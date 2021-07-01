@@ -1,10 +1,10 @@
-#include "RotatingHistoryTest.h"
-#include "../RotatingHistory.h"
+#include "FixedSizeQueueTest.h"
+#include "../FixedSizeQueue.h"
 
 #include <initializer_list>
 #include <iostream>
 
-TEST_SUITE_REGISTRATION(RotatingHistoryTest);
+TEST_SUITE_REGISTRATION(FixedSizeQueueTest);
 
 template <typename RH>
 void testExpectationHelper(RH&& rh, const std::initializer_list<double>& values) {
@@ -23,8 +23,8 @@ void testExpectation(RH&& rh, std::initializer_list<double>&& values) {
 	testExpectationHelper(std::as_const(rh), values);
 }
 
-void RotatingHistoryTest::testDefaultConstructed() {
-	RotatingHistory<double> rh;
+void FixedSizeQueueTest::testDefaultConstructed() {
+	FixedSizeQueue<double> rh;
 	// Should have capacity 1!
 
 	testExpectation(rh, {});
@@ -36,15 +36,15 @@ void RotatingHistoryTest::testDefaultConstructed() {
 	testExpectation(rh, {2.});
 }
 
-void RotatingHistoryTest::testZeroSize() {
-	RotatingHistory<double> rh(0ul);
+void FixedSizeQueueTest::testZeroSize() {
+	FixedSizeQueue<double> rh(0ul);
 
 	rh.insert(1.);
 	testExpectation(rh, {});
 }
 
-void RotatingHistoryTest::testFiveElements() {
-	RotatingHistory<double> rh(5);
+void FixedSizeQueueTest::testFiveElements() {
+	FixedSizeQueue<double> rh(5);
 
 	rh.insert(1.);
 	testExpectation(rh, {1.});
@@ -62,8 +62,8 @@ void RotatingHistoryTest::testFiveElements() {
 	testExpectation(rh, {4., 8., 16., 32., 64.});
 }
 
-void RotatingHistoryTest::testGrowth() {
-	RotatingHistory<double> rh(1);
+void FixedSizeQueueTest::testGrowth() {
+	FixedSizeQueue<double> rh(1);
 
 	rh.insert(1.);
 	testExpectation(rh, {1.});
@@ -80,8 +80,8 @@ void RotatingHistoryTest::testGrowth() {
 	testExpectation(rh, {16., 32., 64.});
 }
 
-void RotatingHistoryTest::testShrink() {
-	RotatingHistory<double> rh(4);
+void FixedSizeQueueTest::testShrink() {
+	FixedSizeQueue<double> rh(4);
 
 	rh.insert(1.);
 	rh.insert(2.);

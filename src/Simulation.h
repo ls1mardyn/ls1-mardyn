@@ -7,8 +7,8 @@
 #include "ensemble/CavityEnsemble.h"
 #include "io/TimerProfiler.h"
 #include "thermostats/VelocityScalingThermostat.h"
+#include "utils/FixedSizeQueue.h"
 #include "utils/FunctionWrapper.h"
-#include "utils/RotatingHistory.h"
 #include "utils/SysMon.h"
 
 // plugins
@@ -525,6 +525,6 @@ private:
 		bool refreshIDs;
 	} _prepare_start_opt;
 
-	RotatingHistory<double> _lastTraversalTimeHistory;
+	FixedSizeQueue<double> _lastTraversalTimeHistory;
 };
 #endif /*SIMULATION_H_*/

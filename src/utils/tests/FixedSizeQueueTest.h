@@ -2,8 +2,8 @@
 
 #include "../Testing.h"
 
-class RotatingHistoryTest : public utils::Test {
-	TEST_SUITE(RotatingHistoryTest);
+class FixedSizeQueueTest : public utils::Test {
+	TEST_SUITE(FixedSizeQueueTest);
 	TEST_METHOD(testDefaultConstructed);
 	TEST_METHOD(testFiveElements);
 	TEST_METHOD(testZeroSize);
