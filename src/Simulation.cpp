@@ -1281,7 +1281,7 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
-	_domainDecomposition->balanceAndExchange(accumulatedLastTraversalTime, forceRebalancing, _moleculeContainer,
+	_domainDecomposition->balanceAndExchange(averageLastTraversalTime, forceRebalancing, _moleculeContainer,
 											 _domain);
 	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
 
