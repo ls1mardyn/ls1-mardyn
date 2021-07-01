@@ -20,7 +20,20 @@ public:
 	explicit RotatingHistory(size_t capacity = 1ul) : _capacity{capacity} {};
 
 	/**
-	 * Insert an element.
+	 * Sets the capacity to new_capacity.
+	 * @param new_capacity
+	 */
+	void setCapacity(size_t new_capacity){
+		_capacity = new_capacity;
+		// shrink to fit:
+		while(_current_size > _capacity){
+			_storage.pop_front();
+			--_current_size;
+		}
+	}
+
+	/**
+	 * Inserts an element.
 	 * Potentially deletes old elements if the capacity was reached.
 	 * @param t
 	 */
@@ -35,7 +48,7 @@ public:
 	}
 
 	/**
-	 * Get iterator.
+	 * Returns the begin iterator.
 	 * This initially points to the oldest entry.
 	 * @return The iterator.
 	 */
@@ -48,7 +61,7 @@ public:
 	auto begin() const { return _storage.cbegin(); }
 
 	/**
-	 * The end iterator.
+	 * Returns the end iterator.
 	 * @return
 	 */
 	auto end() { return _storage.end(); }
