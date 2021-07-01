@@ -386,8 +386,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 
 			std::size_t timerForLoadAveragingLength{1ul};
 			xmlconfig.getNodeValue("timerForLoad_AveragingLength", timerForLoadAveragingLength);
-			global_log->info() << "Using averaging length of " << timerForLoadAveragingLength
-							   << " for the load calculation." << std::endl;
+			global_log->info() << "Averaging over " << timerForLoadAveragingLength
+							   << "time steps for the load calculation." << std::endl;
 			if(timerForLoadAveragingLength < 1ul) {
 				global_log->fatal() << "timerForLoadAveragingLength has to be at least 1" << std::endl;
 				Simulation::exit(15843);
