@@ -6,9 +6,10 @@
 
 #include "ensemble/CavityEnsemble.h"
 #include "io/TimerProfiler.h"
-#include "utils/SysMon.h"
-#include "utils/FunctionWrapper.h"
 #include "thermostats/VelocityScalingThermostat.h"
+#include "utils/FunctionWrapper.h"
+#include "utils/RotatingHistory.h"
+#include "utils/SysMon.h"
 
 // plugins
 #include "plugins/PluginFactory.h"
@@ -104,7 +105,8 @@ public:
 	       </electrostatic>
 	       <datastructure type=STRING><!-- see ParticleContainer class documentation --></datastructure>
 	       <parallelisation type=STRING><!-- see DomainDecompBase class documentation -->
-	         <timerForCalculation>STRING</timerForCalculation><!-- Timer to use as load. requires valid timer name! -->
+	         <timerForLoad>STRING</timerForLoad><!-- Timer to use as load. requires valid timer name! -->
+	         <timerForLoadAveragingLength>UINT</timerForLoadAveragingLength><!-- Defines how many entries should be used to average the last traversal time.-->
 	       </parallelisation>
 	       <thermostats>
 	         <thermostat type='VelocityScaling' componentId=STRING><!-- componentId can be component id or 'global' -->
@@ -522,5 +524,7 @@ private:
 	struct PrepareStartOptions {
 		bool refreshIDs;
 	} _prepare_start_opt;
+
+	RotatingHistory<double> _lastTraversalTimeHistory;
 };
 #endif /*SIMULATION_H_*/
