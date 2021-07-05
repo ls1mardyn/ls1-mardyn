@@ -12,6 +12,11 @@
 #include "utils/SysMon.h"
 
 // plugins
+#include <list>
+#include <string>
+#include <vector>
+#include "io/TaskTimingProfiler.h"
+#include "particleContainer/OptionalParticleData.h"
 #include "plugins/PluginFactory.h"
 
 #if !defined (SIMULATION_SRC) or defined (IN_IDE_PARSER)
@@ -27,11 +32,6 @@ class Ensemble;
 
 /** Reference to the global simulation object */
 #define _simulation (*global_simulation)
-
-#include <list>
-#include <vector>
-#include <string>
-#include <io/TaskTimingProfiler.h>
 
 #ifdef STEEREO
 class SteereoSimSteering;
@@ -356,6 +356,9 @@ private:
 
 	/** Datastructure for finding neighbours efficiently */
 	ParticleContainer* _moleculeContainer;
+
+	/** Dynamic  **/
+	std::unique_ptr<OptionalParticleData> _optionalParticleData;
 
 	/** Handler describing what action is to be done for each particle pair */
 	ParticlePairsHandler* _particlePairsHandler;
