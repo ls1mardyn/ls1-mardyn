@@ -55,6 +55,20 @@ if (ENABLE_LZ4)
     add_dependencies(MarDyn liblz4)
 endif()
 
+# find adios
+if (ENABLE_ADIOS2 AND ENABLE_MPI)
+    TARGET_COMPILE_DEFINITIONS(MarDyn PUBLIC "ENABLE_ADIOS2")
+    if (FIND_PACKAGE_ADIOS2)
+        find_package(ADIOS2 REQUIRED)
+        TARGET_LINK_LIBRARIES(MarDyn adios2::adios2)
+    else()
+        message("${adios2fetch_BINARY_DIR}")
+        add_custom_command(TARGET MarDyn POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${adios2fetch_BINARY_DIR}/bin/bpls bpls)
+    endif()
+else()
+    list(FILTER MY_SRC EXCLUDE REGEX "adios2")
+endif()
+
 # we just add all libraries here. If a library is not set, it will simply be ignored.
 TARGET_LINK_LIBRARIES(MarDyn
         ${BLAS_LIB}    # for armadillo
@@ -62,6 +76,7 @@ TARGET_LINK_LIBRARIES(MarDyn
         ${VTK_LIB}     # for VTK/xerces
         ${CPPUNIT_LIB} # for unit tests
         ${AUTOPAS_LIB} # for autopas
+        ${ADIOS2_LIB}  # for adios2
         ${LZ4_LIB}     # for LZ4 compression
         ${ALL_LIB}     # for ALL
         )
