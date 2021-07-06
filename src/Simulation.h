@@ -177,7 +177,6 @@ public:
 	 */
 	void simulate();
 
-
 	/** @brief call plugins every nth-simstep
 	 *
 	 * The present method serves as a redirection to the actual plugins.
@@ -522,5 +521,18 @@ private:
 	struct PrepareStartOptions {
 		bool refreshIDs;
 	} _prepare_start_opt;
+
+// mamico refactoring area
+public:
+	void simulateOneTimestep();
+	void preSimLoopSteps();
+	void postSimLoopSteps();
+
+private:
+	Timer *loopTimer, *decompositionTimer, *computationTimer, *perStepIoTimer, *forceCalculationTimer, *mpiOMPCommunicationTimer;
+	// stores the timing info for the previous load. This is used for the load calculation and the rebalancing.
+	double previousTimeForLoad = 0.;
+	bool preSimLoopStepsDone = false, simulationDone = false, postSimLoopStepsDone = false;
+
 };
 #endif /*SIMULATION_H_*/
