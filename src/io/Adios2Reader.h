@@ -1,15 +1,11 @@
+#ifndef ADIOS2_READER_H_
+#define ADIOS2_READER_H_
 /*
- * Adios2Reader.h
+ * \file Adios2Reader.h
+ *
+ * Allows to read ADIOS2 phase space series files as checkpoints.
  *
  */
-
-///
-/// \file Adios2Reader.h
-/// Adios2 Reader
-///
-
-#pragma once
-
 #include "io/InputBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "utils/Logger.h"
@@ -42,14 +38,16 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <file type="adios2">
-		 <filename>STRING</filename>
-		 <adios2enginetype><!-- For possible engines see the ADIOS2 doc --></adios2enginetype>
-		 <adios2step><!-- INTEGER --> </adios2step>
-		 <mode><!-- currently only supports "rootOnly" --></mode>
-	   </outputplugin>
+		<phasespacepoint>
+			<file type="adios2">
+				<filename>STRING</filename>
+				<adios2enginetype>STRING<!-- For possible engines see the ADIOS2 doc (default: BP4) --></adios2enginetype>
+				<adios2step>INTEGER<!-- Step in the ADIOS2 file --></adios2step>
+				<mode>STRING<!-- Possible options are rootOnly and equalRanks(Not implemented yet) --></mode>
+			</file>
+		</phasespacepoint>
 	   \endcode
-	 */
+	*/
 	void readXML(XMLfileUnits& xmlconfig);
 
 	void readPhaseSpaceHeader(Domain* domain, double timestep);
@@ -116,3 +114,4 @@ private:
 
 };
 #endif // ENABLE_ADIOS2
+#endif /* ADIOS2_READER_H_*/

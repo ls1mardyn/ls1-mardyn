@@ -1,8 +1,8 @@
 /*
  * Adios2Writer.cpp
  *
- *  Created on: April 2019
- *      Author: Tobias Rau
+ *  Created on: April 2021
+ *      Author: Tobias Rau, Matthias Heinen, Patrick Gralka, Christoph Niethammer, Simon Homes
  */
 
 #include "Adios2Writer.h"

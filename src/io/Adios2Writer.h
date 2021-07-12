@@ -4,6 +4,7 @@
  * \file Adios2Writer.h
  *
  * Allows to write ADIOS2 phase space series files for visualization with Megamol.
+ *
  */
 
 #include "molecules/MoleculeForwardDeclaration.h"
@@ -33,7 +34,7 @@ public:
 	 * \code{.xml}
 	   <outputplugin name="Adios2Writer">
 		 <outputfile>STRING</outputfile>
-		 <adios2enginetype><!-- For possible engines see the ADIOS2 doc --></adios2enginetype>
+		 <adios2enginetype><!-- For possible engines see the ADIOS2 doc (default: BP4) --></adios2enginetype>
 		 <writefrequency>INTEGER</writefrequency>
 	   </outputplugin>
 	   \endcode

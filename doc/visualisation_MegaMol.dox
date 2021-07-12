@@ -1,5 +1,45 @@
 /** \page visualisationMegaMol Visualisation with MegaMol
 
+MegaMol (https://github.com/UniStuttgart-VISUS/megamol.git)
 ls1-MarDyn provides the MmpldWriter which can write out .mmpld files used by MegaMol.
+
+Use the Adios2Writer and the Adios2Reader for generating and restarting checkpoints.
+ADIOS2 (https://github.com/ornladios/ADIOS2.git)
+Additionally, the ADIOS2 format is used for visualization in MegaMol.
+Use the project files (.lua) from the MegaMol examples (https://github.com/UniStuttgart-VISUS/megamol-examples/tree/master/ls1) or locally install/examples/ls1.
+
+Check the ADIOS2 output with the bpls tool (next to MarDyn executable or in the ADIOS2 binary directory).
+The output should look similar to this:
+
+$ ./bpls mardyn.bp/ -a
+  double    Lx                         2*{6466}
+  double    Ly                         2*{6466}
+  double    Lz                         2*{6466}
+  double    component_0_centers        attr
+  string    component_0_element_names  attr
+  double    component_0_epsilon        attr
+  double    component_0_mass           attr
+  string    component_0_name           attr
+  double    component_0_sigma          attr
+  uint64_t  component_id               2*{6466}
+  string    config                     attr
+  double    global_box                 2*{6}
+  double    local_box                  2*[1]*{6}
+  uint64_t  molecule_id                2*{6466}
+  int32_t   num_components             attr
+  int32_t   num_processes              attr
+  uint64_t  offsets                    2*{1}
+  double    qw                         2*{6466}
+  double    qx                         2*{6466}
+  double    qy                         2*{6466}
+  double    qz                         2*{6466}
+  double    rx                         2*{6466}
+  double    ry                         2*{6466}
+  double    rz                         2*{6466}
+  double    simulationtime             2*scalar
+  double    vx                         2*{6466}
+  double    vy                         2*{6466}
+  double    vz                         2*{6466}
+
 
 */
