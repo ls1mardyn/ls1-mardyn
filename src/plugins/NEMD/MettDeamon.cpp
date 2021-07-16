@@ -27,7 +27,7 @@
 #include <iomanip>
 #include <numeric>
 #include <cstdint>
-#include <random>  // normMB
+#include <random>
 #include <ctime>
 
 using namespace std;
@@ -46,45 +46,6 @@ template < typename T > void shuffle( std::list<T>& lst ) // shuffle contents of
 
     // swap the old list with the shuffled list
     lst.swap(shuffled_list) ;
-}
-
-double MettDeamon::generate_normMB_velocity(const double& temperature, const double& drift)
-{
-/*
-	std::default_random_engine generator;
-	std::normal_distribution<double> distribution(drift, temperature);
-	return distribution(generator);
-*/
-	double stdDev = sqrt(temperature);
-	return _rnd->gaussDeviate(stdDev)+drift;
-}
-
-double MettDeamon::generate_normMB_velocity_neg(const double& temperature, const double& drift)
-{
-/*
-	std::default_random_engine generator;
-	std::normal_distribution<double> distribution(drift, temperature);
-*/
-	double dVal = 1.;
-	double stdDev = sqrt(temperature);
-	while(dVal > 0.)
-		//dVal = distribution(generator);
-		dVal = _rnd->gaussDeviate(stdDev)+drift;
-	return dVal;
-}
-
-double MettDeamon::generate_normMB_velocity_pos(const double& temperature, const double& drift)
-{
-/*
-	std::default_random_engine generator;
-	std::normal_distribution<double> distribution(drift, temperature);
-*/
-	double dVal = -1.;
-	double stdDev = sqrt(temperature);
-	while(dVal < 0.)
-		//dVal = distribution(generator);
-		dVal = _rnd->gaussDeviate(stdDev)+drift;
-	return dVal;
 }
 
 void create_rand_vec_ones(const uint64_t& nCount, const double& percent, std::vector<int>& v)
@@ -721,18 +682,6 @@ void MettDeamon::releaseTrappedMolecule(Molecule* mol, bool& bDeleteParticle)
 			update_velocity_vectors(_rnd.get(), N, T, D, v_neg, e_neg, vx, vy, vz);
 
 		std::array<double,3> v;
-		/*
-		 * worked well, at least
-		 *
-		v[0] = generate_normMB_velocity(T,0);
-		v[1] = generate_normMB_velocity_neg(T,D);
-		//v[1] = generate_normMB_velocity_neg(T,0);
-//		v[1] = abs(generate_normMB_velocity(T,0))*(-1.);
-		v[2] = generate_normMB_velocity(T,0);
-		//global_log->debug() << "T,D=" << T << "," << D << "--> vx,vy,vz=" << v[0] << "," << v[1] << "," << v[2] << endl;
-		 *
-		 */
-
 		v[0] = vx.back(); vx.pop_back();
 		v[1] = vy.back(); vy.pop_back();
 		v[2] = vz.back(); vz.pop_back();

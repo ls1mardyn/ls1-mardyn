@@ -29,12 +29,6 @@
 #include <vector>
 template < typename T > void shuffle( std::list<T>& lst ); // shuffle contents of a list
 
-/*
-// normMB
-double generate_normMB_velocity(const double& temperature, const double& drift);
-double generate_normMB_velocity_neg(const double& temperature, const double& drift); 
-double generate_normMB_velocity_pos(const double& temperature, const double& drift); 
-*/
 void create_rand_vec_ones(const uint64_t& nCount, const double& percent, std::vector<int>& v);
 void update_velocity_vectors(std::unique_ptr<Random>& rnd, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
 		std::vector<double>& vxi, std::vector<double>& vyi, std::vector<double>& vzi);
@@ -263,11 +257,6 @@ private:
 
 	// rand vector for trapped particle insertion
 	void updateRandVecTrappedIns();
-
-	// generate random numbers
-	double generate_normMB_velocity(const double& temperature, const double& drift);
-	double generate_normMB_velocity_neg(const double& temperature, const double& drift);
-	double generate_normMB_velocity_pos(const double& temperature, const double& drift);
 
 private:
 	std::unique_ptr<Reservoir> _reservoir;
