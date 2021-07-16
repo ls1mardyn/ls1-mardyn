@@ -564,7 +564,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 	_feedrate.feed.actual = _feedrate.feed.init;
 	_reservoir->readParticleData(domainDecomp, particleContainer);
 	_dInvDensityArea = 1. / (_dAreaXZ * _reservoir->getDensity(0) );
-	if(_reservoir->getDensity(0) < 0.000000001) {
+	if(_reservoir->getDensity(0) < 1e-9) {
 		global_log->warning() << "ERROR: Reservoir density too low, _reservoir->getDensity(0)="
 							<< _reservoir->getDensity(0) << endl;
 	}
