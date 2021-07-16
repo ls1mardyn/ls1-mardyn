@@ -114,31 +114,52 @@ void Cylinder::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Radius: " << _radius << endl;
 	xmlconfig.getNodeValueReduced("height", _height);
 	global_log->info() << "Height: " << _height << endl;
+	int axis = 2;
+	xmlconfig.getNodeValue("direction", axis);
+	_direction.axis = static_cast<ObjectAxis>(axis);
+	global_log->info() << "Direction: " << _direction.axis << endl;
+	switch(_direction.axis) {
+		case OBJ_AXIS_X:
+			_direction.base1 = 1; _direction.base2 = 2; _direction.height = 0; break;
+		case OBJ_AXIS_Y:
+			_direction.base1 = 0; _direction.base2 = 2; _direction.height = 1; break;
+		case OBJ_AXIS_Z:
+		default:
+			_direction.base1 = 0; _direction.base2 = 1; _direction.height = 2;
+	}
 }
 
 bool Cylinder::isInside(double r[3]) {
 	double dr[2];
-	dr[0] = r[0] - _centerBase[0];
-	dr[1] = r[1] - _centerBase[1];
-	return (dr[0]*dr[0] + dr[1]*dr[1] <= _radiusSquare) && (r[2] >= _centerBase[2]) && (r[2] <= _centerBase[2] + _height);
+	uint8_t b1, b2, h;
+	b1 = _direction.base1; b2 = _direction.base2; h = _direction.height;
+	dr[0] = r[b1] - _centerBase[b1];
+	dr[1] = r[b2] - _centerBase[b2];
+	return (dr[0]*dr[0] + dr[1]*dr[1] <= _radiusSquare) && (r[h] >= _centerBase[h]) && (r[h] <= _centerBase[h] + _height);
 }
 
 bool Cylinder::isInsideNoBorder(double r[3]) {
 	double dr[2];
-	dr[0] = r[0] - _centerBase[0];
-	dr[1] = r[1] - _centerBase[1];
-	return (dr[0]*dr[0] + dr[1]*dr[1] < _radiusSquare) && (r[2] > _centerBase[2]) && (r[2] < _centerBase[2] + _height);
+	uint8_t b1, b2, h;
+	b1 = _direction.base1; b2 = _direction.base2; h = _direction.height;
+	dr[0] = r[b1] - _centerBase[b1];
+	dr[1] = r[b2] - _centerBase[b2];
+	return (dr[0]*dr[0] + dr[1]*dr[1] < _radiusSquare) && (r[h] > _centerBase[h]) && (r[h] < _centerBase[h] + _height);
 }
 
 void Cylinder::getBboxMin(double rmin[3]) {
-	rmin[0] = _centerBase[0] - _radius;
-	rmin[1] = _centerBase[1] - _radius;
-	rmin[2] = _centerBase[2];
+	uint8_t b1, b2, h;
+	b1 = _direction.base1; b2 = _direction.base2; h = _direction.height;
+	rmin[b1] = _centerBase[b1] - _radius;
+	rmin[b2] = _centerBase[b2] - _radius;
+	rmin[h] = _centerBase[h];
 }
 void Cylinder::getBboxMax(double rmax[3]) {
-	rmax[0] = _centerBase[0] + _radius;
-	rmax[1] = _centerBase[1] + _radius;
-	rmax[2] = _centerBase[2] + _height;
+	uint8_t b1, b2, h;
+	b1 = _direction.base1; b2 = _direction.base2; h = _direction.height;
+	rmax[b1] = _centerBase[b1] + _radius;
+	rmax[b2] = _centerBase[b2] + _radius;
+	rmax[h] = _centerBase[h] + _height;
 }
 
 
