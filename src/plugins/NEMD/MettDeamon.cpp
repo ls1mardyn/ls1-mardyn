@@ -105,8 +105,6 @@ void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const doub
 	double vyd = sum_vyi * dInvNumSamples;
 	double vzd = sum_vzi * dInvNumSamples;
 
-	global_log->debug() << "vxd,vyd,vzd = " << vxd << "," << vyd << "," << vzd << endl;
-
 	// correct drift
 	for(double & it : vxi)
 		it += (0.0 - vxd);
@@ -125,8 +123,6 @@ void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const doub
 	vxd = sum_vxi * dInvNumSamples;
 	vyd = sum_vyi * dInvNumSamples;
 	vzd = sum_vzi * dInvNumSamples;
-
-	global_log->debug() << "vxd,vyd,vzd = " << vxd << "," << vyd << "," << vzd << endl;
 
 	// update v2 vectors
 	for(uint64_t i=0; i<numSamples; i++)
@@ -151,8 +147,6 @@ void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const doub
 	double v2x = sum_v2xi * dInvNumSamples;
 	double v2y = sum_v2yi * dInvNumSamples;
 	double v2z = sum_v2zi * dInvNumSamples;
-
-	global_log->debug() << "v2x,v2y,v2z = " << v2x << "," << v2y << "," << v2z << endl;
 
 	// correct ekin
 	double scale_vx = sqrt(numSamples*T/sum_v2xi);
@@ -187,9 +181,6 @@ void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const doub
 	v2x = sum_v2xi * dInvNumSamples;
 	v2y = sum_v2yi * dInvNumSamples;
 	v2z = sum_v2zi * dInvNumSamples;
-
-	global_log->debug() << "scale x,y,z = " << scale_vx << "," << scale_vy << "," << scale_vz << endl;
-	global_log->debug() << "v2x,v2y,v2z = " << v2x << "," << v2y << "," << v2z << endl;
 	// <-- EKIN
 
 	// calc drift again
@@ -200,8 +191,6 @@ void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const doub
 	vxd = sum_vxi * dInvNumSamples;
 	vyd = sum_vyi * dInvNumSamples;
 	vzd = sum_vzi * dInvNumSamples;
-
-	global_log->debug() << "vxd,vyd,vzd = " << vxd << "," << vyd << "," << vzd << endl;
 }
 
 MettDeamon::MettDeamon() :
@@ -342,8 +331,6 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 				shuffle(_norm.vy);   // same here
 				DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 				int nRank = domainDecomp.getRank();
-				global_log->debug() << "[" << nRank << "]: First vxz = " << _norm.vxz.front() << endl;
-				global_log->debug() << "[" << nRank << "]: First vy = " << _norm.vy.front() << endl;
 			}
 		}
 		else if (5 == nVal)
@@ -451,17 +438,6 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		global_log->error() << "No component changes defined in XML-config file. Program exit ..." << endl;
 		Simulation::exit(-1);
 	}
-
-	global_log->debug() << "_vecChangeCompIDsFreeze:" << endl;
-	for(uint32_t i=0; i<_vecChangeCompIDsFreeze.size(); ++i)
-	{
-		global_log->debug() << i << ": " << _vecChangeCompIDsFreeze.at(i) << std::endl;
-	}
-	global_log->debug() << "_vecChangeCompIDsUnfreeze:" << endl;
-	for(uint32_t i=0; i<_vecChangeCompIDsUnfreeze.size(); ++i)
-	{
-		global_log->debug() << i << ": " << _vecChangeCompIDsUnfreeze.at(i) << std::endl;
-	}
 }
 
 void MettDeamon::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain)
@@ -502,7 +478,6 @@ void MettDeamon::findMaxMoleculeID(DomainDecompBase* domainDecomp)
 	domainDecomp->collCommAllreduceSum();
 	_nMaxMoleculeID.global = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
-	//global_log->debug() << "_nMaxMoleculeID.global=" << _nMaxMoleculeID.global << endl;
 }
 
 uint64_t MettDeamon::getnNumMoleculesDeleted2( DomainDecompBase* domainDecomposition)
@@ -512,11 +487,9 @@ uint64_t MettDeamon::getnNumMoleculesDeleted2( DomainDecompBase* domainDecomposi
 	domainDecomposition->collCommAllreduceSum();
 	_nNumMoleculesTooFast.global = domainDecomposition->collCommGetUnsLong();
 	domainDecomposition->collCommFinalize();
-//
-//		global_log->debug() << "Particles deleted: "<< _nNumMoleculesDeletedGlobalAlltime << std::endl;
-//		global_log->debug() << "Of which were too fast: " << _nNumMoleculesTooFast.global << std::endl;
 	return _nNumMoleculesTooFast.global;
 }
+
 void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer, double cutoffRadius)
 {
 	_feedrate.feed.actual = _feedrate.feed.init;
@@ -526,8 +499,6 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 		global_log->warning() << "ERROR: Reservoir density too low, _reservoir->getDensity(0)="
 							<< _reservoir->getDensity(0) << endl;
 	}
-	global_log->debug() << "_dInvDensityArea = " << _dInvDensityArea << endl;
-
 	// Activate reservoir bin with respect to restart information
 	if(_bIsRestart)
 		this->initRestart();
@@ -537,9 +508,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 	// find max molecule ID in particle container
 	this->findMaxMoleculeID(domainDecomp);
 
-	//ParticleContainer* _moleculeContainer;
 	particleContainer->deleteOuterParticles();
-	// fixed components
 
 	if(_bIsRestart)
 		return;
@@ -566,11 +535,9 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 		}
 	}
 }
+
 void MettDeamon::init_positionMap(ParticleContainer* particleContainer)
 {
-	// clear map at first to avoid running out of available memory
-	//~ _storePosition.clear(); <-- doesnt work ... not all particles remain trapped, why???
-
 	for(auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit)
 	{
 		uint64_t mid = pit->getID();
@@ -592,7 +559,6 @@ void MettDeamon::init_positionMap(ParticleContainer* particleContainer)
 			pos.at(7) = q.qx();
 			pos.at(8) = q.qy();
 			pos.at(9) = q.qz();
-//			_storePosition.insert ( std::pair<unsigned long, std::array<double, 3> >(mid, pos) );
 			_storePosition[pit->getID()] = pos;
 		}
 	}
@@ -617,20 +583,14 @@ void MettDeamon::releaseTrappedMolecule(Molecule* mol, bool& bDeleteParticle)
 
 	// delete element from map to save memory
 	size_t numDeleted = _storePosition.erase(mol->getID() );
-//	global_log->debug() << "Deleted " << numDeleted << " molecule(s) from map." << endl;
-
 	// only release particles with respect to parameter a_neg from normMB
 	// they keep their component (trapped particle) although passing transition plane
 	// feature DensityControl must delete them directly
 	if(MD_RIGHT_TO_LEFT == _nMovingDirection) {
-//		float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-//		if(r>_feedrate.release_velo.normMB.a_neg) {
-
 		// refill rand insertion vector to only release part of trapped particles, if no values left
 		if(_feedrate.vec_rand_ins.empty())
 			this->updateRandVecTrappedIns();
 
-//		if(r>0.5) {
 		int nDoInsert = _feedrate.vec_rand_ins.back();
 		_feedrate.vec_rand_ins.pop_back();
 		if(0 == nDoInsert)
@@ -647,7 +607,6 @@ void MettDeamon::releaseTrappedMolecule(Molecule* mol, bool& bDeleteParticle)
 	mol->setComponent(compNew);
 
 	this->resetVelocity(mol);
-	// global_log->debug() << "v=" << mol->v(0) << "," << mol->v(1) << "," << mol->v(2) << endl;
 	if(RVM_FIX_VALUE == _feedrate.release_velo.method)
 		mol->setv(1, _feedrate.release_velo.fix_value);
 	else if(RVM_ADD_FIX_VALUE == _feedrate.release_velo.method)
@@ -690,16 +649,8 @@ void MettDeamon::releaseTrappedMolecule(Molecule* mol, bool& bDeleteParticle)
 		for(uint16_t dim=0; dim<3; dim++)
 			mol->setv(dim, v[dim]);
 	}
-
 	// count released molecules
 	_released.count.local++;
-/*
-	mol->setv(0, 0.0);
-	if(MD_LEFT_TO_RIGHT == _nMovingDirection)
-		mol->setv(1, 3*_feedrate.feed.actual);
-	else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
-		mol->setv(1, -3*_feedrate.feed.actual);
-	mol->setv(2, 0.0); */
 }
 
 void MettDeamon::resetPositionAndOrientation(Molecule* mol, const double& dBoxY)
@@ -722,9 +673,6 @@ void MettDeamon::resetPositionAndOrientation(Molecule* mol, const double& dBoxY)
 		mol->setr(1, it->second.at(1) + _feedrate.feed.actual);
 	else if(MD_RIGHT_TO_LEFT == _nMovingDirection)
 		mol->setr(1, it->second.at(1) - _feedrate.feed.actual);
-
-//	if(this->IsInsideOuterReservoirSlab(mol->r(1), dBoxY) == false)
-//		return;
 
 	// reset quaternion (orientation)
 	Quaternion q(it->second.at(6),
@@ -786,10 +734,6 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 		this->resetPositionAndOrientation( &(*pit), dBoxY);
 
 		if(bIsTrappedMolecule) {
-			// limit velocity of trapped molecules
-/*			pit->setv(0, 0.);
-			pit->setv(1, 0.);
-			pit->setv(2, 0.); */
 			pit->setD(0, 0.);
 			pit->setD(1, 0.);
 			pit->setD(2, 0.);
@@ -802,20 +746,9 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 	if(RRM_EMPTY == _reservoir->getReadMethod() )
 		return;
 
-	// DEBUG
-	if(FRM_CONSTANT == _nFeedRateMethod)
-		_feedrate.feed.actual = _feedrate.feed.target;
-	// DEBUG
-
 	_feedrate.feed.sum += _feedrate.feed.actual;
-	global_log->debug() << "_feedrate.feed.actual="<<_feedrate.feed.actual<<", _feedrate.feed.sum="<<_feedrate.feed.sum<<endl;
 	if (_feedrate.feed.sum >= _reservoir->getBinWidth())
 	{
-		global_log->debug() << "Mett-" << (uint32_t)_nMovingDirection << ": _feedrate.feed.sum=" << _feedrate.feed.sum << ", _dSlabWidth=" << _reservoir->getBinWidth() << endl;
-		global_log->debug() << "_dSlabWidth=" << _reservoir->getBinWidth() << endl;
-		global_log->debug() << "_feedrate.feed.sum=" << _feedrate.feed.sum << endl;
-		global_log->debug() << "_reservoir->getActualBinIndex()=" << _reservoir->getActualBinIndex() << endl;
-
 		// insert actual reservoir slab / activate next reservoir slab
 		DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 		this->findMaxMoleculeID(&domainDecomp);
@@ -851,10 +784,6 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 		bool bIsTrappedMolecule = this->IsTrappedMolecule(cid_zb);
 
 		if(bIsTrappedMolecule) {
-			// limit velocity of trapped molecules
-/*			pit->setv(0, 0.);
-			pit->setv(1, 0.);
-			pit->setv(2, 0.); */
 			pit->setD(0, 0.);
 			pit->setD(1, 0.);
 			pit->setD(2, 0.);
@@ -866,7 +795,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 
 	nNumMoleculesLocal = particleContainer->getNumberOfParticles();
 
-	// delta y berechnen: alle x Zeitschritte
+	// Update feedrate
 	if( (FRM_DIRECTED == _nFeedRateMethod) && (global_simulation->getSimulationStep() % _nUpdateFreq == 0) )
 	{
 		// update global number of particles / calc global number of deleted particles
@@ -1091,19 +1020,9 @@ void MettDeamon::logReleasedVelocities()
 	std::stringstream fnamestream;
 	fnamestream << "MettDeamon_released_vel_movdir-" << (uint32_t)_nMovingDirection << "_TS" << fill_width('0', 9) << simstep << "_p" << nRank << ".dat";
 
-//	// init released count log file
-//	if(false == _released.init_file_vel)
-//	{
-		std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
-		std::stringstream outputstream;
-		outputstream << "                      vx" << "                      vy" << "                      vz" << std::endl;
-//		ofs << outputstream.str();
-//		ofs.close();
-//		_released.init_file = true;
-//	}
-
-//	std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
-//	std::stringstream outputstream;
+	std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
+	std::stringstream outputstream;
+	outputstream << "                      vx" << "                      vy" << "                      vz" << std::endl;
 
 	for(auto vi:_released.log_v)
 	{
@@ -1250,7 +1169,6 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	int numProcs = domainDecomp.getNumProcs();
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
 	std::vector<Molecule>& currentReservoirSlab = _reservoir->getParticlesActualBin();
-	global_log->debug() << "[" << nRank << "]: currentReservoirSlab.size()=" << currentReservoirSlab.size() << endl;
 	_reservoir->printBinQueueInfo();
 
 	CommVar<uint64_t> numParticlesCurrentSlab;
@@ -1276,17 +1194,7 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 
 	for(auto mi : currentReservoirSlab)
 	{
-		// reduce reservoir density to percentage
-		//~ float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-		//~ global_log->debug() << "r=" << r << ", _reservoir->GetInsPercent()=" << _reservoir->GetInsPercent() << endl;
-		//~ if(r>_reservoir->GetInsPercent() )
 		index++;
-/*
- * ins_percent=1.0
- *
-		if(0 == v.at(index))
-			continue;
-*/
 		uint64_t id = mi.getID();
 		uint32_t cid = mi.componentid();
 		Component* compNew;
@@ -1392,7 +1300,6 @@ Reservoir::Reservoir(MettDeamon* parent) :
 
 	// allocate BinQueue
 	_binQueue.reset(new BinQueue());
-	//_binQueue = new BinQueue();
 
 	// init identity change vector
 	uint16_t nNumComponents = global_simulation->getEnsemble()->getComponents()->size();
@@ -1493,8 +1400,6 @@ void Reservoir::readParticleData(DomainDecompBase* domainDecomp, ParticleContain
 
 	// volume, densities
 	this->calcPartialDensities(domainDecomp);
-	global_log->debug() << "Volume of Mettdeamon Reservoir: " << _box.volume << endl;
-	global_log->debug() << "Density of Mettdeamon Reservoir: " << _density.at(0).density << endl;
 }
 
 void Reservoir::updateParticleData(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer)
@@ -1658,9 +1563,6 @@ void Reservoir::readFromMemory(DomainDecompBase* domainDecomp, ParticleContainer
 
 	for(auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit)
 	{
-//		if(true == this->IsBehindTransitionPlane(y) )
-//			continue;
-
 		Molecule mol(*pit);
 		double y = mol.r(1);
 
@@ -1777,23 +1679,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 		}
 		componentid --; // TODO: Component IDs start with 0 in the program.
 		Molecule mol = Molecule(i+1,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz);
-/*
-		uint32_t nSlabindex = floor(y / _dBinWidth);
-		m1.setr(1, y - nSlabindex*_dBinWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
 
-		double bbMin[3];
-		double bbMax[3];
-		bool bIsInsideSubdomain = false;
-		domainDecomp->getBoundingBoxMinMax(global_simulation->getDomain(), bbMin, bbMax);
-		bIsInsideSubdomain = x > bbMin[0] && x < bbMax[0] && y > bbMin[1] && y < bbMax[1] && z > bbMin[2] && z < bbMax[2];
-
-		if(true == bIsInsideSubdomain)
-			_binVector.at(nSlabindex).push_back(m1);
-
-		componentid = m1.componentid();
-		// TODO: The following should be done by the addPartice method.
-		dcomponents.at(componentid).incNumMolecules();
-*/
 		bool bIsRelevant = this->isRelevant(domainDecomp, domain, mol);
 		if (bIsRelevant) {
 			_particleVector.push_back(mol);
