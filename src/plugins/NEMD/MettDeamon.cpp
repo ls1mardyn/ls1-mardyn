@@ -298,9 +298,6 @@ MettDeamon::MettDeamon() :
 	_released.deleted.local = 0;
 	_released.init_file = false;
 
-//	// init colleague ptr
-//	_colleague.ptr = nullptr;
-
 	// seed rand()
 	srand (static_cast <unsigned> (time(0)));
 
@@ -747,7 +744,6 @@ void MettDeamon::releaseTrappedMolecule(Molecule* mol, bool& bDeleteParticle)
 
 	// count released molecules
 	_released.count.local++;
-//	this->informColleagueAboutReleased();
 /*
 	mol->setv(0, 0.0);
 	if(MD_LEFT_TO_RIGHT == _nMovingDirection)

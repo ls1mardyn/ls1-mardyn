@@ -301,8 +301,6 @@ private:
 	// keep gas phase density
 	std::vector<double> _vecDensityValues;
 
-//	ColleagueStruct _colleague;
-
 	RestartInfoType _restartInfo;
 	struct{
 		double ymin, ymax;
