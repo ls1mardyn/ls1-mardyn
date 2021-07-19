@@ -14,7 +14,7 @@ class DOFProfile;
 class KineticProfile;
 
 
-class Virial2DProfile : public ProfileBase {
+class Virial2DProfile final : public ProfileBase {
 public:
 	Virial2DProfile(DensityProfile* densProf, DOFProfile * dofProf, KineticProfile * kinProf) :
 			_densityProfile(densProf), _dofProfile(dofProf), _kineticProfile(kinProf), _local3dProfile(), _global3dProfile() {

@@ -6,8 +6,7 @@ if (USE_VECTORIZATION)
     # list of available options
     set(VECTOR_INSTRUCTIONS_OPTIONS "NONE;NATIVE;SSE;AVX;AVX2;KNL")
     # set instruction set type
-    set(VECTOR_INSTRUCTIONS "NATIVE" CACHE STRING "Vector instruction set to use\
- (${VECTOR_INSTRUCTIONS_OPTIONS}).")
+    set(VECTOR_INSTRUCTIONS "NATIVE" CACHE STRING "Vector instruction set to use (${VECTOR_INSTRUCTIONS_OPTIONS}).")
     # let ccmake and cmake-gui offer the options
     set_property(CACHE VECTOR_INSTRUCTIONS PROPERTY STRINGS ${VECTOR_INSTRUCTIONS_OPTIONS})
 

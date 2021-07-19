@@ -9,6 +9,7 @@
 #include <limits>
 #include <list>
 #include <map>
+#include <numeric>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -385,6 +386,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 									<< "')! Aborting!" << std::endl;
 				exit(1);
 			}
+
+			std::size_t timerForLoadAveragingLength{1ul};
+			xmlconfig.getNodeValue("timerForLoad_AveragingLength", timerForLoadAveragingLength);
+			global_log->info() << "Averaging over " << timerForLoadAveragingLength
+							   << "time steps for the load calculation." << std::endl;
+			if(timerForLoadAveragingLength < 1ul) {
+				global_log->fatal() << "timerForLoadAveragingLength has to be at least 1" << std::endl;
+				Simulation::exit(15843);
+			}
+			_lastTraversalTimeHistory.setCapacity(timerForLoadAveragingLength);
 
 			xmlconfig.changecurrentnode("..");
 		}
@@ -1272,9 +1283,15 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 	_moleculeContainer->update();
 	global_simulation->timers()->stop("SIMULATION_UPDATE_CONTAINER");
 
+	_lastTraversalTimeHistory.insert(lastTraversalTime);
+	double averageLastTraversalTime =
+		std::accumulate(_lastTraversalTimeHistory.begin(), _lastTraversalTimeHistory.end(), 0.) /
+		_lastTraversalTimeHistory.size();
+
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
-	_domainDecomposition->balanceAndExchange(lastTraversalTime, forceRebalancing, _moleculeContainer, _domain);
+	_domainDecomposition->balanceAndExchange(averageLastTraversalTime, forceRebalancing, _moleculeContainer,
+											 _domain);
 	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
 
 	// The cache of the molecules must be updated/build after the exchange process,
