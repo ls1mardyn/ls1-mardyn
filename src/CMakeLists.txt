@@ -59,6 +59,10 @@ endif()
 if (ENABLE_ADIOS2)
     TARGET_COMPILE_DEFINITIONS(MarDyn PUBLIC "ENABLE_ADIOS2")
     if (FIND_PACKAGE_ADIOS2)
+        message(WARNING "
+        You're using an external ADIOS2.
+        If the external ADIOS2 has MPI enabled (ADIOS2_ENABLE_MPI=ON), ls1 should also use ENABLE_MPI=ON.
+        Otherwise deactivate MPI in the external ADIOS.")
         find_package(ADIOS2 REQUIRED)
         TARGET_LINK_LIBRARIES(MarDyn adios2::adios2)
     else()
