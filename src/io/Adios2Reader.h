@@ -6,6 +6,8 @@
  * Allows to read ADIOS2 phase space series files as checkpoints.
  *
  */
+#ifdef ENABLE_ADIOS2
+
 #include "io/InputBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "utils/Logger.h"
@@ -20,10 +22,10 @@
 #include <map>
 #include <errno.h>
 
-#ifdef ENABLE_ADIOS2
-
 #include "adios2.h"
-#include "mpi.h"
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif
 
 class Adios2Reader : public InputBase {
 public:

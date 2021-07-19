@@ -6,7 +6,7 @@
  * Allows to write ADIOS2 phase space series files for visualization with Megamol.
  *
  */
-
+#ifdef ENABLE_ADIOS2
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "plugins/PluginBase.h"
 
@@ -18,8 +18,9 @@
 #include <vector>
 
 #include <adios2.h>
+#ifdef ENABLE_MPI
 #include <mpi.h>
-
+#endif
 
 class Adios2Writer : public PluginBase {
 public:
@@ -74,5 +75,5 @@ private:
 	std::shared_ptr<adios2::Engine> _engine;
 	std::shared_ptr<adios2::IO> _io;
 };
-
+#endif
 #endif /* ADIOS2_WRITER_H_*/

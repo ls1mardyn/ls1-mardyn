@@ -4,7 +4,7 @@
  *  Created on: April 2021
  *      Author: Tobias Rau, Matthias Heinen, Patrick Gralka, Christoph Niethammer, Simon Homes
  */
-
+#ifdef ENABLE_ADIOS2
 #include "Adios2Writer.h"
 
 #include <numeric>
@@ -59,7 +59,11 @@ void Adios2Writer::initAdios2() {
 
 	try {
 		/* Set up ADIOS2 instance for output with provided ADIOS2 Engine type */
+#ifdef ENABLE_MPI
 		_inst = std::make_shared<adios2::ADIOS>((MPI_Comm)MPI_COMM_WORLD);
+#else
+		_inst = std::make_shared<adios2::ADIOS>();
+#endif
 		_io = std::make_shared<adios2::IO>(_inst->DeclareIO("Output"));
 		_io->SetEngine(_adios2enginetype);
 
@@ -180,12 +184,14 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 	// gather offsets
 	global_log->debug() << "[Adios2Writer]: numProcs: " << numProcs << std::endl;
-
+	
 	uint64_t offset = 0;
+#ifdef ENABLE_MPI
 	MPI_Exscan(&localNumParticles, &offset, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
 
 	global_log->debug() << "[Adios2Writer]: localNumParticles " << localNumParticles << std::endl;
 	global_log->debug() << "[Adios2Writer]: Offset " << offset << std::endl;
+#endif
 
 	std::array<double, 6> global_box{
 		0, 0, 0, domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2)};
@@ -271,3 +277,4 @@ void Adios2Writer::finish(ParticleContainer* particleContainer, DomainDecompBase
 	_engine->Close();
 	global_log->info() << "[Adios2Writer]: finish." << std::endl;
 }
+#endif

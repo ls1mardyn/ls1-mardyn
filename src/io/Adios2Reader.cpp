@@ -296,8 +296,11 @@ void Adios2Reader::initAdios2() {
 
   try {
     //get adios2 instance
+#ifdef ENABLE_MPI
         inst = std::make_shared<adios2::ADIOS>((MPI_Comm) MPI_COMM_WORLD);
-
+#else
+		inst = std::make_shared<adios2::ADIOS>();
+#endif
         io = std::make_shared<adios2::IO>(inst->DeclareIO("Input"));
 
         io->SetEngine(_adios2enginetype);
