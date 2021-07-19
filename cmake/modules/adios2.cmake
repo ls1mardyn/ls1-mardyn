@@ -1,7 +1,7 @@
 option(ENABLE_ADIOS2 "Enables the ADIOS2 writer type." OFF)
 option(FIND_PACKAGE_ADIOS2 "Uses find_package to find the adios2 library." OFF)
 
-if (ENABLE_ADIOS2 AND ENABLE_MPI)
+if (ENABLE_ADIOS2)
     message(STATUS "Using Adios2.")
 
     # Enable ExternalProject CMake module

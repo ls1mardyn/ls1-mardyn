@@ -7,10 +7,14 @@ Use the Adios2Writer and the Adios2Reader for generating and restarting checkpoi
 ADIOS2 (https://github.com/ornladios/ADIOS2.git)
 Additionally, the ADIOS2 format is used for visualization in MegaMol.
 Use the project files (.lua) from the MegaMol examples (https://github.com/UniStuttgart-VISUS/megamol-examples/tree/master/ls1) or locally install/examples/ls1.
+For multi component projects make sure to add a site name (only for type="LJ126") in the components file, for example:
+```
+<site type="LJ126" id="1" name="C">
+```
 
 Check the ADIOS2 output with the bpls tool (next to MarDyn executable or in the ADIOS2 binary directory).
 The output should look similar to this:
-
+```bash
 $ ./bpls mardyn.bp/ -a
   double    Lx                         2*{6466}
   double    Ly                         2*{6466}
@@ -40,6 +44,6 @@ $ ./bpls mardyn.bp/ -a
   double    vx                         2*{6466}
   double    vy                         2*{6466}
   double    vz                         2*{6466}
-
+```
 
 */

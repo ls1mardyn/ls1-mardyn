@@ -12,9 +12,9 @@
 #include "Domain.h"
 #include "Simulation.h"
 #include "utils/mardyn_assert.h"
+#include "parallel/DomainDecompBase.h"
 #ifdef ENABLE_MPI
 #include "parallel/ParticleData.h"
-#include "parallel/DomainDecompBase.h"
 #endif
 #include "utils/xmlfile.h"
 
@@ -89,9 +89,10 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 	std::vector<uint64_t> mol_id, comp_id;
     double simtime;
     uint64_t buffer = 1000;
+#ifdef ENABLE_MPI
     MPI_Datatype mpi_Particle;
 	ParticleData::getMPIType(mpi_Particle);
-
+#endif
 
     auto num_reads = particle_count / buffer;
     if (particle_count % buffer != 0) num_reads += 1;
@@ -219,8 +220,9 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
         }
         engine->PerformGets();
 
+    	auto& dcomponents = *(_simulation.getEnsemble()->getComponents());
+#ifdef ENABLE_MPI
         std::vector<ParticleData> particle_buff(buffer);
-        auto& dcomponents = *(_simulation.getEnsemble()->getComponents());
         if(domainDecomp->getRank() == 0) {
             for (int i = 0; i < buffer; i++) {
                     Molecule m1 = Molecule(mol_id[i], &dcomponents[comp_id[i]], rx[i], ry[i], rz[i], vx[i],
@@ -229,6 +231,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
             }
         }
         MPI_Bcast(particle_buff.data(), buffer, mpi_Particle, 0, MPI_COMM_WORLD);
+
         for (int j = 0; j < buffer; j++) {
             Molecule m;
             ParticleData::ParticleDataToMolecule(particle_buff[j], m);
@@ -246,6 +249,22 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
             // TODO
             //global_simulation->getEnsemble()->storeSample(&m, componentid);
         }
+#else
+		for (int i = 0; i < particle_count; i++) {
+			Molecule m = Molecule(mol_id[i], &dcomponents[comp_id[i]], rx[i], ry[i], rz[i], vx[i], vy[i], vz[i], qw[i],
+								   qx[i], qy[i], qz[i], Lx[i], Ly[i], Lz[i]);
+
+			// only add particle if it is inside of the own domain!
+			if (particleContainer->isInBoundingBox(m.r_arr().data())) {
+				particleContainer->addParticle(m, true, false);
+			}
+
+			dcomponents[m.componentid()].incNumMolecules();
+			domain->setglobalRotDOF(dcomponents[m.componentid()].getRotationalDegreesOfFreedom() +
+									domain->getglobalRotDOF());
+		}
+#endif
+    	
         // Print status message
 		unsigned long iph = num_reads / 100;
 		if(iph != 0 && (read % iph) == 0)
