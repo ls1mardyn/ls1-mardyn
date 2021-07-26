@@ -219,6 +219,138 @@ pipeline {
         }
       }
     }
+    stage('check ADIOS2 integration') {
+      agent { label 'atsccs11' }
+      stages {
+        stage('build with ADIOS2 sequential') {
+          steps {
+            unstash 'repo'
+            dir ("build"){
+              sh """
+                cmake -DENABLE_ADIOS2=ON -DENABLE_UNIT_TESTS=1 ..
+                make -j4
+              """
+            }
+            stash includes: "build/src/MarDyn", name: "adios2_exec"
+          }
+        }
+        stage('build with ADIOS2 MPI') {
+          steps {
+            unstash 'repo'
+            dir ("build-mpi"){
+              sh """
+                CC=mpicc CXX=mpicxx cmake -DENABLE_MPI=ON -DENABLE_ADIOS2=ON -DENABLE_UNIT_TESTS=1 ..
+                make -j4
+              """
+            }
+            stash includes: "build-mpi/src/MarDyn", name: "adios2_mpi_exec"
+          }
+        }
+        // stage('unit test with autopas') {
+        //   parallel {
+        //     stage('test sequential') {
+        //       steps {
+        //         dir("seq"){
+        //           unstash 'repo'
+        //           unstash 'autopas_exec'
+        //           dir ("build"){
+        //             sh """
+        //               ./src/MarDyn -t -d ../test_input/
+        //             """
+        //           }
+        //         }
+        //       }
+        //     }
+        //     stage('test mpi') {
+        //       steps {
+        //         dir("mpi"){
+        //           unstash 'repo'
+        //           unstash 'autopas_mpi_exec'
+        //           dir ("build-mpi"){
+        //             sh """
+        //               mpirun -n 1 ./src/MarDyn -t -d ../test_input/
+        //               mpirun -n 4 ./src/MarDyn -t -d ../test_input/
+        //             """
+        //           }
+        //         }
+        //       }
+        //     }
+        //   }
+        // }
+        // stage('validation tests with autopas') {
+        //   parallel {
+        //     stage('run with autopas aos') {
+        //       steps {
+        //         dir('aostest'){
+        //           unstash 'repo'
+        //           unstash 'autopas_exec'
+        //           dir ("build"){
+        //             sh """
+        //               ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 | tee autopas_run_log.txt
+        //               grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
+        //               grep "T = 0.000633975" simstep20.txt
+        //               grep "U_pot = -2.14161" simstep20.txt
+        //               grep "p = 5.34057e-07" simstep20.txt
+        //             """
+        //           }
+        //         }
+        //       }
+        //     }
+        //     stage('run with autopas soa') {
+        //       steps {
+        //         dir('soatest'){
+        //           unstash 'repo'
+        //           unstash 'autopas_exec'
+        //           dir ("build"){
+        //             sh """
+        //               ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_soa.xml --steps=20 | tee autopas_run_log.txt
+        //               grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
+        //               grep "T = 0.000633975" simstep20.txt
+        //               grep "U_pot = -2.14161" simstep20.txt
+        //               grep "p = 5.34057e-07" simstep20.txt
+        //             """
+        //           }
+        //         }
+        //       }
+        //     }
+        //     stage('run with autopas DD') {
+        //       steps {
+        //         dir('ddtest'){
+        //           unstash 'repo'
+        //           unstash 'autopas_mpi_exec'
+        //           dir ("build-mpi"){
+        //             sh """
+        //               mpirun -n 4 ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 | tee autopas_run_log.txt
+        //               grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
+        //               grep "T = 0.000633975" simstep20.txt
+        //               grep "U_pot = -2.14161" simstep20.txt
+        //               grep "p = 5.34057e-07" simstep20.txt
+        //             """
+        //           }
+        //         }
+        //       }
+        //     }
+        //     stage('run with autopas ALLLB') {
+        //       steps {
+        //         dir('alltest'){
+        //           unstash 'repo'
+        //           unstash 'autopas_mpi_exec'
+        //           dir ("build-mpi"){
+        //             sh """
+        //               mpirun -n 2 ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_lc_ALL.xml --steps=20 | tee autopas_run_log.txt
+        //               grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
+        //               grep "T = 0.000633975" simstep20.txt
+        //               grep "U_pot = -2.14161" simstep20.txt
+        //               grep "p = 5.34057e-07" simstep20.txt
+        //             """
+        //           }
+        //         }
+        //       }
+        //     }
+        //   }
+        // }
+      }
+    }
     stage('run ci-matrix') {
       steps {
         println "setting up and running ci-matrix..."
