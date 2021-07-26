@@ -42,6 +42,9 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 
+	void testInit(std::string outfile = "mardyn.bp", std::string adios2enginetype = "BP4",
+				  unsigned long writefrequency = 50000);
+
 	void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 								unsigned long simstep);
 

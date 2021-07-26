@@ -55,6 +55,18 @@ void Adios2Writer::readXML(XMLfileUnits& xmlconfig) {
 	if (!_inst) initAdios2();
 }
 
+void Adios2Writer::testInit(std::string outfile, std::string adios2enginetype, unsigned long writefrequency) {
+	using std::endl;
+	_outputfile = outfile;
+	global_log->info() << "[Adios2Writer] Outputfile: " << _outputfile << endl;
+	_adios2enginetype = adios2enginetype;
+	global_log->info() << "[Adios2Writer] Adios2 engine type: " << _adios2enginetype << endl;
+	_writefrequency = writefrequency;
+	global_log->info() << "[Adios2Writer] write frequency: " << _writefrequency << endl;
+
+	if (!_inst) initAdios2();
+}
+
 void Adios2Writer::initAdios2() {
 
 	try {

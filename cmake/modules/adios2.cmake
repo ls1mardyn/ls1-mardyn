@@ -1,4 +1,4 @@
-option(ENABLE_ADIOS2 "Enables the ADIOS2 writer type." OFF)
+option(ENABLE_ADIOS2 "Enables the ADIOS2 writer type." ON)
 option(FIND_PACKAGE_ADIOS2 "Uses find_package to find the adios2 library." OFF)
 
 if (ENABLE_ADIOS2)
