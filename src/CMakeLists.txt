@@ -59,11 +59,17 @@ endif()
 if (ENABLE_ADIOS2)
     TARGET_COMPILE_DEFINITIONS(MarDyn PUBLIC "ENABLE_ADIOS2")
     if (FIND_PACKAGE_ADIOS2)
-        message(WARNING "
-        You're using an external ADIOS2.
-        If the external ADIOS2 has MPI enabled (ADIOS2_ENABLE_MPI=ON), ls1 should also use ENABLE_MPI=ON.
-        Otherwise deactivate MPI in the external ADIOS.")
         find_package(ADIOS2 REQUIRED)
+        if (NOT DEFINED ADIOS2_HAVE_MPI)
+            set(ADIOS2_HAVE_MPI OFF)
+        endif()
+        if ((ADIOS2_HAVE_MPI OR ENABLE_MPI) AND (NOT (ADIOS2_HAVE_MPI AND ENABLE_MPI))) # handish implementation of xor (cmake's EQUAL does not work)
+            message(FATAL_ERROR "
+            You're using an external ADIOS2.
+            ADIOS2_HAVE_MPI set to \"${ADIOS2_HAVE_MPI}\" and ls1 ENALBE_MPI is set to \"${ENABLE_MPI}\".
+            For a parallel build, MPI has to be enabled in the packaged ADIOS2 as well as ls1 (ADIOS2_ENABLE_MPI=ON, ENABLE_MPI=ON).
+            For a sequential build, deactivate MPI both times.")
+        endif()
         TARGET_LINK_LIBRARIES(MarDyn adios2::adios2)
     else()
         add_custom_command(TARGET MarDyn POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${adios2fetch_BINARY_DIR}/bin/bpls bpls)
