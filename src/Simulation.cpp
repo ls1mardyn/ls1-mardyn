@@ -603,7 +603,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
 			_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 		}
-#ifdef ENABLE_ADIOS
+#ifdef ENABLE_ADIOS2
         else if (pspfiletype == "adios2") {
 			_inputReader = new Adios2Reader();
 			_inputReader->readXML(xmlconfig);
