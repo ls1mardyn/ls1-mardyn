@@ -5,6 +5,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"
+#include "plugins/NEMD/DistControl.h"
 
 #include <vector>
 #include <cmath>
@@ -143,6 +144,18 @@ void Planar::init()
 	simstep = 0;
 	
 	temp=_domain->getTargetTemperature(0);
+
+	if (_region.refPosID[0]+_region.refPosID[1] > 0) {
+		_subject = getSubject();
+		if (nullptr != _subject) {
+			this->update(_subject);
+			_subject->registerObserver(this);
+			global_log->info() << "Long Range Correction: Subject registered" << endl;
+		} else {
+			global_log->error() << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << endl;
+			Simulation::exit(-1);
+		}
+	}
 }
 
 void Planar::readXML(XMLfileUnits& xmlconfig)
@@ -152,9 +165,27 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("slabs", _slabs);
 	xmlconfig.getNodeValue("smooth", _smooth);
 	xmlconfig.getNodeValue("frequency", frequency);
+
+	std::string strVal;
+	_region.refPosID[0] = 0; _region.refPosID[1] = 0;
+	
+	if (xmlconfig.getNodeValue("region/left", _region.refPos[0]) && xmlconfig.getNodeValue("region/right", strVal)) {
+		// accept "box" as input
+		_region.refPos[1] = (strVal == "box") ? _domain->getGlobalLength(1) : atof(strVal.c_str() );
+		_region.actPos[0] = _region.refPos[0];
+		_region.actPos[1] = _region.refPos[1];
+		// read reference coords IDs
+		xmlconfig.getNodeValue("region/left@refcoordsID", _region.refPosID[0] );
+		xmlconfig.getNodeValue("region/right@refcoordsID", _region.refPosID[1] );
+	} else {
+		_region.refPos[0] = _region.actPos[0] = 0.0;
+		_region.refPos[1] = _region.actPos[1] = _domain->getGlobalLength(1);
+	}
+	
 	global_log->info() << "Long Range Correction: using " << _slabs << " slabs for profiles to calculate LRC." << endl;
 	global_log->info() << "Long Range Correction: sampling profiles every " << frequency << "th simstep." << endl;
 	global_log->info() << "Long Range Correction: profiles are smoothed (averaged over time): " << std::boolalpha << _smooth << endl;
+	global_log->info() << "Long Range Correction: corrections are applied to particles within yRef = " << _region.refPos[0] << " (refID: " << _region.refPosID[0] << ") and " << _region.refPos[1] << " (refID: " << _region.refPosID[1] << ")" << endl;
 
 	// write control
 	bool bRet1 = xmlconfig.getNodeValue("writecontrol/start", _nStartWritingProfiles);
@@ -182,12 +213,10 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 		global_log->error() << "Long Range Correction: Write control parameters not valid! Programm exit ..." << endl;
 		Simulation::exit(-1);
 	}
-
-	// init
-	this->init();
 }
 
-void Planar::calculateLongRange(){
+void Planar::calculateLongRange() {
+
 	if (_smooth){
 		const double delta_inv = 1.0 / delta;
 		const double slabsPerV = _slabs / V;
@@ -378,10 +407,18 @@ void Planar::calculateLongRange(){
 	double Upot_c=0.0;
 	double Virial_c=0.0; // Correction used for the Pressure Calculation
 
+#ifndef NDEBUG
+	std::cout << "Long Range Correction: Using region boundaries: " << _region.actPos[0] << " and " << _region.actPos[1] << std::endl;
+#endif
+
 	#if defined(_OPENMP)
 	#pragma omp parallel reduction(+:Upot_c, Virial_c)
 	#endif
 	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
+
+		if (tempMol->r(1) < _region.actPos[0] || tempMol->r(1) > _region.actPos[1]) {
+			continue;
+		}
 
 		unsigned cid = tempMol->componentid();
 
@@ -1170,4 +1207,48 @@ void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsig
 	ofstream fileout(filenamestream.str().c_str(), ios::out);
 	fileout << outputstream.str();
 	fileout.close();
+}
+
+SubjectBase* Planar::getSubject() {
+	SubjectBase* subject = nullptr;
+	std::list<PluginBase*>& plugins = *(global_simulation->getPluginList() );
+	for (auto&& pit:plugins) {
+		std::string name = pit->getPluginName();
+		if(name == "DistControl") {
+			subject = dynamic_cast<SubjectBase*>(pit);
+		}
+	}
+	return subject;
+}
+
+void Planar::update(SubjectBase* subject) {
+	auto* distControl = dynamic_cast<DistControl*>(subject);
+	double dMidpointLeft, dMidpointRight, origin;
+	dMidpointLeft = dMidpointRight = 0.;
+	if(nullptr != distControl) {
+		dMidpointLeft = distControl->GetInterfaceMidLeft();
+		dMidpointRight = distControl->GetInterfaceMidRight();
+#ifndef NDEBUG
+		std::cout << "Long Range Correction: Received value for left interface position:  " << dMidpointLeft << std::endl;
+		std::cout << "Long Range Correction: Received value for right interface position: " << dMidpointRight << std::endl;
+#endif
+	}
+
+	for (unsigned short i=0; i<2; i++) {
+
+		switch(_region.refPosID[i]) {
+		case 0:
+			origin = 0.;
+			break;
+		case 1:
+			origin = dMidpointLeft;
+			break;
+		case 2:
+			origin = dMidpointRight;
+			break;
+		default:
+			origin = 0.;
+		}
+		_region.actPos[i] = origin + _region.refPos[i];
+	}
 }
