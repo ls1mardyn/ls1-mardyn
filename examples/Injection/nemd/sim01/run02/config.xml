@@ -278,7 +278,7 @@
 				<writefreq>10000</writefreq>
 				<numvals>10</numvals>
 				<feed>
-					<init>0.003</init>
+					<init>0.000</init>
 					<direction>1</direction>
 					<method>4</method>
 					<targetID>1</targetID>
