@@ -95,13 +95,12 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
 };
 
 void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) {
-
 	Timer inputTimer;
 	inputTimer.start();
 
     std::vector<double> rx ,ry, rz, vx, vy, vz, qw, qx, qy, qz, Lx, Ly, Lz;
 	std::vector<uint64_t> mol_id, comp_id;
-    double simtime;
+    double simtime = 0.0;
     uint64_t buffer = 1000;
 #ifdef ENABLE_MPI
     MPI_Datatype mpi_Particle;
@@ -223,37 +222,70 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
                         global_log->error() << "[Adios2Reader] Molecule ids should be uint64_t (for now)." << std::endl;
                     }
                 }
-            }
-            if (var.first == "simulationtime") {
-                if (var.second["Type"] == "double") {
-                    doTheRead(var.first, simtime);
-                } else {
-                    global_log->error() << "[Adios2Reader] Simulation time should be double (for now)." << std::endl;
-                }
-            }
+	            if (var.first == "simulationtime") {
+	                if (var.second["Type"] == "double") {
+	                    doTheRead(var.first, simtime);
+	                } else {
+	                    global_log->error() << "[Adios2Reader] Simulation time should be double (for now)." << std::endl;
+	                }
+	            }
+			}
         }
+
         engine->PerformGets();
 
     	std::vector<Component> dcomponents;
-    	if (_simulation.getEnsemble() == NULL) {
-    		dcomponents = *(_simulation.getEnsemble()->getComponents());
+    	if (_simulation.getEnsemble()->getComponents()->empty()) {
+            auto attributes = io->AvailableAttributes();
+    		auto comp_id_copy = comp_id;
+			std::sort(comp_id_copy.begin(), comp_id_copy.end());
+			auto u_iter = std::unique(comp_id_copy.begin(), comp_id_copy.end());
+			comp_id_copy.resize(std::distance(comp_id_copy.begin(), u_iter));
+			dcomponents.resize(comp_id_copy.size());
+    		
+    		for (auto comp : comp_id_copy) {
+				std::string name = "component_" + std::to_string(comp);
+				auto centers_var = io->InquireAttribute<double>(name + "_centers");
+    			auto centers = centers_var.Data();
+
+				auto sigma_var = io->InquireAttribute<double>(name + "_sigma");
+				auto sigma = sigma_var.Data();
+
+				auto mass_var = io->InquireAttribute<double>(name + "_mass");
+				auto mass = mass_var.Data();
+
+				auto eps_var = io->InquireAttribute<double>(name + "_epsilon");
+				auto eps = eps_var.Data();
+
+				auto cname_var = io->InquireAttribute<std::string>(name + "_name");
+				auto cname = cname_var.Data();
+
+    			dcomponents[comp].addLJcenter(centers[0], centers[0], centers[0], mass[0], eps[0], sigma[0]);
+				dcomponents[comp].setName(cname[0]);
+    		}
     	} else {
-			dcomponents.resize(1);
+			dcomponents = *(_simulation.getEnsemble()->getComponents());
     	}
+
+
 #ifdef ENABLE_MPI
         std::vector<ParticleData> particle_buff(buffer);
         if(domainDecomp->getRank() == 0) {
             for (int i = 0; i < buffer; i++) {
+
                     Molecule m1 = Molecule(mol_id[i], &dcomponents[comp_id[i]], rx[i], ry[i], rz[i], vx[i],
                                             vy[i], vz[i], qw[i], qx[i], qy[i], qz[i], Lx[i], Ly[i], Lz[i]);
                     ParticleData::MoleculeToParticleData(particle_buff[i], m1);
             }
         }
         MPI_Bcast(particle_buff.data(), buffer, mpi_Particle, 0, MPI_COMM_WORLD);
-
+    	auto asd = 0;
         for (int j = 0; j < buffer; j++) {
-            Molecule m;
-            ParticleData::ParticleDataToMolecule(particle_buff[j], m);
+			Molecule m = Molecule(particle_buff[j].id, &dcomponents[particle_buff[j].cid], particle_buff[j].r[0], particle_buff[j].r[1],
+								particle_buff[j].r[2], particle_buff[j].v[0], particle_buff[j].v[1], particle_buff[j].v[2],
+								particle_buff[j].q[0], particle_buff[j].q[1], particle_buff[j].q[2], particle_buff[j].q[3],
+								particle_buff[j].D[0], particle_buff[j].D[1], particle_buff[j].D[2]);
+            //ParticleData::ParticleDataToMolecule(particle_buff[j], m);
             // only add particle if it is inside of the own domain!
             if(particleContainer->isInBoundingBox(m.r_arr().data())) {
                 particleContainer->addParticle(m, true, false);
@@ -307,7 +339,6 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 
     _simulation.setSimulationTime(simtime);
     global_log->info() << "[Adios2Reader] simulation time is: " << simtime << std::endl;
-
 };
 
 void Adios2Reader::initAdios2() {
@@ -320,13 +351,13 @@ void Adios2Reader::initAdios2() {
 #else
 		inst = std::make_shared<adios2::ADIOS>();
 #endif
-        io = std::make_shared<adios2::IO>(inst->DeclareIO("Input"));
+		io = std::make_shared<adios2::IO>(inst->DeclareIO("Input"));
 
         io->SetEngine(_adios2enginetype);
 
         if (!engine) {
-            global_log->info() << "[Adios2Reader]: Opening File for writing." << _inputfile.c_str() << std::endl;
-            engine = std::make_shared<adios2::Engine>(io->Open(_inputfile, adios2::Mode::Read));
+            global_log->info() << "[Adios2Reader]: Opening File for reading." << _inputfile.c_str() << std::endl;
+			engine = std::make_shared<adios2::Engine>(io->Open(_inputfile, adios2::Mode::Read));
         }
   }
     catch (std::invalid_argument& e) {

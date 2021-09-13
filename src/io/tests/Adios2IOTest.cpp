@@ -180,11 +180,20 @@ void Adios2IOTest::testReadCheckpoint() {
 }
 
 
-
-
 /*
  * Actual test if a written data is equal to read data.
  */
 void Adios2IOTest::checkInput() {
-	
+
+	//int i = 0;
+	//for (auto it = _inputPatricleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
+	//	for (int j = 0; j < 3; ++j) {
+	//		ASSERT_EQUAL(it->r(j), _positions[i][j]);
+	//		ASSERT_EQUAL(it->D(j), _Ds[i][j]);
+	//		ASSERT_EQUAL(it->v(j), _velocities[i][j]);
+	//		ASSERT_EQUAL(it->getID(), _ids[i]);
+	//	}
+	//	++i;
+	//}
+
 }

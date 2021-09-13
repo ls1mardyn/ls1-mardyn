@@ -35,7 +35,7 @@ public:
 	virtual ~Adios2IOTest() = default;
 
 	void initParticles();
-
+	
 	void testWriteCheckpoint();
 
 	void testReadCheckpoint();
