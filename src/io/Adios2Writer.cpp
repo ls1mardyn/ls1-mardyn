@@ -55,7 +55,8 @@ void Adios2Writer::readXML(XMLfileUnits& xmlconfig) {
 	if (!_inst) initAdios2();
 }
 
-void Adios2Writer::testInit(std::string outfile, std::string adios2enginetype, unsigned long writefrequency) {
+void Adios2Writer::testInit(std::vector<Component>& comps, std::string outfile, std::string adios2enginetype,
+							unsigned long writefrequency) {
 	using std::endl;
 	_outputfile = outfile;
 	global_log->info() << "[Adios2Writer] Outputfile: " << _outputfile << endl;
@@ -63,7 +64,8 @@ void Adios2Writer::testInit(std::string outfile, std::string adios2enginetype, u
 	global_log->info() << "[Adios2Writer] Adios2 engine type: " << _adios2enginetype << endl;
 	_writefrequency = writefrequency;
 	global_log->info() << "[Adios2Writer] write frequency: " << _writefrequency << endl;
-
+	_comps = comps;
+	
 	if (!_inst) initAdios2();
 }
 
@@ -90,8 +92,13 @@ void Adios2Writer::initAdios2() {
 		_io->DefineAttribute<int>("num_processes", domainDecomp.getNumProcs());
 
 		/* Include number of components and component definitions */
-		_io->DefineAttribute<int>("num_components", _simulation.getEnsemble()->getComponents()->size());
-		auto const components = _simulation.getEnsemble()->getComponents();
+		std::vector<Component>* components;
+		if (_comps.empty()) {
+			_io->DefineAttribute<int>("num_components", _simulation.getEnsemble()->getComponents()->size());
+			components = _simulation.getEnsemble()->getComponents();
+		} else {
+			components = &_comps;
+		}
 		for (auto& component : *components) {
 			// only write lj components (for now)
 			if (!component.ljcenters().empty()) {

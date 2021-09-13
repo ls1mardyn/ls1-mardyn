@@ -41,6 +41,20 @@ void Adios2Reader::readXML(XMLfileUnits& xmlconfig) {
 	if (!inst) initAdios2();
 };
 
+void Adios2Reader::testInit(std::string infile, int step, std::string adios2enginetype, std::string mode) {
+	using std::endl;
+	_inputfile = infile;
+	global_log->info() << "[Adios2Reader] Inputfile: " << _inputfile << endl;
+	_adios2enginetype = adios2enginetype;
+	global_log->info() << "[Adios2Reader] Adios2 engine type: " << _adios2enginetype << endl;
+	_step = step;
+	global_log->info() << "[Adios2Reader] step to load from input file: " << _step << endl;
+	_mode = mode;
+	global_log->info() << "[Adios2Reader] Input mode: " << _mode << endl;
+	
+	if (!inst) initAdios2();
+}
+
 void Adios2Reader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 //EMPTY
 };
@@ -220,7 +234,12 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
         }
         engine->PerformGets();
 
-    	auto& dcomponents = *(_simulation.getEnsemble()->getComponents());
+    	std::vector<Component> dcomponents;
+    	if (_simulation.getEnsemble() == NULL) {
+    		dcomponents = *(_simulation.getEnsemble()->getComponents());
+    	} else {
+			dcomponents.resize(1);
+    	}
 #ifdef ENABLE_MPI
         std::vector<ParticleData> particle_buff(buffer);
         if(domainDecomp->getRank() == 0) {

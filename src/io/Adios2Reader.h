@@ -52,6 +52,8 @@ public:
 	*/
 	void readXML(XMLfileUnits& xmlconfig);
 
+	void testInit(std::string infile = "mardyn.bp", int step = 0, std::string adios2enginetype = "BP4", std::string mode = "rootOnly");
+
 	void readPhaseSpaceHeader(Domain* domain, double timestep);
 
     std::string getPluginName() {

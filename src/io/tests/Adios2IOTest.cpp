@@ -15,14 +15,19 @@
 #include <iostream>
 #include <random>
 #include <filesystem>
+#include <numeric>
 
 #include "io/tests/Adios2IOTest.h"
 #include "io/Adios2Writer.h"
 #include "io/Adios2Reader.h"
 
-using namespace std;
+#ifdef ENABLE_MPI
+#include "parallel/DomainDecomposition.h"
+#endif
 
 #define NUM_PARTICLES 5
+
+
 
 #if !defined(ENABLE_REDUCED_MEMORY_MODE)
 TEST_SUITE_REGISTRATION(Adios2IOTest);
@@ -60,7 +65,9 @@ void Adios2IOTest::initParticles() {
     }
 
 	// init component
-	_comp.addLJcenter(0,0,0,1,1,1);
+	_comp.resize(1);
+	_comp[0].setName("1CLJ");
+	_comp[0].addLJcenter(0,0,0,1,1,1);
 
 	// init velocities
 	std::uniform_real_distribution<double> dist_v(-1, 1);
@@ -93,15 +100,12 @@ void Adios2IOTest::initParticles() {
 void Adios2IOTest::testWriteCheckpoint() {
 	initParticles();
 
-	constexpr double cutoff = 10.5;
-	std::string filename = "adios2restart.bp";
+	auto particleContainer = std::make_shared<LinkedCells>(_box_lower.data(), _box_upper.data(), _cutoff);
 
-	auto particleContainer = std::make_shared<LinkedCells>(_box_lower.data(), _box_upper.data(),cutoff);
-
-	std::vector<Molecule> particles;
+	std::vector<Molecule> particles(NUM_PARTICLES);
 	for (int i = 0; i < particles.size(); ++i) {
 		particles[i].setid(_ids[i]);
-		particles[i].setComponent(&_comp);
+		particles[i].setComponent(&_comp[0]);
 		particles[i].setr(0,_positions[i][0]);
 		particles[i].setr(1,_positions[i][1]);
 		particles[i].setr(2,_positions[i][2]);
@@ -113,29 +117,38 @@ void Adios2IOTest::testWriteCheckpoint() {
 		particles[i].setD(0,_Ds[i][0]);
 		particles[i].setD(1,_Ds[i][1]);
 		particles[i].setD(2,_Ds[i][2]);
-
 	}
 	particleContainer->addParticles(particles);
 
+	
 	auto adios2writer = std::make_shared<Adios2Writer>();
 	adios2writer->init(nullptr, nullptr, nullptr);
-	adios2writer->testInit(filename);
+	adios2writer->testInit(_comp ,_filename);
 	int ownrank = 0;
 	std::shared_ptr<DomainDecompBase> domaindecomp;
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
-	global_log->info() << "Creating standard domain decomposition ... " << endl;
+	global_log->info() << "[Adios2IOTest] Creating standard domain decomposition ... " << endl;
 	domaindecomp = std::make_shared<DomainDecomposition>();
 #else
-	global_log->info() << "Creating alibi domain decomposition ... " << endl;
+	global_log->info() << "[Adios2IOTest] Creating alibi domain decomposition ... " << endl;
 	domaindecomp = std::make_shared<DomainDecompBase>();
 #endif
 
+	global_log->info() << "[Adios2IOTest] ParticleContainer num particles:"
+					   << particleContainer->getNumberOfParticles() << std::endl;
+	
+	ASSERT_EQUAL(static_cast<unsigned long>(NUM_PARTICLES), particleContainer->getNumberOfParticles());
 	
 	auto domain = std::make_shared<Domain>(ownrank);
+	domain->setGlobalLength(0, _box_upper[0]);
+	domain->setGlobalLength(1, _box_upper[1]);
+	domain->setGlobalLength(2, _box_upper[2]);
+	domain->updateglobalNumMolecules(particleContainer.get(), domaindecomp.get());
 	adios2writer->endStep(particleContainer.get(), domaindecomp.get(), domain.get(), 0);
-
-	ASSERT_EQUAL(true, std::filesystem::is_directory(filename));
+	adios2writer->finish(particleContainer.get(), domaindecomp.get(), domain.get());
+	
+	ASSERT_EQUAL(true, std::filesystem::is_directory(_filename));
 }
 
 
@@ -143,11 +156,35 @@ void Adios2IOTest::testWriteCheckpoint() {
  * Actual test if a written checkpoint can successfully be read again.
  */
 void Adios2IOTest::testReadCheckpoint() {
+	initParticles();
+	
+	_inputPatricleContainer =
+		std::make_shared<LinkedCells>(_box_lower.data(), _box_upper.data(), _cutoff);
+	_inputDomain = std::make_shared<Domain>(0);
+	_inputDomain->setGlobalLength(0, _box_upper[0]);
+	_inputDomain->setGlobalLength(1, _box_upper[1]);
+	_inputDomain->setGlobalLength(2, _box_upper[2]);
+	_inputDomainDecomp = std::make_shared<DomainDecompBase>();
 
+	auto adios2read = std::make_shared<Adios2Reader>();
+	adios2read->testInit(_filename);
+	unsigned long pcount = 0;
+	try {
+		pcount =
+			adios2read->readPhaseSpace(_inputPatricleContainer.get(), _inputDomain.get(), _inputDomainDecomp.get());
+	} catch (const std::exception& e) {
+		global_log->error() << "[Adios2IOTest] exception: " << e.what() << std::endl;
+	}
+	
+	ASSERT_EQUAL(static_cast<unsigned long>(NUM_PARTICLES), pcount);
 }
 
+
+
+
 /*
- * A
+ * Actual test if a written data is equal to read data.
  */
 void Adios2IOTest::checkInput() {
+	
 }

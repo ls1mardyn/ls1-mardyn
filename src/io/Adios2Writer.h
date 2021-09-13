@@ -9,6 +9,7 @@
 #ifdef ENABLE_ADIOS2
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "plugins/PluginBase.h"
+#include "molecules/Component.h"
 
 #include <map>
 #include <memory>
@@ -42,7 +43,7 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 
-	void testInit(std::string outfile = "mardyn.bp", std::string adios2enginetype = "BP4",
+	void testInit(std::vector<Component>& comps, std::string outfile = "mardyn.bp", std::string adios2enginetype = "BP4",
 				  unsigned long writefrequency = 50000);
 
 	void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
@@ -65,6 +66,7 @@ protected:
 	//
 private:
 	void initAdios2();
+	std::vector<Component> _comps;
 	// output filename, from XML
 	std::string _outputfile;
 	std::string _adios2enginetype;

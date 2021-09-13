@@ -51,5 +51,13 @@ private:
 	std::array<double,3> _box_lower;
 	std::array<double,3> _box_upper;
 
-	Component _comp;
+	std::vector<Component> _comp;
+
+	std::shared_ptr<ParticleContainer> _inputPatricleContainer;
+	std::shared_ptr<DomainDecompBase> _inputDomainDecomp;
+	std::shared_ptr<Domain> _inputDomain;
+
+	double _cutoff = 2.5;
+	std::string _filename = "adios2restart.bp";
+	
 };
