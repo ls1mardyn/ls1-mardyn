@@ -65,6 +65,9 @@ public:
 protected:
 	//
 private:
+	void resetContainers();
+	void clearContainers();
+	void defineVariables(int numProcs, int rank);
 	void initAdios2();
 	std::vector<Component> _comps;
 	// output filename, from XML

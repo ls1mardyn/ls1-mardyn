@@ -18,23 +18,78 @@
 
 using Log::global_log;
 
-void Adios2Writer::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+constexpr char const* mol_id_name = "molecule_id";
+constexpr char const* comp_id_name = "component_id";
+constexpr char const* rx_name = "rx";
+constexpr char const* ry_name = "ry";
+constexpr char const* rz_name = "rz";
+constexpr char const* vx_name = "vx";
+constexpr char const* vy_name = "vy";
+constexpr char const* vz_name = "vz";
+constexpr char const* qx_name = "qx";
+constexpr char const* qy_name = "qy";
+constexpr char const* qz_name = "qz";
+constexpr char const* qw_name = "qw";
+constexpr char const* Lx_name = "Lx";
+constexpr char const* Ly_name = "Ly";
+constexpr char const* Lz_name = "Lz";
+constexpr char const* gbox_name = "global_box";
+constexpr char const* lbox_name = "local_box";
+constexpr char const* offsets_name = "offsets";
+constexpr char const* simtime_name = "simulationtime";
+
+void Adios2Writer::resetContainers() {
 	// set variable name to write
-	_vars["molecule_id"] = std::vector<uint64_t>();
-	_vars["component_id"] = std::vector<uint64_t>();
-	_vars["rx"] = std::vector<double>();
-	_vars["ry"] = std::vector<double>();
-	_vars["rz"] = std::vector<double>();
-	_vars["vx"] = std::vector<double>();
-	_vars["vy"] = std::vector<double>();
-	_vars["vz"] = std::vector<double>();
-	_vars["qw"] = std::vector<double>();
-	_vars["qx"] = std::vector<double>();
-	_vars["qy"] = std::vector<double>();
-	_vars["qz"] = std::vector<double>();
-	_vars["Lx"] = std::vector<double>();
-	_vars["Ly"] = std::vector<double>();
-	_vars["Lz"] = std::vector<double>();
+	_vars[mol_id_name] = std::vector<uint64_t>();
+	_vars[comp_id_name] = std::vector<uint64_t>();
+	_vars[ry_name] = std::vector<double>();
+	_vars[rx_name] = std::vector<double>();
+	_vars[rz_name] = std::vector<double>();
+	_vars[vx_name] = std::vector<double>();
+	_vars[vy_name] = std::vector<double>();
+	_vars[vz_name] = std::vector<double>();
+	_vars[qw_name] = std::vector<double>();
+	_vars[qx_name] = std::vector<double>();
+	_vars[qy_name] = std::vector<double>();
+	_vars[qz_name] = std::vector<double>();
+	_vars[Lx_name] = std::vector<double>();
+	_vars[Ly_name] = std::vector<double>();
+	_vars[Lz_name] = std::vector<double>();
+}
+
+void Adios2Writer::clearContainers() {
+	for (auto& [variableName, variableContainer] : _vars) {
+		if (std::holds_alternative<std::vector<double>>(variableContainer)) {
+			std::get<std::vector<double>>(variableContainer).clear();
+		} else {
+			std::get<std::vector<uint64_t>>(variableContainer).clear();
+		}
+	}
+}
+
+void Adios2Writer::defineVariables(int numProcs, int rank) {
+	for (auto& [variableName, variableContainer] : _vars) {
+		global_log->info() << "[Adios2Writer]: Defining Variable " << variableName << std::endl;
+
+		if (std::holds_alternative<std::vector<double>>(variableContainer)) {
+			_io->DefineVariable<double>(variableName, {1}, {0}, {1});
+		} else {
+			_io->DefineVariable<uint64_t>(variableName, {1}, {0}, {1});
+		}
+	}
+	global_log->info() << "[Adios2Writer]: Defining Variable " << gbox_name << std::endl;
+	_io->DefineVariable<double>(gbox_name, {6}, {0}, {6}, adios2::ConstantDims);
+	global_log->info() << "[Adios2Writer]: Defining Variable " << lbox_name << std::endl;
+	_io->DefineVariable<double>(lbox_name, {}, {}, {6}, adios2::ConstantDims);
+	global_log->info() << "[Adios2Writer]: Defining Variable " << offsets_name << std::endl;
+	_io->DefineVariable<uint64_t>(offsets_name, {static_cast<size_t>(numProcs)}, {static_cast<size_t>(rank)}, {1},
+								  adios2::ConstantDims);
+	global_log->info() << "[Adios2Writer]: Defining Variable " << simtime_name << std::endl;
+	_io->DefineVariable<double>(simtime_name);
+}
+
+void Adios2Writer::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+	resetContainers();
 }
 
 void Adios2Writer::readXML(XMLfileUnits& xmlconfig) {
@@ -133,7 +188,8 @@ void Adios2Writer::initAdios2() {
 				_io->DefineAttribute<std::string>(component_id + "_element_names", component_elements);
 			}
 		}
-
+		resetContainers();
+		defineVariables(domainDecomp.getNumProcs(), domainDecomp.getRank());
 	} catch (std::invalid_argument& e) {
 		global_log->fatal() << "Invalid argument exception, STOPPING PROGRAM from rank: " << e.what() << std::endl;
 		mardyn_exit(1);
@@ -180,22 +236,22 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 	comp_id.reserve(localNumParticles);
 
 	for (auto m = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
-		std::get<std::vector<uint64_t>>(_vars["molecule_id"]).emplace_back(m->getID());
-		std::get<std::vector<uint64_t>>(_vars["component_id"]).emplace_back(m->componentid());
-		std::get<std::vector<double>>(_vars["rx"]).emplace_back(m->r(0));
-		std::get<std::vector<double>>(_vars["ry"]).emplace_back(m->r(1));
-		std::get<std::vector<double>>(_vars["rz"]).emplace_back(m->r(2));
-		std::get<std::vector<double>>(_vars["vx"]).emplace_back(m->v(0));
-		std::get<std::vector<double>>(_vars["vy"]).emplace_back(m->v(1));
-		std::get<std::vector<double>>(_vars["vz"]).emplace_back(m->v(2));
+		std::get<std::vector<uint64_t>>(_vars[mol_id_name]).emplace_back(m->getID());
+		std::get<std::vector<uint64_t>>(_vars[comp_id_name]).emplace_back(m->componentid());
+		std::get<std::vector<double>>(_vars[rx_name]).emplace_back(m->r(0));
+		std::get<std::vector<double>>(_vars[ry_name]).emplace_back(m->r(1));
+		std::get<std::vector<double>>(_vars[rz_name]).emplace_back(m->r(2));
+		std::get<std::vector<double>>(_vars[vx_name]).emplace_back(m->v(0));
+		std::get<std::vector<double>>(_vars[vy_name]).emplace_back(m->v(1));
+		std::get<std::vector<double>>(_vars[vz_name]).emplace_back(m->v(2));
 		auto q = m->q();
-		std::get<std::vector<double>>(_vars["qw"]).emplace_back(q.qw());
-		std::get<std::vector<double>>(_vars["qx"]).emplace_back(q.qx());
-		std::get<std::vector<double>>(_vars["qy"]).emplace_back(q.qy());
-		std::get<std::vector<double>>(_vars["qz"]).emplace_back(q.qz());
-		std::get<std::vector<double>>(_vars["Lx"]).emplace_back(m->D(0));
-		std::get<std::vector<double>>(_vars["Ly"]).emplace_back(m->D(1));
-		std::get<std::vector<double>>(_vars["Lz"]).emplace_back(m->D(2));
+		std::get<std::vector<double>>(_vars[qw_name]).emplace_back(q.qw());
+		std::get<std::vector<double>>(_vars[qx_name]).emplace_back(q.qx());
+		std::get<std::vector<double>>(_vars[qy_name]).emplace_back(q.qy());
+		std::get<std::vector<double>>(_vars[qz_name]).emplace_back(q.qz());
+		std::get<std::vector<double>>(_vars[Lx_name]).emplace_back(m->D(0));
+		std::get<std::vector<double>>(_vars[Ly_name]).emplace_back(m->D(1));
+		std::get<std::vector<double>>(_vars[Lz_name]).emplace_back(m->D(2));
 
 		m_id.emplace_back(m->getID());
 		comp_id.emplace_back(m->componentid());
@@ -217,23 +273,21 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 	std::array<double, 6> local_box;
 	domainDecomp->getBoundingBoxMinMax(domain, &local_box[0], &local_box[3]);
 
-	global_log->info() << "[Adios2Writer]: Local Box: " << local_box[0] << " " << local_box[1] << " " << local_box[2]
+	global_log->debug() << "[Adios2Writer]: Local Box: " << local_box[0] << " " << local_box[1] << " " << local_box[2]
 					   << " " << local_box[3] << " " << local_box[4] << " " << local_box[5] << std::endl;
 	try {
 		_engine->BeginStep();
-		_io->RemoveAllVariables();
 		for (auto& [variableName, variableContainer] : _vars) {
-			global_log->info() << "[Adios2Writer]: Defining Variables " << variableName << std::endl;
-
 			if (std::holds_alternative<std::vector<double>>(variableContainer)) {
-				adios2::Variable<double> adios2Var = _io->DefineVariable<double>(
-					variableName, {globalNumParticles}, {offset}, {localNumParticles}, adios2::ConstantDims);
-
+				auto adios2Var = _io->InquireVariable<double>(variableName);
+				adios2Var.SetShape({globalNumParticles});
+				adios2Var.SetSelection(adios2::Box<adios2::Dims>({offset}, {localNumParticles}));
 				// ready for write; transfer data to adios2
 				_engine->Put<double>(adios2Var, std::get<std::vector<double>>(variableContainer).data());
 			} else {
-				adios2::Variable<uint64_t> adios2Var = _io->DefineVariable<uint64_t>(
-					variableName, {globalNumParticles}, {offset}, {localNumParticles}, adios2::ConstantDims);
+				auto adios2Var = _io->InquireVariable<uint64_t>(variableName);
+				adios2Var.SetShape({globalNumParticles});
+				adios2Var.SetSelection(adios2::Box<adios2::Dims>({offset}, {localNumParticles}));
 				// ready for write; transfer data to adios2
 				_engine->Put<uint64_t>(adios2Var, std::get<std::vector<uint64_t>>(variableContainer).data());
 			}
@@ -241,8 +295,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 		// global box
 		if (domainDecomp->getRank() == 0) {
-			adios2::Variable<double> adios2_global_box =
-				_io->DefineVariable<double>("global_box", {6}, {0}, {6}, adios2::ConstantDims);
+			auto adios2_global_box = _io->InquireVariable<double>(gbox_name);
 
 			global_log->debug() << "[Adios2Writer]: Putting Variables" << std::endl;
 			if (!adios2_global_box) {
@@ -253,7 +306,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		}
 
 		// local box
-		adios2::Variable<double> adios2_local_box = _io->DefineVariable<double>("local_box", {}, {}, {6});
+		auto adios2_local_box = _io->InquireVariable<double>(lbox_name);
 
 		if (!adios2_local_box) {
 			global_log->error() << "[Adios2Writer]: Could not create variable: local_box" << std::endl;
@@ -262,14 +315,13 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		_engine->Put<double>(adios2_local_box, local_box.data());
 
 		// offsets
-		adios2::Variable<uint64_t> adios2_offset = _io->DefineVariable<uint64_t>(
-			"offsets", {static_cast<size_t>(numProcs)}, {static_cast<size_t>(rank)}, {1}, adios2::ConstantDims);
+		auto adios2_offset = _io->InquireVariable<uint64_t>(offsets_name);
 		_engine->Put<uint64_t>(adios2_offset, offset);
 
 		// simulation time
 		double current_time = _simulation.getSimulationTime();
 		if (domainDecomp->getRank() == 0) {
-			adios2::Variable<double> adios2_simulationtime = _io->DefineVariable<double>("simulationtime");
+			auto adios2_simulationtime = _io->InquireVariable<double>(simtime_name);
 			if (!adios2_simulationtime) {
 				global_log->error() << "[Adios2Writer]: Could not create variable: simulationtime" << std::endl;
 				return;
@@ -279,6 +331,8 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 		// wait for completion of write
 		_engine->EndStep();
+
+		clearContainers();
 	} catch (std::invalid_argument& e) {
 		global_log->error() << "[ADIOS2] Invalid argument exception, STOPPING PROGRAM";
 		global_log->error() << e.what();
