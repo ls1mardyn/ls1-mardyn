@@ -12,8 +12,15 @@
 #define OBJECTS_H
 
 #include <memory>
+#include <cstdint>
 
 #include "utils/xmlfileUnits.h"
+
+enum ObjectAxis : uint8_t {
+	OBJ_AXIS_X = 0,
+	OBJ_AXIS_Y = 1,
+	OBJ_AXIS_Z = 2,
+};
 
 class Object {
 public:
@@ -135,6 +142,10 @@ private:
 	double _height;
 	double _centerBase[3];
 	double _radiusSquare;
+	struct CylinderDirection {
+		ObjectAxis axis;
+		uint8_t base1, base2, height;
+	} _direction;
 };
 
 /** Abstract class to unify two objects */

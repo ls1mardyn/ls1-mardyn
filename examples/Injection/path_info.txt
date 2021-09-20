@@ -1,0 +1,58 @@
+Injection/  
+│  
+├── comp --------------------------------------------- Component definitions  
+│   ├── components_4c.xml  
+│   ├── mixing_4c.xml  
+│   └── sphereparams_4c.xml  
+│
+├── liq ---------------------------------------------- Liquid phases  
+│   ├── sim01 ---------------------------------------- Small system  
+│   │   ├── run01 ------------------------------------ Create start configuration  
+│   │   │   ├── cfg_set_rho.json  
+│   │   │   ├── config.xml  
+│   │   │   ├── cp_binary-0.restart.header.rhol.xml  
+│   │   │   └── cp_binary-0.restart.rhol.dat  
+│   │   ├── run02 ------------------------------------ Equilibrate liquid phase, starting from checkpoint of run01  
+│   │   │   ├── config.xml  
+│   │   │   ├── cp_binary-1.restart.dat  
+│   │   │   └── cp_binary-1.restart.header.xml  
+│   │   ├── run03 ------------------------------------ Create cylinder liquid phase used as liquid particle reservoir  
+│   │   │   └── config.xml  
+│   │   └── run04 ------------------------------------ Create dummy reservoir for tube  
+│   │       └── config.xml  
+│   │
+│   └── sim02 ---------------------------------------- Big system  
+│       ├── run01 ------------------------------------ Create start configuration  
+│       │   ├── cfg_set_rho.json  
+│       │   ├── config.xml  
+│       │   ├── cp_binary-0.restart.header.rhol.xml  
+│       │   └── cp_binary-0.restart.rhol.dat  
+│       ├── run02 ------------------------------------ Equilibrate liquid phase, starting from checkpoint of run01  
+│       │   ├── config.xml  
+│       │   ├── cp_binary-1.restart.dat  
+│       │   └── cp_binary-1.restart.header.xml  
+│       ├── run03 ------------------------------------ Create cylinder liquid phase used as liquid particle reservoir  
+│       │   └── config.xml  
+│       └── run04 ------------------------------------ Create dummy reservoir for tube  
+│           └── config.xml  
+│
+├── nemd --------------------------------------------- Injection simulations  
+│   ├── sim01 ---------------------------------------- Small system  
+│   │   ├── run01 ------------------------------------ Create start configuration  
+│   │   │   └── config.xml  
+│   │   └── run02 ------------------------------------ Start simulation from checkpoint of run01  
+│   │       └── config.xml  
+│   │
+│   └── sim02 ---------------------------------------- Big system  
+│       ├── run01 ------------------------------------ Create start configuration  
+│       │   └── config.xml  
+│       └── run02 ------------------------------------ Start simulation from checkpoint of run01  
+│           └── config.xml  
+│
+├── png ---------------------------------------------- Snapshots by MegaMol  
+│   ├── nemd_sim01_run02_TS000025000.png  
+│   └── nemd_sim02_run02_TS000080000_ospray.png
+│
+├── path_info.txt ----------------------------------------- This file :)  
+
+20 directories, 28 files

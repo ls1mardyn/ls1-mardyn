@@ -1,0 +1,356 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+
+	<refunits type="SI" >
+		<length unit="nm">0.1</length>
+		<mass unit="u">1</mass>
+		<energy unit="K">1</energy>
+	</refunits>
+
+	<simulation type="MD" >
+		<options>
+			<option name="refreshIDs">1</option>
+		</options>
+		
+		<integrator type="Leapfrog" >
+			<!-- <timestep unit="reduced">0.00182367</timestep> -->
+			<timestep unit="reduced">0.00456</timestep> <!-- 5 fs -->
+		</integrator>
+
+		<run>
+			<currenttime>0.0</currenttime> 
+			<production>
+				<steps>1000000</steps>
+			</production>
+		</run>
+
+		<ensemble type="NVT">
+			<!-- Nparticles determined by the input file -->
+			<temperature unit="reduced" >0.80</temperature>
+			<domain type="box">
+				<lx>100</lx>
+				<ly>300</ly>
+				<lz>100</lz>
+			</domain>
+
+			<components>
+				<include query="/components/moleculetype" >../../../comp/components_4c.xml</include>
+				<include query="/mixing">../../../comp/mixing_4c.xml</include>
+			</components>
+
+			<phasespacepoint>
+				<file type="binary">
+					<header>../run01/cp_binary-0.restart.header.xml</header>
+					<data>../run01/cp_binary-0.restart.dat</data>
+				</file>
+			</phasespacepoint>
+		</ensemble>
+
+		<algorithm>
+
+			<parallelisation type="DomainDecomposition">
+				 <!-- structure handled by DomainDecompMPIBase -->
+				<MPIGridDims> <x>2</x> <y>4</y> <z>2</z> </MPIGridDims>
+			</parallelisation>
+<!--
+			<parallelisation type="KDDecomposition">
+				<CommunicationScheme>indirect</CommunicationScheme>
+				<updateFrequency>100000</updateFrequency>
+				<fullSearchThreshold>3</fullSearchThreshold>
+				<splitBiggestDimension>0</splitBiggestDimension>
+				<useVectorizationTuner>0</useVectorizationTuner>
+				<generateNewFiles>0</generateNewFiles>
+				<useExistingFiles>0</useExistingFiles>
+			</parallelisation>
+-->
+			<datastructure type="LinkedCells">
+				<cellsInCutoffRadius>1</cellsInCutoffRadius>
+			</datastructure>
+			<cutoffs type="CenterOfMass" >
+			<defaultCutoff unit="reduced" >2.5</defaultCutoff>
+				<radiusLJ unit="reduced" >2.5</radiusLJ>
+			</cutoffs>
+			<electrostatic type="ReactionField" >
+				<epsilon>1.0e+10</epsilon>
+			</electrostatic>
+			
+			<thermostats>
+				<thermostat type="TemperatureControl">
+					<control>
+						<start>0</start>
+						<frequency>1</frequency>
+						<stop>1000000000</stop>
+					</control>
+					<regions>
+						<region>
+							<coords>
+								<lcx>40.0</lcx> <lcy>0.0</lcy> <lcz>40.0</lcz>
+								<ucx>60.0</ucx> <ucy>20.0</ucy> <ucz>60.0</ucz>
+							</coords>
+							<target>
+								<temperature>0.8</temperature>
+								<component>2</component>
+							</target>
+							<settings>
+								<numslabs>20</numslabs>
+								<exponent>0.4</exponent>
+								<directions>xyz</directions>
+							</settings>
+							<writefreq>1000</writefreq>
+							<fileprefix>betalog</fileprefix>
+						</region>
+						<region>
+							<coords>
+								<lcx>40.0</lcx> <lcy>20.0</lcy> <lcz>40.0</lcz>
+								<ucx>60.0</ucx> <ucy>30.0</ucy> <ucz>60.0</ucz>
+							</coords>
+							<target>
+								<temperature>0.8</temperature>
+								<component>1</component>
+							</target>
+							<settings>
+								<numslabs>10</numslabs>
+								<exponent>0.4</exponent>
+								<directions>xz</directions>
+							</settings>
+							<writefreq>1000</writefreq>
+							<fileprefix>betalog</fileprefix>
+						</region>
+						 <region>
+							<coords>
+								<lcx>40.0</lcx> <lcy>40.0</lcy> <lcz>40.0</lcz>
+								<ucx>60.0</ucx> <ucy>50.0</ucy> <ucz>60.0</ucz>
+							</coords>
+							<target>
+								<temperature>1.6</temperature>
+								<component>1</component>
+							</target>
+							<settings>
+								<numslabs>10</numslabs>
+								<exponent>0.4</exponent>
+								<directions>xz</directions>
+							</settings>
+							<writefreq>1000</writefreq>
+							<fileprefix>betalog</fileprefix>
+						</region>
+						<region>
+							<coords>
+								<lcx>0.0</lcx> <lcy>0.0</lcy> <lcz>0.0</lcz>
+								<ucx>box</ucx> <ucy>box</ucy> <ucz>box</ucz>
+							</coords>
+							<target>
+								<temperature>0.5</temperature>
+								<component>3</component>
+							</target>
+							<settings>
+								<numslabs>10</numslabs>
+								<exponent>0.4</exponent>
+								<directions>xyz</directions>
+							</settings>
+							<writefreq>1000</writefreq>
+							<fileprefix>betalog</fileprefix>
+						</region>
+						<region>
+							<coords>
+								<lcx>0.0</lcx> <lcy>0.0</lcy> <lcz>0.0</lcz>
+								<ucx>box</ucx> <ucy>box</ucy> <ucz>box</ucz>
+							</coords>
+							<target>
+								<temperature>0.5</temperature>
+								<component>4</component>
+							</target>
+							<settings>
+								<numslabs>10</numslabs>
+								<exponent>0.4</exponent>
+								<directions>xyz</directions>
+							</settings>
+							<writefreq>1000</writefreq>
+							<fileprefix>betalog</fileprefix>
+						</region>
+					</regions>
+				</thermostat>
+			</thermostats>
+		</algorithm>
+
+		<output>
+			<outputplugin name="CheckpointWriter">
+				<type>binary</type>
+				<writefrequency>10000</writefrequency>
+				<outputprefix>cp_binary</outputprefix>
+			</outputplugin>
+
+			<outputplugin name="MmpldWriter" type="simple" ctype="0">  <!-- type=simple|multi ctype=0:NONE|1:UINT8_RGB|2:UINT8_RGBA|3:FLOAT_I|4:FLOAT_RGB|5:FLOAT_RGBA -->
+				<include query="/spheres" >../../../comp/sphereparams_4c.xml</include>
+				<writecontrol>
+					<start>0</start>
+					<writefrequency>50</writefrequency>
+					<stop>1000000</stop>
+					<framesperfile>0</framesperfile>
+				</writecontrol>
+				<outputprefix>megamol</outputprefix>  
+			</outputplugin>
+		</output>
+
+		<plugin name="MaxCheck">
+			<control>
+				<start>0</start>
+				<frequency>1</frequency>
+				<stop>1000000000</stop>
+			</control>
+			<yrange> <min>20</min> <max>40</max> </yrange>
+			<targets>
+				<target cid="1" method="1">
+					<Fmax>800</Fmax>
+					<vmax>8.</vmax>
+				</target>
+				<target cid="2" method="1">
+					<Fmax>800</Fmax>
+					<vmax>8.</vmax>
+				</target>
+			</targets>
+		</plugin>
+
+		<plugin name="MaxCheck">
+			<control>
+				<start>0</start>
+				<frequency>1</frequency>
+				<stop>1000000000</stop>
+			</control>
+			<yrange> <min>40</min> <max>300</max> </yrange>
+			<targets>
+				<target cid="1" method="3">
+					<Fmax>1000</Fmax>
+					<vmax>10.</vmax>
+				</target>
+			</targets>
+		</plugin>
+
+		<plugin name="MaxCheck">
+			<control>
+				<start>0</start>
+				<frequency>1</frequency>
+				<stop>1000000000</stop>
+			</control>
+			<yrange> <min>0</min> <max>20</max> </yrange>
+			<targets>
+				<target cid="1" method="3">
+					<Fmax>1e-6</Fmax>
+					<vmax>1e-6</vmax>
+				</target>
+			</targets>
+		</plugin>
+
+		<plugin name="MaxCheck">
+			<control>
+				<start>0</start>
+				<frequency>1</frequency>
+				<stop>1000000000</stop>
+			</control>
+			<yrange> <min>0</min> <max>20</max> </yrange>
+			<targets>
+				<target cid="2" method="1">
+					<Fmax>300</Fmax>
+					<vmax>3.0</vmax>
+				</target>
+			</targets>
+		</plugin>
+
+		<plugin name="MaxCheck">
+			<control>
+				<start>0</start>
+				<frequency>1</frequency>
+				<stop>1000000000</stop>
+			</control>
+			<yrange> <min>0</min> <max>60</max> </yrange>
+			<targets>
+				<target cid="4" method="1">
+					<Fmax>300</Fmax>
+					<vmax>3.0</vmax>
+				</target>
+			</targets>
+		</plugin>
+
+		<plugin name="MettDeamon">
+			<control>
+				<updatefreq>100</updatefreq>
+				<logfreqfeed>100</logfreqfeed>
+				<logfreqreleased>100</logfreqreleased>
+				<writefreq>10000</writefreq>
+				<numvals>10</numvals>
+				<feed>
+					<init>0.000</init>
+					<direction>1</direction>
+					<method>4</method>
+					<targetID>1</targetID>
+					<target>0.0</target>
+					<release_velo>
+						<method>2</method>
+						<fix_value>1.0</fix_value>
+					</release_velo>
+				</feed>
+				<z2method>1</z2method>
+				<manipfree> <ymin>60</ymin> <ymax>300</ymax> </manipfree>
+			</control>
+			<reservoir>
+				<file type="binary">
+					<header>../../../liq/sim01/run04/cp_binary-0.restart.header.xml</header>
+					<data>../../../liq/sim01/run04/cp_binary-0.restart.dat</data>
+				</file>
+				<binwidth>30</binwidth>
+			</reservoir>
+			<changes>
+				<change> <from>3</from> <to>4</to> </change>
+			</changes>
+			<diameter>1.0</diameter>
+		</plugin>
+
+		<plugin name="MettDeamon">
+			<control>
+				<updatefreq>100</updatefreq>
+				<logfreqfeed>100</logfreqfeed>
+				<logfreqreleased>100</logfreqreleased>
+				<writefreq>10000</writefreq>
+				<numvals>10</numvals>
+				<feed>
+					<init>0.003</init>
+					<direction>1</direction>
+					<method>4</method>
+					<targetID>1</targetID>
+					<target>0.005</target>
+<!--					<target>0.0012952529807050961</target> -->
+					<release_velo>
+						<method>2</method>
+						<fix_value>1.0</fix_value>
+					</release_velo>
+				</feed>
+				<z2method>1</z2method>
+				<manipfree> <ymin>60</ymin> <ymax>300</ymax> </manipfree>
+			</control>
+			<reservoir>
+				<file type="binary">
+					<header>../../../liq/sim01/run03/cp_binary-0.restart.header.xml</header>
+					<data>../../../liq/sim01/run03/cp_binary-0.restart.dat</data>
+				</file>
+				<binwidth>10</binwidth>
+			</reservoir>
+			<changes>
+					<change> <from>1</from> <to>2</to> </change>
+			</changes>
+		</plugin>
+
+		<plugin name="Mirror" type="5" dir="o-|">
+		<pluginID>101</pluginID>
+		<position>
+			<refID>0</refID>
+			<coord>290</coord>
+		</position>
+		<forceConstant>0.</forceConstant>
+		<meland>
+			<use_probability>1</use_probability>
+			<velo_target>100.</velo_target>
+		</meland>
+		</plugin>
+	
+	</simulation>
+
+</mardyn>
