@@ -245,7 +245,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	DomainDecompMPIBase::readXML(xmlconfig);
 
 #ifdef MARDYN_AUTOPAS
-	global_log->info() << "AutoPas only support FS, so setting it." << std::endl;
+	global_log->info() << "AutoPas only supports FS, so setting it." << std::endl;
 	setCommunicationScheme("direct-pp", "fs");
 #endif
 
