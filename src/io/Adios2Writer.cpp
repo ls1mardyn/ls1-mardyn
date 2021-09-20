@@ -67,16 +67,16 @@ void Adios2Writer::clearContainers() {
 	}
 }
 
-void Adios2Writer::defineVariables(int numProcs, int rank) {
+void Adios2Writer::defineVariables(uint64_t global, uint64_t offset, uint64_t local, int numProcs, int rank) {
 	for (auto& [variableName, variableContainer] : _vars) {
 		global_log->info() << "[Adios2Writer]: Defining Variable " << variableName << std::endl;
-
 		if (std::holds_alternative<std::vector<double>>(variableContainer)) {
-			_io->DefineVariable<double>(variableName, {1}, {0}, {1});
+			_io->DefineVariable<double>(variableName, {global}, {offset}, {local}, adios2::ConstantDims);
 		} else {
-			_io->DefineVariable<uint64_t>(variableName, {1}, {0}, {1});
+			_io->DefineVariable<uint64_t>(variableName, {global}, {offset}, {local}, adios2::ConstantDims);
 		}
 	}
+
 	global_log->info() << "[Adios2Writer]: Defining Variable " << gbox_name << std::endl;
 	_io->DefineVariable<double>(gbox_name, {6}, {0}, {6}, adios2::ConstantDims);
 	global_log->info() << "[Adios2Writer]: Defining Variable " << lbox_name << std::endl;
@@ -189,7 +189,6 @@ void Adios2Writer::initAdios2() {
 			}
 		}
 		resetContainers();
-		defineVariables(domainDecomp.getNumProcs(), domainDecomp.getRank());
 	} catch (std::invalid_argument& e) {
 		global_log->fatal() << "Invalid argument exception, STOPPING PROGRAM from rank: " << e.what() << std::endl;
 		mardyn_exit(1);
@@ -224,8 +223,8 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 	if (simstep % _writefrequency != 0) return;
 
 	// for all outputs
-	size_t localNumParticles = particleContainer->getNumberOfParticles();
-	size_t const globalNumParticles = domain->getglobalNumMolecules();
+	uint64_t localNumParticles = particleContainer->getNumberOfParticles();
+	uint64_t globalNumParticles = domain->getglobalNumMolecules();
 	auto numProcs = domainDecomp->getNumProcs();
 	int const rank = domainDecomp->getRank();
 
@@ -235,6 +234,15 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 	std::vector<uint32_t> comp_id;
 	comp_id.reserve(localNumParticles);
 
+	for (auto& [variableName, variableContainer] : _vars) {
+		if (std::holds_alternative<std::vector<double>>(variableContainer)) {
+			std::get<std::vector<double>>(variableContainer).reserve(localNumParticles);
+		} else {
+			std::get<std::vector<uint64_t>>(variableContainer).reserve(localNumParticles);
+		}
+	}
+
+	uint64_t counter = 0;
 	for (auto m = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 		std::get<std::vector<uint64_t>>(_vars[mol_id_name]).emplace_back(m->getID());
 		std::get<std::vector<uint64_t>>(_vars[comp_id_name]).emplace_back(m->componentid());
@@ -255,7 +263,15 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 		m_id.emplace_back(m->getID());
 		comp_id.emplace_back(m->componentid());
+
+		++counter;
 	}
+
+	localNumParticles = counter;
+#ifdef ENABLE_MPI
+	MPI_Allreduce(&localNumParticles, &globalNumParticles, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+	global_log->info() << "[Adios2Writer]: local " << localNumParticles << " global " << globalNumParticles << std::endl;
+#endif
 
 	// gather offsets
 	global_log->debug() << "[Adios2Writer]: numProcs: " << numProcs << std::endl;
@@ -277,18 +293,14 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 					   << " " << local_box[3] << " " << local_box[4] << " " << local_box[5] << std::endl;
 	try {
 		_engine->BeginStep();
+		_io->RemoveAllVariables();
+		defineVariables(globalNumParticles, offset, localNumParticles, numProcs, rank);
 		for (auto& [variableName, variableContainer] : _vars) {
 			if (std::holds_alternative<std::vector<double>>(variableContainer)) {
 				auto adios2Var = _io->InquireVariable<double>(variableName);
-				adios2Var.SetShape({globalNumParticles});
-				adios2Var.SetSelection(adios2::Box<adios2::Dims>({offset}, {localNumParticles}));
-				// ready for write; transfer data to adios2
 				_engine->Put<double>(adios2Var, std::get<std::vector<double>>(variableContainer).data());
 			} else {
 				auto adios2Var = _io->InquireVariable<uint64_t>(variableName);
-				adios2Var.SetShape({globalNumParticles});
-				adios2Var.SetSelection(adios2::Box<adios2::Dims>({offset}, {localNumParticles}));
-				// ready for write; transfer data to adios2
 				_engine->Put<uint64_t>(adios2Var, std::get<std::vector<uint64_t>>(variableContainer).data());
 			}
 		}
