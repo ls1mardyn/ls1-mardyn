@@ -68,8 +68,8 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 		double cellLengthDummy[3]{};
 		global_log->info() << "DDBase: Populating halo." << std::endl;
 		auto haloExportRegions =
-			fs.getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(), moleculeContainer->getSkin(),
-											   coversWholeDomain, cellLengthDummy);
+			fs.getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(),
+																	coversWholeDomain, cellLengthDummy);
 		for (auto haloExportRegion : haloExportRegions) {
 			populateHaloLayerWithCopiesDirect(haloExportRegion, moleculeContainer,
 											  true /*positionCheck, same as doLeavingExchange*/);
@@ -297,7 +297,7 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 	// molecules that have crossed the higher boundary need a negative shift
 	// loop over -+1 for dim=0, -+2 for dim=1, -+3 for dim=2
 	const int sDim = dim+1;
-	double interactionLength = moleculeContainer->getInteractionLength();
+	double interactionLength = moleculeContainer->getCutoff();
 
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));

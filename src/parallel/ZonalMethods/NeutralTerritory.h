@@ -20,8 +20,7 @@ public:
 	~NeutralTerritory() override = default;
 
 	std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
-															double /*skin*/, bool coversWholeDomain[3],
-															double cellLength[3]) override {
+															bool coversWholeDomain[3], double cellLength[3]) override {
 		auto condition = [](const int d[3]) -> bool {
 			// Determines, whether the region is in the disk.
 			// Here, we cannot directly apply the stencil from the NT traversal, as for multiple cells also the
@@ -34,12 +33,11 @@ public:
 			// Return true, if region is in the tower or in the disk.
 			return inDisk || inTower;
 		};
-		return getHaloRegionsConditional(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
+		return getHaloRegionsConditional(initialRegion, cutoffRadius, coversWholeDomain, condition);
 	}
 
 	std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
-															double /*skin*/, bool coversWholeDomain[3],
-															double cellLength[3]) override {
+															bool coversWholeDomain[3], double cellLength[3]) override {
 		auto condition = [](const int d[3]) -> bool {
 			// Determines, whether the region is in the disk.
 			// Here, we cannot directly apply the stencil from the NT traversal, as for multiple cells also the
@@ -52,6 +50,6 @@ public:
 			// Return true, if region is in the tower or in the disk.
 			return inDisk || inTower;
 		};
-		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
+		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, coversWholeDomain, condition);
 	}
 };

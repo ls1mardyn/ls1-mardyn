@@ -63,8 +63,6 @@ public:
 
 	void update() override;
 
-	void forcedUpdate() override;
-
 	bool addParticle(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
 					 const bool &rebuildCaches = false) override;
 
@@ -93,8 +91,6 @@ public:
 	double get_halo_L(int index) const override;
 
 	double getCutoff() const override;
-
-	double getInteractionLength() const override;
 
 	double getSkin() const override;
 

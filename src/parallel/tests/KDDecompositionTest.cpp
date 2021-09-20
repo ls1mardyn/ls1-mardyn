@@ -237,7 +237,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 		}
 	}
 
-	container->forcedUpdate();
+	container->update();
 
 	for(auto iter = container->iterator(ParticleIterator::Type::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter){
 		bool found = false;

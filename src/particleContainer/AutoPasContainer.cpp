@@ -247,17 +247,6 @@ void AutoPasContainer::update() {
 	_invalidParticles = _autopasContainer.updateContainer();
 }
 
-void AutoPasContainer::forcedUpdate() {
-	// in case we update the container before handling the invalid particles, this might lead to lost particles.
-	if (not _invalidParticles.empty()) {
-		global_log->error() << "AutoPasContainer: trying to force update container, even though invalidParticles still "
-							   "exist. This would lead to lost particles => ERROR!"
-							<< std::endl;
-		Simulation::exit(435);
-	}
-	_invalidParticles = _autopasContainer.updateContainer();
-}
-
 bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
 								   const bool &rebuildCaches) {
 	if (particle.inBox(_boundingBoxMin, _boundingBoxMax)) {
@@ -437,8 +426,6 @@ void AutoPasContainer::deleteOuterParticles() {
 double AutoPasContainer::get_halo_L(int /*index*/) const { return _cutoff; }
 
 double AutoPasContainer::getCutoff() const { return _cutoff; }
-
-double AutoPasContainer::getInteractionLength() const { return _cutoff + _verletSkin; }
 
 double AutoPasContainer::getSkin() const { return _verletSkin; }
 

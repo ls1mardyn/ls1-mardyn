@@ -114,17 +114,12 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			global_log->info() << "rebalancing finished" << std::endl;
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 		} else {
-			if (not moleculeContainer->isInvalidParticleReturner() or moleculeContainer->hasInvalidParticles()) {
-				if (sendLeavingWithCopies()) {
-					DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
-				} else {
-					DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
-					moleculeContainer->deleteOuterParticles();
-					DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
-				}
+			if (sendLeavingWithCopies()) {
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
 			} else {
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES,
-														  false /*dohaloPositionCheck*/);
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+				moleculeContainer->deleteOuterParticles();
+				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 			}
 		}
 	}
@@ -164,7 +159,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 											 domain->getGlobalLength(2)};
 	// 0. skin, as it is not needed for the migration of particles!
 	std::tie(recvNeighbors, sendNeighbors) =
-		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownDomain, desiredDomain, 0. /*skin*/, _comm);
+		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownDomain, desiredDomain, _comm);
 
 	std::vector<Molecule> dummy;
 	for (auto& sender : sendNeighbors) {
