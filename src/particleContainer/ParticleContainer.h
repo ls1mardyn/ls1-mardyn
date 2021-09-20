@@ -264,8 +264,6 @@ public:
 
 	virtual bool isInvalidParticleReturner() { return false; }
 
-	virtual bool hasInvalidParticles() { return false; }
-
 	/**
 	 * Return a string representation of the algorithmic configuration of the container.
 	 * Only used for logging / output.

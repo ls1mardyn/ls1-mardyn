@@ -244,7 +244,7 @@ void AutoPasContainer::update() {
 		Simulation::exit(434);
 	}
 
-	std::tie(_invalidParticles, _hasInvalidParticles) = _autopasContainer.updateContainer();
+	_invalidParticles = _autopasContainer.updateContainer();
 }
 
 void AutoPasContainer::forcedUpdate() {
@@ -255,8 +255,7 @@ void AutoPasContainer::forcedUpdate() {
 							<< std::endl;
 		Simulation::exit(435);
 	}
-	_hasInvalidParticles = true;
-	std::tie(_invalidParticles, std::ignore) = _autopasContainer.updateContainer(true /*forced update*/);
+	_invalidParticles = _autopasContainer.updateContainer();
 }
 
 bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
@@ -264,14 +263,14 @@ bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready,
 	if (particle.inBox(_boundingBoxMin, _boundingBoxMax)) {
 		_autopasContainer.addParticle(particle);
 	} else {
-		_autopasContainer.addOrUpdateHaloParticle(particle);
+		_autopasContainer.addHaloParticle(particle);
 	}
 	return true;
 }
 
 bool AutoPasContainer::addHaloParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
 									   const bool &rebuildCaches) {
-	_autopasContainer.addOrUpdateHaloParticle(particle);
+	_autopasContainer.addHaloParticle(particle);
 	return true;
 }
 
@@ -427,11 +426,11 @@ void AutoPasContainer::clear() { _autopasContainer.deleteAllParticles(); }
 
 void AutoPasContainer::deleteOuterParticles() {
 	global_log->info() << "deleting outer particles by using forced update" << std::endl;
-	auto [invalidParticles, ignore] = _autopasContainer.updateContainer(true /*Force an update!*/);
+	auto invalidParticles = _autopasContainer.updateContainer();
 	if (not invalidParticles.empty()) {
 		throw std::runtime_error(
-			"AutoPasContainer: Invalid particles ignored in deleteOuterParticles, check that your rebalance rate is a "
-			"multiple of the rebuild rate!");
+			"AutoPasContainer: deleteOuterParticles(): Invalid particles are returned! Please ensure that you are "
+			"properly updating your container!");
 	}
 }
 

@@ -79,9 +79,6 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 	} else {
 		if (rebalance) {
-			if (moleculeContainer->isInvalidParticleReturner() and not moleculeContainer->hasInvalidParticles()) {
-				moleculeContainer->forcedUpdate();
-			}
 			// first transfer leaving particles
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
 

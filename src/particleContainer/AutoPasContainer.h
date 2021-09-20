@@ -127,11 +127,8 @@ public:
 	void setCutoff(double cutoff) override { _cutoff = cutoff; }
 
 	std::vector<Molecule> getInvalidParticles() override {
-		_hasInvalidParticles = false;
 		return std::move(_invalidParticles);
 	}
-
-	bool hasInvalidParticles() override { return _hasInvalidParticles; }
 
 	bool isInvalidParticleReturner() override { return true; }
 
@@ -178,7 +175,6 @@ private:
 	autopas::Logger::LogLevel _logLevel{autopas::Logger::LogLevel::info};
 
 	std::vector<Molecule> _invalidParticles;
-	bool _hasInvalidParticles{false};
 	bool _useAVXFunctor{true};
 
 	ParticlePropertiesLibrary<double, size_t> _particlePropertiesLibrary;

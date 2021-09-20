@@ -23,7 +23,7 @@ if (ENABLE_AUTOPAS)
     if (AUTOPAS_MANUAL_COMMIT)
         set(AUTOPAS_TAG ${AUTOPAS_MANUAL_COMMIT})
     else()
-        set(AUTOPAS_TAG 5c489e1630fb5091b23a40452133223cbf333aea)
+        set(AUTOPAS_TAG 510e7bb43fb0255cc5d64966f7d68754890e8940)
     endif()
 
     FetchContent_Declare(
