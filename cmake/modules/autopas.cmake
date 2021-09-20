@@ -20,10 +20,16 @@ if (ENABLE_AUTOPAS)
     set(spdlog_ForceBundled ON CACHE BOOL "" FORCE)
     set(Eigen3_ForceBundled ON CACHE BOOL "" FORCE)
 
+    if (AUTOPAS_MANUAL_COMMIT)
+        set(AUTOPAS_TAG ${AUTOPAS_MANUAL_COMMIT})
+    else()
+        set(AUTOPAS_TAG 5c489e1630fb5091b23a40452133223cbf333aea)
+    endif()
+
     FetchContent_Declare(
             autopasfetch
             GIT_REPOSITORY ${autopasRepoPath}
-            GIT_TAG cd228b34bb1dfd3aeae3d6d938fa90e5440ef991
+            GIT_TAG ${AUTOPAS_TAG}
     )
 
     # Get autopas source and binary directories from CMake project
