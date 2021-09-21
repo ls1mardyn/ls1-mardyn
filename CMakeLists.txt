@@ -69,3 +69,6 @@ ADD_SUBDIRECTORY(src)
 
 # add libraries
 ADD_SUBDIRECTORY(libs)
+
+# ARM SVE
+include(sve)
