@@ -151,7 +151,7 @@ pipeline {
                     sh """
                       cd ../examples/adios/CO2_Merker
                       rm -rf co2_merkers.bp
-                      ../../../src/MarDyn config.xml --steps=20 > adios2_run_log.txt
+                      ../../../build_adios/src/MarDyn config.xml --steps=20 > adios2_run_log.txt
                       [ -d "co2_merkers.bp" ] && echo "File written."
                     """
                   }
@@ -167,7 +167,7 @@ pipeline {
                     sh """
                       cd ../examples/adios/CO2_Merker
                       rm -rf co2_merkers.bp
-                      mpirun -n 4 ../../../src/MarDyn config.xml --steps=20 > adios2_run_log.txt
+                      mpirun -n 4 ../../../build_adios_mpi/src/MarDyn config.xml --steps=20 > adios2_run_log.txt
                       [ -d "co2_merkers.bp" ] && echo "File written."
                     """
                   }
