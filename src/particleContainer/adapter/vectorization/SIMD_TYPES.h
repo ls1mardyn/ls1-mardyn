@@ -58,6 +58,7 @@
 #define VCP_VEC_W_128 1
 #define VCP_VEC_W_256 2
 #define VCP_VEC_W_512 3
+#define VCP_VEC_W_SVE 4
 
 #if defined(__AVX2__) && not defined(__FMA__)  // fma should always be existent alongside avx2!!!
 	#error AVX2 enabled, but no FMA found. Please enable fma to use avx2.
@@ -179,8 +180,7 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	#ifndef SVE_VEC_WIDTH
 		#error VCP_VEC_TYPE is VCP_VEC_SVE, but SVE_VEC_WIDTH is not set!
 	#endif
-	// TODO: there are lots of problems with this!
-	#define VCP_VEC_WIDTH VCP_VEC_SVE
+	#define VCP_VEC_WIDTH VCP_VEC_W_SVE
 
 	// TODO! vcp_mask_single is probably wrong, could be bool?
 	typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, uint32_t, uint64_t>::type vcp_mask_single;
