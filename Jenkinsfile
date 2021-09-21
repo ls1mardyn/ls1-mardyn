@@ -88,25 +88,25 @@ pipeline {
         stage('build with ADIOS2 sequential') {
           steps {
             unstash 'repo'
-            dir ("build"){
+            dir ("build_adios"){
               sh """
                 cmake -DENABLE_ADIOS2=ON -DENABLE_UNIT_TESTS=1 ..
                 make -j4
               """
             }
-            stash includes: "build/src/MarDyn", name: "adios2_exec"
+            stash includes: "build_adios/src/MarDyn", name: "adios2_exec"
           }
         }
         stage('build with ADIOS2 MPI') {
           steps {
             unstash 'repo'
-            dir ("build-mpi"){
+            dir ("build_adios_mpi"){
               sh """
                 CC=mpicc CXX=mpicxx cmake -DENABLE_MPI=ON -DENABLE_ADIOS2=ON -DENABLE_UNIT_TESTS=1 ..
                 make -j4
               """
             }
-            stash includes: "build-mpi/src/MarDyn", name: "adios2_mpi_exec"
+            stash includes: "build_adios_mpi/src/MarDyn", name: "adios2_mpi_exec"
           }
         }
         stage('unit test with adios2') {
@@ -116,7 +116,7 @@ pipeline {
                 dir("seq"){
                   unstash 'repo'
                   unstash 'adios2_exec'
-                  dir ("build"){
+                  dir ("build_adios"){
                     sh """
                       ./src/MarDyn -t -d ../test_input/
                     """
@@ -129,7 +129,7 @@ pipeline {
                 dir("mpi"){
                   unstash 'repo'
                   unstash 'adios2_mpi_exec'
-                  dir ("build-mpi"){
+                  dir ("build_adios_mpi"){
                     sh """
                       mpirun -n 1 ./src/MarDyn -t -d ../test_input/
                       mpirun -n 4 ./src/MarDyn -t -d ../test_input/
@@ -147,9 +147,11 @@ pipeline {
                 dir('adios2test'){
                   unstash 'repo'
                   unstash 'adios2_exec'
-                  dir ("build"){
+                  dir ("build_adios"){
                     sh """
-                      ./src/MarDyn ../examples/adios/CO2_Merker/config.xml --steps=20 > adios2_run_log.txt
+                      cd ../examples/adios/CO2_Merker
+                      rm -rf co2_merkers.bp
+                      ../../../src/MarDyn config.xml --steps=20 > adios2_run_log.txt
                       [ -d "co2_merkers.bp" ] && echo "File written."
                     """
                   }
@@ -161,9 +163,11 @@ pipeline {
                 dir('adios2test'){
                   unstash 'repo'
                   unstash 'adios2_mpi_exec'
-                  dir ("build-mpi"){
+                  dir ("build_adios_mpi"){
                     sh """
-                      mpirun -n 4 ./src/MarDyn ../examples/adios/CO2_Merker/config.xml --steps=20 > adios2_run_log.txt
+                      cd ../examples/adios/CO2_Merker
+                      rm -rf co2_merkers.bp
+                      mpirun -n 4 ../../../src/MarDyn config.xml --steps=20 > adios2_run_log.txt
                       [ -d "co2_merkers.bp" ] && echo "File written."
                     """
                   }
