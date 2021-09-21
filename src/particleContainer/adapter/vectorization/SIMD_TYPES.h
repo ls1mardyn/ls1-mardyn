@@ -50,14 +50,16 @@
 #define VCP_VEC_KNL_GATHER 7
 #define VCP_VEC_AVX512F 8
 #define VCP_VEC_AVX512F_GATHER 9
+#define VCP_VEC_SVE 10
+#define VCP_VEC_SVE_GATHER 11
 
 #define VCP_VEC_W__64 0
 #define VCP_VEC_W_128 1
 #define VCP_VEC_W_256 2
 #define VCP_VEC_W_512 3
 
-#if defined(__AVX2__) && not defined(__FMA__)//fma should always be existent alongside avx2!!!
-	#warn AVX2 enabled, but no FMA found. Please enable fma to use avx2.
+#if defined(__AVX2__) && not defined(__FMA__)  // fma should always be existent alongside avx2!!!
+	#error AVX2 enabled, but no FMA found. Please enable fma to use avx2.
 #endif
 
 // define symbols for vectorization
@@ -81,6 +83,12 @@
 	#define VCP_VEC_TYPE VCP_VEC_SSE3
 #elif defined(__SSE3__)
 	#define VCP_VEC_TYPE VCP_VEC_SSE3
+#elif defined(__ARM_FEATURE_SVE)
+	#if defined(__VCP_GATHER__)
+		#define VCP_VEC_TYPE VCP_VEC_SVE_GATHER
+	#else
+		#define VCP_VEC_TYPE VCP_VEC_SVE
+	#endif
 #else
 	#define VCP_VEC_TYPE VCP_NOVEC
 #endif
@@ -96,6 +104,8 @@
 // Include necessary files if we vectorize.
 #if VCP_VEC_TYPE==VCP_NOVEC
 	// no file to include
+#elif VCP_VEC_TYPE==VCP_VEC_SVE
+	#include "arm_sve.h"
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	#include "pmmintrin.h"
 #else
@@ -164,7 +174,19 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 		typedef __m512i vcp_lookupOrMask_vec;
 		typedef countertype32 vcp_lookupOrMask_single;
 	#endif
+#elif VCP_VEC_TYPE==VCP_VEC_SVE
+	#ifndef SVE_VEC_WIDTH
+		#error VCP_VEC_TYPE is VCP_VEC_SVE, but SVE_VEC_WIDTH is not set!
+	#endif
+	// TODO: there are lots of problems with this!
+	#define VCP_VEC_WIDTH VCP_VEC_SVE
 
+	// TODO! vcp_mask_single is probably wrong, could be bool?
+	typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, uint32_t, uint64_t>::type vcp_mask_single;
+
+	typedef svbool_t vcp_mask_vec;
+	typedef vcp_mask_vec vcp_lookupOrMask_vec;
+	typedef vcp_mask_single vcp_lookupOrMask_single;
 #endif
 
 /*
