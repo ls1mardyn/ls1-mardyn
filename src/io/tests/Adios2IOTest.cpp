@@ -158,10 +158,17 @@ void Adios2IOTest::testWriteCheckpoint() {
  */
 void Adios2IOTest::testReadCheckpoint() {
 	initParticles();
+
+	int ownrank = 0;
+	int num_procs = 1;
+#ifdef ENABLE_MPI
+	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
+	MPI_CHECK(MPI_Comm_rank(MPI_COMM_WORLD, &ownrank));
+#endif
 	
 	_inputPatricleContainer =
 		std::make_shared<LinkedCells>(_box_lower.data(), _box_upper.data(), _cutoff);
-	_inputDomain = std::make_shared<Domain>(0);
+	_inputDomain = std::make_shared<Domain>(ownrank);
 	_inputDomain->setGlobalLength(0, _box_upper[0]);
 	_inputDomain->setGlobalLength(1, _box_upper[1]);
 	_inputDomain->setGlobalLength(2, _box_upper[2]);
@@ -176,8 +183,8 @@ void Adios2IOTest::testReadCheckpoint() {
 	} catch (const std::exception& e) {
 		global_log->error() << "[Adios2IOTest] exception: " << e.what() << std::endl;
 	}
-	
-	ASSERT_EQUAL(static_cast<unsigned long>(NUM_PARTICLES), pcount);
+
+	ASSERT_EQUAL(static_cast<unsigned long>(NUM_PARTICLES * num_procs), pcount);
 	
 	for (auto it = _inputPatricleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
 		auto i  = it->getID();
