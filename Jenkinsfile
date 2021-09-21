@@ -174,6 +174,20 @@ pipeline {
                 }
               }
             }
+            stage('parallel read') {
+              steps {
+                dir('adios2test'){
+                  unstash 'repo'
+                  unstash 'adios2_mpi_exec'
+                  dir ("build_adios_mpi"){
+                    sh """
+                      cd ../examples/adios/read
+                      mpirun -n 4 ../../../build_adios_mpi/src/MarDyn config_parallel.xml --steps=20 > adios2_run_log.txt
+                    """
+                  }
+                }
+              }
+            }
           }
         }
       }

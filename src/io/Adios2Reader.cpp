@@ -368,8 +368,9 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 	performInquire(variables, buffer, offset, rx, ry, rz, vx, vy, vz, qw, qx, qy, qz, Lx, Ly, Lz, mol_id, comp_id);
 
     engine->PerformGets();
+	global_log->debug() << "[Adios2Reader] Processed gets." << endl;
 
-	std::vector<uint64_t> global_component_ids(particle_count);
+	std::vector<uint64_t> global_component_ids;
 #ifdef ENABLE_MPI
 	MPI_Datatype mpi_Particle;
 	ParticleData::getMPIType(mpi_Particle);
@@ -383,9 +384,10 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 	MPI_Allgather(&displacements_array[domainDecomp->getRank()], 1, MPI_INT, displacements_array.data(), 1, MPI_INT,
 				  MPI_COMM_WORLD);
 
-	MPI_Allgatherv(&global_component_ids[offset], buffer, mpi_Particle, global_component_ids.data(),
+	global_component_ids.resize(particle_count);
+	MPI_Allgatherv(comp_id.data(), buffer, MPI_UINT64_T, global_component_ids.data(),
 				   counts_array.data(),
-				   displacements_array.data(), mpi_Particle, MPI_COMM_WORLD);
+				   displacements_array.data(), MPI_UINT64_T, MPI_COMM_WORLD);
 #endif
 	
     if (_simulation.getEnsemble()->getComponents()->empty()) {
