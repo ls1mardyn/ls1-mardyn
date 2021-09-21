@@ -8,6 +8,8 @@
  */
 #pragma once
 
+#ifdef ENABLE_ADIOS2
+
 #include "utils/TestWithSimulationSetup.h"
 #include "molecules/Component.h"
 #include <vector>
@@ -23,9 +25,6 @@ class Adios2IOTest : public utils::TestWithSimulationSetup {
 
 	// add a method which perform test
 	TEST_METHOD(testReadCheckpoint);
-	
-	// add a method which perform test
-	TEST_METHOD(checkInput);
 
 	// end suite declaration
 	TEST_SUITE_END();
@@ -40,7 +39,6 @@ public:
 
 	void testReadCheckpoint();
 
-	void checkInput();
 private:
 
 	std::vector<unsigned long> _ids;
@@ -61,3 +59,5 @@ private:
 	std::string _filename = "adios2restart.bp";
 	
 };
+
+#endif

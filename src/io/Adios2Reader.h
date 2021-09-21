@@ -10,6 +10,7 @@
 
 #include "io/InputBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
+#include "molecules/Component.h"
 #include "utils/Logger.h"
 
 #include <chrono>
@@ -68,13 +69,22 @@ protected:
 private:
     void initAdios2();
     void rootOnlyRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
-    void equalRanksRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) {};
+    void parallelRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
+	void performInquire(std::map<std::string, adios2::Params> variables, uint64_t buffer, uint64_t offset,
+									  std::vector<double>& rx, std::vector<double>& ry, std::vector<double>& rz,
+									  std::vector<double>& vx, std::vector<double>& vy, std::vector<double>& vz,
+									  std::vector<double>& qw, std::vector<double>& qx, std::vector<double>& qy,
+									  std::vector<double>& qz, std::vector<double>& Lx, std::vector<double>& Ly,
+									  std::vector<double>& Lz, std::vector<uint64_t>& mol_id,
+									  std::vector<uint64_t>& comp_id);
     // output filename, from XML
     std::string _inputfile;
     std::string _adios2enginetype;
     std::string _mode;
     int _step;
     uint64_t particle_count;
+	std::vector<Component> _dcomponents;
+	double _simtime = 0.0;
     // main instance
     std::shared_ptr<adios2::ADIOS> inst;
     std::shared_ptr<adios2::Engine> engine;  
@@ -98,12 +108,12 @@ private:
       adios2::Dims readsize({buffer});
       adios2::Dims offs({offset});
 
-      Log::global_log->info() << "[Adios2Reader]: Var name " << var_name << std::endl;
+      Log::global_log->debug() << "[Adios2Reader]: Var name " << var_name << std::endl;
       auto advar = io->InquireVariable<T>(var_name);
       advar.SetStepSelection({_step,1});
-      Log::global_log->info() << "[Adios2Reader]: buffer " << buffer << " offset " << offset << std::endl;
+      Log::global_log->debug() << "[Adios2Reader]: buffer " << buffer << " offset " << offset << std::endl;
       for (auto entry: advar.Shape())
-        Log::global_log->info() << "[Adios2Reader]: shape " << entry << std::endl;
+        Log::global_log->debug() << "[Adios2Reader]: shape " << entry << std::endl;
       advar.SetSelection(adios2::Box<adios2::Dims>(offs, readsize));
       container.resize(buffer);
       engine->Get<T>(advar, container);

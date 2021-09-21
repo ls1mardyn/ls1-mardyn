@@ -6,6 +6,7 @@
  *  Created on: July 2021
  *      Author: Heinen, Gralka, Rau
  */
+#ifdef ENABLE_ADIOS2
 
 #include "Domain.h"
 #include "molecules/Quaternion.h"
@@ -56,7 +57,7 @@ void Adios2IOTest::initParticles() {
 	
 	// init positions
     std::mt19937 rnd;
-    rnd.seed(std::random_device()());
+    rnd.seed(666);
     std::uniform_real_distribution<double> dist_pos(_box_lower[0], _box_upper[0]);
     for (auto& pos : _positions) {
 		for (int i = 0; i < 3; ++i) {
@@ -177,23 +178,19 @@ void Adios2IOTest::testReadCheckpoint() {
 	}
 	
 	ASSERT_EQUAL(static_cast<unsigned long>(NUM_PARTICLES), pcount);
+	
+	for (auto it = _inputPatricleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
+		auto i  = it->getID();
+		for (int j = 0; j < 3; ++j) {
+			//global_log->error() << "[Adios2IOTest] position container: " << it->r(j) << " vector: " << _positions[i][j]
+			//					<< std::endl;
+			
+			ASSERT_EQUAL(it->r(j), _positions[i][j]);
+			ASSERT_EQUAL(it->D(j), _Ds[i][j]);
+			ASSERT_EQUAL(it->v(j), _velocities[i][j]);
+			ASSERT_EQUAL(it->getID(), _ids[i]);
+		}
+	}
 }
 
-
-/*
- * Actual test if a written data is equal to read data.
- */
-void Adios2IOTest::checkInput() {
-
-	//int i = 0;
-	//for (auto it = _inputPatricleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-	//	for (int j = 0; j < 3; ++j) {
-	//		ASSERT_EQUAL(it->r(j), _positions[i][j]);
-	//		ASSERT_EQUAL(it->D(j), _Ds[i][j]);
-	//		ASSERT_EQUAL(it->v(j), _velocities[i][j]);
-	//		ASSERT_EQUAL(it->getID(), _ids[i]);
-	//	}
-	//	++i;
-	//}
-
-}
+#endif

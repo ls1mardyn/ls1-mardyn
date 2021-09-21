@@ -109,109 +109,69 @@ pipeline {
             stash includes: "build-mpi/src/MarDyn", name: "adios2_mpi_exec"
           }
         }
-        // stage('unit test with autopas') {
-        //   parallel {
-        //     stage('test sequential') {
-        //       steps {
-        //         dir("seq"){
-        //           unstash 'repo'
-        //           unstash 'autopas_exec'
-        //           dir ("build"){
-        //             sh """
-        //               ./src/MarDyn -t -d ../test_input/
-        //             """
-        //           }
-        //         }
-        //       }
-        //     }
-        //     stage('test mpi') {
-        //       steps {
-        //         dir("mpi"){
-        //           unstash 'repo'
-        //           unstash 'autopas_mpi_exec'
-        //           dir ("build-mpi"){
-        //             sh """
-        //               mpirun -n 1 ./src/MarDyn -t -d ../test_input/
-        //               mpirun -n 4 ./src/MarDyn -t -d ../test_input/
-        //             """
-        //           }
-        //         }
-        //       }
-        //     }
-        //   }
-        // }
-        // stage('validation tests with autopas') {
-        //   parallel {
-        //     stage('run with autopas aos') {
-        //       steps {
-        //         dir('aostest'){
-        //           unstash 'repo'
-        //           unstash 'autopas_exec'
-        //           dir ("build"){
-        //             sh """
-        //               ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 | tee autopas_run_log.txt
-        //               grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
-        //               grep "T = 0.000633975" simstep20.txt
-        //               grep "U_pot = -2.14161" simstep20.txt
-        //               grep "p = 5.34057e-07" simstep20.txt
-        //             """
-        //           }
-        //         }
-        //       }
-        //     }
-        //     stage('run with autopas soa') {
-        //       steps {
-        //         dir('soatest'){
-        //           unstash 'repo'
-        //           unstash 'autopas_exec'
-        //           dir ("build"){
-        //             sh """
-        //               ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_soa.xml --steps=20 | tee autopas_run_log.txt
-        //               grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
-        //               grep "T = 0.000633975" simstep20.txt
-        //               grep "U_pot = -2.14161" simstep20.txt
-        //               grep "p = 5.34057e-07" simstep20.txt
-        //             """
-        //           }
-        //         }
-        //       }
-        //     }
-        //     stage('run with autopas DD') {
-        //       steps {
-        //         dir('ddtest'){
-        //           unstash 'repo'
-        //           unstash 'autopas_mpi_exec'
-        //           dir ("build-mpi"){
-        //             sh """
-        //               mpirun -n 4 ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 | tee autopas_run_log.txt
-        //               grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
-        //               grep "T = 0.000633975" simstep20.txt
-        //               grep "U_pot = -2.14161" simstep20.txt
-        //               grep "p = 5.34057e-07" simstep20.txt
-        //             """
-        //           }
-        //         }
-        //       }
-        //     }
-        //     stage('run with autopas ALLLB') {
-        //       steps {
-        //         dir('alltest'){
-        //           unstash 'repo'
-        //           unstash 'autopas_mpi_exec'
-        //           dir ("build-mpi"){
-        //             sh """
-        //               mpirun -n 2 ./src/MarDyn ../examples/Argon/200K_18mol_l/config_autopas_lc_ALL.xml --steps=20 | tee autopas_run_log.txt
-        //               grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
-        //               grep "T = 0.000633975" simstep20.txt
-        //               grep "U_pot = -2.14161" simstep20.txt
-        //               grep "p = 5.34057e-07" simstep20.txt
-        //             """
-        //           }
-        //         }
-        //       }
-        //     }
-        //   }
-        // }
+        stage('unit test with adios2') {
+          parallel {
+            stage('test sequential') {
+              steps {
+                dir("seq"){
+                  unstash 'repo'
+                  unstash 'adios2_exec'
+                  dir ("build"){
+                    sh """
+                      ./src/MarDyn -t -d ../test_input/
+                    """
+                  }
+                }
+              }
+            }
+            stage('test mpi') {
+              steps {
+                dir("mpi"){
+                  unstash 'repo'
+                  unstash 'adios2_mpi_exec'
+                  dir ("build-mpi"){
+                    sh """
+                      mpirun -n 1 ./src/MarDyn -t -d ../test_input/
+                      mpirun -n 4 ./src/MarDyn -t -d ../test_input/
+                    """
+                  }
+                }
+              }
+            }
+          }
+        }
+        stage('validation tests with adios2') {
+          parallel {
+            stage('run seq') {
+              steps {
+                dir('adios2test'){
+                  unstash 'repo'
+                  unstash 'adios2_exec'
+                  dir ("build"){
+                    sh """
+                      ./src/MarDyn ../examples/adios/CO2_Merker/config.xml --steps=20 > adios2_run_log.txt
+                      [ -d "co2_merkers.bp" ] && echo "File written."
+                    """
+                  }
+                }
+              }
+            }
+            stage('run mpi') {
+              steps {
+                dir('adios2test'){
+                  unstash 'repo'
+                  unstash 'adios2_mpi_exec'
+                  dir ("build-mpi"){
+                    sh """
+                      mpirun -n 4 ./src/MarDyn ../examples/adios/CO2_Merker/config.xml --steps=20 > adios2_run_log.txt
+                      [ -d "co2_merkers.bp" ] && echo "File written."
+                    """
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
     stage('check AutoPas integration') {
