@@ -1,5 +1,6 @@
-################################### START VECTORIZATION ###################################
-option(USE_VECTORIZATION "Enable generations of SIMD vector instructions through omp-simd" ON)
+option(USE_VECTORIZATION "Enable generations of SIMD vector instructions" ON)
+option(USE_VECTORIZATION_GATHER "Use gather operations for the vectorization if possible." OFF)
+
 if (USE_VECTORIZATION)
     MESSAGE(STATUS "vectorization enabled")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_VECTORIZED_CODE=1")
@@ -62,4 +63,10 @@ elseif ()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-vec")
     endif ()
 endif ()
-###################################  END VECTORIZATION  ###################################
+
+if(USE_VECTORIZATION_GATHER)
+    message(STATUS "Using gather operations if possible")
+    add_definitions(-D__VCP_GATHER__)
+else()
+    message(STATUS "Not using gather operations.")
+endif()
