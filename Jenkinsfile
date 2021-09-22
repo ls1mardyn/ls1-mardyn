@@ -149,9 +149,10 @@ pipeline {
                   unstash 'adios2_exec'
                   dir ("build_adios"){
                     sh """
+                      pwd
                       cd ../examples/adios/CO2_Merker
                       rm -rf co2_merkers.bp
-                      ../../../build_adios/src/MarDyn config.xml --steps=20 > adios2_run_log.txt
+                      ../../../build_adios/src/MarDyn config.xml --steps=20
                       [ -d "co2_merkers.bp" ] && echo "File written."
                     """
                   }
@@ -165,9 +166,10 @@ pipeline {
                   unstash 'adios2_mpi_exec'
                   dir ("build_adios_mpi"){
                     sh """
+                      pwd
                       cd ../examples/adios/CO2_Merker
                       rm -rf co2_merkers.bp
-                      mpirun -n 4 ../../../build_adios_mpi/src/MarDyn config.xml --steps=20 > adios2_run_log.txt
+                      mpirun -n 4 ../../../build_adios_mpi/src/MarDyn config.xml --steps=20
                       [ -d "co2_merkers.bp" ] && echo "File written."
                     """
                   }
@@ -181,8 +183,9 @@ pipeline {
                   unstash 'adios2_mpi_exec'
                   dir ("build_adios_mpi"){
                     sh """
+                      pwd
                       cd ../examples/adios/read
-                      mpirun -n 4 ../../../build_adios_mpi/src/MarDyn config_parallel.xml --steps=20 > adios2_run_log.txt
+                      mpirun -n 4 ../../../build_adios_mpi/src/MarDyn config_parallel.xml --steps=20
                     """
                   }
                 }
