@@ -105,7 +105,6 @@ struct FeedRateStruct
 	{
 		double init;
 		double actual;
-		double target;
 		double sum;
 
 	} feed;

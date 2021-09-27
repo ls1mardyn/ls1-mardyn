@@ -265,12 +265,6 @@ MettDeamon::MettDeamon() :
 
 void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 {
-#ifdef MARDYN_AUTOPAS
-    global_log->error() << "MettDeamon: error the MettDeamon is not compatible with AutoPas mode (ENABLE_AUTOPAS)." << std::endl;
-	global_log->error() << "Please either disable AutoPas or the MettDeamon plugin." << std::endl;
-	global_log->error() << "For details see: https://github.com/ls1mardyn/ls1-mardyn/issues/138" << std::endl;
-	Simulation::exit(483);
-#endif
 	// control
 	xmlconfig.getNodeValue("control/updatefreq", _nUpdateFreq);
 	xmlconfig.getNodeValue("control/logfreqfeed", _feedrate.log_freq);
@@ -296,8 +290,10 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		_nFeedRateMethod = FRM_UNKNOWN;
 		nVal = 0;
 		xmlconfig.getNodeValue("control/feed/method", nVal);
-		if(1 == nVal)
+		if(1 == nVal) {
 			_nFeedRateMethod = FRM_DELETED_MOLECULES;
+			global_log->info() << "[MettDeamon] Calculating feed rate from number of deleted particles" << std::endl;
+		}
 		else if(2 == nVal)
 			_nFeedRateMethod = FRM_CHANGED_MOLECULES;
 		else if(3 == nVal)
@@ -305,7 +301,8 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		else if(4 == nVal)
 		{
 			_nFeedRateMethod = FRM_CONSTANT;
-			xmlconfig.getNodeValue("control/feed/target", _feedrate.feed.target);
+			xmlconfig.getNodeValue("control/feed/target", _feedrate.feed.init);
+			global_log->info() << "[MettDeamon] Using constant feed rate with v = " << _feedrate.feed.init << std::endl;
 		}
 
 		_feedrate.release_velo.method = RVM_UNKNOWN;
@@ -325,7 +322,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 			bRet = bRet && xmlconfig.getNodeValue("control/feed/release_velo/vxz", _norm.fname.vxz);
 			bRet = bRet && xmlconfig.getNodeValue("control/feed/release_velo/vy",  _norm.fname.vy);
 			if(bRet) {  // TODO: move this to method: init()? Has to be called before method: afterForces(), within method Simulation::prepare_start()
-				global_log->info() << "MettDeamon release velocities uses MB from files." << std::endl;
+				global_log->info() << "[MettDeamon] Release velocities uses MB from files." << std::endl;
 				this->readNormDistr();
 				shuffle(_norm.vxz);  // sequence should differ between processes
 				shuffle(_norm.vy);   // same here

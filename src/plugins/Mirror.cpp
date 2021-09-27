@@ -228,8 +228,9 @@ void Mirror::beforeForces(
 				if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
 				
 				double vy = it->v(1);
-				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) )
+				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) ) {
 					continue;
+				}
 				/** Diffuse Mirror **/
 				if (_diffuse_mirror.enabled == true) {
 					uint64_t pid = it->getID();
@@ -242,9 +243,9 @@ void Mirror::beforeForces(
 					else {
 						float frnd = _rnd->rnd();
 						if (_direction == MD_RIGHT_MIRROR)
-							mirror_pos = _position.coord - static_cast<double>(frnd) * _diffuse_mirror.width;
-						else
 							mirror_pos = _position.coord + static_cast<double>(frnd) * _diffuse_mirror.width;
+						else
+							mirror_pos = _position.coord - static_cast<double>(frnd) * _diffuse_mirror.width;
 						std::pair<std::map<uint64_t,double>::iterator,bool> status;
 						status = _diffuse_mirror.pos_map.insert({pid, mirror_pos});
 #ifndef NDEBUG
@@ -252,9 +253,11 @@ void Mirror::beforeForces(
 #endif
 					}
 					
-					if (ry <= mirror_pos)
+					if ( (_direction == MD_RIGHT_MIRROR && ry <= mirror_pos) || (_direction == MD_LEFT_MIRROR && ry >= mirror_pos) ) {
 						continue;
+					}
 					else {
+						// Particle will be reflected and can therefore be erased from map
 						auto search = _diffuse_mirror.pos_map.find(pid);
 						_diffuse_mirror.pos_map.erase(search);
 					}
