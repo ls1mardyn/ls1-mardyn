@@ -69,7 +69,7 @@ void Adios2Writer::clearContainers() {
 
 void Adios2Writer::defineVariables(uint64_t global, uint64_t offset, uint64_t local, int numProcs, int rank) {
 	for (auto& [variableName, variableContainer] : _vars) {
-		global_log->info() << "[Adios2Writer]: Defining Variable " << variableName << std::endl;
+		global_log->info() << "[Adios2Writer] Defining Variable " << variableName << std::endl;
 		if (std::holds_alternative<std::vector<double>>(variableContainer)) {
 			_io->DefineVariable<double>(variableName, {global}, {offset}, {local}, adios2::ConstantDims);
 		} else {
@@ -77,14 +77,14 @@ void Adios2Writer::defineVariables(uint64_t global, uint64_t offset, uint64_t lo
 		}
 	}
 
-	global_log->info() << "[Adios2Writer]: Defining Variable " << gbox_name << std::endl;
+	global_log->info() << "[Adios2Writer] Defining Variable " << gbox_name << std::endl;
 	_io->DefineVariable<double>(gbox_name, {6}, {0}, {6}, adios2::ConstantDims);
-	global_log->info() << "[Adios2Writer]: Defining Variable " << lbox_name << std::endl;
+	global_log->info() << "[Adios2Writer] Defining Variable " << lbox_name << std::endl;
 	_io->DefineVariable<double>(lbox_name, {}, {}, {6}, adios2::ConstantDims);
-	global_log->info() << "[Adios2Writer]: Defining Variable " << offsets_name << std::endl;
+	global_log->info() << "[Adios2Writer] Defining Variable " << offsets_name << std::endl;
 	_io->DefineVariable<uint64_t>(offsets_name, {static_cast<size_t>(numProcs)}, {static_cast<size_t>(rank)}, {1},
 								  adios2::ConstantDims);
-	global_log->info() << "[Adios2Writer]: Defining Variable " << simtime_name << std::endl;
+	global_log->info() << "[Adios2Writer] Defining Variable " << simtime_name << std::endl;
 	_io->DefineVariable<double>(simtime_name);
 }
 
@@ -205,17 +205,17 @@ void Adios2Writer::initAdios2() {
 
 void Adios2Writer::beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 										  unsigned long simstep) {
-	global_log->debug() << "[Adios2Writer]: beforeEventNewTimestep." << std::endl;
+	global_log->debug() << "[Adios2Writer] beforeEventNewTimestep." << std::endl;
 }
 
 void Adios2Writer::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 								unsigned long simstep) {
-	global_log->debug() << "[Adios2Writer]: beforeForces." << std::endl;
+	global_log->debug() << "[Adios2Writer] beforeForces." << std::endl;
 }
 
 void Adios2Writer::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 							   unsigned long simstep) {
-	global_log->debug() << "[Adios2Writer]: afterForces." << std::endl;
+	global_log->debug() << "[Adios2Writer] afterForces." << std::endl;
 }
 
 void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
@@ -269,19 +269,19 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 	localNumParticles = counter;
 #ifdef ENABLE_MPI
+	//global_log->set_mpi_output_all();
 	MPI_Allreduce(&localNumParticles, &globalNumParticles, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
-	global_log->info() << "[Adios2Writer]: local " << localNumParticles << " global " << globalNumParticles << std::endl;
+	global_log->info() << "[Adios2Writer] local " << localNumParticles << " global " << globalNumParticles << std::endl;
 #endif
 
 	// gather offsets
-	global_log->debug() << "[Adios2Writer]: numProcs: " << numProcs << std::endl;
+	global_log->debug() << "[Adios2Writer] numProcs: " << numProcs << std::endl;
 	
 	uint64_t offset = 0;
 #ifdef ENABLE_MPI
 	MPI_Exscan(&localNumParticles, &offset, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
-
-	global_log->debug() << "[Adios2Writer]: localNumParticles " << localNumParticles << std::endl;
-	global_log->debug() << "[Adios2Writer]: Offset " << offset << std::endl;
+	global_log->debug() << "[Adios2Writer] localNumParticles " << localNumParticles << std::endl;
+	global_log->debug() << "[Adios2Writer] Offset " << offset << std::endl;
 #endif
 
 	std::array<double, 6> global_box{
@@ -289,7 +289,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 	std::array<double, 6> local_box;
 	domainDecomp->getBoundingBoxMinMax(domain, &local_box[0], &local_box[3]);
 
-	global_log->debug() << "[Adios2Writer]: Local Box: " << local_box[0] << " " << local_box[1] << " " << local_box[2]
+	global_log->debug() << "[Adios2Writer] Local Box: " << local_box[0] << " " << local_box[1] << " " << local_box[2]
 					   << " " << local_box[3] << " " << local_box[4] << " " << local_box[5] << std::endl;
 	try {
 		_engine->BeginStep();
@@ -309,9 +309,9 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		if (domainDecomp->getRank() == 0) {
 			auto adios2_global_box = _io->InquireVariable<double>(gbox_name);
 
-			global_log->debug() << "[Adios2Writer]: Putting Variables" << std::endl;
+			global_log->debug() << "[Adios2Writer] Putting Variables" << std::endl;
 			if (!adios2_global_box) {
-				global_log->error() << "[Adios2Writer]: Could not create variable: global_box" << std::endl;
+				global_log->error() << "[Adios2Writer] Could not create variable: global_box" << std::endl;
 				return;
 			}
 			_engine->Put<double>(adios2_global_box, global_box.data());
@@ -321,7 +321,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		auto adios2_local_box = _io->InquireVariable<double>(lbox_name);
 
 		if (!adios2_local_box) {
-			global_log->error() << "[Adios2Writer]: Could not create variable: local_box" << std::endl;
+			global_log->error() << "[Adios2Writer] Could not create variable: local_box" << std::endl;
 			return;
 		}
 		_engine->Put<double>(adios2_local_box, local_box.data());
@@ -335,7 +335,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		if (domainDecomp->getRank() == 0) {
 			auto adios2_simulationtime = _io->InquireVariable<double>(simtime_name);
 			if (!adios2_simulationtime) {
-				global_log->error() << "[Adios2Writer]: Could not create variable: simulationtime" << std::endl;
+				global_log->error() << "[Adios2Writer] Could not create variable: simulationtime" << std::endl;
 				return;
 			}
 			_engine->Put<double>(adios2_simulationtime, current_time);
@@ -343,23 +343,24 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 		// wait for completion of write
 		_engine->EndStep();
-
+		
 		clearContainers();
 	} catch (std::invalid_argument& e) {
-		global_log->error() << "[ADIOS2] Invalid argument exception, STOPPING PROGRAM";
+		global_log->error() << "[Adios2Writer] Invalid argument exception, STOPPING PROGRAM";
 		global_log->error() << e.what();
 	} catch (std::ios_base::failure& e) {
-		global_log->error() << "[ADIOS2] IO System base failure exception, STOPPING PROGRAM";
+		global_log->error() << "[Adios2Writer] IO System base failure exception, STOPPING PROGRAM";
 		global_log->error() << e.what();
 	} catch (std::exception& e) {
-		global_log->error() << "[ADIOS2] Exception, STOPPING PROGRAM";
+		global_log->error() << "[Adios2Writer] Exception, STOPPING PROGRAM";
 		global_log->error() << e.what();
 	}
-	global_log->debug() << "[Adios2Writer]: endStep." << std::endl;
+	//global_log->set_mpi_output_root();
+	global_log->info() << "[Adios2Writer] endStep." << std::endl;
 }
 
 void Adios2Writer::finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
 	_engine->Close();
-	global_log->info() << "[Adios2Writer]: finish." << std::endl;
+	global_log->info() << "[Adios2Writer] finish." << std::endl;
 }
 #endif

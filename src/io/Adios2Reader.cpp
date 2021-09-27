@@ -84,12 +84,18 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
 
 	if (_mode == "rootOnly") {
 		rootOnlyRead(particleContainer, domain, domainDecomp);
+#ifdef ENABLE_MPI
+		MPI_Bcast(&_simtime, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#endif
 	} else if (_mode == "parallelRead") {
 		parallelRead(particleContainer, domain, domainDecomp);
 	} else {
 		global_log->error() << "[Adios2Reader] Unknown _mode '" << _mode << "'" << std::endl;
 	}
 
+	_simulation.setSimulationTime(_simtime);
+	global_log->info() << "[Adios2Reader] simulation time is: " << _simtime << std::endl;
+	
 	global_log->info() << "[Adios2Reader] Finished reading molecules: 100%" << std::endl;
 	global_log->info() << "[Adios2Reader] Reading Molecules done" << std::endl;
 
@@ -100,9 +106,6 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
 		domain->setglobalRho(domain->getglobalNumMolecules() / domain->getGlobalVolume());
 		global_log->info() << "[Adios2Reader] Calculated Rho_global = " << domain->getglobalRho() << endl;
 	}
-
-	_simulation.setSimulationTime(_simtime);
-	global_log->info() << "[Adios2Reader] simulation time is: " << _simtime << std::endl;
 
 	engine->Close();
 	global_log->info() << "[Adios2Reader] finish." << std::endl;
@@ -308,7 +311,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 			}
 		}
 		MPI_Bcast(particle_buff.data(), buffer, mpi_Particle, 0, MPI_COMM_WORLD);
-		auto asd = 0;
+
 		for (int j = 0; j < buffer; j++) {
 			Molecule m =
 				Molecule(particle_buff[j].id, &_dcomponents[particle_buff[j].cid], particle_buff[j].r[0],
