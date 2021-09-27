@@ -4,7 +4,7 @@
  * Check whether an ADIOS2 checkpoint can be successfully written and read again.
  *
  *  Created on: July 2021
- *      Author: Heinen, Gralka, Rau
+ *      Author: Heinen, Gralka, Rau, Homes
  */
 #ifdef ENABLE_ADIOS2
 

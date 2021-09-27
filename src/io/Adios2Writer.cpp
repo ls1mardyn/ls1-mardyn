@@ -224,7 +224,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 	// for all outputs
 	uint64_t localNumParticles = particleContainer->getNumberOfParticles();
-	uint64_t globalNumParticles = particleContainer->getNumberOfParticles();
+	uint64_t globalNumParticles = localNumParticles;
 	auto numProcs = domainDecomp->getNumProcs();
 	int const rank = domainDecomp->getRank();
 
