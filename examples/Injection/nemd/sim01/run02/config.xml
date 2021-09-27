@@ -50,7 +50,7 @@
 
 			<parallelisation type="DomainDecomposition">
 				 <!-- structure handled by DomainDecompMPIBase -->
-				<MPIGridDims> <x>2</x> <y>4</y> <z>2</z> </MPIGridDims>
+				<!--<MPIGridDims> <x>2</x> <y>4</y> <z>2</z> </MPIGridDims>-->
 			</parallelisation>
 <!--
 			<parallelisation type="KDDecomposition">
