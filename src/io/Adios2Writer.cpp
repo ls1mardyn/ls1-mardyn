@@ -224,7 +224,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 	// for all outputs
 	uint64_t localNumParticles = particleContainer->getNumberOfParticles();
-	uint64_t globalNumParticles = domain->getglobalNumMolecules();
+	uint64_t globalNumParticles = particleContainer->getNumberOfParticles();
 	auto numProcs = domainDecomp->getNumProcs();
 	int const rank = domainDecomp->getRank();
 
@@ -242,7 +242,6 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		}
 	}
 
-	uint64_t counter = 0;
 	for (auto m = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 		std::get<std::vector<uint64_t>>(_vars[mol_id_name]).emplace_back(m->getID());
 		std::get<std::vector<uint64_t>>(_vars[comp_id_name]).emplace_back(m->componentid());
@@ -264,10 +263,8 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		m_id.emplace_back(m->getID());
 		comp_id.emplace_back(m->componentid());
 
-		++counter;
 	}
 
-	localNumParticles = counter;
 #ifdef ENABLE_MPI
 	//global_log->set_mpi_output_all();
 	MPI_Allreduce(&localNumParticles, &globalNumParticles, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
