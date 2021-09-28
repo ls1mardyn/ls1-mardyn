@@ -70,7 +70,7 @@ void MettDeamonFeedrateDirector::readXML(XMLfileUnits& xmlconfig)
 	_updateControl.sampledTimestepCount = 0;
 	_updateControl.updateFreq = 1000;
 	xmlconfig.getNodeValue("mirror/control/update_freq", _updateControl.updateFreq);
-	global_log->info() << "MettDeamonFeedrateDirector: update frequency of Mirror = " << _updateControl.updateFreq << endl;
+	global_log->info() << "[MettDeamonFeedrateDirector] Update frequency of Mirror = " << _updateControl.updateFreq << endl;
 
 	// feedrate
 	_feedrate.init = 0.;
@@ -133,11 +133,11 @@ void MettDeamonFeedrateDirector::beforeForces(
 
 	// Check if other plugins were found
 	if(nullptr == mirror) {
-		global_log->error() << "No Mirror plugin found in plugin list. Program exit ..." << std::endl;
+		global_log->error() << "[MettDeamonFeedrateDirector] No Mirror plugin found in plugin list. Program exit ..." << std::endl;
 		Simulation::exit(-2004);
 	}
 	if(nullptr == mettDeamon) {
-		global_log->error() << "No MettDeamon plugin found in plugin list. Program exit ..." << std::endl;
+		global_log->error() << "[MettDeamonFeedrateDirector] No MettDeamon plugin found in plugin list. Program exit ..." << std::endl;
 		Simulation::exit(-2004);
 	}
 
