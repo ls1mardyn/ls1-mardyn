@@ -292,17 +292,23 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		xmlconfig.getNodeValue("control/feed/method", nVal);
 		if(1 == nVal) {
 			_nFeedRateMethod = FRM_DELETED_MOLECULES;
-			global_log->info() << "[MettDeamon] Calculating feed rate from number of deleted particles" << std::endl;
+			global_log->info() << "[MettDeamon] Feed method 1" << std::endl;
 		}
-		else if(2 == nVal)
+		else if(2 == nVal) {
 			_nFeedRateMethod = FRM_CHANGED_MOLECULES;
-		else if(3 == nVal)
+			global_log->info() << "[MettDeamon] Feed method 2" << std::endl;
+		}
+		else if(3 == nVal) {
 			_nFeedRateMethod = FRM_DENSITY;
-		else if(4 == nVal)
-		{
+			global_log->info() << "[MettDeamon] Feed method 3" << std::endl;
+		}
+		else if(4 == nVal) {
 			_nFeedRateMethod = FRM_CONSTANT;
 			xmlconfig.getNodeValue("control/feed/target", _feedrate.feed.init);
-			global_log->info() << "[MettDeamon] Using constant feed rate with v = " << _feedrate.feed.init << std::endl;
+			global_log->info() << "[MettDeamon] Feed method 4: Using constant feed rate with v = " << _feedrate.feed.init << std::endl;
+		}
+		else if(5 ==nVal) {
+			global_log->info() << "[MettDeamon] Feed method 5: Getting feed rate from MettDeamonFeedrateDirector" << std::endl;
 		}
 
 		_feedrate.release_velo.method = RVM_UNKNOWN;
@@ -938,7 +944,7 @@ void MettDeamon::logFeedrate()
 		fnamestream << "MettDeamon_feedrate_movdir-" << (uint32_t)_nMovingDirection << ".dat";
 		std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
 		std::stringstream outputstream;
-		outputstream << "     simstep" << "                  deltaY" << std::endl;
+		outputstream << "     simstep" << "                feedrate" << std::endl;
 		ofs << outputstream.str();
 		ofs.close();
 		_bInitFeedrateLog = true;

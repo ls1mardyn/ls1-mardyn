@@ -159,7 +159,7 @@ public:
 			<feed>
 				<init>FLOAT</init>           <!-- initial feed rate  -->
 				<direction>INT</direction>   <!-- 0: left --> right | 1: left <-- right  -->
-				<method>INT</method>         <!-- feed rate method 1:count deleted particles | 4: fix rate -->
+				<method>INT</method>         <!-- feed rate method 4: fix rate | 5: get feedrate by MD Feedrate Director -->
 				<targetID>INT</targetID>     <!-- component ID of particles feed rate determined from -->
 				<target>FLOAT</target>       <!-- target value for feed rate, if method==4 -->
 				<release_velo>
