@@ -223,8 +223,9 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 	if (simstep % _writefrequency != 0) return;
 
 	// for all outputs
+	domain->updateglobalNumMolecules(particleContainer, domainDecomp);
 	uint64_t localNumParticles = particleContainer->getNumberOfParticles();
-	uint64_t globalNumParticles = localNumParticles;
+	uint64_t globalNumParticles = domain->getglobalNumMolecules();
 	auto numProcs = domainDecomp->getNumProcs();
 	int const rank = domainDecomp->getRank();
 
@@ -264,12 +265,6 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		comp_id.emplace_back(m->componentid());
 
 	}
-
-#ifdef ENABLE_MPI
-	//global_log->set_mpi_output_all();
-	MPI_Allreduce(&localNumParticles, &globalNumParticles, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
-	global_log->info() << "[Adios2Writer] local " << localNumParticles << " global " << globalNumParticles << std::endl;
-#endif
 
 	// gather offsets
 	global_log->debug() << "[Adios2Writer] numProcs: " << numProcs << std::endl;
