@@ -576,21 +576,17 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 
 unsigned long LinkedCells::getNumberOfParticles() {
 	unsigned long N = 0;
-	
-	for (auto it = iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-		N++;
-	}
-	
-	// The following code does not work as expected as it also counts the halo particles
-	/*unsigned long numCells = _cells.size();
+	unsigned long numCells = _cells.size();
 
 	#if defined(_OPENMP)
 	#pragma omp parallel for reduction(+:N)
 	#endif
 	for (unsigned long i = 0; i < numCells; ++i) {
-		N += _cells.at(i).getMoleculeCount();
-	}*/
-	
+		if (std::find(_haloCellIndices.begin(), _haloCellIndices.end(), i) == _haloCellIndices.end()) {
+			N += _cells.at(i).getMoleculeCount();
+		}
+	}
+
 	return N;
 }
 
