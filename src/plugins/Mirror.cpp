@@ -258,7 +258,6 @@ void Mirror::beforeForces(
 					}
 					else {
 						// Particle will be reflected and can therefore be erased from map
-						auto search = _diffuse_mirror.pos_map.find(pid);
 						_diffuse_mirror.pos_map.erase(search);
 					}
 				}
