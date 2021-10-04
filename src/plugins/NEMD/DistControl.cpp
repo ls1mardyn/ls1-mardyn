@@ -288,7 +288,7 @@ void DistControl::InitDataStructures()
 
 	// profile midpoint positions
 	_dMidpointPositions.resize(_binParams.count);
-	for(auto s=0; s<_binParams.count; ++s)
+	for(auto s=0u; s<_binParams.count; ++s)
 		_dMidpointPositions.at(s) = (0.5 + s)*_binParams.width;
 
 	// resize
@@ -303,7 +303,7 @@ void DistControl::InitDataStructures()
 	_dForceProfileSmoothed.resize(_nNumValuesScalar);
 
 	// init
-	for(auto s=0; s<_nNumValuesScalar; ++s) {
+	for(auto s=0u; s<_nNumValuesScalar; ++s) {
 		// number of molecules
 		_nNumMolecules.local.at(s) = 0;
 		_nNumMolecules.global.at(s) = 0;
@@ -353,13 +353,13 @@ void DistControl::SampleProfiles(Molecule* mol)
 
 void DistControl::CalcProfiles()
 {
-	#ifdef ENABLE_MPI
+#ifdef ENABLE_MPI
 
 	MPI_Allreduce( _nNumMolecules.local.data(), _nNumMolecules.global.data(), _nNumValuesScalar, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
 	MPI_Allreduce( _dForceSum.local.data(), _dForceSum.global.data(), _nNumValuesScalar, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 #else
-	for(auto s=0; s<_nNumValuesScalar; ++s)
+	for(auto s=0u; s<_nNumValuesScalar; ++s)
 	{
 		_nNumMolecules.global.at(s) = _nNumMolecules.local.at(s);
 		_dForceSum.global.at(s) = _dForceSum.local.at(s);
@@ -370,7 +370,7 @@ void DistControl::CalcProfiles()
 	double dInvertShellVolume = 1. / _binParams.volume;
 	double dInvertSampleTimesteps = 1. / ( (double)(_controlFreqs.update) );
 
-	for(unsigned long s=0; s<_nNumValuesScalar; ++s)
+	for(auto s=0u; s<_nNumValuesScalar; ++s)
 	{
 		unsigned long nNumMolecules = _nNumMolecules.global.at(s);
 		_dDensityProfile[s] = nNumMolecules * dInvertSampleTimesteps * dInvertShellVolume;
@@ -402,7 +402,7 @@ void DistControl::EstimateInterfaceMidpointsByForce()
 	double dMax = dProfile[0];
 
 	// find min/max values and their indexes (positions) in profile
-	for(auto s=1; s<_binParams.count; ++s)
+	for(auto s=1u; s<_binParams.count; ++s)
 	{
 		double dTmp = dProfile[s];
 //		if(dTmp < _dVaporDensity)
@@ -474,7 +474,7 @@ void DistControl::EstimateInterfaceMidpoint()
 //		int nIndexMin = 0;
 //		int nIndexMax = 0;
 
-		for(auto s=0; s<_binParams.count/2; ++s)
+		for(auto s=0u; s<_binParams.count/2; ++s)
 		{
 			 double dDensity = _dDensityProfile.at(s);
 
@@ -509,7 +509,7 @@ void DistControl::EstimateInterfaceMidpoint()
 		// 2. Slab mit gerade niedrigerer Anzahl finden --> von links angefangen ersten Slab größer numMax finden --> Index -1 rechnen
 		int nIndexSlabGreater = 0;
 
-		for(auto s=0; s<_binParams.count; ++s)
+		for(auto s=0u; s<_binParams.count; ++s)
 		{
 			if(_dDensityProfile.at(s) > ym)
 			{
@@ -754,7 +754,7 @@ void DistControl::UpdatePositions(const uint64_t& simstep)
 
 void DistControl::ResetLocalValues()
 {
-	for(auto s=0; s<_nNumValuesScalar; ++s) {
+	for(auto s=0u; s<_nNumValuesScalar; ++s) {
 		_nNumMolecules.local.at(s) = 0;
 		_dForceSum.local.at(s) = 0.;
 	}
@@ -893,7 +893,7 @@ void DistControl::WriteDataProfiles(const uint64_t& simstep)
 	}
 	outputstream << endl;
 	// write data
-	for(auto s=0; s<_binParams.count; ++s)
+	for(auto s=0u; s<_binParams.count; ++s)
 	{
 		outputstream << FORMAT_SCI_MAX_DIGITS << _dMidpointPositions.at(s);
 		for(auto cid=0; cid<_nNumComponents; ++cid)
@@ -943,7 +943,7 @@ void DistControl::SmoothProfile(double* dData, double* dSmoothData, const uint64
 	uint32_t li = 0;
 	uint32_t ri = nNeighbourVals;
 
-	for(auto s=0; s<nNumVals; ++s)
+	for(auto s=0u; s<nNumVals; ++s)
 	{
 		double dSum = 0.;
 		uint16_t nNumValsSmooth = 0;
@@ -964,7 +964,7 @@ void DistControl::SmoothProfile(double* dData, double* dSmoothData, const uint64
 
 void DistControl::SmoothProfiles(const uint32_t& nNeighbourVals)
 {
-	for(auto cid=0; cid<_nNumComponents; ++cid) {
+	for(auto cid=0u; cid<_nNumComponents; ++cid) {
 		uint64_t nOffset = _nOffsets.at(cid);
 		SmoothProfile(_dDensityProfile.data()+nOffset, _dDensityProfileSmoothed.data()+nOffset, _binParams.count, nNeighbourVals);
 		SmoothProfile(_dForceProfile.data()+nOffset, _dForceProfileSmoothed.data()+nOffset, _binParams.count, nNeighbourVals);
@@ -997,7 +997,7 @@ void DistControl::DerivateProfile(double* dDataX, double* dDataY, double* dDeriv
 	vector<double> x;
 	vector<double> y;
 
-	for(auto s=0; s<nNumVals; ++s) {
+	for(auto s=0u; s<nNumVals; ++s) {
 		x.clear();
 		y.clear();
 
