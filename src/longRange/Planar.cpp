@@ -431,7 +431,7 @@ void Planar::calculateLongRange() {
 			Via[0] = vTLJ[index];
 			Via[1] = vNLJ[index];
 			Via[2] = vTLJ[index];
-			if (tempMol->r(1) >= _region.actPos[0] && tempMol->r(1) <= _region.actPos[1]) {
+			if ((tempMol->r(1) >= _region.actPos[0]) && (tempMol->r(1) <= _region.actPos[1])) {
 				tempMol->Fljcenteradd(i, Fa);
 			}
 //			Virial_c=Via[1]; TODO: I, tchipevn, think that this line is a bug, so I'm commenting it out. Virial_c is a summation variable, it should not be overwritten by a value, dependent on the last molecule in the system.
@@ -449,7 +449,7 @@ void Planar::calculateLongRange() {
 			Via[0] = vTDipole[index];
 			Via[1] = vNDipole[index];
 			Via[2] = vTDipole[index];
-			if (tempMol->r(1) >= _region.actPos[0] && tempMol->r(1) <= _region.actPos[1]) {
+			if ((tempMol->r(1) >= _region.actPos[0]) && (tempMol->r(1) <= _region.actPos[1])) {
 				tempMol->Fadd(Fa); // Force is stored on the center of mass of the molecule!
 			}
 			tempMol->Viadd(Via);
@@ -1142,10 +1142,10 @@ void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsig
 		for(uint32_t si=0; si<numLJSum; ++si)
 		{
 			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << rho_l[_slabs*si+pi];
-			if (pos >= _region.actPos[0] && pos <= _region.actPos[1]) {
-				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << 0.0;
-			} else {
+			if ((pos >= _region.actPos[0]) && (pos <= _region.actPos[1])) {
 				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << fLJ[_slabs*si+pi];
+			} else {
+				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << 0.0;
 			}
 			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << uLJ[_slabs*si+pi];
 		}
