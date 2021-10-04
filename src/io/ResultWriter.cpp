@@ -52,10 +52,12 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 	}
 }
 
-void ResultWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp, Domain *domain,
+void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                            unsigned long simstep) {
 
 	// Writing of cavities now handled by CavityWriter
+
+	domain->updateglobalNumMolecules(particleContainer, domainDecomp);
 
 	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_p_acc->addEntry(domain->getGlobalPressure());
