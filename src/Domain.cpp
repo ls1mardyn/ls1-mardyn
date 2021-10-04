@@ -737,7 +737,6 @@ void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, Doma
 	numMolecules.global = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
 	this->setglobalNumMolecules(numMolecules.global);
-	std::cout << "Updated num mols " << numMolecules.global << std::endl;
 }
 
 CommVar<uint64_t> Domain::getMaxMoleculeID() const {
