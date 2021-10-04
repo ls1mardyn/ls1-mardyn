@@ -730,13 +730,14 @@ void Domain::setglobalNumMolecules(unsigned long glnummol) { _globalNumMolecules
 
 void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp) {
 	CommVar<uint64_t> numMolecules;
-	numMolecules.local = particleContainer->getNumberOfParticles();
+	numMolecules.local = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(numMolecules.local);
 	domainDecomp->collCommAllreduceSum();
 	numMolecules.global = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
 	this->setglobalNumMolecules(numMolecules.global);
+	std::cout << "Updated num mols " << numMolecules.global << std::endl;
 }
 
 CommVar<uint64_t> Domain::getMaxMoleculeID() const {

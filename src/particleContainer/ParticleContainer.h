@@ -170,6 +170,7 @@ public:
 	//! This number may include particles which are outside of
 	//! the bounding box
 	virtual unsigned long getNumberOfParticles() = 0;
+	virtual unsigned long getNumberOfParticles(ParticleIterator::Type t) { return getNumberOfParticles(); }
 
 	//! @brief returns one coordinate of the lower corner of the bounding box
 	//!

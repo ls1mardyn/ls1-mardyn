@@ -793,7 +793,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 
 	}  // loop over molecules
 
-	nNumMoleculesLocal = particleContainer->getNumberOfParticles();
+	nNumMoleculesLocal = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
 	// Update feedrate
 	if( (FRM_DIRECTED == _nFeedRateMethod) && (global_simulation->getSimulationStep() % _nUpdateFreq == 0) )
