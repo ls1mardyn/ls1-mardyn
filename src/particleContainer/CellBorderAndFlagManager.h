@@ -161,7 +161,7 @@ private:
 	std::array<double, 3> _boundingBoxMin, _boundingBoxMax;
 	std::array<double, 3> _haloBoundingBoxMin, _haloBoundingBoxMax;
 	std::array<double, 3> _cellLength;
-	std::array<int, 3> _haloWidthInNumCells;
+	std::array<unsigned int, 3> _haloWidthInNumCells;
 
 	// is (should be) space-optimised by compiler to store 1 bit per entry, instead of 1 byte.
 	std::vector<bool> _haloCellFlags;
