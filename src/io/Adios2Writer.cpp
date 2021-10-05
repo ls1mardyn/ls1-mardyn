@@ -71,9 +71,38 @@ void Adios2Writer::defineVariables(uint64_t global, uint64_t offset, uint64_t lo
 	for (auto& [variableName, variableContainer] : _vars) {
 		global_log->info() << "[Adios2Writer] Defining Variable " << variableName << std::endl;
 		if (std::holds_alternative<std::vector<double>>(variableContainer)) {
-			_io->DefineVariable<double>(variableName, {global}, {offset}, {local}, adios2::ConstantDims);
+			auto advar_double = _io->DefineVariable<double>(variableName, {global}, {offset}, {local}, adios2::ConstantDims);
+			
+			if (!_compressionOperator.Type().empty()) {
+				if (_compression == "SZ" || _compression == "sz") {
+#ifdef ADIOS2_HAVE_SZ
+					advar_double.AddOperation(_compressionOperator,
+										  {{adios2::ops::sz::key::accuracy, _compression_accuracy}});
+#endif
+				} else if (_compression == "ZFP" || _compression == "zfp") {
+#ifdef ADIOS2_HAVE_ZFP
+					advar_double.AddOperation(_compressionOperator,
+											  {{adios2::ops::zfp::key::rate, _compression_rate}});
+#endif
+				}
+			}
+
 		} else {
-			_io->DefineVariable<uint64_t>(variableName, {global}, {offset}, {local}, adios2::ConstantDims);
+			auto advar_uint64 = _io->DefineVariable<uint64_t>(variableName, {global}, {offset}, {local}, adios2::ConstantDims);
+
+			if (!_compressionOperator.Type().empty()) {
+				if (_compression == "SZ" || _compression == "sz") {
+#ifdef ADIOS2_HAVE_SZ
+					advar_uint64.AddOperation(_compressionOperator,
+											  {{adios2::ops::sz::key::accuracy, _compression_accuracy}});
+#endif
+				} else if (_compression == "ZFP" || _compression == "zfp") {
+#ifdef ADIOS2_HAVE_ZFP
+					advar_uint64.AddOperation(_compressionOperator,
+											  {{adios2::ops::zfp::key::rate, _compression_rate}});
+#endif
+				}
+			}
 		}
 	}
 
@@ -103,15 +132,25 @@ void Adios2Writer::readXML(XMLfileUnits& xmlconfig) {
 	_writefrequency = 50000;
 	xmlconfig.getNodeValue("writefrequency", _writefrequency);
 	global_log->info() << "[Adios2Writer] write frequency: " << _writefrequency << endl;
-
+	_compression = "none";
+	xmlconfig.getNodeValue("compression", _compression);
+	global_log->info() << "[Adios2Writer] compression type: " << _compression << endl;
+	_compression_accuracy = "0.00001";
+	xmlconfig.getNodeValue("compressionaccuracy", _compression_accuracy);
+	global_log->info() << "[Adios2Writer] compression accuracy (SZ): " << _compression_accuracy << endl;
+	_compression_rate = "8";
+	xmlconfig.getNodeValue("compressionrate", _compression_rate);
+	global_log->info() << "[Adios2Writer] compression rate (ZFP): " << _compression_rate << endl;
+	
 	xmlconfig.changecurrentnode("/");
 	xmlconfig.printXML(_xmlstream);
 
 	if (!_inst) initAdios2();
 }
 
-void Adios2Writer::testInit(std::vector<Component>& comps, std::string outfile, std::string adios2enginetype,
-							unsigned long writefrequency) {
+void Adios2Writer::testInit(std::vector<Component>& comps, const std::string outfile, const std::string adios2enginetype, const unsigned long writefrequency,
+							const std::string compression, const std::string compression_accuracy,
+							const std::string compression_rate) {
 	using std::endl;
 	_outputfile = outfile;
 	global_log->info() << "[Adios2Writer] Outputfile: " << _outputfile << endl;
@@ -119,6 +158,12 @@ void Adios2Writer::testInit(std::vector<Component>& comps, std::string outfile, 
 	global_log->info() << "[Adios2Writer] Adios2 engine type: " << _adios2enginetype << endl;
 	_writefrequency = writefrequency;
 	global_log->info() << "[Adios2Writer] write frequency: " << _writefrequency << endl;
+	_compression = compression;
+	global_log->info() << "[Adios2Writer] compression type: " << _compression << endl;
+	_compression_accuracy = compression_accuracy;
+	global_log->info() << "[Adios2Writer] compression accuracy (SZ): " << _compression_accuracy << endl;
+	_compression_rate = compression_rate;
+	global_log->info() << "[Adios2Writer] compression rate (ZFP): " << _compression_rate << endl;
 	_comps = comps;
 	
 	if (!_inst) initAdios2();
@@ -137,10 +182,21 @@ void Adios2Writer::initAdios2() {
 		_io->SetEngine(_adios2enginetype);
 
 		if (!_engine) {
-			global_log->info() << "[Adios2Writer]: Opening File for writing." << _outputfile.c_str() << std::endl;
+			global_log->info() << "[Adios2Writer] Opening File for writing." << _outputfile.c_str() << std::endl;
 			_engine = std::make_shared<adios2::Engine>(_io->Open(_outputfile, adios2::Mode::Write));
 		}
 
+		// add operations
+		if (_compression == "SZ" || _compression == "sz") {
+#ifdef ADIOS2_HAVE_SZ
+			_compressionOperator = _inst->DefineOperator("szCompressor", adios2::ops::LossySZ);
+#endif
+		} else if (_compression == "ZFP" || _compression == "zfp") {
+#ifdef ADIOS2_HAVE_ZFP
+			_compressionOperator = _inst->DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+#endif
+		}
+		
 		// Write information about this simulation using ADIOS2 attributes
 		_io->DefineAttribute<std::string>("config", _xmlstream.str());
 		auto& domainDecomp = _simulation.domainDecomposition();
@@ -200,7 +256,7 @@ void Adios2Writer::initAdios2() {
 							<< std::endl;
 		mardyn_exit(1);
 	}
-	global_log->info() << "[Adios2Writer]: Init complete." << std::endl;
+	global_log->info() << "[Adios2Writer] Init complete." << std::endl;
 }
 
 void Adios2Writer::beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,

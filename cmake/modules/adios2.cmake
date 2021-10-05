@@ -13,7 +13,7 @@ if (ENABLE_ADIOS2)
         if (GIT_SUBMODULES_SSH)
             set(adios2RepoPath git@github.com:ornladios/ADIOS2.git)
         endif ()
-
+        
         set(ADIOS2_BUILD_TESTING OFF CACHE BOOL "" FORCE)
         set(ADIOS2_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
         set(ADIOS2_USE_Fortran OFF CACHE BOOL "" FORCE)
@@ -30,7 +30,7 @@ if (ENABLE_ADIOS2)
                 GIT_TAG "v2.5.0"
         )
 
-        # Get autopas source and binary directories from CMake project
+        # Get adios2 source and binary directories from CMake project
         FetchContent_GetProperties(adios2fetch)
 
         if (NOT adios2fetch_POPULATED)

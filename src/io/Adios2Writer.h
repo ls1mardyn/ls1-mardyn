@@ -43,8 +43,9 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 
-	void testInit(std::vector<Component>& comps, std::string outfile = "mardyn.bp", std::string adios2enginetype = "BP4",
-				  unsigned long writefrequency = 50000);
+	void testInit(std::vector<Component>& comps, const std::string outfile = "mardyn.bp", const std::string adios2enginetype = "BP4", const unsigned long writefrequency = 50000,
+				  const std::string compression = "none", const std::string compression_accuracy = "0.00001",
+				  const std::string compression_rate = "8");
 
 	void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 								unsigned long simstep);
@@ -75,6 +76,9 @@ private:
 	std::string _adios2enginetype;
 	uint32_t _writefrequency;
 	std::stringstream _xmlstream;
+	std::string _compression;
+	std::string _compression_accuracy;
+	std::string _compression_rate;
 	// variables to write, see documentation
 	std::map<std::string, std::variant<std::vector<double>, std::vector<uint64_t>>> _vars;
 	// std::map<std::string, std::vector<double>> vars;
@@ -82,6 +86,7 @@ private:
 	std::shared_ptr<adios2::ADIOS> _inst;
 	std::shared_ptr<adios2::Engine> _engine;
 	std::shared_ptr<adios2::IO> _io;
+	adios2::Operator _compressionOperator;
 };
 #endif
 #endif /* ADIOS2_WRITER_H_*/
