@@ -87,6 +87,7 @@ private:
 	std::shared_ptr<adios2::Engine> _engine;
 	std::shared_ptr<adios2::IO> _io;
 	adios2::Operator _compressionOperator;
+	bool _singleCenter = true;
 };
 #endif
 #endif /* ADIOS2_WRITER_H_*/

@@ -305,8 +305,14 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 		std::vector<ParticleData> particle_buff(buffer);
 		if (domainDecomp->getRank() == 0) {
 			for (int i = 0; i < buffer; i++) {
-				Molecule m1 = Molecule(mol_id[i], &_dcomponents[comp_id[i]], rx[i], ry[i], rz[i], vx[i], vy[i], vz[i],
+				Molecule m1;
+				if (qw.empty()) {
+					m1 = Molecule(mol_id[i], &_dcomponents[comp_id[i]], rx[i], ry[i], rz[i], vx[i], vy[i],
+										   vz[i], 1, 0, 0, 0, 0, 0, 0);
+				} else {
+					m1 = Molecule(mol_id[i], &_dcomponents[comp_id[i]], rx[i], ry[i], rz[i], vx[i], vy[i], vz[i],
 									   qw[i], qx[i], qy[i], qz[i], Lx[i], Ly[i], Lz[i]);
+				}
 				ParticleData::MoleculeToParticleData(particle_buff[i], m1);
 			}
 		}
@@ -335,8 +341,14 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 #else
 		for (int i = 0; i < buffer; i++) {
 			global_log->info() << "[Adios2Reader] Processing particle " << offset + i << std::endl;
-			Molecule m = Molecule(mol_id[i], &_dcomponents[comp_id[i]], rx[i], ry[i], rz[i], vx[i], vy[i], vz[i], qw[i],
-								  qx[i], qy[i], qz[i], Lx[i], Ly[i], Lz[i]);
+			Molecule m;
+			if (qw.empty()) {
+				m = Molecule(mol_id[i], &_dcomponents[comp_id[i]], rx[i], ry[i], rz[i], vx[i], vy[i], vz[i],
+									   1, 0, 0, 0, 0, 0, 0);
+			} else {
+				m = Molecule(mol_id[i], &_dcomponents[comp_id[i]], rx[i], ry[i], rz[i], vx[i], vy[i], vz[i],
+									   qw[i], qx[i], qy[i], qz[i], Lx[i], Ly[i], Lz[i]);
+			}
 
 			// only add particle if it is inside of the own domain!
 			if (particleContainer->isInBoundingBox(m.r_arr().data())) {

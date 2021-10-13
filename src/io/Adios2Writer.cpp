@@ -48,13 +48,15 @@ void Adios2Writer::resetContainers() {
 	_vars[vx_name] = std::vector<double>();
 	_vars[vy_name] = std::vector<double>();
 	_vars[vz_name] = std::vector<double>();
-	_vars[qw_name] = std::vector<double>();
-	_vars[qx_name] = std::vector<double>();
-	_vars[qy_name] = std::vector<double>();
-	_vars[qz_name] = std::vector<double>();
-	_vars[Lx_name] = std::vector<double>();
-	_vars[Ly_name] = std::vector<double>();
-	_vars[Lz_name] = std::vector<double>();
+	if (!_singleCenter) {
+		_vars[qw_name] = std::vector<double>();
+		_vars[qx_name] = std::vector<double>();
+		_vars[qy_name] = std::vector<double>();
+		_vars[qz_name] = std::vector<double>();
+		_vars[Lx_name] = std::vector<double>();
+		_vars[Ly_name] = std::vector<double>();
+		_vars[Lz_name] = std::vector<double>();
+	}
 }
 
 void Adios2Writer::clearContainers() {
@@ -214,6 +216,7 @@ void Adios2Writer::initAdios2() {
 			// only write lj components (for now)
 			if (!component.ljcenters().empty()) {
 				auto sites = component.ljcenters();
+				_singleCenter = _singleCenter && sites.size() <= 1;
 				std::vector<std::string> component_elements_vec;
 				component_elements_vec.reserve(sites.size());
 				for (auto& site : sites) {
@@ -308,15 +311,17 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		std::get<std::vector<double>>(_vars[vx_name]).emplace_back(m->v(0));
 		std::get<std::vector<double>>(_vars[vy_name]).emplace_back(m->v(1));
 		std::get<std::vector<double>>(_vars[vz_name]).emplace_back(m->v(2));
-		auto q = m->q();
-		std::get<std::vector<double>>(_vars[qw_name]).emplace_back(q.qw());
-		std::get<std::vector<double>>(_vars[qx_name]).emplace_back(q.qx());
-		std::get<std::vector<double>>(_vars[qy_name]).emplace_back(q.qy());
-		std::get<std::vector<double>>(_vars[qz_name]).emplace_back(q.qz());
-		std::get<std::vector<double>>(_vars[Lx_name]).emplace_back(m->D(0));
-		std::get<std::vector<double>>(_vars[Ly_name]).emplace_back(m->D(1));
-		std::get<std::vector<double>>(_vars[Lz_name]).emplace_back(m->D(2));
-
+		if (!_singleCenter) {
+			auto q = m->q();
+			std::get<std::vector<double>>(_vars[qw_name]).emplace_back(q.qw());
+			std::get<std::vector<double>>(_vars[qx_name]).emplace_back(q.qx());
+			std::get<std::vector<double>>(_vars[qy_name]).emplace_back(q.qy());
+			std::get<std::vector<double>>(_vars[qz_name]).emplace_back(q.qz());
+			std::get<std::vector<double>>(_vars[Lx_name]).emplace_back(m->D(0));
+			std::get<std::vector<double>>(_vars[Ly_name]).emplace_back(m->D(1));
+			std::get<std::vector<double>>(_vars[Lz_name]).emplace_back(m->D(2));
+		}
+		
 		m_id.emplace_back(m->getID());
 		comp_id.emplace_back(m->componentid());
 
