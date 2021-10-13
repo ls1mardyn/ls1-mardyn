@@ -221,12 +221,20 @@ public:
 
 	// connection to other general plugins
 	void setActualFeedrate(const double& feed_actual) {
-		_feedrate.feed.actual = feed_actual;
-		global_log->info() << "[MettDeamon]: Set new feedrate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
+		if (FRM_DIRECTED == _nFeedRateMethod) {
+			_feedrate.feed.actual = feed_actual;
+			global_log->info() << "[MettDeamon]: Set new feed rate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
+		} else {
+			global_log->warning() << "[MettDeamon]: Feed rate not set because feed method is not 5" << std::endl;
+		}
 	}
 	void setInitFeedrate(const double& feed_init) {
-		_feedrate.feed.init = feed_init;
-		global_log->info() << "[MettDeamon]: Set init feedrate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
+		if (FRM_DIRECTED == _nFeedRateMethod) {
+			_feedrate.feed.init = feed_init;
+			global_log->info() << "[MettDeamon]: Set init feed rate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
+		} else {
+			global_log->warning() << "[MettDeamon]: Feed rate not set because feed method is not 5" << std::endl;
+		}
 	}
 	double getInvDensityArea() {return _dInvDensityArea;}
 
