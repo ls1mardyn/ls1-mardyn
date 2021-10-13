@@ -144,10 +144,6 @@ void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const doub
 	double sum_v2yi = std::accumulate(v2yi.begin(), v2yi.end(), 0.0);
 	double sum_v2zi = std::accumulate(v2zi.begin(), v2zi.end(), 0.0);
 
-	double v2x = sum_v2xi * dInvNumSamples;
-	double v2y = sum_v2yi * dInvNumSamples;
-	double v2z = sum_v2zi * dInvNumSamples;
-
 	// correct ekin
 	double scale_vx = sqrt(numSamples*T/sum_v2xi);
 	for(double & it : vxi)
@@ -177,10 +173,7 @@ void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const doub
 	sum_v2xi = std::accumulate(v2xi.begin(), v2xi.end(), 0.0);
 	sum_v2yi = std::accumulate(v2yi.begin(), v2yi.end(), 0.0);
 	sum_v2zi = std::accumulate(v2zi.begin(), v2zi.end(), 0.0);
-
-	v2x = sum_v2xi * dInvNumSamples;
-	v2y = sum_v2yi * dInvNumSamples;
-	v2z = sum_v2zi * dInvNumSamples;
+	
 	// <-- EKIN
 
 	// calc drift again
@@ -1874,7 +1867,7 @@ bool Reservoir::isRelevant(DomainDecompBase* domainDecomp, Domain* domain, Molec
 {
 	double y = mol.r(1);
 	uint32_t nBinIndex = floor(y / _dBinWidth);
-	double dOffset;
+	double dOffset = 0.0;
 	switch(_parent->getMovingDirection() )
 	{
 	case MD_LEFT_TO_RIGHT:
