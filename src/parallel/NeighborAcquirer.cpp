@@ -19,13 +19,7 @@
  */
 std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> NeighborAcquirer::acquireNeighbors(
 	const std::array<double, 3> &globalDomainLength, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions,
-	double skin, const MPI_Comm &comm, bool excludeOwnRank) {
-
-	HaloRegion ownRegionEnlargedBySkin = *ownRegion;
-	for(unsigned int dim = 0; dim < 3; ++dim){
-		ownRegionEnlargedBySkin.rmin[dim] -= skin;
-		ownRegionEnlargedBySkin.rmax[dim] += skin;
-	}
+	const MPI_Comm &comm, bool excludeOwnRank) {
 
 	int my_rank;  // my rank
 	MPI_Comm_rank(comm, &my_rank);
@@ -107,33 +101,23 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 			i += sizeof(double);  // 4
 
 			// msg format one region: rmin | rmax | offset | width | shift
-			auto shiftedRegionShiftPair = getPotentiallyShiftedRegions(globalDomainLength, unshiftedRegion, skin);
+			auto shiftedRegionShiftPair = getPotentiallyShiftedRegions(globalDomainLength, unshiftedRegion);
 
 			std::vector<HaloRegion> regionsToTest = shiftedRegionShiftPair.first;
 			std::vector<std::array<double, 3>> shifts  = shiftedRegionShiftPair.second;
 
 			for(size_t regionIndex = 0; regionIndex < regionsToTest.size(); ++regionIndex){
 				auto regionToTest = regionsToTest[regionIndex];
-				if ((not excludeOwnRank or rank != my_rank) and isIncluded(&ownRegionEnlargedBySkin, &regionToTest)) {
+				if ((not excludeOwnRank or rank != my_rank) and isIncluded(ownRegion, &regionToTest)) {
 					auto currentShift = shifts[regionIndex];
 
 					numberOfRegionsToSendToRank[rank]++;  // this is a region I will send to rank
 
-					auto overlappedRegion = overlap(ownRegionEnlargedBySkin, regionToTest);  // different shift for the overlap?
+					auto overlappedRegion = overlap(*ownRegion, regionToTest);  // different shift for the overlap?
 
 					// make a note in partners02 - don't forget to squeeze partners02
 					bool enlarged[3][2] = {{false}};
 					for (int k = 0; k < 3; k++) currentShift[k] *= -1;
-
-					if (skin != 0.) {
-						for (size_t dim = 0; dim < 3; ++dim) {
-							if (overlappedRegion.offset[dim] == -1 and overlappedRegion.rmax[dim] == ownRegion->rmax[dim]) {
-								overlappedRegion.rmax[dim] = ownRegionEnlargedBySkin.rmax[dim];
-							} else if (overlappedRegion.offset[dim] == 1 and overlappedRegion.rmin[dim] == ownRegion->rmin[dim]) {
-								overlappedRegion.rmin[dim] = ownRegionEnlargedBySkin.rmin[dim];
-							}
-						}
-					}
 
 					comm_partners02.emplace_back(rank, overlappedRegion.rmin, overlappedRegion.rmax, overlappedRegion.rmin,
 												 overlappedRegion.rmax, currentShift.data(), overlappedRegion.offset, enlarged);
@@ -330,22 +314,22 @@ HaloRegion NeighborAcquirer::overlap(const HaloRegion& myRegion, const HaloRegio
 }
 
 std::pair<std::vector<HaloRegion>, std::vector<std::array<double, 3>>> NeighborAcquirer::getPotentiallyShiftedRegions(
-				  const std::array<double, 3> &domainLength, const HaloRegion &region, double skin) {
+				  const std::array<double, 3> &domainLength, const HaloRegion &region) {
 	std::vector<HaloRegion> haloRegions;
 	std::vector<std::array<double, 3>> shifts;
 
 	std::array<std::vector<int>,3> doShiftsVector;
 	for (unsigned dim = 0; dim < 3; ++dim) {
-		//if rmin is small enough, include wrapping over bottom of domain -> positive shift
-		if(region.rmin[dim] < skin){
+		// if rmin is small enough, include wrapping over bottom of domain -> positive shift
+		if (region.rmin[dim] < 0) {
 			doShiftsVector[dim].emplace_back(1);
 		}
-		//if rmax is big enough, include wrapping over top of domain -> negative shift
-		if(region.rmax[dim] > domainLength[dim] - skin){
+		// if rmax is big enough, include wrapping over top of domain -> negative shift
+		if (region.rmax[dim] > domainLength[dim]) {
 			doShiftsVector[dim].emplace_back(-1);
 		}
-		//if halo region is not completely outside, include non-wrapped halo -> zero shift
-		if(region.rmax[dim] > -skin and region.rmin[dim] < domainLength[dim] + skin){
+		// if halo region is not completely outside, include non-wrapped halo -> zero shift
+		if (region.rmax[dim] > 0 and region.rmin[dim] < domainLength[dim]) {
 			doShiftsVector[dim].emplace_back(0);
 		}
 		// the shift vector should never be empty!
