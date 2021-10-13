@@ -884,27 +884,20 @@ void MettDeamon::writeRestartfile()
 	if(domainDecomp.getRank() != 0)
 		return;
 
+	const std::string fname = "MettDeamonRestart_movdir-"+std::to_string(_nMovingDirection)+".dat";
+	std::stringstream outputstream;
+	std::ofstream ofs;
 	// init restart file
 	if(not _bInitRestartLog)
 	{
-		std::stringstream fnamestream;
-		fnamestream << "MettDeamonRestart_movdir-" << (uint32_t)_nMovingDirection << ".dat";
-		std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
-		std::stringstream outputstream;
+		ofs.open(fname, std::ios::out);
 		outputstream << "     simstep" << "   slabIndex" << "                  deltaY" << std::endl;
-		ofs << outputstream.str();
-		ofs.close();
 		_bInitRestartLog = true;
+	} else {
+		ofs.open(fname, std::ios::app);
 	}
-
-	std::stringstream fnamestream;
-	fnamestream << "MettDeamonRestart_movdir-" << (uint32_t)_nMovingDirection << ".dat";
-	std::ofstream ofs(fnamestream.str().c_str(), std::ios::app);
-	std::stringstream outputstream;
-
 	outputstream << setw(12) << simstep << setw(12) << _reservoir->getActualBinIndex();
 	outputstream << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.sum << std::endl;
-
 	ofs << outputstream.str();
 	ofs.close();
 
@@ -912,8 +905,7 @@ void MettDeamon::writeRestartfile()
 	{
 		std::stringstream fnamestream;
 		fnamestream << "MettDeamonRestart_movdir-" << (uint32_t)_nMovingDirection << "_TS" << fill_width('0', 9) << simstep << ".xml";
-		std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
-		std::stringstream outputstream;
+		ofs.open(fnamestream.str().c_str(), std::ios::out);
 		ofs << "<?xml version='1.0' encoding='UTF-8'?>" << endl;
 		ofs << "<restart>" << endl;
 		ofs << "\t<binindex>" << _reservoir->getActualBinIndex() << "</binindex>" << endl;
@@ -921,8 +913,6 @@ void MettDeamon::writeRestartfile()
 		ofs << "\t<deltaY>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _feedrate.feed.sum << "</deltaY>" << endl;
 		ofs.flags(f);  // restore default format flags
 		ofs << "</restart>" << endl;
-
-		ofs << outputstream.str();
 		ofs.close();
 	}
 }
@@ -937,23 +927,18 @@ void MettDeamon::logFeedrate()
 	if(domainDecomp.getRank() != 0)
 		return;
 
+	const std::string fname = "MettDeamon_feedrate_movdir-"+std::to_string(_nMovingDirection)+".dat";
+	std::stringstream outputstream;
+	std::ofstream ofs;
 	// init feedrate log file
 	if(not _bInitFeedrateLog)
 	{
-		std::stringstream fnamestream;
-		fnamestream << "MettDeamon_feedrate_movdir-" << (uint32_t)_nMovingDirection << ".dat";
-		std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
-		std::stringstream outputstream;
+		ofs.open(fname, std::ios::out);
 		outputstream << "     simstep" << "                feedrate" << std::endl;
-		ofs << outputstream.str();
-		ofs.close();
 		_bInitFeedrateLog = true;
+	} else {
+		ofs.open(fname, std::ios::app);
 	}
-
-	std::stringstream fnamestream;
-	fnamestream << "MettDeamon_feedrate_movdir-" << (uint32_t)_nMovingDirection << ".dat";
-	std::ofstream ofs(fnamestream.str().c_str(), std::ios::app);
-	std::stringstream outputstream;
 
 	outputstream << setw(12) << global_simulation->getSimulationStep();
 	outputstream << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.actual << std::endl;
@@ -983,24 +968,18 @@ void MettDeamon::logReleased()
 	if(domainDecomp.getRank() != 0)
 		return;
 
+	const std::string fname = "MettDeamon_released_movdir-"+std::to_string(_nMovingDirection)+".dat";
+	std::stringstream outputstream;
+	std::ofstream ofs;
 	// init released count log file
 	if(not _released.init_file)
 	{
-		std::stringstream fnamestream;
-		fnamestream << "MettDeamon_released_movdir-" << (uint32_t)_nMovingDirection << ".dat";
-		std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
-		std::stringstream outputstream;
+		ofs.open(fname, std::ios::out);
 		outputstream << "     simstep" << "       count" << "     deleted" << std::endl;
-		ofs << outputstream.str();
-		ofs.close();
 		_released.init_file = true;
+	} else {
+		ofs.open(fname, std::ios::app);
 	}
-
-	std::stringstream fnamestream;
-	fnamestream << "MettDeamon_released_movdir-" << (uint32_t)_nMovingDirection << ".dat";
-	std::ofstream ofs(fnamestream.str().c_str(), std::ios::app);
-	std::stringstream outputstream;
-
 	outputstream << setw(12) << global_simulation->getSimulationStep() << setw(12) << _released.count.global << setw(12) << _released.deleted.global << std::endl;
 
 	ofs << outputstream.str();

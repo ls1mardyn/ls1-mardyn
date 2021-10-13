@@ -131,8 +131,6 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 #pragma omp parallel
 #endif
 	{
-
-		uint64_t id;
 		uint32_t cid_ub;
 		double r[3];
 		double F[3];
@@ -142,7 +140,6 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 		MaxVals absVals;
 
 		for (auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-			id = it->getID();
 			cid_ub = it->componentid() + 1;
 			for (uint8_t d = 0; d < 3; ++d) {
 				r[d] = it->r(d);

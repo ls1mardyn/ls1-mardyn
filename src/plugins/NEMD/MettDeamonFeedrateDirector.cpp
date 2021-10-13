@@ -195,16 +195,16 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 	_feedrate.avg = _feedrate.sum * dInvNumvals;
 
 #ifndef NDEBUG
-	cout << "feedrate.list:" << endl;
+	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : feedrate.list: ";
 	for (std::list<double>::iterator it=_feedrate.list.begin(); it != _feedrate.list.end(); ++it)
-		std::cout << ' ' << *it;
+		std::cout << " " << *it;
 	cout << endl;
-	cout << "_particleManipCount.deleted.local.at(cid)=" << _particleManipCount.deleted.local.at(cid) << endl;
-	cout << "_particleManipCount.deleted.global.at(cid)=" << _particleManipCount.deleted.global.at(cid) << endl;
-	cout << "deletedParticlesPerTimestep=" << deletedParticlesPerTimestep << endl;
-	cout << "_feedrate.actual=" << _feedrate.actual << endl;
-	cout << "_feedrate.sum=" << _feedrate.sum << endl;
-	cout << "_feedrate.avg=" << _feedrate.avg << endl;
+	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _particleManipCount.deleted.local.at(cid)=" << _particleManipCount.deleted.local.at(cid) << endl;
+	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _particleManipCount.deleted.global.at(cid)=" << _particleManipCount.deleted.global.at(cid) << endl;
+	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : deletedParticlesPerTimestep=" << deletedParticlesPerTimestep << endl;
+	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _feedrate.actual=" << _feedrate.actual << endl;
+	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _feedrate.sum=" << _feedrate.sum << endl;
+	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _feedrate.avg=" << _feedrate.avg << endl;
 #endif
 }
 
@@ -244,7 +244,6 @@ void MettDeamonFeedrateDirector::writeRestartfile()
 		std::stringstream fnamestream;
 		fnamestream << "MettDeamonFeedrateDirectorRestart" << "_TS" << fill_width('0', 9) << simstep << ".xml";
 		std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
-		std::stringstream outputstream;
 		ofs << "<?xml version='1.0' encoding='UTF-8'?>" << endl;
 		ofs << "<feedrate>" << endl;
 		ofs << "\t<numvals>" << _feedrate.numvals << "</numvals>" << endl;
@@ -256,8 +255,6 @@ void MettDeamonFeedrateDirector::writeRestartfile()
 		ofs << "</list>" << endl;
 		ofs.flags(f);  // restore default format flags
 		ofs << "</feedrate>" << endl;
-
-		ofs << outputstream.str();
 		ofs.close();
 	}
 }
