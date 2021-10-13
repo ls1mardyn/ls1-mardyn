@@ -16,5 +16,4 @@
 ./Injection/liq/sim01/run04/config.xml
 ./Injection/nemd/sim01/run01/config.xml
 ./Injection/nemd/sim01/run02/config.xml
-./Evaporation/stationary/sim02/run02/config.xml
 
