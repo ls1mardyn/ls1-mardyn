@@ -231,13 +231,14 @@
 				<pluginID>101</pluginID>
 				<control> <update_freq>5000</update_freq> </control>
 			</mirror>
+			<restart> <writefreq>10000</writefreq> </restart>
 		</plugin>-->
 
 		<plugin name="MettDeamon">
 			<control>
-				<updatefreq>1000</updatefreq>
-				<logfreqfeed>1000</logfreqfeed>
-				<logfreqreleased>1000</logfreqreleased>
+				<updatefreq>2000</updatefreq>
+				<logfreqfeed>2000</logfreqfeed>
+				<logfreqreleased>2000</logfreqreleased>
 				<writefreq>10000</writefreq>
 				<numvals>10</numvals>
 				<feed>

@@ -1080,7 +1080,7 @@ void MettDeamon::getAvailableParticleIDs(ParticleContainer* particleContainer, D
 #ifdef ENABLE_MPI
 	MPI_Allreduce(vl.data(), vg.data(), vg.size(), MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
 #else
-	for(auto ii=0; ii<vg.size(); ++ii)
+	for(auto ii=0u; ii<vg.size(); ++ii)
 		vg.at(ii) = vl.at(ii);
 #endif
 
