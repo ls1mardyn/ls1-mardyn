@@ -300,7 +300,8 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 			xmlconfig.getNodeValue("control/feed/target", _feedrate.feed.init);
 			global_log->info() << "[MettDeamon] Feed method 4: Using constant feed rate with v = " << _feedrate.feed.init << std::endl;
 		}
-		else if(5 ==nVal) {
+		else if(5 == nVal) {
+			_nFeedRateMethod = FRM_DIRECTED;
 			global_log->info() << "[MettDeamon] Feed method 5: Getting feed rate from MettDeamonFeedrateDirector" << std::endl;
 		}
 
@@ -872,6 +873,9 @@ void MettDeamon::writeRestartfile()
 	if(0 != simstep % _nWriteFreqRestart)
 		return;
 
+	if( simstep == global_simulation->getNumInitTimesteps() ) // do not write data directly after (re)start
+		return;
+
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 
 	if(domainDecomp.getRank() != 0)
@@ -912,7 +916,11 @@ void MettDeamon::writeRestartfile()
 
 void MettDeamon::logFeedrate()
 {
-	if(0 != global_simulation->getSimulationStep() % _feedrate.log_freq)
+	uint64_t simstep = global_simulation->getSimulationStep();
+	if(0 != simstep % _feedrate.log_freq)
+		return;
+
+	if( simstep == global_simulation->getNumInitTimesteps() ) // do not write data directly after (re)start
 		return;
 
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
@@ -942,7 +950,11 @@ void MettDeamon::logFeedrate()
 
 void MettDeamon::logReleased()
 {
-	if(0 != global_simulation->getSimulationStep() % _feedrate.log_freq)
+	uint64_t simstep = global_simulation->getSimulationStep();
+	if(0 != simstep % _feedrate.log_freq)
+		return;
+
+	if( simstep == global_simulation->getNumInitTimesteps() ) // do not write data directly after (re)start
 		return;
 
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
@@ -986,6 +998,9 @@ void MettDeamon::logReleasedVelocities()
 
 	uint64_t simstep = global_simulation->getSimulationStep();
 	if(0 != (simstep % _released.log_freq_vel) )
+		return;
+	
+	if( simstep == global_simulation->getNumInitTimesteps() ) // do not write data directly after (re)start
 		return;
 
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();

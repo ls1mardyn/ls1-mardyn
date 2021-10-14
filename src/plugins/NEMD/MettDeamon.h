@@ -225,7 +225,7 @@ public:
 			_feedrate.feed.actual = feed_actual;
 			global_log->info() << "[MettDeamon]: Set new feed rate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
 		} else {
-			global_log->warning() << "[MettDeamon]: Feed rate not set because feed method is not 5" << std::endl;
+			global_log->warning() << "[MettDeamon]: Feed rate not set because feed method ( " << _nFeedRateMethod << " ) is not " << FRM_DIRECTED << std::endl;
 		}
 	}
 	void setInitFeedrate(const double& feed_init) {
@@ -233,7 +233,7 @@ public:
 			_feedrate.feed.init = feed_init;
 			global_log->info() << "[MettDeamon]: Set init feed rate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
 		} else {
-			global_log->warning() << "[MettDeamon]: Feed rate not set because feed method is not 5" << std::endl;
+			global_log->warning() << "[MettDeamon]: Feed rate not set because feed method ( " << _nFeedRateMethod << " ) is not " << FRM_DIRECTED << std::endl;
 		}
 	}
 	double getInvDensityArea() {return _dInvDensityArea;}
@@ -290,7 +290,7 @@ private:
 	uint64_t _nNumMoleculesDeletedGlobalAlltime;
 	CommVar<uint64_t> _nNumMoleculesTooFast;
 	uint8_t _nMovingDirection;
-	uint8_t _nFeedRateMethod;
+	FeedRateMethod _nFeedRateMethod;
 	uint8_t _nZone2Method;
 	uint32_t _nNumValsSummation;
 	int64_t _numDeletedMolsSum;
