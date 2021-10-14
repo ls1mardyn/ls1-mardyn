@@ -20,9 +20,10 @@ if (ENABLE_AUTOPAS)
     set(spdlog_ForceBundled ON CACHE BOOL "" FORCE)
     set(Eigen3_ForceBundled ON CACHE BOOL "" FORCE)
 
-    if (AUTOPAS_MANUAL_COMMIT)
-        set(AUTOPAS_TAG ${AUTOPAS_MANUAL_COMMIT})
+    if (AUTOPAS_MANUAL_TAG)
+        set(AUTOPAS_TAG ${AUTOPAS_MANUAL_TAG})
     else()
+        # The merge commit of autopas#642, i.e., the introduction of the LC interface. (2021-09-19)
         set(AUTOPAS_TAG 510e7bb43fb0255cc5d64966f7d68754890e8940)
     endif()
 
