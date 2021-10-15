@@ -134,6 +134,9 @@ void Adios2Writer::readXML(XMLfileUnits& xmlconfig) {
 	_writefrequency = 50000;
 	xmlconfig.getNodeValue("writefrequency", _writefrequency);
 	global_log->info() << "[Adios2Writer] write frequency: " << _writefrequency << endl;
+	_append_mode = "OFF";
+	xmlconfig.getNodeValue("appendmode", _append_mode);
+	global_log->info() << "[Adios2Writer] Append mode: " << _append_mode << endl;
 	_compression = "none";
 	xmlconfig.getNodeValue("compression", _compression);
 	global_log->info() << "[Adios2Writer] compression type: " << _compression << endl;
@@ -185,7 +188,11 @@ void Adios2Writer::initAdios2() {
 
 		if (!_engine) {
 			global_log->info() << "[Adios2Writer] Opening File for writing." << _outputfile.c_str() << std::endl;
-			_engine = std::make_shared<adios2::Engine>(_io->Open(_outputfile, adios2::Mode::Write));
+			if (_append_mode == "ON" || _append_mode == "on" || _append_mode == "TRUE" || _append_mode == "true") {
+				_engine = std::make_shared<adios2::Engine>(_io->Open(_outputfile, adios2::Mode::Append));
+			} else {
+				_engine = std::make_shared<adios2::Engine>(_io->Open(_outputfile, adios2::Mode::Write));
+			}
 		}
 
 		// add operations

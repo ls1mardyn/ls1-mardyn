@@ -79,6 +79,7 @@ private:
 	std::string _compression;
 	std::string _compression_accuracy;
 	std::string _compression_rate;
+	std::string _append_mode;
 	// variables to write, see documentation
 	std::map<std::string, std::variant<std::vector<double>, std::vector<uint64_t>>> _vars;
 	// std::map<std::string, std::vector<double>> vars;
