@@ -121,7 +121,7 @@
 		<output>
 			<outputplugin name="CheckpointWriter">
 				<type>binary</type>
-				<writefrequency>10000</writefrequency>
+				<writefrequency>25000</writefrequency>
 				<outputprefix>cp_binary</outputprefix>
 			</outputplugin>
 			
