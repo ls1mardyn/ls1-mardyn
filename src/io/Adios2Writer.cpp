@@ -42,27 +42,27 @@ void Adios2Writer::resetContainers() {
 	// set variable name to write
 	_vars[mol_id_name] = std::vector<uint64_t>();
 	_vars[comp_id_name] = std::vector<uint64_t>();
-	_vars[ry_name] = std::vector<double>();
-	_vars[rx_name] = std::vector<double>();
-	_vars[rz_name] = std::vector<double>();
-	_vars[vx_name] = std::vector<double>();
-	_vars[vy_name] = std::vector<double>();
-	_vars[vz_name] = std::vector<double>();
+	_vars[ry_name] = std::vector<PRECISION>();
+	_vars[rx_name] = std::vector<PRECISION>();
+	_vars[rz_name] = std::vector<PRECISION>();
+	_vars[vx_name] = std::vector<PRECISION>();
+	_vars[vy_name] = std::vector<PRECISION>();
+	_vars[vz_name] = std::vector<PRECISION>();
 	if (!_singleCenter) {
-		_vars[qw_name] = std::vector<double>();
-		_vars[qx_name] = std::vector<double>();
-		_vars[qy_name] = std::vector<double>();
-		_vars[qz_name] = std::vector<double>();
-		_vars[Lx_name] = std::vector<double>();
-		_vars[Ly_name] = std::vector<double>();
-		_vars[Lz_name] = std::vector<double>();
+		_vars[qw_name] = std::vector<PRECISION>();
+		_vars[qx_name] = std::vector<PRECISION>();
+		_vars[qy_name] = std::vector<PRECISION>();
+		_vars[qz_name] = std::vector<PRECISION>();
+		_vars[Lx_name] = std::vector<PRECISION>();
+		_vars[Ly_name] = std::vector<PRECISION>();
+		_vars[Lz_name] = std::vector<PRECISION>();
 	}
 }
 
 void Adios2Writer::clearContainers() {
 	for (auto& [variableName, variableContainer] : _vars) {
-		if (std::holds_alternative<std::vector<double>>(variableContainer)) {
-			std::get<std::vector<double>>(variableContainer).clear();
+		if (std::holds_alternative<std::vector<PRECISION>>(variableContainer)) {
+			std::get<std::vector<PRECISION>>(variableContainer).clear();
 		} else {
 			std::get<std::vector<uint64_t>>(variableContainer).clear();
 		}
@@ -72,18 +72,19 @@ void Adios2Writer::clearContainers() {
 void Adios2Writer::defineVariables(uint64_t global, uint64_t offset, uint64_t local, int numProcs, int rank) {
 	for (auto& [variableName, variableContainer] : _vars) {
 		global_log->info() << "[Adios2Writer] Defining Variable " << variableName << std::endl;
-		if (std::holds_alternative<std::vector<double>>(variableContainer)) {
-			auto advar_double = _io->DefineVariable<double>(variableName, {global}, {offset}, {local}, adios2::ConstantDims);
+		if (std::holds_alternative<std::vector<PRECISION>>(variableContainer)) {
+			auto advar_prec =
+				_io->DefineVariable<PRECISION>(variableName, {global}, {offset}, {local}, adios2::ConstantDims);
 			
 			if (!_compressionOperator.Type().empty()) {
 				if (_compression == "SZ" || _compression == "sz") {
 #ifdef ADIOS2_HAVE_SZ
-					advar_double.AddOperation(_compressionOperator,
+					advar_prec.AddOperation(_compressionOperator,
 										  {{adios2::ops::sz::key::accuracy, _compression_accuracy}});
 #endif
 				} else if (_compression == "ZFP" || _compression == "zfp") {
 #ifdef ADIOS2_HAVE_ZFP
-					advar_double.AddOperation(_compressionOperator,
+					advar_prec.AddOperation(_compressionOperator,
 											  {{adios2::ops::zfp::key::rate, _compression_rate}});
 #endif
 				}
@@ -109,9 +110,9 @@ void Adios2Writer::defineVariables(uint64_t global, uint64_t offset, uint64_t lo
 	}
 
 	global_log->info() << "[Adios2Writer] Defining Variable " << gbox_name << std::endl;
-	_io->DefineVariable<double>(gbox_name, {6}, {0}, {6}, adios2::ConstantDims);
+	_io->DefineVariable<PRECISION>(gbox_name, {6}, {0}, {6}, adios2::ConstantDims);
 	global_log->info() << "[Adios2Writer] Defining Variable " << lbox_name << std::endl;
-	_io->DefineVariable<double>(lbox_name, {}, {}, {6}, adios2::ConstantDims);
+	_io->DefineVariable<PRECISION>(lbox_name, {}, {}, {6}, adios2::ConstantDims);
 	global_log->info() << "[Adios2Writer] Defining Variable " << offsets_name << std::endl;
 	_io->DefineVariable<uint64_t>(offsets_name, {static_cast<size_t>(numProcs)}, {static_cast<size_t>(rank)}, {1},
 								  adios2::ConstantDims);
@@ -246,7 +247,8 @@ void Adios2Writer::initAdios2() {
 					adios_epsilon.emplace_back(lj_center.eps());
 				}
 
-				_io->DefineAttribute<double>(component_id + "_centers", adios_lj_centers[0].data(), adios_lj_centers.size() * 3);
+				_io->DefineAttribute<double>(component_id + "_centers", adios_lj_centers[0].data(),
+												adios_lj_centers.size() * 3);
 				_io->DefineAttribute<double>(component_id + "_sigma", adios_sigmas.data(), adios_sigmas.size());
 				_io->DefineAttribute<double>(component_id + "_mass", adios_mass.data(), adios_mass.size());
 				_io->DefineAttribute<double>(component_id + "_epsilon", adios_epsilon.data(), adios_epsilon.size());
@@ -302,8 +304,8 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 	comp_id.reserve(localNumParticles);
 
 	for (auto& [variableName, variableContainer] : _vars) {
-		if (std::holds_alternative<std::vector<double>>(variableContainer)) {
-			std::get<std::vector<double>>(variableContainer).reserve(localNumParticles);
+		if (std::holds_alternative<std::vector<PRECISION>>(variableContainer)) {
+			std::get<std::vector<PRECISION>>(variableContainer).reserve(localNumParticles);
 		} else {
 			std::get<std::vector<uint64_t>>(variableContainer).reserve(localNumParticles);
 		}
@@ -312,21 +314,21 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 	for (auto m = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 		std::get<std::vector<uint64_t>>(_vars[mol_id_name]).emplace_back(m->getID());
 		std::get<std::vector<uint64_t>>(_vars[comp_id_name]).emplace_back(m->componentid());
-		std::get<std::vector<double>>(_vars[rx_name]).emplace_back(m->r(0));
-		std::get<std::vector<double>>(_vars[ry_name]).emplace_back(m->r(1));
-		std::get<std::vector<double>>(_vars[rz_name]).emplace_back(m->r(2));
-		std::get<std::vector<double>>(_vars[vx_name]).emplace_back(m->v(0));
-		std::get<std::vector<double>>(_vars[vy_name]).emplace_back(m->v(1));
-		std::get<std::vector<double>>(_vars[vz_name]).emplace_back(m->v(2));
+		std::get<std::vector<PRECISION>>(_vars[rx_name]).emplace_back(m->r(0));
+		std::get<std::vector<PRECISION>>(_vars[ry_name]).emplace_back(m->r(1));
+		std::get<std::vector<PRECISION>>(_vars[rz_name]).emplace_back(m->r(2));
+		std::get<std::vector<PRECISION>>(_vars[vx_name]).emplace_back(m->v(0));
+		std::get<std::vector<PRECISION>>(_vars[vy_name]).emplace_back(m->v(1));
+		std::get<std::vector<PRECISION>>(_vars[vz_name]).emplace_back(m->v(2));
 		if (!_singleCenter) {
 			auto q = m->q();
-			std::get<std::vector<double>>(_vars[qw_name]).emplace_back(q.qw());
-			std::get<std::vector<double>>(_vars[qx_name]).emplace_back(q.qx());
-			std::get<std::vector<double>>(_vars[qy_name]).emplace_back(q.qy());
-			std::get<std::vector<double>>(_vars[qz_name]).emplace_back(q.qz());
-			std::get<std::vector<double>>(_vars[Lx_name]).emplace_back(m->D(0));
-			std::get<std::vector<double>>(_vars[Ly_name]).emplace_back(m->D(1));
-			std::get<std::vector<double>>(_vars[Lz_name]).emplace_back(m->D(2));
+			std::get<std::vector<PRECISION>>(_vars[qw_name]).emplace_back(q.qw());
+			std::get<std::vector<PRECISION>>(_vars[qx_name]).emplace_back(q.qx());
+			std::get<std::vector<PRECISION>>(_vars[qy_name]).emplace_back(q.qy());
+			std::get<std::vector<PRECISION>>(_vars[qz_name]).emplace_back(q.qz());
+			std::get<std::vector<PRECISION>>(_vars[Lx_name]).emplace_back(m->D(0));
+			std::get<std::vector<PRECISION>>(_vars[Ly_name]).emplace_back(m->D(1));
+			std::get<std::vector<PRECISION>>(_vars[Lz_name]).emplace_back(m->D(2));
 		}
 		
 		m_id.emplace_back(m->getID());
@@ -344,10 +346,15 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 	global_log->debug() << "[Adios2Writer] Offset " << offset << std::endl;
 #endif
 
-	std::array<double, 6> global_box{
+	std::array<double, 6> tmp_global_box{
 		0, 0, 0, domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2)};
-	std::array<double, 6> local_box;
-	domainDecomp->getBoundingBoxMinMax(domain, &local_box[0], &local_box[3]);
+	std::array<PRECISION, 6> global_box;
+	std::copy(global_box.begin(), global_box.end(), tmp_global_box.begin());
+
+	std::array<double, 6> tmp_local_box;
+	domainDecomp->getBoundingBoxMinMax(domain, &tmp_local_box[0], &tmp_local_box[3]);
+	std::array<PRECISION, 6> local_box;
+	std::copy(local_box.begin(), local_box.end(), tmp_local_box.begin());
 
 	global_log->debug() << "[Adios2Writer] Local Box: " << local_box[0] << " " << local_box[1] << " " << local_box[2]
 					   << " " << local_box[3] << " " << local_box[4] << " " << local_box[5] << std::endl;
@@ -356,9 +363,9 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		_io->RemoveAllVariables();
 		defineVariables(globalNumParticles, offset, localNumParticles, numProcs, rank);
 		for (auto& [variableName, variableContainer] : _vars) {
-			if (std::holds_alternative<std::vector<double>>(variableContainer)) {
-				auto adios2Var = _io->InquireVariable<double>(variableName);
-				_engine->Put<double>(adios2Var, std::get<std::vector<double>>(variableContainer).data());
+			if (std::holds_alternative<std::vector<PRECISION>>(variableContainer)) {
+				auto adios2Var = _io->InquireVariable<PRECISION>(variableName);
+				_engine->Put<PRECISION>(adios2Var, std::get<std::vector<PRECISION>>(variableContainer).data());
 			} else {
 				auto adios2Var = _io->InquireVariable<uint64_t>(variableName);
 				_engine->Put<uint64_t>(adios2Var, std::get<std::vector<uint64_t>>(variableContainer).data());
@@ -367,31 +374,31 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 		// global box
 		if (domainDecomp->getRank() == 0) {
-			auto adios2_global_box = _io->InquireVariable<double>(gbox_name);
+			auto adios2_global_box = _io->InquireVariable<PRECISION>(gbox_name);
 
 			global_log->debug() << "[Adios2Writer] Putting Variables" << std::endl;
 			if (!adios2_global_box) {
 				global_log->error() << "[Adios2Writer] Could not create variable: global_box" << std::endl;
 				return;
 			}
-			_engine->Put<double>(adios2_global_box, global_box.data());
+			_engine->Put<PRECISION>(adios2_global_box, global_box.data());
 		}
 
 		// local box
-		auto adios2_local_box = _io->InquireVariable<double>(lbox_name);
+		auto adios2_local_box = _io->InquireVariable<PRECISION>(lbox_name);
 
 		if (!adios2_local_box) {
 			global_log->error() << "[Adios2Writer] Could not create variable: local_box" << std::endl;
 			return;
 		}
-		_engine->Put<double>(adios2_local_box, local_box.data());
+		_engine->Put<PRECISION>(adios2_local_box, local_box.data());
 
 		// offsets
 		auto adios2_offset = _io->InquireVariable<uint64_t>(offsets_name);
 		_engine->Put<uint64_t>(adios2_offset, offset);
 
 		// simulation time
-		double current_time = _simulation.getSimulationTime();
+		auto current_time = _simulation.getSimulationTime();
 		if (domainDecomp->getRank() == 0) {
 			auto adios2_simulationtime = _io->InquireVariable<double>(simtime_name);
 			if (!adios2_simulationtime) {

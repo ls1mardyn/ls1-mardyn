@@ -7,11 +7,11 @@
  *
  */
 #ifdef ENABLE_ADIOS2
-
 #include "io/InputBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "molecules/Component.h"
 #include "utils/Logger.h"
+#include "molecules/FullMolecule.h"
 
 #include <chrono>
 #include <set>
@@ -22,6 +22,7 @@
 #include <memory>
 #include <map>
 #include <errno.h>
+#include <variant>
 
 #include "adios2.h"
 #ifdef ENABLE_MPI
@@ -70,13 +71,7 @@ private:
     void initAdios2();
     void rootOnlyRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
     void parallelRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
-	void performInquire(std::map<std::string, adios2::Params> variables, uint64_t buffer, uint64_t offset,
-									  std::vector<double>& rx, std::vector<double>& ry, std::vector<double>& rz,
-									  std::vector<double>& vx, std::vector<double>& vy, std::vector<double>& vz,
-									  std::vector<double>& qw, std::vector<double>& qx, std::vector<double>& qy,
-									  std::vector<double>& qz, std::vector<double>& Lx, std::vector<double>& Ly,
-									  std::vector<double>& Lz, std::vector<uint64_t>& mol_id,
-									  std::vector<uint64_t>& comp_id);
+	
     // output filename, from XML
     std::string _inputfile;
     std::string _adios2enginetype;
@@ -85,6 +80,7 @@ private:
     uint64_t particle_count;
 	std::vector<Component> _dcomponents;
 	double _simtime = 0.0;
+	bool _single_precission = false;
     // main instance
     std::shared_ptr<adios2::ADIOS> inst;
     std::shared_ptr<adios2::Engine> engine;  
@@ -104,7 +100,7 @@ private:
 
     template <typename T> 
     void doTheRead(std::string var_name, std::vector<T>& container, uint64_t buffer, uint64_t offset) {
-
+    	
       adios2::Dims readsize({buffer});
       adios2::Dims offs({offset});
 
@@ -125,6 +121,156 @@ private:
       advar.SetStepSelection({_step,1});
       engine->Get<T>(advar, value);
     }
+
+	template <typename T>
+	Molecule fillMolecule(int i_, std::vector<uint64_t>& mol_id_, std::vector<uint64_t>& comp_id_, T& rx_, T& ry_,
+						  T& rz_, T& vx_, T& vy_, T& vz_, T& qw_, T& qx_, T& qy_, T& qz_, T& Lx_, T& Ly_, T& Lz_) {
+		Molecule m1;
+		if (qw_.empty()) {
+			m1 = Molecule(mol_id_[i_], &_dcomponents[comp_id_[i_]], rx_[i_], ry_[i_], rz_[i_], vx_[i_], vy_[i_],
+						  vz_[i_], 1, 0, 0, 0, 0, 0, 0);
+		} else {
+			m1 = Molecule(mol_id_[i_], &_dcomponents[comp_id_[i_]], rx_[i_], ry_[i_], rz_[i_], vx_[i_], vy_[i_],
+						  vz_[i_], qw_[i_], qx_[i_], qy_[i_], qz_[i_], Lx_[i_], Ly_[i_], Lz_[i_]);
+		}
+		return m1;
+	}
+
+	template <typename T>
+	void performInquire(std::map<std::string, adios2::Params> variables, uint64_t buffer, uint64_t offset,
+						std::vector<T>& rx, std::vector<T>& ry, std::vector<T>& rz, std::vector<T>& vx,
+						std::vector<T>& vy, std::vector<T>& vz, std::vector<T>& qw, std::vector<T>& qx,
+						std::vector<T>& qy, std::vector<T>& qz, std::vector<T>& Lx, std::vector<T>& Ly,
+						std::vector<T>& Lz, std::vector<uint64_t>& mol_id, std::vector<uint64_t>& comp_id) {
+		for (auto var : variables) {
+			if (var.first == "rx") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+						doTheRead(var.first, rx, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Positions should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "ry") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, ry, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Positions should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "rz") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, rz, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Positions should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "vx") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, vx, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Velocities should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "vy") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, vy, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Velocities should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "vz") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, vz, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Velocities should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "qw") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, qw, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Quaternions should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "qx") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, qx, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Quaternions should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "qy") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, qy, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Quaternions should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "qz") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, qz, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Quaternions should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "Lx") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, Lx, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Angular momentum should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "Ly") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, Ly, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Angular momentum should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "Lz") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, Lz, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Angular momentum should be doubles or floats (for now)."
+										<< std::endl;
+				}
+			}
+			if (var.first == "component_id") {
+				if (var.second["Type"] == "uint64_t") {
+					doTheRead(var.first, comp_id, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Component ids should be uint64_t (for now)." << std::endl;
+				}
+			}
+			if (var.first == "molecule_id") {
+				if (var.second["Type"] == "uint64_t") {
+					doTheRead(var.first, mol_id, buffer, offset);
+				} else {
+					global_log->error() << "[Adios2Reader] Molecule ids should be uint64_t (for now)." << std::endl;
+				}
+			}
+			if (var.first == "simulationtime") {
+				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
+					doTheRead(var.first, _simtime);
+				} else {
+					global_log->error() << "[Adios2Reader] Simulation time should be double or float (for now)."
+										<< std::endl;
+				}
+			}
+		}
+	}
 
 };
 #endif // ENABLE_ADIOS2

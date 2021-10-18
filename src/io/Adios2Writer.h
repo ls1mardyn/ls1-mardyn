@@ -7,6 +7,12 @@
  *
  */
 #ifdef ENABLE_ADIOS2
+#ifdef MARDYN_DPDP
+#define PRECISION double
+#else
+#define PRECISION float
+#endif
+
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "plugins/PluginBase.h"
 #include "molecules/Component.h"
@@ -81,8 +87,7 @@ private:
 	std::string _compression_rate;
 	std::string _append_mode;
 	// variables to write, see documentation
-	std::map<std::string, std::variant<std::vector<double>, std::vector<uint64_t>>> _vars;
-	// std::map<std::string, std::vector<double>> vars;
+	std::map<std::string, std::variant<std::vector<double>, std::vector<float>, std::vector<uint64_t>>> _vars;
 	// main instance
 	std::shared_ptr<adios2::ADIOS> _inst;
 	std::shared_ptr<adios2::Engine> _engine;
