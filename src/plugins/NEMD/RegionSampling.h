@@ -204,14 +204,20 @@ private:
 	std::vector<double> _dSquaredVelocityGlobal;
 	std::vector<double> _dForceLocal;
 	std::vector<double> _dForceGlobal;
-	std::vector<double> _dHeatfluxLocal;
-	std::vector<double> _dHeatfluxGlobal;
+	std::vector<double> _dHeatfluxLocal1;
+	std::vector<double> _dHeatfluxLocal2;
+	std::vector<double> _dHeatfluxLocal3;
+	std::vector<double> _dHeatfluxGlobal1;
+	std::vector<double> _dHeatfluxGlobal2;
+	std::vector<double> _dHeatfluxGlobal3;
 	std::vector<double> _dVirialLocal;
 	std::vector<double> _dVirialGlobal;
 
 	// output profiles
 	std::vector<double> _dForce;
-	std::vector<double> _dHeatflux;
+	std::vector<double> _dHeatflux1;
+	std::vector<double> _dHeatflux2;
+	std::vector<double> _dHeatflux3;
 	std::vector<double> _dDriftVelocity;
 	std::vector<double> _d2EkinTransComp;
 	std::vector<double> _d2EkinDriftComp;

@@ -185,8 +185,9 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	global_log->info() << "Long Range Correction: using " << _slabs << " slabs for profiles to calculate LRC." << endl;
 	global_log->info() << "Long Range Correction: sampling profiles every " << frequency << "th simstep." << endl;
 	global_log->info() << "Long Range Correction: profiles are smoothed (averaged over time): " << std::boolalpha << _smooth << endl;
-	global_log->info() << "Long Range Correction: corrections are applied to particles within yRef = " << _region.refPos[0] << " (refID: " << _region.refPosID[0] << ") and " << _region.refPos[1] << " (refID: " << _region.refPosID[1] << ")" << endl;
-
+	global_log->info() << "Long Range Correction: force corrections are applied to particles within yRef = " << _region.refPos[0] << " (refID: " << _region.refPosID[0] << ") and " << _region.refPos[1] << " (refID: " << _region.refPosID[1] << ")" << endl;
+	global_log->info() << "Long Range Correction: pot. energy and virial corrections are applied within whole domain" << endl;
+	
 	// write control
 	bool bRet1 = xmlconfig.getNodeValue("writecontrol/start", _nStartWritingProfiles);
 	bool bRet2 = xmlconfig.getNodeValue("writecontrol/frequency", _nWriteFreqProfiles);
@@ -416,10 +417,6 @@ void Planar::calculateLongRange() {
 	#endif
 	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
 
-		if (tempMol->r(1) < _region.actPos[0] || tempMol->r(1) > _region.actPos[1]) {
-			continue;
-		}
-
 		unsigned cid = tempMol->componentid();
 
 		for (unsigned i=0; i<numLJ[cid]; i++){
@@ -445,7 +442,9 @@ void Planar::calculateLongRange() {
 			Via[6] = vNDLJ[index];
 			Via[7] = vTLJ[index];
 			Via[8] = vNDLJ[index];
-			tempMol->Fljcenteradd(i, Fa);
+			if (tempMol->r(1) >= _region.actPos[0] && tempMol->r(1) <= _region.actPos[1]) {
+				tempMol->Fljcenteradd(i, Fa);
+			}
 //			Virial_c=Via[1]; TODO: I, tchipevn, think that this line is a bug, so I'm commenting it out. Virial_c is a summation variable, it should not be overwritten by a value, dependent on the last molecule in the system.
 			tempMol->Viadd(Via);
 			tempMol->Uadd(uLJ[index]);
@@ -463,7 +462,9 @@ void Planar::calculateLongRange() {
 			Via[2] = vTDipole[index];
 			Via[4] = vTDipole[index];
 			Via[7] = vTDipole[index];
-			tempMol->Fadd(Fa); // Force is stored on the center of mass of the molecule!
+			if (tempMol->r(1) >= _region.actPos[0] && tempMol->r(1) <= _region.actPos[1]) {
+				tempMol->Fadd(Fa); // Force is stored on the center of mass of the molecule!
+			}
 			tempMol->Viadd(Via);
 			tempMol->Uadd(uDipole[index]);
 		}				
@@ -1181,6 +1182,7 @@ void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsig
 	{
 		outputstream << "            rho_l_LRC[" << si << "]";
 		outputstream << "                F_LRC[" << si << "]";
+		outputstream << "                u_LRC[" << si << "]";
 	}
 	outputstream << endl;
 
@@ -1191,13 +1193,13 @@ void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsig
 		outputstream << std::setw(24) << pos;
 		for(uint32_t si=0; si<numLJSum; ++si)
 		{
-			if (pos < _region.actPos[0] || pos > _region.actPos[1]) {
-				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << 0.0;
-				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << 0.0;
-			} else {
-				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << rho_l[_slabs*si+pi];
+			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << rho_l[_slabs*si+pi];
+			if (pos >= _region.actPos[0] && pos <= _region.actPos[1]) {
 				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << fLJ[_slabs*si+pi];
+			} else {
+				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << 0.0;
 			}
+			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << uLJ[_slabs*si+pi];
 		}
 		outputstream << std::endl;
 	} // loop: pos
