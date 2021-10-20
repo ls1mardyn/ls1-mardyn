@@ -65,8 +65,8 @@ public:
 
 	double GetLowerCorner(const uint16_t& nDim) {return _dLowerCorner.at(nDim);}
 	double GetUpperCorner(const uint16_t& nDim) {return _dUpperCorner.at(nDim);}
-	void GetLowerCorner(double*& dLC) {dLC = _dLowerCorner.data();}
-	void GetUpperCorner(double*& dUC) {dUC = _dUpperCorner.data();}
+	std::array<double,3> GetLowerCorner() {return _dLowerCorner();}
+	std::array<double,3> GetUpperCorner() {return _dUpperCorner();}
 	double* GetLowerCorner() {return _dLowerCorner.data();}
 	double* GetUpperCorner() {return _dUpperCorner.data();}
 	void SetLowerCorner(std::array<double,3> dLC) { _dLowerCorner = dLC; }
