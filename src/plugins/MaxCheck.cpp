@@ -42,14 +42,14 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 
 	// range
 	Domain* domain = global_simulation->getDomain();
-	_range.enable = true;
+	_range.inclusive = true;
 	_range.xmin = 0.;
 	_range.xmax = domain->getGlobalLength(0);
 	_range.ymin = 0.;
 	_range.ymax = domain->getGlobalLength(1);
 	_range.zmin = 0.;
 	_range.zmax = domain->getGlobalLength(2);
-	xmlconfig.getNodeValue("range/enable", _range.enable);
+	xmlconfig.getNodeValue("range/inclusive", _range.inclusive);
 	xmlconfig.getNodeValue("range/xmin", _range.xmin);
 	xmlconfig.getNodeValue("range/xmax", _range.xmax);
 	xmlconfig.getNodeValue("range/ymin", _range.ymin);
