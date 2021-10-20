@@ -63,14 +63,10 @@ public:
 	CuboidRegion(ControlInstance* parent, double dLC[3], double dUC[3] );
 	virtual ~CuboidRegion();
 
-	double GetLowerCorner(const uint16_t& nDim) {return _dLowerCorner.at(nDim);}
-	double GetUpperCorner(const uint16_t& nDim) {return _dUpperCorner.at(nDim);}
 	std::array<double,3> GetLowerCorner() {return _dLowerCorner;}
 	std::array<double,3> GetUpperCorner() {return _dUpperCorner;}
 	void SetLowerCorner(std::array<double,3> dLC) { _dLowerCorner = dLC; }
 	void SetUpperCorner(std::array<double,3> dUC) { _dUpperCorner = dUC; }
-	void SetLowerCorner(const uint16_t& nDim, const double& dVal) {_dLowerCorner.at(nDim) = dVal;}
-	void SetUpperCorner(const uint16_t& nDim, const double& dVal) {_dUpperCorner.at(nDim) = dVal;}
 	double GetWidth(const uint16_t& nDim) {return _dUpperCorner[nDim] - _dLowerCorner[nDim];}
 	void GetRange(const uint16_t& nDim, double& dRangeBegin, double& dRangeEnd) {dRangeBegin = _dLowerCorner.at(nDim); dRangeEnd = _dUpperCorner.at(nDim);}
 	bool PositionIsInside(const uint16_t& nDim, const double& dPos) {return (dPos > _dLowerCorner.at(nDim) ) && (dPos < _dUpperCorner.at(nDim) );}

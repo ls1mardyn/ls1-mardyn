@@ -791,8 +791,8 @@ void DistControl::WriteData(const uint64_t& simstep)
 		{
 			CuboidRegionObs* region = dynamic_cast<CuboidRegionObs*>(*it);
 			if(nullptr != region) {
-				outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << region->GetLowerCorner(1);
-				outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << region->GetUpperCorner(1);
+				outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << region->GetLowerCorner()[1];
+				outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << region->GetUpperCorner()[1];
 			}
 			Mirror* mirror = dynamic_cast<Mirror*>(*it);
 			if(nullptr != mirror) {
