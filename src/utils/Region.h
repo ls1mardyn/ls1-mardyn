@@ -65,10 +65,8 @@ public:
 
 	double GetLowerCorner(const uint16_t& nDim) {return _dLowerCorner.at(nDim);}
 	double GetUpperCorner(const uint16_t& nDim) {return _dUpperCorner.at(nDim);}
-	std::array<double,3> GetLowerCorner() {return _dLowerCorner();}
-	std::array<double,3> GetUpperCorner() {return _dUpperCorner();}
-	double* GetLowerCorner() {return _dLowerCorner.data();}
-	double* GetUpperCorner() {return _dUpperCorner.data();}
+	std::array<double,3> GetLowerCorner() {return _dLowerCorner;}
+	std::array<double,3> GetUpperCorner() {return _dUpperCorner;}
 	void SetLowerCorner(std::array<double,3> dLC) { _dLowerCorner = dLC; }
 	void SetUpperCorner(std::array<double,3> dUC) { _dUpperCorner = dUC; }
 	void SetLowerCorner(const uint16_t& nDim, const double& dVal) {_dLowerCorner.at(nDim) = dVal;}
@@ -87,8 +85,8 @@ public:
 		os << "----------------------------------------------------------------" << std::endl;
 		os << "ID: " << _nID << std::endl;
 		os << "width: " << this->GetWidth(0) << " " << this->GetWidth(1) << " " << this->GetWidth(2) << std::endl;
-		double* lc = this->GetLowerCorner();
-		double* uc = this->GetUpperCorner();
+		std::array<double,3> lc = this->GetLowerCorner();
+		std::array<double,3> uc = this->GetUpperCorner();
 		os << "lowerCorner: " << lc[0] << " " << lc[1] << " " << lc[2] << std::endl;
 		os << "upperCorner: " << uc[0] << " " << uc[1] << " " << uc[2] << std::endl;
 		os << "----------------------------------------------------------------" << std::endl;
