@@ -68,7 +68,7 @@ public:
 				<stop>INT</stop>             <!-- stop time step -->
 			</control>
 			<range>
-				<enable>BOOL<enable>  <!-- enable checking inside range (default): 1 | outside range: 0 -->
+				<inclusive>BOOL<inclusive>  <!-- enable checking inside range (default): 1 | outside range: 0 -->
 				<xmin>FLOAT</xmin> <xmax>FLOAT</xmax>  <!-- range x-axis -->
 				<ymin>FLOAT</ymin> <ymax>FLOAT</ymax>  <!-- range y-axis -->
 				<zmin>FLOAT</zmin> <zmax>FLOAT</zmax>  <!-- range z-axis -->
@@ -133,7 +133,7 @@ private:
 	TimestepControl _control;
 	maxvals_map _maxVals;
 	std::vector<Molecule*> _deletions;
-	struct Range {double xmin, xmax, ymin, ymax, zmin, zmax; bool enable;} _range;
+	struct Range {double xmin, xmax, ymin, ymax, zmin, zmax; bool inclusive;} _range;
 };
 
 #endif /*MAXCHECK_H_*/

@@ -165,13 +165,13 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 
 			// check range
 			bool isInside = this->moleculeInsideRange(r);
-			if(true == isInside) {
-				if(false == _range.enable)
-					continue;
+			if (_range.inclusive and not isInside) {
+				// If the range is inclusive, we skip if the particle is not in the range.
+				continue;
 			}
-			else {
-				if(true == _range.enable)
-					continue;
+			if (not _range.inclusive and isInside) {
+				// If the range is exclusive, we skip if the particle is in the range.
+ 				continue;
 			}
 
 			// calc abs vals
@@ -247,5 +247,5 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 
 bool MaxCheck::moleculeInsideRange(std::array<double,3>& r)
 {
-	return r[0] > _range.xmin && r[0] < _range.xmax && r[1] > _range.ymin && r[1] < _range.ymax && r[2] > _range.zmin && r[2] < _range.zmax;
+	return r[0] >= _range.xmin && r[0] < _range.xmax && r[1] >= _range.ymin && r[1] < _range.ymax && r[2] >= _range.zmin && r[2] < _range.zmax;
 }
