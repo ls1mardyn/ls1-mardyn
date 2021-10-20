@@ -16,6 +16,7 @@
 #include <list>
 #include <cstdint>
 #include <vector>
+#include <array>
 
 #include "molecules/MoleculeForwardDeclaration.h"
 
@@ -66,7 +67,12 @@ public:
 				<frequency>INT</frequency>   <!-- frequency of checking -->
 				<stop>INT</stop>             <!-- stop time step -->
 			</control>
-			<yrange> <min>FLOAT</min> <max>FLOAT</max> </yrange>   <!-- range (y axis) within checking is active -->
+			<range>
+				<enable>BOOL<enable>  <!-- enable checking inside range (default): 1 | outside range: 0 -->
+				<xmin>FLOAT</xmin> <xmax>FLOAT</xmax>  <!-- range x-axis -->
+				<ymin>FLOAT</ymin> <ymax>FLOAT</ymax>  <!-- range y-axis -->
+				<zmin>FLOAT</zmin> <zmax>FLOAT</zmax>  <!-- range z-axis -->
+			</range>
 			<targets>
 				<target cid="INT" method="INT">   <!-- cid: component id of target particles
 												  <!-- method: handling particles failing the check, 1:limit to max value | 2:limit to max value if force is too high (overlaps) | 3:delete particle -->
@@ -119,14 +125,15 @@ public:
 	static PluginBase* createInstance() {return new MaxCheck();}
 
 private:
-	double calcSquaredVectorLength(double* vec) {return (vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);}
+	double calcSquaredVectorLength(std::array<double,3>& vec) {return (vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);}
 	void checkMaxVals(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep);
+	bool moleculeInsideRange(std::array<double,3>& r);
 
 private:
 	TimestepControl _control;
 	maxvals_map _maxVals;
 	std::vector<Molecule*> _deletions;
-	struct YRange {double min, max;} _yrange;
+	struct Range {double xmin, xmax, ymin, ymax, zmin, zmax; bool enable;} _range;
 };
 
 #endif /*MAXCHECK_H_*/
