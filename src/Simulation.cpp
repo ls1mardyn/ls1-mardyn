@@ -918,6 +918,7 @@ void Simulation::prepare_start() {
 }
 
 void Simulation::simulate() {
+	
 	preSimLoopSteps();
 	while (keepRunning()) {
 		simulateOneTimestep();
