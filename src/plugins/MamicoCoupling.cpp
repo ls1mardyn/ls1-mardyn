@@ -1,6 +1,9 @@
 #include "MamicoCoupling.h"
 #include "Domain.h"
+
+#ifdef MAMICO_COUPLING
 #include "coupling/interface/impl/ls1/LS1MamicoCouplingSwitch.h"
+#endif
 
 void MamicoCoupling::readXML(XMLfileUnits& xmlconfig)
 {	
@@ -10,6 +13,7 @@ void MamicoCoupling::readXML(XMLfileUnits& xmlconfig)
 void MamicoCoupling::init(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain)
 {
+    #ifdef MAMICO_COUPLING
     if(_macroscopicCellService==NULL) 
     {
         _macroscopicCellService = (coupling::services::MacroscopicCellServiceImpl<ParticleCell,3>*)
@@ -18,6 +22,7 @@ void MamicoCoupling::init(ParticleContainer* particleContainer,
     //since using mamico thermostat, switch off ls1 thermostat
     domain->thermostatOff();
 	//code to print to log that plugin is initialised
+    #endif
 }
 
 void MamicoCoupling::beforeEventNewTimestep(ParticleContainer* particleContainer,
@@ -29,6 +34,7 @@ void MamicoCoupling::beforeEventNewTimestep(ParticleContainer* particleContainer
 void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep)        
 {
+    #ifdef MAMICO_COUPLING
 	if(coupling::interface::LS1MamicoCouplingSwitch::getInstance().getCouplingState())
     {
         if(_macroscopicCellService==NULL) 
@@ -40,11 +46,13 @@ void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
         _macroscopicCellService->distributeMass(simstep);
         _macroscopicCellService->applyTemperatureToMolecules(simstep);
     }
+    #endif
 }
 
 void MamicoCoupling::afterForces(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep)
 {
+    #ifdef MAMICO_COUPLING
     if(coupling::interface::LS1MamicoCouplingSwitch::getInstance().getCouplingState())
     {
         if(_macroscopicCellService==NULL) 
@@ -55,6 +63,7 @@ void MamicoCoupling::afterForces(ParticleContainer* particleContainer,
         _macroscopicCellService->distributeMomentum(simstep);
         _macroscopicCellService->applyBoundaryForce(simstep);
     }
+    #endif
 }   
 
 void MamicoCoupling::endStep(ParticleContainer* particleContainer,

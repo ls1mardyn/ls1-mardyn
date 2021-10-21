@@ -3,8 +3,10 @@
 
 #include "PluginBase.h"
 
+#ifdef MAMICO_COUPLING
 #include "coupling/services/MacroscopicCellService.h"
 #include "coupling/interface/MamicoInterfaceProvider.h"
+#endif
 
 #include "particleContainer/LinkedCells.h"
 
@@ -49,7 +51,9 @@ public:
 	static PluginBase* createInstance() { return new MamicoCoupling(); }
 
 private:
+#ifdef MAMICO_COUPLING
     coupling::services::MacroscopicCellServiceImpl<ParticleCell,3>* _macroscopicCellService;
+#endif
 };
 
 #endif /* SRC_PLUGINS_MAMICOCOUPLING_H_ */
