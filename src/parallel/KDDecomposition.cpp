@@ -288,30 +288,22 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 	}
 
 	if (not rebalance) {
-		if (not moleculeContainer->isInvalidParticleReturner() or moleculeContainer->hasInvalidParticles()) {
-			if (sendLeavingWithCopies()) {
-				global_log->debug() << "kDD: Sending Leaving and Halos together." << std::endl;
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES,
-				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
-			} else {
-				global_log->debug() << "kDD: Sending Leaving, then Halos." << std::endl;
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY,
-				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
-#ifndef MARDYN_AUTOPAS
-				moleculeContainer->deleteOuterParticles();
-#endif
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES,
-				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
-			}
+		if (sendLeavingWithCopies()) {
+			global_log->debug() << "kDD: Sending Leaving and Halos together." << std::endl;
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES,
+													  true /*doHaloPositionCheck*/, removeRecvDuplicates);
 		} else {
-			global_log->debug() << "kDD: Sending Halos." << std::endl;
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, false /*dohaloPositionCheck*/);
+			global_log->debug() << "kDD: Sending Leaving, then Halos." << std::endl;
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY,
+													  true /*doHaloPositionCheck*/, removeRecvDuplicates);
+#ifndef MARDYN_AUTOPAS
+			moleculeContainer->deleteOuterParticles();
+#endif
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES,
+													  true /*doHaloPositionCheck*/, removeRecvDuplicates);
 		}
 	} else {
 		global_log->info() << "KDDecomposition: rebalancing..." << endl;
-		if(moleculeContainer->isInvalidParticleReturner() and not moleculeContainer->hasInvalidParticles()){
-			moleculeContainer->forcedUpdate();
-		}
 		if (_steps != 1) {
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY,
 													  true /*doHaloPositionCheck*/, removeRecvDuplicates);

@@ -323,8 +323,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			} else if (parallelisationtype == "GeneralDomainDecomposition") {
 				double skin = 0.;
 				bool forceLatchingToLinkedCellsGrid = false;
-				// we need the skin here, so we extract it from the AutoPas container's xml,
-				// because the ParticleContainer needs to be instantiated later. :/
+				// We need the skin here (to specify the smallest possible partition), so we extract it from the AutoPas
+				// container's xml, because the ParticleContainer needs to be instantiated later. :/
 				xmlconfig.changecurrentnode("..");
 				if (xmlconfig.changecurrentnode("datastructure")) {
 					string datastructuretype;

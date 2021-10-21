@@ -51,13 +51,10 @@ void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecu
 void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
 	if (moleculeContainer->isInvalidParticleReturner()) {
 		// autopas mode!
-		bool doLeavingExchange = moleculeContainer->hasInvalidParticles();
-		if(doLeavingExchange) {
-			global_log->debug() << "DDBase: Adding + shifting invalid particles." << std::endl;
-			// in case the molecule container returns invalid particles using getInvalidParticles(), we have to handle them directly.
-			auto invalidParticles = moleculeContainer->getInvalidParticles();
-			addLeavingMolecules(std::move(invalidParticles), moleculeContainer);
-		}
+		global_log->debug() << "DDBase: Adding + shifting invalid particles." << std::endl;
+		// in case the molecule container returns invalid particles using getInvalidParticles(), we have to handle them directly.
+		auto invalidParticles = moleculeContainer->getInvalidParticles();
+		addLeavingMolecules(std::move(invalidParticles), moleculeContainer);
 		// now use direct scheme to transfer the rest!
 		FullShell fs;
 		double rmin[3];  // lower corner
@@ -71,11 +68,11 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 		double cellLengthDummy[3]{};
 		global_log->debug() << "DDBase: Populating halo." << std::endl;
 		auto haloExportRegions =
-			fs.getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(), moleculeContainer->getSkin(),
-											   coversWholeDomain, cellLengthDummy);
+			fs.getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(),
+																	coversWholeDomain, cellLengthDummy);
 		for (auto haloExportRegion : haloExportRegions) {
 			populateHaloLayerWithCopiesDirect(haloExportRegion, moleculeContainer,
-											  doLeavingExchange /*positionCheck, same as doLeavingExchange*/);
+											  true /*positionCheck, same as doLeavingExchange*/);
 		}
 	} else {
 	    // default ls1-mode (non-autopas, so linked-cells!)
@@ -300,7 +297,7 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 	// molecules that have crossed the higher boundary need a negative shift
 	// loop over -+1 for dim=0, -+2 for dim=1, -+3 for dim=2
 	const int sDim = dim+1;
-	double interactionLength = moleculeContainer->getInteractionLength();
+	double interactionLength = moleculeContainer->getCutoff();
 
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
