@@ -1002,16 +1002,13 @@ void MettDeamon::logReleasedVelocities()
 	fnamestream << "MettDeamon_released_vel_movdir-" << (uint32_t)_nMovingDirection << "_TS" << fill_width('0', 9) << simstep << "_p" << nRank << ".dat";
 
 	std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
-	std::stringstream outputstream;
-	outputstream << "                      vx" << "                      vy" << "                      vz" << std::endl;
+	ofs << "                      vx" << "                      vy" << "                      vz" << std::endl;
 
 	for(auto vi:_released.log_v)
 	{
-		outputstream << FORMAT_SCI_MAX_DIGITS << vi[0] << FORMAT_SCI_MAX_DIGITS << vi[1] << FORMAT_SCI_MAX_DIGITS << vi[2] << std::endl;
+		ofs << FORMAT_SCI_MAX_DIGITS << vi[0] << FORMAT_SCI_MAX_DIGITS << vi[1] << FORMAT_SCI_MAX_DIGITS << vi[2] << std::endl;
 	}
 	_released.log_v.clear();
-
-	ofs << outputstream.str();
 	ofs.close();
 }
 
