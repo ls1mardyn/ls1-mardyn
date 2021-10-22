@@ -167,6 +167,9 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	std::string strVal;
 	_region.refPosID[0] = 0; _region.refPosID[1] = 0;
 	
+	// In some cases, like for density gradients in the bulk, the planar LRC may be wrong, since it was mainly developed for interfaces.
+	// Therefore, a region can be specified wherein the LRC for the force is applied.
+	// In order to still get correct state values in the bulks, the LRC for the virial and potential enery is also applied outside of the region.
 	if (xmlconfig.getNodeValue("region/left", _region.refPos[0]) && xmlconfig.getNodeValue("region/right", strVal)) {
 		// accept "box" as input
 		_region.refPos[1] = (strVal == "box") ? _domain->getGlobalLength(1) : atof(strVal.c_str() );
@@ -427,25 +430,24 @@ void Planar::calculateLongRange() {
 			Fa[1] = fLJ[index];
 			Upot_c += uLJ[index];
 			Virial_c += 2 * vTLJ[index] + vNLJ[index];
-			double Via[3] = {0.0};
+			double Via[3] = {0.0, 0.0, 0.0};
 			Via[0] = vTLJ[index];
 			Via[1] = vNLJ[index];
 			Via[2] = vTLJ[index];
 			if ((tempMol->r(1) >= _region.actPos[0]) && (tempMol->r(1) <= _region.actPos[1])) {
 				tempMol->Fljcenteradd(i, Fa);
 			}
-//			Virial_c=Via[1]; TODO: I, tchipevn, think that this line is a bug, so I'm commenting it out. Virial_c is a summation variable, it should not be overwritten by a value, dependent on the last molecule in the system.
 			tempMol->Viadd(Via);
 //			tempMol->Uadd(uLJ[loc+i*s+_slabs*numLJSum2[cid]]);      // Storing potential energy onto the molecules is currently not implemented!
 		}
 		if (numDipole[cid] != 0){
 			int loc = tempMol->r(1) * delta_inv;
-			double Fa[3] = { 0.0, 0.0, 0.0 };
+			double Fa[3] = {0.0, 0.0, 0.0};
 			const int index = loc + _slabs * numDipoleSum2[cid];
 			Fa[1] = fDipole[index];
 			Upot_c += uDipole[index];
 			Virial_c += 2 * vTDipole[index] + vNDipole[index];
-			double Via[3] = {0.0};
+			double Via[3] = {0.0, 0.0, 0.0};
 			Via[0] = vTDipole[index];
 			Via[1] = vNDipole[index];
 			Via[2] = vTDipole[index];

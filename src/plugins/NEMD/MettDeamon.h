@@ -159,7 +159,7 @@ public:
 			<feed>
 				<init>FLOAT</init>           <!-- initial feed rate  -->
 				<direction>INT</direction>   <!-- 0: left --> right | 1: left <-- right  -->
-				<method>INT</method>         <!-- feed rate method 4: fix rate | 5: get feedrate by MD Feedrate Director -->
+				<method>INT</method>         <!-- feed rate method 1: count deleted and changed particles | 2: count changed particles | 3: meet target density | 4: fix rate | 5: get feedrate by MD Feedrate Director -->
 				<targetID>INT</targetID>     <!-- component ID of particles feed rate determined from -->
 				<target>FLOAT</target>       <!-- target value for feed rate, if method==4 -->
 				<release_velo>
@@ -225,7 +225,7 @@ public:
 			_feedrate.feed.actual = feed_actual;
 			global_log->info() << "[MettDeamon]: Set new feed rate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
 		} else {
-			global_log->warning() << "[MettDeamon]: Feed rate not set because feed method ( " << _nFeedRateMethod << " ) is not " << FRM_DIRECTED << std::endl;
+			global_log->warning() << "[MettDeamon]: Feed rate not set because current feed method ( " << _nFeedRateMethod << " ) is not set to communicate with MDFRD (method " << FRM_DIRECTED << ")" << std::endl;
 		}
 	}
 	void setInitFeedrate(const double& feed_init) {
@@ -233,7 +233,7 @@ public:
 			_feedrate.feed.init = feed_init;
 			global_log->info() << "[MettDeamon]: Set init feed rate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
 		} else {
-			global_log->warning() << "[MettDeamon]: Feed rate not set because feed method ( " << _nFeedRateMethod << " ) is not " << FRM_DIRECTED << std::endl;
+			global_log->warning() << "[MettDeamon]: Feed rate not set because current feed method ( " << _nFeedRateMethod << " ) is not set to communicate with MDFRD (method " << FRM_DIRECTED << ")" << std::endl;
 		}
 	}
 	double getInvDensityArea() {return _dInvDensityArea;}

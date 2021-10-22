@@ -528,7 +528,7 @@ void VectorizationTuner::runOwn(CellProcessor& cp, ParticleCell& cell1, unsigned
 		if (dynamic_cast<FlopCounter*>(&cp) == nullptr) {
 			global_simulation->timers()->start("VECTORIZATION_TUNER_TUNER");
 		}
-		for (auto i = 0u; i < numRepetitions; ++i) {
+		for (unsigned int i = 0u; i < numRepetitions; ++i) {
 			cp.processCell(myowncopy);
 		}
 	}

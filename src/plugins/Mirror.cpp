@@ -468,11 +468,8 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 					double ry = it->r(1);
 					double distance = _position.coord - ry;
 					additionalForce[1] = _forceConstant * distance;
-//						cout << "[Mirror] additionalForce[1]=" << additionalForce[1] << std::endl;
-//						cout << "[Mirror] before: " << (*it) << std::endl;
 //						it->Fljcenteradd(0, additionalForce);  TODO: Can additional force be added on the LJ sites instead of adding to COM of molecule?
 					it->Fadd(additionalForce);
-//						cout << "[Mirror] after: " << (*it) << std::endl;
 				}
 			}
 		}

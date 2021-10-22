@@ -327,10 +327,8 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
  */
 template <typename ArrayType>
 std::vector<size_t> getOrdering(const ArrayType& data) {
-	std::vector<size_t> index(data.size(), 0);
-	for (auto i = 0u; i != index.size(); i++) {
-		index[i] = i;
-	}
+	std::vector<size_t> index(data.size());
+	std::iota(index.begin(), index.end(), 0);
 	std::sort(index.begin(), index.end(), [&](const size_t& a, const size_t& b) { return (data[a] < data[b]); });
 	return index;
 }

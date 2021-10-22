@@ -285,15 +285,15 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		xmlconfig.getNodeValue("control/feed/method", nVal);
 		if(1 == nVal) {
 			_nFeedRateMethod = FRM_DELETED_MOLECULES;
-			global_log->info() << "[MettDeamon] Feed method 1" << std::endl;
+			global_log->info() << "[MettDeamon] Feed method 1: Calculating feed rate without additional plugins using deleted and changed particles" << std::endl;
 		}
 		else if(2 == nVal) {
 			_nFeedRateMethod = FRM_CHANGED_MOLECULES;
-			global_log->info() << "[MettDeamon] Feed method 2" << std::endl;
+			global_log->info() << "[MettDeamon] Feed method 2: Calculating feed rate without additional plugins using only changed particles" << std::endl;
 		}
 		else if(3 == nVal) {
 			_nFeedRateMethod = FRM_DENSITY;
-			global_log->info() << "[MettDeamon] Feed method 3" << std::endl;
+			global_log->info() << "[MettDeamon] Feed method 3: Adjusting feed rate to meet target density" << std::endl;
 		}
 		else if(4 == nVal) {
 			_nFeedRateMethod = FRM_CONSTANT;
@@ -882,20 +882,18 @@ void MettDeamon::writeRestartfile()
 		return;
 
 	const std::string fname = "MettDeamonRestart_movdir-"+std::to_string(_nMovingDirection)+".dat";
-	std::stringstream outputstream;
 	std::ofstream ofs;
 	// init restart file
 	if(not _bInitRestartLog)
 	{
 		ofs.open(fname, std::ios::out);
-		outputstream << "     simstep" << "   slabIndex" << "                  deltaY" << std::endl;
+		ofs << "     simstep" << "   slabIndex" << "                  deltaY" << std::endl;
 		_bInitRestartLog = true;
 	} else {
 		ofs.open(fname, std::ios::app);
 	}
-	outputstream << setw(12) << simstep << setw(12) << _reservoir->getActualBinIndex();
-	outputstream << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.sum << std::endl;
-	ofs << outputstream.str();
+	ofs << setw(12) << simstep << setw(12) << _reservoir->getActualBinIndex();
+	ofs << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.sum << std::endl;
 	ofs.close();
 
 	// write restart info in XML format
@@ -929,22 +927,18 @@ void MettDeamon::logFeedrate()
 		return;
 
 	const std::string fname = "MettDeamon_feedrate_movdir-"+std::to_string(_nMovingDirection)+".dat";
-	std::stringstream outputstream;
 	std::ofstream ofs;
 	// init feedrate log file
 	if(not _bInitFeedrateLog)
 	{
 		ofs.open(fname, std::ios::out);
-		outputstream << "     simstep" << "                feedrate" << std::endl;
+		ofs << "     simstep" << "                feedrate" << std::endl;
 		_bInitFeedrateLog = true;
 	} else {
 		ofs.open(fname, std::ios::app);
 	}
-
-	outputstream << setw(12) << global_simulation->getSimulationStep();
-	outputstream << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.actual << std::endl;
-
-	ofs << outputstream.str();
+	ofs << setw(12) << global_simulation->getSimulationStep();
+	ofs << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.actual << std::endl;
 	ofs.close();
 }
 
@@ -974,20 +968,17 @@ void MettDeamon::logReleased()
 		return;
 
 	const std::string fname = "MettDeamon_released_movdir-"+std::to_string(_nMovingDirection)+".dat";
-	std::stringstream outputstream;
 	std::ofstream ofs;
 	// init released count log file
 	if(not _released.init_file)
 	{
 		ofs.open(fname, std::ios::out);
-		outputstream << "     simstep" << "       count" << "     deleted" << std::endl;
+		ofs << "     simstep" << "       count" << "     deleted" << std::endl;
 		_released.init_file = true;
 	} else {
 		ofs.open(fname, std::ios::app);
 	}
-	outputstream << setw(12) << global_simulation->getSimulationStep() << setw(12) << _released.count.global << setw(12) << _released.deleted.global << std::endl;
-
-	ofs << outputstream.str();
+	ofs << setw(12) << global_simulation->getSimulationStep() << setw(12) << _released.count.global << setw(12) << _released.deleted.global << std::endl;
 	ofs.close();
 }
 
