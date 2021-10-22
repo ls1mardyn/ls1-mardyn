@@ -12,6 +12,8 @@
 #include "NeighborAcquirer.h"
 #include "NeighbourCommunicationScheme.h"
 
+#include <numeric>
+
 GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength, Domain* domain, bool forceGrid)
 	: _boxMin{0.},
 	  _boxMax{0.},
