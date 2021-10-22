@@ -169,7 +169,7 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	
 	// In some cases, like for density gradients in the bulk, the planar LRC may be wrong, since it was mainly developed for interfaces.
 	// Therefore, a region can be specified wherein the LRC for the force is applied.
-	// In order to still get correct state values in the bulks, the LRC for the virial and potential enery is also applied outside of the region.
+	// In order to still get correct state values in the bulks, the LRC for the virial and potential energy is also applied outside of the region.
 	if (xmlconfig.getNodeValue("region/left", _region.refPos[0]) && xmlconfig.getNodeValue("region/right", strVal)) {
 		// accept "box" as input
 		_region.refPos[1] = (strVal == "box") ? _domain->getGlobalLength(1) : atof(strVal.c_str() );
