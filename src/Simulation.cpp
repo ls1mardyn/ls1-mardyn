@@ -976,7 +976,7 @@ void Simulation::preSimLoopSteps()
 	int num_papi_events = sizeof(papi_event_list) / sizeof(papi_event_list[0]);
 	loopTimer->add_papi_counters(num_papi_events, (char**) papi_event_list);
 #endif
-	loopTimer->start();
+	
 #ifndef NDEBUG
 #ifndef ENABLE_MPI
 		unsigned particleNoTest;
@@ -1004,7 +1004,7 @@ void Simulation::simulateOneTimestep()
 		Simulation::exit(1);
 	}
 
-
+	loopTimer->start();
 	global_log->debug() << "timestep: " << getSimulationStep() << endl;
 	global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 	global_simulation->timers()->incrementTimerTimestepCounter();
@@ -1202,6 +1202,8 @@ void Simulation::simulateOneTimestep()
 		_forced_checkpoint_time = -1; /* disable for further timesteps */
 	}
 	perStepIoTimer->stop();
+
+	loopTimer->stop();
 }
 
 void Simulation::postSimLoopSteps()
@@ -1215,7 +1217,6 @@ void Simulation::postSimLoopSteps()
 	}
 
 
-	loopTimer->stop();
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
 	/***************************************************************************/
