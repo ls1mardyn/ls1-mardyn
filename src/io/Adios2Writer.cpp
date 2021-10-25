@@ -346,15 +346,14 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 	global_log->debug() << "[Adios2Writer] Offset " << offset << std::endl;
 #endif
 
-	std::array<double, 6> tmp_global_box{
-		0, 0, 0, domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2)};
+	std::array<double, 6> tmp_global_box = {0, 0, 0, domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2)};
 	std::array<PRECISION, 6> global_box;
-	std::copy(global_box.begin(), global_box.end(), tmp_global_box.begin());
+	std::copy(tmp_global_box.begin(), tmp_global_box.end(), global_box.begin());
 
 	std::array<double, 6> tmp_local_box;
 	domainDecomp->getBoundingBoxMinMax(domain, &tmp_local_box[0], &tmp_local_box[3]);
 	std::array<PRECISION, 6> local_box;
-	std::copy(local_box.begin(), local_box.end(), tmp_local_box.begin());
+	std::copy(tmp_local_box.begin(), tmp_local_box.end(), local_box.begin());
 
 	global_log->debug() << "[Adios2Writer] Local Box: " << local_box[0] << " " << local_box[1] << " " << local_box[2]
 					   << " " << local_box[3] << " " << local_box[4] << " " << local_box[5] << std::endl;
