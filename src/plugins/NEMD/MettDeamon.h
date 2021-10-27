@@ -105,7 +105,6 @@ struct FeedRateStruct
 	{
 		double init;
 		double actual;
-		double target;
 		double sum;
 
 	} feed;
@@ -160,7 +159,7 @@ public:
 			<feed>
 				<init>FLOAT</init>           <!-- initial feed rate  -->
 				<direction>INT</direction>   <!-- 0: left --> right | 1: left <-- right  -->
-				<method>INT</method>         <!-- feed rate method 1:count deleted particles | 4: fix rate -->
+				<method>INT</method>         <!-- feed rate method 1: count deleted and changed particles | 2: count changed particles | 3: meet target density | 4: fix rate | 5: get feedrate by MD Feedrate Director -->
 				<targetID>INT</targetID>     <!-- component ID of particles feed rate determined from -->
 				<target>FLOAT</target>       <!-- target value for feed rate, if method==4 -->
 				<release_velo>
@@ -222,12 +221,20 @@ public:
 
 	// connection to other general plugins
 	void setActualFeedrate(const double& feed_actual) {
-		_feedrate.feed.actual = feed_actual;
-		global_log->info() << "[MettDeamon]: Set new feedrate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
+		if (FRM_DIRECTED == _nFeedRateMethod) {
+			_feedrate.feed.actual = feed_actual;
+			global_log->info() << "[MettDeamon]: Set new feed rate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
+		} else {
+			global_log->warning() << "[MettDeamon]: Feed rate not set because current feed method ( " << _nFeedRateMethod << " ) is not set to communicate with MDFRD (method " << FRM_DIRECTED << ")" << std::endl;
+		}
 	}
 	void setInitFeedrate(const double& feed_init) {
-		_feedrate.feed.init = feed_init;
-		global_log->info() << "[MettDeamon]: Set init feedrate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
+		if (FRM_DIRECTED == _nFeedRateMethod) {
+			_feedrate.feed.init = feed_init;
+			global_log->info() << "[MettDeamon]: Set init feed rate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
+		} else {
+			global_log->warning() << "[MettDeamon]: Feed rate not set because current feed method ( " << _nFeedRateMethod << " ) is not set to communicate with MDFRD (method " << FRM_DIRECTED << ")" << std::endl;
+		}
 	}
 	double getInvDensityArea() {return _dInvDensityArea;}
 
@@ -283,7 +290,7 @@ private:
 	uint64_t _nNumMoleculesDeletedGlobalAlltime;
 	CommVar<uint64_t> _nNumMoleculesTooFast;
 	uint8_t _nMovingDirection;
-	uint8_t _nFeedRateMethod;
+	FeedRateMethod _nFeedRateMethod;
 	uint8_t _nZone2Method;
 	uint32_t _nNumValsSummation;
 	int64_t _numDeletedMolsSum;

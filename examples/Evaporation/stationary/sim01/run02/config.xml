@@ -38,8 +38,8 @@
 					<objectgenerator>
 						<filler type="ReplicaFiller">
 							<input type="BinaryReader">
-								<header>../run01/cp_binary-10.restart.header.xml</header>
-								<data>../run01/cp_binary-10.restart.dat</data>
+								<header>../run01/cp_binary-1.restart.header.xml</header>
+								<data>../run01/cp_binary-1.restart.dat</data>
 							</input>
 							<componentid>1</componentid>
 						</filler>
@@ -67,8 +67,8 @@
 
 		<algorithm>
 			<parallelisation type="DomainDecomposition">
-				 <!-- structure handled by DomainDecompMPIBase
-				<MPIGridDims> <x>64</x> <y>2</y> <z>72</z> </MPIGridDims> -->
+				<!-- structure handled by DomainDecompMPIBase -->
+				<!--<MPIGridDims> <x>64</x> <y>2</y> <z>72</z> </MPIGridDims> -->
 			</parallelisation>
 <!--
 			<parallelisation type="KDDecomposition">
@@ -96,7 +96,7 @@
 		<output>
 			<outputplugin name="CheckpointWriter">
 				<type>binary</type>
-				<writefrequency>50000</writefrequency>
+				<writefrequency>5000</writefrequency>
 				<outputprefix>cp_binary</outputprefix>
 			</outputplugin>
 <!--
@@ -109,8 +109,8 @@
 				<include query="/spheres" >../../sphereparams_3c.xml</include>
 				<writecontrol>
 					<start>0</start>
-					<writefrequency>5000</writefrequency>
-					<stop>500000</stop>
+					<writefrequency>1000</writefrequency>
+					<stop>50000</stop>
 					<framesperfile>0</framesperfile>
 				</writecontrol>
 				<outputprefix>megamol</outputprefix>  

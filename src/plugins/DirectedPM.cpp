@@ -174,10 +174,6 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 			velocDroplet[0] = 0.;
 			velocDroplet[1] = 0.;
 			velocDroplet[2] = 0.;
-			double velocDroplet2[3];
-			velocDroplet2[0] = 0.;
-			velocDroplet2[1] = 0.;
-			velocDroplet2[2] = 0.;
 			double viDroplet[3];
 			viDroplet[0] = 0.;
 			viDroplet[1] = 0.;
