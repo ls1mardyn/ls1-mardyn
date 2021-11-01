@@ -1717,7 +1717,7 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 				double Ekin_drift = _d2EkinDrift[offset] * 0.5;
 				double Ekin_rot   = _d2EkinRot  [offset] * 0.5;
 				double Ekin_T     = _d2EkinT    [offset] * 0.5;
-				double Epot       = _dEpot      [offset] / _nNumMoleculesGlobal[offset];
+				double Epot       = _dEpot      [offset];
 				double T = _dTemperature[offset];
 				double T_trans = _dTemperatureTrans[offset];
 				double T_rot   = _dTemperatureRot[offset];
