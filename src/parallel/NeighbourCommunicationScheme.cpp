@@ -206,7 +206,6 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 				doDirectFallBackExchange(haloRegions, LEAVING_ONLY, domainDecomp, moleculeContainer, invalidParticles,
 										 doHaloPositionCheck);
 				haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(),
-																			moleculeContainer->getSkin(),
 																			_coversWholeDomain, cellLength);
 				doDirectFallBackExchange(haloRegions, HALO_COPIES, domainDecomp, moleculeContainer, dummy,
 										 doHaloPositionCheck);
@@ -219,14 +218,13 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 				break;
 			case HALO_COPIES:
 				haloRegions = _zonalMethod->getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(),
-																			moleculeContainer->getSkin(),
 																			_coversWholeDomain, cellLength);
 				doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer, dummy,
 										 doHaloPositionCheck);
 				break;
 			case FORCES:
-				haloRegions = _zonalMethod->getHaloImportForceExportRegions(
-					ownRegion, moleculeContainer->getCutoff(), moleculeContainer->getSkin(), _coversWholeDomain, cellLength);
+				haloRegions = _zonalMethod->getHaloImportForceExportRegions(ownRegion, moleculeContainer->getCutoff(),
+																			_coversWholeDomain, cellLength);
 				doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer, dummy,
 										 doHaloPositionCheck);
 				break;
@@ -455,31 +453,28 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 			(*_neighbours)[d].clear();
 		}
 	}
-	
-	
-	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 , cutoffRadius};
+
+	HaloRegion ownRegion = {rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0, cutoffRadius};
 
 	if (_pushPull) {
 		double* cellLength = moleculeContainer->getHaloSize();
 		// halo/force regions
-		double skin = moleculeContainer->getSkin();
-		std::vector<HaloRegion> haloOrForceRegions = _zonalMethod->getHaloImportForceExportRegions(
-			ownRegion, cutoffRadius, skin, _coversWholeDomain, cellLength);
+		std::vector<HaloRegion> haloOrForceRegions =
+			_zonalMethod->getHaloImportForceExportRegions(ownRegion, cutoffRadius, _coversWholeDomain, cellLength);
 		std::vector<HaloRegion> leavingRegions =
 				_zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius,
 						_coversWholeDomain);
 
-		std::array<double, 3> globalDomainLength {domain->getGlobalLength(0),domain->getGlobalLength(1), domain->getGlobalLength(2)};
+		std::array<double, 3> globalDomainLength{domain->getGlobalLength(0), domain->getGlobalLength(1),
+												 domain->getGlobalLength(2)};
 		// assuming p1 sends regions to p2
 		std::tie((*_haloImportForceExportNeighbours)[0], (*_haloExportForceImportNeighbours)[0]) =
-			NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, haloOrForceRegions, skin,
+			NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, haloOrForceRegions,
 											   domainDecomp->getCommunicator(), _useSequentialFallback);
 		// p1 notes reply, p2 notes owned as haloExportForceImport
-		std::tie((*_leavingExportNeighbours)[0], (*_leavingImportNeighbours)[0]) =
-			NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, leavingRegions, 0.,
-											   domainDecomp->getCommunicator(), _useSequentialFallback);
+		std::tie((*_leavingExportNeighbours)[0], (*_leavingImportNeighbours)[0]) = NeighborAcquirer::acquireNeighbors(
+			globalDomainLength, &ownRegion, leavingRegions, domainDecomp->getCommunicator(), _useSequentialFallback);
 		// p1 notes reply, p2 notes owned as leaving import
-
 
 	} else {
 		std::vector<HaloRegion> haloRegions =

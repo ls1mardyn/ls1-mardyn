@@ -21,8 +21,7 @@ public:
 	~EighthShell() override = default;
 
 	std::vector<HaloRegion> getHaloImportForceExportRegions(HaloRegion& initialRegion, double cutoffRadius,
-																	double /*skin*/, bool coversWholeDomain[3],
-																	double cellLength[3]) override {
+															bool coversWholeDomain[3], double cellLength[3]) override {
 		auto condition = [](const int d[3])->bool {
 			bool good = true;
 			for(unsigned short i = 0; i < 3; ++i){
@@ -30,12 +29,11 @@ public:
 			}
 			return good;
 		};
-		return getHaloRegionsConditional(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
+		return getHaloRegionsConditional(initialRegion, cutoffRadius, coversWholeDomain, condition);
 	}
 
 	std::vector<HaloRegion> getHaloExportForceImportRegions(HaloRegion& initialRegion, double cutoffRadius,
-																	double /*skin*/, bool coversWholeDomain[3],
-																	double cellLength[3]) override {
+															bool coversWholeDomain[3], double cellLength[3]) override {
 		auto condition = [](const int d[3])->bool {
 			bool good = true;
 			for(unsigned short i = 0; i < 3; ++i){
@@ -43,7 +41,7 @@ public:
 			}
 			return good;
 		};
-		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, 0., coversWholeDomain, condition);
+		return getHaloRegionsConditionalInside(initialRegion, cutoffRadius, coversWholeDomain, condition);
 	}
 };
 

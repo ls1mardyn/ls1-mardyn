@@ -63,14 +63,10 @@ public:
 	CuboidRegion(ControlInstance* parent, double dLC[3], double dUC[3] );
 	virtual ~CuboidRegion();
 
-	double GetLowerCorner(const uint16_t& nDim) {return _dLowerCorner.at(nDim);}
-	double GetUpperCorner(const uint16_t& nDim) {return _dUpperCorner.at(nDim);}
-	void GetLowerCorner(double* dLC) {dLC = _dLowerCorner.data();}
-	void GetUpperCorner(double* dUC) {dUC = _dUpperCorner.data();}
-	double* GetLowerCorner() {return _dLowerCorner.data();}
-	double* GetUpperCorner() {return _dUpperCorner.data();}
-	void SetLowerCorner(const uint16_t& nDim, const double& dVal) {_dLowerCorner.at(nDim) = dVal;}
-	void SetUpperCorner(const uint16_t& nDim, const double& dVal) {_dUpperCorner.at(nDim) = dVal;}
+	std::array<double,3> GetLowerCorner() {return _dLowerCorner;}
+	std::array<double,3> GetUpperCorner() {return _dUpperCorner;}
+	void SetLowerCorner(std::array<double,3> dLC) { _dLowerCorner = dLC; }
+	void SetUpperCorner(std::array<double,3> dUC) { _dUpperCorner = dUC; }
 	double GetWidth(const uint16_t& nDim) {return _dUpperCorner[nDim] - _dLowerCorner[nDim];}
 	void GetRange(const uint16_t& nDim, double& dRangeBegin, double& dRangeEnd) {dRangeBegin = _dLowerCorner.at(nDim); dRangeEnd = _dUpperCorner.at(nDim);}
 	bool PositionIsInside(const uint16_t& nDim, const double& dPos) {return (dPos > _dLowerCorner.at(nDim) ) && (dPos < _dUpperCorner.at(nDim) );}
@@ -85,8 +81,8 @@ public:
 		os << "----------------------------------------------------------------" << std::endl;
 		os << "ID: " << _nID << std::endl;
 		os << "width: " << this->GetWidth(0) << " " << this->GetWidth(1) << " " << this->GetWidth(2) << std::endl;
-		double* lc = this->GetLowerCorner();
-		double* uc = this->GetUpperCorner();
+		std::array<double,3> lc = this->GetLowerCorner();
+		std::array<double,3> uc = this->GetUpperCorner();
 		os << "lowerCorner: " << lc[0] << " " << lc[1] << " " << lc[2] << std::endl;
 		os << "upperCorner: " << uc[0] << " " << uc[1] << " " << uc[2] << std::endl;
 		os << "----------------------------------------------------------------" << std::endl;

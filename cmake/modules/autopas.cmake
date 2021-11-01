@@ -20,10 +20,17 @@ if (ENABLE_AUTOPAS)
     set(spdlog_ForceBundled ON CACHE BOOL "" FORCE)
     set(Eigen3_ForceBundled ON CACHE BOOL "" FORCE)
 
+    if (AUTOPAS_MANUAL_TAG)
+        set(AUTOPAS_TAG ${AUTOPAS_MANUAL_TAG})
+    else()
+        # The merge commit of autopas#642, i.e., the introduction of the LC interface. (2021-09-19)
+        set(AUTOPAS_TAG 510e7bb43fb0255cc5d64966f7d68754890e8940)
+    endif()
+
     FetchContent_Declare(
             autopasfetch
             GIT_REPOSITORY ${autopasRepoPath}
-            GIT_TAG cd228b34bb1dfd3aeae3d6d938fa90e5440ef991
+            GIT_TAG ${AUTOPAS_TAG}
     )
 
     # Get autopas source and binary directories from CMake project

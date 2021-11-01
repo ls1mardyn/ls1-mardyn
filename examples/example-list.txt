@@ -6,10 +6,14 @@
 ./Generators/mkesfera/config.xml
 ./Generators/cubic_grid_generator/config.xml
 ./FMM/config.xml
-./surface-tension_LRC/CO2_Merker/220K/run01/config.xml
-./surface-tension_LRC/CO2_Merker/250K/run01/config.xml
-./surface-tension_LRC/CO2_Merker/280K/run01/config.xml
-./surface-tension_LRC/C6H12/330K/run01/config.xml
-./surface-tension_LRC/C6H12/415K/run01/config.xml
-./surface-tension_LRC/C6H12/500K/run01/config.xml
+./surface-tension_LRC/CO2_Merker/vle/220K/run01/config.xml
+./surface-tension_LRC/CO2_Merker/vle/250K/run01/config.xml
+./surface-tension_LRC/CO2_Merker/vle/280K/run01/config.xml
+./surface-tension_LRC/C6H12/vle/330K/run01/config.xml
+./surface-tension_LRC/C6H12/vle/415K/run01/config.xml
+./surface-tension_LRC/C6H12/vle/500K/run01/config.xml
+./Injection/liq/sim01/run03/config.xml
+./Injection/liq/sim01/run04/config.xml
+./Injection/nemd/sim01/run01/config.xml
+./Injection/nemd/sim01/run02/config.xml
 

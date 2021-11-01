@@ -34,7 +34,13 @@ public:
 			<mirror>
 				<pluginID>INT</pluginID>   <!-- Plugin ID of Mirror plugin that is relevant for counting deleted/reflected particles -->
 				<control> <update_freq>INT</update_freq> </control>   <!-- frequency of updating feed rate -->
+				<feedrate>
+					<numvals>INT</numvals>   <!-- Length of list storing last INT feedrates
+					<init>FLOAT</init>
+					<list>FLOAT,FLOAT,...</list>   <!-- List with <numvals> entries to use for initialization; list overwrites <init> -->
+				</feedrate>
 			</mirror>
+			<restart> <writefreq>INT</writefreq> </restart> <!-- Write frequency of restart files -->
 		</plugin>
 	   \endcode
 	 */

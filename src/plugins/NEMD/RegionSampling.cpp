@@ -914,7 +914,7 @@ void SampleRegion::doDiscretisationProfiles(int nDimension)
 	if(_bDiscretisationDoneProfiles)  // if allready done -> return
 		return;
 
-	double* dLowerCorner = this->GetLowerCorner();
+	std::array<double,3> dLowerCorner = this->GetLowerCorner();
 
 	// calc Bin midpoints
 	for(unsigned int s = 0; s < _nNumBinsProfiles; s++)
@@ -942,7 +942,7 @@ void SampleRegion::doDiscretisationVDF(int nDimension)
 	}
 
 	// calc Bin midpoints
-	double* dLowerCorner = this->GetLowerCorner();
+	std::array<double,3> dLowerCorner = this->GetLowerCorner();
 	for(uint32_t bi=0; bi<_numBinsVDF; ++bi)
 		_dBinMidpointsVDF.at(bi) = (bi + 0.5) * _dBinWidthVDF + dLowerCorner[nDimension];
 
@@ -957,7 +957,7 @@ void SampleRegion::doDiscretisationFieldYR(int nDimension)
 	if(_bDiscretisationDoneFieldYR)  // if allready done -> return
 		return;
 
-	double* dLowerCorner = this->GetLowerCorner();
+	std::array<double,3> dLowerCorner = this->GetLowerCorner();
 
 	// calc Bin midpoints
 	for(unsigned int bi = 0; bi < _nNumBinsFieldYR; bi++)
@@ -985,7 +985,7 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension, unsigned l
 	// BUT: reset profile before calling this function!!!
 
 	// calc position index
-	double* dLowerCorner = this->GetLowerCorner();
+	std::array<double,3> dLowerCorner = this->GetLowerCorner();
 	double dPosRelative = molecule->r(nDimension) - dLowerCorner[nDimension];
 
 	nPosIndex = (unsigned int) floor(dPosRelative / _dBinWidthProfiles);
@@ -1179,7 +1179,7 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension, unsigned long s
 	uint32_t nComponentOffset = csp.nOffsetDataStructure;
 
 	// calc bin index / offset
-	double* dLowerCorner = this->GetLowerCorner();
+	std::array<double,3> dLowerCorner = this->GetLowerCorner();
 	double dPosRelative = molecule->r(nDimension) - dLowerCorner[nDimension];
 	uint32_t nBinIndex = (uint32_t) floor(dPosRelative * _dInvBinWidthVDF);
 	uint32_t numVelocityClasses   = csp.numVelocityClasses;
@@ -1278,7 +1278,7 @@ void SampleRegion::sampleFieldYR(Molecule* molecule, unsigned long simstep)
 	// BUT: reset profile before calling this function!!!
 
 	// calc position index
-	double* dLowerCorner = this->GetLowerCorner();
+	std::array<double,3> dLowerCorner = this->GetLowerCorner();
 	double dPosRelativeX = molecule->r(0) - (dLowerCorner[0] + this->GetWidth(0)*0.5);
 	double dPosRelativeY = molecule->r(1) -  dLowerCorner[1];
 	double dPosRelativeZ = molecule->r(2) - (dLowerCorner[2] + this->GetWidth(2)*0.5);
@@ -2079,7 +2079,7 @@ void SampleRegion::updateSlabParameters()
 	return;  // Do not update these parameters by now. TODO: Get rid of this??
 
 	double dWidth = this->GetWidth(1);
-	double* dLowerCorner = this->GetLowerCorner();
+	std::array<double,3> dLowerCorner = this->GetLowerCorner();
 
 	// profiles
 	if(_SamplingEnabledProfiles)

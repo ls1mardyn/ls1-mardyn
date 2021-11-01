@@ -27,9 +27,9 @@ enum MirrorType : uint16_t {
 	MT_UNKNOWN = 0,
     MT_REFLECT = 1,
     MT_FORCE_CONSTANT = 2,
-	MT_ZERO_GRADIENT = 3,
-	MT_NORMDISTR_MB = 4,
-	MT_MELAND_2004 = 5,  // Algorithm proposed by Meland et al., Phys. Fluids, Vol. 16, No. 2 (2004)
+	MT_ZERO_GRADIENT = 3, // Deprecated
+	MT_NORMDISTR_MB = 4,  // Deprecated
+	MT_MELAND_2004 = 5,   // Algorithm proposed by Meland et al., Phys. Fluids, Vol. 16, No. 2 (2004)
 	MT_RAMPING = 6,
 };
 
@@ -50,17 +50,17 @@ public:
 	 * \code{.xml}
 		<plugin name="Mirror" type="5" dir="o-|">   <!-- Mirror type and direction, dir="o-|" or dir="|-o" reflecting particles to the left or right side -->
 			<pluginID>INT</pluginID>   <!-- plugin id to enable communication with other plugins -->
+			<cid>INT</cid>             <!-- only apply mirror to specified components; 0: all (Default); 1: component 1; etc. -->
 			<position>
 				<refID>INT</refID>     <!-- coordinate relative to reference point, 1:left interface | 2:right interface
-				<coord>FLOAT</coord>   <!-- coordinate of Mirrot position -->
+				<coord>FLOAT</coord>   <!-- coordinate of Mirror position -->
 			</position>
 			<forceConstant>0.</forceConstant>   <!-- force added to particles in order to reflect them from Mirror plane -->
 			<meland>
-				<use_probability>INT</use_probability>   <!-- 0:disable | 1:enable probability factor in case of Mirror type MT_MELAND_2004 -->
 				<velo_target>FLOAT</velo_target>         <!-- target hydrodynamic velocity -->
-				<fixed_probability>FLOAT</fixed_probability>         <!-- (optional) fixed probability for reflection in Meland2004 mirror -->
+				<fixed_probability>FLOAT</fixed_probability>         <!-- (optional) fixed probability for reflection in Meland mirror -->
 			</meland>
-			<diffuse>   <!-- particles will not sharply be reflected at mirror position x, but at x + dx, where dx is a random number between 0 and <width> -->
+			<diffuse>   <!-- Only with method 5 (Meland); particles will not sharply be reflected at mirror position x, but at x + dx (right mirror) or x - dx (left mirror), where dx is a random number between 0 and <width> -->
 				<width>FLOAT</width>   <!-- width of region behind mirror in which particles will be reflected -->
 			</diffuse>
 			<ramping>
@@ -115,10 +115,10 @@ public:
 
 private:
 		void VelocityChange(ParticleContainer* particleContainer);
-		void readNormDistr();
 
 private:
 	uint32_t _pluginID;
+	uint32_t _targetComp;
 	struct MirrorPosition {
 		uint16_t axis;
 		double coord;
@@ -131,46 +131,10 @@ private:
 	double _forceConstant;
 	MirrorDirection _direction;
 	MirrorType _type;
-	struct NormMB{
-		struct NormFnames{
-			std::string vxz;
-			std::string vy;
-		} fname;
-		std::list<double> vxz;
-		std::list<double> vy;
-	} _norm;
-
-	/** ratio of particles to reflect */
-	float _ratio;
-
-	/** zero gradient BC */
-	struct ComponentIDs {
-		uint32_t original;
-		uint32_t forward;
-		uint32_t backward;
-		uint32_t reflected;
-		uint32_t permitted;
-	} _cids;  // unity based
-
-	struct ControlVolume {
-		double left;
-		double right;
-		double left_outer;
-		double right_outer;
-		double width;
-		double margin;
-	} _cv;
-
-	struct VelocityList {
-		std::array<double, 3> initvals;
-		uint32_t numvals;
-		std::list<std::array<double, 3> > list;
-	} _veloList;
 
 	std::unique_ptr<Random> _rnd;
 
 	struct MelandParams {
-		bool use_probability_factor {true};
 		double velo_target {0.4};
 		float fixed_probability_factor {-1};
 	} _melandParams;

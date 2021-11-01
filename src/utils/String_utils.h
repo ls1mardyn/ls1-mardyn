@@ -8,7 +8,7 @@
 namespace string_utils {
 
 template <typename T>
-static std::string join(const std::vector<T>& vec, const std::string delimiter) {
+inline std::string join(const std::vector<T>& vec, const std::string delimiter) {
 	std::stringstream ss;
 	for(auto elem : vec) {
 		ss << elem;
@@ -24,7 +24,7 @@ static std::string join(const std::vector<T>& vec, const std::string delimiter) 
  * @param s input string.
  * @return Copy of s in lower case.
  */
-static std::string toLowercase(const std::string& s) {
+inline std::string toLowercase(const std::string& s) {
 	std::string ret;
 	ret.resize(s.length());
 	std::transform(s.begin(), s.end(), ret.begin(), ::tolower);
@@ -37,7 +37,7 @@ static std::string toLowercase(const std::string& s) {
  * @param whitespace characters to be removed. Default is whitespaces and tabs
  * @return trimmed string
  */
-static std::string trim(const std::string& str, const std::string &whitespace = " \t") {
+inline std::string trim(const std::string& str, const std::string &whitespace = " \t") {
 	const auto strBegin = str.find_first_not_of(whitespace);
 	if (strBegin == std::string::npos)
 		return "";
@@ -54,7 +54,7 @@ static std::string trim(const std::string& str, const std::string &whitespace = 
  * @param delimiter The delimiter.
  * @return Vector of substrings.
  */
-static std::vector<std::string> split(const std::string& input, const char delimiter ){
+inline std::vector<std::string> split(const std::string& input, const char delimiter ){
 	size_t last = 0;
 	size_t next = 0;
 	std::vector<std::string> output;

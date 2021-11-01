@@ -31,7 +31,7 @@ public:
 	 * The following XML object structure is handled by this method:
 	 * \code{.xml}
 		<longrange type="planar">
-			<region> <!-- y coordinates of left and right boundaries within correction is applied to particles -->
+			<region> <!-- y coordinates of left and right boundaries within correction of force is applied to particles; pot. energy and virial correction is always applied since it is necessary for the correct calculation of the state values -->
 				<left refcoordsID="INT">FLOAT</left> <!-- Reference of coordinate can be set (see DistControl); 0: origin (default) | 1:left interface | 2:right interface -->
 				<right refcoordsID="INT">FLOAT</right>
 			</region>
