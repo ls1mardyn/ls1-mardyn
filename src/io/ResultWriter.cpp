@@ -57,8 +57,6 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 
 	// Writing of cavities now handled by CavityWriter
 
-	domain->updateglobalNumMolecules(particleContainer, domainDecomp);
-
 	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_p_acc->addEntry(domain->getGlobalPressure());
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){

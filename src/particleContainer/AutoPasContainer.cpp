@@ -414,9 +414,9 @@ void AutoPasContainer::traversePartialInnermostCells(CellProcessor &cellProcesso
 	throw std::runtime_error("AutoPasContainer::traversePartialInnermostCells() not yet implemented");
 }
 
-unsigned long AutoPasContainer::getNumberOfParticles() {
+unsigned long AutoPasContainer::getNumberOfParticles(ParticleIterator::Type t /* = ParticleIterator::ONLY_INNER_AND_BOUNDARY */) {
 	unsigned long count = 0;
-	for (auto iter = iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter) {
+	for (auto iter = iterator(t); iter.isValid(); ++iter) {
 		++count;
 	}
 	return count;

@@ -574,7 +574,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	cellProcessor.endTraversal();
 }
 
-unsigned long LinkedCells::getNumberOfParticles(ParticleIterator::Type t) {
+unsigned long LinkedCells::getNumberOfParticles(ParticleIterator::Type t /* = ParticleIterator::ALL_CELLS */) {
 	unsigned long N = 0;
 	unsigned long numCells = _cells.size();
 

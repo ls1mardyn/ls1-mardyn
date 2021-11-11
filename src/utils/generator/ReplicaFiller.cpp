@@ -61,7 +61,7 @@ public:
 
 	void clear() override { _basis = Basis(); }
 
-	unsigned long getNumberOfParticles() override { return _basis.numMolecules(); }
+	unsigned long getNumberOfParticles(ParticleIterator::Type /* t */ = ParticleIterator::ONLY_INNER_AND_BOUNDARY) override { return _basis.numMolecules(); }
 
 	double getBoundingBoxMin(int dimension) const override {
 		double min[3] = {std::numeric_limits<double>::min(),std::numeric_limits<double>::min(),std::numeric_limits<double>::min()};

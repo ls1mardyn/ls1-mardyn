@@ -165,12 +165,11 @@ public:
 	virtual ParticleIterator iterator (ParticleIterator::Type t) = 0;
 	virtual RegionParticleIterator regionIterator (const double startCorner[3], const double endCorner[3], ParticleIterator::Type t) = 0;
 
-	//! @return the number of particles stored in this container
-	//!
-	//! This number may include particles which are outside of
+	//! @brief Gets number of particles stored in this container
+	//! @param t Type of particles to count, e.g. ONLY_INNER_AND_BOUNDARY to dismiss halo particles. Argument defaults to ALL_CELLS
+	//! @return the number of particles stored in this container; for ALL_CELLS, this number may include particles which are outside of
 	//! the bounding box
-	virtual unsigned long getNumberOfParticles() = 0;
-	virtual unsigned long getNumberOfParticles(ParticleIterator::Type t) { return getNumberOfParticles(); }
+	virtual unsigned long getNumberOfParticles(ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
 
 	//! @brief returns one coordinate of the lower corner of the bounding box
 	//!
