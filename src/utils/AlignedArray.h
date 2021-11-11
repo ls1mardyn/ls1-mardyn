@@ -110,7 +110,7 @@ public:
 	}
 
 #if defined(__SSE3__) or defined(__MIC__)
-	virtual void prefetch(int hint = 1, int n = -1) const {
+	virtual void prefetch(int /*hint*/ = 1, int n = -1) const {
 		mardyn_assert(n >= -2);
 
 		size_t endPrefetch;

@@ -29,7 +29,7 @@ void NeighborAcquirerTest::testShiftIfNecessary() {
 
 	{
 		auto regionsShiftsPair =
-			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region, 0.);  // region is within domain box
+			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region);  // region is within domain box
 
 		ASSERT_EQUAL(regionsShiftsPair.first.size(), 1ul);
 
@@ -44,7 +44,7 @@ void NeighborAcquirerTest::testShiftIfNecessary() {
 	for(int i = 0; i < 3; i++) region.rmax[i] = 12.0;
 	{
 		auto regionsShiftsPair =
-			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region, 0.);  // region is within domain box
+			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region);  // region is within domain box
 
 		ASSERT_EQUAL(regionsShiftsPair.first.size(), 1ul);
 
@@ -62,7 +62,7 @@ void NeighborAcquirerTest::testShiftIfNecessary() {
 
 	{
 		auto regionsShiftsPair =
-			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region, 0.);  // region is within domain box
+			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region);  // region is within domain box
 
 		ASSERT_EQUAL(regionsShiftsPair.first.size(), 1ul);
 
@@ -77,7 +77,7 @@ void NeighborAcquirerTest::testShiftIfNecessary() {
 
 	{
 		auto regionsShiftsPair =
-			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region, 0.);  // region is within domain box
+			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region);  // region is within domain box
 
 		ASSERT_EQUAL(regionsShiftsPair.first.size(), 8ul);
 
@@ -88,7 +88,7 @@ void NeighborAcquirerTest::testShiftIfNecessary() {
 
 	{
 		auto regionsShiftsPair =
-			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region, 0.);  // region is within domain box
+			NeighborAcquirer::getPotentiallyShiftedRegions(domainLength, region);  // region is within domain box
 
 		ASSERT_EQUAL(regionsShiftsPair.first.size(), 8ul);
 
@@ -268,7 +268,7 @@ void NeighborAcquirerTest::testCorrectNeighborAcquisition() {
 	std::vector<CommunicationPartner> leavingExportNeighbours;
 	std::vector<CommunicationPartner> leavingImportNeighbours;
 	std::tie(leavingExportNeighbours, leavingImportNeighbours) =
-		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, leavingRegions, 0., MPI_COMM_WORLD);
+		NeighborAcquirer::acquireNeighbors(globalDomainLength, &ownRegion, leavingRegions, MPI_COMM_WORLD);
 	// p1 notes reply, p2 notes owned as leaving import
 
 	for (auto& neighbor : leavingExportNeighbours) {

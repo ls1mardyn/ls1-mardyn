@@ -63,8 +63,6 @@ public:
 
 	void update() override;
 
-	void forcedUpdate() override;
-
 	bool addParticle(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
 					 const bool &rebuildCaches = false) override;
 
@@ -93,8 +91,6 @@ public:
 	double get_halo_L(int index) const override;
 
 	double getCutoff() const override;
-
-	double getInteractionLength() const override;
 
 	double getSkin() const override;
 
@@ -127,11 +123,8 @@ public:
 	void setCutoff(double cutoff) override { _cutoff = cutoff; }
 
 	std::vector<Molecule> getInvalidParticles() override {
-		_hasInvalidParticles = false;
 		return std::move(_invalidParticles);
 	}
-
-	bool hasInvalidParticles() override { return _hasInvalidParticles; }
 
 	bool isInvalidParticleReturner() override { return true; }
 
@@ -178,7 +171,6 @@ private:
 	autopas::Logger::LogLevel _logLevel{autopas::Logger::LogLevel::info};
 
 	std::vector<Molecule> _invalidParticles;
-	bool _hasInvalidParticles{false};
 	bool _useAVXFunctor{true};
 
 	ParticlePropertiesLibrary<double, size_t> _particlePropertiesLibrary;

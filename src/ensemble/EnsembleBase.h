@@ -111,9 +111,9 @@ public:
 
 	/*! runs after forces step for GrandCanonical, nothing for canonical */
 	virtual void
-	afterForces(ParticleContainer* moleculeContainer, DomainDecompBase* domainDecomposition,
-				CellProcessor* cellProcessor,
-				unsigned long simstep) {};
+	afterForces(ParticleContainer* /* moleculeContainer */, DomainDecompBase* /* domainDecomposition */,
+				CellProcessor* /* cellProcessor */,
+				unsigned long /* simstep */) {};
 
 	/*! runs before temperature control is applied, but after force calculations */
 	virtual void beforeThermostat(unsigned long simstep, unsigned long initStatistics) {};

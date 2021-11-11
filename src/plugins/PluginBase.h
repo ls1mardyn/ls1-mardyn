@@ -86,8 +86,8 @@ public:
 
     /** @brief Method will be called first thing in a new timestep. */
 	virtual void beforeEventNewTimestep(
-			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-			unsigned long simstep
+			ParticleContainer* /* particleContainer */, DomainDecompBase* /* domainDecomp */,
+			unsigned long /* simstep */
 	) {};
 
     /** @brief Method beforeForces will be called before forcefields have been applied
@@ -96,8 +96,8 @@ public:
      */
 
     virtual void beforeForces(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            unsigned long simstep
+            ParticleContainer* /* particleContainer */, DomainDecompBase* /* domainDecomp */,
+            unsigned long /* simstep */
     ) {};
 
     /** @brief Method siteWiseForces will be called before forcefields have been applied
@@ -105,16 +105,16 @@ public:
      */
 
     virtual void siteWiseForces(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            unsigned long simstep
+            ParticleContainer* /* particleContainer */, DomainDecompBase* /* domainDecomp */,
+            unsigned long /* simstep */
     ) {};
 
     /** @brief Method afterForces will be called after forcefields have been applied
      *  no sitewise Forces can be applied here
      */
     virtual void afterForces(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            unsigned long simstep
+            ParticleContainer* /* particleContainer */, DomainDecompBase* /* domainDecomp */,
+            unsigned long /* simstep */
     ) {};
 
 
