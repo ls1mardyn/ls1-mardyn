@@ -205,6 +205,7 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _feedrate.actual=" << _feedrate.actual << endl;
 	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _feedrate.sum=" << _feedrate.sum << endl;
 	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _feedrate.avg=" << _feedrate.avg << endl;
+	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : mettDeamon->getInvDensityArea()=" << mettDeamon->getInvDensityArea() << endl;
 #endif
 }
 
