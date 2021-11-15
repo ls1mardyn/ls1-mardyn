@@ -1293,7 +1293,7 @@ Reservoir::~Reservoir() = default;
 void Reservoir::readXML(XMLfileUnits& xmlconfig)
 {
 	// update BinQueue before inserting new Reservoir slab
-	_bUpdateBinQueue = false;
+	_bUpdateBinQueue = true;
 	xmlconfig.getNodeValue("@update", _bUpdateBinQueue);
 	
 	std::string strType = "unknown";

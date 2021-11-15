@@ -170,7 +170,7 @@ public:
 			<z2method>1</z2method>                 <!-- choose zone2 method, 1:reset all i.e. also quaternion | 2:reset only y position od particles
 			<manipfree> <ymin>50</ymin> <ymax>100</ymax> </manipfree>   <!-- range that is not affected with any manipulations -->
 		</control>
-		<reservoir update="1">   <!-- update="1": Update Reservoir's data structure before inserting new particles. This is mandatory when using kd-decomposition
+		<reservoir update="1">   <!-- update="1": Update Reservoir's data structure before inserting new particles. This is mandatory when using kd-decomposition. Default: update="1"
 			<file type="binary">
 				<header>../../liq/run12/cp_binary-0.restart.header.xml</header>   <!-- checkpoint header file used for reservoir -->
 				<data>../../liq/run12/cp_binary-0.restart.dat</data>              <!-- checkpoint data file used for reservoir -->
