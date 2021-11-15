@@ -673,6 +673,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 
 
 void Simulation::readConfigFile(string filename) {
+	std::cout << "here 3111" << std::endl;
 	string extension(getFileExtension(filename.c_str()));
 	global_log->debug() << "Found config filename extension: " << extension << endl;
 	if (extension == "xml") {
@@ -1004,6 +1005,12 @@ void Simulation::simulateOneTimestep()
 		Simulation::exit(1);
 	}
 
+	#ifdef MAMICO_COUPLING
+	//since mamico will control the whole simulation, no need to check for limits
+	_simstep++;
+	#endif
+
+	
 	loopTimer->start();
 	global_log->debug() << "timestep: " << getSimulationStep() << endl;
 	global_log->debug() << "simulation time: " << getSimulationTime() << endl;
@@ -1204,6 +1211,16 @@ void Simulation::simulateOneTimestep()
 	perStepIoTimer->stop();
 
 	loopTimer->stop();
+}
+
+void Simulation::markSimAsDone()
+{
+	//added for mamico
+	//since simulationDone would otherwise be controlled by keepRunning(), mamico manually marks simulation as done here
+	//the variable is only a safeguard for postSimLoopSteps, does not actually affect the simulation
+	//variable exists because technically it's possible to call postSimLoopSteps() before simulation actually over,
+	//even though neither mamico nor ls1 should ever do it
+	simulationDone = true;
 }
 
 void Simulation::postSimLoopSteps()

@@ -531,6 +531,7 @@ public:
 	void simulateOneTimestep();
 	void preSimLoopSteps();
 	void postSimLoopSteps();
+	void markSimAsDone(); //just sanity check
 
 private:
 	Timer *loopTimer, *decompositionTimer, *computationTimer, *perStepIoTimer, *forceCalculationTimer, *mpiOMPCommunicationTimer;

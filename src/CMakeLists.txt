@@ -46,9 +46,20 @@ else()
 endif ()
 
 # add the executable
-ADD_EXECUTABLE(MarDyn
+if (MAMICO_COUPLING)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMAMICO_COUPLING")
+    set(MAMICO_SRC_DIR "../../")
+    set(EIGEN_SRC_DIR "../../../../eigen-3.3.9/")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+    ADD_LIBRARY(MarDyn
         ${MY_SRC}
         parallel/ForceHelper.h)
+    TARGET_INCLUDE_DIRECTORIES(MarDyn SYSTEM PRIVATE "${MAMICO_SRC_DIR}" PRIVATE "${EIGEN_SRC_DIR}")
+else()
+    ADD_EXECUTABLE(MarDyn
+        ${MY_SRC}
+        parallel/ForceHelper.h)
+endif()
 
 # dependencies for lz4
 if (ENABLE_LZ4)
@@ -65,6 +76,7 @@ TARGET_LINK_LIBRARIES(MarDyn
         ${LZ4_LIB}     # for LZ4 compression
         ${ALL_LIB}     # for ALL
         )
+
 
 ADD_TEST(
         NAME MarDyn_test

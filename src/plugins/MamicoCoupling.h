@@ -2,13 +2,16 @@
 #define SRC_PLUGINS_MAMICOCOUPLING_H_
 
 #include "PluginBase.h"
-
 #ifdef MAMICO_COUPLING
-#include "coupling/services/MacroscopicCellService.h"
-#include "coupling/interface/MamicoInterfaceProvider.h"
+#include <climits> //for INT_MAX in indexconversion
+#include <coupling/services/MacroscopicCellService.h>
+#include <coupling/interface/MamicoInterfaceProvider.h>
+#include <coupling/interface/impl/ls1/LS1RegionWrapper.h>
+//#include <MacroscopicCellService.h>
+//#include <MamicoInterfaceProvider.h>
 #endif
 
-#include "particleContainer/LinkedCells.h"
+//#include "particleContainer/LinkedCells.h"
 
 
 class MamicoCoupling: public PluginBase {
@@ -52,7 +55,7 @@ public:
 
 private:
 #ifdef MAMICO_COUPLING
-    coupling::services::MacroscopicCellServiceImpl<ParticleCell,3>* _macroscopicCellService;
+    coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>* _macroscopicCellService;
 #endif
 };
 

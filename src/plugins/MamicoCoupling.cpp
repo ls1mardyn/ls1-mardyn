@@ -2,7 +2,8 @@
 #include "Domain.h"
 
 #ifdef MAMICO_COUPLING
-#include "coupling/interface/impl/ls1/LS1MamicoCouplingSwitch.h"
+#include <coupling/interface/impl/ls1/LS1MamicoCouplingSwitch.h>
+//#include <LS1MamicoCouplingSwitch.h>
 #endif
 
 void MamicoCoupling::readXML(XMLfileUnits& xmlconfig)
@@ -16,8 +17,8 @@ void MamicoCoupling::init(ParticleContainer* particleContainer,
     #ifdef MAMICO_COUPLING
     if(_macroscopicCellService==NULL) 
     {
-        _macroscopicCellService = (coupling::services::MacroscopicCellServiceImpl<ParticleCell,3>*)
-                coupling::interface::MamicoInterfaceProvider<ParticleCell,3>::getInstance().getMacroscopicCellService();
+        _macroscopicCellService = (coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*)
+                coupling::interface::MamicoInterfaceProvider<ls1::LS1RegionWrapper,3>::getInstance().getMacroscopicCellService();
 	}
     //since using mamico thermostat, switch off ls1 thermostat
     domain->thermostatOff();
@@ -39,8 +40,8 @@ void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
     {
         if(_macroscopicCellService==NULL) 
         {
-            _macroscopicCellService = (coupling::services::MacroscopicCellServiceImpl<ParticleCell,3>*)
-                    coupling::interface::MamicoInterfaceProvider<ParticleCell,3>::getInstance().getMacroscopicCellService();
+            _macroscopicCellService = (coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*)
+                    coupling::interface::MamicoInterfaceProvider<ls1::LS1RegionWrapper,3>::getInstance().getMacroscopicCellService();
         }
         _macroscopicCellService->processInnerMacroscopicCellAfterMDTimestep();
         _macroscopicCellService->distributeMass(simstep);
@@ -57,8 +58,8 @@ void MamicoCoupling::afterForces(ParticleContainer* particleContainer,
     {
         if(_macroscopicCellService==NULL) 
         {
-            _macroscopicCellService = (coupling::services::MacroscopicCellServiceImpl<ParticleCell,3>*)
-                    coupling::interface::MamicoInterfaceProvider<ParticleCell,3>::getInstance().getMacroscopicCellService();
+            _macroscopicCellService = (coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*)
+                    coupling::interface::MamicoInterfaceProvider<ls1::LS1RegionWrapper,3>::getInstance().getMacroscopicCellService();
         }
         _macroscopicCellService->distributeMomentum(simstep);
         _macroscopicCellService->applyBoundaryForce(simstep);
