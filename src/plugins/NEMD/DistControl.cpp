@@ -70,8 +70,8 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	_strFilenameProfilesPrefix = "DistControlProfiles";
 	xmlconfig.getNodeValue("filenames/control",  _strFilename);
 	xmlconfig.getNodeValue("filenames/profiles", _strFilenameProfilesPrefix);
-	global_log->error() << "DistControl: Writing control data to file: " << _strFilename << endl;
-	global_log->error() << "DistControl: Writing profile data to files with prefix: " << _strFilenameProfilesPrefix << endl;
+	global_log->info() << "DistControl: Writing control data to file: " << _strFilename << endl;
+	global_log->info() << "DistControl: Writing profile data to files with prefix: " << _strFilenameProfilesPrefix << endl;
 
 	// subdivision of system
 	uint32_t nSubdivisionType = SDOPT_UNKNOWN;
