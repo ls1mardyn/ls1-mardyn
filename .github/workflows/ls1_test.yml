@@ -81,6 +81,7 @@ jobs:
       run: |
         sudo apt-get install libcppunit-dev openmpi-bin -y
         echo "Running ${JOBNAME}"
+        git status
         mkdir build_${JOBNAME}
     - if: matrix.parall == '0'
       name: Build seq. Matrix - vector ${{ matrix.vector }}, target ${{ matrix.target }}, parall ${{ matrix.parall }}
@@ -102,7 +103,9 @@ jobs:
       name: Validation par. examples Matrix - vector ${{ matrix.vector }}, target ${{ matrix.target }}, parall ${{ matrix.parall }}
       run: |
           mkdir build_${JOBNAME}_master
+          git fetch
           git checkout master
+          git status
           cd build_${JOBNAME}_master
           CC=mpicc CXX=mpicxx cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} -DCMAKE_BUILD_TYPE=${{ matrix.target }} -DENABLE_MPI=ON -DENABLE_UNIT_TESTS=1 ..
           make -j2
