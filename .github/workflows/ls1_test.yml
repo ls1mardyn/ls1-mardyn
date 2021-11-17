@@ -1,6 +1,6 @@
 name: C/C++ CI
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   check_AutoPas_seq:
@@ -67,7 +67,7 @@ jobs:
         grep "p = 5.34057e-07" simstep20.txt
   run_ci-matrix:
     runs-on: ubuntu-latest
-    continue-on-error: true
+    # continue-on-error: true
     strategy:
       matrix: 
         vector: ['SSE', 'AVX2']
