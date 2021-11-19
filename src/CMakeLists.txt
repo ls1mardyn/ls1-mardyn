@@ -68,7 +68,7 @@ if (ENABLE_ADIOS2)
             You're using an external ADIOS2.
             ADIOS2_HAVE_MPI set to \"${ADIOS2_HAVE_MPI}\" and ls1 ENALBE_MPI is set to \"${ENABLE_MPI}\".
             For a parallel build, MPI has to be enabled in the packaged ADIOS2 as well as ls1 (ADIOS2_ENABLE_MPI=ON, ENABLE_MPI=ON).
-            For a sequential build, deactivate MPI both times.")
+            For a sequential build, deactivate MPI for both.")
         endif()
         TARGET_LINK_LIBRARIES(MarDyn adios2::adios2)
     else()
