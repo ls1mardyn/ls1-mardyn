@@ -26,7 +26,7 @@
 #include "parallel/DomainDecomposition.h"
 #endif
 
-#define NUM_PARTICLES 5
+constexpr size_t NUM_PARTICLES = 5
 
 
 
