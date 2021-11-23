@@ -70,6 +70,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	_strFilenameProfilesPrefix = "DistControlProfiles";
 	xmlconfig.getNodeValue("filenames/control",  _strFilename);
 	xmlconfig.getNodeValue("filenames/profiles", _strFilenameProfilesPrefix);
+
 	global_log->error() << "[DistControl] Writing control data to file: " << _strFilename << endl;
 	global_log->error() << "[DistControl] Writing profile data to files with prefix: " << _strFilenameProfilesPrefix << endl;
 
@@ -277,14 +278,15 @@ void DistControl::PrepareSubdivision()
 
 void DistControl::InitDataStructures()
 {
-	_nNumValuesScalar = _binParams.count * _nNumComponents;
+	_nNumValuesScalar = static_cast<uint64_t>(_binParams.count) * static_cast<uint64_t>(_nNumComponents);
 //	cout << "DC: _nNumValuesScalar = " << _nNumValuesScalar << endl;
 //	cout << "DC: _nNumComponents = " << (uint32_t)_nNumComponents << endl;
 
 	// init offset array
 	_nOffsets.resize(_nNumComponents);
-	for(auto cid=0; cid<_nNumComponents; ++cid)
-		_nOffsets.at(cid) = cid*_binParams.count;
+	for(auto cid=0; cid<_nNumComponents; ++cid) {
+		_nOffsets.at(cid) = static_cast<uint64_t>(cid)*static_cast<uint64_t>(_binParams.count);
+	}
 
 	// profile midpoint positions
 	_dMidpointPositions.resize(_binParams.count);

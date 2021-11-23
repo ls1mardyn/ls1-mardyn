@@ -30,7 +30,7 @@
 template < typename T > void shuffle( std::list<T>& lst ); // shuffle contents of a list
 
 void create_rand_vec_ones(const uint64_t& nCount, const double& percent, std::vector<int>& v);
-void update_velocity_vectors(std::unique_ptr<Random>& rnd, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
+void update_velocity_vectors(Random*, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
 		std::vector<double>& vxi, std::vector<double>& vyi, std::vector<double>& vzi);
 
 #define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
@@ -40,9 +40,6 @@ enum ReadReservoirMethods : uint8_t
 	RRM_UNKNOWN = 0,
 	RRM_READ_FROM_FILE = 1,
 	RRM_READ_FROM_FILE_BINARY = 2,
-	RRM_READ_FROM_MEMORY = 3,
-	RRM_AMBIGUOUS = 4,
-	RRM_EMPTY = 5,
 };
 
 enum MovingDirections : uint8_t
@@ -111,7 +108,7 @@ struct FeedRateStruct
 
 	struct ReleaseVelocityStruct
 	{
-		uint32_t method;
+		ReleaseVelocityMethod method;
 		double fix_value;
 		ParamsNormMB normMB;
 		std::vector<double> vx;
@@ -171,7 +168,7 @@ public:
 			<manipfree> <ymin>50</ymin> <ymax>100</ymax> </manipfree>   <!-- range that is not affected with any manipulations -->
 		</control>
 		<reservoir update="1">   <!-- update="1": Update Reservoir's data structure before inserting new particles. This is mandatory when using kd-decomposition. Default: update="1"
-			<file type="binary">
+			<file type="binary">   <!-- file type can be ASCII or binary -->
 				<header>../../liq/run12/cp_binary-0.restart.header.xml</header>   <!-- checkpoint header file used for reservoir -->
 				<data>../../liq/run12/cp_binary-0.restart.dat</data>              <!-- checkpoint data file used for reservoir -->
 			</file>
@@ -289,9 +286,9 @@ private:
 	uint64_t _nMaxReservoirMoleculeID;
 	uint64_t _nNumMoleculesDeletedGlobalAlltime;
 	CommVar<uint64_t> _nNumMoleculesTooFast;
-	uint8_t _nMovingDirection;
+	MovingDirections _nMovingDirection;
 	FeedRateMethod _nFeedRateMethod;
-	uint8_t _nZone2Method;
+	Zone2Method _nZone2Method;
 	uint32_t _nNumValsSummation;
 	int64_t _numDeletedMolsSum;
 	uint64_t _nDeleteNonVolatile;
@@ -389,8 +386,8 @@ private:
 
 public:
 	// Getters, Setters
-	double getDensity(const uint32_t& cid) {return _density.at(cid).density;}
-	void setDensity(const uint32_t& cid, const double& dVal) {_density.at(cid).density = dVal;}
+	double getDensity() {return _density;}
+	void setDensity(const double& dVal) {_density = dVal;}
 	double getBoxLength(const uint32_t& nDim) {return _box.length.at(nDim);}
 	void setBoxLength(const uint32_t& nDim, const double& dVal) {_box.length.at(nDim)=dVal;}
 	double getVolume() {return _box.volume;}
@@ -412,7 +409,6 @@ public:
 	void printBinQueueInfo();
 
 private:
-	void calcPartialDensities(DomainDecompBase* domainDecomp);
 	void changeComponentID(Molecule& mol, const uint32_t& cid);
 	bool isRelevant(DomainDecompBase* domainDecomp, Domain* domain, Molecule& mol);
 
@@ -422,15 +418,15 @@ private:
 	std::unique_ptr<BinQueue> _binQueue;
 	uint64_t _numMoleculesRead;
 	uint64_t _nMaxMoleculeID;
-	uint32_t _nMoleculeFormat;
-	uint8_t _nReadMethod;
+	MoleculeFormat _nMoleculeFormat;
+	ReadReservoirMethods _nReadMethod;
 	double _dReadWidthY;
 	double _dBinWidthInit;
 	double _dBinWidth;
 	double _dInsPercent;  // only insert percentage of reservoir density
 	std::vector<Molecule> _particleVector;
 	std::vector<uint32_t> _vecChangeCompIDs;
-	std::vector<DensityStruct> _density;
+	double _density; // Global density of reservoir
 	FilepathStruct _filepath;
 	BoxStruct _box;
 	bool _bUpdateBinQueue;  // BinQueue have to be updated if bounding boxes changes, e.g. in case of using kd-decomposition
