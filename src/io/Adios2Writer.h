@@ -8,9 +8,9 @@
  */
 #ifdef ENABLE_ADIOS2
 
+#include "molecules/Component.h"
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "plugins/PluginBase.h"
-#include "molecules/Component.h"
 
 #include <map>
 #include <memory>
@@ -25,7 +25,6 @@
 #endif
 
 class Adios2Writer : public PluginBase {
-
 #ifdef MARDYN_DPDP
 	using PRECISION = double;
 #else
@@ -33,10 +32,10 @@ class Adios2Writer : public PluginBase {
 #endif
 
 public:
-	Adios2Writer(){};
-	virtual ~Adios2Writer(){};
+	Adios2Writer() = default;
+	~Adios2Writer() override = default;
 
-	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
+	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
 
 	/** @brief Read in XML configuration for Adios2Writer.
 	 *
@@ -55,23 +54,24 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 
-	void testInit(std::vector<Component>& comps, const std::string outfile = "mardyn.bp", const std::string adios2enginetype = "BP4", const unsigned long writefrequency = 50000,
+	void testInit(std::vector<Component>& comps, const std::string outfile = "mardyn.bp",
+				  const std::string adios2enginetype = "BP4", const unsigned long writefrequency = 50000,
 				  const std::string compression = "none", const std::string compression_accuracy = "0.00001",
 				  const std::string compression_rate = "8");
 
 	void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-								unsigned long simstep);
+								unsigned long simstep) override;
 
-	void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep);
+	void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
 
-	void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep);
+	void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
 
 	void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-				 unsigned long simstep);
+				 unsigned long simstep) override;
 
-	void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
+	void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
 
-	std::string getPluginName() { return std::string("Adios2Writer"); }
+	std::string getPluginName() override { return std::string("Adios2Writer"); }
 
 	static PluginBase* createInstance() { return new Adios2Writer(); }
 
@@ -80,7 +80,8 @@ protected:
 private:
 	void resetContainers();
 	void clearContainers();
-	void defineVariables(const uint64_t global, const uint64_t offset, const uint64_t local, const int numProcs, const int rank);
+	void defineVariables(const uint64_t global, const uint64_t offset, const uint64_t local, const int numProcs,
+						 const int rank);
 	void initAdios2();
 	std::vector<Component> _comps;
 	// output filename, from XML
