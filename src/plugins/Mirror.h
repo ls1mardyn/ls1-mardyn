@@ -67,7 +67,10 @@ public:
 				<start>UNSIGNED_LONG</start>   <!-- Timestep until all particles are reflected -->
 				<stop>UNSIGNED_LONG</stop>         <!-- As from this timestep all particles are treated as set in "treatment" -->
 				<treatment>INT</treatment>         <!-- When not reflected, the particles are deleted (0) or transmitted (1) -->
-			</ramping> 
+			</ramping>
+			<switchcomp>
+				<cid>INT</cid>   <!-- Switch component to <cid> if molecule has passed the mirror -->
+			</switchcomp>
 		</plugin>
 	   \endcode
 	 */
@@ -155,6 +158,11 @@ private:
 		float width;
 		std::map<uint64_t,double> pos_map;
 	} _diffuse_mirror;
+	
+	struct SwitchComp {
+		bool enabled;
+		uint32_t cid_ub;  // component id unity based
+	} _switchComp;
 };
 
 #endif /*MIRROR_H_*/
