@@ -94,18 +94,28 @@ private:
 		engine->Get<T>(advar, container);
 	}
 
+	/** @brief Read a variable from the provided ADIOS2 file using the provided offset and bufferSize.
+	 *   The offset and bufferSize point to a section of the data.
+	 *
+	 *   @tparam T double or float depending on what is provided in the file
+	 *   @param var_name Name of the variable to read
+	 *   @param container Target for the actual data
+	 *   @param bufferSize Length of the current read
+	 *   @param offset offset to the current read
+	 *
+	 */
 	template <typename T>
-	void doTheRead(std::string var_name, std::vector<T>& container, uint64_t buffer, uint64_t offset) {
-		adios2::Dims readsize({buffer});
+	void doTheRead(const std::string var_name, std::vector<T>& container, const uint64_t bufferSize, const uint64_t offset) {
+		adios2::Dims readsize({bufferSize});
 		adios2::Dims offs({offset});
 
 		Log::global_log->debug() << "[Adios2Reader]: Var name " << var_name << std::endl;
 		auto advar = io->InquireVariable<T>(var_name);
 		advar.SetStepSelection({_step, 1});
-		Log::global_log->debug() << "[Adios2Reader]: buffer " << buffer << " offset " << offset << std::endl;
+		Log::global_log->debug() << "[Adios2Reader]: buffer " << bufferSize << " offset " << offset << std::endl;
 		for (auto entry : advar.Shape()) Log::global_log->debug() << "[Adios2Reader]: shape " << entry << std::endl;
 		advar.SetSelection(adios2::Box<adios2::Dims>(offs, readsize));
-		container.resize(buffer);
+		container.resize(bufferSize);
 		engine->Get<T>(advar, container);
 	}
 
