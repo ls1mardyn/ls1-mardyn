@@ -317,7 +317,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 	uint64_t bufferSize = particle_count / domainDecomp->getNumProcs();
     auto variables = io->AvailableVariables();
 	
-	for (auto var : variables) {
+	for (const auto &var : variables) {
 		if (var.first == "rx") {
 			if (var.second.at("Type") != "double") {
 				global_log->info() << "[Adios2Reader] Detected single precision" << endl;
