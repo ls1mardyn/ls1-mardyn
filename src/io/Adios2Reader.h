@@ -13,6 +13,12 @@
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "utils/Logger.h"
 
+#ifdef MARDYN_AUTOPAS
+#include "molecules/AutoPasSimpleMolecule.h"
+#else
+#include "molecules/FullMolecule.h"
+#endif
+
 #include <errno.h>
 #include <chrono>
 #include <iomanip>
