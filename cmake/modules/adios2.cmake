@@ -2,9 +2,10 @@ option(ENABLE_ADIOS2 "Enables the ADIOS2 writer type." ON)
 option(FIND_PACKAGE_ADIOS2 "Uses find_package to find the adios2 library locally instead of downloading it from github." OFF)
 
 if (ENABLE_ADIOS2)
-    if (NOT FIND_PACKAGE_ADIOS2)
-        message(STATUS "Using Adios2.")
+    message(STATUS "Using Adios2.")
 
+    # No local version -> download from github
+    if (NOT FIND_PACKAGE_ADIOS2)
         # Enable ExternalProject CMake module
         include(FetchContent)
 
@@ -39,6 +40,13 @@ if (ENABLE_ADIOS2)
         endif ()
 
         set(ADIOS2_LIB "adios2")
+        set(ADIOS2_COMPILE_DEFINITION "ENABLE_ADIOS2")
+
+        # custom target to copy bpls to the build directory
+        add_custom_target(bplsCopy ALL DEPENDS bpls)
+        add_custom_command(TARGET bplsCopy POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${adios2fetch_BINARY_DIR}/bin/bpls bpls)
+
+    # use local version
     else ()
         find_package(ADIOS2 REQUIRED)
         if (NOT DEFINED ADIOS2_HAVE_MPI)

@@ -56,12 +56,7 @@ if (ENABLE_LZ4)
 endif()
 
 # find adios
-if (ENABLE_ADIOS2)
-    TARGET_COMPILE_DEFINITIONS(MarDyn PUBLIC "ENABLE_ADIOS2")
-    if (NOT FIND_PACKAGE_ADIOS2)
-        add_custom_command(TARGET MarDyn POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${adios2fetch_BINARY_DIR}/bin/bpls bpls)
-    endif()
-else()
+if (NOT ENABLE_ADIOS2)
     list(FILTER MY_SRC EXCLUDE REGEX "adios2")
 endif()
 
@@ -76,6 +71,10 @@ TARGET_LINK_LIBRARIES(MarDyn
         ${LZ4_LIB}     # for LZ4 compression
         ${ALL_LIB}     # for ALL
         )
+
+target_compile_definitions(MarDyn PUBLIC
+        ${ADIOS2_COMPILE_DEFINITION}
+)
 
 ADD_TEST(
         NAME MarDyn_test
