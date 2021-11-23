@@ -1,0 +1,10 @@
+bootstrap: library
+from: centos:8
+
+%post
+    dnf makecache
+    dnf -y install filesystem
+    dnf -y install gcc-toolset-10-gcc gcc-toolset-10-gcc-c++ gcc-toolset-10-gdb
+    # can't get this to work...
+    #echo \#\!/bin/bash > /etc/profile.d/gcc10.sh
+    #echo source scl_source enable gcc-toolset-10 >> /etc/profile.d/gcc10.sh
