@@ -69,7 +69,7 @@ void Adios2Writer::clearContainers() {
 	}
 }
 
-void Adios2Writer::defineVariables(uint64_t global, uint64_t offset, uint64_t local, int numProcs, int rank) {
+void Adios2Writer::defineVariables(const uint64_t global, const uint64_t offset, const uint64_t local, const int numProcs, const int rank) {
 	for (auto& [variableName, variableContainer] : _vars) {
 		global_log->info() << "[Adios2Writer] Defining Variable " << variableName << std::endl;
 		if (std::holds_alternative<std::vector<PRECISION>>(variableContainer)) {
@@ -292,9 +292,9 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 	// for all outputs
 	domain->updateglobalNumMolecules(particleContainer, domainDecomp);
-	uint64_t localNumParticles = particleContainer->getNumberOfParticles();
-	uint64_t globalNumParticles = domain->getglobalNumMolecules();
-	auto numProcs = domainDecomp->getNumProcs();
+	const uint64_t localNumParticles = particleContainer->getNumberOfParticles();
+	const uint64_t globalNumParticles = domain->getglobalNumMolecules();
+	const auto numProcs = domainDecomp->getNumProcs();
 	int const rank = domainDecomp->getRank();
 
 	std::vector<uint64_t> m_id;
@@ -363,17 +363,17 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		defineVariables(globalNumParticles, offset, localNumParticles, numProcs, rank);
 		for (auto& [variableName, variableContainer] : _vars) {
 			if (std::holds_alternative<std::vector<PRECISION>>(variableContainer)) {
-				auto adios2Var = _io->InquireVariable<PRECISION>(variableName);
+				const auto adios2Var = _io->InquireVariable<PRECISION>(variableName);
 				_engine->Put<PRECISION>(adios2Var, std::get<std::vector<PRECISION>>(variableContainer).data());
 			} else {
-				auto adios2Var = _io->InquireVariable<uint64_t>(variableName);
+				const auto adios2Var = _io->InquireVariable<uint64_t>(variableName);
 				_engine->Put<uint64_t>(adios2Var, std::get<std::vector<uint64_t>>(variableContainer).data());
 			}
 		}
 
 		// global box
 		if (domainDecomp->getRank() == 0) {
-			auto adios2_global_box = _io->InquireVariable<PRECISION>(gbox_name);
+			const auto adios2_global_box = _io->InquireVariable<PRECISION>(gbox_name);
 
 			global_log->debug() << "[Adios2Writer] Putting Variables" << std::endl;
 			if (!adios2_global_box) {
@@ -384,7 +384,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		}
 
 		// local box
-		auto adios2_local_box = _io->InquireVariable<PRECISION>(lbox_name);
+		const auto adios2_local_box = _io->InquireVariable<PRECISION>(lbox_name);
 
 		if (!adios2_local_box) {
 			global_log->error() << "[Adios2Writer] Could not create variable: local_box" << std::endl;
@@ -393,13 +393,13 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		_engine->Put<PRECISION>(adios2_local_box, local_box.data());
 
 		// offsets
-		auto adios2_offset = _io->InquireVariable<uint64_t>(offsets_name);
+		const auto adios2_offset = _io->InquireVariable<uint64_t>(offsets_name);
 		_engine->Put<uint64_t>(adios2_offset, offset);
 
 		// simulation time
-		auto current_time = _simulation.getSimulationTime();
+		const auto current_time = _simulation.getSimulationTime();
 		if (domainDecomp->getRank() == 0) {
-			auto adios2_simulationtime = _io->InquireVariable<double>(simtime_name);
+			const auto adios2_simulationtime = _io->InquireVariable<double>(simtime_name);
 			if (!adios2_simulationtime) {
 				global_log->error() << "[Adios2Writer] Could not create variable: simulationtime" << std::endl;
 				return;
@@ -421,7 +421,6 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		global_log->error() << "[Adios2Writer] Exception, STOPPING PROGRAM";
 		global_log->error() << e.what();
 	}
-	//global_log->set_mpi_output_root();
 	global_log->info() << "[Adios2Writer] endStep." << std::endl;
 }
 

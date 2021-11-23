@@ -26,7 +26,7 @@
 #include "parallel/DomainDecomposition.h"
 #endif
 
-constexpr size_t NUM_PARTICLES = 5
+constexpr size_t NUM_PARTICLES = 5;
 
 
 
@@ -188,12 +188,8 @@ void Adios2IOTest::testReadCheckpoint() {
 	
 	for (auto it = _inputPatricleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
 		auto i  = it->getID();
-		for (int j = 0; j < 3; ++j) {
-			//global_log->error() << "[Adios2IOTest] position container: " << it->r(j) << " vector: " << _positions[i][j]
-			//					<< std::endl;
-			
+		for (int j = 0; j < 3; ++j) {			
 			ASSERT_EQUAL(it->r(j), _positions[i][j]);
-			//ASSERT_EQUAL(it->D(j), _Ds[i][j]);
 			ASSERT_EQUAL(it->v(j), _velocities[i][j]);
 			ASSERT_EQUAL(it->getID(), _ids[i]);
 		}

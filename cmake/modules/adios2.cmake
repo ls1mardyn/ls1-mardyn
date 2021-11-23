@@ -39,6 +39,19 @@ if (ENABLE_ADIOS2)
         endif ()
 
         set(ADIOS2_LIB "adios2")
+    else ()
+        find_package(ADIOS2 REQUIRED)
+        if (NOT DEFINED ADIOS2_HAVE_MPI)
+            set(ADIOS2_HAVE_MPI OFF)
+        endif()
+        if ((ADIOS2_HAVE_MPI OR ENABLE_MPI) AND (NOT (ADIOS2_HAVE_MPI AND ENABLE_MPI))) # handish implementation of xor (cmake's EQUAL does not work)
+            message(FATAL_ERROR "
+            You're using an external ADIOS2.
+            ADIOS2_HAVE_MPI set to \"${ADIOS2_HAVE_MPI}\" and ls1 ENALBE_MPI is set to \"${ENABLE_MPI}\".
+            For a parallel build, MPI has to be enabled in the packaged ADIOS2 as well as ls1 (ADIOS2_ENABLE_MPI=ON, ENABLE_MPI=ON).
+            For a sequential build, deactivate MPI for both.")
+        endif()
+        set(ADIOS2_LIB "adios2::adios2")
     endif()
 else ()
     message(STATUS "Not using adios2.")

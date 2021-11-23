@@ -7,11 +7,6 @@
  *
  */
 #ifdef ENABLE_ADIOS2
-#ifdef MARDYN_DPDP
-#define PRECISION double
-#else
-#define PRECISION float
-#endif
 
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "plugins/PluginBase.h"
@@ -30,6 +25,13 @@
 #endif
 
 class Adios2Writer : public PluginBase {
+
+#ifdef MARDYN_DPDP
+	using PRECISION = double;
+#else
+	using PRECISION = float;
+#endif
+
 public:
 	Adios2Writer(){};
 	virtual ~Adios2Writer(){};
@@ -44,6 +46,10 @@ public:
 		 <outputfile>STRING</outputfile>
 		 <adios2enginetype><!-- For possible engines see the ADIOS2 doc (default: BP4) --></adios2enginetype>
 		 <writefrequency>INTEGER</writefrequency>
+		 <compression><!-- Enables compression. Supported compression libs: SZ and ZFP. ADIOS2 should be compiled with these libraries. (default: none) --> </compression>
+		 <compressionaccuracy><!-- Parameter for the SZ compression lib (default: 0.00001) --></compressionaccuracy>
+		 <compressionrate><!-- Parameter for the ZFP compression lib (default: 8) --></compressionrate>
+		 <appendmode><!-- Enables the append mode to append data to existing files/checkpoints (default: OFF) --></appendmode>
 	   </outputplugin>
 	   \endcode
 	 */
@@ -74,7 +80,7 @@ protected:
 private:
 	void resetContainers();
 	void clearContainers();
-	void defineVariables(uint64_t global, uint64_t offset, uint64_t local, int numProcs, int rank);
+	void defineVariables(const uint64_t global, const uint64_t offset, const uint64_t local, const int numProcs, const int rank);
 	void initAdios2();
 	std::vector<Component> _comps;
 	// output filename, from XML

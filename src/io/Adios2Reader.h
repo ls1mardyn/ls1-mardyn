@@ -8,21 +8,21 @@
  */
 #ifdef ENABLE_ADIOS2
 #include "io/InputBase.h"
-#include "molecules/MoleculeForwardDeclaration.h"
 #include "molecules/Component.h"
-#include "utils/Logger.h"
 #include "molecules/FullMolecule.h"
+#include "molecules/MoleculeForwardDeclaration.h"
+#include "utils/Logger.h"
 
-#include <chrono>
-#include <set>
-#include <string>
-#include <sstream>
-#include <iomanip>
-#include <vector>
-#include <memory>
-#include <map>
 #include <errno.h>
+#include <chrono>
+#include <iomanip>
+#include <map>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <string>
 #include <variant>
+#include <vector>
 
 #include "adios2.h"
 #ifdef ENABLE_MPI
@@ -31,12 +31,10 @@
 
 class Adios2Reader : public InputBase {
 public:
-    Adios2Reader() {}; 
-    virtual ~Adios2Reader() {};
+	Adios2Reader(){};
+	virtual ~Adios2Reader(){};
 
-    void init(ParticleContainer* particleContainer,
-            DomainDecompBase* domainDecomp, Domain* domain
-    );
+	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
 
 	/** @brief Read in XML configuration for Adios2Reader.
 	 *
@@ -45,82 +43,78 @@ public:
 		<phasespacepoint>
 			<file type="adios2">
 				<filename>STRING</filename>
-				<adios2enginetype>STRING<!-- For possible engines see the ADIOS2 doc (default: BP4) --></adios2enginetype>
-				<adios2step>INTEGER<!-- Step in the ADIOS2 file --></adios2step>
-				<mode>STRING<!-- Possible options are rootOnly and equalRanks(Not implemented yet) --></mode>
+				<adios2enginetype>STRING<!-- For possible engines see the ADIOS2 doc (default: BP4)
+	 --></adios2enginetype> <adios2step>INTEGER<!-- Step in the ADIOS2 file --></adios2step> <mode>STRING<!-- Possible
+	 options are rootOnly (only root node reads the data and broadcasts to all ranks) and parallelRead (each rank reads
+	 a portion of the data and distributes it so every rank holds all data) --></mode>
 			</file>
 		</phasespacepoint>
 	   \endcode
 	*/
 	void readXML(XMLfileUnits& xmlconfig);
 
-	void testInit(std::string infile = "mardyn.bp", int step = 0, std::string adios2enginetype = "BP4", std::string mode = "rootOnly");
+	void testInit(std::string infile = "mardyn.bp", int step = 0, std::string adios2enginetype = "BP4",
+				  std::string mode = "rootOnly");
 
 	void readPhaseSpaceHeader(Domain* domain, double timestep);
 
-    std::string getPluginName() {
-        return std::string("Adios2Reader");
-    }
+	std::string getPluginName() { return std::string("Adios2Reader"); }
 
-   unsigned long readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
+	unsigned long readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
 
-
-protected:
-    // 
 private:
-    void initAdios2();
-    void rootOnlyRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
-    void parallelRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
-	
-    // output filename, from XML
-    std::string _inputfile;
-    std::string _adios2enginetype;
-    std::string _mode;
-    int _step;
-    uint64_t particle_count;
+	void initAdios2();
+	void rootOnlyRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
+	void parallelRead(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
+
+	// input filename, from XML
+	std::string _inputfile;
+
+	std::string _adios2enginetype;
+	std::string _mode;
+	int _step;
+	uint64_t particle_count;
 	std::vector<Component> _dcomponents;
 	double _simtime = 0.0;
 	bool _single_precission = false;
-    // main instance
-    std::shared_ptr<adios2::ADIOS> inst;
-    std::shared_ptr<adios2::Engine> engine;  
-    std::shared_ptr<adios2::IO> io;
+	// main instance
+	std::shared_ptr<adios2::ADIOS> mainInstance;
+	std::shared_ptr<adios2::Engine> engine;
+	std::shared_ptr<adios2::IO> io;
 
-    template <typename T> 
-    void doTheRead(std::string var_name, std::vector<T>& container) {
-      uint64_t num = 1;
-      auto advar = io->InquireVariable<T>(var_name);
-      advar.SetStepSelection({_step,1});
-      auto info = engine->BlocksInfo(advar, 0);
-      auto shape = info[0].Count;
-      std::for_each(shape.begin(), shape.end(), [&](decltype(num) n) { num *= n; });
-      container.resize(num);
-      engine->Get<T>(advar, container);
-    }
+	template <typename T>
+	void doTheRead(std::string var_name, std::vector<T>& container) {
+		uint64_t num = 1;
+		auto advar = io->InquireVariable<T>(var_name);
+		advar.SetStepSelection({_step, 1});
+		auto info = engine->BlocksInfo(advar, 0);
+		auto shape = info[0].Count;
+		std::for_each(shape.begin(), shape.end(), [&](decltype(num) n) { num *= n; });
+		container.resize(num);
+		engine->Get<T>(advar, container);
+	}
 
-    template <typename T> 
-    void doTheRead(std::string var_name, std::vector<T>& container, uint64_t buffer, uint64_t offset) {
-    	
-      adios2::Dims readsize({buffer});
-      adios2::Dims offs({offset});
+	template <typename T>
+	void doTheRead(std::string var_name, std::vector<T>& container, uint64_t buffer, uint64_t offset) {
+		adios2::Dims readsize({buffer});
+		adios2::Dims offs({offset});
 
-      Log::global_log->debug() << "[Adios2Reader]: Var name " << var_name << std::endl;
-      auto advar = io->InquireVariable<T>(var_name);
-      advar.SetStepSelection({_step,1});
-      Log::global_log->debug() << "[Adios2Reader]: buffer " << buffer << " offset " << offset << std::endl;
-      for (auto entry: advar.Shape())
-        Log::global_log->debug() << "[Adios2Reader]: shape " << entry << std::endl;
-      advar.SetSelection(adios2::Box<adios2::Dims>(offs, readsize));
-      container.resize(buffer);
-      engine->Get<T>(advar, container);
-    }
+		Log::global_log->debug() << "[Adios2Reader]: Var name " << var_name << std::endl;
+		auto advar = io->InquireVariable<T>(var_name);
+		advar.SetStepSelection({_step, 1});
+		Log::global_log->debug() << "[Adios2Reader]: buffer " << buffer << " offset " << offset << std::endl;
+		for (auto entry : advar.Shape()) Log::global_log->debug() << "[Adios2Reader]: shape " << entry << std::endl;
+		advar.SetSelection(adios2::Box<adios2::Dims>(offs, readsize));
+		container.resize(buffer);
+		engine->Get<T>(advar, container);
+	}
 
-    template <typename T> 
-    void doTheRead(std::string var_name, T& value) {
-      auto advar = io->InquireVariable<T>(var_name);
-      advar.SetStepSelection({_step,1});
-      engine->Get<T>(advar, value);
-    }
+	template <typename T>
+	void doTheRead(std::string var_name, T& value) {
+		auto advar = io->InquireVariable<T>(var_name);
+		advar.SetStepSelection({_step, 1});
+		engine->Get<T>(advar, value);
+	}
 
 	template <typename T>
 	Molecule fillMolecule(int i_, std::vector<uint64_t>& mol_id_, std::vector<uint64_t>& comp_id_, T& rx_, T& ry_,
@@ -145,7 +139,7 @@ private:
 		for (auto var : variables) {
 			if (var.first == "rx") {
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
-						doTheRead(var.first, rx, buffer, offset);
+					doTheRead(var.first, rx, buffer, offset);
 				} else {
 					global_log->error() << "[Adios2Reader] Positions should be doubles or floats (for now)."
 										<< std::endl;
@@ -271,7 +265,6 @@ private:
 			}
 		}
 	}
-
 };
-#endif // ENABLE_ADIOS2
+#endif  // ENABLE_ADIOS2
 #endif /* ADIOS2_READER_H_*/
