@@ -41,7 +41,9 @@ public:
 
 private:
 
-	std::vector<unsigned long> _ids;
+    constexpr static size_t NUM_PARTICLES = 5ul;
+
+    std::vector<unsigned long> _ids;
 	std::vector<std::array<double,3>> _positions;
 	std::vector<std::array<double,3>> _velocities;
 	std::vector<std::array<double,3>> _Ds;

@@ -26,10 +26,6 @@
 #include "parallel/DomainDecomposition.h"
 #endif
 
-constexpr size_t NUM_PARTICLES = 5;
-
-
-
 #if !defined(ENABLE_REDUCED_MEMORY_MODE)
 TEST_SUITE_REGISTRATION(Adios2IOTest);
 #else
