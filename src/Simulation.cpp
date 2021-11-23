@@ -988,6 +988,7 @@ void Simulation::simulate() {
         for (auto plugin : _plugins) {
             global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Plugin: " << plugin->getPluginName() << endl;
             plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
+			_domain->updateglobalNumMolecules(_moleculeContainer, _domainDecomposition);
         }
 
         _ensemble->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
@@ -999,6 +1000,7 @@ void Simulation::simulate() {
         for (auto plugin : _plugins) {
             global_log -> debug() << "[BEFORE FORCES] Plugin: " << plugin->getPluginName() << endl;
             plugin->beforeForces(_moleculeContainer, _domainDecomposition, _simstep);
+			_domain->updateglobalNumMolecules(_moleculeContainer, _domainDecomposition);
         }
 
 		computationTimer->stop();
@@ -1043,6 +1045,7 @@ void Simulation::simulate() {
 		for (auto plugin : _plugins) {
 			global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << endl;
 			plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
+			_domain->updateglobalNumMolecules(_moleculeContainer, _domainDecomposition);
 		}
 
 		// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
@@ -1077,6 +1080,7 @@ void Simulation::simulate() {
 		for (auto plugin : _plugins) {
 			global_log -> debug() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << endl;
 			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+			_domain->updateglobalNumMolecules(_moleculeContainer, _domainDecomposition);
 		}
 
 		_ensemble->afterForces(_moleculeContainer, _domainDecomposition, _cellProcessor, _simstep);
@@ -1222,6 +1226,7 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 		global_simulation->timers()->start(plugin->getPluginName());
 		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain, simstep);
 		global_simulation->timers()->stop(plugin->getPluginName());
+		_domain->updateglobalNumMolecules(_moleculeContainer, _domainDecomposition);
 	}
 
 

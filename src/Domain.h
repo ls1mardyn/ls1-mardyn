@@ -208,7 +208,7 @@ public:
 	//!
 	//! Before this method is called, it has to be sure that the
 	//! global potential has been calculated (method calculateGlobalValues)
-	double getAverageGlobalUpot() const;
+	double getAverageGlobalUpot();
         double getGlobalUpot() const;
 
 	//! by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction)
@@ -222,7 +222,7 @@ public:
 	//!
 	//! Before this method is called, it has to be sure that the
 	//! global virial has been calculated (method calculateGlobalValues)
-	double getAverageGlobalVirial() const;
+	double getAverageGlobalVirial();
 
 	//! @brief sets _localSummv2 to the given value
 	void setLocalSummv2(double summv2, int thermostat);
@@ -386,6 +386,9 @@ public:
     // explosion heuristics, NOTE: turn off when using slab thermostat
     void SetExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
 
+    // set flag to indicate change of number of particles
+    void setNumPrtlsChanged(bool bVal) { _bNumPrtlsChanged = bVal; std::cout << "Bool set" << std::endl; }
+
 private:
 
 	//! rank of the local process
@@ -488,6 +491,9 @@ private:
 
     // explosion heuristics, NOTE: turn off when using slab thermostat
     bool _bDoExplosionHeuristics;
+
+    // flag to indicate if number of particles was changed
+    bool _bNumPrtlsChanged;
 };
 
 

@@ -13,6 +13,10 @@
 #include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
 
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif
+
 #include "utils/FileUtils.h"
 #include "utils/Logger.h"
 #include "utils/arrayMath.h"
@@ -73,6 +77,8 @@ Domain::Domain(int rank) {
 
     // explosion heuristics, NOTE: turn off when using slab thermostat
     _bDoExplosionHeuristics = true;
+
+	_bNumPrtlsChanged = false;
 }
 
 void Domain::readXML(XMLfileUnits& xmlconfig) {
@@ -139,9 +145,9 @@ double Domain::getGlobalPressure()
 	return globalTemperature * _globalRho + _globalRho * getAverageGlobalVirial()/3.;
 }
 
-double Domain::getAverageGlobalVirial() const { return _globalVirial/_globalNumMolecules; }
+double Domain::getAverageGlobalVirial() { return _globalVirial/this->getglobalNumMolecules(); }
 
-double Domain::getAverageGlobalUpot() const { return getGlobalUpot()/_globalNumMolecules; }
+double Domain::getAverageGlobalUpot() { return getGlobalUpot()/this->getglobalNumMolecules(); }
 double Domain::getGlobalUpot() const { return _globalUpot; }
 
 Comp2Param& Domain::getComp2Params(){
@@ -561,7 +567,7 @@ void Domain::writeCheckpointHeader(string filename,
 				if(0 > uutit->first) continue;
 				if(uutit->second) checkpointfilestream << " U\t" << uutit->first << "\n";
 			}
-			checkpointfilestream << " NumberOfMolecules\t" << _globalNumMolecules << endl;
+			checkpointfilestream << " NumberOfMolecules\t" << this->getglobalNumMolecules() << endl;
 
 			checkpointfilestream << " MoleculeFormat\t" << Molecule::getWriteFormat() << endl;
 			checkpointfilestream.close();
@@ -588,7 +594,7 @@ void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* partic
 				 "<z>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _globalLength[2] << "</z>" << endl;
 	ofs << "\t\t</length>" << endl;
 	ofs.flags(f);  // restore default format flags
-	ofs << "\t\t<number>" << _globalNumMolecules << "</number>" << endl;
+	ofs << "\t\t<number>" << this->getglobalNumMolecules() << "</number>" << endl;
 	ofs << "\t\t<format type=\"" << Molecule::getWriteFormat() << "\"/>" << endl;
 	ofs << "\t</headerinfo>" << endl;
 	ofs << "</mardyn>" << endl;
@@ -655,7 +661,7 @@ void Domain::evaluateRho(
 	this->_globalNumMolecules = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
 
-	this->_globalRho = this->_globalNumMolecules /
+	this->_globalRho = this->getglobalNumMolecules() /
 		(this->_globalLength[0] * this->_globalLength[1] * this->_globalLength[2]);
 }
 
@@ -729,14 +735,29 @@ unsigned long Domain::getglobalNumMolecules() const { return _globalNumMolecules
 void Domain::setglobalNumMolecules(unsigned long glnummol) { _globalNumMolecules = glnummol; }
 
 void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp) {
-	CommVar<uint64_t> numMolecules;
-	numMolecules.local = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(numMolecules.local);
-	domainDecomp->collCommAllreduceSum();
-	numMolecules.global = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
-	this->setglobalNumMolecules(numMolecules.global);
+		bool bVal = false;
+#ifdef ENABLE_MPI
+		std::cout << _localRank << " Bool set MPI Before " << bVal << " " << _bNumPrtlsChanged << std::endl;
+		MPI_Allreduce(&_bNumPrtlsChanged, &bVal, 1, MPI_CXX_BOOL, MPI_LOR, MPI_COMM_WORLD);
+		std::cout << _localRank << " Bool set MPI After  " << bVal << " " << _bNumPrtlsChanged << std::endl;
+#else
+		bVal = _bNumPrtlsChanged;
+#endif
+	std::cout << _localRank << " Before updateglobalNumMolecules " << _bNumPrtlsChanged << std::endl;
+	if (bVal) {
+		std::cout << _localRank << " Update global number of particles " << bVal << " : Before num global " << this->getglobalNumMolecules() << std::endl;
+		CommVar<uint64_t> numMolecules;
+		numMolecules.local = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+		std::cout << _localRank << " updateglobalNumMolecules: Local num " << numMolecules.local << std::endl;
+		domainDecomp->collCommInit(1);
+		domainDecomp->collCommAppendUnsLong(numMolecules.local);
+		domainDecomp->collCommAllreduceSum();
+		numMolecules.global = domainDecomp->collCommGetUnsLong();
+		domainDecomp->collCommFinalize();
+		this->setglobalNumMolecules(numMolecules.global);
+		_bNumPrtlsChanged = false;
+		std::cout << _localRank << " After updateglobalNumMolecules " << this->getglobalNumMolecules() << std::endl;
+	}
 }
 
 CommVar<uint64_t> Domain::getMaxMoleculeID() const {
@@ -790,9 +811,9 @@ double Domain::cv()
 {
 	if((_localRank != 0) || (_globalUSteps == 0)) return 0.0;
 
-	double id = 1.5 + 0.5*_universalRotationalDOF[0]/_globalNumMolecules;
+	double id = 1.5 + 0.5*_universalRotationalDOF[0]/this->getglobalNumMolecules();
 	double conf = (_globalSigmaUU - _globalSigmaU*_globalSigmaU/_globalUSteps)
-		/ (_globalUSteps * _globalNumMolecules * _globalTemperatureMap[0] * _globalTemperatureMap[0]);
+		/ (_globalUSteps * this->getglobalNumMolecules() * _globalTemperatureMap[0] * _globalTemperatureMap[0]);
 
 	return id + conf;
 }

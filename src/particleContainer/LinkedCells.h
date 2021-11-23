@@ -152,7 +152,7 @@ public:
 	void update_via_traversal();
 	void update_via_sliced_traversal();
 
-	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
+	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches = false) override;
 
 	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) override;
 

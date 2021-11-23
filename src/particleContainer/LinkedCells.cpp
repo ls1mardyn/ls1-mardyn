@@ -452,6 +452,9 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 			_cells[cellIndex].buildSoACaches();
 		}
 	}
+	if (wasInserted && particle.inBox(_boundingBoxMin, _boundingBoxMax)) {
+		global_simulation->getDomain()->setNumPrtlsChanged(true);
+	}
 	return wasInserted;
 }
 
@@ -995,6 +998,7 @@ void LinkedCells::deleteMolecule(ParticleIterator &moleculeIter, const bool& reb
         }
 		_cells[cellid].buildSoACaches();
 	}
+	global_simulation->getDomain()->setNumPrtlsChanged(true);
 }
 
 double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessorI) {
