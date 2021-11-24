@@ -735,6 +735,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	_moleculeContainer->update();
 	_moleculeContainer->deleteOuterParticles();
 
+	_domain->setNumPrtlsChanged(true);
 	_domain->updateglobalNumMolecules(_moleculeContainer, _domainDecomposition);
 	unsigned long globalNumMolecules = _domain->getglobalNumMolecules();
 	double rho_global = globalNumMolecules / _ensemble->V();
