@@ -47,7 +47,7 @@ public:
 	void setBoundingBox(std::shared_ptr<Object> object) { _object = std::move(object); }
 
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
-					 const bool& rebuildCaches = false) override {
+					 const bool& rebuildCaches = false, const bool updateGlbNumPrtl = false) override {
 		double r[3] = {particle.r(0), particle.r(1), particle.r(2)};
 		if(_object && !_object->isInside(r)) {
 			return false;
@@ -101,7 +101,7 @@ public:
 
 	double getCutoff() const override { return 0.0; }
 
-	void deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) override {}
+	void deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches, const bool updateGlbNumPrtl = false) override {}
 
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override {
 		return 0.0;

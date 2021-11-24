@@ -442,7 +442,7 @@ void LinkedCells::update_via_traversal() {
 	_traversalTuner->traverseCellPairs(resortCellProcessor);
 }
 
-bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
+bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches, const bool updateGlbNumPrtl) {
 	bool wasInserted = false;
 	const bool inBox = inBoxCheckedAlready or particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 	if (inBox) {
@@ -451,9 +451,7 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 		if (rebuildCaches) {
 			_cells[cellIndex].buildSoACaches();
 		}
-	}
-	if (wasInserted && particle.inBox(_boundingBoxMin, _boundingBoxMax)) {
-		global_simulation->getDomain()->setNumPrtlsChanged(true);
+		if (updateGlbNumPrtl) {global_simulation->getDomain()->setNumPrtlsChanged(true); }
 	}
 	return wasInserted;
 }
@@ -984,7 +982,7 @@ RegionParticleIterator LinkedCells::getRegionParticleIterator(
 	return RegionParticleIterator(type, &_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
 }
 
-void LinkedCells::deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) {
+void LinkedCells::deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches, const bool updateGlbNumPrtl) {
 
 	moleculeIter.deleteCurrentParticle();
 
@@ -998,7 +996,7 @@ void LinkedCells::deleteMolecule(ParticleIterator &moleculeIter, const bool& reb
         }
 		_cells[cellid].buildSoACaches();
 	}
-	global_simulation->getDomain()->setNumPrtlsChanged(true);
+	if (updateGlbNumPrtl) { global_simulation->getDomain()->setNumPrtlsChanged(true); }
 }
 
 double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessorI) {

@@ -387,7 +387,7 @@ public:
     void SetExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
 
     // set flag to indicate change of number of particles
-    void setNumPrtlsChanged(bool bVal) { _bNumPrtlsChanged = bVal; std::cout << "Bool set" << std::endl; }
+    void setNumPrtlsChanged(bool bVal) { _bNumPrtlsChanged = bVal; }
 
 private:
 

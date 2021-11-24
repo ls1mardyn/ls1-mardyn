@@ -228,14 +228,14 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 				}
 			} else if (MCM_DELETE_PARTICLES == mv.method) {
 				if ( (mv.F > 0. && absVals.F2 > mv.F2) || (mv.v > 0. && absVals.v2 > mv.v2) || (mv.M > 0. && absVals.M2 > mv.M2) || (mv.L > 0. && absVals.L2 > mv.L2) )
-				    particleContainer->deleteMolecule(it, false);
+				    particleContainer->deleteMolecule(it, false, true);
 				//				_deletions.push_back(&(*it));
 			}
 		}
 
 		//		// perform deletions
 		//		for(auto it:_deletions) {
-		//			particleContainer->deleteMolecule(*it, true);
+		//			particleContainer->deleteMolecule(*it, true, true);
 		//			_deletions.pop_back();
 		//		}
 

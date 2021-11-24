@@ -735,20 +735,15 @@ unsigned long Domain::getglobalNumMolecules() const { return _globalNumMolecules
 void Domain::setglobalNumMolecules(unsigned long glnummol) { _globalNumMolecules = glnummol; }
 
 void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp) {
-		bool bVal = false;
+		bool bNumPrtlsChangedGlobal = false;
 #ifdef ENABLE_MPI
-		std::cout << _localRank << " Bool set MPI Before " << bVal << " " << _bNumPrtlsChanged << std::endl;
-		MPI_Allreduce(&_bNumPrtlsChanged, &bVal, 1, MPI_CXX_BOOL, MPI_LOR, MPI_COMM_WORLD);
-		std::cout << _localRank << " Bool set MPI After  " << bVal << " " << _bNumPrtlsChanged << std::endl;
+		MPI_Allreduce(&_bNumPrtlsChanged, &bNumPrtlsChangedGlobal, 1, MPI_CXX_BOOL, MPI_LOR, MPI_COMM_WORLD);
 #else
-		bVal = _bNumPrtlsChanged;
+		bNumPrtlsChangedGlobal = _bNumPrtlsChanged;
 #endif
-	std::cout << _localRank << " Before updateglobalNumMolecules " << _bNumPrtlsChanged << std::endl;
-	if (bVal) {
-		std::cout << _localRank << " Update global number of particles " << bVal << " : Before num global " << this->getglobalNumMolecules() << std::endl;
+	if (bNumPrtlsChangedGlobal) {
 		CommVar<uint64_t> numMolecules;
 		numMolecules.local = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-		std::cout << _localRank << " updateglobalNumMolecules: Local num " << numMolecules.local << std::endl;
 		domainDecomp->collCommInit(1);
 		domainDecomp->collCommAppendUnsLong(numMolecules.local);
 		domainDecomp->collCommAllreduceSum();
@@ -756,7 +751,7 @@ void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, Doma
 		domainDecomp->collCommFinalize();
 		this->setglobalNumMolecules(numMolecules.global);
 		_bNumPrtlsChanged = false;
-		std::cout << _localRank << " After updateglobalNumMolecules " << this->getglobalNumMolecules() << std::endl;
+		global_log->debug() << _localRank << " Updated global number of particles to N_new = " << this->getglobalNumMolecules() << std::endl;
 	}
 }
 

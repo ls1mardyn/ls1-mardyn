@@ -248,10 +248,10 @@ void AutoPasContainer::update() {
 }
 
 bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
-								   const bool &rebuildCaches) {
+								   const bool &rebuildCaches, const bool updateGlbNumPrtl) {
 	if (particle.inBox(_boundingBoxMin, _boundingBoxMax)) {
 		_autopasContainer.addParticle(particle);
-		global_simulation->getDomain()->setNumPrtlsChanged(true); // only for non-halo particles
+		if (updateGlbNumPrtl) { global_simulation->getDomain()->setNumPrtlsChanged(true); }
 	} else {
 		_autopasContainer.addHaloParticle(particle);
 	}
@@ -430,9 +430,9 @@ double AutoPasContainer::getCutoff() const { return _cutoff; }
 
 double AutoPasContainer::getSkin() const { return _verletSkin; }
 
-void AutoPasContainer::deleteMolecule(ParticleIterator &moleculeIter, const bool & /*rebuildCaches*/) {
+void AutoPasContainer::deleteMolecule(ParticleIterator &moleculeIter, const bool & /*rebuildCaches*/, const bool updateGlbNumPrtl) {
 	_autopasContainer.deleteParticle(moleculeIter);
-	global_simulation->getDomain()->setNumPrtlsChanged(true);
+	if (updateGlbNumPrtl) { global_simulation->getDomain()->setNumPrtlsChanged(true); }
 }
 
 double AutoPasContainer::getEnergy(ParticlePairsHandler *particlePairsHandler, Molecule *m1,
