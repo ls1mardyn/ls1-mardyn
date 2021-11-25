@@ -384,7 +384,7 @@ public:
 	void setVirialCorr(double virialcorr){ _VirialCorr = virialcorr; }
 
     // explosion heuristics, NOTE: turn off when using slab thermostat
-    void SetExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
+    void setExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
 
     // set flag to indicate change of number of particles
     void setNumPrtlsChanged(bool bVal) { _bNumPrtlsChanged = bVal; }
