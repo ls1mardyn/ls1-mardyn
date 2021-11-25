@@ -113,6 +113,7 @@ public:
 	//! @param inBoxCheckedAlready - if true, spare check whether molecule is in bounding box
 	//! @param checkWhetherDuplicate - if true, check whether molecule already exists and don't insert it.
 	//! @param rebuildCaches specifies, whether the caches should be rebuild
+	//! @param updateGlbNumPrtl specifies, whether the global number of particles should be updated
 	//! @return true if successful, false if particle outside domain
 	virtual bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false, const bool updateGlbNumPrtl = false) = 0;
 
