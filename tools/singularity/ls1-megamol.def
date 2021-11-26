@@ -1,5 +1,6 @@
 bootstrap: localimage
 from: base.sif
+stage: build
 
 %files
     ../../../ls1-mardyn/cmake /tmp/ls1-mardyn/cmake
@@ -7,13 +8,45 @@ from: base.sif
     ../../../ls1-mardyn/CMakeLists.txt /tmp/ls1-mardyn/CMakeLists.txt
 
 %post
+    MEGAMOL_URL="https://github.com/reinago/megamol.git"
+    MEGAMOL_BRANCH="flagstorage_serialization"
+    OSPRAY_URL="https://github.com/ospray/ospray.git"
+    OSPRAY_BRANCH="v2.8.0"
+    MY_BUILD_CONFIG="Release"
+
     dnf -y install mpich mpich-devel
     dnf -y install cmake git
+    dnf -y --enablerepo=powertools install ninja-build
+    # only for interactive debugging, disable later
+    dnf -y install nano
     source scl_source enable gcc-toolset-10
+
+    # ls1
     export CFLAGS=-I/usr/include/mpich-x86_64
     export CXXFLAGS=-I/usr/include/mpich-x86_64
     cd /tmp/ls1-mardyn
     cmake -B build -D ENABLE_MPI=ON -D CMAKE_INSTALL_PREFIX=/opt/ls1 -D CMAKE_C_COMPILER=/usr/lib64/mpich/bin/mpicc -D CMAKE_CXX_COMPILER=/usr/lib64/mpich/bin/mpic++
-    cmake --build build -- -j
+    cmake --build build --config ${MY_BUILD_CONFIG} -- -j
     # this would work but does nothing currently
-    cmake --install build
+    cmake --install build --config ${MY_BUILD_CONFIG}
+
+    # # MegaMol half-build to fetch TBB
+    # cd /tmp
+    # git clone --depth 1 --branch ${MEGAMOL_BRANCH} ${MEGAMOL_URL}
+    # cd megamol
+    # cmake -G Ninja -B build -D ENABLE_MPI=ON -D MPI_GUESS_LIBRARY_NAME= -D ENABLE_GL=OFF -D CMAKE_INSTALL_PREFIX=/opt/megamol -D CMAKE_MPI_C_COMPILER=gcc -D CMAKE_MPI_CXX_COMPILER=g++
+    # cmake --build build --config ${MY_BUILD_CONFIG}
+
+    # # OSPRay complete build, using MegaMol's TBB
+    # cd /tmp
+    # TBB_ROOT=/tmp/megamol/build/_deps/tbb-install
+    # git clone --depth 1 --branch ${OSPRAY_BRANCH} ${OSPRAY_URL}
+    # cmake -S scripts/superbuild -B build/super -D DOWNLOAD_TBB=false -D BUILD_EMBREE_FROM_SOURCE=false -D CMAKE_INSTALL_PREFIX=/opt/ospray -D CMAKE_BUILD_TYPE=Release -G Ninja
+    # cmake --build build/super --config ${MY_BUILD_CONFIG}
+    # cmake --install build/super --config ${MY_BUILD_CONFIG}
+
+    # # now full MegaMol with OSPRAY
+    # cd /tmp/megamol
+    # cmake -B build -D BUILD_PLUGIN_MMOSPRAY=ON
+    # cmake --build build --config ${MY_BUILD_CONFIG}
+    # cmake --install build --config ${MY_BUILD_CONFIG}
