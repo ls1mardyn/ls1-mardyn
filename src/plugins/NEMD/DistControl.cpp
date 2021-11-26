@@ -272,20 +272,16 @@ void DistControl::PrepareSubdivision()
 
 	_binParams.invWidth = 1. / _binParams.width;
 	_binParams.volume = _binParams.width * domain->getGlobalLength(0) * domain->getGlobalLength(2);
-
-//	cout << "DistControl::_binParams.count = " << _binParams.count << endl;
 }
 
 void DistControl::InitDataStructures()
 {
 	_nNumValuesScalar = static_cast<uint64_t>(_binParams.count) * static_cast<uint64_t>(_nNumComponents);
-//	cout << "DC: _nNumValuesScalar = " << _nNumValuesScalar << endl;
-//	cout << "DC: _nNumComponents = " << (uint32_t)_nNumComponents << endl;
 
 	// init offset array
 	_nOffsets.resize(_nNumComponents);
-	for(auto cid=0; cid<_nNumComponents; ++cid) {
-		_nOffsets.at(cid) = static_cast<uint64_t>(cid)*static_cast<uint64_t>(_binParams.count);
+	for(uint64_t cid = 0ul; cid < _nNumComponents; ++cid) {
+		_nOffsets.at(cid) = cid * static_cast<uint64_t>(_binParams.count);
 	}
 
 	// profile midpoint positions

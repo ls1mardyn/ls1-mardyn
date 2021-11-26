@@ -386,16 +386,16 @@ private:
 
 public:
 	// Getters, Setters
-	double getDensity() {return _density;}
+	double getDensity() const {return _density;}
 	void setDensity(const double& dVal) {_density = dVal;}
 	double getBoxLength(const uint32_t& nDim) {return _box.length.at(nDim);}
 	void setBoxLength(const uint32_t& nDim, const double& dVal) {_box.length.at(nDim)=dVal;}
-	double getVolume() {return _box.volume;}
+	double getVolume() const {return _box.volume;}
 	void setVolume(const double& dVal) {_box.volume = dVal;}
-	double getBinWidth() {return _dBinWidth;}
+	double getBinWidth() const {return _dBinWidth;}
 	double GetInsPercent() {return _dInsPercent;}
 	void setInsPercent(const double& dVal) {_dInsPercent = dVal;}
-	uint8_t getReadMethod() {return _nReadMethod;}
+	uint8_t getReadMethod() const {return _nReadMethod;}
 
 	// queue methods
 	uint32_t getActualBinIndex();
@@ -420,7 +420,6 @@ private:
 	uint64_t _nMaxMoleculeID;
 	MoleculeFormat _nMoleculeFormat;
 	ReadReservoirMethods _nReadMethod;
-	double _dReadWidthY;
 	double _dBinWidthInit;
 	double _dBinWidth;
 	double _dInsPercent;  // only insert percentage of reservoir density

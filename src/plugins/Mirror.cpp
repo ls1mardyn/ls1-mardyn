@@ -258,8 +258,8 @@ void Mirror::beforeForces(
 					}
 					else {
 						// Particle will be reflected and can therefore be erased from map
-						auto search = _diffuse_mirror.pos_map.find(pid);
-						_diffuse_mirror.pos_map.erase(search);
+						_diffuse_mirror.pos_map.erase(
+							_diffuse_mirror.pos_map.find(pid));
 					}
 				}
 				double vy_reflected = 2*_melandParams.velo_target - vy;

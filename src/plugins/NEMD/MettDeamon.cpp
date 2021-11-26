@@ -412,7 +412,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		uint8_t numChanges = 0;
 		XMLfile::Query query = xmlconfig.query("change");
 		numChanges = query.card();
-		global_log->info() << "[MettDeamon] Number of fixed molecules components: " << static_cast<uint32_t>(numChanges) << endl;
+		global_log->info() << "[MettDeamon] Number of fixed molecules components: " << numChanges << endl;
 		if(numChanges < 1) {
 			global_log->error() << "[MettDeamon] No component change defined in XML-config file. Program exit ..." << endl;
 			Simulation::exit(-1);
@@ -891,7 +891,7 @@ void MettDeamon::writeRestartfile()
 	// write restart info in XML format
 	{
 		std::stringstream fnamestream;
-		fnamestream << "MettDeamonRestart_movdir-" << static_cast<uint32_t>(_nMovingDirection) << "_TS" << fill_width('0', 9) << simstep << ".xml";
+		fnamestream << "MettDeamonRestart_movdir-" << _nMovingDirection << "_TS" << fill_width('0', 9) << simstep << ".xml";
 		ofs.open(fnamestream.str().c_str(), std::ios::out);
 		ofs << "<?xml version='1.0' encoding='UTF-8'?>" << endl;
 		ofs << "<restart>" << endl;
@@ -991,7 +991,7 @@ void MettDeamon::logReleasedVelocities()
 
 	// construct filename
 	std::stringstream fnamestream;
-	fnamestream << "MettDeamon_released_vel_movdir-" << static_cast<uint32_t>(_nMovingDirection) << "_TS" << fill_width('0', 9) << simstep << "_p" << nRank << ".dat";
+	fnamestream << "MettDeamon_released_vel_movdir-" << _nMovingDirection << "_TS" << fill_width('0', 9) << simstep << "_p" << nRank << ".dat";
 
 	std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
 	ofs << "                      vx" << "                      vy" << "                      vz" << std::endl;
@@ -1261,7 +1261,6 @@ Reservoir::Reservoir(MettDeamon* parent) :
 	_nMaxMoleculeID(0),
 	_nMoleculeFormat(ICRVQD),
 	_nReadMethod(RRM_UNKNOWN),
-	_dReadWidthY(0.0),
 	_dBinWidthInit(0.0),
 	_dBinWidth(0.0)
 {
@@ -1286,8 +1285,7 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("@update", _bUpdateBinQueue);
 	
 	std::string strType = "unknown";
-	bool bRet1 = xmlconfig.getNodeValue("file@type", strType);
-	bool bRet2 = xmlconfig.getNodeValue("width", _dReadWidthY);
+	xmlconfig.getNodeValue("file@type", strType);
 	xmlconfig.getNodeValue("binwidth", _dBinWidthInit);
 	_dInsPercent = 1.0;
 	xmlconfig.getNodeValue("ins_percent", _dInsPercent);
@@ -1303,7 +1301,7 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 		xmlconfig.getNodeValue("file/data", _filepath.data);
 	}
 	else {
-		global_log->error() << "[MettDeamon] Wrong file type='" << strType << "' specified. Programm exit ..." << endl;
+		global_log->error() << "[MettDeamon] Reservoir file type not specified or unknown. Programm exit ..." << endl;
 		Simulation::exit(-1);
 	}
 
@@ -1436,6 +1434,7 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 
 	uint32_t numBins = _box.length.at(1) / _dBinWidthInit;
 	_dBinWidth = _box.length.at(1) / static_cast<double>(numBins);
+	if (_dBinWidthInit != _dBinWidth) { global_log->warning() << "[MettDeamon] Bin width changed from " << _dBinWidthInit << " to " << _dBinWidth << std::endl; }
 	global_log->debug() << "_arrBoxLength[1]="<<_box.length.at(1)<<endl;
 	global_log->debug() << "_dBinWidthInit="<<_dBinWidthInit<<endl;
 	global_log->debug() << "_numBins="<<numBins<<endl;
@@ -1462,10 +1461,12 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 		switch(_parent->getMovingDirection() )
 		{
 			case MD_LEFT_TO_RIGHT:
-				mol.setr(1, y - nBinIndex*_dBinWidth);  // positions in slabs related to origin (x,y,z) == (0,0,0)
+				// positions in slabs related to origin (x,y,z) == (0,0,0)
+				mol.setr(1, y - nBinIndex*_dBinWidth);
 				break;
 			case MD_RIGHT_TO_LEFT:
-				mol.setr(1, y - nBinIndex*_dBinWidth + (domain->getGlobalLength(1) - _dBinWidth) );  // positions in slabs related to origin (x,y,z) == (0,0,0)
+				// positions in slabs related to origin (x,y,z) == (0,0,0)
+				mol.setr(1, y - nBinIndex*_dBinWidth + (domain->getGlobalLength(1) - _dBinWidth) );
 				break;
 			default:
 				global_log->error() << "[MettDeamon] Unknown moving direction" << endl;
@@ -1637,7 +1638,7 @@ void Reservoir::readFromFileBinaryHeader()
 	bool bInputOk = true;
 	double dCurrentTime = 0.;
 	double dBL[3];
-	uint64_t nNumMols = 0;
+	uint64_t nNumMols{0ul};
 	std::string strMoleculeFormat;
 	bInputOk = bInputOk && inp.changecurrentnode("headerinfo");
 	bInputOk = bInputOk && inp.getNodeValue("time", dCurrentTime);
@@ -1699,9 +1700,15 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp, ParticleConta
 
 	// Select appropriate reader
 	switch (_nMoleculeFormat) {
-		case ICRVQD: _moleculeDataReader.reset(new MoleculeDataReaderICRVQD()); break;
-		case ICRV: _moleculeDataReader.reset(new MoleculeDataReaderICRV()); break;
-		case IRV: _moleculeDataReader.reset(new MoleculeDataReaderIRV()); break;
+		case ICRVQD:
+			_moleculeDataReader = std::make_unique<MoleculeDataReaderICRVQD>();
+			break;
+		case ICRV:
+			_moleculeDataReader = std::make_unique<MoleculeDataReaderICRV>();
+			break;
+		case IRV:
+			_moleculeDataReader = std::make_unique<MoleculeDataReaderIRV>();
+			break;
 		default: global_log->error() << "[MettDeamon] Unknown molecule format" << endl;
 	}
 
