@@ -15,7 +15,7 @@ stage: build
     MY_BUILD_CONFIG="Release"
 
     dnf -y install mpich mpich-devel
-    dnf -y install cmake git
+    dnf -y install cmake git libuuid-devel
     dnf -y --enablerepo=powertools install ninja-build
     # only for interactive debugging, disable later
     dnf -y install nano
