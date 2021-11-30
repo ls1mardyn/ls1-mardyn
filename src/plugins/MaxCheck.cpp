@@ -58,8 +58,7 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("range/zmax", _range.zmax);
 
 	// Warn if old config style is used as it has big influence on the simulation
-	double range;
-	if (xmlconfig.getNodeValue("yrange/min", range)) {
+	if (not xmlconfig.query("yrange").empty()) {
 		global_log->warning() << "[MaxCheck] <yrange> is deprecated! Use <range> and <ymin>/<ymax> instead." << endl;
 	}
 
