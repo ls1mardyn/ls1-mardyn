@@ -37,7 +37,13 @@ void AutoPasSimpleMolecule::upd_preF(double dt) {
 
 void AutoPasSimpleMolecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 	using std::isnan;  // C++11 needed
-
+	if(_id == 3092)
+	{
+		std::cout << "ID: " << _id << "\n";
+		std::cout << "r:  (" << _r[0] << ", " << _r[1] << ", " << _r[2] << ")\n" ;
+		std::cout << "v:  (" << _v[0] << ", " << _v[1] << ", " << _v[2] << ")\n" ;
+		std::cout << "F:  (" << _f[0] << ", " << _f[1] << ", " << _f[2] << ")\n" ;
+	}
 	double mass = component()->m();
 	double dtInv2m = dt_halve / mass;
 	double v2 = 0.;

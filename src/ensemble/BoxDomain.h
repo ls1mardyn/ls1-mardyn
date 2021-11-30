@@ -19,15 +19,18 @@ public:
 	     <lx>DOUBLE</lx>
 	     <ly>DOUBLE</ly>
 	     <lz>DOUBLE</lz>
+		 <boxMin> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </boxMin>
+		 <boxMax> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </boxMax>
 	   </domain>
 	   \endcode
+	 * The default behavior of the domain is to set the boxMin coordinates to (0,0,0). So boxMin and boxMax are optional fields.
+	 * If all 3 fields are given, boxMax will be ignored and calculated from l and boxMin. Otherwise the missing field will be calculated from the other two.
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	/** Return volume of the domain */
 	virtual double V();
 
-	virtual double length(int d);
 	void setLength(int d, double l);
 };
 

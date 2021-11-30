@@ -673,7 +673,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 
 
 void Simulation::readConfigFile(string filename) {
-	std::cout << "here 3111" << std::endl;
 	string extension(getFileExtension(filename.c_str()));
 	global_log->debug() << "Found config filename extension: " << extension << endl;
 	if (extension == "xml") {
