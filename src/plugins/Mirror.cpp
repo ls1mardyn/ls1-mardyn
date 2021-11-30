@@ -232,34 +232,37 @@ void Mirror::beforeForces(
 					continue;
 				}
 				/** Diffuse Mirror **/
-				if (_diffuse_mirror.enabled == true) {
+				if (_diffuse_mirror.enabled) {
 					uint64_t pid = it->getID();
 					double ry = it->r(1);
-					double mirror_pos;
-					auto search = _diffuse_mirror.pos_map.find(pid);
-					if (search != _diffuse_mirror.pos_map.end() ) {
-						mirror_pos = search->second;
-					}
-					else {
-						float frnd = _rnd->rnd();
+					double mirrorPos{0.0};
+
+					auto mirrorPosIter = _diffuse_mirror.pos_map.find(pid);
+
+					// if the particle is in the mirror save the position
+					if (mirrorPosIter != _diffuse_mirror.pos_map.end()) {
+						mirrorPos = mirrorPosIter->second;
+					} else {
+						// if it is not in the mirror create a new position with random diffusion
+						// and insert it into the mirror
+						auto randomNumber = static_cast<double>(_rnd->rnd());
 						if (_direction == MD_RIGHT_MIRROR)
-							mirror_pos = _position.coord + static_cast<double>(frnd) * _diffuse_mirror.width;
+							mirrorPos = _position.coord + randomNumber * _diffuse_mirror.width;
 						else
-							mirror_pos = _position.coord - static_cast<double>(frnd) * _diffuse_mirror.width;
+							mirrorPos = _position.coord - randomNumber * _diffuse_mirror.width;
 						std::pair<std::map<uint64_t,double>::iterator,bool> status;
-						status = _diffuse_mirror.pos_map.insert({pid, mirror_pos});
+						status = _diffuse_mirror.pos_map.insert({pid, mirrorPos});
+						mirrorPosIter = status.first;
 #ifndef NDEBUG
 						printInsertionStatus(status);
 #endif
 					}
-					
-					if ( (_direction == MD_RIGHT_MIRROR && ry <= mirror_pos) || (_direction == MD_LEFT_MIRROR && ry >= mirror_pos) ) {
+					// if the particle did not cross the mirror everything is ok
+					if ( (_direction == MD_RIGHT_MIRROR && ry <= mirrorPos) || (_direction == MD_LEFT_MIRROR && ry >= mirrorPos) ) {
 						continue;
-					}
-					else {
+					} else {
 						// Particle will be reflected and can therefore be erased from map
-						_diffuse_mirror.pos_map.erase(
-							_diffuse_mirror.pos_map.find(pid));
+						_diffuse_mirror.pos_map.erase(mirrorPosIter);
 					}
 				}
 				double vy_reflected = 2*_melandParams.velo_target - vy;
