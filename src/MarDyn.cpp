@@ -260,11 +260,11 @@ int main(int argc, char** argv) {
 	//  FIXME: The statements "<< fixed << setprecision(5)" after endl are so that the next logger timestamp appears as expected. A better solution would be nice, of course.
 
 	// print out total simulation speed
-	const unsigned long numForceCalculations = simulation.getNumTimesteps() - simulation.getNumInitTimesteps();
-	const double speed = simulation.getTotalNumberOfMolecules() * numForceCalculations / runtime;
+	const unsigned long numTimesteps = simulation.getNumTimesteps() - simulation.getNumInitTimesteps();
+	const double speed = simulation.getTotalNumberOfMolecules() * numTimesteps / runtime;
 	global_log->info() << "Simulation speed: " << scientific << setprecision(6) << speed << " Molecule-updates per second." << endl << fixed << setprecision(5);
 
-	const double iterationsPerSecond = simulation.getNumTimesteps() / runtime;
+	const double iterationsPerSecond = numTimesteps / runtime;
 	global_log->info() << "Iterations per second: " << fixed << setprecision(3) << iterationsPerSecond << endl << fixed << setprecision(5);
 	global_log->info() << "Time per iteration: " << fixed << setprecision(3) << 1.0 / iterationsPerSecond << " seconds." << endl << fixed << setprecision(5);
 
