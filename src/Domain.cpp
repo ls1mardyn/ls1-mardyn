@@ -143,9 +143,9 @@ double Domain::getGlobalPressure()
 	return globalTemperature * _globalRho + _globalRho * getAverageGlobalVirial()/3.;
 }
 
-double Domain::getAverageGlobalVirial() { return _globalVirial/this->getglobalNumMolecules(); }
+double Domain::getAverageGlobalVirial() { return _globalVirial/_globalNumMolecules; }
 
-double Domain::getAverageGlobalUpot() { return getGlobalUpot()/this->getglobalNumMolecules(); }
+double Domain::getAverageGlobalUpot() { return getGlobalUpot()/_globalNumMolecules; }
 double Domain::getGlobalUpot() const { return _globalUpot; }
 
 Comp2Param& Domain::getComp2Params(){

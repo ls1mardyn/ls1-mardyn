@@ -187,12 +187,14 @@ public:
 	void setepsilonRF(double erf);
 
 	//! @brief get globalNumMolecules
+	//! This method must be called by all processes and not just by root!
 	unsigned long getglobalNumMolecules();
 
 	//! @brief set globalNumMolecules
 	void setglobalNumMolecules(unsigned long glnummol);
 	
 	//! @brief update globalNumMolecules
+	//! This method must be called by all processes and not just by root!
 	void updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
 
 	//! @brief get local/global max. moleculeID
