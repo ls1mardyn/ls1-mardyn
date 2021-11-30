@@ -120,7 +120,7 @@ void ExtractPhase::afterForces(ParticleContainer* particleContainer, DomainDecom
 
 		auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ONLY_INNER_AND_BOUNDARY);  // over all cell types
 		for(auto it = begin; it.isValid(); ++it) {
-			particleContainer->deleteMolecule(it, false, true);
+			particleContainer->deleteMolecule(it, false);
 		}
 	}
 
@@ -194,7 +194,7 @@ void ExtractPhase::afterForces(ParticleContainer* particleContainer, DomainDecom
 				bFound = true;
 		}
 		if(bFound) {
-			particleContainer->deleteMolecule(it, false, true);
+			particleContainer->deleteMolecule(it, false);
 		}
 	}
 

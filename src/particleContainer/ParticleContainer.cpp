@@ -49,5 +49,5 @@ int ParticleContainer::getHaloWidthNumCells() {
 
 bool ParticleContainer::addHaloParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
 	mardyn_assert(not particle.inBox(_boundingBoxMin,_boundingBoxMax));
-	return addParticle(particle, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches, false);
+	return addParticle(particle, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches);
 }

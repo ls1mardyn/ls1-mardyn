@@ -723,7 +723,7 @@ void MettDeamon::preForce_action(ParticleContainer* particleContainer, double cu
 
 		if(bDeleteParticle)
 		{
-			particleContainer->deleteMolecule(pit, false, true);
+			particleContainer->deleteMolecule(pit, false);
 			continue;
 		}
 
@@ -1184,7 +1184,7 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 		mi.setid(particleIDs_available.local.at(index) );
 		mi.setComponent(compNew);
 		mi.setr(1, mi.r(1) + _feedrate.feed.sum - _reservoir->getBinWidth() );
-		particleContainer->addParticle(mi,false,false,false,true);
+		particleContainer->addParticle(mi,false,false,false);
 		numAdded.local++;
 	}
 	_feedrate.feed.sum -= _reservoir->getBinWidth();  // reset feed sum

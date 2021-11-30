@@ -730,7 +730,12 @@ double Domain::getepsilonRF() const { return _epsilonRF; }
 
 void Domain::setepsilonRF(double erf) { _epsilonRF = erf; }
 
-unsigned long Domain::getglobalNumMolecules() const { return _globalNumMolecules; }
+unsigned long Domain::getglobalNumMolecules() {
+	ParticleContainer* particleContainer = global_simulation->getMoleculeContainer();
+	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
+	this->updateglobalNumMolecules(particleContainer, &domainDecomp);
+	return _globalNumMolecules;
+}
 
 void Domain::setglobalNumMolecules(unsigned long glnummol) { _globalNumMolecules = glnummol; }
 

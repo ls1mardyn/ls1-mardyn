@@ -113,9 +113,8 @@ public:
 	//! @param inBoxCheckedAlready - if true, spare check whether molecule is in bounding box
 	//! @param checkWhetherDuplicate - if true, check whether molecule already exists and don't insert it.
 	//! @param rebuildCaches specifies, whether the caches should be rebuild
-	//! @param updateGlbNumPrtl specifies, whether the global number of particles should be updated
 	//! @return true if successful, false if particle outside domain
-	virtual bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false, const bool updateGlbNumPrtl = false) = 0;
+	virtual bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) = 0;
 
 	//! @brief add a single Molecule to the ParticleContainer, ensures that it is added in the halo.
 	//!
@@ -201,7 +200,7 @@ public:
 	virtual double getSkin() const {return 0.;}
 
     /* TODO: Have a look on this */
-	virtual void deleteMolecule(ParticleIterator& moleculeIter, const bool& rebuildCaches, const bool updateGlbNumPrtl = false) = 0;
+	virtual void deleteMolecule(ParticleIterator& moleculeIter, const bool& rebuildCaches) = 0;
 
     /* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) = 0;

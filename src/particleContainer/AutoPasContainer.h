@@ -64,7 +64,7 @@ public:
 	void update() override;
 
 	bool addParticle(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
-					 const bool &rebuildCaches = false, const bool updateGlbNumPrtl = false) override;
+					 const bool &rebuildCaches = false) override;
 
 	bool addHaloParticle(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
 						 const bool &rebuildCaches = false) override;
@@ -94,7 +94,7 @@ public:
 
 	double getSkin() const override;
 
-	void deleteMolecule(ParticleIterator &moleculeIter, const bool &rebuildCaches, const bool updateGlbNumPrtl = false) override;
+	void deleteMolecule(ParticleIterator &moleculeIter, const bool &rebuildCaches) override;
 
 	double getEnergy(ParticlePairsHandler *particlePairsHandler, Molecule *m1, CellProcessor &cellProcessor) override;
 

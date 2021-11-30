@@ -280,13 +280,13 @@ void Mirror::beforeForces(
 						_particleManipCount.reflected.local.at(cid_ub)++;
 					}
 					else {
-						particleContainer->deleteMolecule(it, false, true);
+						particleContainer->deleteMolecule(it, false);
 						_particleManipCount.deleted.local.at(0)++;
 						_particleManipCount.deleted.local.at(cid_ub)++;
 					}
 				}
 				else {
-					particleContainer->deleteMolecule(it, false, true);
+					particleContainer->deleteMolecule(it, false);
 					_particleManipCount.deleted.local.at(0)++;
 					_particleManipCount.deleted.local.at(cid_ub)++;
 				}
@@ -359,7 +359,7 @@ void Mirror::beforeForces(
 				else {
 					if (_rampingParams.treatment == 0) {
 						// Delete particle
-						particleContainer->deleteMolecule(it, false, true);
+						particleContainer->deleteMolecule(it, false);
 						_particleManipCount.deleted.local.at(0)++;
 						_particleManipCount.deleted.local.at(cid_ub)++;
 					}

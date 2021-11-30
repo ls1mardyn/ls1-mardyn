@@ -501,7 +501,7 @@ void ChemicalPotential::grandcanonicalStep(
 
 					this->storeMolecule(*m);
 
-					moleculeContainer->deleteMolecule(m, true/*rebuildCaches*/, true);
+					moleculeContainer->deleteMolecule(m, true/*rebuildCaches*/);
 					m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 					_localInsertionsMinusDeletions--;
 				}
@@ -576,7 +576,7 @@ void ChemicalPotential::grandcanonicalStep(
 				double zeroVec[3] = { 0.0, 0.0, 0.0 };
 				tmp.setVi(zeroVec);
 				bool inBoxCheckedAlready = false, checkWhetherDuplicate = false, rebuildCaches = true;
-				moleculeContainer->addParticle(tmp, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches, true);
+				moleculeContainer->addParticle(tmp, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches);
 			} else {
 				// moleculeContainer->deleteMolecule(m->getID(), m->r(0), m->r(1), m->r(2));
 //				moleculeContainer->_cells[cellid].deleteMolecule(m->getID());

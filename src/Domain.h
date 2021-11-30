@@ -187,7 +187,7 @@ public:
 	void setepsilonRF(double erf);
 
 	//! @brief get globalNumMolecules
-	unsigned long getglobalNumMolecules() const;
+	unsigned long getglobalNumMolecules();
 
 	//! @brief set globalNumMolecules
 	void setglobalNumMolecules(unsigned long glnummol);

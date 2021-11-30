@@ -152,7 +152,7 @@ public:
 	void update_via_traversal();
 	void update_via_sliced_traversal();
 
-	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches = false, const bool updateGlbNumPrtl = false) override;
+	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches = false) override;
 
 	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) override;
 
@@ -195,7 +195,7 @@ public:
 	double getCutoff() const override { return _cutoffRadius; }
 	void setCutoff(double rc) override { _cutoffRadius = rc; }
 
-	void deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches, const bool updateGlbNumPrtl = false) override;
+	void deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) override;
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override;
 
