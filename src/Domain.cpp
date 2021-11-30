@@ -723,8 +723,8 @@ void Domain::setepsilonRF(double erf) { _epsilonRF = erf; }
 
 unsigned long Domain::getglobalNumMolecules() {
 	ParticleContainer* particleContainer = global_simulation->getMoleculeContainer();
-	DomainDecompBase domainDecomp = global_simulation->domainDecomposition();
-	this->updateglobalNumMolecules(particleContainer, &domainDecomp);
+	DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition());
+	this->updateglobalNumMolecules(particleContainer, domainDecomp);
 	return _globalNumMolecules;
 }
 
@@ -734,13 +734,17 @@ void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, Doma
 	unsigned long oldNum = _globalNumMolecules;
 	CommVar<uint64_t> numMolecules;
 	numMolecules.local = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+#ifdef ENABLE_MPI
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(numMolecules.local);
 	domainDecomp->collCommAllreduceSum();
 	numMolecules.global = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
+#else
+	numMolecules.global = numMolecules.local;
+#endif
 	this->setglobalNumMolecules(numMolecules.global);
-	std::cout << _localRank << " Updated global number of particles from " << oldNum << " to N_new = " << _globalNumMolecules << " ( " << numMolecules.global << " , " << numMolecules.local << " ) " << std::endl;
+	std::cout << _localRank << " Updated global number of particles from " << oldNum << " to N_new = " << _globalNumMolecules << std::endl;
 }
 
 CommVar<uint64_t> Domain::getMaxMoleculeID() const {
@@ -792,12 +796,11 @@ void Domain::record_cv()
 
 double Domain::cv()
 {
-	unsigned long globalNumMolecules = this->getglobalNumMolecules();
 	if((_localRank != 0) || (_globalUSteps == 0)) return 0.0;
 
-	double id = 1.5 + 0.5*_universalRotationalDOF[0]/globalNumMolecules;
+	double id = 1.5 + 0.5*_universalRotationalDOF[0]/_globalNumMolecules;
 	double conf = (_globalSigmaUU - _globalSigmaU*_globalSigmaU/_globalUSteps)
-		/ (_globalUSteps * globalNumMolecules * _globalTemperatureMap[0] * _globalTemperatureMap[0]);
+		/ (_globalUSteps * _globalNumMolecules * _globalTemperatureMap[0] * _globalTemperatureMap[0]);
 
 	return id + conf;
 }

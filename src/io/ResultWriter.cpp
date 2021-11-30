@@ -57,14 +57,6 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 
 	// Writing of cavities now handled by CavityWriter
 
-	CommVar<uint64_t> numMolecules;
-	numMolecules.local = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(numMolecules.local);
-	domainDecomp->collCommAllreduceSum();
-	numMolecules.global = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
-
 	unsigned long globalNumMolecules = domain->getglobalNumMolecules();
 	double cv = domain->cv();
 
@@ -80,7 +72,6 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << domain->getGlobalBetaRot()
 			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << cv
 			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << globalNumMolecules
-			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << numMolecules.global
 			<< endl;
 	}
 }
