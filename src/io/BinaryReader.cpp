@@ -242,7 +242,7 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 
 	particle_buff_pos++;
 	if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i
-			== domain->getglobalNumMolecules() - 1)) {
+			== numMolecules - 1)) {
 		MPI_Bcast(&particle_buff_pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
 		MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0,
 				MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD
@@ -286,7 +286,7 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 #endif
 
 		// Print status message
-		unsigned long iph = domain->getglobalNumMolecules() / 100;
+		unsigned long iph = numMolecules / 100;
 		if(iph != 0 && (i % iph) == 0)
 			global_log->info() << "Finished reading molecules: " << i / iph
 							   << "%\r" << flush;

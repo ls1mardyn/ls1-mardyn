@@ -735,8 +735,6 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	_moleculeContainer->update();
 	_moleculeContainer->deleteOuterParticles();
 
-	_domain->setNumPrtlsChanged(true);
-	_domain->updateglobalNumMolecules(_moleculeContainer, _domainDecomposition);
 	unsigned long globalNumMolecules = _domain->getglobalNumMolecules();
 	double rho_global = globalNumMolecules / _ensemble->V();
 	global_log->info() << "Setting domain class parameters: N_global: " << globalNumMolecules
@@ -1215,8 +1213,6 @@ void Simulation::simulate() {
 }
 
 void Simulation::pluginEndStepCall(unsigned long simstep) {
-
-	_domain->updateglobalNumMolecules(_moleculeContainer, _domainDecomposition);
 
 	std::list<PluginBase*>::iterator pluginIter;
 	for (pluginIter = _plugins.begin(); pluginIter != _plugins.end(); pluginIter++) {

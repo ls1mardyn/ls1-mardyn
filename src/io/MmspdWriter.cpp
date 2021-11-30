@@ -125,13 +125,14 @@ void MmspdWriter::endStep(ParticleContainer *particleContainer,
                           DomainDecompBase *domainDecomp, Domain *domain,
                           unsigned long simstep){
 	if (simstep % _writeFrequency == 0) {
+		unsigned long globalNumMolecules = domain->getglobalNumMolecules();
 #ifdef ENABLE_MPI
-	int rank = domainDecomp->getRank();
-	int tag = 4711;
-	if (rank == 0){
+		int rank = domainDecomp->getRank();
+		int tag = 4711;
+		if (rank == 0){
 #endif
 		ofstream mmspdfstream(_filename.c_str(), ios::out|ios::app);
-		mmspdfstream << "> " << domain->getglobalNumMolecules() << "\n";
+		mmspdfstream << "> " << globalNumMolecules << "\n";
 		for (auto pos = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pos.isValid(); ++pos) {
 			bool halo = false;
 			for (unsigned short d = 0; d < 3; d++) {

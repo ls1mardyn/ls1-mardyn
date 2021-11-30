@@ -51,7 +51,7 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 	double corrVeloc = _veloc / _steps;
 
 	if (_enabled) {
-		global_log->debug() << "[Dropaccelerator] before forces called" << std::endl;
+		global_log->debug() << "[Dropaccelerator] after forces called" << std::endl;
 
 		if ((simstep - 1) % _interval != 0) {
 			return;

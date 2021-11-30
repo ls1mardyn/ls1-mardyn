@@ -1059,7 +1059,6 @@ void MettDeamon::getAvailableParticleIDs(ParticleContainer* particleContainer, D
 	CommVar<uint64_t> numMolecules;
 	domain->updateMaxMoleculeID(particleContainer, domainDecomp);
 	maxID = domain->getMaxMoleculeID();
-	domain->updateglobalNumMolecules(particleContainer, domainDecomp);
 	numMolecules.global = domain->getglobalNumMolecules();
 	global_log->debug() << "[" << nRank << "]: maxID.local, maxID.global=" << maxID.local << ", " << maxID.global << endl;
 	uint64_t numMoleculesAfterInsertion = numMolecules.global + numParticleIDs.global;

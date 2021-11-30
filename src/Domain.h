@@ -386,9 +386,6 @@ public:
     // explosion heuristics, NOTE: turn off when using slab thermostat
     void setExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
 
-    // set flag to indicate change of number of particles
-    void setNumPrtlsChanged(bool bVal) { _bNumPrtlsChanged = bVal; }
-
 private:
 
 	//! rank of the local process
@@ -491,9 +488,6 @@ private:
 
     // explosion heuristics, NOTE: turn off when using slab thermostat
     bool _bDoExplosionHeuristics;
-
-    // flag to indicate if number of particles was changed
-    bool _bNumPrtlsChanged;
 };
 
 
