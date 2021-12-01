@@ -746,7 +746,7 @@ void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, Doma
 	numMolecules.global = numMolecules.local;
 #endif
 	this->setglobalNumMolecules(numMolecules.global);
-	global_log->debug() << "[" << _localRank << "] Updated global number of particles from " << oldNum << " to N_new = " << _globalNumMolecules << std::endl;
+	global_log->debug() << "Updated global number of particles from " << oldNum << " to N_new = " << _globalNumMolecules << std::endl;
 }
 
 CommVar<uint64_t> Domain::getMaxMoleculeID() const {
