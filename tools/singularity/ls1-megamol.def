@@ -15,7 +15,8 @@ stage: build
     OSPRAY_URL="https://github.com/ospray/ospray.git"
     OSPRAY_BRANCH="v2.8.0"
     MY_BUILD_CONFIG="Release"
-    MY_PREFIX="~/opt"
+    MY_PREFIX="/opt"
+    MY_BUILDENV="${HOME}/tmp"
     # replaced by devenv intermediate container
     # dnf -y install mpich mpich-devel
     # dnf -y install cmake git libuuid-devel ncurses-devel
@@ -24,13 +25,13 @@ stage: build
     # dnf -y install nano
     
     source scl_source enable gcc-toolset-10
-    mkdir ${MY_PREFIX}
+    mkdir -p ${MY_PREFIX}
+    mkdir -p ${MY_BUILDENV}
 
-    # # ls1
+    # ls1
     export CFLAGS=-I/usr/include/mpich-x86_64
     export CXXFLAGS=-I/usr/include/mpich-x86_64
-    # cd /tmp/ls1-mardyn
-    cd /tmp
+    cd ${MY_BUILDENV}
     git clone --depth 1 --branch ${LS1_BRANCH} ${LS1_URL}
     cd ls1-mardyn
     cmake -B build -D ENABLE_MPI=ON -D CMAKE_INSTALL_PREFIX=${MY_PREFIX}/ls1 -D CMAKE_C_COMPILER=/usr/lib64/mpich/bin/mpicc -D CMAKE_CXX_COMPILER=/usr/lib64/mpich/bin/mpic++
@@ -41,23 +42,23 @@ stage: build
     export PATH=/usr/lib64/mpich/bin:$PATH
 
     # MegaMol half-build to fetch TBB
-    cd /tmp
+    cd ${MY_BUILDENV}
     git clone --depth 1 --branch ${MEGAMOL_BRANCH} ${MEGAMOL_URL}
     cd megamol
     cmake -G Ninja -B build -D ENABLE_MPI=ON -D MPI_GUESS_LIBRARY_NAME= -D ENABLE_GL=OFF -D CMAKE_INSTALL_PREFIX=${MY_PREFIX}/megamol -D CMAKE_MPI_C_COMPILER=gcc -D CMAKE_MPI_CXX_COMPILER=g++
     cmake --build build --config ${MY_BUILD_CONFIG}
 
-    # # OSPRay complete build, using MegaMol's TBB
-    cd /tmp
-    export TBB_ROOT=/tmp/megamol/build/_deps/tbb-install
+    # OSPRay complete build, using MegaMol's TBB
+    cd ${MY_BUILDENV}
+    export TBB_ROOT=${MY_BUILDENV}/megamol/build/_deps/tbb-install
     git clone --depth 1 --branch ${OSPRAY_BRANCH} ${OSPRAY_URL}
     cd ospray
     cmake -S scripts/superbuild -B build/super -D BUILD_GLFW=OFF -D BUILD_OSPRAY_APPS=OFF -D DOWNLOAD_TBB=OFF -D BUILD_EMBREE_FROM_SOURCE=OFF -D CMAKE_INSTALL_PREFIX=${MY_PREFIX}/ospray -D CMAKE_BUILD_TYPE=Release -G Ninja
     cmake --build build/super --config ${MY_BUILD_CONFIG}
     cmake --install build/super --config ${MY_BUILD_CONFIG}
 
-    # # now full MegaMol with OSPRAY
-    cd /tmp/megamol
+    # now full MegaMol with OSPRAY
+    cd ${MY_BUILDENV}/megamol
     cmake -B build -D BUILD_PLUGIN_MMOSPRAY=ON -D ospray_DIR=${MY_PREFIX}/ospray/ospray/lib64/cmake/ospray-2.8.0/ -D rkcommon_DIR=${MY_PREFIX}/ospray/rkcommon/lib64/cmake/rkcommon-1.8.0/
     cmake --build build --config ${MY_BUILD_CONFIG}
     cmake --install build --config ${MY_BUILD_CONFIG}
