@@ -487,8 +487,8 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 }
 
 void Domain::writeCheckpointHeader(string filename,
-		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime) {
-		unsigned long globalNumMolecules = this->getglobalNumMolecules();
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, double currentTime) {
+		unsigned long globalNumMolecules = this->getglobalNumMolecules(true, particleContainer, domainDecomp);
 		/* Rank 0 writes file header */
 		if(0 == this->_localRank) {
 			ofstream checkpointfilestream(filename.c_str());
@@ -575,9 +575,9 @@ void Domain::writeCheckpointHeader(string filename,
 }
 
 void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* particleContainer,
-		const DomainDecompBase* domainDecomp, double currentTime)
+		DomainDecompBase* domainDecomp, double currentTime)
 {
-	unsigned long globalNumMolecules = this->getglobalNumMolecules();
+	unsigned long globalNumMolecules = this->getglobalNumMolecules(true, particleContainer, domainDecomp);
 	if(0 != domainDecomp->getRank() )
 		return;
 
@@ -652,7 +652,7 @@ void Domain::Nadd(unsigned cid, int N, int localN)
 void Domain::evaluateRho(
 		unsigned long localN, DomainDecompBase* domainDecomp
 		) {
-	this->_globalRho = this->getglobalNumMolecules() /
+	this->_globalRho = this->getglobalNumMolecules(true, nullptr, domainDecomp) /
 		(this->_globalLength[0] * this->_globalLength[1] * this->_globalLength[2]);
 }
 
@@ -721,10 +721,12 @@ double Domain::getepsilonRF() const { return _epsilonRF; }
 
 void Domain::setepsilonRF(double erf) { _epsilonRF = erf; }
 
-unsigned long Domain::getglobalNumMolecules() {
-	ParticleContainer* particleContainer = global_simulation->getMoleculeContainer();
-	DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition());
-	this->updateglobalNumMolecules(particleContainer, domainDecomp);
+unsigned long Domain::getglobalNumMolecules(bool bUpdate, ParticleContainer* particleContainer, DomainDecompBase* domainDecomp) {
+	if (bUpdate) {
+		if (particleContainer == nullptr) { global_log->debug() << "ParticleCont unknown!" << endl; particleContainer = global_simulation->getMoleculeContainer(); }
+		if (domainDecomp == nullptr)      { global_log->debug() << "domainDecomp unknown!" << endl; domainDecomp = &(global_simulation->domainDecomposition()); }
+		this->updateglobalNumMolecules(particleContainer, domainDecomp);
+	}
 	return _globalNumMolecules;
 }
 
@@ -744,7 +746,7 @@ void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, Doma
 	numMolecules.global = numMolecules.local;
 #endif
 	this->setglobalNumMolecules(numMolecules.global);
-	std::cout << _localRank << " Updated global number of particles from " << oldNum << " to N_new = " << _globalNumMolecules << std::endl;
+	global_log->debug() << "[" << _localRank << "] Updated global number of particles from " << oldNum << " to N_new = " << _globalNumMolecules << std::endl;
 }
 
 CommVar<uint64_t> Domain::getMaxMoleculeID() const {

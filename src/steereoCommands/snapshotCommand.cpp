@@ -65,7 +65,7 @@ ReturnType SnapshotCommand::execute ()
 
   ParticleContainer* m_molecules = sim -> getMolecules ();
 #ifdef ENABLE_MPI
-  int anzahl_mol = sim -> getDomain () -> getglobalNumMolecules ();
+  int anzahl_mol = sim -> getDomain () -> getglobalNumMolecules (true, m_molecules, nullptr);
 #endif
   int local_mol = m_molecules->getNumberOfParticles();
 #ifdef ENABLE_MPI

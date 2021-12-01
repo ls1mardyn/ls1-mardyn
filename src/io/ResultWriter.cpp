@@ -57,7 +57,7 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 
 	// Writing of cavities now handled by CavityWriter
 
-	unsigned long globalNumMolecules = domain->getglobalNumMolecules();
+	unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
 	double cv = domain->cv();
 
 	_U_pot_acc->addEntry(domain->getGlobalUpot());

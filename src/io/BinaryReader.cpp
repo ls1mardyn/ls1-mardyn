@@ -168,7 +168,8 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	x = y = z = vx = vy = vz = q1 = q2 = q3 = Dx = Dy = Dz = 0.;
 	q0 = 1.;
 
-	uint64_t numMolecules = domain->getglobalNumMolecules();
+	uint64_t numMolecules = domain->getglobalNumMolecules(false, particleContainer, domainDecomp);
+
 	for(uint64_t i = 0; i < numMolecules; i++) {
 
 #ifdef ENABLE_MPI
@@ -296,9 +297,9 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	global_log->info() << "Reading Molecules done" << endl;
 
 	// TODO: Shouldn't we always calculate this?
-	if(domain->getglobalRho() == 0.) {
+	if (domain->getglobalRho() < 1e-5) {
 		domain->setglobalRho(
-				domain->getglobalNumMolecules() / domain->getGlobalVolume());
+				domain->getglobalNumMolecules(true, particleContainer, domainDecomp) / domain->getGlobalVolume());
 		global_log->info() << "Calculated Rho_global = "
 						   << domain->getglobalRho() << endl;
 	}

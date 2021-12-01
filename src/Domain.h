@@ -82,11 +82,11 @@ public:
 	//! @param currentTime The current time to be printed.
 	void writeCheckpointHeader(std::string filename,
 			ParticleContainer* particleContainer,
-			const DomainDecompBase* domainDecomp, double currentTime);
+			DomainDecompBase* domainDecomp, double currentTime);
 
 	void writeCheckpointHeaderXML(std::string filename,
 			ParticleContainer* particleContainer,
-			const DomainDecompBase* domainDecomp, double currentTime);
+			DomainDecompBase* domainDecomp, double currentTime);
 
 	//! @brief initialize far field correction parameters
 	//!
@@ -188,7 +188,7 @@ public:
 
 	//! @brief get globalNumMolecules
 	//! This method must be called by all processes and not just by root!
-	unsigned long getglobalNumMolecules();
+	unsigned long getglobalNumMolecules(bool bUpdate = true, ParticleContainer* particleContainer = nullptr, DomainDecompBase* domainDecomp = nullptr);
 
 	//! @brief set globalNumMolecules
 	void setglobalNumMolecules(unsigned long glnummol);

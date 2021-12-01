@@ -16,7 +16,7 @@ GrandCanonicalEnsemble::GrandCanonicalEnsemble() :
 
 void GrandCanonicalEnsemble::initConfigXML(ParticleContainer* moleculeContainer) {
 	int ownrank = 0;
-	unsigned long globalNumMolecules = _simulationDomain->getglobalNumMolecules();
+	unsigned long globalNumMolecules = _simulationDomain->getglobalNumMolecules(true, moleculeContainer, nullptr);
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 #endif
