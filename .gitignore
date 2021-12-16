@@ -14,4 +14,4 @@ src/MarDyn_*.*
 *.a
 *.so
 doxygen_doc/
-tools/singularity/*.sif
+tools/singularity/**/*.sif
