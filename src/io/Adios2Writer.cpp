@@ -147,6 +147,10 @@ void Adios2Writer::readXML(XMLfileUnits& xmlconfig) {
 	_compression_rate = "8";
 	xmlconfig.getNodeValue("compressionrate", _compression_rate);
 	global_log->info() << "[Adios2Writer] compression rate (ZFP): " << _compression_rate << endl;
+	_num_files = -1;
+	xmlconfig.getNodeValue("numfiles", _num_files);
+	global_log->info() << "[Adios2Writer] Number of files: " << _num_files << endl;
+	
 	
 	xmlconfig.changecurrentnode("/");
 	xmlconfig.printXML(_xmlstream);
@@ -185,6 +189,9 @@ void Adios2Writer::initAdios2() {
 		_inst = std::make_shared<adios2::ADIOS>();
 #endif
 		_io = std::make_shared<adios2::IO>(_inst->DeclareIO("Output"));
+		if (_num_files != -1) {
+			_io->SetParameter("NumAggregators", std::to_string(_num_files));
+		}
 		_io->SetEngine(_adios2enginetype);
 
 		if (!_engine) {

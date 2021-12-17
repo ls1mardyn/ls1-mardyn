@@ -12,6 +12,9 @@
 #include "molecules/Quaternion.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
+#ifdef MARDYN_AUTOPAS
+#include "particleContainer/AutoPasContainer.h"
+#endif
 #include "parallel/DomainDecompBase.h"
 #include <iostream>
 #include <random>
@@ -97,8 +100,13 @@ void Adios2IOTest::initParticles() {
 void Adios2IOTest::testWriteCheckpoint() {
 	initParticles();
 
+	global_log->set_log_level(Log::logLevel::Debug);
+#ifdef MARDYN_AUTOPAS
+	auto particleContainer = std::make_shared<AutoPasContainer>(_cutoff);
+#else
 	auto particleContainer = std::make_shared<LinkedCells>(_box_lower.data(), _box_upper.data(), _cutoff);
-
+#endif
+	
 	std::vector<Molecule> particles(NUM_PARTICLES);
 	for (int i = 0; i < particles.size(); ++i) {
 		particles[i].setid(_ids[i]);
@@ -143,7 +151,7 @@ void Adios2IOTest::testWriteCheckpoint() {
 	domain->setGlobalLength(2, _box_upper[2]);
 	domain->updateglobalNumMolecules(particleContainer.get(), domaindecomp.get());
 	adios2writer->endStep(particleContainer.get(), domaindecomp.get(), domain.get(), 0);
-	adios2writer->finish(particleContainer.get(), domaindecomp.get(), domain.get());
+	adios2writer->finish(nullptr, nullptr, nullptr);
 	
 	ASSERT_EQUAL(true, std::filesystem::is_directory(_filename));
 }
@@ -162,8 +170,13 @@ void Adios2IOTest::testReadCheckpoint() {
 	MPI_CHECK(MPI_Comm_rank(MPI_COMM_WORLD, &ownrank));
 #endif
 	
-	_inputPatricleContainer =
-		std::make_shared<LinkedCells>(_box_lower.data(), _box_upper.data(), _cutoff);
+#ifdef MARDYN_AUTOPAS
+	_inputPatricleContainer = std::make_shared<AutoPasContainer>(_cutoff);
+#else
+	_inputPatricleContainer = std::make_shared<LinkedCells>(_box_lower.data(), _box_upper.data(), _cutoff);
+#endif
+	
+	
 	_inputDomain = std::make_shared<Domain>(ownrank);
 	_inputDomain->setGlobalLength(0, _box_upper[0]);
 	_inputDomain->setGlobalLength(1, _box_upper[1]);
@@ -184,7 +197,7 @@ void Adios2IOTest::testReadCheckpoint() {
 	
 	for (auto it = _inputPatricleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
 		auto i  = it->getID();
-		for (int j = 0; j < 3; ++j) {			
+		for (int j = 0; j < 3; ++j) {
 			ASSERT_EQUAL(it->r(j), _positions[i][j]);
 			ASSERT_EQUAL(it->v(j), _velocities[i][j]);
 			ASSERT_EQUAL(it->getID(), _ids[i]);

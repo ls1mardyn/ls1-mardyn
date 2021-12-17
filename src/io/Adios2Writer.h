@@ -50,6 +50,7 @@ public:
 		 <compressionaccuracy><!-- Parameter for the SZ compression lib (default: 0.00001) --></compressionaccuracy>
 		 <compressionrate><!-- Parameter for the ZFP compression lib (default: 8) --></compressionrate>
 		 <appendmode><!-- Enables the append mode to append data to existing files/checkpoints (default: OFF) --></appendmode>
+		 <numfiles><!-- Number of Aggregators in ADIOS2 IO object (default: -1) --></numfiles>
 	   </outputplugin>
 	   \endcode
 	 */
@@ -92,6 +93,7 @@ private:
 	std::string _compression_accuracy;
 	std::string _compression_rate;
 	std::string _append_mode;
+	int32_t _num_files;
 	// variables to write, see documentation
 	std::map<std::string, std::variant<std::vector<double>, std::vector<float>, std::vector<uint64_t>>> _vars;
 	// main instance
