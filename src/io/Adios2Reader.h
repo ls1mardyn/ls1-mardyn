@@ -37,8 +37,8 @@
 
 class Adios2Reader : public InputBase {
 public:
-	Adios2Reader(){};
-	virtual ~Adios2Reader(){};
+	Adios2Reader() = default;
+	~Adios2Reader() override = default;
 
 	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
 
@@ -57,16 +57,16 @@ public:
 		</phasespacepoint>
 	   \endcode
 	*/
-	void readXML(XMLfileUnits& xmlconfig);
+	void readXML(XMLfileUnits& xmlconfig) override;
 
 	void testInit(std::string infile = "mardyn.bp", int step = 0, std::string adios2enginetype = "BP4",
 				  std::string mode = "rootOnly");
 
-	void readPhaseSpaceHeader(Domain* domain, double timestep);
+	void readPhaseSpaceHeader(Domain* domain, double timestep) override;
 
 	std::string getPluginName() { return std::string("Adios2Reader"); }
 
-	unsigned long readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
+	unsigned long readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) override;
 
 private:
 	void initAdios2();
