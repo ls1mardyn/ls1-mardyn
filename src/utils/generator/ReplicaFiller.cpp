@@ -175,8 +175,11 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 
 	unsigned int componentid = 0;
 	_componentid = 0;
-	if(xmlconfig.getNodeValue("componentid", componentid))
+	_keepComponent = true;
+	if(xmlconfig.getNodeValue("componentid", componentid)) {
 		_componentid = componentid;
+		_keepComponent = false;
+	}
 }
 
 
@@ -215,7 +218,7 @@ int ReplicaFiller::getMolecule(Molecule* molecule) {
 	int ret = _gridFiller.getMolecule(molecule);
 	if(ret != 0) {
 		// change component if specified
-		if (molecule->componentid() != _componentid) {
+		if (molecule->componentid() != _componentid && not _keepComponent) {
 			molecule->setComponent(global_simulation->getEnsemble()->getComponent(_componentid));
 		}
 	}

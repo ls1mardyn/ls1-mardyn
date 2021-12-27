@@ -68,6 +68,7 @@ private:
 	std::shared_ptr<Object> _object;
 	double _origin[3];
 	unsigned int _componentid;
+	bool _keepComponent;
 };
 
 #endif  // REPLICAFILLER_H_
