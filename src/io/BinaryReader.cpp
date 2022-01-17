@@ -168,7 +168,8 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	x = y = z = vx = vy = vz = q1 = q2 = q3 = Dx = Dy = Dz = 0.;
 	q0 = 1.;
 
-	uint64_t numMolecules = domain->getglobalNumMolecules(false, particleContainer, domainDecomp);
+	// Global number of particles must not be updated as this would result in numMolecules = 0
+	uint64_t numMolecules = domain->getglobalNumMolecules(false);
 
 	for(uint64_t i = 0; i < numMolecules; i++) {
 

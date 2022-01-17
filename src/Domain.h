@@ -188,6 +188,14 @@ public:
 
 	//! @brief get globalNumMolecules
 	//! This method must be called by all processes and not just by root!
+	//! @param bUpdate bool to trigger update of global number of particles;
+	//! If bUpdate is set to false, the currently stored value for the global number of particles is returned.
+	//! This value could be wrong, if plugins deleted/added particles in the meantime.
+	//! If bUpdate is set to true, the global number of particles is calculated, stored and returned.
+	//! This ensures, the returned value is always correct.
+	//! The global number must not be updated e.g. during the read-in of a binary checkpoint (BinaryReader.cpp:172).
+	//! @param particleContainer particleContainer to be used for update of global number of particles
+	//! @param domainDecomp Domain decomposition object to be used for update of global number of particles
 	unsigned long getglobalNumMolecules(bool bUpdate = true, ParticleContainer* particleContainer = nullptr, DomainDecompBase* domainDecomp = nullptr);
 
 	//! @brief set globalNumMolecules
