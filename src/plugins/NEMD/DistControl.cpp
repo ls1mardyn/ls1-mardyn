@@ -70,15 +70,16 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	_strFilenameProfilesPrefix = "DistControlProfiles";
 	xmlconfig.getNodeValue("filenames/control",  _strFilename);
 	xmlconfig.getNodeValue("filenames/profiles", _strFilenameProfilesPrefix);
-	global_log->error() << "DistControl: Writing control data to file: " << _strFilename << endl;
-	global_log->error() << "DistControl: Writing profile data to files with prefix: " << _strFilenameProfilesPrefix << endl;
+
+	global_log->info() << "[DistControl] Writing control data to file: " << _strFilename << endl;
+	global_log->info() << "[DistControl] Writing profile data to files with prefix: " << _strFilenameProfilesPrefix << endl;
 
 	// subdivision of system
 	uint32_t nSubdivisionType = SDOPT_UNKNOWN;
 	std::string strSubdivisionType;
 	if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
 	{
-		global_log->error() << "DistControl: Missing attribute \"subdivision@type\"! Programm exit..." << endl;
+		global_log->error() << "[DistControl] Missing attribute \"subdivision@type\"! Programm exit..." << endl;
 		exit(-1);
 	}
 	if("number" == strSubdivisionType)
@@ -86,7 +87,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		unsigned int nNumSlabs = 0;
 		if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
 		{
-			global_log->error() << "DistControl: Missing element \"subdivision/number\"! Programm exit..." << endl;
+			global_log->error() << "[DistControl] Missing element \"subdivision/number\"! Programm exit..." << endl;
 			exit(-1);
 		}
 		else
@@ -97,7 +98,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		double dSlabWidth = 0.;
 		if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
 		{
-			global_log->error() << "DistControl: Missing element \"subdivision/width\"! Programm exit..." << endl;
+			global_log->error() << "[DistControl] Missing element \"subdivision/width\"! Programm exit..." << endl;
 			exit(-1);
 		}
 		else
@@ -105,7 +106,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	}
 	else
 	{
-		global_log->error() << "DistControl: Wrong attribute \"subdivision@type\". Expected: type=\"number|width\"! Programm exit..." << endl;
+		global_log->error() << "[DistControl] Wrong attribute \"subdivision@type\". Expected: type=\"number|width\"! Programm exit..." << endl;
 		exit(-1);
 	}
 
@@ -121,7 +122,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	if("startconfig" == strInitMethodType)
 	{
 		_nMethodInit = DCIM_START_CONFIGURATION;
-		global_log->info() << "DistControl: Init method 'startconfig', dertermining interface midpoints from start configuration." << endl;
+		global_log->info() << "[DistControl] Init method 'startconfig', dertermining interface midpoints from start configuration." << endl;
 	}
 	else if("values" == strInitMethodType)
 	{
@@ -131,12 +132,12 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("init/values/right", _dInterfaceMidRight);
 		if(true == bInputIsValid)
 		{
-			global_log->info() << "DistControl: Init method 'values' => interface midpoint left: " << _dInterfaceMidLeft << ", "
+			global_log->info() << "[DistControl] Init method 'values' => interface midpoint left: " << _dInterfaceMidLeft << ", "
 					"right: " << _dInterfaceMidRight << "." << endl;
 		}
 		else
 		{
-			global_log->error() << "DistControl: Missing elements \"init/values/left\" or \"init/values/right\" or both! Programm exit..." << endl;
+			global_log->error() << "[DistControl] Missing elements \"init/values/left\" or \"init/values/right\" or both! Programm exit..." << endl;
 			exit(-1);
 		}
 	}
@@ -148,18 +149,18 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("init/simstep", _nRestartTimestep);
 		if(true == bInputIsValid)
 		{
-			global_log->info() << "DistControl: Init method 'file', reading from file: " << _strFilenameInit << ", "
+			global_log->info() << "[DistControl] Init method 'file', reading from file: " << _strFilenameInit << ", "
 					"goto line with simstep == " << _nRestartTimestep << "." << endl;
 		}
 		else
 		{
-			global_log->error() << "DistControl: Missing elements \"init/file\" or \"init/simstep\" or both! Programm exit..." << endl;
+			global_log->error() << "[DistControl] Missing elements \"init/file\" or \"init/simstep\" or both! Programm exit..." << endl;
 			exit(-1);
 		}
 	}
 	else
 	{
-		global_log->error() << "DistControl: Wrong attribute \"init@type\", type = " << strInitMethodType << ", "
+		global_log->error() << "[DistControl] Wrong attribute \"init@type\", type = " << strInitMethodType << ", "
 				"expected: type=\"startconfig|values|file\"! Programm exit..." << endl;
 		exit(-1);
 	}
@@ -183,12 +184,12 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("method/density",     _dVaporDensity);
 		if(true == bInputIsValid)
 		{
-			global_log->info() << "DistControl: Update method 'density', using constant value for vapor density rho_vap == " << _dVaporDensity << ", "
+			global_log->info() << "[DistControl] Update method 'density', using constant value for vapor density rho_vap == " << _dVaporDensity << ", "
 					"target componentID: " << _nTargetCompID << "." << endl;
 		}
 		else
 		{
-			global_log->error() << "DistControl: Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << endl;
+			global_log->error() << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << endl;
 			exit(-1);
 		}
 	}
@@ -207,18 +208,18 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		_nNeighbourValsDerivate = (uint16_t)(nNeighbourValsDerivate);
 		if(true == bInputIsValid)
 		{
-			global_log->info() << "DistControl: Update method 'denderiv', using " << _nNeighbourValsSmooth << " neigbour values for smoothing "
+			global_log->info() << "[DistControl] Update method 'denderiv', using " << _nNeighbourValsSmooth << " neigbour values for smoothing "
 					" and " << _nNeighbourValsDerivate << " neigbour values for derivation of the density profile, target componentID: " << _nTargetCompID << "." << endl;
 		}
 		else
 		{
-			global_log->error() << "DistControl: Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << endl;
+			global_log->error() << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << endl;
 			exit(-1);
 		}
 	}
 	else
 	{
-		global_log->error() << "DistControl: Wrong attribute \"method@type\", type = " << strUpdateMethodType << ", "
+		global_log->error() << "[DistControl] Wrong attribute \"method@type\", type = " << strUpdateMethodType << ", "
 				"expected: type=\"density|denderiv\"! Programm exit..." << endl;
 		exit(-1);
 	}
@@ -265,26 +266,23 @@ void DistControl::PrepareSubdivision()
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		global_log->error() << "ERROR in DistControl::PrepareSubdivision(): Neither _binParams.width nor _binParams.count was set correctly! Programm exit..." << endl;
+		global_log->error() << "[DistControl] PrepareSubdivision(): Neither _binParams.width nor _binParams.count was set correctly! Programm exit..." << endl;
 		exit(-1);
 	}
 
 	_binParams.invWidth = 1. / _binParams.width;
 	_binParams.volume = _binParams.width * domain->getGlobalLength(0) * domain->getGlobalLength(2);
-
-//	cout << "DistControl::_binParams.count = " << _binParams.count << endl;
 }
 
 void DistControl::InitDataStructures()
 {
-	_nNumValuesScalar = _binParams.count * _nNumComponents;
-//	cout << "DC: _nNumValuesScalar = " << _nNumValuesScalar << endl;
-//	cout << "DC: _nNumComponents = " << (uint32_t)_nNumComponents << endl;
+	_nNumValuesScalar = static_cast<uint64_t>(_binParams.count) * static_cast<uint64_t>(_nNumComponents);
 
 	// init offset array
 	_nOffsets.resize(_nNumComponents);
-	for(auto cid=0; cid<_nNumComponents; ++cid)
-		_nOffsets.at(cid) = cid*_binParams.count;
+	for(uint64_t cid = 0ul; cid < _nNumComponents; ++cid) {
+		_nOffsets.at(cid) = cid * static_cast<uint64_t>(_binParams.count);
+	}
 
 	// profile midpoint positions
 	_dMidpointPositions.resize(_binParams.count);
@@ -520,7 +518,7 @@ void DistControl::EstimateInterfaceMidpoint()
 
 		if(nIndexSlabGreater < 1)
 		{
-			cout << "ERROR in MEXRegion::EstimateInterfaceMidpoint(): could not find valid index in density profile" << endl;
+			global_log->error() << "[DistControl] EstimateInterfaceMidpoint(): could not find valid index in density profile" << endl;
 			return;
 		}
 
@@ -607,7 +605,7 @@ void DistControl::EstimateInterfaceMidpoint()
 
 		if(nIndexSlabGreater < 1)
 		{
-			cout << "ERROR in MEXRegion::EstimateInterfaceMidpoint(): could not find valid index in density profile" << endl;
+			global_log->error() << "[DistControl] EstimateInterfaceMidpoint(): could not find valid index in density profile" << endl;
 			return;
 		}
 
@@ -704,13 +702,13 @@ void DistControl::UpdatePositionsInit(ParticleContainer* particleContainer)
 		}
 	case DCIM_UNKNOWN:
 	default:
-		cout << "DistControl: Wrong Init Method! Programm exit..." << endl;
+		global_log->error() << "[DistControl] Wrong Init Method! Programm exit..." << endl;
 		exit(-1);
 	}
 
 #ifndef NDEBUG
-	cout << "DistControl::_dInterfaceMidLeft = " << _dInterfaceMidLeft << endl;
-	cout << "DistControl::_dInterfaceMidRight = " << _dInterfaceMidRight << endl;
+	global_log->error() << "[DistControl] _dInterfaceMidLeft = " << _dInterfaceMidLeft << endl;
+	global_log->error() << "[DistControl] _dInterfaceMidRight = " << _dInterfaceMidRight << endl;
 #endif
 
 	// update positions
@@ -740,7 +738,7 @@ void DistControl::UpdatePositions(const uint64_t& simstep)
 		break;
 	case DCUM_UNKNOWN:
 	default:
-		cout << "DistControl::UpdatePositions: Corrupted code!!! Programm exit..." << endl;
+		global_log->error() << "[DistControl] UpdatePositions() Corrupted code!!! Programm exit..." << endl;
 		exit(-1);
 	}
 
