@@ -574,7 +574,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	cellProcessor.endTraversal();
 }
 
-unsigned long LinkedCells::getNumberOfParticles() {
+unsigned long LinkedCells::getNumberOfParticles(ParticleIterator::Type t /* = ParticleIterator::ALL_CELLS */) {
 	unsigned long N = 0;
 	unsigned long numCells = _cells.size();
 
@@ -582,7 +582,9 @@ unsigned long LinkedCells::getNumberOfParticles() {
 	#pragma omp parallel for reduction(+:N)
 	#endif
 	for (unsigned long i = 0; i < numCells; ++i) {
-		N += _cells.at(i).getMoleculeCount();
+		if ((t == ParticleIterator::ALL_CELLS) or (not _cells.at(i).isHaloCell())) {
+			N += _cells.at(i).getMoleculeCount();
+		}
 	}
 	return N;
 }

@@ -167,9 +167,9 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 		string filename = filenamestream.str();
 		global_log->info() << "[MPICheckpointWriter]\tfilename: " << filename << endl;
 		
-		unsigned long numParticles_global=domain->getglobalNumMolecules();
-		unsigned long numParticles=particleContainer->getNumberOfParticles();	// local
-		unsigned long numbb=1;
+		unsigned long numParticles_global = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
+		unsigned long numParticles = particleContainer->getNumberOfParticles();	// local
+		unsigned long numbb{1ul};
 #ifdef ENABLE_MPI
 		global_log->info() << "[MPICheckpointWriter]\tnumber of particles: " << numParticles_global
 		                   << "\t(*" << sizeof(ParticleData) << "=" << numParticles_global*sizeof(ParticleData) << " Bytes in memory)"

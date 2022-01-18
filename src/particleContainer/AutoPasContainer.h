@@ -82,7 +82,7 @@ public:
 	RegionParticleIterator regionIterator(const double startCorner[3], const double endCorner[3],
 										  ParticleIterator::Type t) override;
 
-	unsigned long getNumberOfParticles() override;
+	unsigned long getNumberOfParticles(ParticleIterator::Type t = ParticleIterator::ONLY_INNER_AND_BOUNDARY) override;
 
 	void clear() override;
 
