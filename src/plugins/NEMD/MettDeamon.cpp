@@ -790,7 +790,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 
 	}  // loop over molecules
 
-	nNumMoleculesLocal = particleContainer->getNumberOfParticles();
+	nNumMoleculesLocal = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
 	// Update feedrate
 	if( (FRM_DIRECTED == _nFeedRateMethod) && (global_simulation->getSimulationStep() % _nUpdateFreq == 0) )
@@ -1059,8 +1059,7 @@ void MettDeamon::getAvailableParticleIDs(ParticleContainer* particleContainer, D
 	CommVar<uint64_t> numMolecules;
 	domain->updateMaxMoleculeID(particleContainer, domainDecomp);
 	maxID = domain->getMaxMoleculeID();
-	domain->updateglobalNumMolecules(particleContainer, domainDecomp);
-	numMolecules.global = domain->getglobalNumMolecules();
+	numMolecules.global = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
 	global_log->debug() << "[" << nRank << "]: maxID.local, maxID.global=" << maxID.local << ", " << maxID.global << endl;
 	uint64_t numMoleculesAfterInsertion = numMolecules.global + numParticleIDs.global;
 	uint64_t numIDs;
@@ -1184,7 +1183,7 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 		mi.setid(particleIDs_available.local.at(index) );
 		mi.setComponent(compNew);
 		mi.setr(1, mi.r(1) + _feedrate.feed.sum - _reservoir->getBinWidth() );
-		particleContainer->addParticle(mi);
+		particleContainer->addParticle(mi,false,false,false);
 		numAdded.local++;
 	}
 	_feedrate.feed.sum -= _reservoir->getBinWidth();  // reset feed sum

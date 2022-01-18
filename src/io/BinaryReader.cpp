@@ -168,7 +168,9 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	x = y = z = vx = vy = vz = q1 = q2 = q3 = Dx = Dy = Dz = 0.;
 	q0 = 1.;
 
-	uint64_t numMolecules = domain->getglobalNumMolecules();
+	// Global number of particles must not be updated as this would result in numMolecules = 0
+	uint64_t numMolecules = domain->getglobalNumMolecules(false);
+
 	for(uint64_t i = 0; i < numMolecules; i++) {
 
 #ifdef ENABLE_MPI
@@ -242,7 +244,7 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 
 	particle_buff_pos++;
 	if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i
-			== domain->getglobalNumMolecules() - 1)) {
+			== numMolecules - 1)) {
 		MPI_Bcast(&particle_buff_pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
 		MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0,
 				MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD
@@ -286,7 +288,7 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 #endif
 
 		// Print status message
-		unsigned long iph = domain->getglobalNumMolecules() / 100;
+		unsigned long iph = numMolecules / 100;
 		if(iph != 0 && (i % iph) == 0)
 			global_log->info() << "Finished reading molecules: " << i / iph
 							   << "%\r" << flush;
@@ -296,9 +298,9 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	global_log->info() << "Reading Molecules done" << endl;
 
 	// TODO: Shouldn't we always calculate this?
-	if(domain->getglobalRho() == 0.) {
+	if (domain->getglobalRho() < 1e-5) {
 		domain->setglobalRho(
-				domain->getglobalNumMolecules() / domain->getGlobalVolume());
+				domain->getglobalNumMolecules(true, particleContainer, domainDecomp) / domain->getGlobalVolume());
 		global_log->info() << "Calculated Rho_global = "
 						   << domain->getglobalRho() << endl;
 	}

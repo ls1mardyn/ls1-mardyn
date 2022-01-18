@@ -735,8 +735,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	_moleculeContainer->update();
 	_moleculeContainer->deleteOuterParticles();
 
-	_domain->updateglobalNumMolecules(_moleculeContainer, _domainDecomposition);
-	unsigned long globalNumMolecules = _domain->getglobalNumMolecules();
+	unsigned long globalNumMolecules = _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition);
 	double rho_global = globalNumMolecules / _ensemble->V();
 	global_log->info() << "Setting domain class parameters: N_global: " << globalNumMolecules
 					   << ", rho_global: " << rho_global << ", T_global: " << _ensemble->T() << endl;
@@ -910,7 +909,7 @@ void Simulation::prepare_start() {
 
 	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
-	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules() << " molecules." << endl;
+	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition) << " molecules." << endl;
 
 	/** refresh particle IDs */
 	if(_prepare_start_opt.refreshIDs)

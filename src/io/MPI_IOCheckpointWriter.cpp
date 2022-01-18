@@ -224,7 +224,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		//setGlobalNumCells, cellLength, NumParticles
 		long numCellsAndMolecules[2];
 		numCellsAndMolecules[0] = globalNumCells;
-		numCellsAndMolecules[1] = domain->getglobalNumMolecules();
+		numCellsAndMolecules[1] = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
 
 		if (domainDecomp->getRank() == 0) {
 			ret = MPI_File_seek(fh, 0, MPI_SEEK_SET);
