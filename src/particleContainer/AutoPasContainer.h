@@ -63,13 +63,13 @@ public:
 
 	void update() override;
 
-	bool addParticle(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
+	bool addParticleImpl(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
 					 const bool &rebuildCaches = false) override;
 
-	bool addHaloParticle(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
+	bool addHaloParticleImpl(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
 						 const bool &rebuildCaches = false) override;
 
-	void addParticles(std::vector<Molecule> &particles, bool checkWhetherDuplicate = false) override;
+	void addParticlesImpl(std::vector<Molecule> &particles, bool checkWhetherDuplicate = false) override;
 
 	void traverseCells(CellProcessor &cellProcessor) override;
 
@@ -86,7 +86,7 @@ public:
 
 	void clear() override;
 
-	void deleteOuterParticles() override;
+	void deleteOuterParticlesImpl() override;
 
 	double get_halo_L(int index) const override;
 
@@ -94,7 +94,7 @@ public:
 
 	double getSkin() const override;
 
-	void deleteMolecule(ParticleIterator &moleculeIter, const bool &rebuildCaches) override;
+	void deleteMoleculeImpl(ParticleIterator &moleculeIter, const bool &rebuildCaches) override;
 
 	double getEnergy(ParticlePairsHandler *particlePairsHandler, Molecule *m1, CellProcessor &cellProcessor) override;
 

@@ -114,7 +114,17 @@ public:
 	//! @param checkWhetherDuplicate - if true, check whether molecule already exists and don't insert it.
 	//! @param rebuildCaches specifies, whether the caches should be rebuild
 	//! @return true if successful, false if particle outside domain
-	virtual bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) = 0;
+	virtual bool addParticleImpl(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
+			const bool& rebuildCaches = false) = 0;
+
+	//! @brief Call implicit method and update particle counter
+	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
+			const bool& rebuildCaches = false) {
+		bool wasInserted = addParticleImpl(particle, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches);
+		std::cout << "addParticle insertion status = " << wasInserted << std::endl;
+		if (wasInserted) { _numParticlesInner++; } // ??? Maybe also halo particles could be added that way? How to distinguish?
+		return wasInserted;
+	}
 
 	//! @brief add a single Molecule to the ParticleContainer, ensures that it is added in the halo.
 	//!
@@ -126,12 +136,26 @@ public:
 	//! @param checkWhetherDuplicate - if true, check whether molecule already exists and don't insert it.
 	//! @param rebuildCaches specifies, whether the caches should be rebuild
 	//! @return true if successful, false if particle outside domain
-	virtual bool addHaloParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
+	virtual bool addHaloParticleImpl(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
 			const bool& rebuildCaches = false);
+
+	//! @brief Call implicit method and update particle counter
+	bool addHaloParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
+			const bool& rebuildCaches = false) {
+		bool wasInserted = addHaloParticleImpl(particle, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches);
+		if (wasInserted) { _numParticlesHalo++; }
+		return wasInserted;
+	}
 
 	//! @brief adds a whole vector of particles
 	//! @param particles reference to a vector of pointers to particles
-	virtual void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) = 0;
+	virtual void addParticlesImpl(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) = 0;
+
+	//! @brief Call implicit method and update particle counter
+	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) {
+		addParticlesImpl(particles, checkWhetherDuplicate);
+		_numParticlesInner += particles.size(); // ??? Maybe also halo particles could be added that way? How to distinguish?
+	}
 
 	//! @brief traverse pairs which are close to each other
 	//!
@@ -187,7 +211,13 @@ public:
 
     /* TODO can we combine this with the update method? */
 	//! @brief delete all Particles which are not within the bounding box
-	virtual void deleteOuterParticles() = 0;
+	virtual void deleteOuterParticlesImpl() = 0;
+
+	//! @brief Call implicit method and update particle counter
+	void deleteOuterParticles() {
+		deleteOuterParticlesImpl();
+		_numParticlesHalo = 0;
+	}
 
 	//! @brief returns the width of the halo stripe (for the given dimension index)
 	//! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
@@ -200,7 +230,13 @@ public:
 	virtual double getSkin() const {return 0.;}
 
     /* TODO: Have a look on this */
-	virtual void deleteMolecule(ParticleIterator& moleculeIter, const bool& rebuildCaches) = 0;
+	virtual void deleteMoleculeImpl(ParticleIterator& moleculeIter, const bool& rebuildCaches) = 0;
+
+	//! @brief Call implicit method and update particle counter
+	void deleteMolecule(ParticleIterator& moleculeIter, const bool& rebuildCaches) {
+		deleteMoleculeImpl(moleculeIter, rebuildCaches);
+		_numParticlesInner--; // ??? Maybe also halo particles could be deleted that way? How to distinguish?
+	}
 
     /* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) = 0;
@@ -274,6 +310,11 @@ protected:
 	double _boundingBoxMin[3];
 	//! coordinates of the right, upper, back corner of the bounding box
 	double _boundingBoxMax[3];
+
+	//! number of inner (=non-halo) particles
+	unsigned long _numParticlesInner{0ul};
+	//! number of halo particles
+	unsigned long _numParticlesHalo{0ul};
 
 };
 
