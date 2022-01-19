@@ -247,7 +247,7 @@ void AutoPasContainer::update() {
 	_invalidParticles = _autopasContainer.updateContainer();
 }
 
-bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
+bool AutoPasContainer::addParticleImpl(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
 								   const bool &rebuildCaches) {
 	if (particle.inBox(_boundingBoxMin, _boundingBoxMax)) {
 		_autopasContainer.addParticle(particle);
@@ -257,15 +257,15 @@ bool AutoPasContainer::addParticle(Molecule &particle, bool inBoxCheckedAlready,
 	return true;
 }
 
-bool AutoPasContainer::addHaloParticle(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
+bool AutoPasContainer::addHaloParticleImpl(Molecule &particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate,
 									   const bool &rebuildCaches) {
 	_autopasContainer.addHaloParticle(particle);
 	return true;
 }
 
-void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool checkWhetherDuplicate) {
+void AutoPasContainer::addParticlesImpl(std::vector<Molecule> &particles, bool checkWhetherDuplicate) {
 	for (auto &particle : particles) {
-		addParticle(particle, true, checkWhetherDuplicate);
+		addParticleImpl(particle, true, checkWhetherDuplicate);
 	}
 }
 
@@ -407,18 +407,21 @@ unsigned long AutoPasContainer::getNumberOfParticles(ParticleIterator::Type t /*
 	for (auto iter = iterator(t); iter.isValid(); ++iter) {
 		++count;
 	}
+	unsigned long count2 = _numParticlesInner;
+	if (t == ParticleIterator::ALL_CELLS) { count2 += _numParticlesHalo; }
+	std::cout << "AP Counter: Old method " << count << " ; new method " << count2 << " type " << t << std::endl;
 	return count;
 	// return _autopasContainer.getNumberOfParticles(); // todo: this is currently buggy!, so we use iterators instead.
 }
 
 void AutoPasContainer::clear() { _autopasContainer.deleteAllParticles(); }
 
-void AutoPasContainer::deleteOuterParticles() {
+void AutoPasContainer::deleteOuterParticlesImpl() {
 	global_log->info() << "deleting outer particles by using forced update" << std::endl;
 	auto invalidParticles = _autopasContainer.updateContainer();
 	if (not invalidParticles.empty()) {
 		throw std::runtime_error(
-			"AutoPasContainer: deleteOuterParticles(): Invalid particles are returned! Please ensure that you are "
+			"AutoPasContainer: deleteOuterParticlesImpl(): Invalid particles are returned! Please ensure that you are "
 			"properly updating your container!");
 	}
 }
@@ -429,7 +432,7 @@ double AutoPasContainer::getCutoff() const { return _cutoff; }
 
 double AutoPasContainer::getSkin() const { return _verletSkin; }
 
-void AutoPasContainer::deleteMolecule(ParticleIterator &moleculeIter, const bool & /*rebuildCaches*/) {
+void AutoPasContainer::deleteMoleculeImpl(ParticleIterator &moleculeIter, const bool & /*rebuildCaches*/) {
 	_autopasContainer.deleteParticle(moleculeIter);
 }
 

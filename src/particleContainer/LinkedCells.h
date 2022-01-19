@@ -152,9 +152,9 @@ public:
 	void update_via_traversal();
 	void update_via_sliced_traversal();
 
-	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches = false) override;
+	bool addParticleImpl(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches = false) override;
 
-	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) override;
+	void addParticlesImpl(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) override;
 
 	//! @brief calculate the forces between the molecules.
 	//!
@@ -185,7 +185,7 @@ public:
 	void clear() override;
 
 	//! @brief delete all Particles which are not within the bounding box
-	void deleteOuterParticles() override;
+	void deleteOuterParticlesImpl() override;
 
 	//! @brief gets the width of the halo region in dimension index
 	//! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
@@ -195,7 +195,7 @@ public:
 	double getCutoff() const override { return _cutoffRadius; }
 	void setCutoff(double rc) override { _cutoffRadius = rc; }
 
-	void deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) override;
+	void deleteMoleculeImpl(ParticleIterator &moleculeIter, const bool& rebuildCaches) override;
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override;
 

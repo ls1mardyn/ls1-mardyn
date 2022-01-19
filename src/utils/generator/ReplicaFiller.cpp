@@ -46,7 +46,7 @@ public:
 
 	void setBoundingBox(std::shared_ptr<Object> object) { _object = std::move(object); }
 
-	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
+	bool addParticleImpl(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
 					 const bool& rebuildCaches = false) override {
 		double r[3] = {particle.r(0), particle.r(1), particle.r(2)};
 		if(_object && !_object->isInside(r)) {
@@ -61,7 +61,11 @@ public:
 
 	void clear() override { _basis = Basis(); }
 
-	unsigned long getNumberOfParticles(ParticleIterator::Type /* t */ = ParticleIterator::ALL_CELLS) override { return _basis.numMolecules(); }
+	unsigned long getNumberOfParticles(ParticleIterator::Type /* t */ = ParticleIterator::ALL_CELLS) override {
+		unsigned long count2 = _numParticlesInner + _numParticlesHalo;
+		std::cout << "RF Counter: Old method " << _basis.numMolecules() << " ; new method " << count2 << std::endl;
+		return _basis.numMolecules();
+	}
 
 	double getBoundingBoxMin(int dimension) const override {
 		double min[3] = {std::numeric_limits<double>::min(),std::numeric_limits<double>::min(),std::numeric_limits<double>::min()};
@@ -82,7 +86,7 @@ public:
 
 	void update() override {}
 
-	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate = false) override {}
+	void addParticlesImpl(std::vector<Molecule>& particles, bool checkWhetherDuplicate = false) override {}
 
 	void traverseCells(CellProcessor& cellProcessor) override {}
 
@@ -95,13 +99,13 @@ public:
 	RegionParticleIterator regionIterator(const double startCorner[3], const double endCorner[3],
 										  ParticleIterator::Type t) override { return RegionParticleIterator(); }
 
-	void deleteOuterParticles() override {}
+	void deleteOuterParticlesImpl() override {}
 
 	double get_halo_L(int index) const override { return 0.0; }
 
 	double getCutoff() const override { return 0.0; }
 
-	void deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) override {}
+	void deleteMoleculeImpl(ParticleIterator &moleculeIter, const bool& rebuildCaches) override {}
 
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override {
 		return 0.0;

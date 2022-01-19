@@ -442,7 +442,7 @@ void LinkedCells::update_via_traversal() {
 	_traversalTuner->traverseCellPairs(resortCellProcessor);
 }
 
-bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
+bool LinkedCells::addParticleImpl(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
 	bool wasInserted = false;
 	const bool inBox = inBoxCheckedAlready or particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 	if (inBox) {
@@ -455,7 +455,7 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 	return wasInserted;
 }
 
-void LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDuplicate) {
+void LinkedCells::addParticlesImpl(vector<Molecule>& particles, bool checkWhetherDuplicate) {
 	typedef vector<Molecule>::size_type mol_index_t;
 	typedef vector<ParticleCell>::size_type cell_index_t;
 
@@ -586,6 +586,9 @@ unsigned long LinkedCells::getNumberOfParticles(ParticleIterator::Type t /* = Pa
 			N += _cells.at(i).getMoleculeCount();
 		}
 	}
+	unsigned long count2 = _numParticlesInner;
+	if (t == ParticleIterator::ALL_CELLS) { count2 += _numParticlesHalo; }
+	std::cout << global_simulation->domainDecomposition().getRank() << " LC Counter: Old method " << N << " ; new method " << count2 << " ( " << _numParticlesInner << " + " << _numParticlesHalo << " ) type " << t << std::endl;
 	return N;
 }
 
@@ -610,7 +613,7 @@ void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) 
 	}
 }
 
-void LinkedCells::deleteOuterParticles() {
+void LinkedCells::deleteOuterParticlesImpl() {
 	/*if (_cellsValid == false) {
 		global_log->error()
 				<< "Cell structure in LinkedCells (deleteOuterParticles) invalid, call update first"
@@ -961,6 +964,7 @@ unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMolecul
 	} /* end of parallel */
 
 	unsigned long totalNumberOfMolecules = numMoleculesPerThread.back();
+	_numParticlesInner = totalNumberOfMolecules;
 	return totalNumberOfMolecules;
 }
 
@@ -981,7 +985,7 @@ RegionParticleIterator LinkedCells::getRegionParticleIterator(
 	return RegionParticleIterator(type, &_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
 }
 
-void LinkedCells::deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) {
+void LinkedCells::deleteMoleculeImpl(ParticleIterator &moleculeIter, const bool& rebuildCaches) {
 
 	moleculeIter.deleteCurrentParticle();
 
