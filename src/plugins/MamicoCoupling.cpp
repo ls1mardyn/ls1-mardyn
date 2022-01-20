@@ -20,8 +20,8 @@ void MamicoCoupling::init(ParticleContainer* particleContainer,
         _macroscopicCellService = (coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*)
                 coupling::interface::MamicoInterfaceProvider<ls1::LS1RegionWrapper,3>::getInstance().getMacroscopicCellService();
 	}
-    //since using mamico thermostat, switch off ls1 thermostat (trying ls1 thermostat)
-    //domain->thermostatOff();
+    //since using mamico thermostat, switch off ls1 thermostat 
+    domain->thermostatOff();
 	//code to print to log that plugin is initialised
     #endif
 }
@@ -45,7 +45,7 @@ void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
         }
         _macroscopicCellService->processInnerMacroscopicCellAfterMDTimestep();
         _macroscopicCellService->distributeMass(simstep);
-        //_macroscopicCellService->applyTemperatureToMolecules(simstep);
+        _macroscopicCellService->applyTemperatureToMolecules(simstep);
     }
     #endif
 }

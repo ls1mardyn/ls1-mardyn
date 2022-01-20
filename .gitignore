@@ -14,8 +14,7 @@ src/MarDyn_*.*
 *.a
 *.so
 doxygen_doc/
-examples/EOX/305K_liq/result.res
-examples/EOX/305K_liq/cp_binary-0.restart.header.xml
-examples/EOX/305K_liq/config_autopas.restart.dat
-examples/EOX/305K_liq/megamol_0001.mmpld
-examples/EOX/305K_liq/cp_binary-0.restart.dat
+*.res
+*.header.xml
+*.dat
+*.mmpld
