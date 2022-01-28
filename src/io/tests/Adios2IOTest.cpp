@@ -102,10 +102,11 @@ void Adios2IOTest::testWriteCheckpoint() {
 
 #ifdef MARDYN_AUTOPAS
 	auto particleContainer = std::make_shared<AutoPasContainer>(_cutoff);
+	particleContainer->rebuild(_box_lower.data(), _box_upper.data());
 #else
 	auto particleContainer = std::make_shared<LinkedCells>(_box_lower.data(), _box_upper.data(), _cutoff);
 #endif
-	
+
 	std::vector<Molecule> particles(NUM_PARTICLES);
 	for (int i = 0; i < particles.size(); ++i) {
 		particles[i].setid(_ids[i]);
@@ -173,6 +174,7 @@ void Adios2IOTest::testReadCheckpoint() {
 	
 #ifdef MARDYN_AUTOPAS
 	_inputPatricleContainer = std::make_shared<AutoPasContainer>(_cutoff);
+	_inputPatricleContainer->rebuild(_box_lower.data(), _box_upper.data());
 #else
 	_inputPatricleContainer = std::make_shared<LinkedCells>(_box_lower.data(), _box_upper.data(), _cutoff);
 #endif
