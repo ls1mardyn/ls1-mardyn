@@ -82,7 +82,7 @@ private:
 	uint64_t particle_count;
 	std::vector<Component> _dcomponents;
 	double _simtime = 0.0;
-	bool _single_precission = false;
+	bool _single_precision = false;
 	// main instance
 	std::shared_ptr<adios2::ADIOS> mainInstance;
 	std::shared_ptr<adios2::Engine> engine;

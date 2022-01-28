@@ -100,7 +100,6 @@ void Adios2IOTest::initParticles() {
 void Adios2IOTest::testWriteCheckpoint() {
 	initParticles();
 
-	global_log->set_log_level(Log::logLevel::Debug);
 #ifdef MARDYN_AUTOPAS
 	auto particleContainer = std::make_shared<AutoPasContainer>(_cutoff);
 #else
@@ -152,6 +151,8 @@ void Adios2IOTest::testWriteCheckpoint() {
 	domain->updateglobalNumMolecules(particleContainer.get(), domaindecomp.get());
 	adios2writer->endStep(particleContainer.get(), domaindecomp.get(), domain.get(), 0);
 	adios2writer->finish(nullptr, nullptr, nullptr);
+
+	global_log->info() << "[Adios2IOTest] Writing successful!" << std::endl;
 	
 	ASSERT_EQUAL(true, std::filesystem::is_directory(_filename));
 }
@@ -198,9 +199,9 @@ void Adios2IOTest::testReadCheckpoint() {
 	for (auto it = _inputPatricleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
 		auto i  = it->getID();
 		for (int j = 0; j < 3; ++j) {
-			ASSERT_EQUAL(it->r(j), _positions[i][j]);
-			ASSERT_EQUAL(it->v(j), _velocities[i][j]);
-			ASSERT_EQUAL(it->getID(), _ids[i]);
+			ASSERT_EQUAL(_positions[i][j], it->r(j));
+			ASSERT_EQUAL(_velocities[i][j], it->v(j));
+			ASSERT_EQUAL(_ids[i], it->getID());
 		}
 	}
 }

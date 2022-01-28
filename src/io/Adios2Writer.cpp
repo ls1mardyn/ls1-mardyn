@@ -298,9 +298,8 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 	if (simstep % _writefrequency != 0) return;
 
 	// for all outputs
-	domain->updateglobalNumMolecules(particleContainer, domainDecomp);
+	const uint64_t globalNumParticles = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
 	const uint64_t localNumParticles = particleContainer->getNumberOfParticles();
-	const uint64_t globalNumParticles = domain->getglobalNumMolecules();
 	const auto numProcs = domainDecomp->getNumProcs();
 	int const rank = domainDecomp->getRank();
 

@@ -103,7 +103,7 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
 	global_log->info() << "[Adios2Reader] Initial IO took: " << inputTimer.get_etime() << " sec" << std::endl;
 
 	if (domain->getglobalRho() == 0.) {
-		domain->setglobalRho(domain->getglobalNumMolecules() / domain->getGlobalVolume());
+		domain->setglobalRho(domain->getglobalNumMolecules(true, particleContainer, domainDecomp) / domain->getGlobalVolume());
 		global_log->info() << "[Adios2Reader] Calculated Rho_global = " << domain->getglobalRho() << endl;
 	}
 
@@ -118,6 +118,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 
 	std::variant<std::vector<float>, std::vector<double>> rx, ry, rz, vx, vy, vz, qw, qx, qy, qz, Lx, Ly, Lz;
 	std::vector<uint64_t> mol_id, comp_id;
+	// Root sends bufferSize particles in one MPI_Bcast to all nodes
 	uint64_t bufferSize = 1024;
 #ifdef ENABLE_MPI
 	MPI_Datatype mpi_Particle;
@@ -134,7 +135,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 		if (var.first == "rx") {
 			if (var.second.at("Type") != "double") {
 				global_log->info() << "[Adios2Reader] Detected single precision" << endl;
-				_single_precission = true;
+				_single_precision = true;
 				rx = std::vector<float>();
 				ry = std::vector<float>();
 				rz = std::vector<float>();
@@ -172,7 +173,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 		const uint64_t offset = read * bufferSize;
 		if (read == num_reads - 1) bufferSize = particle_count % bufferSize;
 		if (domainDecomp->getRank() == 0) {
-			if (_single_precission) {
+			if (_single_precision) {
 				performInquire(variables, bufferSize, offset, std::get<std::vector<float>>(rx),
 							   std::get<std::vector<float>>(ry), std::get<std::vector<float>>(rz),
 							   std::get<std::vector<float>>(vx), std::get<std::vector<float>>(vy),
@@ -232,7 +233,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 		if (domainDecomp->getRank() == 0) {
 			for (int i = 0; i < bufferSize; i++) {
 				Molecule m1;
-				if (_single_precission) {
+				if (_single_precision) {
 					m1 = fillMolecule(i, mol_id, comp_id, std::get<std::vector<float>>(rx),
 									  std::get<std::vector<float>>(ry), std::get<std::vector<float>>(rz),
 									  std::get<std::vector<float>>(vx), std::get<std::vector<float>>(vy),
@@ -249,6 +250,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 									  std::get<std::vector<double>>(qz), std::get<std::vector<double>>(Lx),
 									  std::get<std::vector<double>>(Ly), std::get<std::vector<double>>(Lz));
 				}
+				ParticleData::MoleculeToParticleData(particle_buff[i], m1);
 			}
 		}
 		MPI_Bcast(particle_buff.data(), bufferSize, mpi_Particle, 0, MPI_COMM_WORLD);
@@ -273,7 +275,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 		for (int i = 0; i < bufferSize; i++) {
 			global_log->debug() << "[Adios2Reader] Processing particle " << offset + i << std::endl;
 			Molecule m;
-			if (_single_precission) {
+			if (_single_precision) {
 				m = fillMolecule(i, mol_id, comp_id, std::get<std::vector<float>>(rx), std::get<std::vector<float>>(ry),
 								 std::get<std::vector<float>>(rz), std::get<std::vector<float>>(vx),
 								 std::get<std::vector<float>>(vy), std::get<std::vector<float>>(vz),
@@ -321,7 +323,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 		if (var.first == "rx") {
 			if (var.second.at("Type") != "double") {
 				global_log->info() << "[Adios2Reader] Detected single precision" << endl;
-				_single_precission = true;
+				_single_precision = true;
 				rx = std::vector<float>();
 				ry = std::vector<float>();
 				rz = std::vector<float>();
@@ -359,7 +361,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 		bufferSize = particle_count % bufferSize == 0 ? bufferSize : bufferSize + particle_count % bufferSize;
 	}
 	
-	if (_single_precission) {
+	if (_single_precision) {
 		performInquire(
 			variables, bufferSize, offset, std::get<std::vector<float>>(rx), std::get<std::vector<float>>(ry),
 			std::get<std::vector<float>>(rz), std::get<std::vector<float>>(vx), std::get<std::vector<float>>(vy),
@@ -437,7 +439,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 	std::vector<ParticleData> particle_buff(particle_count);
 	for (int i = 0; i < bufferSize; i++) {
     	Molecule m1;
-		if (_single_precission) {
+		if (_single_precision) {
 			m1 = fillMolecule(
 				i, mol_id, comp_id, std::get<std::vector<float>>(rx), std::get<std::vector<float>>(ry),
 				std::get<std::vector<float>>(rz), std::get<std::vector<float>>(vx), std::get<std::vector<float>>(vy),
@@ -479,7 +481,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 #else
 	for (int i = 0; i < particle_count; i++) {
 		Molecule m;
-		if (_single_precission) {
+		if (_single_precision) {
 			m = fillMolecule(
 				i, mol_id, comp_id, std::get<std::vector<float>>(rx), std::get<std::vector<float>>(ry),
 				std::get<std::vector<float>>(rz), std::get<std::vector<float>>(vx), std::get<std::vector<float>>(vy),
@@ -525,7 +527,6 @@ void Adios2Reader::initAdios2() {
 
         if (!engine) {
             global_log->info() << "[Adios2Reader] Opening File for reading: " << _inputfile.c_str() << std::endl;
-			engine = std::make_shared<adios2::Engine>(io->Open(_inputfile, adios2::Mode::Read));
 			engine = std::make_shared<adios2::Engine>(io->Open(_inputfile, adios2::Mode::Read));
         }
   }
