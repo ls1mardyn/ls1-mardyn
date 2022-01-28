@@ -30,7 +30,7 @@ public:
 	 */
 	static std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> acquireNeighbors(
 		const std::array<double, 3>& globalDomainLength, HaloRegion* ownRegion, std::vector<HaloRegion>& desiredRegions,
-		double skin, const MPI_Comm& comm, bool excludeOwnRank=true);
+		const MPI_Comm& comm, bool excludeOwnRank=true);
 
 	static std::vector<CommunicationPartner> squeezePartners(const std::vector<CommunicationPartner>& partners);
 
@@ -45,12 +45,11 @@ private:
 	 * All mirror images, as well as, the orginal region are returned.
 	 * @param domainLength The total length of the domain.
 	 * @param region The initial region.
-	 * @param skin Skin.
 	 * @return A pair of two vectors of equal length. The first vector contains all shifted regions. The second vector
 	 * contains the according shifts.
 	 */
 	static std::pair<std::vector<HaloRegion>, std::vector<std::array<double, 3>>> getPotentiallyShiftedRegions(
-							 const std::array<double, 3>& domainLength, const HaloRegion& region, double skin);
+							 const std::array<double, 3>& domainLength, const HaloRegion& region);
 
     friend class NeighborAcquirerTest;
 };

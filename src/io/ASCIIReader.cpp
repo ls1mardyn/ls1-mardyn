@@ -461,6 +461,6 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 	MPI_CHECK( MPI_Type_free(&mpi_Particle) );
 #endif
 	domain->setglobalNumMolecules(nummolecules);
-	domain->setglobalRho(domain->getglobalNumMolecules() / domain->getGlobalVolume());
+	domain->setglobalRho(nummolecules / domain->getGlobalVolume());
 	return maxid;
 }

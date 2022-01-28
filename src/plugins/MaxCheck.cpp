@@ -11,6 +11,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
+#include <array>
 
 using namespace std;
 using Log::global_log;
@@ -35,26 +36,46 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("control/start", _control.start);
 	xmlconfig.getNodeValue("control/frequency", _control.freq);
 	xmlconfig.getNodeValue("control/stop", _control.stop);
-	global_log->info() << "MaxCheck is acting start:freq:stop = "
+	global_log->info() << "[MaxCheck] Active period: start:freq:stop = "
 			<< _control.start << ":" << _control.freq << ":" << _control.stop
 			<< endl;
 
-	// yrange
+	// range
 	Domain* domain = global_simulation->getDomain();
-	_yrange.min = 0.;
-	_yrange.max = domain->getGlobalLength(1);
-	xmlconfig.getNodeValue("yrange/min", _yrange.min);
-	xmlconfig.getNodeValue("yrange/max", _yrange.max);
+	_range.inclusive = true;
+	_range.xmin = 0.;
+	_range.xmax = domain->getGlobalLength(0);
+	_range.ymin = 0.;
+	_range.ymax = domain->getGlobalLength(1);
+	_range.zmin = 0.;
+	_range.zmax = domain->getGlobalLength(2);
+	xmlconfig.getNodeValue("range/inclusive", _range.inclusive);
+	xmlconfig.getNodeValue("range/xmin", _range.xmin);
+	xmlconfig.getNodeValue("range/xmax", _range.xmax);
+	xmlconfig.getNodeValue("range/ymin", _range.ymin);
+	xmlconfig.getNodeValue("range/ymax", _range.ymax);
+	xmlconfig.getNodeValue("range/zmin", _range.zmin);
+	xmlconfig.getNodeValue("range/zmax", _range.zmax);
+
+	// Warn if old config style is used as it has big influence on the simulation
+	if (not xmlconfig.query("yrange").empty()) {
+		global_log->warning() << "[MaxCheck] <yrange> is deprecated! Use <range> and <ymin>/<ymax> instead." << endl;
+	}
+
+	global_log->info() << "[MaxCheck] Apply " << ((_range.inclusive) ? "inside" : "outside") << " range:"
+					   << " x = " << _range.xmin << " - " << _range.xmax << " ;"
+					   << " y = " << _range.ymin << " - " << _range.ymax << " ;"
+					   << " z = " << _range.zmin << " - " << _range.zmax << endl;
 
 	// targets
 	uint32_t numTargets = 0;
 	XMLfile::Query query = xmlconfig.query("targets/target");
 	numTargets = query.card();
-	global_log->info() << "MaxCheck: Number of component targets: "
+	global_log->info() << "[MaxCheck] Number of component targets: "
 			<< numTargets << endl;
 	if (numTargets < 1) {
 		global_log->warning()
-				<< "MaxCheck: No target parameters specified. Program exit ..."
+				<< "[MaxCheck] No target parameters specified. Program exit ..."
 				<< endl;
 		Simulation::exit(-1);
 	}
@@ -74,26 +95,26 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 		mv.method = MCM_UNKNOWN;
 
 		xmlconfig.getNodeValue("@method", mv.method);
-		global_log->info() << "MaxCheck: Method(cid=" << cid_ub << "): "
+		global_log->info() << "[MaxCheck] Method(cid=" << cid_ub << "): "
 				<< mv.method << endl;
 
 		xmlconfig.getNodeValue("Fmax", mv.F);
-		global_log->info() << "MaxCheck: Fmax(cid=" << cid_ub << "): " << mv.F
+		global_log->info() << "[MaxCheck] Fmax(cid=" << cid_ub << "): " << mv.F
 				<< endl;
 		mv.F2 = mv.F * mv.F;
 
 		xmlconfig.getNodeValue("vmax", mv.v);
-		global_log->info() << "MaxCheck: vmax(cid=" << cid_ub << "): " << mv.v
+		global_log->info() << "[MaxCheck] vmax(cid=" << cid_ub << "): " << mv.v
 				<< endl;
 		mv.v2 = mv.v * mv.v;
 		
 		xmlconfig.getNodeValue("Mmax", mv.M);
-		global_log->info() << "MaxCheck: Mmax(cid=" << cid_ub << "): " << mv.M
+		global_log->info() << "[MaxCheck] Mmax(cid=" << cid_ub << "): " << mv.M
 				<< endl;
 		mv.M2 = mv.M * mv.M;
 		
 		xmlconfig.getNodeValue("Lmax", mv.L);
-		global_log->info() << "MaxCheck: Lmax(cid=" << cid_ub << "): " << mv.L
+		global_log->info() << "[MaxCheck] Lmax(cid=" << cid_ub << "): " << mv.L
 				<< endl;
 		mv.L2 = mv.L * mv.L;
 
@@ -131,18 +152,15 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 #pragma omp parallel
 #endif
 	{
-
-		uint64_t id;
 		uint32_t cid_ub;
-		double r[3];
-		double F[3];
-		double v[3];
-		double M[3];
-		double L[3];
+		std::array<double,3> r;
+		std::array<double,3> F;
+		std::array<double,3> v;
+		std::array<double,3> M;
+		std::array<double,3> L;
 		MaxVals absVals;
 
 		for (auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-			id = it->getID();
 			cid_ub = it->componentid() + 1;
 			for (uint8_t d = 0; d < 3; ++d) {
 				r[d] = it->r(d);
@@ -152,8 +170,16 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 				L[d] = it->D(d);
 			}
 
-			if(r[1] < _yrange.min || r[1] > _yrange.max)
+			// check range
+			bool isInside = this->moleculeInsideRange(r);
+			if (_range.inclusive and not isInside) {
+				// If the range is inclusive, we skip if the particle is not in the range.
 				continue;
+			}
+			if (not _range.inclusive and isInside) {
+				// If the range is exclusive, we skip if the particle is in the range.
+ 				continue;
+			}
 
 			// calc abs vals
 			absVals.F2 = this->calcSquaredVectorLength(F);
@@ -224,4 +250,9 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 		//		}
 
 	} // end pragma omp parallel
+}
+
+bool MaxCheck::moleculeInsideRange(std::array<double,3>& r)
+{
+	return r[0] >= _range.xmin && r[0] < _range.xmax && r[1] >= _range.ymin && r[1] < _range.ymax && r[2] >= _range.zmin && r[2] < _range.zmax;
 }

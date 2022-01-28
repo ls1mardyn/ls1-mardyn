@@ -172,6 +172,7 @@ int g1_(doublereal *a, doublereal *b, doublereal *cterm, doublereal *sterm, doub
 
 	iz2 = *n;
 	iz1 = 1;
+	izmax = 1;
 	nsetp = 0;
 	npp1 = 1;
 /*                             ******  MAIN LOOP BEGINS HERE  ****** */

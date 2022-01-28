@@ -79,7 +79,7 @@
 		<algorithm>
 			<parallelisation type="DomainDecomposition">
 				 <!-- structure handled by DomainDecompMPIBase -->
-				<MPIGridDims> <x>2</x> <y>2</y> <z>2</z> </MPIGridDims>
+				<!--<MPIGridDims> <x>2</x> <y>2</y> <z>2</z> </MPIGridDims>-->
 			</parallelisation>
 <!--
 			<parallelisation type="KDDecomposition">
@@ -185,7 +185,7 @@
 				<frequency>1</frequency>
 				<stop>5000000000</stop>
 			</control>
-			<yrange> <min>0.0</min> <max>320.0</max> </yrange>
+			<range> <ymin>0.0</ymin> <ymax>320.0</ymax> </range>
 			<targets>
 				<target cid="1" method="1">
 						<Fmax>10000</Fmax>

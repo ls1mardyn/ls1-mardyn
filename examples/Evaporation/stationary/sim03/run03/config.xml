@@ -17,7 +17,7 @@
 		<run>
 			<currenttime>0.0</currenttime> 
 			<production>
-				<steps>5000000</steps>
+				<steps>10000</steps>
 			</production>
 		</run>
 
@@ -40,8 +40,8 @@
 					<objectgenerator>
 						<filler type="ReplicaFiller">
 							<input type="BinaryReader">
-								<header>../run02/cp_binary-04.restart.header.xml</header>
-								<data>../run02/cp_binary-04.restart.dat</data>
+								<header>../run02/cp_binary-1.restart.header.xml</header>
+								<data>../run02/cp_binary-1.restart.dat</data>
 							</input>
 						</filler>
 
@@ -52,24 +52,13 @@
 					</objectgenerator>
 				</generator>
 			</phasespacepoint>
-<!--
-			<phasespacepoint>
-				<file type="binary">
-					<header>../run02/cp_binary-04.restart.header.xml</header>
-					<data>../run02/cp_binary-04.restart.dat</data>
-				</file>
-			</phasespacepoint>
 
-			<phasespacepoint>
-					<file type="ASCII">../run02/cp_ascii-10.restart.dat</file>
-			</phasespacepoint>
--->
 		</ensemble>
 
 		<algorithm>
 			<parallelisation type="DomainDecomposition">
-				 <!-- structure handled by DomainDecompMPIBase -->
-				<MPIGridDims> <x>5</x> <y>2</y> <z>8</z> </MPIGridDims>
+				<!-- structure handled by DomainDecompMPIBase -->
+				<!--<MPIGridDims> <x>5</x> <y>2</y> <z>8</z> </MPIGridDims>-->
 			</parallelisation>
 <!--
 			<parallelisation type="KDDecomposition">
@@ -143,7 +132,7 @@
 		<output>
 			<outputplugin name="CheckpointWriter">
 				<type>binary</type>
-				<writefrequency>50000</writefrequency>
+				<writefrequency>10000</writefrequency>
 				<outputprefix>cp_binary</outputprefix>
 			</outputplugin>
 			
@@ -151,8 +140,8 @@
 				<include query="/spheres" >../../sphereparams_3c.xml</include>
 				<writecontrol>
 					<start>0</start>
-					<writefrequency>5000</writefrequency>
-					<stop>5000000</stop>
+					<writefrequency>1000</writefrequency>
+					<stop>10000</stop>
 					<framesperfile>0</framesperfile>
 				</writecontrol>
 				<outputprefix>megamol</outputprefix>  
@@ -172,7 +161,7 @@
 				<number>1</number>
 			</subdivision>
 			<init type="values">   <!-- type="startconfig|values|file" -->
-				<values> <left>0</left> <right>4.875000000000000e+01</right> </values>
+				<values> <left>0</left> <right>4.925000000000000e+01</right> </values>
 				<file>../run02/DistControl.dat</file>
 				<simstep>100000</simstep>
 			</init>
@@ -190,7 +179,7 @@
 				<frequency>1</frequency>
 				<stop>50000000</stop>
 			</control>
-			<yrange> <min>20.0</min> <max>30.0</max> </yrange>
+			<range> <ymin>20.0</ymin> <ymax>30.0</ymax> </range>
 			<targets>
 				<target cid="2" method="1">
 					<Fmax>500</Fmax>
@@ -228,23 +217,24 @@
 		<plugin name="MettDeamonFeedrateDirector">
 			<mirror>
 				<pluginID>101</pluginID>
-				<control> <update_freq>5000</update_freq> </control>
+				<control> <update_freq>2000</update_freq> </control>
 			</mirror>
+			<restart> <writefreq>10000</writefreq> </restart>
 		</plugin>
 
 		<plugin name="MettDeamon">
 			<control>
-				<updatefreq>100</updatefreq>
-				<logfreqfeed>1000</logfreqfeed>
-				<logfreqreleased>1000</logfreqreleased>
+				<updatefreq>2000</updatefreq>
+				<logfreqfeed>2000</logfreqfeed>
+				<logfreqreleased>2000</logfreqreleased>
 				<writefreq>10000</writefreq>
 				<numvals>10</numvals>
 				<feed>
-					<init>5.991098938719616e-06</init>
+					<init>0.0</init>
 					<direction>1</direction>
 					<method>5</method>
 					<targetID>1</targetID>
-					<target>5.991098938719616e-06</target>
+					<target>0.0</target>
 					<release_velo>
 						<method>2</method>
 						<fix_value>0.7</fix_value>
@@ -263,7 +253,7 @@
 
 			<restart>
 				<binindex>0</binindex>
-				<deltaY>1.520725193424952e+00</deltaY>
+				<deltaY>0.0</deltaY>
 			</restart>
 
 			<changes>
@@ -286,7 +276,7 @@
 				<sampling type="profiles" single_component="1">
 					<control>
 						<start>0</start>
-						<frequency>50000</frequency>
+						<frequency>10000</frequency>
 						<stop>1000000000</stop>
 					</control>
 					<subdivision type="width">
@@ -305,7 +295,7 @@
 				<sampling type="VDF" single_component="1">
 					<control>
 						<start>0</start>
-						<frequency>50000</frequency>
+						<frequency>10000</frequency>
 						<stop>1000000000</stop>
 					</control>
 					<subdivision type="width">

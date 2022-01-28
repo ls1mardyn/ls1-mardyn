@@ -136,7 +136,7 @@ private:
 	// instances / ID
 	static unsigned short _nStaticID;
 
-	uint32_t _numComponents;
+	uint8_t _numComponents;
 
 	// ******************
 	// sampling variables

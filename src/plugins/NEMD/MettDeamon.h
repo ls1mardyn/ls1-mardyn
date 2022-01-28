@@ -30,7 +30,7 @@
 template < typename T > void shuffle( std::list<T>& lst ); // shuffle contents of a list
 
 void create_rand_vec_ones(const uint64_t& nCount, const double& percent, std::vector<int>& v);
-void update_velocity_vectors(std::unique_ptr<Random>& rnd, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
+void update_velocity_vectors(Random*, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
 		std::vector<double>& vxi, std::vector<double>& vyi, std::vector<double>& vzi);
 
 #define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
@@ -40,9 +40,6 @@ enum ReadReservoirMethods : uint8_t
 	RRM_UNKNOWN = 0,
 	RRM_READ_FROM_FILE = 1,
 	RRM_READ_FROM_FILE_BINARY = 2,
-	RRM_READ_FROM_MEMORY = 3,
-	RRM_AMBIGUOUS = 4,
-	RRM_EMPTY = 5,
 };
 
 enum MovingDirections : uint8_t
@@ -105,14 +102,13 @@ struct FeedRateStruct
 	{
 		double init;
 		double actual;
-		double target;
 		double sum;
 
 	} feed;
 
 	struct ReleaseVelocityStruct
 	{
-		uint32_t method;
+		ReleaseVelocityMethod method;
 		double fix_value;
 		ParamsNormMB normMB;
 		std::vector<double> vx;
@@ -160,7 +156,7 @@ public:
 			<feed>
 				<init>FLOAT</init>           <!-- initial feed rate  -->
 				<direction>INT</direction>   <!-- 0: left --> right | 1: left <-- right  -->
-				<method>INT</method>         <!-- feed rate method 1:count deleted particles | 4: fix rate -->
+				<method>INT</method>         <!-- feed rate method 1: count deleted and changed particles | 2: count changed particles | 3: meet target density | 4: fix rate | 5: get feedrate by MD Feedrate Director -->
 				<targetID>INT</targetID>     <!-- component ID of particles feed rate determined from -->
 				<target>FLOAT</target>       <!-- target value for feed rate, if method==4 -->
 				<release_velo>
@@ -171,8 +167,8 @@ public:
 			<z2method>1</z2method>                 <!-- choose zone2 method, 1:reset all i.e. also quaternion | 2:reset only y position od particles
 			<manipfree> <ymin>50</ymin> <ymax>100</ymax> </manipfree>   <!-- range that is not affected with any manipulations -->
 		</control>
-		<reservoir update="1">   <!-- update="1": Update Reservoir's data structure before inserting new particles. This is mandatory when using kd-decomposition
-			<file type="binary">
+		<reservoir update="1">   <!-- update="1": Update Reservoir's data structure before inserting new particles. This is mandatory when using kd-decomposition. Default: update="1"
+			<file type="binary">   <!-- file type can be ASCII or binary -->
 				<header>../../liq/run12/cp_binary-0.restart.header.xml</header>   <!-- checkpoint header file used for reservoir -->
 				<data>../../liq/run12/cp_binary-0.restart.dat</data>              <!-- checkpoint data file used for reservoir -->
 			</file>
@@ -222,12 +218,20 @@ public:
 
 	// connection to other general plugins
 	void setActualFeedrate(const double& feed_actual) {
-		_feedrate.feed.actual = feed_actual;
-		global_log->info() << "[MettDeamon]: Set new feedrate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
+		if (FRM_DIRECTED == _nFeedRateMethod) {
+			_feedrate.feed.actual = feed_actual;
+			global_log->info() << "[MettDeamon]: Set new feed rate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
+		} else {
+			global_log->warning() << "[MettDeamon]: Feed rate not set because current feed method ( " << _nFeedRateMethod << " ) is not set to communicate with MDFRD (method " << FRM_DIRECTED << ")" << std::endl;
+		}
 	}
 	void setInitFeedrate(const double& feed_init) {
-		_feedrate.feed.init = feed_init;
-		global_log->info() << "[MettDeamon]: Set init feedrate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
+		if (FRM_DIRECTED == _nFeedRateMethod) {
+			_feedrate.feed.init = feed_init;
+			global_log->info() << "[MettDeamon]: Set init feed rate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
+		} else {
+			global_log->warning() << "[MettDeamon]: Feed rate not set because current feed method ( " << _nFeedRateMethod << " ) is not set to communicate with MDFRD (method " << FRM_DIRECTED << ")" << std::endl;
+		}
 	}
 	double getInvDensityArea() {return _dInvDensityArea;}
 
@@ -282,9 +286,9 @@ private:
 	uint64_t _nMaxReservoirMoleculeID;
 	uint64_t _nNumMoleculesDeletedGlobalAlltime;
 	CommVar<uint64_t> _nNumMoleculesTooFast;
-	uint8_t _nMovingDirection;
-	uint8_t _nFeedRateMethod;
-	uint8_t _nZone2Method;
+	MovingDirections _nMovingDirection;
+	FeedRateMethod _nFeedRateMethod;
+	Zone2Method _nZone2Method;
 	uint32_t _nNumValsSummation;
 	int64_t _numDeletedMolsSum;
 	uint64_t _nDeleteNonVolatile;
@@ -382,16 +386,16 @@ private:
 
 public:
 	// Getters, Setters
-	double getDensity(const uint32_t& cid) {return _density.at(cid).density;}
-	void setDensity(const uint32_t& cid, const double& dVal) {_density.at(cid).density = dVal;}
+	double getDensity() const {return _density;}
+	void setDensity(const double& dVal) {_density = dVal;}
 	double getBoxLength(const uint32_t& nDim) {return _box.length.at(nDim);}
 	void setBoxLength(const uint32_t& nDim, const double& dVal) {_box.length.at(nDim)=dVal;}
-	double getVolume() {return _box.volume;}
+	double getVolume() const {return _box.volume;}
 	void setVolume(const double& dVal) {_box.volume = dVal;}
-	double getBinWidth() {return _dBinWidth;}
+	double getBinWidth() const {return _dBinWidth;}
 	double GetInsPercent() {return _dInsPercent;}
 	void setInsPercent(const double& dVal) {_dInsPercent = dVal;}
-	uint8_t getReadMethod() {return _nReadMethod;}
+	uint8_t getReadMethod() const {return _nReadMethod;}
 
 	// queue methods
 	uint32_t getActualBinIndex();
@@ -405,7 +409,6 @@ public:
 	void printBinQueueInfo();
 
 private:
-	void calcPartialDensities(DomainDecompBase* domainDecomp);
 	void changeComponentID(Molecule& mol, const uint32_t& cid);
 	bool isRelevant(DomainDecompBase* domainDecomp, Domain* domain, Molecule& mol);
 
@@ -415,15 +418,14 @@ private:
 	std::unique_ptr<BinQueue> _binQueue;
 	uint64_t _numMoleculesRead;
 	uint64_t _nMaxMoleculeID;
-	uint32_t _nMoleculeFormat;
-	uint8_t _nReadMethod;
-	double _dReadWidthY;
+	MoleculeFormat _nMoleculeFormat;
+	ReadReservoirMethods _nReadMethod;
 	double _dBinWidthInit;
 	double _dBinWidth;
 	double _dInsPercent;  // only insert percentage of reservoir density
 	std::vector<Molecule> _particleVector;
 	std::vector<uint32_t> _vecChangeCompIDs;
-	std::vector<DensityStruct> _density;
+	double _density; // Global density of reservoir
 	FilepathStruct _filepath;
 	BoxStruct _box;
 	bool _bUpdateBinQueue;  // BinQueue have to be updated if bounding boxes changes, e.g. in case of using kd-decomposition

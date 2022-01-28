@@ -264,6 +264,6 @@ private:
 
 	bool _preparedLoad{false};
 	double _previousTime{0.};
-	int _interpolationStartsAt{1};
 	bool _timeValuesShouldBeIncreasing{true};
+	int _interpolationStartsAt{1};
 };

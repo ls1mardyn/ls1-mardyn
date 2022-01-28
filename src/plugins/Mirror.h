@@ -57,11 +57,10 @@ public:
 			</position>
 			<forceConstant>0.</forceConstant>   <!-- force added to particles in order to reflect them from Mirror plane -->
 			<meland>
-				<use_probability>INT</use_probability>   <!-- 0:disable | 1:enable probability factor in case of Mirror type MT_MELAND_2004 -->
 				<velo_target>FLOAT</velo_target>         <!-- target hydrodynamic velocity -->
-				<fixed_probability>FLOAT</fixed_probability>         <!-- (optional) fixed probability for reflection in Meland2004 mirror -->
+				<fixed_probability>FLOAT</fixed_probability>         <!-- (optional) fixed probability for reflection in Meland mirror -->
 			</meland>
-			<diffuse>   <!-- particles will not sharply be reflected at mirror position x, but at x + dx, where dx is a random number between 0 and <width> -->
+			<diffuse>   <!-- Only with method 5 (Meland); particles will not sharply be reflected at mirror position x, but at x + dx (right mirror) or x - dx (left mirror), where dx is a random number between 0 and <width> -->
 				<width>FLOAT</width>   <!-- width of region behind mirror in which particles will be reflected -->
 			</diffuse>
 			<ramping>

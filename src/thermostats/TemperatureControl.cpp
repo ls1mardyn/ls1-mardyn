@@ -323,7 +323,7 @@ void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*dom
 	unsigned int nIndexMax = _nNumSlabs - 1;
 
 	// calc position index
-	double* dLowerCorner = this->GetLowerCorner();
+	std::array<double,3> dLowerCorner = this->GetLowerCorner();
 	double dPosRelative = mol->r(1) - dLowerCorner[1];
 
 	nPosIndex = (unsigned int)floor(dPosRelative / _dSlabWidth);
@@ -380,7 +380,7 @@ void ControlRegionT::ControlTemperature(Molecule* mol) {
 		unsigned int nIndexMax = _nNumSlabs - 1;
 
 		// calc position index
-		double* dLowerCorner = this->GetLowerCorner();
+		std::array<double,3> dLowerCorner = this->GetLowerCorner();
 		double dPosRelative = mol->r(1) - dLowerCorner[1];
 
 		nPosIndex = (unsigned int)floor(dPosRelative / _dSlabWidth);
@@ -586,7 +586,7 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Stop control at simstep: " << _nStop << endl;
 
 	// turn on/off explosion heuristics
-	// domain->SetExplosionHeuristics(bUseExplosionHeuristics);
+	// domain->setExplosionHeuristics(bUseExplosionHeuristics);
 
 	// add regions
 	uint32_t numRegions = 0;
