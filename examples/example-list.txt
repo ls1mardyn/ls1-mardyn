@@ -14,9 +14,6 @@
 ./surface-tension_LRC/C6H12/vle/500K/run01/config.xml
 ./Injection/liq/sim01/run03/config.xml
 ./Injection/liq/sim01/run04/config.xml
-./Injection/nemd/sim01/run01/config.xml
-./Injection/nemd/sim01/run02/config.xml
 ./adios/write/config.xml
 ./adios/read/config.xml
 ./adios/CO2_Merker/config.xml
-
