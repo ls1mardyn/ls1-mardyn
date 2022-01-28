@@ -85,7 +85,7 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
 	if (_mode == "rootOnly") {
 		rootOnlyRead(particleContainer, domain, domainDecomp);
 #ifdef ENABLE_MPI
-		MPI_Bcast(&_simtime, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+		MPI_Bcast(&_simtime, 1, MPI_DOUBLE, 0, domainDecomp->getCommunicator());
 #endif
 	} else if (_mode == "parallelRead") {
 		parallelRead(particleContainer, domain, domainDecomp);
@@ -253,7 +253,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 				ParticleData::MoleculeToParticleData(particle_buff[i], m1);
 			}
 		}
-		MPI_Bcast(particle_buff.data(), bufferSize, mpi_Particle, 0, MPI_COMM_WORLD);
+		MPI_Bcast(particle_buff.data(), bufferSize, mpi_Particle, 0, domainDecomp->getCommunicator());
 
 		for (int j = 0; j < bufferSize; j++) {
 			Molecule m =
@@ -390,14 +390,14 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 	counts_array[domainDecomp->getRank()] = bufferSize;
 	displacements_array[domainDecomp->getRank()] = offset;
 
-	MPI_Allgather(&counts_array[domainDecomp->getRank()], 1, MPI_INT, counts_array.data(), 1, MPI_INT, MPI_COMM_WORLD);
+	MPI_Allgather(&counts_array[domainDecomp->getRank()], 1, MPI_INT, counts_array.data(), 1, MPI_INT, domainDecomp->getCommunicator());
 	MPI_Allgather(&displacements_array[domainDecomp->getRank()], 1, MPI_INT, displacements_array.data(), 1, MPI_INT,
-				  MPI_COMM_WORLD);
+				  domainDecomp->getCommunicator());
 
 	global_component_ids.resize(particle_count);
 	MPI_Allgatherv(comp_id.data(), bufferSize, MPI_UINT64_T, global_component_ids.data(),
 				   counts_array.data(),
-				   displacements_array.data(), MPI_UINT64_T, MPI_COMM_WORLD);
+				   displacements_array.data(), MPI_UINT64_T, domainDecomp->getCommunicator());
 #endif
 	
     if (_simulation.getEnsemble()->getComponents()->empty()) {
@@ -461,7 +461,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 	MPI_Allgatherv(&particle_buff[offset], bufferSize, mpi_Particle, particle_buff.data(),
 				  counts_array.data(), displacements_array.data(),
 				  mpi_Particle,
-				  MPI_COMM_WORLD);
+				  domainDecomp->getCommunicator());
 	for (int j = 0; j < particle_buff.size(); j++) {
 		Molecule m = Molecule(particle_buff[j].id, &_dcomponents[particle_buff[j].cid], particle_buff[j].r[0],
 							  particle_buff[j].r[1], particle_buff[j].r[2], particle_buff[j].v[0], particle_buff[j].v[1],
@@ -517,7 +517,7 @@ void Adios2Reader::initAdios2() {
   try {
     //get adios2 instance
 #ifdef ENABLE_MPI
-	    mainInstance = std::make_shared<adios2::ADIOS>((MPI_Comm)MPI_COMM_WORLD);
+		mainInstance = std::make_shared<adios2::ADIOS>(domainDecomp.getCommunicator());
 #else
 		mainInstance = std::make_shared<adios2::ADIOS>();
 #endif

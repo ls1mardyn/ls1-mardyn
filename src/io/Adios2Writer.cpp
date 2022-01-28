@@ -180,11 +180,12 @@ void Adios2Writer::testInit(std::vector<Component>& comps, const std::string out
 }
 
 void Adios2Writer::initAdios2() {
+	auto& domainDecomp = _simulation.domainDecomposition();
 
 	try {
 		/* Set up ADIOS2 instance for output with provided ADIOS2 Engine type */
 #ifdef ENABLE_MPI
-		_inst = std::make_shared<adios2::ADIOS>((MPI_Comm)MPI_COMM_WORLD);
+		_inst = std::make_shared<adios2::ADIOS>(domainDecomp.getCommunicator());
 #else
 		_inst = std::make_shared<adios2::ADIOS>();
 #endif
@@ -347,7 +348,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 	
 	uint64_t offset = 0;
 #ifdef ENABLE_MPI
-	MPI_Exscan(&localNumParticles, &offset, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Exscan(&localNumParticles, &offset, 1, MPI_UINT64_T, MPI_SUM, domainDecomp->getCommunicator());
 	global_log->debug() << "[Adios2Writer] localNumParticles " << localNumParticles << std::endl;
 	global_log->debug() << "[Adios2Writer] Offset " << offset << std::endl;
 #endif
