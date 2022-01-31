@@ -114,9 +114,35 @@ jobs:
           rm -f output_new output_master
           rootPath=$PWD
           echo "New commit build running examples..."
-          for i in $(cat ./examples/example-list.txt); do echo $i | tee -a output_new; cd ./examples/$(dirname $i); mpirun -np 2 $rootPath/build_${JOBNAME}/src/MarDyn $(basename $i) --steps=50 --final-checkpoint=0 | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> $rootPath/output_new ; cd - > /dev/null; done
+          for i in $(cat ./examples/example-list.txt)
+          do
+            echo $i | \
+              tee -a output_new
+            cd ./examples/$(dirname $i)
+            mpirun -np 2 $rootPath/build_${JOBNAME}/src/MarDyn \
+              $(basename $i) \
+              --steps=50 \
+              --final-checkpoint=0 \
+              | \
+                awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' \
+                >> $rootPath/output_new
+            cd - > /dev/null
+          done
           echo "Master build running examples..."
-          for i in $(cat ./examples/example-list.txt); do echo $i | tee -a output_master; cd ./examples/$(dirname $i); mpirun -np 2 $rootPath/build_${JOBNAME}_master/src/MarDyn $(basename $i) --steps=50 --final-checkpoint=0 | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> $rootPath/output_master ; cd - > /dev/null; done
+          for i in $(cat ./examples/example-list.txt)
+          do
+            echo $i | \
+              tee -a output_master
+            cd ./examples/$(dirname $i)
+            mpirun -np 2 $rootPath/build_${JOBNAME}_master/src/MarDyn \
+              $(basename $i) \
+              --steps=50 \
+              --final-checkpoint=0 \
+              | \
+                awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' \
+                >> $rootPath/output_master
+            cd - > /dev/null
+          done
           diff output_new output_master
           echo "---"
           [ "$(diff output_new output_master)" == "" ]
