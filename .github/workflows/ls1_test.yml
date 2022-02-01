@@ -112,8 +112,37 @@ jobs:
           cd ..
           # python3 ./validation/validationRun/validationRun.py -m 2 -n ./build_${JOBNAME}/src/MarDyn -o ./build_${JOBNAME}_master/src/MarDyn -c ./validation/validationInput/simple-lj-direct/config.xml
           rm -f output_new output_master
-          for i in $(head -n15 ./examples/example-list.txt); do echo $i | tee output_new ; mpirun -np 2 ./build_${JOBNAME}/src/MarDyn ./examples/$i --steps=50 --final-checkpoint=0 | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> output_new ; done
-          for i in $(head -n15 ./examples/example-list.txt); do echo $i | tee output_master; mpirun -np 2 ./build_${JOBNAME}_master/src/MarDyn ./examples/$i --steps=50 --final-checkpoint=0 | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> output_master ; done
+          rootPath=$PWD
+          echo "New commit build running examples..."
+          for i in $(cat ./examples/example-list.txt)
+          do
+            echo $i | \
+              tee -a output_new
+            cd ./examples/$(dirname $i)
+            mpirun -np 2 $rootPath/build_${JOBNAME}/src/MarDyn \
+              $(basename $i) \
+              --steps=50 \
+              --final-checkpoint=0 \
+              | \
+                awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' \
+                >> $rootPath/output_new
+            cd - > /dev/null
+          done
+          echo "Master build running examples..."
+          for i in $(cat ./examples/example-list.txt)
+          do
+            echo $i | \
+              tee -a output_master
+            cd ./examples/$(dirname $i)
+            mpirun -np 2 $rootPath/build_${JOBNAME}_master/src/MarDyn \
+              $(basename $i) \
+              --steps=50 \
+              --final-checkpoint=0 \
+              | \
+                awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' \
+                >> $rootPath/output_master
+            cd - > /dev/null
+          done
           diff output_new output_master
           echo "---"
           [ "$(diff output_new output_master)" == "" ]
