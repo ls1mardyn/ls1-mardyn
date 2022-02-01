@@ -15,6 +15,10 @@ if (ENABLE_ADIOS2)
             set(adios2RepoPath git@github.com:ornladios/ADIOS2.git)
         endif ()
         
+        ## LGTM wants to install, so we give it a valid location
+        set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install"
+            CACHE PATH "default install path" FORCE)
+        ## ADIOS CONFIG PARAMETERS
         set(ADIOS2_BUILD_TESTING OFF CACHE BOOL "" FORCE)
         set(ADIOS2_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
         set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
