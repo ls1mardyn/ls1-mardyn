@@ -51,7 +51,7 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 	double corrVeloc = _veloc / _steps;
 
 	if (_enabled) {
-		global_log->debug() << "[Dropaccelerator] before forces called" << std::endl;
+		global_log->debug() << "[Dropaccelerator] after forces called" << std::endl;
 
 		if ((simstep - 1) % _interval != 0) {
 			return;
@@ -63,7 +63,7 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 		if (simstep == _startSimStep) {
 			// resize first
 			_particleIsInDroplet.clear();
-			_particleIsInDroplet.resize(global_simulation->getDomain()->getglobalNumMolecules(), false);
+			_particleIsInDroplet.resize(global_simulation->getDomain()->getglobalNumMolecules(true, particleContainer, domainDecomp), false);
 
 			for (auto temporaryMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 				 temporaryMolecule.isValid(); ++temporaryMolecule) {

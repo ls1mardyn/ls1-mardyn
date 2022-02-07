@@ -95,7 +95,7 @@
 				<frequency>1</frequency>
 				<stop>5000</stop>
 			</control>
-			<yrange> <min>0.0</min> <max>80.0</max> </yrange>
+			<range> <ymin>0.0</ymin> <ymax>80.0</ymax> </range>
 			<targets>
 				<target cid="1" method="1">
 					<Fmax>10000</Fmax>

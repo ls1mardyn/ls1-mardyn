@@ -16,6 +16,7 @@ GrandCanonicalEnsemble::GrandCanonicalEnsemble() :
 
 void GrandCanonicalEnsemble::initConfigXML(ParticleContainer* moleculeContainer) {
 	int ownrank = 0;
+	unsigned long globalNumMolecules = _simulationDomain->getglobalNumMolecules(true, moleculeContainer, nullptr);
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 #endif
@@ -30,7 +31,7 @@ void GrandCanonicalEnsemble::initConfigXML(ParticleContainer* moleculeContainer)
 						_simulationDomain->getGlobalLength(1), _simulationDomain->getGlobalLength(2),
 						tmp_molecularMass);
 		cpit->setGlobalN(global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->getNumMolecules());
-		cpit->setNextID(j + (int) (1.001 * (256 + _simulationDomain->getglobalNumMolecules())));
+		cpit->setNextID(j + (int) (1.001 * (256 + globalNumMolecules)));
 
 		cpit->setSubdomain(ownrank, moleculeContainer->getBoundingBoxMin(0),
 						   moleculeContainer->getBoundingBoxMax(0),
