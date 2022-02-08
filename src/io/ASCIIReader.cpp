@@ -386,12 +386,16 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 		}
 
 		if(componentid > numcomponents) {
-			global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">"
+			global_log->error() << "Molecule id " << id
+								<< " has a component ID higher than the existing number of components: "
+								<< componentid
+								<< ">"
 								<< numcomponents << endl;
 			Simulation::exit(1);
 		}
-		componentid--; // TODO: Component IDs start with 0 in the program.
-
+		// ComponentIDs are used as array IDs, hence need to start at 0.
+		// In the input files they always start with 1 so we need to adapt that all the time.
+		componentid--;
 		// store only those molecules within the domain of this process
 		// The necessary check is performed in the particleContainer addParticle method
 		// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
