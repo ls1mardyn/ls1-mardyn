@@ -176,6 +176,11 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 #ifdef ENABLE_MPI
 		if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif
+		if(_phaseSpaceFileStream.eof()) {
+			global_log->error() << "End of file was hit before all " << numMolecules << " expected molecules were read."
+				<< endl;
+			Simulation::exit(1);
+        }
 		_phaseSpaceFileStream.read(reinterpret_cast<char*> (&id), 8);
 		switch (_nMoleculeFormat) {
 			case ICRVQD:
