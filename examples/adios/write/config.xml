@@ -97,7 +97,7 @@
 		</algorithm>
 		<output>
 		<outputplugin name="Adios2Writer">
-		  <outputfile>mardyn.bp</outputfile>
+		  <outputfile>co2_merkers_checkpoint.bp</outputfile>
 		  <adios2enginetype>BP4</adios2enginetype>
 		  <writefrequency>50</writefrequency>
 		</outputplugin>

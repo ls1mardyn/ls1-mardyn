@@ -15,5 +15,6 @@
 ./Injection/liq/sim01/run03/config.xml
 ./Injection/liq/sim01/run04/config.xml
 ./adios/write/config.xml
+./adios/write/config_mix.xml
 ./adios/read/config.xml
-./adios/CO2_Merker/config.xml
+./adios/read/config_parallel.xml

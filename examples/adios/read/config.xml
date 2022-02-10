@@ -29,12 +29,12 @@
 			</domain>
 
 			<components>
-				<include query="/components/moleculetype" >../CO2_Merker/components_co2_merker.xml</include>
+				<include query="/components/moleculetype" >../../surface-tension_LRC/CO2_Merker/components_co2_merker.xml</include>
 			</components>
 
 			<phasespacepoint>
 				<file type="adios2">
-					<filename>../CO2_Merker/co2_merkers_checkpoint.bp</filename>
+					<filename>../write/co2_merkers_checkpoint.bp</filename>
 					<adios2enginetype>BP4</adios2enginetype>
 					<adios2step>0</adios2step>
 					<mode>rootOnly</mode>
