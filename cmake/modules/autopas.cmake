@@ -20,8 +20,8 @@ if (ENABLE_AUTOPAS)
     set(spdlog_ForceBundled ON CACHE BOOL "" FORCE)
     set(Eigen3_ForceBundled ON CACHE BOOL "" FORCE)
 
-    # The merge commit of autopas#642, i.e., the introduction of the LC interface. (2021-09-19)
-    set(AUTOPAS_TAG 510e7bb43fb0255cc5d64966f7d68754890e8940 CACHE STRING "AutoPas Git tag to use")
+    # AutoTuner runtime estimation allowing less samples than rebuild freq (2022-02-10)
+    set(AUTOPAS_TAG 1bc6c6aefeec080be45e85e8efe0bd0daa16acc1 CACHE STRING "AutoPas Git tag to use")
 
     FetchContent_Declare(
             autopasfetch
