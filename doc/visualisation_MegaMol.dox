@@ -46,4 +46,12 @@ $ ./bpls mardyn.bp/ -a
   double    vz                         2*{6466}
 ```
 
+A simple workflow that combines ls1 and MegaMol:
+ - Make sure both software frameworks are installed properly
+ - Add a Adios2Writer to your simulation configuration
+ - Make sure the Adios2Writer is properly configured (see examples and/or Adios2Writer header file)
+ - Run the simulation (and generate output)
+ - Take any lua file from the `megamol-examples/ls1` directory and insert your own output file (can be done via text editor or by loading the file into the MegaMol configurator)
+ - Run the configured lua file with megamol (`./megamol.sh myls1vis.lua`)
+
 */
