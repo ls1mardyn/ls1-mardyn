@@ -55,6 +55,11 @@ if (ENABLE_LZ4)
     add_dependencies(MarDyn liblz4)
 endif()
 
+# find adios
+if (NOT ENABLE_ADIOS2)
+    list(FILTER MY_SRC EXCLUDE REGEX "adios2")
+endif()
+
 # we just add all libraries here. If a library is not set, it will simply be ignored.
 TARGET_LINK_LIBRARIES(MarDyn
         ${BLAS_LIB}    # for armadillo
@@ -62,9 +67,14 @@ TARGET_LINK_LIBRARIES(MarDyn
         ${VTK_LIB}     # for VTK/xerces
         ${CPPUNIT_LIB} # for unit tests
         ${AUTOPAS_LIB} # for autopas
+        ${ADIOS2_LIB}  # for adios2
         ${LZ4_LIB}     # for LZ4 compression
         ${ALL_LIB}     # for ALL
         )
+
+target_compile_definitions(MarDyn PUBLIC
+        ${ADIOS2_COMPILE_DEFINITION}
+)
 
 ADD_TEST(
         NAME MarDyn_test
