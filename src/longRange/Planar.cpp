@@ -208,9 +208,9 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	bool bInputIsValid = (bRet1 && bRet2 && bRet3);
 	if(true == bInputIsValid)
 	{
-		global_log->error() << "Long Range Correction->writecontrol: Start writing profiles at simstep: " << _nStartWritingProfiles << endl;
-		global_log->error() << "Long Range Correction->writecontrol: Writing profiles with frequency: " << _nWriteFreqProfiles << endl;
-		global_log->error() << "Long Range Correction->writecontrol: Stop writing profiles at simstep: " << _nStopWritingProfiles << endl;
+		global_log->info() << "Long Range Correction->writecontrol: Start writing profiles at simstep: " << _nStartWritingProfiles << endl;
+		global_log->info() << "Long Range Correction->writecontrol: Writing profiles with frequency: " << _nWriteFreqProfiles << endl;
+		global_log->info() << "Long Range Correction->writecontrol: Stop writing profiles at simstep: " << _nStopWritingProfiles << endl;
 	}
 	else
 	{

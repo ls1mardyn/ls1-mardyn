@@ -616,7 +616,7 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 	// discrete values: Bin midpoints, velocity values
 	resizeExactly(_dBinMidpointsProfiles,_nNumBinsProfiles);
 
-	_nNumValsScalar = _nNumBinsProfiles * _numComponents * 3;  // * 3: directions: all(+/-) | only (+) | only (-)
+	_nNumValsScalar = static_cast<unsigned long>(_nNumBinsProfiles) * static_cast<unsigned long>(_numComponents) * 3;  // * 3: directions: all(+/-) | only (+) | only (-)
 	_nNumValsVector = _nNumValsScalar * 3;                        // * 3: x, y, z-component
 
 #ifndef NDEBUG

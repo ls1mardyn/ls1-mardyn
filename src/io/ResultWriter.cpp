@@ -52,10 +52,13 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 	}
 }
 
-void ResultWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp, Domain *domain,
+void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                            unsigned long simstep) {
 
 	// Writing of cavities now handled by CavityWriter
+
+	unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
+	double cv = domain->cv();
 
 	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_p_acc->addEntry(domain->getGlobalPressure());
@@ -67,15 +70,15 @@ void ResultWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
 			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << _p_acc->getAverage()
 			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << domain->getGlobalBetaTrans()
 			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << domain->getGlobalBetaRot()
-			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << domain->cv()
-			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << domain->getglobalNumMolecules()
+			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << cv
+			<< std::setw(_writePrecision+15) << std::scientific << std::setprecision(_writePrecision) << globalNumMolecules
 			<< endl;
 	}
 }
 
 void ResultWriter::finish(ParticleContainer * /*particleContainer*/,
 						  DomainDecompBase *domainDecomp, Domain * /*domain*/){
-							  
+
 	if(domainDecomp->getRank() == 0) {
 		time_t now;
 		time(&now);
