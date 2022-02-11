@@ -33,6 +33,8 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules/)
 
 # ----- first: include option files
 option(GIT_SUBMODULES_SSH "Use SSH for git submodules instead of HTTPS" OFF)
+# determine version info and make it available in c++
+include(version)
 # include vectorization module
 include(vectorization)
 # include OpenMP module
