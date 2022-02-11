@@ -50,6 +50,7 @@
 #include "plugins/MaxCheck.h"
 #include "plugins/Mirror.h"
 #include "plugins/MirrorSystem.h"
+#include "plugins/NEMD/DensityControl.h"
 #include "plugins/NEMD/DistControl.h"
 #include "plugins/NEMD/DriftCtrl.h"
 #include "plugins/NEMD/ExtractPhase.h"
@@ -111,6 +112,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(MettDeamon);
 	REGISTER_PLUGIN(MettDeamonFeedrateDirector);
 	REGISTER_PLUGIN(PosNegComp);
+	REGISTER_PLUGIN(DensityControl);
 	REGISTER_PLUGIN(DistControl);
 	REGISTER_PLUGIN(DriftCtrl);
 	REGISTER_PLUGIN(ExtractPhase);
