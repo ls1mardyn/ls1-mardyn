@@ -10,7 +10,7 @@ if (Git_FOUND)
     string(STRIP "${MarDyn_VERSION_BRANCH}" MarDyn_VERSION_BRANCH)
     # commit hash
     execute_process(
-            COMMAND ${GIT_EXECUTABLE} log --pretty=format:%h -n 1
+            COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
             OUTPUT_VARIABLE MarDyn_VERSION_HASH)
     string(STRIP "${MarDyn_VERSION_HASH}" MarDyn_VERSION_HASH)
     # check dirty
