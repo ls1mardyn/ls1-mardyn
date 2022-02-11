@@ -387,7 +387,7 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 
 		if(componentid > numcomponents) {
 			global_log->error() << "Molecule id " << id
-								<< " has a component ID higher than the existing number of components: "
+								<< " has a component ID greater than the existing number of components: "
 								<< componentid
 								<< ">"
 								<< numcomponents << endl;
