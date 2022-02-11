@@ -2,7 +2,8 @@
 # it then edits MarDyn_version.h so that the version is available in C++
 
 find_package(Git)
-if (Git_FOUND)
+# we need git and the folder where git stores its info
+if (Git_FOUND AND EXISTS "${MARDYN_SOURCE_DIR}/.git" )
     # branch name
     execute_process(
             COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
@@ -23,7 +24,7 @@ if (Git_FOUND)
         set(MarDyn_VERSION_IS_DIRTY "")
     endif ()
 else()
-    message(WARNING "Could not find git! MARDYN_VERSION will be missing information.")
+    message(WARNING "Could not find git or ${MARDYN_SOURCE_DIR}/.git folder! MARDYN_VERSION will be missing information.")
 endif ()
 
 configure_file(src/MarDyn_version.h.in src/MarDyn_version.h @ONLY)
