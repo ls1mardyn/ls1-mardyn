@@ -9,8 +9,7 @@ Getting Started
 
 Documentation:
 --------------
-The current doxygen documentation can be found here:
-https://www5.in.tum.de/mardyn/doxygen_doc/html/
+The current doxygen documentation can be found [here](https://www5.in.tum.de/mardyn/doxygen_doc/html/).
 
 Prerequisites:
 --------------
@@ -19,9 +18,9 @@ Prerequisites:
 * a working MPI installation compatible with the MPI 3.0 specification or later (Open MPI, MPICH, MVAPICH, Intel MPI, Cray MPI, NEC MPI, IBM Platform MPI, ...)
 
 ### optional requirements:
-* FFTW3: <http://www.fftw.org>
-* VTK: <http://www.vtk.org>
-* QuickSched: <https://arxiv.org/abs/1601.05384>
+* [FFTW3](http://www.fftw.org)
+* [VTK](http://www.vtk.org)
+* [QuickSched](https://arxiv.org/abs/1601.05384)
 
 
 Installation (make)
@@ -151,7 +150,7 @@ AutoPas Support
 ls1 mardyn supports AutoPas as a replacement for the used linked cells container and the built-in force calculation.
 
 ### Building for AutoPas 
-To enable support for AutoPas (<https://github.com/AutoPas/AutoPas/>), you will have to enable the option `ENABLE_AUTOPAS`.
+To enable support for [AutoPas](https://github.com/AutoPas/AutoPas/), you will have to enable the option `ENABLE_AUTOPAS`.
 
 ### Running using AutoPas
 To use AutoPas a few modifications to the normal `xml` config files have to be performed:
@@ -159,8 +158,8 @@ To use AutoPas a few modifications to the normal `xml` config files have to be p
 - If inside of the `datastructure` section no additional information is given AutoPas will run without auto-tuning and a linked cells container (rebuild frequency = 1, skin = 0).
 - Multiple further options can be specified for AutoPas.
   For a quick overview check config_autopas_allOptions.xml in the Argon example directory.
-  Additional information for the options can be found at: <https://www5.in.tum.de/AutoPas/doxygen_doc/master/namespaceautopas_1_1options.html> 
-  and within the readXML method of <https://www5.in.tum.de/mardyn/doxygen_doc/html/classAutoPasContainer.html>
+  Additional information for the options can be found in the [official documentation](https://www5.in.tum.de/AutoPas/doxygen_doc/master/namespaceautopas_1_1options.html)
+  and within the [responsible readXML method](https://www5.in.tum.de/mardyn/doxygen_doc/html/classAutoPasContainer.html).
 
 ### Limitations
 - Using AutoPas, currently, only single-centered Lennard-Jones interactions are possible.
@@ -170,7 +169,7 @@ Visualisation
 The simulations can be visualised by two external programs which requires the inclusion of the corresponding plugin.
 
 ### MegaMol
-The MegaMol software is developed by VISUS of the University of Stuttgart. Detailed information on how to install it can be found in its GitHub repo <https://github.com/UniStuttgart-VISUS/megamol>. It supports the import of the following two file formats. See `doc/visualisation_MegaMol.dox` for detailed information.
+The MegaMol software is developed by VISUS of the University of Stuttgart. Detailed information on how to install it can be found in its [GitHub repo](https://github.com/UniStuttgart-VISUS/megamol). It supports the import of the following two file formats. See `doc/visualisation_MegaMol.dox` for detailed information.
 
 #### mmpld
 This is the old file format for visualisation. Use the `MmpldWriter` plugin to write the visualisation files during simulation.
