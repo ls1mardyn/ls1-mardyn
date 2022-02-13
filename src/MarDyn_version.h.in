@@ -1,5 +1,4 @@
-#ifndef SRC_MARDYN_VERSION_H_
-#define SRC_MARDYN_VERSION_H_
+#pragma once
 
 #include <string>
 
@@ -19,5 +18,3 @@ const std::string MARDYN_VERSION =
 	+ MARDYN_VERSION_BRANCH
 	+ MARDYN_VERSION_HASH
 	+ MARDYN_VERSION_IS_DIRTY;
-
-#endif  // SRC_MARDYN_VERSION_H_
