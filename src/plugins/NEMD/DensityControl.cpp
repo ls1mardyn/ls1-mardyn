@@ -104,11 +104,8 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	XMLfile::Query::const_iterator nodeIter;
 	for (nodeIter = query.begin(); nodeIter; nodeIter++) {
 		xmlconfig.changecurrentnode(nodeIter);
-
 		uint32_t cid_ub;
 		xmlconfig.getNodeValue("@cid", cid_ub);
-		global_log->info() << "cid_ub = " << cid_ub << endl;
-
 		double density = 0.;
 		xmlconfig.getNodeValue("density", density);
 		_densityTarget.density[cid_ub] = density;
@@ -129,25 +126,15 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	_densityTarget.density[0] = densitySum;
 	_densityTarget.count[0] = countSum;
 
-	cout << "_densityTarget.count: ";
-	if(true) { //(0 == nRank) {
-		for(auto i : _densityTarget.count)
-			std::cout << i << ' ';
-		std::cout << std::endl;
-	}
-
 	// priority (Usally: Molecule size sorted in descending order)
 	std::string strPrio = "";
 	xmlconfig.getNodeValue("priority", strPrio);
-	global_log->info() << "strPrio=" << strPrio << endl;
 	_vecPriority.push_back(0);
 	uint32_t nRet = this->tokenize_int_list(_vecPriority, strPrio);
 	if(nRet != numComponents) {
 		global_log->error() << "[DensityControl] Number of component IDs specified in element <priority>...</priority> does not match the number of components in the simulation. Programm exit ..." << endl;
 		Simulation::exit(-1);
 	}
-	
-	global_log->info() << "END of readXML" << endl;
 }
 
 void DensityControl::beforeForces(
@@ -162,9 +149,11 @@ void DensityControl::beforeForces(
 }
 
 void DensityControl::controlDensity(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, unsigned long simstep) {
-
-	uint64_t pidMax = 10000000;  // TODO: determine max ID
+		DomainDecompBase* domainDecomp, unsigned long simstep)
+{
+	Domain* domain = global_simulation->getDomain();
+	domain->updateMaxMoleculeID(particleContainer, domainDecomp);
+	CommVar<uint64_t> maxMoleculeID = domain->getMaxMoleculeID();
 	int numProcs = domainDecomp->getNumProcs();
 	int nRank = domainDecomp->getRank();
 	uint32_t numComponents = global_simulation->getEnsemble()->getComponents()->size();
@@ -187,8 +176,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 
 	uint32_t cid_ub;
 	CommVar<uint64_t> numMolecules;
-	numMolecules.local = 0;
-	numMolecules.global = 0;
+	numMolecules.local = numMolecules.global = 0;
 	std::array<double,3> pos;
 	
 	CommVar<std::vector<pacIDtype> > vec_pacID;
@@ -224,7 +212,6 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 
 	uint64_t displs = 0;
 	MPI_Exscan(&numMolecules.local, &displs, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-	// cout << "displs = " << displs << endl;
 
 	int displs_int = static_cast<int>(displs);
 	std::vector<int> displs_vec;
@@ -257,11 +244,13 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 		pidMap[0].push_back(it.pid);  // all particles
 	}
 	
-	cout << "pidMap: ";
+#ifndef NDEBUG
+	std::cout << "["<<nRank<<"] pidMap: ";
 	for(int i=0; i<numComponents+1; i++) {
 		std::cout << pidMap[i].size() << ' ';
 	}
 	std::cout << std::endl;
+#endif
 
 	// determine particles to swap, delete and add
 	std::map<int, std::vector<uint64_t> > swpMap;
@@ -272,13 +261,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 	// update particle count balance
 	this->updateBalanceVector(vecBalance, pidMap, numComponents);
 	
-	cout << "before swap vecBalance: ";
-	for(int i=0; i<numComponents+1; i++) {
-		std::cout << vecBalance[i] << ' ';
-	}
-	std::cout << std::endl;
-	
-	// swap components
+	// Prepare: swap components
 	{
 		uint32_t cid_ub_send;
 		uint32_t cid_ub_recv;
@@ -300,12 +283,11 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 				if(balance < 0 && prio > prio_recv)
 					cid_ub_recv = i;
 			}
-			
-			// std::cout << "cid_ub_send, cid_ub_recv = " << cid_ub_send << ", " << cid_ub_recv << std::endl;
+			// std::cout << "["<<nRank<<"] cid_ub_send, cid_ub_recv = " << cid_ub_send << ", " << cid_ub_recv << std::endl;
 			
 			if(cid_ub_send > 0 && cid_ub_recv > 0) {
 				uint64_t numSwap = min(vecBalance[cid_ub_send], abs(vecBalance[cid_ub_recv]) );
-				std::cout << "numSwap = " << numSwap << std::endl;
+				// std::cout << "["<<nRank<<"] numSwap = " << numSwap << std::endl;
 				for(int i=0; i<numSwap; i++) {
 					uint64_t pid = pidMap[cid_ub_send].back();
 					pidMap[cid_ub_send].pop_back();
@@ -321,22 +303,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 		}
 	}
 	
-	if(false) { // 100 == nRank) {
-		for(int cid=1; cid<numComponents+1; cid++) {
-			cout << "swpMap["<<cid<<"]: ";
-			for(auto it : swpMap[cid])
-				std::cout << it << ' ';
-			std::cout << std::endl;
-		}
-	}
-	
-	cout << "after swap vecBalance: ";
-	for(int i=0; i<numComponents+1; i++) {
-		std::cout << vecBalance[i] << ' ';
-	}
-	std::cout << std::endl;
-	
-	// delete particles
+	// Prepare: delete particles
 	{
 		for(auto i=1; i<numComponents+1; i++) {
 			uint32_t cid_ub = i;
@@ -349,17 +316,10 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 		}
 		// update particle count balance
 		this->updateBalanceVector(vecBalance, pidMap, numComponents);
-		
-		cout << "delMap: ";
-		for(int i=0; i<numComponents+1; i++) {
-			std::cout << delMap[i].size() << ' ';
-		}
-		std::cout << std::endl;
 	}
 	
-	// std::cout << "numMolecules.local = " << numMolecules.local << std::endl;
-	
-	begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ONLY_INNER_AND_BOUNDARY);  // over all cell types
+	// swap components, delete particles
+	begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 	for(auto it = begin; it.isValid(); ++it) {
 		uint64_t pid = it->getID();
 		uint32_t cid_zb = it->componentid();  // cid zero based
@@ -380,9 +340,8 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 			
 			// search for pid
 			for(auto sid : swpMap[i]) {
-				// cout << "pid, sid = " << pid << ", " << sid << endl;
 				if(pid == sid) {
-					cout << "Rank=" << nRank << ": Swap pid=" << pid << " with cid=" << cid_ub << " to cid=" << i << endl;
+					// std::cout << "["<<nRank<<"] Swap pid=" << pid << " with cid=" << cid_ub << " to cid=" << i << endl;
 					it->setComponent(compNew);
 				}
 			}
@@ -392,7 +351,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 		for(int i=1; i<numComponents+1; i++) {
 			std::vector<uint64_t> & vec = delMap[i];
 			if ( std::find(vec.begin(), vec.end(), pid ) != vec.end() ) { // found ID of to be deleted particle in vector
-				cout << "Rank=" << nRank << ": Delete particle with pid=" << pid << ", cid_ub=" << cid_ub << endl;
+				// std::cout << "["<<nRank<<"] Delete particle with pid=" << pid << ", cid_ub=" << cid_ub << endl;
 				particleContainer->deleteMolecule(it, false);
 			}
 		}
@@ -406,19 +365,13 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 			if(balance < 0)
 				balance = abs(balance);
 			for(int j=0; j<balance; j++) {
-				uint64_t pid = ++pidMax;
+				uint64_t pid = ++maxMoleculeID.global;
 				addMap[cid_ub].push_back(pid);
 				pidMap[cid_ub].push_back(pid);
 			}
 		}
 		// update particle count balance
 		this->updateBalanceVector(vecBalance, pidMap, numComponents);
-		
-		cout << "addMap: ";
-		for(int i=0; i<numComponents+1; i++) {
-			std::cout << addMap[i].size() << ' ';
-		}
-		std::cout << std::endl;
 		
 		std::vector<Molecule> particles;
 		std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
@@ -436,8 +389,9 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 				bAdd = bAdd && rx > particleContainer->getBoundingBoxMin(0) && rx < particleContainer->getBoundingBoxMax(0);
 				bAdd = bAdd && ry > particleContainer->getBoundingBoxMin(1) && ry < particleContainer->getBoundingBoxMax(1);
 				bAdd = bAdd && rz > particleContainer->getBoundingBoxMin(2) && rz < particleContainer->getBoundingBoxMax(2);
-				if(bAdd)
+				if(bAdd) {
 					particles.push_back(mol);
+				}
 			}
 		}
 		particleContainer->addParticles(particles, true);
@@ -451,20 +405,24 @@ bool DensityControl::moleculeInsideRange(std::array<double,3>& r)
 
 void DensityControl::updateBalanceVector(std::vector<int64_t>& vecBalance, std::map<int, std::vector<uint64_t> >& pidMap, uint32_t& numComponents)
 {
-	// update particle count balance
 	vecBalance[0] = 0;
 	for(int i=1; i<numComponents+1; i++) {
 		int64_t diff = pidMap[i].size() - _densityTarget.count[i];
 		vecBalance[i] = diff;
 		vecBalance[0] += diff;
 	}
-	
-	//~ cout << "vecBalance: ";
-	//~ if(true) { //(0 == nRank) {
-		//~ for(auto i : vecBalance)
-			//~ std::cout << i << ' ';
-		//~ std::cout << std::endl;
-	//~ }
+
+#ifndef NDEBUG
+	cout << "_densityTarget.count: ";
+	for(auto i : _densityTarget.count)
+		std::cout << i << ' ';
+	std::cout << std::endl;
+
+	std::cout << "vecBalance: ";
+	for(auto i : vecBalance)
+		std::cout << i << ' ';
+	std::cout << std::endl;
+#endif
 }
 
 uint32_t DensityControl::tokenize_int_list(std::vector<uint32_t>& vec, std::string str, std::string del)
@@ -474,7 +432,6 @@ uint32_t DensityControl::tokenize_int_list(std::vector<uint32_t>& vec, std::stri
 	int end = str.find(del);
 	while (end != -1) {
 		std::string ss = str.substr(start, end - start);
-		cout << "substr=" << ss << std::endl;
 		vec.push_back(atoi(ss.c_str() ) );
 		start = end + del.size();
 		end = str.find(del, start);
