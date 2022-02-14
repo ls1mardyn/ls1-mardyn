@@ -39,7 +39,9 @@ DensityControl::~DensityControl() {
 void DensityControl::init(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain) {
 	global_log->debug() << "DensityControl enabled" << std::endl;
-	
+
+#ifdef ENABLE_MPI
+	// Create new MPI data type to transport particle ID and component ID together in one object
 	pacIDtype foo;
 	const int nitems = 2;
     int blocklengths[2] = {1,1};
@@ -49,7 +51,8 @@ void DensityControl::init(ParticleContainer* particleContainer,
     offsets[1] = offsetof(pacIDtype, cid);
 
 	MPI_Type_create_struct(nitems, blocklengths, offsets, types, &pacID_mpi_type);
-    MPI_Type_commit(&pacID_mpi_type);
+	MPI_Type_commit(&pacID_mpi_type);
+#endif
 }
 
 void DensityControl::readXML(XMLfileUnits& xmlconfig) {
@@ -210,6 +213,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 	numMolecules.global = numMolecules.local;
 #endif
 
+#ifdef ENABLE_MPI
 	uint64_t displs = 0;
 	MPI_Exscan(&numMolecules.local, &displs, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
 
@@ -228,7 +232,10 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer,
 		vec.global.resize(numMolecules.global);
 		MPI_Allgatherv(vec.local.data(), numMolecules.local, pacID_mpi_type, vec.global.data(), recvcounts.data(), displs_vec.data(), pacID_mpi_type, MPI_COMM_WORLD);
 	}
-	
+#else
+	vec_pacID.global = vec_pacID.local;
+#endif
+
 	// shuffle particle and component ID vector (global)
 	auto rng = std::default_random_engine {};
 	std::shuffle(std::begin(vec_pacID.global), std::end(vec_pacID.global), rng);

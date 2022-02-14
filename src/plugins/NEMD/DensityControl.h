@@ -117,8 +117,10 @@ private:
 	TimestepControl _control;
 	DensityTargetType _densityTarget;
 	struct Range {double xmin, xmax, ymin, ymax, zmin, zmax, volume;} _range;
-	MPI_Datatype pacID_mpi_type;
 	std::vector<uint32_t> _vecPriority;
+#ifdef ENABLE_MPI
+	MPI_Datatype pacID_mpi_type;
+#endif
 };
 
 #endif /*DENSITYCONTROL_H_*/
