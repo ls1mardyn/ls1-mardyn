@@ -47,14 +47,14 @@ public:
 	   \endcode
 	 */
 
-	virtual void init();
-	virtual void readXML(XMLfileUnits& xmlconfig);
-	virtual void calculateLongRange();
+	void init() override;
+	void readXML(XMLfileUnits& xmlconfig) override;
+	void calculateLongRange() override;
 	double lrcLJ(Molecule* mol);
 	// For non-equilibrium simulations the density profile must not be smoothed, therefore the density profile from the actual time step is used.
 	void directDensityProfile();
 	void SetSmoothDensityProfileOption(bool bVal) {_smooth = bVal;}
-	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
+	void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
 
 	// Observer, ControlInstance
 	SubjectBase* getSubject();

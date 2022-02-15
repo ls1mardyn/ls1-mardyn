@@ -9,8 +9,7 @@ Getting Started
 
 Documentation:
 --------------
-The current doxygen documentation can be found here:
-https://www5.in.tum.de/mardyn/doxygen_doc/html/
+The current doxygen documentation can be found [here](https://www5.in.tum.de/mardyn/doxygen_doc/html/).
 
 Prerequisites:
 --------------
@@ -19,9 +18,9 @@ Prerequisites:
 * a working MPI installation compatible with the MPI 3.0 specification or later (Open MPI, MPICH, MVAPICH, Intel MPI, Cray MPI, NEC MPI, IBM Platform MPI, ...)
 
 ### optional requirements:
-* FFTW3: <http://www.fftw.org>
-* VTK: <http://www.vtk.org>
-* QuickSched: <https://arxiv.org/abs/1601.05384>
+* [FFTW3](http://www.fftw.org)
+* [VTK](http://www.vtk.org)
+* [QuickSched](https://arxiv.org/abs/1601.05384)
 
 
 Installation (make)
@@ -54,6 +53,7 @@ To display further information about the available suboptions for a configuratio
 ```
 
 ### Installing ls1-MarDyn using cmake
+This is the recommended way of building ls1-MarDyn.
 
 #### Configuration
 Initial support to build ls1-mardyn using cmake has been recently added.
@@ -80,8 +80,47 @@ That way you can easily edit the available options.
 Finally, build ls1-mardyn using:
 ```bash
 make
-``` 
+```
 For a parallel and faster build please use `make`'s `-j` parameter with an appropriate number of tasks.
+
+#### ADIOS2 support
+If a visualisation with MegaMol and ADIOS2 is desired, an installation of ADIOS2 is needed. By default, ADIOS2 is downloaded and built automatically during the build process of ls1-MarDyn. If connections to external resources, e.g. on HPC systems, are blocked, the following steps (for an MPI build) are required to build ls1-MarDyn with ADIOS2.
+Download ADIOS2 locally
+```bash
+git clone https://github.com/ornladios/ADIOS2.git ADIOS2
+```
+It may be required to checkout the correct version of ADIOS2:
+```bash
+cd ADIOS2
+git checkout v2.7.1.436
+```
+Upload it together with ls1-MarDyn to the target HPC system. On the HPC system, after loading the proper modules, create a build folder in the ADIOS2 directory and run cmake. Note: The `PATH-TO-ADIOS2` string must be adjusted.
+```bash
+cd ADIOS2
+mkdir build && cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=PATH-TO-ADIOS2/ADIOS2/build/install -DADIOS2_BUILD_EXAMPLES=OFF -DADIOS2_BUILD_TESTING=OFF -DADIOS2_USE_Profiling=OFF -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx
+```
+Build now using:
+```bash
+make -j install
+```
+The `-j` parameter can be adjusting to the present system.
+
+After successfully building ADIOS2, ls1-MarDyn can be build.
+In accordance to the above installation steps (section "Configuration"), an additional build directory in the root directory of ls1-MarDyn must be created. In this directory run `cmake`. Note: The `PATH-TO-ADIOS2` string must be adjusted as it was done before.
+```bash
+mkdir build
+cd build
+cmake .. -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DADIOS2_DIR=PATH-TO-ADIOS2/ADIOS2/build/install/lib64/cmake/adios2 -DENABLE_MPI=ON -DFIND_PACKAGE_ADIOS2=ON
+```
+
+Finally, build ls1-mardyn using:
+```bash
+make
+```
+For a parallel and faster build please use `make`'s `-j` parameter with an appropriate number of tasks.
+
+Note: For both, ADIOS2 and ls1-MarDyn, `ccmake` can be used to configure options.
 
 Running ls1-MarDyn
 ------------------
@@ -111,7 +150,7 @@ AutoPas Support
 ls1 mardyn supports AutoPas as a replacement for the used linked cells container and the built-in force calculation.
 
 ### Building for AutoPas 
-To enable support for AutoPas (<https://github.com/AutoPas/AutoPas/>), you will have to enable the option `ENABLE_AUTOPAS`.
+To enable support for [AutoPas](https://github.com/AutoPas/AutoPas/), you will have to enable the option `ENABLE_AUTOPAS`.
 
 ### Running using AutoPas
 To use AutoPas a few modifications to the normal `xml` config files have to be performed:
@@ -119,11 +158,28 @@ To use AutoPas a few modifications to the normal `xml` config files have to be p
 - If inside of the `datastructure` section no additional information is given AutoPas will run without auto-tuning and a linked cells container (rebuild frequency = 1, skin = 0).
 - Multiple further options can be specified for AutoPas.
   For a quick overview check config_autopas_allOptions.xml in the Argon example directory.
-  Additional information for the options can be found at: <https://www5.in.tum.de/AutoPas/doxygen_doc/master/namespaceautopas_1_1options.html> 
-  and within the readXML method of <https://www5.in.tum.de/mardyn/doxygen_doc/html/classAutoPasContainer.html>
+  Additional information for the options can be found in the [official documentation](https://www5.in.tum.de/AutoPas/doxygen_doc/master/namespaceautopas_1_1options.html)
+  and within the [responsible readXML method](https://www5.in.tum.de/mardyn/doxygen_doc/html/classAutoPasContainer.html).
 
 ### Limitations
 - Using AutoPas, currently, only single-centered Lennard-Jones interactions are possible.
+
+Visualisation
+------------------
+The simulations can be visualised by two external programs which requires the inclusion of the corresponding plugin.
+
+### MegaMol
+The MegaMol software is developed by VISUS of the University of Stuttgart. Detailed information on how to install it can be found in its [GitHub repo](https://github.com/UniStuttgart-VISUS/megamol). It supports the import of the following two file formats. See `doc/visualisation_MegaMol.dox` for detailed information.
+
+#### mmpld
+This is the old file format for visualisation. Use the `MmpldWriter` plugin to write the visualisation files during simulation.
+
+#### ADIOS2
+This kind of visualisation files is recommended. Use the `Adios2Writer` plugin to write the visualisation files during simulation. The produced files can also be used for a restart (see `Adios2Reader`).
+
+### Paraview
+Read the documentation in `doc/visualisation_paraview.dox` for detailed information.
+
 
 Additional resources
 ====================
