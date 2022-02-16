@@ -176,6 +176,11 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 #ifdef ENABLE_MPI
 		if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif
+		if(_phaseSpaceFileStream.eof()) {
+			global_log->error() << "End of file was hit before all " << numMolecules << " expected molecules were read."
+				<< endl;
+			Simulation::exit(1);
+        }
 		_phaseSpaceFileStream.read(reinterpret_cast<char*> (&id), 8);
 		switch (_nMoleculeFormat) {
 			case ICRVQD:
@@ -224,13 +229,22 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 			global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << endl;
 		}
 
-		if(componentid > numcomponents || componentid == 0) {
+		if(componentid > numcomponents) {
 			global_log->error() << "Molecule id " << id
-								<< " has wrong componentid: " << componentid << ">"
+								<< " has a component ID greater than the existing number of components: "
+								<< componentid
+								<< ">"
 								<< numcomponents << endl;
 			Simulation::exit(1);
 		}
-		componentid--; // TODO: Component IDs start with 0 in the program.
+		if(componentid == 0) {
+			global_log->error() << "Molecule id " << id
+								<< " has componentID == 0." << endl;
+			Simulation::exit(1);
+		}
+		// ComponentIDs are used as array IDs, hence need to start at 0.
+		// In the input files they always start with 1 so we need to adapt that all the time.
+		componentid--;
 
 		// store only those molecules within the domain of this process
 		// The neccessary check is performed in the particleContainer addPartice method
