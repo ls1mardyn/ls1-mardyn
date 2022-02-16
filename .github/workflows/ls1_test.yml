@@ -53,7 +53,7 @@ jobs:
         mpirun -np 2 --oversubscribe ./build-mpi/src/MarDyn -t -d ./test_input/
     - name: validation - run with autopas DD
       run: |
-        mpirun -np 2 ./build-mpi/src/MarDyn ./examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 | tee autopas_run_log.txt
+        mpirun -np 2 --oversubscribe ./build-mpi/src/MarDyn ./examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 | tee autopas_run_log.txt
         grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
         grep "T = 0.000633975" simstep20.txt
         grep "U_pot = -2.14161" simstep20.txt
