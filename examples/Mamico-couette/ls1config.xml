@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mardyn version="20100525">
+  <refunits type="SI">
+    <length unit="nm">0.34</length> <!-- was 0.0529177-->
+    <mass unit="u">39.948</mass> <!-- was 1000-->
+    <energy unit="K">120</energy> <!-- was eV, 27.2126-->
+  </refunits>
+  <simulation type="MD">
+    <integrator type="Leapfrog">
+      <timestep unit="reduced">0.005</timestep><!-- (one femtosecond seems to be 0.0009118366 = x) mamico ts = 0.005 = 10.85 fs, thus ts = 10.85x-->
+    </integrator>
+    <run>
+      <currenttime>0</currenttime>
+      <equilibration><steps>0</steps></equilibration>
+      <production>
+        <steps>200</steps>
+      </production>
+    </run>
+    <ensemble type="NVT">
+      <temperature unit="reduced">1.1</temperature> <!--was 9.02542795570889975E-004-->
+      <domain type="box">
+        <lx>30</lx>
+        <ly>30</ly>
+        <lz>30</lz>
+        <!--<boxMin><x>10.0</x> <y>10.0</y> <z>2.5</z> </boxMin>-->
+      </domain>
+      <components>
+          <moleculetype id="1" name="Arbitrary">
+            <site type="LJ126" id="1" >
+              <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+              <mass>1.0</mass>
+              <sigma>1.0</sigma>
+              <epsilon>1.0</epsilon>
+            </site>
+          </moleculetype>
+      </components>
+      <phasespacepoint>
+				<file type="ASCII">ls1_CheckpointSimpleMDPeriodic_0__10000_0.inp</file>
+			</phasespacepoint>
+    </ensemble>
+    <algorithm>
+      <parallelisation type="DomainDecomposition">
+        <!--<MPIGridDims> <x>2</x><y>2</y> <z>2</z> </MPIGridDims>-->
+      </parallelisation>
+      <datastructure type="AutoPas">
+        <!--<cellsInCutoffRadius>1</cellsInCutoffRadius>-->
+      </datastructure>
+      <cutoffs type="CenterOfMass">
+        <radiusLJ unit="reduced">2.2</radiusLJ>
+      </cutoffs>
+      <electrostatic type="ReactionField">
+        <epsilon>1.0e+10</epsilon>
+      </electrostatic>
+
+   <!--   <thermostats>
+          <thermostat type="TemperatureControl">
+              <control>
+                  <start>0</start>
+                  <frequency>1</frequency>
+                  <stop>20000</stop>
+              </control>
+              <regions>
+                  <region>
+                      <coords>
+                          <lcx>0.0</lcx> <lcy>0.0</lcy> <lcz>0.0</lcz>
+                          <ucx>30</ucx> <ucy>30</ucy> <ucz>30</ucz>
+                      </coords>
+                      <target>
+                          <temperature>1.1</temperature>
+                          <component>0</component>
+                      </target>
+                      <settings>
+                          <numslabs>1</numslabs>
+                          <exponent>0.4</exponent>
+                          <directions>xyz</directions>
+                      </settings>
+                      <fileprefix>beta_log</fileprefix>
+                      <writefreq>100000000</writefreq>
+                  </region>
+              </regions>
+          </thermostat>
+      </thermostats>
+-->
+    </algorithm>
+    <output>
+      <outputplugin name="CheckpointWriter">
+        <type>binary</type>
+        <writefrequency>10000</writefrequency>
+        <outputprefix>cp_binary</outputprefix>
+      </outputplugin>
+      <outputplugin name="ResultWriter">
+        <writefrequency>10000</writefrequency>
+        <outputprefix>result</outputprefix>
+      </outputplugin>
+      <outputplugin name="VTKMoleculeWriter">
+        <outputprefix>vtkOutput</outputprefix>
+        <writefrequency>1</writefrequency>
+      </outputplugin>
+      <!--<outputplugin name="DecompWriter">
+        <writefrequency>1</writefrequency>
+        <outputprefix>blaaa</outputprefix>
+      </outputplugin>-->
+    </output>
+    <!--<plugin name="MamicoCoupling">
+    </plugin>-->
+  </simulation>
+</mardyn>
