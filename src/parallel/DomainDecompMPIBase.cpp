@@ -208,7 +208,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 	using std::endl;
 
 	if (_rank) {
-		unsigned long num_molecules = moleculeContainer->getNumberOfParticles();
+		unsigned long num_molecules = moleculeContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 		std::vector<unsigned long> tids(num_molecules);
 
 		unsigned long i = 0;
@@ -216,7 +216,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 			tids[i] = m->getID();
 			i++;
 		}
-		MPI_CHECK(MPI_Send(tids.data(), i, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm));
+		MPI_CHECK(MPI_Send(tids.data(), num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm));
 		global_log->info() << "Data consistency checked: for results see rank 0." << endl;
 	} else {
 		/** @todo FIXME: This implementation does not scale. */
