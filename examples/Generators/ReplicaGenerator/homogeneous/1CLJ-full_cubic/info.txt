@@ -1,3 +1,0 @@
-run01: Equilibration of a 1CLJ-full cubic system at temperature T=1.32 and with a density rho=0.31 (critical point of 1CLJ-full fluid)
-run02: Using ReplicaGenerator to create a much larger system by replicating the equilibrated small system.
-

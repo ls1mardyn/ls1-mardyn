@@ -1,8 +1,0 @@
-/** \page visualisation Graphical Simulation Output
-
-To visualise the simulation ls1-MarDyn provides several output plugins for several visualisation tools:
-
-- MegaMol (see \ref visualisationMegaMol)
-- Paraview (see \ref visualisationParaview)
-
-*/

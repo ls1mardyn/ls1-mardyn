@@ -1,4 +1,0 @@
-remove: 
-- src/cppunit/DllMain.cpp
-- examples/cppunittest/CppUnitTestMain.cpp
-- examples/cppunittest/CppUnitTestPlugIn.cpp

@@ -1,4 +1,0 @@
-liq/run01: Equilibration of liquid phase
-vap/run01: Equilibration of vapor phase
-vle/run01: Using ReplicaGenerator to create a large standard vapor-liquid-equilibrium (VLE) system, with al liquid slab in the middle, surrounded by vapor on the left and right side, by replicating the small equilibrated vapor and liquid systems. Note: Merged phases should be padded by a free space to avoid overlaps. Choose the biggest molecule diameter for the width of the free space.
-

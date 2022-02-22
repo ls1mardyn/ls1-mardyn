@@ -1,6 +1,0 @@
-write
- ├── config_mix.xml        Setup system of two LJ components and write ADIOS2 file
- └── config.xml            Read in surface-tension checkpoint and write out ADIOS2 file
-read
- ├── config.xml            Read in written checkpoint from adios/write/config.xml example
- └── config_parallel.xml   Same as read/config.xml, but every node reads fraction of data and broadcasts it to other processes

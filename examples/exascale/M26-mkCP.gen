@@ -1,1 +1,0 @@
-../../tools/mkCP/mkCP -P M26-mkCP -a 0.001 -c 0.1 -d 3 -f Ar -h 125 -H 1 -LN 37400000 -T 1 -uU 0 -V 0.25 -3 0.1

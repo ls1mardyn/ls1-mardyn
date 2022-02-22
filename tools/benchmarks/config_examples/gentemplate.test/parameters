@@ -1,1 +1,0 @@
-NPROC=$NPROC,NPPN=$NPPN,TYPE=$TYPE, NNODES=$NNODES,nnodes=$nnodes,nNodes=$nNodes

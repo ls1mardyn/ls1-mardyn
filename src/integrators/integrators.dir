@@ -1,9 +1,0 @@
-/**
-\dir
-@author Martin Buchholz
-
-Everything that deals with solving the molecules equations of motion
-should be placed in this directory. Currently, this is the Integrator interface
-and the Leapfrog implementation of that interface
-
-*/
