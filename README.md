@@ -9,7 +9,7 @@ Getting Started
 
 Documentation:
 --------------
-The current doxygen documentation can be found [here](https://www5.in.tum.de/mardyn/doxygen_doc/html/).
+The current doxygen documentation can be found [here](https://ls1mardyn.github.io/ls1-mardyn/).
 
 Prerequisites:
 --------------
