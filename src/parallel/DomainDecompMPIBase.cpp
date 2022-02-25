@@ -210,7 +210,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 	if (_rank) {
 		unsigned long num_molecules = moleculeContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 		std::vector<unsigned long> tids;
-        tids.reserve(num_molecules);
+		tids.reserve(num_molecules);
 
 		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 			tids.push_back(m->getID());
