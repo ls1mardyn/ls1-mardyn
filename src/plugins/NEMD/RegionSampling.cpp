@@ -1802,7 +1802,7 @@ void SampleRegion::writeDataFieldYR(DomainDecompBase* domainDecomp, unsigned lon
 		return;
 
 	// sampling starts after initial timestep (_initSamplingFieldYR) and with respect to write frequency (_writeFrequencyFieldYR)
-	if( simstep <= _initSamplingFieldYR )
+	if( simstep >= _stopSamplingFieldYR or simstep <= _initSamplingFieldYR )
 		return;
 
 	if( (simstep - _initSamplingFieldYR) % _writeFrequencyFieldYR != 0 )
