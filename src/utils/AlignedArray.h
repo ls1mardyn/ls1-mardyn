@@ -114,7 +114,7 @@ public:
 		mardyn_assert(n >= -2);
 
 		size_t endPrefetch;
-		const int stride = _round_up(1);
+		const size_t stride = _round_up(1);
 
 		switch(n) {
 		case -1:
