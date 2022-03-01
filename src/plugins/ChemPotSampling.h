@@ -40,6 +40,7 @@ private:
     // Accumulated over _writeFrequency
     CommVar<std::vector<double>> _chemPotSum;
     std::vector<double> _temperatureSumGlobal;
+    std::vector<double> _temperatureWithDriftSumGlobal;
     std::vector<unsigned long> _numMoleculesSumGlobal;
 
     CellProcessor* _cellProcessor;
