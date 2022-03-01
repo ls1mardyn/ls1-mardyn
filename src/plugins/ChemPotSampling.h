@@ -27,21 +27,23 @@
 class ChemPotSampling : public PluginBase{
 
 private:
-    float _binwidth {1.0f};
+    float _binwidth;
+    float _factorNumTest;
+    unsigned long _startSampling;
+    unsigned long _writeFrequency;
+    unsigned long _stopSampling;
+
     uint16_t _numBinsGlobal;
-    double _globalBoxLengthY;
+    double _globalBoxLength[3];
     double _slabVolume;
 
-    unsigned long _startSampling {0ul};
-    unsigned long _writeFrequency {10000ul};
-    unsigned long _stopSampling {1000000000ul};
-
-    // Accumulated over <writefrequency>
+    // Accumulated over _writeFrequency
     CommVar<std::vector<double>> _chemPotSum;
-    CommVar<std::vector<double>> _temperatureSum;
-    CommVar<std::vector<unsigned long>> _numMoleculesSum;
+    std::vector<double> _temperatureSumGlobal;
+    std::vector<unsigned long> _numMoleculesSumGlobal;
 
     CellProcessor* _cellProcessor;
+    ParticlePairsHandler* _particlePairsHandler;
     Molecule _mTest;
 
     void resetVectors();
@@ -50,20 +52,20 @@ public:
     ChemPotSampling();
 	~ChemPotSampling();
 
-    void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
+    void init(ParticleContainer* /* particleContainer */, DomainDecompBase* domainDecomp, Domain* domain) override;
 
     void readXML (XMLfileUnits& xmlconfig) override;
 
     void endStep(
-            ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-            Domain *domain, unsigned long simstep) override;
+            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+            Domain* /* domain */, unsigned long simstep) override;
 
-    void finish(ParticleContainer *particleContainer,
-				DomainDecompBase *domainDecomp, Domain *domain) override {}
+    void finish(ParticleContainer* /* particleContainer */,
+				DomainDecompBase* /* domainDecomp */, Domain* /* domain */) override {}
 
-    std::string getPluginName()override {return std::string("ChemPotSampling");}
+    std::string getPluginName() override { return std::string("ChemPotSampling"); }
 
-    static PluginBase* createInstance(){return new ChemPotSampling();}
+    static PluginBase* createInstance() { return new ChemPotSampling(); }
 
 };
 
