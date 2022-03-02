@@ -18,7 +18,7 @@ ChemPotSampling::ChemPotSampling()
     _binwidth(1.0f),
     _factorNumTest(4.0f),
     _startSampling(0ul),
-    _writeFrequency(5000ul),
+    _writeFrequency(10000ul),
     _stopSampling(1000000000ul)
 {}
 
@@ -50,7 +50,7 @@ void ChemPotSampling::init(ParticleContainer* /* particleContainer */, DomainDec
     _particlePairsHandler = new ParticlePairs2PotForceAdapter(*domain);
     // MolID is maximum possible number minus rank to prevent duplicate IDs
     // Always insert molecule of first component
-    const unsigned long molID = std::numeric_limits<unsigned long>::max()-static_cast<unsigned long>(domainDecomp->getRank());
+    const unsigned long molID = std::numeric_limits<unsigned long>::max() - static_cast<unsigned long>(domainDecomp->getRank());
     _mTest = Molecule(molID, &_simulation.getEnsemble()->getComponents()->at(0));
 
     resetVectors();

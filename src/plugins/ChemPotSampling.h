@@ -17,10 +17,14 @@
 /** @brief
 * Plugin: can be enabled via config.xml <br>
 *
-* Samples chemical potential binwise in y-direction ONLY FOR ONE-CENTERED LJ PARTICLES
+* Samples chemical potential binwise in y-direction for one component systems
 * \code{.xml}
 * <plugin name="ChemPotSampling">
-*			<binwidth>1</binwidth> <!-- Width of sampling bins; maximum value: 65534 -->
+*			<binwidth>FLOAT</binwidth>              <!-- Width of sampling bins; default 1.0 -->
+            <factornumTest>FLOAT</numTest>          <!-- Factor which specifies number of inserted test particles (numTest = factor*numPartsGlobal); default 4.0 -->
+            <start>INT</start>                      <!-- default 0 -->
+            <writefrequency>INT</writefrequency>    <!-- default 10000 -->
+            <stop>INT</stop>                        <!-- default 1000000000 -->
 * </plugin>
 * \endcode
 */
