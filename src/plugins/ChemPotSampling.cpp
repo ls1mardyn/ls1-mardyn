@@ -157,7 +157,7 @@ void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecomp
     std::vector<double> dY(_numBinsGlobal, 0.0);
     std::vector<double> dZ(_numBinsGlobal, 0.0);
     for (uint16_t i = 0; i < _numBinsGlobal; i++) {
-        const unsigned long nTest = std::max(1ul,static_cast<unsigned long>(_factorNumTest*numMols.global.at(i));
+        const unsigned long nTest = std::max(1ul,static_cast<unsigned long>(_factorNumTest*numMols.global.at(i)));
         const unsigned long nY = std::max(1.0,std::pow((nTest*_binwidth*_binwidth)/(_globalBoxLength[0]*_globalBoxLength[0]),(1./3.)));
         dY.at(i) = _binwidth/nY;
         const unsigned long nX = std::max(1.0,std::pow((nTest*_globalBoxLength[0]*_globalBoxLength[0])/(_binwidth*_globalBoxLength[0]),(1./3.)));
