@@ -17,7 +17,7 @@
 /** @brief
 * Plugin: can be enabled via config.xml <br>
 *
-* Samples chemical potential binwise in y-direction for one component systems
+* Samples residual chemical potential binwise in y-direction for one component systems using the Widom insertion method
 * \code{.xml}
 * <plugin name="ChemPotSampling">
 *			<binwidth>FLOAT</binwidth>              <!-- Width of sampling bins; default 1.0 -->
@@ -41,7 +41,7 @@ private:
     double _globalBoxLength[3];
     double _slabVolume;
 
-    // Accumulated over _writeFrequency
+    // Accumulated quantities over _writeFrequency
     CommVar<std::vector<double>> _chemPotSum;
     std::vector<double> _temperatureSumGlobal;
     std::vector<double> _temperatureWithDriftSumGlobal;
