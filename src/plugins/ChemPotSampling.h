@@ -21,7 +21,7 @@
 * \code{.xml}
 * <plugin name="ChemPotSampling">
 *			<binwidth>FLOAT</binwidth>              <!-- Width of sampling bins; default 1.0 -->
-            <factornumTest>FLOAT</numTest>          <!-- Factor which specifies number of inserted test particles (numTest = factor*numPartsGlobal); default 4.0 -->
+            <factorNumTest>FLOAT</factorNumTest>    <!-- Factor which specifies number of inserted test particles (numTest = factor*numPartsGlobal); default 4.0 -->
             <start>INT</start>                      <!-- default 0 -->
             <writefrequency>INT</writefrequency>    <!-- default 10000 -->
             <stop>INT</stop>                        <!-- default 1000000000 -->

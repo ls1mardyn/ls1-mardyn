@@ -59,13 +59,14 @@ void ChemPotSampling::init(ParticleContainer* /* particleContainer */, DomainDec
 void ChemPotSampling::readXML(XMLfileUnits& xmlconfig) {
 
     xmlconfig.getNodeValue("binwidth", _binwidth);  // Default: 1.0
-    xmlconfig.getNodeValue("numTest", _factorNumTest);  // Default: 4.0
+    xmlconfig.getNodeValue("factorNumTest", _factorNumTest);  // Default: 4.0
     xmlconfig.getNodeValue("start", _startSampling);  // Default: 0
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);  // Default: 10000
     xmlconfig.getNodeValue("stop", _stopSampling);  // Default: 1000000000
 
     global_log->info() << "[ChemPotSampling] Start:Freq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
     global_log->info() << "[ChemPotSampling] Binwidth: " << _binwidth << std::endl;
+    global_log->info() << "[ChemPotSampling] " << _factorNumTest << " * numParticles will be inserted" << std::endl;
 }
 
 void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* /* domain */,
@@ -156,7 +157,7 @@ void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecomp
     std::vector<double> dY(_numBinsGlobal, 0.0);
     std::vector<double> dZ(_numBinsGlobal, 0.0);
     for (uint16_t i = 0; i < _numBinsGlobal; i++) {
-        const unsigned long nTest = _factorNumTest*numMols.global.at(i);
+        const unsigned long nTest = std::max(1ul,static_cast<unsigned long>(_factorNumTest*numMols.global.at(i));
         const unsigned long nY = std::max(1.0,std::pow((nTest*_binwidth*_binwidth)/(_globalBoxLength[0]*_globalBoxLength[0]),(1./3.)));
         dY.at(i) = _binwidth/nY;
         const unsigned long nX = std::max(1.0,std::pow((nTest*_globalBoxLength[0]*_globalBoxLength[0])/(_binwidth*_globalBoxLength[0]),(1./3.)));
