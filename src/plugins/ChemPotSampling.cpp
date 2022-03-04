@@ -165,7 +165,7 @@ void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecomp
         dY.at(i) = _binwidth/nY;
         const unsigned long nX = std::max(1.0,std::pow((nTest*_globalBoxLength[0]*_globalBoxLength[0])/(_binwidth*_globalBoxLength[2]),(1./3.)));
         dX.at(i) = _globalBoxLength[0]/nX;
-        const unsigned long nZ = nTest/(nX*nY);
+        const unsigned long nZ = std::max(1ul,nTest/(nX*nY));
         dZ.at(i) = _globalBoxLength[2]/nZ;
     }
 
@@ -186,9 +186,10 @@ void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecomp
                 double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
                 global_log->debug() << "[ChemPotSampling] Inserting molecule at x,y,z = "
                                     << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
-                                    << " ; dU = " << deltaUpot << " ; index = " << index << std::endl;
+                                    << " ; dU = " << deltaUpot << " ; T = " << temperatureStep.at(index) << " ; index = " << index << std::endl;
                 if (temperatureStep.at(index) > 1e-9) {
-                    _chemPotSum.local.at(index) += exp(-deltaUpot/temperatureStep.at(index));
+                    double chemPot = exp(-deltaUpot/temperatureStep.at(index));
+                    if (std::isfinite(chemPot)) { _chemPotSum.local.at(index) += chemPot; }
                 }
                 rZ += dZ.at(index);
             }
@@ -220,7 +221,10 @@ void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecomp
         ofs << setw(24) << "pos" << setw(24) << "numMols" << setw(24) << "density" << setw(24) << "temperature" << setw(24) << "temp_with_Drift" << setw(24) << "chemPot_res" << std::endl;
         for (uint16_t i = 0; i < _numBinsGlobal; i++) {
             double T = _temperatureSumGlobal.at(i)/_writeFrequency;
-            double chemPot = -T*log(_chemPotSum.global.at(i)/_writeFrequency);
+            double chemPot = 0.0;
+            if (_chemPotSum.global.at(i) > 0.0) {
+                chemPot = -T*log(_chemPotSum.global.at(i)/_writeFrequency);
+            }
             double numMolsPerStep = static_cast<double>(_numMoleculesSumGlobal.at(i))/_writeFrequency; // Not an int as particles change bin during simulation
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << (i+0.5)*_binwidth;
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << numMolsPerStep;
