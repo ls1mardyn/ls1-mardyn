@@ -81,7 +81,7 @@ void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecomp
         return;
     }
     
-    double regionLowCorner[3], regionHighCorner[3];
+    double regionLowCorner[3], regionHighCorner[3], regionSize[3];
 
     // Accumulated quantities over one sampling step
     CommVar<std::vector<double>> ekin2;
@@ -108,6 +108,7 @@ void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecomp
     for (int d = 0; d < 3; d++) {
         regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
         regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
+        regionSize[d] = regionHighCorner[d] - regionLowCorner[d];
     }
 
     // Sample temperature, velocity (for drift calculation) and number of molecules
@@ -161,12 +162,15 @@ void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecomp
     for (uint16_t i = 0; i < _numBinsGlobal; i++) {
         // Make sure, number of test particles is never zero and number of test particles per direction is at least 1
         const unsigned long nTest = std::max(1ul,static_cast<unsigned long>(_factorNumTest*numMols.global.at(i)));
+
         const unsigned long nY = std::max(1.0,std::pow((nTest*_binwidth*_binwidth)/(_globalBoxLength[0]*_globalBoxLength[2]),(1./3.)));
-        dY.at(i) = _binwidth/nY;
+        dY.at(i) = std::min(static_cast<float>(_binwidth/nY), static_cast<float>(0.5*regionSize[1]));
+
         const unsigned long nX = std::max(1.0,std::pow((nTest*_globalBoxLength[0]*_globalBoxLength[0])/(_binwidth*_globalBoxLength[2]),(1./3.)));
-        dX.at(i) = _globalBoxLength[0]/nX;
+        dX.at(i) = std::min(static_cast<float>(_globalBoxLength[0]/nX), static_cast<float>(0.5*regionSize[0]));
+
         const unsigned long nZ = std::max(1ul,nTest/(nX*nY));
-        dZ.at(i) = _globalBoxLength[2]/nZ;
+        dZ.at(i) = std::min(static_cast<float>(_globalBoxLength[2]/nZ), static_cast<float>(0.5*regionSize[2]));
     }
 
     // Index of bin in which the left region boundary (y-dir) is in; std::min if particle position is precisely at right boundary
