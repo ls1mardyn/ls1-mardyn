@@ -46,7 +46,7 @@ std::string MmpldWriter::getOutputFilename() {
 }
 
 MmpldWriter::MmpldWriter() :
-		_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _writeBufferSize(32768), _outputPrefix("unknown"),
+		_startTimestep(0), _writeFrequency(1000), _stopTimestep(1000000000), _writeBufferSize(32768), _outputPrefix("unknown"),
 		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false),
 		_fileCount(1), _numFramesPerFile(0), _mmpldversion(MMPLD_DEFAULT_VERSION), _vertex_type(MMPLD_VERTEX_FLOAT_XYZ), _color_type(MMPLD_COLOR_NONE)
 {}
@@ -75,7 +75,6 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("writecontrol/start", _startTimestep);
 	xmlconfig.getNodeValue("writecontrol/writefrequency", _writeFrequency);
 	xmlconfig.getNodeValue("writecontrol/stop", _stopTimestep);
-	_stopTimestep = std::min(_stopTimestep, global_simulation->getNumTimesteps());
 	xmlconfig.getNodeValue("writecontrol/framesperfile", _numFramesPerFile);
 	xmlconfig.getNodeValue("writecontrol/writeBufferSize", _writeBufferSize);
 	global_log->info() << "[MMPLD Writer] Start sampling from simstep: " << _startTimestep << endl;
@@ -391,8 +390,8 @@ void MmpldWriter::PrepareWriteControl()
 	_bWriteControlPrepared = true;
 
 	_startTimestep = ( _startTimestep > _simulation.getNumInitTimesteps() ) ? _startTimestep : _simulation.getNumInitTimesteps();
-	if( 0 == _stopTimestep )
-		_stopTimestep = _simulation.getNumTimesteps();
+
+	_stopTimestep = std::min(_stopTimestep, _simulation.getNumTimesteps());
 
 	if(_stopTimestep < _startTimestep) {
 		global_log->warning() << "[MMPLD Writer] Invalid time interval. No frames will be recorded!" << endl;
