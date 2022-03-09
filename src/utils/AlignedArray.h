@@ -127,7 +127,7 @@ public:
 			break;
 		default:
 			// prefetch only first n elements
-			endPrefetch = n;
+			endPrefetch = static_cast<size_t>(n);
 		}
 
 		for (size_t i = 0; i < endPrefetch; i+= stride) {
