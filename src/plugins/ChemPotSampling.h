@@ -21,10 +21,12 @@
 * \code{.xml}
 * <plugin name="ChemPotSampling">
 *			<binwidth>FLOAT</binwidth>              <!-- Width of sampling bins; default 1.0 -->
+            <lattice>BOOL</lattice>                 <!-- Choose if lattice or random insertion; Note: The random method does not take local density into account; default true -->
             <factorNumTest>FLOAT</factorNumTest>    <!-- Factor which specifies number of inserted test particles (numTest = factor*numPartsGlobal); default 4.0 -->
-            <start>INT</start>                      <!-- default 0 -->
-            <writefrequency>INT</writefrequency>    <!-- default 10000 -->
-            <stop>INT</stop>                        <!-- default 1000000000 -->
+            <start>INT</start>                      <!-- Simstep to start sampling; default 0 -->
+            <writefrequency>INT</writefrequency>    <!-- Simstep to write out result file; default 10000 -->
+            <samplefrequency>INT</samplefrequency>  <!-- Sampling every INT step; default 50 -->
+            <stop>INT</stop>                        <!-- Simstep to stop sampling; default 1000000000 -->
 * </plugin>
 * \endcode
 */
@@ -36,6 +38,8 @@ private:
     unsigned long _startSampling;
     unsigned long _writeFrequency;
     unsigned long _stopSampling;
+    unsigned long _samplefrequency;
+    bool _lattice;
 
     uint16_t _numBinsGlobal;
     double _globalBoxLength[3];
@@ -45,7 +49,10 @@ private:
     CommVar<std::vector<double>> _chemPotSum;
     std::vector<double> _temperatureSumGlobal;
     std::vector<double> _temperatureWithDriftSumGlobal;
+    CommVar<std::vector<double>> _dUpotInsert;  // Average pot. energy of inserted particles
     std::vector<unsigned long> _numMoleculesSumGlobal;
+    CommVar<std::vector<unsigned long>> _countNTest;
+    std::vector<unsigned long> _countSamples;
 
     CellProcessor* _cellProcessor;
     ParticlePairsHandler* _particlePairsHandler;
@@ -61,12 +68,10 @@ public:
 
     void readXML (XMLfileUnits& xmlconfig) override;
 
-    void endStep(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            Domain* /* domain */, unsigned long simstep) override;
-
-    void finish(ParticleContainer* /* particleContainer */,
-				DomainDecompBase* /* domainDecomp */, Domain* /* domain */) override {}
+    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override {}
+    void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
+    void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain, unsigned long simstep) override {}
+    void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) override {}
 
     std::string getPluginName() override { return std::string("ChemPotSampling"); }
 

@@ -9,6 +9,7 @@
 
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
+#include "utils/Random.h"
 
 #include <math.h>
 
@@ -19,7 +20,9 @@ ChemPotSampling::ChemPotSampling()
     _factorNumTest(4.0f),
     _startSampling(0ul),
     _writeFrequency(10000ul),
-    _stopSampling(1000000000ul)
+    _samplefrequency(50ul),
+    _stopSampling(1000000000ul),
+    _lattice(true)
 {}
 
 ChemPotSampling::~ChemPotSampling() {}
@@ -40,6 +43,14 @@ void ChemPotSampling::init(ParticleContainer* /* particleContainer */, DomainDec
     _chemPotSum.local.resize(_numBinsGlobal);
     _chemPotSum.global.resize(_numBinsGlobal);
 
+    _dUpotInsert.local.resize(_numBinsGlobal);
+    _dUpotInsert.global.resize(_numBinsGlobal);
+
+    _countNTest.local.resize(_numBinsGlobal);
+    _countNTest.global.resize(_numBinsGlobal);
+
+    _countSamples.resize(_numBinsGlobal);
+
     _temperatureSumGlobal.resize(_numBinsGlobal);
     _temperatureWithDriftSumGlobal.resize(_numBinsGlobal);
     _numMoleculesSumGlobal.resize(_numBinsGlobal);
@@ -59,23 +70,39 @@ void ChemPotSampling::init(ParticleContainer* /* particleContainer */, DomainDec
 void ChemPotSampling::readXML(XMLfileUnits& xmlconfig) {
 
     xmlconfig.getNodeValue("binwidth", _binwidth);  // Default: 1.0
+    xmlconfig.getNodeValue("lattice", _lattice);  // Default: True
     xmlconfig.getNodeValue("factorNumTest", _factorNumTest);  // Default: 4.0
     xmlconfig.getNodeValue("start", _startSampling);  // Default: 0
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);  // Default: 10000
+    xmlconfig.getNodeValue("samplefrequency", _samplefrequency);  // Default: 50
     xmlconfig.getNodeValue("stop", _stopSampling);  // Default: 1000000000
+
+    string insMethod;
+    if (_lattice) {
+        insMethod = "in a lattice";
+    } else {
+        insMethod = "randomly";
+    }
+    
 
     global_log->info() << "[ChemPotSampling] Start:Freq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
     global_log->info() << "[ChemPotSampling] Binwidth: " << _binwidth << std::endl;
-    global_log->info() << "[ChemPotSampling] " << _factorNumTest << " * numParticles will be inserted" << std::endl;
+    global_log->info() << "[ChemPotSampling] " << _factorNumTest << " * numParticles will be inserted " << insMethod << std::endl;    
 }
 
-void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* /* domain */,
-                         unsigned long simstep) {
+// Needs to be called when halo cells are still existing
+void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {
 
     // Sampling starts after _startSampling and is conducted up to _stopSampling
     if ((simstep <= _startSampling) or (simstep > _stopSampling)) {
         return;
     }
+
+    // Sample only every _samplefrequency
+	if ( (simstep - _startSampling) % _samplefrequency != 0 ) {
+        return;
+    }
+
     // Do not write or sample data directly after (re)start in the first step
 	if ( simstep == global_simulation->getNumInitTimesteps() ) {
         return;
@@ -152,54 +179,98 @@ void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecomp
             _temperatureSumGlobal.at(i) += temperatureStep.at(i);
             _temperatureWithDriftSumGlobal.at(i) += ekin2.global.at(i)/(numMols.global.at(i)*3.0);
             _numMoleculesSumGlobal.at(i) += numMols.global.at(i);
+            _countSamples.at(i)++;
         }
     }
 
-    // Insert particles in lattice structure and sample chem. pot.
+    // Calculate number of test particles per bin
     std::vector<double> dX(_numBinsGlobal, 0.0);
     std::vector<double> dY(_numBinsGlobal, 0.0);
     std::vector<double> dZ(_numBinsGlobal, 0.0);
+    std::vector<unsigned long> nX(_numBinsGlobal, 0ul);
+    std::vector<unsigned long> nY(_numBinsGlobal, 0ul);
+    std::vector<unsigned long> nZ(_numBinsGlobal, 0ul);
+    unsigned long nTestGlobal {0ul};
+
     for (uint16_t i = 0; i < _numBinsGlobal; i++) {
         // Make sure, number of test particles is never zero and number of test particles per direction is at least 1
         const unsigned long nTest = std::max(1ul,static_cast<unsigned long>(_factorNumTest*numMols.global.at(i)));
 
-        const unsigned long nY = std::max(1.0,std::pow((nTest*_binwidth*_binwidth)/(_globalBoxLength[0]*_globalBoxLength[2]),(1./3.)));
-        dY.at(i) = std::min(static_cast<float>(_binwidth/nY), static_cast<float>(0.5*regionSize[1]));
+        nY.at(i) = std::max(1.0,std::pow((nTest*_binwidth*_binwidth)/(_globalBoxLength[0]*_globalBoxLength[2]),(1./3.)));
+        dY.at(i) = std::min(static_cast<float>(_binwidth/nY.at(i)), static_cast<float>(0.5*regionSize[1]));
 
-        const unsigned long nX = std::max(1.0,std::pow((nTest*_globalBoxLength[0]*_globalBoxLength[0])/(_binwidth*_globalBoxLength[2]),(1./3.)));
-        dX.at(i) = std::min(static_cast<float>(_globalBoxLength[0]/nX), static_cast<float>(0.5*regionSize[0]));
+        nX.at(i) = std::max(1.0,std::pow((nTest*_globalBoxLength[0]*_globalBoxLength[0])/(_binwidth*_globalBoxLength[2]),(1./3.)));
+        dX.at(i) = std::min(static_cast<float>(_globalBoxLength[0]/nX.at(i)), static_cast<float>(0.5*regionSize[0]));
 
-        const unsigned long nZ = std::max(1ul,nTest/(nX*nY));
-        dZ.at(i) = std::min(static_cast<float>(_globalBoxLength[2]/nZ), static_cast<float>(0.5*regionSize[2]));
+        nZ.at(i) = std::max(1ul,nTest/(nX.at(i)*nY.at(i)));
+        dZ.at(i) = std::min(static_cast<float>(_globalBoxLength[2]/nZ.at(i)), static_cast<float>(0.5*regionSize[2]));
+        
+        nTestGlobal += nTest;
     }
 
-    // Index of bin in which the left region boundary (y-dir) is in; std::min if particle position is precisely at right boundary
-    uint16_t idxStart = std::min(_numBinsGlobal, static_cast<uint16_t>(regionLowCorner[1]/_binwidth));
-    double rY = regionLowCorner[1]+0.5*dY.at(idxStart);
-    while (rY < regionHighCorner[1]) {
-        uint16_t index = std::min(_numBinsGlobal, static_cast<uint16_t>(rY/_binwidth));  // Index of bin
+    bool _lattice = false;
 
-        double rX = regionLowCorner[0]+0.5*dX.at(idxStart);
-        while (rX < regionHighCorner[0]) {
+    if (_lattice) {
+        // Insert particles in lattice structure and sample chem. pot.
 
-            double rZ = regionLowCorner[2]+0.5*dZ.at(idxStart);
-            while (rZ < regionHighCorner[2]) {
-                _mTest.setr(0,rX);
-                _mTest.setr(1,rY);
-                _mTest.setr(2,rZ);
-                double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
-                global_log->debug() << "[ChemPotSampling] Inserting molecule at x,y,z = "
-                                    << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
-                                    << " ; dU = " << deltaUpot << " ; T = " << temperatureStep.at(index) << " ; index = " << index << std::endl;
-                if (temperatureStep.at(index) > 1e-9) {
-                    double chemPot = exp(-deltaUpot/temperatureStep.at(index));
-                    if (std::isfinite(chemPot)) { _chemPotSum.local.at(index) += chemPot; }
+        // Index of bin in which the left region boundary (y-dir) is in; std::min if particle position is precisely at right boundary
+        uint16_t idxStart = std::min(_numBinsGlobal, static_cast<uint16_t>(regionLowCorner[1]/_binwidth));
+        double rY = regionLowCorner[1]+0.5*dY.at(idxStart);
+        while (rY < regionHighCorner[1]) {
+            uint16_t index = std::min(_numBinsGlobal, static_cast<uint16_t>(rY/_binwidth));  // Index of bin
+
+            double rX = regionLowCorner[0]+0.5*dX.at(idxStart);
+            while (rX < regionHighCorner[0]) {
+
+                double rZ = regionLowCorner[2]+0.5*dZ.at(idxStart);
+                while (rZ < regionHighCorner[2]) {
+                    _mTest.setr(0,rX);
+                    _mTest.setr(1,rY);
+                    _mTest.setr(2,rZ);
+                    double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
+                    if (temperatureStep.at(index) > 1e-9) {
+                        double chemPot = exp(-deltaUpot/temperatureStep.at(index));
+                        if (std::isfinite(chemPot)) {
+                            _chemPotSum.local.at(index) += chemPot;
+                            _dUpotInsert.local.at(index) += deltaUpot;
+                            _countNTest.local.at(index)++;
+                            global_log->debug() << "[ChemPotSampling] Inserting molecule at x,y,z = "
+                                                << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
+                                                << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperatureStep.at(index) << " ; index = " << index << std::endl;
+                        }
+                    }
+                    rZ += dZ.at(index);
                 }
-                rZ += dZ.at(index);
+                rX += dX.at(index);
             }
-            rX += dX.at(index);
+            rY += dY.at(index);
         }
-        rY += dY.at(index);
+    } else {
+        // Random insertion
+        // NOTE: This differs from the lattice method as it does not take the local density into account
+        Random* rnd = new Random();
+
+        for (unsigned long i = 0; i < nTestGlobal; i++) {
+            double rX = regionLowCorner[0] + rnd->rnd()*regionSize[0];
+            double rY = regionLowCorner[1] + rnd->rnd()*regionSize[1];
+            double rZ = regionLowCorner[2] + rnd->rnd()*regionSize[2];
+            const uint16_t index = std::min(_numBinsGlobal, static_cast<uint16_t>(rY/_binwidth));  // Index of bin
+            _mTest.setr(0,rX);
+            _mTest.setr(1,rY);
+            _mTest.setr(2,rZ);
+            double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
+            if (temperatureStep.at(index) > 1e-9) {
+                double chemPot = exp(-deltaUpot/temperatureStep.at(index));
+                if (std::isfinite(chemPot)) {
+                    _chemPotSum.local.at(index) += chemPot;
+                    _dUpotInsert.local.at(index) += deltaUpot;
+                    _countNTest.local.at(index)++;
+                    global_log->debug() << "[ChemPotSampling] Inserting molecule at x,y,z = "
+                                        << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
+                                        << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperatureStep.at(index) << " ; index = " << index << std::endl;
+                }
+            }
+        }
     }
 
     // Write out data every _writeFrequency step
@@ -209,9 +280,13 @@ void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecomp
 
 #ifdef ENABLE_MPI
 	MPI_Reduce(_chemPotSum.local.data(), _chemPotSum.global.data(), _numBinsGlobal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(_dUpotInsert.local.data(), _dUpotInsert.global.data(), _numBinsGlobal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(_countNTest.local.data(), _countNTest.global.data(), _numBinsGlobal, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 #else
 	for (unsigned int i = 0; i < _numBinsGlobal; i++) {
         _chemPotSum.global.at(i) = _chemPotSum.local.at(i);
+        _dUpotInsert.global.at(i) = _dUpotInsert.local.at(i);
+        _countNTest.global.at(i) = _countNTest.local.at(i);
 	}
 #endif
 
@@ -222,19 +297,29 @@ void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecomp
         const std::string fname = "ChemPotSampling_TS"+ss.str()+".dat";
         std::ofstream ofs;
         ofs.open(fname, std::ios::out);
-        ofs << setw(24) << "pos" << setw(24) << "numMols" << setw(24) << "density" << setw(24) << "temperature" << setw(24) << "temp_with_Drift" << setw(24) << "chemPot_res" << std::endl;
+        ofs << setw(24) << "pos"                // Bin position
+            << setw(24) << "numParts"           // Average number of molecules in bin per step
+            << setw(24) << "density"            // Density
+            << setw(24) << "temperature"        // Temperature without drift (i.e. "real" temperature)
+            << setw(24) << "temp_with_drift"    // Temperature with drift
+            << setw(24) << "numParts_test"      // Number of inserted test particles per sample step
+            << setw(24) << "chemPot_res"        // Chemical potential as known as mu_tilde (equals the ms2 value)
+            << std::endl;
         for (uint16_t i = 0; i < _numBinsGlobal; i++) {
-            double T = _temperatureSumGlobal.at(i)/_writeFrequency;
+            double T = _temperatureSumGlobal.at(i)/_countSamples.at(i);
+            double numMolsPerStep = static_cast<double>(_numMoleculesSumGlobal.at(i))/_countSamples.at(i); // Not an int as particles change bin during simulation
             double chemPot = 0.0;
-            if (_chemPotSum.global.at(i) > 0.0) {
-                chemPot = -T*log(_chemPotSum.global.at(i)/_writeFrequency);
+            double dUpotIns = 0.0;
+            if ((_chemPotSum.global.at(i) > 0.0) and (_countNTest.global.at(i) > 0ul)) {
+                chemPot = -log(_chemPotSum.global.at(i)/_countNTest.global.at(i)) + log(numMolsPerStep/_slabVolume);
+                dUpotIns = _dUpotInsert.global.at(i)/_countNTest.global.at(i);
             }
-            double numMolsPerStep = static_cast<double>(_numMoleculesSumGlobal.at(i))/_writeFrequency; // Not an int as particles change bin during simulation
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << (i+0.5)*_binwidth;
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << numMolsPerStep;
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << numMolsPerStep/_slabVolume;
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << T;
-            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _temperatureWithDriftSumGlobal.at(i)/_writeFrequency;
+            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _temperatureWithDriftSumGlobal.at(i)/_countSamples.at(i);
+            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _countNTest.global.at(i)/_countSamples.at(i);
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << chemPot << std::endl;
         }
         ofs.close();
@@ -247,10 +332,18 @@ void ChemPotSampling::endStep(ParticleContainer* particleContainer, DomainDecomp
 
 // Fill vectors with zeros
 void ChemPotSampling::resetVectors() {
-    std::fill(_chemPotSum.local.begin(), _chemPotSum.local.end(), 0.0);
-    std::fill(_chemPotSum.global.begin(), _chemPotSum.global.end(), 0.0);
+    std::fill(_chemPotSum.local.begin(), _chemPotSum.local.end(), 0.0f);
+    std::fill(_chemPotSum.global.begin(), _chemPotSum.global.end(), 0.0f);
 
-    std::fill(_temperatureSumGlobal.begin(), _temperatureSumGlobal.end(), 0.0);
-    std::fill(_temperatureWithDriftSumGlobal.begin(), _temperatureWithDriftSumGlobal.end(), 0.0);
-    std::fill(_numMoleculesSumGlobal.begin(), _numMoleculesSumGlobal.end(), 0);
+    std::fill(_temperatureSumGlobal.begin(), _temperatureSumGlobal.end(), 0.0f);
+    std::fill(_temperatureWithDriftSumGlobal.begin(), _temperatureWithDriftSumGlobal.end(), 0.0f);
+    std::fill(_numMoleculesSumGlobal.begin(), _numMoleculesSumGlobal.end(), 0ul);
+
+    std::fill(_countNTest.local.begin(), _countNTest.local.end(), 0ul);
+    std::fill(_countNTest.global.begin(), _countNTest.global.end(), 0ul);
+
+    std::fill(_countSamples.begin(), _countSamples.end(), 0ul);
+
+    std::fill(_dUpotInsert.local.begin(), _dUpotInsert.local.end(), 0.0f);
+    std::fill(_dUpotInsert.global.begin(), _dUpotInsert.global.end(), 0.0f);
 }
