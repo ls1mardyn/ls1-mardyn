@@ -37,19 +37,18 @@ private:
     float _factorNumTest;
     unsigned long _startSampling;
     unsigned long _writeFrequency;
-    unsigned long _stopSampling;
     unsigned long _samplefrequency;
+    unsigned long _stopSampling;
     bool _lattice;
 
     uint16_t _numBinsGlobal;
-    double _globalBoxLength[3];
+    std::array<double, 3> _globalBoxLength;
     double _slabVolume;
 
     // Accumulated quantities over _writeFrequency
     CommVar<std::vector<double>> _chemPotSum;
     std::vector<double> _temperatureSumGlobal;
     std::vector<double> _temperatureWithDriftSumGlobal;
-    CommVar<std::vector<double>> _dUpotInsert;  // Average pot. energy of inserted particles
     std::vector<unsigned long> _numMoleculesSumGlobal;
     CommVar<std::vector<unsigned long>> _countNTest;
     std::vector<unsigned long> _countSamples;
@@ -68,10 +67,10 @@ public:
 
     void readXML (XMLfileUnits& xmlconfig) override;
 
-    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override {}
+    void beforeForces(ParticleContainer* /* particleContainer */, DomainDecompBase* /* domainDecomp */, unsigned long /* simstep */) override {}
     void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
-    void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain, unsigned long simstep) override {}
-    void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) override {}
+    void endStep(ParticleContainer* /* particleContainer */, DomainDecompBase* /* domainDecomp */, Domain* /* domain */, unsigned long /* simstep */) override {}
+    void finish(ParticleContainer* /* particleContainer */, DomainDecompBase* /* domainDecomp */, Domain* /* domain */) override {}
 
     std::string getPluginName() override { return std::string("ChemPotSampling"); }
 

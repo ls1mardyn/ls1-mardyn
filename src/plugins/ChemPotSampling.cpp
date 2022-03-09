@@ -43,9 +43,6 @@ void ChemPotSampling::init(ParticleContainer* /* particleContainer */, DomainDec
     _chemPotSum.local.resize(_numBinsGlobal);
     _chemPotSum.global.resize(_numBinsGlobal);
 
-    _dUpotInsert.local.resize(_numBinsGlobal);
-    _dUpotInsert.global.resize(_numBinsGlobal);
-
     _countNTest.local.resize(_numBinsGlobal);
     _countNTest.global.resize(_numBinsGlobal);
 
@@ -70,7 +67,7 @@ void ChemPotSampling::init(ParticleContainer* /* particleContainer */, DomainDec
 void ChemPotSampling::readXML(XMLfileUnits& xmlconfig) {
 
     xmlconfig.getNodeValue("binwidth", _binwidth);  // Default: 1.0
-    xmlconfig.getNodeValue("lattice", _lattice);  // Default: True
+    xmlconfig.getNodeValue("lattice", _lattice);  // Default: true
     xmlconfig.getNodeValue("factorNumTest", _factorNumTest);  // Default: 4.0
     xmlconfig.getNodeValue("start", _startSampling);  // Default: 0
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);  // Default: 10000
@@ -108,34 +105,36 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
         return;
     }
     
-    double regionLowCorner[3], regionHighCorner[3], regionSize[3];
+    std::array<double, 3> regionLowCorner;
+    std::array<double, 3> regionHighCorner;
+    std::array<double, 3> regionSize;
 
-    // Accumulated quantities over one sampling step
     CommVar<std::vector<double>> ekin2;
-    std::array<CommVar<std::vector<double>>,3> velocity;
+    std::array<CommVar<std::vector<double>>,3> velocity; // Local and global variable containing summed up velocity in all three directions and for all bins
     CommVar<std::vector<unsigned long>> numMols;
 
-    ekin2.local.resize(_numBinsGlobal);
-    numMols.local.resize(_numBinsGlobal);
-    ekin2.global.resize(_numBinsGlobal);
-    numMols.global.resize(_numBinsGlobal);
-
-    for (int d = 0; d < 3; d++) {
-        velocity[d].local.resize(_numBinsGlobal);
-        velocity[d].global.resize(_numBinsGlobal);
-        std::fill(velocity[d].local.begin(), velocity[d].local.end(), 0.0);
-        std::fill(velocity[d].global.begin(), velocity[d].global.end(), 0.0);
+    for (unsigned short d = 0; d < 3; d++) {
+        regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
+        regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
+        regionSize[d] = regionHighCorner[d] - regionLowCorner[d];
     }
+
+    ekin2.local.resize(_numBinsGlobal);
+    ekin2.global.resize(_numBinsGlobal);
+
+    numMols.local.resize(_numBinsGlobal);
+    numMols.global.resize(_numBinsGlobal);
 
     std::fill(ekin2.local.begin(), ekin2.local.end(), 0.0);
     std::fill(numMols.local.begin(), numMols.local.end(), 0);
     std::fill(ekin2.global.begin(), ekin2.global.end(), 0.0);
     std::fill(numMols.global.begin(), numMols.global.end(), 0);
 
-    for (int d = 0; d < 3; d++) {
-        regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
-        regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
-        regionSize[d] = regionHighCorner[d] - regionLowCorner[d];
+    for (unsigned short d = 0; d < 3; d++) {
+        velocity[d].local.resize(_numBinsGlobal);
+        velocity[d].global.resize(_numBinsGlobal);
+        std::fill(velocity[d].local.begin(), velocity[d].local.end(), 0.0);
+        std::fill(velocity[d].global.begin(), velocity[d].global.end(), 0.0);
     }
 
     // Sample temperature, velocity (for drift calculation) and number of molecules
@@ -208,16 +207,14 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
         nTestGlobal += nTest;
     }
 
-    bool _lattice = false;
-
     if (_lattice) {
         // Insert particles in lattice structure and sample chem. pot.
 
         // Index of bin in which the left region boundary (y-dir) is in; std::min if particle position is precisely at right boundary
-        uint16_t idxStart = std::min(_numBinsGlobal, static_cast<uint16_t>(regionLowCorner[1]/_binwidth));
+        const uint16_t idxStart = std::min(_numBinsGlobal, static_cast<uint16_t>(regionLowCorner[1]/_binwidth));
         double rY = regionLowCorner[1]+0.5*dY.at(idxStart);
         while (rY < regionHighCorner[1]) {
-            uint16_t index = std::min(_numBinsGlobal, static_cast<uint16_t>(rY/_binwidth));  // Index of bin
+            const uint16_t index = std::min(_numBinsGlobal, static_cast<uint16_t>(rY/_binwidth));  // Index of bin
 
             double rX = regionLowCorner[0]+0.5*dX.at(idxStart);
             while (rX < regionHighCorner[0]) {
@@ -227,16 +224,17 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
                     _mTest.setr(0,rX);
                     _mTest.setr(1,rY);
                     _mTest.setr(2,rZ);
-                    double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
+                    const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
                     if (temperatureStep.at(index) > 1e-9) {
                         double chemPot = exp(-deltaUpot/temperatureStep.at(index));
                         if (std::isfinite(chemPot)) {
                             _chemPotSum.local.at(index) += chemPot;
-                            _dUpotInsert.local.at(index) += deltaUpot;
                             _countNTest.local.at(index)++;
-                            global_log->debug() << "[ChemPotSampling] Inserting molecule at x,y,z = "
-                                                << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
-                                                << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperatureStep.at(index) << " ; index = " << index << std::endl;
+#ifndef NDEBUG
+                            std::cout << "[ChemPotSampling] Rank " << domainDecomp->getRank() << " : Inserting molecule at x,y,z = "
+                                      << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
+                                      << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperatureStep.at(index) << " ; index = " << index << std::endl;
+#endif
                         }
                     }
                     rZ += dZ.at(index);
@@ -250,24 +248,36 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
         // NOTE: This differs from the lattice method as it does not take the local density into account
         Random* rnd = new Random();
 
-        for (unsigned long i = 0; i < nTestGlobal; i++) {
-            double rX = regionLowCorner[0] + rnd->rnd()*regionSize[0];
-            double rY = regionLowCorner[1] + rnd->rnd()*regionSize[1];
-            double rZ = regionLowCorner[2] + rnd->rnd()*regionSize[2];
+        const float domainShare = (regionSize[0]*regionSize[1]*regionSize[2])/(_globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2]);  // Share of volume of present rank from whole domain
+        const unsigned long nTest = static_cast<unsigned long>(domainShare*nTestGlobal);
+
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+        for (unsigned long i = 0; i < nTest; i++) {
+            const double rX = regionLowCorner[0] + rnd->rnd()*regionSize[0];
+            const double rY = regionLowCorner[1] + rnd->rnd()*regionSize[1];
+            const double rZ = regionLowCorner[2] + rnd->rnd()*regionSize[2];
             const uint16_t index = std::min(_numBinsGlobal, static_cast<uint16_t>(rY/_binwidth));  // Index of bin
             _mTest.setr(0,rX);
             _mTest.setr(1,rY);
             _mTest.setr(2,rZ);
-            double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
+            const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
             if (temperatureStep.at(index) > 1e-9) {
                 double chemPot = exp(-deltaUpot/temperatureStep.at(index));
                 if (std::isfinite(chemPot)) {
+#ifdef _OPENMP
+#pragma omp atomic
+#endif
+                    {
                     _chemPotSum.local.at(index) += chemPot;
-                    _dUpotInsert.local.at(index) += deltaUpot;
                     _countNTest.local.at(index)++;
-                    global_log->debug() << "[ChemPotSampling] Inserting molecule at x,y,z = "
-                                        << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
-                                        << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperatureStep.at(index) << " ; index = " << index << std::endl;
+#ifndef NDEBUG
+                    std::cout << "[ChemPotSampling] Rank " << domainDecomp->getRank() << " : Inserting molecule at x,y,z = "
+                              << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
+                              << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperatureStep.at(index) << " ; index = " << index << std::endl;
+#endif
+                    }
                 }
             }
         }
@@ -280,12 +290,10 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
 
 #ifdef ENABLE_MPI
 	MPI_Reduce(_chemPotSum.local.data(), _chemPotSum.global.data(), _numBinsGlobal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(_dUpotInsert.local.data(), _dUpotInsert.global.data(), _numBinsGlobal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(_countNTest.local.data(), _countNTest.global.data(), _numBinsGlobal, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 #else
 	for (unsigned int i = 0; i < _numBinsGlobal; i++) {
         _chemPotSum.global.at(i) = _chemPotSum.local.at(i);
-        _dUpotInsert.global.at(i) = _dUpotInsert.local.at(i);
         _countNTest.global.at(i) = _countNTest.local.at(i);
 	}
 #endif
@@ -309,10 +317,8 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
             double T = _temperatureSumGlobal.at(i)/_countSamples.at(i);
             double numMolsPerStep = static_cast<double>(_numMoleculesSumGlobal.at(i))/_countSamples.at(i); // Not an int as particles change bin during simulation
             double chemPot = 0.0;
-            double dUpotIns = 0.0;
             if ((_chemPotSum.global.at(i) > 0.0) and (_countNTest.global.at(i) > 0ul)) {
                 chemPot = -log(_chemPotSum.global.at(i)/_countNTest.global.at(i)) + log(numMolsPerStep/_slabVolume);
-                dUpotIns = _dUpotInsert.global.at(i)/_countNTest.global.at(i);
             }
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << (i+0.5)*_binwidth;
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << numMolsPerStep;
@@ -343,7 +349,4 @@ void ChemPotSampling::resetVectors() {
     std::fill(_countNTest.global.begin(), _countNTest.global.end(), 0ul);
 
     std::fill(_countSamples.begin(), _countSamples.end(), 0ul);
-
-    std::fill(_dUpotInsert.local.begin(), _dUpotInsert.local.end(), 0.0f);
-    std::fill(_dUpotInsert.global.begin(), _dUpotInsert.global.end(), 0.0f);
 }
