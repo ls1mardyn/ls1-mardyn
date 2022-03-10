@@ -251,8 +251,8 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
         const float domainShare = (regionSize[0]*regionSize[1]*regionSize[2])/(_globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2]);  // Share of volume of present rank from whole domain
         const unsigned long nTest = static_cast<unsigned long>(domainShare*nTestGlobal);
 
-#ifdef _OPENMP
-#pragma omp parallel
+#if defined(_OPENMP)
+        #pragma omp parallel
 #endif
         for (unsigned long i = 0; i < nTest; i++) {
             const double rX = regionLowCorner[0] + rnd->rnd()*regionSize[0];
@@ -266,8 +266,8 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
             if (temperatureStep.at(index) > 1e-9) {
                 double chemPot = exp(-deltaUpot/temperatureStep.at(index));
                 if (std::isfinite(chemPot)) {
-#ifdef _OPENMP
-#pragma omp atomic
+#if defined(_OPENMP)
+                    #pragma omp parallel
 #endif
                     {
                     _chemPotSum.local.at(index) += chemPot;

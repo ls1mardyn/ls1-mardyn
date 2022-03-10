@@ -17,7 +17,7 @@
 /** @brief
 * Plugin: can be enabled via config.xml <br>
 *
-* Samples residual chemical potential binwise in y-direction for one component systems using the Widom insertion method
+* Samples residual chemical potential binwise in y-direction for the LJTS fluid (pot. energy corrections not implemented!) using the Widom insertion method
 * \code{.xml}
 * <plugin name="ChemPotSampling">
 *			<binwidth>FLOAT</binwidth>              <!-- Width of sampling bins; default 1.0 -->
