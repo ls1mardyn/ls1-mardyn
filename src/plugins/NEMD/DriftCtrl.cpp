@@ -238,8 +238,9 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			std::ofstream ofs;
 			ofs.open(fname, std::ios::app);
 			ofs << setw(12) << simstep;
-			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID)
+			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID) {
 				ofs << FORMAT_SCI_MAX_DIGITS << _sampling.at(_target.cid).momentum.at(1).global.at(yPosID);
+			}
 			ofs << std::endl;
 			ofs.close();
 		}
@@ -248,18 +249,11 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			std::ofstream ofs;
 			ofs.open(fname, std::ios::app);
 			ofs << setw(12) << simstep;
-			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID)
+			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID) {
 				ofs << setw(12) << _sampling.at(_target.cid).numParticles.global.at(yPosID);
+			}
 			ofs << std::endl;
 			ofs.close();
 		}
 	}
 }
-
-
-
-
-
-
-
-
