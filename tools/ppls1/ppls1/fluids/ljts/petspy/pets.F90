@@ -245,6 +245,9 @@ IF((integer_x.EQ.PP_DMASS.AND.integer_y.EQ.PP_T).OR.(integer_x.EQ.PP_T.AND.integ
     ELSEIF(integer_z(i_z).EQ.PP_GMASS) THEN
       ! gibbs energy
       CALL dT2g_PeTS(var_z(i_z),rho,T)
+    ELSEIF(integer_z(i_z).EQ.PP_GMASS_MS2) THEN
+      ! gibbs energy
+      CALL dT2g_PeTS_ms2(var_z(i_z),rho,T)
     ELSEIF(integer_z(i_z).EQ.PP_PIP) THEN
       ! phase indication parameter
       CALL dT2pip_PeTS(var_z(i_z),rho,T)
@@ -394,6 +397,9 @@ ELSEIF((integer_x.EQ.PP_P.AND.integer_y.EQ.PP_T).OR.(integer_x.EQ.PP_T.AND.integ
     ELSEIF(integer_z(i_z).EQ.PP_GMASS) THEN
       ! gibbs energy
       CALL dT2g_PeTS(var_z(i_z),rho,var_y_calc)
+    ELSEIF(integer_z(i_z).EQ.PP_GMASS_MS2) THEN
+      ! gibbs energy
+      CALL dT2g_PeTS_ms2(var_z(i_z),rho,var_y_calc)
     ELSEIF(integer_z(i_z).EQ.PP_PIP) THEN
       ! phase indication parameter
       CALL dT2pip_PeTS(var_z(i_z),rho,var_y_calc)
@@ -532,6 +538,9 @@ ELSE
     ELSEIF(integer_z(i_z).EQ.PP_GMASS) THEN
       ! gibbs energy
       CALL dT2g_PeTS(var_z(i_z),rho,T)
+    ELSEIF(integer_z(i_z).EQ.PP_GMASS_MS2) THEN
+      ! gibbs energy
+      CALL dT2g_PeTS_ms2(var_z(i_z),rho,T)
     ELSEIF(integer_z(i_z).EQ.PP_PIP) THEN
       ! phase indication parameter
       CALL dT2pip_PeTS(var_z(i_z),rho,T)
@@ -1736,6 +1745,44 @@ alphar00 = ALPHAR(tau,delta,0,0)
 alphar01 = ALPHAR(tau,delta,0,1)
 g        = T*R_mass*((1.0 + delta*alphar01) + (alphai00+alphar00))
 END SUBROUTINE dT2g_PeTS
+
+
+!==================================================================================================================================!
+!> (rho,T) -> (g_ms2) in analogy to ms2
+!==================================================================================================================================!
+SUBROUTINE dT2g_PeTS_ms2(g,rho,T)
+!----------------------------------------------------------------------------------------------------------------------------------!
+! MODULES                                                                                                                          !
+! insert modules here
+!----------------------------------------------------------------------------------------------------------------------------------!
+IMPLICIT NONE
+! INPUT / OUTPUT VARIABLES 
+REAL,INTENT(OUT)                             :: g
+REAL,INTENT(IN)                              :: rho
+REAL,INTENT(IN)                              :: T
+!-----------------------------------------------------------------------------------------------------------------------------------
+! LOCAL VARIABLES
+REAL :: tau,delta
+REAL :: alphai00
+REAL :: alphar00,alphar01
+!===================================================================================================================================
+! calculate reduced variables
+tau   = Tcrit/T
+delta = rho/rhocrit
+!IF(delta.LT.0. .OR. tau.LT.0. .OR. T.LT.Tmin(1)) THEN
+  !RETURN
+!ENDIF
+IF(T.EQ.0.) THEN
+  g = Tcrit*R_mass*ig1
+  RETURN
+ENDIF
+! gibbs energy
+alphai00 = ALPHA0(tau,delta,0,0)
+alphar00 = ALPHAR(tau,delta,0,0)
+alphar01 = ALPHAR(tau,delta,0,1)
+!g        = T*R_mass*((1.0 + delta*alphar01) + (alphai00+alphar00))
+g        = ((delta*alphar01) + (alphar00)) + log(rho)
+END SUBROUTINE dT2g_PeTS_ms2
 
 
 !==================================================================================================================================!

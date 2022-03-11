@@ -19,7 +19,9 @@ variables = {'density':12,
             'temperature':19,
             'internalEnergy':21,
             'isochoricHeatCapacity':32,
-            'isobaricHeatCapacity':34}
+            'isobaricHeatCapacity':34,
+            'gibbsEnergy':51,
+            'chemicalPot':512}
 
 arguments = {'temperature':None, 'density':None, 'pressure':None}
 
@@ -32,7 +34,7 @@ parser.add_argument('-T', '--temperature', type=float, help='Input: Temperature'
 parser.add_argument('-d', '--density', type=float, help='Input: Density')
 parser.add_argument('-p', '--pressure', type=float, help='Input: Pressure')
 parser.add_argument('-o', '--output', type=str, required=True,
-                    help='Output, e.g.: temperature, density, pressure, internalEnergy, enthalpy, entropy, isochoricHeatCapacity, isobaricHeatCapacity \n'+
+                    help='Output, e.g.: temperature, density, pressure, internalEnergy, enthalpy, entropy, isochoricHeatCapacity, isobaricHeatCapacity, gibbsEnergy, chemicalPot \n'+
                     'Example: pets_args -T 1.22 -d 0.4 -o pressure')
 args = parser.parse_args()
 arguments['temperature'] = args.temperature
