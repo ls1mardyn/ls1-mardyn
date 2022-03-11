@@ -6,7 +6,6 @@ Created on 2022
 """
 
 import numpy as np
-import pandas as pd
 
 #%% Get shear viscosity of LJTS fluid with correlation by Lautenschläger2019
 def eta_lauten(T,rho):
