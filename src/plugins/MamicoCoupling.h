@@ -55,7 +55,7 @@ public:
 
 private:
 #ifdef MAMICO_COUPLING
-    coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>* _macroscopicCellService;
+    coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>* _macroscopicCellService = nullptr;
 #endif
 };
 
