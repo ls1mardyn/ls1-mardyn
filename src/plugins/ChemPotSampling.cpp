@@ -40,6 +40,11 @@ void ChemPotSampling::init(ParticleContainer* /* particleContainer */, DomainDec
     }
     _slabVolume = _globalBoxLength[0]*_globalBoxLength[2]*_binwidth;
 
+    if (_slabVolume < 1e-12) {
+        global_log->error() << "[ChemPotSampling] Slab volume too small!" << std::endl;
+        Simulation::exit(-1);
+    }
+
     _chemPotSum.local.resize(_numBinsGlobal);
     _chemPotSum.global.resize(_numBinsGlobal);
 
@@ -80,11 +85,14 @@ void ChemPotSampling::readXML(XMLfileUnits& xmlconfig) {
     } else {
         insMethod = "randomly";
     }
-    
 
-    global_log->info() << "[ChemPotSampling] Start:Freq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
-    global_log->info() << "[ChemPotSampling] Binwidth: " << _binwidth << std::endl;
-    global_log->info() << "[ChemPotSampling] " << _factorNumTest << " * numParticles will be inserted " << insMethod << std::endl;    
+    global_log->info() << "[ChemPotSampling] Start:WriteFreq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
+    global_log->info() << "[ChemPotSampling] Binwidth: " << _binwidth << " ; Sample frequency: " << _samplefrequency << std::endl;
+    global_log->info() << "[ChemPotSampling] " << _factorNumTest << " * numParticles will be inserted " << insMethod << std::endl;
+
+    if (_samplefrequency > _writeFrequency) {
+        global_log->warning() << "[ChemPotSampling] Sample frequency is greater than write frequency! " << std::endl;
+    }
 }
 
 // Needs to be called when halo cells are still existing
@@ -126,9 +134,9 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
     numMols.global.resize(_numBinsGlobal);
 
     std::fill(ekin2.local.begin(), ekin2.local.end(), 0.0);
-    std::fill(numMols.local.begin(), numMols.local.end(), 0);
+    std::fill(numMols.local.begin(), numMols.local.end(), 0ul);
     std::fill(ekin2.global.begin(), ekin2.global.end(), 0.0);
-    std::fill(numMols.global.begin(), numMols.global.end(), 0);
+    std::fill(numMols.global.begin(), numMols.global.end(), 0ul);
 
     for (unsigned short d = 0; d < 3; d++) {
         velocity[d].local.resize(_numBinsGlobal);
@@ -314,18 +322,24 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
             << setw(24) << "chemPot_res"        // Chemical potential as known as mu_tilde (equals the ms2 value)
             << std::endl;
         for (uint16_t i = 0; i < _numBinsGlobal; i++) {
-            double T = _temperatureSumGlobal.at(i)/_countSamples.at(i);
-            double numMolsPerStep = static_cast<double>(_numMoleculesSumGlobal.at(i))/_countSamples.at(i); // Not an int as particles change bin during simulation
-            double chemPot = 0.0;
-            if ((_chemPotSum.global.at(i) > 0.0) and (_countNTest.global.at(i) > 0ul)) {
+            double numMolsPerStep {0.0}; // Not an int as particles change bin during simulation
+            double T {0.0};
+            double TDrift {0.0};
+            unsigned long numTest {0ul};
+            double chemPot {0.0};
+            if ((_chemPotSum.global.at(i) > 0.0) and (_countNTest.global.at(i) > 0ul) and (_countSamples.at(i) > 0ul)) {
+                numMolsPerStep = static_cast<double>(_numMoleculesSumGlobal.at(i))/_countSamples.at(i);
+                T = _temperatureSumGlobal.at(i)/_countSamples.at(i);
+                TDrift = _temperatureWithDriftSumGlobal.at(i)/_countSamples.at(i);
+                numTest = _countNTest.global.at(i)/_countSamples.at(i);
                 chemPot = -log(_chemPotSum.global.at(i)/_countNTest.global.at(i)) + log(numMolsPerStep/_slabVolume);
             }
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << (i+0.5)*_binwidth;
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << numMolsPerStep;
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << numMolsPerStep/_slabVolume;
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << T;
-            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _temperatureWithDriftSumGlobal.at(i)/_countSamples.at(i);
-            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _countNTest.global.at(i)/_countSamples.at(i);
+            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << TDrift;
+            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << numTest;
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << chemPot << std::endl;
         }
         ofs.close();
