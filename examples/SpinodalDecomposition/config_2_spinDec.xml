@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+
+    <refunits type="SI" >
+        <length unit="nm">0.1</length>
+        <mass unit="u">1</mass>
+        <energy unit="K">1</energy>
+    </refunits>
+
+    <simulation type="MD" >
+        <integrator type="Leapfrog" >
+            <timestep unit="reduced" >0.00182367</timestep>
+        </integrator>
+
+        <run>
+            <currenttime>0.0</currenttime>
+            <production>
+                <steps>80000</steps>
+            </production>
+        </run>
+
+        <ensemble type="NVT">
+            <!-- Nparticles determined by the input file -->
+            <temperature unit="reduced" >0.70</temperature>
+            <domain type="box">
+                <lx>60</lx>
+                <ly>60</ly>
+                <lz>60</lz>
+            </domain>
+
+            <components>
+                <include query="/components/moleculetype" >components_1c.xml</include>
+            </components>
+
+            <phasespacepoint>
+                <file type="binary">
+                    <header>cp_equilibration_binary-1.restart.header.xml</header>
+                    <data>cp_equilibration_binary-1.restart.dat</data>
+                </file>
+            </phasespacepoint>
+
+
+        </ensemble>
+
+        <algorithm>
+
+            <parallelisation type="DomainDecomposition"></parallelisation>
+
+            <datastructure type="AutoPas">
+                <allowedTraversals>c08, sli</allowedTraversals>
+                <allowedContainers>linkedCells</allowedContainers>
+                <traversalSelectorStrategy>fastestMedian</traversalSelectorStrategy>
+                <containerSelectorStrategy>fastestMedian</containerSelectorStrategy>
+                <dataLayout>SoA</dataLayout>
+                <tuningInterval>1000</tuningInterval>
+                <tuningSamples>10</tuningSamples>
+            </datastructure>
+
+            <cutoffs type="CenterOfMass" >
+                <defaultCutoff unit="reduced" >2.5</defaultCutoff>
+                <radiusLJ unit="reduced" >2.5</radiusLJ>
+            </cutoffs>
+            <electrostatic type="ReactionField" >
+                <epsilon>1.0e+10</epsilon>
+            </electrostatic>
+        </algorithm>
+
+        <output>
+            <outputplugin name="CheckpointWriter">
+                <type>binary</type>
+                <writefrequency>20000</writefrequency>
+                <outputprefix>cp_spindec_binary</outputprefix>
+            </outputplugin>
+
+            <outputplugin name="VTKMoleculeWriter">
+                <outputprefix>vtkOutput_spindec</outputprefix>
+                <writefrequency>1000</writefrequency>
+            </outputplugin>
+
+            <outputplugin name="DecompWriter">
+                <writefrequency>1000</writefrequency>
+            </outputplugin>
+       </output>
+    </simulation>
+
+</mardyn>
