@@ -3,7 +3,7 @@ name: C/C++ CI
 on:
   push:
     # pushes to master
-    branches: [ master ] 
+    # branches: [ master ] 
   pull_request:
     # PRs to master
     branches: [ master ]
@@ -63,7 +63,7 @@ jobs:
       name: Build sequential
       run: |
           cd build_${JOBNAME}
-          cmake -DVECTOR_INSTRUCTI$ONS=${{ matrix.vector }} \
+          cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
                 -DENABLE_AUTOPAS=${{ matrix.autopas }} \
                 -DENABLE_ALLLBL=OFF \
