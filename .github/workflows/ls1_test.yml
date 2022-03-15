@@ -121,7 +121,7 @@ jobs:
           #save absolute path to root of ls1 directory
           rootPath=$PWD
           echo "New commit build running examples..."
-          for i in $(cat ./examples/example-list.txt)
+          for i rn $(cat ./examples/example-list.txt)
           do
             cd $rootPath
             echo $i | tee ${rootPath}/output_new
@@ -129,6 +129,7 @@ jobs:
             # if AutoPas is enabled, replace all occurences of LinkedCell in the examples' config files with AutoPas
             if [[ ${{ matrix.autopas }} == 'ON' ]]; then sed 's/LinkedCells/AutoPas/g' $(basename $i); else cat $(basename $i); fi >> input_new
             mpirun -np ${{ matrix.procs }} --oversubscribe $rootPath/build_${JOBNAME}/src/MarDyn ${input_new} --steps=20 | \
+                | tee
                 awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' \
                 >> ${rootPath}/output_new
             cd - > /dev/null
@@ -142,6 +143,7 @@ jobs:
             # if AutoPas is enabled, replace all occurences of LinkedCell in the examples' config files with AutoPas
             if [[ ${{ matrix.autopas }} == 'ON' ]]; then sed 's/LinkedCells/AutoPas/g' $(basename $i); else cat $(basename $i); fi >> input_master
             mpirun -np ${{ matrix.procs }} --oversubscribe $rootPath/build_${JOBNAME}_master/src/MarDyn ${input_master} --steps=20 | \
+                | tee
                 awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' \
                 >> ${rootPath}/output_master
             cd - > /dev/null
