@@ -129,8 +129,7 @@ jobs:
             # if AutoPas is enabled, replace all occurences of LinkedCell in the examples' config files with AutoPas
             if [[ ${{ matrix.autopas }} == 'ON' ]]; then sed 's/LinkedCells/AutoPas/g' $(basename $i); else cat $(basename $i); fi >> input_new
             mpirun -np ${{ matrix.procs }} --oversubscribe $repoPath/build_${JOBNAME}/src/MarDyn ${input_new} --steps=20 | \
-                tee > awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' \
-                >> ${repoPath}/output_new
+                tee | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_new
             cd - > /dev/null
           done
           echo "Master build running examples..."
@@ -142,8 +141,7 @@ jobs:
             # if AutoPas is enabled, replace all occurences of LinkedCell in the examples' config files with AutoPas
             if [[ ${{ matrix.autopas }} == 'ON' ]]; then sed 's/LinkedCells/AutoPas/g' $(basename $i); else cat $(basename $i); fi >> input_master
             mpirun -np ${{ matrix.procs }} --oversubscribe $repoPath/build_${JOBNAME}_master/src/MarDyn ${input_master} --steps=20 | \
-                tee > awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' \
-                >> ${repoPath}/output_master
+                tee | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_master
             cd - > /dev/null
           done
           diff output_new output_master
