@@ -122,23 +122,10 @@
             </outputplugin>
             -->
 
-            <!--
-            <outputplugin name="MmpldWriter" type="simple">
-                <include query="/spheres" >../../input/sphereparams.xml</include>
-                    <writecontrol>
-                        <start>0</start>
-                        <writefrequency>500</writefrequency>
-                        <stop>1000000000</stop>
-                        <framesperfile>100</framesperfile>
-                    </writecontrol>
-                <outputprefix>megamol</outputprefix>  
-            </outputplugin>
-            -->
 
             <!--
             <outputplugin name="DecompWriter">
                 <writefrequency>5000</writefrequency>
-                <outputfrequency>default</outputfrequency>
             </outputplugin>
             -->
      </output>
