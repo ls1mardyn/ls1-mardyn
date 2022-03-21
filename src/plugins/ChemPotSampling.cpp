@@ -57,6 +57,13 @@ void ChemPotSampling::init(ParticleContainer* /* particleContainer */, DomainDec
     _temperatureWithDriftSumGlobal.resize(_numBinsGlobal);
     _numMoleculesSumGlobal.resize(_numBinsGlobal);
 
+    _veloXSumGlobal.resize(_numBinsGlobal);
+    _veloYSumGlobal.resize(_numBinsGlobal);
+    _veloZSumGlobal.resize(_numBinsGlobal);
+
+    _ekinSumGlobal.resize(_numBinsGlobal);
+    _ekinDriftSumGlobal.resize(_numBinsGlobal);
+
     // TODO: CAN CELL PROCESSOR CHANGE DURING SIMULATION???
     _cellProcessor = _simulation.getCellProcessor();
     // TODO: CAN PP HANDLER CHANGE DURING SIMULATION???
@@ -151,7 +158,10 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
         uint16_t index = std::min(_numBinsGlobal, static_cast<uint16_t>(ry/_binwidth));  // Index of bin
 
         numMols.local.at(index) += 1;
+        double ekinalt = ekin2.local.at(index);
         ekin2.local.at(index) += pit->U_trans_2() + pit->U_rot_2();
+
+        //cout << "CP trans+rot " << pit->getID() << " " << ekin2.local.at(index) - ekinalt  << " " << pit->U_trans_2()+pit->U_rot_2() << endl;
 
         velocity[0].local.at(index) += pit->v(0);
         velocity[1].local.at(index) += pit->v(1);
@@ -184,9 +194,17 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
             const double ekin2_T = ekin2.global.at(i) - veloDrift2/numMols.global.at(i); // Kinetic energy without drift
             temperatureStep.at(i) = ekin2_T/(numMols.global.at(i)*3.0);
             _temperatureSumGlobal.at(i) += temperatureStep.at(i);
+            _ekinSumGlobal.at(i) += ekin2_T;
+            _ekinDriftSumGlobal.at(i) += ekin2.global.at(i);
             _temperatureWithDriftSumGlobal.at(i) += ekin2.global.at(i)/(numMols.global.at(i)*3.0);
             _numMoleculesSumGlobal.at(i) += numMols.global.at(i);
             _countSamples.at(i)++;
+            _veloXSumGlobal.at(i) += velocity[0].global.at(i);
+            _veloYSumGlobal.at(i) += velocity[1].global.at(i);
+            _veloZSumGlobal.at(i) += velocity[2].global.at(i);
+//            if ((i==1300) and (domainDecomp->getRank() == 0)) {
+//                cout << simstep << " " << _countSamples.at(i) << " " << temperatureStep.at(i) << " " << numMols.global.at(i) << " " << ekin2_T << " " << ekin2.global.at(i) << " " << veloDrift2/numMols.global.at(i) << endl;
+            }
         }
     }
 
@@ -319,6 +337,12 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
             << setw(24) << "temperature"        // Temperature without drift (i.e. "real" temperature)
             << setw(24) << "temp_with_drift"    // Temperature with drift
             << setw(24) << "numParts_test"      // Number of inserted test particles per sample step
+            << setw(24) << "ekin"
+            << setw(24) << "ekinPlusDrift"
+            << setw(24) << "T_2"
+            << setw(24) << "vx"
+            << setw(24) << "vy"
+            << setw(24) << "vz"
             << setw(24) << "chemPot_res"        // Chemical potential as known as mu_tilde (equals the ms2 value)
             << std::endl;
         for (uint16_t i = 0; i < _numBinsGlobal; i++) {
@@ -327,10 +351,18 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
             double TDrift {0.0};
             unsigned long numTest {0ul};
             double chemPot {0.0};
+            double vx = 0.0;
+            double vy = 0.0;
+            double vz = 0.0;
+            double T_2 = 0.0;
             if ((_chemPotSum.global.at(i) > 0.0) and (_countNTest.global.at(i) > 0ul) and (_countSamples.at(i) > 0ul)) {
                 numMolsPerStep = static_cast<double>(_numMoleculesSumGlobal.at(i))/_countSamples.at(i);
                 T = _temperatureSumGlobal.at(i)/_countSamples.at(i);
+                vx = velocity[0].global.at(i)/numMolsPerStep;
+                vy = velocity[1].global.at(i)/numMolsPerStep;
+                vz = velocity[2].global.at(i)/numMolsPerStep;
                 TDrift = _temperatureWithDriftSumGlobal.at(i)/_countSamples.at(i);
+                T_2 = _ekinSumGlobal.at(i)/(3*_numMoleculesSumGlobal.at(i));
                 numTest = _countNTest.global.at(i)/_countSamples.at(i);
                 chemPot = -log(_chemPotSum.global.at(i)/_countNTest.global.at(i)) + log(numMolsPerStep/_slabVolume);
             }
@@ -340,6 +372,12 @@ void ChemPotSampling::afterForces(ParticleContainer* particleContainer, DomainDe
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << T;
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << TDrift;
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << numTest;
+            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << 0.5*_ekinSumGlobal.at(i)/_countSamples.at(i);
+            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << 0.5*_ekinDriftSumGlobal.at(i)/_countSamples.at(i);
+            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << T_2;
+            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << vx;
+            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << vy;
+            ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << vz;
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << chemPot << std::endl;
         }
         ofs.close();
@@ -358,6 +396,13 @@ void ChemPotSampling::resetVectors() {
     std::fill(_temperatureSumGlobal.begin(), _temperatureSumGlobal.end(), 0.0f);
     std::fill(_temperatureWithDriftSumGlobal.begin(), _temperatureWithDriftSumGlobal.end(), 0.0f);
     std::fill(_numMoleculesSumGlobal.begin(), _numMoleculesSumGlobal.end(), 0ul);
+
+    std::fill(_veloXSumGlobal.begin(), _veloXSumGlobal.end(), 0.0f);
+    std::fill(_veloYSumGlobal.begin(), _veloYSumGlobal.end(), 0.0f);
+    std::fill(_veloZSumGlobal.begin(), _veloZSumGlobal.end(), 0.0f);
+
+    std::fill(_ekinSumGlobal.begin(), _ekinSumGlobal.end(), 0.0f);
+    std::fill(_ekinDriftSumGlobal.begin(), _ekinDriftSumGlobal.end(), 0.0f);
 
     std::fill(_countNTest.local.begin(), _countNTest.local.end(), 0ul);
     std::fill(_countNTest.global.begin(), _countNTest.global.end(), 0ul);

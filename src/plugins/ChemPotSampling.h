@@ -48,10 +48,16 @@ private:
     // Accumulated quantities over _writeFrequency
     CommVar<std::vector<double>> _chemPotSum;
     std::vector<double> _temperatureSumGlobal;
+    std::vector<double> _veloXSumGlobal;
+    std::vector<double> _veloYSumGlobal;
+    std::vector<double> _veloZSumGlobal;
     std::vector<double> _temperatureWithDriftSumGlobal;
     std::vector<unsigned long> _numMoleculesSumGlobal;
     CommVar<std::vector<unsigned long>> _countNTest;
     std::vector<unsigned long> _countSamples;
+
+    std::vector<double> _ekinSumGlobal;
+    std::vector<double> _ekinDriftSumGlobal;
 
     CellProcessor* _cellProcessor;
     ParticlePairsHandler* _particlePairsHandler;
