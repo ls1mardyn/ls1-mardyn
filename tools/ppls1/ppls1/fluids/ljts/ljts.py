@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import pandas as pd
 
 
 #%% Get saturated densities by Vrabec et al., Molecular Physics 104 (2006).
