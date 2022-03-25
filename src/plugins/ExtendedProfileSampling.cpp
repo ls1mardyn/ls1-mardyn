@@ -32,7 +32,7 @@ ExtendedProfileSampling::ExtendedProfileSampling()
 {}
 
 ExtendedProfileSampling::~ExtendedProfileSampling() {
-    delete _particlePairsHandler;
+    delete _particlePairsHandler; // ???
 }
 
 void ExtendedProfileSampling::init(ParticleContainer* /* particleContainer */, DomainDecompBase* domainDecomp, Domain* domain) {
@@ -53,14 +53,15 @@ void ExtendedProfileSampling::init(ParticleContainer* /* particleContainer */, D
         Simulation::exit(-1);
     }
 
-    _lenVector = (_singleComp) ? _numBinsGlobal : _numBinsGlobal * domain->getNumberOfComponents(); // Entry per component and bin index
+     // Entry per component and bin; 0 represents all components combined
+    _lenVector = (_singleComp) ? _numBinsGlobal : _numBinsGlobal * (domain->getNumberOfComponents()+1);
 
     resizeVectors();
     resetVectors();
 
-    // TODO: CAN CELL PROCESSOR CHANGE DURING SIMULATION???
+    // ??? TODO: CAN CELL PROCESSOR CHANGE DURING SIMULATION???
     _cellProcessor = _simulation.getCellProcessor();
-    // TODO: CAN PP HANDLER CHANGE DURING SIMULATION???
+    // ??? TODO: CAN PP HANDLER CHANGE DURING SIMULATION???
     _particlePairsHandler = new ParticlePairs2PotForceAdapter(*domain);
     // MolID is maximum possible number minus rank to prevent duplicate IDs
     // Always insert molecule of first component
@@ -104,7 +105,7 @@ void ExtendedProfileSampling::readXML(XMLfileUnits& xmlconfig) {
     }
 }
 
-// Needs to be called when halo cells are still existing
+// Needs to be called when halo cells are still existing (for sampling of chemical potential)
 void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {
 
     // Sampling starts after _startSampling and is conducted up to _stopSampling
@@ -241,9 +242,11 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
 #endif
 
     for (unsigned long i = 0; i < _lenVector; i++) {
-        veloDrift_step_global[0].at(i) = velocityVect_step[0].global.at(i) / numMolecules_step.global.at(i);
-        veloDrift_step_global[1].at(i) = velocityVect_step[1].global.at(i) / numMolecules_step.global.at(i);
-        veloDrift_step_global[2].at(i) = velocityVect_step[2].global.at(i) / numMolecules_step.global.at(i);
+        if (numMolecules_step.global.at(i) > 0ul) {
+            veloDrift_step_global[0].at(i) = velocityVect_step[0].global.at(i) / numMolecules_step.global.at(i);
+            veloDrift_step_global[1].at(i) = velocityVect_step[1].global.at(i) / numMolecules_step.global.at(i);
+            veloDrift_step_global[2].at(i) = velocityVect_step[2].global.at(i) / numMolecules_step.global.at(i);
+        }
     }
 
     for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
@@ -258,9 +261,9 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         const double veloZ = pit->v(2);
         const double mass = pit->mass();
         const double epot = /* pit->U_pot() */ 0.0;
-        const double ekinX = mass * veloCorrX * veloCorrX + (pit->U_rot_2()/3.0); //???
-        const double ekinY = mass * veloCorrY * veloCorrY + (pit->U_rot_2()/3.0); //???
-        const double ekinZ = mass * veloCorrZ * veloCorrZ + (pit->U_rot_2()/3.0); //???
+        const double ekinX = mass * veloCorrX * veloCorrX + (pit->U_rot_2()/3.0); //??? Wie Rotation?
+        const double ekinY = mass * veloCorrY * veloCorrY + (pit->U_rot_2()/3.0); //??? Wie Rotation?
+        const double ekinZ = mass * veloCorrZ * veloCorrZ + (pit->U_rot_2()/3.0); //??? Wie Rotation?
         ekin2_step.local.at(index) += ekinX + ekinY + ekinZ;
         ekin2Trans_step.local.at(index) += pit->U_kin();
         epot_step.local.at(index) += epot;
@@ -305,7 +308,9 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         const unsigned int cid = i/_numBinsGlobal;
         const unsigned int dof = _simulation.getEnsemble()->getComponent(cid)->getRotationalDegreesOfFreedom();
         const unsigned long numMols = numMolecules_step.global.at(i);
-        temperature_step_global.at(i) = ekin2_step.global.at(i) / ((3 + dof)*numMols);
+        if (numMols > 0ul) {
+            temperature_step_global.at(i) = ekin2_step.global.at(i) / ((3 + dof)*numMols);
+        }
         cout << i << " " << cid << " " << dof << " " << temperature_step_global.at(i) << endl;
     }
 
@@ -351,11 +356,11 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
 
                     double rZ = regionLowCorner[2]+0.5*dZ.at(idxStart);
                     while (rZ < regionHighCorner[2]) {
-                        _mTest.setr(0,rX);
-                        _mTest.setr(1,rY);
-                        _mTest.setr(2,rZ);
-                        const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
                         if (temperature_step_global.at(index) > 1e-9) {
+                            _mTest.setr(0,rX);
+                            _mTest.setr(1,rY);
+                            _mTest.setr(2,rZ);
+                            const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
                             double chemPot = exp(-deltaUpot/temperature_step_global.at(index));
                             if (std::isfinite(chemPot)) {
                                 chemPot_step.local.at(index) += chemPot;
@@ -378,7 +383,8 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             // NOTE: This differs from the lattice method as it does not take the local density into account
             Random* rnd = new Random();
 
-            const float domainShare = (regionSize[0]*regionSize[1]*regionSize[2])/(_globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2]);  // Share of volume of present rank from whole domain
+            // Share of volume of present rank from whole domain
+            const float domainShare = (regionSize[0]*regionSize[1]*regionSize[2])/(_globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2]); 
             const unsigned long nTest = static_cast<unsigned long>(domainShare*nTestGlobal);
 
     #if defined(_OPENMP)
@@ -389,11 +395,11 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 const double rY = regionLowCorner[1] + rnd->rnd()*regionSize[1];
                 const double rZ = regionLowCorner[2] + rnd->rnd()*regionSize[2];
                 const uint16_t index = std::min(_numBinsGlobal, static_cast<uint16_t>(rY/_binwidth));  // Index of bin
-                _mTest.setr(0,rX);
-                _mTest.setr(1,rY);
-                _mTest.setr(2,rZ);
-                const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
                 if (temperature_step_global.at(index) > 1e-9) {
+                    _mTest.setr(0,rX);
+                    _mTest.setr(1,rY);
+                    _mTest.setr(2,rZ);
+                    const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
                     double chemPot = exp(-deltaUpot/temperature_step_global.at(index));
                     if (std::isfinite(chemPot)) {
     #if defined(_OPENMP)
@@ -461,7 +467,8 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 const double Tz = ekin2Vect_step[2].global.at(i) / ((1 + dof/3.0)*numMols); // ??? dof
                 _numMolecules_accum.at(i)            += numMolecules_step.global.at(i);
                 _density_accum.at(i)                 += rho;
-                _temperature_accum.at(i)             += temperature_step_global.at(i); // oder (Tx+Ty+Tz)/3.0
+                _temperature_accum.at(i)             += temperature_step_global.at(i); // ??? oder (Tx+Ty+Tz)/3.0
+                cout << "EPS " << temperature_step_global.at(i) << " " << (Tx+Ty+Tz)/3.0 << endl;
                 _ekin_accum.at(i)                    += ekin2Trans_step.global.at(i) / numMols;
                 _epot_accum.at(i)                    += epot_step.global.at(i) / numMols;
                 _pressure_accum.at(i)                += rho * ( (ViX + ViY + ViZ)/(3.0*numMols) + temperature_step_global.at(i) ); // ??? Welche Temperature? Mit Drift? Statisch/dynamisch?
@@ -493,7 +500,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     }
 
     if (domainDecomp->getRank() == 0) {
-        unsigned long numOutputs = (_singleComp) ? 1ul : _simulation.getEnsemble()->getComponents()->size();
+        unsigned long numOutputs = (_singleComp) ? 1ul : (_simulation.getDomain()->getNumberOfComponents()+1);
 
         // Write output file
         std::stringstream ss;
@@ -572,7 +579,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 numSamples  = _countSamples.at(i);
             }
             if ((_chemPot_accum.at(i) > 0.0) and (_countNTest_accum.at(i) > 0ul) and (_countSamples.at(i) > 0ul)) {
-                numTest     = _countNTest_accum.at(i)        /_countSamples.at(i);
+                numTest     = _countNTest_accum.at(i)/_countSamples.at(i);
                 chemPot_res = -log(_chemPot_accum.at(i)/_countNTest_accum.at(i)) + log(rho);
             }
             ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << (i+0.5)*_binwidth;
