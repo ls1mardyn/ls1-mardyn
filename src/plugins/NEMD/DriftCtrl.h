@@ -15,8 +15,8 @@
 
 struct BinVectors {
 	CommVar<std::vector<uint64_t> > numParticles;
-	std::array<CommVar<std::vector<double> >,3> momentum;
-	std::array<std::vector<double>,3> mom_corr;
+	std::array<CommVar<std::vector<double> >,3> velocity;
+	std::array<std::vector<double>,3> velo_corr;
 };
 
 class ParticleContainer;

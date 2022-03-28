@@ -31,18 +31,18 @@ void DriftCtrl::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 	for(uint32_t cid = 0; cid < numComponents; ++cid) {
 		// local
 		_sampling.at(cid).numParticles.local.resize(_range.subdivision.numBins);
-		_sampling.at(cid).momentum.at(0).local.resize(_range.subdivision.numBins);
-		_sampling.at(cid).momentum.at(1).local.resize(_range.subdivision.numBins);
-		_sampling.at(cid).momentum.at(2).local.resize(_range.subdivision.numBins);
+		_sampling.at(cid).velocity.at(0).local.resize(_range.subdivision.numBins);
+		_sampling.at(cid).velocity.at(1).local.resize(_range.subdivision.numBins);
+		_sampling.at(cid).velocity.at(2).local.resize(_range.subdivision.numBins);
 		// global
 		_sampling.at(cid).numParticles.global.resize(_range.subdivision.numBins);
-		_sampling.at(cid).momentum.at(0).global.resize(_range.subdivision.numBins);
-		_sampling.at(cid).momentum.at(1).global.resize(_range.subdivision.numBins);
-		_sampling.at(cid).momentum.at(2).global.resize(_range.subdivision.numBins);
+		_sampling.at(cid).velocity.at(0).global.resize(_range.subdivision.numBins);
+		_sampling.at(cid).velocity.at(1).global.resize(_range.subdivision.numBins);
+		_sampling.at(cid).velocity.at(2).global.resize(_range.subdivision.numBins);
 		// corr
-		_sampling.at(cid).mom_corr.at(0).resize(_range.subdivision.numBins);
-		_sampling.at(cid).mom_corr.at(1).resize(_range.subdivision.numBins);
-		_sampling.at(cid).mom_corr.at(2).resize(_range.subdivision.numBins);
+		_sampling.at(cid).velo_corr.at(0).resize(_range.subdivision.numBins);
+		_sampling.at(cid).velo_corr.at(1).resize(_range.subdivision.numBins);
+		_sampling.at(cid).velo_corr.at(2).resize(_range.subdivision.numBins);
 	}
 	// reset local values
 	for(uint32_t cid = 0; cid < numComponents; ++cid)
@@ -50,9 +50,9 @@ void DriftCtrl::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 		for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID)
 		{
 			_sampling.at(cid).numParticles.local.at(yPosID) = 0;
-			_sampling.at(cid).momentum.at(0).local.at(yPosID) = 0.;
-			_sampling.at(cid).momentum.at(1).local.at(yPosID) = 0.;
-			_sampling.at(cid).momentum.at(2).local.at(yPosID) = 0.;
+			_sampling.at(cid).velocity.at(0).local.at(yPosID) = 0.;
+			_sampling.at(cid).velocity.at(1).local.at(yPosID) = 0.;
+			_sampling.at(cid).velocity.at(2).local.at(yPosID) = 0.;
 		}
 	}
 	global_log->info() << "[DriftCtrl] Init data structures for " << numComponents << " components." << std::endl;
@@ -137,16 +137,11 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			const uint32_t cid_zb = it->componentid();
 			const uint32_t cid_ub = cid_zb+1;
 			const uint32_t yPosID = floor( (yPos-_range.yl) / _range.subdivision.binWidth.actual);
-			const double mass = it->mass();
-			std::array<double,3> p;  // momentum
-			p.at(0) = it->v(0) * mass;
-			p.at(1) = it->v(1) * mass;
-			p.at(2) = it->v(2) * mass;
 
 			_sampling.at(cid_ub).numParticles.local.at(yPosID)++;
-			_sampling.at(cid_ub).momentum.at(0).local.at(yPosID) += p.at(0);
-			_sampling.at(cid_ub).momentum.at(1).local.at(yPosID) += p.at(1);
-			_sampling.at(cid_ub).momentum.at(2).local.at(yPosID) += p.at(2);
+			_sampling.at(cid_ub).velocity.at(0).local.at(yPosID) += it->v(0);
+			_sampling.at(cid_ub).velocity.at(1).local.at(yPosID) += it->v(1);
+			_sampling.at(cid_ub).velocity.at(2).local.at(yPosID) += it->v(2);
 		}
 	}
 	
@@ -163,9 +158,9 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID)
 			{
 				domainDecomp->collCommAppendUnsLong(_sampling.at(cid).numParticles.local.at(yPosID));
-				domainDecomp->collCommAppendDouble(_sampling.at(cid).momentum.at(0).local.at(yPosID));
-				domainDecomp->collCommAppendDouble(_sampling.at(cid).momentum.at(1).local.at(yPosID));
-				domainDecomp->collCommAppendDouble(_sampling.at(cid).momentum.at(2).local.at(yPosID));
+				domainDecomp->collCommAppendDouble(_sampling.at(cid).velocity.at(0).local.at(yPosID));
+				domainDecomp->collCommAppendDouble(_sampling.at(cid).velocity.at(1).local.at(yPosID));
+				domainDecomp->collCommAppendDouble(_sampling.at(cid).velocity.at(2).local.at(yPosID));
 				numValsCheck += 4;
 			}
 		}
@@ -183,15 +178,15 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 				double invNumParticles = 1./static_cast<double>(numParticles);
 				_sampling.at(cid).numParticles.global.at(yPosID) = numParticles;
 				//~ cout << "[" << nRank << "]: cid=" << cid << ",yPosID=" << yPosID << ",numParticles=" << numParticles << endl;
-				_sampling.at(cid).momentum.at(0).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
-				_sampling.at(cid).momentum.at(1).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
-				_sampling.at(cid).momentum.at(2).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
+				_sampling.at(cid).velocity.at(0).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
+				_sampling.at(cid).velocity.at(1).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
+				_sampling.at(cid).velocity.at(2).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
 				
 				// reset local values
 				_sampling.at(cid).numParticles.local.at(yPosID) = 0;
-				_sampling.at(cid).momentum.at(0).local.at(yPosID) = 0.;
-				_sampling.at(cid).momentum.at(1).local.at(yPosID) = 0.;
-				_sampling.at(cid).momentum.at(2).local.at(yPosID) = 0.;
+				_sampling.at(cid).velocity.at(0).local.at(yPosID) = 0.;
+				_sampling.at(cid).velocity.at(1).local.at(yPosID) = 0.;
+				_sampling.at(cid).velocity.at(2).local.at(yPosID) = 0.;
 			}
 		}
 		// finalize
@@ -202,9 +197,9 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 		{
 			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID)
 			{
-				_sampling.at(cid).mom_corr.at(0).at(yPosID) = _target.drift.at(0) - _sampling.at(cid).momentum.at(0).global.at(yPosID);
-				_sampling.at(cid).mom_corr.at(1).at(yPosID) = _target.drift.at(1) - _sampling.at(cid).momentum.at(1).global.at(yPosID);
-				_sampling.at(cid).mom_corr.at(2).at(yPosID) = _target.drift.at(2) - _sampling.at(cid).momentum.at(2).global.at(yPosID);
+				_sampling.at(cid).velo_corr.at(0).at(yPosID) = _target.drift.at(0) - _sampling.at(cid).velocity.at(0).global.at(yPosID);
+				_sampling.at(cid).velo_corr.at(1).at(yPosID) = _target.drift.at(1) - _sampling.at(cid).velocity.at(1).global.at(yPosID);
+				_sampling.at(cid).velo_corr.at(2).at(yPosID) = _target.drift.at(2) - _sampling.at(cid).velocity.at(2).global.at(yPosID);
 			}
 		}
 		
@@ -216,17 +211,18 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 				continue;
 			
 			// check if target component
-			const uint32_t cid_zb = it->componentid();
-			const uint32_t cid_ub = cid_zb+1;
-			if ((cid_ub != _target.cid) and (_target.cid != 0)) {
-				continue;
+			uint32_t cid_ub = 0;
+			if (_target.cid != 0) {
+				cid_ub = it->componentid() + 1;
+				if (cid_ub != _target.cid) {
+					continue;
+				}
 			}
 			
 			uint32_t yPosID = floor( (yPos-_range.yl) / _range.subdivision.binWidth.actual);
-			const double mass = it->mass();
-			it->setv(0, it->v(0) + _sampling.at(cid_ub).mom_corr.at(0).at(yPosID)/mass ); 
-			it->setv(1, it->v(1) + _sampling.at(cid_ub).mom_corr.at(1).at(yPosID)/mass );
-			it->setv(2, it->v(2) + _sampling.at(cid_ub).mom_corr.at(2).at(yPosID)/mass );
+			it->setv(0, it->v(0) + _sampling.at(cid_ub).velo_corr.at(0).at(yPosID) ); 
+			it->setv(1, it->v(1) + _sampling.at(cid_ub).velo_corr.at(1).at(yPosID) );
+			it->setv(2, it->v(2) + _sampling.at(cid_ub).velo_corr.at(2).at(yPosID) );
 		}
 	}
 	
@@ -239,7 +235,7 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			ofs.open(fname, std::ios::app);
 			ofs << setw(12) << simstep;
 			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID) {
-				ofs << FORMAT_SCI_MAX_DIGITS << _sampling.at(_target.cid).momentum.at(1).global.at(yPosID);
+				ofs << FORMAT_SCI_MAX_DIGITS << _sampling.at(_target.cid).velocity.at(1).global.at(yPosID);
 			}
 			ofs << std::endl;
 			ofs.close();
