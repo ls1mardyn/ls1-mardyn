@@ -23,7 +23,7 @@ class ParticleContainer;
 
 class Planar : public LongRangeCorrection, public ObserverBase, public ControlInstance {
 public:
-	Planar(double cutoffT,double cutoffLJ,Domain* domain,  DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation* simulation);
+	Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation* simulation);
 	virtual ~Planar();
 
 	/** @brief Read in XML configuration for Planar and all its included objects.
@@ -86,6 +86,7 @@ private:
 	std::vector<double> uLJ;
 	std::vector<double> vNLJ;
 	std::vector<double> vTLJ;
+	std::vector<double> vNDLJ;
 	std::vector<double> fLJ;
 	std::vector<double> rho_g;
 	std::vector<double> rho_l;

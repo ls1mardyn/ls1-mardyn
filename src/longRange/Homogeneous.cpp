@@ -5,16 +5,19 @@
 #include "Simulation.h"
 #include "longRange/Homogeneous.h"
 //#include "LongRangeCorrection.h"
+#include "molecules/Molecule.h"
+#include "particleContainer/ParticleContainer.h"
 
 #include "utils/Logger.h"
 using Log::global_log;
 
 using namespace std;
 
-Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* domain, Simulation* simulation) {
+Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* domain, ParticleContainer* particleContainer, Simulation* simulation) {
 	_cutoff = cutoffRadius;
 	_cutoffLJ = cutoffRadiusLJ;
 	_domain = domain;
+	_particleContainer = particleContainer;
 	_components = simulation->getEnsemble()->getComponents();
 }
 
@@ -137,6 +140,11 @@ void Homogeneous::calculateLongRange() {
 					   << endl;
 	_domain->setUpotCorr(UpotCorr);
 	_domain->setVirialCorr(VirialCorr);
+	
+	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
+		tempMol->setUConstCorr(UpotCorr/globalNumMolecules);
+		tempMol->setViConstCorr(VirialCorr/globalNumMolecules);
+	}
 }
 
 double Homogeneous::_TICCu(int n, double rc, double sigma2) {

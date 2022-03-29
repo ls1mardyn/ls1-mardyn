@@ -39,6 +39,8 @@ Planar::~Planar() {
 
 void Planar::init()
 {
+	global_log->info() << "[Long Range Correction] Initializing" << endl;
+
 	//_smooth=true; // Deactivate this for transient simulations!
 	_smooth=false;  //true; <-- only applicable to static density profiles
 	
@@ -72,6 +74,7 @@ void Planar::init()
 	resizeExactly(uLJ, _slabs*numLJSum);
 	resizeExactly(vNLJ, _slabs*numLJSum);
 	resizeExactly(vTLJ, _slabs*numLJSum);
+	resizeExactly(vNDLJ, _slabs*numLJSum);
 	resizeExactly(fLJ, _slabs*numLJSum);
 	resizeExactly(rho_g, _slabs*numLJSum);
 	resizeExactly(rho_l, _slabs*numLJSum);
@@ -262,6 +265,7 @@ void Planar::calculateLongRange() {
 		std::fill(uLJ.begin(), uLJ.end(), 0.0);
 		std::fill(vNLJ.begin(), vNLJ.end(), 0.0);
 		std::fill(vTLJ.begin(), vTLJ.end(), 0.0);
+		std::fill(vNDLJ.begin(), vNDLJ.end(), 0.0);
 		std::fill(fLJ.begin(), fLJ.end(), 0.0);
 		
 		std::fill(fDipole.begin(), fDipole.end(), 0.0);
@@ -371,11 +375,12 @@ void Planar::calculateLongRange() {
 	 	} 
 	     
 		// Distribution of the Force, Energy and Virial to every Node
-		_domainDecomposition->collCommInit(_slabs*(4*numLJSum+4*numDipoleSum));
+		_domainDecomposition->collCommInit(_slabs*(5*numLJSum+4*numDipoleSum));
 		for (unsigned i=0; i<_slabs*numLJSum; i++){
 			_domainDecomposition->collCommAppendDouble(uLJ[i]);
 			_domainDecomposition->collCommAppendDouble(vNLJ[i]);
 			_domainDecomposition->collCommAppendDouble(vTLJ[i]);
+			_domainDecomposition->collCommAppendDouble(vNDLJ[i]);
 			_domainDecomposition->collCommAppendDouble(fLJ[i]);
 		}
 		for (unsigned i=0; i<_slabs*numDipoleSum; i++){
@@ -389,6 +394,7 @@ void Planar::calculateLongRange() {
 			uLJ[i]=_domainDecomposition->collCommGetDouble();
 			vNLJ[i]=_domainDecomposition->collCommGetDouble();
 			vTLJ[i]=_domainDecomposition->collCommGetDouble();
+			vNDLJ[i]=_domainDecomposition->collCommGetDouble();
 			fLJ[i]=_domainDecomposition->collCommGetDouble();
 		}
 		for (unsigned i=0; i<_slabs*numDipoleSum; i++){
@@ -430,15 +436,21 @@ void Planar::calculateLongRange() {
 			Fa[1] = fLJ[index];
 			Upot_c += uLJ[index];
 			Virial_c += 2 * vTLJ[index] + vNLJ[index];
-			double Via[3] = {0.0, 0.0, 0.0};
+			double Via[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; /**< Virial tensor all elements: rxfx, ryfy, rzfz, rxfy, rxfz, ryfz, ryfx, rzfx, rzfy */
 			Via[0] = vTLJ[index];
 			Via[1] = vNLJ[index];
 			Via[2] = vTLJ[index];
+			Via[3] = vNDLJ[index];
+			Via[4] = vTLJ[index];
+			Via[5] = vNDLJ[index];
+			Via[6] = vNDLJ[index];
+			Via[7] = vTLJ[index];
+			Via[8] = vNDLJ[index];
 			if ((tempMol->r(1) >= _region.actPos[0]) && (tempMol->r(1) <= _region.actPos[1])) {
 				tempMol->Fljcenteradd(i, Fa);
 			}
 			tempMol->Viadd(Via);
-//			tempMol->Uadd(uLJ[loc+i*s+_slabs*numLJSum2[cid]]);      // Storing potential energy onto the molecules is currently not implemented!
+			tempMol->Uadd(uLJ[index]);
 		}
 		if (numDipole[cid] != 0){
 			int loc = tempMol->r(1) * delta_inv;
@@ -447,15 +459,17 @@ void Planar::calculateLongRange() {
 			Fa[1] = fDipole[index];
 			Upot_c += uDipole[index];
 			Virial_c += 2 * vTDipole[index] + vNDipole[index];
-			double Via[3] = {0.0, 0.0, 0.0};
+			double Via[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; /**< Virial tensor all elements: rxfx, ryfy, rzfz, rxfy, rxfz, ryfz, ryfx, rzfx, rzfy */
 			Via[0] = vTDipole[index];
 			Via[1] = vNDipole[index];
 			Via[2] = vTDipole[index];
+			Via[4] = vTDipole[index];
+			Via[7] = vTDipole[index];
 			if ((tempMol->r(1) >= _region.actPos[0]) && (tempMol->r(1) <= _region.actPos[1])) {
 				tempMol->Fadd(Fa); // Force is stored on the center of mass of the molecule!
 			}
 			tempMol->Viadd(Via);
-//			tempMol->Uadd(uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]); // Storing potential energy onto the molecules is currently not implemented!
+			tempMol->Uadd(uDipole[index]);
 		}
 	}
 
@@ -488,6 +502,7 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 	double termF = 8*3.1416*delta*eps*sig;
 	double termVN = 4*3.1416*delta*eps*sig*sig;
 	double termVT = 2*3.1416*delta*eps*sig*sig;
+	double termVND = 48*3.1416*delta*eps*sig;
 	const unsigned slabsHalf = _slabs / 2;
 	for (unsigned i=_domainDecomposition->getRank(); i<slabsHalf; i+=_domainDecomposition->getNumProcs()){
 		const int index_i = i+si*_slabs+_slabs*numLJSum2[ci];
@@ -518,6 +533,8 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 			uLJ[index_j] += termU*rhoI*(r12*0.2-r6*0.5)/r2;
 			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
 			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
+			vNDLJ[index_i] += termVND*rhoJ*(0.2*r12-(2/11)*r6)/r;
+			vNDLJ[index_j] += termVND*rhoI*(0.2*r12-(2/11)*r6)/r;
 			fLJ[index_i] += -termF*rhoJ*(r12-r6)/r;
 			fLJ[index_j] += termF*rhoI*(r12-r6)/r;
 		}
@@ -545,6 +562,8 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 			uLJ[index_j] += termU*rhoI*(r12*0.2-r6*0.5)/r2;
 			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
 			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
+			vNDLJ[index_i] += termVND*rhoJ*(0.2*r12-(2/11)*r6)/r;
+			vNDLJ[index_j] += termVND*rhoI*(0.2*r12-(2/11)*r6)/r;
 			fLJ[index_i] += termF*rhoJ*(r12-r6)/r;
 			fLJ[index_j] += -termF*rhoI*(r12-r6)/r;
 		}
@@ -581,6 +600,8 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 			uLJ[index_j] += termU*rhoI*(r12*0.2-r6*0.5)/r2;
 			vNLJ[index_i] += termVN*rhoJ*(r12-r6)/(r*r);
 			vNLJ[index_j] += termVN*rhoI*(r12-r6)/(r*r);
+			vNDLJ[index_i] += termVND*rhoJ*(0.2*r12-(2/11)*r6)/r;
+			vNDLJ[index_j] += termVND*rhoI*(0.2*r12-(2/11)*r6)/r;
 			fLJ[index_i] += -termF*rhoJ*(r12-r6)/r;
 			fLJ[index_j] += termF*rhoI*(r12-r6)/r;
 		}
@@ -608,6 +629,7 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 	double termVNRC=termFRC/2;
 	double termVTRC1=-3.1416*eps*delta*sig2/(2*t*rc)*((rcPt10-rcMt10)/5-(rcPt4-rcMt4)/2);
 	double termVTRC2=termURC/2;
+	double termVNDRC=-3.1416*eps*delta*(sig2/t)*(0.44*(rcPt10-rcMt10)-1.25*(rcPt4-rcMt4));
 	double r,r2;
 	double rhoI,rhoJ;
 	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()){
@@ -641,10 +663,13 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				double termF=-2*3.1416*eps*delta*sig2/(t*r)*((rPt10-rMt10)/5-(rPt4-rMt4)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
+				double termVND=-3.1416*eps*delta*(sig2/t)*(0.44*(rPt10-rMt10)-1.25*(rPt4-rMt4));
 				uLJ[index_i]+=rhoJ*termU;
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
+				vNDLJ[index_i]+=rhoJ*termVND*r;
+				vNDLJ[index_j]+=rhoI*termVND*r;
 				vTLJ[index_j]+=rhoI*termVT2;
 				vTLJ[index_i]+=rhoJ*termVT2;
 				fLJ[index_i]+=-rhoJ*termF*r;
@@ -655,6 +680,8 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vNDLJ[index_i]+=rhoJ*termVNDRC*r;
+				vNDLJ[index_j]+=rhoI*termVNDRC*r;
 				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=-rhoJ*termFRC*r;
@@ -683,10 +710,13 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				double termF=-2*3.1416*eps*delta*sig2/(t*r)*((rPt10-rMt10)/5-(rPt4-rMt4)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
+				double termVND=-3.1416*eps*delta*(sig2/t)*(0.44*(rPt10-rMt10)-1.25*(rPt4-rMt4));
 				uLJ[index_i]+=rhoJ*termU;
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
+				vNDLJ[index_i]+=rhoJ*termVND*r;
+				vNDLJ[index_j]+=rhoI*termVND*r;
 				vTLJ[index_i]+=rhoJ*termVT2;
 				vTLJ[index_j]+=rhoI*termVT2;
 				fLJ[index_i]+=rhoJ*termF*r;
@@ -697,6 +727,8 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vNDLJ[index_i]+=rhoJ*termVNDRC*r;
+				vNDLJ[index_j]+=rhoI*termVNDRC*r;
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
 				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=rhoJ*termFRC*r;
@@ -737,10 +769,13 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				double termF=-2*3.1416*eps*delta*sig2/(t*r)*((rPt10-rMt10)/5-(rPt4-rMt4)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
+				double termVND=-3.1416*eps*delta*(sig2/t)*(0.44*(rPt10-rMt10)-1.25*(rPt4-rMt4));
 				uLJ[index_i]+=rhoJ*termU;
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
+				vNDLJ[index_i]+=rhoJ*termVND*r;
+				vNDLJ[index_j]+=rhoI*termVND*r;
 				vTLJ[index_j]+=rhoI*termVT2;
 				vTLJ[index_i]+=rhoJ*termVT2;
 				fLJ[index_i]+=-rhoJ*termF*r;
@@ -751,6 +786,8 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vNDLJ[index_i]+=rhoJ*termVNDRC*r;
+				vNDLJ[index_j]+=rhoI*termVNDRC*r;
 				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=-rhoJ*termFRC*r;
@@ -795,6 +832,7 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 	double termVNRC=termFRC/2;
 	double termVTRC1=3.1416*eps*delta*sig3/(4*t1*t2*rc)*((rcPtP9-rcPtM9-rcMtM9+rcMtP9)/45-(rcPtP3-rcPtM3-rcMtM3+rcMtP3)/6);
 	double termVTRC2=termURC/2;
+	double termVNDRC=2*3.1416*eps*delta*sig3/(t1*t2)*((rcPtP9-rcPtM9-rcMtM9+rcMtP9)/81-(rcPtP3-rcPtM3-rcMtM3+rcMtP3)/9);
 	double r,r2;
 	double rhoI,rhoJ;
 	for (unsigned i=_domainDecomposition->getRank(); i<_slabs/2; i+=_domainDecomposition->getNumProcs()) {
@@ -838,10 +876,13 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				double termF=3.1416*eps*delta*sig3/(3*t1*t2*r)*((rPtP9-rPtM9-rMtM9+rMtP9)/15-(rPtP3-rPtM3-rMtM3+rMtP3)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
+				double termVND=2*3.1416*eps*delta*sig3/(t1*t2)*((rPtP9-rPtM9-rMtM9+rMtP9)/81-(rPtP3-rPtM3-rMtM3+rMtP3)/9);
 				uLJ[index_i]+=rhoJ*termU;
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
+				vNDLJ[index_i]+=rhoJ*termVND*r;
+				vNDLJ[index_j]+=rhoI*termVND*r;
 				vTLJ[index_j]+=rhoI*termVT2;
 				vTLJ[index_i]+=rhoJ*termVT2;
 				fLJ[index_i]+=-rhoJ*termF*r;
@@ -852,6 +893,8 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vNDLJ[index_i]+=rhoJ*termVNDRC*r;
+				vNDLJ[index_j]+=rhoI*termVNDRC*r;
 				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=-rhoJ*termFRC*r;
@@ -890,10 +933,13 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				double termF=3.1416*eps*delta*sig3/(3*t1*t2*r)*((rPtP9-rPtM9-rMtM9+rMtP9)/15-(rPtP3-rPtM3-rMtM3+rMtP3)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
+				double termVND=2*3.1416*eps*delta*sig3/(t1*t2)*((rPtP9-rPtM9-rMtM9+rMtP9)/81-(rPtP3-rPtM3-rMtM3+rMtP3)/9);
 				uLJ[index_i]+=rhoJ*termU;
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
+				vNDLJ[index_i]+=rhoJ*termVND*r;
+				vNDLJ[index_j]+=rhoI*termVND*r;
 				vTLJ[index_j]+=rhoI*termVT2;
 				vTLJ[index_i]+=rhoJ*termVT2;
 				fLJ[index_i]+=rhoJ*termF*r;
@@ -904,6 +950,8 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vNDLJ[index_i]+=rhoJ*termVNDRC*r;
+				vNDLJ[index_j]+=rhoI*termVNDRC*r;
 				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=rhoJ*termFRC*r;
@@ -954,10 +1002,13 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				double termF=3.1416*eps*delta*sig3/(3*t1*t2*r)*((rPtP9-rPtM9-rMtM9+rMtP9)/15-(rPtP3-rPtM3-rMtM3+rMtP3)/2);
 				double termVN=termF/2;
 				double termVT2=termU/2;
+				double termVND=2*3.1416*eps*delta*sig3/(t1*t2)*((rPtP9-rPtM9-rMtM9+rMtP9)/81-(rPtP3-rPtM3-rMtM3+rMtP3)/9);
 				uLJ[index_i]+=rhoJ*termU;
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
+				vNDLJ[index_i]+=rhoJ*termVND*r;
+				vNDLJ[index_j]+=rhoI*termVND*r;
 				vTLJ[index_j]+=rhoI*termVT2;
 				vTLJ[index_i]+=rhoJ*termVT2;
 				fLJ[index_i]+=-rhoJ*termF*r;
@@ -968,6 +1019,8 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
+				vNDLJ[index_i]+=rhoJ*termVNDRC*r;
+				vNDLJ[index_j]+=rhoI*termVNDRC*r;
 				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=-rhoJ*termFRC*r;
