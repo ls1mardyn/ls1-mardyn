@@ -25,11 +25,11 @@
             <writefrequency>INT</writefrequency>        <!-- Simstep to write out result file; default 10000 -->
             <stop>INT</stop>                            <!-- Simstep to stop sampling; default 1000000000 -->
             <singlecomponent>BOOL</singlecomponent>     <!-- Ignore component of the particles; default false -->
-            <chemicalPotential enable=BOOL>             <!-- Enable or disable sampling of chemical potential; default false -->
+            <chemicalpotential enable=BOOL>             <!-- Enable or disable sampling of chemical potential; default false -->
                 <lattice>BOOL</lattice>                 <!-- Choose if lattice or random insertion; Note: The random method does not take local density into account; default true -->
                 <factorNumTest>FLOAT</factorNumTest>    <!-- Factor which specifies number of inserted test particles (numTest = factor*numPartsGlobal); default 4.0 -->
                 <samplefrequency>INT</samplefrequency>  <!-- Sampling every INT step; default 50 -->
-            </chemicalPotential>
+            </chemicalpotential>
 * </plugin>
 * \endcode
 */
