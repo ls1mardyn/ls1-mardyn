@@ -59,38 +59,41 @@ jobs:
         git status
         mkdir build_${JOBNAME}
       # build testing & unit testing
-    - if: ${{ matrix.parall == 'SEQ' }}
-      name: Build sequential version
+    - name: Build and Unit Test 
       run: |
           cd build_${JOBNAME}
+
+          #translate matrix to ON/OFF for certain entries
+          if [[ ${{ matrix.parall }} == 'PAR' ]]
+          then
+            mpi_enabled='ON'
+          else
+            mpi_enabled='OFF'
+          fi
+          if [[ ${{ matrix.parall }} == 'PAR' ]] && [[ ${{ matrix.autopas }} == 'ON' ]]
+          then
+            alllbl_enabled='ON'
+          else
+            alllbl_enabled='OFF'
+          fi
+
           cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
                 -DENABLE_AUTOPAS=${{ matrix.autopas }} \
-                -DENABLE_ALLLBL=OFF \
+                -DENABLE_ALLLBL=$alllbl_enabled \
                 -DOPENMP=${{ matrix.openmp }} \
-                -DENABLE_MPI=OFF \
+                -DENABLE_MPI=$mpi_enabled \
                 -DENABLE_UNIT_TESTS=1 ..
           make -j2
+
           cd ..
-          ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
-      env:
-        CC: ${{ matrix.cc }}
-        CXX: ${{ matrix.cxx }}
-    - if: ${{ matrix.parall  == 'PAR' }}
-      name: Build parallel version
-      run: |
-          cd build_${JOBNAME}
-          #note: ALLLBL is enabled iff AutoPas is enabled.
-          cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
-                -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
-                -DENABLE_AUTOPAS=${{ matrix.autopas }} \
-                -DENABLE_ALLLBL=${{ matrix.autopas }} \
-                -DOPENMP=${{ matrix.openmp }} \
-                -DENABLE_MPI=ON \
-                -DENABLE_UNIT_TESTS=1 ..
-          make -j2
-          cd ..
-          mpirun -np ${{ matrix.procs }} --oversubscribe ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
+
+          if [[ ${{ matrix.parall }} == 'PAR' ]]
+          then
+            mpirun -np ${{ matrix.procs }} --oversubscribe ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
+          else
+            ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
+          fi
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
@@ -109,7 +112,7 @@ jobs:
           cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
                 -DENABLE_AUTOPAS=${{ matrix.autopas }} \
-                -DENABLE_ALLLBL=${{ matrix.autopas }} \
+                -DENABLE_ALLLBL=$allbl_enabled \
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=ON ..
           make -j2
