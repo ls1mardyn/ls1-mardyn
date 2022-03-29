@@ -93,9 +93,12 @@ void DriftCtrl::readXML(XMLfileUnits& xmlconfig)
 	
 	// range
 	_range.yl = 0.;
-	_range.yr = 100.;
+	_range.yr = _simulation.getDomain()->getGlobalLength(1);
+	std::string strVal;
 	xmlconfig.getNodeValue("range/yl", _range.yl);
-	xmlconfig.getNodeValue("range/yr", _range.yr);
+	xmlconfig.getNodeValue("range/yr", strVal);
+	// accept "box" as input
+	_range.yr = (strVal == "box") ? _simulation.getDomain()->getGlobalLength(1) : atof(strVal.c_str());
 	global_log->info() << "[DriftCtrl] Enabled in range yl,yr=" << _range.yl << "," << _range.yr << std::endl;
 	_range.width = _range.yr - _range.yl;
 	// subdivision
@@ -138,10 +141,13 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			const uint32_t cid_ub = cid_zb+1;
 			const uint32_t yPosID = floor( (yPos-_range.yl) / _range.subdivision.binWidth.actual);
 
-			_sampling.at(cid_ub).numParticles.local.at(yPosID)++;
-			_sampling.at(cid_ub).velocity.at(0).local.at(yPosID) += it->v(0);
-			_sampling.at(cid_ub).velocity.at(1).local.at(yPosID) += it->v(1);
-			_sampling.at(cid_ub).velocity.at(2).local.at(yPosID) += it->v(2);
+			std::array<uint32_t,2> cids = {0, cid_ub}; // add velocities to "all components" and respective component
+			for (int cid : cids) {
+				_sampling.at(cid).numParticles.local.at(yPosID)++;
+				_sampling.at(cid).velocity.at(0).local.at(yPosID) += it->v(0);
+				_sampling.at(cid).velocity.at(1).local.at(yPosID) += it->v(1);
+				_sampling.at(cid).velocity.at(2).local.at(yPosID) += it->v(2);
+			}
 		}
 	}
 	
