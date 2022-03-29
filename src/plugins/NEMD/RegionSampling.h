@@ -90,9 +90,9 @@ public:
 	void doDiscretisationFieldYR(int nDimension);
 
 	// molecule container loop methods
-	void sampleProfiles(Molecule* molecule, int nDimension);
-	void sampleVDF(Molecule* molecule, int nDimension);
-	void sampleFieldYR(Molecule* molecule);
+	void sampleProfiles(Molecule* molecule, int nDimension, unsigned long simstep);
+	void sampleVDF(Molecule* molecule, int nDimension, unsigned long simstep);
+	void sampleFieldYR(Molecule* molecule, unsigned long simstep);
 
 	// calc global values
 	void calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Domain* domain);

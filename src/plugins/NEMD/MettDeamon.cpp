@@ -1455,7 +1455,7 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 		this->changeComponentID(mol, mol.componentid() );
 		double y = mol.r(1);
 		nBinIndex = floor(y / _dBinWidth);
-		global_log->debug() << "y="<<y<<", nBinIndex="<<nBinIndex<<", _binVector.size()="<<binVector.size()<<endl;
+		global_log->debug() << "[MettDeamon] y="<<y<<", nBinIndex="<<nBinIndex<<", _binVector.size()="<<binVector.size()<<endl;
 		mardyn_assert(nBinIndex < binVector.size() );
 		switch(_parent->getMovingDirection() )
 		{
@@ -1474,7 +1474,7 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 		bool bIsInsideBB = domainDecomp->procOwnsPos(mol.r(0), mol.r(1), mol.r(2), domain);
 		bool bIsInsidePC = particleContainer->isInBoundingBox(mol.r_arr().data());
 		if(bIsInsideBB != bIsInsidePC)
-			global_log->debug() << "bIsInsideBB=" << bIsInsideBB << ", bIsInsidePC=" << bIsInsidePC << endl;
+			global_log->debug() << "[MettDeamon] bIsInsideBB=" << bIsInsideBB << ", bIsInsidePC=" << bIsInsidePC << endl;
 		if (bIsInsideBB)
 			binVector.at(nBinIndex).push_back(mol);
 	}

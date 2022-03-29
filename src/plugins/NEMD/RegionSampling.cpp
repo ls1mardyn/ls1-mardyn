@@ -958,9 +958,12 @@ void SampleRegion::doDiscretisationFieldYR(int nDimension)
 	_bDiscretisationDoneFieldYR = true;
 }
 
-void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
+void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension, unsigned long simstep)
 {
 	if(not _SamplingEnabledProfiles)
+		return;
+	
+	if( (simstep <= _initSamplingProfiles) or (simstep > _stopSamplingProfiles) )
 		return;
 
 	unsigned int nPosIndex;
@@ -1081,10 +1084,13 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 }
 
 
-void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
+void SampleRegion::sampleVDF(Molecule* molecule, int nDimension, unsigned long simstep)
 {
 
 	if(not _SamplingEnabledVDF)
+		return;
+
+	if( (simstep <= _initSamplingVDF) or (simstep > _stopSamplingVDF) )
 		return;
 
 	// return if discretisation is not done yet
@@ -1189,9 +1195,12 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 	}
 }
 
-void SampleRegion::sampleFieldYR(Molecule* molecule)
+void SampleRegion::sampleFieldYR(Molecule* molecule, unsigned long simstep)
 {
 	if(not _SamplingEnabledFieldYR)
+		return;
+
+	if( (simstep <= _initSamplingFieldYR) or (simstep > _stopSamplingFieldYR) )
 		return;
 
 	uint32_t nPosIndexY;
@@ -2074,9 +2083,9 @@ void RegionSampling::doSampling(Molecule* mol, DomainDecompBase* domainDecomp, u
 
 	for(it=_vecSampleRegions.begin(); it!=_vecSampleRegions.end(); ++it)
 	{
-		(*it)->sampleProfiles(mol, RS_DIMENSION_Y);
-		(*it)->sampleVDF(mol, RS_DIMENSION_Y);
-		(*it)->sampleFieldYR(mol);
+		(*it)->sampleProfiles(mol, RS_DIMENSION_Y, simstep);
+		(*it)->sampleVDF(mol, RS_DIMENSION_Y, simstep);
+		(*it)->sampleFieldYR(mol, simstep);
 	}
 }
 
