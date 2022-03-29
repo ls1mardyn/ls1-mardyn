@@ -172,9 +172,14 @@ INCLUDES = -I$(SRCDIR) -isystem $(SRCDIR)/../libs/rapidxml -isystem $(SRCDIR)/..
 BINARY_BASENAME = MarDyn
 ifneq ("$(wildcard $(SRCDIR)/../.git)","")
   $(info Building from a git version.)
-  GIT_VERSION = $(shell git rev-parse --short HEAD | sed -e "s/:/-/")
-  ifneq ($(GIT_VERSION),)
-    BINARY = $(BINARY_BASENAME)_$(GIT_VERSION).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
+  GIT_VERSION_BRANCH = $(shell git rev-parse --abbrev-ref HEAD | sed -e "s/:/-/")
+  GIT_VERSION_HASH = $(shell git rev-parse --short HEAD | sed -e "s/:/-/")
+  GIT_VERSION_IS_DIRTY = $(shell git diff --quiet || echo "_dirty")
+  $(shell sed "s=@MarDyn_VERSION_BRANCH@=$(GIT_VERSION_BRANCH)=g" MarDyn_version.h.in > MarDyn_version.h)
+  $(shell sed -i "s=@MarDyn_VERSION_HASH@=$(GIT_VERSION_HASH)=g" MarDyn_version.h)
+  $(shell sed -i "s=@MarDyn_VERSION_IS_DIRTY@=$(GIT_VERSION_IS_DIRTY)=g" MarDyn_version.h)
+  ifneq ($(GIT_VERSION_HASH),)
+    BINARY = $(BINARY_BASENAME)_$(GIT_VERSION_HASH).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
   else
     BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
   endif
