@@ -116,12 +116,34 @@ void DriftCtrl::readXML(XMLfileUnits& xmlconfig)
 	_target.drift.at(1) = 0.;
 	_target.drift.at(2) = 0.;
 	_target.cid = 1;
+	std::string strDirs = "xyz";
+	_directions.clear();
 	xmlconfig.getNodeValue("target/cid", _target.cid);
 	xmlconfig.getNodeValue("target/drift/vx", _target.drift.at(0));
 	xmlconfig.getNodeValue("target/drift/vy", _target.drift.at(1));
 	xmlconfig.getNodeValue("target/drift/vz", _target.drift.at(2));
+	xmlconfig.getNodeValue("target/directions", strDirs);
+
+	std::vector<char> vectDirs(strDirs.begin(), strDirs.end());
+	for (char &c: vectDirs) {
+		switch ( c ) {
+			case 'x':
+				_directions.push_back(0);
+				break;
+			case 'y':
+				_directions.push_back(1);
+				break;
+			case 'z':
+				_directions.push_back(2);
+				break;
+			default:
+				global_log->warning() << "[DriftCtrl] Unknown direction: " << c << endl;
+		}
+	}
+
+	global_log->info() << "[DriftCtrl] Directions to be controlled: " << strDirs << endl;
 	global_log->info() << "[DriftCtrl] Target drift vx,vy,vz="
-		<< _target.drift.at(0) << "," << _target.drift.at(1) << "," << _target.drift.at(2) << ", cid=" << _target.cid<< endl;
+		<< _target.drift.at(0) << "," << _target.drift.at(1) << "," << _target.drift.at(2) << ", cid=" << _target.cid << endl;
 }
 
 void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep)
@@ -226,9 +248,9 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			}
 			
 			uint32_t yPosID = floor( (yPos-_range.yl) / _range.subdivision.binWidth.actual);
-			it->setv(0, it->v(0) + _sampling.at(cid_ub).velo_corr.at(0).at(yPosID) ); 
-			it->setv(1, it->v(1) + _sampling.at(cid_ub).velo_corr.at(1).at(yPosID) );
-			it->setv(2, it->v(2) + _sampling.at(cid_ub).velo_corr.at(2).at(yPosID) );
+			for (const auto d : _directions) {
+				it->setv(d, it->v(d) + _sampling.at(cid_ub).velo_corr.at(d).at(yPosID) ); 
+			}
 		}
 	}
 	

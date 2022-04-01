@@ -46,6 +46,7 @@ public:
 			<target>
 				<cid>INT</cid>														<!-- target component id -->
 				<drift> <vx>DOUBLE</vx> <vy>DOUBLE</vy> <vz>DOUBLE</vz> </drift>	<!-- target drift vector (vx,vy,vz) -->
+				<directions>xyz</directions> 										<!-- Directions to correct drift -->
 			</target>
 			<range>
 				<yl>DOUBLE</yl> <yr>DOUBLE</yr>		<!-- range in which drift will be controled -->
@@ -90,6 +91,8 @@ private:
 	} _target;
 	
 	std::vector<BinVectors> _sampling;
+
+	std::vector<short> _directions;
 };
 
 #endif /*DRIFTCTRL_H_*/
