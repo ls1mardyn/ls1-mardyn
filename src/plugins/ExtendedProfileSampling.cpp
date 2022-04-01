@@ -24,6 +24,9 @@ ExtendedProfileSampling::ExtendedProfileSampling()
     _stopSampling(1000000000ul),
     _singleComp(false),
 
+    // Higher moments
+    _sampleHigherMoms(false),
+
     // Control: chemical potential
     _sampleChemPot(false),
     _lattice(true),
@@ -75,6 +78,7 @@ void ExtendedProfileSampling::readXML(XMLfileUnits& xmlconfig) {
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);  // Default: 10000
     xmlconfig.getNodeValue("stop", _stopSampling);  // Default: 1000000000
     xmlconfig.getNodeValue("singlecomponent", _singleComp);  // Default: false
+    xmlconfig.getNodeValue("highermoments", _sampleHigherMoms);  // Default: false
 
     xmlconfig.getNodeValue("chemicalpotential/@enable", _sampleChemPot);  // Default: false
     xmlconfig.getNodeValue("chemicalpotential/lattice", _lattice);  // Default: true
@@ -91,6 +95,7 @@ void ExtendedProfileSampling::readXML(XMLfileUnits& xmlconfig) {
     global_log->info() << "[ExtendedProfileSampling] Start:WriteFreq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
     global_log->info() << "[ExtendedProfileSampling] Binwidth: " << _binwidth << std::endl;
     if (_singleComp) { global_log->info() << "[ExtendedProfileSampling] All components treated as single one" << std::endl; }
+    if (_sampleHigherMoms) { global_log->info() << "[ExtendedProfileSampling] Sampling of higher moments enabled" << std::endl; }
     if (_sampleChemPot) {
         global_log->info() << "[ExtendedProfileSampling] Sampling of chemical potential enabled with a sampling frequency of " << _samplefrequency << std::endl;
         global_log->info() << "[ExtendedProfileSampling] " << _factorNumTest << " * numParticles will be inserted " << insMethod << std::endl;
@@ -140,19 +145,70 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     std::array<std::vector<double>, 3> veloDrift_step_global;       // Drift velocity per particle; global value as calculated with global values
     std::vector<double> temperature_step_global (_lenVector, 0.0);  // Required for sampling of chem. pot.
 
+    CommVar<std::vector<double>> hmDelta_step;
+    std::array<CommVar<std::vector<double>>, 9> hmPressure_step;
+    std::array<CommVar<std::vector<double>>, 9> hmR_step;
+    std::array<CommVar<std::vector<double>>, 27> hmM_step;
+
+    if (_sampleHigherMoms) {
+
+        hmDelta_step.local.resize(_lenVector);
+
+        hmDelta_step.global.resize(_lenVector);
+
+        std::fill(hmDelta_step.local.begin(), hmDelta_step.local.end(), 0.0f);
+
+        std::fill(hmDelta_step.global.begin(), hmDelta_step.global.end(), 0.0f);
+
+        for (unsigned short d = 0; d < 9; d++) {
+            hmPressure_step.at(d).local.resize(_lenVector);
+            hmR_step.at(d).local.resize(_lenVector);
+            hmM_step.at(d).local.resize(_lenVector);
+            hmM_step.at(d+9).local.resize(_lenVector);
+            hmM_step.at(d+18).local.resize(_lenVector);
+
+            hmPressure_step.at(d).global.resize(_lenVector);
+            hmR_step.at(d).global.resize(_lenVector);
+            hmM_step.at(d).global.resize(_lenVector);
+            hmM_step.at(d+9).global.resize(_lenVector);
+            hmM_step.at(d+18).global.resize(_lenVector);
+
+            std::fill(hmPressure_step.at(d).local.begin(), hmPressure_step.at(d).local.end(), 0.0f);
+            std::fill(hmR_step.at(d).local.begin(),        hmR_step.at(d).local.end(), 0.0f);
+            std::fill(hmM_step.at(d).local.begin(),        hmM_step.at(d).local.end(), 0.0f);
+            std::fill(hmM_step.at(d).local.begin(),        hmM_step.at(d).local.end(), 0.0f);
+            std::fill(hmM_step.at(d).local.begin(),        hmM_step.at(d).local.end(), 0.0f);
+
+            std::fill(hmPressure_step.at(d).global.begin(), hmPressure_step.at(d).global.end(), 0.0f);
+            std::fill(hmR_step.at(d).global.begin(),        hmR_step.at(d).global.end(), 0.0f);
+            std::fill(hmM_step.at(d).global.begin(),        hmM_step.at(d).global.end(), 0.0f);
+            std::fill(hmM_step.at(d).global.begin(),        hmM_step.at(d).global.end(), 0.0f);
+            std::fill(hmM_step.at(d).global.begin(),        hmM_step.at(d).global.end(), 0.0f);
+        }
+
+    } else {
+        hmDelta_step.local.clear();
+        hmDelta_step.global.clear();
+        for (unsigned short d = 0; d < 9; d++) {
+            hmPressure_step.at(d).local.clear();
+            hmR_step.at(d).local.clear();
+            hmM_step.at(d).local.clear();
+            hmM_step.at(d+9).local.clear();
+            hmM_step.at(d+18).local.clear();
+            hmPressure_step.at(d).global.clear();
+            hmR_step.at(d).global.clear();
+            hmM_step.at(d).global.clear();
+            hmM_step.at(d+9).global.clear();
+            hmM_step.at(d+18).global.clear();
+        }
+    }
+
     numMolecules_step.local.resize(_lenVector);
     ekin2_step.local.resize(_lenVector);
     ekin2Trans_step.local.resize(_lenVector);
     epot_step.local.resize(_lenVector);
     chemPot_step.local.resize(_lenVector);
     countNTest_step.local.resize(_lenVector);
-    
-    for (unsigned short d = 0; d < 3; d++) {
-        ekin2Vect_step.at(d).local.resize(_lenVector);
-        velocityVect_step.at(d).local.resize(_lenVector);
-        virialVect_step.at(d).local.resize(_lenVector);
-        energyfluxVect_step.at(d).local.resize(_lenVector);
-    }
 
     numMolecules_step.global.resize(_lenVector);
     ekin2_step.global.resize(_lenVector);
@@ -162,6 +218,11 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     countNTest_step.global.resize(_lenVector);
     
     for (unsigned short d = 0; d < 3; d++) {
+        ekin2Vect_step.at(d).local.resize(_lenVector);
+        velocityVect_step.at(d).local.resize(_lenVector);
+        virialVect_step.at(d).local.resize(_lenVector);
+        energyfluxVect_step.at(d).local.resize(_lenVector);
+
         ekin2Vect_step.at(d).global.resize(_lenVector);
         velocityVect_step.at(d).global.resize(_lenVector);
         virialVect_step.at(d).global.resize(_lenVector);
@@ -176,13 +237,6 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     std::fill(epot_step.local.begin(),         epot_step.local.end(), 0.0f);
     std::fill(chemPot_step.local.begin(),      chemPot_step.local.end(), 0.0f);
     std::fill(countNTest_step.local.begin(),   countNTest_step.local.end(), 0ul);
-    
-    for (unsigned short d = 0; d < 3; d++) {
-        std::fill(ekin2Vect_step.at(d).local.begin(),      ekin2Vect_step.at(d).local.end(), 0.0f);
-        std::fill(velocityVect_step.at(d).local.begin(),   velocityVect_step.at(d).local.end(), 0.0f);
-        std::fill(virialVect_step.at(d).local.begin(),     virialVect_step.at(d).local.end(), 0.0f);
-        std::fill(energyfluxVect_step.at(d).local.begin(), energyfluxVect_step.at(d).local.end(), 0.0f);
-    }
 
     std::fill(numMolecules_step.global.begin(), numMolecules_step.global.end(), 0ul);
     std::fill(ekin2_step.global.begin(),        ekin2_step.global.end(), 0.0f);
@@ -192,6 +246,11 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     std::fill(countNTest_step.global.begin(),   countNTest_step.global.end(), 0ul);
     
     for (unsigned short d = 0; d < 3; d++) {
+        std::fill(ekin2Vect_step.at(d).local.begin(),      ekin2Vect_step.at(d).local.end(), 0.0f);
+        std::fill(velocityVect_step.at(d).local.begin(),   velocityVect_step.at(d).local.end(), 0.0f);
+        std::fill(virialVect_step.at(d).local.begin(),     virialVect_step.at(d).local.end(), 0.0f);
+        std::fill(energyfluxVect_step.at(d).local.begin(), energyfluxVect_step.at(d).local.end(), 0.0f);
+
         std::fill(ekin2Vect_step.at(d).global.begin(),      ekin2Vect_step.at(d).global.end(), 0.0f);
         std::fill(velocityVect_step.at(d).global.begin(),   velocityVect_step.at(d).global.end(), 0.0f);
         std::fill(virialVect_step.at(d).global.begin(),     virialVect_step.at(d).global.end(), 0.0f);
@@ -246,6 +305,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         const double veloCorrX = pit->v(0) - veloDrift_step_global[0].at(index);
         const double veloCorrY = pit->v(1) - veloDrift_step_global[1].at(index);
         const double veloCorrZ = pit->v(2) - veloDrift_step_global[2].at(index);
+        const double veloCorrSqrt = veloCorrX*veloCorrX + veloCorrY*veloCorrY + veloCorrZ*veloCorrZ; // Squared velocity of particle without drift
         const double veloX = pit->v(0);
         const double veloY = pit->v(1);
         const double veloZ = pit->v(2);
@@ -269,9 +329,25 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             virialVect_step[0].local.at(indexCID) += pit->Vi(0);
             virialVect_step[1].local.at(indexCID) += pit->Vi(1);
             virialVect_step[2].local.at(indexCID) += pit->Vi(2);
+            if (pit->getID() == 330) {cout << pit->Vi(0) << " " << pit->Vi(3) << " " << pit->Vi(4) << std::endl;
+                                      cout << pit->Vi(6) << " " << pit->Vi(1) << " " << pit->Vi(5) << std::endl;
+                                      cout << pit->Vi(7) << " " << pit->Vi(8) << " " << pit->Vi(2) << std::endl;}
             energyfluxVect_step[0].local.at(indexCID) += (pit->U_kin() + epot)*veloX + (pit->Vi(0)*veloX + pit->Vi(3)*veloY + pit->Vi(4)*veloZ);
             energyfluxVect_step[1].local.at(indexCID) += (pit->U_kin() + epot)*veloY + (pit->Vi(6)*veloX + pit->Vi(1)*veloY + pit->Vi(5)*veloZ);
             energyfluxVect_step[2].local.at(indexCID) += (pit->U_kin() + epot)*veloZ + (pit->Vi(7)*veloX + pit->Vi(8)*veloY + pit->Vi(2)*veloZ);
+            if (_sampleHigherMoms) {
+                const std::array<double, 3> velos = {veloCorrX, veloCorrY, veloCorrZ};
+                hmDelta_step.local.at(indexCID) = veloCorrSqrt*veloCorrSqrt;
+                for (unsigned short i = 0; i < 3; i++) {
+                    for (unsigned short j = 0; j < 3; j++) {
+                        hmPressure_step[3*i+j].local.at(indexCID) = velos[i]*velos[j];  // Pressure; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
+                        hmR_step[3*i+j].local.at(indexCID)    = velos[i]*velos[j]*veloCorrSqrt;  // R; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
+                        hmM_step[3*i+j].local.at(indexCID)    = veloCorrX*velos[i]*velos[j];
+                        hmM_step[3*i+j+9].local.at(indexCID)  = veloCorrY*velos[i]*velos[j];
+                        hmM_step[3*i+j+18].local.at(indexCID) = veloCorrZ*velos[i]*velos[j];
+                    }
+                }
+            }
         }
     }
 
@@ -286,16 +362,15 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
 
     for (unsigned long i = 0; i < _lenVector; i++) {
         const unsigned int cid = i/_numBinsGlobal;
-        unsigned int dof_rot {0};
         unsigned int dof_total {0};
         if (cid == 0) {
             for (unsigned long cj = 0; cj < numComps; cj++) {
-                dof_rot = _simulation.getEnsemble()->getComponent(cj)->getRotationalDegreesOfFreedom();
+                const unsigned int dof_rot = _simulation.getEnsemble()->getComponent(cj)->getRotationalDegreesOfFreedom();
                 dof_total += (3 + dof_rot)*numMolecules_step.global.at((cj+1)*_numBinsGlobal + i);
             }
         } else {
             const unsigned long numMols = numMolecules_step.global.at(i);
-            dof_rot = _simulation.getEnsemble()->getComponent(cid-1)->getRotationalDegreesOfFreedom();
+            const unsigned int dof_rot = _simulation.getEnsemble()->getComponent(cid-1)->getRotationalDegreesOfFreedom();
             dof_total = (3 + dof_rot)*numMols;
         }
         if (dof_total > 0ul) {
@@ -424,6 +499,16 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     MPI_Reduce(energyfluxVect_step[2].local.data(), energyfluxVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(chemPot_step.local.data(), chemPot_step.global.data(), _numBinsGlobal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(countNTest_step.local.data(), countNTest_step.global.data(), _numBinsGlobal, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (_sampleHigherMoms) {
+        MPI_Reduce(hmDelta_step.local.data(), hmDelta_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        for (unsigned short d = 0; d < 9; d++) {
+            MPI_Reduce(hmPressure_step[d].local.data(), hmPressure_step[d].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(hmR_step[d].local.data(), hmR_step[d].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(hmM_step[d].local.data(), hmM_step[d].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(hmM_step[d+9].local.data(), hmM_step[d+9].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(hmM_step[d+18].local.data(), hmM_step[d+18].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        }
+    }
 #else
 	for (unsigned long i = 0; i < _lenVector; i++) {
         ekin2Trans_step.global.at(i) = ekin2Trans_step.local.at(i);
@@ -439,6 +524,16 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         energyfluxVect_step[2].global.at(i) = energyfluxVect_step[2].local.at(i);
         chemPot_step.global.at(i) = chemPot_step.local.at(i);
         countNTest_step.global.at(i) = countNTest_step.local.at(i);
+        if (_sampleHigherMoms) {
+            hmDelta_step.global.at(i) = hmDelta_step.local.at(i);
+            for (unsigned short d = 0; d < 9; d++) {
+                hmPressure_step[d].global.at(i) = hmPressure_step[d].local.at(i);
+                hmR_step[d].global.at(i)    = hmR_step[d].local.at(i);
+                hmM_step[d].global.at(i)    = hmM_step[d].local.at(i);
+                hmM_step[d+9].global.at(i)  = hmM_step[d+9].local.at(i);
+                hmM_step[d+18].global.at(i) = hmM_step[d+18].local.at(i);
+            }
+        }
 	}
 #endif
 
@@ -490,6 +585,17 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 _energyfluxVect_accum[2].at(i)       += energyfluxVect_step[2].global.at(i) / numMols;
 
                 _countSamples.at(i)++;
+
+                if (_sampleHigherMoms) {
+                    _hmDelta_accum.at(i)             += hmDelta_step.global.at(i) / numMols;
+                    for (unsigned short d = 0; d < 9; d++) {
+                        _hmPressure_accum[d].at(i)   += hmPressure_step[d].global.at(i) / numMols;
+                        _hmR_accum[d].at(i)          += hmR_step[d].global.at(i) / numMols;
+                        _hmM_accum[d].at(i)          += hmM_step[d].global.at(i) / numMols;
+                        _hmM_accum[d+9].at(i)        += hmM_step[d+9].global.at(i) / numMols;
+                        _hmM_accum[d+18].at(i)       += hmM_step[d+18].global.at(i) / numMols;
+                    }
+                }
             }
         }
     }
@@ -500,6 +606,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         if (domainDecomp->getRank() == 0) {
             unsigned long numOutputs = (_singleComp) ? 1ul : (_simulation.getDomain()->getNumberOfComponents()+1);
 
+            {
             // Write output file
             std::stringstream ss;
             ss << std::setw(9) << std::setfill('0') << simstep;
@@ -609,6 +716,80 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 ofs << std::endl;
             }
             ofs.close();
+            }
+
+            // Write output for higher moments
+            if (_sampleHigherMoms) {
+                std::map<std::string, short> dirs { {"x", 0}, {"y", 1}, {"z", 2}, };
+                std::stringstream ss;
+                ss << std::setw(9) << std::setfill('0') << simstep;
+                const std::string fname = "ExtendedProfileSampling_HigherMoments_TS"+ss.str()+".dat";
+                std::ofstream ofs;
+                ofs.open(fname, std::ios::out);
+                ofs << setw(24) << "pos";                           // Bin position
+                for (unsigned long cid = 0; cid < numOutputs; cid++) {
+                    ofs << setw(22) << "delta["<<cid<<"]";
+                    for (auto& [k_i, v_i]: dirs) {
+                        for (auto& [k_j, v_j]: dirs) {
+                            ofs << setw(22) << "p_" << k_j << k_j << "[" << cid << "]";
+                        }
+                    }
+                    for (auto& [k_i, v_i]: dirs) {
+                        for (auto& [k_j, v_j]: dirs) {
+                            ofs << setw(22) << "R_" << k_i << k_j << "[" << cid << "]";
+                        }
+                    }
+                    for (auto& [k_i, v_i]: dirs) {
+                        for (auto& [k_j, v_j]: dirs) {
+                            for (auto& [k_k, v_k]: dirs) {
+                                ofs << setw(22) << "m_" << k_i << k_j << k_k << "[" << cid << "]";
+                            }
+                        }
+                    }
+                }
+                ofs << std::endl;
+
+                for (unsigned long idx = 0; idx < _numBinsGlobal; idx++) {
+                    ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << (idx+0.5)*_binwidth;
+                    for (unsigned long cid = 0; cid < numOutputs; cid++) {
+                        unsigned long i = idx + cid*_numBinsGlobal;
+                        double delta {0.0};
+                        std::array<double, 9> p = {0.0};
+                        std::array<double, 9> R = {0.0};
+                        std::array<double, 27> m = {0.0};
+                        if (_countSamples.at(i) > 0ul) {
+                            delta = _hmDelta_accum.at(i)/_countSamples.at(i);
+                            for (unsigned short d = 0; d < 9; d++) {
+                                p[d] = _hmPressure_accum[d].at(i);
+                                R[d] = _hmR_accum[d].at(i);
+                                m[d]    = _hmM_accum[d].at(i);
+                                m[d+9]  = _hmM_accum[d+9].at(i);
+                                m[d+18] = _hmM_accum[d+18].at(i);
+                            }
+                        }
+                        ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << delta;
+                        for (auto& [k_i, v_i]: dirs) {
+                            for (auto& [k_j, v_j]: dirs) {
+                                ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << p[3*v_i+v_j];
+                            }
+                        }
+                        for (auto& [k_i, v_i]: dirs) {
+                            for (auto& [k_j, v_j]: dirs) {
+                                ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << p[3*v_i+v_j];
+                            }
+                        }
+                        for (auto& [k_i, v_i]: dirs) {
+                            for (auto& [k_j, v_j]: dirs) {
+                                for (auto& [k_k, v_k]: dirs) {
+                                    ofs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << p[9*v_i+3*v_j+v_k];
+                                }
+                            }
+                        }
+                    }
+                    ofs << std::endl;
+                }
+                ofs.close();
+            }
         }
 
         // Reset vectors to zero
@@ -618,6 +799,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
 
 // Resize vectors
 void ExtendedProfileSampling::resizeVectors() {
+    
     _numMolecules_accum.resize(_lenVector);
     _density_accum.resize(_lenVector);
     _temperature_accum.resize(_lenVector);
@@ -635,6 +817,27 @@ void ExtendedProfileSampling::resizeVectors() {
     }
 
     _countSamples.resize(_lenVector);
+
+    if (_sampleHigherMoms) {
+        _hmDelta_accum.resize(_lenVector);
+        for (unsigned short d = 0; d < 9; d++) {
+            _hmPressure_accum.at(d).resize(_lenVector);
+            _hmR_accum.at(d).resize(_lenVector);
+            _hmM_accum.at(d).resize(_lenVector);
+            _hmM_accum.at(d+9).resize(_lenVector);
+            _hmM_accum.at(d+18).resize(_lenVector);
+        }
+    } else {
+        _hmDelta_accum.clear();
+        for (unsigned short d = 0; d < 9; d++) {
+            _hmPressure_accum.at(d).clear();
+            _hmR_accum.at(d).clear();
+            _hmM_accum.at(d).clear();
+            _hmM_accum.at(d+9).clear();
+            _hmM_accum.at(d+18).clear();
+        }
+    }
+    
 }
 
 // Fill vectors with zeros
@@ -656,4 +859,15 @@ void ExtendedProfileSampling::resetVectors() {
     }
 
     std::fill(_countSamples.begin(), _countSamples.end(), 0ul);
+
+    if (_sampleHigherMoms) {
+        std::fill(_hmDelta_accum.begin(), _hmDelta_accum.end(), 0.0f);
+        for (unsigned short d = 0; d < 9; d++) {
+            std::fill(_hmPressure_accum.at(d).begin(), _hmPressure_accum.at(d).end(), 0.0f);
+            std::fill(_hmR_accum.at(d).begin(), _hmR_accum.at(d).end(), 0.0f);
+            std::fill(_hmM_accum.at(d).begin(), _hmM_accum.at(d).end(), 0.0f);
+            std::fill(_hmM_accum.at(d+9).begin(), _hmM_accum.at(d+9).end(), 0.0f);
+            std::fill(_hmM_accum.at(d+18).begin(), _hmM_accum.at(d+18).end(), 0.0f);
+        }
+    }
 }
