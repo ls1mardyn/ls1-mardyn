@@ -134,11 +134,14 @@ void VectorizedCellProcessor::endTraversal() {
 		const int tid = mardyn_get_thread_num();
 
 		// reduce vectors and clear local variable
-		vcp_real_accum thread_upot = 0.0, thread_upotXpoles = 0.0, thread_virial = 0.0, thread_myRF = 0.0;
+		vcp_real_accum thread_upot = 0.0, thread_upotXpoles = 0.0;
+		vcp_real_accum thread_virial = 0.0, thread_virialND1 = 0.0, thread_virialND2 = 0.0, thread_myRF = 0.0;
 
 		load_hSum_Store_Clear(&thread_upot, _threadData[tid]->_upot6ljV);
 		load_hSum_Store_Clear(&thread_upotXpoles, _threadData[tid]->_upotXpolesV);
 		load_hSum_Store_Clear(&thread_virial, _threadData[tid]->_virialV);
+		load_hSum_Store_Clear(&thread_virialND1, _threadData[tid]->_virialND1V);
+		load_hSum_Store_Clear(&thread_virialND2, _threadData[tid]->_virialND2V);
 		load_hSum_Store_Clear(&thread_myRF, _threadData[tid]->_myRFV);
 
 		// add to global sum

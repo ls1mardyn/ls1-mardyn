@@ -143,12 +143,16 @@ private:
 			_upot6ljV.resize(_numVectorElements);
 			_upotXpolesV.resize(_numVectorElements);
 			_virialV.resize(_numVectorElements);
+			_virialND1V.resize(_numVectorElements); //The upper right minor diagonal non-diagonal elements of the virial tensor: rxfy, rxfz, ryfz.
+			_virialND2V.resize(_numVectorElements); //The lower left minor diagonal non-diagonal elements of the virial tensor: ryfx, rzfx, rzfy.
 			_myRFV.resize(_numVectorElements);
 
 			for (size_t j = 0; j < _numVectorElements; ++j) {
 				_upot6ljV[j] = 0.0;
 				_upotXpolesV[j] = 0.0;
 				_virialV[j] = 0.0;
+				_virialND1V[j] = 0.0;
+				_virialND2V[j] = 0.0;
 				_myRFV[j] = 0.0;
 			}
 		}
@@ -180,7 +184,7 @@ private:
 		 */
 		vcp_lookupOrMask_single* _quadrupoles_dist_lookup;
 
-		AlignedArray<vcp_real_accum> _upot6ljV, _upotXpolesV, _virialV, _myRFV;
+		AlignedArray<vcp_real_accum> _upot6ljV, _upotXpolesV, _virialV, _virialND1V, _virialND2V, _myRFV;
 	};
 
 	std::vector<VLJCPThreadData *> _threadData;
