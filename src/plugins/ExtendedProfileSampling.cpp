@@ -329,9 +329,6 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             virialVect_step[0].local.at(indexCID) += pit->Vi(0);
             virialVect_step[1].local.at(indexCID) += pit->Vi(1);
             virialVect_step[2].local.at(indexCID) += pit->Vi(2);
-            if (pit->getID() == 330) {cout << pit->Vi(0) << " " << pit->Vi(3) << " " << pit->Vi(4) << std::endl;
-                                      cout << pit->Vi(6) << " " << pit->Vi(1) << " " << pit->Vi(5) << std::endl;
-                                      cout << pit->Vi(7) << " " << pit->Vi(8) << " " << pit->Vi(2) << std::endl;}
             energyfluxVect_step[0].local.at(indexCID) += (pit->U_kin() + epot)*veloX + (pit->Vi(0)*veloX + pit->Vi(3)*veloY + pit->Vi(4)*veloZ);
             energyfluxVect_step[1].local.at(indexCID) += (pit->U_kin() + epot)*veloY + (pit->Vi(6)*veloX + pit->Vi(1)*veloY + pit->Vi(5)*veloZ);
             energyfluxVect_step[2].local.at(indexCID) += (pit->U_kin() + epot)*veloZ + (pit->Vi(7)*veloX + pit->Vi(8)*veloY + pit->Vi(2)*veloZ);
