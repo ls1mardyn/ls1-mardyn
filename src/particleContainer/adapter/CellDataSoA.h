@@ -35,7 +35,7 @@ public:
 	 * \brief
 	 */
 	enum class QuantityType {
-		MOL_POSITION, CENTER_POSITION, FORCE, VIRIAL
+		MOL_POSITION, CENTER_POSITION, FORCE, VIRIAL, VIRIALND1, VIRIALND2
 	};
 
 	size_t _ljc_num;
@@ -56,6 +56,8 @@ public:
 	ConcatenatedSites<vcp_real_calc> _centers_r;
 	ConcatenatedSites<vcp_real_accum> _centers_f;
 	ConcatenatedSites<vcp_real_accum> _centers_V;
+	ConcatenatedSites<vcp_real_accum> _centers_VND1;
+	ConcatenatedSites<vcp_real_accum> _centers_VND2;
 
 	// entries per lj center
 	AlignedArray<vcp_ljc_id_t> _ljc_id;
@@ -95,13 +97,13 @@ public:
 	}
 
 	vcp_inline vcp_real_accum* getBeginAccum(QuantityType qt, SiteType st, CoordinateType coord) {
-		mardyn_assert(qt == QuantityType::FORCE or qt == QuantityType::VIRIAL);
+		mardyn_assert(qt == QuantityType::FORCE or qt == QuantityType::VIRIAL or qt == QuantityType::VIRIALND1 or qt == QuantityType::VIRIALND2);
 		ConcatenatedSites<vcp_real_accum> * thisQuantity = resolveQuantityAccum(qt);
 		return thisQuantity->getBeginPointer(st, coord);
 	}
 
 	vcp_inline const vcp_real_accum* getBeginAccum(QuantityType qt, SiteType st, CoordinateType coord) const {
-		mardyn_assert(qt == QuantityType::FORCE or qt == QuantityType::VIRIAL);
+		mardyn_assert(qt == QuantityType::FORCE or qt == QuantityType::VIRIAL or qt == QuantityType::VIRIALND1 or qt == QuantityType::VIRIALND2);
 		const ConcatenatedSites<vcp_real_accum> * thisQuantity = resolveQuantityAccum(qt);
 		return thisQuantity->getBeginPointer(st, coord);
 	}
@@ -227,6 +229,8 @@ public:
 		_centers_r	.resize(ljcenters_arg, charges_arg, dipoles_arg, quadrupoles_arg);
 		_centers_f	.resize(ljcenters_arg, charges_arg, dipoles_arg, quadrupoles_arg);
 		_centers_V	.resize(ljcenters_arg, charges_arg, dipoles_arg, quadrupoles_arg);
+		_centers_VND1.resize(ljcenters_arg, charges_arg, dipoles_arg, quadrupoles_arg);
+		_centers_VND2.resize(ljcenters_arg, charges_arg, dipoles_arg, quadrupoles_arg);
 
 		// entries per lj center
 		_ljc_id.resize_zero_shrink(_ljc_num, true);
@@ -259,6 +263,8 @@ public:
 		total += _centers_r.get_dynamic_memory();
 		total += _centers_f.get_dynamic_memory();
 		total += _centers_V.get_dynamic_memory();
+		total += _centers_VND1.get_dynamic_memory();
+		total += _centers_VND2.get_dynamic_memory();
 
 		total += _dipoles_p.get_dynamic_memory();
 		total += _dipoles_e.get_dynamic_memory();
@@ -307,7 +313,7 @@ private:
 	}
 
 	vcp_inline ConcatenatedSites<vcp_real_accum>* resolveQuantityAccum(QuantityType qt) {
-		mardyn_assert(qt == QuantityType::FORCE or qt == QuantityType::VIRIAL);
+		mardyn_assert(qt == QuantityType::FORCE or qt == QuantityType::VIRIAL or qt == QuantityType::VIRIALND1 or qt == QuantityType::VIRIALND2);
 		ConcatenatedSites<vcp_real_accum>* returnQuantity;
 		switch(qt) {
 		case QuantityType::FORCE:
@@ -315,6 +321,12 @@ private:
 			break;
 		case QuantityType::VIRIAL:
 			returnQuantity = &_centers_V;
+			break;
+		case QuantityType::VIRIALND1:
+			returnQuantity = &_centers_VND1;
+			break;
+		case QuantityType::VIRIALND2:
+			returnQuantity = &_centers_VND2;
 			break;
 		default:
 			returnQuantity = nullptr;
@@ -345,7 +357,7 @@ private:
 	}
 
 	vcp_inline const ConcatenatedSites<vcp_real_accum>* resolveQuantityAccum(QuantityType qt) const {
-		mardyn_assert(qt == QuantityType::FORCE or qt == QuantityType::VIRIAL);
+		mardyn_assert(qt == QuantityType::FORCE or qt == QuantityType::VIRIAL or qt == QuantityType::VIRIALND1 or qt == QuantityType::VIRIALND2);
 		const ConcatenatedSites<vcp_real_accum>* returnQuantity;
 		switch(qt) {
 		case QuantityType::FORCE:
@@ -353,6 +365,12 @@ private:
 			break;
 		case QuantityType::VIRIAL:
 			returnQuantity = &_centers_V;
+			break;
+		case QuantityType::VIRIALND1:
+			returnQuantity = &_centers_VND1;
+			break;
+		case QuantityType::VIRIALND2:
+			returnQuantity = &_centers_VND2;
 			break;
 		default:
 			returnQuantity = nullptr;

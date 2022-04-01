@@ -295,8 +295,7 @@ public:
 
 	void Fadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
 	void Madd(const double a[]) override { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
-	void Viadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _Vi[d]+=a[d]; }
-	void ViaddAll(const double a[]) override { for(unsigned short d=0;d<9;++d) _Vi[d]+=a[d]; }
+	void Viadd(const double a[]) override { for(unsigned short d=0;d<9;++d) _Vi[d]+=a[d]; }
 	void vadd(const double ax, const double ay, const double az) override {
 		_v[0] += ax; _v[1] += ay; _v[2] += az;
 	}

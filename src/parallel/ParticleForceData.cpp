@@ -58,5 +58,5 @@ void ParticleForceData::MoleculeToParticleData(ParticleForceData &particleStruct
 void ParticleForceData::AddParticleForceDataToMolecule(ParticleForceData &particleStruct, Molecule &molecule) {
 		molecule.Fadd(particleStruct.F);
 		molecule.Madd(particleStruct.M);
-		molecule.ViaddAll(particleStruct.Vi);
+		molecule.Viadd(particleStruct.Vi);
 }

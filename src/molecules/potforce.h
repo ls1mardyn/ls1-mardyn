@@ -575,8 +575,8 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	tempVi[7]=0.5*virialAll[6];
 	tempVi[8]=0.5*virialAll[7];
 
-	mi.ViaddAll(tempVi);
-	mj.ViaddAll(tempVi);
+	mi.Viadd(tempVi);
+	mj.Viadd(tempVi);
 
 	mi.Uadd(0.5*upot);
 	mj.Uadd(0.5*upot);

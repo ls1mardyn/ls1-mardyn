@@ -627,6 +627,12 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(0), j->Vi(0), fabs(delta * j->Vi(0)));
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(1), j->Vi(1), fabs(delta * j->Vi(1)));
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(2), j->Vi(2), fabs(delta * j->Vi(2)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(3), j->Vi(3), fabs(delta * j->Vi(3)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(4), j->Vi(4), fabs(delta * j->Vi(4)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(5), j->Vi(5), fabs(delta * j->Vi(5)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(6), j->Vi(6), fabs(delta * j->Vi(6)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(7), j->Vi(7), fabs(delta * j->Vi(7)));
+			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Virials differ", i->Vi(8), j->Vi(8), fabs(delta * j->Vi(8)));
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(0), j->M(0), fabs(delta * i->M(0)));
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(1), j->M(1), fabs(delta * i->M(1)));
 			CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Rotational moments differ", i->M(2), j->M(2), fabs(delta * i->M(2)));

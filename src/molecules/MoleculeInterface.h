@@ -226,7 +226,6 @@ public:
 	virtual void Fadd(const double a[]) = 0;
 	virtual void Madd(const double a[]) = 0;
 	virtual void Viadd(const double a[]) = 0;
-	virtual void ViaddAll(const double a[]) = 0;
 	virtual void vadd(const double ax, const double ay, const double az) = 0;
 	virtual void vsub(const double ax, const double ay, const double az) = 0;
 
