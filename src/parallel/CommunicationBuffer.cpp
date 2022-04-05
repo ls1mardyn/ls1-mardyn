@@ -31,7 +31,8 @@ size_t CommunicationBuffer::_numBytesHalo = 7 * sizeof(double) + sizeof(int)
 			+ sizeof(unsigned long)
 	#endif
 		;
-size_t CommunicationBuffer::_numBytesForces = sizeof(unsigned long) + 12 * sizeof(double);
+// id (1), position (3), force (3), momentum (3), virial (9)
+size_t CommunicationBuffer::_numBytesForces = sizeof(unsigned long) + 18 * sizeof(double);
 #endif
 
 

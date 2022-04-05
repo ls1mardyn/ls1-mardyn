@@ -138,6 +138,9 @@ public:
 
 	double Vi(unsigned short d) const override { return 0.; }
 
+	double UpotConstCorr() const override { return 0.; }
+	double ViConstCorr() const override { return 0.; }
+
 	void setD(unsigned short d, double D) override {}
 
 	inline void move(int d, double dr) override { setr(d, r(d) + dr); }
@@ -148,6 +151,8 @@ public:
 	double U_rot() override { return 0.; }
 
 	double U_rot_2() override { return 0.; }
+
+	double U_pot() override { return 0.; }
 
 	void updateMassInertia() override {}
 
@@ -233,7 +238,12 @@ public:
 
 	void setM(double M[3]) override {}
 
-	void setVi(double Vi[3]) override {}
+	void setVi(double Vi[9]) override {}
+
+	void setU(const double upot) override {}
+
+	void setUConstCorr(const double a) override {}
+	void setViConstCorr(const double a) override {}
 
 	void Fadd(const double F[]) override {
 		for (unsigned short i = 0; i < 3; i++) _f[i] += F[i];
@@ -252,6 +262,8 @@ public:
 		std::array<double, 3> addV_arr{-ax, -ay, -az};
 		addV(addV_arr);
 	}
+
+	void Uadd(const double upot) override {}
 
 	void Fljcenteradd(unsigned int i, double a[]) override { vadd(a[0], a[1], a[2]); }
 

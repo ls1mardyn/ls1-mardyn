@@ -448,9 +448,6 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             const float domainShare = (regionSize[0]*regionSize[1]*regionSize[2])/(_globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2]); 
             const unsigned long nTest = static_cast<unsigned long>(domainShare*nTestGlobal);
 
-    #if defined(_OPENMP)
-            #pragma omp parallel
-    #endif
             for (unsigned long i = 0; i < nTest; i++) {
                 const double rX = regionLowCorner[0] + rnd->rnd()*regionSize[0];
                 const double rY = regionLowCorner[1] + rnd->rnd()*regionSize[1];
@@ -463,10 +460,6 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
                     double chemPot = exp(-deltaUpot/temperature_step_global.at(index));
                     if (std::isfinite(chemPot)) {
-    #if defined(_OPENMP)
-                        #pragma omp atomic
-    #endif
-                        {
                         chemPot_step.local.at(index) += chemPot;
                         countNTest_step.local.at(index)++;
     #ifndef NDEBUG
@@ -474,7 +467,6 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                                 << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
                                 << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperature_step_global.at(index) << " ; index = " << index << std::endl;
     #endif
-                        }
                     }
                 }
             }
