@@ -569,9 +569,9 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 _pressureVect_accum[0].at(i)         += rho * ( ViX/numMols + Tx );
                 _pressureVect_accum[1].at(i)         += rho * ( ViY/numMols + Ty );
                 _pressureVect_accum[2].at(i)         += rho * ( ViZ/numMols + Tz );
-                _energyfluxVect_accum[0].at(i)       += energyfluxVect_step[0].global.at(i) / numMols;
-                _energyfluxVect_accum[1].at(i)       += energyfluxVect_step[1].global.at(i) / numMols;
-                _energyfluxVect_accum[2].at(i)       += energyfluxVect_step[2].global.at(i) / numMols;
+                _energyfluxVect_accum[0].at(i)       += energyfluxVect_step[0].global.at(i) / _slabVolume;
+                _energyfluxVect_accum[1].at(i)       += energyfluxVect_step[1].global.at(i) / _slabVolume;
+                _energyfluxVect_accum[2].at(i)       += energyfluxVect_step[2].global.at(i) / _slabVolume;
 
                 _countSamples.at(i)++;
 
@@ -720,7 +720,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     ofs << setw(22) << "delta["<<cid<<"]";
                     for (auto& [k_i, v_i]: dirs) {
                         for (auto& [k_j, v_j]: dirs) {
-                            ofs << setw(22) << "p_" << k_j << k_j << "[" << cid << "]";
+                            ofs << setw(22) << "p_" << k_i << k_j << "[" << cid << "]";
                         }
                     }
                     for (auto& [k_i, v_i]: dirs) {
