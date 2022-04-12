@@ -331,16 +331,20 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             energyfluxVect_step[2].local.at(indexCID) += (pit->U_kin() + epot)*veloZ + (pit->Vi(7)*veloX + pit->Vi(8)*veloY + pit->Vi(2)*veloZ);
             if (_sampleHigherMoms) {
                 const std::array<double, 3> velos = {veloCorrX, veloCorrY, veloCorrZ};
-                hmDelta_step.local.at(indexCID) = veloCorrSqrt*veloCorrSqrt;
+
+                hmDelta_step.local.at(indexCID) += veloCorrSqrt*veloCorrSqrt;
+
                 for (unsigned short i = 0; i < 3; i++) {
-                    hmHeatflux_step[i].local.at(indexCID)     = 0.5*veloCorrSqrt*velos[i];
+
+                    hmHeatflux_step[i].local.at(indexCID)     += 0.5*veloCorrSqrt*velos[i];
+
                     for (unsigned short j = 0; j < 3; j++) {
                         if (i == j) { // Trace elements
-                            hmPressure_step[3*i+j].local.at(indexCID) = velos[i]*velos[j];  // Pressure; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
-                            hmR_step[3*i+j].local.at(indexCID)        = velos[i]*velos[j]*veloCorrSqrt;  // R; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
+                            hmPressure_step[3*i+j].local.at(indexCID) += velos[i]*velos[j] - (1./3.)*veloCorrSqrt;  // Pressure; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
+                            hmR_step[3*i+j].local.at(indexCID)        += (velos[i]*velos[j] - (1./3.)*veloCorrSqrt)*veloCorrSqrt;   // R; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
                         } else {
-                            hmPressure_step[3*i+j].local.at(indexCID) = velos[i]*velos[j] - (1./3.)*veloCorrSqrt;
-                            hmR_step[3*i+j].local.at(indexCID)        = (velos[i]*velos[j] - (1./3.)*veloCorrSqrt)*veloCorrSqrt;
+                            hmPressure_step[3*i+j].local.at(indexCID) += velos[i]*velos[j];
+                            hmR_step[3*i+j].local.at(indexCID)        += velos[i]*velos[j]*veloCorrSqrt;
                         }
                     }
                 }
@@ -360,35 +364,35 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     m[2][0][0] + m[2][1][1] + m[2][2][2]
                 };
 
-                hmM_step[0].local.at(indexCID)    = m[0][0][0] - 0.6*(mSum[0]); // m: cxcxcx
-                hmM_step[1].local.at(indexCID)    = m[0][0][1] - 0.2*(mSum[1]); // m: cxcxcy
-                hmM_step[2].local.at(indexCID)    = m[0][0][2] - 0.2*(mSum[2]); // m: cxcxcz
-                hmM_step[3].local.at(indexCID)    = m[0][1][0] - 0.2*(mSum[1]); // m: cxcycx
-                hmM_step[4].local.at(indexCID)    = m[0][1][1] - 0.2*(mSum[0]); // m: cxcycy
-                hmM_step[5].local.at(indexCID)    = m[0][1][2];                 // m: cxcycz
-                hmM_step[6].local.at(indexCID)    = m[0][2][0] - 0.2*(mSum[2]); // m: cxczcx
-                hmM_step[7].local.at(indexCID)    = m[0][2][1];                 // m: cxczcy
-                hmM_step[8].local.at(indexCID)    = m[0][2][2] - 0.2*(mSum[0]); // m: cxczcz
+                hmM_step[0].local.at(indexCID) += m[0][0][0] - 0.6*(mSum[0]); // m: cxcxcx
+                hmM_step[1].local.at(indexCID) += m[0][0][1] - 0.2*(mSum[1]); // m: cxcxcy
+                hmM_step[2].local.at(indexCID) += m[0][0][2] - 0.2*(mSum[2]); // m: cxcxcz
+                hmM_step[3].local.at(indexCID) += m[0][1][0] - 0.2*(mSum[1]); // m: cxcycx
+                hmM_step[4].local.at(indexCID) += m[0][1][1] - 0.2*(mSum[0]); // m: cxcycy
+                hmM_step[5].local.at(indexCID) += m[0][1][2];                 // m: cxcycz
+                hmM_step[6].local.at(indexCID) += m[0][2][0] - 0.2*(mSum[2]); // m: cxczcx
+                hmM_step[7].local.at(indexCID) += m[0][2][1];                 // m: cxczcy
+                hmM_step[8].local.at(indexCID) += m[0][2][2] - 0.2*(mSum[0]); // m: cxczcz
 
-                hmM_step[9].local.at(indexCID)    = m[1][0][0] - 0.2*(mSum[1]); // m: cycxcx
-                hmM_step[10].local.at(indexCID)   = m[1][0][1] - 0.2*(mSum[0]); // m: cycxcy
-                hmM_step[11].local.at(indexCID)   = m[1][0][2];                 // m: cycxcz
-                hmM_step[12].local.at(indexCID)   = m[1][1][0] - 0.2*(mSum[0]); // m: cycycx
-                hmM_step[13].local.at(indexCID)   = m[1][1][1] - 0.6*(mSum[1]); // m: cycycy
-                hmM_step[14].local.at(indexCID)   = m[1][1][2] - 0.2*(mSum[2]); // m: cycycz
-                hmM_step[15].local.at(indexCID)   = m[1][2][0];                 // m: cyczcx
-                hmM_step[16].local.at(indexCID)   = m[1][2][1] - 0.2*(mSum[2]); // m: cyczcy
-                hmM_step[17].local.at(indexCID)   = m[1][2][2] - 0.2*(mSum[1]); // m: cyczcz
+                hmM_step[9].local.at(indexCID) += m[1][0][0] - 0.2*(mSum[1]); // m: cycxcx
+                hmM_step[10].local.at(indexCID) += m[1][0][1] - 0.2*(mSum[0]); // m: cycxcy
+                hmM_step[11].local.at(indexCID) += m[1][0][2];                 // m: cycxcz
+                hmM_step[12].local.at(indexCID) += m[1][1][0] - 0.2*(mSum[0]); // m: cycycx
+                hmM_step[13].local.at(indexCID) += m[1][1][1] - 0.6*(mSum[1]); // m: cycycy
+                hmM_step[14].local.at(indexCID) += m[1][1][2] - 0.2*(mSum[2]); // m: cycycz
+                hmM_step[15].local.at(indexCID) += m[1][2][0];                 // m: cyczcx
+                hmM_step[16].local.at(indexCID) += m[1][2][1] - 0.2*(mSum[2]); // m: cyczcy
+                hmM_step[17].local.at(indexCID) += m[1][2][2] - 0.2*(mSum[1]); // m: cyczcz
 
-                hmM_step[18].local.at(indexCID)   = m[2][0][0] - 0.2*(mSum[2]); // m: czcxcx
-                hmM_step[19].local.at(indexCID)   = m[2][0][1];                 // m: czcxcy
-                hmM_step[20].local.at(indexCID)   = m[2][0][2] - 0.2*(mSum[0]); // m: czcxcz
-                hmM_step[21].local.at(indexCID)   = m[2][1][0];                 // m: czcycx
-                hmM_step[22].local.at(indexCID)   = m[2][1][1] - 0.2*(mSum[2]); // m: czcycy
-                hmM_step[23].local.at(indexCID)   = m[2][1][2] - 0.2*(mSum[1]); // m: czcycz
-                hmM_step[24].local.at(indexCID)   = m[2][2][0] - 0.2*(mSum[0]); // m: czczcx
-                hmM_step[25].local.at(indexCID)   = m[2][2][1] - 0.2*(mSum[1]); // m: czczcy
-                hmM_step[26].local.at(indexCID)   = m[2][2][2] - 0.6*(mSum[2]); // m: czczcz
+                hmM_step[18].local.at(indexCID) += m[2][0][0] - 0.2*(mSum[2]); // m: czcxcx
+                hmM_step[19].local.at(indexCID) += m[2][0][1];                 // m: czcxcy
+                hmM_step[20].local.at(indexCID) += m[2][0][2] - 0.2*(mSum[0]); // m: czcxcz
+                hmM_step[21].local.at(indexCID) += m[2][1][0];                 // m: czcycx
+                hmM_step[22].local.at(indexCID) += m[2][1][1] - 0.2*(mSum[2]); // m: czcycy
+                hmM_step[23].local.at(indexCID) += m[2][1][2] - 0.2*(mSum[1]); // m: czcycz
+                hmM_step[24].local.at(indexCID) += m[2][2][0] - 0.2*(mSum[0]); // m: czczcx
+                hmM_step[25].local.at(indexCID) += m[2][2][1] - 0.2*(mSum[1]); // m: czczcy
+                hmM_step[26].local.at(indexCID) += m[2][2][2] - 0.6*(mSum[2]); // m: czczcz
             }
         }
     }
