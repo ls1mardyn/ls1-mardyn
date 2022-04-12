@@ -922,15 +922,15 @@ void ExtendedProfileSampling::resetVectors() {
 
     if (_sampleHigherMoms) {
         std::fill(_hmDelta_accum.begin(), _hmDelta_accum.end(), 0.0f);
+        for (unsigned short d = 0; d < 3; d++) {
+            std::fill(_hmHeatflux_accum.at(d).begin(), _hmHeatflux_accum.at(d).end(), 0.0f);
+        }
         for (unsigned short d = 0; d < 9; d++) {
             std::fill(_hmPressure_accum.at(d).begin(), _hmPressure_accum.at(d).end(), 0.0f);
             std::fill(_hmR_accum.at(d).begin(), _hmR_accum.at(d).end(), 0.0f);
             std::fill(_hmM_accum.at(d).begin(), _hmM_accum.at(d).end(), 0.0f);
             std::fill(_hmM_accum.at(d+9).begin(), _hmM_accum.at(d+9).end(), 0.0f);
             std::fill(_hmM_accum.at(d+18).begin(), _hmM_accum.at(d+18).end(), 0.0f);
-        }
-        for (unsigned short d = 0; d < 9; d++) {
-            std::fill(_hmHeatflux_accum.at(d).begin(), _hmHeatflux_accum.at(d).end(), 0.0f);
         }
     }
 }

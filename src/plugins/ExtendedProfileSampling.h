@@ -81,9 +81,9 @@ private:
     // Higher moments
     std::vector<double> _hmDelta_accum;                               // Higher moment: Delta
     std::array<std::vector<double>, 3> _hmHeatflux_accum;             // Higher moment: Thermal heatflux; x, y, z
-    std::array<std::vector<double>, 9> _hmPressure_accum;             // Higher moment: Pressure; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
-    std::array<std::vector<double>, 9> _hmR_accum;                    // Higher moment: R; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
-    std::array<std::vector<double>, 27> _hmM_accum;                    // Higher moment: M; cicxcx, cicxcy, cicxcz, cicycx, cicycy, cicycz, ciczcx, ciczcy, ciczcz mit i = x,y,z
+    std::array<std::vector<double>, 9> _hmPressure_accum;             // Higher moment: Pressure (traceless); cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
+    std::array<std::vector<double>, 9> _hmR_accum;                    // Higher moment: R (traceless); cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
+    std::array<std::vector<double>, 27> _hmM_accum;                    // Higher moment: M (traceless); cicxcx, cicxcy, cicxcz, cicycx, cicycy, cicycz, ciczcx, ciczcy, ciczcz mit i = x,y,z
 
     std::vector<unsigned long> _countSamples;                   // Number of samples; can vary from bin to bin as some bins could be empty
 
