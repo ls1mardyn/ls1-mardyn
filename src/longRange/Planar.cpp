@@ -436,16 +436,18 @@ void Planar::calculateLongRange() {
 			Fa[1] = fLJ[index];
 			Upot_c += uLJ[index];
 			Virial_c += 2 * vTLJ[index] + vNLJ[index];
-			double Via[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; /**< Virial tensor all elements: rxfx, ryfy, rzfz, rxfy, rxfz, ryfz, ryfx, rzfx, rzfy */
-			Via[0] = vTLJ[index];
-			Via[1] = vNLJ[index];
-			Via[2] = vTLJ[index];
-			Via[3] = vNDLJ[index];
-			Via[4] = vTLJ[index];
-			Via[5] = vNDLJ[index];
-			Via[6] = vNDLJ[index];
-			Via[7] = vTLJ[index];
-			Via[8] = vNDLJ[index];
+			// all virial tensor elements
+			const double Via[9] = {
+				vTLJ[index],  // rxfx
+				vNLJ[index],  // ryfy
+				vTLJ[index],  // rzfz
+				vNDLJ[index], // rxfy
+				vTLJ[index],  // rxfz
+				vNDLJ[index], // ryfz
+				vNDLJ[index], // ryfx
+				vTLJ[index],  // rzfx
+				vNDLJ[index], // rzfy
+            };
 			if ((tempMol->r(1) >= _region.actPos[0]) && (tempMol->r(1) <= _region.actPos[1])) {
 				tempMol->Fljcenteradd(i, Fa);
 			}
@@ -459,12 +461,18 @@ void Planar::calculateLongRange() {
 			Fa[1] = fDipole[index];
 			Upot_c += uDipole[index];
 			Virial_c += 2 * vTDipole[index] + vNDipole[index];
-			double Via[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; /**< Virial tensor all elements: rxfx, ryfy, rzfz, rxfy, rxfz, ryfz, ryfx, rzfx, rzfy */
-			Via[0] = vTDipole[index];
-			Via[1] = vNDipole[index];
-			Via[2] = vTDipole[index];
-			Via[4] = vTDipole[index];
-			Via[7] = vTDipole[index];
+			// all virial tensor elements
+			const double Via[9] = {
+				vTDipole[index],  // rxfx
+				vNDipole[index],  // ryfy
+				vTDipole[index],  // rzfz
+				0.,               // rxfy
+				vTDipole[index],  // rxfz
+				0.,               // ryfz
+				0.,               // ryfx
+				vTDipole[index],  // rzfx
+				0.,               // rzfy
+			};
 			if ((tempMol->r(1) >= _region.actPos[0]) && (tempMol->r(1) <= _region.actPos[1])) {
 				tempMol->Fadd(Fa); // Force is stored on the center of mass of the molecule!
 			}

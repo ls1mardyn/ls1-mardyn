@@ -218,7 +218,7 @@ public:
         
 	void setF(double /*F*/ [3]) override {}
 	void setM(double /*M*/[3]) override {}
-	void setVi(double /*Vi*/[3]) override {}
+	void setVi(double /*Vi*/[9]) override {}
 	void Fadd(const double /*a*/[]) override {}
 	void Madd(const double /*a*/[]) override {}
 	void Viadd(const double /*a*/[]) override {}

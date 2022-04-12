@@ -138,9 +138,6 @@ public:
 
 	double Vi(unsigned short d) const override { return 0.; }
 
-	double UpotConstCorr() const override { return 0.; }
-	double ViConstCorr() const override { return 0.; }
-
 	void setD(unsigned short d, double D) override {}
 
 	inline void move(int d, double dr) override { setr(d, r(d) + dr); }
@@ -241,9 +238,6 @@ public:
 	void setVi(double Vi[9]) override {}
 
 	void setU(const double upot) override {}
-
-	void setUConstCorr(const double a) override {}
-	void setViConstCorr(const double a) override {}
 
 	void Fadd(const double F[]) override {
 		for (unsigned short i = 0; i < 3; i++) _f[i] += F[i];

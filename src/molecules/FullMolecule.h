@@ -76,21 +76,7 @@ public:
 	double M(unsigned short d) const override { return _M[d]; }
 
 	/** get the virial */
-	double Vi(unsigned short d) const override {
-		if (d < 3) { // Correction term only added to diagonal elements
-
-			return _Vi[d] + _ViConstCorr;
-		}
-		else {
-			return _Vi[d];
-		}
-	}
-
-	/** get the constant correction of potential energy */
-	double UpotConstCorr() const override { return _upotConstCorr; }
-
-	/** get the constant correction of one virial element */
-	double ViConstCorr() const override { return _ViConstCorr; }
+	double Vi(unsigned short d) const override { return _Vi[d]; }
 
 	void setD(unsigned short d, double D) override { this->_L[d] = D; }
 
@@ -135,7 +121,7 @@ public:
 	/** return total kinetic energy of the molecule */
 	double U_kin() override { return U_trans() + U_rot(); }
 	/** return total potential energy of the molecule */
-	double U_pot() override { return _upot + _upotConstCorr; }
+	double U_pot() override { return _upot; }
 	
 	void setupSoACache(CellDataSoABase * s, unsigned iLJ, unsigned iC, unsigned iD, unsigned iQ) override;
 
@@ -289,9 +275,6 @@ public:
 	void setM(double M[3]) override { for(int d = 0; d < 3; d++ ) { _M[d] = M[d]; } }
 	void setVi(double Vi[9]) override { for(int d = 0; d < 9; d++) { _Vi[d] = Vi[d]; } }
 	void setU(const double upot) override { _upot = upot; }
-	
-	void setUConstCorr(const double a) override { _upotConstCorr = a; }
-	void setViConstCorr(const double a) override { _ViConstCorr = a/3.; } // LRC term assigned to the 3 diagonal elements
 
 	void Fadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
 	void Madd(const double a[]) override { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
@@ -369,9 +352,6 @@ protected:
     unsigned long _id;  /**< IDentification number of that molecule */
 
 	double _upot; /**< potential energy */
-
-	double _ViConstCorr; /** Correction of one virial element, used by homogeneous LRC **/
-	double _upotConstCorr; /** Correction of potential energy, used by homogeneous LRC **/
 
 	double _m; /**< total mass */
 	double _I[3]{0.,0.,0.},_invI[3]{0.,0.,0.};  // moment of inertia for principal axes and it's inverse

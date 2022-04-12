@@ -39,8 +39,6 @@ FullMolecule::FullMolecule(unsigned long id, Component *component,
 	_Vi[7]= 0.;
 	_Vi[8]= 0.;
 	_upot = 0;
-	_ViConstCorr = 0;
-	_upotConstCorr = 0;
 
 	_soa = nullptr;
 	_soa_index_lj = 0;
@@ -83,8 +81,6 @@ FullMolecule::FullMolecule(const FullMolecule& m) {
 	_Vi[7]= m._Vi[7];
 	_Vi[8]= m._Vi[8];
 	_upot = m._upot;
-	_ViConstCorr = m._ViConstCorr;
-	_upotConstCorr = m._upotConstCorr;
 
 	_soa = m._soa;
 	_soa_index_lj = m._soa_index_lj;
@@ -130,8 +126,6 @@ FullMolecule& FullMolecule::operator=(const FullMolecule& m) {
 	_Vi[7]= m._Vi[7];
 	_Vi[8]= m._Vi[8];
 	_upot = m._upot;
-	_ViConstCorr = m._ViConstCorr;
-	_upotConstCorr = m._upotConstCorr;
 
 	_soa = m._soa;
 	_soa_index_lj = m._soa_index_lj;

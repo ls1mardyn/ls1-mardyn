@@ -202,8 +202,9 @@ public:
     /* TODO: Have a look on this */
 	virtual void deleteMolecule(ParticleIterator& moleculeIter, const bool& rebuildCaches) = 0;
 
-    /* TODO goes into grand canonical ensemble
-	THIS RETURNS THE WRONG ENERGY IF CALLED WHEN HALO CELLS ARE NOT EXISTENT ANYMORE */
+    /* TODO: goes into the grand canonical ensemble
+	 * WARNING: THIS RETURNS THE WRONG ENERGY IF CALLED WHEN HALO CELLS ARE ALREADY CLEARED!
+	 */
 	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) = 0;
 
 	//! @brief Update the caches of the molecules, that lie in inner cells.

@@ -67,8 +67,7 @@ public:
 		return m_ret;
 	}
 	virtual std::array<double, 9> Vi_arr() {
-		std::array<double, 9> vi_ret{Vi(0), Vi(1), Vi(2), Vi(3), Vi(4), Vi(5), Vi(6), Vi(7), Vi(8)};
-		return vi_ret;
+		return {Vi(0), Vi(1), Vi(2), Vi(3), Vi(4), Vi(5), Vi(6), Vi(7), Vi(8)};
 	}
 
 	virtual const Quaternion& q() const = 0;
@@ -83,8 +82,6 @@ public:
 	}
 	virtual double M(unsigned short d) const = 0;
 	virtual double Vi(unsigned short d) const = 0;
-	virtual double UpotConstCorr() const  = 0;
-	virtual double ViConstCorr() const  = 0;
 
 	virtual void setD(unsigned short d, double D) = 0;
 
@@ -196,9 +193,6 @@ public:
 	virtual void setM(double M[3]) = 0;
 	virtual void setVi(double Vi[9]) = 0;
 	virtual void setU(const double upot) = 0;
-
-	virtual void setUConstCorr(const double a) = 0;
-	virtual void setViConstCorr(const double a) = 0;
 
 	void scale_v(double s) {
 		for(int d = 0; d < 3; ++d) {
