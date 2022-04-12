@@ -20,7 +20,7 @@
 * Samples residual chemical potential binwise in y-direction for the LJTS fluid (pot. energy corrections not implemented!) using the Widom insertion method
 * \code{.xml}
 * <plugin name="ExtendedProfileSampling">
-*			<binwidth>FLOAT</binwidth>                  <!-- Width of sampling bins; default 1.0 -->
+*            <binwidth>FLOAT</binwidth>                  <!-- Width of sampling bins; default 1.0 -->
             <start>INT</start>                          <!-- Simstep to start sampling; default 0 -->
             <writefrequency>INT</writefrequency>        <!-- Simstep to write out result file; default 10000 -->
             <stop>INT</stop>                            <!-- Simstep to stop sampling; default 1000000000 -->
@@ -34,24 +34,24 @@
 * </plugin>
 * \endcode
 */
-class ExtendedProfileSampling : public PluginBase{
+class ExtendedProfileSampling : public PluginBase {
 
 private:
     // Control: general
-    float _binwidth;
-    unsigned long _startSampling;
-    unsigned long _writeFrequency;
-    unsigned long _stopSampling;
-    bool _singleComp;
+    float _binwidth {1.0f};
+    unsigned long _startSampling {0ul};
+    unsigned long _writeFrequency {10000ul};
+    unsigned long _stopSampling {1000000000ul};
+    bool _singleComp {false};
 
     // Higher moments
-    bool _sampleHigherMoms;
+    bool _sampleHigherMoms {false};
 
     // Control: chemical potential
-    bool _sampleChemPot;
-    bool _lattice;
-    float _factorNumTest;
-    unsigned long _samplefrequency;
+    bool _sampleChemPot {false};
+    bool _lattice {true};
+    float _factorNumTest {4.0f};
+    unsigned long _samplefrequency {50ul};
 
     // Auxiliary variables
     uint16_t _numBinsGlobal;
@@ -63,7 +63,8 @@ private:
     Molecule _mTest;
 
     // Accumulated quantities over _writeFrequency per bin
-    // NOTE: Only the root process knows correct values (with exceptions)
+    // NOTE: Only the root process knows correct values (except number of molecules and temperature)
+    // With only the root process writing data, MPI_Reduce instead of MPI_Allreduce could be used -> only root has correct data
     std::vector<unsigned long> _numMolecules_accum;             // Number of molecules in bin
     std::vector<double> _density_accum;                         // Local density
     std::vector<double> _temperature_accum;                     // Temperature (drift corrected)
@@ -79,6 +80,7 @@ private:
 
     // Higher moments
     std::vector<double> _hmDelta_accum;                               // Higher moment: Delta
+    std::array<std::vector<double>, 3> _hmHeatflux_accum;             // Higher moment: Thermal heatflux; x, y, z
     std::array<std::vector<double>, 9> _hmPressure_accum;             // Higher moment: Pressure; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
     std::array<std::vector<double>, 9> _hmR_accum;                    // Higher moment: R; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
     std::array<std::vector<double>, 27> _hmM_accum;                    // Higher moment: M; cicxcx, cicxcy, cicxcz, cicycx, cicycy, cicycz, ciczcx, ciczcy, ciczcz mit i = x,y,z
@@ -90,19 +92,23 @@ private:
 
 public:
     ExtendedProfileSampling();
-	~ExtendedProfileSampling();
+    ~ExtendedProfileSampling() override = default;
 
     void init(ParticleContainer* /* particleContainer */, DomainDecompBase* domainDecomp, Domain* domain) override;
 
     void readXML (XMLfileUnits& xmlconfig) override;
 
     void beforeForces(ParticleContainer* /* particleContainer */, DomainDecompBase* /* domainDecomp */, unsigned long /* simstep */) override {}
+
+    // Needs to be called when halo cells are still existing (for sampling of chemical potential)
     void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
+    
     void endStep(ParticleContainer* /* particleContainer */, DomainDecompBase* /* domainDecomp */, Domain* /* domain */, unsigned long /* simstep */) override {}
+    
     void finish(ParticleContainer* /* particleContainer */, DomainDecompBase* /* domainDecomp */, Domain* /* domain */) override {}
 
-    std::string getPluginName() override { return std::string("ExtendedProfileSampling"); }
-
+    std::string getPluginName() override { return "ExtendedProfileSampling"; }
+    
     static PluginBase* createInstance() { return new ExtendedProfileSampling(); }
 
 };
