@@ -54,12 +54,12 @@ private:
     unsigned long _samplefrequency {50ul};
 
     // Auxiliary variables
-    uint16_t _numBinsGlobal;
+    unsigned int _numBinsGlobal;
     unsigned long _lenVector;
     std::array<double, 3> _globalBoxLength;
     double _slabVolume;
     CellProcessor* _cellProcessor;
-    ParticlePairsHandler* _particlePairsHandler;
+    std::shared_ptr<ParticlePairsHandler> _particlePairsHandler;
     Molecule _mTest;
 
     // Accumulated quantities over _writeFrequency per bin

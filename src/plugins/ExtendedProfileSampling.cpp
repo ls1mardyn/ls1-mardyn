@@ -24,7 +24,7 @@ void ExtendedProfileSampling::init(ParticleContainer* /* particleContainer */, D
     _globalBoxLength[1] = domain->getGlobalLength(1);
     _globalBoxLength[2] = domain->getGlobalLength(2);
 
-    _numBinsGlobal = static_cast<uint16_t>(_globalBoxLength[1]/_binwidth);
+    _numBinsGlobal = static_cast<unsigned int>(_globalBoxLength[1]/_binwidth);
     if (_globalBoxLength[1]/_binwidth != static_cast<float>(_numBinsGlobal)) {
         global_log->error() << "[ExtendedProfileSampling] Can not divide domain without remainder! Change binwidth" << std::endl;
         Simulation::exit(-1);
@@ -43,8 +43,7 @@ void ExtendedProfileSampling::init(ParticleContainer* /* particleContainer */, D
     resetVectors();
 
     _cellProcessor = _simulation.getCellProcessor();
-    // ??? smart pointer
-    _particlePairsHandler = new ParticlePairs2PotForceAdapter(*domain);
+    _particlePairsHandler = std::make_shared<ParticlePairsHandler>(ParticlePairs2PotForceAdapter(*domain));
     // MolID is maximum possible number minus rank to prevent duplicate IDs
     // Always insert molecule of first component
     const unsigned long molID = std::numeric_limits<unsigned long>::max() - static_cast<unsigned long>(domainDecomp->getRank());
@@ -254,7 +253,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     // Calculate drift as it is needed first
     for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
         const double ry = pit->r(1);
-        const uint16_t index = std::min(_numBinsGlobal, static_cast<uint16_t>(ry/_binwidth));  // Index of bin
+        const unsigned int index = std::min(_numBinsGlobal, static_cast<unsigned int>(ry/_binwidth));  // Index of bin
 
         std::vector<unsigned int> cids = {0}; // add velocities to "all components" (0) and respective component
         if (!_singleComp) { cids.push_back(pit->componentid() + 1); }
@@ -292,7 +291,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
 
     for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
         const double ry = pit->r(1);
-        const uint16_t index = std::min(_numBinsGlobal, static_cast<uint16_t>(ry/_binwidth));  // Index of bin
+        const unsigned int index = std::min(_numBinsGlobal, static_cast<unsigned int>(ry/_binwidth));  // Index of bin
 
         const double veloCorrX = pit->v(0) - veloDrift_step_global[0].at(index);
         const double veloCorrY = pit->v(1) - veloDrift_step_global[1].at(index);
@@ -436,7 +435,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         std::vector<unsigned long> nZ(_numBinsGlobal, 0ul);
         unsigned long nTestGlobal {0ul};
 
-        for (uint16_t i = 0; i < _numBinsGlobal; i++) {
+        for (unsigned int i = 0; i < _numBinsGlobal; i++) {
             // Make sure, number of test particles is never zero and number of test particles per direction is at least 1
             const unsigned long nTest = std::max(1ul,static_cast<unsigned long>(_factorNumTest*numMolecules_step.global.at(i)));
 
@@ -456,10 +455,10 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             // Insert particles in lattice structure and sample chem. pot.
 
             // Index of bin in which the left region boundary (y-dir) is in; std::min if particle position is precisely at right boundary
-            const uint16_t idxStart = std::min(_numBinsGlobal, static_cast<uint16_t>(regionLowCorner[1]/_binwidth));
+            const unsigned int idxStart = std::min(_numBinsGlobal, static_cast<unsigned int>(regionLowCorner[1]/_binwidth));
             double rY = regionLowCorner[1]+0.5*dY.at(idxStart);
             while (rY < regionHighCorner[1]) {
-                const uint16_t index = std::min(_numBinsGlobal, static_cast<uint16_t>(rY/_binwidth));  // Index of bin
+                const unsigned int index = std::min(_numBinsGlobal, static_cast<unsigned int>(rY/_binwidth));  // Index of bin
 
                 double rX = regionLowCorner[0]+0.5*dX.at(idxStart);
                 while (rX < regionHighCorner[0]) {
@@ -470,7 +469,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                             _mTest.setr(0,rX);
                             _mTest.setr(1,rY);
                             _mTest.setr(2,rZ);
-                            const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
+                            const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler.get(), &_mTest, *_cellProcessor);
                             double chemPot = exp(-deltaUpot/temperature_step_global.at(index));  // Global temperature of all components
                             if (std::isfinite(chemPot)) {
                                 chemPot_step.local.at(index) += chemPot;
@@ -501,12 +500,12 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 const double rX = regionLowCorner[0] + rnd->rnd()*regionSize[0];
                 const double rY = regionLowCorner[1] + rnd->rnd()*regionSize[1];
                 const double rZ = regionLowCorner[2] + rnd->rnd()*regionSize[2];
-                const uint16_t index = std::min(_numBinsGlobal, static_cast<uint16_t>(rY/_binwidth));  // Index of bin
+                const unsigned int index = std::min(_numBinsGlobal, static_cast<unsigned int>(rY/_binwidth));  // Index of bin
                 if (temperature_step_global.at(index) > 1e-9) {
                     _mTest.setr(0,rX);
                     _mTest.setr(1,rY);
                     _mTest.setr(2,rZ);
-                    const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler, &_mTest, *_cellProcessor);
+                    const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler.get(), &_mTest, *_cellProcessor);
                     double chemPot = exp(-deltaUpot/temperature_step_global.at(index));
                     if (std::isfinite(chemPot)) {
                         chemPot_step.local.at(index) += chemPot;
