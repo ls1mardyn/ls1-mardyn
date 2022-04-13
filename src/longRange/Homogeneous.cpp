@@ -13,11 +13,11 @@ using Log::global_log;
 using namespace std;
 
 Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* domain, ParticleContainer* particleContainer, Simulation* simulation) :
-	_cutoff(cutoffRadius),
-	_cutoffLJ(cutoffRadiusLJ),
+	_components(simulation->getEnsemble()->getComponents()),
 	_domain(domain),
 	_particleContainer(particleContainer),
-	_components(simulation->getEnsemble()->getComponents())
+	_cutoff(cutoffRadius),
+	_cutoffLJ(cutoffRadiusLJ)
 {}
 
 void Homogeneous::init() {

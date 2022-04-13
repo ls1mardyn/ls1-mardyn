@@ -43,7 +43,7 @@ void ExtendedProfileSampling::init(ParticleContainer* /* particleContainer */, D
     resetVectors();
 
     _cellProcessor = _simulation.getCellProcessor();
-    _particlePairsHandler = std::make_shared<ParticlePairsHandler>(ParticlePairs2PotForceAdapter(*domain));
+    _particlePairsHandler = std::make_shared<ParticlePairs2PotForceAdapter>(*domain);
     // MolID is maximum possible number minus rank to prevent duplicate IDs
     // Always insert molecule of first component
     const unsigned long molID = std::numeric_limits<unsigned long>::max() - static_cast<unsigned long>(domainDecomp->getRank());
