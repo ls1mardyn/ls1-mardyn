@@ -891,7 +891,8 @@ void MettDeamon::writeRestartfile()
 	// write restart info in XML format
 	{
 		std::stringstream fnamestream;
-		fnamestream << "MettDeamonRestart_movdir-" << _nMovingDirection << "_TS" << fill_width('0', 9) << simstep << ".xml";
+		const std::string fname = "MettDeamonRestart_movdir-"+std::to_string(_nMovingDirection);
+		fnamestream << fname << "_TS" << fill_width('0', 9) << simstep << ".xml";
 		ofs.open(fnamestream.str().c_str(), std::ios::out);
 		ofs << "<?xml version='1.0' encoding='UTF-8'?>" << endl;
 		ofs << "<restart>" << endl;
@@ -991,7 +992,8 @@ void MettDeamon::logReleasedVelocities()
 
 	// construct filename
 	std::stringstream fnamestream;
-	fnamestream << "MettDeamon_released_vel_movdir-" << _nMovingDirection << "_TS" << fill_width('0', 9) << simstep << "_p" << nRank << ".dat";
+	const std::string fname = "MettDeamon_released_vel_movdir-"+std::to_string(_nMovingDirection);
+	fnamestream << fname << "_TS" << fill_width('0', 9) << simstep << "_p" << nRank << ".dat";
 
 	std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
 	ofs << "                      vx" << "                      vy" << "                      vz" << std::endl;

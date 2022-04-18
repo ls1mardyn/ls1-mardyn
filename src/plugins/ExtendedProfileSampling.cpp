@@ -630,16 +630,16 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 _countSamples.at(i)++;
 
                 if (_sampleHigherMoms) {
-                    _hmDelta_accum.at(i)             += hmDelta_step.global.at(i) / numMols;
+                    _hmDelta_accum.at(i)             += hmDelta_step.global.at(i) / _slabVolume;
                     for (unsigned short d = 0; d < 3; d++) {
-                        _hmHeatflux_accum[d].at(i)   += hmHeatflux_step[d].global.at(i) / numMols;
+                        _hmHeatflux_accum[d].at(i)   += hmHeatflux_step[d].global.at(i) / _slabVolume;
                     }
                     for (unsigned short d = 0; d < 9; d++) {
-                        _hmPressure_accum[d].at(i)   += hmPressure_step[d].global.at(i) / numMols;
-                        _hmR_accum[d].at(i)          += hmR_step[d].global.at(i) / numMols;
-                        _hmM_accum[d].at(i)          += hmM_step[d].global.at(i) / numMols;
-                        _hmM_accum[d+9].at(i)        += hmM_step[d+9].global.at(i) / numMols;
-                        _hmM_accum[d+18].at(i)       += hmM_step[d+18].global.at(i) / numMols;
+                        _hmPressure_accum[d].at(i)   += hmPressure_step[d].global.at(i) / _slabVolume;
+                        _hmR_accum[d].at(i)          += hmR_step[d].global.at(i) / _slabVolume;
+                        _hmM_accum[d].at(i)          += hmM_step[d].global.at(i) / _slabVolume;
+                        _hmM_accum[d+9].at(i)        += hmM_step[d+9].global.at(i) / _slabVolume;
+                        _hmM_accum[d+18].at(i)       += hmM_step[d+18].global.at(i) / _slabVolume;
                     }
                 }
             }
@@ -776,22 +776,22 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 for (unsigned long cid = 0; cid < numOutputs; cid++) {
                     ofs << setw(22) << "delta["<<cid<<"]";
                     for (auto& [k_i, v_i]: dirs) {
-                        ofs << setw(22) << "q_" << k_i << "[" << cid << "]";
+                        ofs << setw(20) << "q_" << k_i << "[" << cid << "]";
                     }
                     for (auto& [k_i, v_i]: dirs) {
                         for (auto& [k_j, v_j]: dirs) {
-                            ofs << setw(22) << "p_" << k_i << k_j << "[" << cid << "]";
+                            ofs << setw(19) << "p_" << k_i << k_j << "[" << cid << "]";
                         }
                     }
                     for (auto& [k_i, v_i]: dirs) {
                         for (auto& [k_j, v_j]: dirs) {
-                            ofs << setw(22) << "R_" << k_i << k_j << "[" << cid << "]";
+                            ofs << setw(19) << "R_" << k_i << k_j << "[" << cid << "]";
                         }
                     }
                     for (auto& [k_i, v_i]: dirs) {
                         for (auto& [k_j, v_j]: dirs) {
                             for (auto& [k_k, v_k]: dirs) {
-                                ofs << setw(22) << "m_" << k_i << k_j << k_k << "[" << cid << "]";
+                                ofs << setw(18) << "m_" << k_i << k_j << k_k << "[" << cid << "]";
                             }
                         }
                     }
