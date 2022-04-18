@@ -5,6 +5,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "Domain.h"
 #include "utils/xmlfileUnits.h"
+#include "utils/FileUtils.h"
 
 #include <ctime>
 
@@ -13,9 +14,14 @@ using namespace std;
 
 void GammaWriter::readXML(XMLfileUnits& xmlconfig) {
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-    global_log->info() << "GammaWriter: Write frequency: " << _writeFrequency << endl;
+    global_log->info() << "[GammaWriter] Write frequency: " << _writeFrequency << endl;
     xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-    global_log->info() << "GammaWriter: Output prefix: " << _outputPrefix << endl;
+    global_log->info() << "[GammaWriter] Output prefix: " << _outputPrefix << endl;
+
+	_range.ymax = global_simulation->getDomain()->getGlobalLength(1);
+	xmlconfig.getNodeValue("range/ymin", _range.ymin);
+	xmlconfig.getNodeValue("range/ymax", _range.ymax);
+	global_log->info() << "[GammaWriter] Range: y: " << _range.ymin << " - " << _range.ymax << endl;
 }
 
 void GammaWriter::init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
@@ -26,7 +32,7 @@ void GammaWriter::init(ParticleContainer *particleContainer, DomainDecompBase *d
 		time_t now;
 		time(&now);
 		_gammaStream << "# mardyn MD simulation starting at " << ctime(&now) << endl;
-		_gammaStream << "#\tgamma" << endl;
+		_gammaStream << setw(24) << "simstep" << setw(24) << "gamma" << endl;
 	}
 }
 
@@ -39,9 +45,9 @@ void GammaWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase
 		for(int d = 0; d < 3; ++d) {
 			globalLength[d] = domain->getGlobalLength(d);
 		}
-		_gammaStream << simstep;
+		_gammaStream << FORMAT_SCI_MAX_DIGITS << simstep;
 		for(unsigned int componentId = 0; componentId < domain->getNumberOfComponents(); ++componentId){
-			_gammaStream << "\t" << getGamma(componentId, globalLength)/_writeFrequency;
+			_gammaStream << FORMAT_SCI_MAX_DIGITS << getGamma(componentId, globalLength)/_writeFrequency;
 		}
 		_gammaStream << endl;
 		resetGamma();
@@ -65,7 +71,7 @@ double GammaWriter::getGamma(unsigned id, double globalLength[3]){
 
 void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDecompBase* domainDecom){
 	unsigned numComp = _simulation.getEnsemble()->getComponents()->size();
-	std::vector<double> _localGamma(numComp, 0.0);
+	std::vector<double> localGamma(numComp, 0.0);
 
 	#if defined(_OPENMP)
 	#pragma omp parallel
@@ -76,7 +82,8 @@ void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDec
 
 		for (auto tempMol = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
 
-			if (particleContainer->isInBoundingBox(tempMol->r_arr().data())) {
+			// Only for particles within range
+			if ((tempMol->r(1) - _range.ymax)*(tempMol->r(1) - _range.ymax) <= 0) {
 				unsigned cid = tempMol->componentid();
 				localGamma_thread[cid] += tempMol->Vi(1) - 0.5 * (tempMol->Vi(0) + tempMol->Vi(2));
 			}
@@ -87,21 +94,21 @@ void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDec
 		#endif
 		{
 			for (unsigned i = 0; i < numComp; ++i) {
-				_localGamma[i] += localGamma_thread[i];
+				localGamma[i] += localGamma_thread[i];
 			}
 		}
 	}
 
 	domainDecom->collCommInit(numComp);
 	for (unsigned i=0; i<numComp; i++){
-		domainDecom->collCommAppendDouble(_localGamma[i]);
+		domainDecom->collCommAppendDouble(localGamma[i]);
 	}
 	domainDecom->collCommAllreduceSum();
 	for (unsigned i=0; i<numComp; i++){
-		_localGamma[i] = domainDecom->collCommGetDouble();
+		localGamma[i] = domainDecom->collCommGetDouble();
 	}
 	domainDecom->collCommFinalize();
 	for (unsigned i=0; i<numComp; i++){
-		_Gamma[i]+=_localGamma[i];
+		_Gamma[i]+=localGamma[i];
 	}
 }
