@@ -32,9 +32,9 @@ public:
      * \code{.xml}
         <outputplugin name="GammaWriter">
             <writefrequency>INTEGER</writefrequency>   <!-- Frequency to write out data to file; default: 1000 -->
-             <outputprefix>STRING</outputprefix>           <!-- Prefix string of output file name; default: gamma -->
-            <range>                                       <!-- Range in which to sample data -->
-                 <ymin>DOUBLE</ymin>                       <!-- Sampled in y-direction between ymin and ymax; defaults: 0 and domain length -->
+            <outputprefix>STRING</outputprefix>        <!-- Prefix string of output file name; default: gamma -->
+            <range>                                    <!-- Range in which to sample data -->
+                <ymin>DOUBLE</ymin>                    <!-- Sampled in y-direction between ymin and ymax; defaults: 0 and domain length -->
                 <ymax>DOUBLE</ymax>
             </range>
        </outputplugin>

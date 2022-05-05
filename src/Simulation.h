@@ -225,6 +225,9 @@ public:
 	/** Get pointer to the molecule container */
 	ParticleContainer* getMoleculeContainer() { return _moleculeContainer; }
 
+	/** Get pointer to longrange correction */
+	LongRangeCorrection* getLongRangeCorrection() { return _longRangeCorrection; }
+
 	/** Set the number of time steps to be performed in the simulation */
 	void setNumTimesteps( unsigned long steps ) { _numberOfTimesteps = steps; }
 	/** Get the number of time steps to be performed in the simulation */

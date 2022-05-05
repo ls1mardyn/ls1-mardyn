@@ -24,7 +24,7 @@ class ParticleContainer;
 class Planar : public LongRangeCorrection, public ObserverBase, public ControlInstance {
 public:
 	Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation* simulation);
-	virtual ~Planar();
+	~Planar() override = default;
 
 	/** @brief Read in XML configuration for Planar and all its included objects.
 	 *
@@ -50,11 +50,13 @@ public:
 	void init() override;
 	void readXML(XMLfileUnits& xmlconfig) override;
 	void calculateLongRange() override;
-	double lrcLJ(Molecule* mol);
 	// For non-equilibrium simulations the density profile must not be smoothed, therefore the density profile from the actual time step is used.
 	void directDensityProfile();
 	void SetSmoothDensityProfileOption(bool bVal) {_smooth = bVal;}
 	void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
+	
+	// Get potential energy correction per molecule
+	double getUpotCorr(Molecule* mol) override;
 
 	// Observer, ControlInstance
 	SubjectBase* getSubject();

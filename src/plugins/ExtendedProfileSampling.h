@@ -18,6 +18,7 @@
 * Plugin: can be enabled via config.xml <br>
 *
 * Samples residual chemical potential binwise in y-direction for the LJTS fluid (pot. energy corrections not implemented!) using the Widom insertion method
+* TODO for general case: Rotation in kin. Temperatur; Upot correction for getEnergy; multi component chem pot;
 * \code{.xml}
 * <plugin name="ExtendedProfileSampling">
 *            <binwidth>FLOAT</binwidth>                  <!-- Width of sampling bins; default 1.0 -->
@@ -30,6 +31,7 @@
                 <lattice>BOOL</lattice>                 <!-- Choose if lattice or random insertion; Note: The random method does not take local density into account; default true -->
                 <factorNumTest>FLOAT</factorNumTest>    <!-- Factor which specifies number of inserted test particles (numTest = factor*numPartsGlobal); default 4.0 -->
                 <samplefrequency>INT</samplefrequency>  <!-- Sampling every INT step; default 50 -->
+                <cids>INT,INT,INT,...</cids>            <!-- List of cids to be inserted; starting at 1; default 1 -->
             </chemicalpotential>
 * </plugin>
 * \endcode
@@ -52,6 +54,8 @@ private:
     bool _lattice {true};
     float _factorNumTest {4.0f};
     unsigned long _samplefrequency {50ul};
+    // Vector of components to be inserted during chem. pot. sampling; starting at 1
+    std::vector<unsigned long> _cidsTest;
 
     // Auxiliary variables
     unsigned int _numBinsGlobal;

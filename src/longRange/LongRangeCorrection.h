@@ -6,8 +6,6 @@
 
 class Domain;
 class DomainDecompBase;
-//class Planar;
-//class Homogeneous;
 class XMLfileUnits;
 class LongRangeCorrection{
 
@@ -18,13 +16,9 @@ public:
 	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 	virtual void calculateLongRange() = 0;
 	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) = 0;
-/*
-private:
-	unsigned _type;
-	Planar* _planar;
-	Homogeneous* _homogen;
-*/
-  
+
+	// Get potential energy correction per molecule
+	virtual double getUpotCorr(Molecule* /* mol */) = 0;
 };
 
 #endif /* __LONGRANGECORRECTION_H__ */

@@ -143,7 +143,8 @@ void Homogeneous::calculateLongRange() {
 	// Pot. energy and virial are also stored in molecule class
 	// To maintain continuity (sum of U over N == U_global_domain), the correction values are added to each molecule
 	// For the virial, the correction is distributed equally to the diagonal elements
-	const double uPotCorrPerMol = upotCorr/globalNumMolecules;
+	// NOTE: UPotCorr may need some sophistication as correction could depend on component
+	_uPotCorrPerMol = upotCorr/globalNumMolecules;
 	const double virialCorrPerMol[9] = {
 		virialCorr/(3.*globalNumMolecules),  // rxfx
 		virialCorr/(3.*globalNumMolecules),  // ryfy
@@ -157,8 +158,14 @@ void Homogeneous::calculateLongRange() {
 	};
 	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
 		tempMol->Viadd(virialCorrPerMol);
-		tempMol->Uadd(uPotCorrPerMol);
+		tempMol->Uadd(_uPotCorrPerMol);
 	}
+}
+
+double Homogeneous::getUpotCorr(Molecule* /* mol */) {
+	// unsigned int cid = mol->componentid();
+	// TODO: May need some sophistication as correction could depend on component
+	return _uPotCorrPerMol;
 }
 
 double Homogeneous::_TICCu(int n, double rc, double sigma2) {

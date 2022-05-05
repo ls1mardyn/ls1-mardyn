@@ -152,7 +152,9 @@ void MettDeamonFeedrateDirector::beforeForces(
 	{
 		_updateControl.sampledTimestepCount = 0;  // reset sampling control
 		this->calcFeedrate(mettDeamon);
+		cout << domainDecomp->getRank() << " 1new feedrate " << _feedrate.avg << endl;
 		mettDeamon->setActualFeedrate(_feedrate.avg);
+		cout << domainDecomp->getRank() << " 2new feedrate " << _feedrate.avg << endl;
 	}
 
 	// Write out restart information
@@ -194,7 +196,7 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 	double dInvNumvals = 1./static_cast<double>(_feedrate.list.size());
 	_feedrate.avg = _feedrate.sum * dInvNumvals;
 
-#ifndef NDEBUG
+// #ifndef NDEBUG
 	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : feedrate.list: ";
 	for (std::list<double>::iterator it=_feedrate.list.begin(); it != _feedrate.list.end(); ++it)
 		std::cout << " " << *it;
@@ -206,7 +208,7 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _feedrate.sum=" << _feedrate.sum << endl;
 	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _feedrate.avg=" << _feedrate.avg << endl;
 	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : mettDeamon->getInvDensityArea()=" << mettDeamon->getInvDensityArea() << endl;
-#endif
+// #endif
 }
 
 void MettDeamonFeedrateDirector::resetLocalValues()

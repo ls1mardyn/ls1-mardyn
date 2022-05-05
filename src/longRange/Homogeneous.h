@@ -16,12 +16,15 @@ class Homogeneous: public LongRangeCorrection{
 
 public:
 	Homogeneous(double cutoffRadius, double cutoffRadiusLJ,  Domain* domain, ParticleContainer* particleContainer, Simulation* simulation);
-	virtual ~Homogeneous() {}
+	~Homogeneous() override = default;
 
-	virtual void init();
-	virtual void readXML(XMLfileUnits& xmlconfig) {}
-	virtual void calculateLongRange();
-	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) {}
+	void init() override;
+	void readXML(XMLfileUnits& xmlconfig) override {}
+	void calculateLongRange() override;
+	void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override {}
+
+	// Get potential energy correction per molecule
+	double getUpotCorr(Molecule* /* mol */) override;
 
 private:
 	/* TODO: Comments on all the functions */
@@ -40,6 +43,8 @@ private:
 	
 	Domain* _domain{nullptr};
 	ParticleContainer* _particleContainer{nullptr};
+
+	double _uPotCorrPerMol; // Correction of potential energy per particle
 
 	double _cutoff{std::numeric_limits<double>::quiet_NaN()};
 	double _cutoffLJ{std::numeric_limits<double>::quiet_NaN()};

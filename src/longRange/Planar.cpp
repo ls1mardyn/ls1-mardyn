@@ -34,9 +34,6 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 	numComp=0;
 }
 
-Planar::~Planar() {
-}
-
 void Planar::init()
 {
 	global_log->info() << "[Long Range Correction] Initializing" << endl;
@@ -1138,7 +1135,7 @@ void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
 	}  
 }
 
-double Planar::lrcLJ(Molecule* mol){
+double Planar::getUpotCorr(Molecule* mol){
 	double potentialEnergy = 0.;
 	unsigned cid=mol->componentid();
 	for (unsigned i=0; i<numLJ[cid]; i++){

@@ -12,6 +12,7 @@
 #include "utils/Random.h"
 #include "utils/FileUtils.h"
 #include "Simulation.h"
+#include "longRange/LongRangeCorrection.h"
 
 #include <math.h>
 
@@ -64,7 +65,29 @@ void ExtendedProfileSampling::readXML(XMLfileUnits& xmlconfig) {
     xmlconfig.getNodeValue("chemicalpotential/factorNumTest", _factorNumTest);
     xmlconfig.getNodeValue("chemicalpotential/samplefrequency", _samplefrequency);
 
-    string insMethod;
+    std::string strCids;
+    if (xmlconfig.getNodeValue("chemicalpotential/cids", strCids)) {
+        // Parse string of comma-separated values into vector
+        std::stringstream ssCids(strCids);
+        const unsigned int numComps = _simulation.getDomain()->getNumberOfComponents();
+        for (unsigned int i; ssCids >> i;) {
+            _cidsTest.push_back(i);    
+            if (ssCids.peek() == ',' || ssCids.peek() == ' ') {
+                ssCids.ignore();
+            } else if ((i <= 0) || (i > numComps)) {
+                global_log->warning() << "[ExtendedProfileSampling] cid " << i << " is not valid! cids must be between 1 and " << numComps << std::endl;
+            }
+            
+        }
+    } else {
+        _cidsTest.push_back(1);  // Default
+    }
+
+    for (auto cid : _cidsTest) {
+        cout << cid << endl;
+    }
+
+    std::string insMethod;
     if (_lattice) {
         insMethod = "in a lattice";
     } else {
@@ -78,9 +101,13 @@ void ExtendedProfileSampling::readXML(XMLfileUnits& xmlconfig) {
     if (_sampleChemPot) {
         global_log->info() << "[ExtendedProfileSampling] Sampling of chemical potential enabled with a sampling frequency of " << _samplefrequency << std::endl;
         global_log->info() << "[ExtendedProfileSampling] " << _factorNumTest << " * numParticles will be inserted " << insMethod << std::endl;
+        global_log->info() << "[ExtendedProfileSampling] Inserting particles with cids = " << strCids << std::endl;
         if (_samplefrequency > _writeFrequency) {
             global_log->warning() << "[ExtendedProfileSampling] Sample frequency (" << _samplefrequency << ") is greater than write frequency (" 
                                   << _writeFrequency << ")! " << std::endl;
+        }
+        if ((_cidsTest.size() > 1) and (_singleComp)) {
+            global_log->warning() << "[ExtendedProfileSampling] <singlecomponent> and <cids> set!" << std::endl;
         }
     }
 }
@@ -93,7 +120,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     }
 
     // Do not write or sample data directly after (re)start in the first step
-    if ( simstep == global_simulation->getNumInitTimesteps() ) {
+    if ( simstep == _simulation.getNumInitTimesteps() ) {
         return;
     }
     
@@ -469,16 +496,25 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                             _mTest.setr(0,rX);
                             _mTest.setr(1,rY);
                             _mTest.setr(2,rZ);
-                            const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler.get(), &_mTest, *_cellProcessor);
-                            double chemPot = exp(-deltaUpot/temperature_step_global.at(index));  // Global temperature of all components
-                            if (std::isfinite(chemPot)) {
-                                chemPot_step.local.at(index) += chemPot;
-                                countNTest_step.local.at(index)++;
+                            for (auto cid : _cidsTest) {
+                                const uint32_t indexCID = cid*_numBinsGlobal + index;
+                                _mTest.setComponent(&(_simulation.getEnsemble()->getComponents()->at(cid-1)));
+                                const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler.get(), &_mTest, *_cellProcessor)
+                                                        + _simulation.getLongRangeCorrection()->getUpotCorr(&_mTest);
+                                double chemPot = exp(-deltaUpot/temperature_step_global.at(index));  // Global temperature of all components
+                                if (std::isfinite(chemPot)) {
+                                    chemPot_step.local.at(indexCID) += chemPot;
+                                    countNTest_step.local.at(indexCID)++;
+                                    // For component 0 (single component)
+                                    chemPot_step.local.at(index) += chemPot;
+                                    countNTest_step.local.at(index)++;
     #ifndef NDEBUG
-                                std::cout << "[ExtendedProfileSampling] Rank " << domainDecomp->getRank() << " : Inserting molecule at x,y,z = "
-                                        << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
-                                        << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperature_step_global.at(index) << " ; index = " << index << std::endl;
+                                    std::cout << "[ExtendedProfileSampling] Rank " << domainDecomp->getRank() << " : Inserting molecule at x,y,z = "
+                                            << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
+                                            << " ; cid = " << _mTest.componentid()
+                                            << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperature_step_global.at(index) << " ; index = " << index << std::endl;
     #endif
+                                }
                             }
                         }
                         rZ += dZ.at(index);
@@ -490,7 +526,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         } else {
             // Random insertion
             // NOTE: This differs from the lattice method as it does not take the local density into account
-            Random* rnd = new Random();
+            std::unique_ptr<Random> rnd(new Random());
 
             // Share of volume of present rank from whole domain
             const float domainShare = (regionSize[0]*regionSize[1]*regionSize[2])/(_globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2]); 
@@ -505,16 +541,25 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     _mTest.setr(0,rX);
                     _mTest.setr(1,rY);
                     _mTest.setr(2,rZ);
-                    const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler.get(), &_mTest, *_cellProcessor);
-                    double chemPot = exp(-deltaUpot/temperature_step_global.at(index));
-                    if (std::isfinite(chemPot)) {
-                        chemPot_step.local.at(index) += chemPot;
-                        countNTest_step.local.at(index)++;
-    #ifndef NDEBUG
-                        std::cout << "[ExtendedProfileSampling] Rank " << domainDecomp->getRank() << " : Inserting molecule at x,y,z = "
-                                << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
-                                << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperature_step_global.at(index) << " ; index = " << index << std::endl;
-    #endif
+                    for (auto cid : _cidsTest) {
+                        const uint32_t indexCID = cid*_numBinsGlobal + index;
+                        _mTest.setComponent(&(_simulation.getEnsemble()->getComponents()->at(cid-1)));
+                        const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler.get(), &_mTest, *_cellProcessor)
+                                                + _simulation.getLongRangeCorrection()->getUpotCorr(&_mTest);
+                        double chemPot = exp(-deltaUpot/temperature_step_global.at(index));
+                        if (std::isfinite(chemPot)) {
+                            chemPot_step.local.at(indexCID) += chemPot;
+                            countNTest_step.local.at(indexCID)++;
+                            // For component 0 (single component)
+                            chemPot_step.local.at(index) += chemPot;
+                            countNTest_step.local.at(index)++;
+        #ifndef NDEBUG
+                            std::cout << "[ExtendedProfileSampling] Rank " << domainDecomp->getRank() << " : Inserting molecule at x,y,z = "
+                                    << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
+                                    << " ; cid = " << _mTest.componentid()
+                                    << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperature_step_global.at(index) << " ; index = " << index << std::endl;
+        #endif
+                        }
                     }
                 }
             }
@@ -717,8 +762,6 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         ekin        = _ekin_accum.at(i)              /_countSamples.at(i);
                         epot        = _epot_accum.at(i)              /_countSamples.at(i);
                         p           = _pressure_accum.at(i)          /_countSamples.at(i);
-                        chemPot_res = _chemPot_accum.at(i)           /_countSamples.at(i);
-                        numTest     = static_cast<double>(_countNTest_accum.at(i))/_countSamples.at(i);
                         T_x         = _temperatureVect_accum[0].at(i)/_countSamples.at(i);
                         T_y         = _temperatureVect_accum[1].at(i)/_countSamples.at(i);
                         T_z         = _temperatureVect_accum[2].at(i)/_countSamples.at(i);
@@ -733,8 +776,8 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         jEF_z       = _energyfluxVect_accum[2].at(i) /_countSamples.at(i);
                         numSamples  = _countSamples.at(i);
                     }
-                    if ((_chemPot_accum.at(i) > 0.0) and (_countNTest_accum.at(i) > 0ul) and (_countSamples.at(i) > 0ul)) {
-                        numTest     = _countNTest_accum.at(i)/_countSamples.at(i);
+                    if ((_chemPot_accum.at(i) > 0.0) and (_countNTest_accum.at(i) > 0ul)) {
+                        numTest     = static_cast<double>(_countNTest_accum.at(i)*_samplefrequency) / _writeFrequency;
                         chemPot_res = -log(_chemPot_accum.at(i)/_countNTest_accum.at(i)) + log(rho);
                     }
                     ofs << FORMAT_SCI_MAX_DIGITS << numMolsPerStep
