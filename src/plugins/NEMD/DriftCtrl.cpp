@@ -155,6 +155,13 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			p.at(1) = it->v(1) * mass;
 			p.at(2) = it->v(2) * mass;
 
+			// sum all components
+			_sampling.at(0).numParticles.local.at(yPosID)++;
+			_sampling.at(0).momentum.at(0).local.at(yPosID) += p.at(0);
+			_sampling.at(0).momentum.at(1).local.at(yPosID) += p.at(1);
+			_sampling.at(0).momentum.at(2).local.at(yPosID) += p.at(2);
+
+			// sum specific component
 			_sampling.at(cid_ub).numParticles.local.at(yPosID)++;
 			_sampling.at(cid_ub).momentum.at(0).local.at(yPosID) += p.at(0);
 			_sampling.at(cid_ub).momentum.at(1).local.at(yPosID) += p.at(1);
@@ -230,14 +237,14 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			// check if target component
 			uint32_t cid_zb = it->componentid();
 			uint32_t cid_ub = cid_zb+1;
-			if(cid_ub != _target.cid)
+			if(cid_ub != _target.cid && 0 != _target.cid)
 				continue;
 			
 			uint32_t yPosID = floor( (yPos-_range.yl) / _range.subdivision.binWidth.actual);
 
-			//~ it->setv(0, it->v(0) + _sampling.at(cid_ub).mom_corr.at(0).at(yPosID) ); 
+			it->setv(0, it->v(0) + _sampling.at(cid_ub).mom_corr.at(0).at(yPosID) ); 
 			it->setv(1, it->v(1) + _sampling.at(cid_ub).mom_corr.at(1).at(yPosID) );
-			//~ it->setv(2, it->v(2) + _sampling.at(cid_ub).mom_corr.at(2).at(yPosID) );
+			it->setv(2, it->v(2) + _sampling.at(cid_ub).mom_corr.at(2).at(yPosID) );
 		}
 	}
 	
