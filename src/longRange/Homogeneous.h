@@ -11,7 +11,6 @@ class Simulation;
 class Domain;
 class LongRangeCorrection;
 
-//class Homogeneous:public LongRangeCorrection{
 class Homogeneous: public LongRangeCorrection{
 
 public:

@@ -326,7 +326,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 				for (unsigned short d = 0; d < 3; ++d) {
 					for (unsigned e = 0; e < 3; ++e) {
-						virialAll[3*d+e] += drm[d] * f[e];
+						virialAll[3u*d+e] += drm[d] * f[e];
 					}
 				}
 			}
@@ -360,7 +360,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			for (unsigned short d = 0; d < 3; d++) {
 				for (unsigned e = 0; e < 3; ++e) {
-					virialAll[3*d+e] += drm[d] * f[e];
+					virialAll[3u*d+e] += drm[d] * f[e];
 				}
 			}
 		}
@@ -382,7 +382,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			for (unsigned short d = 0; d < 3; d++) {
 				for (unsigned e = 0; e < 3; ++e) {
-					virialAll[3*d+e] += drm[d] * f[e];
+					virialAll[3u*d+e] += drm[d] * f[e];
 				}
 			}
 		}
@@ -404,7 +404,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			for (unsigned short d = 0; d < 3; d++) {
 				for (unsigned e = 0; e < 3; ++e) {
-					virialAll[3*d+e] += drm[d] * f[e];
+					virialAll[3u*d+e] += drm[d] * f[e];
 				}
 			}
 		}
@@ -430,7 +430,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			for (unsigned short d = 0; d < 3; d++) {
 				for (unsigned e = 0; e < 3; ++e) {
-					virialAll[3*d+e] -= drm[d] * f[e];
+					virialAll[3u*d+e] -= drm[d] * f[e];
 				}
 			}
 		}
@@ -454,7 +454,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			for (unsigned short d = 0; d < 3; ++d) {
 				for (unsigned e = 0; e < 3; ++e) {
-					virialAll[3*d+e] += drm[d] * f[e];
+					virialAll[3u*d+e] += drm[d] * f[e];
 				}
 			}
 		}
@@ -478,7 +478,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			for (unsigned short d = 0; d < 3; d++) {
 				for (unsigned e = 0; e < 3; ++e) {
-					virialAll[3*d+e] -= drm[d] * f[e];
+					virialAll[3u*d+e] -= drm[d] * f[e];
 				}
 			}
 		}
@@ -503,7 +503,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			for (unsigned short d = 0; d < 3; d++) {
 				for (unsigned e = 0; e < 3; ++e) {
-					virialAll[3*d+e] -= drm[d] * f[e];
+					virialAll[3u*d+e] -= drm[d] * f[e];
 				}
 			}
 		}
@@ -527,7 +527,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			for (unsigned short d = 0; d < 3; ++d) {
 				for (unsigned e = 0; e < 3; ++e) {
-					virialAll[3*d+e] += drm[d] * f[e];
+					virialAll[3u*d+e] += drm[d] * f[e];
 				}
 			}
 		}
@@ -552,7 +552,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			for (unsigned short d = 0; d < 3; ++d) {
 				for (unsigned e = 0; e < 3; ++e) {
-					virialAll[3*d+e] += drm[d] * f[e];
+					virialAll[3u*d+e] += drm[d] * f[e];
 				}
 			}
 		}
