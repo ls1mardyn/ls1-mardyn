@@ -97,6 +97,7 @@ jobs:
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
+        OMP_NUM_THREADS: 2
 
       # validation testing
     - if: ${{ matrix.parall == 'PAR' }}
@@ -153,3 +154,4 @@ jobs:
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
+        OMP_NUM_THREADS: 2
