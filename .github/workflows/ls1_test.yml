@@ -109,7 +109,7 @@ jobs:
           git checkout master
           git status
           cd build_${JOBNAME}_master
-          #note: ALLLBL is enabled iff AutoPas is enabled.
+          #note: ALLLBL is enabled if AutoPas is enabled.
           cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
                 -DENABLE_AUTOPAS=${{ matrix.autopas }} \
@@ -117,7 +117,11 @@ jobs:
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=ON ..
           make -j2
+          
           cd ..
+          
+          #get back as the example list of the new commit should be used for validation tests
+          git switch -
           
           #set strict pipefail option
           set -eo pipefail
