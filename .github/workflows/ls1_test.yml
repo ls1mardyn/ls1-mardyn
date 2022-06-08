@@ -132,6 +132,8 @@ jobs:
             cd ./examples/$(dirname $i)
             # if AutoPas is enabled, replace all occurences of LinkedCell in the examples' config files with AutoPas
             if [[ ${{ matrix.autopas }} == 'ON' ]]; then sed 's/LinkedCells/AutoPas/g' $(basename $i); else cat $(basename $i); fi >> input_new.xml
+            # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
+            if [[ ${{ matrix.vector }} == 'NONE' ]]; then sed 's=AutoPas">=AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>=g' input_new.xml; fi
             mpirun -np ${{ matrix.procs }} --oversubscribe $repoPath/build_${JOBNAME}/src/MarDyn input_new.xml --steps=20 | \
                 tee | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_new
             cd - > /dev/null
@@ -144,6 +146,8 @@ jobs:
             cd ./examples/$(dirname $i)
             # if AutoPas is enabled, replace all occurences of LinkedCell in the examples' config files with AutoPas
             if [[ ${{ matrix.autopas }} == 'ON' ]]; then sed 's/LinkedCells/AutoPas/g' $(basename $i); else cat $(basename $i); fi >> input_master.xml
+            # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
+            if [[ ${{ matrix.vector }} == 'NONE' ]]; then sed 's=AutoPas">=AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>=g' input_new.xml; fi
             mpirun -np ${{ matrix.procs }} --oversubscribe $repoPath/build_${JOBNAME}_master/src/MarDyn input_master.xml --steps=20 | \
                 tee | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_master
             cd - > /dev/null
