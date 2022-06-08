@@ -121,7 +121,7 @@ jobs:
           cd ..
           
           #get back as the example list of the new commit should be used for validation tests
-          git switch -
+          git checkout ${{ github.head_ref }}
           
           #set strict pipefail option
           set -eo pipefail
