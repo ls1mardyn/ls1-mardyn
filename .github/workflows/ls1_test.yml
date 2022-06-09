@@ -1,4 +1,4 @@
-name: C/C++ Continuous Integration
+name: C/C++ CI for ls1
 
 on:
   push:
@@ -119,9 +119,6 @@ jobs:
           make -j2
           
           cd ..
-          
-          #get back as the example list of the new commit should be used for validation tests
-          git checkout ${{ github.head_ref }}
           
           #set strict pipefail option
           set -eo pipefail
