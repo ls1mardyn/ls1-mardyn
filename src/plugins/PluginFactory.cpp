@@ -50,6 +50,7 @@
 #include "plugins/MaxCheck.h"
 #include "plugins/Mirror.h"
 #include "plugins/MirrorSystem.h"
+#include "plugins/NEMD/DensityControl.h"
 #include "plugins/NEMD/DistControl.h"
 #include "plugins/NEMD/DriftCtrl.h"
 #include "plugins/NEMD/ExtractPhase.h"
@@ -61,10 +62,8 @@
 #include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
+#include "plugins/NEMD/VelocityExchange.h"
 #include "plugins/WallPotential.h"
-#ifdef ENABLE_ADIOS2
-#include "io/Adios2Writer.h"
-#endif
 
 #ifdef VTK
 #include "io/vtk/VTKGridWriter.h"
@@ -79,9 +78,6 @@ template <>
 void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	global_log->debug() << "REGISTERING PLUGINS" << endl;
 
-#ifdef ENABLE_ADIOS2
-	REGISTER_PLUGIN(Adios2Writer);
-#endif
 	REGISTER_PLUGIN(COMaligner);
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
@@ -117,6 +113,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(MettDeamon);
 	REGISTER_PLUGIN(MettDeamonFeedrateDirector);
 	REGISTER_PLUGIN(PosNegComp);
+  REGISTER_PLUGIN(DensityControl);
 	REGISTER_PLUGIN(DistControl);
 	REGISTER_PLUGIN(DriftCtrl);
 	REGISTER_PLUGIN(ExtractPhase);
@@ -125,6 +122,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(TestPlugin);
 	REGISTER_PLUGIN(TimerWriter);
 	REGISTER_PLUGIN(VectorizationTuner);
+  REGISTER_PLUGIN(VelocityExchange);
 	REGISTER_PLUGIN(VISWriter);
 	REGISTER_PLUGIN(WallPotential);
 	REGISTER_PLUGIN(XyzWriter);
