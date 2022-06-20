@@ -34,10 +34,6 @@ DEPS ?= 0
 # 0: disbaled, 1: enabled
 UNIT_TESTS ?= 0
 
-# build with ADIOS2 support
-# 0: disabled, 1: enabled
-ADIOS2 ?= 0
-
 # build with VTK support
 # 0: disbaled, 1: enabled
 VTK ?= 0
@@ -160,7 +156,7 @@ else
   $(error ERROR: config file for $(CFG) not found - no include )
 endif
 
-SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/|/fft/|AutoPas|Adios2)")
+SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/|/fft/|AutoPas)")
 SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "DomainDecompBase\|LoadCalc\|Zonal\|ForceHelper" | grep -E -v "/tests/")
 SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -E -v "(/tests/|/vtk/|ALLL)")
 SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE))
@@ -251,11 +247,6 @@ endif
 ifeq ($(INSITU), 1)
 	INSITU_MAKEFILE := $(realpath $(MAKEFILEDIR)/insitu.mk )
   include $(INSITU_MAKEFILE)
-endif
-
-ifeq ($(ADIOS2), 1)
-  ADIOS2_MAKEFILE := $(realpath $(MAKEFILEDIR)/adios2.mk )
-  include $(ADIOS2_MAKEFILE)
 endif
 
 ifeq ($(VTK), 1)
