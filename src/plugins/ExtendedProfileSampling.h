@@ -82,6 +82,7 @@ class ExtendedProfileSampling : public PluginBase {
     std::vector<double> _temperature_accum;                     // Temperature (drift corrected)
     std::vector<double> _ekin_accum;                            // Kinetic energy including drift
     std::vector<double> _epot_accum;                            // Potential energy
+    std::vector<double> _massflux_accum;                        // Mass flux in y-direction (=rho*v_y)
     std::vector<double> _pressure_accum;                        // Pressure
     std::vector<double> _chemPot_accum;                         // Chemical potential as sampled in ms2 (Widom insertion method)
     std::vector<unsigned long> _countNTest_accum;               // Number of inserted test particles for chem. pot. sampling

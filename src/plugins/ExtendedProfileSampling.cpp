@@ -689,6 +689,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 _temperature_accum.at(i)             += temperature_step_global.at(i);
                 _ekin_accum.at(i)                    += ekin2Trans_step.global.at(i) / numMols;
                 _epot_accum.at(i)                    += epot_step.global.at(i) / numMols;
+                _massflux_accum.at(i)                += rho * veloDrift_step_global[1].at(i);
                 _pressure_accum.at(i)                += rho * ( (ViX + ViY + ViZ)/(3.0*numMols) + temperature_step_global.at(i) ); // ??? Welche Temperature? Mit Drift? Statisch/dynamisch?
                 _chemPot_accum.at(i)                 += chemPot_step.global.at(i);
                 _countNTest_accum.at(i)              += countNTest_step.global.at(i);
@@ -702,9 +703,9 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 _pressureVect_accum[0].at(i)         += rho * ( ViX/numMols + Tx );
                 _pressureVect_accum[1].at(i)         += rho * ( ViY/numMols + Ty );
                 _pressureVect_accum[2].at(i)         += rho * ( ViZ/numMols + Tz );
-                _forceVect_accum[0].at(i)            += Fx;
-                _forceVect_accum[1].at(i)            += Fy;
-                _forceVect_accum[2].at(i)            += Fz;
+                _forceVect_accum[0].at(i)            += Fx / numMols;
+                _forceVect_accum[1].at(i)            += Fy / numMols;
+                _forceVect_accum[2].at(i)            += Fz / numMols;
                 _energyfluxVect_accum[0].at(i)       += energyfluxVect_step[0].global.at(i) / _slabVolume;
                 _energyfluxVect_accum[1].at(i)       += energyfluxVect_step[1].global.at(i) / _slabVolume;
                 _energyfluxVect_accum[2].at(i)       += energyfluxVect_step[2].global.at(i) / _slabVolume;
@@ -747,6 +748,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     << setw(22) << "T["        << cid << "]"        // Temperature without drift (i.e. "real" temperature)
                     << setw(22) << "ekin["     << cid << "]"        // Kinetic energy including drift
                     << setw(22) << "epot["     << cid << "]"        // Potential energy
+                    << setw(22) << "jp_y["     << cid << "]"        // Mass flux in y-direction
                     << setw(22) << "p["        << cid << "]"        // Pressure
                     << setw(22) << "chemPot_res[" << cid << "]"     // Chemical potential as known as mu_tilde (equals the ms2 value)
                     << setw(22) << "numTest["     << cid << "]"     // Number of inserted test particles per sample step
@@ -778,6 +780,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     double T {0.0};
                     double ekin {0.0};
                     double epot {0.0};
+                    double jp_y {0.0};
                     double p {0.0};
                     double chemPot_res {0.0};
                     double numTest {0.0};
@@ -803,6 +806,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         T           = _temperature_accum.at(i)       /_countSamples.at(i);
                         ekin        = _ekin_accum.at(i)              /_countSamples.at(i);
                         epot        = _epot_accum.at(i)              /_countSamples.at(i);
+                        jp_y        = _massflux_accum.at(i)          /_countSamples.at(i);
                         p           = _pressure_accum.at(i)          /_countSamples.at(i);
                         T_x         = _temperatureVect_accum[0].at(i)/_countSamples.at(i);
                         T_y         = _temperatureVect_accum[1].at(i)/_countSamples.at(i);
@@ -830,6 +834,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         << FORMAT_SCI_MAX_DIGITS << T
                         << FORMAT_SCI_MAX_DIGITS << ekin
                         << FORMAT_SCI_MAX_DIGITS << epot
+                        << FORMAT_SCI_MAX_DIGITS << jp_y
                         << FORMAT_SCI_MAX_DIGITS << p
                         << FORMAT_SCI_MAX_DIGITS << chemPot_res
                         << FORMAT_SCI_MAX_DIGITS << numTest
@@ -953,6 +958,7 @@ void ExtendedProfileSampling::resizeVectors() {
     _temperature_accum.resize(_lenVector);
     _ekin_accum.resize(_lenVector);
     _epot_accum.resize(_lenVector);
+    _massflux_accum.resize(_lenVector);
     _pressure_accum.resize(_lenVector);
     _chemPot_accum.resize(_lenVector);
     _countNTest_accum.resize(_lenVector);
@@ -1002,6 +1008,7 @@ void ExtendedProfileSampling::resetVectors() {
     std::fill(_temperature_accum.begin(), _temperature_accum.end(), 0.0f);
     std::fill(_ekin_accum.begin(), _ekin_accum.end(), 0.0f);
     std::fill(_epot_accum.begin(), _epot_accum.end(), 0.0f);
+    std::fill(_massflux_accum.begin(), _massflux_accum.end(), 0.0f);
     std::fill(_pressure_accum.begin(), _pressure_accum.end(), 0.0f);
     std::fill(_chemPot_accum.begin(), _chemPot_accum.end(), 0.0f);
     std::fill(_countNTest_accum.begin(), _countNTest_accum.end(), 0ul);
