@@ -31,7 +31,7 @@ public:
 	 * The following XML object structure is handled by this method:
 	 * \code{.xml}
 		<longrange type="planar">
-			<region> <!-- y coordinates of left and right boundaries within correction is applied to particles -->
+			<region> <!-- y coordinates of left and right boundaries within correction of force is applied to particles; pot. energy and virial correction is always applied since it is necessary for the correct calculation of the state values -->
 				<left refcoordsID="INT">FLOAT</left> <!-- Reference of coordinate can be set (see DistControl); 0: origin (default) | 1:left interface | 2:right interface -->
 				<right refcoordsID="INT">FLOAT</right>
 			</region>
@@ -47,14 +47,14 @@ public:
 	   \endcode
 	 */
 
-	virtual void init();
-	virtual void readXML(XMLfileUnits& xmlconfig);
-	virtual void calculateLongRange();
+	void init() override;
+	void readXML(XMLfileUnits& xmlconfig) override;
+	void calculateLongRange() override;
 	double lrcLJ(Molecule* mol);
 	// For non-equilibrium simulations the density profile must not be smoothed, therefore the density profile from the actual time step is used.
 	void directDensityProfile();
 	void SetSmoothDensityProfileOption(bool bVal) {_smooth = bVal;}
-	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
+	void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
 
 	// Observer, ControlInstance
 	SubjectBase* getSubject();

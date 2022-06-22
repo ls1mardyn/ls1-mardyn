@@ -54,12 +54,12 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 {
 	_pluginID = 100;
 	xmlconfig.getNodeValue("pluginID", _pluginID);
-	global_log->info() << "[Mirror] pluginID = " << _pluginID << endl;
+	global_log->info() << "[Mirror] pluginID = " << _pluginID << std::endl;
 
 	// Target component
 	_targetComp = 0;
 	xmlconfig.getNodeValue("cid", _targetComp);
-	if(_targetComp > 0) { global_log->info() << "[Mirror] Target component: " << _targetComp << endl; }
+	if(_targetComp > 0) { global_log->info() << "[Mirror] Target component: " << _targetComp << std::endl; }
 
 	// Mirror position
 	_position.axis = 1;  // only y-axis supported yet
@@ -77,11 +77,11 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 		if(nullptr != subject)
 			subject->registerObserver(this);
 		else {
-			global_log->error() << "[Mirror] Initialization of plugin DistControl is needed before! Program exit..." << endl;
+			global_log->error() << "[Mirror] Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
 			Simulation::exit(-1);
 		}
 	}
-	global_log->info() << "[Mirror] Enabled at position: y = " << _position.coord << endl;
+	global_log->info() << "[Mirror] Enabled at position: y = " << _position.coord << std::endl;
 
 	/** mirror type */
 	_type = MT_UNKNOWN;
@@ -101,16 +101,16 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	else if("o-|" == strDirection)
 		_direction = MD_RIGHT_MIRROR;
 	if(MD_LEFT_MIRROR == _direction)
-		global_log->info() << "[Mirror] Reflect particles to the right |-o" << endl;
+		global_log->info() << "[Mirror] Reflect particles to the right |-o" << std::endl;
 	else if(MD_RIGHT_MIRROR == _direction)
-		global_log->info() << "[Mirror] Reflect particles to the left o-|" << endl;
+		global_log->info() << "[Mirror] Reflect particles to the left o-|" << std::endl;
 
 	/** constant force */
 	if(MT_FORCE_CONSTANT == _type)
 	{
 		_forceConstant = 100.;
 		xmlconfig.getNodeValue("forceConstant", _forceConstant);
-		global_log->info() << "[Mirror] Applying force in vicinity of mirror: _forceConstant = " << _forceConstant << endl;
+		global_log->info() << "[Mirror] Applying force in vicinity of mirror: _forceConstant = " << _forceConstant << std::endl;
 	}
 
 	/** zero gradient */
@@ -134,7 +134,7 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 
 		if(!xmlconfig.getNodeValue("meland/velo_target", _melandParams.velo_target))
 		{
-			global_log->error() << "[Mirror] Meland: Parameters for method 5 (MT_MELAND_2004) provided in config-file *.xml corrupted/incomplete. Program exit ..." << endl;
+			global_log->error() << "[Mirror] Meland: Parameters for method 5 (MT_MELAND_2004) provided in config-file *.xml corrupted/incomplete. Program exit ..." << std::endl;
 			Simulation::exit(-2004);
 		}
 		else {
@@ -143,6 +143,13 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 				global_log->info() << "[Mirror] Meland: FixedProb = " << _melandParams.fixed_probability_factor << std::endl;
 			}
 		}
+		
+		/** Diffuse mirror **/
+		_diffuse_mirror.enabled = false;
+		_diffuse_mirror.width = 0.0;
+		bool bRet = xmlconfig.getNodeValue("diffuse/width", _diffuse_mirror.width);
+		_diffuse_mirror.enabled = bRet;
+		if(_diffuse_mirror.width > 0.0) { global_log->info() << "[Mirror] Using diffuse Mirror width = " << _diffuse_mirror.width << std::endl; }
 	}
 	
 	if(MT_RAMPING == _type)
@@ -153,16 +160,16 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 		bRet = bRet && xmlconfig.getNodeValue("ramping/treatment", _rampingParams.treatment);
 		
 		if (not bRet) {
-			global_log->error() << "[Mirror] Ramping: Parameters for method 5 (MT_RAMPING) provided in config-file *.xml corrupted/incomplete. Program exit ..." << endl;
+			global_log->error() << "[Mirror] Ramping: Parameters for method 5 (MT_RAMPING) provided in config-file *.xml corrupted/incomplete. Program exit ..." << std::endl;
 			Simulation::exit(-1);
 		}
 		else {
 			if(_rampingParams.startStep > _rampingParams.stopStep) {
-				global_log->error() << "[Mirror] Ramping: Start > Stop. Program exit ..." << endl;
+				global_log->error() << "[Mirror] Ramping: Start > Stop. Program exit ..." << std::endl;
 				Simulation::exit(-1);
 			}
 			else {
-				global_log->info() << "[Mirror] Ramping from " << _rampingParams.startStep << " to " << _rampingParams.stopStep << endl;
+				global_log->info() << "[Mirror] Ramping from " << _rampingParams.startStep << " to " << _rampingParams.stopStep << std::endl;
 				std::string treatmentStr = "";
 				switch(_rampingParams.treatment) {
 					case 0 : treatmentStr = "Deletion";
@@ -170,20 +177,13 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 					case 1 : treatmentStr = "Transmission";
 						break;
 					default:
-						global_log->error() << "[Mirror] Ramping: No proper treatment was set. Use 0 (Deletion) or 1 (Transmission). Program exit ..." << endl;
+						global_log->error() << "[Mirror] Ramping: No proper treatment was set. Use 0 (Deletion) or 1 (Transmission). Program exit ..." << std::endl;
 						Simulation::exit(-1);
 				}
-				global_log->info() << "[Mirror] Ramping: Treatment for non-reflected particles: " << _rampingParams.treatment << " ( " << treatmentStr << " ) " << endl;
+				global_log->info() << "[Mirror] Ramping: Treatment for non-reflected particles: " << _rampingParams.treatment << " ( " << treatmentStr << " ) " << std::endl;
 			}
 		}
 	}
-	
-	/** Diffuse mirror **/
-	_diffuse_mirror.enabled = false;
-	_diffuse_mirror.width = 0;
-	bool bRet = xmlconfig.getNodeValue("diffuse/width", _diffuse_mirror.width);
-	_diffuse_mirror.enabled = bRet;
-	if(_diffuse_mirror.width > 0.0) { global_log->info() << "[Mirror] Using diffuse Mirror width = " << _diffuse_mirror.width << endl; }
 }
 
 void Mirror::beforeForces(
@@ -228,35 +228,41 @@ void Mirror::beforeForces(
 				if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
 				
 				double vy = it->v(1);
-				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) )
+				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) ) {
 					continue;
+				}
 				/** Diffuse Mirror **/
-				if (_diffuse_mirror.enabled == true) {
+				if (_diffuse_mirror.enabled) {
 					uint64_t pid = it->getID();
 					double ry = it->r(1);
-					double mirror_pos;
-					auto search = _diffuse_mirror.pos_map.find(pid);
-					if (search != _diffuse_mirror.pos_map.end() ) {
-						mirror_pos = search->second;
-					}
-					else {
-						float frnd = _rnd->rnd();
+					double mirrorPos{0.0};
+
+					auto mirrorPosIter = _diffuse_mirror.pos_map.find(pid);
+
+					// if the particle is in the mirror save the position
+					if (mirrorPosIter != _diffuse_mirror.pos_map.end()) {
+						mirrorPos = mirrorPosIter->second;
+					} else {
+						// if it is not in the mirror create a new position with random diffusion
+						// and insert it into the mirror
+						auto randomNumber = static_cast<double>(_rnd->rnd());
 						if (_direction == MD_RIGHT_MIRROR)
-							mirror_pos = _position.coord - static_cast<double>(frnd) * _diffuse_mirror.width;
+							mirrorPos = _position.coord + randomNumber * _diffuse_mirror.width;
 						else
-							mirror_pos = _position.coord + static_cast<double>(frnd) * _diffuse_mirror.width;
+							mirrorPos = _position.coord - randomNumber * _diffuse_mirror.width;
 						std::pair<std::map<uint64_t,double>::iterator,bool> status;
-						status = _diffuse_mirror.pos_map.insert({pid, mirror_pos});
+						status = _diffuse_mirror.pos_map.insert({pid, mirrorPos});
+						mirrorPosIter = status.first;
 #ifndef NDEBUG
 						printInsertionStatus(status);
 #endif
 					}
-					
-					if (ry <= mirror_pos)
+					// if the particle did not cross the mirror everything is ok
+					if ( (_direction == MD_RIGHT_MIRROR && ry <= mirrorPos) || (_direction == MD_LEFT_MIRROR && ry >= mirrorPos) ) {
 						continue;
-					else {
-						auto search = _diffuse_mirror.pos_map.find(pid);
-						_diffuse_mirror.pos_map.erase(search);
+					} else {
+						// Particle will be reflected and can therefore be erased from map
+						_diffuse_mirror.pos_map.erase(mirrorPosIter);
 					}
 				}
 				double vy_reflected = 2*_melandParams.velo_target - vy;
@@ -269,7 +275,7 @@ void Mirror::beforeForces(
 						pbf = std::abs(vy_reflected / vy);
 					}
 					frnd = _rnd->rnd();
-					global_log->debug() << "[Mirror] Meland: pbf = " << pbf << " ; frnd = " << frnd << " ; vy_reflected = " << vy_reflected << " ; vy = " << vy << endl;
+					global_log->debug() << "[Mirror] Meland: pbf = " << pbf << " ; frnd = " << frnd << " ; vy_reflected = " << vy_reflected << " ; vy = " << vy << std::endl;
 					// reflect particles and delete all not reflected
 					if(frnd < pbf) {
 						it->setv(1, vy_reflected);
@@ -351,7 +357,7 @@ void Mirror::beforeForces(
 					it->setv(1, -vy);
 					_particleManipCount.reflected.local.at(0)++;
 					_particleManipCount.reflected.local.at(cid_ub)++;
-					global_log->debug() << "[Mirror] Ramping: Velo. reversed at step " << currentSimstep << " , ReflRatio: " << ratioRefl << endl;
+					global_log->debug() << "[Mirror] Ramping: Velo. reversed at step " << currentSimstep << " , ReflRatio: " << ratioRefl << std::endl;
 				}
 				else {
 					if (_rampingParams.treatment == 0) {
@@ -466,11 +472,8 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 					double ry = it->r(1);
 					double distance = _position.coord - ry;
 					additionalForce[1] = _forceConstant * distance;
-//						cout << "[Mirror] additionalForce[1]=" << additionalForce[1] << endl;
-//						cout << "[Mirror] before: " << (*it) << endl;
 //						it->Fljcenteradd(0, additionalForce);  TODO: Can additional force be added on the LJ sites instead of adding to COM of molecule?
 					it->Fadd(additionalForce);
-//						cout << "[Mirror] after: " << (*it) << endl;
 				}
 			}
 		}

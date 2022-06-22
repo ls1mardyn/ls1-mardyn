@@ -55,7 +55,7 @@ void InMemoryCheckpointing::beforeEventNewTimestep(
 	global_simulation->setSimulationTime(_snapshot.getCurrentTime());
 	domain->setGlobalTemperature(_snapshot.getTemperature());
 
-	mardyn_assert(_snapshot.getGlobalNumberOfMolecules() == domain->getglobalNumMolecules());
+	mardyn_assert(_snapshot.getGlobalNumberOfMolecules() == domain->getglobalNumMolecules(true, particleContainer, domainDecomp));
 	mardyn_assert(domainDecomp->getRank() == _snapshot.getRank());
 
 }
@@ -77,7 +77,7 @@ void InMemoryCheckpointing::endStep(ParticleContainer* particleContainer,
 
 	//set time, global number of molecules and temperature
 	_snapshot.setCurrentTime(global_simulation->getSimulationTime());
-	_snapshot.setGlobalNumberOfMolecules(domain->getglobalNumMolecules());
+	_snapshot.setGlobalNumberOfMolecules(domain->getglobalNumMolecules(true, particleContainer, domainDecomp));
 	_snapshot.setTemperature(domain->getGlobalCurrentTemperature());
 	_snapshot.setRank(domainDecomp->getRank());
 

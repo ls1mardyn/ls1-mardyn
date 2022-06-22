@@ -7,6 +7,8 @@ Since the number of plugins is expected to grow quite rapidly, the following tab
 
 Plugin name  | Up to 5 Keywords | Short Description (one line)
 ------------- | ------------- | --
+Adios2Reader | input, checkpoint, visualization, parallel, particle configurations, MegaMol | Requires ENABLE_ADIOS2=ON (downloads and installs ADIOS2 automatically, alternatively can use your preinstalled ADIOS2 with FIND_PACKAGE_ADIOS2=ON). Reads checkpoint for further computation. Use bpls tool (next to MarDyn executable) for investigation of ADIOS2 files or directories (*.bp).
+Adios2Writer | output, checkpoint, visualization, parallel, particle configurations, MegaMol | Requires ENABLE_ADIOS2=ON (downloads and installs ADIOS2 automatically, alternatively can use your preinstalled ADIOS2 with FIND_PACKAGE_ADIOS2=ON). Writes out particle configuration including position, velocity, angular momentum, quaternions for all components. Also provides meta information such as the full configuration file, component information, process count, and bounding box.
 CavityWriter | cavity, output, profile, grid | Sets up a grid of pseudo-molecules that check for neighbours in radius. Threshold determines if grid point counts as cavity or not. Output in .xyz format.
 CheckpointWriter | checkpoint, legacy | (Legacy) Checkpoint writer. Hint: use <type>binary</type> to speed-up. See also MPICheckpointWriter and MPI_IOCheckpointWriter.
 COMaligner | alignment, particleContainer utility, visualization | Calculates Center of Mass (COM) of all particles and aligns it with center of simulation box. Dimension/frequency/speed of alignment can be controlled via XML.
@@ -18,10 +20,10 @@ DistControl | distance, interface, density profile, quasi-stationary, reference 
 DriftCtrl | drift, hydrodynamic velocity, control, region | Control the drift or hydrodynamic velocity of particles within a specified region. 
 Dropaccelerator | utility for droplet simulations | Speeds up particles that are located within a specified spherical region at a given point in time to a desired veloctiy. The time frame for the acceleration may also be specified.
 Dropaligner | utility for droplet simulations | aligns the center of mass of particles within a spherical region with a specified center of mass in a similar fashion as the COMaligner. Used to hold a spherical droplet in position.
-EnergyLogWriter | print, file, thermodynamic macroscopic quantities | Write the global \f$N\f$, \f$U_\mathrm{pot}\f$, \f$U_\mathrm{kin}\f$, \f$U_\mathrm{kinTrans}\f$, \f$U_\mathrm{kinRot}\f$, \f$T\f$, \f$p\f$ to file. Duplication with ResultWriter?
+EnergyLogWriter | print, file, thermodynamic macroscopic quantities | Write the global N, U_pot, U_kin, U_kinTrans, U_kinRot, T, p to file. Duplication with ResultWriter?
 ExamplePlugin  | example, sample, illustrate, usage | Print user-specifed text at a user-specified position in the code.  
 ExtractPhase  | extract, phase, interface, vapor-liquid equilibrium (VLE), local density | Extracts the liquid phase from a vapor-liquid equilibrium (VLE) simulation by evaluating the local density surrounding individual particles.
-FixRegion | Fixes particles within a cuboid region to their respective positions. Fixed particles still exert forces onto other particles but they do not move.
+FixRegion | todo | Fixes particles within a cuboid region to their respective positions. Fixed particles still exert forces onto other particles but they do not move.
 FlopRateWriter | performance, FLOP/sec | Calculate the floating point operations per second at which the simulation runs. Only FLOPs in the force calculation are calculated.
 GammaWriter | todo | todo
 HaloParticleWriter | mpi, communication, HaloParticles, output, debugging | Prints the halo particles for each process in a separate files.
@@ -45,7 +47,7 @@ MmspdBinWriter | visualization, particle configurations, MegaMol, mmspd, binary 
 MPI_IOCheckpointWriter  | checkpointing | WIP, not functionable
 MPICheckpointWriter | checkpointing | WIP, not functionable (no proper reader existing)
 ODF | orientation distribution function | Calculates the distribution of mutual orientations between dipolar molecules and writes them into an output. Always use dipolar vector [0 0 1] in the input when using this plugin. Only tested for molecules with exactly one dipole site. Application to other molecules should be possible with minor adjustments and some testing.
-Permittivity | Samples the relative permittivity for pure/mixed Stockmayer fluids and mixtures containing Stockmayer fluids and unpolar fluids. Requires long sampling times (i.e. several million steps). Using global thermostat is recommended.
+Permittivity | todo | Samples the relative permittivity for pure/mixed Stockmayer fluids and mixtures containing Stockmayer fluids and unpolar fluids. Requires long sampling times (i.e. several million steps). Using global thermostat is recommended.
 PovWriter | visualization?, todo | todo
 PosNegComp | component change, moving direction, visualization, particle fluxes | Change component according to the moving direction (y axis) of individual particles. This can be used to visualize forward and backward particle fluxes.
 RDF | radial distribution function | Calculate and write the radial distribution function to file. Slows down visibly, set sampling frequency > 1. Optional angular resolution of the RDF possible by choosing angular bins > 1

@@ -196,7 +196,7 @@
 				<frequency>1</frequency>
 				<stop>1000000000</stop>
 			</control>
-			<yrange> <min>20</min> <max>40</max> </yrange>
+			<range> <ymin>20</ymin> <ymax>40</ymax> </range>
 			<targets>
 				<target cid="1" method="1">
 					<Fmax>800</Fmax>
@@ -215,7 +215,7 @@
 				<frequency>1</frequency>
 				<stop>1000000000</stop>
 			</control>
-			<yrange> <min>40</min> <max>1200</max> </yrange>
+			<range> <ymin>40</ymin> <ymax>1200</ymax> </range>
 			<targets>
 				<target cid="1" method="3">
 					<Fmax>1000</Fmax>
@@ -230,7 +230,7 @@
 				<frequency>1</frequency>
 				<stop>1000000000</stop>
 			</control>
-			<yrange> <min>0</min> <max>20</max> </yrange>
+			<range> <ymin>0</ymin> <ymax>20</ymax> </range>
 			<targets>
 				<target cid="1" method="3">
 					<Fmax>1e-6</Fmax>
@@ -245,7 +245,7 @@
 				<frequency>1</frequency>
 				<stop>1000000000</stop>
 			</control>
-			<yrange> <min>0</min> <max>20</max> </yrange>
+			<range> <ymin>0</ymin> <ymax>20</ymax> </range>
 			<targets>
 				<target cid="2" method="1">
 					<Fmax>300</Fmax>
@@ -260,7 +260,7 @@
 				<frequency>1</frequency>
 				<stop>1000000000</stop>
 			</control>
-			<yrange> <min>0</min> <max>150</max> </yrange>
+			<range> <ymin>0</ymin> <ymax>150</ymax> </range>
 			<targets>
 				<target cid="4" method="1">
 					<Fmax>300</Fmax>

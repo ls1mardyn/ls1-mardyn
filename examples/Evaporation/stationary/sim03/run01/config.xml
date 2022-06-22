@@ -17,7 +17,7 @@
 		<run>
 			<currenttime>0.0</currenttime> 
 			<production>
-				<steps>5000000</steps>
+				<steps>10000</steps>
 			</production>
 		</run>
 
@@ -40,8 +40,8 @@
 					<objectgenerator>
 						<filler type="ReplicaFiller">
 							<input type="BinaryReader">
-								<header>../../sim01/run01/cp_binary-10.restart.header.xml</header>
-								<data>../../sim01/run01/cp_binary-10.restart.dat</data>
+								<header>../../sim01/run01/cp_binary-1.restart.header.xml</header>
+								<data>../../sim01/run01/cp_binary-1.restart.dat</data>
 							</input>
 							<componentid>1</componentid>
 						</filler>
@@ -69,8 +69,8 @@
 
 		<algorithm>
 			<parallelisation type="DomainDecomposition">
-				 <!-- structure handled by DomainDecompMPIBase -->
-				<MPIGridDims> <x>4</x> <y>2</y> <z>5</z> </MPIGridDims>
+				<!-- structure handled by DomainDecompMPIBase -->
+				<!--<MPIGridDims> <x>4</x> <y>2</y> <z>5</z> </MPIGridDims>-->
 			</parallelisation>
 <!--
 			<parallelisation type="KDDecomposition">
@@ -144,7 +144,7 @@
 		<output>
 			<outputplugin name="CheckpointWriter">
 				<type>binary</type>
-				<writefrequency>50000</writefrequency>
+				<writefrequency>10000</writefrequency>
 				<outputprefix>cp_binary</outputprefix>
 			</outputplugin>
 			
@@ -152,8 +152,8 @@
 				<include query="/spheres" >../../sphereparams_3c.xml</include>
 				<writecontrol>
 					<start>0</start>
-					<writefrequency>500</writefrequency>
-					<stop>5000000</stop>
+					<writefrequency>1000</writefrequency>
+					<stop>10000</stop>
 					<framesperfile>0</framesperfile>
 				</writecontrol>
 				<outputprefix>megamol</outputprefix>  
@@ -191,7 +191,7 @@
 				<frequency>1</frequency>
 				<stop>50000000</stop>
 			</control>
-			<yrange> <min>20.0</min> <max>30.0</max> </yrange>
+			<range> <ymin>20.0</ymin> <ymax>30.0</ymax> </range>
 			<targets>
 				<target cid="2" method="1">
 					<Fmax>500</Fmax>
@@ -217,7 +217,7 @@
 			<pluginID>101</pluginID>
 			<position>
 				<refID>2</refID>
-				<coord>100</coord>
+				<coord>150</coord>
 			</position>
 			<forceConstant>0.</forceConstant>
 			<meland>
@@ -226,26 +226,27 @@
 			</meland>
 		</plugin>
 
-		<plugin name="MettDeamonFeedrateDirector">
+		<!--<plugin name="MettDeamonFeedrateDirector">
 			<mirror>
 				<pluginID>101</pluginID>
 				<control> <update_freq>5000</update_freq> </control>
 			</mirror>
-		</plugin>
+			<restart> <writefreq>10000</writefreq> </restart>
+		</plugin>-->
 
 		<plugin name="MettDeamon">
 			<control>
-				<updatefreq>100</updatefreq>
-				<logfreqfeed>1000</logfreqfeed>
-				<logfreqreleased>1000</logfreqreleased>
+				<updatefreq>2000</updatefreq>
+				<logfreqfeed>2000</logfreqfeed>
+				<logfreqreleased>2000</logfreqreleased>
 				<writefreq>10000</writefreq>
 				<numvals>10</numvals>
 				<feed>
-					<init>1.0e-05</init>
+					<init>0.0</init>
 					<direction>1</direction>
 					<method>4</method>
 					<targetID>1</targetID>
-					<target>1.0e-05</target>
+					<target>0.0</target>
 					<release_velo>
 						<method>2</method>
 						<fix_value>0.7</fix_value>
@@ -256,8 +257,8 @@
 			</control>
 			<reservoir>
 				<file type="binary">
-					<header>../../sim01/run01/cp_binary-10.restart.header.xml</header>
-					<data>../../sim01/run01/cp_binary-10.restart.dat</data>
+					<header>../../sim01/run01/cp_binary-1.restart.header.xml</header>
+					<data>../../sim01/run01/cp_binary-1.restart.dat</data>
 				</file>
 				<binwidth>10</binwidth>
 			</reservoir>
