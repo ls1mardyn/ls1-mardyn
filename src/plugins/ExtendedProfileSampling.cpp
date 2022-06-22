@@ -671,7 +671,9 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 dof_rot = _simulation.getEnsemble()->getComponent(0)->getRotationalDegreesOfFreedom();
                 dof_total = (1 + dof_rot/3.0)*numMols; // ??? rot dof
             }
-            if (dof_total > 0) {
+            // Only consider sample if it is representative i.e. enough particles inside the bin (e.g. to have a temperature defined in the first place)
+            // Arbitrarily set to 10 particles () -> binwidth must not be too small
+            if (numMols >= 10) {
                 const double rho = numMols / _slabVolume;
                 const double ViX = virialVect_step[0].global.at(i);
                 const double ViY = virialVect_step[1].global.at(i);
