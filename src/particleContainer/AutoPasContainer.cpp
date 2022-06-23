@@ -131,6 +131,12 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	// use avx functor?
 	xmlconfig.getNodeValue("useAVXFunctor", _useAVXFunctor);
+#ifndef __AVX__
+	if(_useAVXFunctor) {
+		global_log->warning() << "Selected AVX Functor but AVX is not supported! Switching to non-AVX functor." << std::endl;
+		_useAVXFunctor = false;
+	}
+#endif
 
 	// AutoPas log level
 	auto logLevelStr = xmlconfig.getNodeValue_string("logLevel", "");
