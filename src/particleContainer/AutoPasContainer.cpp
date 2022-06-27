@@ -13,6 +13,76 @@
 #include "autopas/utils/logging/Logger.h"
 #include "parallel/DomainDecompBase.h"
 
+// Declare the main AutoPas class and the iteratePairwise() methods with all used functors as extern template
+// instantiation. They are instantiated in the respective cpp file inside the templateInstantiations folder.
+//! @cond Doxygen_Suppress
+extern template class autopas::AutoPas<Molecule>;
+extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+		autopas::LJFunctor<
+				Molecule,
+				/*applyShift*/ true,
+				/*mixing*/ true,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true
+		> *);
+extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+		autopas::LJFunctor<
+				Molecule,
+				/*applyShift*/ true,
+				/*mixing*/ false,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true
+		> *);
+extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+		autopas::LJFunctor<
+				Molecule,
+				/*applyShift*/ false,
+				/*mixing*/ true,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true
+		> *);
+extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+		autopas::LJFunctor<
+				Molecule,
+				/*applyShift*/ false,
+				/*mixing*/ false,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true
+		> *);
+extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+		autopas::LJFunctorAVX<
+				Molecule,
+				/*applyShift*/ true,
+				/*mixing*/ true,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true
+		> *);
+extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+		autopas::LJFunctorAVX<
+				Molecule,
+				/*applyShift*/ true,
+				/*mixing*/ false,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true
+		> *);
+extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+		autopas::LJFunctorAVX<
+				Molecule,
+				/*applyShift*/ false,
+				/*mixing*/ true,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true
+		> *);
+extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+		autopas::LJFunctorAVX<
+				Molecule,
+				/*applyShift*/ false,
+				/*mixing*/ false,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true
+		> *);
+//! @endcond
+
 AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePropertiesLibrary(cutoff) {
 	// use autopas defaults. This block is important when we do not read from an XML like in the unit tests
 	_verletSkin = _autopasContainer.getVerletSkin();
