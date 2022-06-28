@@ -48,7 +48,7 @@ jobs:
 
     env:
       JOBNAME: ${{ matrix.vector }}-${{ matrix.target }}-${{ matrix.parall }}-${{ matrix.cc }}-AutoPas=${{ matrix.autopas }}-Ranks=${{ matrix.procs }}-OMP=${{ matrix.openmp }}
-    name: ${JOBNAME}
+    name: ${{ env.JOB_NAME }}
     steps:
       # setup github actions runner node
     - uses: actions/checkout@v2
