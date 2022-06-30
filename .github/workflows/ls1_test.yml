@@ -106,6 +106,10 @@ jobs:
     - if: ${{ matrix.parall == 'PAR' }}
       name: Validation
       run: |
+        
+          # save examples
+          cp ./examples/example-list.txt branchExamples.txt
+        
           #build master branch equivalent to compare new build to
           mkdir build_${JOBNAME}_master
           git fetch
@@ -129,7 +133,7 @@ jobs:
           #save absolute path to root of ls1 directory
           repoPath=$PWD
           echo "New commit build running examples..."
-          for i in $(cat ./examples/example-list.txt)
+          for i in $(cat ${repoPath}/branchExamples.txt)
           do
             # skip if comment
             if [[ $i == \#* ]]
@@ -149,7 +153,7 @@ jobs:
             cd - > /dev/null
           done
           echo "Master build running examples..."
-          for i in $(cat ./examples/example-list.txt)
+          for i in $(cat ${repoPath}/branchExamples.txt)
           do
             # skip if comment
             if [[ $i == \#* ]]
