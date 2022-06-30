@@ -131,6 +131,12 @@ jobs:
           echo "New commit build running examples..."
           for i in $(cat ./examples/example-list.txt)
           do
+            # skip if comment
+            if [[ $i == \#* ]]
+            then
+              continue
+            fi
+        
             cd $repoPath
             echo $i | tee ${repoPath}/output_new
             cd ./examples/$(dirname $i)
@@ -145,6 +151,12 @@ jobs:
           echo "Master build running examples..."
           for i in $(cat ./examples/example-list.txt)
           do
+            # skip if comment
+            if [[ $i == \#* ]]
+            then
+              continue
+            fi
+          
             cd $repoPath
             echo $i | tee ${repoPath}/output_master
             cd ./examples/$(dirname $i)

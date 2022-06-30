@@ -4,7 +4,7 @@
 ./EOX/600K_15mol_l/config.xml
 ./Generators/mkTcTS/config.xml
 ./Generators/mkesfera/config.xml
-./FMM/config.xml
+#./FMM/config.xml
 ./surface-tension_LRC/CO2_Merker/vle/220K/run01/config.xml
 ./surface-tension_LRC/CO2_Merker/vle/250K/run01/config.xml
 ./surface-tension_LRC/CO2_Merker/vle/280K/run01/config.xml
