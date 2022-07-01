@@ -153,7 +153,7 @@ jobs:
             # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
             if [[ ${{ matrix.vector }} == 'NONE' ]]; then sed --in-place 's=AutoPas">=AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>=g' input_new.xml; fi
             mpirun -np ${{ matrix.procs }} $repoPath/build_${JOBNAME}/src/MarDyn input_new.xml --steps=20 | \
-                tee | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_new
+                tee /dev/tty | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_new
             cd - > /dev/null
           done
           echo "Master build running examples..."
@@ -173,7 +173,7 @@ jobs:
             # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
             if [[ ${{ matrix.vector }} == 'NONE' ]]; then sed --in-place 's=AutoPas">=AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>=g' input_new.xml; fi
             mpirun -np ${{ matrix.procs }} $repoPath/build_${JOBNAME}_master/src/MarDyn input_master.xml --steps=20 | \
-                tee | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_master
+                tee /dev/tty | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_master
             cd - > /dev/null
           done
           diff output_new output_master
