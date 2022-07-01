@@ -13,7 +13,7 @@
 ./surface-tension_LRC/C6H12/vle/500K/run01/config.xml
 ./Injection/liq/sim01/run03/config.xml
 ./Injection/liq/sim01/run04/config.xml
-./adios/write/config.xml
-./adios/write/config_mix.xml
-./adios/read/config.xml
-./adios/read/config_parallel.xml
+#./adios/write/config.xml
+#./adios/write/config_mix.xml
+#./adios/read/config.xml
+#./adios/read/config_parallel.xml
