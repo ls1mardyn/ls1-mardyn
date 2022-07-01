@@ -120,7 +120,7 @@ jobs:
           cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
                 -DENABLE_AUTOPAS=${{ matrix.autopas }} \
-                -DENABLE_ALLLBL=$allbl_enabled \
+                -DENABLE_ALLLBL=${{ matrix.autopas }} \
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=ON ..
           make -j2
