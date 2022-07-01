@@ -108,7 +108,6 @@ jobs:
     - if: ${{ matrix.parall == 'PAR' }}
       name: Validation
       run: |
-
           # save examples
           cp ./examples/example-list.txt branchExamples.txt
 
