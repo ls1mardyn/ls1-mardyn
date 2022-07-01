@@ -111,6 +111,20 @@ jobs:
         
           # save examples
           cp ./examples/example-list.txt branchExamples.txt
+             
+          #translate matrix to ON/OFF for certain entries
+          if [[ ${{ matrix.parall }} == 'PAR' ]]
+          then
+            mpi_enabled='ON'
+          else
+            mpi_enabled='OFF'
+          fi
+          if [[ ${{ matrix.parall }} == 'PAR' ]] && [[ ${{ matrix.autopas }} == 'ON' ]]
+          then
+            alllbl_enabled='ON'
+          else
+            alllbl_enabled='OFF'
+          fi
         
           #build master branch equivalent to compare new build to
           mkdir build_${JOBNAME}_master
@@ -121,10 +135,10 @@ jobs:
           #note: ALLLBL is enabled if AutoPas is enabled.
           cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
-                -DENABLE_AUTOPAS=${{ matrix.autopas }} \
+                -DENABLE_AUTOPAS=$alllbl_enabled \
                 -DENABLE_ALLLBL=${{ matrix.autopas }} \
                 -DOPENMP=${{ matrix.openmp }} \
-                -DENABLE_MPI=ON \
+                -DENABLE_MPI=$mpi_enabled \
               ..
 #                -DFIND_PACKAGE_ADIOS2=ON \
           make -j2
@@ -152,8 +166,10 @@ jobs:
             if [[ ${{ matrix.autopas }} == 'ON' ]]; then sed 's/LinkedCells/AutoPas/g' $(basename $i); else cat $(basename $i); fi >> input_new.xml
             # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
             if [[ ${{ matrix.vector }} == 'NONE' ]]; then sed --in-place 's=AutoPas">=AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>=g' input_new.xml; fi
-            mpirun -np ${{ matrix.procs }} $repoPath/build_${JOBNAME}/src/MarDyn input_new.xml --steps=20 | \
-                tee /dev/tty | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_new
+            mpirun -np ${{ matrix.procs }} $repoPath/build_${JOBNAME}/src/MarDyn input_new.xml --steps=20             \
+              | tee output_${{ join(matrix.*, '-') }}                                                                 \
+              | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_new                      \
+              || cat output_${{ join(matrix.*, '-') }}
             cd - > /dev/null
           done
           echo "Master build running examples..."
@@ -172,8 +188,10 @@ jobs:
             if [[ ${{ matrix.autopas }} == 'ON' ]]; then sed 's/LinkedCells/AutoPas/g' $(basename $i); else cat $(basename $i); fi >> input_master.xml
             # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
             if [[ ${{ matrix.vector }} == 'NONE' ]]; then sed --in-place 's=AutoPas">=AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>=g' input_new.xml; fi
-            mpirun -np ${{ matrix.procs }} $repoPath/build_${JOBNAME}_master/src/MarDyn input_master.xml --steps=20 | \
-                tee /dev/tty | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_master
+            mpirun -np ${{ matrix.procs }} $repoPath/build_${JOBNAME}_master/src/MarDyn input_master.xml --steps=20   \
+              | tee output_${{ join(matrix.*, '-') }}                                                                 \
+              | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_master                   \
+              || cat output_${{ join(matrix.*, '-') }}
             cd - > /dev/null
           done
           diff output_new output_master
