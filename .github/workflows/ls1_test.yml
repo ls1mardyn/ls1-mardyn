@@ -62,7 +62,7 @@ jobs:
         git status
         mkdir build_${JOBNAME}
       # build testing & unit testing
-    - name: Build and Unit Test 
+    - name: Build and Unit Test
       run: |
           cd build_${JOBNAME}
 
@@ -88,7 +88,7 @@ jobs:
                 -DENABLE_MPI=$mpi_enabled \
                 -DENABLE_UNIT_TESTS=1 \
               ..
-#                -DFIND_PACKAGE_ADIOS2=ON \
+
           make -j2
 
           cd ..
@@ -108,10 +108,10 @@ jobs:
     - if: ${{ matrix.parall == 'PAR' }}
       name: Validation
       run: |
-        
+
           # save examples
           cp ./examples/example-list.txt branchExamples.txt
-             
+
           #translate matrix to ON/OFF for certain entries
           if [[ ${{ matrix.parall }} == 'PAR' ]]
           then
@@ -125,7 +125,7 @@ jobs:
           else
             alllbl_enabled='OFF'
           fi
-        
+
           #build master branch equivalent to compare new build to
           mkdir build_${JOBNAME}_master
           git fetch
@@ -140,11 +140,11 @@ jobs:
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
               ..
-#                -DFIND_PACKAGE_ADIOS2=ON \
+
           make -j2
-          
+
           cd ..
-          
+
           #set strict pipefail option
           set -eo pipefail
           rm -f output_new output_master
@@ -158,7 +158,7 @@ jobs:
             then
               continue
             fi
-        
+
             cd $repoPath
             echo $i | tee ${repoPath}/output_new
             cd ./examples/$(dirname $i)
@@ -167,9 +167,9 @@ jobs:
             # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
             if [[ ${{ matrix.vector }} == 'NONE' ]]; then sed --in-place 's=AutoPas">=AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>=g' input_new.xml; fi
             mpirun -np ${{ matrix.procs }} $repoPath/build_${JOBNAME}/src/MarDyn input_new.xml --steps=20             \
-              | tee output_${{ join(matrix.*, '-') }}                                                                 \
+              | tee "output_${{ join(matrix.*, '-') }}"                                                               \
               | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_new                      \
-              || cat output_${{ join(matrix.*, '-') }}
+              || cat "output_${{ join(matrix.*, '-') }}"
             cd - > /dev/null
           done
           echo "Master build running examples..."
@@ -180,7 +180,7 @@ jobs:
             then
               continue
             fi
-          
+
             cd $repoPath
             echo $i | tee ${repoPath}/output_master
             cd ./examples/$(dirname $i)
@@ -189,9 +189,9 @@ jobs:
             # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
             if [[ ${{ matrix.vector }} == 'NONE' ]]; then sed --in-place 's=AutoPas">=AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>=g' input_new.xml; fi
             mpirun -np ${{ matrix.procs }} $repoPath/build_${JOBNAME}_master/src/MarDyn input_master.xml --steps=20   \
-              | tee output_${{ join(matrix.*, '-') }}                                                                 \
+              | tee "output_${{ join(matrix.*, '-') }}"                                                               \
               | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_master                   \
-              || cat output_${{ join(matrix.*, '-') }}
+              || cat "output_${{ join(matrix.*, '-') }}"
             cd - > /dev/null
           done
           diff output_new output_master
