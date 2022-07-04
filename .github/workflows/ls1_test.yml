@@ -179,9 +179,9 @@ jobs:
             do
               if [[ "${VERSION}" == "master" ]]
               then
-                local EXE=$repoPath/build_${JOBNAME}_master/src/MarDyn
+                EXE=$repoPath/build_${JOBNAME}_master/src/MarDyn
               else
-                local EXE=$repoPath/build_${JOBNAME}/src/MarDyn
+                EXE=$repoPath/build_${JOBNAME}/src/MarDyn
               fi
           
               mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
