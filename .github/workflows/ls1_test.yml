@@ -146,10 +146,13 @@ jobs:
 
           #set strict pipefail option
           set -eo pipefail
+        
+          # make sure there are no artifacts from other iterations
           rm -f output_new output_master
           #save absolute path to root of ls1 directory
           repoPath=$PWD
-          echo "New commit build running examples..."
+        
+          # execute all examples. These calls create artifacts which we will then compare
           for i in $(cat ${repoPath}/branchExamples.txt)
           do
             # skip if comment
@@ -157,45 +160,42 @@ jobs:
             then
               continue
             fi
-
-            cd $repoPath
-            echo $i | tee ${repoPath}/output_new
-            cd ./examples/$(dirname $i)
-            # if AutoPas is enabled, replace all occurences of LinkedCell in the examples' config files with AutoPas
-            if [[ ${{ matrix.autopas }} == 'ON' ]]; then sed 's/LinkedCells/AutoPas/g' $(basename $i); else cat $(basename $i); fi >> input_new.xml
-            # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
-            if [[ ${{ matrix.vector }} == 'NONE' ]]; then sed --in-place 's=AutoPas">=AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>=g' input_new.xml; fi
-            mpirun -np ${{ matrix.procs }} $repoPath/build_${JOBNAME}/src/MarDyn input_new.xml --steps=20             \
-              | tee "output_${{ join(matrix.*, '-') }}"                                                               \
-              | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_new                      \
-              || cat "output_${{ join(matrix.*, '-') }}"
-            cd - > /dev/null
-          done
-          echo "Master build running examples..."
-          for i in $(cat ${repoPath}/branchExamples.txt)
-          do
-            # skip if comment
-            if [[ $i == \#* ]]
+            echo $i | tee ${repoPath}/output_${VERSION}
+            cd $repoPath/examples/$(dirname $i)
+        
+            # patch input files according to current conf
+            cp $i input_patched.xml
+            # if AutoPas is enabled, replace all occurrences of LinkedCell in the examples' config files with AutoPas
+            if [[ ${{ matrix.autopas }} == 'ON' ]]
             then
-              continue
+              sed --in-place 's/LinkedCells/AutoPas/g' input_patched.xml
             fi
-
-            cd $repoPath
-            echo $i | tee ${repoPath}/output_master
-            cd ./examples/$(dirname $i)
-            # if AutoPas is enabled, replace all occurences of LinkedCell in the examples' config files with AutoPas
-            if [[ ${{ matrix.autopas }} == 'ON' ]]; then sed 's/LinkedCells/AutoPas/g' $(basename $i); else cat $(basename $i); fi >> input_master.xml
+        
             # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
-            if [[ ${{ matrix.vector }} == 'NONE' ]]; then sed --in-place 's=AutoPas">=AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>=g' input_new.xml; fi
-            mpirun -np ${{ matrix.procs }} $repoPath/build_${JOBNAME}_master/src/MarDyn input_master.xml --steps=20   \
-              | tee "output_${{ join(matrix.*, '-') }}"                                                               \
-              | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_master                   \
-              || cat "output_${{ join(matrix.*, '-') }}"
-            cd - > /dev/null
+            if [[ ${{ matrix.vector }} == 'NONE' ]]
+            then
+              sed --in-place 's|AutoPas">|AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>|g' input_patched.xml
+            fi
+        
+            # run the example with the old and new exe
+            for VERSION in "master" "new"
+            do
+              if [[ "${VERSION}" == "master" ]]
+              then
+                local EXE=$repoPath/build_${JOBNAME}_master/src/MarDyn
+              else
+                local EXE=$repoPath/build_${JOBNAME}/src/MarDyn
+              fi
+          
+              mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
+                | tee "output_${{ join(matrix.*, '-') }}"                                                   \
+                | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' >> ${repoPath}/output_${VERSION}   \
+                || cat "output_${{ join(matrix.*, '-') }}"
+            done
+            # compare the two runs
+            diff output_new output_master
           done
-          diff output_new output_master
-          echo "---"
-          [ "$(diff output_new output_master)" == "" ]
+
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
