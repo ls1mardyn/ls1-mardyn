@@ -108,6 +108,8 @@ jobs:
     - if: ${{ matrix.parall == 'PAR' }}
       name: Validation
       run: |
+          #save absolute path to root of ls1 directory
+          repoPath=$PWD
           # save examples
           cp ./examples/example-list.txt branchExamples.txt
 
@@ -142,15 +144,10 @@ jobs:
 
           make -j2
 
-          cd ..
+          cd "${repoPath}"
 
           #set strict pipefail option
           set -eo pipefail
-        
-          # make sure there are no artifacts from other iterations
-          rm -f output_new output_master
-          #save absolute path to root of ls1 directory
-          repoPath=$PWD
         
           # execute all examples. These calls create artifacts which we will then compare
           for i in $(cat ${repoPath}/branchExamples.txt)
@@ -164,7 +161,7 @@ jobs:
             cd $repoPath/examples/$(dirname $i)
         
             # patch input files according to current conf
-            cp $i input_patched.xml
+            cp $(basename i) input_patched.xml
             # if AutoPas is enabled, replace all occurrences of LinkedCell in the examples' config files with AutoPas
             if [[ ${{ matrix.autopas }} == 'ON' ]]
             then
