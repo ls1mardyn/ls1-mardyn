@@ -161,7 +161,7 @@ jobs:
             cd $repoPath/examples/$(dirname $i)
         
             # patch input files according to current conf
-            cp $(basename i) input_patched.xml
+            cp $(basename $i) input_patched.xml
             # if AutoPas is enabled, replace all occurrences of LinkedCell in the examples' config files with AutoPas
             if [[ ${{ matrix.autopas }} == 'ON' ]]
             then
