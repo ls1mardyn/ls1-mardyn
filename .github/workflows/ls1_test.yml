@@ -110,8 +110,13 @@ jobs:
       run: |
           #save absolute path to root of ls1 directory
           repoPath=$PWD
-          # save examples
-          cp ./examples/example-list.txt branchExamples.txt
+          # choose and save examples (so that this commit and master execute the same list)
+          if [[ ${{ matrix.autopas }} == 'ON' ]]
+          then
+            cp ./examples/example-list_autopas.txt branchExamples.txt
+          else
+            cp ./examples/example-list.txt branchExamples.txt
+          fi
 
           #translate matrix to ON/OFF for certain entries
           if [[ ${{ matrix.parall }} == 'PAR' ]]
@@ -150,10 +155,10 @@ jobs:
           set -eo pipefail
         
           # execute all examples. These calls create artifacts which we will then compare
-          for i in $(cat ${repoPath}/branchExamples.txt)
+          while read i
           do
-            # skip if comment
-            if [[ $i == \#* ]]
+            # skip if comment or empty line
+            if [[ $i == \#* || -z "$i" ]]
             then
               continue
             fi
@@ -191,7 +196,7 @@ jobs:
             done
             # compare the two runs
             diff ${repoPath}/output_new ${repoPath}/output_master
-          done
+          done <${repoPath}/branchExamples.txt
 
       env:
         CC: ${{ matrix.cc }}

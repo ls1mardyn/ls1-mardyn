@@ -1,10 +1,11 @@
+# Configs in this file will be tested by the CI for vanilla ls1 mardyn
+
 ./Argon/200K_18mol_l/config.xml
 ./CO2/370K_15mol_l/config.xml
 ./EOX/305K_liq/config.xml
 ./EOX/600K_15mol_l/config.xml
 ./Generators/mkTcTS/config.xml
 ./Generators/mkesfera/config.xml
-#./FMM/config.xml
 ./surface-tension_LRC/CO2_Merker/vle/220K/run01/config.xml
 ./surface-tension_LRC/CO2_Merker/vle/250K/run01/config.xml
 ./surface-tension_LRC/CO2_Merker/vle/280K/run01/config.xml
@@ -13,7 +14,10 @@
 ./surface-tension_LRC/C6H12/vle/500K/run01/config.xml
 ./Injection/liq/sim01/run03/config.xml
 ./Injection/liq/sim01/run04/config.xml
-#./adios/write/config.xml
-#./adios/write/config_mix.xml
-#./adios/read/config.xml
-#./adios/read/config_parallel.xml
+./adios/write/config.xml
+./adios/write/config_mix.xml
+./adios/read/config.xml
+./adios/read/config_parallel.xml
+
+## deactivated because FMM:
+#./FMM/config.xml
