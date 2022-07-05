@@ -86,7 +86,6 @@ jobs:
                 -DENABLE_ALLLBL=$alllbl_enabled \
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
-                -DENABLE_UNIT_TESTS=1 \
               ..
 
           make -j2
@@ -136,8 +135,8 @@ jobs:
           #note: ALLLBL is enabled if AutoPas is enabled.
           cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
-                -DENABLE_AUTOPAS=$alllbl_enabled \
-                -DENABLE_ALLLBL=${{ matrix.autopas }} \
+                -DENABLE_AUTOPAS=${{ matrix.autopas }} \
+                -DENABLE_ALLLBL=$alllbl_enabled \
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
               ..
@@ -157,7 +156,7 @@ jobs:
             then
               continue
             fi
-            echo $i | tee ${repoPath}/output_${VERSION}
+            echo $i
             cd $repoPath/examples/$(dirname $i)
         
             # patch input files according to current conf
