@@ -86,6 +86,7 @@ jobs:
                 -DENABLE_ALLLBL=$alllbl_enabled \
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
+                -DENABLE_UNIT_TESTS=ON \
               ..
 
           make -j2
