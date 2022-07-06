@@ -212,7 +212,11 @@ Public Member Functions</h2></td></tr>
 
 <p>Read in XML configuration for <a class="el" href="classMkTcTSGenerator.html" title="Generates a scenario of two layers of the same component but with different densities.">MkTcTSGenerator</a> and all its included objects. </p>
 <p >The following xml object structure is handled by this method: </p><div class="fragment"><div class="line">&lt;<span class="keywordtype">generator</span> <span class="keyword">name</span>=<span class="stringliteral">&quot;CubicGridGenerator&quot;</span>&gt;</div>
-<div class="line"><span class="keyword">TODO:</span> <span class="keyword">more</span></div>
+<div class="line">   &lt;<span class="keywordtype">numMolecules</span>&gt;<span class="keyword">INT</span>&lt;/<span class="keywordtype">numMolecules</span>&gt;</div>
+<div class="line">    <span class="comment">&lt;!-- OR --&gt;</span></div>
+<div class="line">    &lt;<span class="keywordtype">density</span>&gt;<span class="keyword">DOUBLE</span>&lt;/<span class="keywordtype">density</span>&gt;</div>
+<div class="line"> </div>
+<div class="line">    &lt;<span class="keywordtype">binaryMixture</span>&gt;<span class="keyword">BOOL</span>&lt;<span class="keywordtype">binaryMixture</span>&gt;</div>
 <div class="line">&lt;/<span class="keywordtype">generator</span>&gt;</div>
 </div><!-- fragment --> 
 <p>Reimplemented from <a class="el" href="classInputBase.html">InputBase</a>.</p>
@@ -226,7 +230,7 @@ Public Member Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sat Jul 2 2022 17:23:02 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Wed Jul 6 2022 12:26:28 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
