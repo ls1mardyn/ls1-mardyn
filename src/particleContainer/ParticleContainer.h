@@ -228,7 +228,14 @@ public:
 	// @brief Should the domain decomposition exchange calculated forces at the boundaries,
 	// or does this particle container calculate all forces.
 	virtual bool requiresForceExchange() const {return false;}
-        
+
+    /**
+     * Generates a body-centered cubic grid.
+     * @param numMoleculesPerDimension
+     * @param simBoxLength
+     * @param seed_offset
+     * @return
+     */
 	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, size_t seed_offset) = 0;
 
 	virtual double* getCellLength() = 0;

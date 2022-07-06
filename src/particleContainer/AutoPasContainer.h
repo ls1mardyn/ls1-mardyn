@@ -171,7 +171,13 @@ private:
 	autopas::Logger::LogLevel _logLevel{autopas::Logger::LogLevel::info};
 
 	std::vector<Molecule> _invalidParticles;
-	bool _useAVXFunctor{true};
+	bool _useAVXFunctor{
+#ifdef __AVX__
+		true
+#else
+		false
+#endif
+	};
 
 	ParticlePropertiesLibrary<double, size_t> _particlePropertiesLibrary;
 
