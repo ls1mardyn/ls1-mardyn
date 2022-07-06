@@ -177,14 +177,14 @@ jobs:
             then
               sed --in-place 's/LinkedCells/AutoPas/g' input_patched.xml
             fi
-          echo "Path 1 done"
+          echo "Patch 1 done"
         
             # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
             if [[ ${{ matrix.vector }} == 'NONE' ]]
             then
               sed --in-place 's|AutoPas">|AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>|g' input_patched.xml
             fi
-          echo "Path 2 done"
+          echo "Patch 2 done"
           
             # run the example with the old and new exe
             for VERSION in "master" "new"
@@ -195,11 +195,7 @@ jobs:
               else
                 EXE=$repoPath/build_${JOBNAME}/src/MarDyn
               fi
-            echo '\
-              mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
-                | tee "output_${{ join(matrix.*, '-') }}"                                                   \
-                | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' > ${repoPath}/output_${VERSION}    \
-                || cat "output_${{ join(matrix.*, '-') }}"'
+            echo 'run $VERSION'
           
               mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
                 | tee "output_${{ join(matrix.*, '-') }}"                                                   \
