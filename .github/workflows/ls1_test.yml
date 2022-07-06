@@ -155,6 +155,10 @@ jobs:
           #set strict pipefail option
           set -eo pipefail
         
+        echo "------------ TODO ------------"
+        cat "${repoPath}/${examplesFile}"
+        echo "------------------------------"
+        
           # execute all examples. These calls create artifacts which we will then compare
           while read i
           do
@@ -173,13 +177,15 @@ jobs:
             then
               sed --in-place 's/LinkedCells/AutoPas/g' input_patched.xml
             fi
+          echo "Path 1 done"
         
             # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
             if [[ ${{ matrix.vector }} == 'NONE' ]]
             then
               sed --in-place 's|AutoPas">|AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>|g' input_patched.xml
             fi
-        
+          echo "Path 2 done"
+          
             # run the example with the old and new exe
             for VERSION in "master" "new"
             do
@@ -189,6 +195,11 @@ jobs:
               else
                 EXE=$repoPath/build_${JOBNAME}/src/MarDyn
               fi
+            echo '\
+              mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
+                | tee "output_${{ join(matrix.*, '-') }}"                                                   \
+                | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' > ${repoPath}/output_${VERSION}    \
+                || cat "output_${{ join(matrix.*, '-') }}"'
           
               mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
                 | tee "output_${{ join(matrix.*, '-') }}"                                                   \
@@ -196,6 +207,7 @@ jobs:
                 || cat "output_${{ join(matrix.*, '-') }}"
             done
             # compare the two runs
+          echo 'diff ${repoPath}/output_new ${repoPath}/output_master'
             diff ${repoPath}/output_new ${repoPath}/output_master
           done <"${repoPath}/${examplesFile}"
 
