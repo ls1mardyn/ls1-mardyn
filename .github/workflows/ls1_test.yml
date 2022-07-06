@@ -110,12 +110,13 @@ jobs:
       run: |
           #save absolute path to root of ls1 directory
           repoPath=$PWD
+          examplesFile="branchExamples_${JOBNAME}.txt"
           # choose and save examples (so that this commit and master execute the same list)
           if [[ ${{ matrix.autopas }} == 'ON' ]]
           then
-            cp ./examples/example-list_autopas.txt branchExamples.txt
+            cp ./examples/example-list_autopas.txt "${examplesFile}"
           else
-            cp ./examples/example-list.txt branchExamples.txt
+            cp ./examples/example-list.txt "${examplesFile}"
           fi
 
           #translate matrix to ON/OFF for certain entries
@@ -196,7 +197,7 @@ jobs:
             done
             # compare the two runs
             diff ${repoPath}/output_new ${repoPath}/output_master
-          done <${repoPath}/branchExamples.txt
+          done <"${repoPath}/${examplesFile}"
 
       env:
         CC: ${{ matrix.cc }}
