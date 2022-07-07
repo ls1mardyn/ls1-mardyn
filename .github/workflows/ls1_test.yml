@@ -159,7 +159,7 @@ jobs:
           cat "${repoPath}/${examplesFile}"
           echo "XXXXXXXXXXXXXXXXXXXXXXXXXXX"
           # execute all examples. These calls create artifacts which we will then compare
-          while IFS= read -r i
+          while IFS=$'\n' read -r i
           do
             # skip if comment or empty line
             if [[ $i == \#* || -z "$i" ]]
