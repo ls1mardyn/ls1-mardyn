@@ -188,7 +188,9 @@ jobs:
               else
                 EXE=$repoPath/build_${JOBNAME}/src/MarDyn
               fi
-
+        
+              echo $VERSION
+        
               mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
                 | tee "output_${{ join(matrix.*, '-') }}"                                                   \
                 | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' > ${repoPath}/output_${VERSION}    \
