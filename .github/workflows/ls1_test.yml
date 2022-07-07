@@ -1,7 +1,7 @@
 name: C/C++ CI for ls1
 
 on:
-  push:
+  # push:
     # pushes to master
     # branches: [ master ] 
   pull_request:
