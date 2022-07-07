@@ -164,6 +164,7 @@ jobs:
             # skip if comment or empty line
             if [[ $i == \#* || -z "$i" ]]
             then
+              echo "Skipping X${i}X"
               continue
             fi
             echo $i
