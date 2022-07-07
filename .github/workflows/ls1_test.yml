@@ -154,10 +154,6 @@ jobs:
 
           #set strict pipefail option TODO reinsert: set -eo pipefail
         
-          echo "XXXXXXXXXXXXXXXXXXXXXXXXXXX"
-          echo "${repoPath}/${examplesFile}"
-          cat "${repoPath}/${examplesFile}"
-          echo "XXXXXXXXXXXXXXXXXXXXXXXXXXX"
           # execute all examples. These calls create artifacts which we will then compare
           IFS=$'\n'
           for i in $(cat "${repoPath}/${examplesFile}" )
@@ -165,7 +161,6 @@ jobs:
             # skip if comment or empty line
             if [[ $i == \#* || -z "$i" ]]
             then
-              echo "Skipping X${i}X"
               continue
             fi
             echo $i
@@ -202,7 +197,6 @@ jobs:
             done
             # compare the two runs
             diff ${repoPath}/output_new ${repoPath}/output_master
-            echo "diff good"
           done
 
       env:
