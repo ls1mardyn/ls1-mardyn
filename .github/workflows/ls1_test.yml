@@ -152,8 +152,7 @@ jobs:
 
           cd "${repoPath}"
 
-          #set strict pipefail option
-          set -eo pipefail
+          #set strict pipefail option TODO reinsert: set -eo pipefail
         
           # execute all examples. These calls create artifacts which we will then compare
           while IFS= read -r i
