@@ -159,7 +159,8 @@ jobs:
           cat "${repoPath}/${examplesFile}"
           echo "XXXXXXXXXXXXXXXXXXXXXXXXXXX"
           # execute all examples. These calls create artifacts which we will then compare
-          while IFS=$'\n' read -r i
+          IFS=$'\n'
+          for i in $(cat "${repoPath}/${examplesFile}" )
           do
             # skip if comment or empty line
             if [[ $i == \#* || -z "$i" ]]
@@ -202,7 +203,7 @@ jobs:
             # compare the two runs
             diff ${repoPath}/output_new ${repoPath}/output_master
             echo "diff good"
-          done < "${repoPath}/${examplesFile}"
+          done
 
       env:
         CC: ${{ matrix.cc }}
