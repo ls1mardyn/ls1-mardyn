@@ -36,7 +36,11 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	 <generator name="CubicGridGenerator">
-	 TODO: more
+		<numMolecules>INT</numMolecules>
+	 	<!-- OR -->
+	 	<density>DOUBLE</density>
+
+	 	<binaryMixture>BOOL<binaryMixture>
 	 </generator>
 	 \endcode
 	 */
