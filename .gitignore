@@ -14,7 +14,3 @@ src/MarDyn_*.*
 *.a
 *.so
 doxygen_doc/
-*.res
-*.header.xml
-*.dat
-*.mmpld

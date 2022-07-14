@@ -1013,7 +1013,7 @@ void Simulation::simulateOneTimestep()
 	}
 
 	#ifdef MAMICO_COUPLING
-	//since mamico will control the whole simulation, no need to check for limits
+	//since mamico will control the whole simulation, keep track of simstep manually here, since keeprunning() is not called
 	_simstep++;
 	#endif
 
@@ -1222,11 +1222,6 @@ void Simulation::simulateOneTimestep()
 
 void Simulation::markSimAsDone()
 {
-	//added for mamico
-	//since simulationDone would otherwise be controlled by keepRunning(), mamico manually marks simulation as done here
-	//the variable is only a safeguard for postSimLoopSteps, does not actually affect the simulation
-	//variable exists because technically it's possible to call postSimLoopSteps() before simulation actually over,
-	//even though neither mamico nor ls1 should ever do it
 	simulationDone = true;
 }
 

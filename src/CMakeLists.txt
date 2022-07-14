@@ -47,14 +47,13 @@ endif ()
 
 # add the executable
 if (MAMICO_COUPLING)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMAMICO_COUPLING")
-    set(MAMICO_SRC_DIR "../../")
-    set(EIGEN_SRC_DIR "../../../../eigen-3.3.9/")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
     ADD_LIBRARY(MarDyn
         ${MY_SRC}
         parallel/ForceHelper.h)
-    TARGET_INCLUDE_DIRECTORIES(MarDyn SYSTEM PRIVATE "${MAMICO_SRC_DIR}" PRIVATE "${EIGEN_SRC_DIR}")
+    TARGET_INCLUDE_DIRECTORIES(MarDyn SYSTEM PRIVATE "${MAMICO_SRC_DIR}")
+    TARGET_COMPILE_DEFINITIONS(MarDyn PUBLIC
+        ${MAMICO_COMPILE_DEFINITION}
+)
 else()
     ADD_EXECUTABLE(MarDyn
         ${MY_SRC}

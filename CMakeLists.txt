@@ -2,9 +2,6 @@
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-#mamico
-option(MAMICO_COUPLING "Couple with MaMiCo" OFF)
-
 cmake_minimum_required(VERSION 3.11)
 
 project(MarDyn)
@@ -65,6 +62,9 @@ include(ALL)
 
 # ----- third: include autopas
 include(autopas)
+
+# ----- include mamico
+include(mamico)
 
 # ----- resilience plugin dependencies are set here
 include(compression)

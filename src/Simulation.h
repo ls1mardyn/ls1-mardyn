@@ -526,17 +526,51 @@ private:
 
 	FixedSizeQueue<double> _lastTraversalTimeHistory;
 
-// mamico refactoring area
+
 public:
+	/*** @brief Performs one time step. Is called as many times as timesteps are needed for the full simulation.
+	 * 
+	 * In library mode, this function is used to externally control the simulation. In normal usage, this function is 
+	 * only called in the simulate() function, within the simulation loop.
+	 * preSimLoopSteps() needs to be called before this function is called.
+	*/
 	void simulateOneTimestep();
+
+	/*** @brief Performs necessary setup before the first timestep, which includes initializing all timers. */
 	void preSimLoopSteps();
+
+	/*** @brief Performs immediate cleanup after the simulation ends.
+	 * 
+	 * The final checkpoint is written, the final plugin call is made, and all timers are stopped. 
+	 * Relevant timer information is printed.
+	 */
 	void postSimLoopSteps();
-	void markSimAsDone(); //just sanity check
+
+	/*** @brief Used to flag simulation as finished and to proceed to cleanup. Only used when ls1 is compiled and used
+	 * as a library, and not in normal usage.
+	 * 
+	 * Normally, the simulation is controlled entirely by the simulate() function, which determines whether the 
+	 * simulation is complete by checking the keepRunning() function.
+	 * However in library mode, it is expected that the external code will manually control the simulation by calling
+	 * simulateOneTimeStep(). As such, the keepRunning() function will never be called, and the exit conditions will 
+	 * never be checked on ls1's side. \n
+	 * This function acts as a way for the external code to perform some cleanup steps, before ending the simulation
+	 * on the ls1 side. For now, it only sets the simulationDone boolean to true, which is used as a check within
+	 * the postSimLoopSteps() function.
+	 * */
+	void markSimAsDone();
 
 private:
+	/*** @brief Various timers used to keep track of simulation performance. */
 	Timer *loopTimer, *decompositionTimer, *computationTimer, *perStepIoTimer, *forceCalculationTimer, *mpiOMPCommunicationTimer;
 	// stores the timing info for the previous load. This is used for the load calculation and the rebalancing.
 	double previousTimeForLoad = 0.;
+	/*** @brief Act as safeguards for the preSimLoopSteps(), simulateOneTimestep() and postSimLoopSteps() functions.
+	 * 
+	 * These three functions are public, since they need to be reachable by external code when ls1 is compiled
+	 * as a library. However it is possible to call them out of order, causing unexpected behaviour. As such,
+	 * these bool values help keep track of the simulation and can be used to verify the state the simulation is in. 
+	 */
 	bool preSimLoopStepsDone = false, simulationDone = false, postSimLoopStepsDone = false;
 
 };
