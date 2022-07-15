@@ -1,7 +1,7 @@
 name: C/C++ CI for ls1
 
 on:
-  push:
+  # push:
     # pushes to master
     # branches: [ master ] 
   pull_request:
@@ -110,12 +110,13 @@ jobs:
       run: |
           #save absolute path to root of ls1 directory
           repoPath=$PWD
+          examplesFile="branchExamples_${JOBNAME}.txt"
           # choose and save examples (so that this commit and master execute the same list)
           if [[ ${{ matrix.autopas }} == 'ON' ]]
           then
-            cp ./examples/example-list_autopas.txt branchExamples.txt
+            cp ./examples/example-list_autopas.txt "${examplesFile}"
           else
-            cp ./examples/example-list.txt branchExamples.txt
+            cp ./examples/example-list.txt "${examplesFile}"
           fi
 
           #translate matrix to ON/OFF for certain entries
@@ -155,7 +156,8 @@ jobs:
           set -eo pipefail
         
           # execute all examples. These calls create artifacts which we will then compare
-          while read i
+          IFS=$'\n'
+          for i in $(cat "${repoPath}/${examplesFile}" )
           do
             # skip if comment or empty line
             if [[ $i == \#* || -z "$i" ]]
@@ -172,13 +174,13 @@ jobs:
             then
               sed --in-place 's/LinkedCells/AutoPas/g' input_patched.xml
             fi
-        
+
             # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
             if [[ ${{ matrix.vector }} == 'NONE' ]]
             then
               sed --in-place 's|AutoPas">|AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>|g' input_patched.xml
             fi
-        
+
             # run the example with the old and new exe
             for VERSION in "master" "new"
             do
@@ -188,7 +190,7 @@ jobs:
               else
                 EXE=$repoPath/build_${JOBNAME}/src/MarDyn
               fi
-          
+        
               mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
                 | tee "output_${{ join(matrix.*, '-') }}"                                                   \
                 | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' > ${repoPath}/output_${VERSION}    \
@@ -196,7 +198,7 @@ jobs:
             done
             # compare the two runs
             diff ${repoPath}/output_new ${repoPath}/output_master
-          done <${repoPath}/branchExamples.txt
+          done
 
       env:
         CC: ${{ matrix.cc }}
