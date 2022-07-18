@@ -20,8 +20,8 @@ void MamicoCoupling::init(ParticleContainer* particleContainer,
 	#ifdef MAMICO_COUPLING
 	if(_macroscopicCellService == nullptr)
 	{
-		_macroscopicCellService = (coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*)
-				coupling::interface::MamicoInterfaceProvider<ls1::LS1RegionWrapper,3>::getInstance().getMacroscopicCellService();
+		_macroscopicCellService = static_cast<coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*>
+				(coupling::interface::MamicoInterfaceProvider<ls1::LS1RegionWrapper,3>::getInstance().getMacroscopicCellService());
 	}
 	//since using mamico thermostat, switch off ls1 thermostat 
 	domain->thermostatOff();
@@ -52,8 +52,8 @@ void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
 	{
 		if(_macroscopicCellService == nullptr)
 		{
-			_macroscopicCellService = (coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*)
-				coupling::interface::MamicoInterfaceProvider<ls1::LS1RegionWrapper,3>::getInstance().getMacroscopicCellService();
+			_macroscopicCellService = static_cast<coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*>
+				(coupling::interface::MamicoInterfaceProvider<ls1::LS1RegionWrapper,3>::getInstance().getMacroscopicCellService());
 		}
 
 		_macroscopicCellService->processInnerMacroscopicCellAfterMDTimestep();
@@ -77,8 +77,8 @@ void MamicoCoupling::afterForces(ParticleContainer* particleContainer,
 	{
 		if(_macroscopicCellService == nullptr)
 		{
-			_macroscopicCellService = (coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*)
-				coupling::interface::MamicoInterfaceProvider<ls1::LS1RegionWrapper,3>::getInstance().getMacroscopicCellService();
+			_macroscopicCellService = static_cast<coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*>
+				(coupling::interface::MamicoInterfaceProvider<ls1::LS1RegionWrapper,3>::getInstance().getMacroscopicCellService());
 		}
 		_macroscopicCellService->distributeMomentum(simstep);
 		_macroscopicCellService->applyBoundaryForce(simstep);
