@@ -172,9 +172,22 @@ INCLUDES = -I$(SRCDIR) -isystem $(SRCDIR)/../libs/rapidxml -isystem $(SRCDIR)/..
 BINARY_BASENAME = MarDyn
 ifneq ("$(wildcard $(SRCDIR)/../.git)","")
   $(info Building from a git version.)
-  GIT_VERSION = $(shell git rev-parse --short HEAD | sed -e "s/:/-/")
-  ifneq ($(GIT_VERSION),)
-    BINARY = $(BINARY_BASENAME)_$(GIT_VERSION).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
+  # Using git, the current version and state of the code are written to MarDyn_version.h
+  # this enables for the display of the information during execution of MarDyn
+  # see version.cmake for accordance in cmake
+  GIT_VERSION_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+  GIT_VERSION_HASH = $(shell git rev-parse --short HEAD)
+  GIT_VERSION_IS_DIRTY = $(shell git diff --quiet || echo "_dirty")
+  GIT_VERSION_HASH_CURRENT = $(shell grep "MARDYN_VERSION_HASH =" MarDyn_version.h 2> /dev/null | awk -F '"' '{print $$2}' | tr -d '_')
+  # Check if git commit has changed since last execution of make command
+  ifneq ($(GIT_VERSION_HASH),$(GIT_VERSION_HASH_CURRENT))
+    $(shell rm -f MarDyn.o) # Force new build of MarDyn including updated version info
+    $(shell sed "s=@MarDyn_VERSION_BRANCH@=$(GIT_VERSION_BRANCH)=g" MarDyn_version.h.in > MarDyn_version.h)
+    $(shell sed -i "s=@MarDyn_VERSION_HASH@=$(GIT_VERSION_HASH)=g" MarDyn_version.h)
+    $(shell sed -i "s=@MarDyn_VERSION_IS_DIRTY@=$(GIT_VERSION_IS_DIRTY)=g" MarDyn_version.h)
+  endif
+  ifneq ($(GIT_VERSION_HASH),)
+    BINARY = $(BINARY_BASENAME)_$(GIT_VERSION_HASH).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
   else
     BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
   endif
