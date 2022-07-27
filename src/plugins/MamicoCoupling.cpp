@@ -48,8 +48,10 @@ void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep)        
 {
 	#ifdef MAMICO_COUPLING
-	if(coupling::interface::LS1MamicoCouplingSwitch::getInstance().getCouplingState())
+	if(coupling::interface::LS1MamicoCouplingSwitch::getInstance().getCouplingState()) //only perform coupling steps if coupling is enabled
 	{
+		// This object is directly accessed by MaMiCo and may get switched around when multiple MD simulations are involved
+		// Hence this acts as a sanity check
 		if(_macroscopicCellService == nullptr)
 		{
 			_macroscopicCellService = static_cast<coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*>
