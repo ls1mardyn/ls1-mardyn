@@ -49,6 +49,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
+#ifdef __AVX__
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 		autopas::LJFunctorAVX<
 				Molecule,
@@ -81,6 +82,41 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
+#endif
+#ifdef __ARM_FEATURE_SVE
+extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+		autopas::LJFunctorSVE<
+				Molecule,
+				/*applyShift*/ true,
+				/*mixing*/ true,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true
+		> *);
+extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+		autopas::LJFunctorSVE<
+				Molecule,
+				/*applyShift*/ true,
+				/*mixing*/ false,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true
+		> *);
+extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+		autopas::LJFunctorSVE<
+				Molecule,
+				/*applyShift*/ false,
+				/*mixing*/ true,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true
+		> *);
+extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+		autopas::LJFunctorSVE<
+				Molecule,
+				/*applyShift*/ false,
+				/*mixing*/ false,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true
+		> *);
+#endif
 //! @endcond
 
 AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePropertiesLibrary(cutoff) {
@@ -199,14 +235,28 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_relativeBlacklistRange = static_cast<double>(
 		xmlconfig.getNodeValue_double("blacklistRange", static_cast<double>(_relativeBlacklistRange)));
 
-	// use avx functor?
-	xmlconfig.getNodeValue("useAVXFunctor", _useAVXFunctor);
+	std::string functorChoiceStr{};
+	xmlconfig.getNodeValue("functor", functorChoiceStr);
+	if (functorChoiceStr.find("avx") != std::string::npos) {
+		functorOption = FunctorOption::AVX;
 #ifndef __AVX__
-	if(_useAVXFunctor) {
+	if(functorOption == FunctorOption::AVX) {
 		global_log->warning() << "Selected AVX Functor but AVX is not supported! Switching to non-AVX functor." << std::endl;
-		_useAVXFunctor = false;
+		functorOption = autoVec;
 	}
 #endif
+	} else if (functorChoiceStr.find("sve") != std::string::npos) {
+		functorOption = FunctorOption::SVE;
+#ifndef __AVX__
+		if(functorOption == FunctorOption::AVX) {
+		global_log->warning() << "Selected AVX Functor but AVX is not supported! Switching to non-AVX functor." << std::endl;
+		functorOption = autoVec;
+	}
+#endif
+	} else {
+		functorOption = FunctorOption::autoVec;
+	}
+
 
 	// AutoPas log level
 	auto logLevelStr = xmlconfig.getNodeValue_string("logLevel", "");
@@ -379,39 +429,75 @@ void AutoPasContainer::traverseTemplateHelper() {
 
 	if (useMixing) {
 		global_log->debug() << "AutoPasContainer: Using mixing." << std::endl;
-		if (_useAVXFunctor) {
-			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-			autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
-								  /*calculateGlobals*/ true>
-				functor(_cutoff, _particlePropertiesLibrary);
+		switch (functorOption) {
+			case SVE: {
+#ifdef __ARM_FEATURE_SVE
+				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+				autopas::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+						/*calculateGlobals*/ true>
+						functor(_cutoff, _particlePropertiesLibrary);
 
-			std::tie(upot, virial) = iterateWithFunctor(functor);
-		} else {
-			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-			autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
-							   /*calculateGlobals*/ true>
-				functor(_cutoff, _particlePropertiesLibrary);
+				std::tie(upot, virial) = iterateWithFunctor(functor);
+#else
+				throw std::runtime_error("SVE Functor not compiled due to lack of compiler support!");
+#endif
+			}
+			case AVX: {
+#ifdef __AVX__
+				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+				autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+						/*calculateGlobals*/ true>
+						functor(_cutoff, _particlePropertiesLibrary);
 
-			std::tie(upot, virial) = iterateWithFunctor(functor);
+				std::tie(upot, virial) = iterateWithFunctor(functor);
+#else
+				throw std::runtime_error("AVX Functor not compiled due to lack of compiler support!");
+#endif
+			}
+			case autoVec: {
+				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+				autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+						/*calculateGlobals*/ true>
+						functor(_cutoff, _particlePropertiesLibrary);
+
+				std::tie(upot, virial) = iterateWithFunctor(functor);
+			}
 		}
 	} else {
 		global_log->debug() << "AutoPasContainer: Not using mixing." << std::endl;
-		if (_useAVXFunctor) {
-			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-			autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
-								  /*calculateGlobals*/ true>
-				functor(_cutoff);
-			functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
+		switch (functorOption) {
+			case SVE: {
+#ifdef __ARM_FEATURE_SVE
+				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+				autopas::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+						/*calculateGlobals*/ true>
+						functor(_cutoff);
 
-			std::tie(upot, virial) = iterateWithFunctor(functor);
-		} else {
-			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-			autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
-							   /*calculateGlobals*/ true>
-				functor(_cutoff);
-			functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
+				std::tie(upot, virial) = iterateWithFunctor(functor);
+#else
+				throw std::runtime_error("SVE Functor not compiled due to lack of compiler support!");
+#endif
+			}
+			case AVX: {
+#ifdef __AVX__
+				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+				autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+						/*calculateGlobals*/ true>
+						functor(_cutoff);
 
-			std::tie(upot, virial) = iterateWithFunctor(functor);
+				std::tie(upot, virial) = iterateWithFunctor(functor);
+#else
+				throw std::runtime_error("AVX Functor not compiled due to lack of compiler support!");
+#endif
+			}
+			case autoVec: {
+				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+				autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+						/*calculateGlobals*/ true>
+						functor(_cutoff);
+
+				std::tie(upot, virial) = iterateWithFunctor(functor);
+			}
 		}
 	}
 

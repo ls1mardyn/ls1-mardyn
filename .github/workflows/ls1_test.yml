@@ -178,7 +178,7 @@ jobs:
             # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
             if [[ ${{ matrix.vector }} == 'NONE' ]]
             then
-              sed --in-place 's|AutoPas">|AutoPas">\n\t<useAVXFunctor>false</useAVXFunctor>|g' input_patched.xml
+              sed --in-place 's|AutoPas">|AutoPas">\n\t<functor>autoVec</functor>|g' input_patched.xml
             fi
 
             # run the example with the old and new exe
