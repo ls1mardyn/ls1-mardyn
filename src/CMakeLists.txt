@@ -49,7 +49,7 @@ endif ()
 if (MAMICO_COUPLING)
     ADD_LIBRARY(MarDyn
         ${MY_SRC}
-        parallel/ForceHelper.h)
+        )
     TARGET_INCLUDE_DIRECTORIES(MarDyn SYSTEM PRIVATE "${MAMICO_SRC_DIR}")
     TARGET_COMPILE_DEFINITIONS(MarDyn PUBLIC
         ${MAMICO_COMPILE_DEFINITION}
@@ -57,7 +57,7 @@ if (MAMICO_COUPLING)
 else()
     ADD_EXECUTABLE(MarDyn
         ${MY_SRC}
-        parallel/ForceHelper.h)
+        )
 endif()
 
 # dependencies for lz4

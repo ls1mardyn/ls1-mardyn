@@ -42,7 +42,6 @@ void MamicoCoupling::beforeEventNewTimestep(ParticleContainer* particleContainer
  * - Iterate over cells to average values like momentum and mass, to pass to macroscopic solvers
  * - Distribute incoming mass from macroscopic solver by inserting perticles (if enabled)
  * - Run the MaMiCo thermostat cell by cell
- * 
  * */
 void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep)        
