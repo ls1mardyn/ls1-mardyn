@@ -442,6 +442,8 @@ void AutoPasContainer::traverseTemplateHelper() {
 				throw std::runtime_error("SVE Functor not compiled due to lack of compiler support!");
 #endif
 			}
+			break;
+
 			case AVX: {
 #ifdef __AVX__
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
@@ -454,6 +456,8 @@ void AutoPasContainer::traverseTemplateHelper() {
 				throw std::runtime_error("AVX Functor not compiled due to lack of compiler support!");
 #endif
 			}
+			break;
+
 			case autoVec: {
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
 				autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
@@ -478,6 +482,8 @@ void AutoPasContainer::traverseTemplateHelper() {
 				throw std::runtime_error("SVE Functor not compiled due to lack of compiler support!");
 #endif
 			}
+			break;
+
 			case AVX: {
 #ifdef __AVX__
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
@@ -490,6 +496,8 @@ void AutoPasContainer::traverseTemplateHelper() {
 				throw std::runtime_error("AVX Functor not compiled due to lack of compiler support!");
 #endif
 			}
+			break;
+			
 			case autoVec: {
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
 				autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
