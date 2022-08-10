@@ -48,8 +48,15 @@ public:
 
 	static PluginBase* createInstance() { return new MamicoCoupling(); }
 
+#ifdef MAMICO_COUPLING
+	void setMamicoMacroscopicCellService(coupling::services::MacroscopicCellService<3>* macroscopicCellService){
+		_macroscopicCellService = static_cast<coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*>
+			(macroscopicCellService);
+	}
+#endif
+
 private:
 #ifdef MAMICO_COUPLING
-	coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>* _macroscopicCellService = nullptr;
+	coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>* _macroscopicCellService;
 #endif
 };
