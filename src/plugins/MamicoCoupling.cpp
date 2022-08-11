@@ -1,11 +1,6 @@
 #include "MamicoCoupling.h"
 #include "Domain.h"
 
-#ifdef MAMICO_COUPLING
-#include <coupling/interface/MamicoInterfaceProvider.h>
-#include <coupling/interface/impl/ls1/LS1MamicoCouplingSwitch.h>
-#endif
-
 void MamicoCoupling::readXML(XMLfileUnits& xmlconfig)
 {	
 	return;
@@ -44,10 +39,10 @@ void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep)        
 {
 	#ifdef MAMICO_COUPLING
-	if(coupling::interface::LS1MamicoCouplingSwitch::getInstance().getCouplingState()) //only perform coupling steps if coupling is enabled
+	if(_couplingEnabled && _cellServiceSet) //only perform coupling steps if coupling is enabled
 	{
 		// This object should be set by MaMiCo after the plugins are created in the simulation readxml file
-		// Even though this method is called before the object is set, at this point the coupling switch is always off
+		// Even though this method is called before the object is set, at this point the coupling switch should be always off
 		_macroscopicCellService->processInnerMacroscopicCellAfterMDTimestep();
 		_macroscopicCellService->distributeMass(simstep);
 		_macroscopicCellService->applyTemperatureToMolecules(simstep);
@@ -65,7 +60,7 @@ void MamicoCoupling::afterForces(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep)
 {
 	#ifdef MAMICO_COUPLING
-	if(coupling::interface::LS1MamicoCouplingSwitch::getInstance().getCouplingState())
+	if(_couplingEnabled && _cellServiceSet)
 	{
 		_macroscopicCellService->distributeMomentum(simstep);
 		_macroscopicCellService->applyBoundaryForce(simstep);
