@@ -38,6 +38,8 @@ void MamicoCoupling::beforeEventNewTimestep(ParticleContainer* particleContainer
  * - Distribute incoming mass from macroscopic solver by inserting perticles (if enabled)
  * - Run the MaMiCo thermostat cell by cell
  * */
+#pragma GCC push_options
+#pragma GCC optimize("O0")
 void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep)        
 {
@@ -69,7 +71,8 @@ void MamicoCoupling::afterForces(ParticleContainer* particleContainer,
 		_macroscopicCellService->applyBoundaryForce(simstep);
 	}
 	#endif
-}   
+}
+#pragma GCC pop_options
 
 void MamicoCoupling::endStep(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep)
