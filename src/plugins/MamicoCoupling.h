@@ -52,7 +52,6 @@ public:
 	void setMamicoMacroscopicCellService(coupling::services::MacroscopicCellService<3>* macroscopicCellService){
 		_macroscopicCellService = static_cast<coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>*>
 			(macroscopicCellService);
-		_cellServiceSet = true;
 	}
 	void switchOnCoupling(){ _couplingEnabled = true; }
 	void switchOffCoupling(){ _couplingEnabled = false; }
@@ -62,6 +61,6 @@ public:
 private:
 #ifdef MAMICO_COUPLING
 	coupling::services::MacroscopicCellServiceImpl<ls1::LS1RegionWrapper,3>* _macroscopicCellService;
-	bool _cellServiceSet = false, _couplingEnabled = false;
+	bool _couplingEnabled = false;
 #endif
 };
