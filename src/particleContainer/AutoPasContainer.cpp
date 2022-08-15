@@ -239,22 +239,25 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	xmlconfig.getNodeValue("functor", functorChoiceStr);
 	if (functorChoiceStr.find("avx") != std::string::npos) {
 		functorOption = FunctorOption::AVX;
+		global_log->info() << "Selected AVX Functor." << std::endl;
 #ifndef __AVX__
 	if(functorOption == FunctorOption::AVX) {
-		global_log->warning() << "Selected AVX Functor but AVX is not supported! Switching to non-AVX functor." << std::endl;
+		global_log->warning() << "Selected AVX Functor but AVX is not supported! Switching to autoVec functor." << std::endl;
 		functorOption = autoVec;
 	}
 #endif
 	} else if (functorChoiceStr.find("sve") != std::string::npos) {
 		functorOption = FunctorOption::SVE;
+		global_log->info() << "Selected SVE Functor." << std::endl;
 #ifndef __AVX__
 		if(functorOption == FunctorOption::AVX) {
-		global_log->warning() << "Selected AVX Functor but AVX is not supported! Switching to non-AVX functor." << std::endl;
+		global_log->warning() << "Selected AVX Functor but AVX is not supported! Switching to autoVec functor." << std::endl;
 		functorOption = autoVec;
 	}
 #endif
 	} else {
 		functorOption = FunctorOption::autoVec;
+		global_log->info() << "Selected autoVec Functor." << std::endl;
 	}
 
 
