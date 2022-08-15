@@ -440,6 +440,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 #else
 				throw std::runtime_error("SVE Functor not compiled due to lack of compiler support!");
 #endif
+				break;
 			}
 			case FunctorOption::AVX: {
 #ifdef __AVX__
@@ -452,6 +453,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 #else
 				throw std::runtime_error("AVX Functor not compiled due to lack of compiler support!");
 #endif
+				break;
 			}
 			case FunctorOption::autoVec: {
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
@@ -460,6 +462,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 						functor(_cutoff, _particlePropertiesLibrary);
 
 				std::tie(upot, virial) = iterateWithFunctor(functor);
+				break;
 			}
 		}
 	} else {
@@ -476,6 +479,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 #else
 				throw std::runtime_error("SVE Functor not compiled due to lack of compiler support!");
 #endif
+				break;
 			}
 			case FunctorOption::AVX: {
 #ifdef __AVX__
@@ -488,6 +492,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 #else
 				throw std::runtime_error("AVX Functor not compiled due to lack of compiler support!");
 #endif
+				break;
 			}
 			case FunctorOption::autoVec: {
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
@@ -496,6 +501,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 						functor(_cutoff);
 
 				std::tie(upot, virial) = iterateWithFunctor(functor);
+				break;
 			}
 		}
 	}
