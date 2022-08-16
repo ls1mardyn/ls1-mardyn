@@ -36,7 +36,7 @@ class ExtendedProfileSamplingTest;
                 <lattice>BOOL</lattice>                 <!-- Choose if lattice or random insertion; Note: The random method does not take local density into account; default true -->
                 <factorNumTest>FLOAT</factorNumTest>    <!-- Factor which specifies number of inserted test particles (numTest = factor*numPartsGlobal); default 4.0 -->
                 <samplefrequency>INT</samplefrequency>  <!-- Sampling every INT step; default 50 -->
-                <cids>INT,INT,INT,...</cids>            <!-- List of cids to be inserted; starting at 1; default 1 -->
+                <cids>INT,INT,INT,...</cids>            <!-- List of cids to be inserted; starting at 1; default 1 (only first component is inserted) -->
             </chemicalpotential>
 * </plugin>
 * \endcode
@@ -78,17 +78,16 @@ class ExtendedProfileSampling : public PluginBase {
     // NOTE: Only the root process knows correct values (except number of molecules and temperature)
     // With only the root process writing data, MPI_Reduce instead of MPI_Allreduce could be used -> only root has correct data
     std::vector<unsigned long> _numMolecules_accum;             // Number of molecules in bin
-    std::vector<double> _density_accum;                         // Local density
-    std::vector<double> _temperature_accum;                     // Temperature (drift corrected)
+    std::vector<unsigned long> _doftotal_accum;                 // DOF in bin
+    std::vector<double> _mass_accum;                            // Mass
     std::vector<double> _ekin_accum;                            // Kinetic energy including drift
     std::vector<double> _epot_accum;                            // Potential energy
-    std::vector<double> _massflux_accum;                        // Mass flux in y-direction (=rho*v_y)
-    std::vector<double> _pressure_accum;                        // Pressure
+    std::vector<double> _virial_accum;                          // Virial
     std::vector<double> _chemPot_accum;                         // Chemical potential as sampled in ms2 (Widom insertion method)
     std::vector<unsigned long> _countNTest_accum;               // Number of inserted test particles for chem. pot. sampling
-    std::array<std::vector<double>, 3> _temperatureVect_accum;  // Kinetic temperature in each direction (drift corrected)
+    std::array<std::vector<double>, 3> _ekinVect_accum;         // Kinetic energy in each direction (drift corrected)
     std::array<std::vector<double>, 3> _velocityVect_accum;     // Drift velocity in each direction
-    std::array<std::vector<double>, 3> _pressureVect_accum;     // Pressure in each direction
+    std::array<std::vector<double>, 3> _virialVect_accum;       // Virial in each direction
     std::array<std::vector<double>, 3> _forceVect_accum;        // Sum of forces on particles in each direction
     std::array<std::vector<double>, 3> _energyfluxVect_accum;   // Energy flux (heat flux plus enthalpy flux) in each direction
 

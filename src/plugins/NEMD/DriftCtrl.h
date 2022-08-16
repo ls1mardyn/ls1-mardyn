@@ -74,6 +74,8 @@ private:
 		struct Freq{
 			uint32_t sample, control, write;
 		} freq;
+		uint32_t start;
+		uint32_t stop;
 	} _control;
 	struct Range{
 		double yl, yr, width;

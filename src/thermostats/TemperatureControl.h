@@ -102,6 +102,7 @@ public:
 	void update(SubjectBase* subject) override;
 
 	// measure added kin. energy
+	void InitAddedEkin();
 	void writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep);
 
 private:
@@ -194,6 +195,7 @@ public:
 	void VelocityScalingPreparation(DomainDecompBase*, ParticleContainer*, unsigned long simstep);
 
 	// measure added kin. energy
+	void InitAddedEkin();
 	void writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep);
 
 private:

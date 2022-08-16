@@ -23,8 +23,6 @@ DriftCtrl::~DriftCtrl()
 
 void DriftCtrl::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain)
 {
-	global_log->debug() << "[DriftCtrl] Enabled in range yl,yr=" << _range.yl << "," << _range.yr << std::endl;
-	
 	// number of components
 	uint32_t numComponents = domain->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
 	_sampling.resize(numComponents);
@@ -55,7 +53,7 @@ void DriftCtrl::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 			_sampling.at(cid).velocity.at(2).local.at(yPosID) = 0.;
 		}
 	}
-	global_log->info() << "[DriftCtrl] Init data structures for " << numComponents << " components." << std::endl;
+	global_log->debug() << "[DriftCtrl] Init data structures for " << numComponents << " components." << std::endl;
 	
 	// init files
 	uint64_t simstep = global_simulation->getSimulationStep();
@@ -87,9 +85,15 @@ void DriftCtrl::readXML(XMLfileUnits& xmlconfig)
 	_control.freq.sample = 10;
 	_control.freq.control = 100;
 	_control.freq.write = 10000;
+	_control.start = 0;
+	_control.stop = std::numeric_limits<uint32_t>::max();
+
 	xmlconfig.getNodeValue("control/freq/sample", _control.freq.sample);
 	xmlconfig.getNodeValue("control/freq/control", _control.freq.control);
 	xmlconfig.getNodeValue("control/freq/write", _control.freq.write);
+
+	xmlconfig.getNodeValue("control/start", _control.start);
+	xmlconfig.getNodeValue("control/stop", _control.stop);
 	
 	// range
 	_range.yl = 0.;
@@ -100,6 +104,7 @@ void DriftCtrl::readXML(XMLfileUnits& xmlconfig)
 	// accept "box" as input
 	_range.yr = (strVal == "box") ? _simulation.getDomain()->getGlobalLength(1) : atof(strVal.c_str());
 	global_log->info() << "[DriftCtrl] Enabled in range yl,yr=" << _range.yl << "," << _range.yr << std::endl;
+	global_log->info() << "[DriftCtrl] Enabled between simstep " << _control.start << " and " << _control.stop << std::endl;
 	_range.width = _range.yr - _range.yl;
 	// subdivision
 	_range.subdivision.binWidth.init = 10.;
@@ -148,6 +153,12 @@ void DriftCtrl::readXML(XMLfileUnits& xmlconfig)
 
 void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep)
 {
+
+	// Only between start and stop
+    if ((simstep < _control.start) or (simstep > _control.stop)) {
+        return;
+    }
+
 	int nRank = domainDecomp->getRank();
 	
 	// sample
