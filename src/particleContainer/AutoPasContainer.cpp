@@ -464,6 +464,9 @@ void AutoPasContainer::traverseTemplateHelper() {
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 				break;
 			}
+			default: {
+				throw std::runtime_error("Unknown functor choice!");
+			}
 		}
 	} else {
 		global_log->debug() << "AutoPasContainer: Not using mixing." << std::endl;
@@ -502,6 +505,9 @@ void AutoPasContainer::traverseTemplateHelper() {
 
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 				break;
+			}
+			default: {
+				throw std::runtime_error("Unknown functor choice!");
 			}
 		}
 	}
