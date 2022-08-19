@@ -508,7 +508,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                                 const uint32_t indexCID = cid*_numBinsGlobal + index;
                                 _mTest.setComponent(&(_simulation.getEnsemble()->getComponents()->at(cid-1)));
                                 const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler.get(), &_mTest, *_cellProcessor)
-                                                        + _simulation.getLongRangeCorrection()->getUpotCorr(&_mTest);
+                                                        + 2.0*_simulation.getLongRangeCorrection()->getUpotCorr(&_mTest);
                                 double chemPot = exp(-deltaUpot/temperature_step_global.at(index));  // Global temperature of all components
                                 if (std::isfinite(chemPot)) {
                                     // For component 0 (single component)
