@@ -10,10 +10,20 @@
      * attributes "NumberOfComponents" and "Name" in element <DataArray> are required
  -->
 
- <xsd:simpleType name='DataArrayList_t'>
+  <xsd:simpleType name='DataArrayList_t'>
     <xsd:list itemType='xsd:decimal'/>
   </xsd:simpleType>
 
+  <!-- <xsd:simpleType name='DataArrayList_t'>
+    <xsd:union>
+      <xsd:simpleType>
+    <xsd:list itemType='xsd:decimal'/>
+      </xsd:simpleType>
+      <xsd:simpleType>
+    <xsd:list itemType='xsd:unsignedLong'/>
+      </xsd:simpleType>
+    </xsd:union>
+  </xsd:simpleType>-->
 
   <xsd:complexType name="DataArray_t">
     <xsd:simpleContent>
