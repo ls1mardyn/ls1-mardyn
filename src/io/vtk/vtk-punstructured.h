@@ -31,6 +31,11 @@
 // in the accompanying FLOSSE file.
 //
 
+/**
+ * @file
+ * @brief Generated from vtk-punstructured.xsd.
+ */
+
 #ifndef VTK_PUNSTRUCTURED_H
 #define VTK_PUNSTRUCTURED_H
 
@@ -87,137 +92,437 @@ class Piece;
 
 #include "vtk-unstructured.h"
 
+/**
+ * @brief Class corresponding to the %PUnstructuredGrid_t schema type.
+ *
+ * @nosubgrouping
+ */
 class PUnstructuredGrid_t: public ::xml_schema::type
 {
   public:
-  // PPointData
-  //
+  /**
+   * @name PPointData
+   *
+   * @brief Accessor and modifier functions for the %PPointData
+   * required element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::PPointData PPointData_type;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< PPointData_type, char > PPointData_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element.
+   *
+   * @return A constant reference to the element.
+   */
   const PPointData_type&
   PPointData () const;
 
+  /**
+   * @brief Return a read-write reference to the element.
+   *
+   * @return A reference to the element.
+   */
   PPointData_type&
   PPointData ();
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the element.
+   */
   void
   PPointData (const PPointData_type& x);
 
+  /**
+   * @brief Set the element value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   PPointData (::std::unique_ptr< PPointData_type > p);
 
-  // PCellData
-  //
+  //@}
+
+  /**
+   * @name PCellData
+   *
+   * @brief Accessor and modifier functions for the %PCellData
+   * required element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::PCellData PCellData_type;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< PCellData_type, char > PCellData_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element.
+   *
+   * @return A constant reference to the element.
+   */
   const PCellData_type&
   PCellData () const;
 
+  /**
+   * @brief Return a read-write reference to the element.
+   *
+   * @return A reference to the element.
+   */
   PCellData_type&
   PCellData ();
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the element.
+   */
   void
   PCellData (const PCellData_type& x);
 
+  /**
+   * @brief Set the element value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   PCellData (::std::unique_ptr< PCellData_type > p);
 
-  // PPoints
-  //
+  //@}
+
+  /**
+   * @name PPoints
+   *
+   * @brief Accessor and modifier functions for the %PPoints
+   * required element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::PPoints PPoints_type;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< PPoints_type, char > PPoints_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element.
+   *
+   * @return A constant reference to the element.
+   */
   const PPoints_type&
   PPoints () const;
 
+  /**
+   * @brief Return a read-write reference to the element.
+   *
+   * @return A reference to the element.
+   */
   PPoints_type&
   PPoints ();
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the element.
+   */
   void
   PPoints (const PPoints_type& x);
 
+  /**
+   * @brief Set the element value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   PPoints (::std::unique_ptr< PPoints_type > p);
 
-  // PCells
-  //
+  //@}
+
+  /**
+   * @name PCells
+   *
+   * @brief Accessor and modifier functions for the %PCells
+   * required element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::PCells PCells_type;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< PCells_type, char > PCells_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element.
+   *
+   * @return A constant reference to the element.
+   */
   const PCells_type&
   PCells () const;
 
+  /**
+   * @brief Return a read-write reference to the element.
+   *
+   * @return A reference to the element.
+   */
   PCells_type&
   PCells ();
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the element.
+   */
   void
   PCells (const PCells_type& x);
 
+  /**
+   * @brief Set the element value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   PCells (::std::unique_ptr< PCells_type > p);
 
-  // Piece
-  //
+  //@}
+
+  /**
+   * @name Piece
+   *
+   * @brief Accessor and modifier functions for the %Piece
+   * sequence element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::Piece Piece_type;
+
+  /**
+   * @brief Element sequence container type.
+   */
   typedef ::xsd::cxx::tree::sequence< Piece_type > Piece_sequence;
+
+  /**
+   * @brief Element iterator type.
+   */
   typedef Piece_sequence::iterator Piece_iterator;
+
+  /**
+   * @brief Element constant iterator type.
+   */
   typedef Piece_sequence::const_iterator Piece_const_iterator;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< Piece_type, char > Piece_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element
+   * sequence.
+   *
+   * @return A constant reference to the sequence container.
+   */
   const Piece_sequence&
   Piece () const;
 
+  /**
+   * @brief Return a read-write reference to the element sequence.
+   *
+   * @return A reference to the sequence container.
+   */
   Piece_sequence&
   Piece ();
 
+  /**
+   * @brief Copy elements from a given sequence.
+   *
+   * @param s A sequence to copy elements from.
+   *
+   * For each element in @a s this function makes a copy and adds it 
+   * to the sequence. Note that this operation completely changes the 
+   * sequence and all old elements will be lost.
+   */
   void
   Piece (const Piece_sequence& s);
 
-  // GhostLevel
-  //
+  //@}
+
+  /**
+   * @name GhostLevel
+   *
+   * @brief Accessor and modifier functions for the %GhostLevel
+   * required attribute.
+   */
+  //@{
+
+  /**
+   * @brief Attribute type.
+   */
   typedef ::xml_schema::integer GhostLevel_type;
+
+  /**
+   * @brief Attribute traits type.
+   */
   typedef ::xsd::cxx::tree::traits< GhostLevel_type, char > GhostLevel_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the attribute.
+   *
+   * @return A constant reference to the attribute.
+   */
   const GhostLevel_type&
   GhostLevel () const;
 
+  /**
+   * @brief Return the default value for the attribute.
+   *
+   * @return The attribute's default value.
+   */
   static GhostLevel_type
   GhostLevel_default_value ();
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   PUnstructuredGrid_t (const PPointData_type&,
                        const PCellData_type&,
                        const PPoints_type&,
                        const PCells_type&);
 
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes
+   * (::std::unique_ptr version).
+   *
+   * This constructor will try to use the passed values directly
+   * instead of making copies.
+   */
   PUnstructuredGrid_t (::std::unique_ptr< PPointData_type >,
                        ::std::unique_ptr< PCellData_type >,
                        ::std::unique_ptr< PPoints_type >,
                        ::std::unique_ptr< PCells_type >);
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   PUnstructuredGrid_t (const ::xercesc::DOMElement& e,
                        ::xml_schema::flags f = 0,
                        ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PUnstructuredGrid_t (const PUnstructuredGrid_t& x,
                        ::xml_schema::flags f = 0,
                        ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual PUnstructuredGrid_t*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PUnstructuredGrid_t&
   operator= (const PUnstructuredGrid_t& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~PUnstructuredGrid_t ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -230,116 +535,377 @@ class PUnstructuredGrid_t: public ::xml_schema::type
   ::xsd::cxx::tree::one< PCells_type > PCells_;
   Piece_sequence Piece_;
   ::xsd::cxx::tree::one< GhostLevel_type > GhostLevel_;
+
+  //@endcond
 };
 
+/**
+ * @brief Class corresponding to the %VTKFile_t schema type.
+ *
+ * @nosubgrouping
+ */
 class VTKFile_t: public ::xml_schema::type
 {
   public:
-  // PUnstructuredGrid
-  //
+  /**
+   * @name PUnstructuredGrid
+   *
+   * @brief Accessor and modifier functions for the %PUnstructuredGrid
+   * optional element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::PUnstructuredGrid_t PUnstructuredGrid_type;
+
+  /**
+   * @brief Element optional container type.
+   */
   typedef ::xsd::cxx::tree::optional< PUnstructuredGrid_type > PUnstructuredGrid_optional;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< PUnstructuredGrid_type, char > PUnstructuredGrid_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element
+   * container.
+   *
+   * @return A constant reference to the optional container.
+   */
   const PUnstructuredGrid_optional&
   PUnstructuredGrid () const;
 
+  /**
+   * @brief Return a read-write reference to the element container.
+   *
+   * @return A reference to the optional container.
+   */
   PUnstructuredGrid_optional&
   PUnstructuredGrid ();
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the element.
+   */
   void
   PUnstructuredGrid (const PUnstructuredGrid_type& x);
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x An optional container with the new value to set.
+   *
+   * If the value is present in @a x then this function makes a copy 
+   * of this value and sets it as the new value of the element.
+   * Otherwise the element container is set the 'not present' state.
+   */
   void
   PUnstructuredGrid (const PUnstructuredGrid_optional& x);
 
+  /**
+   * @brief Set the element value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly instead
+   * of making a copy.
+   */
   void
   PUnstructuredGrid (::std::unique_ptr< PUnstructuredGrid_type > p);
 
-  // UnstructuredGrid
-  //
+  //@}
+
+  /**
+   * @name UnstructuredGrid
+   *
+   * @brief Accessor and modifier functions for the %UnstructuredGrid
+   * optional element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::UnstructuredGrid_t UnstructuredGrid_type;
+
+  /**
+   * @brief Element optional container type.
+   */
   typedef ::xsd::cxx::tree::optional< UnstructuredGrid_type > UnstructuredGrid_optional;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< UnstructuredGrid_type, char > UnstructuredGrid_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element
+   * container.
+   *
+   * @return A constant reference to the optional container.
+   */
   const UnstructuredGrid_optional&
   UnstructuredGrid () const;
 
+  /**
+   * @brief Return a read-write reference to the element container.
+   *
+   * @return A reference to the optional container.
+   */
   UnstructuredGrid_optional&
   UnstructuredGrid ();
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the element.
+   */
   void
   UnstructuredGrid (const UnstructuredGrid_type& x);
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x An optional container with the new value to set.
+   *
+   * If the value is present in @a x then this function makes a copy 
+   * of this value and sets it as the new value of the element.
+   * Otherwise the element container is set the 'not present' state.
+   */
   void
   UnstructuredGrid (const UnstructuredGrid_optional& x);
 
+  /**
+   * @brief Set the element value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly instead
+   * of making a copy.
+   */
   void
   UnstructuredGrid (::std::unique_ptr< UnstructuredGrid_type > p);
 
-  // type
-  //
+  //@}
+
+  /**
+   * @name type
+   *
+   * @brief Accessor and modifier functions for the %type
+   * required attribute.
+   */
+  //@{
+
+  /**
+   * @brief Attribute type.
+   */
   typedef ::xml_schema::string type_type;
+
+  /**
+   * @brief Attribute traits type.
+   */
   typedef ::xsd::cxx::tree::traits< type_type, char > type_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the attribute.
+   *
+   * @return A constant reference to the attribute.
+   */
   const type_type&
   type () const;
 
+  /**
+   * @brief Return a read-write reference to the attribute.
+   *
+   * @return A reference to the attribute.
+   */
   type_type&
   type ();
 
+  /**
+   * @brief Set the attribute value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the attribute.
+   */
   void
   type (const type_type& x);
 
+  /**
+   * @brief Set the attribute value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   type (::std::unique_ptr< type_type > p);
 
-  // version
-  //
+  //@}
+
+  /**
+   * @name version
+   *
+   * @brief Accessor and modifier functions for the %version
+   * required attribute.
+   */
+  //@{
+
+  /**
+   * @brief Attribute type.
+   */
   typedef ::xml_schema::string version_type;
+
+  /**
+   * @brief Attribute traits type.
+   */
   typedef ::xsd::cxx::tree::traits< version_type, char > version_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the attribute.
+   *
+   * @return A constant reference to the attribute.
+   */
   const version_type&
   version () const;
 
+  /**
+   * @brief Return the default value for the attribute.
+   *
+   * @return A read-only (constant) reference to the attribute's
+   * default value.
+   */
   static const version_type&
   version_default_value ();
 
-  // byte_order
-  //
+  //@}
+
+  /**
+   * @name byte_order
+   *
+   * @brief Accessor and modifier functions for the %byte_order
+   * required attribute.
+   */
+  //@{
+
+  /**
+   * @brief Attribute type.
+   */
   typedef ::xml_schema::string byte_order_type;
+
+  /**
+   * @brief Attribute traits type.
+   */
   typedef ::xsd::cxx::tree::traits< byte_order_type, char > byte_order_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the attribute.
+   *
+   * @return A constant reference to the attribute.
+   */
   const byte_order_type&
   byte_order () const;
 
+  /**
+   * @brief Return the default value for the attribute.
+   *
+   * @return A read-only (constant) reference to the attribute's
+   * default value.
+   */
   static const byte_order_type&
   byte_order_default_value ();
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   VTKFile_t (const type_type&);
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   VTKFile_t (const ::xercesc::DOMElement& e,
              ::xml_schema::flags f = 0,
              ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   VTKFile_t (const VTKFile_t& x,
              ::xml_schema::flags f = 0,
              ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual VTKFile_t*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   VTKFile_t&
   operator= (const VTKFile_t& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~VTKFile_t ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -353,52 +919,157 @@ class VTKFile_t: public ::xml_schema::type
   static const version_type version_default_value_;
   ::xsd::cxx::tree::one< byte_order_type > byte_order_;
   static const byte_order_type byte_order_default_value_;
+
+  //@endcond
 };
 
+/**
+ * @brief Class corresponding to the %PPointData schema type.
+ *
+ * @nosubgrouping
+ */
 class PPointData: public ::xml_schema::type
 {
   public:
-  // PDataArray
-  //
+  /**
+   * @name PDataArray
+   *
+   * @brief Accessor and modifier functions for the %PDataArray
+   * sequence element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::DataArray_t PDataArray_type;
+
+  /**
+   * @brief Element sequence container type.
+   */
   typedef ::xsd::cxx::tree::sequence< PDataArray_type > PDataArray_sequence;
+
+  /**
+   * @brief Element iterator type.
+   */
   typedef PDataArray_sequence::iterator PDataArray_iterator;
+
+  /**
+   * @brief Element constant iterator type.
+   */
   typedef PDataArray_sequence::const_iterator PDataArray_const_iterator;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< PDataArray_type, char > PDataArray_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element
+   * sequence.
+   *
+   * @return A constant reference to the sequence container.
+   */
   const PDataArray_sequence&
   PDataArray () const;
 
+  /**
+   * @brief Return a read-write reference to the element sequence.
+   *
+   * @return A reference to the sequence container.
+   */
   PDataArray_sequence&
   PDataArray ();
 
+  /**
+   * @brief Copy elements from a given sequence.
+   *
+   * @param s A sequence to copy elements from.
+   *
+   * For each element in @a s this function makes a copy and adds it 
+   * to the sequence. Note that this operation completely changes the 
+   * sequence and all old elements will be lost.
+   */
   void
   PDataArray (const PDataArray_sequence& s);
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   PPointData ();
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   PPointData (const ::xercesc::DOMElement& e,
               ::xml_schema::flags f = 0,
               ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PPointData (const PPointData& x,
               ::xml_schema::flags f = 0,
               ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual PPointData*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PPointData&
   operator= (const PPointData& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~PPointData ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -406,52 +1077,157 @@ class PPointData: public ::xml_schema::type
 
   protected:
   PDataArray_sequence PDataArray_;
+
+  //@endcond
 };
 
+/**
+ * @brief Class corresponding to the %PCellData schema type.
+ *
+ * @nosubgrouping
+ */
 class PCellData: public ::xml_schema::type
 {
   public:
-  // PDataArray
-  //
+  /**
+   * @name PDataArray
+   *
+   * @brief Accessor and modifier functions for the %PDataArray
+   * sequence element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::DataArray_t PDataArray_type;
+
+  /**
+   * @brief Element sequence container type.
+   */
   typedef ::xsd::cxx::tree::sequence< PDataArray_type > PDataArray_sequence;
+
+  /**
+   * @brief Element iterator type.
+   */
   typedef PDataArray_sequence::iterator PDataArray_iterator;
+
+  /**
+   * @brief Element constant iterator type.
+   */
   typedef PDataArray_sequence::const_iterator PDataArray_const_iterator;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< PDataArray_type, char > PDataArray_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element
+   * sequence.
+   *
+   * @return A constant reference to the sequence container.
+   */
   const PDataArray_sequence&
   PDataArray () const;
 
+  /**
+   * @brief Return a read-write reference to the element sequence.
+   *
+   * @return A reference to the sequence container.
+   */
   PDataArray_sequence&
   PDataArray ();
 
+  /**
+   * @brief Copy elements from a given sequence.
+   *
+   * @param s A sequence to copy elements from.
+   *
+   * For each element in @a s this function makes a copy and adds it 
+   * to the sequence. Note that this operation completely changes the 
+   * sequence and all old elements will be lost.
+   */
   void
   PDataArray (const PDataArray_sequence& s);
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   PCellData ();
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   PCellData (const ::xercesc::DOMElement& e,
              ::xml_schema::flags f = 0,
              ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PCellData (const PCellData& x,
              ::xml_schema::flags f = 0,
              ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual PCellData*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PCellData&
   operator= (const PCellData& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~PCellData ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -459,52 +1235,157 @@ class PCellData: public ::xml_schema::type
 
   protected:
   PDataArray_sequence PDataArray_;
+
+  //@endcond
 };
 
+/**
+ * @brief Class corresponding to the %PPoints schema type.
+ *
+ * @nosubgrouping
+ */
 class PPoints: public ::xml_schema::type
 {
   public:
-  // PDataArray
-  //
+  /**
+   * @name PDataArray
+   *
+   * @brief Accessor and modifier functions for the %PDataArray
+   * sequence element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::DataArray_t PDataArray_type;
+
+  /**
+   * @brief Element sequence container type.
+   */
   typedef ::xsd::cxx::tree::sequence< PDataArray_type > PDataArray_sequence;
+
+  /**
+   * @brief Element iterator type.
+   */
   typedef PDataArray_sequence::iterator PDataArray_iterator;
+
+  /**
+   * @brief Element constant iterator type.
+   */
   typedef PDataArray_sequence::const_iterator PDataArray_const_iterator;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< PDataArray_type, char > PDataArray_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element
+   * sequence.
+   *
+   * @return A constant reference to the sequence container.
+   */
   const PDataArray_sequence&
   PDataArray () const;
 
+  /**
+   * @brief Return a read-write reference to the element sequence.
+   *
+   * @return A reference to the sequence container.
+   */
   PDataArray_sequence&
   PDataArray ();
 
+  /**
+   * @brief Copy elements from a given sequence.
+   *
+   * @param s A sequence to copy elements from.
+   *
+   * For each element in @a s this function makes a copy and adds it 
+   * to the sequence. Note that this operation completely changes the 
+   * sequence and all old elements will be lost.
+   */
   void
   PDataArray (const PDataArray_sequence& s);
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   PPoints ();
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   PPoints (const ::xercesc::DOMElement& e,
            ::xml_schema::flags f = 0,
            ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PPoints (const PPoints& x,
            ::xml_schema::flags f = 0,
            ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual PPoints*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PPoints&
   operator= (const PPoints& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~PPoints ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -512,52 +1393,157 @@ class PPoints: public ::xml_schema::type
 
   protected:
   PDataArray_sequence PDataArray_;
+
+  //@endcond
 };
 
+/**
+ * @brief Class corresponding to the %PCells schema type.
+ *
+ * @nosubgrouping
+ */
 class PCells: public ::xml_schema::type
 {
   public:
-  // PDataArray
-  //
+  /**
+   * @name PDataArray
+   *
+   * @brief Accessor and modifier functions for the %PDataArray
+   * sequence element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::DataArray_t PDataArray_type;
+
+  /**
+   * @brief Element sequence container type.
+   */
   typedef ::xsd::cxx::tree::sequence< PDataArray_type > PDataArray_sequence;
+
+  /**
+   * @brief Element iterator type.
+   */
   typedef PDataArray_sequence::iterator PDataArray_iterator;
+
+  /**
+   * @brief Element constant iterator type.
+   */
   typedef PDataArray_sequence::const_iterator PDataArray_const_iterator;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< PDataArray_type, char > PDataArray_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element
+   * sequence.
+   *
+   * @return A constant reference to the sequence container.
+   */
   const PDataArray_sequence&
   PDataArray () const;
 
+  /**
+   * @brief Return a read-write reference to the element sequence.
+   *
+   * @return A reference to the sequence container.
+   */
   PDataArray_sequence&
   PDataArray ();
 
+  /**
+   * @brief Copy elements from a given sequence.
+   *
+   * @param s A sequence to copy elements from.
+   *
+   * For each element in @a s this function makes a copy and adds it 
+   * to the sequence. Note that this operation completely changes the 
+   * sequence and all old elements will be lost.
+   */
   void
   PDataArray (const PDataArray_sequence& s);
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   PCells ();
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   PCells (const ::xercesc::DOMElement& e,
           ::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PCells (const PCells& x,
           ::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual PCells*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PCells&
   operator= (const PCells& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~PCells ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -565,52 +1551,151 @@ class PCells: public ::xml_schema::type
 
   protected:
   PDataArray_sequence PDataArray_;
+
+  //@endcond
 };
 
+/**
+ * @brief Class corresponding to the %Piece schema type.
+ *
+ * @nosubgrouping
+ */
 class Piece: public ::xml_schema::type
 {
   public:
-  // Source
-  //
+  /**
+   * @name Source
+   *
+   * @brief Accessor and modifier functions for the %Source
+   * required attribute.
+   */
+  //@{
+
+  /**
+   * @brief Attribute type.
+   */
   typedef ::xml_schema::string Source_type;
+
+  /**
+   * @brief Attribute traits type.
+   */
   typedef ::xsd::cxx::tree::traits< Source_type, char > Source_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the attribute.
+   *
+   * @return A constant reference to the attribute.
+   */
   const Source_type&
   Source () const;
 
+  /**
+   * @brief Return a read-write reference to the attribute.
+   *
+   * @return A reference to the attribute.
+   */
   Source_type&
   Source ();
 
+  /**
+   * @brief Set the attribute value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the attribute.
+   */
   void
   Source (const Source_type& x);
 
+  /**
+   * @brief Set the attribute value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   Source (::std::unique_ptr< Source_type > p);
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   Piece (const Source_type&);
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   Piece (const ::xercesc::DOMElement& e,
          ::xml_schema::flags f = 0,
          ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   Piece (const Piece& x,
          ::xml_schema::flags f = 0,
          ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual Piece*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   Piece&
   operator= (const Piece& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~Piece ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -618,6 +1703,8 @@ class Piece: public ::xml_schema::type
 
   protected:
   ::xsd::cxx::tree::one< Source_type > Source_;
+
+  //@endcond
 };
 
 #include <iosfwd>
@@ -626,52 +1713,150 @@ class Piece: public ::xml_schema::type
 #include <xercesc/dom/DOMDocument.hpp>
 #include <xercesc/dom/DOMErrorHandler.hpp>
 
-// Parse a URI or a local file.
-//
+/**
+ * @name Parsing functions for the %VTKFile document root.
+ *
+ * The hello element is a root of the Hello XML vocabulary.
+ * Every conforming document should start with this element.
+ */
+//@{
 
+/**
+ * @brief Parse a URI or a local file.
+ *
+ * @param uri A URI or a local file name.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * This function uses exceptions to report parsing errors.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (const ::std::string& uri,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
+/**
+ * @brief Parse a URI or a local file with an error handler.
+ *
+ * @param uri A URI or a local file name.
+ * @param eh An error handler.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * This function reports parsing errors by calling the error handler.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (const ::std::string& uri,
          ::xml_schema::error_handler& eh,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
+/**
+ * @brief Parse a URI or a local file with a Xerces-C++ DOM error
+ * handler.
+ *
+ * @param uri A URI or a local file name.
+ * @param eh A Xerces-C++ DOM error handler.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * This function reports parsing errors by calling the error handler.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (const ::std::string& uri,
          ::xercesc::DOMErrorHandler& eh,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-// Parse std::istream.
-//
-
+/**
+ * @brief Parse a standard input stream.
+ *
+ * @param is A standrad input stream.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * This function uses exceptions to report parsing errors.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (::std::istream& is,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
+/**
+ * @brief Parse a standard input stream with an error handler.
+ *
+ * @param is A standrad input stream.
+ * @param eh An error handler.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * This function reports parsing errors by calling the error handler.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (::std::istream& is,
          ::xml_schema::error_handler& eh,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
+/**
+ * @brief Parse a standard input stream with a Xerces-C++ DOM error
+ * handler.
+ *
+ * @param is A standrad input stream.
+ * @param eh A Xerces-C++ DOM error handler.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * This function reports parsing errors by calling the error handler.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (::std::istream& is,
          ::xercesc::DOMErrorHandler& eh,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
+/**
+ * @brief Parse a standard input stream with a resource id.
+ *
+ * @param is A standrad input stream.
+ * @param id A resource id.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * The resource id is used to identify the document being parsed in
+ * diagnostics as well as to resolve relative paths.
+ *
+ * This function uses exceptions to report parsing errors.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (::std::istream& is,
          const ::std::string& id,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
+/**
+ * @brief Parse a standard input stream with a resource id and an
+ * error handler.
+ *
+ * @param is A standrad input stream.
+ * @param id A resource id.
+ * @param eh An error handler.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * The resource id is used to identify the document being parsed in
+ * diagnostics as well as to resolve relative paths.
+ *
+ * This function reports parsing errors by calling the error handler.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (::std::istream& is,
          const ::std::string& id,
@@ -679,6 +1864,22 @@ VTKFile (::std::istream& is,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
+/**
+ * @brief Parse a standard input stream with a resource id and a
+ * Xerces-C++ DOM error handler.
+ *
+ * @param is A standrad input stream.
+ * @param id A resource id.
+ * @param eh A Xerces-C++ DOM error handler.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * The resource id is used to identify the document being parsed in
+ * diagnostics as well as to resolve relative paths.
+ *
+ * This function reports parsing errors by calling the error handler.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (::std::istream& is,
          const ::std::string& id,
@@ -686,38 +1887,87 @@ VTKFile (::std::istream& is,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-// Parse xercesc::InputSource.
-//
-
+/**
+ * @brief Parse a Xerces-C++ input source.
+ *
+ * @param is A Xerces-C++ input source.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * This function uses exceptions to report parsing errors.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (::xercesc::InputSource& is,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
+/**
+ * @brief Parse a Xerces-C++ input source with an error handler.
+ *
+ * @param is A Xerces-C++ input source.
+ * @param eh An error handler.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * This function reports parsing errors by calling the error handler.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (::xercesc::InputSource& is,
          ::xml_schema::error_handler& eh,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
+/**
+ * @brief Parse a Xerces-C++ input source with a Xerces-C++ DOM
+ * error handler.
+ *
+ * @param is A Xerces-C++ input source.
+ * @param eh A Xerces-C++ DOM error handler.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * This function reports parsing errors by calling the error handler.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (::xercesc::InputSource& is,
          ::xercesc::DOMErrorHandler& eh,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-// Parse xercesc::DOMDocument.
-//
-
+/**
+ * @brief Parse a Xerces-C++ DOM document.
+ *
+ * @param d A Xerces-C++ DOM document.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (const ::xercesc::DOMDocument& d,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
+/**
+ * @brief Parse a Xerces-C++ DOM document.
+ *
+ * @param d A pointer to the Xerces-C++ DOM document.
+ * @param f Parsing flags.
+ * @param p Parsing properties. 
+ * @return A pointer to the root of the object model.
+ *
+ * This function is normally used together with the keep_dom and
+ * own_dom parsing flags to assign ownership of the DOM document
+ * to the object model.
+ */
 ::std::unique_ptr< ::VTKFile_t >
 VTKFile (::xml_schema::dom::unique_ptr< ::xercesc::DOMDocument > d,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+//@}
 
 #include <iosfwd>
 
@@ -733,9 +1983,25 @@ operator<< (::xercesc::DOMElement&, const PUnstructuredGrid_t&);
 void
 operator<< (::xercesc::DOMElement&, const VTKFile_t&);
 
-// Serialize to std::ostream.
-//
+/**
+ * @name Serialization functions for the %VTKFile document root.
+ *
+ * The hello element is a root of the Hello XML vocabulary.
+ * Every conforming document should start with this element.
+ */
+//@{
 
+/**
+ * @brief Serialize to a standard output stream.
+ *
+ * @param os A standrad output stream.
+ * @param x An object model to serialize.
+ * @param m A namespace information map.
+ * @param e A character encoding to produce XML in.
+ * @param f Serialization flags.
+ *
+ * This function uses exceptions to report serialization errors.
+ */
 void
 VTKFile (::std::ostream& os,
          const ::VTKFile_t& x, 
@@ -743,6 +2009,19 @@ VTKFile (::std::ostream& os,
          const ::std::string& e = "UTF-8",
          ::xml_schema::flags f = 0);
 
+/**
+ * @brief Serialize to a standard output stream with an error handler.
+ *
+ * @param os A standrad output stream.
+ * @param x An object model to serialize.
+ * @param eh An error handler.
+ * @param m A namespace information map.
+ * @param e A character encoding to produce XML in.
+ * @param f Serialization flags.
+ *
+ * This function reports serialization errors by calling the error
+ * handler.
+ */
 void
 VTKFile (::std::ostream& os,
          const ::VTKFile_t& x, 
@@ -751,6 +2030,20 @@ VTKFile (::std::ostream& os,
          const ::std::string& e = "UTF-8",
          ::xml_schema::flags f = 0);
 
+/**
+ * @brief Serialize to a standard output stream with a Xerces-C++ DOM
+ * error handler.
+ *
+ * @param os A standrad output stream.
+ * @param x An object model to serialize.
+ * @param eh A Xerces-C++ DOM error handler.
+ * @param m A namespace information map.
+ * @param e A character encoding to produce XML in.
+ * @param f Serialization flags.
+ *
+ * This function reports serialization errors by calling the error
+ * handler.
+ */
 void
 VTKFile (::std::ostream& os,
          const ::VTKFile_t& x, 
@@ -759,9 +2052,17 @@ VTKFile (::std::ostream& os,
          const ::std::string& e = "UTF-8",
          ::xml_schema::flags f = 0);
 
-// Serialize to xercesc::XMLFormatTarget.
-//
-
+/**
+ * @brief Serialize to a Xerces-C++ XML format target.
+ *
+ * @param ft A Xerces-C++ XML format target.
+ * @param x An object model to serialize.
+ * @param m A namespace information map.
+ * @param e A character encoding to produce XML in.
+ * @param f Serialization flags.
+ *
+ * This function uses exceptions to report serialization errors.
+ */
 void
 VTKFile (::xercesc::XMLFormatTarget& ft,
          const ::VTKFile_t& x, 
@@ -769,6 +2070,20 @@ VTKFile (::xercesc::XMLFormatTarget& ft,
          const ::std::string& e = "UTF-8",
          ::xml_schema::flags f = 0);
 
+/**
+ * @brief Serialize to a Xerces-C++ XML format target with an error
+ * handler.
+ *
+ * @param ft A Xerces-C++ XML format target.
+ * @param x An object model to serialize.
+ * @param eh An error handler.
+ * @param m A namespace information map.
+ * @param e A character encoding to produce XML in.
+ * @param f Serialization flags.
+ *
+ * This function reports serialization errors by calling the error
+ * handler.
+ */
 void
 VTKFile (::xercesc::XMLFormatTarget& ft,
          const ::VTKFile_t& x, 
@@ -777,6 +2092,20 @@ VTKFile (::xercesc::XMLFormatTarget& ft,
          const ::std::string& e = "UTF-8",
          ::xml_schema::flags f = 0);
 
+/**
+ * @brief Serialize to a Xerces-C++ XML format target with a
+ * Xerces-C++ DOM error handler.
+ *
+ * @param ft A Xerces-C++ XML format target.
+ * @param x An object model to serialize.
+ * @param eh A Xerces-C++ DOM error handler.
+ * @param m A namespace information map.
+ * @param e A character encoding to produce XML in.
+ * @param f Serialization flags.
+ *
+ * This function reports serialization errors by calling the error
+ * handler.
+ */
 void
 VTKFile (::xercesc::XMLFormatTarget& ft,
          const ::VTKFile_t& x, 
@@ -785,21 +2114,36 @@ VTKFile (::xercesc::XMLFormatTarget& ft,
          const ::std::string& e = "UTF-8",
          ::xml_schema::flags f = 0);
 
-// Serialize to an existing xercesc::DOMDocument.
-//
-
+/**
+ * @brief Serialize to an existing Xerces-C++ DOM document.
+ *
+ * @param d A Xerces-C++ DOM document.
+ * @param x An object model to serialize.
+ * @param f Serialization flags.
+ *
+ * Note that it is your responsibility to create the DOM document
+ * with the correct root element as well as set the necessary
+ * namespace mapping attributes.
+ */
 void
 VTKFile (::xercesc::DOMDocument& d,
          const ::VTKFile_t& x,
          ::xml_schema::flags f = 0);
 
-// Serialize to a new xercesc::DOMDocument.
-//
-
+/**
+ * @brief Serialize to a new Xerces-C++ DOM document.
+ *
+ * @param x An object model to serialize.
+ * @param m A namespace information map.
+ * @param f Serialization flags.
+ * @return A pointer to the new Xerces-C++ DOM document.
+ */
 ::xml_schema::dom::unique_ptr< ::xercesc::DOMDocument >
 VTKFile (const ::VTKFile_t& x, 
          const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
          ::xml_schema::flags f = 0);
+
+//@}
 
 void
 operator<< (::xercesc::DOMElement&, const PPointData&);

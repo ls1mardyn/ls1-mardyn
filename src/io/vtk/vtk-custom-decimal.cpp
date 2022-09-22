@@ -57,8 +57,6 @@ namespace XERCES_CPP_NAMESPACE
 
     os << std::fixed << d.x;
 
-//    e << os.str ();
-
     // Remove the trailing zeros and the decimal point if necessary.
     //
     std::string s (os.str ());
@@ -83,8 +81,6 @@ namespace XERCES_CPP_NAMESPACE
     os.precision (std::numeric_limits<long double>::digits10);
 
     os << std::fixed << d.x;
-
-    //a << os.str();
 
     // Remove the trailing zeros and the decimal point if necessary.
     //
@@ -113,31 +109,27 @@ namespace xsd
       void
       operator<< (xml_schema::list_stream& ls, const xml_schema::as_decimal& d)
       {
-        /*ls.os_.imbue (std::locale::classic ());
-        ls.os_.precision (std::numeric_limits<long double>::digits10);
+        
+        ostringstream os;
+        os.imbue (locale::classic ());
+        os.precision (std::numeric_limits<long double>::digits10);
 
-        ls.os_ << fixed << d.x;
-	*/
-    	ostringstream os;
-    	os.imbue (locale::classic ());
-    	os.precision (std::numeric_limits<long double>::digits10);
+        os << std::fixed << d.x;
+      
+        // Remove the trailing zeros and the decimal point if necessary.
+        //
+        std::string s (os.str ());
+        std::string::size_type size (s.size ()), n (size);
 
-    	os << std::fixed << d.x;
-    
-	// Remove the trailing zeros and the decimal point if necessary.
-    	//
-    	std::string s (os.str ());
-    	std::string::size_type size (s.size ()), n (size);
+        for (; n > 0 && s[n - 1] == '0'; --n);
 
-    	for (; n > 0 && s[n - 1] == '0'; --n);
+        if (n > 0 && s[n - 1] == '.')
+          --n;
 
-    	if (n > 0 && s[n - 1] == '.')
-    	  --n;
-
-    	if (n != size)
-    	  s.resize (n);
+        if (n != size)
+          s.resize (n);
 	
-	ls.os_ << s;
+	      ls.os_ << s;
       }
     }
   }

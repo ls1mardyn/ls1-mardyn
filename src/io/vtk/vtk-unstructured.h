@@ -31,6 +31,11 @@
 // in the accompanying FLOSSE file.
 //
 
+/**
+ * @file
+ * @brief Generated from vtk-unstructured.xsd.
+ */
+
 #ifndef VTK_UNSTRUCTURED_H
 #define VTK_UNSTRUCTURED_H
 
@@ -87,156 +92,481 @@ class Cells;
 
 #include <xsd/cxx/xml/dom/parsing-header.hxx>
 
+/**
+ * @brief List class corresponding to the %DataArrayList_t
+ * schema type.
+ *
+ * This class has an interface of a standard C++ sequence (e.g.,
+ * std::vector).
+ */
 class DataArrayList_t: public ::xml_schema::simple_type,
   public ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal >
 {
   public:
+  /**
+   * @brief Default constructor.
+   *
+   * Creates an empty list.
+   */
   DataArrayList_t ();
 
+  /**
+   * @brief Create a list with copies of the specified element.
+   *
+   * @param n A number of elements to copy.
+   * @param x An element to copy.
+   *
+   * This constructor creates a list with @a n copies of @a x.
+   */
   DataArrayList_t (size_type n, const ::xml_schema::decimal& x);
 
+  /**
+   * @brief Create a list from an iterator range.
+   *
+   * @param begin An iterator pointing to the first element.
+   * @param end An iterator pointing to the one past the last element.
+   *
+   * This constructor creates a list consisting of copies of the
+   * elements in the range [begin,end).
+   */
   template < typename I >
   DataArrayList_t (const I& begin, const I& end)
   : ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (begin, end, this)
   {
   }
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   DataArrayList_t (const ::xercesc::DOMElement& e,
                    ::xml_schema::flags f = 0,
                    ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Create an instance from a DOM attribute.
+   *
+   * @param a A DOM attribute to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   DataArrayList_t (const ::xercesc::DOMAttr& a,
                    ::xml_schema::flags f = 0,
                    ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Create an instance from a string fragment.
+   *
+   * @param s A string fragment to extract the data from.
+   * @param e A pointer to DOM element containing the string fragment.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   DataArrayList_t (const ::std::string& s,
                    const ::xercesc::DOMElement* e,
                    ::xml_schema::flags f = 0,
                    ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   DataArrayList_t (const DataArrayList_t& x,
                    ::xml_schema::flags f = 0,
                    ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual DataArrayList_t*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~DataArrayList_t ();
 };
 
+/**
+ * @brief Class corresponding to the %DataArray_t schema type.
+ *
+ * @nosubgrouping
+ */
 class DataArray_t: public ::DataArrayList_t
 {
   public:
-  // type
-  //
+  /**
+   * @name type
+   *
+   * @brief Accessor and modifier functions for the %type
+   * required attribute.
+   */
+  //@{
+
+  /**
+   * @brief Attribute type.
+   */
   typedef ::type type_type;
+
+  /**
+   * @brief Attribute traits type.
+   */
   typedef ::xsd::cxx::tree::traits< type_type, char > type_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the attribute.
+   *
+   * @return A constant reference to the attribute.
+   */
   const type_type&
   type () const;
 
+  /**
+   * @brief Return a read-write reference to the attribute.
+   *
+   * @return A reference to the attribute.
+   */
   type_type&
   type ();
 
+  /**
+   * @brief Set the attribute value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the attribute.
+   */
   void
   type (const type_type& x);
 
+  /**
+   * @brief Set the attribute value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   type (::std::unique_ptr< type_type > p);
 
-  // Name
-  //
+  //@}
+
+  /**
+   * @name Name
+   *
+   * @brief Accessor and modifier functions for the %Name
+   * required attribute.
+   */
+  //@{
+
+  /**
+   * @brief Attribute type.
+   */
   typedef ::xml_schema::string Name_type;
+
+  /**
+   * @brief Attribute traits type.
+   */
   typedef ::xsd::cxx::tree::traits< Name_type, char > Name_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the attribute.
+   *
+   * @return A constant reference to the attribute.
+   */
   const Name_type&
   Name () const;
 
+  /**
+   * @brief Return a read-write reference to the attribute.
+   *
+   * @return A reference to the attribute.
+   */
   Name_type&
   Name ();
 
+  /**
+   * @brief Set the attribute value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the attribute.
+   */
   void
   Name (const Name_type& x);
 
+  /**
+   * @brief Set the attribute value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   Name (::std::unique_ptr< Name_type > p);
 
-  // NumberOfComponents
-  //
+  //@}
+
+  /**
+   * @name NumberOfComponents
+   *
+   * @brief Accessor and modifier functions for the %NumberOfComponents
+   * required attribute.
+   */
+  //@{
+
+  /**
+   * @brief Attribute type.
+   */
   typedef ::xml_schema::integer NumberOfComponents_type;
+
+  /**
+   * @brief Attribute traits type.
+   */
   typedef ::xsd::cxx::tree::traits< NumberOfComponents_type, char > NumberOfComponents_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the attribute.
+   *
+   * @return A constant reference to the attribute.
+   */
   const NumberOfComponents_type&
   NumberOfComponents () const;
 
+  /**
+   * @brief Return a read-write reference to the attribute.
+   *
+   * @return A reference to the attribute.
+   */
   NumberOfComponents_type&
   NumberOfComponents ();
 
+  /**
+   * @brief Set the attribute value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the attribute.
+   */
   void
   NumberOfComponents (const NumberOfComponents_type& x);
 
-  // format
-  //
+  //@}
+
+  /**
+   * @name format
+   *
+   * @brief Accessor and modifier functions for the %format
+   * optional attribute with a default value.
+   */
+  //@{
+
+  /**
+   * @brief Attribute type.
+   */
   typedef ::xml_schema::string format_type;
+
+  /**
+   * @brief Attribute traits type.
+   */
   typedef ::xsd::cxx::tree::traits< format_type, char > format_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the attribute.
+   *
+   * @return A constant reference to the attribute.
+   */
   const format_type&
   format () const;
 
+  /**
+   * @brief Return the default value for the attribute.
+   *
+   * @return A read-only (constant) reference to the attribute's
+   * default value.
+   */
   static const format_type&
   format_default_value ();
 
-  // offset
-  //
+  //@}
+
+  /**
+   * @name offset
+   *
+   * @brief Accessor and modifier functions for the %offset
+   * optional attribute.
+   */
+  //@{
+
+  /**
+   * @brief Attribute type.
+   */
   typedef ::xml_schema::integer offset_type;
+
+  /**
+   * @brief Attribute optional container type.
+   */
   typedef ::xsd::cxx::tree::optional< offset_type > offset_optional;
+
+  /**
+   * @brief Attribute traits type.
+   */
   typedef ::xsd::cxx::tree::traits< offset_type, char > offset_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the attribute
+   * container.
+   *
+   * @return A constant reference to the optional container.
+   */
   const offset_optional&
   offset () const;
 
+  /**
+   * @brief Return a read-write reference to the attribute container.
+   *
+   * @return A reference to the optional container.
+   */
   offset_optional&
   offset ();
 
+  /**
+   * @brief Set the attribute value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the attribute.
+   */
   void
   offset (const offset_type& x);
 
+  /**
+   * @brief Set the attribute value.
+   *
+   * @param x An optional container with the new value to set.
+   *
+   * If the value is present in @a x then this function makes a copy 
+   * of this value and sets it as the new value of the attribute.
+   * Otherwise the attribute container is set the 'not present' state.
+   */
   void
   offset (const offset_optional& x);
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from initializers for required 
+   * elements and attributes.
+   */
   DataArray_t (const type_type&,
                const Name_type&,
                const NumberOfComponents_type&);
 
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   DataArray_t (const ::DataArrayList_t&,
                const type_type&,
                const Name_type&,
                const NumberOfComponents_type&);
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   DataArray_t (const ::xercesc::DOMElement& e,
                ::xml_schema::flags f = 0,
                ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   DataArray_t (const DataArray_t& x,
                ::xml_schema::flags f = 0,
                ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual DataArray_t*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   DataArray_t&
   operator= (const DataArray_t& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~DataArray_t ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -249,109 +579,353 @@ class DataArray_t: public ::DataArrayList_t
   ::xsd::cxx::tree::one< format_type > format_;
   static const format_type format_default_value_;
   offset_optional offset_;
+
+  //@endcond
 };
 
+/**
+ * @brief Class corresponding to the %PieceUnstructuredGrid_t schema type.
+ *
+ * @nosubgrouping
+ */
 class PieceUnstructuredGrid_t: public ::xml_schema::type
 {
   public:
-  // PointData
-  //
+  /**
+   * @name PointData
+   *
+   * @brief Accessor and modifier functions for the %PointData
+   * required element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::PointData PointData_type;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< PointData_type, char > PointData_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element.
+   *
+   * @return A constant reference to the element.
+   */
   const PointData_type&
   PointData () const;
 
+  /**
+   * @brief Return a read-write reference to the element.
+   *
+   * @return A reference to the element.
+   */
   PointData_type&
   PointData ();
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the element.
+   */
   void
   PointData (const PointData_type& x);
 
+  /**
+   * @brief Set the element value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   PointData (::std::unique_ptr< PointData_type > p);
 
-  // CellData
-  //
+  //@}
+
+  /**
+   * @name CellData
+   *
+   * @brief Accessor and modifier functions for the %CellData
+   * required element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::CellData CellData_type;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< CellData_type, char > CellData_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element.
+   *
+   * @return A constant reference to the element.
+   */
   const CellData_type&
   CellData () const;
 
+  /**
+   * @brief Return a read-write reference to the element.
+   *
+   * @return A reference to the element.
+   */
   CellData_type&
   CellData ();
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the element.
+   */
   void
   CellData (const CellData_type& x);
 
+  /**
+   * @brief Set the element value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   CellData (::std::unique_ptr< CellData_type > p);
 
-  // Points
-  //
+  //@}
+
+  /**
+   * @name Points
+   *
+   * @brief Accessor and modifier functions for the %Points
+   * required element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::Points Points_type;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< Points_type, char > Points_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element.
+   *
+   * @return A constant reference to the element.
+   */
   const Points_type&
   Points () const;
 
+  /**
+   * @brief Return a read-write reference to the element.
+   *
+   * @return A reference to the element.
+   */
   Points_type&
   Points ();
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the element.
+   */
   void
   Points (const Points_type& x);
 
+  /**
+   * @brief Set the element value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   Points (::std::unique_ptr< Points_type > p);
 
-  // Cells
-  //
+  //@}
+
+  /**
+   * @name Cells
+   *
+   * @brief Accessor and modifier functions for the %Cells
+   * required element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::Cells Cells_type;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< Cells_type, char > Cells_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element.
+   *
+   * @return A constant reference to the element.
+   */
   const Cells_type&
   Cells () const;
 
+  /**
+   * @brief Return a read-write reference to the element.
+   *
+   * @return A reference to the element.
+   */
   Cells_type&
   Cells ();
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the element.
+   */
   void
   Cells (const Cells_type& x);
 
+  /**
+   * @brief Set the element value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   Cells (::std::unique_ptr< Cells_type > p);
 
-  // NumberOfPoints
-  //
+  //@}
+
+  /**
+   * @name NumberOfPoints
+   *
+   * @brief Accessor and modifier functions for the %NumberOfPoints
+   * required attribute.
+   */
+  //@{
+
+  /**
+   * @brief Attribute type.
+   */
   typedef ::xml_schema::integer NumberOfPoints_type;
+
+  /**
+   * @brief Attribute traits type.
+   */
   typedef ::xsd::cxx::tree::traits< NumberOfPoints_type, char > NumberOfPoints_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the attribute.
+   *
+   * @return A constant reference to the attribute.
+   */
   const NumberOfPoints_type&
   NumberOfPoints () const;
 
+  /**
+   * @brief Return a read-write reference to the attribute.
+   *
+   * @return A reference to the attribute.
+   */
   NumberOfPoints_type&
   NumberOfPoints ();
 
+  /**
+   * @brief Set the attribute value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the attribute.
+   */
   void
   NumberOfPoints (const NumberOfPoints_type& x);
 
-  // NumberOfCells
-  //
+  //@}
+
+  /**
+   * @name NumberOfCells
+   *
+   * @brief Accessor and modifier functions for the %NumberOfCells
+   * required attribute.
+   */
+  //@{
+
+  /**
+   * @brief Attribute type.
+   */
   typedef ::xml_schema::integer NumberOfCells_type;
+
+  /**
+   * @brief Attribute traits type.
+   */
   typedef ::xsd::cxx::tree::traits< NumberOfCells_type, char > NumberOfCells_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the attribute.
+   *
+   * @return A constant reference to the attribute.
+   */
   const NumberOfCells_type&
   NumberOfCells () const;
 
+  /**
+   * @brief Return a read-write reference to the attribute.
+   *
+   * @return A reference to the attribute.
+   */
   NumberOfCells_type&
   NumberOfCells ();
 
+  /**
+   * @brief Set the attribute value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the attribute.
+   */
   void
   NumberOfCells (const NumberOfCells_type& x);
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   PieceUnstructuredGrid_t (const PointData_type&,
                            const CellData_type&,
                            const Points_type&,
@@ -359,6 +933,14 @@ class PieceUnstructuredGrid_t: public ::xml_schema::type
                            const NumberOfPoints_type&,
                            const NumberOfCells_type&);
 
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes
+   * (::std::unique_ptr version).
+   *
+   * This constructor will try to use the passed values directly
+   * instead of making copies.
+   */
   PieceUnstructuredGrid_t (::std::unique_ptr< PointData_type >,
                            ::std::unique_ptr< CellData_type >,
                            ::std::unique_ptr< Points_type >,
@@ -366,26 +948,70 @@ class PieceUnstructuredGrid_t: public ::xml_schema::type
                            const NumberOfPoints_type&,
                            const NumberOfCells_type&);
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   PieceUnstructuredGrid_t (const ::xercesc::DOMElement& e,
                            ::xml_schema::flags f = 0,
                            ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PieceUnstructuredGrid_t (const PieceUnstructuredGrid_t& x,
                            ::xml_schema::flags f = 0,
                            ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual PieceUnstructuredGrid_t*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PieceUnstructuredGrid_t&
   operator= (const PieceUnstructuredGrid_t& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~PieceUnstructuredGrid_t ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -398,54 +1024,161 @@ class PieceUnstructuredGrid_t: public ::xml_schema::type
   ::xsd::cxx::tree::one< Cells_type > Cells_;
   ::xsd::cxx::tree::one< NumberOfPoints_type > NumberOfPoints_;
   ::xsd::cxx::tree::one< NumberOfCells_type > NumberOfCells_;
+
+  //@endcond
 };
 
+/**
+ * @brief Class corresponding to the %UnstructuredGrid_t schema type.
+ *
+ * @nosubgrouping
+ */
 class UnstructuredGrid_t: public ::xml_schema::type
 {
   public:
-  // Piece
-  //
+  /**
+   * @name Piece
+   *
+   * @brief Accessor and modifier functions for the %Piece
+   * required element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::PieceUnstructuredGrid_t Piece_type;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< Piece_type, char > Piece_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element.
+   *
+   * @return A constant reference to the element.
+   */
   const Piece_type&
   Piece () const;
 
+  /**
+   * @brief Return a read-write reference to the element.
+   *
+   * @return A reference to the element.
+   */
   Piece_type&
   Piece ();
 
+  /**
+   * @brief Set the element value.
+   *
+   * @param x A new value to set.
+   *
+   * This function makes a copy of its argument and sets it as
+   * the new value of the element.
+   */
   void
   Piece (const Piece_type& x);
 
+  /**
+   * @brief Set the element value without copying.
+   *
+   * @param p A new value to use.
+   *
+   * This function will try to use the passed value directly
+   * instead of making a copy.
+   */
   void
   Piece (::std::unique_ptr< Piece_type > p);
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   UnstructuredGrid_t (const Piece_type&);
 
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes
+   * (::std::unique_ptr version).
+   *
+   * This constructor will try to use the passed values directly
+   * instead of making copies.
+   */
   UnstructuredGrid_t (::std::unique_ptr< Piece_type >);
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   UnstructuredGrid_t (const ::xercesc::DOMElement& e,
                       ::xml_schema::flags f = 0,
                       ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   UnstructuredGrid_t (const UnstructuredGrid_t& x,
                       ::xml_schema::flags f = 0,
                       ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual UnstructuredGrid_t*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   UnstructuredGrid_t&
   operator= (const UnstructuredGrid_t& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~UnstructuredGrid_t ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -453,11 +1186,21 @@ class UnstructuredGrid_t: public ::xml_schema::type
 
   protected:
   ::xsd::cxx::tree::one< Piece_type > Piece_;
+
+  //@endcond
 };
 
+/**
+ * @brief Enumeration class corresponding to the %type
+ * schema type.
+ */
 class type: public ::xml_schema::string
 {
   public:
+
+  /**
+   * @brief Underlying enum type.
+   */
   enum value
   {
     Int8,
@@ -472,43 +1215,122 @@ class type: public ::xml_schema::string
     Float64
   };
 
+  /**
+   * @brief Create an instance from the underlying enum value.
+   *
+   * @param v A enum value.
+   */
   type (value v);
 
+  /**
+   * @brief Create an instance from a C string.
+   *
+   * @param v A string value.
+   */
   type (const char* v);
 
+  /**
+   * @brief Create an instance from a string.
+   *
+   * @param v A string value.
+   */
   type (const ::std::string& v);
 
+  /**
+   * @brief Create an instance from the base value.
+   *
+   * @param v A base value.
+   */
   type (const ::xml_schema::string& v);
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   type (const ::xercesc::DOMElement& e,
         ::xml_schema::flags f = 0,
         ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Create an instance from a DOM attribute.
+   *
+   * @param a A DOM attribute to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   type (const ::xercesc::DOMAttr& a,
         ::xml_schema::flags f = 0,
         ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Create an instance from a string fragment.
+   *
+   * @param s A string fragment to extract the data from.
+   * @param e A pointer to DOM element containing the string fragment.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   type (const ::std::string& s,
         const ::xercesc::DOMElement* e,
         ::xml_schema::flags f = 0,
         ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   type (const type& x,
         ::xml_schema::flags f = 0,
         ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual type*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Assign the underlying enum value.
+   *
+   * @param v A enum value.
+   * @return A reference to the instance.
+   */
   type&
   operator= (value v);
 
+  /**
+   * @brief Implicit conversion operator to the underlying
+   * enum value.
+   *
+   * @return A enum value.
+   */
   virtual
   operator value () const
   {
     return _xsd_type_convert ();
   }
+
+  //@cond
 
   protected:
   value
@@ -517,52 +1339,157 @@ class type: public ::xml_schema::string
   public:
   static const char* const _xsd_type_literals_[10];
   static const value _xsd_type_indexes_[10];
+
+  //@endcond
 };
 
+/**
+ * @brief Class corresponding to the %PointData schema type.
+ *
+ * @nosubgrouping
+ */
 class PointData: public ::xml_schema::type
 {
   public:
-  // DataArray
-  //
+  /**
+   * @name DataArray
+   *
+   * @brief Accessor and modifier functions for the %DataArray
+   * sequence element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::DataArray_t DataArray_type;
+
+  /**
+   * @brief Element sequence container type.
+   */
   typedef ::xsd::cxx::tree::sequence< DataArray_type > DataArray_sequence;
+
+  /**
+   * @brief Element iterator type.
+   */
   typedef DataArray_sequence::iterator DataArray_iterator;
+
+  /**
+   * @brief Element constant iterator type.
+   */
   typedef DataArray_sequence::const_iterator DataArray_const_iterator;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< DataArray_type, char > DataArray_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element
+   * sequence.
+   *
+   * @return A constant reference to the sequence container.
+   */
   const DataArray_sequence&
   DataArray () const;
 
+  /**
+   * @brief Return a read-write reference to the element sequence.
+   *
+   * @return A reference to the sequence container.
+   */
   DataArray_sequence&
   DataArray ();
 
+  /**
+   * @brief Copy elements from a given sequence.
+   *
+   * @param s A sequence to copy elements from.
+   *
+   * For each element in @a s this function makes a copy and adds it 
+   * to the sequence. Note that this operation completely changes the 
+   * sequence and all old elements will be lost.
+   */
   void
   DataArray (const DataArray_sequence& s);
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   PointData ();
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   PointData (const ::xercesc::DOMElement& e,
              ::xml_schema::flags f = 0,
              ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PointData (const PointData& x,
              ::xml_schema::flags f = 0,
              ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual PointData*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   PointData&
   operator= (const PointData& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~PointData ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -570,52 +1497,157 @@ class PointData: public ::xml_schema::type
 
   protected:
   DataArray_sequence DataArray_;
+
+  //@endcond
 };
 
+/**
+ * @brief Class corresponding to the %CellData schema type.
+ *
+ * @nosubgrouping
+ */
 class CellData: public ::xml_schema::type
 {
   public:
-  // DataArray
-  //
+  /**
+   * @name DataArray
+   *
+   * @brief Accessor and modifier functions for the %DataArray
+   * sequence element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::DataArray_t DataArray_type;
+
+  /**
+   * @brief Element sequence container type.
+   */
   typedef ::xsd::cxx::tree::sequence< DataArray_type > DataArray_sequence;
+
+  /**
+   * @brief Element iterator type.
+   */
   typedef DataArray_sequence::iterator DataArray_iterator;
+
+  /**
+   * @brief Element constant iterator type.
+   */
   typedef DataArray_sequence::const_iterator DataArray_const_iterator;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< DataArray_type, char > DataArray_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element
+   * sequence.
+   *
+   * @return A constant reference to the sequence container.
+   */
   const DataArray_sequence&
   DataArray () const;
 
+  /**
+   * @brief Return a read-write reference to the element sequence.
+   *
+   * @return A reference to the sequence container.
+   */
   DataArray_sequence&
   DataArray ();
 
+  /**
+   * @brief Copy elements from a given sequence.
+   *
+   * @param s A sequence to copy elements from.
+   *
+   * For each element in @a s this function makes a copy and adds it 
+   * to the sequence. Note that this operation completely changes the 
+   * sequence and all old elements will be lost.
+   */
   void
   DataArray (const DataArray_sequence& s);
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   CellData ();
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   CellData (const ::xercesc::DOMElement& e,
             ::xml_schema::flags f = 0,
             ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   CellData (const CellData& x,
             ::xml_schema::flags f = 0,
             ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual CellData*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   CellData&
   operator= (const CellData& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~CellData ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -623,52 +1655,157 @@ class CellData: public ::xml_schema::type
 
   protected:
   DataArray_sequence DataArray_;
+
+  //@endcond
 };
 
+/**
+ * @brief Class corresponding to the %Points schema type.
+ *
+ * @nosubgrouping
+ */
 class Points: public ::xml_schema::type
 {
   public:
-  // DataArray
-  //
+  /**
+   * @name DataArray
+   *
+   * @brief Accessor and modifier functions for the %DataArray
+   * sequence element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::DataArray_t DataArray_type;
+
+  /**
+   * @brief Element sequence container type.
+   */
   typedef ::xsd::cxx::tree::sequence< DataArray_type > DataArray_sequence;
+
+  /**
+   * @brief Element iterator type.
+   */
   typedef DataArray_sequence::iterator DataArray_iterator;
+
+  /**
+   * @brief Element constant iterator type.
+   */
   typedef DataArray_sequence::const_iterator DataArray_const_iterator;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< DataArray_type, char > DataArray_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element
+   * sequence.
+   *
+   * @return A constant reference to the sequence container.
+   */
   const DataArray_sequence&
   DataArray () const;
 
+  /**
+   * @brief Return a read-write reference to the element sequence.
+   *
+   * @return A reference to the sequence container.
+   */
   DataArray_sequence&
   DataArray ();
 
+  /**
+   * @brief Copy elements from a given sequence.
+   *
+   * @param s A sequence to copy elements from.
+   *
+   * For each element in @a s this function makes a copy and adds it 
+   * to the sequence. Note that this operation completely changes the 
+   * sequence and all old elements will be lost.
+   */
   void
   DataArray (const DataArray_sequence& s);
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   Points ();
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   Points (const ::xercesc::DOMElement& e,
           ::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   Points (const Points& x,
           ::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual Points*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   Points&
   operator= (const Points& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~Points ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -676,52 +1813,157 @@ class Points: public ::xml_schema::type
 
   protected:
   DataArray_sequence DataArray_;
+
+  //@endcond
 };
 
+/**
+ * @brief Class corresponding to the %Cells schema type.
+ *
+ * @nosubgrouping
+ */
 class Cells: public ::xml_schema::type
 {
   public:
-  // DataArray
-  //
+  /**
+   * @name DataArray
+   *
+   * @brief Accessor and modifier functions for the %DataArray
+   * sequence element.
+   */
+  //@{
+
+  /**
+   * @brief Element type.
+   */
   typedef ::DataArray_t DataArray_type;
+
+  /**
+   * @brief Element sequence container type.
+   */
   typedef ::xsd::cxx::tree::sequence< DataArray_type > DataArray_sequence;
+
+  /**
+   * @brief Element iterator type.
+   */
   typedef DataArray_sequence::iterator DataArray_iterator;
+
+  /**
+   * @brief Element constant iterator type.
+   */
   typedef DataArray_sequence::const_iterator DataArray_const_iterator;
+
+  /**
+   * @brief Element traits type.
+   */
   typedef ::xsd::cxx::tree::traits< DataArray_type, char > DataArray_traits;
 
+  /**
+   * @brief Return a read-only (constant) reference to the element
+   * sequence.
+   *
+   * @return A constant reference to the sequence container.
+   */
   const DataArray_sequence&
   DataArray () const;
 
+  /**
+   * @brief Return a read-write reference to the element sequence.
+   *
+   * @return A reference to the sequence container.
+   */
   DataArray_sequence&
   DataArray ();
 
+  /**
+   * @brief Copy elements from a given sequence.
+   *
+   * @param s A sequence to copy elements from.
+   *
+   * For each element in @a s this function makes a copy and adds it 
+   * to the sequence. Note that this operation completely changes the 
+   * sequence and all old elements will be lost.
+   */
   void
   DataArray (const DataArray_sequence& s);
 
-  // Constructors.
-  //
+  //@}
+
+  /**
+   * @name Constructors
+   */
+  //@{
+
+  /**
+   * @brief Create an instance from the ultimate base and
+   * initializers for required elements and attributes.
+   */
   Cells ();
 
+  /**
+   * @brief Create an instance from a DOM element.
+   *
+   * @param e A DOM element to extract the data from.
+   * @param f Flags to create the new instance with.
+   * @param c A pointer to the object that will contain the new
+   * instance.
+   */
   Cells (const ::xercesc::DOMElement& e,
          ::xml_schema::flags f = 0,
          ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy constructor.
+   *
+   * @param x An instance to make a copy of.
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   Cells (const Cells& x,
          ::xml_schema::flags f = 0,
          ::xml_schema::container* c = 0);
 
+  /**
+   * @brief Copy the instance polymorphically.
+   *
+   * @param f Flags to create the copy with.
+   * @param c A pointer to the object that will contain the copy.
+   * @return A pointer to the dynamically allocated copy.
+   *
+   * This function ensures that the dynamic type of the instance is
+   * used for copying and should be used for polymorphic object
+   * models instead of the copy constructor.
+   */
   virtual Cells*
   _clone (::xml_schema::flags f = 0,
           ::xml_schema::container* c = 0) const;
 
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param x An instance to make a copy of.
+   * @return A reference to itself.
+   *
+   * For polymorphic object models use the @c _clone function instead.
+   */
   Cells&
   operator= (const Cells& x);
 
+  //@}
+
+  /**
+   * @brief Destructor.
+   */
   virtual 
   ~Cells ();
 
   // Implementation.
   //
+
+  //@cond
+
   protected:
   void
   parse (::xsd::cxx::xml::dom::parser< char >&,
@@ -729,6 +1971,8 @@ class Cells: public ::xml_schema::type
 
   protected:
   DataArray_sequence DataArray_;
+
+  //@endcond
 };
 
 #include <iosfwd>
