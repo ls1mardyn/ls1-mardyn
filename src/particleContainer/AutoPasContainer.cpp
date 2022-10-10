@@ -477,7 +477,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 				autopas::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff);
-
+				functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 #else
 				throw std::runtime_error("SVE Functor not compiled due to lack of compiler support!");
@@ -490,7 +490,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 				autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff);
-
+				functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 #else
 				throw std::runtime_error("AVX Functor not compiled due to lack of compiler support!");
@@ -502,7 +502,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 				autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff);
-
+				functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 				break;
 			}
