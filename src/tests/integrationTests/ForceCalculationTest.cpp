@@ -80,6 +80,7 @@ void ForceCalculationTest::testForcePotentialCalculationF0() {
 	// -> potential U = -1 per particle pair.
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "ForceCalculationTestF0.inp", 1.3);
 
+    ASSERT_EQUAL(4ul, container->getNumberOfParticles());
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), 1e-8);
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
 
