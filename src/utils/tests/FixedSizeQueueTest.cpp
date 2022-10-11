@@ -3,6 +3,7 @@
 
 #include <initializer_list>
 #include <iostream>
+#include <utility>
 
 TEST_SUITE_REGISTRATION(FixedSizeQueueTest);
 
