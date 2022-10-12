@@ -239,22 +239,21 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	xmlconfig.getNodeValue("functor", functorChoiceStr);
 	if (functorChoiceStr.find("avx") != std::string::npos) {
 		functorOption = FunctorOption::AVX;
+		global_log->info() << "Selected AVX Functor." << std::endl;
 #ifndef __AVX__
-	if(functorOption == FunctorOption::AVX) {
-		global_log->warning() << "Selected AVX Functor but AVX is not supported! Switching to non-AVX functor." << std::endl;
-		functorOption = autoVec;
-	}
+		global_log->warning() << "Selected AVX Functor but AVX is not supported! Switching to autoVec functor." << std::endl;
+		functorOption = FunctorOption::autoVec;
 #endif
 	} else if (functorChoiceStr.find("sve") != std::string::npos) {
 		functorOption = FunctorOption::SVE;
-#ifndef __AVX__
-		if(functorOption == FunctorOption::AVX) {
-		global_log->warning() << "Selected AVX Functor but AVX is not supported! Switching to non-AVX functor." << std::endl;
-		functorOption = autoVec;
-	}
+		global_log->info() << "Selected SVE Functor." << std::endl;
+#ifndef __ARM_FEATURE_SVE
+		global_log->warning() << "Selected SVE Functor but SVE is not supported! Switching to autoVec functor." << std::endl;
+		functorOption = FunctorOption::autoVec;
 #endif
 	} else {
 		functorOption = FunctorOption::autoVec;
+		global_log->info() << "Selected autoVec Functor." << std::endl;
 	}
 
 
@@ -430,7 +429,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 	if (useMixing) {
 		global_log->debug() << "AutoPasContainer: Using mixing." << std::endl;
 		switch (functorOption) {
-			case SVE: {
+			case FunctorOption::SVE: {
 #ifdef __ARM_FEATURE_SVE
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
 				autopas::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
@@ -441,8 +440,9 @@ void AutoPasContainer::traverseTemplateHelper() {
 #else
 				throw std::runtime_error("SVE Functor not compiled due to lack of compiler support!");
 #endif
+				break;
 			}
-			case AVX: {
+			case FunctorOption::AVX: {
 #ifdef __AVX__
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
 				autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
@@ -453,50 +453,61 @@ void AutoPasContainer::traverseTemplateHelper() {
 #else
 				throw std::runtime_error("AVX Functor not compiled due to lack of compiler support!");
 #endif
+				break;
 			}
-			case autoVec: {
+			case FunctorOption::autoVec: {
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
 				autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff, _particlePropertiesLibrary);
 
 				std::tie(upot, virial) = iterateWithFunctor(functor);
+				break;
+			}
+			default: {
+				throw std::runtime_error("Unknown functor choice!");
 			}
 		}
 	} else {
 		global_log->debug() << "AutoPasContainer: Not using mixing." << std::endl;
 		switch (functorOption) {
-			case SVE: {
+			case FunctorOption::SVE: {
 #ifdef __ARM_FEATURE_SVE
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
 				autopas::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff);
-
+				functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 #else
 				throw std::runtime_error("SVE Functor not compiled due to lack of compiler support!");
 #endif
+				break;
 			}
-			case AVX: {
+			case FunctorOption::AVX: {
 #ifdef __AVX__
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
 				autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff);
-
+				functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 #else
 				throw std::runtime_error("AVX Functor not compiled due to lack of compiler support!");
 #endif
+				break;
 			}
-			case autoVec: {
+			case FunctorOption::autoVec: {
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
 				autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff);
-
+				functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
 				std::tie(upot, virial) = iterateWithFunctor(functor);
+				break;
+			}
+			default: {
+				throw std::runtime_error("Unknown functor choice!");
 			}
 		}
 	}
