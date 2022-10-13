@@ -7,8 +7,6 @@
 #include <xsd/cxx/ro-string.hxx>
 #include <xsd/cxx/zc-istream.hxx>
 
-using namespace std;
-
 // Parsing
 //
 namespace xsd

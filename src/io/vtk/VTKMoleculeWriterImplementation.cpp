@@ -13,7 +13,6 @@
 #include <fstream>
 
 using namespace Log;
-using namespace std;
 
 VTKMoleculeWriterImplementation::VTKMoleculeWriterImplementation(int rank, bool plotCenters)
 : _vtkFile(NULL), _parallelVTKFile(NULL), _numMoleculesPlotted(0), _rank(rank), _plotCenters(plotCenters) {
