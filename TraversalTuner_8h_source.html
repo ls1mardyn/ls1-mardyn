@@ -123,14 +123,14 @@ $(function() {
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keywordtype">void</span> traverseCellPairs(<a class="code hl_class" href="classCellProcessor.html">CellProcessor</a> &amp;cellProcessor);</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="keywordtype">void</span> traverseCellPairs(traversalNames <a class="code hl_typedef" href="namespacexml__schema.html#a2f1617231643eded4c3b9aa5f1ed6c08">name</a>, <a class="code hl_class" href="classCellProcessor.html">CellProcessor</a> &amp;cellProcessor);</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="keywordtype">void</span> traverseCellPairs(traversalNames <a class="code hl_typedef" href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">name</a>, <a class="code hl_class" href="classCellProcessor.html">CellProcessor</a> &amp;cellProcessor);</div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="keywordtype">void</span> traverseCellPairsOuter(<a class="code hl_class" href="classCellProcessor.html">CellProcessor</a> &amp;cellProcessor);</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <span class="keywordtype">void</span> traverseCellPairsInner(<a class="code hl_class" href="classCellProcessor.html">CellProcessor</a> &amp;cellProcessor, <span class="keywordtype">unsigned</span> stage, <span class="keywordtype">unsigned</span> stageCount);</div>
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="keywordtype">bool</span> isTraversalApplicable(traversalNames <a class="code hl_typedef" href="namespacexml__schema.html#a2f1617231643eded4c3b9aa5f1ed6c08">name</a>, <span class="keyword">const</span> std::array&lt;unsigned long, 3&gt; &amp;dims) <span class="keyword">const</span>; <span class="comment">// new</span></div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="keywordtype">bool</span> isTraversalApplicable(traversalNames <a class="code hl_typedef" href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">name</a>, <span class="keyword">const</span> std::array&lt;unsigned long, 3&gt; &amp;dims) <span class="keyword">const</span>; <span class="comment">// new</span></div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    traversalNames getSelectedTraversal()<span class="keyword"> const </span>{</div>
@@ -390,13 +390,13 @@ $(function() {
 <div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>}</div>
 <div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span> </div>
 <div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span><span class="keyword">template</span>&lt;<span class="keyword">class</span> CellTemplate&gt;</div>
-<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span><span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code hl_class" href="classTraversalTuner.html">TraversalTuner&lt;CellTemplate&gt;::traverseCellPairs</a>(traversalNames <a class="code hl_typedef" href="namespacexml__schema.html#a2f1617231643eded4c3b9aa5f1ed6c08">name</a>,</div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span><span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code hl_class" href="classTraversalTuner.html">TraversalTuner&lt;CellTemplate&gt;::traverseCellPairs</a>(traversalNames <a class="code hl_typedef" href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">name</a>,</div>
 <div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>        <a class="code hl_class" href="classCellProcessor.html">CellProcessor</a>&amp; cellProcessor) {</div>
-<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>    <span class="keywordflow">if</span> (<a class="code hl_typedef" href="namespacexml__schema.html#a2f1617231643eded4c3b9aa5f1ed6c08">name</a> == getSelectedTraversal()) {</div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>    <span class="keywordflow">if</span> (<a class="code hl_typedef" href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">name</a> == getSelectedTraversal()) {</div>
 <div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>        traverseCellPairs(cellProcessor);</div>
 <div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>    } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>        <a class="code hl_class" href="classSlicedCellPairTraversal.html">SlicedCellPairTraversal&lt;CellTemplate&gt;</a> slicedTraversal(*_cells, _dims);</div>
-<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>        <span class="keywordflow">switch</span>(<a class="code hl_typedef" href="namespacexml__schema.html#a2f1617231643eded4c3b9aa5f1ed6c08">name</a>) {</div>
+<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>        <span class="keywordflow">switch</span>(<a class="code hl_typedef" href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">name</a>) {</div>
 <div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>        <span class="keywordflow">case</span> SLICED:</div>
 <div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span>            slicedTraversal.traverseCellPairs(cellProcessor);</div>
 <div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span>            <span class="keywordflow">break</span>;</div>
@@ -427,9 +427,9 @@ $(function() {
 <div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span> </div>
 <div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span><span class="keyword">template</span>&lt;<span class="keyword">class</span> CellTemplate&gt;</div>
 <div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span><span class="keyword">inline</span> <span class="keywordtype">bool</span> <a class="code hl_class" href="classTraversalTuner.html">TraversalTuner&lt;CellTemplate&gt;::isTraversalApplicable</a>(</div>
-<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>        traversalNames <a class="code hl_typedef" href="namespacexml__schema.html#a2f1617231643eded4c3b9aa5f1ed6c08">name</a>, <span class="keyword">const</span> std::array&lt;unsigned long, 3&gt; &amp;dims)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>        traversalNames <a class="code hl_typedef" href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">name</a>, <span class="keyword">const</span> std::array&lt;unsigned long, 3&gt; &amp;dims)<span class="keyword"> const </span>{</div>
 <div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>    <span class="keywordtype">bool</span> ret = <span class="keyword">true</span>;</div>
-<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>    <span class="keywordflow">switch</span>(<a class="code hl_typedef" href="namespacexml__schema.html#a2f1617231643eded4c3b9aa5f1ed6c08">name</a>) {</div>
+<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>    <span class="keywordflow">switch</span>(<a class="code hl_typedef" href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">name</a>) {</div>
 <div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>    <span class="keywordflow">case</span> SLICED:</div>
 <div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>        ret = <a class="code hl_class" href="classSlicedCellPairTraversal.html">SlicedCellPairTraversal&lt;CellTemplate&gt;::isApplicable</a>(dims);</div>
 <div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>        <span class="keywordflow">break</span>;</div>
@@ -479,7 +479,7 @@ $(function() {
 <div class="ttc" id="aclassXMLfile_html_a847d404be2c87508e682c5add9022270"><div class="ttname"><a href="classXMLfile.html#a847d404be2c87508e682c5add9022270">XMLfile::getNodeValue_string</a></div><div class="ttdeci">std::string getNodeValue_string(const std::string &amp;nodepath, const std::string defaultvalue=std::string()) const</div><div class="ttdoc">get node value as string get the node content</div><div class="ttdef"><b>Definition:</b> xmlfile.h:499</div></div>
 <div class="ttc" id="aclassXMLfile_html_ac46e2da0709ed1eaf3ae1ee626612373"><div class="ttname"><a href="classXMLfile.html#ac46e2da0709ed1eaf3ae1ee626612373">XMLfile::getNodeValue</a></div><div class="ttdeci">unsigned long getNodeValue(const std::string &amp;nodepath, T &amp;value) const</div><div class="ttdoc">get node value get the node content and convert it to a given type</div><div class="ttdef"><b>Definition:</b> xmlfile.h:484</div></div>
 <div class="ttc" id="aclassXMLfile_html_af707102c26bb4869ceb223135bbe6232"><div class="ttname"><a href="classXMLfile.html#af707102c26bb4869ceb223135bbe6232">XMLfile::getcurrentnodepath</a></div><div class="ttdeci">std::string getcurrentnodepath() const</div><div class="ttdoc">get current node path</div><div class="ttdef"><b>Definition:</b> xmlfile.h:477</div></div>
-<div class="ttc" id="anamespacexml__schema_html_a2f1617231643eded4c3b9aa5f1ed6c08"><div class="ttname"><a href="namespacexml__schema.html#a2f1617231643eded4c3b9aa5f1ed6c08">xml_schema::name</a></div><div class="ttdeci">::xsd::cxx::tree::name&lt; char, token &gt; name</div><div class="ttdoc">C++ type corresponding to the Name XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> vtk-punstructured.h:288</div></div>
+<div class="ttc" id="anamespacexml__schema_html_abefc242069a8a8b837230355cbc238a1"><div class="ttname"><a href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">xml_schema::name</a></div><div class="ttdeci">::xsd::cxx::tree::name&lt; char, token &gt; name</div><div class="ttdoc">C++ type corresponding to the Name XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:286</div></div>
 <div class="ttc" id="astructC04CellPairTraversalData_html"><div class="ttname"><a href="structC04CellPairTraversalData.html">C04CellPairTraversalData</a></div><div class="ttdef"><b>Definition:</b> C04CellPairTraversal.h:16</div></div>
 <div class="ttc" id="astructC08CellPairTraversalData_html"><div class="ttname"><a href="structC08CellPairTraversalData.html">C08CellPairTraversalData</a></div><div class="ttdef"><b>Definition:</b> C08CellPairTraversal.h:16</div></div>
 <div class="ttc" id="astructCellPairTraversalData_html"><div class="ttname"><a href="structCellPairTraversalData.html">CellPairTraversalData</a></div><div class="ttdef"><b>Definition:</b> CellPairTraversals.h:16</div></div>
@@ -492,7 +492,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 12 2022 11:58:29 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Oct 14 2022 11:43:57 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

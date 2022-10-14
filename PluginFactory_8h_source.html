@@ -103,7 +103,7 @@ $(function() {
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="classPluginFactory.html#ae843b26fda13aeb28d4053ebbdd4e444">   52</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classPluginFactory.html#ae843b26fda13aeb28d4053ebbdd4e444">registerPlugin</a>(createInstanceFunc* createInstance) {</div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        T *pluginInstance = createInstance();</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> pluginname = pluginInstance-&gt;getPluginName();</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> pluginname = pluginInstance-&gt;getPluginName();</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        Log::global_log-&gt;debug() &lt;&lt; <span class="stringliteral">&quot;Registering plugin with name &quot;</span> &lt;&lt; pluginname &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        <span class="keyword">delete</span> pluginInstance;</div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        <span class="keywordflow">if</span>( _pluginFactoryMap.count(pluginname) &gt; 0 ) {</div>
@@ -124,7 +124,7 @@ $(function() {
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>        <span class="keywordflow">return</span> pluginNames;</div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    }</div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno"><a class="line" href="classPluginFactory.html#a6d47450efd7f107e9a7285060efead01">   81</a></span>    T* <a class="code hl_function" href="classPluginFactory.html#a6d47450efd7f107e9a7285060efead01">create</a>(<a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> pluginname) {</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno"><a class="line" href="classPluginFactory.html#a6d47450efd7f107e9a7285060efead01">   81</a></span>    T* <a class="code hl_function" href="classPluginFactory.html#a6d47450efd7f107e9a7285060efead01">create</a>(<a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> pluginname) {</div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        <span class="keyword">auto</span> existing = _pluginFactoryMap.find(pluginname);</div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        <span class="keywordflow">if</span>( existing != _pluginFactoryMap.end() ) {</div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            <span class="keywordflow">return</span> existing-&gt;second(); <span class="comment">/* call createInstance for plugin */</span></div>
@@ -133,7 +133,7 @@ $(function() {
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    }</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    <span class="keywordtype">long</span> enablePlugins(std::list&lt;PluginBase*&gt;&amp; _plugins, <a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>&amp; xmlconfig, <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> category, <a class="code hl_class" href="classDomain.html">Domain</a>* _domain);</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    <span class="keywordtype">long</span> enablePlugins(std::list&lt;PluginBase*&gt;&amp; _plugins, <a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>&amp; xmlconfig, <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> category, <a class="code hl_class" href="classDomain.html">Domain</a>* _domain);</div>
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>};</div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="preprocessor">#endif  </span><span class="comment">// SRC_UTILS_PLUGINFACTORY_H_</span></div>
 <div class="ttc" id="aclassDomain_html"><div class="ttname"><a href="classDomain.html">Domain</a></div><div class="ttdoc">This class is used to read in the phasespace and to handle macroscopic values.</div><div class="ttdef"><b>Definition:</b> Domain.h:47</div></div>
@@ -143,11 +143,11 @@ $(function() {
 <div class="ttc" id="aclassPluginFactory_html_a99c026816d7a5ebfc36877479099f4af"><div class="ttname"><a href="classPluginFactory.html#a99c026816d7a5ebfc36877479099f4af">PluginFactory::getPluginNames</a></div><div class="ttdeci">std::vector&lt; std::string &gt; getPluginNames()</div><div class="ttdoc">Get all names of registered plugins.</div><div class="ttdef"><b>Definition:</b> PluginFactory.h:72</div></div>
 <div class="ttc" id="aclassPluginFactory_html_ae843b26fda13aeb28d4053ebbdd4e444"><div class="ttname"><a href="classPluginFactory.html#ae843b26fda13aeb28d4053ebbdd4e444">PluginFactory::registerPlugin</a></div><div class="ttdeci">void registerPlugin(createInstanceFunc *createInstance)</div><div class="ttdoc">Register an output plugin.</div><div class="ttdef"><b>Definition:</b> PluginFactory.h:52</div></div>
 <div class="ttc" id="aclassXMLfileUnits_html"><div class="ttname"><a href="classXMLfileUnits.html">XMLfileUnits</a></div><div class="ttdoc">XML file with unit attributes abstraction.</div><div class="ttdef"><b>Definition:</b> xmlfileUnits.h:25</div></div>
-<div class="ttc" id="anamespacexml__schema_html_ac0cec83a330f0024e4e318b3deac5104"><div class="ttname"><a href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> vtk-punstructured.h:270</div></div>
+<div class="ttc" id="anamespacexml__schema_html_aefbaf353f9a0043af46d23d9040ef268"><div class="ttname"><a href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:268</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 12 2022 11:58:29 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Oct 14 2022 11:43:57 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

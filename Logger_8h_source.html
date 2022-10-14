@@ -130,7 +130,7 @@ $(function() {
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    logLevel _log_level;</div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    logLevel _msg_log_level;</div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="keywordtype">bool</span> _do_output;</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> _filename;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> _filename;</div>
 <div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    std::ostream *_log_stream;</div>
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    std::map&lt;logLevel, std::string&gt; logLevelNames;</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="preprocessor">#ifdef USE_GETTIMEOFDAY</span></div>
@@ -160,7 +160,7 @@ $(function() {
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="keyword">public</span>:</div>
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    <a class="code hl_class" href="classLog_1_1Logger.html">Logger</a>(logLevel level = Log::Error, std::ostream *os = &amp;(std::cout));</div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <a class="code hl_class" href="classLog_1_1Logger.html">Logger</a>(logLevel level, <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> prefix);</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <a class="code hl_class" href="classLog_1_1Logger.html">Logger</a>(logLevel level, <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> prefix);</div>
 <div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span> </div>
 <div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <a class="code hl_function" href="classLog_1_1Logger.html#a6f9ed9c24db66c09cd4f7b0cf4f0e913">~Logger</a>();</div>
 <div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
@@ -197,7 +197,7 @@ $(function() {
 <div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        <span class="keywordflow">if</span> (_msg_log_level &lt;= _log_level &amp;&amp; _do_output) {</div>
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>            <span class="comment">// Include timestamp</span></div>
 <div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>            time_t t;</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>            t = <a class="code hl_typedef" href="namespacexml__schema.html#a59aaa57bb5452c1f6c6111f1501277d4">time</a>(NULL);</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>            t = <a class="code hl_typedef" href="namespacexml__schema.html#a75a88454d26d1fbbe712e22e9e994cee">time</a>(NULL);</div>
 <div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>            tm* lt = localtime(&amp;t);</div>
 <div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>            <span class="comment">//*_log_stream &lt;&lt; ctime(&amp;t) &lt;&lt; &quot; &quot;;</span></div>
 <div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>            stringstream timestampstream;</div>
@@ -258,7 +258,7 @@ $(function() {
 <div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span><span class="preprocessor">#ifdef USE_GETTIMEOFDAY</span></div>
 <div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>        gettimeofday(&amp;_starttime, 0);</div>
 <div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><span class="preprocessor">#else</span></div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>        _starttime = <a class="code hl_typedef" href="namespacexml__schema.html#a59aaa57bb5452c1f6c6111f1501277d4">time</a>(NULL);</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>        _starttime = <a class="code hl_typedef" href="namespacexml__schema.html#a75a88454d26d1fbbe712e22e9e994cee">time</a>(NULL);</div>
 <div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    }</div>
 <div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span> </div>
@@ -288,12 +288,12 @@ $(function() {
 <div class="ttc" id="aclassLog_1_1Logger_html_a96cb5591497fba0a60e767718bec201a"><div class="ttname"><a href="classLog_1_1Logger.html#a96cb5591497fba0a60e767718bec201a">Log::Logger::init_starting_time</a></div><div class="ttdeci">void init_starting_time()</div><div class="ttdoc">initialize starting time</div><div class="ttdef"><b>Definition:</b> Logger.h:229</div></div>
 <div class="ttc" id="aclassLog_1_1Logger_html_ab155ed0ce791c19c799a6b570b4615dc"><div class="ttname"><a href="classLog_1_1Logger.html#ab155ed0ce791c19c799a6b570b4615dc">Log::Logger::set_mpi_output_all</a></div><div class="ttdeci">void set_mpi_output_all()</div><div class="ttdoc">all processes shall perform logging</div><div class="ttdef"><b>Definition:</b> Logger.cpp:50</div></div>
 <div class="ttc" id="aclassLog_1_1Logger_html_acc4f5a515203074f27b915e25f363d0a"><div class="ttname"><a href="classLog_1_1Logger.html#acc4f5a515203074f27b915e25f363d0a">Log::Logger::set_log_level</a></div><div class="ttdeci">logLevel set_log_level(logLevel l)</div><div class="ttdoc">set log level</div><div class="ttdef"><b>Definition:</b> Logger.h:210</div></div>
-<div class="ttc" id="anamespacexml__schema_html_a59aaa57bb5452c1f6c6111f1501277d4"><div class="ttname"><a href="namespacexml__schema.html#a59aaa57bb5452c1f6c6111f1501277d4">xml_schema::time</a></div><div class="ttdeci">::xsd::cxx::tree::time&lt; char, simple_type &gt; time</div><div class="ttdoc">C++ type corresponding to the time XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> vtk-punstructured.h:438</div></div>
-<div class="ttc" id="anamespacexml__schema_html_ac0cec83a330f0024e4e318b3deac5104"><div class="ttname"><a href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> vtk-punstructured.h:270</div></div>
+<div class="ttc" id="anamespacexml__schema_html_a75a88454d26d1fbbe712e22e9e994cee"><div class="ttname"><a href="namespacexml__schema.html#a75a88454d26d1fbbe712e22e9e994cee">xml_schema::time</a></div><div class="ttdeci">::xsd::cxx::tree::time&lt; char, simple_type &gt; time</div><div class="ttdoc">C++ type corresponding to the time XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:436</div></div>
+<div class="ttc" id="anamespacexml__schema_html_aefbaf353f9a0043af46d23d9040ef268"><div class="ttname"><a href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:268</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 12 2022 11:58:29 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Oct 14 2022 11:43:57 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

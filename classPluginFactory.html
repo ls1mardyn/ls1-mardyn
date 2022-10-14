@@ -105,8 +105,8 @@ long&#160;</td><td class="memItemRight" valign="bottom"><b>enablePlugins</b> (st
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename T&gt;<br />
 class PluginFactory&lt; T &gt;</div><p >Plugin Factory. </p>
-<p >Provides a common interface to register plugins based on the template given as parameter. The interface must include the following method: </p><div class="fragment"><div class="line"><span class="keyword">virtual</span> <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> getPluginName() = 0; <span class="comment">// return the name of the plugin</span></div>
-<div class="ttc" id="anamespacexml__schema_html_ac0cec83a330f0024e4e318b3deac5104"><div class="ttname"><a href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> vtk-punstructured.h:270</div></div>
+<p >Provides a common interface to register plugins based on the template given as parameter. The interface must include the following method: </p><div class="fragment"><div class="line"><span class="keyword">virtual</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> getPluginName() = 0; <span class="comment">// return the name of the plugin</span></div>
+<div class="ttc" id="anamespacexml__schema_html_aefbaf353f9a0043af46d23d9040ef268"><div class="ttname"><a href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:268</div></div>
 </div><!-- fragment --><p> Also each plugin has to implement the following static method: </p><div class="fragment"><div class="line"><span class="keyword">static</span> T* createInstance() { <span class="keywordflow">return</span> <span class="keyword">new</span> MyPlugin(); }  <span class="comment">// return an instance object</span></div>
 </div><!-- fragment --><p> Plugins are registered in the <a class="el" href="classPluginFactory.html" title="Plugin Factory.">PluginFactory</a> constructor using the REGISTER_PLUGIN(NAME) macro. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
@@ -204,7 +204,7 @@ template&lt;typename T &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 12 2022 11:58:32 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Oct 14 2022 11:44:00 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

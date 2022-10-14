@@ -122,7 +122,7 @@ $(function() {
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <a class="code hl_class" href="classDistControl.html">DistControl</a>();</div>
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    <span class="keyword">virtual</span> <a class="code hl_class" href="classDistControl.html">~DistControl</a>();</div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> getShortName()<span class="keyword"> override </span>{<span class="keywordflow">return</span> <span class="stringliteral">&quot;DiC&quot;</span>;}</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> getShortName()<span class="keyword"> override </span>{<span class="keywordflow">return</span> <span class="stringliteral">&quot;DiC&quot;</span>;}</div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#a62733e3b24b61b1b9c725dc852f2f892">readXML</a>(<a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>&amp; xmlconfig) <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
@@ -147,7 +147,7 @@ $(function() {
 <div class="line"><a id="l00105" name="l00105"></a><span class="lineno"><a class="line" href="classDistControl.html#a5fd169366b72afc9cd2331329341cdaf">  105</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#a5fd169366b72afc9cd2331329341cdaf">finish</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain)<span class="keyword"> override </span>{}</div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno"><a class="line" href="classDistControl.html#a562ebe4e67c395cbaeabecd03315ef7e">  108</a></span>    <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> <a class="code hl_function" href="classDistControl.html#a562ebe4e67c395cbaeabecd03315ef7e">getPluginName</a>()<span class="keyword"> override </span>{<span class="keywordflow">return</span> <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a>(<span class="stringliteral">&quot;DistControl&quot;</span>);}</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno"><a class="line" href="classDistControl.html#a562ebe4e67c395cbaeabecd03315ef7e">  108</a></span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> <a class="code hl_function" href="classDistControl.html#a562ebe4e67c395cbaeabecd03315ef7e">getPluginName</a>()<span class="keyword"> override </span>{<span class="keywordflow">return</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a>(<span class="stringliteral">&quot;DistControl&quot;</span>);}</div>
 <div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keyword">static</span> <a class="code hl_class" href="classPluginBase.html">PluginBase</a>* createInstance() {<span class="keywordflow">return</span> <span class="keyword">new</span> <a class="code hl_class" href="classDistControl.html">DistControl</a>();}</div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    <span class="comment">// set subdivision</span></div>
@@ -224,12 +224,12 @@ $(function() {
 <div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    uint16_t _nNeighbourValsDerivate;</div>
 <div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span> </div>
 <div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    <span class="keywordtype">int</span> _nMethodInit;</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> _strFilenameInit;</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> _strFilenameInit;</div>
 <div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    uint64_t _nRestartTimestep;</div>
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span> </div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="comment">// write data</span></div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> _strFilename;</div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> _strFilenameProfilesPrefix;</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> _strFilename;</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> _strFilenameProfilesPrefix;</div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span> </div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    <span class="comment">// observer</span></div>
 <div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    std::vector&lt;ObserverBase*&gt; _observer;</div>
@@ -278,12 +278,12 @@ $(function() {
 <div class="ttc" id="aclassPluginBase_html"><div class="ttname"><a href="classPluginBase.html">PluginBase</a></div><div class="ttdoc">The PluginBase class provides the interface for any kind of output/plugin classes - called &quot;(output) ...</div><div class="ttdef"><b>Definition:</b> PluginBase.h:47</div></div>
 <div class="ttc" id="aclassSubjectBase_html"><div class="ttname"><a href="classSubjectBase.html">SubjectBase</a></div><div class="ttdef"><b>Definition:</b> ObserverBase.h:20</div></div>
 <div class="ttc" id="aclassXMLfileUnits_html"><div class="ttname"><a href="classXMLfileUnits.html">XMLfileUnits</a></div><div class="ttdoc">XML file with unit attributes abstraction.</div><div class="ttdef"><b>Definition:</b> xmlfileUnits.h:25</div></div>
-<div class="ttc" id="anamespacexml__schema_html_ac0cec83a330f0024e4e318b3deac5104"><div class="ttname"><a href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> vtk-punstructured.h:270</div></div>
+<div class="ttc" id="anamespacexml__schema_html_aefbaf353f9a0043af46d23d9040ef268"><div class="ttname"><a href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:268</div></div>
 <div class="ttc" id="astructDistControl_1_1ControlFreqType_1_1WriteFreqType_html"><div class="ttname"><a href="structDistControl_1_1ControlFreqType_1_1WriteFreqType.html">DistControl::ControlFreqType::WriteFreqType</a></div><div class="ttdef"><b>Definition:</b> DistControl.h:209</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 12 2022 11:58:29 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Oct 14 2022 11:43:57 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

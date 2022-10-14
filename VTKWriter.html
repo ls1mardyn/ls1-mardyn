@@ -76,16 +76,19 @@ $(function() {
 <li>one describing the actual (sequential) unstructured grid</li>
 <li>one describing the file format for the meta-file (for parallel io)</li>
 </ul>
-<p >To generate the code, exute Ubuntu provides the package xsdcxx (with executable xsdcxx)</p>
-<p >./xsdcxx cxx-tree &ndash;std c++11 &ndash;root-element-last &ndash;generate-doxygen &ndash;generate-serialization vtk-unstructured.xsd</p>
-<p >on both xsd-files.</p>
+<p >Additionally, the VTK-XML-Schema is modified by mapping the XML data type 'decimal' to the 'long double' type, thus allowing to serialize large long integers.</p>
+<p >To generate the code, exute:</p>
+<p >xsdcxx cxx-tree &ndash;std c++11 &ndash;generate-serialization &ndash;generate-doxygen &ndash;generate-xml-schema &ndash;hxx-suffix .h &ndash;cxx-suffix .cpp &ndash;custom-type "decimal=long double" &ndash;hxx-epilogue '#include "vtk-custom-decimal.h"' xml-schema.xsd <br  />
+ xsdcxx cxx-tree &ndash;std c++11 &ndash;generate-doxygen &ndash;root-element-last &ndash;hxx-suffix .h &ndash;cxx-suffix .cpp &ndash;extern-xml-schema xml-schema.xsd &ndash;generate-serialization vtk-unstructured.xsd <br  />
+ xsdcxx cxx-tree &ndash;std c++11 &ndash;generate-doxygen &ndash;root-element-last &ndash;hxx-suffix .h &ndash;cxx-suffix .cpp &ndash;extern-xml-schema xml-schema.xsd &ndash;generate-serialization vtk-punstructured.xsd</p>
+<p >in this order (Ubuntu provides the package xsdcxx with executable xsdcxx).</p>
 <p >!!! Building the code</p>
 <p >The xsd runtime library (which consists only of headers) has to be on the include path you have to link against the Apache Xerces library (-lxerces-c) </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 12 2022 11:58:29 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Oct 14 2022 11:43:58 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

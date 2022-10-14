@@ -12,6 +12,6 @@ var searchData=
   ['handleforceexchange_9',['handleForceExchange',['../classDomainDecompBase.html#aac545e2701e83434a8dcf7ea507cf752',1,'DomainDecompBase']]],
   ['handleforceexchangedirect_10',['handleForceExchangeDirect',['../classDomainDecompBase.html#af9e7ffe606930a3e9a75a5717a466bb0',1,'DomainDecompBase']]],
   ['hash2indices_11',['hash2indices',['../classArray2D.html#a1ae3186b10c0d782f003f4c577531379',1,'Array2D']]],
-  ['hex_5fbinary_12',['hex_binary',['../namespacexml__schema.html#ac9db22d87610e02355669749770fac89',1,'xml_schema']]],
+  ['hex_5fbinary_12',['hex_binary',['../namespacexml__schema.html#a8179ecdc89c60ae524aa6b63ee9d7f77',1,'xml_schema']]],
   ['homogeneous_13',['Homogeneous',['../classHomogeneous.html',1,'']]]
 ];

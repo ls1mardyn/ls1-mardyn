@@ -80,7 +80,7 @@ $(function() {
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="keyword">namespace </span>string_utils {</div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">inline</span> <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> join(<span class="keyword">const</span> std::vector&lt;T&gt;&amp; vec, <span class="keyword">const</span> <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> delimiter) {</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">inline</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> join(<span class="keyword">const</span> std::vector&lt;T&gt;&amp; vec, <span class="keyword">const</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> delimiter) {</div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>    std::stringstream ss;</div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>    <span class="keywordflow">for</span>(<span class="keyword">auto</span> elem : vec) {</div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>        ss &lt;&lt; elem;</div>
@@ -91,14 +91,14 @@ $(function() {
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    <span class="keywordflow">return</span> ss.str();</div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>}</div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="keyword">inline</span> <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> toLowercase(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a>&amp; s) {</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> ret;</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="keyword">inline</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> toLowercase(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a>&amp; s) {</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> ret;</div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    ret.resize(s.length());</div>
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    std::transform(s.begin(), s.end(), ret.begin(), ::tolower);</div>
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <span class="keywordflow">return</span> ret;</div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>}</div>
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="keyword">inline</span> <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> trim(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a>&amp; str, <span class="keyword">const</span> <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> &amp;whitespace = <span class="stringliteral">&quot; \t&quot;</span>) {</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="keyword">inline</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> trim(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a>&amp; str, <span class="keyword">const</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> &amp;whitespace = <span class="stringliteral">&quot; \t&quot;</span>) {</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="keyword">const</span> <span class="keyword">auto</span> strBegin = str.find_first_not_of(whitespace);</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <span class="keywordflow">if</span> (strBegin == std::string::npos)</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;&quot;</span>;</div>
@@ -109,7 +109,7 @@ $(function() {
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordflow">return</span> str.substr(strBegin, strRange);</div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>}</div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="keyword">inline</span> std::vector&lt;std::string&gt; split(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a>&amp; input, <span class="keyword">const</span> <span class="keywordtype">char</span> delimiter ){</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="keyword">inline</span> std::vector&lt;std::string&gt; split(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a>&amp; input, <span class="keyword">const</span> <span class="keywordtype">char</span> delimiter ){</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="keywordtype">size_t</span> last = 0;</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keywordtype">size_t</span> next = 0;</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    std::vector&lt;std::string&gt; output;</div>
@@ -122,11 +122,11 @@ $(function() {
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>}</div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>}  <span class="comment">// namespace string_utils</span></div>
-<div class="ttc" id="anamespacexml__schema_html_ac0cec83a330f0024e4e318b3deac5104"><div class="ttname"><a href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> vtk-punstructured.h:270</div></div>
+<div class="ttc" id="anamespacexml__schema_html_aefbaf353f9a0043af46d23d9040ef268"><div class="ttname"><a href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:268</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 12 2022 11:58:29 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Oct 14 2022 11:43:57 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

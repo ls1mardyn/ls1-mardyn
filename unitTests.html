@@ -163,12 +163,12 @@ public:
 </ul>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="Testing_8h_source.html">utils/Testing.h</a></dd></dl>
 <p>The implementation of a test method may look like </p><div class="fragment"><div class="line"><span class="keywordtype">void</span> CommonTest::testGetTimeString() {</div>
-<div class="line">    <a class="code hl_typedef" href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">std::string</a> <a class="code hl_typedef" href="namespacexml__schema.html#a59aaa57bb5452c1f6c6111f1501277d4">time</a> = gettimestring();</div>
-<div class="line">    ASSERT_EQUAL((<span class="keywordtype">size_t</span>)13, <a class="code hl_typedef" href="namespacexml__schema.html#a59aaa57bb5452c1f6c6111f1501277d4">time</a>.size());</div>
-<div class="line">    ASSERT_EQUAL(<a class="code hl_typedef" href="namespacexml__schema.html#a59aaa57bb5452c1f6c6111f1501277d4">time</a>[6], <span class="charliteral">&#39;T&#39;</span>);</div>
+<div class="line">    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> <a class="code hl_typedef" href="namespacexml__schema.html#a75a88454d26d1fbbe712e22e9e994cee">time</a> = gettimestring();</div>
+<div class="line">    ASSERT_EQUAL((<span class="keywordtype">size_t</span>)13, <a class="code hl_typedef" href="namespacexml__schema.html#a75a88454d26d1fbbe712e22e9e994cee">time</a>.size());</div>
+<div class="line">    ASSERT_EQUAL(<a class="code hl_typedef" href="namespacexml__schema.html#a75a88454d26d1fbbe712e22e9e994cee">time</a>[6], <span class="charliteral">&#39;T&#39;</span>);</div>
 <div class="line">}</div>
-<div class="ttc" id="anamespacexml__schema_html_a59aaa57bb5452c1f6c6111f1501277d4"><div class="ttname"><a href="namespacexml__schema.html#a59aaa57bb5452c1f6c6111f1501277d4">xml_schema::time</a></div><div class="ttdeci">::xsd::cxx::tree::time&lt; char, simple_type &gt; time</div><div class="ttdoc">C++ type corresponding to the time XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> vtk-punstructured.h:438</div></div>
-<div class="ttc" id="anamespacexml__schema_html_ac0cec83a330f0024e4e318b3deac5104"><div class="ttname"><a href="namespacexml__schema.html#ac0cec83a330f0024e4e318b3deac5104">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> vtk-punstructured.h:270</div></div>
+<div class="ttc" id="anamespacexml__schema_html_a75a88454d26d1fbbe712e22e9e994cee"><div class="ttname"><a href="namespacexml__schema.html#a75a88454d26d1fbbe712e22e9e994cee">xml_schema::time</a></div><div class="ttdeci">::xsd::cxx::tree::time&lt; char, simple_type &gt; time</div><div class="ttdoc">C++ type corresponding to the time XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:436</div></div>
+<div class="ttc" id="anamespacexml__schema_html_aefbaf353f9a0043af46d23d9040ef268"><div class="ttname"><a href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:268</div></div>
 </div><!-- fragment --><h2>General Thoughts about Tests </h2>
 <ul>
 <li>Think about testability, when you write code. Try to keep your methods small and simple. If your method is just too long or contains complex control flows, then your tests might get very complex as well. Thus, try to design your code for testability.</li>
@@ -185,7 +185,7 @@ public:
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 12 2022 11:58:29 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Oct 14 2022 11:43:58 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
