@@ -23,12 +23,16 @@ The VTK-XML-Schema is divided into two parts:
 - one describing the actual (sequential) unstructured grid
 - one describing the file format for the meta-file (for parallel io)
 
-To generate the code, exute 
-Ubuntu provides the package xsdcxx (with executable xsdcxx)
+Additionally, the VTK-XML-Schema is modified by mapping the XML data type 'decimal' to the 
+'long double' type, thus allowing to serialize large long integers.
 
-./xsdcxx cxx-tree --std c++11 --root-element-last --generate-doxygen --generate-serialization vtk-unstructured.xsd
+To generate the code, exute:
 
-on both xsd-files.
+xsdcxx cxx-tree --std c++11 --generate-serialization --generate-doxygen --generate-xml-schema  --hxx-suffix .h --cxx-suffix .cpp --custom-type "decimal=long double" --hxx-epilogue '#include "vtk-custom-decimal.h"' xml-schema.xsd \n 
+xsdcxx cxx-tree --std c++11 --generate-doxygen --root-element-last  --hxx-suffix .h --cxx-suffix .cpp --extern-xml-schema xml-schema.xsd --generate-serialization vtk-unstructured.xsd \n 
+xsdcxx cxx-tree --std c++11 --generate-doxygen --root-element-last  --hxx-suffix .h --cxx-suffix .cpp --extern-xml-schema xml-schema.xsd --generate-serialization vtk-punstructured.xsd
+
+in this order (Ubuntu provides the package xsdcxx with executable xsdcxx).
 
 !!! Building the code
 
