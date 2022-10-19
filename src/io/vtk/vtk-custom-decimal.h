@@ -7,8 +7,6 @@
 
 #include <xsd/cxx/tree/text.hxx>  // text_content
 
-using namespace std;
-
 // Define decimal as long double
 //
 /**
