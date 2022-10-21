@@ -1245,7 +1245,7 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 									case 2: //face
 										cellCosts[dim][i_dim] += _loadCalc->getFace(numParts1, numParts2);
 										break;
-									case 2: //3 zeroes is the cell itself which was already counted
+									case 3: //3 zeroes is the cell itself which was already counted
 										break;
 									default:
 										global_log->error() << "[KDDecomposition] zeroCounts too large!" << std::endl;
