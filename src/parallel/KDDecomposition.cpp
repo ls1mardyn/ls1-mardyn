@@ -228,7 +228,7 @@ void KDDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/,
 }
 
 //check whether or not to do rebalancing in the specified step
-bool doRebalancing(bool forceRebalancing, bool needsRebalance, size_t steps, int frequency){
+bool KDDecomposition::doRebalancing(bool forceRebalancing, bool needsRebalance, size_t steps, int frequency){
 	return forceRebalancing or ((steps % frequency == 0 or steps <= 1) and needsRebalance);
 }
 
@@ -1236,16 +1236,20 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 															_numParticlesPerCell[_globalNumCells + getGlobalIndex(dim, dim1, dim2, nI_dim, nI_dim1, nI_dim2, area)];
 
 								switch(zeroCount1+zeroCount2+zeroCount3){
-								case 0: //the current neighbour shares a corner
-									cellCosts[dim][i_dim] += _loadCalc->getCorner(numParts1, numParts2);
-									break;
-								case 1: //edge
-									cellCosts[dim][i_dim] += _loadCalc->getEdge(numParts1, numParts2);
-									break;
-								case 2: //face
-									cellCosts[dim][i_dim] += _loadCalc->getFace(numParts1, numParts2);
-									break;
-									//3 zeroes is the cell itself which was already counted
+									case 0: //the current neighbour shares a corner
+										cellCosts[dim][i_dim] += _loadCalc->getCorner(numParts1, numParts2);
+										break;
+									case 1: //edge
+										cellCosts[dim][i_dim] += _loadCalc->getEdge(numParts1, numParts2);
+										break;
+									case 2: //face
+										cellCosts[dim][i_dim] += _loadCalc->getFace(numParts1, numParts2);
+										break;
+									case 2: //3 zeroes is the cell itself which was already counted
+										break;
+									default:
+										global_log->error() << "[KDDecomposition] zeroCounts too large!" << std::endl;
+										Simulation::exit(1);
 								}
 							}
 						}
