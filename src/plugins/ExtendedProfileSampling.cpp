@@ -340,9 +340,6 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         const double veloZ = pit->v(2);
         const double mass = pit->mass();
         const double epot = pit->U_pot();
-        const double ekinX2 = mass * veloX * veloX + (pit->U_rot_2()/3.0);
-        const double ekinY2 = mass * veloY * veloY + (pit->U_rot_2()/3.0);
-        const double ekinZ2 = mass * veloZ * veloZ + (pit->U_rot_2()/3.0);
 
         std::vector<unsigned int> cids = {0};  // add quantities to "all components" (0) and respective component
         if (!_singleComp) { cids.push_back(pit->componentid() + 1); }
@@ -352,9 +349,9 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             mass_step.local.at(indexCID) += pit->mass();
             ekin_step.local.at(indexCID) += pit->U_kin();
             epot_step.local.at(indexCID) += epot;
-            ekinVect_step[0].local.at(indexCID) += 0.5*ekinX2;
-            ekinVect_step[1].local.at(indexCID) += 0.5*ekinY2;
-            ekinVect_step[2].local.at(indexCID) += 0.5*ekinZ2;
+            ekinVect_step[0].local.at(indexCID) += 0.5*mass*veloX*veloX;
+            ekinVect_step[1].local.at(indexCID) += 0.5*mass*veloY*veloY;
+            ekinVect_step[2].local.at(indexCID) += 0.5*mass*veloZ*veloZ;
             virialVect_step[0].local.at(indexCID) += pit->Vi(0);
             virialVect_step[1].local.at(indexCID) += pit->Vi(1);
             virialVect_step[2].local.at(indexCID) += pit->Vi(2);
@@ -804,9 +801,9 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         epot        = _epot_accum.at(i) / numMols_accum;
                         p           = rho * ( (_virial_accum.at(i))/(3.0*numMols_accum) + T);
 
-                        T_x         = 3*(2*_ekinVect_accum[0].at(i) - (v_x*v_x)*numMols_accum) / _doftotal_accum.at(i);
-                        T_y         = 3*(2*_ekinVect_accum[1].at(i) - (v_y*v_y)*numMols_accum) / _doftotal_accum.at(i);
-                        T_z         = 3*(2*_ekinVect_accum[2].at(i) - (v_z*v_z)*numMols_accum) / _doftotal_accum.at(i);
+                        T_x         = (2*_ekinVect_accum[0].at(i) - (v_x*v_x)*_mass_accum.at(i)) / numMols_accum;
+                        T_y         = (2*_ekinVect_accum[1].at(i) - (v_y*v_y)*_mass_accum.at(i)) / numMols_accum;
+                        T_z         = (2*_ekinVect_accum[2].at(i) - (v_z*v_z)*_mass_accum.at(i)) / numMols_accum;
                         p_x         = rho * ( _virialVect_accum[0].at(i)/numMols_accum + T);
                         p_y         = rho * ( _virialVect_accum[1].at(i)/numMols_accum + T);
                         p_z         = rho * ( _virialVect_accum[2].at(i)/numMols_accum + T);
