@@ -19,9 +19,12 @@ if (ENABLE_AUTOPAS)
     set(AUTOPAS_OPENMP ${OPENMP} CACHE BOOL "" FORCE)
     set(spdlog_ForceBundled ON CACHE BOOL "" FORCE)
     set(Eigen3_ForceBundled ON CACHE BOOL "" FORCE)
+    # translate ls1 vectorization settings to AutoPas'
+    set(AUTOPAS_USE_VECTORIZATION ${USE_VECTORIZATION} CACHE BOOL "Set via USE_VECTORIZATION" FORCE)
+    set(AUTOPAS_VECTOR_INSTRUCTIONS ${VECTOR_INSTRUCTIONS} CACHE STRING "Set via VECTOR_INSTRUCTIONS_OPTIONS" FORCE)
 
-    # AutoTuner runtime estimation allowing less samples than rebuild freq (2022-02-10)
-    set(AUTOPAS_TAG 1bc6c6aefeec080be45e85e8efe0bd0daa16acc1 CACHE STRING "AutoPas Git tag to use")
+    # AutoTuner SVE Functor (2022-07-30)
+    set(AUTOPAS_TAG 96cdceba59e394b830fc0a967caddcc024b27175 CACHE STRING "AutoPas Git tag to use")
 
     FetchContent_Declare(
             autopasfetch
