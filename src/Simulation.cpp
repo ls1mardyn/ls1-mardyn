@@ -355,7 +355,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					Simulation::exit(1);
 				}
 				delete _domainDecomposition;
-				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid);
+				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid, _numberOfTimesteps);
 			} else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
 				Simulation::exit(1);

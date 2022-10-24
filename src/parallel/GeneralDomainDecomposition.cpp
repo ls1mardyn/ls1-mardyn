@@ -14,12 +14,13 @@
 
 #include <numeric>
 
-GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength, Domain* domain, bool forceGrid)
+GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength, Domain* domain, bool forceGrid, unsigned long numTimesteps)
 	: _boxMin{0.},
 	  _boxMax{0.},
 	  _domainLength{domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2)},
 	  _interactionLength{interactionLength},
-	  _forceLatchingToLinkedCellsGrid{forceGrid} {}
+	  _forceLatchingToLinkedCellsGrid{forceGrid},
+	  _numTimesteps{numTimesteps} {}
 
 void GeneralDomainDecomposition::initializeALL() {
 	global_log->info() << "initializing ALL load balancer..." << std::endl;
@@ -252,6 +253,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 #endif
 
 	xmlconfig.getNodeValue("updateFrequency", _rebuildFrequency);
+	_rebuildFrequency = std::min(_rebuildFrequency, _numTimesteps);
 	global_log->info() << "GeneralDomainDecomposition update frequency: " << _rebuildFrequency << endl;
 
 	xmlconfig.getNodeValue("initialPhaseTime", _initPhase);

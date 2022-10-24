@@ -22,7 +22,7 @@ public:
 	 * @param domain
 	 * @param forceGrid
 	 */
-	GeneralDomainDecomposition(double interactionLength, Domain* domain, bool forceGrid);
+	GeneralDomainDecomposition(double interactionLength, Domain* domain, bool forceGrid, unsigned long numTimesteps);
 
 	// documentation see father class (DomainDecompBase.h)
 	~GeneralDomainDecomposition() override;
@@ -189,6 +189,7 @@ private:
 
 	size_t _steps{0};
 	size_t _rebuildFrequency{10000};
+	unsigned long _numTimesteps;
 
 	size_t _initPhase{0};
 	size_t _initFrequency{500};
