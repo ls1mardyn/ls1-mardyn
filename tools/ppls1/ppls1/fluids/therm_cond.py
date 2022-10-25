@@ -154,7 +154,7 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         print(allFluids)
         return
     
-    if (fluid in ['LJTS','LJfull']) and units == 'SI'
+    if (fluid in ['LJTS','LJfull']) and (units == 'SI'):
         print('LJTS and LJfull do not support SI units')
         return
 
