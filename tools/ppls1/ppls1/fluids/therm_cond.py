@@ -154,6 +154,10 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         print(allFluids)
         return
     
+    if (fluid in ['LJTS','LJfull']) and units == 'SI'
+        print('LJTS and LJfull do not support SI units')
+        return
+
     na=6.02214076e23
     kb=1.380649e-23
     
@@ -175,6 +179,10 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         # rc=0.31
     else:
         units = 'SI'
+        sig=1.0
+        eps=1.0
+        mass=1.0
+        tc=1.0
     
     if units == 'reduced':
         T = T/tc*150.687
