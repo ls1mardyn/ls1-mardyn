@@ -77,7 +77,7 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 	_numComponents = global_simulation->getEnsemble()->getComponents()->size()+1;  // cid == 0: all components
 	_vecMass.resize(_numComponents);
 	_vecMass.at(0) = 0.;
-	for(uint8_t cid=1; cid<_numComponents; ++cid)
+	for(uint32_t cid=1; cid<_numComponents; ++cid)
 		_vecMass.at(cid) = global_simulation->getEnsemble()->getComponent(cid-1)->m();
 
 	// Init component specific parameters for VDF sampling
@@ -639,7 +639,7 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 	// Scalar quantities
 	nOffset = 0;
 	for(unsigned int dir = 0; dir < 3; ++dir){
-		for(unsigned int cid = 0; cid<_numComponents; ++cid){
+		for(uint32_t cid = 0; cid<_numComponents; ++cid){
 			_nOffsetScalar[dir][cid] = nOffset;
 			nOffset += _nNumBinsProfiles;
 		}
@@ -648,7 +648,7 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 	nOffset = 0;
 	for(unsigned int dim = 0; dim < 3; ++dim){
 		for(unsigned int dir = 0; dir < 3; ++dir){
-			for(unsigned int cid = 0; cid<_numComponents; ++cid){
+			for(uint32_t cid = 0; cid<_numComponents; ++cid){
 				_nOffsetVector[dim][dir][cid] = nOffset;
 				nOffset += _nNumBinsProfiles;
 			}
@@ -1339,7 +1339,7 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	{
 		for(uint8_t dim=0; dim<3; ++dim)
 		{
-			for(uint8_t cid=1; cid<_numComponents; ++cid)
+			for(uint32_t cid=1; cid<_numComponents; ++cid)
 			{
 				unsigned long offsetN    = _nOffsetScalar[dir][cid];
 				unsigned long offsetComp = _nOffsetVector[dim][dir][cid];
@@ -1372,7 +1372,7 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	{
 		for(uint8_t dim=0; dim<3; ++dim)
 		{
-			for(uint8_t cid=0; cid<_numComponents; ++cid)
+			for(uint32_t cid=0; cid<_numComponents; ++cid)
 			{
 				unsigned long offsetDim = _nOffsetVector[dim][dir][cid];
 				unsigned long offsetSum = _nOffsetVector[  0][dir][cid];  // sum x, y, z --> scalar
@@ -1619,7 +1619,7 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 			outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsProfiles[s];
 			outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsProfiles[s];
 
-			for(uint8_t cid=0; cid<_numComponents; ++cid)
+			for(uint32_t cid=0; cid<_numComponents; ++cid)
 			{
 				// scalar
 				mardyn_assert( _nOffsetScalar[dir][cid]+s < _nNumValsScalar );
@@ -1765,7 +1765,7 @@ void SampleRegion::writeDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 	dataPtrs.at(10) = _VDF_njy_nvy_global.data();
 	dataPtrs.at(11) = _VDF_njy_nvz_global.data();
 
-	for(uint64_t cid=0; cid<_numComponents; ++cid)
+	for(uint32_t cid=0; cid<_numComponents; ++cid)
 	{
 		const ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
 		if(not csp.bSamplingEnabled)
