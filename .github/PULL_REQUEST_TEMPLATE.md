@@ -1,6 +1,7 @@
 # Description
 
 Please include a summary of the changes.
+If you submit a plugin please see the checklist in [General_Plugins.dox](/doc/General_Plugins.dox)
 
 ## Related Pull Requests
 
