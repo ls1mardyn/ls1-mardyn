@@ -49,11 +49,11 @@ jobs:
 
     - name: Build
     - run: |
-      mkdir build
-      cd build
-      cmake -DOPENMP=ON -DENABLE_MPI=ON ..
-      make -j2
-      cd ..
+        mkdir build
+        cd build
+        cmake -DOPENMP=ON -DENABLE_MPI=ON ..
+        make -j2
+        cd ..
     env:
       CC: gcc
       CXX: g++
