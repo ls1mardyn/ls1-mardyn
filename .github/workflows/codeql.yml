@@ -55,7 +55,7 @@ jobs:
           libmpich-dev
         mkdir build
         cd build
-        cmake -DOPENMP=ON -DENABLE_MPI=ON ..
+        cmake -DOPENMP=ON -DENABLE_MPI=ON -DENABLE_UNIT_TESTS=ON ..
         make -j2
         cd ..
       env:
