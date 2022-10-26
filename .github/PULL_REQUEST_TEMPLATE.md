@@ -10,7 +10,7 @@ Please include a summary of the changes.
 
 - [ ] #Issue
 
-# How Has This Been Tested?
+## How Has This Been Tested?
 
 Please describe the tests that you ran to verify your changes.
 
