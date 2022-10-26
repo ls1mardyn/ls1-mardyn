@@ -22,17 +22,17 @@
             <frequency>10000</frequency>         <!-- frequency to conduct velo swap; default 10000 -->
             <stop>200000000</stop>               <!-- step to stop; default 200000000 -->
         </control>
-        <coldrange>                              <!-- region with lower temperature -->
+        <coldregion>                              <!-- region with lower temperature -->
             <xmin>0</xmin> <xmax>100</xmax>      <!-- range x-axis -->
             <ymin>140</ymin> <ymax>160</ymax>    <!-- range y-axis -->
             <zmin>0</zmin> <zmax>100</zmax>      <!-- range z-axis -->
-        </coldrange>
-        <warmrange>                              <!-- region with higher temperature -->
+        </coldregion>
+        <warmregion>                              <!-- region with higher temperature -->
             <symmetric>1</symmetric>             <!-- 0: no symmetry; 1: symmetry in y direction -->
             <xmin>0</xmin> <xmax>100</xmax>      <!-- range x-axis -->
             <ymin>20</ymin> <ymax>30</ymax>      <!-- range y-axis -->
             <zmin>0</zmin> <zmax>100</zmax>      <!-- range z-axis -->
-        </warmrange>
+        </warmregion>
     </plugin>
  * \endcode
  */
@@ -45,23 +45,23 @@ class VelocityExchange: public PluginBase {
         uint64_t stop {200000000ul};
     } _control;
 
-    struct C_Range {
+    struct Cold_Region {
         double xmin{0.0f};
         double xmax{0.0f};
         double ymin{0.0f};
         double ymax{0.0f};
         double zmin{0.0f};
         double zmax{0.0f};
-    } _cold_range;
+    } _cold_region;
 
-    struct W_Range {
+    struct Warm_Region {
         double xmin{0.0f};
         double xmax{0.0f};
         double ymin{0.0f};
         double ymax{0.0f};
         double zmin{0.0f};
         double zmax{0.0f};
-    } _warm_range;
+    } _warm_region;
 
     bool _symmetry {true};
 
