@@ -54,9 +54,9 @@ jobs:
         cmake -DOPENMP=ON -DENABLE_MPI=ON ..
         make -j2
         cd ..
-    env:
-      CC: gcc
-      CXX: g++
+      env:
+        CC: gcc
+        CXX: g++
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
