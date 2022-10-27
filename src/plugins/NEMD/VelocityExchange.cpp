@@ -236,16 +236,6 @@ void VelocityExchange::exchangeVelocities(ParticleContainer* particleContainer, 
 
 #endif
 
-#ifndef NDEBUG
-    // find rank with coldest/warmest molecule and read velocities
-    for (uint32_t cid = 0; cid < _numComp; cid++) {
-        std::cout << "[VelocityExchange] component " << cid << " ; rank " << domainDecomp->getRank() << " ; velocity_abs_coldP.local = " << velocity_abs_coldP.local[cid] << std::endl;
-        std::cout << "[VelocityExchange] component " << cid << " ; rank " << domainDecomp->getRank() << " ; velocity_abs_warmP.local = " << velocity_abs_warmP.local[cid] << std::endl;
-        std::cout << "[VelocityExchange] component " << cid << " ; rank " << domainDecomp->getRank() << " ; velocity_abs_coldP.global = " << velocity_abs_coldP.global[cid] << std::endl;
-        std::cout << "[VelocityExchange] component " << cid << " ; rank " << domainDecomp->getRank() << " ; velocity_abs_warmP.global = " << velocity_abs_warmP.global[cid] << std::endl;
-    }
-#endif
-
     // Seek the molecule with the highest abs. velocity and store its ID and direction-wise velos
     // Needed to distribute the global values
     for (uint32_t cid = 0; cid < _numComp; cid++) {
@@ -270,11 +260,24 @@ void VelocityExchange::exchangeVelocities(ParticleContainer* particleContainer, 
         }
     }
 
+#ifndef NDEBUG
+    for (uint32_t cid = 0; cid < _numComp; cid++) {
+        std::cout << "[VelocityExchange] component " << cid << " ; rank " << domainDecomp->getRank() << " ; velocity_abs_coldP.local = " << velocity_abs_coldP.local[cid]
+                                                                                                     << " ; molID_coldP.local = " << molID_coldP.local[cid] << std::endl;
+        std::cout << "[VelocityExchange] component " << cid << " ; rank " << domainDecomp->getRank() << " ; velocity_abs_warmP.local = " << velocity_abs_warmP.local[cid]
+                                                                                                     << " ; molID_warmP.local = " << molID_warmP.local[cid] << std::endl;
+        std::cout << "[VelocityExchange] component " << cid << " ; rank " << domainDecomp->getRank() << " ; velocity_abs_coldP.global = " << velocity_abs_coldP.global[cid]
+                                                                                                     << " ; molID_coldP.global = " << molID_coldP.global[cid] << std::endl;
+        std::cout << "[VelocityExchange] component " << cid << " ; rank " << domainDecomp->getRank() << " ; velocity_abs_warmP.global = " << velocity_abs_warmP.global[cid]
+                                                                                                     << " ; molID_warmP.global = " << molID_warmP.global[cid] << std::endl;
+    }
+#endif
+
 
 // distribute IDs and velocities to all ranks using MPI_MAX as only one rank contains real information
 #ifdef ENABLE_MPI
-    MPI_Allreduce(molID_warmP.local.data(), molID_warmP.global.data(), _numComp, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-    MPI_Allreduce(molID_coldP.local.data(), molID_coldP.global.data(), _numComp, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(molID_warmP.local.data(), molID_warmP.global.data(), _numComp, MPI_UNSIGNED_LONG, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(molID_coldP.local.data(), molID_coldP.global.data(), _numComp, MPI_UNSIGNED_LONG, MPI_MAX, MPI_COMM_WORLD);
 
     for (unsigned short d = 0; d < 3; d++) {
         MPI_Allreduce(velocity_coldP.local[d].data(), velocity_coldP.global[d].data(), _numComp, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
