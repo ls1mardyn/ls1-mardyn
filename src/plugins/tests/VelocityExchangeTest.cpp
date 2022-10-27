@@ -62,25 +62,38 @@ void VelocityExchangeTest::testExchangeVelocities() {
         ASSERT_DOUBLES_EQUAL_MSG("Box size (max) in warm region in direction "+std::to_string(d)+" not as expected", region_warm_max[d], max_val, delta);
     }
 
+    bool insideBox {false};
     // Search for exchanged particles
     for (auto it = container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
         const unsigned long pid = it->getID();
 
         for (uint32_t cid = 0; cid < 3; cid++) {
-            // Formerly coldest particle
+            // Formerly coldest particle in warm region
             if (pid == id_coldP[cid]) {
                 // Should now be the velocity of the formerly warmest particle
                 ASSERT_DOUBLES_EQUAL_MSG("Velocity v_x of formerly coldest particle (ID "+std::to_string(pid)+", cid "+std::to_string(cid+1)+") not as expected", velo_warmP[cid][0], it->v(0), delta);
                 ASSERT_DOUBLES_EQUAL_MSG("Velocity v_y of formerly coldest particle (ID "+std::to_string(pid)+", cid "+std::to_string(cid+1)+") not as expected", velo_warmP[cid][1], it->v(1), delta);
                 ASSERT_DOUBLES_EQUAL_MSG("Velocity v_z of formerly coldest particle (ID "+std::to_string(pid)+", cid "+std::to_string(cid+1)+") not as expected", velo_warmP[cid][2], it->v(2), delta);
+                insideBox = (it->r(0) >= region_cold_min[0]) and (it->r(0) <= region_cold_max[0]);
+                ASSERT_EQUAL_MSG("Position r_x of formerly coldest particle (ID "+std::to_string(pid)+", cid "+std::to_string(cid+1)+") not in warm region", true, insideBox);
+                insideBox = (it->r(1) >= region_cold_min[1]) and (it->r(1) <= region_cold_max[1]);
+                ASSERT_EQUAL_MSG("Position r_y of formerly coldest particle (ID "+std::to_string(pid)+", cid "+std::to_string(cid+1)+") not in warm region", true, insideBox);
+                insideBox = (it->r(2) >= region_cold_min[2]) and (it->r(2) <= region_cold_max[2]);
+                ASSERT_EQUAL_MSG("Position r_z of formerly coldest particle (ID "+std::to_string(pid)+", cid "+std::to_string(cid+1)+") not in warm region", true, insideBox);
             }
 
-            // Formerly warmest particle
+            // Formerly warmest particle in cold region
             if (pid == id_warmP[cid]) {
                 // Should now be the velocity of the formerly coldest particle
                 ASSERT_DOUBLES_EQUAL_MSG("Velocity v_x of formerly warmest particle (ID "+std::to_string(pid)+", cid "+std::to_string(cid+1)+") not as expected", velo_coldP[cid][0], it->v(0), delta);
                 ASSERT_DOUBLES_EQUAL_MSG("Velocity v_y of formerly warmest particle (ID "+std::to_string(pid)+", cid "+std::to_string(cid+1)+") not as expected", velo_coldP[cid][1], it->v(1), delta);
                 ASSERT_DOUBLES_EQUAL_MSG("Velocity v_z of formerly warmest particle (ID "+std::to_string(pid)+", cid "+std::to_string(cid+1)+") not as expected", velo_coldP[cid][2], it->v(2), delta);
+                insideBox = (it->r(0) >= region_warm_min[0]) and (it->r(0) <= region_warm_max[0]);
+                ASSERT_EQUAL_MSG("Position r_x of formerly warmest particle (ID "+std::to_string(pid)+", cid "+std::to_string(cid+1)+") not in cold region", true, insideBox);
+                insideBox = (it->r(1) >= region_warm_min[1]) and (it->r(1) <= region_warm_max[1]);
+                ASSERT_EQUAL_MSG("Position r_y of formerly warmest particle (ID "+std::to_string(pid)+", cid "+std::to_string(cid+1)+") not in cold region", true, insideBox);
+                insideBox = (it->r(2) >= region_warm_min[2]) and (it->r(2) <= region_warm_max[2]);
+                ASSERT_EQUAL_MSG("Position r_z of formerly warmest particle (ID "+std::to_string(pid)+", cid "+std::to_string(cid+1)+") not in cold region", true, insideBox);
             }
         }
     }

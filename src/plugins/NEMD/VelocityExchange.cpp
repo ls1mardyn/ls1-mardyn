@@ -306,8 +306,8 @@ void VelocityExchange::exchangeVelocities(ParticleContainer* particleContainer, 
 
     for (uint32_t cid = 0; cid < _numComp; cid++) {
         global_log->info() << domainDecomp->getRank() << " [VelocityExchange] flipped velocities of molecules "
-                            << molID_coldP.global[cid] << " (in warm region, v_new = " << velocity_warmP.global[0].at(cid) << " " << velocity_warmP.global[1].at(cid) << " " << velocity_warmP.global[2].at(cid) << ") and "
-                            << molID_warmP.global[cid] << " (in cold region v_new = " << velocity_coldP.global[0].at(cid) << " " << velocity_coldP.global[1].at(cid) << " " << velocity_coldP.global[2].at(cid) << ") of component " << cid+1 << std::endl;
+                            << molID_coldP.global[cid] << " (in warm region, v_new = " << velocity_abs_warmP.global[cid] << ") and "
+                            << molID_warmP.global[cid] << " (in cold region v_new = " << velocity_abs_coldP.global[cid] << ") of component " << cid+1 << std::endl;
     }
 }
 

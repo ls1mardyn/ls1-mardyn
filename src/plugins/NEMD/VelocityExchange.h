@@ -74,17 +74,6 @@ class VelocityExchange: public PluginBase {
                           const CommVar<std::array<std::vector<double>, 3>>& velocity, const CommVar<std::array<std::vector<double>, 3>>& rotVelo);
 
     // Used in unit test
-    // sets minimum and maximum value of specified region in direction d
-    void setRegionCoords(double& min_val, double& max_val, unsigned short d, const bool flgColdRegion) {
-        if (flgColdRegion) {
-            _cold_region.min[d] = min_val;
-            _cold_region.max[d] = max_val;
-        } else {
-            _warm_region.min[d] = min_val;
-            _warm_region.max[d] = max_val;
-        }
-    }
-
     // gets minimum and maximum value of specified region in direction d
     void getRegionCoords(double& min_val, double& max_val, unsigned short d, const bool flgColdRegion) {
         if (flgColdRegion) {
