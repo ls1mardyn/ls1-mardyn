@@ -114,7 +114,7 @@ void compressionTest::testThrowOnFailedCreate() {
     try {
         std::unique_ptr<Compression> compInstance = Compression::create("FailMe");
     }
-    catch (std::invalid_argument ia) {
+    catch (const std::invalid_argument& ia) {
         std::string const correctMsg("CompressionWrapper error > Invalid encoding: FailMe");
         std::string const exceptionMsg(ia.what());
         ASSERT_EQUAL(correctMsg, exceptionMsg);

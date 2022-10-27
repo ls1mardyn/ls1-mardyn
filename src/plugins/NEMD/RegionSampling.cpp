@@ -819,7 +819,7 @@ void SampleRegion::initSamplingFieldYR(int nDimension)
 	resizeExactly(_dBinMidpointsFieldYR, _nNumBinsFieldYR);
 	resizeExactly(_dShellMidpointsFieldYR, _nNumShellsFieldYR);
 
-	_nNumValsFieldYR = _numComponents * 3 * _nNumShellsFieldYR * _nNumBinsFieldYR;  // *3: number of sections: 0: all, 1: upper, 2: lower section
+	_nNumValsFieldYR = 3ul * _numComponents * _nNumShellsFieldYR * _nNumBinsFieldYR;  // *3: number of sections: 0: all, 1: upper, 2: lower section
 
 #ifndef NDEBUG
 	cout << "_numComponents    = " << _numComponents    << endl;

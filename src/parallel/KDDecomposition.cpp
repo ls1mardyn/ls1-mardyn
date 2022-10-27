@@ -59,7 +59,7 @@ void KDDecomposition::init(Domain* domain){
         coversWholeDomain[dim] = true;
     }
 
-    _numParticlesPerCell.resize(_numParticleTypes * _globalNumCells);
+    _numParticlesPerCell.resize(static_cast<size_t>(_numParticleTypes) * _globalNumCells);
 
     // create initial decomposition
     // ensure that enough cells for the number of procs are available
