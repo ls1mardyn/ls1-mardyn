@@ -39,8 +39,9 @@ while the `template.txt` contains:
 
 Now run:
 ```sh
-python3 tagbatch.py -t template.txt -c input.ods -f temperature -o outputfile -v
+python3 tagbatch.py -t template.txt -c input.ods -s sheet1 -f temperature -o outputfile -v
 ```
+with `sheet1` being the name of the table sheet in `input.ods`.
 
 This results in 3 output files named `outputfile0001.txt`, `outputfile0002.txt` and `outputfile0003.txt`.
 E.g. file `outputfile0002.txt` contains:
