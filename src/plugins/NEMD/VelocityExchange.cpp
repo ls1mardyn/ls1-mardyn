@@ -155,56 +155,19 @@ void VelocityExchange::exchangeVelocities(ParticleContainer* particleContainer, 
     }
 
 
-    // Corners of cold region
-    double coldRegion_lowCorner[3], coldRegion_highCorner[3];
-    // if linked cell in the region of interest
-    for (unsigned short d = 0; d < 3; d++) {
-        coldRegion_lowCorner[d] = particleContainer->getBoundingBoxMin(d);
-        coldRegion_highCorner[d] = particleContainer->getBoundingBoxMax(d);
-    }
-    // ensure that we do not iterate over things outside of the container.
-    coldRegion_lowCorner[0] = std::max(_cold_region.min[0], coldRegion_lowCorner[0]);
-    coldRegion_lowCorner[1] = std::max(_cold_region.min[1], coldRegion_lowCorner[1]);
-    coldRegion_lowCorner[2] = std::max(_cold_region.min[2], coldRegion_lowCorner[2]);
-    coldRegion_highCorner[0] = std::min(_cold_region.max[0], coldRegion_highCorner[0]);
-    coldRegion_highCorner[1] = std::min(_cold_region.max[1], coldRegion_highCorner[1]);
-    coldRegion_highCorner[2] = std::min(_cold_region.max[2], coldRegion_highCorner[2]);
-    const auto begin_c = particleContainer->regionIterator(coldRegion_lowCorner, coldRegion_highCorner, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+    // Iterator for cold region
+    const auto begin_c = particleContainer->regionIterator(_cold_region.min, _cold_region.max, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
 
-    // Corners of warm region
-    double warmRegion_lowCorner[3], warmRegion_highCorner[3];
-    // if linked cell in the region of interest
-    for (unsigned short d = 0; d < 3; d++) {
-        warmRegion_lowCorner[d] = particleContainer->getBoundingBoxMin(d);
-        warmRegion_highCorner[d] = particleContainer->getBoundingBoxMax(d);
-    }
-    // ensure that we do not iterate over things outside of the container.
-    warmRegion_lowCorner[0] = std::max(_warm_region.min[0], warmRegion_lowCorner[0]);
-    warmRegion_lowCorner[1] = std::max(_warm_region.min[1], warmRegion_lowCorner[1]);
-    warmRegion_lowCorner[2] = std::max(_warm_region.min[2], warmRegion_lowCorner[2]);
-    warmRegion_highCorner[0] = std::min(_warm_region.max[0], warmRegion_highCorner[0]);
-    warmRegion_highCorner[1] = std::min(_warm_region.max[1], warmRegion_highCorner[1]);
-    warmRegion_highCorner[2] = std::min(_warm_region.max[2], warmRegion_highCorner[2]);
-    const auto begin_w = particleContainer->regionIterator(warmRegion_lowCorner, warmRegion_highCorner, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+    // Iterator for warm region
+    const auto begin_w = particleContainer->regionIterator(_warm_region.min, _warm_region.max, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
 
-    // Corners of symmetric warm region
-    double warmRegion_sym_lowCorner[3], warmRegion_sym_highCorner[3];
-    double ymin_symm = _boxLength[1] - _warm_region.max[1];
-    double ymax_symm = _boxLength[1] - _warm_region.min[1];
-    // if linked cell in the region of interest
-    for (unsigned short d = 0; d < 3; d++) {
-        warmRegion_sym_lowCorner[d] = particleContainer->getBoundingBoxMin(d);
-        warmRegion_sym_highCorner[d] = particleContainer->getBoundingBoxMax(d);
-    }
-    // ensure that we do not iterate over things outside of the container.
-    warmRegion_sym_lowCorner[0] = std::max(_cold_region.min[0], warmRegion_sym_lowCorner[0]);
-    warmRegion_sym_lowCorner[1] = std::max(ymin_symm, warmRegion_sym_lowCorner[1]);
-    warmRegion_sym_lowCorner[2] = std::max(_cold_region.min[2], warmRegion_sym_lowCorner[2]);
-    warmRegion_sym_highCorner[0] = std::min(_cold_region.max[0], warmRegion_sym_highCorner[0]);
-    warmRegion_sym_highCorner[1] = std::min(ymax_symm, warmRegion_sym_highCorner[1]);
-    warmRegion_sym_highCorner[2] = std::min(_cold_region.max[2], warmRegion_sym_highCorner[2]);
+    // Iterator for symmetric warm region
+    const double ymin_symm = _boxLength[1] - _warm_region.max[1];
+    const double ymax_symm = _boxLength[1] - _warm_region.min[1];
+    const double warmRegion_sym_lowCorner[3] = {_warm_region.min[0], ymin_symm, _warm_region.min[2]};
+    const double warmRegion_sym_highCorner[3] = {_warm_region.max[0], ymax_symm, _warm_region.max[2]};
     const auto begin_w_s = particleContainer->regionIterator(warmRegion_sym_lowCorner, warmRegion_sym_highCorner, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
 
@@ -308,7 +271,7 @@ void VelocityExchange::exchangeVelocities(ParticleContainer* particleContainer, 
     }
 
     for (uint32_t cid = 0; cid < _numComp; cid++) {
-        global_log->info() << domainDecomp->getRank() << " [VelocityExchange] flipped velocities of molecules "
+        global_log->info() << " [VelocityExchange] flipped velocities of molecules "
                             << molID_coldP.global[cid] << " (in warm region, v_new = " << velocity_abs_warmP.global[cid] << ") and "
                             << molID_warmP.global[cid] << " (in cold region v_new = "  << velocity_abs_coldP.global[cid] << ") of component " << cid+1 << std::endl;
     }
