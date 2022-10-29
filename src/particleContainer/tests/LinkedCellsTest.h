@@ -24,6 +24,8 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testMoleculeBeginNextEndDeleteCurrent);
 	TEST_METHOD(testTraversalMethods);
 
+	TEST_METHOD(testRegionIterator);
+
 	TEST_METHOD(testCellBorderAndFlagManager);
 
 #ifndef ENABLE_REDUCED_MEMORY_MODE
@@ -77,6 +79,7 @@ public:
 	void testUpdateAndDeleteOuterParticles8Particles();
 	void testMoleculeBeginNextEndDeleteCurrent();
 	void testTraversalMethods();
+	void testRegionIterator();
 	void testGetHaloBoundaryParticlesDirection();
 
 	void testHalfShell();
