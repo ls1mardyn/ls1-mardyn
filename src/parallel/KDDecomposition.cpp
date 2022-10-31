@@ -1257,7 +1257,7 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 		// exchange intermediate calc costs
 		MPI_Status recvStat;
 		double tempRecvCosts, tempSendCosts;
-		tempSendCosts = 0;
+		tempRecvCosts = tempSendCosts = 0;
 		if (recvCostValue) {
 			MPI_CHECK( MPI_Recv(&tempRecvCosts, 1, MPI_DOUBLE, _rank - 1, 123, MPI_COMM_WORLD, &recvStat) );
 			if (sendCostValue) {
