@@ -90,6 +90,30 @@ void LinkedCellsTest::testRegionIterator() {
 	}
 }
 
+void LinkedCellsTest::testRegionIteratorFile() {
+
+	const double delta = 1e-6;  // Tolerate deviation between expected and actual value
+
+	// Test region size in x,y,z
+	// Domain (cubic) size is 134.266123
+	const double testRegionMin[3] = {1.2, 2.5, 45.0};
+	const double testRegionMax[3] = {134.2, 15.9, 111.1};
+
+	// Cutoff might be too small, but has no effect anyway
+	std::unique_ptr<ParticleContainer> container{initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials.inp", 6.0)};
+
+	const auto begin_regionIter = container->regionIterator(testRegionMin, testRegionMax, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+
+	// Search for exchanged particles
+	for (auto it = begin_regionIter; it.isValid(); ++it) {
+		const unsigned long pid = it->getID();
+		for (unsigned short d = 0; d < 3; d++) {
+			const bool insideBox {(it->r(d) >= testRegionMin[d]) and (it->r(d) <= testRegionMax[d])};
+			ASSERT_EQUAL_MSG("Particle "+std::to_string(pid)+" not in test region", true, insideBox);
+		}
+	}
+}
+
 void LinkedCellsTest::testUpdateAndDeleteOuterParticlesFilename(const char * filename, double cutoff) {
 	// original pointer will be deleted by tearDown()
 	_domainDecomposition = new DomainDecompBase();
