@@ -6,8 +6,6 @@ Created on Fri Nov 19 23:48:38 2021
 @author: mheinen
 """
 
-import numpy as np
-
 # For details, see Vrabec et al., Molecular Physics 104 (2006).
 # Equation numbers refer above paper
 def rho_vrabec2006(t,Re=None):
