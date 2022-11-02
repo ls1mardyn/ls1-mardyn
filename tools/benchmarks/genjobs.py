@@ -523,7 +523,6 @@ for i in range(numvar):
 		except Exception, errno:
 			print "ERROR evaluating break condition",breakcondition,"after substitution:",breakcond,"is erroneous"
 			#break
-			pass
 	v[0]+=1
 
 print "-"*72

@@ -33,7 +33,7 @@ class GeneralEdit(object):
 		self.readOnly = True
 		self.parent = parent
 		
-	def setFocus(self):
+	def setFocus(self, reason):
 		pass
 	
 	def notifyChange(self, editor):

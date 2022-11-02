@@ -5,35 +5,22 @@ import argparse
 
 import ppls1.imp.chp as chp
 
-flgArgs = 1
+ap = argparse.ArgumentParser()
+ap.add_argument("-p", "--path", required=True, type=str, help="path to binary checkpoint")
+ap.add_argument("-e", "--export", required=True, type=str, help="export")
+ap.add_argument("-q", "--quantity", required=True, nargs='+', help="quantity")
+ap.add_argument("-n", "--nbins", required=False, default=11, type=int, help="number of bins")
+args = vars(ap.parse_args())
 
-if flgArgs == 1:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-p", "--path", required=True, type=str, help="path to binary checkpoint")
-    ap.add_argument("-e", "--export", required=True, type=str, help="export")
-    ap.add_argument("-q", "--quantity", required=True, nargs='+', help="quantity")
-    ap.add_argument("-n", "--nbins", required=False, default=11, type=int, help="number of bins")
-    args = vars(ap.parse_args())
-
-    fullPathChp = args['path']
-    expName = args['export']
-    quantity = args['quantity']
-    if type(quantity) is list:
-        numQuantities = len(quantity)
-    else:
-        quantity = [quantity]
-        numQuantities = 1
-    nbins = args['nbins']
+fullPathChp = args['path']
+expName = args['export']
+quantity = args['quantity']
+if type(quantity) is list:
+    numQuantities = len(quantity)
 else:
-    fullPathChp = 'PATHTOSIMULATION'
-    expName = 'test.pdf'
-    quantity = 'rho_all'
-    if type(quantity) is list:
-        numQuantities = len(quantity)
-    else:
-        quantity = [quantity]
-        numQuantities = 1
-    nbins = 41
+    quantity = [quantity]
+    numQuantities = 1
+nbins = args['nbins']
 
 mass = 1.0
 
@@ -86,7 +73,6 @@ else:
         if idxQuant < numQuantities-1: axes[idxQuant].set_xlabel('')
     axes[-1].set_xlabel('z Coordinate')
 
-#plt.show()
 fig.savefig(expName, format='pdf')
 
 print('Done')
