@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(CUR_DIR + '/../'))
 from ppls1.ppls1.fluids.ljts.ljts import rho_vrabec2006
 
 # For details, see Vrabec et al., Molecular Physics 104 (2006).
-# The following variables are delared with respect to the default droplet experiment
+# The following variables are declared with respect to the default droplet experiment
 # They may be edited as required
 
 sig = 3.3916                #sigma value for Argon (see Table 3 in paper)
