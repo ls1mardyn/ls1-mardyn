@@ -16,6 +16,12 @@ class VelocityExchangeTest;
 
 /** @brief Read in XML configuration for VelocityExchange
  *
+ * This plugin can be used to create a temperature gradient by exchanging the velocities of
+ * the coldest particle in the specified warm region and the warmest particle in the specified
+ * cold region. As temperature gradients are often investigated using a symmetric system, this
+ * plugin can be configured to set up a second warm region at the opposite side of the simulation
+ * box in y-direction.
+ *
  * The following XML object structure is handled by this method:
  * \code{.xml}
     <plugin name="VelocityExchange">
@@ -24,13 +30,14 @@ class VelocityExchangeTest;
             <frequency>10000</frequency>         <!-- frequency to conduct velo swap; default 10000 -->
             <stop>200000000</stop>               <!-- step to stop; default 200000000 -->
         </control>
-        <coldregion>                              <!-- region with lower temperature -->
+        <coldregion>                             <!-- region with lower temperature -->
             <xmin>0</xmin> <xmax>box</xmax>      <!-- range x-axis; default: 0 to box size -->
             <ymin>140</ymin> <ymax>160</ymax>    <!-- range y-axis -->
             <zmin>0</zmin> <zmax>box</zmax>      <!-- range z-axis; default: 0 to box size -->
         </coldregion>
-        <warmregion>                              <!-- region with higher temperature -->
-            <symmetric>1</symmetric>             <!-- 0: no symmetry; 1: symmetry in y direction (default) -->
+        <warmregion>                             <!-- region with higher temperature -->
+            <symmetric>1</symmetric>             <!-- if set to 1 (default), a second warm region is inserted at the opposite side (in y-direction) of the
+                                                      simulation box (from yBoxsize-ymax to yBoxsize-ymin) -->
             <xmin>0</xmin> <xmax>box</xmax>      <!-- range x-axis; default: 0 to box size -->
             <ymin>20</ymin> <ymax>30</ymax>      <!-- range y-axis -->
             <zmin>0</zmin> <zmax>box</zmax>      <!-- range z-axis; default: 0 to box size -->
