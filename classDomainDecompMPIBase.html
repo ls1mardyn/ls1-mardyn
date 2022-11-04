@@ -90,12 +90,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a058b252cd9b375a9f49a252581b28c2c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#a058b252cd9b375a9f49a252581b28c2c">barrier</a> () const override</td></tr>
 <tr class="memdesc:a058b252cd9b375a9f49a252581b28c2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">synchronizes all processes  <a href="classDomainDecompMPIBase.html#a058b252cd9b375a9f49a252581b28c2c">More...</a><br /></td></tr>
 <tr class="separator:a058b252cd9b375a9f49a252581b28c2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a14296a98581fa5c5f4750e02cb39d25a"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#a14296a98581fa5c5f4750e02cb39d25a">Ndistribution</a> (unsigned localN, float *minrnd, float *maxrnd)</td></tr>
-<tr class="memdesc:a14296a98581fa5c5f4750e02cb39d25a"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns total number of molecules  <a href="classDomainDecompMPIBase.html#a14296a98581fa5c5f4750e02cb39d25a">More...</a><br /></td></tr>
-<tr class="separator:a14296a98581fa5c5f4750e02cb39d25a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae8f26035986ea91be4318a7240f18cb6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#ae8f26035986ea91be4318a7240f18cb6">assertIntIdentity</a> (int IX)</td></tr>
-<tr class="memdesc:ae8f26035986ea91be4318a7240f18cb6"><td class="mdescLeft">&#160;</td><td class="mdescRight">checks identity of random number generators  <a href="classDomainDecompMPIBase.html#ae8f26035986ea91be4318a7240f18cb6">More...</a><br /></td></tr>
-<tr class="separator:ae8f26035986ea91be4318a7240f18cb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a74b255776a71006f4670b048e09dd570"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#a74b255776a71006f4670b048e09dd570">Ndistribution</a> (unsigned localN, float *minrnd, float *maxrnd) override</td></tr>
+<tr class="memdesc:a74b255776a71006f4670b048e09dd570"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns total number of molecules  <a href="classDomainDecompMPIBase.html#a74b255776a71006f4670b048e09dd570">More...</a><br /></td></tr>
+<tr class="separator:a74b255776a71006f4670b048e09dd570"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a130fbe7deb6dae8c6b1c93a49c19c3e2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#a130fbe7deb6dae8c6b1c93a49c19c3e2">assertIntIdentity</a> (int IX) override</td></tr>
+<tr class="memdesc:a130fbe7deb6dae8c6b1c93a49c19c3e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">checks identity of random number generators  <a href="classDomainDecompMPIBase.html#a130fbe7deb6dae8c6b1c93a49c19c3e2">More...</a><br /></td></tr>
+<tr class="separator:a130fbe7deb6dae8c6b1c93a49c19c3e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27ba0f16fcc3a0edd43904c1fbf437ef"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#a27ba0f16fcc3a0edd43904c1fbf437ef">assertDisjunctivity</a> (<a class="el" href="classParticleContainer.html">ParticleContainer</a> *moleculeContainer) const override</td></tr>
 <tr class="separator:a27ba0f16fcc3a0edd43904c1fbf437ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b551e688f0ea53639bdeb45485d8c42"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#a1b551e688f0ea53639bdeb45485d8c42">collCommInit</a> (int numValues, int key=0) override</td></tr>
@@ -176,9 +176,9 @@ MPI_Datatype&#160;</td><td class="memItemRight" valign="bottom"><b>getMPIParticl
 <tr class="separator:a4e1f2069c1460046b35d9b1c2aecb90b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77a47e9b768c891d7352da6c6c1cfde6"><td class="memItemLeft" align="right" valign="top">MPI_Comm&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#a77a47e9b768c891d7352da6c6c1cfde6">getCommunicator</a> () override</td></tr>
 <tr class="separator:a77a47e9b768c891d7352da6c6c1cfde6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab5efdc3fc41a62e90d665af6c1f3dee4"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#ab5efdc3fc41a62e90d665af6c1f3dee4">readXML</a> (<a class="el" href="classXMLfileUnits.html">XMLfileUnits</a> &amp;xmlconfig)</td></tr>
-<tr class="memdesc:ab5efdc3fc41a62e90d665af6c1f3dee4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read in XML configuration for <a class="el" href="classDomainDecompMPIBase.html">DomainDecompMPIBase</a>.  <a href="classDomainDecompMPIBase.html#ab5efdc3fc41a62e90d665af6c1f3dee4">More...</a><br /></td></tr>
-<tr class="separator:ab5efdc3fc41a62e90d665af6c1f3dee4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66ca8bb621af5d189cf1dc4b4aa4007a"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#a66ca8bb621af5d189cf1dc4b4aa4007a">readXML</a> (<a class="el" href="classXMLfileUnits.html">XMLfileUnits</a> &amp;xmlconfig) override</td></tr>
+<tr class="memdesc:a66ca8bb621af5d189cf1dc4b4aa4007a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read in XML configuration for <a class="el" href="classDomainDecompMPIBase.html">DomainDecompMPIBase</a>.  <a href="classDomainDecompMPIBase.html#a66ca8bb621af5d189cf1dc4b4aa4007a">More...</a><br /></td></tr>
+<tr class="separator:a66ca8bb621af5d189cf1dc4b4aa4007a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acdd62d01bfdbe5294a6879b61f590828"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#acdd62d01bfdbe5294a6879b61f590828">setCommunicationScheme</a> (const std::string &amp;scheme, const std::string &amp;comScheme)</td></tr>
 <tr class="separator:acdd62d01bfdbe5294a6879b61f590828"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6921b87900b7a13de52c4ee0e5178de0"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#a6921b87900b7a13de52c4ee0e5178de0">getNonBlockingStageCount</a> () override</td></tr>
@@ -335,8 +335,8 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
 
 </div>
 </div>
-<a id="ae8f26035986ea91be4318a7240f18cb6" name="ae8f26035986ea91be4318a7240f18cb6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae8f26035986ea91be4318a7240f18cb6">&#9670;&nbsp;</a></span>assertIntIdentity()</h2>
+<a id="a130fbe7deb6dae8c6b1c93a49c19c3e2" name="a130fbe7deb6dae8c6b1c93a49c19c3e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a130fbe7deb6dae8c6b1c93a49c19c3e2">&#9670;&nbsp;</a></span>assertIntIdentity()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -354,7 +354,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -1345,8 +1345,8 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
 
 </div>
 </div>
-<a id="a14296a98581fa5c5f4750e02cb39d25a" name="a14296a98581fa5c5f4750e02cb39d25a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a14296a98581fa5c5f4750e02cb39d25a">&#9670;&nbsp;</a></span>Ndistribution()</h2>
+<a id="a74b255776a71006f4670b048e09dd570" name="a74b255776a71006f4670b048e09dd570"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a74b255776a71006f4670b048e09dd570">&#9670;&nbsp;</a></span>Ndistribution()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1380,7 +1380,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -1622,8 +1622,8 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
 
 </div>
 </div>
-<a id="ab5efdc3fc41a62e90d665af6c1f3dee4" name="ab5efdc3fc41a62e90d665af6c1f3dee4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab5efdc3fc41a62e90d665af6c1f3dee4">&#9670;&nbsp;</a></span>readXML()</h2>
+<a id="a66ca8bb621af5d189cf1dc4b4aa4007a" name="a66ca8bb621af5d189cf1dc4b4aa4007a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a66ca8bb621af5d189cf1dc4b4aa4007a">&#9670;&nbsp;</a></span>readXML()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1641,7 +1641,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -1729,7 +1729,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
   </tr>
 </table>
 </div><div class="memdoc">
-<p >Indicates whether the direct-pp communication scheme should be forced. Flag to indicate necessity to use the direct-pp neighbour communication scheme. Can be overwritten by any child class. </p><dl class="section note"><dt>Note</dt><dd>Intended to be used in <code><a class="el" href="classDomainDecompMPIBase.html#ab5efdc3fc41a62e90d665af6c1f3dee4" title="Read in XML configuration for DomainDecompMPIBase.">readXML()</a></code>. </dd></dl>
+<p >Indicates whether the direct-pp communication scheme should be forced. Flag to indicate necessity to use the direct-pp neighbour communication scheme. Can be overwritten by any child class. </p><dl class="section note"><dt>Note</dt><dd>Intended to be used in <code><a class="el" href="classDomainDecompMPIBase.html#a66ca8bb621af5d189cf1dc4b4aa4007a" title="Read in XML configuration for DomainDecompMPIBase.">readXML()</a></code>. </dd></dl>
 
 </div>
 </div>
@@ -1740,7 +1740,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 3 2022 16:22:43 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Nov 4 2022 17:03:05 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

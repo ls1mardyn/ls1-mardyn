@@ -187,102 +187,105 @@ $(function() {
 <div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>    <span class="keywordtype">int</span> calculatePartitionRank();</div>
 <div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>    <span class="keywordtype">bool</span> checkNeedRebalance(<span class="keywordtype">double</span> lastTraversalTime) <span class="keyword">const</span>;</div>
 <div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span> </div>
-<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>    <span class="comment">//######################################</span></div>
-<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>    <span class="comment">//###    private member variables    ###</span></div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>    <span class="comment">//######################################</span></div>
-<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span><span class="comment"></span>    <span class="keywordtype">double</span> _cellSize[KDDIM]{};</div>
-<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span> </div>
-<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>    <span class="keywordtype">int</span> _globalCellsPerDim[KDDIM]{};</div>
-<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span> </div>
-<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>    <span class="keywordtype">int</span> _globalNumCells{};</div>
+<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>    <span class="comment">//check whether or not to do rebalancing in the specified step</span></div>
+<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>    <span class="keywordtype">bool</span> doRebalancing(<span class="keywordtype">bool</span> forceRebalancing, <span class="keywordtype">bool</span> needsRebalance, <span class="keywordtype">size_t</span> steps, <span class="keywordtype">int</span> frequency);</div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span> </div>
+<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>    <span class="comment">//######################################</span></div>
+<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>    <span class="comment">//###    private member variables    ###</span></div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>    <span class="comment">//######################################</span></div>
+<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span><span class="comment"></span>    <span class="keywordtype">double</span> _cellSize[KDDIM]{};</div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span> </div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>    <span class="keywordtype">int</span> _globalCellsPerDim[KDDIM]{};</div>
 <div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span> </div>
-<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>    <span class="comment">// Pointer to the root element of the decomposition tree</span></div>
-<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>    <a class="code hl_class" href="classKDNode.html">KDNode</a>* _decompTree{<span class="keyword">nullptr</span>};</div>
+<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>    <span class="keywordtype">int</span> _globalNumCells{};</div>
 <div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span> </div>
-<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>    <span class="comment">// each process owns an area in the decomposition</span></div>
-<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>    <a class="code hl_class" href="classKDNode.html">KDNode</a>* _ownArea{<span class="keyword">nullptr</span>};</div>
+<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>    <span class="comment">// Pointer to the root element of the decomposition tree</span></div>
+<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>    <a class="code hl_class" href="classKDNode.html">KDNode</a>* _decompTree{<span class="keyword">nullptr</span>};</div>
 <div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span> </div>
-<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>    std::vector&lt;unsigned int&gt; _numParticlesPerCell;</div>
+<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span>    <span class="comment">// each process owns an area in the decomposition</span></div>
+<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>    <a class="code hl_class" href="classKDNode.html">KDNode</a>* _ownArea{<span class="keyword">nullptr</span>};</div>
 <div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span> </div>
-<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>    <span class="comment">/* TODO: This may not be equal to the number simulation steps if balanceAndExchange</span></div>
-<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span><span class="comment">     * is not called exactly once in every simulation step! */</span></div>
-<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>    <span class="keywordtype">size_t</span> _steps{0ul};</div>
-<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span> </div>
-<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span>    <span class="keywordtype">int</span> _frequency;</div>
+<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>    std::vector&lt;unsigned int&gt; _numParticlesPerCell;</div>
+<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span> </div>
+<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>    <span class="comment">/* TODO: This may not be equal to the number simulation steps if balanceAndExchange</span></div>
+<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span><span class="comment">     * is not called exactly once in every simulation step! */</span></div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span>    <span class="keywordtype">size_t</span> _steps{0ul};</div>
 <div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span> </div>
-<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>    <span class="keywordtype">double</span> _cutoffRadius;</div>
-<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>    <span class="keywordtype">int</span> _cellsInCutoffRadius{1};</div>
+<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>    <span class="keywordtype">int</span> _frequency;</div>
 <div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span> </div>
-<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>    <span class="comment">/*</span></div>
-<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span><span class="comment">     * Threshold for full tree search. If a node has more than _fullSearchThreshold processors,</span></div>
-<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span><span class="comment">     * it is for each dimension divided in the middle only. Otherwise, all possible subdivisions</span></div>
-<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span><span class="comment">     * are created. // TODO hetero: change description</span></div>
-<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span><span class="comment">     */</span></div>
-<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>    <span class="keywordtype">int</span> _fullSearchThreshold;</div>
-<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span> </div>
-<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span> </div>
-<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>    std::vector&lt;double&gt; _processorSpeeds;</div>
-<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>    std::vector&lt;double&gt; _accumulatedProcessorSpeeds;<span class="comment">//length nprocs+1, first element is 0.</span></div>
-<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>    <span class="keywordtype">double</span> _totalMeanProcessorSpeed{1.};</div>
-<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>    <span class="keywordtype">double</span> _totalProcessorSpeed{1.};</div>
-<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>    <span class="keywordtype">int</span> _processorSpeedUpdateCount{0};</div>
-<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>    <span class="keywordtype">bool</span> _heterogeneousSystems{<span class="keyword">false</span>};</div>
-<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>    <span class="keywordtype">bool</span> _clusteredHeterogeneouseSystems{<span class="keyword">false</span>};</div>
-<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>    <span class="keywordtype">bool</span> _splitBiggest{<span class="keyword">true</span>};  <span class="comment">// indicates, whether a subdomain is to be split along its biggest size</span></div>
-<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>    <span class="keywordtype">bool</span> _forceRatio{<span class="keyword">false</span>};  <span class="comment">// if you want to enable forcing the above ratio, enable this.</span></div>
-<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span> </div>
-<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>    <span class="keywordtype">bool</span> _doMeasureLoadCalc {<span class="keyword">false</span>};  <span class="comment">// specifies if measureLoad should be used.</span></div>
-<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>    <span class="keywordtype">int</span>  _measureLoadInterpolationStartsAt{1};  <span class="comment">// specifies at which number of particles per cell measureLoad should start using interpolation.</span></div>
-<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>    <span class="keywordtype">bool</span> _measureLoadIncreasingTimeValues{<span class="keyword">true</span>};  <span class="comment">// specifies if the time values should be increasing if the number of particles increases.</span></div>
-<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span> </div>
-<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>    <span class="keywordtype">int</span> _splitThreshold{std::numeric_limits&lt;int&gt;::max()};</div>
-<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>    <span class="keywordtype">int</span> _numParticleTypes;</div>
-<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span> </div>
-<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>    <span class="comment">/*</span></div>
-<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span><span class="comment">     * Stores the maximum number of particles encountered in a cell by the processor (per particle type).</span></div>
-<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span><span class="comment">     * This information is max-reduced in the destructor to print the overall maximum number of particles (per type).</span></div>
-<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span><span class="comment">     *</span></div>
-<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span><span class="comment">     * This is can be useful for the vectorization tuner to know how many values should be measured</span></div>
-<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span><span class="comment">     * and comes at the cost of only one additional conditional move per cell per load balancing.</span></div>
-<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span><span class="comment">     */</span></div>
-<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>    <span class="keywordtype">int</span> _maxPars{std::numeric_limits&lt;int&gt;::min()};</div>
-<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span>    <span class="keywordtype">int</span> _maxPars2{std::numeric_limits&lt;int&gt;::min()};</div>
-<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span> </div>
-<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span>    <span class="comment">/*</span></div>
-<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span><span class="comment">     * The partition rank that is used in the &quot;clustered&quot; heterogeneous decomposition to determine</span></div>
-<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span><span class="comment">     * the mpi ranks associated with each cluster.</span></div>
-<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span><span class="comment">     *</span></div>
-<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span><span class="comment">     * Cluster 1: (0; partitionRank(</span></div>
-<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span><span class="comment">     * Cluster 2: (partitionRank; maxRank)</span></div>
-<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span><span class="comment">     */</span></div>
-<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>    <span class="keyword">const</span> <span class="keywordtype">int</span> _partitionRank;</div>
-<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>    <a class="code hl_class" href="classLoadCalc.html">LoadCalc</a>* _loadCalc;  <span class="comment">// stores the times (and constants) measured by the vectorization tuner</span></div>
-<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>    <a class="code hl_class" href="classMeasureLoad.html">MeasureLoad</a>* _measureLoadCalc;  <span class="comment">// stores the measured times of the real-world simulations</span></div>
-<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span> </div>
-<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>    <span class="comment">/*</span></div>
-<div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span><span class="comment">     * The following Variables are only used for as parameters for the Vectorization tuner constructor.</span></div>
-<div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span><span class="comment">     * They are stored here since the tuner is still partly a optional OutputPlugin which doesn&#39;t</span></div>
-<div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span><span class="comment">     * really fit to its use now as essential part of the load balancing of the k-d-tree.</span></div>
-<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span><span class="comment">     *</span></div>
-<div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span><span class="comment">     * For documentation see public tune function of the vectorization tuner</span></div>
-<div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span><span class="comment">     *</span></div>
-<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span><span class="comment">     * TODO These should probably be transferred into the tuner at some point,</span></div>
-<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span><span class="comment">     * when a decision is made whether the tuner should still be a Outputplugin or simply be a part of the</span></div>
-<div class="line"><a id="l00410" name="l00410"></a><span class="lineno">  410</span><span class="comment">     * KDDecomposition (or both)</span></div>
-<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span><span class="comment">     */</span></div>
-<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span>    std::vector&lt;int&gt; _vecTunParticleNums;</div>
-<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>    <span class="keywordtype">bool</span> _generateNewFiles{<span class="keyword">true</span>};</div>
-<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span>    <span class="keywordtype">bool</span> _useExistingFiles{<span class="keyword">true</span>};</div>
-<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span>    <span class="keywordtype">bool</span> _vecTunerAllowMPIReduce{<span class="keyword">true</span>};</div>
-<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span> </div>
-<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span> </div>
-<div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span>    <span class="keywordtype">double</span> _rebalanceLimit{0.}; </div>
+<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>    <span class="keywordtype">double</span> _cutoffRadius;</div>
+<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>    <span class="keywordtype">int</span> _cellsInCutoffRadius{1};</div>
+<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span> </div>
+<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>    <span class="comment">/*</span></div>
+<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span><span class="comment">     * Threshold for full tree search. If a node has more than _fullSearchThreshold processors,</span></div>
+<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span><span class="comment">     * it is for each dimension divided in the middle only. Otherwise, all possible subdivisions</span></div>
+<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span><span class="comment">     * are created. // TODO hetero: change description</span></div>
+<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>    <span class="keywordtype">int</span> _fullSearchThreshold;</div>
+<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span> </div>
+<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span> </div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>    std::vector&lt;double&gt; _processorSpeeds;</div>
+<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>    std::vector&lt;double&gt; _accumulatedProcessorSpeeds;<span class="comment">//length nprocs+1, first element is 0.</span></div>
+<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>    <span class="keywordtype">double</span> _totalMeanProcessorSpeed{1.};</div>
+<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>    <span class="keywordtype">double</span> _totalProcessorSpeed{1.};</div>
+<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>    <span class="keywordtype">int</span> _processorSpeedUpdateCount{0};</div>
+<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>    <span class="keywordtype">bool</span> _heterogeneousSystems{<span class="keyword">false</span>};</div>
+<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>    <span class="keywordtype">bool</span> _clusteredHeterogeneouseSystems{<span class="keyword">false</span>};</div>
+<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>    <span class="keywordtype">bool</span> _splitBiggest{<span class="keyword">true</span>};  <span class="comment">// indicates, whether a subdomain is to be split along its biggest size</span></div>
+<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>    <span class="keywordtype">bool</span> _forceRatio{<span class="keyword">false</span>};  <span class="comment">// if you want to enable forcing the above ratio, enable this.</span></div>
+<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span> </div>
+<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>    <span class="keywordtype">bool</span> _doMeasureLoadCalc {<span class="keyword">false</span>};  <span class="comment">// specifies if measureLoad should be used.</span></div>
+<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>    <span class="keywordtype">int</span>  _measureLoadInterpolationStartsAt{1};  <span class="comment">// specifies at which number of particles per cell measureLoad should start using interpolation.</span></div>
+<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>    <span class="keywordtype">bool</span> _measureLoadIncreasingTimeValues{<span class="keyword">true</span>};  <span class="comment">// specifies if the time values should be increasing if the number of particles increases.</span></div>
+<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span> </div>
+<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>    <span class="keywordtype">int</span> _splitThreshold{std::numeric_limits&lt;int&gt;::max()};</div>
+<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>    <span class="keywordtype">int</span> _numParticleTypes;</div>
+<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span> </div>
+<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>    <span class="comment">/*</span></div>
+<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span><span class="comment">     * Stores the maximum number of particles encountered in a cell by the processor (per particle type).</span></div>
+<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span><span class="comment">     * This information is max-reduced in the destructor to print the overall maximum number of particles (per type).</span></div>
+<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span><span class="comment">     *</span></div>
+<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span><span class="comment">     * This is can be useful for the vectorization tuner to know how many values should be measured</span></div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span><span class="comment">     * and comes at the cost of only one additional conditional move per cell per load balancing.</span></div>
+<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span>    <span class="keywordtype">int</span> _maxPars{std::numeric_limits&lt;int&gt;::min()};</div>
+<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>    <span class="keywordtype">int</span> _maxPars2{std::numeric_limits&lt;int&gt;::min()};</div>
+<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span> </div>
+<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span>    <span class="comment">/*</span></div>
+<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span><span class="comment">     * The partition rank that is used in the &quot;clustered&quot; heterogeneous decomposition to determine</span></div>
+<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span><span class="comment">     * the mpi ranks associated with each cluster.</span></div>
+<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span><span class="comment">     *</span></div>
+<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span><span class="comment">     * Cluster 1: (0; partitionRank(</span></div>
+<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span><span class="comment">     * Cluster 2: (partitionRank; maxRank)</span></div>
+<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>    <span class="keyword">const</span> <span class="keywordtype">int</span> _partitionRank;</div>
+<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>    <a class="code hl_class" href="classLoadCalc.html">LoadCalc</a>* _loadCalc;  <span class="comment">// stores the times (and constants) measured by the vectorization tuner</span></div>
+<div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span>    <a class="code hl_class" href="classMeasureLoad.html">MeasureLoad</a>* _measureLoadCalc;  <span class="comment">// stores the measured times of the real-world simulations</span></div>
+<div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span> </div>
+<div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span>    <span class="comment">/*</span></div>
+<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span><span class="comment">     * The following Variables are only used for as parameters for the Vectorization tuner constructor.</span></div>
+<div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span><span class="comment">     * They are stored here since the tuner is still partly a optional OutputPlugin which doesn&#39;t</span></div>
+<div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span><span class="comment">     * really fit to its use now as essential part of the load balancing of the k-d-tree.</span></div>
+<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span><span class="comment">     *</span></div>
+<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span><span class="comment">     * For documentation see public tune function of the vectorization tuner</span></div>
+<div class="line"><a id="l00410" name="l00410"></a><span class="lineno">  410</span><span class="comment">     *</span></div>
+<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span><span class="comment">     * TODO These should probably be transferred into the tuner at some point,</span></div>
+<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span><span class="comment">     * when a decision is made whether the tuner should still be a Outputplugin or simply be a part of the</span></div>
+<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span><span class="comment">     * KDDecomposition (or both)</span></div>
+<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span>    std::vector&lt;int&gt; _vecTunParticleNums;</div>
+<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span>    <span class="keywordtype">bool</span> _generateNewFiles{<span class="keyword">true</span>};</div>
+<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span>    <span class="keywordtype">bool</span> _useExistingFiles{<span class="keyword">true</span>};</div>
+<div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span>    <span class="keywordtype">bool</span> _vecTunerAllowMPIReduce{<span class="keyword">true</span>};</div>
 <div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span> </div>
-<div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span>    MPI_Op _deviationReductionOperation{MPI_SUM};</div>
-<div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span>};</div>
-<div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span> </div>
-<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span> </div>
-<div class="line"><a id="l00429" name="l00429"></a><span class="lineno">  429</span><span class="preprocessor">#endif </span><span class="comment">/* KDDECOMPOSITION2_H_ */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span> </div>
+<div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span>    <span class="keywordtype">double</span> _rebalanceLimit{0.}; </div>
+<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span> </div>
+<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span>    MPI_Op _deviationReductionOperation{MPI_SUM};</div>
+<div class="line"><a id="l00429" name="l00429"></a><span class="lineno">  429</span>};</div>
+<div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span> </div>
+<div class="line"><a id="l00431" name="l00431"></a><span class="lineno">  431</span> </div>
+<div class="line"><a id="l00432" name="l00432"></a><span class="lineno">  432</span><span class="preprocessor">#endif </span><span class="comment">/* KDDECOMPOSITION2_H_ */</span><span class="preprocessor"></span></div>
 <div class="ttc" id="aclassCellProcessor_html"><div class="ttname"><a href="classCellProcessor.html">CellProcessor</a></div><div class="ttdef"><b>Definition:</b> CellProcessor.h:29</div></div>
 <div class="ttc" id="aclassDomainDecompMPIBase_html"><div class="ttname"><a href="classDomainDecompMPIBase.html">DomainDecompMPIBase</a></div><div class="ttdef"><b>Definition:</b> DomainDecompMPIBase.h:30</div></div>
 <div class="ttc" id="aclassDomain_html"><div class="ttname"><a href="classDomain.html">Domain</a></div><div class="ttdoc">This class is used to read in the phasespace and to handle macroscopic values.</div><div class="ttdef"><b>Definition:</b> Domain.h:47</div></div>
@@ -291,7 +294,7 @@ $(function() {
 <div class="ttc" id="aclassKDDecomposition_html_a2830959d072ad07f8b73d22beb978501"><div class="ttname"><a href="classKDDecomposition.html#a2830959d072ad07f8b73d22beb978501">KDDecomposition::queryBalanceAndExchangeNonBlocking</a></div><div class="ttdeci">bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer *moleculeContainer, Domain *domain, double etime) override</div><div class="ttdoc">Checks whether the balance and exchange step can be performed non-blocking.</div><div class="ttdef"><b>Definition:</b> KDDecomposition.cpp:235</div></div>
 <div class="ttc" id="aclassKDDecomposition_html_a3c5a774a7f6589e14855640391a04eae"><div class="ttname"><a href="classKDDecomposition.html#a3c5a774a7f6589e14855640391a04eae">KDDecomposition::readXML</a></div><div class="ttdeci">virtual void readXML(XMLfileUnits &amp;xmlconfig) override</div><div class="ttdoc">Read in XML configuration for KDDecomposition and all its included objects.</div><div class="ttdef"><b>Definition:</b> KDDecomposition.cpp:101</div></div>
 <div class="ttc" id="aclassKDDecomposition_html_a4537528b5a4e42979b732032e466a912"><div class="ttname"><a href="classKDDecomposition.html#a4537528b5a4e42979b732032e466a912">KDDecomposition::balanceAndExchange</a></div><div class="ttdeci">void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer *moleculeContainer, Domain *domain) override</div><div class="ttdoc">balance the load (and optimize communication) and exchange boundary particles</div><div class="ttdef"><b>Definition:</b> KDDecomposition.cpp:261</div></div>
-<div class="ttc" id="aclassKDDecomposition_html_a4993c2e8d91979f6c78e3a74a6210771"><div class="ttname"><a href="classKDDecomposition.html#a4993c2e8d91979f6c78e3a74a6210771">KDDecomposition::printTree</a></div><div class="ttdeci">void printTree(std::ostream &amp;ostream)</div><div class="ttdef"><b>Definition:</b> KDDecomposition.cpp:1856</div></div>
+<div class="ttc" id="aclassKDDecomposition_html_a4993c2e8d91979f6c78e3a74a6210771"><div class="ttname"><a href="classKDDecomposition.html#a4993c2e8d91979f6c78e3a74a6210771">KDDecomposition::printTree</a></div><div class="ttdeci">void printTree(std::ostream &amp;ostream)</div><div class="ttdef"><b>Definition:</b> KDDecomposition.cpp:1860</div></div>
 <div class="ttc" id="aclassKDDecomposition_html_a52e24db5ee541a560b53ffacf4296eb7"><div class="ttname"><a href="classKDDecomposition.html#a52e24db5ee541a560b53ffacf4296eb7">KDDecomposition::getBoundingBoxMax</a></div><div class="ttdeci">double getBoundingBoxMax(int dimension, Domain *domain) override</div><div class="ttdef"><b>Definition:</b> KDDecomposition.cpp:688</div></div>
 <div class="ttc" id="aclassKDDecomposition_html_a72e03542bbfe806b0489ee0446d8ee37"><div class="ttname"><a href="classKDDecomposition.html#a72e03542bbfe806b0489ee0446d8ee37">KDDecomposition::prepareNonBlockingStage</a></div><div class="ttdeci">virtual void prepareNonBlockingStage(bool forceRebalancing, ParticleContainer *moleculeContainer, Domain *domain, unsigned int stageNumber) override</div><div class="ttdef"><b>Definition:</b> KDDecomposition.cpp:206</div></div>
 <div class="ttc" id="aclassKDDecomposition_html_ad9b693428813e808ba917e1a21ddfea4"><div class="ttname"><a href="classKDDecomposition.html#ad9b693428813e808ba917e1a21ddfea4">KDDecomposition::KDDecomposition</a></div><div class="ttdeci">KDDecomposition(double cutoffRadius, int numParticleTypes, int updateFrequency=100, int fullSearchThreshold=2)</div><div class="ttdoc">create an initial decomposition tree</div><div class="ttdef"><b>Definition:</b> KDDecomposition.cpp:34</div></div>
@@ -305,7 +308,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 3 2022 16:22:41 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Nov 4 2022 17:03:02 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
