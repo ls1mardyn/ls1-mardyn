@@ -1,6 +1,7 @@
 # Description
 
 Please include a summary of the changes.
+If you submit a plugin please see the checklist in [General_Plugins.dox](/doc/General_Plugins.dox)
 
 ## Related Pull Requests
 
@@ -10,7 +11,7 @@ Please include a summary of the changes.
 
 - [ ] #Issue
 
-# How Has This Been Tested?
+## How Has This Been Tested?
 
 Please describe the tests that you ran to verify your changes.
 
