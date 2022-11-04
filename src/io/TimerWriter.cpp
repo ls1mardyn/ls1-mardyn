@@ -43,14 +43,13 @@ void TimerWriter::init(ParticleContainer* /*particleContainer*/, DomainDecompBas
 	auto rank = domainDecomp->getRank();
 	std::stringstream filename;
 
-	auto timeNow = chrono::system_clock::now();
-	auto time_tNow = std::chrono::system_clock::to_time_t(timeNow);
+	const auto time_tNow = std::chrono::system_clock::to_time_t(chrono::system_clock::now());
 
-	auto maxRank = domainDecomp->getNumProcs();
-	auto numDigitsMaxRank = std::to_string(maxRank).length();
-
+	const auto maxRank = domainDecomp->getNumProcs();
+	const auto numDigitsMaxRank = std::to_string(maxRank).length();
+	tm unused{};
 	filename << _outputPrefix << "-rank" << setfill('0') << setw(numDigitsMaxRank) << rank << "_"
-			 << std::put_time(std::localtime(&time_tNow), "%Y-%m-%d_%H-%M-%S") << ".dat";
+			 << std::put_time(localtime_r(&time_tNow, &unused), "%Y-%m-%d_%H-%M-%S") << ".dat";
 
 	_fileStream.open(filename.str(), std::ofstream::out);
 

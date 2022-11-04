@@ -2,28 +2,24 @@
 
 #include "Common.h"
 
-#include <sstream>
+#include <chrono>
 #include <ctime>
-#include <cmath>
 #include <iostream>
-
-using namespace std;
+#include <sstream>
 
 int gettimestr(const char* fmt, char *buffer, int buffsize) {
-	time_t rawtime;
-	struct tm* timeinfo;
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
+	const auto rawtime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	tm unused{};
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-	return strftime(buffer, buffsize, fmt, timeinfo);
+	return strftime(buffer, buffsize, fmt, localtime_r(&rawtime, &unused));
 #pragma GCC diagnostic pop
 }
 
-string gettimestring(const char* fmt) {
+std::string gettimestring(const char* fmt) {
 	char buffer[80];
 	gettimestr(fmt, buffer, 80);
-	string date(buffer);
+	std::string date(buffer);
 
 	return date;
 }
@@ -35,12 +31,12 @@ string gettimestring(const char* fmt) {
  * @param num_digits the number of digits
  * @param c character used for filling up
  */
-string aligned_number(int number, int num_digits, char c) {
-	stringstream numstream;
+std::string aligned_number(int number, int num_digits, char c) {
+	std::stringstream numstream;
 	numstream.fill(c);
 	numstream.width(num_digits);
 	numstream << number;
-	string numstr(numstream.str());
+	std::string numstr(numstream.str());
 	return numstr;
 }
 

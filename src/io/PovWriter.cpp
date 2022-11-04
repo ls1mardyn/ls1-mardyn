@@ -83,9 +83,9 @@ void PovWriter::endStep(ParticleContainer *particleContainer,
 
 		ostrm << "// " << filenamestream.str() << endl;
 		ostrm << "// moldy" << endl;
-		time_t now;
-		now = time(NULL);
-		ostrm << "// " << ctime(&now) << endl;
+		const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+		tm unused{};
+		ostrm << "// " << std::put_time(localtime_r(&now, &unused), "%c") << endl;
 
 		ostrm << "// bb: [0," << domain->getGlobalLength(0) << "]^3" << endl;
 		ostrm << "//*PMRawBegin" << endl;
