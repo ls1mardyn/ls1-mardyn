@@ -55,7 +55,7 @@ public:
 	std::vector<int> getNeighbourRanksFullShell() override;
 
 	//returns the ranks of the neighbours
-	std::vector<std::vector<std::vector<int>>> getAllRanks();
+	std::vector<std::vector<std::vector<int>>> getAllRanks() override;
 
 
 	// documentation in base class
