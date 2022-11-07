@@ -89,7 +89,7 @@ void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDec
 
             // Only for particles within range
             if ((tempMol->r(1) - _range.ymax)*(tempMol->r(1) - _range.ymin) <= 0) {
-                const unsigned cid = tempMol->componentid();
+                const unsigned cid = tempMol->componentid() + 1;
                 const double gamma = tempMol->Vi(1) - 0.5 * (tempMol->Vi(0) + tempMol->Vi(2));
                 localGamma_thread[cid] += gamma;
                 localGamma_thread[0]   += gamma;  // 0 is component-independent value
