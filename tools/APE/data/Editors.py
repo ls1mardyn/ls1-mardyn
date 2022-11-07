@@ -26,12 +26,12 @@ class WidgetListElement(object):
 The GeneralEdit class is the parent class for all editors.
 '''
 class GeneralEdit(object):
-	def __init__(self, settingData, parentWidget, parent=None):
+	def __init__(self, settingData, parentWidget, parent=None, valueWidget=None, readOnly=True):
 		self.widgetList = []
-		self.valueWidget = None
 		self.settingData = settingData
-		self.readOnly = True
 		self.parent = parent
+		self.valueWidget = valueWidget
+		self.readOnly = readOnly
 		
 	def setFocus(self, reason):
 		pass
@@ -48,8 +48,7 @@ The LineEdit class defines a simple line editor including value type validation
 '''
 class LineEdit(GeneralEdit):
 	def __init__(self, settingData, parentWidget, editable, parent=None):
-		super(LineEdit, self).__init__(settingData, parentWidget, parent)
-		self.readOnly = not editable
+		super(LineEdit, self).__init__(settingData, parentWidget, parent, None, not editable)
 		
 		element = WidgetListElement()
 		element.widget = QtWidgets.QLabel(self.settingData.description, parentWidget)
@@ -104,8 +103,7 @@ The SelectEdit class shows a drop down menu to select certain setting elements.
 '''
 class SelectEdit(GeneralEdit):
 	def __init__(self, settingData, parentWidget, parent=None):
-		super(SelectEdit, self).__init__(settingData, parentWidget, parent)
-		self.readOnly = False
+		super(SelectEdit, self).__init__(settingData, parentWidget, parent, None, False)
 		
 		element = WidgetListElement()
 		element.widget = QtWidgets.QLabel(self.settingData.description, parentWidget)
