@@ -32,8 +32,13 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <filler type="ReplicaFiller">
-	     <input type=""><!-- See the documentation of the input reader --></input>
-	     <origin><x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> <!-- base point for the replication --> </origin>
+	     <input type="">...</input>     <!-- See the documentation of the input reader -->
+	     <origin>				        <!-- base point for the replication; default: 0.0, 0.0, 0.0 -->
+		 	<x>DOUBLE</x>
+			<y>DOUBLE</y>
+			<z>DOUBLE</z>
+		</origin>
+		<componentid>INT</componentid>  <!-- If specified, componentID of input will be changed to INT (starting from 1); default: keep componentID -->
 	   </filler>
 	   \endcode
 	 */
@@ -68,6 +73,7 @@ private:
 	std::shared_ptr<Object> _object;
 	double _origin[3];
 	unsigned int _componentid;
+	bool _keepComponent;
 };
 
 #endif  // REPLICAFILLER_H_

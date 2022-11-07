@@ -148,20 +148,20 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 		std::string inputPluginName;
 		xmlconfig.getNodeValue("@type", inputPluginName);
 		if(inputPluginName != "BinaryReader") {
-			global_log->error() << "ReplicaFiller only works with inputPlugins: BinaryReader at the moment" << endl;
+			global_log->error() << "[ReplicaFiller] ReplicaFiller only works with inputPlugins: BinaryReader at the moment" << endl;
 			Simulation::exit(1);
 		}
 // 	InputPluginFactory inputPluginFactory;
 		InputBase* inputReader = new BinaryReader();
 		if(inputReader == nullptr) {
-			global_log->error() << "Could not create input reader " << inputPluginName << endl;
+			global_log->error() << "[ReplicaFiller] Could not create input reader " << inputPluginName << endl;
 			Simulation::exit(1);
 		}
 		setInputReader(std::shared_ptr<InputBase>(inputReader));
 		_inputReader->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	} else {
-		global_log->error() << "Input reader for original not specified." << endl;
+		global_log->error() << "[ReplicaFiller] Input reader for original not specified." << endl;
 		Simulation::exit(1);
 	}
 	if(xmlconfig.changecurrentnode("origin")) {
@@ -170,13 +170,28 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 		origin.get(_origin);
 		xmlconfig.changecurrentnode("..");
 	}
-	global_log->info() << "Base point for the replication: [" << _origin[0] << "," << _origin[1] << "," << _origin[2]
+	global_log->info() << "[ReplicaFiller] Base point for the replication: ["
+					   << _origin[0] << "," << _origin[1] << "," << _origin[2]
 					   << "]" << endl;
 
 	unsigned int componentid = 0;
 	_componentid = 0;
-	if(xmlconfig.getNodeValue("componentid", componentid))
-		_componentid = componentid;
+	_keepComponent = true;
+	if(xmlconfig.getNodeValue("componentid", componentid)) {
+		cout << componentid << endl;
+		const size_t numComps = global_simulation->getEnsemble()->getComponents()->size();
+		if ((componentid < 1) or (componentid > numComps)) {
+			global_log->error() << "[ReplicaFiller] Specified componentid is invalid. Valid range: 0 < componentid <= " << numComps << endl;
+			Simulation::exit(1);
+		}
+		_componentid = componentid - 1;  // Internally stored in array starting at index 0
+		_keepComponent = false;
+	}
+	if (_keepComponent) {
+		global_log->info() << "[ReplicaFiller] Keeping componentid of input" << endl;
+	} else {
+		global_log->info() << "[ReplicaFiller] Changing componentid of input to " << _componentid + 1 << endl;
+	}
 }
 
 
@@ -192,14 +207,14 @@ void ReplicaFiller::init() {
 	_inputReader->readPhaseSpaceHeader(&domain, 0.0);
 	_inputReader->readPhaseSpace(&basisContainer, &domain, &global_simulation->domainDecomposition());
 	unsigned long numberOfParticles = basisContainer.getNumberOfParticles();
-	global_log->info() << "Number of molecules in the replica: " << numberOfParticles << endl;
+	global_log->info() << "[ReplicaFiller] Number of molecules in the replica: " << numberOfParticles << endl;
 
 	if(numberOfParticles == 0){
-		global_log->error_always_output() << "No molecules in replica, aborting! " << endl;
+		global_log->error_always_output() << "[ReplicaFiller] No molecules in replica, aborting! " << endl;
 		Simulation::exit(1);
 	}
 
-	global_log->info() << "Setting simulation time to 0." << endl;
+	global_log->info() << "[ReplicaFiller] Setting simulation time to 0.0" << endl;
 	_simulation.setSimulationTime(0);
 
 	Lattice lattice;
@@ -215,10 +230,9 @@ int ReplicaFiller::getMolecule(Molecule* molecule) {
 	int ret = _gridFiller.getMolecule(molecule);
 	if(ret != 0) {
 		// change component if specified
-		if (molecule->componentid() != _componentid) {
+		if (not _keepComponent && molecule->componentid() != _componentid) {
 			molecule->setComponent(global_simulation->getEnsemble()->getComponent(_componentid));
 		}
 	}
 	return ret;
 }
-
