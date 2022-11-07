@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils/TestWithSimulationSetup.h"
+#include "utils/Testing.h"
 #include "plugins/NEMD/VelocityExchange.h"
 
 // Test of VelocityExchange plugin

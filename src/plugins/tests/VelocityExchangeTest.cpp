@@ -1,5 +1,7 @@
 #include "VelocityExchangeTest.h"
 
+#include "utils/Testing.h"
+
 TEST_SUITE_REGISTRATION(VelocityExchangeTest);
 
 VelocityExchangeTest::VelocityExchangeTest() {}

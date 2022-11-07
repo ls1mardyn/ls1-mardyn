@@ -5,13 +5,6 @@
  *      Author: mheinen
  */
 
-#include "DensityControl.h"
-#include "particleContainer/ParticleContainer.h"
-#include "Domain.h"
-#include "parallel/DomainDecompBase.h"
-#include "molecules/Molecule.h"
-#include "utils/Logger.h"
-#include "utils/CommVar.h"
 #include <iostream>
 #include <string>
 #include <array>
@@ -27,7 +20,14 @@
 #include <mpi.h>
 #endif
 
-using namespace std;
+#include "DensityControl.h"
+#include "particleContainer/ParticleContainer.h"
+#include "Domain.h"
+#include "parallel/DomainDecompBase.h"
+#include "molecules/Molecule.h"
+#include "utils/Logger.h"
+#include "utils/CommVar.h"
+
 using Log::global_log;
 
 DensityControl::DensityControl() {
@@ -66,7 +66,7 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("control/stop", _control.stop);
 	global_log->info() << "[DensityControl] is acting start:freq:stop = "
 			<< _control.start << ":" << _control.freq << ":" << _control.stop
-			<< endl;
+			<< std::endl;
 
 	// range
 	Domain* domain = global_simulation->getDomain();
@@ -84,8 +84,19 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("range/zmax", _range.zmax);
 	_range.volume = (_range.xmax - _range.xmin) * (_range.ymax - _range.ymin) * (_range.zmax - _range.zmin);
 
-	// targets
+	// priority (Usually: Molecule size sorted in descending order)
 	uint32_t numComponents = global_simulation->getEnsemble()->getComponents()->size();
+	std::string strPrio = "";
+	bool a = xmlconfig.getNodeValue("priority", strPrio);
+	_vecPriority.push_back(0);
+	uint32_t nRet = this->tokenize_int_list(_vecPriority, strPrio);
+	if(nRet != numComponents) {
+		global_log->error() << "[DensityControl] Number of component IDs specified in element <priority>...</priority>"
+							<< " does not match the number of components in the simulation. Programm exit ..." << std::endl;
+		Simulation::exit(-1);
+	}
+
+	// targets
 	_densityTarget.density.resize(numComponents+1); _densityTarget.count.resize(numComponents+1);
 	for(auto it : _densityTarget.density)
 		it = 0.;
@@ -96,11 +107,9 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	XMLfile::Query query = xmlconfig.query("targets/target");
 	numTargets = query.card();
 	global_log->info() << "[DensityControl] Number of component targets: "
-			<< numTargets << endl;
+					   << numTargets << std::endl;
 	if (numTargets < 1) {
-		global_log->warning()
-				<< "[DensityControl] No target parameters specified. Program exit ..."
-				<< endl;
+		global_log->error() << "[DensityControl] No target parameters specified. Program exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 	string oldpath = xmlconfig.getcurrentnodepath();
@@ -128,16 +137,6 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	}
 	_densityTarget.density[0] = densitySum;
 	_densityTarget.count[0] = countSum;
-
-	// priority (Usally: Molecule size sorted in descending order)
-	std::string strPrio = "";
-	xmlconfig.getNodeValue("priority", strPrio);
-	_vecPriority.push_back(0);
-	uint32_t nRet = this->tokenize_int_list(_vecPriority, strPrio);
-	if(nRet != numComponents) {
-		global_log->error() << "[DensityControl] Number of component IDs specified in element <priority>...</priority> does not match the number of components in the simulation. Programm exit ..." << endl;
-		Simulation::exit(-1);
-	}
 }
 
 void DensityControl::beforeForces(
