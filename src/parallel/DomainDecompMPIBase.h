@@ -38,10 +38,10 @@ public:
 	}
 
 	//! @brief returns total number of molecules
-	unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
+	unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd) override;
 
 	//! @brief checks identity of random number generators
-	void assertIntIdentity(int IX);
+	void assertIntIdentity(int IX) override;
 	void assertDisjunctivity(ParticleContainer* moleculeContainer) const override;
 
 	//##################################################################
@@ -204,7 +204,7 @@ public:
 	   </parallelisation>
 	   \endcode
 	 */
-	virtual void readXML(XMLfileUnits& xmlconfig);
+	virtual void readXML(XMLfileUnits& xmlconfig) override;
 
 	/**
 	 * Sets the communicationScheme.

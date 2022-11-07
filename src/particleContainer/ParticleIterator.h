@@ -65,6 +65,8 @@ public:
 
 	virtual ~ParticleIterator(){}
 
+	constexpr ParticleIterator(const ParticleIterator&) = default;
+
 	Molecule& operator *  () const;
 	Molecule* operator -> () const;
 

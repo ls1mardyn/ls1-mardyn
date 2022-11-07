@@ -1,0 +1,32 @@
+name: Doxygen Build & Deploy
+
+# execute this action on each push to remote master
+on: 
+  push:
+    branches: [ master ]
+
+jobs:
+  doxygen:
+      runs-on: ubuntu-latest
+      steps:
+      # get current state from git
+      - uses: actions/checkout@v3
+      
+      - name: Get doxygen
+        run: sudo apt-get install doxygen -y
+        
+      # build Doxygen documentation from Doxyfile in project root folder
+      # output is found as specified in Doxyfile in: doxygen_doc/html
+      - name: Build documentation
+        uses: mattnotmitt/doxygen-action@v1.9.2
+        with:
+          working-directory: '.'
+          doxyfile-path: './Doxyfile'
+
+      # host Doxygen output on ls1's github pages site (ls1mardyn.github.io/ls1-mardyn)
+      - name: Deploy documentation to GitHub pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: './doxygen_doc/html'
+

@@ -187,6 +187,8 @@ public:
 protected:
 	std::string getTestDataFilename(const std::string& file, bool checkExistence = true);
 
+	std::string getTestDataDirectory() { return testDataDirectory; };
+
 private:
 	static std::string testDataDirectory;
 

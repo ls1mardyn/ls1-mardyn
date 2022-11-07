@@ -21,6 +21,8 @@ class LinkedCellsTest;
 #include "particleContainer/LinkedCellTraversals/HalfShellTraversal.h"
 #include "particleContainer/TraversalTuner.h"
 
+#include "utils/arrayMath.h"
+
 TEST_SUITE_REGISTRATION(LinkedCellsTest);
 
 LinkedCellsTest::LinkedCellsTest() {
@@ -28,6 +30,88 @@ LinkedCellsTest::LinkedCellsTest() {
 }
 
 LinkedCellsTest::~LinkedCellsTest() {
+}
+
+void LinkedCellsTest::testRegionIterator() {
+	// can't be const bc of LinkedCells constructor...
+	std::array<double, 3> boxMin = {0.0, 0.0, 0.0};
+	std::array<double, 3> boxMax = {10.0, 10.0, 10.0};
+	std::array<double, 3> boxLength = arrayMath::sub(boxMax, boxMin);
+	const double cutoff = 1.;
+	LinkedCells linkedCells(boxMin.data(), boxMax.data(), cutoff);
+
+	size_t numMolecules = 0;
+	// place one molecule in the center of every cell
+	for (double z = boxMin[2]; z < boxMax[2]; ++z) {
+		for (double y = boxMin[1]; y < boxMax[1]; ++y) {
+			for (double x = boxMin[0]; x < boxMax[0]; ++x) {
+				Molecule m(numMolecules++, &_components[0], x + cutoff / 2, y + cutoff / 2, z + cutoff / 2, 0., 0., 0., 0., 0.,
+						   0., 0., 0., 0., 0.);
+				linkedCells.addParticle(m);
+			}
+		}
+	}
+
+	// Test over full domain
+	{
+		size_t particlesFound = 0;
+		const std::array<double, 3> iterRegionStart = boxMin;
+		const std::array<double, 3> iterRegionEnd = boxMax;
+		for (auto regionIter = linkedCells.regionIterator(iterRegionStart.data(), iterRegionEnd.data(), ParticleIterator::ALL_CELLS);
+			 regionIter.isValid(); ++regionIter) {
+			++particlesFound;
+		}
+		ASSERT_EQUAL_MSG("RegionIterator over the whole domain did not find all particles.",
+				numMolecules, particlesFound);
+	}
+	// Test outside the domain
+	{
+		size_t particlesFound = 0;
+		const std::array<double, 3> iterRegionStart = {boxMax[0] + 10., boxMin[1] - 1., boxMin[2] - 1.};
+		const std::array<double, 3> iterRegionEnd = {boxMax[0] + 20., boxMax[1] + 1., boxMax[2] + 1.};
+		for (auto regionIter = linkedCells.regionIterator(iterRegionStart.data(), iterRegionEnd.data(), ParticleIterator::ALL_CELLS);
+			 regionIter.isValid(); ++regionIter) {
+			++particlesFound;
+		}
+		ASSERT_EQUAL_MSG("RegionIterator outside the domain found particles, but it shouldn't.",
+				0ul, particlesFound);
+	}
+	// Test partially outside the domain
+	{
+		size_t particlesFound = 0;
+		const std::array<double, 3> iterRegionStart = {boxMin[0] + 0.5*boxLength[0], boxMin[1] - 1., boxMin[2] - 1.};
+		const std::array<double, 3> iterRegionEnd = {boxMax[0] + 20., boxMax[1] + 1., boxMax[2] + 1.};
+		for (auto regionIter = linkedCells.regionIterator(iterRegionStart.data(), iterRegionEnd.data(), ParticleIterator::ALL_CELLS);
+			 regionIter.isValid(); ++regionIter) {
+			++particlesFound;
+		}
+		ASSERT_EQUAL_MSG("RegionIterator outside the domain found particles, but it shouldn't.",
+				numMolecules/2, particlesFound);
+	}
+}
+
+void LinkedCellsTest::testRegionIteratorFile() {
+
+	const double delta = 1e-6;  // Tolerate deviation between expected and actual value
+
+	// Test region size in x,y,z
+	// Domain (cubic) size is 134.266123
+	const double testRegionMin[3] = {1.2, 2.5, 45.0};
+	const double testRegionMax[3] = {134.2, 15.9, 111.1};
+
+	// Cutoff might be too small, but has no effect anyway
+	std::unique_ptr<ParticleContainer> container{initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials.inp", 6.0)};
+
+	const auto begin_regionIter = container->regionIterator(testRegionMin, testRegionMax, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+
+	// Search for exchanged particles
+	for (auto it = begin_regionIter; it.isValid(); ++it) {
+		const unsigned long pid = it->getID();
+		for (unsigned short d = 0; d < 3; d++) {
+			const bool insideBox {(it->r(d) >= testRegionMin[d]) and (it->r(d) <= testRegionMax[d])};
+			ASSERT_EQUAL_MSG("Particle "+std::to_string(pid)+" not in test region", true, insideBox);
+		}
+	}
 }
 
 void LinkedCellsTest::testUpdateAndDeleteOuterParticlesFilename(const char * filename, double cutoff) {
@@ -175,7 +259,7 @@ public:
 
 	virtual void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false) { // does this need a bool
 		_cellPairProcessCount[cell1.getCellIndex()][cell2.getCellIndex()] += sign;
-		_cellPairProcessCount[cell2.getCellIndex()][cell1.getCellIndex()] += sign;  // newton 3
+		_cellPairProcessCount[cell2.getCellIndex()][cell1.getCellIndex()] += sign;	// newton 3
 	}
 
 	virtual void processCell(ParticleCell& cell) {
@@ -309,7 +393,7 @@ void LinkedCellsTest::testTraversalMethods() {
 //
 //
 //	//------------------------------------------------------------
-//	//  Calculate forces for FS and HS and compare
+//	//	Calculate forces for FS and HS and compare
 //	//------------------------------------------------------------
 //
 //	doHSTest(domainDecomposition, vectorizedCellProcessor, container, containerHS);
@@ -353,7 +437,7 @@ void LinkedCellsTest::testTraversalMethods() {
 //
 //
 //	//------------------------------------------------------------
-//	//  Calculate forces for FS and MP and compare
+//	//	Calculate forces for FS and MP and compare
 //	//------------------------------------------------------------
 //
 //	doHSTest(domainDecomposition, vectorizedCellProcessor, container, containerMP);
@@ -426,7 +510,7 @@ void LinkedCellsTest::testCellBorderAndFlagManager() {
 	for (int iz = 0; iz < LC._cellsPerDimension[2]; ++iz) {
 		cellBoxMin[2] = iz * LC._cellLength[2] + LC._haloBoundingBoxMin[2];
 		cellBoxMax[2] = (iz + 1) * LC._cellLength[2] + LC._haloBoundingBoxMin[2];
-		if (iz == 0) {  // make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+		if (iz == 0) {	// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
 			cellBoxMax[2] = LC._boundingBoxMin[2];
 		} else if (iz == 1) {// make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
 			cellBoxMin[2] = LC._boundingBoxMin[2];
@@ -557,7 +641,7 @@ void LinkedCellsTest::doForceComparisonTest(std::string inputFile,
 #endif
 
 	//------------------------------------------------------------
-	//  Calculate forces for FS and TestTraversal and compare
+	//	Calculate forces for FS and TestTraversal and compare
 	//------------------------------------------------------------
 	//------------------------------------------------------------
 	// Prepare molecule containers

@@ -34,6 +34,12 @@ public:
 	/** set the site mass */
 	void setM(double m) { _m = m; }
 
+	/** set the site name */
+	void setName(std::string& n) { _name = n; }
+
+	/** get the site name */
+	std::string getName() const { return _name; }
+
 	/** @brief Read in XML configuration for a site and all its included objects.
 	 *
 	 * The following xml object structure is handled by this method:
@@ -49,6 +55,12 @@ public:
 		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
 		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
 		xmlconfig.getNodeValueReduced("mass", _m);
+		
+		if (!xmlconfig.getNodeValue("@name", _name)) {
+			global_log->error() << "Cannot find site name. Defaulting to type." << std::endl;
+			xmlconfig.getNodeValue("@type", _name);
+		}
+
 	}
 
 	virtual ~Site() {}
@@ -69,6 +81,7 @@ protected:
 
 	std::array<double, 3> _r;  /**< position coordinates */
 	double _m;  /**< mass */
+	std::string _name;
 };
 
 

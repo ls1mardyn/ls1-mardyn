@@ -31,7 +31,7 @@ bool ParticleCellBase::deleteMoleculeByID(unsigned long molid) {
 
 template <typename T>
 std::array<T, 3> getRandomVelocity(T temperature, Random& RNG) {
-	std::array<T,3> ret;
+	std::array<T,3> ret{};
 
 	// Velocity
 	for (int dim = 0; dim < 3; dim++) {
@@ -70,13 +70,14 @@ bool PositionIsInBox3D(const T l[3], const T u[3], const T r[3]) {
 	return in;
 }
 
-unsigned long ParticleCellBase::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, Random & RNG) {
+unsigned long ParticleCellBase::initCubicGrid(const array<unsigned long, 3> &numMoleculesPerDimension,
+											  const std::array<double, 3> &simBoxLength, Random &RNG) {
 
-	std::array<double, 3> spacing;
-	std::array<double, 3> origin1; // origin of the first DrawableMolecule
-	std::array<double, 3> origin2; // origin of the first DrawableMolecule
+	std::array<double, 3> spacing{};
+	std::array<double, 3> origin1{}; // origin of the first DrawableMolecule
+	std::array<double, 3> origin2{}; // origin of the first DrawableMolecule
 	for (int d = 0; d < 3; ++d) {
-		spacing[d] = simBoxLength[d] / numMoleculesPerDimension[d];
+		spacing[d] = simBoxLength[d] / static_cast<double>(numMoleculesPerDimension[d]);
 		origin1[d] = spacing[d] * 0.25;
 		origin2[d] = spacing[d] * 0.25 * 3.;
 	}
@@ -86,13 +87,13 @@ unsigned long ParticleCellBase::initCubicGrid(std::array<unsigned long, 3> numMo
 	double boxMin[3] = {getBoxMin(0), getBoxMin(1), getBoxMin(2)};
 	double boxMax[3] = {getBoxMax(0), getBoxMax(1), getBoxMax(2)};
 
-	int start_i = floor((boxMin[0] / simBoxLength[0]) * numMoleculesPerDimension[0]) - 1;
-	int start_j = floor((boxMin[1] / simBoxLength[1]) * numMoleculesPerDimension[1]) - 1;
-	int start_k = floor((boxMin[2] / simBoxLength[2]) * numMoleculesPerDimension[2]) - 1;
+	int start_i = floor((boxMin[0] / simBoxLength[0]) * static_cast<double>(numMoleculesPerDimension[0])) - 1;
+	int start_j = floor((boxMin[1] / simBoxLength[1]) * static_cast<double>(numMoleculesPerDimension[1])) - 1;
+	int start_k = floor((boxMin[2] / simBoxLength[2]) * static_cast<double>(numMoleculesPerDimension[2])) - 1;
 
-	int end_i = ceil((boxMax[0] / simBoxLength[0]) * numMoleculesPerDimension[0]) + 1;
-	int end_j = ceil((boxMax[1] / simBoxLength[1]) * numMoleculesPerDimension[1]) + 1;
-	int end_k = ceil((boxMax[2] / simBoxLength[2]) * numMoleculesPerDimension[2]) + 1;
+	int end_i = ceil((boxMax[0] / simBoxLength[0]) * static_cast<double>(numMoleculesPerDimension[0])) + 1;
+	int end_j = ceil((boxMax[1] / simBoxLength[1]) * static_cast<double>(numMoleculesPerDimension[1])) + 1;
+	int end_k = ceil((boxMax[2] / simBoxLength[2]) * static_cast<double>(numMoleculesPerDimension[2])) + 1;
 
 	std::vector<Molecule> buffer;
 	int numMolsUpperBound = (end_k - start_k) * (end_j - start_j) * (end_i - start_i) * 2;

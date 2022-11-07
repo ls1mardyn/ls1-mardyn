@@ -1603,10 +1603,16 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 		}
 
 		if( componentid > numcomponents ) {
-			global_log->error() << "[MettDeamon] Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
+			global_log->error() << "[MettDeamon] Molecule id " << id
+								<< " has a component ID greater than the existing number of components: "
+								<< componentid
+								<< ">"
+								<< numcomponents << endl;
 			Simulation::exit(1);
 		}
-		componentid --; // TODO: Component IDs start with 0 in the program.
+		// ComponentIDs are used as array IDs, hence need to start at 0.
+		// In the input files they always start with 1 so we need to adapt that all the time.
+		componentid--;
 		Molecule mol = Molecule(i+1,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz);
 
 		bool bIsRelevant = this->isRelevant(domainDecomp, domain, mol);

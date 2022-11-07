@@ -1,161 +1,206 @@
-name: C/C++ CI
+name: C/C++ CI for ls1
 
-on: [push]
+on:
+  push:
+    # pushes to master
+    branches: [ master ]
+  pull_request:
+    # PRs to master
+    branches: [ master ]
+
+# abort old runs if a new one is started
+concurrency:
+  group: ${{ github.head_ref }}-tests
+  cancel-in-progress: true
 
 jobs:
-  check_AutoPas_seq:
+  ci-matrix:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: prepare_seq
-      run: |
-        sudo apt-get install libcppunit-dev openmpi-bin -y
-    - name: build with autopas sequential
-      run: |
-        mkdir build && cd build
-        cmake -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
-        make -j2
-    - name: test sequential
-      run: |
-        ls
-        ls build
-        ls build/src
-        ./build/src/MarDyn -t -d ./test_input/
-    - name: validation - run with autopas aos
-      run: |
-        ./build/src/MarDyn ./examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 | tee autopas_run_log.txt
-        grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
-        grep "T = 0.000633975" simstep20.txt
-        grep "U_pot = -2.14161" simstep20.txt
-        grep "p = 5.34057e-07" simstep20.txt
-    - name: validation - run with autopas soa
-      run: |
-        ./build/src/MarDyn ./examples/Argon/200K_18mol_l/config_autopas_soa.xml --steps=20 | tee autopas_run_log.txt
-        grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
-        grep "T = 0.000633975" simstep20.txt
-        grep "U_pot = -2.14161" simstep20.txt
-        grep "p = 5.34057e-07" simstep20.txt
-  check_AutoPas_mpi:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: prepare_mpi
-      run: |
-        sudo apt-get install libcppunit-dev openmpi-bin -y
-    - name: build with autopas MPI
-      run: |
-        mkdir build-mpi && cd build-mpi
-        CC=mpicc CXX=mpicxx cmake -DENABLE_ALLLBL=ON -DENABLE_MPI=ON -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
-        make -j2
-    - name: test mpi
-      run: |
-        mpirun -np 1 ./build-mpi/src/MarDyn -t -d ./test_input/
-        mpirun -np 2 ./build-mpi/src/MarDyn -t -d ./test_input/
-    - name: validation - run with autopas DD
-      run: |
-        mpirun -np 2 ./build-mpi/src/MarDyn ./examples/Argon/200K_18mol_l/config_autopas_aos.xml --steps=20 | tee autopas_run_log.txt
-        grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
-        grep "T = 0.000633975" simstep20.txt
-        grep "U_pot = -2.14161" simstep20.txt
-        grep "p = 5.34057e-07" simstep20.txt
-    - name: validation - run with autopas ALLLB
-      run: |
-        mpirun -np 2 ./build-mpi/src/MarDyn ./examples/Argon/200K_18mol_l/config_autopas_lc_ALL.xml --steps=20 | tee autopas_run_log.txt
-        grep "Simstep = 20" autopas_run_log.txt > simstep20.txt
-        grep "T = 0.000633975" simstep20.txt
-        grep "U_pot = -2.14161" simstep20.txt
-        grep "p = 5.34057e-07" simstep20.txt
-  run_ci-matrix:
-    runs-on: ubuntu-latest
-    # continue-on-error: true
     strategy:
+      # do not cancel all other workflow runs if one fails
+      fail-fast: false
       matrix: 
-        vector: ['SSE', 'AVX2']
+        vector: ['SSE', 'NONE', 'AVX', 'AVX2']
         target: ['Debug', 'Release']
-        parall: ['0', '1']
+        parall: ['SEQ', 'PAR']
+        cc: ['gcc', 'clang']
+        cxx: ['g++', 'clang++']
+        autopas: ['ON', 'OFF']
+        procs: ['1', '4', '8'] #TODO: >= 27 ranks case, to have non-border rank
+        openmp: ['ON', 'OFF']
+        exclude:
+            # exclude incompatible compiler pairs
+          - cc: 'gcc'
+            cxx: 'clang++'
+          - cc: 'clang'
+            cxx: 'g++'
+            # exclude legacy configurations
+          - vector: 'SSE'
+          - vector: 'AVX'
+          - openmp: 'OFF'
+            # exclude SEQ & np > 1, exclude PAR & np = 1
+          - parall: 'PAR'
+            procs: '1'
+          - parall: 'SEQ'
+            procs: '4'
+          - parall: 'SEQ'
+            procs: '8'
+
     env:
-      JOBNAME: ${{ matrix.vector }}-${{ matrix.target }}-${{ matrix.parall }}
+      JOBNAME: ${{ join(matrix.*, '-') }}
+    name: ${{ matrix.vector }}-${{ matrix.target }}-${{ matrix.parall }}-${{ matrix.cc }}-AutoPas=${{ matrix.autopas }}-Ranks=${{ matrix.procs }}-OMP=${{ matrix.openmp }}
     steps:
-    - uses: actions/checkout@v2
-    - name: prepare_matrix
+      # setup github actions runner node
+    - uses: actions/checkout@v3
+    - name: Setup
       run: |
-        sudo apt-get install libcppunit-dev openmpi-bin -y
+        sudo apt-get update
+        sudo apt-get install -y \
+          libcppunit-dev        \
+          libmpich-dev
         echo "Running ${JOBNAME}"
         git status
         mkdir build_${JOBNAME}
-    - if: matrix.parall == '0'
-      name: Build seq. Matrix - vector ${{ matrix.vector }}, target ${{ matrix.target }}, parall ${{ matrix.parall }}
+      # build testing & unit testing
+    - name: Build and Unit Test
       run: |
           cd build_${JOBNAME}
-          CC=gcc CXX=g++ cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} -DCMAKE_BUILD_TYPE=${{ matrix.target }} -DENABLE_MPI=OFF -DENABLE_UNIT_TESTS=1 ..
+
+          #translate matrix to ON/OFF for certain entries
+          if [[ ${{ matrix.parall }} == 'PAR' ]]
+          then
+            mpi_enabled='ON'
+          else
+            mpi_enabled='OFF'
+          fi
+          if [[ ${{ matrix.parall }} == 'PAR' ]] && [[ ${{ matrix.autopas }} == 'ON' ]]
+          then
+            alllbl_enabled='ON'
+          else
+            alllbl_enabled='OFF'
+          fi
+
+          cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
+                -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
+                -DENABLE_AUTOPAS=${{ matrix.autopas }} \
+                -DENABLE_ALLLBL=$alllbl_enabled \
+                -DOPENMP=${{ matrix.openmp }} \
+                -DENABLE_MPI=$mpi_enabled \
+                -DENABLE_UNIT_TESTS=ON \
+              ..
+
           make -j2
+
           cd ..
-          ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
-    - if: matrix.parall == '1'
-      name: Build par. Matrix - vector ${{ matrix.vector }}, target ${{ matrix.target }}, parall ${{ matrix.parall }}
+
+          if [[ ${{ matrix.parall }} == 'PAR' ]]
+          then
+            mpirun -np ${{ matrix.procs }} ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
+          else
+            ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
+          fi
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+        OMP_NUM_THREADS: 2
+
+      # validation testing
+    - if: ${{ matrix.parall == 'PAR' }}
+      name: Validation
       run: |
-          cd build_${JOBNAME}
-          CC=mpicc CXX=mpicxx cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} -DCMAKE_BUILD_TYPE=${{ matrix.target }} -DENABLE_MPI=ON -DENABLE_UNIT_TESTS=1 ..
-          make -j2
-          cd ..
-          mpirun -np 2 ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
-    - if: matrix.parall == '1'
-      name: Validation par. examples Matrix - vector ${{ matrix.vector }}, target ${{ matrix.target }}, parall ${{ matrix.parall }}
-      run: |
+          #save absolute path to root of ls1 directory
+          repoPath=$PWD
+          examplesFile="branchExamples_${JOBNAME}.txt"
+          # choose and save examples (so that this commit and master execute the same list)
+          if [[ ${{ matrix.autopas }} == 'ON' ]]
+          then
+            cp ./examples/example-list_autopas.txt "${examplesFile}"
+          else
+            cp ./examples/example-list.txt "${examplesFile}"
+          fi
+
+          #translate matrix to ON/OFF for certain entries
+          if [[ ${{ matrix.parall }} == 'PAR' ]]
+          then
+            mpi_enabled='ON'
+          else
+            mpi_enabled='OFF'
+          fi
+          if [[ ${{ matrix.parall }} == 'PAR' ]] && [[ ${{ matrix.autopas }} == 'ON' ]]
+          then
+            alllbl_enabled='ON'
+          else
+            alllbl_enabled='OFF'
+          fi
+
+          #build master branch equivalent to compare new build to
           mkdir build_${JOBNAME}_master
           git fetch
           git checkout master
           git status
           cd build_${JOBNAME}_master
-          CC=mpicc CXX=mpicxx cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} -DCMAKE_BUILD_TYPE=${{ matrix.target }} -DENABLE_MPI=ON -DENABLE_UNIT_TESTS=1 ..
-          make -j2
-          cd ..
-          # python3 ./validation/validationRun/validationRun.py -m 2 -n ./build_${JOBNAME}/src/MarDyn -o ./build_${JOBNAME}_master/src/MarDyn -c ./validation/validationInput/simple-lj-direct/config.xml
-          rm -f output_new output_master
-          rootPath=$PWD
-          echo "New commit build running examples..."
-          for i in $(cat ./examples/example-list.txt)
-          do
-            echo $i | \
-              tee -a output_new
-            cd ./examples/$(dirname $i)
-            mpirun -np 2 $rootPath/build_${JOBNAME}/src/MarDyn \
-              $(basename $i) \
-              --steps=50 \
-              --final-checkpoint=0 \
-              | \
-                awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' \
-                >> $rootPath/output_new
-            cd - > /dev/null
-          done
-          echo "Master build running examples..."
-          for i in $(cat ./examples/example-list.txt)
-          do
-            echo $i | \
-              tee -a output_master
-            cd ./examples/$(dirname $i)
-            mpirun -np 2 $rootPath/build_${JOBNAME}_master/src/MarDyn \
-              $(basename $i) \
-              --steps=50 \
-              --final-checkpoint=0 \
-              | \
-                awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' \
-                >> $rootPath/output_master
-            cd - > /dev/null
-          done
-          diff output_new output_master
-          echo "---"
-          [ "$(diff output_new output_master)" == "" ]
-          
-  post-build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: documentation
-      run: |
-        sudo apt-get install doxygen -y
-    - name: build doc
-      run: |
-        mkdir doxygen_doc || echo 'doxygen_doc Folder exists already'
-        doxygen
+          #note: ALLLBL is enabled if AutoPas is enabled.
+          cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
+                -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
+                -DENABLE_AUTOPAS=${{ matrix.autopas }} \
+                -DENABLE_ALLLBL=$alllbl_enabled \
+                -DOPENMP=${{ matrix.openmp }} \
+                -DENABLE_MPI=$mpi_enabled \
+              ..
 
+          make -j2
+
+          cd "${repoPath}"
+
+          #set strict pipefail option
+          set -eo pipefail
+        
+          # execute all examples. These calls create artifacts which we will then compare
+          IFS=$'\n'
+          for i in $(cat "${repoPath}/${examplesFile}" )
+          do
+            # skip if comment or empty line
+            if [[ $i == \#* || -z "$i" ]]
+            then
+              continue
+            fi
+            echo $i
+            cd $repoPath/examples/$(dirname $i)
+        
+            # patch input files according to current conf
+            cp $(basename $i) input_patched.xml
+            # if AutoPas is enabled, replace all occurrences of LinkedCell in the examples' config files with AutoPas
+            if [[ ${{ matrix.autopas }} == 'ON' ]]
+            then
+              sed --in-place 's/LinkedCells/AutoPas/g' input_patched.xml
+            fi
+
+            # if AutoPas is enabled and no vectorization is used, the AVX functor of Autopas has to be disabled
+            if [[ ${{ matrix.vector }} == 'NONE' ]]
+            then
+              sed --in-place 's|AutoPas">|AutoPas">\n\t<functor>autoVec</functor>|g' input_patched.xml
+            fi
+
+            # run the example with the old and new exe
+            for VERSION in "master" "new"
+            do
+              if [[ "${VERSION}" == "master" ]]
+              then
+                EXE=$repoPath/build_${JOBNAME}_master/src/MarDyn
+              else
+                EXE=$repoPath/build_${JOBNAME}/src/MarDyn
+              fi
+        
+              mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
+                | tee "output_${{ join(matrix.*, '-') }}"                                                   \
+                | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' > ${repoPath}/output_${VERSION}    \
+                || cat "output_${{ join(matrix.*, '-') }}"
+            done
+            # compare the two runs
+            diff ${repoPath}/output_new ${repoPath}/output_master
+          done
+
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+        OMP_NUM_THREADS: 2

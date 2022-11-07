@@ -194,7 +194,9 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			}
 			break;
 		}
-
+		default:
+			global_log->error() << "[CommunicationPartner] MessageType unknown!" << std::endl;
+			Simulation::exit(1);
 	}
 
 	#ifndef NDEBUG

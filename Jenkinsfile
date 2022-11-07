@@ -82,6 +82,119 @@ pipeline {
         stash 'repo'
       }
     }
+    stage('check ADIOS2 integration') {
+      agent { label 'atsccs11' }
+      stages {
+        stage('build with ADIOS2 sequential') {
+          steps {
+            unstash 'repo'
+            dir ("build_adios"){
+              sh """
+                cmake -DENABLE_ADIOS2=ON -DENABLE_UNIT_TESTS=1 ..
+                make -j4
+              """
+            }
+            stash includes: "build_adios/src/MarDyn", name: "adios2_exec"
+          }
+        }
+        stage('build with ADIOS2 MPI') {
+          steps {
+            unstash 'repo'
+            dir ("build_adios_mpi"){
+              sh """
+                CC=mpicc CXX=mpicxx cmake -DENABLE_MPI=ON -DENABLE_ADIOS2=ON -DENABLE_UNIT_TESTS=1 ..
+                make -j4
+              """
+            }
+            stash includes: "build_adios_mpi/src/MarDyn", name: "adios2_mpi_exec"
+          }
+        }
+        stage('unit test with adios2') {
+          parallel {
+            stage('test sequential') {
+              steps {
+                dir("seq"){
+                  unstash 'repo'
+                  unstash 'adios2_exec'
+                  dir ("build_adios"){
+                    sh """
+                      ./src/MarDyn -t -d ../test_input/
+                    """
+                  }
+                }
+              }
+            }
+            stage('test mpi') {
+              steps {
+                dir("mpi"){
+                  unstash 'repo'
+                  unstash 'adios2_mpi_exec'
+                  dir ("build_adios_mpi"){
+                    sh """
+                      mpirun -n 1 ./src/MarDyn -t -d ../test_input/
+                      mpirun -n 4 ./src/MarDyn -t -d ../test_input/
+                    """
+                  }
+                }
+              }
+            }
+          }
+        }
+        stage('validation tests with adios2') {
+          parallel {
+            stage('run seq') {
+              steps {
+                dir('adios2test'){
+                  unstash 'repo'
+                  unstash 'adios2_exec'
+                  dir ("build_adios"){
+                    sh """
+                      pwd
+                      cd ../examples/adios/CO2_Merker
+                      rm -rf co2_merkers.bp
+                      ../../../build_adios/src/MarDyn config.xml --steps=20
+                      [ -d "co2_merkers.bp" ] && echo "File written."
+                    """
+                  }
+                }
+              }
+            }
+            stage('run mpi') {
+              steps {
+                dir('adios2test'){
+                  unstash 'repo'
+                  unstash 'adios2_mpi_exec'
+                  dir ("build_adios_mpi"){
+                    sh """
+                      pwd
+                      cd ../examples/adios/CO2_Merker
+                      rm -rf co2_merkers.bp
+                      mpirun -n 4 ../../../build_adios_mpi/src/MarDyn config.xml --steps=20
+                      [ -d "co2_merkers.bp" ] && echo "File written."
+                    """
+                  }
+                }
+              }
+            }
+            stage('parallel read') {
+              steps {
+                dir('adios2test'){
+                  unstash 'repo'
+                  unstash 'adios2_mpi_exec'
+                  dir ("build_adios_mpi"){
+                    sh """
+                      pwd
+                      cd ../examples/adios/read
+                      mpirun -n 4 ../../../build_adios_mpi/src/MarDyn config_parallel.xml --steps=20
+                    """
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
     stage('check AutoPas integration') {
       agent { label 'atsccs11' }
       stages {
@@ -93,7 +206,7 @@ pipeline {
                 unstash 'repo'
                 dir ("build"){
                   sh """
-                    cmake -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
+                    cmake -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 -DENABLE_ADIOS2=OFF ..
                     make -j4
                   """
                 }
@@ -105,7 +218,7 @@ pipeline {
                 unstash 'repo'
                 dir ("build-mpi"){
                   sh """
-                    CC=mpicc CXX=mpicxx cmake -DENABLE_ALLLBL=ON -DENABLE_MPI=ON -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
+                    CC=mpicc CXX=mpicxx cmake -DENABLE_ALLLBL=ON -DENABLE_MPI=ON -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 -DENABLE_ADIOS2= ..
                     make -j4
                   """
                 }

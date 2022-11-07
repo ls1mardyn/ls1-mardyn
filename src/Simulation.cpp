@@ -58,6 +58,9 @@
 #include "io/ReplicaGenerator.h"
 #include "io/TcTS.h"
 #include "io/TimerProfiler.h"
+#ifdef ENABLE_ADIOS2
+#include "io/Adios2Reader.h"
+#endif
 
 #include "ensemble/GrandCanonicalEnsemble.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -587,7 +590,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Reading phase space from file." << endl;
 		string pspfiletype;
 		xmlconfig.getNodeValue("@type", pspfiletype);
-		global_log->info() << "Face space file type: " << pspfiletype << endl;
+		global_log->info() << "Phase space file type: " << pspfiletype << endl;
 
 		if (pspfiletype == "ASCII") {
 			_inputReader = new ASCIIReader();
@@ -600,6 +603,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
 			_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 		}
+#ifdef ENABLE_ADIOS2
+        else if (pspfiletype == "adios2") {
+			_inputReader = new Adios2Reader();
+			_inputReader->readXML(xmlconfig);
+		}
+#endif
 		else {
 			global_log->error() << "Unknown phase space file type" << endl;
 			Simulation::exit(-1);

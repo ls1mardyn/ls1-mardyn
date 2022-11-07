@@ -36,9 +36,9 @@ void VTKMoleculeWriterImplementation::initializeVTKFile() {
 	// The iterator over PointData traverses the DataArrays just in the order
 	// in which we add them here.
 	PointData pointData;
-	DataArray_t moleculeId(type::Float32, "id", 1);
+	DataArray_t moleculeId(type::UInt64, "id", 1);
 	pointData.DataArray().push_back(moleculeId);
-	DataArray_t componentId(type::Float32, "component-id", 1);
+	DataArray_t componentId(type::Int32, "component-id", 1);
 	pointData.DataArray().push_back(componentId);
 	DataArray_t node_rank(type::Int32, "node-rank", 1);
 	pointData.DataArray().push_back(node_rank);
