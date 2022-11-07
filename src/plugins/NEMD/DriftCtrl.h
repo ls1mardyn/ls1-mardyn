@@ -11,21 +11,13 @@
 #include <array>
 #include <vector>
 
-#define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
-
 struct BinVectors {
 	CommVar<std::vector<uint64_t> > numParticles;
 	std::array<CommVar<std::vector<double> >,3> velocity;
 	std::array<std::vector<double>,3> velo_corr;
 };
 
-class ParticleContainer;
-class DomainDecompBase;
-class Domain;
-class ChemicalPotential;
-class CavityEnsemble;
-class DriftCtrl : public PluginBase
-{
+class DriftCtrl : public PluginBase {
 public:
 	// constructor and destructor
 	DriftCtrl();
