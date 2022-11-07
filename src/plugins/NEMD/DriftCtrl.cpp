@@ -23,26 +23,24 @@ DriftCtrl::~DriftCtrl()
 
 void DriftCtrl::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain)
 {
-	global_log->debug() << "DriftCtrl enabled in range yl,yr=" << _range.yl << "," << _range.yr << std::endl;
-	
 	// number of components
 	uint32_t numComponents = domain->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
 	_sampling.resize(numComponents);
 	for(uint32_t cid = 0; cid < numComponents; ++cid) {
 		// local
 		_sampling.at(cid).numParticles.local.resize(_range.subdivision.numBins);
-		_sampling.at(cid).momentum.at(0).local.resize(_range.subdivision.numBins);
-		_sampling.at(cid).momentum.at(1).local.resize(_range.subdivision.numBins);
-		_sampling.at(cid).momentum.at(2).local.resize(_range.subdivision.numBins);
+		_sampling.at(cid).velocity.at(0).local.resize(_range.subdivision.numBins);
+		_sampling.at(cid).velocity.at(1).local.resize(_range.subdivision.numBins);
+		_sampling.at(cid).velocity.at(2).local.resize(_range.subdivision.numBins);
 		// global
 		_sampling.at(cid).numParticles.global.resize(_range.subdivision.numBins);
-		_sampling.at(cid).momentum.at(0).global.resize(_range.subdivision.numBins);
-		_sampling.at(cid).momentum.at(1).global.resize(_range.subdivision.numBins);
-		_sampling.at(cid).momentum.at(2).global.resize(_range.subdivision.numBins);
+		_sampling.at(cid).velocity.at(0).global.resize(_range.subdivision.numBins);
+		_sampling.at(cid).velocity.at(1).global.resize(_range.subdivision.numBins);
+		_sampling.at(cid).velocity.at(2).global.resize(_range.subdivision.numBins);
 		// corr
-		_sampling.at(cid).mom_corr.at(0).resize(_range.subdivision.numBins);
-		_sampling.at(cid).mom_corr.at(1).resize(_range.subdivision.numBins);
-		_sampling.at(cid).mom_corr.at(2).resize(_range.subdivision.numBins);
+		_sampling.at(cid).velo_corr.at(0).resize(_range.subdivision.numBins);
+		_sampling.at(cid).velo_corr.at(1).resize(_range.subdivision.numBins);
+		_sampling.at(cid).velo_corr.at(2).resize(_range.subdivision.numBins);
 	}
 	// reset local values
 	for(uint32_t cid = 0; cid < numComponents; ++cid)
@@ -50,45 +48,33 @@ void DriftCtrl::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 		for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID)
 		{
 			_sampling.at(cid).numParticles.local.at(yPosID) = 0;
-			_sampling.at(cid).momentum.at(0).local.at(yPosID) = 0.;
-			_sampling.at(cid).momentum.at(1).local.at(yPosID) = 0.;
-			_sampling.at(cid).momentum.at(2).local.at(yPosID) = 0.;
+			_sampling.at(cid).velocity.at(0).local.at(yPosID) = 0.;
+			_sampling.at(cid).velocity.at(1).local.at(yPosID) = 0.;
+			_sampling.at(cid).velocity.at(2).local.at(yPosID) = 0.;
 		}
 	}
-	global_log->info() << "DriftCtrl: Init data structures for " << numComponents << " components." << std::endl;
+	global_log->debug() << "[DriftCtrl] Init data structures for " << numComponents << " components." << std::endl;
 	
 	// init files
 	uint64_t simstep = global_simulation->getSimulationStep();
 	{
-		// construct filename
-		std::stringstream fnamestream;
-		fnamestream << "DriftCtrl_drift.dat";
-	
-		std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
-		std::stringstream outputstream;
-
-		outputstream << "     simstep";
+		const std::string fname = "DriftCtrl_drift.dat";
+		std::ofstream ofs;
+		ofs.open(fname, std::ios::out);
+		ofs << "     simstep";
 		for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID)
-			outputstream  << "                 bin" << fill_width('0', 4) << yPosID;
-		outputstream << std::endl;
-		
-		ofs << outputstream.str();
+			ofs  << "                 bin" << fill_width('0', 4) << yPosID;
+		ofs << std::endl;
 		ofs.close();
 	}
 	{
-		// construct filename
-		std::stringstream fnamestream;
-		fnamestream << "DriftCtrl_numParticles.dat";
-	
-		std::ofstream ofs(fnamestream.str().c_str(), std::ios::out);
-		std::stringstream outputstream;
-
-		outputstream << "     simstep";
+		const std::string fname = "DriftCtrl_numParticles.dat";
+		std::ofstream ofs;
+		ofs.open(fname, std::ios::out);
+		ofs << "     simstep";
 		for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID)
-			outputstream  << "     bin" << fill_width('0', 4) << yPosID;
-		outputstream << std::endl;
-		
-		ofs << outputstream.str();
+			ofs  << "     bin" << fill_width('0', 4) << yPosID;
+		ofs << std::endl;
 		ofs.close();
 	}
 }
@@ -99,16 +85,26 @@ void DriftCtrl::readXML(XMLfileUnits& xmlconfig)
 	_control.freq.sample = 10;
 	_control.freq.control = 100;
 	_control.freq.write = 10000;
+	_control.start = 0;
+	_control.stop = std::numeric_limits<uint32_t>::max();
+
 	xmlconfig.getNodeValue("control/freq/sample", _control.freq.sample);
 	xmlconfig.getNodeValue("control/freq/control", _control.freq.control);
 	xmlconfig.getNodeValue("control/freq/write", _control.freq.write);
+
+	xmlconfig.getNodeValue("control/start", _control.start);
+	xmlconfig.getNodeValue("control/stop", _control.stop);
 	
 	// range
 	_range.yl = 0.;
-	_range.yr = 100.;
+	_range.yr = _simulation.getDomain()->getGlobalLength(1);
+	std::string strVal;
 	xmlconfig.getNodeValue("range/yl", _range.yl);
-	xmlconfig.getNodeValue("range/yr", _range.yr);
-	global_log->info() << "DriftCtrl enabled in range yl,yr=" << _range.yl << "," << _range.yr << std::endl;
+	xmlconfig.getNodeValue("range/yr", strVal);
+	// accept "box" as input
+	_range.yr = (strVal == "box") ? _simulation.getDomain()->getGlobalLength(1) : atof(strVal.c_str());
+	global_log->info() << "[DriftCtrl] Enabled in range yl,yr=" << _range.yl << "," << _range.yr << std::endl;
+	global_log->info() << "[DriftCtrl] Enabled between simstep " << _control.start << " and " << _control.stop << std::endl;
 	_range.width = _range.yr - _range.yl;
 	// subdivision
 	_range.subdivision.binWidth.init = 10.;
@@ -125,16 +121,44 @@ void DriftCtrl::readXML(XMLfileUnits& xmlconfig)
 	_target.drift.at(1) = 0.;
 	_target.drift.at(2) = 0.;
 	_target.cid = 1;
+	std::string strDirs = "xyz";
+	_directions.clear();
 	xmlconfig.getNodeValue("target/cid", _target.cid);
 	xmlconfig.getNodeValue("target/drift/vx", _target.drift.at(0));
 	xmlconfig.getNodeValue("target/drift/vy", _target.drift.at(1));
 	xmlconfig.getNodeValue("target/drift/vz", _target.drift.at(2));
-	global_log->info() << "DriftCtrl: target drift vx,vy,vz="
-		<< _target.drift.at(0) << "," << _target.drift.at(1) << "," << _target.drift.at(2) << ", cid=" << _target.cid<< endl;
+	xmlconfig.getNodeValue("target/directions", strDirs);
+
+	std::vector<char> vectDirs(strDirs.begin(), strDirs.end());
+	for (char &c: vectDirs) {
+		switch ( c ) {
+			case 'x':
+				_directions.push_back(0);
+				break;
+			case 'y':
+				_directions.push_back(1);
+				break;
+			case 'z':
+				_directions.push_back(2);
+				break;
+			default:
+				global_log->warning() << "[DriftCtrl] Unknown direction: " << c << endl;
+		}
+	}
+
+	global_log->info() << "[DriftCtrl] Directions to be controlled: " << strDirs << endl;
+	global_log->info() << "[DriftCtrl] Target drift vx,vy,vz="
+		<< _target.drift.at(0) << "," << _target.drift.at(1) << "," << _target.drift.at(2) << ", cid=" << _target.cid << endl;
 }
 
 void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep)
 {
+
+	// Only between start and stop
+    if ((simstep < _control.start) or (simstep > _control.stop)) {
+        return;
+    }
+
 	int nRank = domainDecomp->getRank();
 	
 	// sample
@@ -146,26 +170,17 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			if(yPos <= _range.yl || yPos > _range.yr)
 				continue;
 			
-			uint32_t cid_zb = it->componentid();
-			uint32_t cid_ub = cid_zb+1;
-			uint32_t yPosID = floor( (yPos-_range.yl) / _range.subdivision.binWidth.actual);
-			double mass = 1.;  //TODO: get mass
-			std::array<double,3> p;  // momentum
-			p.at(0) = it->v(0) * mass;
-			p.at(1) = it->v(1) * mass;
-			p.at(2) = it->v(2) * mass;
+			const uint32_t cid_zb = it->componentid();
+			const uint32_t cid_ub = cid_zb+1;
+			const uint32_t yPosID = floor( (yPos-_range.yl) / _range.subdivision.binWidth.actual);
 
-			// sum all components
-			_sampling.at(0).numParticles.local.at(yPosID)++;
-			_sampling.at(0).momentum.at(0).local.at(yPosID) += p.at(0);
-			_sampling.at(0).momentum.at(1).local.at(yPosID) += p.at(1);
-			_sampling.at(0).momentum.at(2).local.at(yPosID) += p.at(2);
-
-			// sum specific component
-			_sampling.at(cid_ub).numParticles.local.at(yPosID)++;
-			_sampling.at(cid_ub).momentum.at(0).local.at(yPosID) += p.at(0);
-			_sampling.at(cid_ub).momentum.at(1).local.at(yPosID) += p.at(1);
-			_sampling.at(cid_ub).momentum.at(2).local.at(yPosID) += p.at(2);
+			std::array<uint32_t,2> cids = {0, cid_ub}; // add velocities to "all components" and respective component
+			for (int cid : cids) {
+				_sampling.at(cid).numParticles.local.at(yPosID)++;
+				_sampling.at(cid).velocity.at(0).local.at(yPosID) += it->v(0);
+				_sampling.at(cid).velocity.at(1).local.at(yPosID) += it->v(1);
+				_sampling.at(cid).velocity.at(2).local.at(yPosID) += it->v(2);
+			}
 		}
 	}
 	
@@ -182,9 +197,9 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID)
 			{
 				domainDecomp->collCommAppendUnsLong(_sampling.at(cid).numParticles.local.at(yPosID));
-				domainDecomp->collCommAppendDouble(_sampling.at(cid).momentum.at(0).local.at(yPosID));
-				domainDecomp->collCommAppendDouble(_sampling.at(cid).momentum.at(1).local.at(yPosID));
-				domainDecomp->collCommAppendDouble(_sampling.at(cid).momentum.at(2).local.at(yPosID));
+				domainDecomp->collCommAppendDouble(_sampling.at(cid).velocity.at(0).local.at(yPosID));
+				domainDecomp->collCommAppendDouble(_sampling.at(cid).velocity.at(1).local.at(yPosID));
+				domainDecomp->collCommAppendDouble(_sampling.at(cid).velocity.at(2).local.at(yPosID));
 				numValsCheck += 4;
 			}
 		}
@@ -202,15 +217,15 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 				double invNumParticles = 1./static_cast<double>(numParticles);
 				_sampling.at(cid).numParticles.global.at(yPosID) = numParticles;
 				//~ cout << "[" << nRank << "]: cid=" << cid << ",yPosID=" << yPosID << ",numParticles=" << numParticles << endl;
-				_sampling.at(cid).momentum.at(0).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
-				_sampling.at(cid).momentum.at(1).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
-				_sampling.at(cid).momentum.at(2).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
+				_sampling.at(cid).velocity.at(0).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
+				_sampling.at(cid).velocity.at(1).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
+				_sampling.at(cid).velocity.at(2).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
 				
 				// reset local values
 				_sampling.at(cid).numParticles.local.at(yPosID) = 0;
-				_sampling.at(cid).momentum.at(0).local.at(yPosID) = 0.;
-				_sampling.at(cid).momentum.at(1).local.at(yPosID) = 0.;
-				_sampling.at(cid).momentum.at(2).local.at(yPosID) = 0.;
+				_sampling.at(cid).velocity.at(0).local.at(yPosID) = 0.;
+				_sampling.at(cid).velocity.at(1).local.at(yPosID) = 0.;
+				_sampling.at(cid).velocity.at(2).local.at(yPosID) = 0.;
 			}
 		}
 		// finalize
@@ -221,9 +236,9 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 		{
 			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID)
 			{
-				_sampling.at(cid).mom_corr.at(0).at(yPosID) = _target.drift.at(0) - _sampling.at(cid).momentum.at(0).global.at(yPosID);
-				_sampling.at(cid).mom_corr.at(1).at(yPosID) = _target.drift.at(1) - _sampling.at(cid).momentum.at(1).global.at(yPosID);
-				_sampling.at(cid).mom_corr.at(2).at(yPosID) = _target.drift.at(2) - _sampling.at(cid).momentum.at(2).global.at(yPosID);
+				_sampling.at(cid).velo_corr.at(0).at(yPosID) = _target.drift.at(0) - _sampling.at(cid).velocity.at(0).global.at(yPosID);
+				_sampling.at(cid).velo_corr.at(1).at(yPosID) = _target.drift.at(1) - _sampling.at(cid).velocity.at(1).global.at(yPosID);
+				_sampling.at(cid).velo_corr.at(2).at(yPosID) = _target.drift.at(2) - _sampling.at(cid).velocity.at(2).global.at(yPosID);
 			}
 		}
 		
@@ -235,16 +250,18 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 				continue;
 			
 			// check if target component
-			uint32_t cid_zb = it->componentid();
-			uint32_t cid_ub = cid_zb+1;
-			if(cid_ub != _target.cid && 0 != _target.cid)
-				continue;
+			uint32_t cid_ub = 0;
+			if (_target.cid != 0) {
+				cid_ub = it->componentid() + 1;
+				if (cid_ub != _target.cid) {
+					continue;
+				}
+			}
 			
 			uint32_t yPosID = floor( (yPos-_range.yl) / _range.subdivision.binWidth.actual);
-
-			it->setv(0, it->v(0) + _sampling.at(cid_ub).mom_corr.at(0).at(yPosID) ); 
-			it->setv(1, it->v(1) + _sampling.at(cid_ub).mom_corr.at(1).at(yPosID) );
-			it->setv(2, it->v(2) + _sampling.at(cid_ub).mom_corr.at(2).at(yPosID) );
+			for (const auto d : _directions) {
+				it->setv(d, it->v(d) + _sampling.at(cid_ub).velo_corr.at(d).at(yPosID) ); 
+			}
 		}
 	}
 	
@@ -252,46 +269,26 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 	if(simstep % _control.freq.write == 0 && nRank == 0)
 	{
 		{
-			// construct filename
-			std::stringstream fnamestream;
-			fnamestream << "DriftCtrl_drift.dat";
-		
-			std::ofstream ofs(fnamestream.str().c_str(), std::ios::app);
-			std::stringstream outputstream;
-			//~ outputstream << "     simstep" << "                      vy" << "                      vz" << std::endl;
-		
-			outputstream << setw(12) << simstep;
-			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID)
-				outputstream << FORMAT_SCI_MAX_DIGITS << _sampling.at(_target.cid).momentum.at(1).global.at(yPosID);
-			outputstream << std::endl;
-			
-			ofs << outputstream.str();
+			const std::string fname = "DriftCtrl_drift.dat";
+			std::ofstream ofs;
+			ofs.open(fname, std::ios::app);
+			ofs << setw(12) << simstep;
+			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID) {
+				ofs << FORMAT_SCI_MAX_DIGITS << _sampling.at(_target.cid).velocity.at(1).global.at(yPosID);
+			}
+			ofs << std::endl;
 			ofs.close();
 		}
 		{
-			// construct filename
-			std::stringstream fnamestream;
-			fnamestream << "DriftCtrl_numParticles.dat";
-		
-			std::ofstream ofs(fnamestream.str().c_str(), std::ios::app);
-			std::stringstream outputstream;
-			//~ outputstream << "     simstep" << "                      vy" << "                      vz" << std::endl;
-		
-			outputstream << setw(12) << simstep;
-			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID)
-				outputstream << setw(12) << _sampling.at(_target.cid).numParticles.global.at(yPosID);
-			outputstream << std::endl;
-			
-			ofs << outputstream.str();
+			const std::string fname = "DriftCtrl_numParticles.dat";
+			std::ofstream ofs;
+			ofs.open(fname, std::ios::app);
+			ofs << setw(12) << simstep;
+			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID) {
+				ofs << setw(12) << _sampling.at(_target.cid).numParticles.global.at(yPosID);
+			}
+			ofs << std::endl;
 			ofs.close();
 		}
 	}
 }
-
-
-
-
-
-
-
-
