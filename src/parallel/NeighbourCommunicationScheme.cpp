@@ -614,7 +614,7 @@ void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI1D(ParticleContai
 
 void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp, bool /*doHaloPositionCheck*/) {
-	for (unsigned short d = 0; d < getCommDims(); d++) {
+	for (unsigned int d = 0; d < getCommDims(); d++) {
 		exchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, d, domainDecomp);
 	}
 }

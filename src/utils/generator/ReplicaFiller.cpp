@@ -151,14 +151,12 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 			global_log->error() << "ReplicaFiller only works with inputPlugins: BinaryReader at the moment" << endl;
 			Simulation::exit(1);
 		}
-// 	InputPluginFactory inputPluginFactory;
-		InputBase* inputReader = new BinaryReader();
-		if(inputReader == nullptr) {
+		setInputReader(std::make_shared<BinaryReader>());
+		_inputReader->readXML(xmlconfig);
+		if(_inputReader == nullptr) {
 			global_log->error() << "Could not create input reader " << inputPluginName << endl;
 			Simulation::exit(1);
 		}
-		setInputReader(std::shared_ptr<InputBase>(inputReader));
-		_inputReader->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	} else {
 		global_log->error() << "Input reader for original not specified." << endl;

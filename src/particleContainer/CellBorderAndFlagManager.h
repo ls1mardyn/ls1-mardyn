@@ -114,7 +114,7 @@ private:
 	}
 	bool isCell1D(IsCell_t type, Global1DIndex_t index, int dimension) const {
 		mardyn_assert(_initCalled);
-		bool ret;
+		bool ret = false;
 		switch(type) {
 		case IsCell_t::HALO:
 			ret = (index == 0) or (index == _cellsPerDimension[dimension]-1);

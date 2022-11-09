@@ -41,8 +41,6 @@ ppscript=None
 ppcommand=None
 logfile=None
 
-logfhdl=None
-
 if sys.version_info < (2, 6):
 	#raise "ERROR: python version too old: "+str(sys.version_info)+"<2.6"
 	sys.stderr.write("\n!!! WARNING: using old python version "+str(sys.version_info)+" < 2.6 !!!\n\n")
@@ -160,12 +158,11 @@ if logfile:
 	parasubs["$LOGFILENAME"]=logfile
 	logfile=os.path.join(rootdir,logfile)
 	try:
-		logfhdl=open(logfile, 'w')
-		parasubs["$LOGFILEPATH"]=os.path.realpath(logfile)
-		print "log file:\t{0}".format(logfile)
+		with open(logfile, 'w') as f_log:
+			parasubs["$LOGFILEPATH"]=os.path.realpath(logfile)
+			print "log file:\t{0}".format(logfile)
 	except IOError, (errno, strerror):
 		print "Error ({0}) opening {1} for writing: {2}".format(errno,logfile,strerror)
-		#logfhdl=None
 		print "\tlogging deactivated"
 		del parasubs["$LOGFILENAME"]
 		#parasubs["$LOGFILENAME"]=""
@@ -173,11 +170,11 @@ if logfile:
 #else:
 #	parasubs["$LOGFILENAME"]=""
 #	parasubs["$LOGFILEPATH"]=""
-if logfhdl is not None:
-	logfhdl.write("# log file:\t{0}\n".format(parasubs["$LOGFILEPATH"]))
-	logfhdl.write("# label:\t{0}\n".format(label))
-	logfhdl.write("# generator template:\t{0}\n".format(parasubs["$GENTEMPLATEPATH"]))
-	logfhdl.write("# destination root:\t{0}\n".format(parasubs["$DSTROOTPATH"]))
+with open(logfile, 'a') as f_log:
+	f_log.write("# log file:\t{0}\n".format(parasubs["$LOGFILEPATH"]))
+	f_log.write("# label:\t{0}\n".format(label))
+	f_log.write("# generator template:\t{0}\n".format(parasubs["$GENTEMPLATEPATH"]))
+	f_log.write("# destination root:\t{0}\n".format(parasubs["$DSTROOTPATH"]))
 
 if cfgparser.has_option("postproc","template"):
 	pptemplate=cfgparser.get("postproc","template")
@@ -324,13 +321,13 @@ if cfgparser.has_section("parameters"):
 	print "number of jobs:\t{0}".format(numvar)
 else:
 	print "WARNING: ",configfile," does not have a \"parameters\" section"
-	if logfhdl is not None:
-		logfhdl.write("WARNING: configuration file {0} does not contain a \"parameters\" section\n".format(configfile))
+	with open(logfile, 'a') as f_log:
+		f_log.write("WARNING: configuration file {0} does not contain a \"parameters\" section\n".format(configfile))
 	
 
 
 def execmd(cmd,wd="."):
-	global logfhdl
+	global f_log
 	#print "execute command \"{0}\" (working directory: {1})".format(cmd,wd)
 	status=-1
 	stdoutdata=""
@@ -354,16 +351,16 @@ def execmd(cmd,wd="."):
 			#if status: print "ERROR {0} executing \"{1}\"".format(status,cmd)	# return status and let caller deal with it
 		except ValueError:
 			print "Popen ERROR executing "+cmd
-	if logfhdl is not None:
-			#logfhdl.write("cd {0}; {1}; cd $OLDPWD # cmd rc={2}\n".format(wd,cmd,status))
-			#logfhdl.write("cd {0}; {1}; cd - # cmd rc={2}\n".format(wd,cmd,status))
-			logfhdl.write("(cd {0}; {1}) # cmd rc={2}\n".format(wd,cmd,status))
+	with open(logfile, 'a') as f_log:
+			#f_log.write("cd {0}; {1}; cd $OLDPWD # cmd rc={2}\n".format(wd,cmd,status))
+			#f_log.write("cd {0}; {1}; cd - # cmd rc={2}\n".format(wd,cmd,status))
+			f_log.write("(cd {0}; {1}) # cmd rc={2}\n".format(wd,cmd,status))
 	return status,stdoutdata,stderrdata
 
 def adjrlinks(dstdir,srcdir):
 	""" adjust relative links
 	"""
-	global logfhdl
+	global f_log
 	#print "adapt relative links contained in directory {0} copied from {1}".format(dstdir,srcdir)
 	dstdirqueue=["."]
 	while len(dstdirqueue)>0:
@@ -380,12 +377,12 @@ def adjrlinks(dstdir,srcdir):
 					templatelinkfile=os.path.realpath(os.path.join(srcdir,qdir,filename))
 					if dstfile!=templatelinkfile:
 						os.remove(dstfile)
-						if logfhdl is not None:
-							logfhdl.write("rm {0}\n".format(dstfile))
+						with open(logfile, 'a') as f_log:
+							f_log.write("rm {0}\n".format(dstfile))
 						symlinkpath=os.path.relpath(templatelinkfile,dstqdir)
 						os.symlink(symlinkpath,dstfile)
-						if logfhdl is not None:
-							logfhdl.write("ln -s {0} {1}\n".format(symlinkpath,dstfile))
+						with open(logfile, 'a') as f_log:
+							f_log.write("ln -s {0} {1}\n".format(symlinkpath,dstfile))
 
 
 if os.path.exists(dstroot):
@@ -396,14 +393,14 @@ print "creating directory {0}".format(dstroot)
 if pptemplate is not None:
 	print "\t(copying {0})".format(pptemplate)
 	shutil.copytree(pptemplate,dstroot,symlinks=True)
-	if logfhdl is not None:
-		logfhdl.write("cp -a {0} {1}\n".format(pptemplate,dstroot))
+	with open(logfile, 'a') as f_log:
+		f_log.write("cp -a {0} {1}\n".format(pptemplate,dstroot))
 	adjrlinks(dstroot,pptemplate)
 else:
 	#os.mkdir(dstroot)
 	os.makedirs(dstroot)
-	if logfhdl is not None:
-		logfhdl.write("mkdir {0}\n".format(dstroot))
+	with open(logfile, 'a') as f_log:
+		f_log.write("mkdir {0}\n".format(dstroot))
 if not (os.path.isdir(dstroot) and os.access(dstroot, os.W_OK)):
 	sys.stderr.write("ERROR: destination directory {0} not accessible\n".format(dstroot))
 	sys.exit(6)
@@ -414,7 +411,7 @@ print "generate jobs ##########################################################"
 createdjobs=[]
 cmd=None
 cmd_output=[]
-#cmd_status=[]
+cmd_status=[]
 cmd_failed=0
 parasubs["$COMMANDSTATUS"]=0
 v=[0]*max(1,len(parameters))
@@ -468,8 +465,8 @@ for i in range(numvar):
 			print "destination directory {0} already exists ... skipping".format(jobdir)
 			continue
 		shutil.copytree(gentemplate,jobdir,symlinks=True)
-		if logfhdl is not None:
-			logfhdl.write("cp -a {0} {1}\n".format(gentemplate,jobdir))
+		with open(logfile, 'a') as f_log:
+			f_log.write("cp -a {0} {1}\n".format(gentemplate,jobdir))
 		adjrlinks(jobdir,gentemplate)
 		# substitute parameters within all parafiles
 		for parareplacefile in genparareplfiles:
@@ -501,7 +498,7 @@ for i in range(numvar):
 			print "-",time.strftime("%H:%M:%S"),"command:",cmd,'-'*(51-len(cmd))
 			status,stdoutdata,stderrdata=execmd(cmd,jobdir)
 			parasubs["$COMMANDSTATUS"]=status
-			#cmd_status.append(status)
+			cmd_status.append(status)
 			if status!=0:
 				print stdoutdata
 				print stderrdata
@@ -523,14 +520,13 @@ for i in range(numvar):
 		except Exception, errno:
 			print "ERROR evaluating break condition",breakcondition,"after substitution:",breakcond,"is erroneous"
 			#break
-			pass
 	v[0]+=1
 
 print "-"*72
 print "",time.strftime("%H:%M:%S"),"created",len(createdjobs),"jobs"
 print "",len(cmd_output),"commands executed without errors"
 if cmd is not None:
-	#  cmd_failed=len(filter(lambda s: s>0, cmd_status))
+	cmd_failed=len(filter(lambda s: s>0, cmd_status))
 	if cmd_failed>0:
 		print " Errors detected for executed commands:",cmd_failed,"failed"
 	else:
@@ -584,7 +580,5 @@ if pptemplate is not None:
 			print '-'*58,"done",time.strftime("%H:%M:%S")
 			cmd_output.append(stdoutdata)
 	print "################################################################### done"
-
-	if logfhdl is not None: logfhdl.close()
 
 print time.strftime("finished at %a, %d.%m.%Y %H:%M:%S %Z")

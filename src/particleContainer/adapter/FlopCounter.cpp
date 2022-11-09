@@ -356,10 +356,10 @@ void FlopCounter::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & 
 		const vcp_real_calc m1_y = soa1_mol_pos_y[i];
 		const vcp_real_calc m1_z = soa1_mol_pos_z[i];
 
-		const int numLJcenters_i 	= soa1_mol_ljc_num[i];
-		const int numCharges_i 		= soa1_mol_charges_num[i];
-		const int numDipoles_i 		= soa1_mol_dipoles_num[i];
-		const int numQuadrupoles_i 	= soa1_mol_quadrupoles_num[i];
+		const unsigned long int numLJcenters_i   = static_cast<unsigned long int>(soa1_mol_ljc_num[i]);
+		const unsigned long int numCharges_i     = static_cast<unsigned long int>(soa1_mol_charges_num[i]);
+		const unsigned long int numDipoles_i     = static_cast<unsigned long int>(soa1_mol_dipoles_num[i]);
+		const unsigned long int numQuadrupoles_i = static_cast<unsigned long int>(soa1_mol_quadrupoles_num[i]);
 
 		#if defined(_OPENMP)
 		#pragma omp simd reduction(+ : i_lj, i_charge, i_charge_dipole, i_dipole, i_charge_quadrupole, i_dipole_quadrupole, i_quadrupole, i_mm) \

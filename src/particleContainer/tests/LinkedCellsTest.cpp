@@ -325,7 +325,7 @@ void LinkedCellsTest::testTraversalMethods() {
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, 5.);
 	int* boxWidthInNumCells = dynamic_cast<LinkedCells*>(container)->getBoxWidthInNumCells();
 	int haloWidthInNumCells = container->getHaloWidthNumCells();
-	size_t numCells = (boxWidthInNumCells[0] + 2 * haloWidthInNumCells)
+	size_t numCells = static_cast<size_t>(boxWidthInNumCells[0] + 2 * haloWidthInNumCells)
 			* (boxWidthInNumCells[1] + 2 * haloWidthInNumCells) * (boxWidthInNumCells[2] + 2 * haloWidthInNumCells);
 	CellProcessorStub cpStub(numCells);
 
