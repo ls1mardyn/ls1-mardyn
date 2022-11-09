@@ -36,6 +36,7 @@ def readKeyword(inpfhdl, keywd):
 				return str.strip(tokens[1])
 			else:
 				return ""
+	return None
 
 def readKeywords(inpfhdl, keywds):
 	result={}
@@ -52,7 +53,7 @@ def readKeywords(inpfhdl, keywds):
 				keywds.remove(k)
 				if len(keywds)==0: return result
 				break
-	return
+	return result
 
 def processInput():
 
