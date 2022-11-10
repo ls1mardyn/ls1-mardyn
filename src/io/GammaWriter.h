@@ -16,49 +16,70 @@ class Domain;
 class XMLfileUnits;
 class GammaWriter : public PluginBase {
 public:
-	GammaWriter() : _gammaStream(), _writeFrequency(1), _outputPrefix("mardyn"), _Gamma() {}
-	~GammaWriter() {}
+    GammaWriter() :
+        _gammaStream(),
+        _writeFrequency(5000ul),
+        _outputPrefix("gamma"),
+		_numInterfaces(2),
+        _gamma(),
+        _range{0,20000}, // Reasonable filling value for ymax as domain length is not available here
+		_globalLength{0.0,0.0,0.0},
+		_numComp(0)
+    {}
 
-	/** @brief Read in XML configuration for GammaWriter.
-	 *
-	 * The following xml object structure is handled by this method:
-	 * \code{.xml}
-	   <outputplugin name="GammaWriter">
-	     <writefrequency>INTEGER</writefrequency>  <!-- frequency of writing output file (default: 5000) -->
-	     <outputprefix>STRING</outputprefix>       <!-- prefix of output file (default: "gamma") -->
-		 <numInterfaces>INT</numInterfaces>        <!-- number of interfaces within sampling range (default: 2) -->
-	   </outputplugin>
-	   \endcode
-	 */
-	void readXML(XMLfileUnits& xmlconfig);
-	//! @todo comment
-	void init(ParticleContainer *particleContainer,
-              DomainDecompBase *domainDecomp, Domain *domain);
-	//! @todo comment
-	void endStep(
+    ~GammaWriter() {}
+
+    /** @brief Read in XML configuration for GammaWriter.
+     *
+     * The following xml object structure is handled by this method:
+     * \code{.xml}
+        <outputplugin name="GammaWriter">
+            <writefrequency>INTEGER</writefrequency>   <!-- Frequency to write out data to file; default: 1000 -->
+            <outputprefix>STRING</outputprefix>        <!-- Prefix string of output file name; default: gamma -->
+			<numInterfaces>INT</numInterfaces>         <!-- Number of interfaces within sampling range; default: 2 -->
+            <range>                                    <!-- Range in which to sample data -->
+                <ymin>DOUBLE</ymin>                    <!-- Sampled in y-direction between ymin and ymax; defaults: 0 and domain length -->
+                <ymax>DOUBLE</ymax>
+            </range>
+        </outputplugin>
+       \endcode
+     */
+    void readXML(XMLfileUnits& xmlconfig) override;
+
+    // Initialization of output file
+    void init(ParticleContainer */* particleContainer */,
+              DomainDecompBase *domainDecomp, Domain *domain) override;
+
+    // Calculation of surface tension and, if applicable, output to file
+    void endStep(
             ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain,
             unsigned long simstep
-    );
-	//! @todo comment
-	void finish(ParticleContainer *particleContainer,
-				DomainDecompBase *domainDecomp, Domain *domain);
-	
-	std::string getPluginName() {
-		return std::string("GammaWriter");
-	}
-	static PluginBase* createInstance() { return new GammaWriter(); }
+    ) override;
+
+    void finish(ParticleContainer *particleContainer,
+                DomainDecompBase *domainDecomp, Domain *domain) override {}
+    
+    std::string getPluginName() override { return "GammaWriter"; }
+    static PluginBase* createInstance() { return new GammaWriter(); }
 
 private:
-	void calculateGamma(ParticleContainer* particleContainer, DomainDecompBase* domainDecom);
-	double getGamma(unsigned id, double globalLength[3]);
-	void resetGamma();
+    void calculateGamma(ParticleContainer *particleContainer, DomainDecompBase *domainDecom);
+    inline double getGamma(unsigned id);
+    inline void resetGamma(Domain *domain);
 
-	std::ofstream _gammaStream;
-	unsigned long _writeFrequency {5000ul};
-	std::string _outputPrefix {"gamma"};     // prefix the output file
-	unsigned short _numInterfaces {2};     // prefix the output file
-	std::map<unsigned,double> _Gamma;        // component-wise surface tension
+    std::ofstream _gammaStream;
+	unsigned long _writeFrequency;
+	std::string _outputPrefix;      // prefix the output file
+	unsigned int _numInterfaces;    // number of interfaces within range
+	std::vector<double> _gamma;     // component-wise surface tension; 0 is all components
+	// Range within particles are considered for calculation of surface tension
+    struct Range {
+        double ymin, ymax;
+    } _range;
+
+	std::array<double, 3> _globalLength;
+	unsigned int _numComp;
 };
 
 #endif  // SRC_IO_GAMMAWRITER_H_

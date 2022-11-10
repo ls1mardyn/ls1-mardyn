@@ -151,18 +151,18 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 		std::string inputPluginName;
 		xmlconfig.getNodeValue("@type", inputPluginName);
 		if(inputPluginName != "BinaryReader") {
-			global_log->error() << "ReplicaFiller only works with inputPlugins: BinaryReader at the moment" << endl;
+			global_log->error() << "[ReplicaFiller] ReplicaFiller only works with inputPlugins: BinaryReader at the moment" << endl;
 			Simulation::exit(1);
 		}
 		setInputReader(std::make_shared<BinaryReader>());
 		_inputReader->readXML(xmlconfig);
 		if(_inputReader == nullptr) {
-			global_log->error() << "Could not create input reader " << inputPluginName << endl;
+			global_log->error() << "[ReplicaFiller] Could not create input reader " << inputPluginName << endl;
 			Simulation::exit(1);
 		}
 		xmlconfig.changecurrentnode("..");
 	} else {
-		global_log->error() << "Input reader for original not specified." << endl;
+		global_log->error() << "[ReplicaFiller] Input reader for original not specified." << endl;
 		Simulation::exit(1);
 	}
 	if(xmlconfig.changecurrentnode("origin")) {
@@ -171,8 +171,9 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 		origin.get(_origin);
 		xmlconfig.changecurrentnode("..");
 	}
-	global_log->info() << "Base point for the replication: [" << _origin[0] << "," << _origin[1] << "," << _origin[2]
-					   << "]" << endl;
+	global_log->info() << "[ReplicaFiller] Base point for the replication: ["
+					    << _origin[0] << "," << _origin[1] << "," << _origin[2]
+						<< "]" << endl;
 
     unsigned int componentid = 0;
     _componentid = 0;
