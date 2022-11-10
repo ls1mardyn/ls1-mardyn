@@ -28,7 +28,6 @@
 #include "utils/Logger.h"
 #include "utils/CommVar.h"
 
-using Log::global_log;
 
 DensityControl::DensityControl() {
 }

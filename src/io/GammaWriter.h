@@ -24,8 +24,9 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <outputplugin name="GammaWriter">
-	     <writefrequency>INTEGER</writefrequency>
-	     <outputprefix>STRING</outputprefix>
+	     <writefrequency>INTEGER</writefrequency>  <!-- frequency of writing output file (default: 5000) -->
+	     <outputprefix>STRING</outputprefix>       <!-- prefix of output file (default: "gamma") -->
+		 <numInterfaces>INT</numInterfaces>        <!-- number of interfaces within sampling range (default: 2) -->
 	   </outputplugin>
 	   \endcode
 	 */
@@ -54,9 +55,10 @@ private:
 	void resetGamma();
 
 	std::ofstream _gammaStream;
-	unsigned long _writeFrequency;
-	std::string _outputPrefix;  //!< prefix the output file
-	std::map<unsigned,double> _Gamma;  //!< Surface tension component wise
+	unsigned long _writeFrequency {5000ul};
+	std::string _outputPrefix {"gamma"};     // prefix the output file
+	unsigned short _numInterfaces {2};     // prefix the output file
+	std::map<unsigned,double> _Gamma;        // component-wise surface tension
 };
 
 #endif  // SRC_IO_GAMMAWRITER_H_

@@ -16,11 +16,13 @@ void GammaWriter::readXML(XMLfileUnits& xmlconfig) {
     global_log->info() << "GammaWriter: Write frequency: " << _writeFrequency << endl;
     xmlconfig.getNodeValue("outputprefix", _outputPrefix);
     global_log->info() << "GammaWriter: Output prefix: " << _outputPrefix << endl;
+	xmlconfig.getNodeValue("numInterfaces", _numInterfaces);
+    global_log->info() << "GammaWriter: Number of interfaces: " << _numInterfaces << endl;
 }
 
 void GammaWriter::init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
 	if(domainDecomp->getRank() == 0){
-		string resultfilename(_outputPrefix + ".gamma");
+		string resultfilename(_outputPrefix + ".dat");
 		_gammaStream.open(resultfilename);
 		_gammaStream.precision(6);
 		const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -60,7 +62,8 @@ void GammaWriter::resetGamma() {
 }
 
 double GammaWriter::getGamma(unsigned id, double globalLength[3]){
-	return (_Gamma[id]/(2*globalLength[0]*globalLength[2]));
+	// Depending on the number of interfaces
+	return (_Gamma[id]/(globalLength[0]*globalLength[2]*_numInterfaces));
 }
 
 void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDecompBase* domainDecom){
