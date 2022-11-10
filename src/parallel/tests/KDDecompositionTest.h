@@ -74,7 +74,7 @@ private:
 
 	unsigned f(double x, double y, double z, int N[3], const std::vector<double>& c) const;
 
-	void Write_VTK_Structured_Points(unsigned *A, int N[3], const char *filename) const;
+	void Write_VTK_Structured_Points(unsigned *A, int N[3], std::string& filename) const;
 
 	void initCoeffs(std::vector<double>& c) const;
 	double myRand(double min, double max) const;

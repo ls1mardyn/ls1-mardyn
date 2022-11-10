@@ -302,10 +302,10 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 		std::vector<double> edgeValues;
 		std::vector<double> cornerValues;
 
-		ownValues.reserve((maxMols+1)*(maxMols2+1));
-		faceValues.reserve((maxMols+1)*(maxMols2+1));
-		edgeValues.reserve((maxMols+1)*(maxMols2+1));
-		cornerValues.reserve((maxMols+1)*(maxMols2+1));
+		ownValues.reserve(static_cast<size_t>(maxMols+1)*(maxMols2+1));
+		faceValues.reserve(static_cast<size_t>(maxMols+1)*(maxMols2+1));
+		edgeValues.reserve(static_cast<size_t>(maxMols+1)*(maxMols2+1));
+		cornerValues.reserve(static_cast<size_t>(maxMols+1)*(maxMols2+1));
 
 		for(int numMols1 = 0; numMols1 <= maxMols; numMols1++){
 			global_log->info() << numMols1 << " Molecule(s)" << std::endl;

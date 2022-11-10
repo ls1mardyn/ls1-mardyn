@@ -335,8 +335,9 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 			_feedrate.release_velo.method = RVM_NORM_DISTR_GENERATOR;
 			double T, D;  // T:Temperature, D:Drift
 			double a_neg, a_pos, v_neg, v_pos, e_neg, e_pos;
-			std::string fpath;
-			uint64_t numSamples;
+			T = D = a_neg = a_pos = v_neg = v_pos = e_neg = e_pos = 0.0f;
+			std::string fpath = "";
+			uint64_t numSamples = 0u;
 			bool bRet = true;
 			bRet = bRet && xmlconfig.getNodeValue("control/feed/release_velo/normMB/temperature", T);
 			bRet = bRet && xmlconfig.getNodeValue("control/feed/release_velo/normMB/drift", D);
@@ -1576,9 +1577,11 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 		dcomponents[0].setID(0);
 		dcomponents[0].addLJcenter(0., 0., 0., 1., 1., 1., 6., false);
 	}
+
+	// This is more or less copied from ASCIIReader.cpp
 	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz, Vix, Viy, Viz;
-	unsigned long id;
-	unsigned int componentid;
+	unsigned long id = 0ul;
+	unsigned int componentid = 1;  // Default componentID when using IRV format
 
 	x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=Vix=Viy=Viz=0.;
 	q0=1.;

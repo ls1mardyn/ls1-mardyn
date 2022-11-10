@@ -23,9 +23,9 @@ void GammaWriter::init(ParticleContainer *particleContainer, DomainDecompBase *d
 		string resultfilename(_outputPrefix + ".gamma");
 		_gammaStream.open(resultfilename);
 		_gammaStream.precision(6);
-		time_t now;
-		time(&now);
-		_gammaStream << "# mardyn MD simulation starting at " << ctime(&now) << endl;
+		const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+		tm unused{};
+		_gammaStream << "# mardyn MD simulation starting at " << std::put_time(localtime_r(&now, &unused), "%c") << endl;
 		_gammaStream << "#\tgamma" << endl;
 	}
 }

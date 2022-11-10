@@ -11,6 +11,7 @@
 #include <ctime>
 #include <string>
 #include <sstream>
+#include <chrono>
 
 #ifdef USE_GETTIMEOFDAY
 #include <sys/time.h>
@@ -163,9 +164,9 @@ public:
 		_msg_log_level = level;
 		if (_msg_log_level <= _log_level && _do_output) {
 			// Include timestamp
-			time_t t;
-			t = time(NULL);
-			tm* lt = localtime(&t);
+			const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+			tm unused{};
+			const auto* lt = localtime_r(&now, &unused);
 			//*_log_stream << ctime(&t) << " ";
 			stringstream timestampstream;
 			// maybe sprintf is easier here...
