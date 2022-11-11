@@ -186,15 +186,19 @@ jobs:
             do
               if [[ "${VERSION}" == "master" ]]
               then
+                printf "   Running master... "
                 EXE=$repoPath/build_${JOBNAME}_master/src/MarDyn
               else
+                printf "   Running new version... "
                 EXE=$repoPath/build_${JOBNAME}/src/MarDyn
               fi
         
-              mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
+              mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20 2>&1                       \
                 | tee "output_${{ join(matrix.*, '-') }}"                                                   \
                 | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' > ${repoPath}/output_${VERSION}    \
                 || cat "output_${{ join(matrix.*, '-') }}"
+
+              printf "Done\n"
             done
             # compare the two runs
             diff ${repoPath}/output_new ${repoPath}/output_master
