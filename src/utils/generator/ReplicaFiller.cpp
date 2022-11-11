@@ -68,18 +68,15 @@ class ParticleContainerToBasisWrapper : public ParticleContainer {
 
     double getBoundingBoxMin(int dimension) const override {
         double min[3] = {std::numeric_limits<double>::min(), std::numeric_limits<double>::min(), std::numeric_limits<double>::min()};
-    //    _object->getBboxMin(min);
         return min[dimension];
     }
 
     double getBoundingBoxMax(int dimension) const override {
         double max[3] = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), std::numeric_limits<double>::max()};
-    //    _object->getBboxMax(max);
         return max[dimension];
     }
 
     bool isInBoundingBox(double r[3]) const override {
-        // _object->isInside(r);
         return true;
     }
 
