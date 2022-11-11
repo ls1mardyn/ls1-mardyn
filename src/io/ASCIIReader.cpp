@@ -22,7 +22,6 @@
 #include "utils/Logger.h"
 
 using Log::global_log;
-using namespace std;
 
 
 ASCIIReader::ASCIIReader() {}
@@ -43,7 +42,7 @@ void ASCIIReader::readXML(XMLfileUnits& xmlconfig) {
 		if (pspfile[0] != '/') {
 			pspfile.insert(0, xmlconfig.getDir());
 		}
-		global_log->info() << "phasespacepoint description file:\t" << pspfile << endl;
+		global_log->info() << "phasespacepoint description file:\t" << pspfile << std::endl;
 	}
 	setPhaseSpaceFile(pspfile);
 }
@@ -51,11 +50,11 @@ void ASCIIReader::readXML(XMLfileUnits& xmlconfig) {
 void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	string token;
 
-	global_log->info() << "Opening phase space header file " << _phaseSpaceHeaderFile << endl;
+	global_log->info() << "Opening phase space header file " << _phaseSpaceHeaderFile << std::endl;
 	_phaseSpaceHeaderFileStream.open(_phaseSpaceHeaderFile.c_str());
 	_phaseSpaceHeaderFileStream >> token;
 	if(token != "mardyn") {
-		global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << endl;
+		global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << std::endl;
 		Simulation::exit(1);
 	}
 
@@ -63,16 +62,16 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_phaseSpaceHeaderFileStream >> token >> inputversion;
 	// FIXME: remove tag trunk from file specification?
 	if(token != "trunk") {
-		global_log->error() << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << endl;
+		global_log->error() << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << std::endl;
 		Simulation::exit(1);
 	}
 
 	if(std::stoi(inputversion) < 20080701) {
-		global_log->error() << "Input version too old (" << inputversion << ")" << endl;
+		global_log->error() << "Input version too old (" << inputversion << ")" << std::endl;
 		Simulation::exit(1);
 	}
 
-	global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << endl;
+	global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << std::endl;
 
 	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
 	bool header = true; // When the last header element is reached, "header" is set to false
@@ -89,7 +88,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 		token.clear();
 		_phaseSpaceHeaderFileStream >> token;
-		global_log->info() << "{{" << token << "}}" << endl;
+		global_log->info() << "{{" << token << "}}" << std::endl;
 
 		if((token == "currentTime") || (token == "t")) {
 			// set current simulation time
@@ -149,10 +148,10 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			// components:
 			unsigned int numcomponents = 0;
 			_phaseSpaceHeaderFileStream >> numcomponents;
-			global_log->info() << "Reading " << numcomponents << " components" << endl;
+			global_log->info() << "Reading " << numcomponents << " components" << std::endl;
 			dcomponents.resize(numcomponents);
 			for(unsigned int i = 0; i < numcomponents; i++) {
-				global_log->info() << "comp. i = " << i << ": " << endl;
+				global_log->info() << "comp. i = " << i << ": " << std::endl;
 				dcomponents[i].setID(i);
 				unsigned int numljcenters = 0;
 				unsigned int numcharges = 0;
@@ -172,26 +171,26 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> eps >> sigma >> tcutoff >> do_shift;
 					dcomponents[i].addLJcenter(x, y, z, m, eps, sigma, tcutoff, (do_shift != 0));
 					global_log->info() << "LJ at [" << x << " " << y << " " << z << "], mass: " << m << ", epsilon: "
-									   << eps << ", sigma: " << sigma << endl;
+									   << eps << ", sigma: " << sigma << std::endl;
 				}
 				for(unsigned int j = 0; j < numcharges; j++) {
 					double q;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> q;
 					dcomponents[i].addCharge(x, y, z, m, q);
 					global_log->info() << "charge at [" << x << " " << y << " " << z << "], mass: " << m << ", q: " << q
-									   << endl;
+									   << std::endl;
 				}
 				for(unsigned int j = 0; j < numdipoles; j++) {
 					double eMyx, eMyy, eMyz, absMy;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> eMyx >> eMyy >> eMyz >> absMy;
 					dcomponents[i].addDipole(x, y, z, eMyx, eMyy, eMyz, absMy);
-					global_log->info() << "dipole at [" << x << " " << y << " " << z << "] " << endl;
+					global_log->info() << "dipole at [" << x << " " << y << " " << z << "] " << std::endl;
 				}
 				for(unsigned int j = 0; j < numquadrupoles; j++) {
 					double eQx, eQy, eQz, absQ;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> eQx >> eQy >> eQz >> absQ;
 					dcomponents[i].addQuadrupole(x, y, z, eQx, eQy, eQz, absQ);
-					global_log->info() << "quad at [" << x << " " << y << " " << z << "] " << endl;
+					global_log->info() << "quad at [" << x << " " << y << " " << z << "] " << std::endl;
 				}
 				double IDummy1, IDummy2, IDummy3;
 				// FIXME! Was soll das hier? Was ist mit der Initialisierung im Fall I <= 0.
@@ -200,13 +199,13 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 				if(IDummy2 > 0.) dcomponents[i].setI22(IDummy2);
 				if(IDummy3 > 0.) dcomponents[i].setI33(IDummy3);
 				domain->setProfiledComponentMass(dcomponents[i].m());
-				global_log->info() << endl;
+				global_log->info() << std::endl;
 			}
 
 #ifndef NDEBUG
 			for(unsigned int i = 0; i < numcomponents; i++) {
-				global_log->debug() << "Component " << (i + 1) << " of " << numcomponents << endl;
-				global_log->debug() << dcomponents[i] << endl;
+				global_log->debug() << "Component " << (i + 1) << " of " << numcomponents << std::endl;
+				global_log->debug() << dcomponents[i] << std::endl;
 			}
 #endif
 
@@ -243,7 +242,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 		}
 		// LOCATION OF OLD PRESSURE GRADIENT TOKENS
 		else {
-			global_log->error() << "Invalid token \'" << token << "\' found. Skipping rest of the header." << endl;
+			global_log->error() << "Invalid token \'" << token << "\' found. Skipping rest of the header." << std::endl;
 			header = false;
 		}
 	}
@@ -262,13 +261,13 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 	if (domainDecomp->getRank() == 0)
 	{ // Rank 0 only
 #endif
-	global_log->info() << "Opening phase space file " << _phaseSpaceFile << endl;
+	global_log->info() << "Opening phase space file " << _phaseSpaceFile << std::endl;
 	_phaseSpaceFileStream.open(_phaseSpaceFile.c_str());
 	if(!_phaseSpaceFileStream.is_open()) {
-		global_log->error() << "Could not open phaseSpaceFile " << _phaseSpaceFile << endl;
+		global_log->error() << "Could not open phaseSpaceFile " << _phaseSpaceFile << std::endl;
 		Simulation::exit(1);
 	}
-	global_log->info() << "Reading phase space file " << _phaseSpaceFile << endl;
+	global_log->info() << "Reading phase space file " << _phaseSpaceFile << std::endl;
 #ifdef ENABLE_MPI
 	} // Rank 0 only
 #endif
@@ -291,7 +290,7 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 		_phaseSpaceFileStream >> token;
 	}
 	if((token != "NumberOfMolecules") && (token != "N")) {
-		global_log->error() << "Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << endl;
+		global_log->error() << "Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << std::endl;
 		Simulation::exit(1);
 	}
 	_phaseSpaceFileStream >> nummolecules;
@@ -300,7 +299,7 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 	// TODO: Better do the following in setGlobalNumMolecules?!
 	MPI_Bcast(&nummolecules, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 #endif
-	global_log->info() << " number of molecules: " << nummolecules << endl;
+	global_log->info() << " number of molecules: " << nummolecules << std::endl;
 
 
 #ifdef ENABLE_MPI
@@ -318,15 +317,15 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 		else if(ntypestring == "ICRV") ntype = Ndatatype::ICRV;
 		else if(ntypestring == "IRV") ntype = Ndatatype::IRV;
 		else {
-			global_log->error() << "Unknown molecule format '" << ntypestring << "'" << endl;
+			global_log->error() << "Unknown molecule format '" << ntypestring << "'" << std::endl;
 			Simulation::exit(1);
 		}
 	} else {
 		_phaseSpaceFileStream.seekg(spos);
 	}
-	global_log->info() << " molecule format: " << ntypestring << endl;
+	global_log->info() << " molecule format: " << ntypestring << std::endl;
 	if(numcomponents < 1) {
-		global_log->warning() << "No components defined! Setting up single one-centered LJ" << endl;
+		global_log->warning() << "No components defined! Setting up single one-centered LJ" << std::endl;
 		numcomponents = 1;
 		dcomponents.resize(numcomponents);
 		dcomponents[0].setID(0);
@@ -351,8 +350,8 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 #endif
 
 	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz, Vix, Viy, Viz;
-	unsigned long id;
-	unsigned int componentid = std::numeric_limits<unsigned int>::max();
+	unsigned long id = 0ul;
+	unsigned int componentid = 1;  // Default componentID when using IRV format
 
 	x = y = z = vx = vy = vz = q1 = q2 = q3 = Dx = Dy = Dz = Vix = Viy = Viz = 0.;
 	q0 = 1.;
@@ -378,20 +377,27 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 				_phaseSpaceFileStream >> id >> x >> y >> z >> vx >> vy >> vz;
 				componentid = 1;
 				break;
+			default:
+				global_log->error() << "[ASCIIReader.cpp] Unknown ntype" << std::endl;
+				Simulation::exit(1);
 		}
 		if((x < 0.0 || x >= domain->getGlobalLength(0))
 		   || (y < 0.0 || y >= domain->getGlobalLength(1))
 		   || (z < 0.0 || z >= domain->getGlobalLength(2))) {
-			global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << endl;
+			global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << std::endl;
 		}
 
 		if(componentid > numcomponents) {
-			global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">"
-								<< numcomponents << endl;
+			global_log->error() << "Molecule id " << id
+								<< " has a component ID greater than the existing number of components: "
+								<< componentid
+								<< ">"
+								<< numcomponents << std::endl;
 			Simulation::exit(1);
 		}
-		componentid--; // TODO: Component IDs start with 0 in the program.
-
+		// ComponentIDs are used as array IDs, hence need to start at 0.
+		// In the input files they always start with 1 so we need to adapt that all the time.
+		componentid--;
 		// store only those molecules within the domain of this process
 		// The necessary check is performed in the particleContainer addParticle method
 		// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
@@ -442,7 +448,7 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 
 #endif
 	}
-	global_log->info() << "Reading Molecules done" << endl;
+	global_log->info() << "Reading Molecules done" << std::endl;
 
 
 #ifdef ENABLE_MPI
@@ -461,6 +467,6 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 	MPI_CHECK( MPI_Type_free(&mpi_Particle) );
 #endif
 	domain->setglobalNumMolecules(nummolecules);
-	domain->setglobalRho(domain->getglobalNumMolecules() / domain->getGlobalVolume());
+	domain->setglobalRho(nummolecules / domain->getGlobalVolume());
 	return maxid;
 }

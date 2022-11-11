@@ -34,6 +34,10 @@ DEPS ?= 0
 # 0: disbaled, 1: enabled
 UNIT_TESTS ?= 0
 
+# build with ADIOS2 support
+# 0: disabled, 1: enabled
+ADIOS2 ?= 0
+
 # build with VTK support
 # 0: disbaled, 1: enabled
 VTK ?= 0
@@ -156,7 +160,7 @@ else
   $(error ERROR: config file for $(CFG) not found - no include )
 endif
 
-SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/|/fft/|AutoPas)")
+SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/|/fft/|AutoPas|Adios2)")
 SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "DomainDecompBase\|LoadCalc\|Zonal\|ForceHelper" | grep -E -v "/tests/")
 SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -E -v "(/tests/|/vtk/|ALLL)")
 SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE))
@@ -166,16 +170,42 @@ OBJECTS = $(SOURCES:.cpp=.o)
 INCLUDES = -I$(SRCDIR) -isystem $(SRCDIR)/../libs/rapidxml -isystem $(SRCDIR)/../libs/armadillo
 
 BINARY_BASENAME = MarDyn
-ifneq ("$(wildcard $(SRCDIR)/../.git)","")
+# Check if .git folder and git command are available
+ifeq ("$(wildcard $(SRCDIR)/../.git)","")
+  # If .git folder is not found, do not display git version info
+  $(info .git folder not found)
+  $(shell sed "s=@MarDyn_VERSION_BRANCH@==g" MarDyn_version.h.in > MarDyn_version.h)
+  $(shell sed -i "s=@MarDyn_VERSION_HASH@==g" MarDyn_version.h)
+  $(shell sed -i "s=@MarDyn_VERSION_IS_DIRTY@==g" MarDyn_version.h)
+  BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
+else ifeq ("$(shell which git)","")
+  # If git command is not found, do not display git version info
+  $(info git command not found)
+  $(shell sed "s=@MarDyn_VERSION_BRANCH@==g" MarDyn_version.h.in > MarDyn_version.h)
+  $(shell sed -i "s=@MarDyn_VERSION_HASH@==g" MarDyn_version.h)
+  $(shell sed -i "s=@MarDyn_VERSION_IS_DIRTY@==g" MarDyn_version.h)
+  BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
+else
   $(info Building from a git version.)
-  GIT_VERSION = $(shell git rev-parse --short HEAD | sed -e "s/:/-/")
-  ifneq ($(GIT_VERSION),)
-    BINARY = $(BINARY_BASENAME)_$(GIT_VERSION).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
+  # Using git, the current version and state of the code are written to MarDyn_version.h
+  # this enables for the display of the information during execution of MarDyn
+  # see version.cmake for accordance in cmake
+  GIT_VERSION_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+  GIT_VERSION_HASH = $(shell git rev-parse --short HEAD)
+  GIT_VERSION_IS_DIRTY = $(shell git diff --quiet || echo "_dirty")
+  GIT_VERSION_HASH_CURRENT = $(shell grep "MARDYN_VERSION_HASH =" MarDyn_version.h 2> /dev/null | awk -F '"' '{print $$2}' | tr -d '_')
+  # Check if git commit has changed since last execution of make command
+  ifneq ($(GIT_VERSION_HASH),$(GIT_VERSION_HASH_CURRENT))
+    $(shell rm -f MarDyn.o) # Force new build of MarDyn including updated version info
+    $(shell sed "s=@MarDyn_VERSION_BRANCH@=$(GIT_VERSION_BRANCH)=g" MarDyn_version.h.in > MarDyn_version.h)
+    $(shell sed -i "s=@MarDyn_VERSION_HASH@=$(GIT_VERSION_HASH)=g" MarDyn_version.h)
+    $(shell sed -i "s=@MarDyn_VERSION_IS_DIRTY@=$(GIT_VERSION_IS_DIRTY)=g" MarDyn_version.h)
+  endif
+  ifneq ($(GIT_VERSION_HASH),)
+    BINARY = $(BINARY_BASENAME)_$(GIT_VERSION_HASH).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
   else
     BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
   endif
-else
-  BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
 endif
 
 CXX = $(CXX_$(PARTYPE))
@@ -247,6 +277,11 @@ endif
 ifeq ($(INSITU), 1)
 	INSITU_MAKEFILE := $(realpath $(MAKEFILEDIR)/insitu.mk )
   include $(INSITU_MAKEFILE)
+endif
+
+ifeq ($(ADIOS2), 1)
+  ADIOS2_MAKEFILE := $(realpath $(MAKEFILEDIR)/adios2.mk )
+  include $(ADIOS2_MAKEFILE)
 endif
 
 ifeq ($(VTK), 1)

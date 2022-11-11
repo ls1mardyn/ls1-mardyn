@@ -14,6 +14,7 @@
 #include <numeric>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <algorithm>
 
 using namespace std;
@@ -55,7 +56,7 @@ void MettDeamonFeedrateDirector::init(ParticleContainer* particleContainer, Doma
 		for (auto it=_feedrate.list.begin(); it != _feedrate.list.end(); ++it) {
 			_feedrate.sum += *it;
 		}
-		_feedrate.avg = _feedrate.sum * 1./(double)(_feedrate.list.size());
+		_feedrate.avg = _feedrate.sum * 1./static_cast<double>(_feedrate.list.size());
 		mettDeamon->setInitFeedrate(_feedrate.avg);
 	}
 }
@@ -179,7 +180,7 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 	// reset local values
 	this->resetLocalValues();
 
-	double dInvSampledTimestepCount = 1. / (double)(_updateControl.updateFreq);
+	double dInvSampledTimestepCount = 1. / static_cast<double>(_updateControl.updateFreq);
 	double deletedParticlesPerTimestep = _particleManipCount.deleted.global.at(cid) * dInvSampledTimestepCount;
 	_feedrate.actual = deletedParticlesPerTimestep * mettDeamon->getInvDensityArea();
 
@@ -191,7 +192,7 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 		_feedrate.list.pop_front();
 	else
 		_feedrate.sum = std::accumulate(_feedrate.list.begin(), _feedrate.list.end(), 0.0);
-	double dInvNumvals = 1./(double)(_feedrate.list.size());
+	double dInvNumvals = 1./static_cast<double>(_feedrate.list.size());
 	_feedrate.avg = _feedrate.sum * dInvNumvals;
 
 #ifndef NDEBUG
@@ -205,6 +206,7 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _feedrate.actual=" << _feedrate.actual << endl;
 	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _feedrate.sum=" << _feedrate.sum << endl;
 	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : _feedrate.avg=" << _feedrate.avg << endl;
+	cout << "[MDFD] Rank: " << domainDecomp.getRank() << " : mettDeamon->getInvDensityArea()=" << mettDeamon->getInvDensityArea() << endl;
 #endif
 }
 

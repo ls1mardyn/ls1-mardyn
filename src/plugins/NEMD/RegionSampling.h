@@ -201,6 +201,8 @@ private:
 	std::vector<double> _dSquaredVelocityGlobal;
 	std::vector<double> _dForceLocal;
 	std::vector<double> _dForceGlobal;
+	std::vector<double> _dVirialLocal;
+	std::vector<double> _dVirialGlobal;
 
 	// output profiles
 	std::vector<double> _dForce;
@@ -208,6 +210,7 @@ private:
 	std::vector<double> _d2EkinTransComp;
 	std::vector<double> _d2EkinDriftComp;
 	std::vector<double> _dTemperatureComp;
+	std::vector<double> _dVirial;
 
 	// --- VDF ---
 
@@ -431,4 +434,3 @@ private:
 };
 
 #endif /* REGIONSAMPLING_H_ */
-

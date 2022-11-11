@@ -314,6 +314,9 @@ private:
 	int calculatePartitionRank();
 	bool checkNeedRebalance(double lastTraversalTime) const;
 
+	//check whether or not to do rebalancing in the specified step
+	bool doRebalancing(bool forceRebalancing, bool needsRebalance, size_t steps, int frequency);
+
 	//######################################
 	//###    private member variables    ###
 	//######################################

@@ -19,13 +19,12 @@ if (ENABLE_AUTOPAS)
     set(AUTOPAS_OPENMP ${OPENMP} CACHE BOOL "" FORCE)
     set(spdlog_ForceBundled ON CACHE BOOL "" FORCE)
     set(Eigen3_ForceBundled ON CACHE BOOL "" FORCE)
+    # translate ls1 vectorization settings to AutoPas'
+    set(AUTOPAS_USE_VECTORIZATION ${USE_VECTORIZATION} CACHE BOOL "Set via USE_VECTORIZATION" FORCE)
+    set(AUTOPAS_VECTOR_INSTRUCTIONS ${VECTOR_INSTRUCTIONS} CACHE STRING "Set via VECTOR_INSTRUCTIONS_OPTIONS" FORCE)
 
-    if (AUTOPAS_MANUAL_TAG)
-        set(AUTOPAS_TAG ${AUTOPAS_MANUAL_TAG})
-    else()
-        # The merge commit of autopas#642, i.e., the introduction of the LC interface. (2021-09-19)
-        set(AUTOPAS_TAG 510e7bb43fb0255cc5d64966f7d68754890e8940)
-    endif()
+    # AutoTuner SVE Functor (2022-07-30)
+    set(AUTOPAS_TAG 96cdceba59e394b830fc0a967caddcc024b27175 CACHE STRING "AutoPas Git tag to use")
 
     FetchContent_Declare(
             autopasfetch

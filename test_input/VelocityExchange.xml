@@ -1,0 +1,17 @@
+<!-- Test input config file for VelocityExchange plugin -->
+<control>
+	<start>0</start>                     <!-- step to start; default 0 -->
+	<frequency>10000</frequency>         <!-- frequency to conduct velo swap; default 10000 -->
+	<stop>200000000</stop>               <!-- step to stop; default 200000000 -->
+</control>
+<coldregion>                                 <!-- region with lower temperature -->
+	<xmin>1.2</xmin> <xmax>box</xmax>      <!-- range x-axis; default: 0 to box size -->
+	<ymin>2.5</ymin> <ymax>24.2</ymax>    <!-- range y-axis -->
+	<zmin>3.0</zmin> <zmax>111.1</zmax>      <!-- range z-axis; default: 0 to box size -->
+</coldregion>
+<warmregion>                                 <!-- region with higher temperature -->
+	<symmetric>0</symmetric>             <!-- 0: no symmetry; 1: symmetry in y direction (default) -->
+	<xmin>7.1</xmin> <xmax>131.3</xmax>      <!-- range x-axis; default: 0 to box size -->
+	<ymin>94.0</ymin> <ymax>120.4</ymax>      <!-- range y-axis -->
+	<zmin>4.0</zmin> <zmax>box</zmax>      <!-- range z-axis; default: 0 to box size -->
+</warmregion>

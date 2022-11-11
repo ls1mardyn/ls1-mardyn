@@ -63,7 +63,7 @@ void MaxWriter::init(ParticleContainer * /*particleContainer*/,
 	sstrFilename[3] << _outputPrefix << "_max_torqe.dat";
 
 	std::stringstream sstrOutput[4];
-	for(uint8_t qi=0; qi<_numQuantities; ++qi)
+	for(uint32_t qi=0; qi<_numQuantities; ++qi)
 		sstrOutput[qi] << "                 simstep";
 
 	for(uint32_t cid=0; cid<_numComponents; ++cid)
@@ -105,7 +105,7 @@ void MaxWriter::init(ParticleContainer * /*particleContainer*/,
 		sstrOutput[3] << "                  M-z_c" << cid;
 	}
 
-	for(uint8_t qi=0; qi<_numQuantities; ++qi)
+	for(uint32_t qi=0; qi<_numQuantities; ++qi)
 	{
 		ofstream ofs(sstrFilename[qi].str().c_str(), ios::out);
 		sstrOutput[qi] << endl;
@@ -247,14 +247,14 @@ void MaxWriter::writeData(DomainDecompBase* domainDecomp)
 			uint32_t nOffsetComponent = cid*_numValsPerComponent;
 			double vmax = sqrt(_dMaxValuesGlobal[nOffsetComponent+nOffsetQuantity]);
 			sstrOutput[qi] << FORMAT_SCI_MAX_DIGITS << vmax;
-			for(uint8_t vi=1; vi<_numValsPerQuantity; ++vi)
+			for(uint32_t vi=1; vi<_numValsPerQuantity; ++vi)
 				sstrOutput[qi] << FORMAT_SCI_MAX_DIGITS << _dMaxValuesGlobal[nOffsetComponent+nOffsetQuantity+vi];
 		}
 		sstrOutput[qi] << endl;
 	}
 
 	// write streams to files
-	for(uint8_t qi=0; qi<_numQuantities; ++qi)
+	for(uint32_t qi=0; qi<_numQuantities; ++qi)
 	{
 		ofstream ofs(sstrFilename[qi].str().c_str(), ios::app);
 		ofs << sstrOutput[qi].str();

@@ -60,24 +60,14 @@ def chp_replicate(num_reps, in_file_path, out_file_path, createHeader=True):
 #%% Main program which can be called from the command line
 if __name__ == '__main__':
     
-    flgInp = 1 # 1: Parse args; 2: Hardcoded
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('num_reps', help='Number of replications in each direction')
+    parser.add_argument('in_file_path', help='Path to input checkpoint')
+    parser.add_argument('out_file_path', help='Path and filename of output checkpoint')
+    args = parser.parse_args()
+    num_reps = int(float(args.num_reps))
+    in_file_path = args.in_file_path
+    out_file_path = args.out_file_path
     
-    if flgInp==1:
-        import argparse
-        parser = argparse.ArgumentParser()
-        parser.add_argument('num_reps', help='Number of replications in each direction')
-        parser.add_argument('in_file_path', help='Path to input checkpoint')
-        parser.add_argument('out_file_path', help='Path and filename of output checkpoint')
-        args = parser.parse_args()
-        num_reps = int(float(args.num_reps))
-        in_file_path = args.in_file_path
-        out_file_path = args.out_file_path
-    
-    if flgInp==2:
-        num_reps = 2
-        work_folder = 'PATHTOSIMULATION'
-        in_file_path = work_folder+'cp_binary-0.restart.dat'
-        out_file_path = work_folder+'cp_binary_rep.restart.dat'
-        
     if chp_replicate(num_reps,in_file_path,out_file_path, createHeader=True): print('Replication ('+str(num_reps)+'x) successful')
-    

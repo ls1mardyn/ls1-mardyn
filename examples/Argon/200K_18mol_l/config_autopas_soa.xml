@@ -32,7 +32,7 @@
     <algorithm>
       <parallelisation type="DomainDecomposition"/>
       <datastructure type="AutoPas">
-        <allowedTraversals>c01, c08, c18, sli, directsumtraversal</allowedTraversals>
+        <allowedTraversals>lc_c01, lc_c08, lc_c18, lc_sli, ds_sequential</allowedTraversals>
         <allowedContainers>linkedCells, verletLists, directsum</allowedContainers>
         <selectorStrategy>fastestMedian</selectorStrategy>
         <dataLayouts>SoA</dataLayouts>

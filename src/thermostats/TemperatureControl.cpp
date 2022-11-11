@@ -388,10 +388,8 @@ void ControlRegionT::ControlTemperature(Molecule* mol) {
 		// ignore outer (halo) molecules
 		if (nPosIndex > nIndexMax)  // negative values will be ignored to: cast to unsigned int --> high value
 			return;
-
 		GlobalThermostatVariables& globalTV = _globalThermVars[nPosIndex];  // do not forget &
 		if (globalTV._numMolecules < 1) return;
-
 		// scale velocity
 		double vcorr = 2. - 1. / globalTV._betaTrans;
 		double Dcorr = 2. - 1. / globalTV._betaRot;
@@ -586,7 +584,7 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Stop control at simstep: " << _nStop << endl;
 
 	// turn on/off explosion heuristics
-	// domain->SetExplosionHeuristics(bUseExplosionHeuristics);
+	// domain->setExplosionHeuristics(bUseExplosionHeuristics);
 
 	// add regions
 	uint32_t numRegions = 0;
@@ -637,20 +635,21 @@ void TemperatureControl::AddRegion(ControlRegionT* region) { _vecControlRegions.
 
 void TemperatureControl::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp, unsigned long simstep) {
 	if (simstep % _nControlFreq != 0) return;
+	if (simstep <= this->GetStart() || simstep > this->GetStop()) return;
 
 	for (auto&& reg : _vecControlRegions) reg->MeasureKineticEnergy(mol, domainDecomp);
 }
 
 void TemperatureControl::CalcGlobalValues(DomainDecompBase* domainDecomp, unsigned long simstep) {
 	if (simstep % _nControlFreq != 0) return;
+	if (simstep <= this->GetStart() || simstep > this->GetStop()) return;
 
 	for (auto&& reg : _vecControlRegions) reg->CalcGlobalValues(domainDecomp);
 }
 
 void TemperatureControl::ControlTemperature(Molecule* mol, unsigned long simstep) {
-	if (simstep % _nControlFreq != 0) {
-		return;
-	}
+	if (simstep % _nControlFreq != 0) return;
+	if (simstep <= this->GetStart() || simstep > this->GetStop()) return;
 
 	for (auto&& reg : _vecControlRegions) {
 		reg->ControlTemperature(mol);
@@ -659,6 +658,7 @@ void TemperatureControl::ControlTemperature(Molecule* mol, unsigned long simstep
 
 void TemperatureControl::Init(unsigned long simstep) {
 	if (simstep % _nControlFreq != 0) return;
+	if (simstep <= this->GetStart() || simstep > this->GetStop()) return;
 
 	for (auto&& reg : _vecControlRegions) reg->ResetLocalValues();
 }

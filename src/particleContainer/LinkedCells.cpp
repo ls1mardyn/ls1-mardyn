@@ -28,7 +28,6 @@
 
 #include "ResortCellProcessorSliced.h"
 
-
 using namespace std;
 using Log::global_log;
 
@@ -574,7 +573,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	cellProcessor.endTraversal();
 }
 
-unsigned long LinkedCells::getNumberOfParticles() {
+unsigned long LinkedCells::getNumberOfParticles(ParticleIterator::Type t /* = ParticleIterator::ALL_CELLS */) {
 	unsigned long N = 0;
 	unsigned long numCells = _cells.size();
 
@@ -582,7 +581,9 @@ unsigned long LinkedCells::getNumberOfParticles() {
 	#pragma omp parallel for reduction(+:N)
 	#endif
 	for (unsigned long i = 0; i < numCells; ++i) {
-		N += _cells.at(i).getMoleculeCount();
+		if ((t == ParticleIterator::ALL_CELLS) or (not _cells.at(i).isHaloCell())) {
+			N += _cells.at(i).getMoleculeCount();
+		}
 	}
 	return N;
 }
@@ -638,9 +639,47 @@ RegionParticleIterator LinkedCells::regionIterator(const double startRegion[3], 
 	unsigned int startRegionCellIndex;
 	unsigned int endRegionCellIndex;
 
-	getCellIndicesOfRegion(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex);
+	// only include halo cells if iterator explicitly asks for all cells
+	const auto &localBoxOfInterestMin = type == ParticleIterator::ALL_CELLS ? _haloBoundingBoxMin : _boundingBoxMin;
+	const auto &localBoxOfInterestMax = type == ParticleIterator::ALL_CELLS ? _haloBoundingBoxMax : _boundingBoxMax;
 
-	return getRegionParticleIterator(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex, type);
+    // clamp iterated region to local MPI subdomain
+	const std::array<double, 3> startRegionClamped = {
+		std::clamp(startRegion[0], localBoxOfInterestMin[0], localBoxOfInterestMax[0]),
+		std::clamp(startRegion[1], localBoxOfInterestMin[1], localBoxOfInterestMax[1]),
+		std::clamp(startRegion[2], localBoxOfInterestMin[2], localBoxOfInterestMax[2]),
+	};
+	const std::array<double, 3> endRegionClamped = {
+		std::clamp(endRegion[0], localBoxOfInterestMin[0], localBoxOfInterestMax[0]),
+		std::clamp(endRegion[1], localBoxOfInterestMin[1], localBoxOfInterestMax[1]),
+		std::clamp(endRegion[2], localBoxOfInterestMin[2], localBoxOfInterestMax[2]),
+	};
+
+	// check if the clipping resulted in the region of interest box collapsing as it is not part of the local domain.
+	const auto localVolumeIsZero = localBoxOfInterestMin[0] == localBoxOfInterestMax[0]
+							  or localBoxOfInterestMin[1] == localBoxOfInterestMax[1]
+							  or localBoxOfInterestMin[2] == localBoxOfInterestMax[2];
+	if (localVolumeIsZero) {
+		// return invalid iterator (_cells == nullptr)
+		return RegionParticleIterator{};
+	}
+
+	getCellIndicesOfRegion(startRegionClamped.data(), endRegionClamped.data(), startRegionCellIndex, endRegionCellIndex);
+
+	std::array<int, 3> start3DIndices{}, end3DIndices{};
+	threeDIndexOfCellIndex(static_cast<int>(startRegionCellIndex), start3DIndices.data(), _cellsPerDimension);
+	threeDIndexOfCellIndex(static_cast<int>(endRegionCellIndex), end3DIndices.data(), _cellsPerDimension);
+	const std::array<int, 3> regionDimensions = {
+		end3DIndices[0] - start3DIndices[0] + 1,
+		end3DIndices[1] - start3DIndices[1] + 1,
+		end3DIndices[2] - start3DIndices[2] + 1,
+	};
+
+	// if the iterator on this rank has nothing to iterate over invalidate it by pushing its cell offset out of range.
+	const ParticleIterator::CellIndex_T offset = mardyn_get_thread_num(); // starting position
+	const ParticleIterator::CellIndex_T stride = mardyn_get_num_threads(); // stride
+
+	return {type, &_cells, offset, stride, static_cast<int>(startRegionCellIndex), regionDimensions.data(), _cellsPerDimension, startRegion, endRegion};
 }
 
 //################################################
@@ -960,23 +999,6 @@ unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMolecul
 
 	unsigned long totalNumberOfMolecules = numMoleculesPerThread.back();
 	return totalNumberOfMolecules;
-}
-
-RegionParticleIterator LinkedCells::getRegionParticleIterator(
-		const double startRegion[3], const double endRegion[3],
-		const unsigned int startRegionCellIndex,
-		const unsigned int endRegionCellIndex, ParticleIterator::Type type) {
-	int start3DIndices[3], end3DIndices[3];
-	int regionDimensions[3];
-	threeDIndexOfCellIndex(startRegionCellIndex, start3DIndices, _cellsPerDimension);
-	threeDIndexOfCellIndex(endRegionCellIndex, end3DIndices, _cellsPerDimension);
-	for(int d = 0; d < 3; d++){
-		regionDimensions[d] = end3DIndices[d] - start3DIndices[d] + 1;
-	}
-	ParticleIterator::CellIndex_T offset = mardyn_get_thread_num(); // starting position
-	ParticleIterator::CellIndex_T stride = mardyn_get_num_threads(); // stride
-
-	return RegionParticleIterator(type, &_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
 }
 
 void LinkedCells::deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) {

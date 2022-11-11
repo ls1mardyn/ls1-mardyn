@@ -152,7 +152,7 @@ public:
 	void update_via_traversal();
 	void update_via_sliced_traversal();
 
-	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
+	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches = false) override;
 
 	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) override;
 
@@ -176,8 +176,10 @@ public:
 
 	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) override;
 
+	//! @brief Gets number of particles stored in Linked Cells
+	//! @param t Type of particles to count, e.g. ONLY_INNER_AND_BOUNDARY to dismiss halo particles. Argument defaults to ALL_CELLS
 	//! @return the number of particles stored in the Linked Cells
-	unsigned long getNumberOfParticles() override;
+	unsigned long getNumberOfParticles(ParticleIterator::Type t = ParticleIterator::ALL_CELLS) override;
 
 	// @todo: where is this function called?
 	void clear() override;
@@ -325,11 +327,6 @@ private:
 	void deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]);
 
 	void getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startRegionCellIndex, unsigned int &endRegionCellIndex);
-
-	RegionParticleIterator getRegionParticleIterator(
-			const double startRegion[3], const double endRegion[3],
-			const unsigned int startRegionCellIndex,
-			const unsigned int endRegionCellIndex, ParticleIterator::Type type);
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####

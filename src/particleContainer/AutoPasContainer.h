@@ -46,7 +46,7 @@ public:
 		<skin>DOUBLE</skin>
 		<optimumRange>DOUBLE</optimumRange>
 		<blacklistRange>DOUBLE</blacklistRange>
-		<useAVXFunctor>BOOL</useAVXFunctor>
+		<functor>STRING</functor>
 	    <verletClusterSize>INTEGER</verletClusterSize>
 	   </datastructure>
 	   \endcode
@@ -82,7 +82,7 @@ public:
 	RegionParticleIterator regionIterator(const double startCorner[3], const double endCorner[3],
 										  ParticleIterator::Type t) override;
 
-	unsigned long getNumberOfParticles() override;
+	unsigned long getNumberOfParticles(ParticleIterator::Type t = ParticleIterator::ONLY_INNER_AND_BOUNDARY) override;
 
 	void clear() override;
 
@@ -104,7 +104,8 @@ public:
 
 	void updateMoleculeCaches() override;
 
-	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override;
+	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>>
+	getMoleculeAtPosition(const double pos[3]) override;
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
 								std::array<double, 3> simBoxLength, size_t seed_offset) override;
@@ -129,12 +130,13 @@ public:
 	bool isInvalidParticleReturner() override { return true; }
 
 	std::string getConfigurationAsString() override;
+
 private:
 	/**
 	 * Helper to get static value of shifting bool.
 	 * @tparam shifting
 	 */
-	template <bool shifting>
+	template<bool shifting>
 	void traverseTemplateHelper();
 
 	/**
@@ -143,8 +145,8 @@ private:
 	 * @param functor The functor.
 	 * @return Pair of upot, virial.
 	 */
-	template <typename F>
-	std::pair<double,double> iterateWithFunctor(F&& functor);
+	template<typename F>
+	std::pair<double, double> iterateWithFunctor(F &&functor);
 
 	double _cutoff{0.};
 	double _verletSkin;
@@ -171,7 +173,19 @@ private:
 	autopas::Logger::LogLevel _logLevel{autopas::Logger::LogLevel::info};
 
 	std::vector<Molecule> _invalidParticles;
-	bool _useAVXFunctor{true};
+	enum class FunctorOption {
+		autoVec,
+		AVX,
+		SVE
+	} functorOption{
+#if defined(__ARM_FEATURE_SVE)
+			FunctorOption::SVE
+#elif defined(__AVX__)
+			FunctorOption::AVX
+#else
+			FunctorOption::autoVec
+#endif
+	};
 
 	ParticlePropertiesLibrary<double, size_t> _particlePropertiesLibrary;
 
