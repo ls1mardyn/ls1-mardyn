@@ -711,6 +711,8 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		inp.getNodeValue("@version", version);
 		global_log->info() << "MarDyn XML config file version: " << version << endl;
 
+		global_log->set_log_level(inp.getNodeValue_string("loglevel", "info"));
+
 		if(inp.changecurrentnode("simulation")) {
 			readXML(inp);
 			inp.changecurrentnode("..");
@@ -1289,6 +1291,7 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
+	std::cout << "Simulation::updateParticleContainerAndDecomposition " << __LINE__ << std::endl;
 	_domainDecomposition->balanceAndExchange(averageLastTraversalTime, forceRebalancing, _moleculeContainer,
 											 _domain);
 	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
