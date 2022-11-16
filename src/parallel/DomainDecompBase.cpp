@@ -25,7 +25,7 @@ DomainDecompBase::~DomainDecompBase() {
 void DomainDecompBase::readXML(XMLfileUnits& /* xmlconfig */) {
 }
 
-void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecules,
+void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>& invalidMolecules,
 										   ParticleContainer* moleculeContainer) {
 	for (auto& molecule : invalidMolecules) {
 		for (auto dim : {0, 1, 2}) {
@@ -52,9 +52,8 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 	if (moleculeContainer->isInvalidParticleReturner()) {
 		// autopas mode!
 		global_log->debug() << "DDBase: Adding + shifting invalid particles." << std::endl;
-		// in case the molecule container returns invalid particles using getInvalidParticles(), we have to handle them directly.
-		auto invalidParticles = moleculeContainer->getInvalidParticles();
-		addLeavingMolecules(std::move(invalidParticles), moleculeContainer);
+		// in case the molecule container returns invalid particles using getInvalidParticlesRef(), we have to handle them directly.
+		addLeavingMolecules(moleculeContainer->getInvalidParticlesRef(), moleculeContainer);
 		// now use direct scheme to transfer the rest!
 		FullShell fs;
 		double rmin[3];  // lower corner

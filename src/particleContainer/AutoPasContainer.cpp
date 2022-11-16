@@ -278,7 +278,12 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 
 	// check if autopas is already initialized
 	if (_autopasContainerIsInitialized) {
-		_autopasContainer.resizeBox(boxMin, boxMax);
+		const auto emigrants = _autopasContainer.resizeBox(boxMin, boxMax);
+		if (not emigrants.empty()) {
+			throw std::runtime_error("AutoPasContainer::rebuild(): After resizing the container some particles"
+				" were dropped and no effort is made to reinsert them. They should have been collected earlier!" +
+				autopas::utils::ArrayUtils::to_string(emigrants, "\n", {"",""}));
+		}
 		// TODO: maybe only force this if the box and num particles changed too much?
 		_autopasContainer.forceRetune();
 		return false;

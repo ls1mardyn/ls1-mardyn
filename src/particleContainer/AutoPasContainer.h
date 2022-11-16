@@ -123,10 +123,6 @@ public:
 
 	void setCutoff(double cutoff) override { _cutoff = cutoff; }
 
-	std::vector<Molecule> getInvalidParticles() override {
-		return std::move(_invalidParticles);
-	}
-
 	bool isInvalidParticleReturner() override { return true; }
 
 	std::string getConfigurationAsString() override;
@@ -172,7 +168,6 @@ private:
 	std::set<autopas::Newton3Option> _newton3Choices;
 	autopas::Logger::LogLevel _logLevel{autopas::Logger::LogLevel::info};
 
-	std::vector<Molecule> _invalidParticles;
 	enum class FunctorOption {
 		autoVec,
 		AVX,

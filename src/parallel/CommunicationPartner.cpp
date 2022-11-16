@@ -140,7 +140,6 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 									const MPI_Datatype& type, MessageType msgType,
 									std::vector<Molecule>& invalidParticles, bool mightUseInvalidParticles,
 									bool doHaloPositionCheck, bool removeFromContainer) {
-	global_log->debug() << _rank << std::endl;
 	_sendBuf.clear();
 
 	const unsigned int numHaloInfo = _haloInfo.size();
@@ -587,14 +586,14 @@ void CommunicationPartner::collectLeavingMoleculesFromInvalidParticles(std::vect
 
 	// compute how many molecules are already in of this type: - adjust for Forces
 
-	auto removeBegin = std::partition(invalidParticles.begin(), invalidParticles.end(), [=](const Molecule& m) {
-	  // if this is true, it will be put in the first part of the partition, if it is false, in the second.
+	const auto removeBegin = std::partition(invalidParticles.begin(), invalidParticles.end(), [=](const Molecule& m) {
+	  // if this returns true, the particle will be put in the first part of the partition, else in the second.
 	  return not m.inBox(lowCorner, highCorner);
 	});
 
-	unsigned long numMolsAlreadyIn = _sendBuf.getNumLeaving();
-	int totalNumMolsAppended = invalidParticles.end() - removeBegin;
-	// resize the send buffer
+	auto numMolsAlreadyIn = _sendBuf.getNumLeaving();
+	const auto totalNumMolsAppended = invalidParticles.end() - removeBegin;
+	// resize the send-buffer
 	_sendBuf.resizeForAppendingLeavingMolecules(totalNumMolsAppended);
 
 	Domain* domain = global_simulation->getDomain();
