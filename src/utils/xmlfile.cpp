@@ -14,7 +14,6 @@
 #include <string>
 
 #include "utils/mardyn_assert.h"
-//#include "utils/Logger.h"
 #include "rapidxml/rapidxml_print.hpp"
 #include "String_utils.h"
 #include "Simulation.h"

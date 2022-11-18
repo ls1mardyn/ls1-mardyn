@@ -874,23 +874,27 @@ void MettDeamon::writeRestartfile()
 	if(domainDecomp.getRank() != 0)
 		return;
 
-	const std::string fname = "MettDeamonRestart_movdir-"+std::to_string(_nMovingDirection)+".dat";
-	std::ofstream ofs;
-	// init restart file
-	if(not _bInitRestartLog)
+	// write restart info in dat format
 	{
-		ofs.open(fname, std::ios::out);
-		ofs << "     simstep" << "   slabIndex" << "                  deltaY" << std::endl;
-		_bInitRestartLog = true;
-	} else {
-		ofs.open(fname, std::ios::app);
+		std::ofstream ofs;
+		const std::string fname = "MettDeamonRestart_movdir-"+std::to_string(_nMovingDirection)+".dat";
+		// init restart file
+		if(not _bInitRestartLog)
+		{
+			ofs.open(fname, std::ios::out);
+			ofs << "     simstep" << "   slabIndex" << "                  deltaY" << std::endl;
+			_bInitRestartLog = true;
+		} else {
+			ofs.open(fname, std::ios::app);
+		}
+		ofs << setw(12) << simstep << setw(12) << _reservoir->getActualBinIndex();
+		ofs << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.sum << std::endl;
+		ofs.close();
 	}
-	ofs << setw(12) << simstep << setw(12) << _reservoir->getActualBinIndex();
-	ofs << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.sum << std::endl;
-	ofs.close();
 
 	// write restart info in XML format
 	{
+		std::ofstream ofs;
 		std::stringstream fnamestream;
 		const std::string fname = "MettDeamonRestart_movdir-"+std::to_string(_nMovingDirection);
 		fnamestream << fname << "_TS" << fill_width('0', 9) << simstep << ".xml";

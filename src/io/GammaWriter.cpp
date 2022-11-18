@@ -52,7 +52,7 @@ void GammaWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase
 
     // Write every _writeFrequency steps; do not write data directly after (re)start
     if ((simstep % _writeFrequency == 0) && (simstep > global_simulation->getNumInitTimesteps())) {
-		// Rank 0 writes data to file; 
+		// Rank 0 writes data to file
 		if (domainDecomp->getRank() == 0) {
 			string resultfilename(_outputPrefix + ".dat");
 			

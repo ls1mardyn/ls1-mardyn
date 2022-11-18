@@ -56,7 +56,6 @@ void DriftCtrl::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 	global_log->debug() << "[DriftCtrl] Init data structures for " << numComponents << " components." << std::endl;
 	
 	// init files
-	uint64_t simstep = global_simulation->getSimulationStep();
 	{
 		const std::string fname = "DriftCtrl_drift.dat";
 		std::ofstream ofs;

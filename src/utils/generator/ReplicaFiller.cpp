@@ -8,7 +8,6 @@
 
 #include "molecules/Molecule.h"
 #include "io/InputBase.h"
-// #include "io/InputPluginFactory.h"
 #include "io/BinaryReader.h"
 #include "utils/Logger.h"
 #include "utils/Coordinate3D.h"
