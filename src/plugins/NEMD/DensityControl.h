@@ -54,6 +54,7 @@ private:
 	{
 		std::vector<double> density;
 		std::vector<uint64_t> count;
+		std::vector<bool> specified;
 	};
 
 public:
@@ -117,7 +118,7 @@ private:
 	/// @return True, if molecule is located inside the specified range \p _range, otherwise False.
 	bool moleculeInsideRange(std::array<double,3>& r);
 	/// @brief Establishes the specified target partial densities of all components, stored in \p _densityTarget . The target total density is calculated by the sum of all target partial densities. \
-	If the target value for a component is not specified, it is assumed that the target value equals the initial value for this component. \
+	If the target value for a component is not specified, it is assumed that the target value equals the initial value for this component at the specified start timestep \p _control.start , with which the plugin starts to work. \
 	First, an attempt is made to produce the desired composition by component exchange. Therefore, the order (priority) of the component IDs, which is stored in \p _vecPriority , is taken into account. \
 	Usually, the IDs should be sorted in descending order of molecule size. This results in as many larger molecules as possible being exchanged for smaller ones. 
 	/// @param particleContainer Data structure containing the molecule objects.

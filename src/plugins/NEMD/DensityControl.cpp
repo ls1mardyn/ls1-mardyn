@@ -95,10 +95,18 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	// targets
-	_densityTarget.density.resize(numComponents+1); _densityTarget.count.resize(numComponents+1);
-	ParticleContainer* particleContainer = global_simulation->getMoleculeContainer();
-	DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition() );
-	this->initTargetValues(particleContainer, domainDecomp);
+	{  // init target values
+	_densityTarget.density.resize(numComponents+1); _densityTarget.count.resize(numComponents+1); _densityTarget.specified.resize(numComponents+1);
+	for(auto it : _densityTarget.density)
+                it = 0.;
+    for(auto it : _densityTarget.count)
+                it = 0;
+	for(auto it : _densityTarget.specified)
+                it = false;
+	}
+
+	// ParticleContainer* particleContainer = global_simulation->getMoleculeContainer();
+	// DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition() );
 	
 	uint32_t numTargets = 0;
 	XMLfile::Query query = xmlconfig.query("targets/target");
@@ -120,8 +128,13 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 		_densityTarget.density[cid_ub] = density;
 		uint64_t count = round(_range.volume * density);
 		_densityTarget.count[cid_ub] = count;
+		_densityTarget.specified.at(cid_ub) = true;
 	}  // loop over 'targets/target' nodes
 	xmlconfig.changecurrentnode(oldpath);
+
+	for(uint16_t i=0; i<numComponents+1; i++) {
+		cout << "cID=" << i << ", target count=" << _densityTarget.count[i] << ", target density=" << _densityTarget.density[i] << endl;
+	}
 
 	// calc total density, particle count
 	double densitySum = 0.;
@@ -141,6 +154,10 @@ void DensityControl::beforeForces(
 		unsigned long simstep
 	)
 {
+	if (simstep == _control.start) {
+		this->initTargetValues(particleContainer, domainDecomp);
+	}
+
 	if (simstep < _control.start || simstep > _control.stop
 			|| simstep % _control.freq != 0)
 		return;
@@ -474,6 +491,7 @@ void DensityControl::initTargetValues(ParticleContainer* particleContainer, Doma
 		pos[0] = it->r(0);
 		pos[1] = it->r(1);
 		pos[2] = it->r(2);
+
 		if(not this->moleculeInsideRange(pos) )
 			continue;
 		
@@ -498,13 +516,15 @@ void DensityControl::initTargetValues(ParticleContainer* particleContainer, Doma
 	}
 #endif
 
-	// Set initial target values
+	// Set target values that were omitted in XML config
 	double invVolume = 1./_range.volume;
 
-	for (uint16_t i=0; i<numComponents+1; i++) {
+	for (uint16_t i=1; i<numComponents+1; i++) {
+		if (_densityTarget.specified.at(i) ) {
+			continue;
+		}
 		_densityTarget.count.at(i) = numMolecules.global.at(i);
 		_densityTarget.density.at(i) = _densityTarget.count.at(i) * invVolume;
+		global_log->info() << "cID=" << i << ", count=" << _densityTarget.count.at(i) << ", density=" << _densityTarget.density.at(i) << endl;
 	}
-
-	cout << "DensityControl::initTargetValues" << endl;
 }
