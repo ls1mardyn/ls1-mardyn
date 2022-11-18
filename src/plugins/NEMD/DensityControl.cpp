@@ -97,10 +97,9 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 
 	// targets
 	_densityTarget.density.resize(numComponents+1); _densityTarget.count.resize(numComponents+1);
-	for(auto it : _densityTarget.density)
-		it = 0.;
-	for(auto it : _densityTarget.count)
-		it = 0;
+	ParticleContainer* particleContainer = global_simulation->getMoleculeContainer();
+	DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition() );
+	this->initTargetValues(particleContainer, domainDecomp);
 	
 	uint32_t numTargets = 0;
 	XMLfile::Query query = xmlconfig.query("targets/target");
@@ -445,4 +444,72 @@ uint32_t DensityControl::tokenize_int_list(std::vector<uint32_t>& vec, std::stri
 	vec.push_back(atoi(ss.c_str() ) );
 	numTokens = vec.size() - numTokens;
 	return numTokens;
+}
+
+void DensityControl::initTargetValues(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp)
+{
+	uint32_t numComponents = global_simulation->getEnsemble()->getComponents()->size();
+	double regionLowCorner[3], regionHighCorner[3];
+
+	// if linked cell in the region of interest
+	for (unsigned d = 0; d < 3; d++) {
+		regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
+		regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
+	}
+	// ensure that we do not iterate over things outside of the container.
+	regionLowCorner[0] = std::max(_range.xmin, regionLowCorner[0]);
+	regionLowCorner[1] = std::max(_range.ymin, regionLowCorner[1]);
+	regionLowCorner[2] = std::max(_range.zmin, regionLowCorner[2]);
+
+	regionHighCorner[0] = std::min(_range.xmax, regionHighCorner[0]);
+	regionHighCorner[1] = std::min(_range.ymax, regionHighCorner[1]);
+	regionHighCorner[2] = std::min(_range.zmax, regionHighCorner[2]);
+
+	uint32_t cid_ub;
+	CommVar<std::vector<uint64_t> > numMolecules;
+	numMolecules.local.resize(numComponents+1); numMolecules.global.resize(numComponents+1);
+	for (uint16_t i=0; i<numComponents+1; i++) {
+		numMolecules.local.at(i) = numMolecules.global.at(i) = 0;
+	}
+	std::array<double,3> pos;
+
+	auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ONLY_INNER_AND_BOUNDARY);  // over all cell types
+	for(auto it = begin; it.isValid(); ++it) {
+		// check position
+		pos[0] = it->r(0);
+		pos[1] = it->r(1);
+		pos[2] = it->r(2);
+		if(not this->moleculeInsideRange(pos) )
+			continue;
+		
+		uint32_t cid_ub = it->componentid()+1;
+		numMolecules.local.at(cid_ub)++;
+		numMolecules.local.at(0)++;
+	}
+
+#ifdef ENABLE_MPI
+	domainDecomp->collCommInit(numComponents+1);
+	for (uint16_t i=0; i<numComponents+1; i++) {
+		domainDecomp->collCommAppendUnsLong(numMolecules.local.at(i) );
+	}
+	domainDecomp->collCommAllreduceSum();
+	for (uint16_t i=0; i<numComponents+1; i++) {
+		numMolecules.global.at(i) = domainDecomp->collCommGetUnsLong();
+	}
+	domainDecomp->collCommFinalize();
+#else
+	for (uint16_t i=0; i<numComponents+1; i++) {
+		numMolecules.global[i] = numMolecules.local[i] = 0;
+	}
+#endif
+
+	// Set initial target values
+	double invVolume = 1./_range.volume;
+
+	for (uint16_t i=0; i<numComponents+1; i++) {
+		_densityTarget.count.at(i) = numMolecules.global.at(i);
+		_densityTarget.density.at(i) = _densityTarget.count.at(i) * invVolume;
+	}
+
+	cout << "DensityControl::initTargetValues" << endl;
 }
