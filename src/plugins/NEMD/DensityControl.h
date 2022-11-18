@@ -82,7 +82,8 @@ public:
 					<density>DOUBLE</density>            <!-- target density -->
 				</target>
 			</targets>
-			<priority>INT,INT,INT</priority>  <!-- Usually: Molecule size sorted in descending order -->
+			<priority>INT,INT,INT</priority>  <!-- Comma separated list of component IDs (unity based) to specify the priority for component exchange. \
+			Usually, IDs should be sorted in descending order of corresponding molecule size -->
 		</plugin>
 	   \endcode
 	 */
@@ -111,10 +112,31 @@ public:
 	static PluginBase* createInstance() {return new DensityControl();}
 
 private:
+	/// @brief Uses the position \p r of a molecule to check whether it is in the specified range \p _range in which the density has to be controlled by this plugin.
+	/// @param r Position of a molecule
+	/// @return True, if molecule is located inside the specified range \p _range, otherwise False.
 	bool moleculeInsideRange(std::array<double,3>& r);
+	/// @brief Establishes the specified target partial densities of all components, stored in \p _densityTarget . The target total density is calculated by the sum of all target partial densities. \
+	If the target value for a component is not specified, it is assumed that the target value equals the initial value for this component. \
+	First, an attempt is made to produce the desired composition by component exchange. Therefore, the order (priority) of the component IDs, which is stored in \p _vecPriority , is taken into account. \
+	Usually, the IDs should be sorted in descending order of molecule size. This results in as many larger molecules as possible being exchanged for smaller ones. 
+	/// @param particleContainer Data structure containing the molecule objects.
+	/// @param domainDecomp Active domain decomposition.
+	/// @param simstep Actual simulation timestep
 	void controlDensity(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep);
+	/// @brief Calculates the difference between target and actual value of the molecule count for each component and stores the information in the vector \p vecBalance .
+	/// @param[out] vecBalance Vector containing the difference between target and actual value of the molecule count for each component, where indices refer to the unity based component id. \
+	The difference for the total molecule count is stored at index 0. Too many molecules are indicated by a positive value, too few by a negative value.
+	/// @param pidMap Map containing particle (molecule) IDs of all molecules within specified range \p _range , sorted with respect to the respective unity based component IDs.
+	/// @param numComponents Number of components present in simulation.
 	void updateBalanceVector(std::vector<int64_t>& vecBalance, std::map<int, std::vector<uint64_t> >& pidMap, uint32_t& numComponents);
+	/// @brief Extracts (tokenizes) numbers from the string \p str , where those numbers are separated by delimiter \p del .
+	/// @param[out] vec List (vector) containing the tokenized numbers
+	/// @param[in] str String containing numbers separated by delimiter \p del
+	/// @param del Delimiter, default: ','
+	/// @return Number of tokens stored in the list (vector) \p vec
 	uint32_t tokenize_int_list(std::vector<uint32_t>& vec, std::string str, std::string del = ",");
+	void initTargetValues(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
 
 private:
 	Random _rnd;
