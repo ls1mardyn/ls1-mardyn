@@ -147,9 +147,9 @@ std::vector<int> DomainDecomposition::getNeighbourRanksFullShell() {
 	//order of ranks is important in current version!!!
 #if defined(ENABLE_MPI) //evil hack to not destroy the necessary order
     int myRank;
-	MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
+	MPI_Comm_rank(_comm,&myRank);
 	int numProcs;
-	MPI_Comm_size(MPI_COMM_WORLD,&numProcs);
+	MPI_Comm_size(_comm,&numProcs);
 	std::vector<std::vector<std::vector<int>>> ranks = getAllRanks();
 	int myCoords[3];
 	MPI_Cart_coords(_comm, myRank, 3, myCoords);
@@ -236,9 +236,9 @@ std::vector<std::vector<std::vector<int>>> DomainDecomposition::getAllRanks(){
 #ifdef ENABLE_MPI
 	std::vector<std::vector<std::vector<int>>> ranks;
 	int myRank;
-	MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
+	MPI_Comm_rank(_comm,&myRank);
 	int numProcessors;
-	MPI_Comm_size(MPI_COMM_WORLD,&numProcessors);
+	MPI_Comm_size(_comm,&numProcessors);
 
 	ranks.resize(_gridSize[0]);
 	for(int i = 0; i < _gridSize[0]; i++){
