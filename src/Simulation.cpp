@@ -80,6 +80,10 @@
 #include "bhfmm/FastMultipoleMethod.h"
 #include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
 
+#ifdef MAMICO_COUPLING
+#include <coupling/interface/impl/ls1/LS1StaticCommData.h>
+#endif
+
 using Log::global_log;
 using namespace std;
 
@@ -318,7 +322,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else if(parallelisationtype == "DomainDecomposition") {
 				delete _domainDecomposition;
+				#ifndef MAMICO_COUPLING
 				_domainDecomposition = new DomainDecomposition();
+				#else
+				_domainDecomposition = new DomainDecomposition(coupling::interface::LS1StaticCommData::getInstance().getLocalCommunicator());
+				#endif
 			}
 			else if(parallelisationtype == "KDDecomposition") {
 				delete _domainDecomposition;
