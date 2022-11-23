@@ -229,11 +229,19 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 		xmlconfig.getNodeValue_int("verletClusterSize", static_cast<int>(_verletClusterSize)));
 
 	// double
-	_verletSkin = static_cast<double>(xmlconfig.getNodeValue_double("skin", static_cast<double>(_verletSkin)));
-	_relativeOptimumRange =
-		static_cast<double>(xmlconfig.getNodeValue_double("optimumRange", static_cast<double>(_relativeOptimumRange)));
-	_relativeBlacklistRange = static_cast<double>(
-		xmlconfig.getNodeValue_double("blacklistRange", static_cast<double>(_relativeBlacklistRange)));
+	const auto vlSkin = xmlconfig.getNodeValue_double("skin", -1);
+	const auto vlSkinPerTimestep = xmlconfig.getNodeValue_double("skinPerTimestep", -1);
+	if (vlSkin == -1 and vlSkinPerTimestep == -1) {
+		// stick with the default value
+	} else if (vlSkin == -1) {
+		_verletSkin = vlSkinPerTimestep * _verletRebuildFrequency;
+	} else if (vlSkinPerTimestep == -1 ){
+		_verletSkin = vlSkin;
+	} else {
+		global_log->error() << "Input XML specifies skin AND skinPerTimestep. Please choose only one." << std::endl;
+	}
+	_relativeOptimumRange = xmlconfig.getNodeValue_double("optimumRange", _relativeOptimumRange);
+	_relativeBlacklistRange = xmlconfig.getNodeValue_double("blacklistRange", _relativeBlacklistRange);
 
 	std::string functorChoiceStr{};
 	xmlconfig.getNodeValue("functor", functorChoiceStr);
@@ -293,7 +301,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setBoxMin(boxMin);
 	_autopasContainer.setBoxMax(boxMax);
 	_autopasContainer.setCutoff(_cutoff);
-	_autopasContainer.setVerletSkin(_verletSkin);
+	_autopasContainer.setVerletSkinPerTimestep(_verletSkin / _verletRebuildFrequency);
 	_autopasContainer.setVerletRebuildFrequency(_verletRebuildFrequency);
 	_autopasContainer.setVerletClusterSize(_verletClusterSize);
 	_autopasContainer.setTuningInterval(_tuningFrequency);
