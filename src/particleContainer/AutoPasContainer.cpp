@@ -384,7 +384,9 @@ void AutoPasContainer::update() {
 	// in case we update the container before handling the invalid particles, this might lead to lost particles.
 	if (not _invalidParticles.empty()) {
 		global_log->error() << "AutoPasContainer: trying to update container, even though invalidParticles still "
-							   "exist. This would lead to lost particles => ERROR!"
+							   "exist. This would lead to lost particles => ERROR!\n"
+							   "Remaining invalid particles:\n"
+							<< autopas::utils::ArrayUtils::to_string(_invalidParticles, "\n", {"", ""})
 							<< std::endl;
 		Simulation::exit(434);
 	}
