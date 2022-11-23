@@ -245,6 +245,13 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	std::string functorChoiceStr{};
 	xmlconfig.getNodeValue("functor", functorChoiceStr);
+    if (functorChoiceStr.empty()) {
+#ifdef __ARM_FEATURE_SVE
+        functorChoiceStr = "sve";
+#elif defined(__AVX__)
+        functorChoiceStr = "avx";
+#endif
+    }
 	if (functorChoiceStr.find("avx") != std::string::npos) {
 		functorOption = FunctorOption::AVX;
 		global_log->info() << "Selected AVX Functor." << std::endl;
