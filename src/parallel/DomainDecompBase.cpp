@@ -46,6 +46,7 @@ void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>& invalidMolecul
 		}
 	}
 	moleculeContainer->addParticles(invalidMolecules);
+	invalidMolecules.clear();
 }
 
 void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
