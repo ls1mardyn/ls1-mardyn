@@ -16,7 +16,6 @@ class DensityControlTest;
 #include <cstdint>
 #include <vector>
 #include <array>
-#include <string>
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
@@ -32,9 +31,8 @@ class Domain;
 class ParticleContainer;
 class DomainDecompBase;
 
-class DensityControl : public PluginBase
-{
-private:
+class DensityControl : public PluginBase {
+ private:
 	friend DensityControlTest;
 
 	struct pacIDtype // particle and component ID
@@ -57,7 +55,7 @@ private:
 		std::vector<bool> specified;
 	};
 
-public:
+ public:
 	// constructor and destructor
 	DensityControl();
 	~DensityControl();
@@ -102,9 +100,8 @@ public:
             unsigned long /* simstep */
     ) override;
 
-    virtual void endStep(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            Domain* domain, unsigned long simstep) override {}
+    void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+            			 Domain* domain, unsigned long simstep) override {}
 
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain) override {}
@@ -112,11 +109,11 @@ public:
 	std::string getPluginName() override {return std::string("DensityControl");}
 	static PluginBase* createInstance() {return new DensityControl();}
 
-private:
+ private:
 	/// @brief Uses the position \p r of a molecule to check whether it is in the specified range \p _range in which the density has to be controlled by this plugin.
 	/// @param r Position of a molecule
 	/// @return True, if molecule is located inside the specified range \p _range, otherwise False.
-	bool moleculeInsideRange(std::array<double,3>& r);
+	bool moleculeInsideRange(const std::array<double,3>& r);
 	/// @brief Establishes the specified target partial densities of all components, stored in \p _densityTarget . The target total density is calculated by the sum of all target partial densities. \
 	If the target value for a component is not specified, it is assumed that the target value equals the initial value for this component at the specified start timestep \p _control.start , with which the plugin starts to work. \
 	First, an attempt is made to produce the desired composition by component exchange. Therefore, the order (priority) of the component IDs, which is stored in \p _vecPriority , is taken into account. \
@@ -139,7 +136,7 @@ private:
 	uint32_t tokenize_int_list(std::vector<uint32_t>& vec, std::string str, std::string del = ",");
 	void initTargetValues(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
 
-private:
+ private:
 	Random _rnd;
 	TimestepControl _control;
 	DensityTargetType _densityTarget;
