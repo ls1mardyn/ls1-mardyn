@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   ci-matrix:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       # do not cancel all other workflow runs if one fails
       fail-fast: false
@@ -57,7 +57,6 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y \
           libcppunit-dev        \
-          libomp-dev            \
           libmpich-dev
         echo "Running ${JOBNAME}"
         git status
