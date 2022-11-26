@@ -55,7 +55,7 @@ void DensityControlTest::testDensityControl() {
 #endif
 
     // Compare to expected values
-    for (uint32_t cid = 0; cid < 3; cid++) {
+    for (uint32_t cid = 0; cid < 5; cid++) {
         ASSERT_EQUAL_MSG("Total number of particles of component "+std::to_string(cid+1)+" not as expected.", numPrtl_expect[cid], numPrtl_counted.global[cid]);
     }
 

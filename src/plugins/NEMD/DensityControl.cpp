@@ -131,22 +131,6 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
         _densityTarget.specified.at(cid_ub) = true;
     }  // loop over 'targets/target' nodes
     xmlconfig.changecurrentnode(oldpath);
-
-    for (uint32_t i=0; i<numComponents+1; i++) {
-        cout << "cID=" << i << ", target count=" << _densityTarget.count[i] << ", target density=" << _densityTarget.density[i] << endl;
-    }
-
-    // calc total density, particle count
-    double densitySum = 0.;
-    uint64_t countSum = 0;
-    for (int32_t i=1; i<numComponents+1; i++) {
-        double density = _densityTarget.density[i];
-        densitySum += density;
-        uint64_t count = _densityTarget.count[i];
-        countSum += count;
-    }
-    _densityTarget.density[0] = densitySum;
-    _densityTarget.count[0] = countSum;
 }
 
 void DensityControl::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
@@ -501,7 +485,7 @@ void DensityControl::initTargetValues(ParticleContainer* particleContainer, Doma
     domainDecomp->collCommFinalize();
 #else
     for (uint32_t i=0; i<numComponents+1; i++) {
-        numMolecules.global[i] = numMolecules.local[i] = 0;
+        numMolecules.global[i] = numMolecules.local[i];
     }
 #endif
 
@@ -514,6 +498,20 @@ void DensityControl::initTargetValues(ParticleContainer* particleContainer, Doma
         }
         _densityTarget.count.at(i) = numMolecules.global.at(i);
         _densityTarget.density.at(i) = _densityTarget.count.at(i) * invVolume;
-        global_log->info() << "cID=" << i << ", count=" << _densityTarget.count.at(i) << ", density=" << _densityTarget.density.at(i) << endl;
     }
+
+    // calc total target density and particle count
+    uint64_t countSum = 0;
+    for (int32_t i=1; i<numComponents+1; i++) {
+        countSum += _densityTarget.count[i];
+    }
+    _densityTarget.count[0] = countSum;
+	_densityTarget.density[0] = countSum * invVolume;
+
+#ifndef NDEBUG
+	// show target values
+    for (uint32_t i=0; i<numComponents+1; i++) {
+        global_log->info() << "cID=" << i << ": target count=" << _densityTarget.count[i] << ", target density=" << _densityTarget.density[i] << endl;
+    }
+#endif
 }
