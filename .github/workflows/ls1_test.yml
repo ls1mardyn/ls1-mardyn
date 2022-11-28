@@ -194,7 +194,7 @@ jobs:
               mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
                 | tee "output_${{ join(matrix.*, '-') }}"                                                   \
                 | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' > ${repoPath}/output_${VERSION}    \
-                || cat "output_${{ join(matrix.*, '-') }}"
+                || (exitCode=$?; cat "output_${{ join(matrix.*, '-') }}"; (exit $exitCode))
             done
             # compare the two runs
             diff ${repoPath}/output_new ${repoPath}/output_master
