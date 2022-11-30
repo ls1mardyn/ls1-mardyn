@@ -94,7 +94,9 @@ jobs:
                 -DENABLE_UNIT_TESTS=ON \
               ..
 
-          make -j2
+          # workaround for AutoPas' dependency harmony (Makefile C projekt) throwing up when invoked with mpich wrapper
+          CC=${{ matrix.cc }} \
+            make -j2
 
           cd ..
 
@@ -152,8 +154,10 @@ jobs:
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
               ..
-
-          make -j2
+        
+          # workaround for AutoPas' dependency harmony (Makefile C projekt) throwing up when invoked with mpich wrapper
+          CC=${{ matrix.cc }} \
+            make -j2
 
           cd "${repoPath}"
 
