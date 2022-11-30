@@ -186,9 +186,9 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	// halo position check needs to be done, unless it is a invalidParticle returner and it had no invalid particles.
 	auto &invalidParticles = moleculeContainer->getInvalidParticlesRef();
 
-	if(_useSequentialFallback) {
-		std::array<double, DIMgeom> rmin;  // lower corner
-		std::array<double, DIMgeom> rmax;  // higher corner
+	if (_useSequentialFallback) {
+		std::array<double, DIMgeom> rmin{};  // lower corner
+		std::array<double, DIMgeom> rmax{};  // higher corner
 
 		for (int d = 0; d < DIMgeom; d++) {
 			rmin[d] = domainDecomp->getBoundingBoxMin(d, domain);
