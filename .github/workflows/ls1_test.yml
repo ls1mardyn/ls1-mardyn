@@ -206,6 +206,8 @@ jobs:
           done
 
       env:
-        CC: ${{ matrix.cc }}
-        CXX: ${{ matrix.cxx }}
+        MPICH_CC: ${{ matrix.cc }}
+        MPICH_CXX: ${{ matrix.cxx }}
+        CC: mpicc.mpich
+        CXX: mpicxx.mpich
         OMP_NUM_THREADS: 2
