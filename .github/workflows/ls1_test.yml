@@ -71,7 +71,11 @@ jobs:
           if [[ ${{ matrix.parall }} == 'PAR' ]]
           then
             mpi_enabled='ON'
+            export CC=mpicc.mpich
+            export CXX=mpicxx.mpich
           else
+            export CC=${{ matrix.cc }}
+            export CXX=${{ matrix.cxx }}
             mpi_enabled='OFF'
           fi
           if [[ ${{ matrix.parall }} == 'PAR' ]] && [[ ${{ matrix.autopas }} == 'ON' ]]
@@ -101,8 +105,8 @@ jobs:
             ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
           fi
       env:
-        CC: ${{ matrix.cc }}
-        CXX: ${{ matrix.cxx }}
+        MPICH_CC: ${{ matrix.cc }}
+        MPICH_CXX: ${{ matrix.cxx }}
         OMP_NUM_THREADS: 2
 
       # validation testing
