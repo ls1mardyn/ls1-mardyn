@@ -389,13 +389,13 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 	std::vector<int> displacements_array(domainDecomp->getNumProcs(), 0);
 	counts_array[domainDecomp->getRank()] = bufferSize;
 	displacements_array[domainDecomp->getRank()] = offset;
-	int recvBuffer{};
+	std::vector<int> recvBuffer(domainDecomp->getNumProcs(), 0);
 
-	MPI_Allgather(&counts_array[domainDecomp->getRank()], 1, MPI_INT, &recvBuffer, 1, MPI_INT, domainDecomp->getCommunicator());
-	counts_array[0] = recvBuffer;
-	MPI_Allgather(&displacements_array[domainDecomp->getRank()], 1, MPI_INT, &recvBuffer, 1, MPI_INT,
+	MPI_Allgather(&counts_array[domainDecomp->getRank()], 1, MPI_INT, recvBuffer.data(), 1, MPI_INT, domainDecomp->getCommunicator());
+	counts_array = recvBuffer;
+	MPI_Allgather(&displacements_array[domainDecomp->getRank()], 1, MPI_INT, recvBuffer.data(), 1, MPI_INT,
 				  domainDecomp->getCommunicator());
-	displacements_array[0] = recvBuffer;
+	displacements_array = recvBuffer;
 
 	global_component_ids.resize(particle_count);
 	MPI_Allgatherv(comp_id.data(), bufferSize, MPI_UINT64_T, global_component_ids.data(),
