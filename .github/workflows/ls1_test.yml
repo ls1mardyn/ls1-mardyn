@@ -55,9 +55,10 @@ jobs:
     - name: Setup
       run: |
         sudo apt-get update
+        # MPICH 4.0.3 seems to have a bug that triggers a FP exception in our collective communication when doing 0+0.
         sudo apt-get install -y \
           libcppunit-dev        \
-          libmpich-dev          \
+          libopenmpi-dev        \
           libomp-dev
         echo "Running ${JOBNAME}"
         git status
@@ -71,11 +72,7 @@ jobs:
           if [[ ${{ matrix.parall }} == 'PAR' ]]
           then
             mpi_enabled='ON'
-            export CC=mpicc.mpich
-            export CXX=mpicxx.mpich
           else
-            export CC=${{ matrix.cc }}
-            export CXX=${{ matrix.cxx }}
             mpi_enabled='OFF'
           fi
           if [[ ${{ matrix.parall }} == 'PAR' ]] && [[ ${{ matrix.autopas }} == 'ON' ]]
@@ -93,10 +90,8 @@ jobs:
                 -DENABLE_MPI=$mpi_enabled \
                 -DENABLE_UNIT_TESTS=ON \
               ..
-
-          # workaround for AutoPas' dependency harmony (Makefile C projekt) throwing up when invoked with mpich wrapper
-          CC=${{ matrix.cc }} \
-            make -j2
+        
+          cmake --build . --parallel 2
 
           cd ..
 
@@ -107,8 +102,8 @@ jobs:
             ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
           fi
       env:
-        MPICH_CC: ${{ matrix.cc }}
-        MPICH_CXX: ${{ matrix.cxx }}
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
         OMP_NUM_THREADS: 2
 
       # validation testing
@@ -155,9 +150,7 @@ jobs:
                 -DENABLE_MPI=$mpi_enabled \
               ..
         
-          # workaround for AutoPas' dependency harmony (Makefile C projekt) throwing up when invoked with mpich wrapper
-          CC=${{ matrix.cc }} \
-            make -j2
+          cmake --build . --parallel 2
 
           cd "${repoPath}"
 
@@ -210,8 +203,6 @@ jobs:
           done
 
       env:
-        MPICH_CC: ${{ matrix.cc }}
-        MPICH_CXX: ${{ matrix.cxx }}
-        CC: mpicc.mpich
-        CXX: mpicxx.mpich
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
         OMP_NUM_THREADS: 2
