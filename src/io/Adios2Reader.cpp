@@ -51,7 +51,7 @@ void Adios2Reader::testInit(std::string infile, int step, std::string adios2engi
 	global_log->info() << "[Adios2Reader] step to load from input file: " << _step << endl;
 	_mode = mode;
 	global_log->info() << "[Adios2Reader] Input mode: " << _mode << endl;
-	
+
 	if (!mainInstance) initAdios2();
 }
 
@@ -95,7 +95,7 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
 
 	_simulation.setSimulationTime(_simtime);
 	global_log->info() << "[Adios2Reader] simulation time is: " << _simtime << std::endl;
-	
+
 	global_log->info() << "[Adios2Reader] Finished reading molecules: 100%" << std::endl;
 	global_log->info() << "[Adios2Reader] Reading Molecules done" << std::endl;
 
@@ -167,7 +167,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 			}
 		}
 	}
-	
+
 	for (int read = 0; read < num_reads; read++) {
 		global_log->info() << "[Adios2Reader] Performing read " << read << endl;
 		const uint64_t offset = read * bufferSize;
@@ -194,7 +194,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 
 		engine->PerformGets();
 		global_log->info() << "[Adios2Reader] Read " << read << " done." << endl;
-		
+
 		if (_simulation.getEnsemble()->getComponents()->empty()) {
 			auto attributes = io->AvailableAttributes();
 			auto comp_id_copy = comp_id;
@@ -318,7 +318,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 	std::vector<uint64_t> mol_id, comp_id;
 	uint64_t bufferSize = particle_count / domainDecomp->getNumProcs();
     auto variables = io->AvailableVariables();
-	
+
 	for (const auto &var : variables) {
 		if (var.first == "rx") {
 			if (var.second.at("Type") != "double") {
@@ -355,12 +355,12 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 			}
 		}
 	}
-	
+
     uint64_t offset = domainDecomp->getRank() * bufferSize;
 	if (domainDecomp->getRank() == domainDecomp->getNumProcs() - 1) {
 		bufferSize = particle_count % bufferSize == 0 ? bufferSize : bufferSize + particle_count % bufferSize;
 	}
-	
+
 	if (_single_precision) {
 		performInquire(
 			variables, bufferSize, offset, std::get<std::vector<float>>(rx), std::get<std::vector<float>>(ry),
@@ -376,7 +376,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 			std::get<std::vector<double>>(qy), std::get<std::vector<double>>(qz), std::get<std::vector<double>>(Lx),
 			std::get<std::vector<double>>(Ly), std::get<std::vector<double>>(Lz), mol_id, comp_id);
 	}
-	
+
     engine->PerformGets();
 	global_log->debug() << "[Adios2Reader] Processed gets." << endl;
 
@@ -402,7 +402,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 				   counts_array.data(),
 				   displacements_array.data(), MPI_UINT64_T, domainDecomp->getCommunicator());
 #endif
-	
+
     if (_simulation.getEnsemble()->getComponents()->empty()) {
 		global_log->debug() << "[Adios2Reader] getComponents is empty. Reading components from Adios file ..." << std::endl;
         auto attributes = io->AvailableAttributes();
@@ -411,7 +411,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 		auto u_iter = std::unique(comp_id_copy.begin(), comp_id_copy.end());
 		comp_id_copy.resize(std::distance(comp_id_copy.begin(), u_iter));
 		_dcomponents.resize(comp_id_copy.size());
-    	
+
     	for (auto comp : comp_id_copy) {
 			std::string name = "component_" + std::to_string(comp);
 			auto centers_var = io->InquireAttribute<double>(name + "_centers");
@@ -459,7 +459,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 		}
 		ParticleData::MoleculeToParticleData(particle_buff[i + offset], m1);
     }
-	
+
 	global_log->debug() << "[Adios2Reader] performing allgather" << std::endl;
 	MPI_Allgatherv(&particle_buff[offset], bufferSize, mpi_Particle, particle_buff.data(),
 				  counts_array.data(), displacements_array.data(),
@@ -534,21 +534,21 @@ void Adios2Reader::initAdios2() {
         }
   }
     catch (std::invalid_argument& e) {
-        global_log->fatal() 
-                << "[Adios2Reader] Invalid argument exception, STOPPING PROGRAM from rank" 
-                << domainDecomp.getRank() 
+        global_log->fatal()
+                << "[Adios2Reader] Invalid argument exception, STOPPING PROGRAM from rank"
+                << domainDecomp.getRank()
                 << ": " << e.what() << std::endl;
 	mardyn_exit(1);
     } catch (std::ios_base::failure& e) {
-        global_log->fatal() 
-                << "[Adios2Reader] IO System base failure exception, STOPPING PROGRAM from rank " 
-                << domainDecomp.getRank() 
+        global_log->fatal()
+                << "[Adios2Reader] IO System base failure exception, STOPPING PROGRAM from rank "
+                << domainDecomp.getRank()
                 << ": " << e.what() << std::endl;
 	mardyn_exit(1);
     } catch (std::exception& e) {
-        global_log->fatal() 
-                << "[Adios2Reader] Exception, STOPPING PROGRAM from rank" 
-                << domainDecomp.getRank() 
+        global_log->fatal()
+                << "[Adios2Reader] Exception, STOPPING PROGRAM from rank"
+                << domainDecomp.getRank()
                 << ": " << e.what() << std::endl;
 	mardyn_exit(1);
     }
