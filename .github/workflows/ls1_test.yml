@@ -55,9 +55,11 @@ jobs:
     - name: Setup
       run: |
         sudo apt-get update
+        # MPICH 4.0.3 seems to have a bug that triggers a FP exception in our collective communication when doing 0+0.
         sudo apt-get install -y \
           libcppunit-dev        \
-          libmpich-dev
+          libopenmpi-dev        \
+          libomp-dev
         echo "Running ${JOBNAME}"
         git status
         mkdir build_${JOBNAME}
@@ -88,14 +90,15 @@ jobs:
                 -DENABLE_MPI=$mpi_enabled \
                 -DENABLE_UNIT_TESTS=ON \
               ..
-
-          make -j2
+        
+          cmake --build . --parallel 2
 
           cd ..
 
           if [[ ${{ matrix.parall }} == 'PAR' ]]
           then
-            mpirun -np ${{ matrix.procs }} ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
+            # when using OpenMPI --oversubscribe is needed. Remove it if you switch to MPICH.
+            mpirun --oversubscribe -np ${{ matrix.procs }} ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
           else
             ./build_${JOBNAME}/src/MarDyn -t -d ./test_input/
           fi
@@ -147,8 +150,8 @@ jobs:
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
               ..
-
-          make -j2
+        
+          cmake --build . --parallel 2
 
           cd "${repoPath}"
 
@@ -191,10 +194,11 @@ jobs:
                 EXE=$repoPath/build_${JOBNAME}/src/MarDyn
               fi
         
-              mpirun -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
+              # when using OpenMPI --oversubscribe is needed. Remove it if you switch to MPICH.
+              mpirun --oversubscribe -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
                 | tee "output_${{ join(matrix.*, '-') }}"                                                   \
                 | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' > ${repoPath}/output_${VERSION}    \
-                || cat "output_${{ join(matrix.*, '-') }}"
+                || (exitCode=$?; cat "output_${{ join(matrix.*, '-') }}"; (exit $exitCode))
             done
             # compare the two runs
             diff ${repoPath}/output_new ${repoPath}/output_master
