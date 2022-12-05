@@ -227,8 +227,13 @@ static <a class="el" href="classObjectFillerBase.html">ObjectFillerBase</a> *&#1
 
 <p>Read in XML configuration for <a class="el" href="classReplicaFiller.html">ReplicaFiller</a> and all its included objects. </p>
 <p >The following xml object structure is handled by this method: </p><div class="fragment"><div class="line">&lt;<span class="keywordtype">filler</span> <span class="keyword">type</span>=<span class="stringliteral">&quot;ReplicaFiller&quot;</span>&gt;</div>
-<div class="line">  &lt;<span class="keywordtype">input</span> <span class="keyword">type</span>=<span class="stringliteral">&quot;&quot;</span>&gt;<span class="comment">&lt;!-- See the documentation of the input reader --&gt;</span>&lt;/<span class="keywordtype">input</span>&gt;</div>
-<div class="line">  &lt;<span class="keywordtype">origin</span>&gt;&lt;<span class="keywordtype">x</span>&gt;<span class="keyword">DOUBLE</span>&lt;/<span class="keywordtype">x</span>&gt; &lt;<span class="keywordtype">y</span>&gt;<span class="keyword">DOUBLE</span>&lt;/<span class="keywordtype">y</span>&gt; &lt;<span class="keywordtype">z</span>&gt;<span class="keyword">DOUBLE</span>&lt;/<span class="keywordtype">z</span>&gt; <span class="comment">&lt;!-- base point for the replication --&gt;</span> &lt;/<span class="keywordtype">origin</span>&gt;</div>
+<div class="line">   &lt;<span class="keywordtype">input</span> <span class="keyword">type</span>=<span class="stringliteral">&quot;&quot;</span>&gt;...&lt;/<span class="keywordtype">input</span>&gt;      <span class="comment">&lt;!-- See the documentation of the input reader --&gt;</span></div>
+<div class="line">   &lt;<span class="keywordtype">origin</span>&gt;                                            <span class="comment">&lt;!-- base point for the replication; default: 0.0, 0.0, 0.0 --&gt;</span></div>
+<div class="line">       &lt;<span class="keywordtype">x</span>&gt;<span class="keyword">DOUBLE</span>&lt;/<span class="keywordtype">x</span>&gt;</div>
+<div class="line">       &lt;<span class="keywordtype">y</span>&gt;<span class="keyword">DOUBLE</span>&lt;/<span class="keywordtype">y</span>&gt;</div>
+<div class="line">       &lt;<span class="keywordtype">z</span>&gt;<span class="keyword">DOUBLE</span>&lt;/<span class="keywordtype">z</span>&gt;</div>
+<div class="line">&lt;/<span class="keywordtype">origin</span>&gt;</div>
+<div class="line">&lt;<span class="keywordtype">componentid</span>&gt;<span class="keyword">INT</span>&lt;/<span class="keywordtype">componentid</span>&gt; <span class="comment">&lt;!-- If specified, componentID of input will be changed to INT (starting from 1); default: keep componentID --&gt;</span></div>
 <div class="line">&lt;/<span class="keywordtype">filler</span>&gt;</div>
 </div><!-- fragment --> 
 <p>Implements <a class="el" href="classObjectFillerBase.html#aad978a0460262e0160e87421b9e39f35">ObjectFillerBase</a>.</p>
@@ -270,7 +275,7 @@ static <a class="el" href="classObjectFillerBase.html">ObjectFillerBase</a> *&#1
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Dec 2 2022 10:35:33 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Dec 5 2022 14:30:50 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
