@@ -30,7 +30,7 @@
 
 			<components>
 				<include query="/components/moleculetype" >../../components_3c.xml</include>
-				<include query="/mixing/rule">../../mixing_3c.xml</include>
+				<include query="/mixing">../../mixing_3c.xml</include>
 			</components>
 
 			<phasespacepoint>

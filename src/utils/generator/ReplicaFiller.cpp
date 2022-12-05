@@ -40,7 +40,7 @@ using std::endl;
  */
 class ParticleContainerToBasisWrapper : public ParticleContainer {
  public:
-    ParticleContainerToBasisWrapper() = default;
+	ParticleContainerToBasisWrapper() = default;
 
     ~ParticleContainerToBasisWrapper() override = default;
 
@@ -48,15 +48,15 @@ class ParticleContainerToBasisWrapper : public ParticleContainer {
 
     void setBoundingBox(std::shared_ptr<Object> object) { _object = std::move(object); }
 
-    bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
-                     const bool& rebuildCaches = false) override {
-        double r[3] = {particle.r(0), particle.r(1), particle.r(2)};
-        if (_object && !_object->isInside(r)) {
-            return false;
-        }
-        _basis.addMolecule(particle);
-        return true;
-    }
+	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
+					 const bool& rebuildCaches = false) override {
+		double r[3] = {particle.r(0), particle.r(1), particle.r(2)};
+		if (_object && !_object->isInside(r)) {
+			return false;
+		}
+		_basis.addMolecule(particle);
+		return true;
+	}
 
     /** @brief return reference to internal basis object. */
     Basis& getBasis() { return _basis; }
@@ -65,22 +65,19 @@ class ParticleContainerToBasisWrapper : public ParticleContainer {
 
     unsigned long getNumberOfParticles(ParticleIterator::Type /* t */ = ParticleIterator::ALL_CELLS) override { return _basis.numMolecules(); }
 
-    double getBoundingBoxMin(int dimension) const override {
-        double min[3] = {std::numeric_limits<double>::min(), std::numeric_limits<double>::min(), std::numeric_limits<double>::min()};
-    //    _object->getBboxMin(min);
-        return min[dimension];
-    }
+	double getBoundingBoxMin(int dimension) const override {
+		double min[3] = {std::numeric_limits<double>::min(), std::numeric_limits<double>::min(), std::numeric_limits<double>::min()};
+		return min[dimension];
+	}
 
-    double getBoundingBoxMax(int dimension) const override {
-        double max[3] = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), std::numeric_limits<double>::max()};
-    //    _object->getBboxMax(max);
-        return max[dimension];
-    }
+	double getBoundingBoxMax(int dimension) const override {
+		double max[3] = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), std::numeric_limits<double>::max()};
+		return max[dimension];
+	}
 
-    bool isInBoundingBox(double r[3]) const override {
-        // _object->isInside(r);
-        return true;
-    }
+	bool isInBoundingBox(double r[3]) const override {
+		return true;
+	}
 
     void update() override {}
 
@@ -136,8 +133,8 @@ class ParticleContainerToBasisWrapper : public ParticleContainer {
     }
 
  private:
-    Basis _basis;
-    std::shared_ptr<Object> _object;
+	Basis _basis;
+	std::shared_ptr<Object> _object;
 };
 
 
@@ -146,16 +143,16 @@ void ReplicaFiller::setObject(std::shared_ptr<Object> object) { _object = object
 std::shared_ptr<Object> ReplicaFiller::getObject() { return _object; }
 
 void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
-	if(xmlconfig.changecurrentnode("input")) {
+	if (xmlconfig.changecurrentnode("input")) {
 		std::string inputPluginName;
 		xmlconfig.getNodeValue("@type", inputPluginName);
-		if(inputPluginName != "BinaryReader") {
+		if (inputPluginName != "BinaryReader") {
 			global_log->error() << "[ReplicaFiller] ReplicaFiller only works with inputPlugins: BinaryReader at the moment" << endl;
 			Simulation::exit(1);
 		}
 		setInputReader(std::make_shared<BinaryReader>());
 		_inputReader->readXML(xmlconfig);
-		if(_inputReader == nullptr) {
+		if (_inputReader == nullptr) {
 			global_log->error() << "[ReplicaFiller] Could not create input reader " << inputPluginName << endl;
 			Simulation::exit(1);
 		}
@@ -164,34 +161,33 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 		global_log->error() << "[ReplicaFiller] Input reader for original not specified." << endl;
 		Simulation::exit(1);
 	}
-	if(xmlconfig.changecurrentnode("origin")) {
+	if (xmlconfig.changecurrentnode("origin")) {
 		Coordinate3D origin;
 		origin.readXML(xmlconfig);
 		origin.get(_origin);
 		xmlconfig.changecurrentnode("..");
 	}
 	global_log->info() << "[ReplicaFiller] Base point for the replication: ["
-					    << _origin[0] << "," << _origin[1] << "," << _origin[2]
-						<< "]" << endl;
+					   << _origin[0] << "," << _origin[1] << "," << _origin[2]
+					   << "]" << endl;
 
-    unsigned int componentid = 0;
-    _componentid = 0;
-    _keepComponent = true;
-    if (xmlconfig.getNodeValue("componentid", componentid)) {
-        cout << componentid << endl;
-        const size_t numComps = global_simulation->getEnsemble()->getComponents()->size();
-        if ((componentid < 1) || (componentid > numComps)) {
-            global_log->error() << "[ReplicaFiller] Specified componentid is invalid. Valid range: 0 < componentid <= " << numComps << endl;
-            Simulation::exit(1);
-        }
-        _componentid = componentid - 1;  // Internally stored in array starting at index 0
-        _keepComponent = false;
-    }
-    if (_keepComponent) {
-        global_log->info() << "[ReplicaFiller] Keeping componentid of input" << endl;
-    } else {
-        global_log->info() << "[ReplicaFiller] Changing componentid of input to " << _componentid + 1 << endl;
-    }
+	unsigned int componentid = 0;
+    // If the XML defines a new component ID for the replication, use it.
+    // Otherwise, keep the value that is defined in the phase space file.
+	if (xmlconfig.getNodeValue("componentid", componentid)) {
+		const size_t numComps = global_simulation->getEnsemble()->getComponents()->size();
+		if ((componentid < 1) || (componentid > numComps)) {
+			global_log->error() << "[ReplicaFiller] Specified componentid is invalid. Valid range: 1 <= componentid <= " << numComps << endl;
+			Simulation::exit(1);
+		}
+		_componentid = componentid - 1;  // Internally stored in array starting at index 0
+		_keepComponent = false;
+	}
+	if (_keepComponent) {
+		global_log->info() << "[ReplicaFiller] Keeping componentid of input" << endl;
+	} else {
+		global_log->info() << "[ReplicaFiller] Changing componentid of input to " << _componentid + 1 << endl;
+	}
 }
 
 
@@ -203,19 +199,19 @@ void ReplicaFiller::init() {
     // see https://github.com/ls1mardyn/ls1-mardyn/pull/64
     // basisContainer.setBoundingBox(object);
 
-    Domain domain(0);
-    _inputReader->readPhaseSpaceHeader(&domain, 0.0);
-    _inputReader->readPhaseSpace(&basisContainer, &domain, &global_simulation->domainDecomposition());
-    unsigned long numberOfParticles = basisContainer.getNumberOfParticles();
-    global_log->info() << "[ReplicaFiller] Number of molecules in the replica: " << numberOfParticles << endl;
+	Domain domain(0);
+	_inputReader->readPhaseSpaceHeader(&domain, 0.0);
+	_inputReader->readPhaseSpace(&basisContainer, &domain, &global_simulation->domainDecomposition());
+	unsigned long numberOfParticles = basisContainer.getNumberOfParticles();
+	global_log->info() << "[ReplicaFiller] Number of molecules in the replica: " << numberOfParticles << endl;
 
-    if (numberOfParticles == 0) {
-        global_log->error_always_output() << "[ReplicaFiller] No molecules in replica, aborting! " << endl;
-        Simulation::exit(1);
-    }
+	if (numberOfParticles == 0) {
+		global_log->error_always_output() << "[ReplicaFiller] No molecules in replica, aborting! " << endl;
+		Simulation::exit(1);
+	}
 
-    global_log->info() << "[ReplicaFiller] Setting simulation time to 0.0" << endl;
-    _simulation.setSimulationTime(0);
+	global_log->info() << "[ReplicaFiller] Setting simulation time to 0.0" << endl;
+	_simulation.setSimulationTime(0);
 
     Lattice lattice;
     double a[3] = {domain.getGlobalLength(0), 0.0, 0.0};
@@ -227,12 +223,12 @@ void ReplicaFiller::init() {
 }
 
 int ReplicaFiller::getMolecule(Molecule* molecule) {
-    int ret = _gridFiller.getMolecule(molecule);
-    if (ret != 0) {
-        // change component if specified
-        if (not _keepComponent && molecule->componentid() != _componentid) {
-            molecule->setComponent(global_simulation->getEnsemble()->getComponent(_componentid));
-        }
-    }
-    return ret;
+	int ret = _gridFiller.getMolecule(molecule);
+	if (ret != 0) {
+		// change component if specified
+		if (not _keepComponent && molecule->componentid() != _componentid) {
+			molecule->setComponent(global_simulation->getEnsemble()->getComponent(_componentid));
+		}
+	}
+	return ret;
 }
