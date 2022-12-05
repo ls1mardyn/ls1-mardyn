@@ -30,7 +30,7 @@
 
 			<components>
 				<include query="/components/moleculetype" >../../components_3c.xml</include>
-				<include query="/mixing/rule">../../mixing_3c.xml</include>
+				<include query="/mixing">../../mixing_3c.xml</include>
 			</components>
 
 			<phasespacepoint>
@@ -41,7 +41,6 @@
 								<header>../run01/cp_binary-1.restart.header.xml</header>
 								<data>../run01/cp_binary-1.restart.dat</data>
 							</input>
-							<componentid>1</componentid>
 						</filler>
 
 						<object type="Cuboid">

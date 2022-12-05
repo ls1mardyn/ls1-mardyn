@@ -42,7 +42,7 @@
 								<header>../run02/cp_binary-1.restart.header.xml</header>
 								<data>../run02/cp_binary-1.restart.dat</data>
 							</input>
-							<componentid>0</componentid>
+							<componentid>1</componentid>
 						</filler>
 
 						<object type="ObjectSubtractor">
