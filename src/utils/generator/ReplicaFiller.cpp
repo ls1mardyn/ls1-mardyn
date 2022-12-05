@@ -42,11 +42,11 @@ class ParticleContainerToBasisWrapper : public ParticleContainer {
  public:
 	ParticleContainerToBasisWrapper() = default;
 
-    ~ParticleContainerToBasisWrapper() override = default;
+	~ParticleContainerToBasisWrapper() override = default;
 
-    void readXML(XMLfileUnits& xmlconfig) override {};
+	void readXML(XMLfileUnits& xmlconfig) override {};
 
-    void setBoundingBox(std::shared_ptr<Object> object) { _object = std::move(object); }
+	void setBoundingBox(std::shared_ptr<Object> object) { _object = std::move(object); }
 
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
 					 const bool& rebuildCaches = false) override {
@@ -58,12 +58,12 @@ class ParticleContainerToBasisWrapper : public ParticleContainer {
 		return true;
 	}
 
-    /** @brief return reference to internal basis object. */
-    Basis& getBasis() { return _basis; }
+	/** @brief return reference to internal basis object. */
+	Basis& getBasis() { return _basis; }
 
-    void clear() override { _basis = Basis(); }
+	void clear() override { _basis = Basis(); }
 
-    unsigned long getNumberOfParticles(ParticleIterator::Type /* t */ = ParticleIterator::ALL_CELLS) override { return _basis.numMolecules(); }
+	unsigned long getNumberOfParticles(ParticleIterator::Type /* t */ = ParticleIterator::ALL_CELLS) override { return _basis.numMolecules(); }
 
 	double getBoundingBoxMin(int dimension) const override {
 		double min[3] = {std::numeric_limits<double>::min(), std::numeric_limits<double>::min(), std::numeric_limits<double>::min()};
@@ -79,58 +79,58 @@ class ParticleContainerToBasisWrapper : public ParticleContainer {
 		return true;
 	}
 
-    void update() override {}
+	void update() override {}
 
-    void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate = false) override {}
+	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate = false) override {}
 
-    void traverseCells(CellProcessor& cellProcessor) override {}
+	void traverseCells(CellProcessor& cellProcessor) override {}
 
-    void traverseNonInnermostCells(CellProcessor& cellProcessor) override {}
+	void traverseNonInnermostCells(CellProcessor& cellProcessor) override {}
 
-    void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) override {}
+	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) override {}
 
-    ParticleIterator iterator(ParticleIterator::Type t) override { return ParticleIterator(); }
+	ParticleIterator iterator(ParticleIterator::Type t) override { return ParticleIterator(); }
 
-    RegionParticleIterator regionIterator(const double startCorner[3], const double endCorner[3],
-                                          ParticleIterator::Type t) override { return RegionParticleIterator(); }
+	RegionParticleIterator regionIterator(const double startCorner[3], const double endCorner[3],
+										  ParticleIterator::Type t) override { return RegionParticleIterator(); }
 
-    void deleteOuterParticles() override {}
+	void deleteOuterParticles() override {}
 
-    double get_halo_L(int index) const override { return 0.0; }
+	double get_halo_L(int index) const override { return 0.0; }
 
-    double getCutoff() const override { return 0.0; }
+	double getCutoff() const override { return 0.0; }
 
-    void deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) override {}
+	void deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) override {}
 
-    double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override {
-        return 0.0;
-    }
+	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) override {
+		return 0.0;
+	}
 
-    void updateInnerMoleculeCaches() override {}
+	void updateInnerMoleculeCaches() override {}
 
-    void updateBoundaryAndHaloMoleculeCaches() override {}
+	void updateBoundaryAndHaloMoleculeCaches() override {}
 
-    void updateMoleculeCaches() override {}
+	void updateMoleculeCaches() override {}
 
-    // Pure virtual in ParticleContainer.h
-    // Returns invalid iterator.
-    std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override { return {}; }
+	// Pure virtual in ParticleContainer.h
+	// Returns invalid iterator.
+	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override { return {}; }
 
-    unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-                                std::array<double, 3> simBoxLength, size_t seed_offset) override { return 0; }
+	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
+								std::array<double, 3> simBoxLength, size_t seed_offset) override { return 0; }
 
-    size_t getTotalSize() override { return _basis.numMolecules() * sizeof(Molecule); }
+	size_t getTotalSize() override { return _basis.numMolecules() * sizeof(Molecule); }
 
-    void printSubInfo(int offset) override { }
+	void printSubInfo(int offset) override { }
 
-    std::string getName() override { return std::string("ParticleContainerToBasisWrapper"); }
+	std::string getName() override { return std::string("ParticleContainerToBasisWrapper"); }
 
-    double* getCellLength() override { return nullptr; }
+	double* getCellLength() override { return nullptr; }
 
-    string getConfigurationAsString() override {
-        // give some dummy value
-        return "{ParticleContainerToBasisWrapper: dummy}";
-    }
+	string getConfigurationAsString() override {
+		// give some dummy value
+		return "{ParticleContainerToBasisWrapper: dummy}";
+	}
 
  private:
 	Basis _basis;
@@ -172,8 +172,8 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 					   << "]" << endl;
 
 	unsigned int componentid = 0;
-    // If the XML defines a new component ID for the replication, use it.
-    // Otherwise, keep the value that is defined in the phase space file.
+	// If the XML defines a new component ID for the replication, use it.
+	// Otherwise, keep the value that is defined in the phase space file.
 	if (xmlconfig.getNodeValue("componentid", componentid)) {
 		const size_t numComps = global_simulation->getEnsemble()->getComponents()->size();
 		if ((componentid < 1) || (componentid > numComps)) {
@@ -192,12 +192,12 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 
 
 void ReplicaFiller::init() {
-    ParticleContainerToBasisWrapper basisContainer;
-    std::shared_ptr<Object> object = std::make_shared<ObjectShifter>(_object, _origin);
+	ParticleContainerToBasisWrapper basisContainer;
+	std::shared_ptr<Object> object = std::make_shared<ObjectShifter>(_object, _origin);
 
-    // the following line is commented out, because the selection should not yet happen at this stage.
-    // see https://github.com/ls1mardyn/ls1-mardyn/pull/64
-    // basisContainer.setBoundingBox(object);
+	// the following line is commented out, because the selection should not yet happen at this stage.
+	// see https://github.com/ls1mardyn/ls1-mardyn/pull/64
+	// basisContainer.setBoundingBox(object);
 
 	Domain domain(0);
 	_inputReader->readPhaseSpaceHeader(&domain, 0.0);
@@ -213,13 +213,13 @@ void ReplicaFiller::init() {
 	global_log->info() << "[ReplicaFiller] Setting simulation time to 0.0" << endl;
 	_simulation.setSimulationTime(0);
 
-    Lattice lattice;
-    double a[3] = {domain.getGlobalLength(0), 0.0, 0.0};
-    double b[3] = {0.0, domain.getGlobalLength(1), 0.0};
-    double c[3] = {0.0, 0.0, domain.getGlobalLength(2)};
-    lattice.init(triclinic, primitive, a, b, c);
-    _gridFiller.setObject(getObject());
-    _gridFiller.init(lattice, basisContainer.getBasis(), _origin);
+	Lattice lattice;
+	double a[3] = {domain.getGlobalLength(0), 0.0, 0.0};
+	double b[3] = {0.0, domain.getGlobalLength(1), 0.0};
+	double c[3] = {0.0, 0.0, domain.getGlobalLength(2)};
+	lattice.init(triclinic, primitive, a, b, c);
+	_gridFiller.setObject(getObject());
+	_gridFiller.init(lattice, basisContainer.getBasis(), _origin);
 }
 
 int ReplicaFiller::getMolecule(Molecule* molecule) {

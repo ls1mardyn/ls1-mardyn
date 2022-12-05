@@ -25,7 +25,7 @@ class ReplicaFiller : public ObjectFillerBase {
  public:
 	ReplicaFiller() : _inputReader(nullptr), _origin() {}
 
-    ~ReplicaFiller() {}
+	~ReplicaFiller() {}
 
 	/** @brief Read in XML configuration for ReplicaFiller and all its included objects.
 	 *
@@ -44,17 +44,17 @@ class ReplicaFiller : public ObjectFillerBase {
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
-    /** Initialize the generator with current internal state */
-    void init();
+	/** Initialize the generator with current internal state */
+	void init();
 
-    /* Set input reader */
-    void setInputReader(std::shared_ptr<InputBase> inputReader) { _inputReader = inputReader; }
+	/* Set input reader */
+	void setInputReader(std::shared_ptr<InputBase> inputReader) { _inputReader = inputReader; }
 
-    /* Set object to fill */
-    void setObject(std::shared_ptr<Object> object);
+	/* Set object to fill */
+	void setObject(std::shared_ptr<Object> object);
 
-    /* Get object to fill */
-    std::shared_ptr<Object> getObject();
+	/* Get object to fill */
+	std::shared_ptr<Object> getObject();
 
 	/** Get a single molecule
 	 * By subsequent calls all molecules will be returned, one by one.
@@ -63,9 +63,9 @@ class ReplicaFiller : public ObjectFillerBase {
 	 */
 	int getMolecule(Molecule* molecule);
 
-    std::string getPluginName() { return std::string("ReplicaFiller"); }
+	std::string getPluginName() { return std::string("ReplicaFiller"); }
 
-    static ObjectFillerBase* createInstance() { return new ReplicaFiller(); }
+	static ObjectFillerBase* createInstance() { return new ReplicaFiller(); }
 
  private:
 	std::shared_ptr<InputBase> _inputReader;

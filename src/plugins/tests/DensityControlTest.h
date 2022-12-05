@@ -9,16 +9,16 @@
 
 class DensityControlTest : public utils::TestWithSimulationSetup {
 
-    TEST_SUITE(DensityControlTest);
-    TEST_METHOD(testDensityControl);
-    TEST_SUITE_END;
+	TEST_SUITE(DensityControlTest);
+	TEST_METHOD(testDensityControl);
+	TEST_SUITE_END;
 
 public:
 
-    DensityControlTest();
+	DensityControlTest();
 
-    virtual ~DensityControlTest();
+	virtual ~DensityControlTest();
 
-    void testDensityControl();
+	void testDensityControl();
 
 };
