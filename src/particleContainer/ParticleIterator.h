@@ -31,8 +31,19 @@ public:
 
 	ParticleIterator() = default;
 
+	/**
+	 * Copy constructor that converts from anything that implements this IteratorTrait.
+	 * @param parent
+	 */
 	ParticleIterator(const autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t& parent)
 		: autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t(parent) {}
+
+	/**
+	 * Move constructor that converts from anything that implements this IteratorTrait.
+	 * @param parent
+	 */
+	ParticleIterator(autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t&& parent)
+		: autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t(std::move(parent)) {}
 
 	size_t getCellIndex() {
 		return 0;  // not yet implemented

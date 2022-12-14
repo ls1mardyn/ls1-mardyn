@@ -19,8 +19,21 @@
 class RegionParticleIterator : public ParticleIterator {
 public:
 	RegionParticleIterator() = default;
+
+	/**
+	 * Copy constructor that converts from anything that implements this IteratorTrait.
+	 * @param parent
+	 */
 	explicit RegionParticleIterator(const autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t& parent)
 		: ParticleIterator(parent){};
+
+	/**
+	 * Move constructor that converts from anything that implements this IteratorTrait.
+	 * @param parent
+	 */
+	RegionParticleIterator(autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t&& parent)
+		: ParticleIterator(std::move(parent)) {};
+
 };
 
 #else
