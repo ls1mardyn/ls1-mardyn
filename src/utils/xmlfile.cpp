@@ -192,7 +192,7 @@ bool XMLfile::initfile_local(const string& filepath) {
 		m_filename=string(filepathTrimmed);
 	}
 	
-    //version using ifstream
+	//version using ifstream
 	ifstream fstrm(filepathTrimmed.c_str(),ifstream::binary|ifstream::ate);
 	if(!fstrm) {
 		cerr << "ERROR opening " << filepathTrimmed << endl;

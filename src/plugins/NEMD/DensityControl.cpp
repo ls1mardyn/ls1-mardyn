@@ -29,11 +29,8 @@
 #include "utils/CommVar.h"
 
 
-DensityControl::DensityControl() {
-}
-
-DensityControl::~DensityControl() {
-}
+DensityControl::DensityControl() = default;
+DensityControl::~DensityControl() = default;
 
 void DensityControl::init(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain) {

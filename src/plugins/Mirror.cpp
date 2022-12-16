@@ -93,8 +93,8 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	/** mirror type */
 	_type = MT_UNKNOWN;
 	uint32_t type = 0;
-    xmlconfig.getNodeValue("@type", type);
-    _type = static_cast<MirrorType>(type);
+	xmlconfig.getNodeValue("@type", type);
+	_type = static_cast<MirrorType>(type);
 
 	/** mirror direction */
 	_direction = MD_LEFT_MIRROR;
@@ -397,8 +397,8 @@ void Mirror::beforeForces(
 }
 
 void Mirror::afterForces(
-        ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-        unsigned long simstep
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep
 )
 {
 	this->VelocityChange(particleContainer);

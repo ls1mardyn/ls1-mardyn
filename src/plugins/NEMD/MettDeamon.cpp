@@ -34,18 +34,18 @@ using namespace std;
 
 template < typename T > void shuffle( std::list<T>& lst ) // shuffle contents of a list
 {
-    // create a vector of (wrapped) references to elements in the list
-    // http://en.cppreference.com/w/cpp/utility/functional/reference_wrapper
-    std::vector< std::reference_wrapper< const T > > vec( lst.begin(), lst.end() ) ;
+	// create a vector of (wrapped) references to elements in the list
+	// http://en.cppreference.com/w/cpp/utility/functional/reference_wrapper
+	std::vector< std::reference_wrapper< const T > > vec( lst.begin(), lst.end() ) ;
 
-    // shuffle (the references in) the vector
-    std::shuffle( vec.begin(), vec.end(), std::mt19937{ std::random_device{}() } ) ;
+	// shuffle (the references in) the vector
+	std::shuffle( vec.begin(), vec.end(), std::mt19937{ std::random_device{}() } ) ;
 
-    // copy the shuffled sequence into a new list
-    std::list<T> shuffled_list {  vec.begin(), vec.end() } ;
+	// copy the shuffled sequence into a new list
+	std::list<T> shuffled_list {  vec.begin(), vec.end() } ;
 
-    // swap the old list with the shuffled list
-    lst.swap(shuffled_list) ;
+	// swap the old list with the shuffled list
+	lst.swap(shuffled_list) ;
 }
 
 void create_rand_vec_ones(const uint64_t& nCount, const double& percent, std::vector<int>& v)

@@ -25,8 +25,8 @@ enum MirrorDirection : uint16_t {
 
 enum MirrorType : uint16_t {
 	MT_UNKNOWN = 0,
-    MT_REFLECT = 1,
-    MT_FORCE_CONSTANT = 2,
+	MT_REFLECT = 1,
+	MT_FORCE_CONSTANT = 2,
 	MT_ZERO_GRADIENT = 3, // Deprecated
 	MT_NORMDISTR_MB = 4,  // Deprecated
 	MT_MELAND_2004 = 5,   // Algorithm proposed by Meland et al., Phys. Fluids, Vol. 16, No. 2 (2004)
@@ -84,14 +84,14 @@ public:
 			unsigned long simstep
 	) override;
 
-    /** @brief Method afterForces will be called after forcefields have been applied
-     *
-     * make pure Virtual ?
-     */
-    void afterForces(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            unsigned long simstep
-    ) override;
+	/** @brief Method afterForces will be called after forcefields have been applied
+	 *
+	 * make pure Virtual ?
+	 */
+	void afterForces(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) override;
 
 	void endStep(
 			ParticleContainer *particleContainer,

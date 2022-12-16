@@ -45,7 +45,7 @@ std::string MmpldWriter::getOutputFilename() {
 }
 
 MmpldWriter::MmpldWriter() :
-		_startTimestep(0), _writeFrequency(1000), _stopTimestep(1000000000), _writeBufferSize(32768), _outputPrefix("unknown"),
+		_startTimestep(0), _writeFrequency(1000), _stopTimestep(std::numeric_limits<uint64_t>::max()), _writeBufferSize(32768), _outputPrefix("unknown"),
 		_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false),
 		_fileCount(1), _numFramesPerFile(0), _mmpldversion(MMPLD_DEFAULT_VERSION), _vertex_type(MMPLD_VERTEX_FLOAT_XYZ), _color_type(MMPLD_COLOR_NONE)
 {}
@@ -142,7 +142,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 
 //Header Information
 void MmpldWriter::init(ParticleContainer *particleContainer,
-                       DomainDecompBase *domainDecomp, Domain *domain)
+						DomainDecompBase *domainDecomp, Domain *domain)
 {
 	// only executed once
 	this->PrepareWriteControl();
@@ -304,8 +304,8 @@ void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecomp
 }
 
 void MmpldWriter::endStep(ParticleContainer *particleContainer,
-                          DomainDecompBase *domainDecomp, Domain *domain,
-                          unsigned long simstep)
+							DomainDecompBase *domainDecomp, Domain *domain,
+							unsigned long simstep)
 {
 	if((simstep < _startTimestep) || (simstep > _stopTimestep) || (0 != ((simstep - _startTimestep) % _writeFrequency)) ) {
 		return;
@@ -378,7 +378,7 @@ void MmpldWriter::MultiFileApproachReset(ParticleContainer* particleContainer,
 {
 	this->finish(particleContainer, domainDecomp, domain);
 	_fileCount++;
-    this->init(particleContainer, domainDecomp, domain);
+	this->init(particleContainer, domainDecomp, domain);
 }
 
 void MmpldWriter::PrepareWriteControl()
@@ -455,17 +455,17 @@ long MmpldWriter::get_particle_data_size() {
 			elemsize = 3 * sizeof(uint16_t);
 	}
 	switch(_color_type) {
-        case MMPLD_COLOR_NONE:
-            break;
-        case MMPLD_COLOR_UINT8_RGB:
-            elemsize += 3 * sizeof(uint8_t);
-            break;
-        case MMPLD_COLOR_UINT8_RGBA:
-            elemsize += 4 * sizeof(uint8_t);
-            break;
-        case MMPLD_COLOR_FLOAT_I:
-            elemsize += sizeof(float);
-            break;
+		case MMPLD_COLOR_NONE:
+			break;
+		case MMPLD_COLOR_UINT8_RGB:
+			elemsize += 3 * sizeof(uint8_t);
+			break;
+		case MMPLD_COLOR_UINT8_RGBA:
+			elemsize += 4 * sizeof(uint8_t);
+			break;
+		case MMPLD_COLOR_FLOAT_I:
+			elemsize += sizeof(float);
+			break;
 		case MMPLD_COLOR_FLOAT_RGB:
 			elemsize += 3 * sizeof(float);
 			break;
