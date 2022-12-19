@@ -73,12 +73,12 @@ void GammaWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase
 
 inline void GammaWriter::resetGamma(Domain *domain) {
 	for (unsigned componentId = 0; componentId < _numComp; ++componentId) {
-		_gamma.at(componentId) = 0.0;
+		_gamma[componentId] = 0.0;
 	}
 }
 
 inline double GammaWriter::getGamma(unsigned id) {
-	return (_gamma.at(id)/(_globalLength.at(0)*_globalLength.at(2)*_numInterfaces));
+	return (_gamma[id]/(_globalLength[0]*_globalLength[2]*_numInterfaces));
 }
 
 void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDecompBase* domainDecom) {
@@ -97,22 +97,22 @@ void GammaWriter::calculateGamma(ParticleContainer* particleContainer, DomainDec
 			if ((tempMol->r(1) - _range.ymax)*(tempMol->r(1) - _range.ymin) <= 0) {
 				const unsigned cid = tempMol->componentid() + 1;
 				const double gamma = tempMol->Vi(1) - 0.5 * (tempMol->Vi(0) + tempMol->Vi(2));
-				localGamma.at(cid) += gamma;
-				localGamma.at(0)   += gamma;  // 0 is component-independent value
+				localGamma[cid] += gamma;
+				localGamma[0]   += gamma;  // 0 is component-independent value
 			}
 		}
 	}
 
 	domainDecom->collCommInit(_numComp);
 	for (unsigned int i=0; i<_numComp; i++) {
-		domainDecom->collCommAppendDouble(localGamma.at(i));
+		domainDecom->collCommAppendDouble(localGamma[i]);
 	}
 	domainDecom->collCommAllreduceSum();
 	for (unsigned int i=0; i<_numComp; i++) {
-		localGamma.at(i) = domainDecom->collCommGetDouble();
+		localGamma[i] = domainDecom->collCommGetDouble();
 	}
 	domainDecom->collCommFinalize();
 	for (unsigned int i=0; i<_numComp; i++) {
-		_gamma.at(i)+=localGamma.at(i);
+		_gamma[i] += localGamma[i];
 	}
 }
