@@ -201,14 +201,14 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             std::fill(hmPressure_step.at(d).local.begin(), hmPressure_step.at(d).local.end(), 0.0f);
             std::fill(hmR_step.at(d).local.begin(),        hmR_step.at(d).local.end(), 0.0f);
             std::fill(hmM_step.at(d).local.begin(),        hmM_step.at(d).local.end(), 0.0f);
-            std::fill(hmM_step.at(d).local.begin(),        hmM_step.at(d).local.end(), 0.0f);
-            std::fill(hmM_step.at(d).local.begin(),        hmM_step.at(d).local.end(), 0.0f);
+            std::fill(hmM_step.at(d+9u).local.begin(),     hmM_step.at(d+9u).local.end(), 0.0f);
+            std::fill(hmM_step.at(d+18u).local.begin(),    hmM_step.at(d+18u).local.end(), 0.0f);
 
             std::fill(hmPressure_step.at(d).global.begin(), hmPressure_step.at(d).global.end(), 0.0f);
             std::fill(hmR_step.at(d).global.begin(),        hmR_step.at(d).global.end(), 0.0f);
             std::fill(hmM_step.at(d).global.begin(),        hmM_step.at(d).global.end(), 0.0f);
-            std::fill(hmM_step.at(d).global.begin(),        hmM_step.at(d).global.end(), 0.0f);
-            std::fill(hmM_step.at(d).global.begin(),        hmM_step.at(d).global.end(), 0.0f);
+            std::fill(hmM_step.at(d+9u).global.begin(),     hmM_step.at(d+9u).global.end(), 0.0f);
+            std::fill(hmM_step.at(d+18u).global.begin(),    hmM_step.at(d+18u).global.end(), 0.0f);
         }
 
     } else {
@@ -861,6 +861,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 ofs << setw(24) << "pos";                           // Bin position
                 for (unsigned long cid = 0; cid < numOutputs; cid++) {
                     ofs << setw(22) << "delta[" << cid << "]";
+                    // key k_i and value v_i
                     for (auto& [k_i, v_i] : dirs) {
                         ofs << setw(20) << "q_" << k_i << "[" << cid << "]";
                     }
@@ -918,13 +919,13 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         }
                         for (auto& [k_i, v_i] : dirs) {
                             for (auto& [k_j, v_j] : dirs) {
-                                ofs << FORMAT_SCI_MAX_DIGITS << p[3u*v_i+v_j];
+                                ofs << FORMAT_SCI_MAX_DIGITS << R[3u*v_i+v_j];
                             }
                         }
                         for (auto& [k_i, v_i] : dirs) {
                             for (auto& [k_j, v_j] : dirs) {
                                 for (auto& [k_k, v_k] : dirs) {
-                                    ofs << FORMAT_SCI_MAX_DIGITS << p[9u*v_i+3u*v_j+v_k];
+                                    ofs << FORMAT_SCI_MAX_DIGITS << m[9u*v_i+3u*v_j+v_k];
                                 }
                             }
                         }
