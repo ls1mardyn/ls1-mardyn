@@ -14,6 +14,7 @@ CheckpointWriter | checkpoint, legacy | (Legacy) Checkpoint writer. Hint: use <t
 COMaligner | alignment, particleContainer utility, visualization | Calculates Center of Mass (COM) of all particles and aligns it with center of simulation box. Dimension/frequency/speed of alignment can be controlled via XML.
 CommunicationPartnerWriter | mpi, communication, output, debugging | Prints the CommunicationPartners for each rank in a separate file.
 DecompWriter | mpi, print | Writes information on the MPI Domain Decomposition. For each rank the boxmin and boxmax is printed.
+DensityControl | density, composition, control, checkpoint | Establishes the specified target partial densities of all components within a specified region.
 DensityProfileWriter | todo | todo
 DirectedPM | utility for droplet simulations, output writer | Generates output for droplet simulations. Temperature, pressure and denstiy are calculated locally for the droplet and the surrounding gas phase in cylindrical bins. Droplet velocity is calculated as well
 DistControl | distance, interface, density profile, quasi-stationary, reference coordinates | Determines vapor-liquid interface positions from density profile. The positions can be used as reference coordinates for e.g. sampling regions in quasi-stationary evaporation simulations.
@@ -25,7 +26,7 @@ ExamplePlugin | example, sample, illustrate, usage | Print user-specifed text at
 ExtractPhase | extract, phase, interface, vapor-liquid equilibrium (VLE), local density | Extracts the liquid phase from a vapor-liquid equilibrium (VLE) simulation by evaluating the local density surrounding individual particles.
 FixRegion | todo | Fixes particles within a cuboid region to their respective positions. Fixed particles still exert forces onto other particles but they do not move.
 FlopRateWriter | performance, FLOP/sec | Calculate the floating point operations per second at which the simulation runs. Only FLOPs in the force calculation are calculated.
-GammaWriter | todo | todo
+GammaWriter | sampling, surface tension | Calculate the surface tension in a two phase system consisting of one or two interfaces.
 HaloParticleWriter | mpi, communication, HaloParticles, output, debugging | Prints the halo particles for each process in a separate files.
 InMemoryCheckpointing | resilience, checkpoint, fault tolerance, in-memory | In-memory Checkpointing. Save and restore the state of a simulation from a previous snapshot stored in RAM. Under development.
 KDTreePrinter | output, debugging, kdd | Prints the full tree information of the kd-tree decomposition.

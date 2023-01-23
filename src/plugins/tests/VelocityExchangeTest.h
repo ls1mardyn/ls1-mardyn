@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils/TestWithSimulationSetup.h"
+#include "utils/Testing.h"
 #include "plugins/NEMD/VelocityExchange.h"
 
 // Test of VelocityExchange plugin
@@ -8,16 +9,16 @@
 
 class VelocityExchangeTest : public utils::TestWithSimulationSetup {
 
-    TEST_SUITE(VelocityExchangeTest);
-    TEST_METHOD(testExchangeVelocities);
-    TEST_SUITE_END;
+	TEST_SUITE(VelocityExchangeTest);
+	TEST_METHOD(testExchangeVelocities);
+	TEST_SUITE_END;
 
 public:
 
-    VelocityExchangeTest();
+	VelocityExchangeTest();
 
-    virtual ~VelocityExchangeTest();
+	virtual ~VelocityExchangeTest();
 
-    void testExchangeVelocities();
+	void testExchangeVelocities();
 
 };

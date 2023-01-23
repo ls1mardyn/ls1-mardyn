@@ -8,7 +8,6 @@
 
 #include "molecules/Molecule.h"
 #include "io/InputBase.h"
-// #include "io/InputPluginFactory.h"
 #include "io/BinaryReader.h"
 #include "utils/Logger.h"
 #include "utils/Coordinate3D.h"
@@ -173,8 +172,8 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 					   << "]" << endl;
 
 	unsigned int componentid = 0;
-    // If the XML defines a new component ID for the replication, use it.
-    // Otherwise, keep the value that is defined in the phase space file.
+	// If the XML defines a new component ID for the replication, use it.
+	// Otherwise, keep the value that is defined in the phase space file.
 	if (xmlconfig.getNodeValue("componentid", componentid)) {
 		const size_t numComps = global_simulation->getEnsemble()->getComponents()->size();
 		if ((componentid < 1) || (componentid > numComps)) {
