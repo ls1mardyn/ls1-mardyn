@@ -116,101 +116,106 @@ $(function() {
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <a class="code hl_class" href="classMirror.html">Mirror</a>();</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <a class="code hl_class" href="classMirror.html">~Mirror</a>() <span class="keyword">override</span> = <span class="keywordflow">default</span>;</div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classMirror.html#aa702fd8b5b0c2bb4801b7318a3fcd8cc">readXML</a>(<a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>&amp; xmlconfig) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classMirror.html#a0216dd4ee798c472537f265115b66ab4">init</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>              <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classMirror.html#aa702fd8b5b0c2bb4801b7318a3fcd8cc">readXML</a>(<a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>&amp; xmlconfig) <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classMirror.html#a58bf99e7215756924d3d49503db0f9ed">beforeForces</a>(</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>            <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    ) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classMirror.html#ae2be2dd3c4d332a0c1138a973d2ad2b0">afterForces</a>(</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>            <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    ) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno"><a class="line" href="classMirror.html#aa00b7938f693c86f04e57590efc8c320">   93</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classMirror.html#aa00b7938f693c86f04e57590efc8c320">endStep</a>(</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>            <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>            <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain,</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep)<span class="keyword"> override </span>{}</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno"><a class="line" href="classMirror.html#ae830c19229aa463d34666bce45bdfeab">   98</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classMirror.html#ae830c19229aa463d34666bce45bdfeab">finish</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain)<span class="keyword"> override </span>{}</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classMirror.html#a0216dd4ee798c472537f265115b66ab4">init</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>              <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classMirror.html#a58bf99e7215756924d3d49503db0f9ed">beforeForces</a>(</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>            <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    ) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classMirror.html#ae2be2dd3c4d332a0c1138a973d2ad2b0">afterForces</a>(</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>            <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    ) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno"><a class="line" href="classMirror.html#aa00b7938f693c86f04e57590efc8c320">   96</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classMirror.html#aa00b7938f693c86f04e57590efc8c320">endStep</a>(</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>            <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>            <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain,</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep)<span class="keyword"> override </span>{}</div>
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span> </div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno"><a class="line" href="classMirror.html#aaa0fb8af08313a24377d0e79699d599a">  101</a></span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> <a class="code hl_function" href="classMirror.html#aaa0fb8af08313a24377d0e79699d599a">getPluginName</a>()<span class="keyword"> override </span>{<span class="keywordflow">return</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a>(<span class="stringliteral">&quot;Mirror&quot;</span>);}</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="keyword">static</span> <a class="code hl_class" href="classPluginBase.html">PluginBase</a>* createInstance() {<span class="keywordflow">return</span> <span class="keyword">new</span> <a class="code hl_class" href="classMirror.html">Mirror</a>();}</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno"><a class="line" href="classMirror.html#ae830c19229aa463d34666bce45bdfeab">  101</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classMirror.html#ae830c19229aa463d34666bce45bdfeab">finish</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain)<span class="keyword"> override </span>{}</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="comment">// Getters, Setters</span></div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    uint64_t getReflectedParticlesCountLocal(<span class="keyword">const</span> uint16_t&amp; componentid){<span class="keywordflow">return</span> _particleManipCount.reflected.local.at(componentid);}</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    uint64_t getDeletedParticlesCountLocal(<span class="keyword">const</span> uint16_t&amp; componentid) {<span class="keywordflow">return</span> _particleManipCount.deleted.local.at(componentid);}</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    uint32_t getPluginID() {<span class="keywordflow">return</span> _pluginID;}</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keywordtype">void</span> setPluginID(<span class="keyword">const</span> uint32_t&amp; <span class="keywordtype">id</span>) {_pluginID = <a class="code hl_typedef" href="namespacexml__schema.html#a398fa1a00d828dc3bd1aadf89e68a3fb">id</a>;}</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keywordtype">double</span> getPosition() {<span class="keywordflow">return</span> _position.coord;}</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    <span class="comment">// Observer, ControlInstance</span></div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <a class="code hl_class" href="classSubjectBase.html">SubjectBase</a>* getSubject();</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    <span class="keywordtype">void</span> update(<a class="code hl_class" href="classSubjectBase.html">SubjectBase</a>* subject) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> getShortName()<span class="keyword"> override </span>{<span class="keywordflow">return</span> <span class="stringliteral">&quot;Mirr&quot;</span>;}</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>        <span class="keywordtype">void</span> VelocityChange(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer);</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno"><a class="line" href="classMirror.html#aaa0fb8af08313a24377d0e79699d599a">  104</a></span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> <a class="code hl_function" href="classMirror.html#aaa0fb8af08313a24377d0e79699d599a">getPluginName</a>()<span class="keyword"> override </span>{<span class="keywordflow">return</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a>(<span class="stringliteral">&quot;Mirror&quot;</span>);}</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keyword">static</span> <a class="code hl_class" href="classPluginBase.html">PluginBase</a>* createInstance() {<span class="keywordflow">return</span> <span class="keyword">new</span> <a class="code hl_class" href="classMirror.html">Mirror</a>();}</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="comment">// Getters, Setters</span></div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    uint64_t getReflectedParticlesCountLocal(<span class="keyword">const</span> uint16_t&amp; componentid){<span class="keywordflow">return</span> _particleManipCount.reflected.local.at(componentid);}</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    uint64_t getDeletedParticlesCountLocal(<span class="keyword">const</span> uint16_t&amp; componentid) {<span class="keywordflow">return</span> _particleManipCount.deleted.local.at(componentid);}</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    uint32_t getPluginID() {<span class="keywordflow">return</span> _pluginID;}</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    <span class="keywordtype">void</span> setPluginID(<span class="keyword">const</span> uint32_t&amp; <span class="keywordtype">id</span>) {_pluginID = <a class="code hl_typedef" href="namespacexml__schema.html#a398fa1a00d828dc3bd1aadf89e68a3fb">id</a>;}</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="keywordtype">double</span> getPosition() {<span class="keywordflow">return</span> _position.coord;}</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span> </div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="comment">// Observer, ControlInstance</span></div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <a class="code hl_class" href="classSubjectBase.html">SubjectBase</a>* getSubject();</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    <span class="keywordtype">void</span> update(<a class="code hl_class" href="classSubjectBase.html">SubjectBase</a>* subject) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> getShortName()<span class="keyword"> override </span>{<span class="keywordflow">return</span> <span class="stringliteral">&quot;Mirr&quot;</span>;}</div>
 <div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span> </div>
 <div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    uint32_t _pluginID;</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    uint32_t _targetComp;</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="keyword">struct </span>MirrorPosition {</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>        uint16_t axis;</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>        <span class="keywordtype">double</span> coord;</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno"><a class="line" href="structMirror_1_1MirrorPosition_1_1RefPoint.html">  125</a></span>        <span class="keyword">struct </span><a class="code hl_struct" href="structMirror_1_1MirrorPosition_1_1RefPoint.html">RefPoint</a> {</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>            uint16_t id;</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>            <span class="keywordtype">double</span> origin;</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>            <span class="keywordtype">double</span> coord;</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>        } ref;</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    } _position;</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    <span class="keywordtype">double</span> _forceConstant;</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    MirrorDirection _direction;</div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    MirrorType _type;</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span> </div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    std::unique_ptr&lt;Random&gt; _rnd;</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span> </div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    <span class="keyword">struct </span>MelandParams {</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>        <span class="keywordtype">double</span> velo_target {0.4};</div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        <span class="keywordtype">float</span> fixed_probability_factor {-1};</div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>    } _melandParams;</div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    </div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    <span class="keyword">struct </span>RampingParams {</div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>        <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> startStep {1000};</div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>        <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> stopStep {2000};</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>        <span class="keywordtype">int</span> treatment {1};</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    } _rampingParams;</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span> </div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>    <span class="keyword">struct </span>ParticleManipCount {</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>        <a class="code hl_class" href="classCommVar.html">CommVar&lt;std::vector&lt;uint64_t&gt;</a> &gt; reflected;</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>        <a class="code hl_class" href="classCommVar.html">CommVar&lt;std::vector&lt;uint64_t&gt;</a> &gt; deleted;</div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    } _particleManipCount;</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>    </div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    <span class="keyword">struct </span>DiffuseMirror {</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        <span class="keywordtype">bool</span> enabled;</div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        <span class="keywordtype">float</span> width;</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>        std::map&lt;uint64_t,double&gt; pos_map;</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    } _diffuse_mirror;</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>};</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span> </div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span><span class="preprocessor">#endif </span><span class="comment">/*MIRROR_H_*/</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        <span class="keywordtype">void</span> VelocityChange(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer);</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    uint32_t _pluginID;</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    uint32_t _targetComp;</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    <span class="keyword">struct </span>MirrorPosition {</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>        uint16_t axis;</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        <span class="keywordtype">double</span> coord;</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno"><a class="line" href="structMirror_1_1MirrorPosition_1_1RefPoint.html">  128</a></span>        <span class="keyword">struct </span><a class="code hl_struct" href="structMirror_1_1MirrorPosition_1_1RefPoint.html">RefPoint</a> {</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>            uint16_t id;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>            <span class="keywordtype">double</span> origin;</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>            <span class="keywordtype">double</span> coord;</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>        } ref;</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    } _position;</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    <span class="keywordtype">double</span> _forceConstant;</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    MirrorDirection _direction;</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    MirrorType _type;</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    std::unique_ptr&lt;Random&gt; _rnd;</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>    <span class="keyword">struct </span>MelandParams {</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>        <span class="keywordtype">double</span> velo_target {0.4};</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>        <span class="keywordtype">float</span> fixed_probability_factor {-1};</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    } _melandParams;</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    </div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    <span class="keyword">struct </span>RampingParams {</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>        <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> startStep {1000};</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>        <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> stopStep {2000};</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        <span class="keywordtype">int</span> treatment {1};</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    } _rampingParams;</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span> </div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    <span class="keyword">struct </span>ParticleManipCount {</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>        <a class="code hl_class" href="classCommVar.html">CommVar&lt;std::vector&lt;uint64_t&gt;</a> &gt; reflected;</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>        <a class="code hl_class" href="classCommVar.html">CommVar&lt;std::vector&lt;uint64_t&gt;</a> &gt; deleted;</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    } _particleManipCount;</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>    </div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    <span class="keyword">struct </span>DiffuseMirror {</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>        <span class="keywordtype">bool</span> enabled;</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>        <span class="keywordtype">float</span> width;</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        std::map&lt;uint64_t,double&gt; pos_map;</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    } _diffuse_mirror;</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>    </div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>    <span class="keyword">struct </span>SwitchComp {</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        <span class="keywordtype">bool</span> enabled;</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        uint32_t cid_ub;  <span class="comment">// component id unity based</span></div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    } _switchComp;</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>};</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span> </div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span><span class="preprocessor">#endif </span><span class="comment">/*MIRROR_H_*/</span><span class="preprocessor"></span></div>
 <div class="ttc" id="aclassCommVar_html"><div class="ttname"><a href="classCommVar.html">CommVar</a></div><div class="ttdef"><b>Definition:</b> CommVar.h:17</div></div>
 <div class="ttc" id="aclassControlInstance_html"><div class="ttname"><a href="classControlInstance.html">ControlInstance</a></div><div class="ttdef"><b>Definition:</b> Region.h:29</div></div>
 <div class="ttc" id="aclassDomainDecompBase_html"><div class="ttname"><a href="classDomainDecompBase.html">DomainDecompBase</a></div><div class="ttdoc">handle boundary region and multiple processes</div><div class="ttdef"><b>Definition:</b> DomainDecompBase.h:51</div></div>
 <div class="ttc" id="aclassDomain_html"><div class="ttname"><a href="classDomain.html">Domain</a></div><div class="ttdoc">This class is used to read in the phasespace and to handle macroscopic values.</div><div class="ttdef"><b>Definition:</b> Domain.h:47</div></div>
 <div class="ttc" id="aclassMirror_html"><div class="ttname"><a href="classMirror.html">Mirror</a></div><div class="ttdef"><b>Definition:</b> Mirror.h:41</div></div>
 <div class="ttc" id="aclassMirror_html_a0216dd4ee798c472537f265115b66ab4"><div class="ttname"><a href="classMirror.html#a0216dd4ee798c472537f265115b66ab4">Mirror::init</a></div><div class="ttdeci">void init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) override</div><div class="ttdoc">Method init will be called at the begin of the simulation.</div><div class="ttdef"><b>Definition:</b> Mirror.cpp:49</div></div>
-<div class="ttc" id="aclassMirror_html_a58bf99e7215756924d3d49503db0f9ed"><div class="ttname"><a href="classMirror.html#a58bf99e7215756924d3d49503db0f9ed">Mirror::beforeForces</a></div><div class="ttdeci">void beforeForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, unsigned long simstep) override</div><div class="ttdoc">Method beforeForces will be called before forcefields have been applied no alterations w....</div><div class="ttdef"><b>Definition:</b> Mirror.cpp:189</div></div>
-<div class="ttc" id="aclassMirror_html_aa00b7938f693c86f04e57590efc8c320"><div class="ttname"><a href="classMirror.html#aa00b7938f693c86f04e57590efc8c320">Mirror::endStep</a></div><div class="ttdeci">void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain, unsigned long simstep) override</div><div class="ttdoc">Method endStep will be called at the end of each time step.</div><div class="ttdef"><b>Definition:</b> Mirror.h:93</div></div>
+<div class="ttc" id="aclassMirror_html_a58bf99e7215756924d3d49503db0f9ed"><div class="ttname"><a href="classMirror.html#a58bf99e7215756924d3d49503db0f9ed">Mirror::beforeForces</a></div><div class="ttdeci">void beforeForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, unsigned long simstep) override</div><div class="ttdoc">Method beforeForces will be called before forcefields have been applied no alterations w....</div><div class="ttdef"><b>Definition:</b> Mirror.cpp:196</div></div>
+<div class="ttc" id="aclassMirror_html_aa00b7938f693c86f04e57590efc8c320"><div class="ttname"><a href="classMirror.html#aa00b7938f693c86f04e57590efc8c320">Mirror::endStep</a></div><div class="ttdeci">void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain, unsigned long simstep) override</div><div class="ttdoc">Method endStep will be called at the end of each time step.</div><div class="ttdef"><b>Definition:</b> Mirror.h:96</div></div>
 <div class="ttc" id="aclassMirror_html_aa702fd8b5b0c2bb4801b7318a3fcd8cc"><div class="ttname"><a href="classMirror.html#aa702fd8b5b0c2bb4801b7318a3fcd8cc">Mirror::readXML</a></div><div class="ttdeci">void readXML(XMLfileUnits &amp;xmlconfig) override</div><div class="ttdoc">Read in XML configuration for Mirror and all its included objects.</div><div class="ttdef"><b>Definition:</b> Mirror.cpp:53</div></div>
-<div class="ttc" id="aclassMirror_html_aaa0fb8af08313a24377d0e79699d599a"><div class="ttname"><a href="classMirror.html#aaa0fb8af08313a24377d0e79699d599a">Mirror::getPluginName</a></div><div class="ttdeci">std::string getPluginName() override</div><div class="ttdoc">return the name of the plugin</div><div class="ttdef"><b>Definition:</b> Mirror.h:101</div></div>
-<div class="ttc" id="aclassMirror_html_ae2be2dd3c4d332a0c1138a973d2ad2b0"><div class="ttname"><a href="classMirror.html#ae2be2dd3c4d332a0c1138a973d2ad2b0">Mirror::afterForces</a></div><div class="ttdeci">void afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, unsigned long simstep) override</div><div class="ttdoc">Method afterForces will be called after forcefields have been applied.</div><div class="ttdef"><b>Definition:</b> Mirror.cpp:378</div></div>
-<div class="ttc" id="aclassMirror_html_ae830c19229aa463d34666bce45bdfeab"><div class="ttname"><a href="classMirror.html#ae830c19229aa463d34666bce45bdfeab">Mirror::finish</a></div><div class="ttdeci">void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) override</div><div class="ttdoc">Method finish will be called at the end of the simulation.</div><div class="ttdef"><b>Definition:</b> Mirror.h:98</div></div>
+<div class="ttc" id="aclassMirror_html_aaa0fb8af08313a24377d0e79699d599a"><div class="ttname"><a href="classMirror.html#aaa0fb8af08313a24377d0e79699d599a">Mirror::getPluginName</a></div><div class="ttdeci">std::string getPluginName() override</div><div class="ttdoc">return the name of the plugin</div><div class="ttdef"><b>Definition:</b> Mirror.h:104</div></div>
+<div class="ttc" id="aclassMirror_html_ae2be2dd3c4d332a0c1138a973d2ad2b0"><div class="ttname"><a href="classMirror.html#ae2be2dd3c4d332a0c1138a973d2ad2b0">Mirror::afterForces</a></div><div class="ttdeci">void afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, unsigned long simstep) override</div><div class="ttdoc">Method afterForces will be called after forcefields have been applied.</div><div class="ttdef"><b>Definition:</b> Mirror.cpp:399</div></div>
+<div class="ttc" id="aclassMirror_html_ae830c19229aa463d34666bce45bdfeab"><div class="ttname"><a href="classMirror.html#ae830c19229aa463d34666bce45bdfeab">Mirror::finish</a></div><div class="ttdeci">void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) override</div><div class="ttdoc">Method finish will be called at the end of the simulation.</div><div class="ttdef"><b>Definition:</b> Mirror.h:101</div></div>
 <div class="ttc" id="aclassObserverBase_html"><div class="ttname"><a href="classObserverBase.html">ObserverBase</a></div><div class="ttdef"><b>Definition:</b> ObserverBase.h:13</div></div>
 <div class="ttc" id="aclassParticleContainer_html"><div class="ttname"><a href="classParticleContainer.html">ParticleContainer</a></div><div class="ttdoc">This Interface is used to get access to particles and pairs of particles.</div><div class="ttdef"><b>Definition:</b> ParticleContainer.h:69</div></div>
 <div class="ttc" id="aclassPluginBase_html"><div class="ttname"><a href="classPluginBase.html">PluginBase</a></div><div class="ttdoc">The PluginBase class provides the interface for any kind of output/plugin classes - called &quot;(output) ...</div><div class="ttdef"><b>Definition:</b> PluginBase.h:47</div></div>
@@ -218,11 +223,11 @@ $(function() {
 <div class="ttc" id="aclassXMLfileUnits_html"><div class="ttname"><a href="classXMLfileUnits.html">XMLfileUnits</a></div><div class="ttdoc">XML file with unit attributes abstraction.</div><div class="ttdef"><b>Definition:</b> xmlfileUnits.h:25</div></div>
 <div class="ttc" id="anamespacexml__schema_html_a398fa1a00d828dc3bd1aadf89e68a3fb"><div class="ttname"><a href="namespacexml__schema.html#a398fa1a00d828dc3bd1aadf89e68a3fb">xml_schema::id</a></div><div class="ttdeci">::xsd::cxx::tree::id&lt; char, ncname &gt; id</div><div class="ttdoc">C++ type corresponding to the ID XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:320</div></div>
 <div class="ttc" id="anamespacexml__schema_html_aefbaf353f9a0043af46d23d9040ef268"><div class="ttname"><a href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:268</div></div>
-<div class="ttc" id="astructMirror_1_1MirrorPosition_1_1RefPoint_html"><div class="ttname"><a href="structMirror_1_1MirrorPosition_1_1RefPoint.html">Mirror::MirrorPosition::RefPoint</a></div><div class="ttdef"><b>Definition:</b> Mirror.h:125</div></div>
+<div class="ttc" id="astructMirror_1_1MirrorPosition_1_1RefPoint_html"><div class="ttname"><a href="structMirror_1_1MirrorPosition_1_1RefPoint.html">Mirror::MirrorPosition::RefPoint</a></div><div class="ttdef"><b>Definition:</b> Mirror.h:128</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Dec 5 2022 14:30:46 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Jan 23 2023 13:44:42 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

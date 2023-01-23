@@ -1,8 +1,8 @@
 var searchData=
 [
   ['n_0',['N',['../classEnsemble.html#a7dc18923b5b01b2bfa0074c8cff3bbc8',1,'Ensemble::N()'],['../classCanonicalEnsemble.html#a0028b5c21c6286eeed9aa1cfd156e7a5',1,'CanonicalEnsemble::N()'],['../classGrandCanonicalEnsemble.html#a1c44d4ff41a8eaf620497c73f1bcdb69',1,'GrandCanonicalEnsemble::N()']]],
-  ['name_1',['Name',['../classDataArray__t.html#aee4e88149a6405378a573ffb554c5373',1,'DataArray_t::Name() const'],['../classDataArray__t.html#aeb126f8a8b03eea44eed5a2b606da59c',1,'DataArray_t::Name()'],['../classDataArray__t.html#a95a1f49a6dd9f54fb71fb6b70240a51b',1,'DataArray_t::Name(const Name_type &amp;x)'],['../classDataArray__t.html#add3007d3bd0cecaf0800c20c297373ec',1,'DataArray_t::Name(::std::unique_ptr&lt; Name_type &gt; p)']]],
-  ['name_2',['name',['../classXMLfile_1_1Node.html#ada9634ba450f85abdc116e683f36e112',1,'XMLfile::Node']]],
+  ['name_1',['name',['../classXMLfile_1_1Node.html#ada9634ba450f85abdc116e683f36e112',1,'XMLfile::Node']]],
+  ['name_2',['Name',['../classDataArray__t.html#aee4e88149a6405378a573ffb554c5373',1,'DataArray_t::Name() const'],['../classDataArray__t.html#aeb126f8a8b03eea44eed5a2b606da59c',1,'DataArray_t::Name()'],['../classDataArray__t.html#a95a1f49a6dd9f54fb71fb6b70240a51b',1,'DataArray_t::Name(const Name_type &amp;x)'],['../classDataArray__t.html#add3007d3bd0cecaf0800c20c297373ec',1,'DataArray_t::Name(::std::unique_ptr&lt; Name_type &gt; p)']]],
   ['ndistribution_3',['Ndistribution',['../classDomainDecompBase.html#ace0b6e99093f88cd41a86a1bb4da57f9',1,'DomainDecompBase::Ndistribution()'],['../classDomainDecompMPIBase.html#a74b255776a71006f4670b048e09dd570',1,'DomainDecompMPIBase::Ndistribution()']]],
   ['node_4',['Node',['../classXMLfile_1_1Node.html#a9ada1537f5549fc35e2c26aa219ef49d',1,'XMLfile::Node::Node()'],['../classXMLfile_1_1Node.html#aa38361fd9c052d04216d19290c4ab632',1,'XMLfile::Node::Node(const Node &amp;n)']]],
   ['nodepath_5',['nodepath',['../classXMLfile_1_1Node.html#a170b6848812f77bbd392c0a7dfadc1f4',1,'XMLfile::Node']]],

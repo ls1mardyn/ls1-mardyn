@@ -513,7 +513,10 @@ static <a class="el" href="classPluginBase.html">PluginBase</a> *&#160;</td><td 
 <div class="line">       &lt;<span class="keywordtype">start</span>&gt;<span class="keyword">UNSIGNED_LONG</span>&lt;/<span class="keywordtype">start</span>&gt;   <span class="comment">&lt;!-- Timestep until all particles are reflected --&gt;</span></div>
 <div class="line">       &lt;<span class="keywordtype">stop</span>&gt;<span class="keyword">UNSIGNED_LONG</span>&lt;/<span class="keywordtype">stop</span>&gt;         <span class="comment">&lt;!-- As from this timestep all particles are treated as set in &quot;treatment&quot; --&gt;</span></div>
 <div class="line">       &lt;<span class="keywordtype">treatment</span>&gt;<span class="keyword">INT</span>&lt;/<span class="keywordtype">treatment</span>&gt;         <span class="comment">&lt;!-- When not reflected, the particles are deleted (0) or transmitted (1) --&gt;</span></div>
-<div class="line">   &lt;/<span class="keywordtype">ramping</span>&gt; </div>
+<div class="line">   &lt;/<span class="keywordtype">ramping</span>&gt;</div>
+<div class="line">   &lt;<span class="keywordtype">switchcomp</span>&gt;</div>
+<div class="line">       &lt;<span class="keywordtype">cid</span>&gt;<span class="keyword">INT</span>&lt;/<span class="keywordtype">cid</span>&gt;   <span class="comment">&lt;!-- Switch component to &lt;cid&gt; if molecule has passed the mirror --&gt;</span></div>
+<div class="line">   &lt;/<span class="keywordtype">switchcomp</span>&gt;</div>
 <div class="line">&lt;/<span class="keywordtype">plugin</span>&gt;</div>
 </div><!-- fragment --> <p >mirror type</p>
 <p >mirror direction</p>
@@ -562,7 +565,7 @@ static <a class="el" href="classPluginBase.html">PluginBase</a> *&#160;</td><td 
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Dec 5 2022 14:30:49 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Jan 23 2023 13:44:44 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
