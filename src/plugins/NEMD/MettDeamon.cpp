@@ -34,18 +34,18 @@ using namespace std;
 
 template < typename T > void shuffle( std::list<T>& lst ) // shuffle contents of a list
 {
-    // create a vector of (wrapped) references to elements in the list
-    // http://en.cppreference.com/w/cpp/utility/functional/reference_wrapper
-    std::vector< std::reference_wrapper< const T > > vec( lst.begin(), lst.end() ) ;
+	// create a vector of (wrapped) references to elements in the list
+	// http://en.cppreference.com/w/cpp/utility/functional/reference_wrapper
+	std::vector< std::reference_wrapper< const T > > vec( lst.begin(), lst.end() ) ;
 
-    // shuffle (the references in) the vector
-    std::shuffle( vec.begin(), vec.end(), std::mt19937{ std::random_device{}() } ) ;
+	// shuffle (the references in) the vector
+	std::shuffle( vec.begin(), vec.end(), std::mt19937{ std::random_device{}() } ) ;
 
-    // copy the shuffled sequence into a new list
-    std::list<T> shuffled_list {  vec.begin(), vec.end() } ;
+	// copy the shuffled sequence into a new list
+	std::list<T> shuffled_list {  vec.begin(), vec.end() } ;
 
-    // swap the old list with the shuffled list
-    lst.swap(shuffled_list) ;
+	// swap the old list with the shuffled list
+	lst.swap(shuffled_list) ;
 }
 
 void create_rand_vec_ones(const uint64_t& nCount, const double& percent, std::vector<int>& v)
@@ -335,8 +335,9 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 			_feedrate.release_velo.method = RVM_NORM_DISTR_GENERATOR;
 			double T, D;  // T:Temperature, D:Drift
 			double a_neg, a_pos, v_neg, v_pos, e_neg, e_pos;
-			std::string fpath;
-			uint64_t numSamples;
+			T = D = a_neg = a_pos = v_neg = v_pos = e_neg = e_pos = 0.0f;
+			std::string fpath = "";
+			uint64_t numSamples = 0u;
 			bool bRet = true;
 			bRet = bRet && xmlconfig.getNodeValue("control/feed/release_velo/normMB/temperature", T);
 			bRet = bRet && xmlconfig.getNodeValue("control/feed/release_velo/normMB/drift", D);
@@ -873,23 +874,27 @@ void MettDeamon::writeRestartfile()
 	if(domainDecomp.getRank() != 0)
 		return;
 
-	const std::string fname = "MettDeamonRestart_movdir-"+std::to_string(_nMovingDirection)+".dat";
-	std::ofstream ofs;
-	// init restart file
-	if(not _bInitRestartLog)
+	// write restart info in dat format
 	{
-		ofs.open(fname, std::ios::out);
-		ofs << "     simstep" << "   slabIndex" << "                  deltaY" << std::endl;
-		_bInitRestartLog = true;
-	} else {
-		ofs.open(fname, std::ios::app);
+		std::ofstream ofs;
+		const std::string fname = "MettDeamonRestart_movdir-"+std::to_string(_nMovingDirection)+".dat";
+		// init restart file
+		if(not _bInitRestartLog)
+		{
+			ofs.open(fname, std::ios::out);
+			ofs << "     simstep" << "   slabIndex" << "                  deltaY" << std::endl;
+			_bInitRestartLog = true;
+		} else {
+			ofs.open(fname, std::ios::app);
+		}
+		ofs << setw(12) << simstep << setw(12) << _reservoir->getActualBinIndex();
+		ofs << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.sum << std::endl;
+		ofs.close();
 	}
-	ofs << setw(12) << simstep << setw(12) << _reservoir->getActualBinIndex();
-	ofs << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.sum << std::endl;
-	ofs.close();
 
 	// write restart info in XML format
 	{
+		std::ofstream ofs;
 		std::stringstream fnamestream;
 		const std::string fname = "MettDeamonRestart_movdir-"+std::to_string(_nMovingDirection);
 		fnamestream << fname << "_TS" << fill_width('0', 9) << simstep << ".xml";
@@ -1576,9 +1581,11 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 		dcomponents[0].setID(0);
 		dcomponents[0].addLJcenter(0., 0., 0., 1., 1., 1., 6., false);
 	}
+
+	// This is more or less copied from ASCIIReader.cpp
 	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz, Vix, Viy, Viz;
-	unsigned long id;
-	unsigned int componentid;
+	unsigned long id = 0ul;
+	unsigned int componentid = 1;  // Default componentID when using IRV format
 
 	x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=Vix=Viy=Viz=0.;
 	q0=1.;

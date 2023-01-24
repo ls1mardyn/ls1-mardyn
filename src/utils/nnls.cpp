@@ -175,6 +175,8 @@ int g1_(doublereal *a, doublereal *b, doublereal *cterm, doublereal *sterm, doub
 	izmax = 1;
 	nsetp = 0;
 	npp1 = 1;
+
+	jj = -1;
 /*                             ******  MAIN LOOP BEGINS HERE  ****** */
 L30:
 	/*                  QUIT IF ALL COEFFICIENTS ARE ALREADY IN THE SOLUTION.

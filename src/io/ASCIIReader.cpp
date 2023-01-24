@@ -350,8 +350,8 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 #endif
 
 	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz, Vix, Viy, Viz;
-	unsigned long id;
-	unsigned int componentid = std::numeric_limits<unsigned int>::max();
+	unsigned long id = 0ul;
+	unsigned int componentid = 1;  // Default componentID when using IRV format
 
 	x = y = z = vx = vy = vz = q1 = q2 = q3 = Dx = Dy = Dz = Vix = Viy = Viz = 0.;
 	q0 = 1.;

@@ -14,7 +14,6 @@
 #include <string>
 
 #include "utils/mardyn_assert.h"
-//#include "utils/Logger.h"
 #include "rapidxml/rapidxml_print.hpp"
 #include "String_utils.h"
 #include "Simulation.h"
@@ -193,7 +192,7 @@ bool XMLfile::initfile_local(const string& filepath) {
 		m_filename=string(filepathTrimmed);
 	}
 	
-    //version using ifstream
+	//version using ifstream
 	ifstream fstrm(filepathTrimmed.c_str(),ifstream::binary|ifstream::ate);
 	if(!fstrm) {
 		cerr << "ERROR opening " << filepathTrimmed << endl;

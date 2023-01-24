@@ -104,10 +104,9 @@ int get_compile_time(char *info_str) {
 }
 
 int get_timestamp(char *info_str) {
-	time_t t;
-	struct tm *ts;
-	t = time(NULL);
-	ts = localtime(&t);
+	const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	tm unused{};
+	const auto * ts = localtime_r(&now, &unused);
 	sprintf(info_str, "D%d-%d-%d T%d:%d:%d",
 	        ts->tm_mday, ts->tm_mon + 1, ts->tm_year + 1900,
 	        ts->tm_hour, ts->tm_min, ts->tm_sec);

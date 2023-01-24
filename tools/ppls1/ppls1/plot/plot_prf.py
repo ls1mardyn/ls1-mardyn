@@ -3,34 +3,24 @@ import argparse
 
 import ppls1.pp.pp_prf2df as pp_prf2df
 
-flgArgs = 1
+ap = argparse.ArgumentParser()
+ap.add_argument("-p", "--path", required=True, type=str, help="path to profile data")
+ap.add_argument("-e", "--export", required=True, type=str, help="export")
+ap.add_argument("-q", "--quantity", required=True, nargs='+', help="quantity")
+ap.add_argument("-a", "--avg", action='store_true', help="quantity")
+ap.add_argument("-t", "--timestep", type=int, help="quantity")
+args = vars(ap.parse_args())
 
-if flgArgs == 1:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-p", "--path", required=True, type=str, help="path to profile data")
-    ap.add_argument("-e", "--export", required=True, type=str, help="export")
-    ap.add_argument("-q", "--quantity", required=True, nargs='+', help="quantity")
-    ap.add_argument("-a", "--avg", action='store_true', help="quantity")
-    ap.add_argument("-t", "--timestep", type=int, help="quantity")
-    args = vars(ap.parse_args())
-
-    fullPathSim = args['path']
-    expName = args['export']
-    quantity = args['quantity']
-    if type(quantity) is list:
-        numQuantities = len(quantity)
-    else:
-        quantity = [quantity]
-        numQuantities = 1
-    flgAverage = args['avg']
-    timestep = args['timestep']
+fullPathSim = args['path']
+expName = args['export']
+quantity = args['quantity']
+if type(quantity) is list:
+    numQuantities = len(quantity)
 else:
-    fullPathSim = 'PATHTOSIMULATION'
-    expName = 'test.pdf'
-    quantity = 'rho_all'
+    quantity = [quantity]
     numQuantities = 1
-    flgAverage = True
-    timestep = None
+flgAverage = args['avg']
+timestep = args['timestep']
     
 
 print('Path to simulation:       '+fullPathSim)

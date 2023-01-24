@@ -232,7 +232,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	Vector3<int> edgeHaloSize = 0;
 	int cornerHaloSize = 0;
 	for (int n = _globalLevel + 1; n <= _maxLevel; n++) {
-		_mpCellLocal.push_back(std::vector<MpCell>((int) (num_cells_in_level_one_dim[0] + 4) * (num_cells_in_level_one_dim[1] + 4) * (num_cells_in_level_one_dim[2] + 4) , _maxOrd));
+		_mpCellLocal.push_back(std::vector<MpCell>(static_cast<size_t>(num_cells_in_level_one_dim[0] + 4) * (num_cells_in_level_one_dim[1] + 4) * (num_cells_in_level_one_dim[2] + 4) , _maxOrd));
 		xHaloSize += 2 * num_cells_in_level_one_dim[1] * num_cells_in_level_one_dim[2];
 		yHaloSize += 2 * (num_cells_in_level_one_dim[0] + 4) * num_cells_in_level_one_dim[2];
 		zHaloSize += 2 * (num_cells_in_level_one_dim[0] + 4) * (num_cells_in_level_one_dim[1] + 4);

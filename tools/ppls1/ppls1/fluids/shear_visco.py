@@ -28,7 +28,6 @@ def eta_lauten(T,rho):
 
 if __name__ == '__main__':
     print('Running test with LJTS ...')
-    fluid = 'LJTS'
     T = 0.8
     rho = 0.55
 

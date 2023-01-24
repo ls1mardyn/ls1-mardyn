@@ -60,25 +60,25 @@ MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* do
 		box[d] = _simulation.getEnsemble()->domain()->length(d);
 	}
 
-	unsigned fl_units[3][2];
+	size_t fl_units[3][2];
 	double fl_unit[3][2];
 	double N_id[2];
 	for(int i = 0; i < 2; i++) {
 		double curr_ratio = (i == 0) ? l1_ratio : (1 - l1_ratio);
 		N_id[i] = box[0] * (curr_ratio * box[1]) * box[2] * ((i == 0) ? rho1 : rho2);
 		double N_boxes = N_id[i] / 3.0; /* 3 molecules per box */
-		fl_units[1][i] = (unsigned int) round(
+		fl_units[1][i] = static_cast<size_t>(round(
 				pow(
 						(N_boxes * (curr_ratio * box[1]) * (curr_ratio * box[1]))
 						/ (box[0] * box[2]), 1.0 / 3.0
 				)
-		);
-		if(fl_units[1][i] == 0) fl_units[1][i] = 1;
+		));
+		if(fl_units[1][i] == 0ul) fl_units[1][i] = 1;
 		double bxbz_id = N_boxes / fl_units[1][i];
-		fl_units[0][i] = (unsigned int) round(sqrt(box[0] * bxbz_id / box[2]));
-		if(fl_units[0][i] == 0) fl_units[0][i] = 1;
-		fl_units[2][i] = (unsigned int) ceil(bxbz_id / fl_units[0][i]);
-		for(int d = 0; d < 3; d++) fl_unit[d][i] = ((d == 1) ? curr_ratio : 1.0) * box[d] / (double) fl_units[d][i];
+		fl_units[0][i] = static_cast<size_t>(round(sqrt(box[0] * bxbz_id / box[2])));
+		if(fl_units[0][i] == 0ul) fl_units[0][i] = 1;
+		fl_units[2][i] = static_cast<size_t>(ceil(bxbz_id / fl_units[0][i]));
+		for(int d = 0; d < 3; d++) fl_unit[d][i] = ((d == 1) ? curr_ratio : 1.0) * box[d] / static_cast<double>(fl_units[d][i]);
 		global_log->debug() << "Elementary cell " << i << ": " << fl_unit[0][i] << " x " << fl_unit[1][i] << " x "
 							<< fl_unit[2][i] << endl;
 	}

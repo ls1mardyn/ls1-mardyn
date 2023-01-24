@@ -56,7 +56,6 @@ void DriftCtrl::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 	global_log->debug() << "[DriftCtrl] Init data structures for " << numComponents << " components." << std::endl;
 	
 	// init files
-	uint64_t simstep = global_simulation->getSimulationStep();
 	{
 		const std::string fname = "DriftCtrl_drift.dat";
 		std::ofstream ofs;
@@ -155,9 +154,9 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 {
 
 	// Only between start and stop
-    if ((simstep < _control.start) or (simstep > _control.stop)) {
-        return;
-    }
+	if ((simstep < _control.start) or (simstep > _control.stop)) {
+		return;
+	}
 
 	int nRank = domainDecomp->getRank();
 	
@@ -273,8 +272,8 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			std::ofstream ofs;
 			ofs.open(fname, std::ios::app);
 			ofs << setw(12) << simstep;
-			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID) {
-				ofs << FORMAT_SCI_MAX_DIGITS << _sampling.at(_target.cid).velocity.at(1).global.at(yPosID);
+			for(const auto &veloGlobalY : _sampling.at(_target.cid).velocity.at(1).global) {
+				ofs << FORMAT_SCI_MAX_DIGITS << veloGlobalY;
 			}
 			ofs << std::endl;
 			ofs.close();
@@ -284,8 +283,8 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			std::ofstream ofs;
 			ofs.open(fname, std::ios::app);
 			ofs << setw(12) << simstep;
-			for(uint32_t yPosID = 0; yPosID < _range.subdivision.numBins; ++yPosID) {
-				ofs << setw(12) << _sampling.at(_target.cid).numParticles.global.at(yPosID);
+			for(const auto &numPartsGlobal : _sampling.at(_target.cid).numParticles.global) {
+				ofs << setw(12) << numPartsGlobal;
 			}
 			ofs << std::endl;
 			ofs.close();

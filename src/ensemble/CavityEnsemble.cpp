@@ -48,7 +48,7 @@ CavityEnsemble::CavityEnsemble() {
 
 void CavityEnsemble::setSystem(double x, double y, double z, int maxNeighbors, float radius) {
     this->maxNeighbours = maxNeighbors;
-    this->r2n = radius * radius;
+    this->r2n = static_cast<double>(radius) * radius;
 
     this->system[0] = x;
     this->system[1] = y;
