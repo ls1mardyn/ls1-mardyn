@@ -1,0 +1,11 @@
+bootstrap: localimage
+from: base-system.sif
+stage: build
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    apt -y install mpich
+    apt -y install cmake git uuid-dev libncurses-dev
+    apt -y install ninja-build
+    # only for interactive debugging, disable later
+    apt -y install nano
