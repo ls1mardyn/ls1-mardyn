@@ -1,6 +1,7 @@
 #include "io/ObjectGenerator.h"
 
 #include <limits>
+#include <chrono>
 
 #include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
@@ -61,6 +62,12 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 			_velocityAssigner = std::make_shared<EqualVelocityAssigner>();
 		} else if(velocityAssignerName == "MaxwellVelocityDistribution") {
 			_velocityAssigner = std::make_shared<MaxwellVelocityAssigner>();
+		} else if(velocityAssignerName == "EqualVelocityDistributionRandomSeed") {
+			const int seed = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+			_velocityAssigner = std::make_shared<EqualVelocityAssigner>(0, seed);
+		} else if(velocityAssignerName == "MaxwellVelocityDistributionRandomSeed") {
+			const int seed = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+			_velocityAssigner = std::make_shared<MaxwellVelocityAssigner>(0, seed);
 		} else {
 			global_log->error() << "Unknown velocity assigner specified." << endl;
 			Simulation::exit(1);
