@@ -56,17 +56,26 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 
 	if(xmlconfig.changecurrentnode("velocityAssigner")) {
 		std::string velocityAssignerName;
+		bool enableRandomSeed = false;
+		int seed = 0;
 		xmlconfig.getNodeValue("@type", velocityAssignerName);
+		xmlconfig.getNodeValue("@enableRandomSeed", enableRandomSeed);
 		global_log->info() << "Velocity assigner: " << velocityAssignerName << endl;
+		if(enableRandomSeed)
+		{
+			/** A random seed for the velocity generator is created.
+			 *  The current rank is added to make sure that, if multiple simulations are instantiated across
+			 *  multiple ranks (for ex. when coupling to MaMiCo), the seeds will be unique if they are created
+			 *  at the same time
+			*/
+			seed = std::chrono::duration_cast<std::chrono::seconds>
+				(std::chrono::system_clock::now().time_since_epoch()).count() + _simulation.domainDecomposition().getRank();
+			
+		}
+		global_log->info() << "Seed for velocity assigner: " << seed << endl;
 		if(velocityAssignerName == "EqualVelocityDistribution") {
-			_velocityAssigner = std::make_shared<EqualVelocityAssigner>();
-		} else if(velocityAssignerName == "MaxwellVelocityDistribution") {
-			_velocityAssigner = std::make_shared<MaxwellVelocityAssigner>();
-		} else if(velocityAssignerName == "EqualVelocityDistributionRandomSeed") {
-			const int seed = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 			_velocityAssigner = std::make_shared<EqualVelocityAssigner>(0, seed);
-		} else if(velocityAssignerName == "MaxwellVelocityDistributionRandomSeed") {
-			const int seed = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+		} else if(velocityAssignerName == "MaxwellVelocityDistribution") {
 			_velocityAssigner = std::make_shared<MaxwellVelocityAssigner>(0, seed);
 		} else {
 			global_log->error() << "Unknown velocity assigner specified." << endl;
