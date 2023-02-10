@@ -59,7 +59,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("@type", velocityAssignerName);
 		global_log->info() << "Velocity assigner: " << velocityAssignerName << endl;
 
-		const int seed = [&]() {
+		const int seed = [&]() -> int {
 			bool enableRandomSeed = false;
 			xmlconfig.getNodeValue("@enableRandomSeed", enableRandomSeed);
 			if(enableRandomSeed) {
