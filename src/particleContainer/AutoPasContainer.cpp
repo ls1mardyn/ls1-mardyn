@@ -730,13 +730,13 @@ autopas::IteratorBehavior convertBehaviorToAutoPas(ParticleIterator::Type t) {
 }
 
 ParticleIterator AutoPasContainer::iterator(ParticleIterator::Type t) {
-	return _autopasContainer.begin(convertBehaviorToAutoPas(t));
+	return ParticleIterator{_autopasContainer.begin(convertBehaviorToAutoPas(t))};
 }
 
 RegionParticleIterator AutoPasContainer::regionIterator(const double *startCorner, const double *endCorner,
 														ParticleIterator::Type t) {
-	std::array<double, 3> lowCorner{startCorner[0], startCorner[1], startCorner[2]};
-	std::array<double, 3> highCorner{endCorner[0], endCorner[1], endCorner[2]};
+	const std::array<double, 3> lowCorner{startCorner[0], startCorner[1], startCorner[2]};
+	const std::array<double, 3> highCorner{endCorner[0], endCorner[1], endCorner[2]};
 	return RegionParticleIterator{
 		_autopasContainer.getRegionIterator(lowCorner, highCorner, convertBehaviorToAutoPas(t))};
 }

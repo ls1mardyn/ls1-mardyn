@@ -15,18 +15,17 @@
 
 #ifdef MARDYN_AUTOPAS
 // AUTOPAS WRAPPER
+#include <autopas/iterators/ContainerIterator.h>
 #include "molecules/AutoPasSimpleMolecule.h"
-#include <autopas/iterators/ParticleIteratorWrapper.h>
-
 /**
- * Wrapper class for AutoPas' ParticleIterator
+ * Wrapper class for AutoPas' non-region ContainerIterator.
  */
-class ParticleIterator : public autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t {
+class ParticleIterator : public autopas::ContainerIterator<AutoPasSimpleMolecule, true, false> {
 public:
 
 	enum Type {
-		ALL_CELLS=0, /* iterates every cell */
-		ONLY_INNER_AND_BOUNDARY=1, /* iterates only inner and boundary cells, i.e. no halo cells */
+		ALL_CELLS = 0,               /* iterates every cell */
+		ONLY_INNER_AND_BOUNDARY = 1, /* iterates only inner and boundary cells, i.e. no halo cells */
 	};
 
 	ParticleIterator() = default;
@@ -35,15 +34,15 @@ public:
 	 * Copy constructor that converts from anything that implements this IteratorTrait.
 	 * @param parent
 	 */
-	ParticleIterator(const autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t& parent)
-		: autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t(parent) {}
+	ParticleIterator(const autopas::ContainerIterator<AutoPasSimpleMolecule, true, false>& parent)
+		: autopas::ContainerIterator<AutoPasSimpleMolecule, true, false>(parent) {}
 
 	/**
 	 * Move constructor that converts from anything that implements this IteratorTrait.
 	 * @param parent
 	 */
-	ParticleIterator(autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t&& parent)
-		: autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t(std::move(parent)) {}
+	ParticleIterator(autopas::ContainerIterator<AutoPasSimpleMolecule, true, false>&& parent)
+		: autopas::ContainerIterator<AutoPasSimpleMolecule, true, false>(std::move(parent)) {}
 
 	size_t getCellIndex() {
 		return 0;  // not yet implemented
