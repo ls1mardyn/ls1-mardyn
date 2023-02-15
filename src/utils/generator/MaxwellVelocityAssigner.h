@@ -10,7 +10,7 @@
  */
 class MaxwellVelocityAssigner : public VelocityAssignerBase {
 public:
-	MaxwellVelocityAssigner(double T = 0, int seed = 0) : VelocityAssignerBase(T), _mt(seed), _normalDistribution(0.0, 1.0) {}
+	MaxwellVelocityAssigner(double T = 0, long seed = 0) : VelocityAssignerBase(T), _mt(seed), _normalDistribution(0.0, 1.0) {}
 	~MaxwellVelocityAssigner() {}
 
 	void assignVelocity(Molecule *molecule) {

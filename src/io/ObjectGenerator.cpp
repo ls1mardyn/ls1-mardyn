@@ -59,7 +59,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("@type", velocityAssignerName);
 		global_log->info() << "Velocity assigner: " << velocityAssignerName << endl;
 
-		const int seed = [&]() -> int {
+		const long seed = [&]() -> int {
 			bool enableRandomSeed = false;
 			xmlconfig.getNodeValue("@enableRandomSeed", enableRandomSeed);
 			if(enableRandomSeed) {
@@ -68,8 +68,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 				 *  multiple ranks (for ex. when coupling to MaMiCo), the seeds will be unique if they are created
 				 *  at the same time
 				 */
-				return std::chrono::duration_cast<std::chrono::seconds>
-				(std::chrono::system_clock::now().time_since_epoch()).count() + _simulation.domainDecomposition().getRank();
+				return std::chrono::system_clock::now().time_since_epoch().count() + _simulation.domainDecomposition().getRank();
 			
 			} else {
 				return 0;
