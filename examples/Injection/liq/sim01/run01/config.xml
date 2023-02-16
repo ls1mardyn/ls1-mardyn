@@ -32,7 +32,7 @@
 
 			<components>
 				<include query="/components/moleculetype" >../../../comp/components_4c.xml</include>
-				<include query="/mixing/rule">../../../mixing.xml</include>
+				<include query="/mixing">../../../comp/mixing_4c.xml</include>
 			</components>
 
 			<phasespacepoint>
@@ -101,7 +101,7 @@
 			</outputplugin>
 			
 			<outputplugin name="MmpldWriter" type="simple">
-				<include query="/spheres" >../../../sphereparams.xml</include>
+				<include query="/spheres" >../../../comp/sphereparams_4c.xml</include>
 				<writecontrol>
 					<start>0</start>
 					<writefrequency>50</writefrequency>

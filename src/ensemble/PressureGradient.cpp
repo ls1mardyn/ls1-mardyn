@@ -128,7 +128,7 @@ void PressureGradient::determineAdditionalAcceleration
 				previousVelocity[d] = invgN * _globalPriorVelocitySums[d][gVSit->first].front();
 				this->_globalPriorVelocitySums[d][gVSit->first].pop_front();
 				this->_universalAdditionalAcceleration[d][gVSit->first]
-					+= dtConstantAcc * invgtau2 *
+					+= static_cast<long double>(dtConstantAcc) * invgtau2 *
 					( this->_globalTargetVelocity[d][gVSit->first]
 					  - 2.0*this->_globalVelocitySum[d][gVSit->first]*invgN
 					  + previousVelocity[d] );

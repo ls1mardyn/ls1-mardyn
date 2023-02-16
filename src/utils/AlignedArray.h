@@ -114,7 +114,7 @@ public:
 		mardyn_assert(n >= -2);
 
 		size_t endPrefetch;
-		const int stride = _round_up(1);
+		const size_t stride = _round_up(1);
 
 		switch(n) {
 		case -1:
@@ -127,7 +127,7 @@ public:
 			break;
 		default:
 			// prefetch only first n elements
-			endPrefetch = n;
+			endPrefetch = static_cast<size_t>(n);
 		}
 
 		for (size_t i = 0; i < endPrefetch; i+= stride) {

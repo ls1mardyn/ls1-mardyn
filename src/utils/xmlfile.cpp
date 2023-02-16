@@ -14,9 +14,9 @@
 #include <string>
 
 #include "utils/mardyn_assert.h"
-//#include "utils/Logger.h"
 #include "rapidxml/rapidxml_print.hpp"
 #include "String_utils.h"
+#include "Simulation.h"
 
 //#include <cstdio>	// fseek(),fread(); should be included after mpi.h
 //#ifdef __linux__
@@ -192,12 +192,12 @@ bool XMLfile::initfile_local(const string& filepath) {
 		m_filename=string(filepathTrimmed);
 	}
 	
-    //version using ifstream
+	//version using ifstream
 	ifstream fstrm(filepathTrimmed.c_str(),ifstream::binary|ifstream::ate);
 	if(!fstrm) {
 		cerr << "ERROR opening " << filepathTrimmed << endl;
 		clear();
-		return false;
+		Simulation::exit(1);
 	}
 	ifstream::pos_type filesize=fstrm.tellg();
 	fstrm.close(); fstrm.clear();

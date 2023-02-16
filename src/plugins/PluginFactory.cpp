@@ -50,6 +50,7 @@
 #include "plugins/MaxCheck.h"
 #include "plugins/Mirror.h"
 #include "plugins/MirrorSystem.h"
+#include "plugins/NEMD/DensityControl.h"
 #include "plugins/NEMD/DistControl.h"
 #include "plugins/NEMD/DriftCtrl.h"
 #include "plugins/NEMD/ExtractPhase.h"
@@ -57,6 +58,7 @@
 #include "plugins/NEMD/MettDeamonFeedrateDirector.h"
 #include "plugins/NEMD/PosNegComp.h"
 #include "plugins/NEMD/RegionSampling.h"
+#include "plugins/NEMD/VelocityExchange.h"
 #include "plugins/Permittivity.h"
 #include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
@@ -114,9 +116,11 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(PovWriter);
 	REGISTER_PLUGIN(RDF);
 	REGISTER_PLUGIN(RegionSampling);
+	REGISTER_PLUGIN(VelocityExchange);
 	REGISTER_PLUGIN(MettDeamon);
 	REGISTER_PLUGIN(MettDeamonFeedrateDirector);
 	REGISTER_PLUGIN(PosNegComp);
+	REGISTER_PLUGIN(DensityControl);
 	REGISTER_PLUGIN(DistControl);
 	REGISTER_PLUGIN(DriftCtrl);
 	REGISTER_PLUGIN(ExtractPhase);

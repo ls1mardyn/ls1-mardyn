@@ -590,7 +590,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Reading phase space from file." << endl;
 		string pspfiletype;
 		xmlconfig.getNodeValue("@type", pspfiletype);
-		global_log->info() << "Face space file type: " << pspfiletype << endl;
+		global_log->info() << "Phase space file type: " << pspfiletype << endl;
 
 		if (pspfiletype == "ASCII") {
 			_inputReader = new ASCIIReader();

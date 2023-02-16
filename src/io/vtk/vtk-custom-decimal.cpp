@@ -30,7 +30,7 @@ namespace xsd
       trim (tmp);
 
       zc_istream<char> is (tmp);
-      is.imbue (locale::classic ());
+      is.imbue (std::locale::classic ());
 
       long double t;
       is >> t;
@@ -49,8 +49,8 @@ namespace XERCES_CPP_NAMESPACE
   void
   operator<< (xercesc::DOMElement& e, const xml_schema::as_decimal& d)
   {
-    ostringstream os;
-    os.imbue (locale::classic ());
+    std::ostringstream os;
+    os.imbue (std::locale::classic ());
     os.precision (std::numeric_limits<long double>::digits10);
 
     os << std::fixed << d.x;
@@ -74,8 +74,8 @@ namespace XERCES_CPP_NAMESPACE
   void
   operator<< (xercesc::DOMAttr& a, const xml_schema::as_decimal& d)
   {
-    ostringstream os;
-    os.imbue (locale::classic ());
+    std::ostringstream os;
+    os.imbue (std::locale::classic ());
     os.precision (std::numeric_limits<long double>::digits10);
 
     os << std::fixed << d.x;
@@ -108,8 +108,8 @@ namespace xsd
       operator<< (xml_schema::list_stream& ls, const xml_schema::as_decimal& d)
       {
         
-        ostringstream os;
-        os.imbue (locale::classic ());
+        std::ostringstream os;
+        os.imbue (std::locale::classic ());
         os.precision (std::numeric_limits<long double>::digits10);
 
         os << std::fixed << d.x;

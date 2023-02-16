@@ -84,7 +84,7 @@ unsigned long long MemoryProfiler::getCachedSize() {
 	return cached_size;
 }
 
-int parseLine(char* line) {
+int MemoryProfiler::parseLine(char* line) {
 	// This assumes that a digit will be found and the line ends in " Kb".
 	int i = strlen(line);
 	const char* p = line;
@@ -95,7 +95,7 @@ int parseLine(char* line) {
 	return i;
 }
 
-int countHugePages() {
+int MemoryProfiler::countHugePages() {
 	FILE* file = fopen("/proc/self/numa_maps", "r");
 	if (!file) {
 		return 0;
@@ -120,7 +120,7 @@ int countHugePages() {
 	return hugepagecount;
 }
 
-int getOwnMemory() { //Note: this value is in KB!
+int MemoryProfiler::getOwnMemory() { //Note: this value is in KB!
 	FILE* file = fopen("/proc/self/status", "r");
 	int result = -1;
 	char line[1024];

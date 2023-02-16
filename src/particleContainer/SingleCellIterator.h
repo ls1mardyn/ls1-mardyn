@@ -20,6 +20,8 @@ public:
 	SingleCellIterator& operator=(const SingleCellIterator& other);
 	~SingleCellIterator(){}
 
+	constexpr SingleCellIterator(const SingleCellIterator&) = default;
+
 	Molecule& operator *  () const {
 		// .at method performs automatically an out-of-bounds check
 		Molecule *moleculePtr = nullptr;
