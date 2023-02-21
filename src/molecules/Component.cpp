@@ -107,14 +107,18 @@ void Component::addLJcenter(double x, double y, double z,
                             double rc, bool TRUNCATED_SHIFTED) {
 	double shift6 = 0.0;
 	if (TRUNCATED_SHIFTED) {
-		double sigperrc2 = sigma * sigma / (rc * rc);
-		double sigperrc6 = sigperrc2 * sigperrc2 * sigperrc2;
-		shift6 = 24.0 * eps * (sigperrc6 - sigperrc6 * sigperrc6);
+		shift6 = calculateLJshift(eps, sigma, rc);
 	}
 
 	LJcenter ljsite(x, y, z, m, eps, sigma, shift6);
 	_ljcenters.push_back(ljsite);
 	updateMassInertia(ljsite);
+}
+
+double Component::calculateLJshift(double eps, double sigma, double rc) const {
+	double sigperrc2 = sigma * sigma / (rc * rc);
+	double sigperrc6 = sigperrc2 * sigperrc2 * sigperrc2;
+	return 24.0 * eps * (sigperrc6 - sigperrc6 * sigperrc6);
 }
 
 void Component::addLJcenter(LJcenter& ljsite) {
