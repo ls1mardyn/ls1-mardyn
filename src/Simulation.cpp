@@ -264,6 +264,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			if(xmlconfig.getNodeValueReduced("radiusLJ", _LJCutoffRadius)) {
 				global_log->info() << "dimensionless LJ cutoff radius:\t" << _LJCutoffRadius << endl;
+				for(auto &component: *(_ensemble->getComponents())) {
+					component.updateAllLJcenters(_LJCutoffRadius);
+				}
 			}
 			/** @todo introduce maxCutoffRadius here for datastructures, ...
 			 *        maybe use map/list to store cutoffs for different potentials? */
