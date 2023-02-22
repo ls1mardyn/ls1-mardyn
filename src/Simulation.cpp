@@ -647,6 +647,17 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 	xmlconfig.changecurrentnode(oldpath);
 
+	oldpath = xmlconfig.getcurrentnodepath();
+
+	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint")) {
+		bool ignoreCheckpointTime = false;
+		if(xmlconfig.getNodeValue("ignoreCheckpointTime", ignoreCheckpointTime) && ignoreCheckpointTime) {
+			_simulationTime = 0;
+		}
+	}
+
+	xmlconfig.changecurrentnode(oldpath);
+
 	/** Prepare start options, affecting behavior of method prepare_start() */
 	_prepare_start_opt.refreshIDs = false;
 

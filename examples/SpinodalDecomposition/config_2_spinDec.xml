@@ -37,6 +37,7 @@
                     <header>cp_equilibration_binary-1.restart.header.xml</header>
                     <data>cp_equilibration_binary-1.restart.dat</data>
                 </file>
+                <ignoreCheckpointTime>true</ignoreCheckpointTime>
             </phasespacepoint>
 
 

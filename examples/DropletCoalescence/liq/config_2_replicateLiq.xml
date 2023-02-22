@@ -49,6 +49,7 @@
 						</object>
 					</objectgenerator>
 				</generator>
+				<ignoreCheckpointTime>true</ignoreCheckpointTime>
 			</phasespacepoint>
 			
 		</ensemble>
