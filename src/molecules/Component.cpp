@@ -126,7 +126,7 @@ void Component::addLJcenter(LJcenter& ljsite) {
 	updateMassInertia(ljsite);
 }
 
-void Component::updateAllLJcenters(double rc) {
+void Component::updateAllLJcentersShift(double rc) {
 	for(LJcenter &ljcenter : _ljcenters) {
 		if(ljcenter.shiftRequested())
 			ljcenter.setULJShift6(calculateLJshift(ljcenter.eps(), ljcenter.sigma(), rc));
