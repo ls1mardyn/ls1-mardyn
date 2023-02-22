@@ -97,7 +97,7 @@ protected:
 class LJcenter : public Site {
 public:
 	/** @brief Constructor */
-	LJcenter(): Site(0., 0., 0., 0.), _epsilon(0.), _sigma(0.), _uLJshift6(0.) {}
+	LJcenter(): Site(0., 0., 0., 0.), _epsilon(0.), _sigma(0.), _uLJshift6(0.), _shiftRequested(false) {}
 	/** @brief Constructor
 	 * \param[in] x        relative x coordinate
 	 * \param[in] y        relative y coordinate
@@ -108,7 +108,7 @@ public:
 	 * \param[in] shift    0. for full LJ potential
 	 */
 	LJcenter(double x, double y, double z, double m, double epsilon, double sigma, double shift)
-		: Site(x, y, z, m), _epsilon(epsilon), _sigma(sigma), _uLJshift6(shift) {}
+		: Site(x, y, z, m), _epsilon(epsilon), _sigma(sigma), _uLJshift6(shift), _shiftRequested(false) {}
 
 	/** @brief Read in XML configuration for a LJcenter and all its included objects.
 	 *
