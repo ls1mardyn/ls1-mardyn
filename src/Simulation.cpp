@@ -651,8 +651,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 
 	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint")) {
 		bool ignoreCheckpointTime = false;
-		if(xmlconfig.getNodeValue("ignoreCheckpointTime", ignoreCheckpointTime) && ignoreCheckpointTime) {
-			_simulationTime = 0;
+		if(xmlconfig.getNodeValue("ignoreCheckpointTime", ignoreCheckpointTime)) {
+			if(ignoreCheckpointTime)
+				_simulationTime = 0;
 		}
 	}
 
