@@ -118,7 +118,7 @@ public:
 	     <!-- all Site class parameters -->
 	     <epsilon>DOUBLE</epsilon>
 	     <sigma>DOUBLE</sigma>
-	     <shifted>DOUBLE</shifted>
+	     <shifted>BOOLEAN</shifted>
 	   </site>
 	   \endcode
 	 */
@@ -126,7 +126,7 @@ public:
 		Site::readXML(xmlconfig);
 		xmlconfig.getNodeValueReduced("epsilon", _epsilon);
 		xmlconfig.getNodeValueReduced("sigma", _sigma);
-		xmlconfig.getNodeValueReduced("shifted", _uLJshift6);
+		xmlconfig.getNodeValue("shifted", _shiftRequested);
 	}
 	
 	/// write to stream
@@ -138,6 +138,7 @@ public:
 	double eps() const { return _epsilon; }  /**< get interaction strength */
 	double sigma() const { return _sigma; }  /**< get interaction diameter */
 	double shift6() const { return _uLJshift6; }  /**< get energy shift of interaction potential */
+	double shiftRequested() const { return _shiftRequested; } /**< get the shift request value */
 
 	/** set the interaction strength */
 	void setEps(double epsilon) { _epsilon = epsilon; }
@@ -151,6 +152,7 @@ private:
 	double _epsilon;  /**< interaction strength */
 	double _sigma;  /**< interaction diameter */
 	double _uLJshift6; /**< energy shift of the interaction potential, used to implement the LJ truncated and shifted (LJTS) potential */
+	bool _shiftRequested; /***< whether the LJTS potential shift needs to be calculated or not */
 };
 
 /** @brief Charge center
