@@ -116,8 +116,8 @@ void Component::addLJcenter(double x, double y, double z,
 }
 
 double Component::calculateLJshift(double eps, double sigma, double rc) const {
-	double sigperrc2 = sigma * sigma / (rc * rc);
-	double sigperrc6 = sigperrc2 * sigperrc2 * sigperrc2;
+	const double sigperrc2 = sigma * sigma / (rc * rc);
+	const double sigperrc6 = sigperrc2 * sigperrc2 * sigperrc2;
 	return 24.0 * eps * (sigperrc6 - sigperrc6 * sigperrc6);
 }
 

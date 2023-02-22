@@ -138,7 +138,7 @@ public:
 	double eps() const { return _epsilon; }  /**< get interaction strength */
 	double sigma() const { return _sigma; }  /**< get interaction diameter */
 	double shift6() const { return _uLJshift6; }  /**< get energy shift of interaction potential */
-	double shiftRequested() const { return _shiftRequested; } /**< get the shift request value */
+	bool shiftRequested() const { return _shiftRequested; } /**< get the shift request value */
 
 	/** set the interaction strength */
 	void setEps(double epsilon) { _epsilon = epsilon; }
