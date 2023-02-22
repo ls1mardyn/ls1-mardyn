@@ -128,8 +128,9 @@ void Component::addLJcenter(LJcenter& ljsite) {
 
 void Component::updateAllLJcentersShift(double rc) {
 	for(LJcenter &ljcenter : _ljcenters) {
-		if(ljcenter.shiftRequested())
+		if(ljcenter.shiftRequested()) {
 			ljcenter.setULJShift6(calculateLJshift(ljcenter.eps(), ljcenter.sigma(), rc));
+		}
 	}
 }
 
