@@ -13,14 +13,14 @@
             <mass>1.0</mass>
             <sigma>1.0</sigma>
             <epsilon>1.0</epsilon>
-            <shifted>0</shifted>
+            <shifted>false</shifted>
         </site>
         <site type="LJ126" id="2" >
             <coords> <x>0.0</x> <y>0.0</y> <z>0.5</z> </coords>
             <mass>1.0</mass>
             <sigma>1.0</sigma>
             <epsilon>1.0</epsilon>
-            <shifted>0</shifted>
+            <shifted>false</shifted>
         </site>
         <momentsofinertia rotaxes="xyz" >
         <Ixx>0.5</Ixx>

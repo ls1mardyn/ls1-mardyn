@@ -7,21 +7,21 @@
 			<mass>0.012</mass>
 			<sigma>5.31712452</sigma>
 			<epsilon>3.91811245e-05</epsilon>
-			<shifted>0</shifted>
+			<shifted>false</shifted>
 		</site>
 		<site type="LJ126" id="2" >
 			<coords> <x>0.0</x> <y>0.0</y> <z>-2.43188952</z> </coords>
 			<mass>0.016</mass>
 			<sigma>5.62288233</sigma>
 			<epsilon>0.00031824324</epsilon>
-			<shifted>0</shifted>
+			<shifted>false</shifted>
 		</site>
 		<site type="LJ126" id="3" >
 			<coords> <x>0.0</x> <y>0.0</y> <z>2.43188952</z> </coords>
 			<mass>0.016</mass>
 			<sigma>5.62288233</sigma>
 			<epsilon>0.00031824324</epsilon>
-			<shifted>0</shifted>
+			<shifted>false</shifted>
 		</site>
 
 		<site type="Charge" id="4" >

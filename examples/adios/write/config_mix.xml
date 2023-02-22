@@ -36,7 +36,7 @@
 						<mass>1</mass>
 						<sigma>1</sigma>
 						<epsilon>1</epsilon>
-						<shifted>0</shifted>
+						<shifted>false</shifted>
 					</site>
 					<momentsofinertia rotaxes="xyz" >
 						<Ixx>0.0</Ixx>
@@ -51,7 +51,7 @@
 						<mass>2</mass>
 						<sigma>1</sigma>
 						<epsilon>1</epsilon>
-						<shifted>0</shifted>
+						<shifted>false</shifted>
 					</site>
 					<momentsofinertia rotaxes="xyz" >
 						<Ixx>0.0</Ixx>

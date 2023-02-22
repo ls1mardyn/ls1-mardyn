@@ -36,7 +36,7 @@
             <mass>1.0</mass>
             <sigma>1.0</sigma>
             <epsilon>1.0</epsilon>
-            <shifted>1</shifted>
+            <shifted>true</shifted>
           </site>
         </moleculetype>
       </components>
