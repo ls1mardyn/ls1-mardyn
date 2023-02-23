@@ -897,14 +897,14 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         if (_countSamples.at(i) > 0ul) {
                             delta = _hmDelta_accum.at(i)/_countSamples.at(i);
                             for (unsigned short d = 0; d < 3; d++) {
-                                q[d] = _hmHeatflux_accum[d].at(i);
+                                q[d] = _hmHeatflux_accum[d].at(i)/_countSamples.at(i);
                             }
                             for (unsigned short d = 0; d < 9; d++) {
-                                p[d] = _hmPressure_accum[d].at(i);
-                                R[d] = _hmR_accum[d].at(i);
-                                m[d]    = _hmM_accum[d].at(i);
-                                m[d+9u]  = _hmM_accum[d+9u].at(i);
-                                m[d+18u] = _hmM_accum[d+18u].at(i);
+                                p[d] = _hmPressure_accum[d].at(i)/_countSamples.at(i);
+                                R[d] = _hmR_accum[d].at(i)/_countSamples.at(i);
+                                m[d]    = _hmM_accum[d].at(i)/_countSamples.at(i);
+                                m[d+9u]  = _hmM_accum[d+9u].at(i)/_countSamples.at(i);
+                                m[d+18u] = _hmM_accum[d+18u].at(i)/_countSamples.at(i);
                             }
                         }
                         ofs << FORMAT_SCI_MAX_DIGITS << delta;
