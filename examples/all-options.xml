@@ -90,6 +90,11 @@
       <phasespacepoint>
         <!-- Read in old ASCII phase spcae file (skipping old phase space header information) -->
         <file type="ASCII" >test.inp</file>
+        <!-- Alternative: binary checkpoints -->
+        <file type="binary">
+            <header>cp_binary-1.restart.header.xml</header>
+            <data>cp_binary-1.restart.dat</data>
+        </file>
 
 
         <generator name="ReplicaGenerator">
