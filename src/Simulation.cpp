@@ -333,7 +333,15 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					string datastructuretype;
 					xmlconfig.getNodeValue("@type", datastructuretype);
 					if (datastructuretype == "AutoPas" or datastructuretype == "AutoPasContainer") {
-						xmlconfig.getNodeValue("skin", skin);
+						// check if skin is specified
+						if (xmlconfig.getNodeValue("skin", skin) == 0) {
+							global_log->error() << "Skin not set in datastructure/AutoPas. "
+												   "This will lead to a different interaction length in the container "
+												   "vs the GeneralDomainDecomposition which can lead ALL to shrink the "
+												   "domain too small."
+												  << endl;
+							this->exit(512435340);
+						}
 					} else {
 						global_log->warning() << "Using the GeneralDomainDecomposition without AutoPas is not "
 												 "thoroughly tested and considered BETA."
