@@ -41,8 +41,8 @@ void GeneralDomainDecomposition::initializeALL() {
 	}
 #ifdef ENABLE_ALLLBL
 	// Increased slightly to prevent rounding errors.
-	double safetyFactor = 1. + 1.e-10;
-	std::array<double, 3> minimalDomainSize =
+	const double safetyFactor = 1. + 1.e-10;
+	const std::array<double, 3> minimalDomainSize =
 		_gridSize.has_value() ? *_gridSize
 							  : std::array{_interactionLength * safetyFactor, _interactionLength * safetyFactor,
 										   _interactionLength * safetyFactor};
