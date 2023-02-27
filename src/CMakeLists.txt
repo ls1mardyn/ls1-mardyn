@@ -47,7 +47,7 @@ endif ()
 
 # add the executable
 if (MAMICO_COUPLING)
-    ADD_LIBRARY(MarDyn
+    ADD_LIBRARY(MarDyn STATIC
         ${MY_SRC}
         )
     TARGET_INCLUDE_DIRECTORIES(MarDyn SYSTEM PRIVATE "${MAMICO_SRC_DIR}")
