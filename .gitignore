@@ -14,3 +14,4 @@ src/MarDyn_*.*
 *.a
 *.so
 doxygen_doc/
+__pycache__/

@@ -1,0 +1,96 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+
+    <refunits type="SI" >
+        <length unit="nm">0.1</length>
+        <mass unit="u">1</mass>
+        <energy unit="K">1</energy>
+    </refunits>
+
+    <simulation type="MD" >
+        <integrator type="Leapfrog" >
+            <timestep unit="reduced" >0.00182367</timestep>
+        </integrator>
+
+        <run>
+            <currenttime>0.0</currenttime>
+            <production>
+                <steps>500000</steps>
+            </production>
+        </run>
+
+        <ensemble type="NVT">
+            <!-- Nparticles determined by the input file -->
+            <temperature unit="reduced" >1.40</temperature>
+            <domain type="box">
+                <lx>60</lx>
+                <ly>60</ly>
+                <lz>60</lz>
+            </domain>
+
+            <components>
+                <include query="/components/moleculetype" >components_1c.xml</include>
+            </components>
+
+            <phasespacepoint>
+                <generator name="MultiObjectGenerator">
+                    <objectgenerator>
+                        <filler type="GridFiller">
+                            <lattice system="cubic" centering="face">
+                                <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
+                                <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
+                                <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
+                            </lattice>
+                            <basis>
+                                <site>
+                                    <componentid>0</componentid>
+                                    <coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
+                                </site>
+                            </basis>
+                            <latticeOccupancy>1</latticeOccupancy>
+                            <density>0.29</density>
+                        </filler>
+                        <object type="Cuboid">
+                            <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>60</x> <y>60</y> <z>60</z> </upper>
+                        </object>
+                        <velocityAssigner type="EqualVelocityDistribution"></velocityAssigner>
+                    </objectgenerator>
+                </generator>
+            </phasespacepoint>
+
+        </ensemble>
+
+        <algorithm>
+
+            <parallelisation type="DomainDecomposition"></parallelisation>
+
+            <datastructure type="LinkedCells">
+                <cellsInCutoffRadius>1</cellsInCutoffRadius>
+            </datastructure>
+
+            <cutoffs type="CenterOfMass" >
+                <defaultCutoff unit="reduced" >2.5</defaultCutoff>
+                <radiusLJ unit="reduced" >2.5</radiusLJ>
+            </cutoffs>
+            <electrostatic type="ReactionField" >
+                <epsilon>1.0e+10</epsilon>
+            </electrostatic>
+        </algorithm>
+
+        <output>
+            <outputplugin name="CheckpointWriter">
+                <type>binary</type>
+                <writefrequency>500000</writefrequency>
+                <outputprefix>cp_equilibration_binary</outputprefix>
+            </outputplugin>
+
+            <outputplugin name="VTKMoleculeWriter">
+                <outputprefix>vtkOutput_equilibration</outputprefix>
+                <writefrequency>500000</writefrequency>
+            </outputplugin>
+
+        </output>
+    </simulation>
+
+</mardyn>
