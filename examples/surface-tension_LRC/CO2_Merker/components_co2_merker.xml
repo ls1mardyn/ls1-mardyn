@@ -13,21 +13,21 @@
             <mass>12.012</mass>
             <sigma>2.8137</sigma>
             <epsilon>12.3724</epsilon>
-            <shifted>0</shifted>
+            <shifted>false</shifted>
         </site>
         <site type="LJ126" id="2" name="O">
             <coords> <x>0.0</x> <y>0.0</y> <z>-1.2869</z> </coords>
             <mass>15.999</mass>
             <sigma>2.9755</sigma>
             <epsilon>100.493</epsilon>
-            <shifted>0</shifted>
+            <shifted>false</shifted>
         </site>
         <site type="LJ126" id="3" name="O">
             <coords> <x>0.0</x> <y>0.0</y> <z>1.2869</z> </coords>
             <mass>15.999</mass>
             <sigma>2.9755</sigma>
             <epsilon>100.493</epsilon>
-            <shifted>0</shifted>
+            <shifted>false</shifted>
         </site>
         <site type="Quadrupole" id="4" >
             <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>

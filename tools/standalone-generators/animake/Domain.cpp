@@ -374,7 +374,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
              << FLUIDMASS/REFMASS << "</mass><sigma>"
              << SIG_FLUID/SIG_REF << "</sigma><epsilon>"
              << EPS_FLUID/EPS_REF
-             << "</epsilon><shifted>0</shifted></site>\n";
+             << "</epsilon><shifted>false</shifted></site>\n";
       }
       else if(fluid == FLUID_EOX)
       {
@@ -384,21 +384,21 @@ void Domain::write(char* prefix, int format, double mu, double x)
              << CEOXMASS/REFMASS << "</mass><sigma>"
              << SIG_CEOX/SIG_REF << "</sigma><epsilon>"
              << EPS_CEOX/EPS_REF
-             << "</epsilon><shifted>0</shifted></site>\n"
+             << "</epsilon><shifted>false</shifted></site>\n"
              << "<site type=\"LJ126\" id=\"2\"><coord><x>"
              << R0_C2EOX/SIG_REF << "</x><y>" << R1_C2EOX/SIG_REF
              << "</y><z>" << R2_C2EOX/SIG_REF << "</z></coord><mass>"
              << CEOXMASS/REFMASS << "</mass><sigma>"
              << SIG_CEOX/SIG_REF << "</sigma><epsilon>"
              << EPS_CEOX/EPS_REF
-             << "</epsilon><shifted>0</shifted></site>\n"
+             << "</epsilon><shifted>false</shifted></site>\n"
              << "<site type=\"LJ126\" id=\"3\"><coord><x>"
              << R0_O_EOX/SIG_REF << "</x><y>" << R1_O_EOX/SIG_REF
              << "</y><z>" << R2_O_EOX/SIG_REF << "</z></coord><mass>"
              << OEOXMASS/REFMASS << "</mass><sigma>"
              << SIG_OEOX/SIG_REF << "</sigma><epsilon>"
              << EPS_OEOX/EPS_REF
-             << "</epsilon><shifted>0</shifted></site>\n"
+             << "</epsilon><shifted>false</shifted></site>\n"
              << "<site type=\"Dipol\" id=\"4\"><coord><x>"
              << R0DIPEOX/SIG_REF << "</x><y>" << R1DIPEOX/SIG_REF
              << "</y><z>" << R2DIPEOX/SIG_REF
