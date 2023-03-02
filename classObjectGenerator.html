@@ -237,6 +237,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setMoleculeIDPool</b>
 <div class="line">  &lt;<span class="keywordtype">velocityAssigner</span> <span class="keyword">type</span>=<span class="stringliteral">&quot;STRING&quot;</span>&gt; <span class="comment">&lt;!-- see VelocityAssignerBase documentation --&gt;</span> &lt;/<span class="keywordtype">velocityAssigner</span>&gt;</div>
 <div class="line">&lt;/<span class="keywordtype">objectgenerator</span>&gt;</div>
 </div><!-- fragment --> </dd></dl>
+<p >A random seed for the velocity generator is created. The current rank is added to make sure that, if multiple simulations are instantiated across multiple ranks (for ex. when coupling to MaMiCo), the seeds will be unique if they are created at the same time</p>
 
 <p>Reimplemented from <a class="el" href="classInputBase.html">InputBase</a>.</p>
 
@@ -249,7 +250,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setMoleculeIDPool</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jan 23 2023 13:44:45 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Thu Mar 2 2023 13:12:57 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
