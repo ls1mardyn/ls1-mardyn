@@ -139,72 +139,75 @@ $(function() {
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="keywordtype">void</span> addQuadrupole(<span class="keywordtype">double</span> x, <span class="keywordtype">double</span> y, <span class="keywordtype">double</span> z,</div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>                       <span class="keywordtype">double</span> eQx, <span class="keywordtype">double</span> eQy, <span class="keywordtype">double</span> eQz, <span class="keywordtype">double</span> eQabs);</div>
 <div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno"><a class="line" href="classComponent.html#acb1f0e3429c5f9c96225031676673668">   97</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classComponent.html#acb1f0e3429c5f9c96225031676673668">deleteLJCenter</a>() { _ljcenters.pop_back() ;}</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    <span class="keywordtype">void</span> deleteCharge() { _charges.pop_back() ;}</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <span class="keywordtype">void</span> deleteDipole() { _dipoles.pop_back() ;}</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    <span class="keywordtype">void</span> deleteQuadrupole() { _quadrupoles.pop_back() ;}</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span> </div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classComponent.html#ad58b9771674e1a250f3f723832f47741">updateMassInertia</a>();</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classComponent.html#a86bd66f47eae565fe121dd880d7c413e">write</a>(std::ostream&amp; ostrm) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classComponent.html#af55768f6dfd38528faae14451d857f05">updateAllLJcentersShift</a>(<span class="keywordtype">double</span> rc);</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno"><a class="line" href="classComponent.html#acb1f0e3429c5f9c96225031676673668">  100</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classComponent.html#acb1f0e3429c5f9c96225031676673668">deleteLJCenter</a>() { _ljcenters.pop_back() ;}</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="keywordtype">void</span> deleteCharge() { _charges.pop_back() ;}</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="keywordtype">void</span> deleteDipole() { _dipoles.pop_back() ;}</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keywordtype">void</span> deleteQuadrupole() { _quadrupoles.pop_back() ;}</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classComponent.html#ad58b9771674e1a250f3f723832f47741">updateMassInertia</a>();</div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    <span class="keywordtype">void</span> writeVIM(std::ostream&amp; ostrm);</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span> </div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    <span class="keywordtype">void</span> setE_trans(<span class="keywordtype">double</span> E) { _E_trans = E; }</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="keywordtype">void</span> setE_rot(<span class="keywordtype">double</span> E) { _E_rot = E; }</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="keywordtype">void</span> setT(<span class="keywordtype">double</span> T) { _T = T; }</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    <span class="keywordtype">double</span> E_trans()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _E_trans; }</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    <span class="keywordtype">double</span> E_rot()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _E_rot; }</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    <span class="keywordtype">double</span> E()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _E_trans + _E_rot; }</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <span class="keywordtype">double</span> T()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _T; }</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    <span class="keywordtype">void</span> setName(<a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> <a class="code hl_typedef" href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">name</a>) { _name = <a class="code hl_typedef" href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">name</a>; }</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> getName()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _name; }</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span> </div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno"><a class="line" href="classComponent.html#ac0cad8f474fce2ee69e7af0fbe00ce59">  125</a></span>    <span class="keywordtype">double</span> <a class="code hl_function" href="classComponent.html#ac0cad8f474fce2ee69e7af0fbe00ce59">getEps</a>(<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> i)<span class="keyword"> const </span>{<span class="keywordflow">return</span> _ljcenters[i].eps();}</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="keywordtype">double</span> getSigma(<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> i)<span class="keyword"> const </span>{<span class="keywordflow">return</span> _ljcenters[i].sigma();}</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span> </div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    <span class="keywordtype">unsigned</span> getLookUpId()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>        <span class="keywordflow">return</span> _lookUpID;</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    }</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    <span class="keywordtype">void</span> setLookUpId(<span class="keywordtype">unsigned</span> lookUpId) {</div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>        _lookUpID = lookUpId;</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    }</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span> </div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classComponent.html#ad58b9771674e1a250f3f723832f47741">updateMassInertia</a>(<a class="code hl_class" href="classSite.html">Site</a>&amp; site);</div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _id; </div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    <span class="comment">// LJcenter,Dipole,Quadrupole have different size -&gt; not suitable to store in a _Site_-array</span></div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    <span class="comment">//std::vector&lt;Site&gt; _sites;</span></div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    <span class="comment">// use separate vectors instead...</span></div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    std::vector&lt;LJcenter&gt; _ljcenters;</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    std::vector&lt;Charge&gt; _charges;</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    std::vector&lt;Dipole&gt; _dipoles;</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    std::vector&lt;Quadrupole&gt; _quadrupoles;</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>    <span class="comment">/* for performance reasons better(?) omit Site-class indirection and use cached values */</span></div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    <span class="keywordtype">double</span> _m; </div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    <span class="keywordtype">double</span> _I[6];</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    <span class="keywordtype">double</span> _Ipa[3]; </div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> _rot_dof; </div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    <span class="comment">/* cached values, set by ensemble class! */</span></div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> _numMolecules; <span class="comment">// number of molecules for this molecule type</span></div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    <span class="keywordtype">double</span> _E_trans; <span class="comment">// translational energy</span></div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    <span class="keywordtype">double</span> _E_rot; <span class="comment">// rotational energy</span></div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>    <span class="keywordtype">double</span> _T; <span class="comment">// temperature</span></div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>    </div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>    <span class="keywordtype">bool</span> _isStockmayer; <span class="comment">//Checks whether component is a Stockmayer fluid to determine moments of inertia</span></div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    </div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> _name; </div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <span class="keywordtype">unsigned</span> _lookUpID;</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>};</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span> </div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>std::ostream&amp; <a class="code hl_function" href="namespacebhfmm.html#ad7f9b6ba81ecb460ec4133bf04276fab">operator&lt;&lt;</a>(std::ostream&amp; stream, <span class="keyword">const</span> <a class="code hl_class" href="classComponent.html">Component</a>&amp; component);</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span> </div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span><span class="preprocessor">#endif </span><span class="comment">/* COMPONENT_H_ */</span><span class="preprocessor"></span></div>
-<div class="ttc" id="aclassCharge_html"><div class="ttname"><a href="classCharge.html">Charge</a></div><div class="ttdoc">Charge center.</div><div class="ttdef"><b>Definition:</b> Site.h:167</div></div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classComponent.html#a86bd66f47eae565fe121dd880d7c413e">write</a>(std::ostream&amp; ostrm) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span> </div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="keywordtype">void</span> writeVIM(std::ostream&amp; ostrm);</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    <span class="keywordtype">void</span> setE_trans(<span class="keywordtype">double</span> E) { _E_trans = E; }</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    <span class="keywordtype">void</span> setE_rot(<span class="keywordtype">double</span> E) { _E_rot = E; }</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    <span class="keywordtype">void</span> setT(<span class="keywordtype">double</span> T) { _T = T; }</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <span class="keywordtype">double</span> E_trans()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _E_trans; }</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    <span class="keywordtype">double</span> E_rot()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _E_rot; }</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <span class="keywordtype">double</span> E()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _E_trans + _E_rot; }</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="keywordtype">double</span> T()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _T; }</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    <span class="keywordtype">void</span> setName(<a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> <a class="code hl_typedef" href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">name</a>) { _name = <a class="code hl_typedef" href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">name</a>; }</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> getName()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _name; }</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno"><a class="line" href="classComponent.html#ac0cad8f474fce2ee69e7af0fbe00ce59">  128</a></span>    <span class="keywordtype">double</span> <a class="code hl_function" href="classComponent.html#ac0cad8f474fce2ee69e7af0fbe00ce59">getEps</a>(<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> i)<span class="keyword"> const </span>{<span class="keywordflow">return</span> _ljcenters[i].eps();}</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <span class="keywordtype">double</span> getSigma(<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> i)<span class="keyword"> const </span>{<span class="keywordflow">return</span> _ljcenters[i].sigma();}</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    <span class="keywordtype">unsigned</span> getLookUpId()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>        <span class="keywordflow">return</span> _lookUpID;</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    }</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span> </div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    <span class="keywordtype">void</span> setLookUpId(<span class="keywordtype">unsigned</span> lookUpId) {</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>        _lookUpID = lookUpId;</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    }</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span> </div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span> </div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classComponent.html#ad58b9771674e1a250f3f723832f47741">updateMassInertia</a>(<a class="code hl_class" href="classSite.html">Site</a>&amp; site);</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    <span class="keywordtype">double</span> calculateLJshift(<span class="keywordtype">double</span> eps, <span class="keywordtype">double</span> sigma, <span class="keywordtype">double</span> rc) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span> </div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _id; </div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    <span class="comment">// LJcenter,Dipole,Quadrupole have different size -&gt; not suitable to store in a _Site_-array</span></div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    <span class="comment">//std::vector&lt;Site&gt; _sites;</span></div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    <span class="comment">// use separate vectors instead...</span></div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>    std::vector&lt;LJcenter&gt; _ljcenters;</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    std::vector&lt;Charge&gt; _charges;</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    std::vector&lt;Dipole&gt; _dipoles;</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    std::vector&lt;Quadrupole&gt; _quadrupoles;</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>    <span class="comment">/* for performance reasons better(?) omit Site-class indirection and use cached values */</span></div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    <span class="keywordtype">double</span> _m; </div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    <span class="keywordtype">double</span> _I[6];</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    <span class="keywordtype">double</span> _Ipa[3]; </div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> _rot_dof; </div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>    <span class="comment">/* cached values, set by ensemble class! */</span></div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> _numMolecules; <span class="comment">// number of molecules for this molecule type</span></div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>    <span class="keywordtype">double</span> _E_trans; <span class="comment">// translational energy</span></div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    <span class="keywordtype">double</span> _E_rot; <span class="comment">// rotational energy</span></div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    <span class="keywordtype">double</span> _T; <span class="comment">// temperature</span></div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    </div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>    <span class="keywordtype">bool</span> _isStockmayer; <span class="comment">//Checks whether component is a Stockmayer fluid to determine moments of inertia</span></div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    </div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> _name; </div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    <span class="keywordtype">unsigned</span> _lookUpID;</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>};</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span> </div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>std::ostream&amp; <a class="code hl_function" href="namespacebhfmm.html#ad7f9b6ba81ecb460ec4133bf04276fab">operator&lt;&lt;</a>(std::ostream&amp; stream, <span class="keyword">const</span> <a class="code hl_class" href="classComponent.html">Component</a>&amp; component);</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span> </div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span><span class="preprocessor">#endif </span><span class="comment">/* COMPONENT_H_ */</span><span class="preprocessor"></span></div>
+<div class="ttc" id="aclassCharge_html"><div class="ttname"><a href="classCharge.html">Charge</a></div><div class="ttdoc">Charge center.</div><div class="ttdef"><b>Definition:</b> Site.h:169</div></div>
 <div class="ttc" id="aclassComponent_html"><div class="ttname"><a href="classComponent.html">Component</a></div><div class="ttdoc">Class implementing molecules as rigid rotators consisting out of different interaction sites (LJcente...</div><div class="ttdef"><b>Definition:</b> Component.h:14</div></div>
 <div class="ttc" id="aclassComponent_html_a0febe0055d2b48341640c8b28ea96ef0"><div class="ttname"><a href="classComponent.html#a0febe0055d2b48341640c8b28ea96ef0">Component::numOrientedSites</a></div><div class="ttdeci">unsigned int numOrientedSites() const</div><div class="ttdef"><b>Definition:</b> Component.h:42</div></div>
 <div class="ttc" id="aclassComponent_html_a1d37916b104282f8c65635916a196fdd"><div class="ttname"><a href="classComponent.html#a1d37916b104282f8c65635916a196fdd">Component::numLJcenters</a></div><div class="ttdeci">unsigned int numLJcenters() const</div><div class="ttdef"><b>Definition:</b> Component.h:44</div></div>
@@ -215,19 +218,20 @@ $(function() {
 <div class="ttc" id="aclassComponent_html_a4c5573fd7bfc47e4dc2dc332088ff77e"><div class="ttname"><a href="classComponent.html#a4c5573fd7bfc47e4dc2dc332088ff77e">Component::numSites</a></div><div class="ttdeci">unsigned int numSites() const</div><div class="ttdef"><b>Definition:</b> Component.h:36</div></div>
 <div class="ttc" id="aclassComponent_html_a686788e4f4020ef2f35cab87b2620c9f"><div class="ttname"><a href="classComponent.html#a686788e4f4020ef2f35cab87b2620c9f">Component::m</a></div><div class="ttdeci">double m() const</div><div class="ttdef"><b>Definition:</b> Component.h:53</div></div>
 <div class="ttc" id="aclassComponent_html_a7d95a648daaaeeaa1cf4a2598c6ebaac"><div class="ttname"><a href="classComponent.html#a7d95a648daaaeeaa1cf4a2598c6ebaac">Component::setID</a></div><div class="ttdeci">void setID(unsigned int id)</div><div class="ttdef"><b>Definition:</b> Component.h:31</div></div>
-<div class="ttc" id="aclassComponent_html_a86bd66f47eae565fe121dd880d7c413e"><div class="ttname"><a href="classComponent.html#a86bd66f47eae565fe121dd880d7c413e">Component::write</a></div><div class="ttdeci">void write(std::ostream &amp;ostrm) const</div><div class="ttdef"><b>Definition:</b> Component.cpp:207</div></div>
+<div class="ttc" id="aclassComponent_html_a86bd66f47eae565fe121dd880d7c413e"><div class="ttname"><a href="classComponent.html#a86bd66f47eae565fe121dd880d7c413e">Component::write</a></div><div class="ttdeci">void write(std::ostream &amp;ostrm) const</div><div class="ttdef"><b>Definition:</b> Component.cpp:218</div></div>
 <div class="ttc" id="aclassComponent_html_aa22df8fe726677467ccb9cb34c500054"><div class="ttname"><a href="classComponent.html#aa22df8fe726677467ccb9cb34c500054">Component::numDipoles</a></div><div class="ttdeci">unsigned int numDipoles() const</div><div class="ttdef"><b>Definition:</b> Component.h:48</div></div>
 <div class="ttc" id="aclassComponent_html_ab4ff3015522fa6c4f1b2ed70d60063d3"><div class="ttname"><a href="classComponent.html#ab4ff3015522fa6c4f1b2ed70d60063d3">Component::incNumMolecules</a></div><div class="ttdeci">void incNumMolecules(int N)</div><div class="ttdef"><b>Definition:</b> Component.h:79</div></div>
 <div class="ttc" id="aclassComponent_html_abe034fe65c4c3a1d43c2ff7ca39e4051"><div class="ttname"><a href="classComponent.html#abe034fe65c4c3a1d43c2ff7ca39e4051">Component::getNumMolecules</a></div><div class="ttdeci">unsigned long getNumMolecules() const</div><div class="ttdef"><b>Definition:</b> Component.h:80</div></div>
-<div class="ttc" id="aclassComponent_html_ac0cad8f474fce2ee69e7af0fbe00ce59"><div class="ttname"><a href="classComponent.html#ac0cad8f474fce2ee69e7af0fbe00ce59">Component::getEps</a></div><div class="ttdeci">double getEps(unsigned int i) const</div><div class="ttdef"><b>Definition:</b> Component.h:125</div></div>
-<div class="ttc" id="aclassComponent_html_acb1f0e3429c5f9c96225031676673668"><div class="ttname"><a href="classComponent.html#acb1f0e3429c5f9c96225031676673668">Component::deleteLJCenter</a></div><div class="ttdeci">void deleteLJCenter()</div><div class="ttdef"><b>Definition:</b> Component.h:97</div></div>
+<div class="ttc" id="aclassComponent_html_ac0cad8f474fce2ee69e7af0fbe00ce59"><div class="ttname"><a href="classComponent.html#ac0cad8f474fce2ee69e7af0fbe00ce59">Component::getEps</a></div><div class="ttdeci">double getEps(unsigned int i) const</div><div class="ttdef"><b>Definition:</b> Component.h:128</div></div>
+<div class="ttc" id="aclassComponent_html_acb1f0e3429c5f9c96225031676673668"><div class="ttname"><a href="classComponent.html#acb1f0e3429c5f9c96225031676673668">Component::deleteLJCenter</a></div><div class="ttdeci">void deleteLJCenter()</div><div class="ttdef"><b>Definition:</b> Component.h:100</div></div>
 <div class="ttc" id="aclassComponent_html_aceb5245b98c1697688ca7ffa769e1ebf"><div class="ttname"><a href="classComponent.html#aceb5245b98c1697688ca7ffa769e1ebf">Component::readXML</a></div><div class="ttdeci">void readXML(XMLfileUnits &amp;xmlconfig)</div><div class="ttdoc">Read in XML configuration for a component and all its included objects.</div><div class="ttdef"><b>Definition:</b> Component.cpp:32</div></div>
-<div class="ttc" id="aclassComponent_html_ad58b9771674e1a250f3f723832f47741"><div class="ttname"><a href="classComponent.html#ad58b9771674e1a250f3f723832f47741">Component::updateMassInertia</a></div><div class="ttdeci">void updateMassInertia()</div><div class="ttdef"><b>Definition:</b> Component.cpp:126</div></div>
+<div class="ttc" id="aclassComponent_html_ad58b9771674e1a250f3f723832f47741"><div class="ttname"><a href="classComponent.html#ad58b9771674e1a250f3f723832f47741">Component::updateMassInertia</a></div><div class="ttdeci">void updateMassInertia()</div><div class="ttdef"><b>Definition:</b> Component.cpp:137</div></div>
 <div class="ttc" id="aclassComponent_html_ae93bd0738bbfb106175aa5150c49146a"><div class="ttname"><a href="classComponent.html#ae93bd0738bbfb106175aa5150c49146a">Component::ID</a></div><div class="ttdeci">unsigned int ID() const</div><div class="ttdef"><b>Definition:</b> Component.h:33</div></div>
 <div class="ttc" id="aclassComponent_html_aee27e798cc0d4be783e0ca48d7c2df29"><div class="ttname"><a href="classComponent.html#aee27e798cc0d4be783e0ca48d7c2df29">Component::incNumMolecules</a></div><div class="ttdeci">void incNumMolecules()</div><div class="ttdef"><b>Definition:</b> Component.h:78</div></div>
-<div class="ttc" id="aclassDipole_html"><div class="ttname"><a href="classDipole.html">Dipole</a></div><div class="ttdoc">Dipole center.</div><div class="ttdef"><b>Definition:</b> Site.h:279</div></div>
+<div class="ttc" id="aclassComponent_html_af55768f6dfd38528faae14451d857f05"><div class="ttname"><a href="classComponent.html#af55768f6dfd38528faae14451d857f05">Component::updateAllLJcentersShift</a></div><div class="ttdeci">void updateAllLJcentersShift(double rc)</div><div class="ttdef"><b>Definition:</b> Component.cpp:129</div></div>
+<div class="ttc" id="aclassDipole_html"><div class="ttname"><a href="classDipole.html">Dipole</a></div><div class="ttdoc">Dipole center.</div><div class="ttdef"><b>Definition:</b> Site.h:281</div></div>
 <div class="ttc" id="aclassLJcenter_html"><div class="ttname"><a href="classLJcenter.html">LJcenter</a></div><div class="ttdoc">Lennard-Jones 12-6 center.</div><div class="ttdef"><b>Definition:</b> Site.h:97</div></div>
-<div class="ttc" id="aclassQuadrupole_html"><div class="ttname"><a href="classQuadrupole.html">Quadrupole</a></div><div class="ttdoc">Quadrupole center.</div><div class="ttdef"><b>Definition:</b> Site.h:341</div></div>
+<div class="ttc" id="aclassQuadrupole_html"><div class="ttname"><a href="classQuadrupole.html">Quadrupole</a></div><div class="ttdoc">Quadrupole center.</div><div class="ttdef"><b>Definition:</b> Site.h:343</div></div>
 <div class="ttc" id="aclassSite_html"><div class="ttname"><a href="classSite.html">Site</a></div><div class="ttdoc">The Site class is the basis for the implementation of physical interactions.</div><div class="ttdef"><b>Definition:</b> Site.h:20</div></div>
 <div class="ttc" id="aclassXMLfileUnits_html"><div class="ttname"><a href="classXMLfileUnits.html">XMLfileUnits</a></div><div class="ttdoc">XML file with unit attributes abstraction.</div><div class="ttdef"><b>Definition:</b> xmlfileUnits.h:25</div></div>
 <div class="ttc" id="anamespacebhfmm_html_ad7f9b6ba81ecb460ec4133bf04276fab"><div class="ttname"><a href="namespacebhfmm.html#ad7f9b6ba81ecb460ec4133bf04276fab">bhfmm::operator&lt;&lt;</a></div><div class="ttdeci">std::ostream &amp; operator&lt;&lt;(std::ostream &amp;stream, const Vector3&lt; type &gt; &amp;v)</div><div class="ttdef"><b>Definition:</b> Vector3.h:22</div></div>
@@ -237,7 +241,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Mar 2 2023 13:12:54 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Thu Mar 2 2023 13:14:46 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
