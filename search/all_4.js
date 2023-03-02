@@ -16,7 +16,7 @@ var searchData=
   ['deallocate_13',['deallocate',['../structAlignedAllocator.html#afd83cebdc615d21e693aacacd87b36d8',1,'AlignedAllocator']]],
   ['deallocateallparticles_14',['deallocateAllParticles',['../classFullParticleCell.html#a3a831f67af6c077563a2c48b0b7bbecb',1,'FullParticleCell']]],
   ['decimal_15',['decimal',['../namespacexml__schema.html#aa9a63328083a3d58f8da0f83d8a20e9f',1,'xml_schema']]],
-  ['decompress_16',['decompress',['../classNoCompression.html#a5d9df7f7bcd06a89d34cfc4734682fa4',1,'NoCompression::decompress()'],['../classCompression.html#a798d7c542573a3a07a9ce7d2e4851a73',1,'Compression::decompress()']]],
+  ['decompress_16',['decompress',['../classCompression.html#a798d7c542573a3a07a9ce7d2e4851a73',1,'Compression::decompress()'],['../classNoCompression.html#a5d9df7f7bcd06a89d34cfc4734682fa4',1,'NoCompression::decompress()']]],
   ['decompwriter_17',['DecompWriter',['../classDecompWriter.html',1,'']]],
   ['deleteljcenter_18',['deleteLJCenter',['../classComponent.html#acb1f0e3429c5f9c96225031676673668',1,'Component']]],
   ['deletemoleculebyid_19',['deleteMoleculeByID',['../classParticleCellBase.html#af2b126e4e0c69137584898b42ffbc7b8',1,'ParticleCellBase']]],
@@ -31,7 +31,7 @@ var searchData=
   ['dim_28',['dim',['../classArray2D.html#ae5fc0cfd193ad7a0a92531d9f6bd32a0',1,'Array2D']]],
   ['dim0_29',['dim0',['../classArray2D.html#ae9fead8f6d1804526953eb235c941c06',1,'Array2D']]],
   ['dim1_30',['dim1',['../classArray2D.html#a40785f431fbf40a6f55196f40c8e7255',1,'Array2D']]],
-  ['dipole_31',['Dipole',['../classDipole.html',1,'Dipole'],['../classDipole.html#aed3596afedc131598b49d464b54abefe',1,'Dipole::Dipole()']]],
+  ['dipole_31',['Dipole',['../classDipole.html#aed3596afedc131598b49d464b54abefe',1,'Dipole::Dipole()'],['../classDipole.html',1,'Dipole']]],
   ['directedpm_32',['DirectedPM',['../classDirectedPM.html',1,'']]],
   ['directneighbourcommunicationscheme_33',['DirectNeighbourCommunicationScheme',['../classDirectNeighbourCommunicationScheme.html',1,'']]],
   ['disablecomponentwisethermostat_34',['disableComponentwiseThermostat',['../classDomain.html#adf9860af93693cd030c0aa7ba1083b37',1,'Domain']]],
@@ -50,9 +50,10 @@ var searchData=
   ['driftctrl_47',['DriftCtrl',['../classDriftCtrl.html',1,'']]],
   ['dropaccelerator_48',['Dropaccelerator',['../classDropaccelerator.html',1,'']]],
   ['dropaligner_49',['Dropaligner',['../classDropaligner.html',1,'']]],
-  ['dttnode_50',['DttNode',['../classbhfmm_1_1DttNode.html',1,'bhfmm']]],
-  ['dummyexpansion_51',['DummyExpansion',['../classDummyExpansion.html',1,'']]],
-  ['dummystorage_52',['DummyStorage',['../classDummyStorage.html',1,'']]],
-  ['duplicate_5fid_53',['duplicate_id',['../namespacexml__schema.html#a22a2b3c973b87b06c2868d85a154fd63',1,'xml_schema']]],
-  ['duration_54',['duration',['../namespacexml__schema.html#acd79b4620c053b211a2e739daed3b2bf',1,'xml_schema']]]
+  ['droplet_20coalescence_50',['Droplet Coalescence',['../index.html',1,'']]],
+  ['dttnode_51',['DttNode',['../classbhfmm_1_1DttNode.html',1,'bhfmm']]],
+  ['dummyexpansion_52',['DummyExpansion',['../classDummyExpansion.html',1,'']]],
+  ['dummystorage_53',['DummyStorage',['../classDummyStorage.html',1,'']]],
+  ['duplicate_5fid_54',['duplicate_id',['../namespacexml__schema.html#a22a2b3c973b87b06c2868d85a154fd63',1,'xml_schema']]],
+  ['duration_55',['duration',['../namespacexml__schema.html#acd79b4620c053b211a2e739daed3b2bf',1,'xml_schema']]]
 ];

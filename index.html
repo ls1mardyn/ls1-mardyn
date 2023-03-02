@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.2"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ls1-MarDyn: Injection scenario</title>
+<title>ls1-MarDyn: Droplet Coalescence</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -63,32 +63,47 @@ $(function() {
 </div>
 
 <div><div class="header">
-  <div class="headertitle"><div class="title">Injection scenario </div></div>
+  <div class="headertitle"><div class="title">Droplet Coalescence </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p ><a class="anchor" id="md_examples_Injection_README"></a> In this scenario, a liquid jet is injected into an evacuated chamber. Therefore, a tube consisting of fixed LJ centers, arranged on dense fcc grid points is generated on the left side of a cuboid system. The liquid is pushed through this tube with constant velocity and replenished by a reservoir to attain stationary conditions. Such a reservoir was also used in a scenario for stationary evaporation across a planar vapor-liquid interface, published by Heinen et al., <em>J. Chem. Phys.</em> <b>151</b>, 044704 (2019).</p>
-<h1>File path structure</h1>
-<p >A tree view of the file path structure can be found here: <a href="path_info.txt" title="File path structure">path_info.txt</a></p>
-<h1>Small system</h1>
-<h2>Preparation</h2>
-<h3>Create liquid reservoir configuration</h3>
-<div class="fragment"><div class="line">cd /path-to-mardyn/examples/Injection/liq/sim01/run03</div>
-<div class="line">mpirun -np &lt;numprocs&gt; /path-to-mardyn/src/MarDyn config.xml</div>
-</div><!-- fragment --><h3>Create dummy reservoir configuration (for the tube)</h3>
-<div class="fragment"><div class="line">cd /path-to-mardyn/examples/Injection/liq/sim01/run04</div>
-<div class="line">mpirun -np &lt;numprocs&gt; /path-to-mardyn/src/MarDyn config.xml</div>
-</div><!-- fragment --><h3>Create scenario start configuration</h3>
-<div class="fragment"><div class="line">cd /path-to-mardyn/examples/Injection/nemd/sim01/run01</div>
-<div class="line">mpirun -np &lt;numprocs&gt; /path-to-mardyn/src/MarDyn config.xml</div>
-</div><!-- fragment --><h2><a class="el" href="classSimulation.html" title="Controls the simulation process.">Simulation</a></h2>
-<h3>Start NEMD simulation</h3>
-<div class="fragment"><div class="line">cd /path-to-mardyn/examples/Injection/nemd/sim01/run02</div>
-<div class="line">mpirun -np &lt;numprocs&gt; /path-to-mardyn/src/MarDyn config.xml</div>
-</div><!-- fragment --> </div></div><!-- PageDoc -->
+<div class="textblock"><p ><a class="anchor" id="md_examples_DropletCoalescence_README"></a> </p><h1>Description</h1>
+<p >Two spherical liquid droplets (of argon) are suspended in vapour next to each other. Particle attractions cause the droplets to attract each other and slowly coalesce into a single droplet. The two droplets initially form a bridge between them, which eventually grows and subsumes the droplets.</p>
+<h1>Steps</h1>
+<ol type="1">
+<li><code>config_1_generateLiq.xml</code> : Create a liquid argon cube and equilibrate it, saving as a checkpoint.</li>
+<li><code>config_2_replicateLiq.xml</code> : Take the checkpoint from step 1, replicate it to form a larger liquid body, and equilibrate it to smooth out the edges and create a checkpoint.</li>
+<li><code>config_3_generateVap.xml</code> : Create a vapour argon cube and equilibrate it, saving as a checkpoint.</li>
+<li><code>config_4_replicateVap.xml</code> : Take the checkpoint from step 3, replicate it to form a larger vapour body, and equilibrate it to smooth out the edges and create a checkpoint.</li>
+<li><code>config_5_droplet.xml</code> : Generate the final scenario, by copying the checkpoint from step 4 to create a large vapour box, and then creating two spherical voids inside the box and inserting liquid fron step 2's checkpoint. From here the simulation can be run for as long as required.</li>
+</ol>
+<h1>Variability</h1>
+<p >The droplet size can be any desired size, achieved by editing the values in config_5. However the densities for the fluid and vapour will vary for different droplet sizes, so config_1 and config_3 would need to be rerun with new densities. A python script to calculate densities can be found in tools/scenario-helper/droplet_density_calc.py. The script uses formulae established in reference 1.</p>
+<p >These are some common values for quick lookup. </p><table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Diameter   </th><th class="markdownTableHeadNone">Liquid Density   </th><th class="markdownTableHeadNone">Vapour Density    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">50 nm   </td><td class="markdownTableBodyNone">0.0188022   </td><td class="markdownTableBodyNone">0.000515    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">100 nm   </td><td class="markdownTableBodyNone">0.018778   </td><td class="markdownTableBodyNone">0.000506    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">200 nm   </td><td class="markdownTableBodyNone">0.0187650   </td><td class="markdownTableBodyNone">0.000501   </td></tr>
+</table>
+<h1>Notes</h1>
+<ul>
+<li>The checkpoint reading process in config_5 is very memory intensive, since all the particles are read into rank 1 of the simulation and hence may cause the node to run out of memory. A scenario size of 4k x 6k x 4k fails on both HPE HAWK and Supercomputer Fugaku with a single node.</li>
+<li>When the liquid droplet is first placed into the spherical void, the sphere surface shows some oscillatory behaviour that is not observed in real life experiments. This is because the liquid boundary is not pre-equilibrated with the vapour. A more realistic scenario is being worked on, where a vapour box is created by deleting particles from a liquid box, keeping a liquid droplet in the centre intact.</li>
+</ul>
+<h1>Publications</h1>
+<p >Refer to the following for more information:</p><ul>
+<li>[1] Vrabec, J., Kedia, G. K., Fuchs, G., &amp; Hasse, H. (2006). Comprehensive study of the vapour–liquid coexistence of the truncated and shifted Lennard–Jones fluid including planar and spherical interface properties. Molecular physics, 104(09), 1509-1527.</li>
+<li>[2] Seckler, S., Gratl, F., Heinen, M., Vrabec, J., Bungartz, H. J., &amp; Neumann, P. (2021). AutoPas in ls1 mardyn: Massively parallel particle simulations with node-level auto-tuning. Journal of Computational Science, 50, 101296.</li>
+<li>[3] Heinen, M., Hoffmann, M., Diewald, F., Seckler, S., Langenbach, K., &amp; Vrabec, J. (2022). Droplet coalescence by molecular dynamics and phase-field modeling. Physics of Fluids, 34(4), 042006. </li>
+</ul>
+</div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Mar 2 2023 13:14:50 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Thu Mar 2 2023 13:21:42 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
