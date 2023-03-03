@@ -12,7 +12,9 @@
 using Log::global_log;
 using namespace std;
 
-DomainDecomposition::DomainDecomposition() : DomainDecompMPIBase(), _gridSize{0}, _coords{0} {
+DomainDecomposition::DomainDecomposition() : DomainDecomposition(MPI_COMM_WORLD) {}
+
+DomainDecomposition::DomainDecomposition(MPI_Comm comm) : DomainDecompMPIBase(comm), _gridSize{0}, _coords{0} {
 	initMPIGridDims();
 }
 
@@ -33,7 +35,7 @@ void DomainDecomposition::initMPIGridDims() {
 	}
 
 	MPI_CHECK(MPI_Dims_create( _numProcs, DIMgeom, (int *) &_gridSize ));
-	MPI_CHECK(MPI_Cart_create(MPI_COMM_WORLD, DIMgeom, _gridSize, period, reorder, &_comm));
+	MPI_CHECK(MPI_Cart_create(_comm, DIMgeom, _gridSize, period, reorder, &_comm));
 	global_log->info() << "MPI grid dimensions: " << _gridSize[0] << ", " << _gridSize[1] << ", " << _gridSize[2] << endl;
 	MPI_CHECK(MPI_Comm_rank(_comm, &_rank));
 	MPI_CHECK(MPI_Cart_coords(_comm, _rank, DIMgeom, _coords));
@@ -145,9 +147,9 @@ std::vector<int> DomainDecomposition::getNeighbourRanksFullShell() {
 	//order of ranks is important in current version!!!
 #if defined(ENABLE_MPI) //evil hack to not destroy the necessary order
     int myRank;
-	MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
+	MPI_Comm_rank(_comm,&myRank);
 	int numProcs;
-	MPI_Comm_size(MPI_COMM_WORLD,&numProcs);
+	MPI_Comm_size(_comm,&numProcs);
 	std::vector<std::vector<std::vector<int>>> ranks = getAllRanks();
 	int myCoords[3];
 	MPI_Cart_coords(_comm, myRank, 3, myCoords);
@@ -234,9 +236,9 @@ std::vector<std::vector<std::vector<int>>> DomainDecomposition::getAllRanks(){
 #ifdef ENABLE_MPI
 	std::vector<std::vector<std::vector<int>>> ranks;
 	int myRank;
-	MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
+	MPI_Comm_rank(_comm,&myRank);
 	int numProcessors;
-	MPI_Comm_size(MPI_COMM_WORLD,&numProcessors);
+	MPI_Comm_size(_comm,&numProcessors);
 
 	ranks.resize(_gridSize[0]);
 	for(int i = 0; i < _gridSize[0]; i++){

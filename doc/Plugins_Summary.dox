@@ -37,6 +37,7 @@ SP / TemperatureProfile | temperature profile output | Outputs the average tempe
 SP / VirialProfile | virial pressure profile output | Outputs the virial/partial pressures in a spatial 1D output in y-direction or 2D output (Virial2DProfile). Requires/auto enables DensityProfile.
 LoadbalanceWriter | print, mpi, load balance, timers | Writes load balance information. Averages, min, max and a load balance is written. For more detailed output use the TimerWriter.
 LoadImbalanceThroughSleepPlugin | mpi, overlapping | Artificially introduces a load imbalance at different plugin steps. Primarily used for testing.
+MamicoCoupling | coupling, compile as library | Allows the coupling code MaMiCo to couple with ls1. Requires ls1 to be compiled as library. This is automatically done when passing MAMICO_COUPLING=ON to cmake. This plugin always switches the ls1 thermostat off.
 MaxCheck  | limit, maximum values, overlaps, explosion | Limit velocity and force of individual particles to maximum values to avoid overlaps and consequently exploding systems. 
 MaxWriter  | sampling, maximum values, force, velocity | Sampling maximum force and velocities values occuring in the system. 
 MettDeamon | particle-insertion, reservoir, replenish, stationary, evaporation | Replenish a liquid film by a particle reservoir, to attain stationary conditons in an e.g. evaporation simulation.

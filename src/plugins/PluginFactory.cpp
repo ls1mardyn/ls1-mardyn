@@ -71,6 +71,10 @@
 #include "io/vtk/VTKMoleculeWriter.h"
 #endif
 
+#ifdef MAMICO_COUPLING
+#include "plugins/MamicoCoupling.h"
+#endif
+
 /** @brief Register all default plugins with base PluginBase
  *
  * @param createInstance  pointer to a function returning an instance of the plugin object.
@@ -133,6 +137,10 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 #ifndef MARDYN_AUTOPAS
 	REGISTER_PLUGIN(VTKGridWriter);
 #endif
+#endif
+
+#ifdef MAMICO_COUPLING
+	REGISTER_PLUGIN(MamicoCoupling);
 #endif
 }
 

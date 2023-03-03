@@ -23,6 +23,7 @@ public:
 	//!        sets up the topology
 	DomainDecomposition();
 
+	DomainDecomposition(MPI_Comm comm);
 	// documentation see father class (DomainDecompBase.h)
 	~DomainDecomposition();
 
@@ -73,7 +74,7 @@ public:
 
 	std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
 
-private:
+protected:
 	void initMPIGridDims();
 
 	int _gridSize[DIMgeom]; //!< Number of processes in each dimension of the MPI process grid

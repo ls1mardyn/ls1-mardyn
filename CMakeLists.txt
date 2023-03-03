@@ -63,6 +63,9 @@ include(ALL)
 # ----- third: include autopas
 include(autopas)
 
+# ----- include mamico
+include(mamico)
+
 # ----- resilience plugin dependencies are set here
 include(compression)
 
