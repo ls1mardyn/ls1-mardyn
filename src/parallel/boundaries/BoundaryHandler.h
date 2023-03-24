@@ -1,5 +1,5 @@
 /*
- * BoundaryUtils.h
+ * BoundaryHandler.h
  *
  *  Created on: 24 March 2023
  *      Author: amartyads
@@ -13,10 +13,10 @@
 #include "BoundaryType.h"
 #include "DimensionType.h"
 
-class BoundaryUtils
+class BoundaryHandler
 {
 public:
-	BoundaryUtils();
+	BoundaryHandler();
 	BoundaryType getBoundary(std::string dimension) const;
 	void setBoundary(std::string dimension, BoundaryType value);
 	BoundaryType getBoundary(DimensionType dimension) const;
