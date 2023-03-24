@@ -17,11 +17,11 @@ class BoundaryUtils
 {
 public:
 	BoundaryUtils();
-	BoundaryType getBoundary(std::string dimension);
+	BoundaryType getBoundary(std::string dimension) const;
 	void setBoundary(std::string dimension, BoundaryType value);
-	BoundaryType getBoundary(DimensionType dimension);
+	BoundaryType getBoundary(DimensionType dimension) const;
 	void setBoundary(DimensionType dimension, BoundaryType value);
-	DimensionType convertStringToDimension(std::string dimension);
+	DimensionType convertStringToDimension(std::string dimension) const;
 
 private:
 	std::map<DimensionType, BoundaryType> boundaries;
