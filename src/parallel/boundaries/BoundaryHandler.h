@@ -21,9 +21,7 @@ public:
 	void setBoundary(std::string dimension, BoundaryType value);
 	BoundaryType getBoundary(DimensionType dimension) const;
 	void setBoundary(DimensionType dimension, BoundaryType value);
-	DimensionType convertStringToDimension(std::string dimension) const;
 
 private:
 	std::map<DimensionType, BoundaryType> boundaries;
-	const std::vector<std::string> permissibleDimensions = {"+x", "-x", "+y", "-y", "+z", "-z"};
 };

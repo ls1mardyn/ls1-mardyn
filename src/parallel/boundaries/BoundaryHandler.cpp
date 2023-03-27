@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include "BoundaryHandler.h"
+#include "BoundaryUtils.h"
 #include "utils/Logger.h" 
 
 BoundaryHandler::BoundaryHandler() : boundaries{
@@ -19,13 +20,13 @@ BoundaryHandler::BoundaryHandler() : boundaries{
 
 BoundaryType BoundaryHandler::getBoundary(std::string dimension) const
 {
-	DimensionType convertedDimension = convertStringToDimension(dimension);
+	DimensionType convertedDimension = BoundaryUtils::convertStringToDimension(dimension);
 	return boundaries.at(convertedDimension);
 }
 
 void BoundaryHandler::setBoundary(std::string dimension, BoundaryType value) 
 {
-	DimensionType convertedDimension = convertStringToDimension(dimension);
+	DimensionType convertedDimension = BoundaryUtils::convertStringToDimension(dimension);
 	if(convertedDimension == DimensionType::ERROR)
 		return;
 	boundaries[convertedDimension] = value;
@@ -40,25 +41,4 @@ void BoundaryHandler::setBoundary(DimensionType dimension, BoundaryType value)
 {
 	if(dimension != DimensionType::ERROR)
 		boundaries[dimension] = value;
-}
-
-DimensionType BoundaryHandler::convertStringToDimension(std::string dimension) const
-{ 
-	if(std::find(permissibleDimensions.begin(),permissibleDimensions.end(),dimension) == permissibleDimensions.end())
-	{
-		Log::global_log->error() << "Invalid dimension passed for boundary check" << std::endl;
-		return DimensionType::ERROR;
-	}
-	if(dimension == "+x")
-		return DimensionType::POSX;
-	if(dimension == "+y")
-		return DimensionType::POSY;
-	if(dimension == "+z")
-		return DimensionType::POSZ;
-	if(dimension == "-x")
-		return DimensionType::NEGX;
-	if(dimension == "-y")
-		return DimensionType::NEGY;
-	//if(dimension == "-z")
-	return DimensionType::NEGZ;
 }
