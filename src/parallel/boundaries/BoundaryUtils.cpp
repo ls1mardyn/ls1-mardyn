@@ -90,6 +90,11 @@ std::string BoundaryUtils::convertDimensionToString(DimensionType dimension)
 	}
 }
 
+std::string BoundaryUtils::convertDimensionToStringAbs(DimensionType dimension)
+{ 
+	return convertDimensionToString(dimension).substr(1,1); 
+}
+
 int BoundaryUtils::convertDimensionToNumeric(DimensionType dimension)
 {
 	switch (dimension)
@@ -116,4 +121,10 @@ int BoundaryUtils::convertDimensionToNumeric(DimensionType dimension)
 		Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
 		return 0;
 	}
+}
+
+int BoundaryUtils::convertDimensionToNumericAbs(DimensionType dimension) 
+{
+	int toReturn = convertDimensionToNumeric(dimension);
+	return findSign(toReturn) * toReturn; 
 }

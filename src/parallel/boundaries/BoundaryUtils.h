@@ -5,6 +5,8 @@
 #include "BoundaryType.h"
 #include "DimensionType.h"
 
+#include "molecules/Molecule.h"
+
 namespace BoundaryUtils
 {
 	static const std::vector<std::string> permissibleDimensionsString = {"+x", "+y", "+z", "-x", "-y", "-z"};
@@ -17,7 +19,11 @@ namespace BoundaryUtils
 	static DimensionType convertNumericToDimension(int dim);
 
 	static std::string convertDimensionToString(DimensionType dimension);
+	static std::string convertDimensionToStringAbs(DimensionType dimension);
 	static int convertDimensionToNumeric(DimensionType dimension);
+	static int convertDimensionToNumericAbs(DimensionType dimension);
+
+	
 
 	static int findSign(int n) { return n < 0 ? -1 : 1; }
 }
