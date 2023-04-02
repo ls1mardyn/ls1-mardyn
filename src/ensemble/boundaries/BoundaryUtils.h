@@ -25,5 +25,5 @@ namespace BoundaryUtils
 
 	
 
-	static int findSign(int n) { return n < 0 ? -1 : 1; }
+	static inline int findSign(int n) { return n < 0 ? -1 : 1; }
 }
