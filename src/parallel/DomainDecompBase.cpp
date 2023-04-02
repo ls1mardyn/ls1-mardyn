@@ -25,6 +25,10 @@ DomainDecompBase::~DomainDecompBase() {
 void DomainDecompBase::readXML(XMLfileUnits& /* xmlconfig */) {
 }
 
+void DomainDecompBase::setBoundaryType(DimensionType dimension, BoundaryType boundary) {
+	boundaryHandler.setBoundary(dimension, boundary);
+}
+
 void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecules,
 										   ParticleContainer* moleculeContainer) {
 	for (auto& molecule : invalidMolecules) {

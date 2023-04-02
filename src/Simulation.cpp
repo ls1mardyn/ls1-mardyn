@@ -80,6 +80,8 @@
 #include "bhfmm/FastMultipoleMethod.h"
 #include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
 
+#include "parallel/boundaries/BoundaryUtils.h"
+
 using Log::global_log;
 using namespace std;
 
@@ -399,6 +401,28 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				Simulation::exit(15843);
 			}
 			_lastTraversalTimeHistory.setCapacity(timerForLoadAveragingLength);
+
+			if(xmlconfig.changecurrentnode("boundaries")) {
+				std::string tempBoundary;
+				xmlconfig.getNodeValue("boundaryType", tempBoundary);
+				//xmlconfig.getNodeValue("posx", tempBoundary);
+				_domainDecomposition->setBoundaryType(DimensionType::POSX, BoundaryUtils::convertStringToBoundary(tempBoundary));
+				//xmlconfig.getNodeValue("posy", tempBoundary);
+				_domainDecomposition->setBoundaryType(DimensionType::POSY, BoundaryUtils::convertStringToBoundary(tempBoundary));
+				//xmlconfig.getNodeValue("posz", tempBoundary);
+				_domainDecomposition->setBoundaryType(DimensionType::POSZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
+				//xmlconfig.getNodeValue("negx", tempBoundary);
+				_domainDecomposition->setBoundaryType(DimensionType::NEGX, BoundaryUtils::convertStringToBoundary(tempBoundary));
+				//xmlconfig.getNodeValue("negy", tempBoundary);
+				_domainDecomposition->setBoundaryType(DimensionType::NEGY, BoundaryUtils::convertStringToBoundary(tempBoundary));
+				//xmlconfig.getNodeValue("negz", tempBoundary);
+				_domainDecomposition->setBoundaryType(DimensionType::NEGZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
+
+				if (_domainDecomposition->hasInvalidBoundary()) {
+					global_log->error() << "Invalid boundary type! Please check the config file" << std::endl;
+					exit(1);
+				}
+			}
 
 			xmlconfig.changecurrentnode("..");
 		}

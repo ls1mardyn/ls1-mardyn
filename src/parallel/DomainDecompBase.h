@@ -16,6 +16,8 @@
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "utils/Logger.h"  // is this used?
 
+#include "boundaries/BoundaryHandler.h"
+
 class Component;
 class Domain;
 class ParticleContainer;
@@ -288,6 +290,10 @@ public:
 
 	virtual void printCommunicationPartners(std::string filename) const {};
 
+	void setBoundaryType(DimensionType dimension, BoundaryType boundary);
+
+	bool hasInvalidBoundary() const { return boundaryHandler.hasInvalidBoundary();}
+
 protected:
 	void addLeavingMolecules(std::vector<Molecule>&& invalidMolecules, ParticleContainer* moleculeContainer);
 
@@ -336,6 +342,8 @@ protected:
 
 	//! total number of processes in the simulation
 	int _numProcs;
+
+	BoundaryHandler boundaryHandler;
 
 private:
 	CollectiveCommBase _collCommBase;

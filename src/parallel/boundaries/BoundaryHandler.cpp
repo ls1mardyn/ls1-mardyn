@@ -42,3 +42,14 @@ void BoundaryHandler::setBoundary(DimensionType dimension, BoundaryType value)
 	if(dimension != DimensionType::ERROR)
 		boundaries[dimension] = value;
 }
+
+bool BoundaryHandler::hasInvalidBoundary() const
+{
+	return boundaries.at(DimensionType::POSX) == BoundaryType::ERROR ||
+		boundaries.at(DimensionType::POSY) == BoundaryType::ERROR ||
+		boundaries.at(DimensionType::POSZ) == BoundaryType::ERROR ||
+		boundaries.at(DimensionType::NEGX) == BoundaryType::ERROR ||
+		boundaries.at(DimensionType::NEGY) == BoundaryType::ERROR ||
+		boundaries.at(DimensionType::NEGZ) == BoundaryType::ERROR;
+
+}

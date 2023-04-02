@@ -21,6 +21,7 @@ public:
 	void setBoundary(std::string dimension, BoundaryType value);
 	BoundaryType getBoundary(DimensionType dimension) const;
 	void setBoundary(DimensionType dimension, BoundaryType value);
+	bool hasInvalidBoundary() const;
 
 private:
 	std::map<DimensionType, BoundaryType> boundaries;
