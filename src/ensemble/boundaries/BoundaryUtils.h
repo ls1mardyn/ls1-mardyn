@@ -23,7 +23,7 @@ namespace BoundaryUtils
 	static int convertDimensionToNumeric(DimensionType dimension);
 	static int convertDimensionToNumericAbs(DimensionType dimension);
 
-	
+	static BoundaryType convertStringToBoundary(std::string boundary);
 
 	static inline int findSign(int n) { return n < 0 ? -1 : 1; }
 }

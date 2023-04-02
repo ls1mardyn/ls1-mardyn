@@ -128,3 +128,15 @@ int BoundaryUtils::convertDimensionToNumericAbs(DimensionType dimension)
 	int toReturn = convertDimensionToNumeric(dimension);
 	return findSign(toReturn) * toReturn; 
 }
+
+BoundaryType BoundaryUtils::convertStringToBoundary(std::string boundary)
+{
+	if(boundary == "periodic")
+		return BoundaryType::PERIODIC;
+	if(boundary == "reflecting" || boundary == "reflective")
+		return BoundaryType::REFLECTING;
+	if(boundary == "outflow")
+		return BoundaryType::OUTFLOW;
+	Log::global_log->error() << "Invalid boundary type passed. Check your input file!" << std::endl;
+	return BoundaryType::ERROR;
+}
