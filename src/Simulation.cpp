@@ -405,17 +405,14 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			if(xmlconfig.changecurrentnode("boundaries")) {
 				std::string tempBoundary;
 				xmlconfig.getNodeValue("boundaryType", tempBoundary);
-				//xmlconfig.getNodeValue("posx", tempBoundary);
+				//xmlconfig.getNodeValue("x", tempBoundary);
 				_domainDecomposition->setBoundaryType(DimensionType::POSX, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				//xmlconfig.getNodeValue("posy", tempBoundary);
-				_domainDecomposition->setBoundaryType(DimensionType::POSY, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				//xmlconfig.getNodeValue("posz", tempBoundary);
-				_domainDecomposition->setBoundaryType(DimensionType::POSZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				//xmlconfig.getNodeValue("negx", tempBoundary);
 				_domainDecomposition->setBoundaryType(DimensionType::NEGX, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				//xmlconfig.getNodeValue("negy", tempBoundary);
+				//xmlconfig.getNodeValue("y", tempBoundary);
+				_domainDecomposition->setBoundaryType(DimensionType::POSY, BoundaryUtils::convertStringToBoundary(tempBoundary));
 				_domainDecomposition->setBoundaryType(DimensionType::NEGY, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				//xmlconfig.getNodeValue("negz", tempBoundary);
+				//xmlconfig.getNodeValue("z", tempBoundary);
+				_domainDecomposition->setBoundaryType(DimensionType::POSZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
 				_domainDecomposition->setBoundaryType(DimensionType::NEGZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
 
 				if (_domainDecomposition->hasInvalidBoundary()) {

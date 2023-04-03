@@ -294,6 +294,8 @@ public:
 
 	bool hasInvalidBoundary() const { return boundaryHandler.hasInvalidBoundary();}
 
+	void processBoundaryConditions(ParticleContainer* moleculeContainer, Domain* domain);
+
 protected:
 	void addLeavingMolecules(std::vector<Molecule>&& invalidMolecules, ParticleContainer* moleculeContainer);
 

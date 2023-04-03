@@ -14,6 +14,7 @@
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #include "utils/MPI_Info_object.h"
+#include "DomainDecompBase.h"
 #endif
 
 DomainDecompBase::DomainDecompBase() : _rank(0), _numProcs(1) {
@@ -29,6 +30,55 @@ void DomainDecompBase::setBoundaryType(DimensionType dimension, BoundaryType bou
 	boundaryHandler.setBoundary(dimension, boundary);
 }
 
+void DomainDecompBase::processBoundaryConditions(ParticleContainer* moleculeContainer, Domain* domain) {
+	//find which walls to consider
+	double cutoff = moleculeContainer->getCutoff();
+	double startRegion[3]{moleculeContainer->getBoundingBoxMin(0),
+							  moleculeContainer->getBoundingBoxMin(1),
+							  moleculeContainer->getBoundingBoxMin(2)};
+	double endRegion[3]{moleculeContainer->getBoundingBoxMax(0),
+							moleculeContainer->getBoundingBoxMax(1),
+							moleculeContainer->getBoundingBoxMax(2)};
+
+	double globStartRegion[3]{getBoundingBoxMin(0, domain),
+								getBoundingBoxMin(1, domain),
+								getBoundingBoxMin(2, domain)};
+	double globEndRegion[3]{getBoundingBoxMax(0, domain),
+								getBoundingBoxMax(1, domain),
+								getBoundingBoxMax(2, domain)};
+	
+	std::map<DimensionType, bool> isOuterWall {{DimensionType::POSX, endRegion[0] == globEndRegion[0]},
+											{DimensionType::NEGX, startRegion[0] == globStartRegion[0]},
+											{DimensionType::POSY, endRegion[1] == globEndRegion[1]},
+											{DimensionType::NEGY, startRegion[1] == globStartRegion[1]},
+											{DimensionType::POSZ, endRegion[2] == globEndRegion[2]},
+											{DimensionType::NEGZ, startRegion[2] == globStartRegion[2]}};
+	
+	for (auto const& currentWall : isOuterWall)
+	{
+		if(!currentWall.second)
+			continue;
+
+		switch(boundaryHandler.getBoundary(currentWall.first))
+		{
+			case BoundaryType::PERIODIC:
+				//default behaviour
+				break;
+			
+			case BoundaryType::OUTFLOW:
+				//delete exiting particles
+				//remove from invalidparticles
+				break;
+
+			case BoundaryType::REFLECTING:
+				break;
+
+			default:
+				global_log->error() << "Boundary type error! Received type " << boundaryHandler.getBoundary(currentWall.first) << " not allowed!" << std::endl;
+				Simulation::exit(1);
+		}
+	}
+}
 void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecules,
 										   ParticleContainer* moleculeContainer) {
 	for (auto& molecule : invalidMolecules) {
