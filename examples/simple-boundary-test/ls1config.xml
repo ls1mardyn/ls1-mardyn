@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mardyn version="20100525">
+	<refunits type="SI">
+		<length unit="nm">0.34</length>
+		<mass unit="u">39.948</mass>
+		<energy unit="K">120</energy>
+	</refunits>
+	<simulation type="MD">
+		<integrator type="Leapfrog">
+			<timestep unit="reduced">0.005</timestep>
+		</integrator>
+		<run>
+			<currenttime>0</currenttime>
+			<equilibration><steps>0</steps></equilibration>
+			<production>
+				<steps>200</steps>
+			</production>
+		</run>
+		<ensemble type="NVT">
+			<temperature unit="reduced">1.1</temperature>
+			<domain type="box">
+				<lx>20</lx>
+				<ly>20</ly>
+				<lz>20</lz>
+			</domain>
+			<components>
+				<moleculetype id="1" name="Arbitrary">
+					<site type="LJ126" id="1" >
+						<coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+						<mass>1.0</mass>
+						<sigma>1.0</sigma>
+						<epsilon>1.0</epsilon>
+						<shifted>true</shifted>
+					</site>
+				</moleculetype>
+			</components>
+			<phasespacepoint>
+				<file type="ASCII">simple_checkpoint.inp</file>
+			</phasespacepoint>
+		</ensemble>
+		<algorithm>
+			<parallelisation type="DomainDecomposition">
+				<MPIGridDims> <x>2</x><y>2</y> <z>1</z> </MPIGridDims>
+				<boundaries> <x>periodic</x><y>reflecting</y><z>outflow</z> </boundaries>
+			</parallelisation>
+			<datastructure type="LinkedCells">
+			</datastructure>
+			<cutoffs type="CenterOfMass">
+				<radiusLJ unit="reduced">2.2</radiusLJ>
+			</cutoffs>
+			<electrostatic type="ReactionField">
+				<epsilon>1.0e+10</epsilon>
+			</electrostatic>
+		</algorithm>
+		<output>
+			<outputplugin name="VTKMoleculeWriter">
+				<outputprefix>vtkOutput</outputprefix>
+				<writefrequency>1</writefrequency>
+			</outputplugin>
+		</output>
+	</simulation>
+</mardyn>

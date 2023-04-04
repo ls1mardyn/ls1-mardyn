@@ -129,6 +129,11 @@ int BoundaryUtils::convertDimensionToNumericAbs(DimensionType dimension)
 	return findSign(toReturn) * toReturn; 
 }
 
+int BoundaryUtils::convertDimensionToLS1Dims(DimensionType dimension) 
+{
+	return convertDimensionToNumericAbs(dimension) - 1;
+}
+
 BoundaryType BoundaryUtils::convertStringToBoundary(std::string boundary)
 {
 	if(boundary == "periodic")
@@ -139,4 +144,43 @@ BoundaryType BoundaryUtils::convertStringToBoundary(std::string boundary)
 		return BoundaryType::OUTFLOW;
 	Log::global_log->error() << "Invalid boundary type passed. Check your input file!" << std::endl;
 	return BoundaryType::ERROR;
+}
+
+bool BoundaryUtils::setRegionToParams(double* givenRegionBegin, double* givenRegionEnd, DimensionType dimension, double regionWidth,
+									  double* returnRegionBegin, double* returnRegionEnd) 
+{
+	for (int i = 0; i < 3; i++)
+	{
+		returnRegionBegin[i] = givenRegionBegin[i];
+		returnRegionEnd[i] = givenRegionEnd[i];
+	}
+
+	int dimensionLS1 = convertDimensionToLS1Dims(dimension);
+	
+	switch (dimension) //can be done with findsign() too, but this is clearer
+	{
+	case DimensionType::POSX:
+	case DimensionType::POSY:
+	case DimensionType::POSZ:
+		returnRegionBegin[dimensionLS1] = returnRegionEnd[dimensionLS1] - regionWidth;
+		break;
+	
+	case DimensionType::NEGX:
+	case DimensionType::NEGY:
+	case DimensionType::NEGZ:
+		returnRegionEnd[dimensionLS1] = returnRegionBegin[dimensionLS1] + regionWidth;
+	
+	default:
+		return false;
+	}
+	return true;
+}
+
+bool BoundaryUtils::isMoleculeLeaving(Molecule molecule, double* regionBegin, double* regionEnd,
+									  DimensionType dimension, double timestepLength) {
+	int ls1dim = convertDimensionToLS1Dims(dimension);
+	double newPos = molecule.r(ls1dim) + (timestepLength * molecule.v(ls1dim));
+	if(newPos < regionBegin[ls1dim] || newPos > regionEnd[ls1dim])
+		return true;
+	return false;
 }

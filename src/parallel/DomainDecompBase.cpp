@@ -14,8 +14,9 @@
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #include "utils/MPI_Info_object.h"
-#include "DomainDecompBase.h"
 #endif
+
+#include "boundaries/BoundaryUtils.h"
 
 DomainDecompBase::DomainDecompBase() : _rank(0), _numProcs(1) {
 }
@@ -30,23 +31,24 @@ void DomainDecompBase::setBoundaryType(DimensionType dimension, BoundaryType bou
 	boundaryHandler.setBoundary(dimension, boundary);
 }
 
-void DomainDecompBase::processBoundaryConditions(ParticleContainer* moleculeContainer, Domain* domain) {
+void DomainDecompBase::processBoundaryConditions(Domain* domain, Ensemble* ensemble) {
 	//find which walls to consider
-	double cutoff = moleculeContainer->getCutoff();
-	double startRegion[3]{moleculeContainer->getBoundingBoxMin(0),
-							  moleculeContainer->getBoundingBoxMin(1),
-							  moleculeContainer->getBoundingBoxMin(2)};
-	double endRegion[3]{moleculeContainer->getBoundingBoxMax(0),
-							moleculeContainer->getBoundingBoxMax(1),
-							moleculeContainer->getBoundingBoxMax(2)};
+	double startRegion[3], endRegion[3];
+	for(int d = 0; d < 3; d++) {
+		startRegion[d] = getBoundingBoxMin(d, domain);
+		endRegion[d] = getBoundingBoxMax(d, domain);
+	}
 
-	double globStartRegion[3]{getBoundingBoxMin(0, domain),
-								getBoundingBoxMin(1, domain),
-								getBoundingBoxMin(2, domain)};
-	double globEndRegion[3]{getBoundingBoxMax(0, domain),
-								getBoundingBoxMax(1, domain),
-								getBoundingBoxMax(2, domain)};
+	double* globStartRegion = ensemble->domain()->rmin();
+	double* globEndRegion = ensemble->domain()->rmax();
+	global_log->set_mpi_output_all();
+	global_log->info() << "local: " << startRegion[0] << " " << startRegion[1] << " " << startRegion[2] << " "
+										<< endRegion[0] << " " << endRegion[1] << " " << endRegion[2] << " "
+							<< "global: " << globStartRegion[0] << " " << globStartRegion[1] << " " << globStartRegion[2] << " "
+										<< globEndRegion[0] << " " << globEndRegion[1] << " " << globEndRegion[2] << " " << std::endl;
 	
+	
+
 	std::map<DimensionType, bool> isOuterWall {{DimensionType::POSX, endRegion[0] == globEndRegion[0]},
 											{DimensionType::NEGX, startRegion[0] == globStartRegion[0]},
 											{DimensionType::POSY, endRegion[1] == globEndRegion[1]},
@@ -54,30 +56,11 @@ void DomainDecompBase::processBoundaryConditions(ParticleContainer* moleculeCont
 											{DimensionType::POSZ, endRegion[2] == globEndRegion[2]},
 											{DimensionType::NEGZ, startRegion[2] == globStartRegion[2]}};
 	
-	for (auto const& currentWall : isOuterWall)
-	{
-		if(!currentWall.second)
-			continue;
 
-		switch(boundaryHandler.getBoundary(currentWall.first))
-		{
-			case BoundaryType::PERIODIC:
-				//default behaviour
-				break;
-			
-			case BoundaryType::OUTFLOW:
-				//delete exiting particles
-				//remove from invalidparticles
-				break;
+	boundaryHandler.setOuterWalls(isOuterWall);
+	boundaryHandler.processBoundaries(startRegion, endRegion);
 
-			case BoundaryType::REFLECTING:
-				break;
-
-			default:
-				global_log->error() << "Boundary type error! Received type " << boundaryHandler.getBoundary(currentWall.first) << " not allowed!" << std::endl;
-				Simulation::exit(1);
-		}
-	}
+	global_log->set_mpi_output_root();
 }
 void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecules,
 										   ParticleContainer* moleculeContainer) {

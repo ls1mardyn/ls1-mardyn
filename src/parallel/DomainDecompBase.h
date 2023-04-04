@@ -17,6 +17,7 @@
 #include "utils/Logger.h"  // is this used?
 
 #include "boundaries/BoundaryHandler.h"
+#include "ensemble/EnsembleBase.h"
 
 class Component;
 class Domain;
@@ -294,7 +295,7 @@ public:
 
 	bool hasInvalidBoundary() const { return boundaryHandler.hasInvalidBoundary();}
 
-	void processBoundaryConditions(ParticleContainer* moleculeContainer, Domain* domain);
+	void processBoundaryConditions(Domain* domain, Ensemble* _ensemble);
 
 protected:
 	void addLeavingMolecules(std::vector<Molecule>&& invalidMolecules, ParticleContainer* moleculeContainer);

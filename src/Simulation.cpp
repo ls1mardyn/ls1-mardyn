@@ -404,14 +404,17 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 
 			if(xmlconfig.changecurrentnode("boundaries")) {
 				std::string tempBoundary;
-				xmlconfig.getNodeValue("boundaryType", tempBoundary);
-				//xmlconfig.getNodeValue("x", tempBoundary);
+				//xmlconfig.getNodeValue("boundaryType", tempBoundary);
+				xmlconfig.getNodeValue("x", tempBoundary);
+				global_log->info() << "x boundary " << tempBoundary << std::endl;
 				_domainDecomposition->setBoundaryType(DimensionType::POSX, BoundaryUtils::convertStringToBoundary(tempBoundary));
 				_domainDecomposition->setBoundaryType(DimensionType::NEGX, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				//xmlconfig.getNodeValue("y", tempBoundary);
+				xmlconfig.getNodeValue("y", tempBoundary);
+				global_log->info() << "y boundary " << tempBoundary << std::endl;
 				_domainDecomposition->setBoundaryType(DimensionType::POSY, BoundaryUtils::convertStringToBoundary(tempBoundary));
 				_domainDecomposition->setBoundaryType(DimensionType::NEGY, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				//xmlconfig.getNodeValue("z", tempBoundary);
+				xmlconfig.getNodeValue("z", tempBoundary);
+				global_log->info() << "z boundary " << tempBoundary << std::endl;
 				_domainDecomposition->setBoundaryType(DimensionType::POSZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
 				_domainDecomposition->setBoundaryType(DimensionType::NEGZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
 
@@ -419,6 +422,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					global_log->error() << "Invalid boundary type! Please check the config file" << std::endl;
 					exit(1);
 				}
+				xmlconfig.changecurrentnode("..");
 			}
 
 			xmlconfig.changecurrentnode("..");
@@ -1322,6 +1326,8 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 	double averageLastTraversalTime =
 		std::accumulate(_lastTraversalTimeHistory.begin(), _lastTraversalTimeHistory.end(), 0.) /
 		_lastTraversalTimeHistory.size();
+
+	_domainDecomposition->processBoundaryConditions(_moleculeContainer, _domain, _ensemble);
 
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
