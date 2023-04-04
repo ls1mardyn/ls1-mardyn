@@ -13,15 +13,15 @@
 			<currenttime>0</currenttime>
 			<equilibration><steps>0</steps></equilibration>
 			<production>
-				<steps>200</steps>
+				<steps>400</steps>
 			</production>
 		</run>
 		<ensemble type="NVT">
 			<temperature unit="reduced">1.1</temperature>
 			<domain type="box">
-				<lx>20</lx>
-				<ly>20</ly>
-				<lz>20</lz>
+				<lx>10</lx>
+				<ly>10</ly>
+				<lz>10</lz>
 			</domain>
 			<components>
 				<moleculetype id="1" name="Arbitrary">
@@ -40,8 +40,8 @@
 		</ensemble>
 		<algorithm>
 			<parallelisation type="DomainDecomposition">
-				<MPIGridDims> <x>2</x><y>2</y> <z>1</z> </MPIGridDims>
-				<boundaries> <x>periodic</x><y>reflecting</y><z>outflow</z> </boundaries>
+				<MPIGridDims> <x>1</x><y>1</y> <z>1</z> </MPIGridDims>
+				<boundaries> <x>reflective</x><y>reflective</y><z>reflective</z> </boundaries>
 			</parallelisation>
 			<datastructure type="LinkedCells">
 			</datastructure>

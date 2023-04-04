@@ -100,7 +100,7 @@ bool BoundaryHandler::processBoundaries(double* startRegion, double* endRegion)
 						}
 						else
 						{
-							moleculeContainer->deleteMolecule(it, true);
+							moleculeContainer->deleteMolecule(it, false);
 						}
 					}
 				}
@@ -111,4 +111,5 @@ bool BoundaryHandler::processBoundaries(double* startRegion, double* endRegion)
 				Simulation::exit(1);
 		}
 	}
+	return true;
 }

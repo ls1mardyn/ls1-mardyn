@@ -169,6 +169,7 @@ bool BoundaryUtils::setRegionToParams(double* givenRegionBegin, double* givenReg
 	case DimensionType::NEGY:
 	case DimensionType::NEGZ:
 		returnRegionEnd[dimensionLS1] = returnRegionBegin[dimensionLS1] + regionWidth;
+		break;
 	
 	default:
 		return false;
