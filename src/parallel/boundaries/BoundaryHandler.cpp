@@ -76,11 +76,6 @@ bool BoundaryHandler::processBoundaries(double* startRegion, double* endRegion)
 				break;
 			
 			case BoundaryType::OUTFLOW:
-				//delete exiting particles
-				//remove from invalidparticles
-
-				break;
-
 			case BoundaryType::REFLECTING:
 			{
 				//create region
@@ -98,8 +93,15 @@ bool BoundaryHandler::processBoundaries(double* startRegion, double* endRegion)
 					if (BoundaryUtils::isMoleculeLeaving(curMolecule, curWallRegionBegin, curWallRegionEnd, currentWall.first, timestepLength))
 					{
 						int currentDim = BoundaryUtils::convertDimensionToLS1Dims(currentWall.first);
-						double vel = it->v(currentDim);
-						it->setv(currentDim, -vel);
+						if(getBoundary(currentWall.first) == BoundaryType::REFLECTING)
+						{
+							double vel = it->v(currentDim);
+							it->setv(currentDim, -vel);
+						}
+						else
+						{
+							moleculeContainer->deleteMolecule(it, true);
+						}
 					}
 				}
 				break;

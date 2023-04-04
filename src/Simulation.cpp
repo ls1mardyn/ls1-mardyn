@@ -1327,7 +1327,7 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 		std::accumulate(_lastTraversalTimeHistory.begin(), _lastTraversalTimeHistory.end(), 0.) /
 		_lastTraversalTimeHistory.size();
 
-	_domainDecomposition->processBoundaryConditions(_moleculeContainer, _domain, _ensemble);
+	_domainDecomposition->processBoundaryConditions(_domain, _ensemble);
 
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
