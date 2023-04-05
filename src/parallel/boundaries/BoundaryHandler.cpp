@@ -60,12 +60,12 @@ bool BoundaryHandler::hasInvalidBoundary() const
 
 bool BoundaryHandler::processBoundaries(double* startRegion, double* endRegion)
 {
-	auto moleculeContainer = global_simulation->getMoleculeContainer();
+	auto moleculeContainer = global_simulation->getMoleculeContainer(); // :-(
 	double timestepLength = (global_simulation->getIntegrator())->getTimestepLength(); 
 	double cutoff = moleculeContainer->getCutoff();
 	for (auto const& currentWall : isOuterWall)
 	{
-		global_log->info() << "wall number " << BoundaryUtils::convertDimensionToString(currentWall.first) << " : " << currentWall.second << std::endl;
+		//global_log->info() << "wall number " << BoundaryUtils::convertDimensionToString(currentWall.first) << " : " << currentWall.second << std::endl;
 		if(!currentWall.second)
 			continue;
 

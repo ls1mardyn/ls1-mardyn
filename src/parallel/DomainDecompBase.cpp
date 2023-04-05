@@ -41,12 +41,12 @@ void DomainDecompBase::processBoundaryConditions(Domain* domain, Ensemble* ensem
 
 	double* globStartRegion = ensemble->domain()->rmin();
 	double* globEndRegion = ensemble->domain()->rmax();
-	global_log->set_mpi_output_all();
-	global_log->info() << "local: " << startRegion[0] << " " << startRegion[1] << " " << startRegion[2] << " "
+	//global_log->set_mpi_output_all();
+	/**global_log->info() << "local: " << startRegion[0] << " " << startRegion[1] << " " << startRegion[2] << " "
 										<< endRegion[0] << " " << endRegion[1] << " " << endRegion[2] << " "
 							<< "global: " << globStartRegion[0] << " " << globStartRegion[1] << " " << globStartRegion[2] << " "
 										<< globEndRegion[0] << " " << globEndRegion[1] << " " << globEndRegion[2] << " " << std::endl;
-	
+	**/
 	
 
 	std::map<DimensionType, bool> isOuterWall {{DimensionType::POSX, endRegion[0] == globEndRegion[0]},
@@ -60,7 +60,7 @@ void DomainDecompBase::processBoundaryConditions(Domain* domain, Ensemble* ensem
 	boundaryHandler.setOuterWalls(isOuterWall);
 	boundaryHandler.processBoundaries(startRegion, endRegion);
 
-	global_log->set_mpi_output_root();
+	//global_log->set_mpi_output_root();
 }
 void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecules,
 										   ParticleContainer* moleculeContainer) {

@@ -60,6 +60,7 @@ DimensionType BoundaryUtils::convertNumericToDimension(int dim)
 				default: return DimensionType::POSZ; //case 3
 			}
 	}
+	return DimensionType::ERROR;
 }
 
 std::string BoundaryUtils::convertDimensionToString(DimensionType dimension) 
@@ -180,8 +181,11 @@ bool BoundaryUtils::setRegionToParams(double* givenRegionBegin, double* givenReg
 bool BoundaryUtils::isMoleculeLeaving(Molecule molecule, double* regionBegin, double* regionEnd,
 									  DimensionType dimension, double timestepLength) {
 	int ls1dim = convertDimensionToLS1Dims(dimension);
+	int direction = findSign(dimension);
 	double newPos = molecule.r(ls1dim) + (timestepLength * molecule.v(ls1dim));
-	if(newPos < regionBegin[ls1dim] || newPos > regionEnd[ls1dim])
+	if (newPos < regionBegin[ls1dim] && direction < 0)
+		return true;
+	if (newPos > regionEnd[ls1dim] && direction > 0)
 		return true;
 	return false;
 }

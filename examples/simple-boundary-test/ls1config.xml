@@ -13,7 +13,7 @@
 			<currenttime>0</currenttime>
 			<equilibration><steps>0</steps></equilibration>
 			<production>
-				<steps>400</steps>
+				<steps>800</steps>
 			</production>
 		</run>
 		<ensemble type="NVT">
@@ -40,7 +40,7 @@
 		</ensemble>
 		<algorithm>
 			<parallelisation type="DomainDecomposition">
-				<MPIGridDims> <x>1</x><y>1</y> <z>1</z> </MPIGridDims>
+				<MPIGridDims> <x>2</x><y>2</y> <z>2</z> </MPIGridDims>
 				<boundaries> <x>reflective</x><y>reflective</y><z>reflective</z> </boundaries>
 			</parallelisation>
 			<datastructure type="LinkedCells">
@@ -57,6 +57,16 @@
 				<outputprefix>vtkOutput</outputprefix>
 				<writefrequency>1</writefrequency>
 			</outputplugin>
+			<!--<outputplugin name="Adios2Writer">
+		  		<outputfile>particles.bp</outputfile>
+		  		<adios2enginetype>BP4</adios2enginetype>
+		  		<writefrequency>1</writefrequency>
+			</outputplugin>-->
+			<!--<outputplugin name="CheckpointWriter">
+        		<type>ASCII</type>
+        		<writefrequency>1</writefrequency>
+        		<outputprefix>cp_binary</outputprefix>
+			</outputplugin>-->
 		</output>
 	</simulation>
 </mardyn>
