@@ -150,6 +150,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     CommVar<std::vector<double>> mass_step;
     CommVar<std::vector<double>> ekin_step;                        // Including drift energy
     CommVar<std::vector<double>> epot_step;
+    CommVar<std::vector<double>> orientation_step;
     CommVar<std::vector<double>> chemPot_step;
     CommVar<std::vector<unsigned long>> countNTest_step;
     std::array<CommVar<std::vector<double>>, 3> ekinVect_step;
@@ -236,6 +237,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     mass_step.local.resize(_lenVector);
     ekin_step.local.resize(_lenVector);
     epot_step.local.resize(_lenVector);
+    orientation_step.local.resize(_lenVector);
     chemPot_step.local.resize(_lenVector);
     countNTest_step.local.resize(_lenVector);
 
@@ -243,6 +245,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     mass_step.global.resize(_lenVector);
     ekin_step.global.resize(_lenVector);
     epot_step.global.resize(_lenVector);
+    orientation_step.global.resize(_lenVector);
     chemPot_step.global.resize(_lenVector);
     countNTest_step.global.resize(_lenVector);
     
@@ -266,6 +269,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     std::fill(mass_step.local.begin(),        mass_step.local.end(), 0.0f);
     std::fill(ekin_step.local.begin(),        ekin_step.local.end(), 0.0f);
     std::fill(epot_step.local.begin(),         epot_step.local.end(), 0.0f);
+    std::fill(orientation_step.local.begin(),  orientation_step.local.end(), 0.0f);
     std::fill(chemPot_step.local.begin(),      chemPot_step.local.end(), 0.0f);
     std::fill(countNTest_step.local.begin(),   countNTest_step.local.end(), 0ul);
 
@@ -273,6 +277,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     std::fill(mass_step.global.begin(),        mass_step.global.end(), 0.0f);
     std::fill(ekin_step.global.begin(),        ekin_step.global.end(), 0.0f);
     std::fill(epot_step.global.begin(),         epot_step.global.end(), 0.0f);
+    std::fill(orientation_step.global.begin(),  orientation_step.global.end(), 0.0f);
     std::fill(chemPot_step.global.begin(),      chemPot_step.global.end(), 0.0f);
     std::fill(countNTest_step.global.begin(),   countNTest_step.global.end(), 0ul);
     
@@ -349,6 +354,13 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             mass_step.local.at(indexCID) += pit->mass();
             ekin_step.local.at(indexCID) += pit->U_kin();
             epot_step.local.at(indexCID) += epot;
+
+            Quaternion q_pit = pit->q();
+            mardyn_assert(q_pit.isNormalized());
+            std::array<double, 3> pos_rot = q_pit.rotate({0., 0., 1.});
+            const double angle = std::atan(abs(pos_rot[1])/(std::sqrt(pos_rot[0]*pos_rot[0]+pos_rot[2]*pos_rot[2])))*(180/3.14159265);
+            orientation_step.local.at(indexCID) += angle;
+
             ekinVect_step[0].local.at(indexCID) += 0.5*mass*veloX*veloX;
             ekinVect_step[1].local.at(indexCID) += 0.5*mass*veloY*veloY;
             ekinVect_step[2].local.at(indexCID) += 0.5*mass*veloZ*veloZ;
@@ -361,6 +373,27 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             energyfluxVect_step[0].local.at(indexCID) += (pit->U_kin() + epot)*veloX + (pit->Vi(0)*veloX + pit->Vi(3)*veloY + pit->Vi(4)*veloZ);
             energyfluxVect_step[1].local.at(indexCID) += (pit->U_kin() + epot)*veloY + (pit->Vi(6)*veloX + pit->Vi(1)*veloY + pit->Vi(5)*veloZ);
             energyfluxVect_step[2].local.at(indexCID) += (pit->U_kin() + epot)*veloZ + (pit->Vi(7)*veloX + pit->Vi(8)*veloY + pit->Vi(2)*veloZ);
+
+            // std::array<double, 3> r1 = pit->computeLJcenter_d(0);
+            // std::array<double, 3> r2 = pit->computeLJcenter_d(1);
+
+            // double dx = abs(r1[0]-r2[0]);
+            // double dy = abs(r1[1]-r2[1]);
+            // double dz = abs(r1[2]-r2[2]);
+
+            // double angle = std::atan(dy/(std::sqrt(dx*dx+dz*dz)))*(180/3.14159265);
+
+            // if (pit->getID()==33) { std::cout << "asdf1 " << dx << " " << dy << " " << dz << " " << angle << std::endl; }
+
+            // Quaternion q_pit = pit->q();
+            // mardyn_assert(q_pit.isNormalized());
+            // std::array<double, 3> dpos = q_pit.rotate({0., 0., std::sqrt(dx*dx+dy*dy+dz*dz)});
+
+            // double angle2 = std::atan(abs(dpos[1])/(std::sqrt(dpos[0]*dpos[0]+dpos[2]*dpos[2])))*(180/3.14159265);
+
+            // if (pit->getID()==33) { std::cout << "asdf2 " << dpos[0] << " " << dpos[1] << " " << dpos[2] << " " << angle2 << std::endl; }
+            // if (pit->getID()==33) { std::cout << "asdf2 " << q_pit.qw() << " " << q_pit.qx() << " " << q_pit.qy() << " " << q_pit.qz() << std::endl; }
+
 
             if (_sampleHigherMoms) {
                 const double veloCorrX = veloX - veloDrift_step_global[0].at(index);
@@ -582,6 +615,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     MPI_Reduce(mass_step.local.data(), mass_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekin_step.local.data(), ekin_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(epot_step.local.data(), epot_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(orientation_step.local.data(), orientation_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[0].local.data(), virialVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[1].local.data(), virialVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[2].local.data(), virialVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -614,6 +648,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         mass_step.global.at(i) = mass_step.local.at(i);
         ekin_step.global.at(i) = ekin_step.local.at(i);
         epot_step.global.at(i) = epot_step.local.at(i);
+        orientation_step.global.at(i) = orientation_step.local.at(i);
         virialVect_step[0].global.at(i) = virialVect_step[0].local.at(i);
         virialVect_step[1].global.at(i) = virialVect_step[1].local.at(i);
         virialVect_step[2].global.at(i) = virialVect_step[2].local.at(i);
@@ -677,6 +712,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             _mass_accum.at(i)                    += mass_step.global.at(i);
             _ekin_accum.at(i)                    += ekin_step.global.at(i);
             _epot_accum.at(i)                    += epot_step.global.at(i);
+            _orientation_accum.at(i)             += orientation_step.global.at(i);
             _virial_accum.at(i)                  += ViX + ViY + ViZ;
             _chemPot_accum.at(i)                 += chemPot_step.global.at(i);
             _countNTest_accum.at(i)              += countNTest_step.global.at(i);
@@ -734,6 +770,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     << setw(22) << "T["        << cid << "]"        // Temperature without drift (i.e. "real" temperature)
                     << setw(22) << "ekin["     << cid << "]"        // Kinetic energy including drift
                     << setw(22) << "epot["     << cid << "]"        // Potential energy
+                    << setw(22) << "angle["    << cid << "]"        // Orientation angle between y plane and z axis of molecule
                     << setw(22) << "p["        << cid << "]"        // Pressure
                     << setw(22) << "chemPot_res[" << cid << "]"     // Chemical potential as known as mu_tilde (equals the ms2 value)
                     << setw(22) << "numTest["     << cid << "]"     // Number of inserted test particles per sample step
@@ -765,6 +802,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     double T {std::nan("0")};
                     double ekin {std::nan("0")};
                     double epot {std::nan("0")};
+                    double angle {std::nan("0")};
                     double p {std::nan("0")};
                     double chemPot_res {std::nan("0")};
                     double numTest {std::nan("0")};
@@ -799,6 +837,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         T           = (2*_ekin_accum.at(i) - v_drift_sqr*_mass_accum.at(i)) / _doftotal_accum.at(i);
                         ekin        = _ekin_accum.at(i) / numMols_accum;
                         epot        = _epot_accum.at(i) / numMols_accum;
+                        angle       = _orientation_accum.at(i) / numMols_accum;;
                         p           = rho * ( (_virial_accum.at(i))/(3.0*numMols_accum) + T);
 
                         T_x         = (2*_ekinVect_accum[0].at(i) - (v_x*v_x)*_mass_accum.at(i)) / numMols_accum;
@@ -825,6 +864,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         << FORMAT_SCI_MAX_DIGITS << T
                         << FORMAT_SCI_MAX_DIGITS << ekin
                         << FORMAT_SCI_MAX_DIGITS << epot
+                        << FORMAT_SCI_MAX_DIGITS << angle
                         << FORMAT_SCI_MAX_DIGITS << p
                         << FORMAT_SCI_MAX_DIGITS << chemPot_res
                         << FORMAT_SCI_MAX_DIGITS << numTest
@@ -949,6 +989,7 @@ void ExtendedProfileSampling::resizeVectors() {
     _mass_accum.resize(_lenVector);
     _ekin_accum.resize(_lenVector);
     _epot_accum.resize(_lenVector);
+    _orientation_accum.resize(_lenVector);
     _virial_accum.resize(_lenVector);
     _chemPot_accum.resize(_lenVector);
     _countNTest_accum.resize(_lenVector);
@@ -998,6 +1039,7 @@ void ExtendedProfileSampling::resetVectors() {
     std::fill(_mass_accum.begin(), _mass_accum.end(), 0.0f);
     std::fill(_ekin_accum.begin(), _ekin_accum.end(), 0.0f);
     std::fill(_epot_accum.begin(), _epot_accum.end(), 0.0f);
+    std::fill(_orientation_accum.begin(), _orientation_accum.end(), 0.0f);
     std::fill(_virial_accum.begin(), _virial_accum.end(), 0.0f);
     std::fill(_chemPot_accum.begin(), _chemPot_accum.end(), 0.0f);
     std::fill(_countNTest_accum.begin(), _countNTest_accum.end(), 0ul);
