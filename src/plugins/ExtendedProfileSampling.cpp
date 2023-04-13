@@ -356,6 +356,9 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             epot_step.local.at(indexCID) += epot;
 
             Quaternion q_pit = pit->q();
+            if (fabs(q_pit.magnitude2() - 1.0) >= 1e-15) {
+                std::cout << pit->getID() << " Not normalized " << q_pit.qw() << " " << q_pit.qx() << " " << q_pit.qy() << " " << q_pit.qz() << " " << q_pit.magnitude2() << std::endl;
+            }
             mardyn_assert(q_pit.isNormalized());
             std::array<double, 3> pos_rot = q_pit.rotate({0., 0., 1.});
             const double angle = std::atan(abs(pos_rot[1])/(std::sqrt(pos_rot[0]*pos_rot[0]+pos_rot[2]*pos_rot[2])))*(180/3.14159265);

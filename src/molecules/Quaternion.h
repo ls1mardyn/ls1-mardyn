@@ -9,7 +9,7 @@
  */
 class Quaternion {
 public:
-	Quaternion(double qw = 1., double qx = 1., double qy = 0., double qz = 0.)
+	Quaternion(double qw = 1., double qx = 0., double qy = 0., double qz = 0.)
 			: m_qw(qw), m_qx(qx), m_qy(qy), m_qz(qz) {
 	}
 

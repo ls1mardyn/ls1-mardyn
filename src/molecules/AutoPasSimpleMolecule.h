@@ -17,10 +17,11 @@
  */
 class AutoPasSimpleMolecule final : public MoleculeInterface, public autopas::ParticleFP64 {
 public:
-	explicit AutoPasSimpleMolecule(unsigned long id = 0, Component* component = nullptr, double rx = 0., double ry = 0.,
-								   double rz = 0., double vx = 0., double vy = 0., double vz = 0., double q0 = 1.,
-								   double q1 = 1., double q2 = 0., double q3 = 0., double Dx = 0., double Dy = 0.,
-								   double Dz = 0.);
+	explicit AutoPasSimpleMolecule(unsigned long id = 0, Component* component = nullptr,
+								   double rx = 0., double ry = 0., double rz = 0.,
+								   double vx = 0., double vy = 0., double vz = 0.,
+								   double q0 = 1., double q1 = 0., double q2 = 0., double q3 = 0.,
+								   double Dx = 0., double Dy = 0., double Dz = 0.);
 
 	AutoPasSimpleMolecule(const AutoPasSimpleMolecule& m) = default;
 
