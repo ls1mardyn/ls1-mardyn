@@ -356,13 +356,17 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             epot_step.local.at(indexCID) += epot;
 
             Quaternion q_pit = pit->q();
-            if (fabs(q_pit.magnitude2() - 1.0) >= 1e-15) {
-                std::cout << pit->getID() << " Not normalized " << q_pit.qw() << " " << q_pit.qx() << " " << q_pit.qy() << " " << q_pit.qz() << " " << q_pit.magnitude2() << std::endl;
-            }
-            mardyn_assert(q_pit.isNormalized());
+            // if (fabs(q_pit.magnitude2() - 1.0) >= 1e-15) {
+            //     std::cout << pit->getID() << " Not normalized " << q_pit.qw() << " " << q_pit.qx() << " " << q_pit.qy() << " " << q_pit.qz() << " " << q_pit.magnitude2() << std::endl;
+            // }
+            // mardyn_assert(q_pit.isNormalized());
+            // Molecule should be elongated (ie. main axis) in z direction
             std::array<double, 3> pos_rot = q_pit.rotate({0., 0., 1.});
-            const double angle = std::atan(abs(pos_rot[1])/(std::sqrt(pos_rot[0]*pos_rot[0]+pos_rot[2]*pos_rot[2])))*(180/3.14159265);
-            orientation_step.local.at(indexCID) += angle;
+            // Orientation order parameter, cf. Eq. 29 in Mecke2001
+            // cos^2(theta) = dy^2 = pos_rot[1]^2 since length of rotated vector (hypotenuse) is 1
+            orientation_step.local.at(indexCID) += 3.*pos_rot[1]*pos_rot[1] - 1.;
+            // Angle between normal vector of y plane and z axis of molecule
+            // const double angle = 90 - (std::atan(abs(pos_rot[1])/(std::sqrt(pos_rot[0]*pos_rot[0]+pos_rot[2]*pos_rot[2])))*(180/3.14159265));
 
             ekinVect_step[0].local.at(indexCID) += 0.5*mass*veloX*veloX;
             ekinVect_step[1].local.at(indexCID) += 0.5*mass*veloY*veloY;
@@ -773,7 +777,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     << setw(22) << "T["        << cid << "]"        // Temperature without drift (i.e. "real" temperature)
                     << setw(22) << "ekin["     << cid << "]"        // Kinetic energy including drift
                     << setw(22) << "epot["     << cid << "]"        // Potential energy
-                    << setw(22) << "angle["    << cid << "]"        // Orientation angle between y plane and z axis of molecule
+                    << setw(22) << "orientation[" << cid << "]"     // Orientation order parameter, cf. Eq. 29 in Mecke2001
                     << setw(22) << "p["        << cid << "]"        // Pressure
                     << setw(22) << "chemPot_res[" << cid << "]"     // Chemical potential as known as mu_tilde (equals the ms2 value)
                     << setw(22) << "numTest["     << cid << "]"     // Number of inserted test particles per sample step
@@ -805,7 +809,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     double T {std::nan("0")};
                     double ekin {std::nan("0")};
                     double epot {std::nan("0")};
-                    double angle {std::nan("0")};
+                    double orderparam {std::nan("0")};
                     double p {std::nan("0")};
                     double chemPot_res {std::nan("0")};
                     double numTest {std::nan("0")};
@@ -840,7 +844,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         T           = (2*_ekin_accum.at(i) - v_drift_sqr*_mass_accum.at(i)) / _doftotal_accum.at(i);
                         ekin        = _ekin_accum.at(i) / numMols_accum;
                         epot        = _epot_accum.at(i) / numMols_accum;
-                        angle       = _orientation_accum.at(i) / numMols_accum;;
+                        orderparam  = 0.5*_orientation_accum.at(i) / numMols_accum;;
                         p           = rho * ( (_virial_accum.at(i))/(3.0*numMols_accum) + T);
 
                         T_x         = (2*_ekinVect_accum[0].at(i) - (v_x*v_x)*_mass_accum.at(i)) / numMols_accum;
@@ -867,7 +871,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         << FORMAT_SCI_MAX_DIGITS << T
                         << FORMAT_SCI_MAX_DIGITS << ekin
                         << FORMAT_SCI_MAX_DIGITS << epot
-                        << FORMAT_SCI_MAX_DIGITS << angle
+                        << FORMAT_SCI_MAX_DIGITS << orderparam
                         << FORMAT_SCI_MAX_DIGITS << p
                         << FORMAT_SCI_MAX_DIGITS << chemPot_res
                         << FORMAT_SCI_MAX_DIGITS << numTest
