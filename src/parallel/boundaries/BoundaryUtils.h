@@ -26,8 +26,9 @@ namespace BoundaryUtils
 
 	BoundaryType convertStringToBoundary(std::string boundary);
 
-	bool setRegionToParams(double* givenRegionBegin, double* givenRegionEnd, DimensionType dimension, double regionWidth, double* returnRegionBegin, double* returnRegionEnd);
+	bool getInnerBuffer(double* givenRegionBegin, double* givenRegionEnd, DimensionType dimension, double regionWidth, double* returnRegionBegin, double* returnRegionEnd);
 	bool isMoleculeLeaving(Molecule molecule, double* regionBegin, double* regionEnd, DimensionType dimension, double timestepLength);
+	bool getOuterBuffer(double* givenRegionBegin, double* givenRegionEnd, DimensionType dimension, double regionWidth, double* returnRegionBegin, double* returnRegionEnd);
 
 	inline int findSign(int n) { return n < 0 ? -1 : 1; }
 	inline int findSign(DimensionType dimension) { return findSign(convertDimensionToNumeric(dimension)); }

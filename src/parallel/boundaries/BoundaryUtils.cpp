@@ -147,7 +147,7 @@ BoundaryType BoundaryUtils::convertStringToBoundary(std::string boundary)
 	return BoundaryType::ERROR;
 }
 
-bool BoundaryUtils::setRegionToParams(double* givenRegionBegin, double* givenRegionEnd, DimensionType dimension, double regionWidth,
+bool BoundaryUtils::getInnerBuffer(double* givenRegionBegin, double* givenRegionEnd, DimensionType dimension, double regionWidth,
 									  double* returnRegionBegin, double* returnRegionEnd) 
 {
 	for (int i = 0; i < 3; i++)
@@ -188,4 +188,36 @@ bool BoundaryUtils::isMoleculeLeaving(Molecule molecule, double* regionBegin, do
 	if (newPos > regionEnd[ls1dim] && direction > 0)
 		return true;
 	return false;
+}
+
+bool BoundaryUtils::getOuterBuffer(double* givenRegionBegin, double* givenRegionEnd, DimensionType dimension,
+								   double regionWidth, double* returnRegionBegin, double* returnRegionEnd) {
+	for (int i = 0; i < 3; i++)
+	{
+		returnRegionBegin[i] = givenRegionBegin[i];
+		returnRegionEnd[i] = givenRegionEnd[i];
+	}
+
+	int dimensionLS1 = convertDimensionToLS1Dims(dimension);
+	
+	switch (dimension) //can be done with findsign() too, but this is clearer
+	{
+	case DimensionType::POSX:
+	case DimensionType::POSY:
+	case DimensionType::POSZ:
+		returnRegionBegin[dimensionLS1] = returnRegionEnd[dimensionLS1];
+		returnRegionEnd[dimensionLS1] = returnRegionBegin[dimensionLS1] + regionWidth;
+		break;
+	
+	case DimensionType::NEGX:
+	case DimensionType::NEGY:
+	case DimensionType::NEGZ:
+		returnRegionEnd[dimensionLS1] = returnRegionBegin[dimensionLS1];
+		returnRegionBegin[dimensionLS1] = returnRegionEnd[dimensionLS1] - regionWidth;
+		break;
+	
+	default:
+		return false;
+	}
+	return true;
 }

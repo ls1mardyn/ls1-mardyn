@@ -1077,6 +1077,8 @@ void Simulation::simulate() {
 
 			decompositionTimer->stop();
 
+			_domainDecomposition->removeNonPeriodicHalos(_domain);
+
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
 			computationTimer->start();

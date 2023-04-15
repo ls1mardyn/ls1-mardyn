@@ -47,6 +47,23 @@ void BoundaryHandler::setBoundary(DimensionType dimension, BoundaryType value)
 		boundaries[dimension] = value;
 }
 
+BoundaryType BoundaryHandler::getBoundary(int dimension) const 
+{
+	DimensionType toRet = DimensionType::ERROR;
+	switch(dimension)
+	{
+		case 0:
+			toRet = DimensionType::POSX;
+			break;
+		case 1:
+			toRet = DimensionType::POSY;
+			break;
+		default: //case 2:
+			toRet = DimensionType::POSZ;
+	}
+	return boundaries.at(toRet);
+}
+
 bool BoundaryHandler::hasInvalidBoundary() const
 {
 	return boundaries.at(DimensionType::POSX) == BoundaryType::ERROR ||
@@ -80,7 +97,7 @@ bool BoundaryHandler::processBoundaries(double* startRegion, double* endRegion)
 			{
 				//create region
 				double curWallRegionBegin[3], curWallRegionEnd[3];
-				bool successRegionSet = BoundaryUtils::setRegionToParams(startRegion, endRegion, currentWall.first, cutoff, curWallRegionBegin, curWallRegionEnd);
+				bool successRegionSet = BoundaryUtils::getInnerBuffer(startRegion, endRegion, currentWall.first, cutoff, curWallRegionBegin, curWallRegionEnd);
 				if (!successRegionSet)
 				{
 					global_log->error() << "Error while setting the region for boundary conditions " << std::endl;
@@ -112,4 +129,47 @@ bool BoundaryHandler::processBoundaries(double* startRegion, double* endRegion)
 		}
 	}
 	return true;
+}
+
+void BoundaryHandler::removeHalos(double* startRegion, double* endRegion)
+{
+	auto moleculeContainer = global_simulation->getMoleculeContainer();
+	double cutoff = moleculeContainer->getCutoff();
+	for (auto const& currentWall : isOuterWall)
+	{
+		//global_log->info() << "wall number " << BoundaryUtils::convertDimensionToString(currentWall.first) << " : " << currentWall.second << std::endl;
+		if(!currentWall.second) //not an outer wall
+			continue;
+
+		switch(getBoundary(currentWall.first))
+		{
+			case BoundaryType::PERIODIC:
+				//default behaviour
+				break;
+			
+			case BoundaryType::OUTFLOW:
+			case BoundaryType::REFLECTING:
+			{
+				//create region
+				double curWallRegionBegin[3], curWallRegionEnd[3];
+				bool successRegionSet = BoundaryUtils::getOuterBuffer(startRegion, endRegion, currentWall.first, cutoff, curWallRegionBegin, curWallRegionEnd);
+				if (!successRegionSet)
+				{
+					global_log->error() << "Error while setting the halo region for boundary conditions " << std::endl;
+					Simulation::exit(1);
+				}
+				auto particlesInRegion = moleculeContainer->regionIterator(curWallRegionBegin, curWallRegionEnd, ParticleIterator::ALL_CELLS);
+				for (auto it = particlesInRegion; it.isValid(); ++it)
+				{
+					global_log->info() << "Halo particle found " << std::endl;
+					moleculeContainer->deleteMolecule(it, false);
+				}
+				break;
+			}
+			default:
+				global_log->error() << "Boundary type error! Received type not allowed!" << std::endl;
+				Simulation::exit(1);
+		}
+	}
+	moleculeContainer->updateBoundaryAndHaloMoleculeCaches();
 }

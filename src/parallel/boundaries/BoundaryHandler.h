@@ -22,10 +22,12 @@ public:
 	void setBoundary(std::string dimension, BoundaryType value);
 	BoundaryType getBoundary(DimensionType dimension) const;
 	void setBoundary(DimensionType dimension, BoundaryType value);
+	BoundaryType getBoundary(int dimension) const;
 	bool hasInvalidBoundary() const;
 
 	void setOuterWalls(std::map<DimensionType, bool> isOuterWallOth) {isOuterWall = isOuterWallOth;}
 	bool processBoundaries(double* startRegion, double* endRegion);
+	void removeHalos(double* startRegion, double* endRegion);
 
 private:
 	std::map<DimensionType, BoundaryType> boundaries;

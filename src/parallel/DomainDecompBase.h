@@ -297,6 +297,8 @@ public:
 
 	void processBoundaryConditions(Domain* domain, Ensemble* _ensemble);
 
+	void removeNonPeriodicHalos(Domain* domain);
+
 protected:
 	void addLeavingMolecules(std::vector<Molecule>&& invalidMolecules, ParticleContainer* moleculeContainer);
 

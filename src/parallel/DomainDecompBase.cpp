@@ -34,10 +34,7 @@ void DomainDecompBase::setBoundaryType(DimensionType dimension, BoundaryType bou
 void DomainDecompBase::processBoundaryConditions(Domain* domain, Ensemble* ensemble) {
 	//find which walls to consider
 	double startRegion[3], endRegion[3];
-	for(int d = 0; d < 3; d++) {
-		startRegion[d] = getBoundingBoxMin(d, domain);
-		endRegion[d] = getBoundingBoxMax(d, domain);
-	}
+	getBoundingBoxMinMax(domain, startRegion, endRegion);
 
 	double* globStartRegion = ensemble->domain()->rmin();
 	double* globEndRegion = ensemble->domain()->rmax();
@@ -62,6 +59,14 @@ void DomainDecompBase::processBoundaryConditions(Domain* domain, Ensemble* ensem
 
 	//global_log->set_mpi_output_root();
 }
+
+void DomainDecompBase::removeNonPeriodicHalos(Domain* domain)
+{
+	double startRegion[3], endRegion[3];
+	getBoundingBoxMinMax(domain, startRegion, endRegion);
+	boundaryHandler.removeHalos(startRegion, endRegion);
+}
+
 void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecules,
 										   ParticleContainer* moleculeContainer) {
 	for (auto& molecule : invalidMolecules) {
