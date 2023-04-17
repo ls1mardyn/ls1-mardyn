@@ -10,6 +10,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <array>
 #include "BoundaryType.h"
 #include "DimensionType.h"
 
@@ -26,8 +27,8 @@ public:
 	bool hasInvalidBoundary() const;
 
 	void setOuterWalls(std::map<DimensionType, bool> isOuterWallOth) {isOuterWall = isOuterWallOth;}
-	bool processBoundaries(double* startRegion, double* endRegion);
-	void removeHalos(double* startRegion, double* endRegion);
+	bool processBoundaries(std::array<double,3> startRegion, std::array<double,3> endRegion);
+	void removeHalos(std::array<double,3> startRegion, std::array<double,3> endRegion);
 
 private:
 	std::map<DimensionType, BoundaryType> boundaries;

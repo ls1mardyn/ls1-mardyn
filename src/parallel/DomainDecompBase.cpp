@@ -55,7 +55,12 @@ void DomainDecompBase::processBoundaryConditions(Domain* domain, Ensemble* ensem
 	
 
 	boundaryHandler.setOuterWalls(isOuterWall);
-	boundaryHandler.processBoundaries(startRegion, endRegion);
+
+	std::array <double, 3> modernStyleStartRegion, modernStyleEndRegion;
+	std::move(std::begin(startRegion), std::end(startRegion), modernStyleStartRegion.begin());
+	std::move(std::begin(endRegion), std::end(endRegion), modernStyleEndRegion.begin());
+	
+	boundaryHandler.processBoundaries(modernStyleStartRegion, modernStyleEndRegion);
 
 	//global_log->set_mpi_output_root();
 }
@@ -64,7 +69,12 @@ void DomainDecompBase::removeNonPeriodicHalos(Domain* domain)
 {
 	double startRegion[3], endRegion[3];
 	getBoundingBoxMinMax(domain, startRegion, endRegion);
-	boundaryHandler.removeHalos(startRegion, endRegion);
+
+	std::array <double, 3> modernStyleStartRegion, modernStyleEndRegion;
+	std::move(std::begin(startRegion), std::end(startRegion), modernStyleStartRegion.begin());
+	std::move(std::begin(endRegion), std::end(endRegion), modernStyleEndRegion.begin());
+
+	boundaryHandler.processBoundaries(modernStyleStartRegion, modernStyleEndRegion);
 }
 
 void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecules,

@@ -75,7 +75,7 @@ bool BoundaryHandler::hasInvalidBoundary() const
 
 }
 
-bool BoundaryHandler::processBoundaries(double* startRegion, double* endRegion)
+bool BoundaryHandler::processBoundaries(std::array<double,3> startRegion, std::array<double,3> endRegion)
 {
 	auto moleculeContainer = global_simulation->getMoleculeContainer(); // :-(
 	double timestepLength = (global_simulation->getIntegrator())->getTimestepLength(); 
@@ -96,14 +96,13 @@ bool BoundaryHandler::processBoundaries(double* startRegion, double* endRegion)
 			case BoundaryType::REFLECTING:
 			{
 				//create region
-				double curWallRegionBegin[3], curWallRegionEnd[3];
-				bool successRegionSet = BoundaryUtils::getInnerBuffer(startRegion, endRegion, currentWall.first, cutoff, curWallRegionBegin, curWallRegionEnd);
-				if (!successRegionSet)
-				{
-					global_log->error() << "Error while setting the region for boundary conditions " << std::endl;
-					Simulation::exit(1);
-				}
-				auto particlesInRegion = moleculeContainer->regionIterator(curWallRegionBegin, curWallRegionEnd, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+				std::array<double,3> curWallRegionBegin, curWallRegionEnd;
+				std::tie(curWallRegionBegin, curWallRegionEnd) = BoundaryUtils::getInnerBuffer(startRegion, endRegion, currentWall.first, cutoff);
+				//conversion
+				const double cstylerbegin[] = {curWallRegionBegin[0], curWallRegionBegin[1], curWallRegionBegin[2]}; 
+				const double cstylerend[] = {curWallRegionEnd[0], curWallRegionEnd[1], curWallRegionEnd[2]};
+				
+				auto particlesInRegion = moleculeContainer->regionIterator(cstylerbegin, cstylerend, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 				for (auto it = particlesInRegion; it.isValid(); ++it)
 				{
 					Molecule curMolecule = *it;
@@ -131,7 +130,7 @@ bool BoundaryHandler::processBoundaries(double* startRegion, double* endRegion)
 	return true;
 }
 
-void BoundaryHandler::removeHalos(double* startRegion, double* endRegion)
+void BoundaryHandler::removeHalos(std::array<double,3> startRegion, std::array<double,3> endRegion)
 {
 	auto moleculeContainer = global_simulation->getMoleculeContainer();
 	double cutoff = moleculeContainer->getCutoff();
@@ -151,14 +150,13 @@ void BoundaryHandler::removeHalos(double* startRegion, double* endRegion)
 			case BoundaryType::REFLECTING:
 			{
 				//create region
-				double curWallRegionBegin[3], curWallRegionEnd[3];
-				bool successRegionSet = BoundaryUtils::getOuterBuffer(startRegion, endRegion, currentWall.first, cutoff, curWallRegionBegin, curWallRegionEnd);
-				if (!successRegionSet)
-				{
-					global_log->error() << "Error while setting the halo region for boundary conditions " << std::endl;
-					Simulation::exit(1);
-				}
-				auto particlesInRegion = moleculeContainer->regionIterator(curWallRegionBegin, curWallRegionEnd, ParticleIterator::ALL_CELLS);
+				std::array<double,3> curWallRegionBegin, curWallRegionEnd;
+				std::tie(curWallRegionBegin, curWallRegionEnd) = BoundaryUtils::getInnerBuffer(startRegion, endRegion, currentWall.first, cutoff);
+				//conversion
+				const double cstylerbegin[] = {curWallRegionBegin[0], curWallRegionBegin[1], curWallRegionBegin[2]}; 
+				const double cstylerend[] = {curWallRegionEnd[0], curWallRegionEnd[1], curWallRegionEnd[2]};
+
+				auto particlesInRegion = moleculeContainer->regionIterator(cstylerbegin, cstylerend, ParticleIterator::ALL_CELLS);
 				for (auto it = particlesInRegion; it.isValid(); ++it)
 				{
 					global_log->info() << "Halo particle found " << std::endl;

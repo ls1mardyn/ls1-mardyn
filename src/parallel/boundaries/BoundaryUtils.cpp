@@ -3,6 +3,8 @@
 
 
 #include "BoundaryUtils.h"
+
+#include "Simulation.h"
 #include "utils/Logger.h"
 
 bool BoundaryUtils::checkIfDimensionStringPermissible(std::string dimension)
@@ -19,6 +21,7 @@ DimensionType BoundaryUtils::convertStringToDimension(std::string dimension) {
 	if(checkIfDimensionStringPermissible(dimension))
 	{
 		Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
+		Simulation::exit(1);
 		return DimensionType::ERROR;
 	}
 	if(dimension == "+x")
@@ -40,6 +43,7 @@ DimensionType BoundaryUtils::convertNumericToDimension(int dim)
 	if(checkIfDimensionNumericPermissible(dim))
 	{
 		Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
+		Simulation::exit(1);
 		return DimensionType::ERROR;
 	}
 	switch(findSign(dim))
@@ -59,6 +63,9 @@ DimensionType BoundaryUtils::convertNumericToDimension(int dim)
 				case 2: return DimensionType::POSY;
 				default: return DimensionType::POSZ; //case 3
 			}
+		default: //should never happen
+			Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
+			Simulation::exit(1);
 	}
 	return DimensionType::ERROR;
 }
@@ -87,6 +94,7 @@ std::string BoundaryUtils::convertDimensionToString(DimensionType dimension)
 
 	default:
 		Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
+		Simulation::exit(1);
 		return "error";
 	}
 }
@@ -120,6 +128,7 @@ int BoundaryUtils::convertDimensionToNumeric(DimensionType dimension)
 
 	default:
 		Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
+		Simulation::exit(1);
 		return 0;
 	}
 }
@@ -147,9 +156,10 @@ BoundaryType BoundaryUtils::convertStringToBoundary(std::string boundary)
 	return BoundaryType::ERROR;
 }
 
-bool BoundaryUtils::getInnerBuffer(double* givenRegionBegin, double* givenRegionEnd, DimensionType dimension, double regionWidth,
-									  double* returnRegionBegin, double* returnRegionEnd) 
+std::tuple<std::array<double, 3>, std::array<double, 3>> BoundaryUtils::getInnerBuffer(const std::array<double,3> givenRegionBegin, 
+								const std::array<double,3> givenRegionEnd, DimensionType dimension, double regionWidth) 
 {
+	std::array<double, 3> returnRegionBegin, returnRegionEnd;
 	for (int i = 0; i < 3; i++)
 	{
 		returnRegionBegin[i] = givenRegionBegin[i];
@@ -173,12 +183,13 @@ bool BoundaryUtils::getInnerBuffer(double* givenRegionBegin, double* givenRegion
 		break;
 	
 	default:
-		return false;
+		Log::global_log->error() << "Invalid dimension passed for inner buffer calculation" << std::endl;
+		Simulation::exit(1);
 	}
-	return true;
+	return std::make_tuple(returnRegionBegin, returnRegionEnd);
 }
 
-bool BoundaryUtils::isMoleculeLeaving(Molecule molecule, double* regionBegin, double* regionEnd,
+bool BoundaryUtils::isMoleculeLeaving(const Molecule molecule, const std::array<double,3> regionBegin, const std::array<double,3> regionEnd,
 									  DimensionType dimension, double timestepLength) {
 	int ls1dim = convertDimensionToLS1Dims(dimension);
 	int direction = findSign(dimension);
@@ -190,8 +201,10 @@ bool BoundaryUtils::isMoleculeLeaving(Molecule molecule, double* regionBegin, do
 	return false;
 }
 
-bool BoundaryUtils::getOuterBuffer(double* givenRegionBegin, double* givenRegionEnd, DimensionType dimension,
-								   double regionWidth, double* returnRegionBegin, double* returnRegionEnd) {
+std::tuple<std::array<double,3>, std::array<double,3>> BoundaryUtils::getOuterBuffer(const std::array<double,3> givenRegionBegin,
+								const std::array<double,3> givenRegionEnd, DimensionType dimension, double regionWidth) 
+{
+	std::array<double, 3> returnRegionBegin, returnRegionEnd;
 	for (int i = 0; i < 3; i++)
 	{
 		returnRegionBegin[i] = givenRegionBegin[i];
@@ -217,7 +230,8 @@ bool BoundaryUtils::getOuterBuffer(double* givenRegionBegin, double* givenRegion
 		break;
 	
 	default:
-		return false;
+		Log::global_log->error() << "Invalid dimension passed for inner buffer calculation" << std::endl;
+		Simulation::exit(1);
 	}
-	return true;
+	return std::make_tuple(returnRegionBegin, returnRegionEnd);
 }

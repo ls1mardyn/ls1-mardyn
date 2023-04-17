@@ -1,6 +1,8 @@
 
 #include <vector>
 #include <string>
+#include <tuple>
+#include <array>
 
 #include "BoundaryType.h"
 #include "DimensionType.h"
@@ -9,8 +11,8 @@
 
 namespace BoundaryUtils
 {
-	const std::vector<std::string> permissibleDimensionsString = {"+x", "+y", "+z", "-x", "-y", "-z"};
-	const std::vector<int> permissibleDimensionsInt = {-1, -2, -3, 1, 2, 3};
+	const std::array<std::string, 6> permissibleDimensionsString = {"+x", "+y", "+z", "-x", "-y", "-z"};
+	const std::array<int, 6> permissibleDimensionsInt = {-1, -2, -3, 1, 2, 3};
 
 	bool checkIfDimensionStringPermissible(std::string dimension);
 	bool checkIfDimensionNumericPermissible(int dim);
@@ -26,9 +28,9 @@ namespace BoundaryUtils
 
 	BoundaryType convertStringToBoundary(std::string boundary);
 
-	bool getInnerBuffer(double* givenRegionBegin, double* givenRegionEnd, DimensionType dimension, double regionWidth, double* returnRegionBegin, double* returnRegionEnd);
-	bool isMoleculeLeaving(Molecule molecule, double* regionBegin, double* regionEnd, DimensionType dimension, double timestepLength);
-	bool getOuterBuffer(double* givenRegionBegin, double* givenRegionEnd, DimensionType dimension, double regionWidth, double* returnRegionBegin, double* returnRegionEnd);
+	std::tuple<std::array<double,3>, std::array<double,3>> getInnerBuffer(const std::array<double,3> givenRegionBegin, const std::array<double,3> givenRegionEnd, DimensionType dimension, double regionWidth);
+	bool isMoleculeLeaving(const Molecule molecule, const std::array<double,3> regionBegin, const std::array<double,3> regionEnd, DimensionType dimension, double timestepLength);
+	std::tuple<std::array<double,3>, std::array<double,3>> getOuterBuffer(const std::array<double,3> givenRegionBegin, const std::array<double,3> givenRegionEnd, DimensionType dimension, double regionWidth);
 
 	inline int findSign(int n) { return n < 0 ? -1 : 1; }
 	inline int findSign(DimensionType dimension) { return findSign(convertDimensionToNumeric(dimension)); }
