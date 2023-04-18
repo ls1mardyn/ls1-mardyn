@@ -82,7 +82,7 @@ class ExtendedProfileSampling : public PluginBase {
     std::vector<double> _mass_accum;                            // Mass
     std::vector<double> _ekin_accum;                            // Kinetic energy including drift
     std::vector<double> _epot_accum;                            // Potential energy
-    std::vector<double> _orientation_accum;                     // Orientation order parameter, cf. Eq. 29 in Mecke2001
+    std::vector<double> _orientation_accum;                     // Orientation order parameter, cf. Eq. 29 in Mecke2001, between z axis of molecule and y plane
     std::vector<double> _virial_accum;                          // Virial
     std::vector<double> _chemPot_accum;                         // Chemical potential as sampled in ms2 (Widom insertion method)
     std::vector<unsigned long> _countNTest_accum;               // Number of inserted test particles for chem. pot. sampling

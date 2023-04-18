@@ -356,10 +356,6 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             epot_step.local.at(indexCID) += epot;
 
             Quaternion q_pit = pit->q();
-            // if (fabs(q_pit.magnitude2() - 1.0) >= 1e-15) {
-            //     std::cout << pit->getID() << " Not normalized " << q_pit.qw() << " " << q_pit.qx() << " " << q_pit.qy() << " " << q_pit.qz() << " " << q_pit.magnitude2() << std::endl;
-            // }
-            // mardyn_assert(q_pit.isNormalized());
             // Molecule should be elongated (ie. main axis) in z direction
             std::array<double, 3> pos_rot = q_pit.rotate({0., 0., 1.});
             // Orientation order parameter, cf. Eq. 29 in Mecke2001
@@ -380,27 +376,6 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             energyfluxVect_step[0].local.at(indexCID) += (pit->U_kin() + epot)*veloX + (pit->Vi(0)*veloX + pit->Vi(3)*veloY + pit->Vi(4)*veloZ);
             energyfluxVect_step[1].local.at(indexCID) += (pit->U_kin() + epot)*veloY + (pit->Vi(6)*veloX + pit->Vi(1)*veloY + pit->Vi(5)*veloZ);
             energyfluxVect_step[2].local.at(indexCID) += (pit->U_kin() + epot)*veloZ + (pit->Vi(7)*veloX + pit->Vi(8)*veloY + pit->Vi(2)*veloZ);
-
-            // std::array<double, 3> r1 = pit->computeLJcenter_d(0);
-            // std::array<double, 3> r2 = pit->computeLJcenter_d(1);
-
-            // double dx = abs(r1[0]-r2[0]);
-            // double dy = abs(r1[1]-r2[1]);
-            // double dz = abs(r1[2]-r2[2]);
-
-            // double angle = std::atan(dy/(std::sqrt(dx*dx+dz*dz)))*(180/3.14159265);
-
-            // if (pit->getID()==33) { std::cout << "asdf1 " << dx << " " << dy << " " << dz << " " << angle << std::endl; }
-
-            // Quaternion q_pit = pit->q();
-            // mardyn_assert(q_pit.isNormalized());
-            // std::array<double, 3> dpos = q_pit.rotate({0., 0., std::sqrt(dx*dx+dy*dy+dz*dz)});
-
-            // double angle2 = std::atan(abs(dpos[1])/(std::sqrt(dpos[0]*dpos[0]+dpos[2]*dpos[2])))*(180/3.14159265);
-
-            // if (pit->getID()==33) { std::cout << "asdf2 " << dpos[0] << " " << dpos[1] << " " << dpos[2] << " " << angle2 << std::endl; }
-            // if (pit->getID()==33) { std::cout << "asdf2 " << q_pit.qw() << " " << q_pit.qx() << " " << q_pit.qy() << " " << q_pit.qz() << std::endl; }
-
 
             if (_sampleHigherMoms) {
                 const double veloCorrX = veloX - veloDrift_step_global[0].at(index);

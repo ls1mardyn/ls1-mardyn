@@ -265,6 +265,8 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 		for (int j = 0; j < particle_buff_pos; j++) {
 			Molecule m;
 			ParticleData::ParticleDataToMolecule(particle_buff[j], m);
+			// Check if quaternions are normalized
+			mardyn_assert(m.q().isNormalized());
 			// only add particle if it is inside of the own domain!
 			if(particleContainer->isInBoundingBox(m.r_arr().data())) {
 				particleContainer->addParticle(m, true, false);

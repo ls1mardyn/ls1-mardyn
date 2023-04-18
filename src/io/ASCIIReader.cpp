@@ -402,6 +402,8 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 		// The necessary check is performed in the particleContainer addParticle method
 		// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
 		Molecule m1 = Molecule(id, &dcomponents[componentid], x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz);
+		// Check if quaternions are normalized
+		mardyn_assert(m1.q().isNormalized());
 #ifdef ENABLE_MPI
 		ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], m1);
 	} // Rank 0 only

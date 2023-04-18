@@ -34,7 +34,7 @@ void Basis::readXML(XMLfileUnits& xmlconfig) {
 		molecule.setr(0, r[0]);
 		molecule.setr(1, r[1]);
 		molecule.setr(2, r[2]);
-		Quaternion q(1.0, 0., 0., 0.); /* orientation of molecules has to be set to a value other than 0,0,0,0! */
+		Quaternion q(1., 0., 0., 0.); /* orientation of molecules has to be set to a value other than 0,0,0,0! */
 		molecule.setq(q);
 		global_log->info() << "[Basis] Adding molecule cid=" << componentid << ", (x,y,z)=(" << molecule.r(0) << "," << molecule.r(1) << "," << molecule.r(2) << ")" << endl;
 		addMolecule(molecule);
