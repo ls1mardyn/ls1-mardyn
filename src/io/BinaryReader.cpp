@@ -251,6 +251,8 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 		// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
 		Molecule m1 = Molecule(id, &dcomponents[componentid], x, y, z, vx,
 							   vy, vz, q0, q1, q2, q3, Dx, Dy, Dz);
+		// Check if quaternions are normalized
+		if (!m1.q().isNormalized()) { m1.normalizeQuaternion(); };
 #ifdef ENABLE_MPI
 		ParticleData::MoleculeToParticleData(
 				particle_buff[particle_buff_pos], m1);
@@ -265,8 +267,6 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 		for (int j = 0; j < particle_buff_pos; j++) {
 			Molecule m;
 			ParticleData::ParticleDataToMolecule(particle_buff[j], m);
-			// Check if quaternions are normalized
-			mardyn_assert(m.q().isNormalized());
 			// only add particle if it is inside of the own domain!
 			if(particleContainer->isInBoundingBox(m.r_arr().data())) {
 				particleContainer->addParticle(m, true, false);

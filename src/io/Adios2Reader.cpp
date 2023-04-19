@@ -471,7 +471,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 							  particle_buff[j].v[2], particle_buff[j].q[0], particle_buff[j].q[1], particle_buff[j].q[2],
 							  particle_buff[j].q[3], particle_buff[j].D[0], particle_buff[j].D[1], particle_buff[j].D[2]);
 		// Check if quaternions are normalized
-		mardyn_assert(m.q().isNormalized());
+		if (!m.q().isNormalized()) { m.normalizeQuaternion(); };
         // only add particle if it is inside of the own domain!
         if(particleContainer->isInBoundingBox(m.r_arr().data())) {
             particleContainer->addParticle(m, true, false);
@@ -501,6 +501,8 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 				std::get<std::vector<double>>(Ly), std::get<std::vector<double>>(Lz));
 		}
 
+		// Check if quaternions are normalized
+		if (!m.q().isNormalized()) { m.normalizeQuaternion(); };
 		// only add particle if it is inside of the own domain!
 		if (particleContainer->isInBoundingBox(m.r_arr().data())) {
 			particleContainer->addParticle(m, true, false);
