@@ -1,16 +1,35 @@
+# IDE stuff and build dirs
 cmake-build-*/
 build*/
 *.swp
 .idea/
+.project
+.settings
+
+# Generated documentation
+doxygen_doc/
+
+# sourcetrail stuff
+*.srctrlbm
+*.srctrldb
+*.srctrlprj
+
+# Generated build artifacts
 *.o
 src/MarDyn
 src/MarDyn.*
 !src/MarDyn.cpp
 src/MarDyn_*.*
 !src/MarDyn_version.h*
-.project
-.settings
 *.so.1.0
 *.a
 *.so
-doxygen_doc/
+
+# Generated checkpoints and other output
+*.dat
+*.bp
+*.vtk
+*.csv
+*.out
+*.pvtu
+
