@@ -24,7 +24,7 @@ if (ENABLE_AUTOPAS)
     set(AUTOPAS_VECTOR_INSTRUCTIONS ${VECTOR_INSTRUCTIONS} CACHE STRING "Set via VECTOR_INSTRUCTIONS_OPTIONS" FORCE)
 
     # TODO: change this to a fixed hash as soon as that branch is merged
-    set(AUTOPAS_TAG refactorIterators CACHE STRING "AutoPas Git tag or commit id to use")
+    set(AUTOPAS_TAG inlineAnalysis CACHE STRING "AutoPas Git tag or commit id to use")
 
     FetchContent_Declare(
             autopasfetch
