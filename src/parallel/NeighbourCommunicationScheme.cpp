@@ -257,9 +257,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 										  << moleculeContainer->getBoundingBoxMax(2) << "\n"
 										  << "The particles:" << std::endl;
 		for (auto& invalidParticle : invalidParticles) {
-			std::stringstream ss;
-			invalidParticle.write(ss);
-			global_log->error_always_output() << ss.str() << std::endl;
+			global_log->error_always_output() << invalidParticle << std::endl;
 		}
 		global_log->error_always_output() << "The leavingExportNeighbours:" << std::endl;
 		for (auto& neighbour : (*_leavingExportNeighbours)[0]) {
