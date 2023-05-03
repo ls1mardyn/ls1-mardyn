@@ -153,6 +153,10 @@ jobs:
         
           cmake --build . --parallel 2
 
+          #as example list of new version is used, also the example files of new version should be used
+          #therefore, go back to new version
+          git checkout -
+
           cd "${repoPath}"
 
           #set strict pipefail option
@@ -189,8 +193,10 @@ jobs:
             do
               if [[ "${VERSION}" == "master" ]]
               then
+                printf "   Running master... "
                 EXE=$repoPath/build_${JOBNAME}_master/src/MarDyn
               else
+                printf "   Running new version... "
                 EXE=$repoPath/build_${JOBNAME}/src/MarDyn
               fi
         
@@ -199,6 +205,7 @@ jobs:
                 | tee "output_${{ join(matrix.*, '-') }}"                                                   \
                 | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' > ${repoPath}/output_${VERSION}    \
                 || (exitCode=$?; cat "output_${{ join(matrix.*, '-') }}"; (exit $exitCode))
+              printf "Done\n"
             done
             # compare the two runs
             diff ${repoPath}/output_new ${repoPath}/output_master

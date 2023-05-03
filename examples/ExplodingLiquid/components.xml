@@ -7,7 +7,7 @@
 		<mass>1</mass>
 		<sigma>1</sigma>
 		<epsilon>1</epsilon>
-		<shifted>1</shifted>
+		<shifted>true</shifted>
 	</site>
 	<momentsofinertia rotaxes="xyz" >
 		<Ixx>0.0</Ixx>

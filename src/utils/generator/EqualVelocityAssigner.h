@@ -9,7 +9,7 @@
  */
 class EqualVelocityAssigner : public VelocityAssignerBase {
 public:
-	EqualVelocityAssigner(double T = 0, int seed = 0) : VelocityAssignerBase(T), _mt(seed), _uniformDistribution(0, 1) {}
+	EqualVelocityAssigner(double T = 0, long seed = 0) : VelocityAssignerBase(T), _mt(seed), _uniformDistribution(0, 1) {}
 	~EqualVelocityAssigner(){}
 
 	void assignVelocity(Molecule *molecule) {

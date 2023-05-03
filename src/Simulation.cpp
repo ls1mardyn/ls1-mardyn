@@ -264,6 +264,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			if(xmlconfig.getNodeValueReduced("radiusLJ", _LJCutoffRadius)) {
 				global_log->info() << "dimensionless LJ cutoff radius:\t" << _LJCutoffRadius << endl;
+				for(auto &component: *(_ensemble->getComponents())) {
+					component.updateAllLJcentersShift(_LJCutoffRadius);
+				}
 			}
 			/** @todo introduce maxCutoffRadius here for datastructures, ...
 			 *        maybe use map/list to store cutoffs for different potentials? */
@@ -653,6 +656,18 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		_inputReader->readXML(xmlconfig);
 	}
+	xmlconfig.changecurrentnode(oldpath);
+
+	oldpath = xmlconfig.getcurrentnodepath();
+
+	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint")) {
+		bool ignoreCheckpointTime = false;
+		if(xmlconfig.getNodeValue("ignoreCheckpointTime", ignoreCheckpointTime)) {
+			if(ignoreCheckpointTime)
+				_simulationTime = 0;
+		}
+	}
+
 	xmlconfig.changecurrentnode(oldpath);
 
 	/** Prepare start options, affecting behavior of method prepare_start() */

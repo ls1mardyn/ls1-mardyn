@@ -13,8 +13,8 @@
 
 struct BinVectors {
 	CommVar<std::vector<uint64_t> > numParticles;
-	std::array<CommVar<std::vector<double> >,3> momentum;
-	std::array<std::vector<double>,3> mom_corr;
+	std::array<CommVar<std::vector<double> >,3> velocity;
+	std::array<std::vector<double>,3> velo_corr;
 };
 
 class DriftCtrl : public PluginBase {
@@ -38,6 +38,7 @@ public:
 			<target>
 				<cid>INT</cid>														<!-- target component id -->
 				<drift> <vx>DOUBLE</vx> <vy>DOUBLE</vy> <vz>DOUBLE</vz> </drift>	<!-- target drift vector (vx,vy,vz) -->
+				<directions>xyz</directions> 										<!-- Directions to correct drift -->
 			</target>
 			<range>
 				<yl>DOUBLE</yl> <yr>DOUBLE</yr>		<!-- range in which drift will be controled -->
@@ -65,6 +66,8 @@ private:
 		struct Freq{
 			uint32_t sample, control, write;
 		} freq;
+		uint32_t start;
+		uint32_t stop;
 	} _control;
 	struct Range{
 		double yl, yr, width;
@@ -82,6 +85,8 @@ private:
 	} _target;
 	
 	std::vector<BinVectors> _sampling;
+
+	std::vector<short> _directions;
 };
 
 #endif /*DRIFTCTRL_H_*/

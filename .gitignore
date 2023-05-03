@@ -1,4 +1,5 @@
 # IDE stuff and build dirs
+__pycache__/
 cmake-build-*/
 build*/
 *.swp
