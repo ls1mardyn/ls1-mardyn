@@ -8,6 +8,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <string>
 
 using Log::global_log;
 
@@ -126,7 +127,15 @@ public:
 		Site::readXML(xmlconfig);
 		xmlconfig.getNodeValueReduced("epsilon", _epsilon);
 		xmlconfig.getNodeValueReduced("sigma", _sigma);
-		xmlconfig.getNodeValue("shifted", _shiftRequested);
+		// Read shifted value and check if its boolean (true/false) to avoid legacy-errors
+		std::string strShifted;
+		xmlconfig.getNodeValue("shifted", strShifted);
+		if (strShifted == "true" || strShifted == "false") {
+			xmlconfig.getNodeValue("shifted", _shiftRequested);
+		} else {
+			global_log->error() << "Parameter <shifted> of components has to be either set to 'true' or 'false'" << std::endl;
+			mardyn_exit(1);
+		}
 	}
 	
 	/// write to stream
