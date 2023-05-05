@@ -39,23 +39,18 @@ public:
 		</outputplugin>
 	   \endcode
 	 */
-	virtual void readXML(XMLfileUnits& xmlconfig);
+	virtual void readXML(XMLfileUnits& xmlconfig) override;
 
 	void init(ParticleContainer *particleContainer,
-              DomainDecompBase *domainDecomp, Domain *domain);
+			  DomainDecompBase *domainDecomp, Domain *domain) override;
 
-	void endStep(
-            ParticleContainer *particleContainer,
-            DomainDecompBase *domainDecomp, Domain *domain,
-            unsigned long simstep
-    );
+	void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+				 Domain *domain, unsigned long simstep) override;
 
 	void finish(ParticleContainer* /* particleContainer */,
 				DomainDecompBase* /* domainDecomp */, Domain* /* domain */) override {}
 	
-	std::string getPluginName() {
-		return std::string("ResultWriter");
-	}
+	std::string getPluginName() override {return std::string("ResultWriter");}
 	static PluginBase* createInstance() { return new ResultWriter(); }
 
 private:

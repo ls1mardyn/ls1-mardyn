@@ -128,7 +128,7 @@ public:
 		xmlconfig.getNodeValueReduced("epsilon", _epsilon);
 		xmlconfig.getNodeValueReduced("sigma", _sigma);
 		// Read shifted value and check if its boolean (true/false) to avoid legacy-errors
-		std::string strShifted;
+		std::string strShifted = "false";
 		xmlconfig.getNodeValue("shifted", strShifted);
 		if (strShifted == "true" || strShifted == "false") {
 			xmlconfig.getNodeValue("shifted", _shiftRequested);
