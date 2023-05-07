@@ -39,6 +39,7 @@
 #include "io/XyzWriter.h"
 
 // General plugins
+#include "plugins/AdResS/AdResS.h"
 #include "plugins/COMaligner.h"
 #include "plugins/DirectedPM.h"
 #include "plugins/Dropaccelerator.h"
@@ -84,6 +85,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 #ifdef ENABLE_ADIOS2
 	REGISTER_PLUGIN(Adios2Writer);
 #endif
+    REGISTER_PLUGIN(AdResS);
 	REGISTER_PLUGIN(COMaligner);
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
