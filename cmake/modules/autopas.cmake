@@ -23,8 +23,8 @@ if (ENABLE_AUTOPAS)
     set(AUTOPAS_USE_VECTORIZATION ${USE_VECTORIZATION} CACHE BOOL "Set via USE_VECTORIZATION" FORCE)
     set(AUTOPAS_VECTOR_INSTRUCTIONS ${VECTOR_INSTRUCTIONS} CACHE STRING "Set via VECTOR_INSTRUCTIONS_OPTIONS" FORCE)
 
-    # TODO: change this to a fixed hash as soon as that branch is merged
-    set(AUTOPAS_TAG inlineAnalysis CACHE STRING "AutoPas Git tag or commit id to use")
+    # Merge of fixSpacialLocksResize 2023-05-08; This includes the rewrites of remainder traversal and iterators.
+    set(AUTOPAS_TAG e47c9257bb8d0c6ab680d02823b1e8749b25369a CACHE STRING "AutoPas Git tag or commit id to use")
 
     FetchContent_Declare(
             autopasfetch
