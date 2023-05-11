@@ -13,7 +13,8 @@
 using namespace std;
 using Log::global_log;
 
-AdResS::AdResS() : _mesoVals(), _fpRegions(), _particleContainer(nullptr), _components(nullptr), _comp_to_res() ,_domain(nullptr) {};
+AdResS::AdResS() : _mesoVals(), _forceAdapter(_mesoVals), _fpRegions(), _particleContainer(nullptr),
+                   _components(nullptr), _comp_to_res(), _domain(nullptr) {};
 
 AdResS::~AdResS() = default;
 
@@ -56,6 +57,8 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
                 exit(669);
             }
         }
+
+        _forceAdapter.init(domain);
     }
 }
 
@@ -102,33 +105,29 @@ std::string AdResS::getPluginName() {
 
 void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsigned long) {
     // check for all particles if it is in a certain region to set component correctly
+    #if defined(_OPENMP)
+    #pragma omp parallel
+    #endif
     for(auto itM = container->iterator(ParticleIterator::ALL_CELLS); itM.isValid(); ++itM) {
-        for(auto& reg : _fpRegions) {
-            if(itM->inBox(reg._lowHybrid.data(), reg._highHybrid.data())) {
-                // is in FP LOD
-                if(itM->inBox(reg._low.data(), reg._high.data())) {
-                    checkMoleculeLOD(*itM, FullParticle);
-                }
-                // is in Hybrid LOD
-                else {
-                    checkMoleculeLOD(*itM, Hybrid);
-                }
-                goto end;
-            }
-        }
         // molecule is in no Hybrid or FP region
         checkMoleculeLOD(*itM, CoarseGrain);
-
-        //molecule has been full handled
-        end: continue;
+        for(auto& reg : _fpRegions) {
+            if(itM->inBox(reg._lowHybrid.data(), reg._highHybrid.data())) {
+                checkMoleculeLOD(*itM, Hybrid);
+            }
+        }
+        for(auto& reg : _fpRegions) {
+            if(itM->inBox(reg._low.data(), reg._high.data())) {
+                checkMoleculeLOD(*itM, FullParticle);
+            }
+        }
     }
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
     _mesoVals.clear();
-
-
-
+    computeForce(true);
+    computeForce(false);
     _mesoVals.setInDomain(_domain);
 }
 
@@ -141,10 +140,65 @@ void AdResS::checkMoleculeLOD(Molecule &molecule, Resolution targetRes) {
     molecule.setComponent(&_components->at(id + offset));
 }
 
+void AdResS::computeForce(bool invert) {
+    double cutoff = _simulation.getcutoffRadius();
+    double cutoff2 = cutoff * cutoff;
+    double LJCutoff2 = _simulation.getLJCutoff();
+    LJCutoff2 *= LJCutoff2;
+    std::array<double, 3> dist = {0,0,0};
+
+    //check all regions
+    for(auto& region : _fpRegions) {
+        // only molecules within cutoff around the region have interacted with hybrid molecules
+        std::array<double, 3> check_low {region._lowHybrid};
+        std::array<double, 3> check_high {region._highHybrid};
+        for(int d = 0; d < 3; d++) {
+            check_low[d] -= cutoff;
+            check_high[d] += cutoff;
+        }
+
+        auto itOuter = _particleContainer->regionIterator(check_low.data(), check_high.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+        for(; itOuter.isValid(); ++itOuter) {
+            Molecule& m1 = *itOuter;
+
+            auto itInner = itOuter;
+            ++itInner;
+            for(; itInner.isValid(); ++itInner) {
+                Molecule& m2 = *itInner;
+                mardyn_assert(&m1 != &m2);
+
+                //check if inner is FP or CG -> skip
+                if(FPRegion::isInnerPoint(m2.r_arr(), region._low, region._high)) continue;
+                if(!FPRegion::isInnerPoint(m2.r_arr(), region._lowHybrid, region._highHybrid)) continue;
+
+                //check distance
+                double dd = m1.dist2(m2, dist.data());
+                if(dd < cutoff2) {
+                    //recompute force and invert it -> last bool param is true
+                    _forceAdapter.processPair(m1, m2, dist, MOLECULE_MOLECULE, dd, (dd < LJCutoff2), invert,
+                                              _comp_to_res, region);
+                }
+            }
+        }
+    }
+}
+
 double AdResS::weight(std::array<double, 3> r, FPRegion &region) {
-    std::array<double, 3> axis_vector{ };
-    for(int d = 0; d < 3; d++) axis_vector[d] = r[d] - region._center[d];
+    // if point is in the FP region -> weight is 1
+    if(FPRegion::isInnerPoint(r, region._low, region._high)) return 1.;
+    // point is in hybrid region -> weight is between 0 and 1
+    else if(FPRegion::isInnerPoint(r, region._lowHybrid, region._highHybrid)) {
+        std::array<double, 3> intersect_inner = region.computeIntersection(r, FPRegion::Intersection::H_FP);
+        std::array<double, 3> intersect_outer = region.computeIntersection(r, FPRegion::Intersection::CG_H);
+        double hyb_axis_length = sqrt(std::pow(intersect_outer[0]-intersect_inner[0], 2) +
+                                      std::pow(intersect_outer[1]-intersect_inner[1], 2) +
+                                      std::pow(intersect_outer[2]-intersect_inner[2], 2));
+        double dist = sqrt(std::pow(r[0]-intersect_inner[0], 2) +
+                           std::pow(r[1]-intersect_inner[1], 2) +
+                           std::pow(r[2]-intersect_inner[2], 2));
 
-
-    return 0;
+        return std::pow(std::cos(M_PI/(2*hyb_axis_length) * dist), 2);
+    }
+    // point is in the CG region -> weight is 0
+    else return 0.;
 }

@@ -11,6 +11,8 @@
 #include "particleContainer/RegionParticleIterator.h"
 #include "molecules/potforce.h"
 #include "AdResSData.h"
+#include "AdResSForceAdapter.h"
+#include "AdResSInteractionLogProcessor.h"
 
 class ParticleContainer;
 class DomainDecompBase;
@@ -28,6 +30,10 @@ class Domain;
  * the full particle component must have id n,
  * the hybrid component id n+1 and the CG component id n+2!
  * The names of the components must be prefixed with "FP_", "H_" or "CG_"!
+ * The hybrid component must first contain all CG parts with mass = 0 and then the FP part.
+ *
+ * todo Currently FPRegions cannot be at the border of the domain as periodic bounds are not considered yet.
+ * todo Regions cannot overlap, otherwise forces are computed multiple times at the moment.
  * */
 class AdResS : public PluginBase {
 public:
@@ -100,11 +106,26 @@ public:
         return new AdResS();
     }
 
+/**
+ * @brief Weighting function for AdResS force computation.
+ * For smooth transition from full particle to coarse grain area.
+ * Hybrid area is a wall surrounding full particle area. The weight is then based on the position of the
+ * viewed molecule along the axis from the molecules position to the center of the FPRegion.
+ * @param r position of the site
+ * @param region region of FP
+ * */
+static double weight(std::array<double, 3> r, FPRegion& region);
+
 private:
     /**
      * @brief Container for mesoscopic values during force recomputation.
      * */
     MesoValues _mesoVals;
+
+    /**
+     * Handles force computation
+     * */
+    AdResSForceAdapter _forceAdapter;
 
     /**
      * @brief Container for all areas of interest for AdResS. The ares are currently boxes.
@@ -117,7 +138,8 @@ private:
     ParticleContainer* _particleContainer;
 
     /**
-     * Ptr to all saved components in the current simulation
+     * Ptr to all saved components in the current simulation.
+     * This resource is owned by the active domain instance.
      * */
     std::vector<Component>* _components;
 
@@ -135,14 +157,15 @@ private:
     void checkMoleculeLOD(Molecule& molecule, Resolution targetRes);
 
     /**
-     * @brief Weighting function for AdResS force computation.
-     * For smooth transition from full particle to coarse grain area.
-     * Hybrid area is a wall surrounding full particle area. The weight is then based on the position of the
-     * viewed molecules site along the axis from the molecule with the shortest distance to the other area.
-     * @param r position of the site
-     * @param region region of FP
+     * Computes all forces. Depending on "invert" all forces are applied with AdResS concepts or inverted with no weight.
+     *
+     * Invert = true:
+     * During the traversal of all cells, the default cell processor handles the cells without knowledge of AdResS.
+     * Therefore, all forces and mesoscopic values computed for FPRegions are incorrect.
+     * This method removes all force and meso contributions all FPRegions made.
      * */
-    static double weight(std::array<double, 3> r, FPRegion& region);
+    void computeForce(bool invert);
+
 };
 
 #endif //MARDYN_ADRESS_H

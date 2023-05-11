@@ -23,6 +23,13 @@ enum Resolution{
  * The hybrid area is a shell around the FP box. Each FPRegion can have different dimensions for the hybrid area.
  * */
 struct FPRegion {
+    /**
+     * Defines a boundary region.
+     * H_FP is the region between the hybrid and full particle region.
+     * CG_H is the region between the hybrid and coarse grain region.
+     * */
+    enum Intersection { H_FP = 0, CG_H = 1};
+
     //! @brief front left lower corner of FP
     std::array<double, 3> _low;
     //! @brief rear right upper corner of FP
@@ -35,6 +42,8 @@ struct FPRegion {
     std::array<double, 3> _center;
     //! @brief thickness of hybrid walls
     double _hybridDim;
+    //! @brief dimensions of the FP region
+    std::array<double, 3> _dim;
 
     /**
      * @brief Constructs a FPRegion
@@ -43,7 +52,7 @@ struct FPRegion {
      * @param hDim is the width of the hybrid area shell around the FP box
      * */
     FPRegion(const std::array<double,3>& low = {0,0,0}, const std::array<double, 3>& high = {0,0,0}, double hDim = 0)
-            : _low(low), _high(high), _hybridDim(hDim) {}
+            : _low(low), _high(high), _hybridDim(hDim), _dim({0,0,0}) {}
 
     //! @brief gets the lower corner of hybrid region
     [[nodiscard]] const std::array<double, 3>& getLowHybrid() const { return _lowHybrid; }
@@ -65,8 +74,41 @@ struct FPRegion {
         for(int d = 0; d < 3; d++) {
             _lowHybrid[d] = _low[d] - _hybridDim;
             _highHybrid[d] = _high[d] + _hybridDim;
-            _center[d] = (_high[d] - _low[d])/2;
+            _center[d] = (_high[d] - _low[d])/2 + _low[d];
+            _dim[d] = _high[d] - _low[d];
         }
+    }
+
+    /**
+     * @brief Computes the intersection point of the line that is created by connection
+     * the center of the region and the provided point with the either the inner or outer box of this region
+     * depending on the intersection type.
+     * @param point outside or inside of the box that is used for the computation
+     * @param inter Intersection::H_FP inner box, Intersection::CG_H outer box
+     * */
+    std::array<double, 3> computeIntersection(std::array<double,3> point, Intersection inter) {
+        double scale = std::max(
+                            std::max(std::abs(point[0] - _center[0])/(_dim[0]+2*_hybridDim*inter)*2.0,
+                                     std::abs(point[1] - _center[1])/(_dim[1]+2*_hybridDim*inter)*2.0),
+                            std::abs(point[2] - _center[2])/(_dim[2]+2*_hybridDim*inter)*2.0
+                        );
+        std::array<double,3> result{0,0,0};
+        for(int d = 0; d < 3; d++) result[d] = _center[d] + (point[d] - _center[d]) / scale;
+        return result;
+    }
+
+    /**
+     * @brief checks if the point is in the provided box defined by low and high
+     * @param point is the point to be checked
+     * @param low is the inclusive lower left front corner of the box
+     * @param high is the exclusive upper right rear corner of the box
+     * @returns true when point is in the box
+     * */
+    static bool isInnerPoint(std::array<double,3> point, std::array<double, 3> low, std::array<double, 3> high) {
+        bool res = true;
+        for(int d = 0; d < 3; d++) res &= point[d] >= low[d];
+        for(int d = 0; d < 3; d++) res &= point[d] < high[d];
+        return res;
     }
 };
 
