@@ -9,6 +9,7 @@
 #define SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_MASKVECFLOAT_H_
 
 #include "MaskVec.h"
+#include <cstdint>
 
 // keep this file and MaskVecDouble as close as possible, so that they can be examined via diff!
 

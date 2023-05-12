@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <cstdint>
 
 #include "plugins/PluginBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"

@@ -10,7 +10,7 @@
 
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 
-#include <stdint.h>
+#include <cstdint>
 #include <vector>
 
 using namespace std;

@@ -9,6 +9,7 @@
 
 #include <string>
 #include <fstream>
+#include <cstdint>
 
 #include "utils/xmlfile.h"
 #include "io/InputBase.h"
