@@ -40,10 +40,14 @@
 		</ensemble>
 		<algorithm>
 			<parallelisation type="DomainDecomposition">
-				<MPIGridDims> <x>2</x><y>2</y> <z>2</z> </MPIGridDims>
-				<boundaries> <x>reflective</x><y>reflective</y><z>reflective</z> </boundaries>
+			<!--<updateFrequency> 10000 </updateFrequency>
+			<loadBalancer type="none">
+
+                </loadBalancer>-->
+				<!--<MPIGridDims> <x>2</x><y>2</y> <z>2</z> </MPIGridDims>-->
+				<boundaries> <x>reflective</x><y>outflow</y><z>reflective</z> </boundaries>
 			</parallelisation>
-			<datastructure type="LinkedCells">
+			<datastructure type="AutoPas">
 			</datastructure>
 			<cutoffs type="CenterOfMass">
 				<radiusLJ unit="reduced">2.2</radiusLJ>
@@ -53,15 +57,15 @@
 			</electrostatic>
 		</algorithm>
 		<output>
-			<outputplugin name="VTKMoleculeWriter">
+			<!--<outputplugin name="VTKMoleculeWriter">
 				<outputprefix>vtkOutput</outputprefix>
 				<writefrequency>1</writefrequency>
-			</outputplugin>
-			<!--<outputplugin name="Adios2Writer">
+			</ouputplugin>-->
+			<outputplugin name="Adios2Writer">
 		  		<outputfile>particles.bp</outputfile>
 		  		<adios2enginetype>BP4</adios2enginetype>
 		  		<writefrequency>1</writefrequency>
-			</outputplugin>-->
+			</outputplugin>
 			<!--<outputplugin name="CheckpointWriter">
         		<type>ASCII</type>
         		<writefrequency>1</writefrequency>

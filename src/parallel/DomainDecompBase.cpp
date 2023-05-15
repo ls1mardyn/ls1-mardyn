@@ -74,7 +74,7 @@ void DomainDecompBase::removeNonPeriodicHalos(Domain* domain)
 	std::move(std::begin(startRegion), std::end(startRegion), modernStyleStartRegion.begin());
 	std::move(std::begin(endRegion), std::end(endRegion), modernStyleEndRegion.begin());
 
-	boundaryHandler.processBoundaries(modernStyleStartRegion, modernStyleEndRegion);
+	boundaryHandler.removeHalos(modernStyleStartRegion, modernStyleEndRegion);
 }
 
 void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecules,
