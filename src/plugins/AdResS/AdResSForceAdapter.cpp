@@ -67,7 +67,8 @@ AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, std::
     }
 
     // we should never reach this point
-    Simulation::exit(671);
+    //Simulation::exit(671);
+    global_log->warning() << "[AdResS] AdResSForceAdapter::potForce called with 2 non hybrid molecules" << std::endl;
 }
 
 void inline AdResSForceAdapter::invertedPotForce(Molecule& mi, Molecule& mj, ParaStrm& params, std::array<double,3> drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calculateLJ) {

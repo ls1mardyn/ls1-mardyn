@@ -31,9 +31,7 @@ class Domain;
  * the hybrid component id n+1 and the CG component id n+2!
  * The names of the components must be prefixed with "FP_", "H_" or "CG_"!
  * The hybrid component must first contain all CG parts with mass = 0 and then the FP part.
- *
- * todo Currently FPRegions cannot be at the border of the domain as periodic bounds are not considered yet.
- * todo Regions cannot overlap, otherwise forces are computed multiple times at the moment.
+ * Regions cannot overlap, otherwise forces are computed multiple times.
  * */
 class AdResS : public PluginBase {
 public:

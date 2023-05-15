@@ -1,0 +1,182 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+    <refunits type="SI" >
+        <!-- standard units - should be  used for internal reduction one day, but default for all values in simulation remain "reduced" -->
+        <length unit="nm">0.0529177</length>	<!-- default: nm - also m,pm,fm or Angstroem may be used in the future? -->
+        <mass unit="u">1000</mass> <!-- also atomistic mass unit Dalton "u" in the future? -->
+        <energy unit="eV">27.2126</energy> <!-- again: offer other units -->
+    </refunits>
+
+    <!-- simulation options -->
+    <simulation type="MD" >
+        <run>
+            <currenttime>1.599999999999935</currenttime>
+            <production>
+                <steps>48000</steps>
+            </production>
+        </run>
+        <integrator type="Leapfrog">
+            <!-- MD ODE integrator -->
+            <timestep unit="reduced">0.001</timestep>
+        </integrator>
+
+        <ensemble type="NVT">
+            <!--Ensemble is the main topic of the simulation -->
+            <temperature unit="reduced" >0.0012</temperature>	<!-- in future also units="K" -->
+            <domain type="box">
+                <lx unit="reduced">300.</lx>
+                <ly unit="reduced">40.</ly>
+                <lz unit="reduced">40.</lz>
+            </domain>
+            <!-- instead of lx/ly/lz we might accept density -->
+            <components>
+                <moleculetype id="1" name="FP_Mol">
+                    <coord_base>principal_axes</coord_base>
+                    <site type="LJ126" id="1" >
+                        <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+                        <mass>0.012</mass>
+                        <sigma>5.31712452</sigma>
+                        <epsilon>3.91811245e-05</epsilon>
+                        <shifted>false</shifted>
+                    </site>
+                    <site type="LJ126" id="2" >
+                        <coords> <x>0.57735027</x> <y>0.57735027</y> <z>0.57735027</z> </coords>
+                        <mass>0.001</mass>
+                        <sigma>5.62288233</sigma>
+                        <epsilon>0.00031824324</epsilon>
+                    </site>
+                    <site type="LJ126" id="2" >
+                        <coords> <x>-0.57735027</x> <y>-0.57735027</y> <z>0.57735027</z> </coords>
+                        <mass>0.001</mass>
+                        <sigma>5.62288233</sigma>
+                        <epsilon>0.00031824324</epsilon>
+                    </site>
+                    <site type="LJ126" id="2" >
+                        <coords> <x>-0.57735027</x> <y>0.57735027</y> <z>-0.57735027</z> </coords>
+                        <mass>0.001</mass>
+                        <sigma>5.62288233</sigma>
+                        <epsilon>0.00031824324</epsilon>
+                    </site>
+                    <site type="LJ126" id="2" >
+                        <coords> <x>0.57735027</x> <y>-0.57735027</y> <z>-0.57735027</z> </coords>
+                        <mass>0.001</mass>
+                        <sigma>5.62288233</sigma>
+                        <epsilon>0.00031824324</epsilon>
+                    </site>
+                    <momentsofinertia rotates="xyz">
+                        <Ixx>0.0</Ixx>
+                        <Iyy>0.0</Iyy>
+                        <Izz>0.0</Izz>
+                    </momentsofinertia>
+                </moleculetype>
+                <moleculetype id="2" name="H_Mol">
+                    <coord_base>principal_axes</coord_base>
+                    <site type="LJ126" id="1" >
+                        <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+                        <mass>0.0</mass>
+                        <sigma>5.470003425</sigma>
+                        <epsilon>0.000111665</epsilon>
+                        <shifted>false</shifted>
+                    </site>
+                    <site type="LJ126" id="2" >
+                        <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+                        <mass>0.012</mass>
+                        <sigma>5.31712452</sigma>
+                        <epsilon>3.91811245e-05</epsilon>
+                        <shifted>false</shifted>
+                    </site>
+                    <site type="LJ126" id="3" >
+                        <coords> <x>0.57735027</x> <y>0.57735027</y> <z>0.57735027</z> </coords>
+                        <mass>0.001</mass>
+                        <sigma>5.62288233</sigma>
+                        <epsilon>0.00031824324</epsilon>
+                    </site>
+                    <site type="LJ126" id="4" >
+                        <coords> <x>-0.57735027</x> <y>-0.57735027</y> <z>0.57735027</z> </coords>
+                        <mass>0.001</mass>
+                        <sigma>5.62288233</sigma>
+                        <epsilon>0.00031824324</epsilon>
+                    </site>
+                    <site type="LJ126" id="5" >
+                        <coords> <x>-0.57735027</x> <y>0.57735027</y> <z>-0.57735027</z> </coords>
+                        <mass>0.001</mass>
+                        <sigma>5.62288233</sigma>
+                        <epsilon>0.00031824324</epsilon>
+                    </site>
+                    <site type="LJ126" id="6" >
+                        <coords> <x>0.57735027</x> <y>-0.57735027</y> <z>-0.57735027</z> </coords>
+                        <mass>0.001</mass>
+                        <sigma>5.62288233</sigma>
+                        <epsilon>0.00031824324</epsilon>
+                    </site>
+                    <momentsofinertia rotates="xyz">
+                        <Ixx>0.0</Ixx>
+                        <Iyy>0.0</Iyy>
+                        <Izz>0.0</Izz>
+                    </momentsofinertia>
+                </moleculetype>
+                <moleculetype id="3" name="CG_Mol">
+                    <coord_base>principal_axes</coord_base>
+                    <site type="LJ126" id="1" >
+                        <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+                        <mass>0.016</mass>
+                        <sigma>5.470003425</sigma>
+                        <epsilon>0.000111665</epsilon>
+                        <shifted>false</shifted>
+                    </site>
+                    <momentsofinertia rotates="xyz">
+                        <Ixx>0.0</Ixx>
+                        <Iyy>0.0</Iyy>
+                        <Izz>0.0</Izz>
+                    </momentsofinertia>
+                </moleculetype>
+            </components>
+
+            <phasespacepoint>
+                <file type="ASCII">AdResSLarge.restart.dat</file>
+            </phasespacepoint>
+        </ensemble>
+
+        <algorithm>
+            <parallelisation type="DomainDecomposition"/>
+            <datastructure type="LinkedCells">
+                <cellsInCutoffRadius>1</cellsInCutoffRadius>
+                <traversalSelector>c08</traversalSelector>
+            </datastructure>
+            <cutoffs type="CenterOfMass" >
+                <radiusLJ unit="reduced" >16.5351</radiusLJ>
+            </cutoffs>
+            <electrostatic type="ReactionField" >
+                <epsilon>0</epsilon>
+            </electrostatic>
+
+            <thermostat type="VelocityScaling" component="1">
+                <temperature>0.7</temperature>
+            </thermostat>
+        </algorithm>
+
+        <output>
+            <outputplugin name="VTKMoleculeWriter">
+                <writefrequency>1</writefrequency>
+                <writefrequencyOffset>0</writefrequencyOffset>
+                <outputprefix>AdResSLarge</outputprefix>
+            </outputplugin>
+        </output>
+
+        <plugin name="AdResS">
+            <fpregions>
+                <region id="1">
+                    <lowX>115.0</lowX><lowY>10.0</lowY><lowZ>10.0</lowZ>
+                    <highX>135.0</highX><highY>30.0</highY><highZ>30.0</highZ>
+                    <hybridDim>10.0</hybridDim>
+                </region>
+                <region id="2">
+                    <lowX>165.0</lowX><lowY>10.0</lowY><lowZ>10.0</lowZ>
+                    <highX>185.0</highX><highY>30.0</highY><highZ>30.0</highZ>
+                    <hybridDim>10.0</hybridDim>
+                </region>
+            </fpregions>
+        </plugin>
+
+    </simulation>
+</mardyn>

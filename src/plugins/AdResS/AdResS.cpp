@@ -111,13 +111,17 @@ void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsi
     for(auto itM = container->iterator(ParticleIterator::ALL_CELLS); itM.isValid(); ++itM) {
         // molecule is in no Hybrid or FP region
         checkMoleculeLOD(*itM, CoarseGrain);
+
+        //check if is in any hybrid region
         for(auto& reg : _fpRegions) {
-            if(itM->inBox(reg._lowHybrid.data(), reg._highHybrid.data())) {
+            if(reg.isInnerPointDomain(_domain, Hybrid, itM->r_arr())) {
                 checkMoleculeLOD(*itM, Hybrid);
             }
         }
+
+        //check if is in any full particle region
         for(auto& reg : _fpRegions) {
-            if(itM->inBox(reg._low.data(), reg._high.data())) {
+            if(reg.isInnerPointDomain(_domain, FullParticle, itM->r_arr())) {
                 checkMoleculeLOD(*itM, FullParticle);
             }
         }
@@ -146,37 +150,78 @@ void AdResS::computeForce(bool invert) {
     double LJCutoff2 = _simulation.getLJCutoff();
     LJCutoff2 *= LJCutoff2;
     std::array<double, 3> dist = {0,0,0};
+    std::array<double,3> globLen{0};
+    std::array<double, 3> pc_low{0};
+    std::array<double, 3> pc_high{0};
+    for(int d = 0; d < 3; d++) {
+        globLen[d] = _domain->getGlobalLength(d);
+        pc_low[d] = _particleContainer->getBoundingBoxMin(d);
+        pc_high[d] = _particleContainer->getBoundingBoxMax(d);
+    }
 
     //check all regions
     for(auto& region : _fpRegions) {
-        // only molecules within cutoff around the region have interacted with hybrid molecules
-        std::array<double, 3> check_low {region._lowHybrid};
-        std::array<double, 3> check_high {region._highHybrid};
+        //check for local node if region is even in particle container
+        if(!region.isRegionInBox(pc_low, pc_high)) continue;
+
+        // first check if the region crosses any domain bounds
+        std::array<bool, 3> inDim {false};
         for(int d = 0; d < 3; d++) {
-            check_low[d] -= cutoff;
-            check_high[d] += cutoff;
+            inDim[d] = region._lowHybrid[d] >= 0 && region._highHybrid[d] <= globLen[d];
         }
+        // find how much it crosses bounds
+        std::array<std::array<double,2>,3> deltaLowHighDim{};
+        for(int d = 0; d < 3; d++) {
+            deltaLowHighDim[d][0] = std::max(-(region._lowHybrid[d]), 0.);
+            deltaLowHighDim[d][1] = std::max((region._highHybrid[d]) - globLen[d], 0.);
+        }
+        // check all regions that wrap around due to periodic bounds
+        // we only need to check for each dim twice if it actually wraps around in that dimension
+        // in the arrays we create the indices of the boxes depending on the viewed case
+        // for x y or z: if they are 0 then we do not check a wrap around in that dimension
+        for(int x = 0; x <= !inDim[0]; x++) {
+            for(int y = 0; y <= !inDim[1]; y++) {
+                for(int z = 0; z <= !inDim[2]; z++) {
+                    std::array<double, 3> checkLow {
+                            (1 - x) * std::max(region._lowHybrid[0], 0.) + x * ((deltaLowHighDim[0][0] != 0) * (globLen[0] - deltaLowHighDim[0][0]) + (deltaLowHighDim[0][1] != 0) * 0),
+                            (1 - y) * std::max(region._lowHybrid[1], 0.) + y * ((deltaLowHighDim[1][0] != 0) * (globLen[1] - deltaLowHighDim[1][0]) + (deltaLowHighDim[1][1] != 0) * 0),
+                            (1 - z) * std::max(region._lowHybrid[2], 0.) + z * ((deltaLowHighDim[2][0] != 0) * (globLen[2] - deltaLowHighDim[2][0]) + (deltaLowHighDim[2][1] != 0) * 0) };
 
-        auto itOuter = _particleContainer->regionIterator(check_low.data(), check_high.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-        for(; itOuter.isValid(); ++itOuter) {
-            Molecule& m1 = *itOuter;
+                    std::array<double, 3> checkHigh {
+                            (1 - x) * std::min(region._highHybrid[0], globLen[0]) + x * ((deltaLowHighDim[0][0] != 0) * (globLen[0]) + (deltaLowHighDim[0][1] != 0) * deltaLowHighDim[0][1]),
+                            (1 - y) * std::min(region._highHybrid[1], globLen[1]) + y * ((deltaLowHighDim[1][0] != 0) * (globLen[1]) + (deltaLowHighDim[1][1] != 0) * deltaLowHighDim[1][1]),
+                            (1 - z) * std::min(region._highHybrid[2], globLen[2]) + z * ((deltaLowHighDim[2][0] != 0) * (globLen[2]) + (deltaLowHighDim[2][1] != 0) * deltaLowHighDim[2][1]) };
+                    // checkLow and checkHigh create a box within bounds, that was potentially wrapped around due to periodic bounds
+                    // now create bigger box surrounding this box to find molecules that have interacted with our hybrid molecules
+                    // only molecules within cutoff around the region have interacted with hybrid molecules
+                    for(int d = 0; d < 3; d++) {
+                        checkLow[d] -= cutoff;
+                        checkHigh[d] += cutoff;
+                    }
 
-            auto itInner = itOuter;
-            ++itInner;
-            for(; itInner.isValid(); ++itInner) {
-                Molecule& m2 = *itInner;
-                mardyn_assert(&m1 != &m2);
+                    // let every molecule in the box created by checkLow and checkHigh interact with the hybrid molecules in this region
+                    auto itOuter = _particleContainer->regionIterator(checkLow.data(), checkHigh.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+                    for(; itOuter.isValid(); ++itOuter) {
+                        Molecule& m1 = *itOuter; // this can be of any type
 
-                //check if inner is FP or CG -> skip
-                if(FPRegion::isInnerPoint(m2.r_arr(), region._low, region._high)) continue;
-                if(!FPRegion::isInnerPoint(m2.r_arr(), region._lowHybrid, region._highHybrid)) continue;
+                        auto itInner = itOuter;
+                        ++itInner;
+                        for(; itInner.isValid(); ++itInner) {
+                            Molecule& m2 = *itInner; // must be hybrid
+                            mardyn_assert(&m1 != &m2);
 
-                //check distance
-                double dd = m1.dist2(m2, dist.data());
-                if(dd < cutoff2) {
-                    //recompute force and invert it -> last bool param is true
-                    _forceAdapter.processPair(m1, m2, dist, MOLECULE_MOLECULE, dd, (dd < LJCutoff2), invert,
-                                              _comp_to_res, region);
+                            //check if inner is FP or CG -> skip
+                            if(_comp_to_res[m2.componentid()] != Hybrid) continue;
+
+                            //check distance
+                            double dd = m1.dist2(m2, dist.data());
+                            if(dd < cutoff2) {
+                                //recompute force and invert it -> last bool param is true
+                                _forceAdapter.processPair(m1, m2, dist, MOLECULE_MOLECULE, dd, (dd < LJCutoff2), invert,
+                                                          _comp_to_res, region);
+                            }
+                        }
+                    }
                 }
             }
         }
