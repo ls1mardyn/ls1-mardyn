@@ -2,8 +2,8 @@
 // Created by alex on 09.05.23.
 //
 
-#ifndef MARDYN_ADRESSINTERACTIONLOGPROCESSOR_H
-#define MARDYN_ADRESSINTERACTIONLOGPROCESSOR_H
+#ifndef MARDYN_INTERACTIONLOGPROCESSOR_H
+#define MARDYN_INTERACTIONLOGPROCESSOR_H
 
 
 #include <vector>
@@ -16,7 +16,7 @@
  * This is used in AdResS to clear forces that were incorrectly computed during normal cell traversal.
  * Once all cells have been analyzed, results will be cached as FP regions do not move.
  * */
-class AdResSInteractionLogProcessor : public CellProcessor {
+class InteractionLogProcessor : public CellProcessor {
 public:
     /**
      * @brief Constructor
@@ -24,10 +24,10 @@ public:
      * @param ljCutoffRadius noclue todo Alex check this
      * @param fpRegions reference to all FP regions from the AdResS plugin instance
      * */
-    explicit AdResSInteractionLogProcessor(const double cutoffRadius, const double ljCutoffRadius,
-                                           const vector<FPRegion> &fpRegions);
+    explicit InteractionLogProcessor(const double cutoffRadius, const double ljCutoffRadius,
+                                     const vector<FPRegion> &fpRegions);
     //! @brief does nothing
-    ~AdResSInteractionLogProcessor() override;
+    ~InteractionLogProcessor() override;
     //! @brief does nothing
     void initTraversal() override;
     //! @brief does nothing
@@ -64,4 +64,4 @@ private:
 };
 
 
-#endif //MARDYN_ADRESSINTERACTIONLOGPROCESSOR_H
+#endif //MARDYN_INTERACTIONLOGPROCESSOR_H

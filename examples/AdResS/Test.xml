@@ -12,7 +12,7 @@
         <run>
             <currenttime>0</currenttime>
             <production>
-                <steps>20</steps>
+                <steps>2000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">

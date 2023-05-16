@@ -7,6 +7,7 @@
 #include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
 #include "Domain.h"
+#include "AdResSRegionTraversal.h"
 
 #include <cmath>
 
@@ -81,6 +82,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
         _fpRegions[id - 1].readXML(xmlconfig);
     }
     xmlconfig.changecurrentnode(oldpath);
+    // todo add check that no region overlap even in hybrid considering periodic bounds
 
     for(const auto& region : _fpRegions) {
         global_log->info() << "[AdResS] FPRegion Box from ["
@@ -149,7 +151,6 @@ void AdResS::computeForce(bool invert) {
     double cutoff2 = cutoff * cutoff;
     double LJCutoff2 = _simulation.getLJCutoff();
     LJCutoff2 *= LJCutoff2;
-    std::array<double, 3> dist = {0,0,0};
     std::array<double,3> globLen{0};
     std::array<double, 3> pc_low{0};
     std::array<double, 3> pc_high{0};
@@ -199,29 +200,10 @@ void AdResS::computeForce(bool invert) {
                         checkHigh[d] += cutoff;
                     }
 
-                    // let every molecule in the box created by checkLow and checkHigh interact with the hybrid molecules in this region
-                    auto itOuter = _particleContainer->regionIterator(checkLow.data(), checkHigh.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-                    for(; itOuter.isValid(); ++itOuter) {
-                        Molecule& m1 = *itOuter; // this can be of any type
-
-                        auto itInner = itOuter;
-                        ++itInner;
-                        for(; itInner.isValid(); ++itInner) {
-                            Molecule& m2 = *itInner; // must be hybrid
-                            mardyn_assert(&m1 != &m2);
-
-                            //check if inner is FP or CG -> skip
-                            if(_comp_to_res[m2.componentid()] != Hybrid) continue;
-
-                            //check distance
-                            double dd = m1.dist2(m2, dist.data());
-                            if(dd < cutoff2) {
-                                //recompute force and invert it -> last bool param is true
-                                _forceAdapter.processPair(m1, m2, dist, MOLECULE_MOLECULE, dd, (dd < LJCutoff2), invert,
-                                                          _comp_to_res, region);
-                            }
-                        }
-                    }
+                    // now have created a box in which forces need to be calculated
+                    // this we will multi-thread: for that we implement a simplified C08-Traversal
+                    AdResSRegionTraversal traversal{ checkLow, checkHigh, _particleContainer, _comp_to_res};
+                    traversal.traverse(_forceAdapter, region, invert);
                 }
             }
         }

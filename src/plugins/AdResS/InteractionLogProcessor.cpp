@@ -2,18 +2,18 @@
 // Created by alex on 09.05.23.
 //
 
-#include "AdResSInteractionLogProcessor.h"
+#include "InteractionLogProcessor.h"
 
-AdResSInteractionLogProcessor::AdResSInteractionLogProcessor(const double cutoffRadius, const double ljCutoffRadius,
-                                                             const vector<FPRegion> &fpRegions) : CellProcessor(
+InteractionLogProcessor::InteractionLogProcessor(const double cutoffRadius, const double ljCutoffRadius,
+                                                 const vector<FPRegion> &fpRegions) : CellProcessor(
         cutoffRadius, ljCutoffRadius), _fpRegions(fpRegions), _processed(false) { }
-AdResSInteractionLogProcessor::~AdResSInteractionLogProcessor() = default;
-void AdResSInteractionLogProcessor::initTraversal() {}
-void AdResSInteractionLogProcessor::preprocessCell(ParticleCell &cell) {}
-double AdResSInteractionLogProcessor::processSingleMolecule(Molecule *m1, ParticleCell &cell2) {return 0;}
-void AdResSInteractionLogProcessor::postprocessCell(ParticleCell &cell) {}
+InteractionLogProcessor::~InteractionLogProcessor() = default;
+void InteractionLogProcessor::initTraversal() {}
+void InteractionLogProcessor::preprocessCell(ParticleCell &cell) {}
+double InteractionLogProcessor::processSingleMolecule(Molecule *m1, ParticleCell &cell2) {return 0;}
+void InteractionLogProcessor::postprocessCell(ParticleCell &cell) {}
 
-void AdResSInteractionLogProcessor::endTraversal() { _processed = true; }
+void InteractionLogProcessor::endTraversal() { _processed = true; }
 
 static inline bool overlapped(std::array<double, 3> low1, std::array<double, 3> high1, std::array<double, 3> low2, std::array<double, 3> high2) {
     return low1[0] <= high2[0] && low2[0] <= high1[0] &&
@@ -21,7 +21,7 @@ static inline bool overlapped(std::array<double, 3> low1, std::array<double, 3> 
            low1[2] <= high2[2] && low2[2] <= high1[2];
 }
 
-void AdResSInteractionLogProcessor::processCell(ParticleCell &cell) {
+void InteractionLogProcessor::processCell(ParticleCell &cell) {
     auto low = cell.getBoxMinArray();
     auto high = cell.getBoxMaxArray();
 
@@ -34,7 +34,7 @@ void AdResSInteractionLogProcessor::processCell(ParticleCell &cell) {
 }
 
 
-void AdResSInteractionLogProcessor::processCellPair(ParticleCell &cell1, ParticleCell &cell2, bool sumAll) {
+void InteractionLogProcessor::processCellPair(ParticleCell &cell1, ParticleCell &cell2, bool sumAll) {
     auto low1 = cell1.getBoxMinArray();
     auto high1 = cell1.getBoxMaxArray();
     auto low2 = cell2.getBoxMinArray();

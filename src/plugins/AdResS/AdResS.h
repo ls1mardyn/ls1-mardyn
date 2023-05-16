@@ -12,7 +12,7 @@
 #include "molecules/potforce.h"
 #include "AdResSData.h"
 #include "AdResSForceAdapter.h"
-#include "AdResSInteractionLogProcessor.h"
+#include "InteractionLogProcessor.h"
 
 class ParticleContainer;
 class DomainDecompBase;
