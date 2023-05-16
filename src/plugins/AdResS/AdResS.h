@@ -56,6 +56,7 @@ public:
      * The following XML object structure is handled by this method:
      * \code{.xml}
      *  <plugin name="AdResS">
+     *      <weightImpl>euclid</weightImpl>
      *      <fpregions>
      *          <region id="1">
      *              <lowX>0.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
@@ -68,6 +69,7 @@ public:
      *
      * fpregions can contain N region objects. The first region object must have id 1.
      * The id must grow in increasing order. If N regions are used, then the largest id must be N and the smallest 1.
+     * WeightImpl options: "euclid", "manhattan", "component", "near"; Default: "euclid"
      * */
     void readXML(XMLfileUnits &xmlconfig) override;
 
@@ -109,10 +111,11 @@ public:
  * For smooth transition from full particle to coarse grain area.
  * Hybrid area is a wall surrounding full particle area. The weight is then based on the position of the
  * viewed molecule along the axis from the molecules position to the center of the FPRegion.
+ * Depending on the initialization of the AdResS Plugin this will point to different weight function implementations.
  * @param r position of the site
  * @param region region of FP
  * */
-static double weight(std::array<double, 3> r, FPRegion& region);
+static double (*weight)(std::array<double, 3> r, FPRegion& region);
 
 private:
     /**
@@ -163,6 +166,44 @@ private:
      * This method removes all force and meso contributions all FPRegions made.
      * */
     void computeForce(bool invert);
+
+    /**
+     * @brief Weighting function for AdResS force computation.
+     * Implementation computes axis intersection points and uses euclidean distance to determine the period of
+     * the underlying cosine function.
+     * @param r position of the site
+     * @param region region of FP
+     * */
+    static double weightEuclid(std::array<double, 3> r, FPRegion& region);
+
+    /**
+     * @brief Weighting function for AdResS force computation.
+     * Implementation computes axis intersection points and uses manhattan distance to determine the period of
+     * the underlying cosine function.
+     * @param r position of the site
+     * @param region region of FP
+     * */
+    static double weightManhattan(std::array<double, 3> r, FPRegion& region);
+
+    /**
+     * @brief Weighting function for AdResS force computation.
+     * Implementation computes weight percentage for each component by checking where each component is in the hybrid region.
+     * All component weights are multiplied together.
+     * This results in a weight function, where each component does its own contribution.
+     * @param r position of the site
+     * @param region region of FP
+     * */
+    static double weightComponent(std::array<double, 3> r, FPRegion& region);
+
+    /**
+     * @brief Weighting function for AdResS force computation.
+     * Implementation conceptually find the nearest point on the surface of the inner region in respect to r and
+     * computes the distance between r and this point.
+     * By doing so, this weight function treats the FPRegion as a box with rounded corners and edges.
+     * @param r position of the site
+     * @param region region of FP
+     * */
+    static double weightNearest(std::array<double, 3> r, FPRegion& region);
 
 };
 
