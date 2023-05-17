@@ -27,9 +27,10 @@ def particleMinMax(particlesVtu):
     for line in particlesVtu:
         # find the line with all coordinates
         # Format x0 y0 z0 x1 y1 z1 ...
-        if re.search('\s*<DataArray Name="points"', line):
+        if '<DataArray Name="points"' in line:
             # split off xml tags, split all numbers, and convert to floats
-            data=[float(i) for i in line.replace('<','>').split('>')[2].split(' ')]
+            splitLine = line.replace('<','>').split('>')[2].split(' ')
+            data = list(map(float, splitLine))          # this conversion is the script's hotspot
             # extract min and max of every dimension
             minMaxCoord=[(min(data[dim::3]), max(data[dim::3])) for dim in range(3)]
             break
