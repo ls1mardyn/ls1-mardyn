@@ -328,7 +328,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				#ifndef MAMICO_COUPLING
 				_domainDecomposition = new DomainDecomposition();
 				#else
-				_domainDecomposition = new DomainDecomposition(coupling::interface::LS1StaticCommData::getInstance().getLocalCommunicator());
+				_domainDecomposition = new DomainDecomposition(coupling::interface::LS1StaticCommData::getInstance().getLocalCommunicator(),
+															coupling::interface::LS1StaticCommData::getInstance().getDomainBreakDown());
 				#endif
 			}
 			else if(parallelisationtype == "KDDecomposition") {

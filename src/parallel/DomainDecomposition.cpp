@@ -12,9 +12,9 @@
 using Log::global_log;
 using namespace std;
 
-DomainDecomposition::DomainDecomposition() : DomainDecomposition(MPI_COMM_WORLD) {}
+DomainDecomposition::DomainDecomposition() : DomainDecomposition(MPI_COMM_WORLD, new int[3]{0,0,0}) {}
 
-DomainDecomposition::DomainDecomposition(MPI_Comm comm) : DomainDecompMPIBase(comm), _gridSize{0}, _coords{0} {
+DomainDecomposition::DomainDecomposition(MPI_Comm comm, const int* gridSize) : DomainDecompMPIBase(comm), _gridSize{gridSize[0], gridSize[1], gridSize[2]}, _coords{0} {
 	initMPIGridDims();
 }
 

@@ -23,7 +23,7 @@ public:
 	//!        sets up the topology
 	DomainDecomposition();
 
-	DomainDecomposition(MPI_Comm comm);
+	DomainDecomposition(MPI_Comm comm, const int* gridSize);
 	// documentation see father class (DomainDecompBase.h)
 	~DomainDecomposition();
 
