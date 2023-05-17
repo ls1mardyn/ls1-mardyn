@@ -43,7 +43,6 @@
 								<header>../../sim01/run01/cp_binary-1.restart.header.xml</header>
 								<data>../../sim01/run01/cp_binary-1.restart.dat</data>
 							</input>
-							<componentid>1</componentid>
 						</filler>
 
 						<object type="Cuboid">

@@ -631,7 +631,7 @@ void Domain::Nadd(unsigned cid, int N, int localN)
 	Ensemble* ensemble = _simulation.getEnsemble();
 	Component* component = ensemble->getComponent(cid);
 	component->incNumMolecules(N);
-	unsigned int rotationDegreesOfFreeedom = component->getRotationalDegreesOfFreedom();
+	unsigned long rotationDegreesOfFreeedom = static_cast<unsigned long>(component->getRotationalDegreesOfFreedom());
 
 	this->_globalNumMolecules += N;
 	if( (this->_componentwiseThermostat)

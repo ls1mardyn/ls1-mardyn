@@ -161,6 +161,7 @@ std::vector<int> DomainDecomposition::getNeighbourRanksFullShell() {
 	else{
 		for(int i = 0; i<26; i++){
 			int x,y,z;
+			x=y=z=0;
 			switch(i)
 			{
 			case 0: //faces

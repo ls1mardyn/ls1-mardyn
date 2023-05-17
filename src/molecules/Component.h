@@ -93,6 +93,9 @@ public:
 	void addQuadrupole(double x, double y, double z,
 	                   double eQx, double eQy, double eQz, double eQabs);
 
+	/** functions to fix the LJTS after rc is read in the simulation*/
+	void updateAllLJcentersShift(double rc);
+
 	/** delete the last site stored in the vector -- these are used by the external generators*/
 	void deleteLJCenter() { _ljcenters.pop_back() ;}
 	void deleteCharge() { _charges.pop_back() ;}
@@ -136,6 +139,7 @@ public:
 private:
 
 	void updateMassInertia(Site& site);
+	double calculateLJshift(double eps, double sigma, double rc) const;
 
 	unsigned int _id; /**< component ID */
 	// LJcenter,Dipole,Quadrupole have different size -> not suitable to store in a _Site_-array

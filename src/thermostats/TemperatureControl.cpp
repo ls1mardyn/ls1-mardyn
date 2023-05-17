@@ -388,10 +388,8 @@ void ControlRegionT::ControlTemperature(Molecule* mol) {
 		// ignore outer (halo) molecules
 		if (nPosIndex > nIndexMax)  // negative values will be ignored to: cast to unsigned int --> high value
 			return;
-
 		GlobalThermostatVariables& globalTV = _globalThermVars[nPosIndex];  // do not forget &
 		if (globalTV._numMolecules < 1) return;
-
 		// scale velocity
 		double vcorr = 2. - 1. / globalTV._betaTrans;
 		double Dcorr = 2. - 1. / globalTV._betaRot;
@@ -440,15 +438,15 @@ void ControlRegionT::InitBetaLogfile() {
 		// int numprocs = domainDecomp->getNumProcs();
 		if (rank != 0) return;
 #endif
-
-		std::stringstream filenamestream;
-		filenamestream << _strFilenamePrefixBetaLog << "_reg" << this->GetID() << ".dat";
-		std::stringstream outputstream;
-		outputstream.write(reinterpret_cast<const char*>(&_nWriteFreqBeta), 8);
-
-		std::ofstream fileout(filenamestream.str().c_str(), std::ios::out | std::ios::binary);
-		fileout << outputstream.str();
-		fileout.close();
+		// touch file
+		const std::string fname = _strFilenamePrefixBetaLog + "_reg" + std::to_string(this->GetID()) + ".dat";
+		std::ofstream ofs;
+		ofs.open(fname, std::ios::out);
+		ofs << setw(12) << "simstep"
+			<< setw(24) << "dBetaTrans"
+			<< setw(24) << "dBetaRot"
+			<< std::endl;
+		ofs.close();
 	}
 }
 
@@ -468,18 +466,19 @@ void ControlRegionT::WriteBetaLogfile(unsigned long simstep) {
 	if (rank != 0) return;
 #endif
 
-	std::stringstream filenamestream;
-	filenamestream << _strFilenamePrefixBetaLog << "_reg" << this->GetID() << ".dat";
-	std::stringstream outputstream;
-	double dInvNumConfigs = 1. / (double)(_numSampledConfigs);
-	double dBetaTrans = _dBetaTransSumGlobal * dInvNumConfigs;
-	double dBetaRot = _dBetaRotSumGlobal * dInvNumConfigs;
-	outputstream.write(reinterpret_cast<const char*>(&dBetaTrans), 8);
-	outputstream.write(reinterpret_cast<const char*>(&dBetaRot), 8);
+	double dInvNumConfigsSlabs = 1. / (double)(_numSampledConfigs*_nNumSlabs);
+	double dBetaTrans = _dBetaTransSumGlobal * dInvNumConfigsSlabs;
+	double dBetaRot = _dBetaRotSumGlobal * dInvNumConfigsSlabs;
 
-	ofstream fileout(filenamestream.str().c_str(), std::ios::app | std::ios::binary);
-	fileout << outputstream.str();
-	fileout.close();
+	// writing to file
+	const std::string fname = _strFilenamePrefixBetaLog + "_reg" + std::to_string(this->GetID()) + ".dat";
+	std::ofstream ofs;
+	ofs.open(fname, std::ios::app);
+	ofs << setw(12) << simstep
+		<< FORMAT_SCI_MAX_DIGITS << dBetaTrans
+		<< FORMAT_SCI_MAX_DIGITS << dBetaRot
+		<< std::endl;
+	ofs.close();
 
 	// reset averaged values
 	_numSampledConfigs = 0;
@@ -517,6 +516,28 @@ void ControlRegionT::update(SubjectBase* subject) {
 	_dSlabWidth = this->GetWidth(1) / ((double)(_nNumSlabs));
 }
 
+void ControlRegionT::InitAddedEkin() {
+	if (_localMethod == VelocityScaling) {
+#ifdef ENABLE_MPI
+		DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition());
+		int rank = domainDecomp->getRank();
+		// int numprocs = domainDecomp->getNumProcs();
+		if (rank != 0) return;
+#endif
+		// touch file
+		const std::string fname = "addedEkin_reg" + std::to_string(this->GetID()) + "_cid" + std::to_string(_nTargetComponentID) + ".dat";
+		std::ofstream ofs;
+		ofs.open(fname, std::ios::out);
+		ofs << setw(12) << "simstep";
+		for (int i = 0; i < _nNumSlabs; ++i) {
+			std::string s = "bin" + std::to_string(i+1);
+			ofs << setw(24) << s;
+		}
+		ofs << std::endl;
+		ofs.close();
+	}
+}
+
 void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep) {
 	if (_localMethod != VelocityScaling) return;
 
@@ -525,7 +546,7 @@ void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64
 	for (int thread = 0; thread < mardyn_get_max_threads(); ++thread) {
 		mardyn_assert(_addedEkin.data.local.size() == _nNumSlabs);
 		for (size_t slabID = 0; slabID < _nNumSlabs; ++slabID) {
-			_addedEkin.data.local[0] += _addedEkinLocalThreadBuffer[thread][slabID];
+			_addedEkin.data.local[slabID] += _addedEkinLocalThreadBuffer[thread][slabID];
 		}
 	}
 	// calc global values
@@ -556,15 +577,16 @@ void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64
 	}
 
 	// writing .dat-files
-	std::stringstream filenamestream;
-	filenamestream << "addedEkin_reg" << this->GetID() << "_cid" << _nTargetComponentID << ".dat";
-
-	std::stringstream outputstream;
-	outputstream.write(reinterpret_cast<const char*>(_addedEkin.data.global.data()), 8 * _addedEkin.data.global.size());
-
-	ofstream fileout(filenamestream.str().c_str(), std::ios::app | std::ios::binary);
-	fileout << outputstream.str();
-	fileout.close();
+	const std::string fname = "addedEkin_reg" + std::to_string(this->GetID()) + "_cid" + std::to_string(_nTargetComponentID) + ".dat";
+	std::ofstream ofs;
+	ofs.open(fname, std::ios::app);
+	
+	ofs << setw(12) << simstep;
+	for (double& it : vg) {
+		ofs << FORMAT_SCI_MAX_DIGITS << it;
+	}
+	ofs << std::endl;
+	ofs.close();
 }
 
 // class TemperatureControl
@@ -631,26 +653,28 @@ void TemperatureControl::prepare_start() {
 		reg->registerAsObserver();
 	}
 	this->InitBetaLogfiles();
+	this->InitAddedEkin();
 }
 
 void TemperatureControl::AddRegion(ControlRegionT* region) { _vecControlRegions.push_back(region); }
 
 void TemperatureControl::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp, unsigned long simstep) {
 	if (simstep % _nControlFreq != 0) return;
+	if (simstep <= this->GetStart() || simstep > this->GetStop()) return;
 
 	for (auto&& reg : _vecControlRegions) reg->MeasureKineticEnergy(mol, domainDecomp);
 }
 
 void TemperatureControl::CalcGlobalValues(DomainDecompBase* domainDecomp, unsigned long simstep) {
 	if (simstep % _nControlFreq != 0) return;
+	if (simstep <= this->GetStart() || simstep > this->GetStop()) return;
 
 	for (auto&& reg : _vecControlRegions) reg->CalcGlobalValues(domainDecomp);
 }
 
 void TemperatureControl::ControlTemperature(Molecule* mol, unsigned long simstep) {
-	if (simstep % _nControlFreq != 0) {
-		return;
-	}
+	if (simstep % _nControlFreq != 0) return;
+	if (simstep <= this->GetStart() || simstep > this->GetStop()) return;
 
 	for (auto&& reg : _vecControlRegions) {
 		reg->ControlTemperature(mol);
@@ -659,6 +683,7 @@ void TemperatureControl::ControlTemperature(Molecule* mol, unsigned long simstep
 
 void TemperatureControl::Init(unsigned long simstep) {
 	if (simstep % _nControlFreq != 0) return;
+	if (simstep <= this->GetStart() || simstep > this->GetStop()) return;
 
 	for (auto&& reg : _vecControlRegions) reg->ResetLocalValues();
 }
@@ -669,6 +694,10 @@ void TemperatureControl::InitBetaLogfiles() {
 
 void TemperatureControl::WriteBetaLogfiles(unsigned long simstep) {
 	for (auto&& reg : _vecControlRegions) reg->WriteBetaLogfile(simstep);
+}
+
+void TemperatureControl::InitAddedEkin() {
+	for (auto&& reg : _vecControlRegions) reg->InitAddedEkin();
 }
 
 void TemperatureControl::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep) {

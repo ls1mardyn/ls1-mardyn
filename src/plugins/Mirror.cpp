@@ -61,6 +61,13 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("cid", _targetComp);
 	if(_targetComp > 0) { global_log->info() << "[Mirror] Target component: " << _targetComp << std::endl; }
 
+	// Switch component
+	_switchComp.enabled = false;
+	_switchComp.cid_ub = 1;
+	_switchComp.enabled = xmlconfig.getNodeValue("switchcomp/cid", _switchComp.cid_ub);
+	if(_switchComp.enabled)
+		global_log->info() << "[Mirror] Switch component to cid: " << _switchComp.cid_ub << " if molecule has passed the Mirror." << std::endl;
+
 	// Mirror position
 	_position.axis = 1;  // only y-axis supported yet
 	_position.coord = 0.;
@@ -86,8 +93,8 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	/** mirror type */
 	_type = MT_UNKNOWN;
 	uint32_t type = 0;
-    xmlconfig.getNodeValue("@type", type);
-    _type = static_cast<MirrorType>(type);
+	xmlconfig.getNodeValue("@type", type);
+	_type = static_cast<MirrorType>(type);
 
 	/** mirror direction */
 	_direction = MD_LEFT_MIRROR;
@@ -283,13 +290,27 @@ void Mirror::beforeForces(
 						_particleManipCount.reflected.local.at(cid_ub)++;
 					}
 					else {
-						particleContainer->deleteMolecule(it, false);
+						if(_switchComp.enabled) {
+							std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
+							Component* compNew = &(ptrComps->at(_switchComp.cid_ub-1) );
+							it->setComponent(compNew);
+						}
+						else {
+							particleContainer->deleteMolecule(it, false);
+						}
 						_particleManipCount.deleted.local.at(0)++;
 						_particleManipCount.deleted.local.at(cid_ub)++;
 					}
 				}
 				else {
-					particleContainer->deleteMolecule(it, false);
+					if(_switchComp.enabled) {
+						std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
+						Component* compNew = &(ptrComps->at(_switchComp.cid_ub-1) );
+						it->setComponent(compNew);
+					}
+					else {
+						particleContainer->deleteMolecule(it, false);
+					}
 					_particleManipCount.deleted.local.at(0)++;
 					_particleManipCount.deleted.local.at(cid_ub)++;
 				}
@@ -376,8 +397,8 @@ void Mirror::beforeForces(
 }
 
 void Mirror::afterForces(
-        ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-        unsigned long simstep
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+		unsigned long simstep
 )
 {
 	this->VelocityChange(particleContainer);

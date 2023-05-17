@@ -118,7 +118,7 @@ class FileHandlerXML(object):
 			saveResult = str(e)
 		finally:
 			doc.unlink()
-			return saveResult
+		return saveResult
 	
 	def readFile(self, targetModel, libraryModel, fileName, plugin):
 		errorMessageLog = []

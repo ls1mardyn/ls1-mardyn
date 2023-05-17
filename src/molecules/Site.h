@@ -97,7 +97,7 @@ protected:
 class LJcenter : public Site {
 public:
 	/** @brief Constructor */
-	LJcenter(): Site(0., 0., 0., 0.), _epsilon(0.), _sigma(0.), _uLJshift6(0.) {}
+	LJcenter(): Site(0., 0., 0., 0.), _epsilon(0.), _sigma(0.), _uLJshift6(0.), _shiftRequested(false) {}
 	/** @brief Constructor
 	 * \param[in] x        relative x coordinate
 	 * \param[in] y        relative y coordinate
@@ -108,7 +108,7 @@ public:
 	 * \param[in] shift    0. for full LJ potential
 	 */
 	LJcenter(double x, double y, double z, double m, double epsilon, double sigma, double shift)
-		: Site(x, y, z, m), _epsilon(epsilon), _sigma(sigma), _uLJshift6(shift) {}
+		: Site(x, y, z, m), _epsilon(epsilon), _sigma(sigma), _uLJshift6(shift), _shiftRequested(false) {}
 
 	/** @brief Read in XML configuration for a LJcenter and all its included objects.
 	 *
@@ -118,7 +118,7 @@ public:
 	     <!-- all Site class parameters -->
 	     <epsilon>DOUBLE</epsilon>
 	     <sigma>DOUBLE</sigma>
-	     <shifted>DOUBLE</shifted>
+	     <shifted>BOOLEAN</shifted>
 	   </site>
 	   \endcode
 	 */
@@ -126,7 +126,7 @@ public:
 		Site::readXML(xmlconfig);
 		xmlconfig.getNodeValueReduced("epsilon", _epsilon);
 		xmlconfig.getNodeValueReduced("sigma", _sigma);
-		xmlconfig.getNodeValueReduced("shifted", _uLJshift6);
+		xmlconfig.getNodeValue("shifted", _shiftRequested);
 	}
 	
 	/// write to stream
@@ -138,6 +138,7 @@ public:
 	double eps() const { return _epsilon; }  /**< get interaction strength */
 	double sigma() const { return _sigma; }  /**< get interaction diameter */
 	double shift6() const { return _uLJshift6; }  /**< get energy shift of interaction potential */
+	bool shiftRequested() const { return _shiftRequested; } /**< get the shift request value */
 
 	/** set the interaction strength */
 	void setEps(double epsilon) { _epsilon = epsilon; }
@@ -151,6 +152,7 @@ private:
 	double _epsilon;  /**< interaction strength */
 	double _sigma;  /**< interaction diameter */
 	double _uLJshift6; /**< energy shift of the interaction potential, used to implement the LJ truncated and shifted (LJTS) potential */
+	bool _shiftRequested; /***< whether the LJTS potential shift needs to be calculated or not */
 };
 
 /** @brief Charge center

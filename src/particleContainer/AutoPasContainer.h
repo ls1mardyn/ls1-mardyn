@@ -173,17 +173,17 @@ private:
 	autopas::Logger::LogLevel _logLevel{autopas::Logger::LogLevel::info};
 
 	std::vector<Molecule> _invalidParticles;
-	enum FunctorOption {
+	enum class FunctorOption {
 		autoVec,
 		AVX,
 		SVE
 	} functorOption{
 #if defined(__ARM_FEATURE_SVE)
-			SVE
+			FunctorOption::SVE
 #elif defined(__AVX__)
-			AVX
+			FunctorOption::AVX
 #else
-			autoVec
+			FunctorOption::autoVec
 #endif
 	};
 

@@ -1,0 +1,21 @@
+
+<control>
+	<start>0</start>           <!-- start time step -->
+	<frequency>1</frequency>   <!-- frequency of checking -->
+	<stop>1000</stop>          <!-- stop time step -->
+</control>
+<range>
+	<inclusive>1</inclusive>   <!-- enable checking inside range (default): 1 | outside range: 0 -->
+	<xmin>11.2</xmin> <xmax>134.266123</xmax>  <!-- range x-axis -->
+	<ymin>23.5</ymin> <ymax>99.9</ymax>        <!-- range y-axis -->
+	<zmin>0.0</zmin> <zmax>111.1</zmax>        <!-- range z-axis -->
+</range>
+<targets>
+	<target cid="1">                <!-- cid: component id of target particles -->
+		<density>0.00001</density>  <!-- target density -->
+	</target>
+	<target cid="3">               <!-- cid: component id of target particles -->
+		<density>0.0001</density>  <!-- target density -->
+	</target>
+</targets>
+<priority>3,1,2,4,5</priority>  <!-- Usually: Molecule size sorted in descending order -->

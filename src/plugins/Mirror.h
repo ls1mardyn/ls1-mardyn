@@ -25,8 +25,8 @@ enum MirrorDirection : uint16_t {
 
 enum MirrorType : uint16_t {
 	MT_UNKNOWN = 0,
-    MT_REFLECT = 1,
-    MT_FORCE_CONSTANT = 2,
+	MT_REFLECT = 1,
+	MT_FORCE_CONSTANT = 2,
 	MT_ZERO_GRADIENT = 3, // Deprecated
 	MT_NORMDISTR_MB = 4,  // Deprecated
 	MT_MELAND_2004 = 5,   // Algorithm proposed by Meland et al., Phys. Fluids, Vol. 16, No. 2 (2004)
@@ -67,7 +67,10 @@ public:
 				<start>UNSIGNED_LONG</start>   <!-- Timestep until all particles are reflected -->
 				<stop>UNSIGNED_LONG</stop>         <!-- As from this timestep all particles are treated as set in "treatment" -->
 				<treatment>INT</treatment>         <!-- When not reflected, the particles are deleted (0) or transmitted (1) -->
-			</ramping> 
+			</ramping>
+			<switchcomp>
+				<cid>INT</cid>   <!-- Switch component to <cid> if molecule has passed the mirror -->
+			</switchcomp>
 		</plugin>
 	   \endcode
 	 */
@@ -81,14 +84,14 @@ public:
 			unsigned long simstep
 	) override;
 
-    /** @brief Method afterForces will be called after forcefields have been applied
-     *
-     * make pure Virtual ?
-     */
-    void afterForces(
-            ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-            unsigned long simstep
-    ) override;
+	/** @brief Method afterForces will be called after forcefields have been applied
+	 *
+	 * make pure Virtual ?
+	 */
+	void afterForces(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			unsigned long simstep
+	) override;
 
 	void endStep(
 			ParticleContainer *particleContainer,
@@ -155,6 +158,11 @@ private:
 		float width;
 		std::map<uint64_t,double> pos_map;
 	} _diffuse_mirror;
+	
+	struct SwitchComp {
+		bool enabled;
+		uint32_t cid_ub;  // component id unity based
+	} _switchComp;
 };
 
 #endif /*MIRROR_H_*/

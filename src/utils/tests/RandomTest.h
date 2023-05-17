@@ -5,8 +5,7 @@
  *      Author: tchipevn
  */
 
-#ifndef SRC_UTILS_TESTS_PERMUTATIONTEST_H_
-#define SRC_UTILS_TESTS_PERMUTATIONTEST_H_
+#pragma once
 
 #include "../Testing.h"
 
@@ -39,5 +38,3 @@ public:
 	 */
 //	void testGaussDeviate();
 };
-
-#endif /* SRC_UTILS_TESTS_PERMUTATIONTEST_H_ */

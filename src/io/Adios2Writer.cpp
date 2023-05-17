@@ -300,7 +300,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 	// for all outputs
 	const uint64_t globalNumParticles = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
-	const uint64_t localNumParticles = particleContainer->getNumberOfParticles();
+	const uint64_t localNumParticles = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 	const auto numProcs = domainDecomp->getNumProcs();
 	int const rank = domainDecomp->getRank();
 

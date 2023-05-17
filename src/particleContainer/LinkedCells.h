@@ -328,11 +328,6 @@ private:
 
 	void getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startRegionCellIndex, unsigned int &endRegionCellIndex);
 
-	RegionParticleIterator getRegionParticleIterator(
-			const double startRegion[3], const double endRegion[3],
-			const unsigned int startRegionCellIndex,
-			const unsigned int endRegionCellIndex, ParticleIterator::Type type);
-
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
 	//####################################

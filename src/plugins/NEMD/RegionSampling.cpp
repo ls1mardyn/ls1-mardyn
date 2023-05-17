@@ -77,7 +77,7 @@ SampleRegion::SampleRegion( RegionSampling* parent, double dLowerCorner[3], doub
 	_numComponents = global_simulation->getEnsemble()->getComponents()->size()+1;  // cid == 0: all components
 	_vecMass.resize(_numComponents);
 	_vecMass.at(0) = 0.;
-	for(uint8_t cid=1; cid<_numComponents; ++cid)
+	for(uint32_t cid=1; cid<_numComponents; ++cid)
 		_vecMass.at(cid) = global_simulation->getEnsemble()->getComponent(cid-1)->m();
 
 	// Init component specific parameters for VDF sampling
@@ -617,7 +617,7 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 	resizeExactly(_dBinMidpointsProfiles,_nNumBinsProfiles);
 
 	_nNumValsScalar = static_cast<unsigned long>(_nNumBinsProfiles) * static_cast<unsigned long>(_numComponents) * 3;  // * 3: directions: all(+/-) | only (+) | only (-)
-	_nNumValsVector = _nNumValsScalar * 3;                        // * 3: x, y, z-component
+	_nNumValsVector = _nNumValsScalar * 3;  // * 3: x, y, z-component
 
 #ifndef NDEBUG
 	cout << "_nNumBinsProfiles = " << _nNumBinsProfiles << endl;
@@ -639,7 +639,7 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 	// Scalar quantities
 	nOffset = 0;
 	for(unsigned int dir = 0; dir < 3; ++dir){
-		for(unsigned int cid = 0; cid<_numComponents; ++cid){
+		for(uint32_t cid = 0; cid<_numComponents; ++cid){
 			_nOffsetScalar[dir][cid] = nOffset;
 			nOffset += _nNumBinsProfiles;
 		}
@@ -648,7 +648,7 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 	nOffset = 0;
 	for(unsigned int dim = 0; dim < 3; ++dim){
 		for(unsigned int dir = 0; dir < 3; ++dir){
-			for(unsigned int cid = 0; cid<_numComponents; ++cid){
+			for(uint32_t cid = 0; cid<_numComponents; ++cid){
 				_nOffsetVector[dim][dir][cid] = nOffset;
 				nOffset += _nNumBinsProfiles;
 			}
@@ -683,6 +683,8 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 	resizeExactly(_dSquaredVelocityGlobal, _nNumValsVector);
 	resizeExactly(_dForceLocal, _nNumValsVector);
 	resizeExactly(_dForceGlobal, _nNumValsVector);
+	resizeExactly(_dVirialLocal, _nNumValsVector);
+	resizeExactly(_dVirialGlobal, _nNumValsVector);
 
 	// output profiles
 	resizeExactly(_dForce, _nNumValsVector);
@@ -690,6 +692,7 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 	resizeExactly(_d2EkinTransComp, _nNumValsVector);
 	resizeExactly(_d2EkinDriftComp, _nNumValsVector);
 	resizeExactly(_dTemperatureComp, _nNumValsVector);
+	resizeExactly(_dVirial, _nNumValsVector);
 
 	// init sampling data structures
 	this->resetLocalValuesProfiles();
@@ -819,7 +822,7 @@ void SampleRegion::initSamplingFieldYR(int nDimension)
 	resizeExactly(_dBinMidpointsFieldYR, _nNumBinsFieldYR);
 	resizeExactly(_dShellMidpointsFieldYR, _nNumShellsFieldYR);
 
-	_nNumValsFieldYR = _numComponents * 3 * _nNumShellsFieldYR * _nNumBinsFieldYR;  // *3: number of sections: 0: all, 1: upper, 2: lower section
+	_nNumValsFieldYR = 3ul * _numComponents * _nNumShellsFieldYR * _nNumBinsFieldYR;  // *3: number of sections: 0: all, 1: upper, 2: lower section
 
 #ifndef NDEBUG
 	cout << "_numComponents    = " << _numComponents    << endl;
@@ -958,9 +961,12 @@ void SampleRegion::doDiscretisationFieldYR(int nDimension)
 	_bDiscretisationDoneFieldYR = true;
 }
 
-void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
+void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension, unsigned long simstep)
 {
 	if(not _SamplingEnabledProfiles)
+		return;
+	
+	if( (simstep <= _initSamplingProfiles) or (simstep > _stopSamplingProfiles) )
 		return;
 
 	unsigned int nPosIndex;
@@ -998,6 +1004,11 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 	v2[0] = v[0]*v[0];
 	v2[1] = v[1]*v[1];
 	v2[2] = v[2]*v[2];
+
+	double virial[3];
+	virial[0] = molecule->Vi(0);
+	virial[1] = molecule->Vi(1);
+	virial[2] = molecule->Vi(2);
 
 	// Loop over directions: all (+/-) | only (+) | only (-)
 	for(unsigned int dir = 0; dir < 3; ++dir)
@@ -1076,15 +1087,26 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension)
 			#pragma omp atomic
 			#endif
 			_dForceLocal          [ vIndexCID ] += F[dim];
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
+			_dVirialLocal         [ vIndexAll ] += virial[dim];
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
+			_dVirialLocal         [ vIndexCID ] += virial[dim];
 		}
 	}
 }
 
 
-void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
+void SampleRegion::sampleVDF(Molecule* molecule, int nDimension, unsigned long simstep)
 {
 
 	if(not _SamplingEnabledVDF)
+		return;
+
+	if( (simstep <= _initSamplingVDF) or (simstep > _stopSamplingVDF) )
 		return;
 
 	// return if discretisation is not done yet
@@ -1189,9 +1211,12 @@ void SampleRegion::sampleVDF(Molecule* molecule, int nDimension)
 	}
 }
 
-void SampleRegion::sampleFieldYR(Molecule* molecule)
+void SampleRegion::sampleFieldYR(Molecule* molecule, unsigned long simstep)
 {
 	if(not _SamplingEnabledFieldYR)
+		return;
+
+	if( (simstep <= _initSamplingFieldYR) or (simstep > _stopSamplingFieldYR) )
 		return;
 
 	uint32_t nPosIndexY;
@@ -1282,6 +1307,7 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	MPI_Reduce( _dVelocityLocal.data(),        _dVelocityGlobal.data(),        _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	MPI_Reduce( _dSquaredVelocityLocal.data(), _dSquaredVelocityGlobal.data(), _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	MPI_Reduce( _dForceLocal.data(),           _dForceGlobal.data(),           _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _dVirialLocal.data(),          _dVirialGlobal.data(),               _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
 #else
 	// Scalar quantities
@@ -1298,6 +1324,7 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 		_dVelocityGlobal[i]        = _dVelocityLocal[i];
 		_dSquaredVelocityGlobal[i] = _dSquaredVelocityLocal[i];
 		_dForceGlobal[i]           = _dForceLocal[i];
+		_dVirialGlobal[i]          = _dVirialLocal[i];
 	}
 #endif
 
@@ -1321,9 +1348,9 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	{
 		for(uint8_t dim=0; dim<3; ++dim)
 		{
-			for(uint8_t cid=1; cid<_numComponents; ++cid)
+			for(uint32_t cid=1; cid<_numComponents; ++cid)
 			{
-				unsigned long offsetN    =      _nOffsetScalar[dir][cid];
+				unsigned long offsetN    = _nOffsetScalar[dir][cid];
 				unsigned long offsetComp = _nOffsetVector[dim][dir][cid];
 				unsigned long offsetSum  = _nOffsetVector[dim][dir][  0];
 
@@ -1354,7 +1381,7 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	{
 		for(uint8_t dim=0; dim<3; ++dim)
 		{
-			for(uint8_t cid=0; cid<_numComponents; ++cid)
+			for(uint32_t cid=0; cid<_numComponents; ++cid)
 			{
 				unsigned long offsetDim = _nOffsetVector[dim][dir][cid];
 				unsigned long offsetSum = _nOffsetVector[  0][dir][cid];  // sum x, y, z --> scalar
@@ -1413,6 +1440,7 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 			double d2EkinTrans = _d2EkinTransComp[nDimOffset+i];
 			double d2EkinDrift = _d2EkinDriftComp[nDimOffset+i];
 			_dTemperatureComp[nDimOffset+i] = (d2EkinTrans - d2EkinDrift) * dInvertNumMolecules;
+			_dVirial       [nDimOffset+i] = _dVirialGlobal[nDimOffset+i];
 		}
 	}
 }
@@ -1514,7 +1542,7 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 		return;
 
 	// sampling starts after initial timestep (_initSamplingProfiles) and with respect to write frequency (_writeFrequencyProfiles)
-	if( simstep <= _initSamplingProfiles )
+	if( (simstep <= _initSamplingProfiles) or (simstep > _stopSamplingProfiles) )
 		return;
 
 	if( (simstep - _initSamplingProfiles) % _writeFrequencyProfiles != 0 )
@@ -1569,6 +1597,7 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 			outputstream_scal << "                    T[" << cid << "]";
 			outputstream_scal << "              T_trans[" << cid << "]";
 			outputstream_scal << "                T_rot[" << cid << "]";
+			outputstream_scal << "                    p[" << cid << "]";
 
 			// vector
 			outputstream_vect << "                   Fx[" << cid << "]";
@@ -1586,6 +1615,9 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 			outputstream_vect << "                   Tx[" << cid << "]";
 			outputstream_vect << "                   Ty[" << cid << "]";
 			outputstream_vect << "                   Tz[" << cid << "]";
+			outputstream_vect << "                   px[" << cid << "]";
+			outputstream_vect << "                   py[" << cid << "]";
+			outputstream_vect << "                   pz[" << cid << "]";
 		}
 		outputstream_scal << endl;
 		outputstream_vect << endl;
@@ -1596,7 +1628,7 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 			outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsProfiles[s];
 			outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsProfiles[s];
 
-			for(uint8_t cid=0; cid<_numComponents; ++cid)
+			for(uint32_t cid=0; cid<_numComponents; ++cid)
 			{
 				// scalar
 				mardyn_assert( _nOffsetScalar[dir][cid]+s < _nNumValsScalar );
@@ -1615,9 +1647,25 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 				double T = _dTemperature[offset];
 				double T_trans = _dTemperatureTrans[offset];
 				double T_rot   = _dTemperatureRot[offset];
-				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << DOF_total;
-				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << DOF_trans;
-				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << DOF_rot;
+
+				// vector
+				mardyn_assert( _nOffsetVector[0][dir][cid]+s < _nNumValsVector );
+				mardyn_assert( _nOffsetVector[1][dir][cid]+s < _nNumValsVector );
+				mardyn_assert( _nOffsetVector[2][dir][cid]+s < _nNumValsVector );
+
+				unsigned long offset_x = _nOffsetVector[0][dir][cid]+s;
+				unsigned long offset_y = _nOffsetVector[1][dir][cid]+s;
+				unsigned long offset_z = _nOffsetVector[2][dir][cid]+s;
+				double Pressure = rho * ( (_dVirial[offset_x]+_dVirial[offset_y]+_dVirial[offset_z])/(3*_nNumMoleculesGlobal[offset]) + T );
+
+				double PressureX = rho * ( _dVirial[offset_x]/_nNumMoleculesGlobal[offset] + _dTemperatureComp[offset_x] );
+				double PressureY = rho * ( _dVirial[offset_y]/_nNumMoleculesGlobal[offset] + _dTemperatureComp[offset_y] );
+				double PressureZ = rho * ( _dVirial[offset_z]/_nNumMoleculesGlobal[offset] + _dTemperatureComp[offset_z] );
+
+				// scalar
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << DOF_total * _dInvertNumSamplesProfiles;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << DOF_trans * _dInvertNumSamplesProfiles;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << DOF_rot   * _dInvertNumSamplesProfiles;
 				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rho;
 				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << Ekin_total * _dInvertNumSamplesProfiles;;
 				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << Ekin_trans * _dInvertNumSamplesProfiles;;
@@ -1628,16 +1676,9 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << T;
 				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << T_trans;
 				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << T_rot;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << Pressure;
 
 				// vector
-				mardyn_assert( _nOffsetVector[0][dir][cid]+s < _nNumValsVector );
-				mardyn_assert( _nOffsetVector[1][dir][cid]+s < _nNumValsVector );
-				mardyn_assert( _nOffsetVector[2][dir][cid]+s < _nNumValsVector );
-
-				unsigned long offset_x = _nOffsetVector[0][dir][cid]+s;
-				unsigned long offset_y = _nOffsetVector[1][dir][cid]+s;
-				unsigned long offset_z = _nOffsetVector[2][dir][cid]+s;
-
 				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[offset_x];
 				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[offset_y];
 				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[offset_z];
@@ -1653,6 +1694,9 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComp[offset_x];
 				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComp[offset_y];
 				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComp[offset_z];
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PressureX;
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PressureY;
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PressureZ;
 			} // loop: cid
 			outputstream_scal << endl;
 			outputstream_vect << endl;
@@ -1677,7 +1721,7 @@ void SampleRegion::writeDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 		return;
 
 	// sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
-	if( simstep <= _initSamplingVDF )
+	if( (simstep <= _initSamplingVDF) or (simstep > _stopSamplingVDF) )
 		return;
 
 	if( (simstep - _initSamplingVDF) % _writeFrequencyVDF != 0 )
@@ -1730,7 +1774,7 @@ void SampleRegion::writeDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 	dataPtrs.at(10) = _VDF_njy_nvy_global.data();
 	dataPtrs.at(11) = _VDF_njy_nvz_global.data();
 
-	for(uint64_t cid=0; cid<_numComponents; ++cid)
+	for(uint32_t cid=0; cid<_numComponents; ++cid)
 	{
 		const ComponentSpecificParamsVDF& csp = _vecComponentSpecificParamsVDF.at(cid);
 		if(not csp.bSamplingEnabled)
@@ -1802,7 +1846,7 @@ void SampleRegion::writeDataFieldYR(DomainDecompBase* domainDecomp, unsigned lon
 		return;
 
 	// sampling starts after initial timestep (_initSamplingFieldYR) and with respect to write frequency (_writeFrequencyFieldYR)
-	if( simstep <= _initSamplingFieldYR )
+	if( (simstep <= _initSamplingFieldYR) or (simstep > _stopSamplingFieldYR) )
 		return;
 
 	if( (simstep - _initSamplingFieldYR) % _writeFrequencyFieldYR != 0 )
@@ -1908,6 +1952,7 @@ void SampleRegion::resetLocalValuesProfiles()
 	std::fill(_dVelocityLocal.begin(), _dVelocityLocal.end(), 0.);
 	std::fill(_dSquaredVelocityLocal.begin(), _dSquaredVelocityLocal.end(), 0.);
 	std::fill(_dForceLocal.begin(), _dForceLocal.end(), 0.);
+	std::fill(_dVirialLocal.begin(), _dVirialLocal.end(), 0.);
 }
 
 void SampleRegion::resetOutputDataProfiles()
@@ -2074,9 +2119,9 @@ void RegionSampling::doSampling(Molecule* mol, DomainDecompBase* domainDecomp, u
 
 	for(it=_vecSampleRegions.begin(); it!=_vecSampleRegions.end(); ++it)
 	{
-		(*it)->sampleProfiles(mol, RS_DIMENSION_Y);
-		(*it)->sampleVDF(mol, RS_DIMENSION_Y);
-		(*it)->sampleFieldYR(mol);
+		(*it)->sampleProfiles(mol, RS_DIMENSION_Y, simstep);
+		(*it)->sampleVDF(mol, RS_DIMENSION_Y, simstep);
+		(*it)->sampleFieldYR(mol, simstep);
 	}
 }
 

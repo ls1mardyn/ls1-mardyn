@@ -5,7 +5,7 @@ Summary of Plugins in Trunk
 
 Since the number of plugins is expected to grow quite rapidly, the following table provides a list of the currently available plugins. It is intended to prevent duplication of reimplementing features, which already exist in other Plugins.
 
-Plugin name  | Up to 5 Keywords | Short Description (one line)
+Plugin name | Up to 5 Keywords | Short Description (one line)
 ------------- | ------------- | --
 Adios2Reader | input, checkpoint, visualization, parallel, particle configurations, MegaMol | Requires ENABLE_ADIOS2=ON (downloads and installs ADIOS2 automatically, alternatively can use your preinstalled ADIOS2 with FIND_PACKAGE_ADIOS2=ON). Reads checkpoint for further computation. Use bpls tool (next to MarDyn executable) for investigation of ADIOS2 files or directories (*.bp).
 Adios2Writer | output, checkpoint, visualization, parallel, particle configurations, MegaMol | Requires ENABLE_ADIOS2=ON (downloads and installs ADIOS2 automatically, alternatively can use your preinstalled ADIOS2 with FIND_PACKAGE_ADIOS2=ON). Writes out particle configuration including position, velocity, angular momentum, quaternions for all components. Also provides meta information such as the full configuration file, component information, process count, and bounding box.
@@ -14,6 +14,7 @@ CheckpointWriter | checkpoint, legacy | (Legacy) Checkpoint writer. Hint: use <t
 COMaligner | alignment, particleContainer utility, visualization | Calculates Center of Mass (COM) of all particles and aligns it with center of simulation box. Dimension/frequency/speed of alignment can be controlled via XML.
 CommunicationPartnerWriter | mpi, communication, output, debugging | Prints the CommunicationPartners for each rank in a separate file.
 DecompWriter | mpi, print | Writes information on the MPI Domain Decomposition. For each rank the boxmin and boxmax is printed.
+DensityControl | density, composition, control, checkpoint | Establishes the specified target partial densities of all components within a specified region.
 DensityProfileWriter | todo | todo
 DirectedPM | utility for droplet simulations, output writer | Generates output for droplet simulations. Temperature, pressure and denstiy are calculated locally for the droplet and the surrounding gas phase in cylindrical bins. Droplet velocity is calculated as well
 DistControl | distance, interface, density profile, quasi-stationary, reference coordinates | Determines vapor-liquid interface positions from density profile. The positions can be used as reference coordinates for e.g. sampling regions in quasi-stationary evaporation simulations.
@@ -21,11 +22,11 @@ DriftCtrl | drift, hydrodynamic velocity, control, region | Control the drift or
 Dropaccelerator | utility for droplet simulations | Speeds up particles that are located within a specified spherical region at a given point in time to a desired veloctiy. The time frame for the acceleration may also be specified.
 Dropaligner | utility for droplet simulations | aligns the center of mass of particles within a spherical region with a specified center of mass in a similar fashion as the COMaligner. Used to hold a spherical droplet in position.
 EnergyLogWriter | print, file, thermodynamic macroscopic quantities | Write the global N, U_pot, U_kin, U_kinTrans, U_kinRot, T, p to file. Duplication with ResultWriter?
-ExamplePlugin  | example, sample, illustrate, usage | Print user-specifed text at a user-specified position in the code.  
-ExtractPhase  | extract, phase, interface, vapor-liquid equilibrium (VLE), local density | Extracts the liquid phase from a vapor-liquid equilibrium (VLE) simulation by evaluating the local density surrounding individual particles.
+ExamplePlugin | example, sample, illustrate, usage | Print user-specifed text at a user-specified position in the code.
+ExtractPhase | extract, phase, interface, vapor-liquid equilibrium (VLE), local density | Extracts the liquid phase from a vapor-liquid equilibrium (VLE) simulation by evaluating the local density surrounding individual particles.
 FixRegion | todo | Fixes particles within a cuboid region to their respective positions. Fixed particles still exert forces onto other particles but they do not move.
 FlopRateWriter | performance, FLOP/sec | Calculate the floating point operations per second at which the simulation runs. Only FLOPs in the force calculation are calculated.
-GammaWriter | todo | todo
+GammaWriter | sampling, surface tension | Calculate the surface tension in a two phase system consisting of one or two interfaces.
 HaloParticleWriter | mpi, communication, HaloParticles, output, debugging | Prints the halo particles for each process in a separate files.
 InMemoryCheckpointing | resilience, checkpoint, fault tolerance, in-memory | In-memory Checkpointing. Save and restore the state of a simulation from a previous snapshot stored in RAM. Under development.
 KDTreePrinter | output, debugging, kdd | Prints the full tree information of the kd-tree decomposition.
@@ -38,14 +39,14 @@ SP / VirialProfile | virial pressure profile output | Outputs the virial/partial
 LoadbalanceWriter | print, mpi, load balance, timers | Writes load balance information. Averages, min, max and a load balance is written. For more detailed output use the TimerWriter.
 LoadImbalanceThroughSleepPlugin | mpi, overlapping | Artificially introduces a load imbalance at different plugin steps. Primarily used for testing.
 MamicoCoupling | coupling, compile as library | Allows the coupling code MaMiCo to couple with ls1. Requires ls1 to be compiled as library. This is automatically done when passing MAMICO_COUPLING=ON to cmake. This plugin always switches the ls1 thermostat off.
-MaxCheck  | limit, maximum values, overlaps, explosion | Limit velocity and force of individual particles to maximum values to avoid overlaps and consequently exploding systems. 
-MaxWriter  | sampling, maximum values, force, velocity | Sampling maximum force and velocities values occuring in the system. 
+MaxCheck | limit, maximum values, overlaps, explosion | Limit velocity and force of individual particles to maximum values to avoid overlaps and consequently exploding systems.
+MaxWriter | sampling, maximum values, force, velocity | Sampling maximum force and velocities values occuring in the system.
 MettDeamon | particle-insertion, reservoir, replenish, stationary, evaporation | Replenish a liquid film by a particle reservoir, to attain stationary conditons in an e.g. evaporation simulation.
 MettDeamonFeedrateDirector | feed rate, director, reservoir, stationary, evaporation | Directing the feed rate of MettDeamon plugin, co-working with a special mirror type of Mirror plugin.
 Mirror | reflection, mirror plane, wall, boundary condition | Reflect particles at a mirror plane employing different algorithms. This can be used as a simple wall or even more complex boundary conditions.
-MmpldWriter  | visualization, particle configurations, MegaMol, mmpld, binary | Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the binary MegaMol Particle List Data file format (MMPLD).
+MmpldWriter | visualization, particle configurations, MegaMol, mmpld, binary | Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the binary MegaMol Particle List Data file format (MMPLD).
 MmspdBinWriter | visualization, particle configurations, MegaMol, mmspd, binary | Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the binary MegaMol Simple Particle Data file format (MMSPD).
-MPI_IOCheckpointWriter  | checkpointing | WIP, not functionable
+MPI_IOCheckpointWriter | checkpointing | WIP, not functionable
 MPICheckpointWriter | checkpointing | WIP, not functionable (no proper reader existing)
 ODF | orientation distribution function | Calculates the distribution of mutual orientations between dipolar molecules and writes them into an output. Always use dipolar vector [0 0 1] in the input when using this plugin. Only tested for molecules with exactly one dipole site. Application to other molecules should be possible with minor adjustments and some testing.
 Permittivity | todo | Samples the relative permittivity for pure/mixed Stockmayer fluids and mixtures containing Stockmayer fluids and unpolar fluids. Requires long sampling times (i.e. several million steps). Using global thermostat is recommended.
@@ -55,9 +56,10 @@ RDF | radial distribution function | Calculate and write the radial distribution
 RegionSampling | sampling, region, profiles, velocity distribution function (VDF), cylinder shells | Sampling profiles of various scalar and vector quantities within multiple regions, e.g. temperature, density, force, hydrodynamic velocity. Moreover velocity distribution function (VDF) and sampling of a density field rho(y,r) in cylinder shells, depending on a cartesian coordinate y and radius r is supported.
 ResultWriter | print, macroscopic thermodynamic quantities, file | Write macroscopic thermodynamic quantities to file, such as temperature, pressure, BetaTrans, BetaRot, cv, number of molecules and number of cavities (?).
 SysMonOutput | todo | todo
-TestPlugin  | test | Test correctness of plugin calls within Simulation. Simpler version without XML input of ExamplePlugin
+TestPlugin | test | Test correctness of plugin calls within Simulation. Simpler version without XML input of ExamplePlugin
 TimerWriter | Timers, mpi, print, load balance | Prints the average time for the specified timers as a transient. Separate output for each rank. Can be used to gather information of the load balance.
 VectorizationTuner | todo | todo
+VelocityExchange | temperature gradient | Swap the velocities and angular momentum of two particles. One particle is the warmest (fastest) in the specified cold region, the other one is the coldest (slowest) in the specified warm region.
 VISWriter | visualization, particle configurations, MegaMol | Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the deprecated *.vis MegaMol file format.
 VTKGridWriter | vtk, grid | Write MPI rank, number of molecules in each cell in a .vtu or .pvtu file. Requires compiling with VTK=1.
 VTKMoleculeWriter | vtk, visualization | Write a .vtu or .pvtu file with the molecules for visualiziation in ParaView. Requires compiling with VTK=1.

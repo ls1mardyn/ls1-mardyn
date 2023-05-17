@@ -35,5 +35,7 @@ private:
 	unsigned long long getCachedSize();
 	void printGeneralInfo(const std::string& string);
 	int parseLine(char* line);
+	int countHugePages();
+	int getOwnMemory();
 };
 

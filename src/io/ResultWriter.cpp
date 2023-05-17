@@ -4,10 +4,9 @@
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
 #include "utils/Logger.h"
+#include <chrono>
 
 using Log::global_log;
-using namespace std;
-
 
 void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
@@ -33,11 +32,12 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
                         DomainDecompBase *domainDecomp, Domain * /*domain*/) {
 
 	if(domainDecomp->getRank() == 0) {
-		time_t now;
-		time(&now);
+		const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+		tm unused{};
+		const auto nowStr = std::put_time(localtime_r(&now, &unused), "%c");
 		string resultfile(_outputPrefix+".res");
 		_resultStream.open(resultfile.c_str(), std::ios::out);
-		_resultStream << "# ls1 MarDyn simulation started at " << ctime(&now) << endl;
+		_resultStream << "# ls1 MarDyn simulation started at " << nowStr << endl;
 		_resultStream << "# Averages are the accumulated values over " << _U_pot_acc->getWindowLength()  << " time steps."<< endl;
 		_resultStream << std::setw(10) << "# step" << std::setw(_writePrecision+15) << "time" 
 			<< std::setw(_writePrecision+15) << "U_pot"
@@ -80,9 +80,10 @@ void ResultWriter::finish(ParticleContainer * /*particleContainer*/,
 						  DomainDecompBase *domainDecomp, Domain * /*domain*/){
 
 	if(domainDecomp->getRank() == 0) {
-		time_t now;
-		time(&now);
-		_resultStream << "# ls1 mardyn simulation finished at " << ctime(&now) << endl;
+		const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+		tm unused{};
+		const auto nowStr = std::put_time(localtime_r(&now, &unused), "%c");
+		_resultStream << "# ls1 mardyn simulation finished at " << nowStr << endl;
 		_resultStream.close();
 	}
 }

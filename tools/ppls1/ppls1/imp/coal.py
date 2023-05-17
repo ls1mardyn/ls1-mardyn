@@ -82,6 +82,9 @@ def imp_coal_vtk_txt(files, flist=False):
 #    print("len:",len(fplist))
 
     ln_number=0
+    points_params = list()
+    cells_params = list()
+    rho_params = list()
     with open(fplist[0]) as search:
         print('Scaning VTK format from file:',fplist[0])
         for line in search:

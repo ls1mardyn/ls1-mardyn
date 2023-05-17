@@ -575,7 +575,7 @@ class XMLOptionChecker(object):
 			message = 'The attribute "' + optionType + '" has a invalid value: "' + xmlString + '". Valid values are: "'
 			for option in options:
 				message += option + '"'
-				if option is not options[-1]:
+				if option != options[-1]:
 					message += ', '
 				else:
 					message += '. '
