@@ -16,6 +16,8 @@
  * particle container. This is needed during the force calculation in AdResS as FPRegions can be defined anywhere.
  * To increase performance this class also is capable of handling the traversal with multiple threads.
  * For that, there is a simplified C08 traversal implemented alongside with a cell structure consisting of region iterators.
+ *
+ * Based on C08CellPairTraversal.h
  * */
 class AdResSRegionTraversal {
 public:

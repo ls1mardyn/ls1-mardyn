@@ -8,6 +8,7 @@
 #include "molecules/Comp2Param.h"
 #include "AdResSData.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
+#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 
 /**
  * Handles all force calculation done in AdResS method.
@@ -21,10 +22,21 @@ public:
     explicit AdResSForceAdapter(MesoValues& mesoValues);
 
     /**
+     * Destructor: clears allocated memory
+     * */
+    ~AdResSForceAdapter() noexcept;
+
+    /**
      * @brief initializes the local Comp2Param instance by using the provided domain.
      * _c2p is used to force calculation
      * */
     void init(Domain* domain);
+
+    /**
+     * @brief reduction of all thread local buffers, called when all forces are computed.
+     * Will set results in _mesoValues.
+     * */
+    void finish();
 
     /** @brief based on ParticlePairs2PotForceAdapter.h -> Adapted to support AdResS
      * calculate force between pairs and collect macroscopic contribution
@@ -77,10 +89,11 @@ public:
                          std::unordered_map<unsigned long, Resolution> &compResMap, FPRegion &region);
 
 private:
-    //! @brief params for force calculation
-    Comp2Param _c2p;
+    using PP2PFAThreadData = ParticlePairs2PotForceAdapter::PP2PFAThreadData;
     //! @brief mesoscopic value buffer
     MesoValues& _mesoValues;
+    //! @brief meso-buffer and params for each thread
+    std::vector<PP2PFAThreadData*> _threadData;
 
     /** @brief Computes the inverted potential and force to reverse prior forces. Does not consider weight function.
      *

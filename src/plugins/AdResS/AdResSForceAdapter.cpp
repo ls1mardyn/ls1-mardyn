@@ -6,10 +6,48 @@
 #include "molecules/potforce.h"
 #include "AdResS.h"
 
-AdResSForceAdapter::AdResSForceAdapter(MesoValues &mesoValues) : _mesoValues(mesoValues), _c2p(){ }
+AdResSForceAdapter::AdResSForceAdapter(MesoValues &mesoValues) : _mesoValues(mesoValues) {
+    const int numThreads = mardyn_get_max_threads();
+    Log::global_log->info() << "[AdResSForceAdapter]: allocate data for " << numThreads << " threads." << std::endl;
+    _threadData.resize(numThreads);
+    #if defined(_OPENMP)
+    #pragma omp parallel
+    #endif
+    {
+        auto* myown = new PP2PFAThreadData();
+        const int myid = mardyn_get_thread_num();
+        _threadData[myid] = myown;
+    } // end pragma omp parallel
+}
+
+AdResSForceAdapter::~AdResSForceAdapter() noexcept {
+    #if defined(_OPENMP)
+    #pragma omp parallel
+    #endif
+    {
+        const int myid = mardyn_get_thread_num();
+        delete _threadData[myid];
+    } // end pragma omp parallel
+}
 
 void AdResSForceAdapter::init(Domain *domain) {
-    _c2p = Comp2Param(domain->getComp2Params());
+    #if defined(_OPENMP)
+    #pragma omp parallel
+    #endif
+    {
+        const int myid = mardyn_get_thread_num();
+        _threadData[myid]->initComp2Param(domain->getComp2Params());
+        _threadData[myid]->clear();
+    }
+}
+
+void AdResSForceAdapter::finish() {
+    for(auto tLocal : _threadData) {
+        _mesoValues._virial += tLocal->_virial;
+        _mesoValues._upot6LJ += tLocal->_upot6LJ;
+        _mesoValues._upotXpoles += tLocal->_upotXpoles;
+        _mesoValues._myRF += tLocal->_myRF;
+    }
 }
 
 double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2, std::array<double, 3> distanceVector,
@@ -17,7 +55,9 @@ double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2,
                                        double dd, bool calculateLJ, bool invert,
                                        std::unordered_map<unsigned long, Resolution> &compResMap,
                                        FPRegion &region) {
-    ParaStrm& params = _c2p(molecule1.componentid(), molecule2.componentid());
+    const int tid = mardyn_get_thread_num();
+    PP2PFAThreadData &my_threadData = *_threadData[tid];
+    ParaStrm& params = (* my_threadData._comp2Param)(molecule1.componentid(), molecule2.componentid());
     params.reset_read();
 
     switch (pairType) {
@@ -25,10 +65,10 @@ double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2,
         double dummy1, dummy2, dummy3, dummy4[3], Virial3[3];
 
         case MOLECULE_MOLECULE :
-            potForce(molecule1, molecule2, params, distanceVector, _mesoValues._upot6LJ, _mesoValues._upotXpoles,
-                     _mesoValues._myRF, Virial3, calculateLJ, invert, compResMap, region);
-            _mesoValues._virial += 2*(Virial3[0]+Virial3[1]+Virial3[2]);
-            return _mesoValues._upot6LJ + _mesoValues._upotXpoles;
+            potForce(molecule1, molecule2, params, distanceVector, my_threadData._upot6LJ, my_threadData._upotXpoles,
+                     my_threadData._myRF, Virial3, calculateLJ, invert, compResMap, region);
+            my_threadData._virial += 2*(Virial3[0]+Virial3[1]+Virial3[2]);
+            return my_threadData._upot6LJ + my_threadData._upotXpoles;
         case MOLECULE_HALOMOLECULE :
             potForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ, invert,
                      compResMap, region);

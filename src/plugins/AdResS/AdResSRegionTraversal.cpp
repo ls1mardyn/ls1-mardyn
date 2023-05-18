@@ -62,7 +62,7 @@ AdResSRegionTraversal::AdResSRegionTraversal(std::array<double, 3> checkLow, std
         for(long indY = 0; indY < _dims[1]; indY++) {
             for(long indZ = 0; indZ < _dims[2]; indZ++) {
                 std::array<double,3> low_offset = {_cutoff * indX, _cutoff * indY, _cutoff * indZ};
-                std::array<double,3> high_offset = {(_cutoff + 1) * indX, (_cutoff + 1) * indY, (_cutoff + 1) * indZ};
+                std::array<double,3> high_offset = {_cutoff * (indX + 1), _cutoff * (indY + 1), _cutoff * (indZ + 1)};
                 std::array<double,3> low = {checkLow[0] + low_offset[0], checkLow[1] + low_offset[1], checkLow[2] + low_offset[2]};
                 std::array<double,3> high = {checkLow[0] + high_offset[0], checkLow[1] + high_offset[1], checkLow[2] + high_offset[2]};
                 if(indX == _dims[0] - 1) high[0] = checkHigh[0];
@@ -97,7 +97,6 @@ void AdResSRegionTraversal::traverse(AdResSForceAdapter& forceAdapter, FPRegion&
 
                             unsigned offset2 = current_pair.second;
                             unsigned cellIndex2 = baseIndex + offset2;
-
                             RegionParticleIterator cell1 = RegionParticleIterator(this->_cells[cellIndex1]) ;
                             RegionParticleIterator cell2 = RegionParticleIterator(this->_cells[cellIndex2]);
 

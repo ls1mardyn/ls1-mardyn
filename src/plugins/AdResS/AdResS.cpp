@@ -14,6 +14,8 @@
 using namespace std;
 using Log::global_log;
 
+double (*AdResS::weight)(std::array<double, 3> r, FPRegion& region) = nullptr;
+
 AdResS::AdResS() : _mesoVals(), _forceAdapter(_mesoVals), _fpRegions(), _particleContainer(nullptr),
                    _components(nullptr), _comp_to_res(), _domain(nullptr) {};
 
@@ -58,8 +60,6 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
                 exit(669);
             }
         }
-
-        _forceAdapter.init(domain);
     }
 }
 
@@ -69,8 +69,9 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
         {weightEuclid, weightManhattan, weightComponent, weightNearest};
     std::string impl = weight_impls[0];
     xmlconfig.getNodeValue("weightImpl", impl);
-    unsigned long index = std::distance(std::find(weight_impls.begin(), weight_impls.end(), impl), weight_impls.begin());
+    unsigned long index = std::distance(weight_impls.begin(), std::find(weight_impls.begin(), weight_impls.end(), impl));
     AdResS::weight = impls[index >= 4 ? 0 : index];
+    global_log->info() << "[AdResS] Using weight implementation " << weight_impls[index >= 4 ? 0 : index] << std::endl;
 
     long numRegions = 0;
     XMLfile::Query query = xmlconfig.query("fpregions/region");
@@ -210,8 +211,10 @@ void AdResS::computeForce(bool invert) {
 
                     // now have created a box in which forces need to be calculated
                     // this we will multi-thread: for that we implement a simplified C08-Traversal
+                    _forceAdapter.init(_domain); // clear thread data
                     AdResSRegionTraversal traversal{ checkLow, checkHigh, _particleContainer, _comp_to_res};
                     traversal.traverse(_forceAdapter, region, invert);
+                    _forceAdapter.finish(); // gather thread data
                 }
             }
         }
