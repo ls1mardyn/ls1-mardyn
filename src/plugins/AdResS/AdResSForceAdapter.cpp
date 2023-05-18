@@ -426,7 +426,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         for (unsigned sj = 0; sj < ne2; sj++) {
             massJ = mj.component()->ljcenter(sj).m();
             if((massI == 0) ^ (massJ == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             const std::array<double,3> djj = mj.charge_d_abs(sj);
@@ -449,7 +449,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         for (unsigned sj = 0; sj < nq2; sj++) {
             massJ = mj.component()->ljcenter(sj).m();
             if((massI == 0) ^ (massJ == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             const std::array<double,3> djj = mj.quadrupole_d_abs(sj);
@@ -474,7 +474,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         for (unsigned sj = 0; sj < nd2; sj++) {
             massJ = mj.component()->ljcenter(sj).m();
             if((massI == 0) ^ (massJ == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             const std::array<double,3> djj = mj.dipole_d_abs(sj);
@@ -506,7 +506,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         for (unsigned sj = 0; sj < ne2; sj++) {
             massJ = mj.component()->ljcenter(sj).m();
             if((massI == 0) ^ (massJ == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             const std::array<double,3> djj = mj.charge_d_abs(sj);
@@ -530,7 +530,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         for (unsigned int sj = 0; sj < nq2; ++sj) {
             massJ = mj.component()->ljcenter(sj).m();
             if((massI == 0) ^ (massJ == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             //double drs[3];
@@ -557,7 +557,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         for (unsigned int sj = 0; sj < nd2; ++sj) {
             massJ = mj.component()->ljcenter(sj).m();
             if((massI == 0) ^ (massJ == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             //double drs[3];
@@ -590,7 +590,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         for (unsigned sj = 0; sj < ne2; sj++) {
             massJ = mj.component()->ljcenter(sj).m();
             if((massI == 0) ^ (massJ == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             const std::array<double,3> djj = mj.charge_d_abs(sj);
@@ -614,7 +614,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         for (unsigned int sj = 0; sj < nq2; ++sj) {
             massJ = mj.component()->ljcenter(sj).m();
             if((massI == 0) ^ (massJ == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             //double drs[3];
@@ -640,7 +640,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         for (unsigned int sj = 0; sj < nd2; ++sj) {
             massJ = mj.component()->ljcenter(sj).m();
             if((massI == 0) ^ (massJ == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp; params >> tmp;
                 continue;
             }
             const std::array<double,3> djj = mj.dipole_d_abs(sj);
@@ -756,7 +756,7 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             massJ = mj.component()->ljcenter(sj).m();
             if((resolutionJ == CoarseGrain && massI != 0) ||
                (resolutionJ == FullParticle && massI == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             const std::array<double,3> djj = mj.charge_d_abs(sj);
@@ -780,7 +780,7 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             massJ = mj.component()->ljcenter(sj).m();
             if((resolutionJ == CoarseGrain && massI != 0) ||
                (resolutionJ == FullParticle && massI == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             const std::array<double,3> djj = mj.quadrupole_d_abs(sj);
@@ -806,7 +806,7 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             massJ = mj.component()->ljcenter(sj).m();
             if((resolutionJ == CoarseGrain && massI != 0) ||
                (resolutionJ == FullParticle && massI == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             const std::array<double,3> djj = mj.dipole_d_abs(sj);
@@ -839,7 +839,7 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             massJ = mj.component()->ljcenter(sj).m();
             if((resolutionJ == CoarseGrain && massI != 0) ||
                (resolutionJ == FullParticle && massI == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             const std::array<double,3> djj = mj.charge_d_abs(sj);
@@ -864,7 +864,7 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             massJ = mj.component()->ljcenter(sj).m();
             if((resolutionJ == CoarseGrain && massI != 0) ||
                (resolutionJ == FullParticle && massI == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             //double drs[3];
@@ -892,7 +892,7 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             massJ = mj.component()->ljcenter(sj).m();
             if((resolutionJ == CoarseGrain && massI != 0) ||
                (resolutionJ == FullParticle && massI == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             //double drs[3];
@@ -926,7 +926,7 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             massJ = mj.component()->ljcenter(sj).m();
             if((resolutionJ == CoarseGrain && massI != 0) ||
                (resolutionJ == FullParticle && massI == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             const std::array<double,3> djj = mj.charge_d_abs(sj);
@@ -951,7 +951,7 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             massJ = mj.component()->ljcenter(sj).m();
             if((resolutionJ == CoarseGrain && massI != 0) ||
                (resolutionJ == FullParticle && massI == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp;
                 continue;
             }
             //double drs[3];
@@ -978,7 +978,7 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             massJ = mj.component()->ljcenter(sj).m();
             if((resolutionJ == CoarseGrain && massI != 0) ||
                (resolutionJ == FullParticle && massI == 0)) {
-                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                double tmp; params >> tmp; params >> tmp;
                 continue;
             }
             const std::array<double,3> djj = mj.dipole_d_abs(sj);

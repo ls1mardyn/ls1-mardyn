@@ -23,6 +23,7 @@ AdResSRegionTraversal::AdResSRegionTraversal(std::array<double, 3> checkLow, std
 
     for (int d = 0; d < 3; ++d) {
         _dims[d] = static_cast<long>((checkHigh[d] - checkLow[d]) / _cutoff);
+        _dims[d] += 1; // need 1 dummy cell in every direction to get remaining interactions
         _end[d] = _dims[d] - 1;
     }
 
@@ -65,9 +66,10 @@ AdResSRegionTraversal::AdResSRegionTraversal(std::array<double, 3> checkLow, std
                 std::array<double,3> high_offset = {_cutoff * (indX + 1), _cutoff * (indY + 1), _cutoff * (indZ + 1)};
                 std::array<double,3> low = {checkLow[0] + low_offset[0], checkLow[1] + low_offset[1], checkLow[2] + low_offset[2]};
                 std::array<double,3> high = {checkLow[0] + high_offset[0], checkLow[1] + high_offset[1], checkLow[2] + high_offset[2]};
-                if(indX == _dims[0] - 1) high[0] = checkHigh[0];
-                if(indY == _dims[1] - 1) high[1] = checkHigh[1];
-                if(indZ == _dims[2] - 1) high[2] = checkHigh[2];
+                if(indX == _dims[0] - 2) high[0] = checkHigh[0]; // - 1 for last index and - 1 for one dummy cell
+                if(indY == _dims[1] - 2) high[1] = checkHigh[1]; // - 1 for last index and - 1 for one dummy cell
+                if(indZ == _dims[2] - 2) high[2] = checkHigh[2]; // - 1 for last index and - 1 for one dummy cell
+                if(indX == _dims[0] - 1 || indY == _dims[1] - 1 || indZ == _dims[2] - 1) high = low; // make empty dummy cells
                 _cells[threeToOneD(indX, indY, indZ, _dims)] = _particleContainer->regionIterator(low.data(), high.data(), ParticleIterator::ALL_CELLS);
             }
         }
