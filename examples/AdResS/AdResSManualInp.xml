@@ -12,7 +12,7 @@
         <run>
             <currenttime>0</currenttime>
             <production>
-                <steps>2000</steps>
+                <steps>40000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -24,9 +24,9 @@
             <!--Ensemble is the main topic of the simulation -->
             <temperature unit="reduced" >0.0012</temperature>	<!-- in future also units="K" -->
             <domain type="box">
-                <lx unit="reduced">300.</lx>
-                <ly unit="reduced">40.</ly>
-                <lz unit="reduced">40.</lz>
+                <lx unit="reduced">50.</lx>
+                <ly unit="reduced">50.</ly>
+                <lz unit="reduced">50.</lz>
             </domain>
             <!-- instead of lx/ly/lz we might accept density -->
             <components>
@@ -119,11 +119,7 @@
             </components>
 
             <phasespacepoint>
-                <generator name="CubicGridGenerator">
-                    <specification>density</specification>
-                    <density>0.01</density>
-                    <binaryMixture>false</binaryMixture>
-                </generator>
+                <file type="ASCII">test.phase.inp</file>
             </phasespacepoint>
         </ensemble>
 
@@ -134,22 +130,18 @@
                 <traversalSelector>c08</traversalSelector>
             </datastructure>
             <cutoffs type="CenterOfMass" >
-                <radiusLJ unit="reduced" >16.5351</radiusLJ>
+                <radiusLJ unit="reduced" >10.</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField" >
                 <epsilon>0</epsilon>
             </electrostatic>
-
-            <thermostat type="VelocityScaling" component="1">
-                <temperature>0.7</temperature>
-            </thermostat>
         </algorithm>
 
         <output>
             <outputplugin name="VTKMoleculeWriter">
                 <writefrequency>1</writefrequency>
                 <writefrequencyOffset>0</writefrequencyOffset>
-                <outputprefix>AdResSLarge</outputprefix>
+                <outputprefix>ManualInp</outputprefix>
             </outputplugin>
         </output>
 
@@ -157,13 +149,8 @@
             <weightImpl>euclid</weightImpl>
             <fpregions>
                 <region id="1">
-                    <lowX>115.0</lowX><lowY>10.0</lowY><lowZ>10.0</lowZ>
-                    <highX>135.0</highX><highY>30.0</highY><highZ>30.0</highZ>
-                    <hybridDim>10.0</hybridDim>
-                </region>
-                <region id="2">
-                    <lowX>165.0</lowX><lowY>10.0</lowY><lowZ>10.0</lowZ>
-                    <highX>185.0</highX><highY>30.0</highY><highZ>30.0</highZ>
+                    <lowX>20.0</lowX><lowY>20.0</lowY><lowZ>20.0</lowZ>
+                    <highX>30.0</highX><highY>30.0</highY><highZ>30.0</highZ>
                     <hybridDim>10.0</hybridDim>
                 </region>
             </fpregions>

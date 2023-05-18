@@ -33,35 +33,28 @@
                 <moleculetype id="1" name="FP_Mol">
                     <coord_base>principal_axes</coord_base>
                     <site type="LJ126" id="1" >
-                        <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
-                        <mass>0.012</mass>
-                        <sigma>5.31712452</sigma>
-                        <epsilon>3.91811245e-05</epsilon>
-                        <shifted>false</shifted>
-                    </site>
-                    <site type="LJ126" id="2" >
                         <coords> <x>0.57735027</x> <y>0.57735027</y> <z>0.57735027</z> </coords>
                         <mass>0.001</mass>
-                        <sigma>5.62288233</sigma>
-                        <epsilon>0.00031824324</epsilon>
+                        <sigma>5.0</sigma>
+                        <epsilon>0.0001</epsilon>
                     </site>
                     <site type="LJ126" id="2" >
                         <coords> <x>-0.57735027</x> <y>-0.57735027</y> <z>0.57735027</z> </coords>
                         <mass>0.001</mass>
-                        <sigma>5.62288233</sigma>
-                        <epsilon>0.00031824324</epsilon>
+                        <sigma>5.0</sigma>
+                        <epsilon>0.0001</epsilon>
                     </site>
-                    <site type="LJ126" id="2" >
+                    <site type="LJ126" id="3" >
                         <coords> <x>-0.57735027</x> <y>0.57735027</y> <z>-0.57735027</z> </coords>
                         <mass>0.001</mass>
-                        <sigma>5.62288233</sigma>
-                        <epsilon>0.00031824324</epsilon>
+                        <sigma>5.0</sigma>
+                        <epsilon>0.0001</epsilon>
                     </site>
-                    <site type="LJ126" id="2" >
+                    <site type="LJ126" id="4" >
                         <coords> <x>0.57735027</x> <y>-0.57735027</y> <z>-0.57735027</z> </coords>
                         <mass>0.001</mass>
-                        <sigma>5.62288233</sigma>
-                        <epsilon>0.00031824324</epsilon>
+                        <sigma>5.0</sigma>
+                        <epsilon>0.0001</epsilon>
                     </site>
                     <momentsofinertia rotates="xyz">
                         <Ixx>0.0</Ixx>
@@ -74,40 +67,33 @@
                     <site type="LJ126" id="1" >
                         <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
                         <mass>0.0</mass>
-                        <sigma>5.470003425</sigma>
-                        <epsilon>0.000111665</epsilon>
+                        <sigma>5.0</sigma>
+                        <epsilon>0.0004</epsilon>
                         <shifted>false</shifted>
                     </site>
                     <site type="LJ126" id="2" >
-                        <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
-                        <mass>0.012</mass>
-                        <sigma>5.31712452</sigma>
-                        <epsilon>3.91811245e-05</epsilon>
-                        <shifted>false</shifted>
-                    </site>
-                    <site type="LJ126" id="3" >
                         <coords> <x>0.57735027</x> <y>0.57735027</y> <z>0.57735027</z> </coords>
                         <mass>0.001</mass>
-                        <sigma>5.62288233</sigma>
-                        <epsilon>0.00031824324</epsilon>
+                        <sigma>5.0</sigma>
+                        <epsilon>0.0001</epsilon>
                     </site>
-                    <site type="LJ126" id="4" >
+                    <site type="LJ126" id="3" >
                         <coords> <x>-0.57735027</x> <y>-0.57735027</y> <z>0.57735027</z> </coords>
                         <mass>0.001</mass>
-                        <sigma>5.62288233</sigma>
-                        <epsilon>0.00031824324</epsilon>
+                        <sigma>5.0</sigma>
+                        <epsilon>0.0001</epsilon>
                     </site>
-                    <site type="LJ126" id="5" >
+                    <site type="LJ126" id="4" >
                         <coords> <x>-0.57735027</x> <y>0.57735027</y> <z>-0.57735027</z> </coords>
                         <mass>0.001</mass>
-                        <sigma>5.62288233</sigma>
-                        <epsilon>0.00031824324</epsilon>
+                        <sigma>5.0</sigma>
+                        <epsilon>0.0001</epsilon>
                     </site>
-                    <site type="LJ126" id="6" >
+                    <site type="LJ126" id="5" >
                         <coords> <x>0.57735027</x> <y>-0.57735027</y> <z>-0.57735027</z> </coords>
                         <mass>0.001</mass>
-                        <sigma>5.62288233</sigma>
-                        <epsilon>0.00031824324</epsilon>
+                        <sigma>5.0</sigma>
+                        <epsilon>0.0001</epsilon>
                     </site>
                     <momentsofinertia rotates="xyz">
                         <Ixx>0.0</Ixx>
@@ -119,9 +105,9 @@
                     <coord_base>principal_axes</coord_base>
                     <site type="LJ126" id="1" >
                         <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
-                        <mass>0.016</mass>
-                        <sigma>5.470003425</sigma>
-                        <epsilon>0.000111665</epsilon>
+                        <mass>0.004</mass>
+                        <sigma>5.0</sigma>
+                        <epsilon>0.0004</epsilon>
                         <shifted>false</shifted>
                     </site>
                     <momentsofinertia rotates="xyz">
@@ -168,6 +154,7 @@
         </output>
 
         <plugin name="AdResS">
+            <weightImpl>euclid</weightImpl>
             <fpregions>
                 <region id="1">
                     <lowX>10.0</lowX><lowY>10.0</lowY><lowZ>10.0</lowZ>
