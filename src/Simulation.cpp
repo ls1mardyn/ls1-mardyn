@@ -329,7 +329,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_domainDecomposition = new DomainDecomposition();
 				#else
 				_domainDecomposition = new DomainDecomposition(coupling::interface::LS1StaticCommData::getInstance().getLocalCommunicator(),
-															coupling::interface::LS1StaticCommData::getInstance().getDomainBreakDown());
+															coupling::interface::LS1StaticCommData::getInstance().getDomainGridDecomp());
 				#endif
 			}
 			else if(parallelisationtype == "KDDecomposition") {
