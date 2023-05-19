@@ -64,14 +64,14 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
 }
 
 void AdResS::readXML(XMLfileUnits &xmlconfig) {
-    static const std::array<std::string, 4> weight_impls {"euclid", "manhattan", "component", "near"};
-    static const std::array<double (*)(std::array<double, 3> r, FPRegion &region), 4> impls
-        {weightEuclid, weightManhattan, weightComponent, weightNearest};
+    static const std::array<std::string, 5> weight_impls {"euclid", "manhattan", "component", "near", "flat"};
+    static const std::array<double (*)(std::array<double, 3> r, FPRegion &region), 5> impls
+        {weightEuclid, weightManhattan, weightComponent, weightNearest, weightFlat};
     std::string impl = weight_impls[0];
     xmlconfig.getNodeValue("weightImpl", impl);
     unsigned long index = std::distance(weight_impls.begin(), std::find(weight_impls.begin(), weight_impls.end(), impl));
-    AdResS::weight = impls[index >= 4 ? 0 : index];
-    global_log->info() << "[AdResS] Using weight implementation " << weight_impls[index >= 4 ? 0 : index] << std::endl;
+    AdResS::weight = impls[index >= 5 ? 0 : index];
+    global_log->info() << "[AdResS] Using weight implementation " << weight_impls[index >= 5 ? 0 : index] << std::endl;
 
     long numRegions = 0;
     XMLfile::Query query = xmlconfig.query("fpregions/region");
@@ -300,4 +300,9 @@ double AdResS::weightNearest(std::array<double, 3> r, FPRegion &region) {
     }
     // point is in the CG region -> weight is 0
     else return 0.;
+}
+
+double AdResS::weightFlat(std::array<double, 3> r, FPRegion &region) {
+    if(FPRegion::isInnerPoint(r, region._low, region._high)) return 1.;
+    return 0.;
 }

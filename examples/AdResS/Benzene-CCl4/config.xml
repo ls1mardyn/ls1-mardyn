@@ -22,7 +22,7 @@
 
         <ensemble type="NVT">
             <!--Ensemble is the main topic of the simulation -->
-            <temperature unit="reduced" >50.</temperature>	<!-- in future also units="K" -->
+            <temperature unit="reduced" >100.</temperature>	<!-- in future also units="K" -->
             <domain type="box">
                 <lx unit="reduced">400.</lx>
                 <ly unit="reduced">200.</ly>

@@ -205,6 +205,14 @@ private:
      * */
     static double weightNearest(std::array<double, 3> r, FPRegion& region);
 
+    /**
+     * @brief Weighting function for AdResS force computation.
+     * Implementation disables Hybrid region. Only for testing purposes, do not use in production.
+     * @param r position of the site
+     * @param region region of FP
+     * */
+    static double weightFlat(std::array<double, 3> r, FPRegion& region);
+
 };
 
 #endif //MARDYN_ADRESS_H
