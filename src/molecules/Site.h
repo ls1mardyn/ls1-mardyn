@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstdint>
 #include <string>
+#include <algorithm>
 
 using Log::global_log;
 
@@ -130,6 +131,8 @@ public:
 		// Read shifted value and check if its boolean (true/false) to avoid legacy-errors
 		std::string strShifted = "false";
 		xmlconfig.getNodeValue("shifted", strShifted);
+		// Convert to lower case to avoid input errors
+		std::transform(strShifted.begin(), strShifted.end(), strShifted.begin(), [](auto c) { return std::tolower(c); });
 		if (strShifted == "true" || strShifted == "false") {
 			xmlconfig.getNodeValue("shifted", _shiftRequested);
 		} else {

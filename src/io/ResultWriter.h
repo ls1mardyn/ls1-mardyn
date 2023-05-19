@@ -56,6 +56,7 @@ public:
 private:
 	uint64_t _writeFrequency{1000UL};
 	unsigned int _writePrecision{5};
+	unsigned int _writeWidth{20};
 	std::string _outputPrefix{"mardyn"};
 	uint64_t _numSamples{0UL};
 	double _uPot_acc{0.0F};
