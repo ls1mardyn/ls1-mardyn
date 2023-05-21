@@ -26,8 +26,8 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
     for(const auto& region : _fpRegions) {
         global_log->debug() << "[AdResS] FPRegion Box from ["
         << region._low[0] << "," << region._low[1] << "," << region._low[2] << "] to ["
-        << region._high[0] << "," << region._high[1] << "," << region._high[2] << "] with hybrid dim "
-        << region._hybridDim  << std::endl;
+        << region._high[0] << "," << region._high[1] << "," << region._high[2] << "] with hybrid dims ["
+        << region._hybridDims[0] << "," << region._hybridDims[1] << "," << region._hybridDims[2] << "]" << std::endl;
     }
 
     _components = _simulation.getEnsemble()->getComponents();
@@ -97,7 +97,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
         global_log->info() << "[AdResS] FPRegion Box from ["
                             << region._low[0] << "," << region._low[1] << "," << region._low[2] << "] to ["
                             << region._high[0] << "," << region._high[1] << "," << region._high[2] << "] with hybrid dim "
-                            << region._hybridDim  << std::endl;
+                            << region._hybridDims[0] << "," << region._hybridDims[1] << "," << region._hybridDims[2] << "]" << std::endl;
     }
 }
 
@@ -274,7 +274,8 @@ double AdResS::weightComponent(std::array<double, 3> r, FPRegion &region) {
                                       std::max(std::max(region._low[2] - r[2], 0.), std::max(r[2] - region._high[2], 0.))};
         double w = 1.;
         for(int d = 0; d < 3; d++) {
-            w *= contribute_dir[d] * std::cos(M_PI/(2*region._hybridDim) * dist_dir[d]) + (1 - contribute_dir[d]);
+            if(region._hybridDims[d] != 0)
+                w *= contribute_dir[d] * std::cos(M_PI/(2*region._hybridDims[d]) * dist_dir[d]) + (1 - contribute_dir[d]);
         }
         return w;
     }
@@ -295,8 +296,14 @@ double AdResS::weightNearest(std::array<double, 3> r, FPRegion &region) {
                                       std::max(std::max(region._low[2] - r[2], 0.), std::max(r[2] - region._high[2], 0.))};
         // => distance to the closest point of r on the surface of the inner region is the l2-norm of dist_dir
         double dist = sqrt(std::pow(dist_dir[0],2)+std::pow(dist_dir[1],2)+std::pow(dist_dir[2],2));
-        if(dist >= region._hybridDim) return 0.; // we are outside the rounded region -> treat as CG
-        return std::pow(std::cos(M_PI/(2*region._hybridDim) * dist), 2);
+        // compute hybrid size as hybrid width is not equal on all sides
+        double hDim = 0;
+        for(int d = 0; d < 3; d++) {
+            hDim += (dist_dir[d] != 0) * std::pow(region._hybridDims[d], 2);
+        }
+        hDim = sqrt(hDim);
+        if(dist >= hDim) return 0.; // we are outside the rounded region -> treat as CG
+        return std::pow(std::cos(M_PI/(2*hDim) * dist), 2);
     }
     // point is in the CG region -> weight is 0
     else return 0.;

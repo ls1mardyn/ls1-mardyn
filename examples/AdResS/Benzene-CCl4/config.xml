@@ -75,12 +75,12 @@
                 <region id="1">
                     <lowX>140.0</lowX><lowY>90.0</lowY><lowZ>90.0</lowZ>
                     <highX>160.0</highX><highY>110.0</highY><highZ>110.0</highZ>
-                    <hybridDim>20.0</hybridDim>
+                    <hybridDimX>20.0</hybridDimX><hybridDimY>20.0</hybridDimY><hybridDimZ>20.0</hybridDimZ>
                 </region>
                 <region id="2">
                     <lowX>220.0</lowX><lowY>90.0</lowY><lowZ>90.0</lowZ>
                     <highX>240.0</highX><highY>110.0</highY><highZ>110.0</highZ>
-                    <hybridDim>20.0</hybridDim>
+                    <hybridDimX>20.0</hybridDimX><hybridDimY>20.0</hybridDimY><hybridDimZ>20.0</hybridDimZ>
                 </region>
             </fpregions>
         </plugin>

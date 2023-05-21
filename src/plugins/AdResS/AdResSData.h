@@ -41,7 +41,7 @@ struct FPRegion {
     //! @brief center point of FP region
     std::array<double, 3> _center;
     //! @brief thickness of hybrid walls
-    double _hybridDim;
+    std::array<double, 3> _hybridDims;
     //! @brief dimensions of the FP region
     std::array<double, 3> _dim;
 
@@ -51,8 +51,8 @@ struct FPRegion {
      * @param high is the right higher corner of the FP box
      * @param hDim is the width of the hybrid area shell around the FP box
      * */
-    FPRegion(const std::array<double,3>& low = {0,0,0}, const std::array<double, 3>& high = {0,0,0}, double hDim = 0)
-            : _low(low), _high(high), _hybridDim(hDim), _dim({0,0,0}) {}
+    FPRegion(const std::array<double,3>& low = {0,0,0}, const std::array<double, 3>& high = {0,0,0}, const std::array<double,3>& dims = {0,0,0})
+            : _low(low), _high(high), _hybridDims(dims), _dim({0,0,0}) {}
 
     //! @brief gets the lower corner of hybrid region
     [[nodiscard]] const std::array<double, 3>& getLowHybrid() const { return _lowHybrid; }
@@ -68,12 +68,14 @@ struct FPRegion {
         xmlconfig.getNodeValue("highX", _high[0]);
         xmlconfig.getNodeValue("highY", _high[1]);
         xmlconfig.getNodeValue("highZ", _high[2]);
-        xmlconfig.getNodeValue("hybridDim", _hybridDim);
+        xmlconfig.getNodeValue("hybridDimX", _hybridDims[0]);
+        xmlconfig.getNodeValue("hybridDimY", _hybridDims[1]);
+        xmlconfig.getNodeValue("hybridDimZ", _hybridDims[2]);
 
 
         for(int d = 0; d < 3; d++) {
-            _lowHybrid[d] = _low[d] - _hybridDim;
-            _highHybrid[d] = _high[d] + _hybridDim;
+            _lowHybrid[d] = _low[d] - _hybridDims[d];
+            _highHybrid[d] = _high[d] + _hybridDims[d];
             _center[d] = (_high[d] - _low[d])/2 + _low[d];
             _dim[d] = _high[d] - _low[d];
         }
@@ -88,9 +90,9 @@ struct FPRegion {
      * */
     std::array<double, 3> computeIntersection(std::array<double,3> point, Intersection inter) {
         double scale = std::max(
-                            std::max(std::abs(point[0] - _center[0])/(_dim[0]+2*_hybridDim*inter)*2.0,
-                                     std::abs(point[1] - _center[1])/(_dim[1]+2*_hybridDim*inter)*2.0),
-                            std::abs(point[2] - _center[2])/(_dim[2]+2*_hybridDim*inter)*2.0
+                            std::max(std::abs(point[0] - _center[0])/(_dim[0]+2*_hybridDims[0]*inter)*2.0,
+                                     std::abs(point[1] - _center[1])/(_dim[1]+2*_hybridDims[1]*inter)*2.0),
+                            std::abs(point[2] - _center[2])/(_dim[2]+2*_hybridDims[2]*inter)*2.0
                         );
         std::array<double,3> result{0,0,0};
         for(int d = 0; d < 3; d++) result[d] = _center[d] + (point[d] - _center[d]) / scale;
@@ -140,8 +142,8 @@ struct FPRegion {
         bool checkOuter = region == Hybrid;
         std::array<std::array<double,2>,3> deltaLowHighDim{};
         for(int d = 0; d < 3; d++) {
-            deltaLowHighDim[d][0] = std::max(-(_low[d] - checkOuter * _hybridDim), 0.);
-            deltaLowHighDim[d][1] = std::max((_high[d] + checkOuter * _hybridDim) - globLen[d], 0.);
+            deltaLowHighDim[d][0] = std::max(-(_low[d] - checkOuter * _hybridDims[d]), 0.);
+            deltaLowHighDim[d][1] = std::max((_high[d] + checkOuter * _hybridDims[d]) - globLen[d], 0.);
         }
 
         // check all regions that wrap around due to periodic bounds
@@ -153,14 +155,14 @@ struct FPRegion {
             for(int y = 0; y <= !inDim[1]; y++) {
                 for(int z = 0; z <= !inDim[2]; z++) {
                     std::array<double, 3> checkLow {
-                        (1 - x) * std::max(_low[0] - checkOuter * _hybridDim, 0.) + x * ((deltaLowHighDim[0][0] != 0) * (globLen[0] - deltaLowHighDim[0][0]) + (deltaLowHighDim[0][1] != 0) * 0),
-                        (1 - y) * std::max(_low[1] - checkOuter * _hybridDim, 0.) + y * ((deltaLowHighDim[1][0] != 0) * (globLen[1] - deltaLowHighDim[1][0]) + (deltaLowHighDim[1][1] != 0) * 0),
-                        (1 - z) * std::max(_low[2] - checkOuter * _hybridDim, 0.) + z * ((deltaLowHighDim[2][0] != 0) * (globLen[2] - deltaLowHighDim[2][0]) + (deltaLowHighDim[2][1] != 0) * 0) };
+                        (1 - x) * std::max(_low[0] - checkOuter * _hybridDims[0], 0.) + x * ((deltaLowHighDim[0][0] != 0) * (globLen[0] - deltaLowHighDim[0][0]) + (deltaLowHighDim[0][1] != 0) * 0),
+                        (1 - y) * std::max(_low[1] - checkOuter * _hybridDims[1], 0.) + y * ((deltaLowHighDim[1][0] != 0) * (globLen[1] - deltaLowHighDim[1][0]) + (deltaLowHighDim[1][1] != 0) * 0),
+                        (1 - z) * std::max(_low[2] - checkOuter * _hybridDims[2], 0.) + z * ((deltaLowHighDim[2][0] != 0) * (globLen[2] - deltaLowHighDim[2][0]) + (deltaLowHighDim[2][1] != 0) * 0) };
 
                     std::array<double, 3> checkHigh {
-                        (1 - x) * std::min(_high[0] + checkOuter * _hybridDim, globLen[0]) + x * ((deltaLowHighDim[0][0] != 0) * (globLen[0]) + (deltaLowHighDim[0][1] != 0) * deltaLowHighDim[0][1]),
-                        (1 - y) * std::min(_high[1] + checkOuter * _hybridDim, globLen[1]) + y * ((deltaLowHighDim[1][0] != 0) * (globLen[1]) + (deltaLowHighDim[1][1] != 0) * deltaLowHighDim[1][1]),
-                        (1 - z) * std::min(_high[2] + checkOuter * _hybridDim, globLen[2]) + z * ((deltaLowHighDim[2][0] != 0) * (globLen[2]) + (deltaLowHighDim[2][1] != 0) * deltaLowHighDim[2][1]) };
+                        (1 - x) * std::min(_high[0] + checkOuter * _hybridDims[0], globLen[0]) + x * ((deltaLowHighDim[0][0] != 0) * (globLen[0]) + (deltaLowHighDim[0][1] != 0) * deltaLowHighDim[0][1]),
+                        (1 - y) * std::min(_high[1] + checkOuter * _hybridDims[1], globLen[1]) + y * ((deltaLowHighDim[1][0] != 0) * (globLen[1]) + (deltaLowHighDim[1][1] != 0) * deltaLowHighDim[1][1]),
+                        (1 - z) * std::min(_high[2] + checkOuter * _hybridDims[2], globLen[2]) + z * ((deltaLowHighDim[2][0] != 0) * (globLen[2]) + (deltaLowHighDim[2][1] != 0) * deltaLowHighDim[2][1]) };
                     result |= isInnerPoint(point, checkLow, checkHigh);
                 }
             }

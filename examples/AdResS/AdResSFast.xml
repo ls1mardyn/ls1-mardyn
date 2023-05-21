@@ -159,7 +159,7 @@
                 <region id="1">
                     <lowX>10.0</lowX><lowY>10.0</lowY><lowZ>10.0</lowZ>
                     <highX>20.0</highX><highY>20.0</highY><highZ>20.0</highZ>
-                    <hybridDim>5.0</hybridDim>
+                    <hybridDimX>5.0</hybridDimX><hybridDimY>5.0</hybridDimY><hybridDimZ>5.0</hybridDimZ>
                 </region>
             </fpregions>
         </plugin>
