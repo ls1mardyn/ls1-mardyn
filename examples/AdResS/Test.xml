@@ -12,7 +12,7 @@
         <run>
             <currenttime>0</currenttime>
             <production>
-                <steps>2000</steps>
+                <steps>10000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -22,7 +22,7 @@
 
         <ensemble type="NVT">
             <!--Ensemble is the main topic of the simulation -->
-            <temperature unit="reduced" >0.0012</temperature>	<!-- in future also units="K" -->
+            <temperature unit="reduced" >1</temperature>	<!-- in future also units="K" -->
             <domain type="box">
                 <lx unit="reduced">100.</lx>
                 <ly unit="reduced">100.</ly>
@@ -119,10 +119,51 @@
             </components>
 
             <phasespacepoint>
-                <generator name="CubicGridGenerator">
-                    <specification>density</specification>
-                    <density>0.01</density>
-                    <binaryMixture>false</binaryMixture>
+                <generator name="MultiObjectGenerator">
+                    <objectgenerator>
+                        <filler type="GridFiller">
+                            <lattice system="cubic" centering="face">
+                                <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
+                                <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
+                                <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
+                            </lattice>
+                            <basis>
+                                <site>
+                                    <componentid>2</componentid>
+                                    <coordinate> <x>.5</x> <y>.5</y> <z>.5</z> </coordinate>
+                                </site>
+                            </basis>
+                            <latticeOccupancy>1.</latticeOccupancy>
+                            <density>0.001</density>
+                        </filler>
+                        <object type="Cuboid">
+                            <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>50</x> <y>100</y> <z>100</z> </upper>
+                        </object>
+                        <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>
+                    </objectgenerator>
+                    <objectgenerator>
+                        <filler type="GridFiller">
+                            <lattice system="cubic" centering="face">
+                                <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
+                                <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
+                                <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
+                            </lattice>
+                            <basis>
+                                <site>
+                                    <componentid>2</componentid>
+                                    <coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
+                                </site>
+                            </basis>
+                            <latticeOccupancy>1.</latticeOccupancy>
+                            <density>0.001</density>
+                        </filler>
+                        <object type="Cuboid">
+                            <lower> <x>50</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>100</x> <y>100</y> <z>100</z> </upper>
+                        </object>
+                        <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>
+                    </objectgenerator>
                 </generator>
             </phasespacepoint>
         </ensemble>
@@ -140,9 +181,6 @@
                 <epsilon>0</epsilon>
             </electrostatic>
 
-            <thermostat type="VelocityScaling" component="1">
-                <temperature>0.7</temperature>
-            </thermostat>
         </algorithm>
 
         <output>
@@ -154,12 +192,12 @@
         </output>
 
         <plugin name="AdResS">
-            <weightImpl>euclid</weightImpl>
+            <weightImpl>near</weightImpl>
             <fpregions>
                 <region id="1">
-                    <lowX>40.0</lowX><lowY>40.0</lowY><lowZ>40.0</lowZ>
-                    <highX>60.0</highX><highY>60.0</highY><highZ>60.0</highZ>
-                    <hybridDimX>20.0</hybridDimX><hybridDimY>20.0</hybridDimY><hybridDimZ>20.0</hybridDimZ>
+                    <lowX>40.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
+                    <highX>60.0</highX><highY>100.0</highY><highZ>100.0</highZ>
+                    <hybridDimX>20.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
         </plugin>

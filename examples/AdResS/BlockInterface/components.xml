@@ -1,0 +1,113 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<components version="20100525">
+    <!--
+
+************************************************************************
+*               Publishing with the MolMod Database                    *
+*  Every user agrees to cite the MolMod Database upon usage as follows *
+*                                                                      *
+*  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+*  MolMod – an Open Access Database of Force Fields for Molecular      *
+*  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+************************************************************************
+
+                               Model data
+
+ Substance     H2O_X
+ CAS-No        7732-18-5
+ Reference     J. L. Abascal and C. Vega: A General Purpose Model for th
+               e Condensed Phases of Water: TIP4P/2005, The Journal of P
+               hysical Chemistry 123, 23, 234505 (2005), 10.1063/1.21216
+               87
+
+-->
+	<moleculetype id="1" name="FP_H2O">
+		<site type="LJ126" id="1">
+			<coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+			<sigma>3.1589</sigma>
+			<epsilon>93.19964</epsilon>
+			<mass>16.00</mass>
+		</site>
+		<site type="Charge" id="2">
+			<coords><x>0.1546</x><y>0.0</y><z>0.0</z>   </coords>
+			<charge>-454.88994426699</charge>
+		</site>
+		<site type="Charge" id="3">
+			<coords><x>0.5858822766</x><y>0.7569503273</y><z>0.0</z>   </coords>
+			<charge>227.44497213349</charge>
+		</site>
+		<site type="Charge" id="4">
+			<coords><x>0.5858822766</x><y>-0.7569503273</y><z>0.0</z>   </coords>
+			<charge>227.44497213349</charge>
+		</site>
+		<momentsofinertia rotaxes="xyz">
+			<Ixx>1.1551151767671</Ixx>
+			<Iyy>0.69200821274054</Iyy>
+			<Izz>1.8471233895077</Izz>
+		</momentsofinertia>
+	</moleculetype>
+	<!-- Hybrid representation is combination of FP and CG version -->
+	<moleculetype id="2" name="H_H2O">
+		<site type="LJ126" id="1">
+			<coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+			<sigma>2.641</sigma>
+			<epsilon>809.1</epsilon>
+			<mass>0.0</mass>
+		</site>
+		<site type="LJ126" id="2">
+			<coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+			<sigma>3.1589</sigma>
+			<epsilon>93.19964</epsilon>
+			<mass>16.00</mass>
+		</site>
+		<site type="Charge" id="3">
+			<coords><x>0.1546</x><y>0.0</y><z>0.0</z>   </coords>
+			<charge>-454.88994426699</charge>
+		</site>
+		<site type="Charge" id="4">
+			<coords><x>0.5858822766</x><y>0.7569503273</y><z>0.0</z>   </coords>
+			<charge>227.44497213349</charge>
+		</site>
+		<site type="Charge" id="5">
+			<coords><x>0.5858822766</x><y>-0.7569503273</y><z>0.0</z>   </coords>
+			<charge>227.44497213349</charge>
+		</site>
+		<momentsofinertia rotaxes="xyz">
+			<Ixx>1.1551151767671</Ixx>
+			<Iyy>0.69200821274054</Iyy>
+			<Izz>1.8471233895077</Izz>
+		</momentsofinertia>
+	</moleculetype>
+	<!--
+
+************************************************************************
+*               Publishing with the MolMod Database                    *
+*  Every user agrees to cite the MolMod Database upon usage as follows *
+*                                                                      *
+*  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+*  MolMod – an Open Access Database of Force Fields for Molecular      *
+*  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+************************************************************************
+
+                               Model data
+
+ Substance     H2O_I
+ CAS-No        7732-18-5
+ Reference     R. A. Svehla: Estimated Viscosities and Thermal Conductiv
+               ities of Gases at High Temperatures, 132, (1963),
+
+-->
+	<moleculetype id="3" name="CG_H2O">
+		<site type="LJ126" id="1">
+			<coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+			<sigma>2.641</sigma>
+			<epsilon>809.1</epsilon>
+			<mass>18.015</mass>
+		</site>
+		<momentsofinertia rotaxes="xyz">
+			<Ixx>0</Ixx>
+			<Iyy>0</Iyy>
+			<Izz>0</Izz>
+		</momentsofinertia>
+	</moleculetype>
+</components>
