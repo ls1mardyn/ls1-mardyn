@@ -11,7 +11,7 @@ AdResSRegionTraversal::AdResSRegionTraversal(std::array<double, 3> checkLow, std
                                              std::unordered_map<unsigned long, Resolution>& compMap) :
                                              _cellPairOffsets8Pack(), _particleContainer(particleContainer),
                                              _cells(), _end(), _dims(), _comp_to_res(compMap), _cutoff(0), _cutoff2(0),
-                                             _ljcutoff2(0){
+                                             _ljcutoff2(0), _cellSize(0){
     using threeDimensionalMapping::threeToOneD;
     using std::make_pair;
 
@@ -20,9 +20,11 @@ AdResSRegionTraversal::AdResSRegionTraversal(std::array<double, 3> checkLow, std
     _cutoff2 = _cutoff * _cutoff;
     _ljcutoff2 = _simulation.getLJCutoff();
     _ljcutoff2 *= _ljcutoff2;
+    _cellSize = _cutoff;
 
     for (int d = 0; d < 3; ++d) {
-        _dims[d] = static_cast<long>((checkHigh[d] - checkLow[d]) / _cutoff);
+        _dims[d] = static_cast<long>((checkHigh[d] - checkLow[d]) / _cellSize);
+        if(_dims[d] == 0) _dims[d] = 1;
         _dims[d] += 1; // need 1 dummy cell in every direction to get remaining interactions
         _end[d] = _dims[d] - 1;
     }
@@ -62,8 +64,8 @@ AdResSRegionTraversal::AdResSRegionTraversal(std::array<double, 3> checkLow, std
     for(long indX = 0; indX < _dims[0]; indX++) {
         for(long indY = 0; indY < _dims[1]; indY++) {
             for(long indZ = 0; indZ < _dims[2]; indZ++) {
-                std::array<double,3> low_offset = {_cutoff * indX, _cutoff * indY, _cutoff * indZ};
-                std::array<double,3> high_offset = {_cutoff * (indX + 1), _cutoff * (indY + 1), _cutoff * (indZ + 1)};
+                std::array<double,3> low_offset = {_cellSize * indX, _cellSize * indY, _cellSize * indZ};
+                std::array<double,3> high_offset = {_cellSize * (indX + 1), _cellSize * (indY + 1), _cellSize * (indZ + 1)};
                 std::array<double,3> low = {checkLow[0] + low_offset[0], checkLow[1] + low_offset[1], checkLow[2] + low_offset[2]};
                 std::array<double,3> high = {checkLow[0] + high_offset[0], checkLow[1] + high_offset[1], checkLow[2] + high_offset[2]};
                 if(indX == _dims[0] - 2) high[0] = checkHigh[0]; // - 1 for last index and - 1 for one dummy cell

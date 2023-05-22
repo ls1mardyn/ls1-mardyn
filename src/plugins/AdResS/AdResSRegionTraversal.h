@@ -53,6 +53,8 @@ private:
     double _cutoff2;
     //! @brief lennard jones cutoff distance squared
     double _ljcutoff2;
+    //! @brief size in world coordinates of each cell
+    double _cellSize;
 
     void processCell(RegionParticleIterator& cell, AdResSForceAdapter& forceAdapter, FPRegion& region, bool invert);
     void processCellPair(RegionParticleIterator& cell1, RegionParticleIterator& cell2, AdResSForceAdapter& forceAdapter, FPRegion& region, bool invert);
