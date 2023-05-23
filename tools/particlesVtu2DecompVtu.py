@@ -30,6 +30,11 @@ def particleMinMax(particlesVtu):
         if '<DataArray Name="points"' in line:
             # split off xml tags, split all numbers, and convert to floats
             splitLine = line.replace('<','>').split('>')[2].split(' ')
+            # Special case: this vtu file contains no particles
+            if splitLine == ['\n']:
+                # return something that does not drive paraview crazy
+                return [(0.,0.), (0.,0.), (0.,0.)]
+
             data = list(map(float, splitLine))          # this conversion is the script's hotspot
             # extract min and max of every dimension
             minMaxCoord=[(min(data[dim::3]), max(data[dim::3])) for dim in range(3)]
