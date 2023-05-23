@@ -78,3 +78,6 @@ ADD_SUBDIRECTORY(src)
 
 # add libraries
 ADD_SUBDIRECTORY(libs)
+
+# add vtk tool
+ADD_SUBDIRECTORY(tools/VTKAnalysis)
