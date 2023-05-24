@@ -118,17 +118,10 @@ inline RegionParticleIterator :: RegionParticleIterator (Type t, CellContainer_T
 	mardyn_assert(_cells != nullptr);
 
 	const CellContainer_T& cells = *_cells;
-	const CellIndex_T numCellsInRegion = _regionDimensions[2] * _regionDimensions[1] * _regionDimensions[0]; //cells.size();
+	const CellIndex_T numCellsInRegion = _regionDimensions[2] * _regionDimensions[1] * _regionDimensions[0];
 
 	// if _cell_index is out of the region => invalid <=> (_localCellIndex >= numCellsInRegion)
 	if (_localCellIndex < numCellsInRegion) {
-		/*
-		if (cells[_cell_index].isEmpty()) {
-			next_non_empty_cell();
-		}
-		*/
-//		_currentParticleDeleted = true;
-
 		if (cells[_cell_index].isNotEmpty() and (this->operator*()).inBox(_startRegion, _endRegion)) {
 			// if the particle is good, leave it
 		} else {
