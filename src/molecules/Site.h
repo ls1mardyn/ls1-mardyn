@@ -8,7 +8,9 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <iostream>
 #include <string>
+#include <sstream>
 #include <algorithm>
 
 using Log::global_log;
