@@ -7,7 +7,6 @@ src/MarDyn
 src/MarDyn.*
 !src/MarDyn.cpp
 src/MarDyn_*.*
-!src/MarDyn_version.h*
 .project
 .settings
 *.so.1.0
