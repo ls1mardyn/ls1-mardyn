@@ -45,13 +45,13 @@
 
 DataArrayList_t::
 DataArrayList_t ()
-: ::xsd::cxx::tree::std::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (this)
+: ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (this)
 {
 }
 
 DataArrayList_t::
 DataArrayList_t (size_type n, const ::xml_schema::decimal& x)
-: ::xsd::cxx::tree::std::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (n, x, this)
+: ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (n, x, this)
 {
 }
 
@@ -60,7 +60,7 @@ DataArrayList_t (const DataArrayList_t& o,
                  ::xml_schema::flags f,
                  ::xml_schema::container* c)
 : ::xml_schema::simple_type (o, f, c),
-  ::xsd::cxx::tree::std::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (o, f, this)
+  ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (o, f, this)
 {
 }
 
@@ -477,7 +477,7 @@ DataArrayList_t (const ::xercesc::DOMElement& e,
                  ::xml_schema::flags f,
                  ::xml_schema::container* c)
 : ::xml_schema::simple_type (e, f, c),
-  ::xsd::cxx::tree::std::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (e, f, this)
+  ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (e, f, this)
 {
 }
 
@@ -486,7 +486,7 @@ DataArrayList_t (const ::xercesc::DOMAttr& a,
                  ::xml_schema::flags f,
                  ::xml_schema::container* c)
 : ::xml_schema::simple_type (a, f, c),
-  ::xsd::cxx::tree::std::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (a, f, this)
+  ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (a, f, this)
 {
 }
 
@@ -496,7 +496,7 @@ DataArrayList_t (const ::std::string& s,
                  ::xml_schema::flags f,
                  ::xml_schema::container* c)
 : ::xml_schema::simple_type (s, e, f, c),
-  ::xsd::cxx::tree::std::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (s, e, f, this)
+  ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (s, e, f, this)
 {
 }
 
@@ -1426,20 +1426,20 @@ Cells::
 void
 operator<< (::xercesc::DOMElement& e, const DataArrayList_t& i)
 {
-  e << static_cast< const ::xsd::cxx::tree::std::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal >& > (i);
+  e << static_cast< const ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal >& > (i);
 }
 
 void
 operator<< (::xercesc::DOMAttr& a, const DataArrayList_t& i)
 {
-  a << static_cast< const ::xsd::cxx::tree::std::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal >& > (i);
+  a << static_cast< const ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal >& > (i);
 }
 
 void
 operator<< (::xml_schema::list_stream& l,
             const DataArrayList_t& i)
 {
-  l << static_cast< const ::xsd::cxx::tree::std::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal >& > (i);
+  l << static_cast< const ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal >& > (i);
 }
 
 void
@@ -1698,4 +1698,3 @@ operator<< (::xercesc::DOMElement& e, const Cells& i)
 //
 //
 // End epilogue.
-

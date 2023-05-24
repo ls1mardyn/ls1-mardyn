@@ -100,7 +100,7 @@ class Cells;
  * std::vector).
  */
 class DataArrayList_t: public ::xml_schema::simple_type,
-  public ::xsd::cxx::tree::std::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal >
+  public ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal >
 {
   public:
   /**
@@ -131,7 +131,7 @@ class DataArrayList_t: public ::xml_schema::simple_type,
    */
   template < typename I >
   DataArrayList_t (const I& begin, const I& end)
-  : ::xsd::cxx::tree::std::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (begin, end, this)
+  : ::xsd::cxx::tree::list< ::xml_schema::decimal, char, ::xsd::cxx::tree::schema_type::decimal > (begin, end, this)
   {
   }
 

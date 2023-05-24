@@ -313,47 +313,47 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	// print full configuration to the command line
 	int valueOffset = 28;
 	global_log->info() << "AutoPas configuration:" << std::endl
-					   << std::setw(valueOffset) << left << "Data Layout "
+					   << std::setw(valueOffset) << std::left << "Data Layout "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts())
 					   << std::endl
-					   << std::setw(valueOffset) << left << "Container "
+					   << std::setw(valueOffset) << std::left << "Container "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers())
 					   << std::endl
-					   << std::setw(valueOffset) << left << "Cell size Factor "
+					   << std::setw(valueOffset) << std::left << "Cell size Factor "
 					   << ": " << _autopasContainer.getAllowedCellSizeFactors() << std::endl
-					   << std::setw(valueOffset) << left << "Traversals "
+					   << std::setw(valueOffset) << std::left << "Traversals "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals())
 					   << std::endl
-					   << std::setw(valueOffset) << left << "Newton3"
+					   << std::setw(valueOffset) << std::left << "Newton3"
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options())
 					   << std::endl
-					   << std::setw(valueOffset) << left << "Tuning strategy "
+					   << std::setw(valueOffset) << std::left << "Tuning strategy "
 					   << ": " << _autopasContainer.getTuningStrategyOption() << std::endl
-					   << std::setw(valueOffset) << left << "Selector strategy "
+					   << std::setw(valueOffset) << std::left << "Selector strategy "
 					   << ": " << _autopasContainer.getSelectorStrategy() << std::endl
-					   << std::setw(valueOffset) << left << "Tuning frequency"
+					   << std::setw(valueOffset) << std::left << "Tuning frequency"
 					   << ": " << _autopasContainer.getTuningInterval() << std::endl
-					   << std::setw(valueOffset) << left << "Number of samples "
+					   << std::setw(valueOffset) << std::left << "Number of samples "
 					   << ": " << _autopasContainer.getNumSamples() << std::endl
-					   << std::setw(valueOffset) << left << "Tuning Acquisition Function"
+					   << std::setw(valueOffset) << std::left << "Tuning Acquisition Function"
 					   << ": " << _autopasContainer.getAcquisitionFunction() << std::endl
-					   << std::setw(valueOffset) << left << "Number of evidence "
+					   << std::setw(valueOffset) << std::left << "Number of evidence "
 					   << ": " << _autopasContainer.getMaxEvidence() << std::endl
-					   << std::setw(valueOffset) << left << "Verlet Cluster size "
+					   << std::setw(valueOffset) << std::left << "Verlet Cluster size "
 					   << ": " << _autopasContainer.getVerletClusterSize() << std::endl
-					   << std::setw(valueOffset) << left << "Rebuild frequency "
+					   << std::setw(valueOffset) << std::left << "Rebuild frequency "
 					   << ": " << _autopasContainer.getVerletRebuildFrequency() << std::endl
-					   << std::setw(valueOffset) << left << "Verlet Skin "
+					   << std::setw(valueOffset) << std::left << "Verlet Skin "
 					   << ": " << _autopasContainer.getVerletSkin() << std::endl
-					   << std::setw(valueOffset) << left << "Optimum Range "
+					   << std::setw(valueOffset) << std::left << "Optimum Range "
 					   << ": " << _autopasContainer.getRelativeOptimumRange() << std::endl
-					   << std::setw(valueOffset) << left << "Tuning Phases without test "
+					   << std::setw(valueOffset) << std::left << "Tuning Phases without test "
 					   << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << std::endl
-					   << std::setw(valueOffset) << left << "Blacklist Range "
+					   << std::setw(valueOffset) << std::left << "Blacklist Range "
 					   << ": " << _autopasContainer.getRelativeBlacklistRange() << std::endl
-					   << std::setw(valueOffset) << left << "Evidence for prediction "
+					   << std::setw(valueOffset) << std::left << "Evidence for prediction "
 					   << ": " << _autopasContainer.getEvidenceFirstPrediction() << std::endl
-					   << std::setw(valueOffset) << left << "Extrapolation method "
+					   << std::setw(valueOffset) << std::left << "Extrapolation method "
 					   << ": " << _autopasContainer.getExtrapolationMethodOption() << std::endl;
 
 	/// @todo return sendHaloAndLeavingTogether, (always false) for simplicity.

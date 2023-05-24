@@ -648,7 +648,7 @@ void FullMolecule::check(unsigned long id) {
   }
   _q.check();
   if (!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2])) {
-    cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = ("
+    std::cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = ("
          << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")" << std::endl;
     _Vi[0] = 0.0;
     _Vi[1] = 0.0;
