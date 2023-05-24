@@ -3,7 +3,6 @@
 #include <fstream>
 #include <sstream>
 
-using namespace std;
 
 #define TIME 20111116
 

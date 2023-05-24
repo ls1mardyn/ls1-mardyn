@@ -17,7 +17,6 @@
 #include<map>
 #include"RandomNumber.h"
 
-using namespace std;
 
 class GlobalStartGeometry
 {
@@ -88,11 +87,11 @@ private:
 	//@brief: 4-dimensional array addressing single slots that may be filled with a particle
 	// => 3 diemsions for a fluid elementary box (due to 3 directions in space)
 	// and one dimension addressing one of three slots within an elementary box
-	map< unsigned, map<unsigned, map<unsigned, map<unsigned, bool> > > > _fill;
+	std::map< unsigned, std::map<unsigned, std::map<unsigned, std::map<unsigned, bool> > > > _fill;
 	//@brief: 4-dimensional array addressing single slots that may be filled with a vapour particle
 	// => 3 diemsions for a vapour elementary box (due to 3 directions in space)
 	// and one dimension addressing one of three slots within an elementary box
-	map< unsigned, map<unsigned, map<unsigned, map<unsigned, bool> > > > _fillVap;
+	std::map< unsigned, std::map<unsigned, std::map<unsigned, std::map<unsigned, bool> > > > _fillVap;
 	
 };
 #endif /* GLOBALSTARTGEOMETRY_H_ */

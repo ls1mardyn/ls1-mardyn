@@ -38,8 +38,8 @@ CubicGridGenerator::CubicGridGenerator() :
 	calculateSimulationBoxLength();
 }
 
-vector<ParameterCollection*> CubicGridGenerator::getParameters() {
-	vector<ParameterCollection*> parameters;
+std::vector<ParameterCollection*> CubicGridGenerator::getParameters() {
+	std::vector<ParameterCollection*> parameters;
 	parameters.push_back(new MardynConfigurationParameters(_configuration));
 
 	ParameterCollection* tab = new ParameterCollection("EqvGridParameters", "Parameters of EqvGridGenerator",
@@ -75,7 +75,7 @@ vector<ParameterCollection*> CubicGridGenerator::getParameters() {
 
 
 void CubicGridGenerator::setParameter(Parameter* p) {
-	string id = p->getNameId();
+	std::string id = p->getNameId();
 	if (id == "numMolecules") {
 		_numMolecules = static_cast<ParameterWithLongIntValue*> (p)->getValue();
 		calculateSimulationBoxLength();
@@ -117,7 +117,7 @@ void CubicGridGenerator::calculateSimulationBoxLength() {
 
 
 void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
-	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator..." << endl;
+	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator..." << std::endl;
 	global_simulation->setSimulationTime(0);
 
 	domain->disableComponentwiseThermostat();
@@ -134,7 +134,7 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	global_simulation->getEnsemble()->setComponentLookUpIDs();
 
 	domain->setepsilonRF(1e+10);
-	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator done." << endl;
+	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator done." << std::endl;
 
     /* silence compiler warnings */
     (void) timestep;
@@ -145,7 +145,7 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 		Domain* domain, DomainDecompBase* domainDecomp) {
 
 	global_simulation->timers()->start("CUBIC_GRID_GENERATOR_INPUT");
-	_logger->info() << "Reading phase space file (CubicGridGenerator)." << endl;
+	_logger->info() << "Reading phase space file (CubicGridGenerator)." << std::endl;
 
 // create a body centered cubic layout, by creating by placing the molecules on the
 // vertices of a regular grid, then shifting that grid by spacing/2 in all dimensions.
@@ -186,7 +186,7 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 		}
 		if ((int)(i * percentage) > percentageRead) {
 			percentageRead = i * percentage;
-			_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << flush;
+			_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << std::flush;
 		}
 	}
 
@@ -206,7 +206,7 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 		}
 		if ((int)(50 + i * percentage) > percentageRead) {
 			percentageRead = 50 + i * percentage;
-			_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << flush;
+			_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << std::flush;
 		}
 	}
 	_logger->info() << std::endl;
@@ -225,17 +225,17 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 
 	removeMomentum(particleContainer, _components);
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
-	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
+	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << std::endl;
 	global_simulation->timers()->stop("CUBIC_GRID_GENERATOR_INPUT");
 	global_simulation->timers()->setOutputString("CUBIC_GRID_GENERATOR_INPUT", "Initial IO took:                 ");
-	_logger->info() << "Initial IO took:                 " << global_simulation->timers()->getTime("CUBIC_GRID_GENERATOR_INPUT") << " sec" << endl;
+	_logger->info() << "Initial IO took:                 " << global_simulation->timers()->getTime("CUBIC_GRID_GENERATOR_INPUT") << " sec" << std::endl;
 
 
 	return id + idOffset;
 }
 
 void CubicGridGenerator::addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer) {
-	vector<double> velocity = getRandomVelocity(_temperature);
+	std::vector<double> velocity = getRandomVelocity(_temperature);
 
 	//double orientation[4] = {1, 0, 0, 0}; // default: in the xy plane
 	// rotate by 30° along the vector (1/1/0), i.e. the angle bisector of x and y axis
@@ -277,19 +277,19 @@ bool CubicGridGenerator::validateParameters() {
 
 	if (_configuration.getScenarioName() == "") {
 		valid = false;
-		_logger->error() << "ScenarioName not set!" << endl;
+		_logger->error() << "ScenarioName not set!" << std::endl;
 	}
 
 	if (_configuration.getOutputFormat() == MardynConfiguration::XML) {
 		valid = false;
-		_logger->error() << "OutputFormat XML not yet supported!" << endl;
+		_logger->error() << "OutputFormat XML not yet supported!" << std::endl;
 	}
 
 	if (_simBoxLength < 2. * _configuration.getCutoffRadius()) {
 		valid = false;
-		_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << endl;
+		_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << std::endl;
 		_logger->error() << "Cutoff radius=" << _configuration.getCutoffRadius()
-							<< " domain size=" << _simBoxLength << endl;
+							<< " domain size=" << _simBoxLength << std::endl;
 	}
 	return valid;
 }

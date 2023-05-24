@@ -721,18 +721,18 @@ class ContentXMLImporter(object):
 			currentNode = currentNode.parentNode
 			
 		if error:
-			string = "Error: "
+			std::string = "Error: "
 		else:
-			string = "Warning: "
+			std::string = "Warning: "
 			
-		string += 'At XML-Path: "'
+		std::string += 'At XML-Path: "'
 		for nodeName in reversed(nodeNameTree):
-			string += nodeName
+			std::string += nodeName
 			if nodeName is not nodeNameTree[0]:
-				string += '/'
-		string += '" '
-		string += text
-		self.messages.append(string)
+				std::string += '/'
+		std::string += '" '
+		std::string += text
+		self.messages.append(std::string)
 '''
 The DeepSearchSettingTreeIndex class uses the DeepSearchSettingTree class to do the deep search with indexes as return values
 '''

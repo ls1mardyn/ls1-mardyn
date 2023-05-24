@@ -117,7 +117,7 @@ void Molecule::calculateCoordinatesOfWallMolecule(double xLength, double zLength
 	_numberOfMolecules = 0;
 	double stripeWidth = xLength / numberOfStripes; // width of a single stripe in x-direction => delta_x
 	if (stripeWidth < 0.5*latticeConstant){
-		cerr << "Too many stripes: width would be smaller than half the lattice constant! Meaningless => width adapted to half the lattice constant!";
+		std::cerr << "Too many stripes: width would be smaller than half the lattice constant! Meaningless => width adapted to half the lattice constant!";
 		stripeWidth = 0.5 * latticeConstant;
 	}
 	double currentZeroPos[3];
@@ -164,7 +164,7 @@ void Molecule::calculateCoordinatesOfWallMolecule(double xLength, double zLength
        }
        _numberOfMolecules = 0;
        if (deltaRCircle < 0.5*latticeConstant){
-               cerr << "Circle size chosen too small! delta_r has to be at least 1*lattice constant! delta_r SWITCHED to 1*lattice constant.";
+               std::cerr << "Circle size chosen too small! delta_r has to be at least 1*lattice constant! delta_r SWITCHED to 1*lattice constant.";
                deltaRCircle = latticeConstant;
        }
        double currentZeroPos[3];

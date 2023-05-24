@@ -26,8 +26,8 @@ Domain::Domain(
 
 void Domain::write(char* prefix, int format, double mu, double x)
 {
-   ofstream xdr, txt, buchholz;
-   stringstream strstrm, txtstrstrm, buchholzstrstrm;
+   std::ofstream xdr, txt, buchholz;
+   std::stringstream strstrm, txtstrstrm, buchholzstrstrm;
    if(format == FORMAT_BRANCH)
    {
       strstrm << prefix << ".xdr";
@@ -36,7 +36,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
    {
       strstrm << prefix << ".inp";
    }
-   xdr.open(strstrm.str().c_str(), ios::trunc);
+   xdr.open(strstrm.str().c_str(), std::ios::trunc);
    if(format == FORMAT_BRANCH)
    {
       txtstrstrm << prefix << "_1R.txt";
@@ -49,7 +49,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
    {
       txtstrstrm << prefix << "_1R.xml";
    }
-   txt.open(txtstrstrm.str().c_str(), ios::trunc);
+   txt.open(txtstrstrm.str().c_str(), std::ios::trunc);
    if(format == FORMAT_BERNREUTHER)
    {
       txt << "<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<mardyn version=\""
@@ -58,7 +58,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
    if(format == FORMAT_BUCHHOLZ)
    {
       buchholzstrstrm << prefix << "_1R.xml";
-      buchholz.open(buchholzstrstrm.str().c_str(), ios::trunc);
+      buchholz.open(buchholzstrstrm.str().c_str(), std::ios::trunc);
 
       /*
        * Gesamter Inhalt der Buchholz-Datei
@@ -75,10 +75,10 @@ void Domain::write(char* prefix, int format, double mu, double x)
    );
    double REFTIME = SIG_REF * sqrt(REFMASS / EPS_REF);
    double VEL_REF = SIG_REF / REFTIME;
-   cout << "Velocity unit 1 = " << VEL_REF << " * 1620.34 m/s = "
+   std::cout << "Velocity unit 1 = " << VEL_REF << " * 1620.34 m/s = "
         << 1620.34 * VEL_REF << " m/s.\n";
    double REFCARG = sqrt(EPS_REF * SIG_REF);
-   cout << "Charge unit 1 = " << REFCARG << " e.\n";
+   std::cout << "Charge unit 1 = " << REFCARG << " e.\n";
    double DIP_REF = SIG_REF*REFCARG;
    double QDR_REF = SIG_REF*DIP_REF;
    double REFOMGA = 1.0 / REFTIME;
@@ -102,7 +102,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
    if(fl_units[0] == 0) fl_units[0] = 1;
    fl_units[2] = ceil(bxbz_id / fl_units[0]);
    for(int d=0; d < 3; d++) fl_unit[d] = box[d] / (double)fl_units[d];
-   cout << "Unit cell dimensions: " << fl_unit[0] << " x " << fl_unit[1] << " x " << fl_unit[2] << ".\n";
+   std::cout << "Unit cell dimensions: " << fl_unit[0] << " x " << fl_unit[1] << " x " << fl_unit[2] << ".\n";
    bool fill[fl_units[0]][fl_units[1]][fl_units[2]][3];
    unsigned slots = 3 * fl_units[0] * fl_units[1] * fl_units[2];
    /*
@@ -130,7 +130,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
    {
       tswap = (N1 < N);
       pswap = ((double)N - (double)N1) / ((tswap? slots: 0) - (double)N1);
-      // cout << "(N = " << N << ", N1 = " << N1 << ", tswap = " << tswap << ", pswap = " << pswap << ")\n";
+      // std::cout << "(N = " << N << ", N1 = " << N1 << ", tswap = " << tswap << ", pswap = " << pswap << ")\n";
       for(unsigned i=0; i < fl_units[0]; i++)
          for(unsigned j=0; j < fl_units[1]; j++)
             for(unsigned k=0; k < fl_units[2]; k++)
@@ -142,7 +142,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
                      if(tswap) N1++;
                   }
    }
-   cout << "Filling " << N1 << " of 3*"
+   std::cout << "Filling " << N1 << " of 3*"
         << fl_units[0] << "*" << fl_units[1] << "*" << fl_units[2]
         << " = " << 3*fl_units[0]*fl_units[1]*fl_units[2]
         << " slots (ideally " << N << ").\n";
@@ -227,7 +227,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
    }
    else
    {
-      cout << "Unavailable fluid ID " << fluid << ".\n";
+      std::cout << "Unavailable fluid ID " << fluid << ".\n";
       exit(20);
    }
 

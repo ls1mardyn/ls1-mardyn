@@ -3,7 +3,6 @@
 
 #include <math.h>
 #include <iostream>
-using namespace std;
 
 int Graphit::getNumberOfAtoms()
 {
@@ -222,8 +221,8 @@ unsigned Graphit::comp(int ti, int tj)
    int i = ti % 2;
    int j = tj % 14;
 
-   // cout << "\t\t(i, j) \t=\t (" << i << ", " << j << ")\n";
-   // cout.flush();
+   // std::cout << "\t\t(i, j) \t=\t (" << i << ", " << j << ")\n";
+   // std::cout.flush();
 
    if((j == 2) && (i == 1)) return CID_I;
    else if((j ==  3) && (i == 0)) return CID_I;

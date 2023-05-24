@@ -7,10 +7,10 @@
 Domain::Domain(int ingrid)
 {
    this->grid = ingrid;
-   this->cavities = set<long>();
-   this->verlet = map< long, set<long> >();
-   this->clusterID = map<long, long>();
-   this->clusterVertices = map< long, set<long> >();
+   this->cavities = std::set<long>();
+   this->verlet = std::map< long, std::set<long> >();
+   this->clusterID = std::map<long, long>();
+   this->clusterVertices = std::map< long, std::set<long> >();
 }
 
 long Domain::encode(int xgrid, int ygrid, int zgrid)
@@ -23,7 +23,7 @@ long Domain::encode(int xgrid, int ygrid, int zgrid)
 void Domain::decode(int* qgrid, long code)
 {
    long rest;
-   if((code < 0) || (code >= grid*grid*grid)) { cout << "invalid code " << code << ".\n"; exit(22); }
+   if((code < 0) || (code >= grid*grid*grid)) { std::cout << "invalid code " << code << ".\n"; exit(22); }
    
    rest = code % grid;
    qgrid[2] = rest;
@@ -37,16 +37,16 @@ void Domain::decode(int* qgrid, long code)
    return;
 }
 
-bool Domain::neighbours(long code, set<long>* vicinity)
+bool Domain::neighbours(long code, std::set<long>* vicinity)
 {
-   // cout << "\t{";
+   // std::cout << "\t{";
    vicinity->clear();
    if(this->cavities.count(code) > 0)
    {
-      // cout << code;
+      // std::cout << code;
       int x[3];
       this->decode(x, code);
-      // cout << " ; (" << x[0] << "/" << x[1] << "/" << x[2] << ")";
+      // std::cout << " ; (" << x[0] << "/" << x[1] << "/" << x[2] << ")";
       
       int c[3];
       int y[3];
@@ -65,7 +65,7 @@ bool Domain::neighbours(long code, set<long>* vicinity)
                      if(y[d] < 0) y[d] += grid;
                      else if(y[d] >= grid) y[d] -= grid;
                   }
-                  // cout << " -?-> (" << y[0] << "/" << y[1] << "/" << y[2] << ")";
+                  // std::cout << " -?-> (" << y[0] << "/" << y[1] << "/" << y[2] << ")";
                   ycode = this->encode(y[0], y[1], y[2]);
                   if(this->cavities.count(ycode) > 0) vicinity->insert(ycode);
                }
@@ -73,42 +73,42 @@ bool Domain::neighbours(long code, set<long>* vicinity)
          }
       }
    }
-   // cout << "}";
+   // std::cout << "}";
    return !vicinity->empty();
 }
 
 void Domain::build_verlet()
 {
-   set<long>::iterator cavit;
+   std::set<long>::iterator cavit;
    for(cavit = this->cavities.begin(); cavit != this->cavities.end(); cavit++)
    {
-      this->verlet[*cavit] = set<long>();
+      this->verlet[*cavit] = std::set<long>();
       this->neighbours(*cavit, &(this->verlet[*cavit]));
    }
 }
 
 void Domain::detectClusters()
 {
-   set<long>::iterator acti, actj;
+   std::set<long>::iterator acti, actj;
    
    long lowlink, tnode;
-   set<long> processed_nodes;
-   set<long> present_nodes;
-   set<long> unprocessed_nodes;
+   std::set<long> processed_nodes;
+   std::set<long> present_nodes;
+   std::set<long> unprocessed_nodes;
    
-   stack<long> dfs_stack;
-   map<long, set<long>::iterator> edgeit;
+   std::stack<long> dfs_stack;
+   std::map<long, std::set<long>::iterator> edgeit;
    
    for(acti = this->cavities.begin(); acti != this->cavities.end(); acti++)
    {
-      // cout << "\t{" << *acti << "}";
+      // std::cout << "\t{" << *acti << "}";
       this->attach(*acti, *acti, false);
       unprocessed_nodes.insert(*acti);
    }
    
-   // cout << "\nBuilding Verlet list:";
+   // std::cout << "\nBuilding Verlet list:";
    this->build_verlet();
-   // cout << " done.\n";
+   // std::cout << " done.\n";
    
    while(!unprocessed_nodes.empty())
    {
@@ -156,7 +156,7 @@ void Domain::attach(long vertex, long cluster, bool detach_previous)
 {
    if(cluster > vertex)
    {
-      cout << "\nCavity " << vertex << " cannot be attached to cluster " << cluster << ".\n";
+      std::cout << "\nCavity " << vertex << " cannot be attached to cluster " << cluster << ".\n";
       exit(23);
    }
    
@@ -175,15 +175,15 @@ void Domain::attach(long vertex, long cluster, bool detach_previous)
    this->clusterID[vertex] = cluster;
    if(this->clusterVertices.count(cluster) == 0)
    {
-      this->clusterVertices[cluster] = set<long>();
+      this->clusterVertices[cluster] = std::set<long>();
    }
    this->clusterVertices[cluster].insert(vertex);
 }
 
-unsigned Domain::countClusters(map<unsigned, unsigned>* thresholds)
+unsigned Domain::countClusters(std::map<unsigned, unsigned>* thresholds)
 {
-   map<unsigned, unsigned> exactPopulation;
-   map< long, set<long> >::iterator cluvit;
+   std::map<unsigned, unsigned> exactPopulation;
+   std::map< long, std::set<long> >::iterator cluvit;
    for(cluvit = this->clusterVertices.begin(); cluvit != this->clusterVertices.end(); cluvit++)
    {
       unsigned cavsize = cluvit->second.size();
@@ -192,7 +192,7 @@ unsigned Domain::countClusters(map<unsigned, unsigned>* thresholds)
    }
    
    unsigned largest = 0;
-   map<unsigned, unsigned>::iterator threshit, popit;
+   std::map<unsigned, unsigned>::iterator threshit, popit;
    for(threshit = thresholds->begin(); threshit != thresholds->end(); *threshit++)
    {
       (*thresholds)[threshit->first] = 0;

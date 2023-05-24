@@ -40,8 +40,8 @@ Domain::Domain(unsigned t_N, double t_rho, double t_RDF)
 
 void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu, bool compute_autocorr, int format)
 {
-   ofstream xdr, txt, buchholz;
-   stringstream strstrm, txtstrstrm, buchholzstrstrm;
+   std::ofstream xdr, txt, buchholz;
+   std::stringstream strstrm, txtstrstrm, buchholzstrstrm;
    if(format == FORMAT_BRANCH)
    {
       strstrm << prefix << ".xdr";
@@ -50,7 +50,7 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    {
       strstrm << prefix << ".inp";
    }
-   xdr.open(strstrm.str().c_str(), ios::trunc);
+   xdr.open(strstrm.str().c_str(), std::ios::trunc);
    if(format == FORMAT_BRANCH)
    {
       txtstrstrm << prefix << "_1R.txt";
@@ -59,11 +59,11 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    {
       txtstrstrm << prefix << "_1R.cfg";
    }
-   txt.open(txtstrstrm.str().c_str(), ios::trunc);
+   txt.open(txtstrstrm.str().c_str(), std::ios::trunc);
    if(format == FORMAT_BUCHHOLZ)
    {
       buchholzstrstrm << prefix << "_1R.xml";
-      buchholz.open(buchholzstrstrm.str().c_str(), ios::trunc);
+      buchholz.open(buchholzstrstrm.str().c_str(), std::ios::trunc);
 
       /*
        * Gesamter Inhalt der Buchholz-Datei
@@ -92,7 +92,7 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
       if(fl_units[0][i] == 0) fl_units[0][i] = 1;
       fl_units[2][i] = ceil(bxbz_id / fl_units[0][i]);
       for(int d=0; d < 3; d++) fl_unit[d][i] = ((d == 1)? 0.5: 1.0) * box[d] / (double)fl_units[d][i];
-      cout << "Elementary cell " << i << ": " << fl_unit[0][i] << " x " << fl_unit[1][i] << " x " << fl_unit[2][i] << ".\n";
+      std::cout << "Elementary cell " << i << ": " << fl_unit[0][i] << " x " << fl_unit[1][i] << " x " << fl_unit[2][i] << ".\n";
    }
 
    Random* r = new Random();
@@ -127,7 +127,7 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
       {
          tswap = (N[l] < N_id[l]);
          pswap = (N_id[l] - (double)N[l]) / ((tswap? slots[l]: 0) - (double)N[l]);
-         // cout << "N = " << N[l] << ", N_id = " << N_id[l] << " => tswap = " << tswap << ", pswap = " << pswap << "\n";
+         // std::cout << "N = " << N[l] << ", N_id = " << N_id[l] << " => tswap = " << tswap << ", pswap = " << pswap << "\n";
          for(unsigned i=0; i < fl_units[0][l]; i++)
             for(unsigned j=0; j < fl_units[1][l]; j++)
                for(unsigned k=0; k < fl_units[2][l]; k++)
@@ -140,7 +140,7 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
                         if(tswap) N[l] ++;
                      }
       }
-      cout << "Filling " << N[l] << " of 3*"
+      std::cout << "Filling " << N[l] << " of 3*"
            << fl_units[0][l] << "*" << fl_units[1][l] << "*" << fl_units[2][l]
            << " = " << slots[l] << " slots (ideally " << N_id[l] << ").\n";
    }
@@ -209,7 +209,7 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
          }
          else
          {
-            cout << "N[0] = " << N[0] << ", N[1] = " << N[1] << ", conducting " << round((double)(N[0]+N[1]) / 5000.0) << " test actions.\n";
+            std::cout << "N[0] = " << N[0] << ", N[1] = " << N[1] << ", conducting " << round((double)(N[0]+N[1]) / 5000.0) << " test actions.\n";
             txt << "chemicalPotential\t" << mu << " component 1\tconduct " << (int)round((double)(N[0]+N[1]) / 5000.0) << " tests every 2 steps\n";
          }
          txt << "planckConstant\t" << sqrt(6.2831853 * T) << "\ninitGrandCanonical\t60000\n";

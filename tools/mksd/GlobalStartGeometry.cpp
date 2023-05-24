@@ -31,11 +31,11 @@ GlobalStartGeometry::GlobalStartGeometry(unsigned in_nFluid, double in_rhoLiq, d
 	_gamma = in_gamma;
 	_nLiq = _nFluid / (1+ (_alpha*_beta*_gamma-1.0) *_rhoVap/_rhoLiq );
 	_nVap = _nFluid - _nLiq;
-	cout << "\n**********************************\n";
-	cout << "GloablStartGeometry:\n";
+	std::cout << "\n**********************************\n";
+	std::cout << "GloablStartGeometry:\n";
 	//cout << "rhoVap = "<< _rhoVap << "\t rhoLiq = " << _rhoLiq << "\n";
-	cout << "N liquid: " << _nLiq << "\n";
-	cout << "N vapor: " << _nVap << "\n";
+	std::cout << "N liquid: " << _nLiq << "\n";
+	std::cout << "N vapor: " << _nVap << "\n";
 }
 
 GlobalStartGeometry::~GlobalStartGeometry(){
@@ -65,19 +65,19 @@ void GlobalStartGeometry::calculateBoxFluidOffset(double hWall, double shielding
 	_effLiq[1] = (_nLiq / _rhoLiq) / (_effLiq[0]*_effLiq[2]); 
 
 	_box[1] = _nVap/_rhoVap/_box[0]/_box[2] + (_effLiq[0]*_effLiq[1]*_effLiq[2])/_box[0]/_box[2] + hWall + shielding;
-	cout << "hWall: " << hWall << "\n";
-	cout << "shielding: " << shielding <<"\n";
-	cout << "box[0]: " << _box[0] << "\n";
-	cout << "box[1]: " << _box[1] << "\n";
-	cout << "box[2]: " << _box[2] << "\n";
+	std::cout << "hWall: " << hWall << "\n";
+	std::cout << "shielding: " << shielding <<"\n";
+	std::cout << "box[0]: " << _box[0] << "\n";
+	std::cout << "box[1]: " << _box[1] << "\n";
+	std::cout << "box[2]: " << _box[2] << "\n";
 
 	effVap[0] = 0.97*_box[0];
 	effVap[1] = 0.97*(_box[1]-hWall-shielding) ;
 	effVap[2] = 0.97*_box[2];
 	_grossFluidDens = _nFluid / (_box[0] * _box[2] * (_box[1] - hWall));
-	cout << "gross fluid density: " <<  _grossFluidDens << "\n";
-	cout << "critical density 1CLJ: " << RHO_CRITICAL_1CLJ << "\n";
-	cout << "vapour fraction x = " << (1.0/_grossFluidDens - 1.0/_rhoLiq) / (1.0/_rhoVap - 1.0/_rhoLiq) << "\n";
+	std::cout << "gross fluid density: " <<  _grossFluidDens << "\n";
+	std::cout << "critical density 1CLJ: " << RHO_CRITICAL_1CLJ << "\n";
+	std::cout << "vapour fraction x = " << (1.0/_grossFluidDens - 1.0/_rhoLiq) / (1.0/_rhoVap - 1.0/_rhoLiq) << "\n";
 
 	_offLiq[0] = 0.5*(_box[0] - _effLiq[0]);
 	_offLiq[1] = hWall + shielding;
@@ -116,16 +116,16 @@ void GlobalStartGeometry::calculateBoxFluidOffset(double hWall, double shielding
 	_vapUnit[1] = (double)effVap[1]/_vapUnits[1];
 	_vapUnit[2] = (double)effVap[2]/_vapUnits[2];
 	
-	cout << "_vapUnit[0]  = "<< _vapUnit[0] << "\t _vapUnit[1] = " << _vapUnit[1] << "\t _vapUnit[2] = " << _vapUnit[2] << "\n";
-	cout << "_vapUnits[0]  = "<< _vapUnits[0] << "\t _vapUnits[1] = " << _vapUnits[1] << "\t _vapUnits[2] = " << _vapUnits[2] << "\n";
-	cout << "effVap[0] = " << effVap[0] << "\t effVap[1] = " << effVap[1] << "\teffVap[2] = " << effVap[2] << "\n";
+	std::cout << "_vapUnit[0]  = "<< _vapUnit[0] << "\t _vapUnit[1] = " << _vapUnit[1] << "\t _vapUnit[2] = " << _vapUnit[2] << "\n";
+	std::cout << "_vapUnits[0]  = "<< _vapUnits[0] << "\t _vapUnits[1] = " << _vapUnits[1] << "\t _vapUnits[2] = " << _vapUnits[2] << "\n";
+	std::cout << "effVap[0] = " << effVap[0] << "\t effVap[1] = " << effVap[1] << "\teffVap[2] = " << effVap[2] << "\n";
 	
-	cout << "_effLiq[0]  = " << _effLiq[0] << "\t _effLiq[1] = " << _effLiq[1] << "\t _effLiq[2] = " << _effLiq[2] <<"\n"; 
-	cout << "upper edge of the liquid cuboid: _effLiq[1] + _offLiq[1] = " << _effLiq[1] + _offLiq[1] << "blub\n";
+	std::cout << "_effLiq[0]  = " << _effLiq[0] << "\t _effLiq[1] = " << _effLiq[1] << "\t _effLiq[2] = " << _effLiq[2] <<"\n"; 
+	std::cout << "upper edge of the liquid cuboid: _effLiq[1] + _offLiq[1] = " << _effLiq[1] + _offLiq[1] << "blub\n";
 	
 	
 	_vapFillProbability = _nVap/3.0 / ( _vapUnits[0] * _vapUnits[1] * _vapUnits[2] );
-	cout << "_vapFillProbability \t "<< _vapFillProbability << "\n";
+	std::cout << "_vapFillProbability \t "<< _vapFillProbability << "\n";
 	
 	_offVap[0] = 0.1 * _vapUnit[0];
 	_offVap[1] = _offLiq[1];
@@ -157,19 +157,19 @@ void GlobalStartGeometry::calculateBoxFluidOffset(double hWall, double shielding
 	_effLiq[1] = (_nLiq / _rhoLiq) / (_effLiq[0]*_effLiq[2]); 
 
 	_box[1] = _nVap/_rhoVap/_box[0]/_box[2] + (_effLiq[0]*_effLiq[1]*_effLiq[2])/_box[0]/_box[2] + hWall + shielding;
-	cout << "hWall: " << hWall << "\n";
-	cout << "shielding: " << shielding <<"\n";
-	cout << "box[0]: " << _box[0] << "\n";
-	cout << "box[1]: " << _box[1] << "\n";
-	cout << "box[2]: " << _box[2] << "\n";
+	std::cout << "hWall: " << hWall << "\n";
+	std::cout << "shielding: " << shielding <<"\n";
+	std::cout << "box[0]: " << _box[0] << "\n";
+	std::cout << "box[1]: " << _box[1] << "\n";
+	std::cout << "box[2]: " << _box[2] << "\n";
 
 	effVap[0] = 0.97*_box[0];
 	effVap[1] = 0.97*(_box[1]-hWall-shielding) ;
 	effVap[2] = 0.97*_box[2];
 	_grossFluidDens = _nFluid / (_box[0] * _box[2] * (_box[1] - hWall));
-	cout << "gross fluid density: " <<  _grossFluidDens << "\n";
-	cout << "critical density 1CLJ: " << RHO_CRITICAL_1CLJ << "\n";
-	cout << "vapour fraction x = " << (1.0/_grossFluidDens - 1.0/_rhoLiq) / (1.0/_rhoVap - 1.0/_rhoLiq) << "\n";
+	std::cout << "gross fluid density: " <<  _grossFluidDens << "\n";
+	std::cout << "critical density 1CLJ: " << RHO_CRITICAL_1CLJ << "\n";
+	std::cout << "vapour fraction x = " << (1.0/_grossFluidDens - 1.0/_rhoLiq) / (1.0/_rhoVap - 1.0/_rhoLiq) << "\n";
 
 	_offLiq[0] = 0.5*(_box[0] - _effLiq[0]);
 	_offLiq[1] = hWall + shielding;
@@ -208,12 +208,12 @@ void GlobalStartGeometry::calculateBoxFluidOffset(double hWall, double shielding
 	_vapUnit[1] = (double)effVap[1]/_vapUnits[1];
 	_vapUnit[2] = (double)effVap[2]/_vapUnits[2];
 	
-	cout << "_vapUnit[0]  = "<< _vapUnit[0] << "\t _vapUnit[1] = " << _vapUnit[1] << "\t _vapUnit[2] = " << _vapUnit[2] << "\n";
-	cout << "_vapUnits[0]  = "<< _vapUnits[0] << "\t _vapUnits[1] = " << _vapUnits[1] << "\t _vapUnits[2] = " << _vapUnits[2] << "\n";
-	cout << "effVap[0] = " << effVap[0] << "\t effVap[1] = " << effVap[1] << "\teffVap[2] = " << effVap[2] << "\n";
+	std::cout << "_vapUnit[0]  = "<< _vapUnit[0] << "\t _vapUnit[1] = " << _vapUnit[1] << "\t _vapUnit[2] = " << _vapUnit[2] << "\n";
+	std::cout << "_vapUnits[0]  = "<< _vapUnits[0] << "\t _vapUnits[1] = " << _vapUnits[1] << "\t _vapUnits[2] = " << _vapUnits[2] << "\n";
+	std::cout << "effVap[0] = " << effVap[0] << "\t effVap[1] = " << effVap[1] << "\teffVap[2] = " << effVap[2] << "\n";
 	
-	cout << "_effLiq[0]  = " << _effLiq[0] << "\t _effLiq[1] = " << _effLiq[1] << "\t _effLiq[2] = " << _effLiq[2] <<"\n"; 
-	cout << "upper edge of the liquid cuboid: _effLiq[1] + _offLiq[1] = " << _effLiq[1] + _offLiq[1] << "\n";
+	std::cout << "_effLiq[0]  = " << _effLiq[0] << "\t _effLiq[1] = " << _effLiq[1] << "\t _effLiq[2] = " << _effLiq[2] <<"\n"; 
+	std::cout << "upper edge of the liquid cuboid: _effLiq[1] + _offLiq[1] = " << _effLiq[1] + _offLiq[1] << "\n";
 	
 	
 	_vapFillProbability = _nVap/3.0 / ( _vapUnits[0] * _vapUnits[1] * _vapUnits[2] );
@@ -253,7 +253,7 @@ void GlobalStartGeometry::calculateLiqFillProbabilityArray()
 	bool tSwap;
 
 	_nFilledLiqSlots = 3*_liqUnits[0]*_liqUnits[1]*_liqUnits[2];
-//	cout << "number of filled slots at the beginning of Gloablstartgeometry:" << _nFilledSlots <<"\n";
+//	std::cout << "number of filled slots at the beginning of Gloablstartgeometry:" << _nFilledSlots <<"\n";
 	totalNSlots = _nFilledLiqSlots; // slots is and "always" will be the total number of slots
 	nIdeallyFilled = _liqFillProbability * totalNSlots;
 	RandomNumber rdm;
@@ -275,7 +275,7 @@ void GlobalStartGeometry::calculateLiqFillProbabilityArray()
 			}
 		}
 	}
-/*	cout << "Filling" << _nFilledSlots << " out of a total number of " << totalNSlots << "fluid slots. Ideally a number of "
+/*	std::cout << "Filling" << _nFilledSlots << " out of a total number of " << totalNSlots << "fluid slots. Ideally a number of "
 		<< nIdeallyFilled << "fluid slots was to be filled.\n" << "fluidFillProbability = " << _fluidFillProbability << "\n";*/
 }
 
@@ -304,7 +304,7 @@ void GlobalStartGeometry::calculateVapFillProbabilityArray(){
 	bool tSwap;
 
 	_nFilledVapSlots = 3*_vapUnits[0]*_vapUnits[1]*_vapUnits[2];
-//	cout << "number of filled slots at the beginning of Gloablstartgeometry:" << _nFilledSlots <<"\n";
+//	std::cout << "number of filled slots at the beginning of Gloablstartgeometry:" << _nFilledSlots <<"\n";
 	totalNSlots = _nFilledVapSlots; 
 	nIdeallyFilled = _vapFillProbability * totalNSlots;
 	RandomNumber rdm;
@@ -338,7 +338,7 @@ void GlobalStartGeometry::calculateVapFillProbabilityArray(){
 			}
 		}
 	}
-/*	cout << "Filling" << _nFilledSlots << " out of a total number of " << totalNSlots << "fluid slots. Ideally a number of "
+/*	std::cout << "Filling" << _nFilledSlots << " out of a total number of " << totalNSlots << "fluid slots. Ideally a number of "
 		<< nIdeallyFilled << "fluid slots was to be filled.\n" << "fluidFillProbability = " << _fluidFillProbability << "\n";*/
 
   

@@ -401,14 +401,14 @@ class FileInformationXML(object):
 	
 	def __str__(self):
 		if self.isValid():
-			string = 'XML-Path: "'
+			std::string = 'XML-Path: "'
 			for element in self.xmlpath:
-				string += element
+				std::string += element
 				if element is not self.xmlpath[-1]:
-					string += '/'
-			string += '" '
+					std::string += '/'
+			std::string += '" '
 			if self.attribute != "":
-				string += 'Attribute: "' + self.attribute + '" '
+				std::string += 'Attribute: "' + self.attribute + '" '
 			return string
 		else:
 			return ""

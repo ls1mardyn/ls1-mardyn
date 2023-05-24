@@ -97,13 +97,13 @@ void MDGenerator::generatePreview() {
 
 	_logger->info() << "MDGenerator: bounding box of domain is [" <<
 			bBoxMin[0] << "," << bBoxMin[1] << "," << bBoxMin[2] << "] to ["
-			<< bBoxMax[0] << "," << bBoxMax[1] << "," << bBoxMax[2] << "]" << endl;
-	_logger->info() << "MDGenerator: temperature=" << domain.getTargetTemperature(0) << endl;
+			<< bBoxMax[0] << "," << bBoxMax[1] << "," << bBoxMax[2] << "]" << std::endl;
+	_logger->info() << "MDGenerator: temperature=" << domain.getTargetTemperature(0) << std::endl;
 
 	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius);
 
 	readPhaseSpace(&container, &domain, &domainDecomposition);
-	_logger->info() << "MDGenerator: " << container.getNumberOfParticles() << " particles were created." << endl;
+	_logger->info() << "MDGenerator: " << container.getNumberOfParticles() << " particles were created." << std::endl;
 
 	auto molecule = container.iterator(ParticleIterator::ALL_CELLS);
 	while (molecule.isValid()) {
@@ -117,19 +117,19 @@ void MDGenerator::generatePreview() {
 void MDGenerator::generateOutput(const std::string& directory) {
 
 	srand(1);
-	std::cout << "MDGenerator::generateOutput called!" << endl;
+	std::cout << "MDGenerator::generateOutput called!" << std::endl;
 
 	if (_configuration.getOutputFormat() == MardynConfiguration::LEGACY) {
 		MardynConfigLegacyWriter::writeConfigFile(directory, _configuration.getScenarioName() + ".cfg", _configuration);
 	} else if (_configuration.getOutputFormat() == MardynConfiguration::XML) {
-		_logger->error() << "XML Output not yet supported!" << endl;
-		_logger->error() << "Generating nothing!" << endl;
+		_logger->error() << "XML Output not yet supported!" << std::endl;
+		_logger->error() << "Generating nothing!" << std::endl;
 		return;
 	} else {
-		_logger->error() << "Invalid File format for Output!" << _configuration.getOutputFormat() << endl;
+		_logger->error() << "Invalid File format for Output!" << _configuration.getOutputFormat() << std::endl;
 	}
 
-	std::cout << "MDGenerator::config file written!" << endl;
+	std::cout << "MDGenerator::config file written!" << std::endl;
 	int rank = 0;
 	Domain domain(rank);
 	DomainDecompBase domainDecomposition;
@@ -143,21 +143,21 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	double bBoxMax[3] = { 0,0,0};
 	double cutoffRadius = 3.0;
 
-	std::cout << "MDGenerator::generateOutput before read phasespace header!" << endl;
+	std::cout << "MDGenerator::generateOutput before read phasespace header!" << std::endl;
 	readPhaseSpaceHeader(&domain, 0);
-	std::cout << "MDGenerator::generateOutput after read phasespace header!" << endl;
+	std::cout << "MDGenerator::generateOutput after read phasespace header!" << std::endl;
 	bBoxMax[0] = domain.getGlobalLength(0);
 	bBoxMax[1] = domain.getGlobalLength(1);
 	bBoxMax[2] = domain.getGlobalLength(2);
 	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius);
-	std::cout << "MDGenerator::generateOutput before read phasespace!" << endl;
+	std::cout << "MDGenerator::generateOutput before read phasespace!" << std::endl;
 	readPhaseSpace(&container, &domain, &domainDecomposition);
-	std::cout << "MDGenerator::generateOutput read phasespace done!" << endl;
+	std::cout << "MDGenerator::generateOutput read phasespace done!" << std::endl;
 	domain.setglobalNumMolecules(container.getNumberOfParticles());
-	std::cout << "NumMolecules in Container: " << container.getNumberOfParticles() << endl;
+	std::cout << "NumMolecules in Container: " << container.getNumberOfParticles() << std::endl;
 
 	std::string destination = directory + "/" + _configuration.getScenarioName() + ".inp";
-	_logger->info() << "Writing output to: " << destination << endl;
+	_logger->info() << "Writing output to: " << destination << std::endl;
 	domain.writeCheckpoint(destination, &container, &domainDecomposition, 0.);
 
 #ifndef MARDYN
@@ -166,7 +166,7 @@ void MDGenerator::generateOutput(const std::string& directory) {
 }
 
 std::vector<double> MDGenerator::getRandomVelocity(double temperature) const {
-	vector<double> v_;
+	std::vector<double> v_;
 	v_.resize(3);
 
 	// Velocity

@@ -8,16 +8,16 @@
 #include"PhaseSpaceWriter.h"
 
 extern double LATTICE_CONST_WALL_LJTS;
-extern const string WALL_CU_LJ;
+extern const std::string WALL_CU_LJ;
 
 // constructor
 
-PhaseSpaceWriter::PhaseSpaceWriter(string in_prefix, double in_Temperature, double in_densFac, unsigned in_nFluid, string in_fluidComponent,
-		string in_wallComponent, unsigned in_wallLayers, double in_xi12, double in_xi13, double in_eta12, double in_alpha, double in_beta, double in_gamma, double in_edgeProp, bool in_stripes,
+PhaseSpaceWriter::PhaseSpaceWriter(std::string in_prefix, double in_Temperature, double in_densFac, unsigned in_nFluid, std::string in_fluidComponent,
+		std::string in_wallComponent, unsigned in_wallLayers, double in_xi12, double in_xi13, double in_eta12, double in_alpha, double in_beta, double in_gamma, double in_edgeProp, bool in_stripes,
 		unsigned in_numberOfStripes, bool in_LJShifted, bool in_LJunits)
 {
-	cout << "\n\n**********************************\nPhaseSpaceWriter opened\n";
-	cout << "writing the header ...\n**********************************\n";
+	std::cout << "\n\n**********************************\nPhaseSpaceWriter opened\n";
+	std::cout << "writing the header ...\n**********************************\n";
 	_fileName = in_prefix + ".inp";
 	_fileNameXyz = in_prefix+".xyz";
 	_fluidComponentName = in_fluidComponent;
@@ -37,12 +37,12 @@ PhaseSpaceWriter::PhaseSpaceWriter(string in_prefix, double in_Temperature, doub
 	_numberOfStripes = in_numberOfStripes;
 	_LJShifted = in_LJShifted;
 	_LJunits = in_LJunits;
-//	cout << "\n**********************************\nPhaseSpaceWriter constructor finished\n**********************************\n";
+//	std::cout << "\n**********************************\nPhaseSpaceWriter constructor finished\n**********************************\n";
 
 /*	// generating the ofstream, i.e. the phase space file
-	psstrm(_fileName.c_str(), ios::binary|ios::out);
+	psstrm(_fileName.c_str(), std::ios::binary|std::ios::out);
 	if(!psstrm){ // simple error handling: ofstream MUST exist
-		cerr << "Error in constructor of PhaseSpaceWriter:\nPhase space file \""<< _fileName <<"\" cannot be opened.";
+		std::cerr << "Error in constructor of PhaseSpaceWriter:\nPhase space file \""<< _fileName <<"\" cannot be opened.";
 		exit(-50);
 	}
 */
@@ -54,25 +54,25 @@ PhaseSpaceWriter::~PhaseSpaceWriter(){
 
 void PhaseSpaceWriter::write()
 {
-//	cout <<"\n**********************************\n PhaseSpaceWriter write() method started\n**********************************\n";
+//	std::cout <<"\n**********************************\n PhaseSpaceWriter write() method started\n**********************************\n";
 	//@brief: wirting the header
 	// generating the ofstream, i.e. the phase space file.
-	 ofstream psstrm(_fileName.c_str(), ios::binary|ios::out);
+	 std::ofstream psstrm(_fileName.c_str(), std::ios::binary|std::ios::out);
 		if(!psstrm){ // simple error handling: ofstream MUST exist
-			cerr << "Error in 'write()'-method of PhaseSpaceWriter:\nPhase space file \""<< _fileName <<"\" cannot be opened.";
+			std::cerr << "Error in 'write()'-method of PhaseSpaceWriter:\nPhase space file \""<< _fileName <<"\" cannot be opened.";
 			exit(101);
 		}
 	// xyz file format, to be used for VMD-visualisation
-	ofstream xyzstrm(_fileNameXyz.c_str(), ios::binary|ios::out);
+	std::ofstream xyzstrm(_fileNameXyz.c_str(), std::ios::binary|std::ios::out);
 	if(!xyzstrm){ // simple error handling: ofstream MUST exist
-				cerr << "Error in constructor of PhaseSpaceWriter:\nPhase space file \""<< _fileNameXyz <<"\" cannot be opened.";
+				std::cerr << "Error in constructor of PhaseSpaceWriter:\nPhase space file \""<< _fileNameXyz <<"\" cannot be opened.";
 				exit(101);
 			}
 
 	Component fluidComp(_fluidComponentName, _LJunits);
 	GlobalStartGeometry geometry(_nFluid, fluidComp.calculateLiquidDensity(_temperature),
 									fluidComp.calculateVaporDensity(_temperature, _densFac), _alpha, _beta, _gamma);
-//	cout << "\n**********************************\n objects of classes 'Component' and 'GlobalStartGeometry' generated\n**********************************\n";
+//	std::cout << "\n**********************************\n objects of classes 'Component' and 'GlobalStartGeometry' generated\n**********************************\n";
 	unsigned numberOfComponents;
 	if(_stripes){
 		numberOfComponents = 3;
@@ -86,7 +86,7 @@ void PhaseSpaceWriter::write()
 		latticeConst= LATTICE_CONST_WALL_LJTS;
 	}
 	else{
-		cerr << "error in PhaseSpaceWriter.write(): no lattice const available for this wall model.";
+		std::cerr << "error in PhaseSpaceWriter.write(): no lattice const available for this wall model.";
 		exit(102);
 	}
 	hWall = latticeConst * (_wallLayers-0.5);
@@ -139,7 +139,7 @@ void PhaseSpaceWriter::write()
 	
 	_avMass = (_nFluid*fluidComp.gMass(0) + (_nTotal-_nFluid)*wallComp.gMass(0))/_nTotal;
 
-//	cout << "\n**********************************\nobject 'wallComp' of the 'Component' class generated.\n**********************************\n";
+//	std::cout << "\n**********************************\nobject 'wallComp' of the 'Component' class generated.\n**********************************\n";
 
 	// so far no other models than LJ implemented => no scheme for writing the model parameters corresponding to charges, dipoles, etc.
 //***************************************************************************************************************************************
@@ -159,7 +159,7 @@ void PhaseSpaceWriter::write()
 	Molecule wallMolecule(_temperature, wallComp.gMass(0));
 
 
-//	cout << "\n**********************************\nobject walMolecule of the class 'Molecule' generated\n**********************************\n";
+//	std::cout << "\n**********************************\nobject walMolecule of the class 'Molecule' generated\n**********************************\n";
 
 	/*wallMolecule.calculateCoordinatesOfWallMolecule(_wallLayers, geometry.gBoxLength(0), geometry.gBoxLength(1), geometry.gBoxLength(2),
 			geometry.gOffset(0), geometry.gOffset(1), geometry.gOffset(2), latticeConst);*/
@@ -171,7 +171,7 @@ void PhaseSpaceWriter::write()
 		wallMolecule.calculateCoordinatesOfWallMolecule(geometry.gBoxLength(0),geometry.gBoxLength(2),
 															geometry.gOffsetLiq(1), latticeConst, shielding);
 	}
-//	cout<< "\n**********************************\n coordinates of wall molecules calculated\n**********************************\n";
+//	std::cout<< "\n**********************************\n coordinates of wall molecules calculated\n**********************************\n";
 
 	// total number of particles
 	geometry.calculateLiqFillProbabilityArray(); // within this method the number of actually filled liquid particles is calculated, too => already called here
@@ -198,7 +198,7 @@ void PhaseSpaceWriter::write()
 	//cout << "fluidUnit[0]: "<<geometry.gFluidUnit(0) << " fluidUnits[0]: " << geometry.gFluidUnits(0) <<"\n";
 	//cout << "fluidUnit[1]: "<<geometry.gFluidUnit(1) << " fluidUnits[1]: " << geometry.gFluidUnits(1) <<"\n";
 	//cout << "fluidUnit[2]: "<<geometry.gFluidUnit(2) << " fluidUnits[2]: " << geometry.gFluidUnits(2) <<"\n";
-	cout << "\n**********************************\nWriting the body ...\n**********************************\n";
+	std::cout << "\n**********************************\nWriting the body ...\n**********************************\n";
 	RandomNumber rdm;
 	//liquid particles
 	for(ii[0] = 0; ii[0] < geometry.gLiqUnits(0); ii[0]++){
@@ -216,7 +216,7 @@ void PhaseSpaceWriter::write()
 							}
 							else{ // PBC in y-direction => collision with the wall!
 								if(geometry.gBoxLength(j) < positionVec[j]){
-									cerr << "Severe error in PhaseSpaceWriter::write() => writing the fluid positions:\n"
+									std::cerr << "Severe error in PhaseSpaceWriter::write() => writing the fluid positions:\n"
 											<< "Fluid particle placed within wall due to PBC in y-direction!!!\n";
 											exit(104);
 								}
@@ -258,7 +258,7 @@ void PhaseSpaceWriter::write()
 							}
 							else{ // PBC in y-direction => collision with the wall!
 								if(geometry.gBoxLength(j) < positionVec[j]){
-									cerr << "Severe error in PhaseSpaceWriter::write() => writing the fluid positions:\n"
+									std::cerr << "Severe error in PhaseSpaceWriter::write() => writing the fluid positions:\n"
 											<< "Fluid particle placed within wall due to PBC in y-direction!!!\n";
 											exit(104);
 								}
@@ -284,8 +284,8 @@ void PhaseSpaceWriter::write()
 	// wall molecules are being filled
 	wallMolecule.calculateVelocities();
 	unsigned numberOfWallMolecules = wallMolecule.gNumberOfMolecules();
-	cout << "Number of fluid molecules: " << geometry.gNFilledLiqSlots() + geometry.gNFilledVapSlots()<< "\n";
-	cout << "Number of wall molecules: "<< numberOfWallMolecules <<"\n**********************************\n\n";
+	std::cout << "Number of fluid molecules: " << geometry.gNFilledLiqSlots() + geometry.gNFilledVapSlots()<< "\n";
+	std::cout << "Number of wall molecules: "<< numberOfWallMolecules <<"\n**********************************\n\n";
 	for (unsigned i = 0; i < numberOfWallMolecules; i++){
 		psstrm << id <<" "<< wallMolecule.gMoleculeCID(i) <<"\t"<< wallMolecule.gXPos(i) <<" "<< wallMolecule.gYPos(i) <<" "<< wallMolecule.gZPos(i) <<
 				"\t"<< wallMolecule.gXVelocity(i) <<" "<< wallMolecule.gYVelocity(i) <<" "<< wallMolecule.gZVelocity(i)
@@ -297,8 +297,8 @@ void PhaseSpaceWriter::write()
 			xyzstrm << "N \t"<< wallMolecule.gXPos(i) <<" "<< wallMolecule.gYPos(i) <<" "<< wallMolecule.gZPos(i) <<"\n";
 		}
 	if (wallMolecule.gMoleculeCID(i) != 3 && wallMolecule.gMoleculeCID(i) != 2 ){
-			cerr << "!!!Error: wall cid differs from 2 or 3, respectively! cid = " << wallMolecule.gMoleculeCID(i) << "\n";
-			cerr << "id = " << id <<"\n";
+			std::cerr << "!!!Error: wall cid differs from 2 or 3, respectively! cid = " << wallMolecule.gMoleculeCID(i) << "\n";
+			std::cerr << "id = " << id <<"\n";
 		}
 		id++;
 	} // end for(i...)

@@ -126,8 +126,8 @@ void Domain::writeGraphite(
    double TAU, double U, bool original, double wo_acceleration,
    double polarity, bool WLJ, bool symmetric, bool widom, double x
 ) {
-   ofstream xdr, txt, buchholz;
-   stringstream strstrm, txtstrstrm, buchholzstrstrm;
+   std::ofstream xdr, txt, buchholz;
+   std::stringstream strstrm, txtstrstrm, buchholzstrstrm;
    if(format == FORMAT_BRANCH)
    {
       strstrm << prefix << ".xdr";
@@ -136,7 +136,7 @@ void Domain::writeGraphite(
    {
       strstrm << prefix << ".inp";
    }
-   xdr.open(strstrm.str().c_str(), ios::trunc);
+   xdr.open(strstrm.str().c_str(), std::ios::trunc);
    if(format == FORMAT_BRANCH)
    {
       txtstrstrm << prefix << "_1R.txt";
@@ -145,11 +145,11 @@ void Domain::writeGraphite(
    {
       txtstrstrm << prefix << "_1R.cfg";
    }
-   txt.open(txtstrstrm.str().c_str(), ios::trunc);
+   txt.open(txtstrstrm.str().c_str(), std::ios::trunc);
    if(format == FORMAT_BUCHHOLZ)
    {
       buchholzstrstrm << prefix << "_1R.xml";
-      buchholz.open(buchholzstrstrm.str().c_str(), ios::trunc);
+      buchholz.open(buchholzstrstrm.str().c_str(), std::ios::trunc);
 
       /*
        * Gesamter Inhalt der Buchholz-Datei
@@ -167,11 +167,11 @@ void Domain::writeGraphite(
    );
    double REFTIME = SIG_REF * sqrt(REFMASS / EPS_REF);
    double VEL_REF = SIG_REF / REFTIME;
-   cout << "Velocity unit 1 = " << VEL_REF << " * 1620.34 m/s = "
+   std::cout << "Velocity unit 1 = " << VEL_REF << " * 1620.34 m/s = "
         << 1620.34 * VEL_REF << " m/s.\n";
    double ACC_REF = VEL_REF / REFTIME;
    double REFCARG = sqrt(EPS_REF * SIG_REF);
-   cout << "Charge unit 1 = " << REFCARG << " e.\n";
+   std::cout << "Charge unit 1 = " << REFCARG << " e.\n";
    double QDR_REF = SIG_REF*SIG_REF * REFCARG;
    double REFOMGA = 1.0 / REFTIME;
 
@@ -195,7 +195,7 @@ void Domain::writeGraphite(
       {
          tswap = (N1a < N_id);
          pswap = (N_id - (double)N1a) / ((tswap? slots: 0.0) - (double)N1a);
-         cout << "(N_id = " << N_id << ", N1a = " << N1a << ", tswap = " << tswap << ", pswap = " << pswap << ")\n";
+         std::cout << "(N_id = " << N_id << ", N1a = " << N1a << ", tswap = " << tswap << ", pswap = " << pswap << ")\n";
          for(unsigned i=0; i < fl_units[0]; i++)
             for(unsigned j=0; j < fl_units[1]; j++)
                for(unsigned k=0; k < fl_units[2]; k++)
@@ -208,7 +208,7 @@ void Domain::writeGraphite(
                            if(tswap) N1a++;
                         }
       }
-      cout << "Filling " << N1a << " of " << repl << " x 3*"
+      std::cout << "Filling " << N1a << " of " << repl << " x 3*"
            << fl_units[0] << "*" << fl_units[1] << "*" << fl_units[2]
            << " = " << slots << " slots (ideally " << N_id << ").\n\n";
    }
@@ -230,7 +230,7 @@ void Domain::writeGraphite(
       {
          tswap = (N1b < N_id);
          pswap = (N_id - (double)N1b) / ((tswap? slots: 0.0) - (double)N1b);
-         cout << "(N_id = " << N_id << ", N1b = " << N1b << ", tswap = " << tswap << ", pswap = " << pswap << ")\n";
+         std::cout << "(N_id = " << N_id << ", N1b = " << N1b << ", tswap = " << tswap << ", pswap = " << pswap << ")\n";
          for(unsigned i=0; i < fl_units_ext[0]; i++)
             for(unsigned j=0; j < fl_units_ext[1]; j++)
                for(unsigned k=0; k < fl_units_ext[2]; k++)
@@ -243,7 +243,7 @@ void Domain::writeGraphite(
                            if(tswap) N1b++;
                         }
       }
-      cout << "Filling " << N1b << " of " << repl << " x 3*"
+      std::cout << "Filling " << N1b << " of " << repl << " x 3*"
            << fl_units_ext[0] << "*" << fl_units_ext[1] << "*" << fl_units_ext[2]
            << " = " << slots << " extension slots (ideally " << N_id << ").\n\n";
    }
@@ -268,7 +268,7 @@ void Domain::writeGraphite(
          1, this->box[0], this->box[2], this->bondlength, this->wo_wall
       );
       Ngraphene = gra.getNumberOfAtoms();
-      cout << "Inserting " << repl*d << " x " << Ngraphene
+      std::cout << "Inserting " << repl*d << " x " << Ngraphene
            << " carbon atoms.\n";
       Ntotal += repl * d * Ngraphene;
    }
@@ -350,7 +350,7 @@ void Domain::writeGraphite(
    }
    else
    {
-      cout << "Unavailable fluid ID " << fluid << ".\n";
+      std::cout << "Unavailable fluid ID " << fluid << ".\n";
       exit(20);
    }
 
@@ -655,7 +655,7 @@ void Domain::writeGraphite(
          }
          else
          {
-            cout << "Fluid code " << tfluid << ": Not yet implemented.\n";
+            std::cout << "Fluid code " << tfluid << ": Not yet implemented.\n";
             exit(1000+tfluid);
          }
       
@@ -1201,7 +1201,7 @@ void Domain::writeNanotube(
    double TAU, double U, bool original, double wo_acceleration,
    double polarity, bool WLJ, bool symmetric, bool widom, double x
 ) {
-   cout << "Cannot create the nanotube - implementation missing.\n";
+   std::cout << "Cannot create the nanotube - implementation missing.\n";
    exit(19);
 }
 
@@ -1223,11 +1223,11 @@ void Domain::specifyGraphite(double rho, unsigned N)
       this->box[1] = this->h + ((double)(this->d)-1.0)*Z;
       if(1.1 * this->shielding > 0.5 * this->h)
       {
-         cout << "Warning: shielding = " << shielding
+         std::cout << "Warning: shielding = " << shielding
               << " versus h = " << h << ", ";
          this->shielding = 0.5*this->h - 0.1 * this->shielding;
          if(this->shielding < 0.0) this->shielding = 0.0;
-         cout << "corrected to shielding = " << shielding << ".\n";
+         std::cout << "corrected to shielding = " << shielding << ".\n";
       }
       this->eff[1] = this->h - 2.0*this->shielding;
       this->off[1] = 0.5*this->h + ((double)(this->d)-1.0)*Z
@@ -1236,9 +1236,9 @@ void Domain::specifyGraphite(double rho, unsigned N)
 
    double V_id = (double)(N/rho) / (wo_wall + (1.0 - wo_wall)*eff[1]/box[1]);
    if(this->flow == FLOW_COUETTE) V_id *= 0.5;
-   cout << "Carbon-carbon bond length: " << bondlength
+   std::cout << "Carbon-carbon bond length: " << bondlength
         << " * 0.05291772 nm.\n";
-   cout << "Total volume should approach " << V_id
+   std::cout << "Total volume should approach " << V_id
         << " * 1.4818e-04 nm^3.\n";
 
    /*
@@ -1263,7 +1263,7 @@ void Domain::specifyGraphite(double rho, unsigned N)
          zeta = round(A / (tX*tZ*xi));
          if(zeta == 0)
          {
-            cout << "Warning: The generated box will be larger than specified, due to technical reasons.\n\n";
+            std::cout << "Warning: The generated box will be larger than specified, due to technical reasons.\n\n";
             zeta = 1;
          }
       }
@@ -1279,7 +1279,7 @@ void Domain::specifyGraphite(double rho, unsigned N)
     * fluid unit box dimensions
     */
    double V_eff = this->eff[0] * this->eff[1] * this->eff[2];
-   cout << "Symmetry volume " << box[0]*box[1]*box[2]
+   std::cout << "Symmetry volume " << box[0]*box[1]*box[2]
         << " * 1.4818e-04 nm^3, effectively " << V_eff
         << " * 1.4818e-04 nm^3.\n";
    double N_id = rho*V_eff;
@@ -1295,7 +1295,7 @@ void Domain::specifyGraphite(double rho, unsigned N)
    fl_units[0] = round(sqrt(this->eff[0] * bxbz_id / this->eff[2]));
    if(fl_units[0] == 0) this->fl_units[0] = 1;
    fl_units[2] = ceil(bxbz_id / fl_units[0]);
-   cout << "Elementary cell: " << this->eff[0]/fl_units[0] << " a0 x " << this->eff[1]/fl_units[1] << " a0 x " << this->eff[2]/fl_units[2] << " a0.\n\n";
+   std::cout << "Elementary cell: " << this->eff[0]/fl_units[0] << " a0 x " << this->eff[1]/fl_units[1] << " a0 x " << this->eff[2]/fl_units[2] << " a0.\n\n";
    for(int i=0; i < 3; i++)
       this->fl_unit[i] = this->eff[i] / (double)fl_units[i];
    this->pfill = N_boxes / ((double)fl_units[0]*fl_units[1]*fl_units[2]);
@@ -1316,7 +1316,7 @@ void Domain::specifyGraphite(double rho, unsigned N)
       this->ext[2] = this->box[2]*wo_wall - 2.0*shielding;
       this->off_ext[2] = this->off[2] + 0.5*(1.0 - wo_wall)*box[2] + shielding; // Shielding (Aussenseite der Wand)
       double V_ext = this->ext[0] * this->ext[1] * this->ext[2];
-      cout << "Additionally available: " << V_ext << " * 1.4818e-04 nm^3,"
+      std::cout << "Additionally available: " << V_ext << " * 1.4818e-04 nm^3,"
            << "i.e. " << this->ext[0] << " (off " << this->off_ext[0]
            << ") x " << this->ext[1] << " (off " << this->off_ext[1]
            << ") x " << this->ext[2] << " (off " << this->off_ext[2] << ").\n";
@@ -1334,7 +1334,7 @@ void Domain::specifyGraphite(double rho, unsigned N)
       fl_units_ext[0] = round(sqrt(this->ext[0] * bxbz_id_ext / this->ext[2]));
       if(fl_units_ext[0] == 0) this->fl_units_ext[0] = 1;
       fl_units_ext[2] = ceil(bxbz_id_ext / fl_units_ext[0]);
-      cout << "Elementary cell (extension): " << this->ext[0]/fl_units_ext[0]
+      std::cout << "Elementary cell (extension): " << this->ext[0]/fl_units_ext[0]
            << " a0 x " << this->ext[1]/fl_units_ext[1] << " a0 x "
            << this->ext[2]/fl_units_ext[2] << " a0.\n\n";
       for(int i=0; i < 3; i++)
@@ -1350,7 +1350,7 @@ void Domain::specifyGraphite(double rho, unsigned N)
 
 void Domain::specifyNanotube(double rho, double m_per_n, unsigned N)
 {
-   cout << "Nanotubes are not yet implemented.\n";
+   std::cout << "Nanotubes are not yet implemented.\n";
    exit(16);
 }
 

@@ -11,20 +11,20 @@
 const double DT = 0.030620; // corresponds to 1 fs
 
 
-extern const string WALL_TERSOFF;
-extern const string WALL_CU_LJ;
+extern const std::string WALL_TERSOFF;
+extern const std::string WALL_CU_LJ;
 extern double LATTICE_CONST_WALL_LJTS;
 
 
 
 // @brief: implementing the constructor and destructor, respectively
 ConfigWriter::ConfigWriter(
-		char* in_prefix, string in_wall, int in_wallLays, double in_refTime, 
+		char* in_prefix, std::string in_wall, int in_wallLays, double in_refTime, 
 		unsigned in_profilePhi, unsigned in_profileR, unsigned in_profile_H,
 		unsigned in_profileOutputTimesteps, unsigned initCanon, bool in_movie, Component& fluidComp
 		)
 {
-	cout << "\n**********************************\nConfigwriter opened\n**********************************\n";
+	std::cout << "\n**********************************\nConfigwriter opened\n**********************************\n";
 	thermostat = THERMOSTAT_VELSCALE;
 	sPrefix(in_prefix);
 	sTimestepLength(in_refTime);
@@ -51,7 +51,7 @@ ConfigWriter::ConfigWriter(
 	//@todo: if no error reported during test runs => removing the else-branch
 	else
 	{
-		cout << "wall model: only Lennard-Jones TS.\n";
+		std::cout << "wall model: only Lennard-Jones TS.\n";
 		//return 51;
 	}*/
 	sProfile (in_profilePhi, in_profileR, in_profile_H);
@@ -69,14 +69,14 @@ ConfigWriter::ConfigWriter(
 		sOutputMmspdWriter(500);
 	}
 	
-	//	cout << "\n**********************************\nConstructor of Configwriter finished\n**********************************\n";
+	//	std::cout << "\n**********************************\nConstructor of Configwriter finished\n**********************************\n";
 }
 
-ConfigWriter:: ConfigWriter(	char* in_prefix, string in_wall, int in_wallLays, double in_refTime, 
+ConfigWriter:: ConfigWriter(	char* in_prefix, std::string in_wall, int in_wallLays, double in_refTime, 
 			unsigned in_profilePhi, unsigned in_profileR, unsigned in_profile_H,
 			unsigned in_profileOutputTimesteps, unsigned initCanon, bool in_movie, PhaseSpaceWriter& psw, Component& fluidComp,
 			double nuAndFac	){
-  cout << "\n**********************************\nConfigwriter opened\n**********************************\n";
+  std::cout << "\n**********************************\nConfigwriter opened\n**********************************\n";
 	thermostat = THERMOSTAT_ANDERSEN;
 	sPrefix(in_prefix);
 	sTimestepLength(in_refTime);
@@ -103,7 +103,7 @@ ConfigWriter:: ConfigWriter(	char* in_prefix, string in_wall, int in_wallLays, d
 	//@todo: if no error reported during test runs => removing the else-branch
 	else
 	{
-		cout << "wall model: only Lennard-Jones TS.\n";
+		std::cout << "wall model: only Lennard-Jones TS.\n";
 		//return 51;
 	}*/
 	sProfile (in_profilePhi, in_profileR, in_profile_H);
@@ -125,9 +125,9 @@ ConfigWriter:: ConfigWriter(	char* in_prefix, string in_wall, int in_wallLays, d
 	double diffCoeffLJ = 0.05; // estimate of the self-diffusion coefficient of the LJ-Fluid
 	nuAndersenSingle = psw.gTemperature()*timestepLength/ averageMassPerParticle/diffCoeffLJ;
 	nuAndersen = nuAndersenSingle*pow(psw.gNTotal(), -2.0/3.0)*nuAndFac;
-	cout << "nu Andersen: " << nuAndersen << "\n";
+	std::cout << "nu Andersen: " << nuAndersen << "\n";
 	
-	//	cout << "\n**********************************\nConstructor of Configwriter finished\n**********************************\n";
+	//	std::cout << "\n**********************************\nConstructor of Configwriter finished\n**********************************\n";
 }
 
 ConfigWriter::~ConfigWriter()
@@ -139,11 +139,11 @@ ConfigWriter::~ConfigWriter()
 //@brief: superior writing method: handling the streams, calling the single write-methods
 void ConfigWriter::write(){
 
-//	cout << "\n**********************************\nwrite() method of Configwriter started\n**********************************\n";
+//	std::cout << "\n**********************************\nwrite() method of Configwriter started\n**********************************\n";
 	confFile << prefix << "_1R.cfg";					// building the file prefix.cfg
-	confStrm.open(confFile.str().c_str(), ios::trunc);	// linking the file prefix.cfg with confStrm => confStrm writes in prefix.cfg
+	confStrm.open(confFile.str().c_str(), std::ios::trunc);	// linking the file prefix.cfg with confStrm => confStrm writes in prefix.cfg
 
-	cout << "\n**********************************\nWriting the config file \n**********************************\n\n";
+	std::cout << "\n**********************************\nWriting the config file \n**********************************\n\n";
 
 	confStrm << "MDProjectConfig\n";
 	wTimestepLength();

@@ -11,7 +11,6 @@
  */
 
 #include"RandomNumber.h"
-using namespace std;
 
 //@brief: rand() is initialized by srand(time). srand() is called in main.cpp.
 
