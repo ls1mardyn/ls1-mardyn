@@ -134,7 +134,7 @@ public:
 		// Convert to lower case to avoid input errors
 		std::transform(strShifted.begin(), strShifted.end(), strShifted.begin(), [](auto c) { return std::tolower(c); });
 		if (strShifted == "true" || strShifted == "false") {
-			xmlconfig.getNodeValue("shifted", _shiftRequested);
+			std::istringstream(strShifted) >> std::boolalpha >> _shiftRequested;
 		} else {
 			global_log->error() << "Parameter <shifted> of components has to be either set to 'true' or 'false'" << std::endl;
 			mardyn_exit(1);
