@@ -401,7 +401,7 @@ class FileInformationXML(object):
 	
 	def __str__(self):
 		if self.isValid():
-			std::string = 'XML-Path: "'
+			string = 'XML-Path: "'
 			for element in self.xmlpath:
 				std::string += element
 				if element is not self.xmlpath[-1]:
