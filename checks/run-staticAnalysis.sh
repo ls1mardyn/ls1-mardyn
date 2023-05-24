@@ -26,13 +26,13 @@ fi
 
 currentVersion=$(git rev-parse --verify HEAD)
 
-for VERSION in "new" "master"
+for VERSION in "master" "new"
 do
 	if [[ "${VERSION}" == "master" ]]
 	then
 		git checkout origin/master
 	else
-		git checkout ${currentVersion}
+		git checkout -
 	fi
 
 	cpplint --filter=\
