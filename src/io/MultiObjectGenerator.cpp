@@ -23,9 +23,6 @@
 #include "utils/xmlfileUnits.h"
 
 
-using Log::global_log;
-using namespace std;
-
 MultiObjectGenerator::MultiObjectGenerator::~MultiObjectGenerator() {
 	for(auto& generator : _generators) {
 		delete generator;
@@ -36,8 +33,8 @@ MultiObjectGenerator::MultiObjectGenerator::~MultiObjectGenerator() {
 void MultiObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 
 	XMLfile::Query query = xmlconfig.query("objectgenerator");
-	global_log->info() << "Number of sub-objectgenerators: " << query.card() << endl;
-	string oldpath = xmlconfig.getcurrentnodepath();
+	global_log->info() << "Number of sub-objectgenerators: " << query.card() << std::endl;
+	std::string oldpath = xmlconfig.getcurrentnodepath();
 	for(auto generatorIter = query.begin(); generatorIter; ++generatorIter) {
 		xmlconfig.changecurrentnode(generatorIter);
 		ObjectGenerator* generator = new ObjectGenerator();
@@ -59,12 +56,12 @@ unsigned long MultiObjectGenerator::readPhaseSpace(ParticleContainer* particleCo
 		numMolecules += generator->readPhaseSpace(particleContainer, domain, domainDecomp);
 	}
 	particleContainer->updateMoleculeCaches();
-	global_log->info() << "Number of locally inserted molecules: " << numMolecules << endl;
+	global_log->info() << "Number of locally inserted molecules: " << numMolecules << std::endl;
 	_globalNumMolecules = numMolecules;
 #ifdef ENABLE_MPI
 	MPI_Allreduce(MPI_IN_PLACE, &_globalNumMolecules, 1, MPI_UNSIGNED_LONG, MPI_SUM, domainDecomp->getCommunicator());
 #endif
-	global_log->info() << "Number of globally inserted molecules: " << _globalNumMolecules << endl;
+	global_log->info() << "Number of globally inserted molecules: " << _globalNumMolecules << std::endl;
 	//! @todo Get rid of the domain class calls at this place here...
 	return _globalNumMolecules;
 }

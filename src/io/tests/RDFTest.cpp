@@ -22,7 +22,6 @@
 
 #include <sstream>
 
-using namespace std;
 
 #if !defined(ENABLE_REDUCED_MEMORY_MODE) && !defined(MARDYN_AUTOPAS)
 TEST_SUITE_REGISTRATION(RDFTest);
@@ -62,7 +61,7 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
-	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
+	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	moleculeContainer->update();
@@ -101,7 +100,7 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 
 	for (int i = 0; i < 100; i++) {
 //		std::cout << " i=" << i << " global = " <<rdf._distribution.global[0][0][i] << " acc="
-//				<< rdf._globalAccumulatedDistribution[0][0][i] << endl;
+//				<< rdf._globalAccumulatedDistribution[0][0][i] << std::endl;
 		if (i == 55) {
 			ASSERT_EQUAL(20ul, rdf._distribution.global[0][0][i]);
 			ASSERT_EQUAL(40ul, rdf._globalAccumulatedDistribution[0][0][i]);
@@ -132,7 +131,7 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
 	
-	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
+	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	moleculeContainer->deleteOuterParticles();
@@ -175,7 +174,7 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	rdf.accumulateRDF();
 
 	for (int i = 0; i < 100; i++) {
-		stringstream msg;
+		std::stringstream msg;
 		msg << "at index " << i;
 		if (i == 55) {
 			ASSERT_EQUAL(4752ul, rdf._distribution.global[0][0][i]);
@@ -211,7 +210,7 @@ void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
 
-	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
+	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	_domainDecomposition->balanceAndExchange(1.0, true, moleculeContainer, _domain);

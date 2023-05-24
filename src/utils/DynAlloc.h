@@ -10,7 +10,6 @@
 
 #include <iostream>
 #include <cstdint>
-using namespace std;
 
 // leak save dynamic memory allocation
 inline void AllocateUnsLongArray(unsigned long* &ptr, const unsigned int& nSize)

@@ -4,10 +4,10 @@
 
 #include "KineticProfile.h"
 
-void KineticProfile::output(string prefix, long unsigned accumulatedDatasets) {
+void KineticProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
     global_log->info() << "[KineticProfile] has no output.\n";
 }
 
-void KineticProfile::writeDataEntry(unsigned long uID, ofstream &outfile) const {
+void KineticProfile::writeDataEntry(unsigned long uID, std::ofstream &outfile) const {
     global_log->debug() << "[KineticProfile] has no writeDataEntry.\n";
 }

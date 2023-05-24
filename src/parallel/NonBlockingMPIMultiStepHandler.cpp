@@ -13,8 +13,6 @@
 #include "particleContainer/adapter/CellProcessor.h"
 #include "utils/Logger.h"
 
-using Log::global_log;
-using namespace std;
 
 NonBlockingMPIMultiStepHandler::NonBlockingMPIMultiStepHandler(DomainDecompMPIBase* domainDecomposition,
 															   ParticleContainer* moleculeContainer, Domain* domain,

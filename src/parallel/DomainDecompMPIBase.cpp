@@ -23,8 +23,6 @@
 #include "parallel/CollectiveCommunication.h"
 #include "parallel/CollectiveCommunicationNonBlocking.h"
 
-using Log::global_log;
-using std::endl;
 
 DomainDecompMPIBase::DomainDecompMPIBase() :
 		_comm(MPI_COMM_WORLD) {
@@ -57,7 +55,7 @@ DomainDecompMPIBase::~DomainDecompMPIBase() {
 
 void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	// store current path
-	string oldPath(xmlconfig.getcurrentnodepath());
+	std::string oldPath(xmlconfig.getcurrentnodepath());
 
 #ifndef MARDYN_AUTOPAS
 	std::string neighbourCommunicationScheme = "indirect";
@@ -82,9 +80,9 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	          traversal.begin(),
 	          ::tolower);
 	// currently only checks, if traversal is valid - should check, if zonal method/traversal is valid
-	if(traversal.find("hs") != string::npos || traversal.find("mp") != string::npos  || traversal.find("nt") != string::npos ) {
+	if(traversal.find("hs") != std::string::npos || traversal.find("mp") != std::string::npos  || traversal.find("nt") != std::string::npos ) {
 		zonalMethod = traversal;
-	} else if(traversal.find("es") != string::npos){
+	} else if(traversal.find("es") != std::string::npos){
 		zonalMethod = "es";
 	}
 	else{
@@ -114,17 +112,17 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	bool overlappingCollectives = false;
 	xmlconfig.getNodeValue("overlappingCollectives", overlappingCollectives);
 	if(overlappingCollectives) {
-		global_log->info() << "DomainDecompMPIBase: Using Overlapping Collectives" << endl;
+		global_log->info() << "DomainDecompMPIBase: Using Overlapping Collectives" << std::endl;
 #if MPI_VERSION >= 3
 		_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
 #else
-		global_log->warning() << "DomainDecompMPIBase: Can not use overlapping collectives, as the MPI version is less than MPI 3." << endl;
+		global_log->warning() << "DomainDecompMPIBase: Can not use overlapping collectives, as the MPI version is less than MPI 3." << std::endl;
 #endif
 		xmlconfig.getNodeValue("overlappingStartAtStep", _overlappingStartAtStep);
 		global_log->info() << "DomainDecompMPIBase: Overlapping Collectives start at step " << _overlappingStartAtStep
-						   << endl;
+						   << std::endl;
 	} else {
-		global_log->info() << "DomainDecompMPIBase: NOT Using Overlapping Collectives" << endl;
+		global_log->info() << "DomainDecompMPIBase: NOT Using Overlapping Collectives" << std::endl;
 	}
 }
 
@@ -216,10 +214,10 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 			tids.push_back(m->getID());
 		}
 		MPI_CHECK(MPI_Send(tids.data(), num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm));
-		global_log->info() << "Data consistency checked: for results see rank 0." << endl;
+		global_log->info() << "Data consistency checked: for results see rank 0." << std::endl;
 	} else {
 		/** @todo FIXME: This implementation does not scale. */
-		map<unsigned long, int> check;
+		std::map<unsigned long, int> check;
 
 		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 			if(check.find(m->getID()) != check.end()){
@@ -240,19 +238,19 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 			for (int j = 0; j < num_recv; j++) {
 				if (check.find(recv[j]) != check.end()) {
 					global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID "
-							<< recv[j] << endl;
+							<< recv[j] << std::endl;
 					isOk = false;
 				} else
 					check[recv[j]] = i;
 			}
 		}
 		if (not isOk) {
-			global_log->error() << "Aborting because of duplicated partices." << endl;
+			global_log->error() << "Aborting because of duplicated partices." << std::endl;
 			MPI_Abort(_comm, 1);
 		}
 
 		global_log->info() << "Data consistency checked: No duplicate IDs detected among " << check.size()
-				<< " entries." << endl;
+				<< " entries." << std::endl;
 	}
 }
 
@@ -304,19 +302,19 @@ size_t DomainDecompMPIBase::getTotalSize() {
 
 void DomainDecompMPIBase::printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) {
 	if (_rank == 0) {
-		ofstream povcfgstrm(filename);
+		std::ofstream povcfgstrm(filename);
 		povcfgstrm << "size " << domain->getGlobalLength(0) << " " << domain->getGlobalLength(1) << " "
-				   << domain->getGlobalLength(2) << endl;
-		povcfgstrm << "rank boxMin_x boxMin_y boxMin_z boxMax_x boxMax_y boxMax_z Configuration" << endl;
+				   << domain->getGlobalLength(2) << std::endl;
+		povcfgstrm << "rank boxMin_x boxMin_y boxMin_z boxMax_x boxMax_y boxMax_z Configuration" << std::endl;
 		povcfgstrm.close();
 	}
 
-	stringstream localCellInfo;
+	std::stringstream localCellInfo;
 	localCellInfo << _rank << " " << getBoundingBoxMin(0, domain) << " " << getBoundingBoxMin(1, domain) << " "
 			<< getBoundingBoxMin(2, domain) << " " << getBoundingBoxMax(0, domain) << " "
 			<< getBoundingBoxMax(1, domain) << " " << getBoundingBoxMax(2, domain) << " "
 			<< particleContainer->getConfigurationAsString() << "\n";
-	string localCellInfoStr = localCellInfo.str();
+	std::string localCellInfoStr = localCellInfo.str();
 
 #ifdef ENABLE_MPI
 	MPI_File fh;
@@ -336,7 +334,7 @@ void DomainDecompMPIBase::printDecomp(const std::string &filename, Domain *domai
 	MPI_File_write_at(fh, static_cast<MPI_Offset>(offset), localCellInfoStr.c_str(), static_cast<int>(localCellInfoStr.size()), MPI_CHAR, MPI_STATUS_IGNORE);
 	MPI_File_close(&fh);
 #else
-	ofstream povcfgstrm(filename.c_str(), ios::app);
+	std::ofstream povcfgstrm(filename.c_str(), std::ios::app);
 	povcfgstrm << localCellInfoStr;
 	povcfgstrm.close();
 #endif

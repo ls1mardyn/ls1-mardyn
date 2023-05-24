@@ -75,31 +75,31 @@ void TaskTimingProfiler::dump(std::string filename) {
     std::cout << "done!" << std::endl;
 
 #ifdef QUICKSCHED
-	global_log->info() << "Task ids:" << endl
+	global_log->info() << "Task ids:" << std::endl
 					   << std::setw(42) << "" << "P2PPreprocessSingleCell  = "
-					   << bhfmm::FastMultipoleMethod::taskType::P2PPreprocessSingleCell << endl
+					   << bhfmm::FastMultipoleMethod::taskType::P2PPreprocessSingleCell << std::endl
 					   << std::setw(42) << "" << "P2Pc08StepBlock          = "
-					   << bhfmm::FastMultipoleMethod::taskType::P2Pc08StepBlock << endl
+					   << bhfmm::FastMultipoleMethod::taskType::P2Pc08StepBlock << std::endl
 					   << std::setw(42) << "" << "P2PPostprocessSingleCell = "
-					   << bhfmm::FastMultipoleMethod::taskType::P2PPostprocessSingleCell << endl
+					   << bhfmm::FastMultipoleMethod::taskType::P2PPostprocessSingleCell << std::endl
 					   << std::setw(42) << "" << "P2MCompleteCell          = "
-					   << bhfmm::FastMultipoleMethod::taskType::P2MCompleteCell << endl
+					   << bhfmm::FastMultipoleMethod::taskType::P2MCompleteCell << std::endl
 					   << std::setw(42) << "" << "M2MCompleteCell          = "
-					   << bhfmm::FastMultipoleMethod::taskType::M2MCompleteCell << endl
+					   << bhfmm::FastMultipoleMethod::taskType::M2MCompleteCell << std::endl
 					   << std::setw(42) << "" << "M2LInitializeCell        = "
-					   << bhfmm::FastMultipoleMethod::taskType::M2LInitializeCell << endl
+					   << bhfmm::FastMultipoleMethod::taskType::M2LInitializeCell << std::endl
 					   << std::setw(42) << "" << "M2LInitializeSource      = "
-					   << bhfmm::FastMultipoleMethod::taskType::M2LInitializeSource << endl
+					   << bhfmm::FastMultipoleMethod::taskType::M2LInitializeSource << std::endl
 					   << std::setw(42) << "" << "M2LTranslation           = "
-					   << bhfmm::FastMultipoleMethod::taskType::M2LTranslation << endl
+					   << bhfmm::FastMultipoleMethod::taskType::M2LTranslation << std::endl
 					   << std::setw(42) << "" << "M2LPair2Way              = "
-					   << bhfmm::FastMultipoleMethod::taskType::M2LPair2Way << endl
+					   << bhfmm::FastMultipoleMethod::taskType::M2LPair2Way << std::endl
 					   << std::setw(42) << "" << "M2LFinalizeCell          = "
-					   << bhfmm::FastMultipoleMethod::taskType::M2LFinalizeCell << endl
+					   << bhfmm::FastMultipoleMethod::taskType::M2LFinalizeCell << std::endl
 					   << std::setw(42) << "" << "L2LCompleteCell          = "
-					   << bhfmm::FastMultipoleMethod::taskType::L2LCompleteCell << endl
+					   << bhfmm::FastMultipoleMethod::taskType::L2LCompleteCell << std::endl
 					   << std::setw(42) << "" << "L2PCompleteCell          = "
-					   << bhfmm::FastMultipoleMethod::taskType::L2PCompleteCell << endl;
+					   << bhfmm::FastMultipoleMethod::taskType::L2PCompleteCell << std::endl;
 #endif /* QUICKSCHED */
 }
 

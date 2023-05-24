@@ -36,12 +36,12 @@ void GammaWriter::init(ParticleContainer *particleContainer, DomainDecompBase *d
 
 	// Rank 0 writes data to file
 	if (domainDecomp->getRank() == 0) {
-		string resultfilename(_outputPrefix + ".dat");
+		std::string resultfilename(_outputPrefix + ".dat");
 		_gammaStream.open(resultfilename);
 		_gammaStream.precision(6);
-		_gammaStream << setw(24) << "simstep";
+		_gammaStream << std::setw(24) << "simstep";
 		for (unsigned int componentId = 0; componentId < _numComp; ++componentId) {
-			_gammaStream << setw(22) << "gamma[" << componentId << "]";
+			_gammaStream << std::setw(22) << "gamma[" << componentId << "]";
 		}
 		_gammaStream << std::endl;
 		_gammaStream.close();
@@ -57,7 +57,7 @@ void GammaWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase
 	if ((simstep % _writeFrequency == 0) && (simstep > global_simulation->getNumInitTimesteps())) {
 		// Rank 0 writes data to file
 		if (domainDecomp->getRank() == 0) {
-			string resultfilename(_outputPrefix + ".dat");
+			std::string resultfilename(_outputPrefix + ".dat");
 			
 			_gammaStream.open(resultfilename, std::ios::app);
 			_gammaStream << FORMAT_SCI_MAX_DIGITS << simstep;

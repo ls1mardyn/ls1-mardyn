@@ -477,7 +477,7 @@ void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename
 	}
 	uint64_t buffer_size = 32768;
 	std::string __dummy(buffer_size, '\0');  // __dummy for preallocation of internal buffer with buffer_size.
-	std::ostringstream write_buffer(__dummy, ios_base::binary);
+	std::ostringstream write_buffer(__dummy, std::ios_base::binary);
 	__dummy.clear();
 	__dummy.shrink_to_fit();
 	//char* write_buffer = new char[buffer_size];

@@ -21,9 +21,7 @@
 #include "utils/Logger.h"
 #include "utils/arrayMath.h"
 #include "utils/CommVar.h"
-using Log::global_log;
 
-using namespace std;
 
 
 Domain::Domain(int rank) {
@@ -34,29 +32,29 @@ Domain::Domain(int rank) {
 	_globalVirial = 0;
 	_globalRho = 0;
 
-	this->_componentToThermostatIdMap = map<int, int>();
-	this->_localThermostatN = map<int, unsigned long>();
+	this->_componentToThermostatIdMap = std::map<int, int>();
+	this->_localThermostatN = std::map<int, unsigned long>();
 	this->_localThermostatN[-1] = 0;
 	this->_localThermostatN[0] = 0;
-	this->_universalThermostatN = map<int, unsigned long>();
+	this->_universalThermostatN = std::map<int, unsigned long>();
 	this->_universalThermostatN[-1] = 0;
 	this->_universalThermostatN[0] = 0;
-	this->_localRotationalDOF = map<int, unsigned long>();
+	this->_localRotationalDOF = std::map<int, unsigned long>();
 	this->_localRotationalDOF[-1] = 0;
 	this->_localRotationalDOF[0] = 0;
-	this->_universalRotationalDOF = map<int, unsigned long>();
+	this->_universalRotationalDOF = std::map<int, unsigned long>();
 	this->_universalRotationalDOF[-1] = 0;
 	this->_universalRotationalDOF[0] = 0;
 	this->_globalLength[0] = 0;
 	this->_globalLength[1] = 0;
 	this->_globalLength[2] = 0;
-	this->_universalBTrans = map<int, double>();
+	this->_universalBTrans = std::map<int, double>();
 	this->_universalBTrans[0] = 1.0;
-	this->_universalBRot = map<int, double>();
+	this->_universalBRot = std::map<int, double>();
 	this->_universalBRot[0] = 1.0;
-	this->_universalTargetTemperature = map<int, double>();
+	this->_universalTargetTemperature = std::map<int, double>();
 	this->_universalTargetTemperature[0] = 1.0;
-	this->_globalTemperatureMap = map<int, double>();
+	this->_globalTemperatureMap = std::map<int, double>();
 	this->_globalTemperatureMap[0] = 1.0;
 	this->_local2KETrans[0] = 0.0;
 	this->_local2KERot[0] = 0.0;
@@ -67,9 +65,9 @@ Domain::Domain(int rank) {
 	this->_globalSigmaUU = 0.0;
 	this->_componentwiseThermostat = false;
 #ifdef COMPLEX_POTENTIAL_SET
-	this->_universalUndirectedThermostat = map<int, bool>();
-	this->_universalThermostatDirectedVelocity = map<int, std::array<double,3> >();
-	this->_localThermostatDirectedVelocity = map<int, std::array<double,3> >();
+	this->_universalUndirectedThermostat = std::map<int, bool>();
+	this->_universalThermostatDirectedVelocity = std::map<int, std::array<double,3> >();
+	this->_localThermostatDirectedVelocity = std::map<int, std::array<double,3> >();
 #endif
 	this->_universalSelectiveThermostatCounter = 0;
 	this->_universalSelectiveThermostatWarning = 0;
@@ -84,17 +82,17 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	if ( xmlconfig.changecurrentnode( "volume" )) {
 		std::string type;
 		xmlconfig.getNodeValue( "@type", type );
-		global_log->info() << "Volume type: " << type << endl;
+		global_log->info() << "Volume type: " << type << std::endl;
 		if( type == "box" ) {
 			xmlconfig.getNodeValueReduced( "lx", _globalLength[0] );
 			xmlconfig.getNodeValueReduced( "ly", _globalLength[1] );
 			xmlconfig.getNodeValueReduced( "lz", _globalLength[2] );
 			global_log->info() << "Box size: " << _globalLength[0] << ", "
 				<< _globalLength[1] << ", "
-				<< _globalLength[2] << endl;
+				<< _globalLength[2] << std::endl;
 		}
 		else {
-			global_log->error() << "Unsupported volume type " << type << endl;
+			global_log->error() << "Unsupported volume type " << type << std::endl;
 		}
 		xmlconfig.changecurrentnode("..");
 	}
@@ -106,7 +104,7 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	bInputOk = bInputOk && xmlconfig.getNodeValueReduced("temperature", temperature);
 	if(bInputOk) {
 		setGlobalTemperature(temperature);
-		global_log->info() << "Temperature: " << temperature << endl;
+		global_log->info() << "Temperature: " << temperature << std::endl;
 	}
 }
 
@@ -127,7 +125,7 @@ double Domain::getGlobalBetaRot(int thermostat) { return _universalBRot[thermost
 void Domain::setLocalSummv2(double summv2, int thermostat)
 {
 #ifndef NDEBUG
-	global_log->debug() << "* local thermostat " << thermostat << ":  mvv = " << summv2 << endl;
+	global_log->debug() << "* local thermostat " << thermostat << ":  mvv = " << summv2 << std::endl;
 #endif
 	this->_local2KETrans[thermostat] = summv2;
 }
@@ -188,10 +186,10 @@ void Domain::calculateGlobalValues(
 	 * thermostat ID 0 represents the entire system
 	 */
 
-	map<int, unsigned long>::iterator thermit;
+	std::map<int, unsigned long>::iterator thermit;
 	if( _componentwiseThermostat )
 	{
-		global_log->debug() << "* applying a component-wise thermostat" << endl;
+		global_log->debug() << "* applying a component-wise thermostat" << std::endl;
 		this->_localThermostatN[0] = 0;
 		this->_localRotationalDOF[0] = 0;
 		this->_local2KETrans[0] = 0;
@@ -227,7 +225,7 @@ void Domain::calculateGlobalValues(
 		rotDOF = domainDecomp->collCommGetUnsLong();
 		domainDecomp->collCommFinalize();
 		global_log->debug() << "[ thermostat ID " << thermit->first << "]\tN = " << numMolecules << "\trotDOF = " << rotDOF
-			<< "\tmv2 = " <<  summv2 << "\tIw2 = " << sumIw2 << endl;
+			<< "\tmv2 = " <<  summv2 << "\tIw2 = " << sumIw2 << std::endl;
 
 		this->_universalThermostatN[thermit->first] = numMolecules;
 		this->_universalRotationalDOF[thermit->first] = rotDOF;
@@ -259,10 +257,10 @@ void Domain::calculateGlobalValues(
 		if( ( (_universalBTrans[thermit->first] < MIN_BETA) || (_universalBRot[thermit->first] < MIN_BETA) )
 				&& (0 >= _universalSelectiveThermostatError)  && _bDoExplosionHeuristics == true)
 		{
-			global_log->warning() << "Explosion!" << endl;
+			global_log->warning() << "Explosion!" << std::endl;
 			global_log->debug() << "Selective thermostat will be applied to set " << thermit->first
 				<< " (beta_trans = " << this->_universalBTrans[thermit->first]
-				<< ", beta_rot = " << this->_universalBRot[thermit->first] << "!)" << endl;
+				<< ", beta_rot = " << this->_universalBRot[thermit->first] << "!)" << std::endl;
 			int rot_dof;
 			const double limit_energy =  KINLIMIT_PER_T * Ti;
 
@@ -276,7 +274,7 @@ void Domain::calculateGlobalValues(
 					Utrans = tM->U_trans();
 					if (Utrans > limit_energy) {
 						vcorr = sqrt(limit_energy / Utrans);
-						global_log->debug() << ": v(m" << tM->getID() << ") *= " << vcorr << endl;
+						global_log->debug() << ": v(m" << tM->getID() << ") *= " << vcorr << std::endl;
 						tM->scale_v(vcorr);
 						tM->scale_F(vcorr);
 					}
@@ -287,7 +285,7 @@ void Domain::calculateGlobalValues(
 						Urot = tM->U_rot();
 						if (Urot > limit_rot_energy) {
 							Dcorr = sqrt(limit_rot_energy / Urot);
-							global_log->debug() << "D(m" << tM->getID() << ") *= " << Dcorr << endl;
+							global_log->debug() << "D(m" << tM->getID() << ") *= " << Dcorr << std::endl;
 							tM->scale_D(Dcorr);
 							tM->scale_M(Dcorr);
 						}
@@ -320,7 +318,7 @@ void Domain::calculateGlobalValues(
 			/* FIXME: why difference counters? */
 			global_log->debug() << "counter " << _universalSelectiveThermostatCounter
 				<< ",\t warning " << _universalSelectiveThermostatWarning
-				<< ",\t error " << _universalSelectiveThermostatError << endl;
+				<< ",\t error " << _universalSelectiveThermostatError << std::endl;
 
 		if(collectThermostatVelocities && _universalUndirectedThermostat[thermit->first])
 		{
@@ -346,7 +344,7 @@ void Domain::calculateGlobalValues(
 				<< _universalThermostatDirectedVelocity[thermit->first][0]
 				<< " / " << _universalThermostatDirectedVelocity[thermit->first][1]
 				<< " / " << _universalThermostatDirectedVelocity[thermit->first][2]
-				<< ")" << endl;
+				<< ")" << std::endl;
 #endif
 		}
 
@@ -373,7 +371,7 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 {
 	if(this->_componentwiseThermostat)
 	{
-		for( map<int, bool>::iterator thit = _universalUndirectedThermostat.begin();
+		for( std::map<int, bool>::iterator thit = _universalUndirectedThermostat.begin();
 				thit != _universalUndirectedThermostat.end();
 				thit ++ )
 		{
@@ -482,25 +480,25 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 
 		global_log->debug() << "      * N = " << this->_localThermostatN[0]
 			<< " rotDOF = " << this->_localRotationalDOF[0] << "   mv2 = "
-			<< _local2KETrans[0] << " Iw2 = " << _local2KERot[0] << endl;
+			<< _local2KETrans[0] << " Iw2 = " << _local2KERot[0] << std::endl;
 	}
 }
 
-void Domain::writeCheckpointHeader(string filename,
+void Domain::writeCheckpointHeader(std::string filename,
 		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, double currentTime) {
 		unsigned long globalNumMolecules = this->getglobalNumMolecules(true, particleContainer, domainDecomp);
 		/* Rank 0 writes file header */
 		if(0 == this->_localRank) {
-			ofstream checkpointfilestream(filename.c_str());
+			std::ofstream checkpointfilestream(filename.c_str());
 			checkpointfilestream << "mardyn trunk " << CHECKPOINT_FILE_VERSION;
 			checkpointfilestream << "\n";  // store default format flags
-			ios::fmtflags f( checkpointfilestream.flags() );
+			std::ios::fmtflags f( checkpointfilestream.flags() );
 			checkpointfilestream << "currentTime\t"  << FORMAT_SCI_MAX_DIGITS << currentTime << "\n"; //edited by Michaela Heier
 			checkpointfilestream.flags(f);  // restore default format flags
-			checkpointfilestream << " Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
+			checkpointfilestream << " Length\t" << std::setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
 			if(this->_componentwiseThermostat)
 			{
-				for( map<int, int>::iterator thermit = this->_componentToThermostatIdMap.begin();
+				for( std::map<int, int>::iterator thermit = this->_componentToThermostatIdMap.begin();
 						thermit != this->_componentToThermostatIdMap.end();
 						thermit++ )
 				{
@@ -508,7 +506,7 @@ void Domain::writeCheckpointHeader(string filename,
 					checkpointfilestream << " CT\t" << 1+thermit->first
 						<< "\t" << thermit->second << "\n";
 				}
-				for( map<int, double>::iterator Tit = this->_universalTargetTemperature.begin();
+				for( std::map<int, double>::iterator Tit = this->_universalTargetTemperature.begin();
 						Tit != this->_universalTargetTemperature.end();
 						Tit++ )
 				{
@@ -518,7 +516,7 @@ void Domain::writeCheckpointHeader(string filename,
 			}
 			else
 			{
-				checkpointfilestream << " Temperature\t" << _universalTargetTemperature[0] << endl;
+				checkpointfilestream << " Temperature\t" << _universalTargetTemperature[0] << std::endl;
 			}
 	#ifndef NDEBUG
 			checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
@@ -529,14 +527,14 @@ void Domain::writeCheckpointHeader(string filename,
 			if(this->_globalUSteps > 1)
 			if(this->_globalUSteps > 1)
 			{
-				checkpointfilestream << setprecision(13);
+				checkpointfilestream << std::setprecision(13);
 				checkpointfilestream << " I\t" << this->_globalUSteps << " "
 					<< this->_globalSigmaU << " " << this->_globalSigmaUU << "\n";
-				checkpointfilestream << setprecision(8);
+				checkpointfilestream << std::setprecision(8);
 			}
 			*/
-			vector<Component>* components = _simulation.getEnsemble()->getComponents();
-			checkpointfilestream << " NumberOfComponents\t" << components->size() << endl;
+			std::vector<Component>* components = _simulation.getEnsemble()->getComponents();
+			checkpointfilestream << " NumberOfComponents\t" << components->size() << std::endl;
 			for(auto pos=components->begin();pos!=components->end();++pos){
 				pos->write(checkpointfilestream);
 			}
@@ -547,7 +545,7 @@ void Domain::writeCheckpointHeader(string filename,
 				iout++;
 				// 2 parameters (xi and eta)
 				if(iout/2>=numperline) {
-					checkpointfilestream << endl;
+					checkpointfilestream << std::endl;
 					iout=0;
 					--numperline;
 				}
@@ -558,7 +556,7 @@ void Domain::writeCheckpointHeader(string filename,
 					checkpointfilestream << " ";
 				}
 			}
-			checkpointfilestream << _epsilonRF << endl;
+			checkpointfilestream << _epsilonRF << std::endl;
 			for( auto uutit = this->_universalUndirectedThermostat.begin();
 					uutit != this->_universalUndirectedThermostat.end();
 					uutit++ )
@@ -566,41 +564,41 @@ void Domain::writeCheckpointHeader(string filename,
 				if(0 > uutit->first) continue;
 				if(uutit->second) checkpointfilestream << " U\t" << uutit->first << "\n";
 			}
-			checkpointfilestream << " NumberOfMolecules\t" << globalNumMolecules << endl;
+			checkpointfilestream << " NumberOfMolecules\t" << globalNumMolecules << std::endl;
 
-			checkpointfilestream << " MoleculeFormat\t" << Molecule::getWriteFormat() << endl;
+			checkpointfilestream << " MoleculeFormat\t" << Molecule::getWriteFormat() << std::endl;
 			checkpointfilestream.close();
 		}
 
 }
 
-void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* particleContainer,
+void Domain::writeCheckpointHeaderXML(std::string filename, ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, double currentTime)
 {
 	unsigned long globalNumMolecules = this->getglobalNumMolecules(true, particleContainer, domainDecomp);
 	if(0 != domainDecomp->getRank() )
 		return;
 
-	ofstream ofs(filename.c_str() );
+	std::ofstream ofs(filename.c_str() );
 
-	ofs << "<?xml version='1.0' encoding='UTF-8'?>" << endl;
-	ofs << "<mardyn version=\"20100525\" >" << endl;
-	ofs << "\t<headerinfo>" << endl;
-	ios::fmtflags f( ofs.flags() );
-	ofs << "\t\t<time>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << currentTime << "</time>" << endl;
-	ofs << "\t\t<length>" << endl;
+	ofs << "<?xml version='1.0' encoding='UTF-8'?>" << std::endl;
+	ofs << "<mardyn version=\"20100525\" >" << std::endl;
+	ofs << "\t<headerinfo>" << std::endl;
+	std::ios::fmtflags f( ofs.flags() );
+	ofs << "\t\t<time>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << currentTime << "</time>" << std::endl;
+	ofs << "\t\t<length>" << std::endl;
 	ofs << "\t\t\t<x>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _globalLength[0] << "</x> "
 				 "<y>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _globalLength[1] << "</y> "
-				 "<z>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _globalLength[2] << "</z>" << endl;
-	ofs << "\t\t</length>" << endl;
+				 "<z>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _globalLength[2] << "</z>" << std::endl;
+	ofs << "\t\t</length>" << std::endl;
 	ofs.flags(f);  // restore default format flags
-	ofs << "\t\t<number>" << globalNumMolecules << "</number>" << endl;
-	ofs << "\t\t<format type=\"" << Molecule::getWriteFormat() << "\"/>" << endl;
-	ofs << "\t</headerinfo>" << endl;
-	ofs << "</mardyn>" << endl;
+	ofs << "\t\t<number>" << globalNumMolecules << "</number>" << std::endl;
+	ofs << "\t\t<format type=\"" << Molecule::getWriteFormat() << "\"/>" << std::endl;
+	ofs << "\t</headerinfo>" << std::endl;
+	ofs << "</mardyn>" << std::endl;
 }
 
-void Domain::writeCheckpoint(string filename,
+void Domain::writeCheckpoint(std::string filename,
 		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, double currentTime,
 		bool useBinaryFormat) {
 	domainDecomp->assertDisjunctivity(particleContainer);
@@ -661,7 +659,7 @@ void Domain::setTargetTemperature(int thermostatID, double targetT)
 	if(thermostatID < 0)
 	{
 		global_log->warning() << "Warning: thermostat \'" << thermostatID << "\' (T = "
-			<< targetT << ") will be ignored." << endl;
+			<< targetT << ") will be ignored." << std::endl;
 		return;
 	}
 
@@ -672,20 +670,20 @@ void Domain::setTargetTemperature(int thermostatID, double targetT)
 	/* FIXME: Substantial change in program behavior! */
 	if(thermostatID == 0) {
 #ifndef UNIT_TESTS
-		global_log->warning() << "Disabling the component wise thermostat!" << endl;
+		global_log->warning() << "Disabling the component wise thermostat!" << std::endl;
 #endif
 		disableComponentwiseThermostat();
 	}
 	if(thermostatID >= 1) {
 		if( ! _componentwiseThermostat ) {
 			/* FIXME: Substantial change in program behavior! */
-			global_log->warning() << "Enabling the component wise thermostat!" << endl;
+			global_log->warning() << "Enabling the component wise thermostat!" << std::endl;
 			_componentwiseThermostat = true;
 			_universalTargetTemperature.erase(0);
 			_universalUndirectedThermostat.erase(0);
 			this->_universalThermostatDirectedVelocity.erase(0);
-			vector<Component>* components = _simulation.getEnsemble()->getComponents();
-			for( vector<Component>::iterator tc = components->begin(); tc != components->end(); tc ++ ) {
+			std::vector<Component>* components = _simulation.getEnsemble()->getComponents();
+			for( std::vector<Component>::iterator tc = components->begin(); tc != components->end(); tc ++ ) {
 				if(!(this->_componentToThermostatIdMap[ tc->ID() ] > 0)) {
 					this->_componentToThermostatIdMap[ tc->ID() ] = -1;
 				}
@@ -700,8 +698,8 @@ void Domain::enableComponentwiseThermostat()
 
 	this->_componentwiseThermostat = true;
 	this->_universalTargetTemperature.erase(0);
-	vector<Component>* components = _simulation.getEnsemble()->getComponents();
-	for( vector<Component>::iterator tc = components->begin(); tc != components->end(); tc ++ ) {
+	std::vector<Component>* components = _simulation.getEnsemble()->getComponents();
+	for( std::vector<Component>::iterator tc = components->begin(); tc != components->end(); tc ++ ) {
 		if(!(this->_componentToThermostatIdMap[ tc->ID() ] > 0)) {
 			this->_componentToThermostatIdMap[ tc->ID() ] = -1;
 		}
@@ -715,7 +713,7 @@ void Domain::enableUndirectedThermostat(int tst)
 	this->_universalThermostatDirectedVelocity[tst].fill(0.0);
 }
 
-vector<double> & Domain::getmixcoeff() { return _mixcoeff; }
+std::vector<double> & Domain::getmixcoeff() { return _mixcoeff; }
 
 double Domain::getepsilonRF() const { return _epsilonRF; }
 
@@ -723,8 +721,8 @@ void Domain::setepsilonRF(double erf) { _epsilonRF = erf; }
 
 unsigned long Domain::getglobalNumMolecules(bool bUpdate, ParticleContainer* particleContainer, DomainDecompBase* domainDecomp) {
 	if (bUpdate) {
-		if (particleContainer == nullptr) { global_log->debug() << "ParticleCont unknown!" << endl; particleContainer = global_simulation->getMoleculeContainer(); }
-		if (domainDecomp == nullptr)      { global_log->debug() << "domainDecomp unknown!" << endl; domainDecomp = &(global_simulation->domainDecomposition()); }
+		if (particleContainer == nullptr) { global_log->debug() << "ParticleCont unknown!" << std::endl; particleContainer = global_simulation->getMoleculeContainer(); }
+		if (domainDecomp == nullptr)      { global_log->debug() << "domainDecomp unknown!" << std::endl; domainDecomp = &(global_simulation->domainDecomposition()); }
 		this->updateglobalNumMolecules(particleContainer, domainDecomp);
 	}
 	return _globalNumMolecules;

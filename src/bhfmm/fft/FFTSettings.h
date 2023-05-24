@@ -12,8 +12,6 @@
 #include <string>
 #include "bhfmm/fft/FFTSettings_preprocessor.h"
 
-using namespace std;
-
 /**
  * Static class containing all the FFT Acceleration's settings
  * 
@@ -53,8 +51,8 @@ public:
 	}
 
 	//Used in the bhfmm code for command line interface
-	static void setOptions(string option);
-	static vector<string> getAvailableOptions();
+	static void setOptions(std::string option);
+	static std::vector<std::string> getAvailableOptions();
 	static void printCurrentOptions();
 
 };

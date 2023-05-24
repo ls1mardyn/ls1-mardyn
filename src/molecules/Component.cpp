@@ -7,8 +7,6 @@
 #include "utils/Logger.h"
 #include "Simulation.h"
 
-using namespace std;
-using Log::global_log;
 
 Component::Component(unsigned int id) {
 	_id = id;
@@ -23,21 +21,21 @@ Component::Component(unsigned int id) {
 	_E_rot=0.;
 	_isStockmayer = false;
 
-	_ljcenters = vector<LJcenter> ();
-	_charges = vector<Charge> ();
-	_quadrupoles = vector<Quadrupole> ();
-	_dipoles = vector<Dipole> ();
+	_ljcenters = std::vector<LJcenter> ();
+	_charges = std::vector<Charge> ();
+	_quadrupoles = std::vector<Quadrupole> ();
+	_dipoles = std::vector<Dipole> ();
 }
 
 void Component::readXML(XMLfileUnits& xmlconfig) {
-	global_log->info() << "Reading in component" << endl;
+	global_log->info() << "Reading in component" << std::endl;
 	unsigned int cid = 0;
 	xmlconfig.getNodeValue( "@id", cid );
-	global_log->info() << "Component ID:" << cid << endl;
+	global_log->info() << "Component ID:" << cid << std::endl;
 	setID(cid - 1);
-	string name;
+	std::string name;
 	xmlconfig.getNodeValue( "@name", name );
-	global_log->info() << "Component name:" << name << endl;
+	global_log->info() << "Component name:" << name << std::endl;
 	setName(name);
 
 	XMLfile::Query query = xmlconfig.query( "site" );
@@ -47,7 +45,7 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 
 		std::string siteType;
 		xmlconfig.getNodeValue("@type", siteType);
-		global_log->info() << "Adding site of type " << siteType << endl;
+		global_log->info() << "Adding site of type " << siteType << std::endl;
 
 		if (siteType == "LJ126") {
 			LJcenter ljSite;
@@ -71,17 +69,17 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 
 			global_log->info() << "Rotation enabled with [Ixx Iyy Izz] = [" << _Ipa[0] << " " << _Ipa[1] << " "
 							   << _Ipa[2] << "]. Dipole direction vector of the Stockmayer fluid should be [0 0 1]."
-							   << endl;
+							   << std::endl;
 
 		} else if (siteType == "Quadrupole") {
 			Quadrupole quadrupoleSite;
 			quadrupoleSite.readXML(xmlconfig);
 			addQuadrupole(quadrupoleSite);
 		} else if (siteType == "Tersoff") {
-			global_log->error() << "Tersoff no longer supported:" << siteType << endl;
+			global_log->error() << "Tersoff no longer supported:" << siteType << std::endl;
 			Simulation::exit(-1);
 		} else {
-			global_log->error() << "Unknown site type:" << siteType << endl;
+			global_log->error() << "Unknown site type:" << siteType << std::endl;
 			Simulation::exit(-1);
 		}
 		// go back to initial level, to be consistent, even if no site information is found.
@@ -221,30 +219,30 @@ void Component::write(std::ostream& ostrm) const {
 		  << 0 << "\n";  // the 0 indicates a zero amount of tersoff sites.
 	for (auto pos = _ljcenters.cbegin(); pos != _ljcenters.end(); ++pos) {
 		pos->write(ostrm);
-		ostrm << endl;
+		ostrm << std::endl;
 	}
 	for (auto pos = _charges.cbegin(); pos != _charges.end(); ++pos) {
 		pos->write(ostrm);
-		ostrm << endl;
+		ostrm << std::endl;
 	}
 	for (auto pos = _dipoles.cbegin(); pos != _dipoles.end(); ++pos) {
 		pos->write(ostrm);
-		ostrm << endl;
+		ostrm << std::endl;
 	}
 	for (auto pos = _quadrupoles.cbegin(); pos != _quadrupoles.end(); ++pos) {
 		pos->write(ostrm);
-		ostrm << endl;
+		ostrm << std::endl;
 	}
-	ostrm << _Ipa[0] << " " << _Ipa[1] << " " << _Ipa[2] << endl;
+	ostrm << _Ipa[0] << " " << _Ipa[1] << " " << _Ipa[2] << std::endl;
 }
 
 void Component::writeVIM(std::ostream& ostrm) {
 	for (auto pos = _ljcenters.cbegin(); pos != _ljcenters.end(); ++pos) {
-		ostrm << "~ " << this->_id + 1 << " LJ " << setw(7) << pos->rx() << ' '
-		      << setw(7) << pos->ry() << ' ' << setw(7) << pos->rz() << ' '
-		      << setw(6) << pos->sigma() << ' ' << setw(2) << (1 + (this->_id % 9)) << "\n";
+		ostrm << "~ " << this->_id + 1 << " LJ " << std::setw(7) << pos->rx() << ' '
+		      << std::setw(7) << pos->ry() << ' ' << std::setw(7) << pos->rz() << ' '
+		      << std::setw(6) << pos->sigma() << ' ' << std::setw(2) << (1 + (this->_id % 9)) << "\n";
 	}
-	ostrm << flush;
+	ostrm << std::flush;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Component& component) {

@@ -11,7 +11,6 @@
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 
-using Log::global_log;
 
 void ExamplePlugin::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
@@ -67,7 +66,7 @@ void ExamplePlugin::init(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain) {
 	if (_displaySelector == WhereToDisplay::ALL
 			or _displaySelector == WhereToDisplay::AT_INIT) {
-		global_log->info() << "ExamplePlugin::init                           " << _message << endl;
+		global_log->info() << "ExamplePlugin::init                           " << _message << std::endl;
 	}
 }
 
@@ -77,7 +76,7 @@ void ExamplePlugin::beforeEventNewTimestep(ParticleContainer* particleContainer,
 			and (_displaySelector == WhereToDisplay::ALL
 					or _displaySelector
 							== WhereToDisplay::BEFORE_EVENT_NEW_TIMESTEP)) {
-		global_log->info() << "ExamplePlugin::beforeEventNewTimestep         " << _message << endl;
+		global_log->info() << "ExamplePlugin::beforeEventNewTimestep         " << _message << std::endl;
 	}
 }
 
@@ -86,7 +85,7 @@ void ExamplePlugin::beforeForces(ParticleContainer* particleContainer,
 	if (simstep % _writeFrequency == 0
 			and (_displaySelector == WhereToDisplay::ALL
 					or _displaySelector == WhereToDisplay::BEFORE_FORCES)) {
-		global_log->info() << "ExamplePlugin::beforeForces                   " << _message << endl;
+		global_log->info() << "ExamplePlugin::beforeForces                   " << _message << std::endl;
 	}
 }
 
@@ -95,7 +94,7 @@ void ExamplePlugin::afterForces(ParticleContainer* particleContainer,
 	if (simstep % _writeFrequency == 0
 			and (_displaySelector == WhereToDisplay::ALL
 					or _displaySelector == WhereToDisplay::AFTER_FORCES)) {
-		global_log->info() << "ExamplePlugin::afterForces                    " << _message << endl;
+		global_log->info() << "ExamplePlugin::afterForces                    " << _message << std::endl;
 	}
 }
 
@@ -104,7 +103,7 @@ void ExamplePlugin::endStep(ParticleContainer* particleContainer,
 	if (simstep % _writeFrequency == 0
 			and (_displaySelector == WhereToDisplay::ALL
 					or _displaySelector == WhereToDisplay::END_STEP)) {
-		global_log->info() << "ExamplePlugin::endStep                        " << _message << endl;
+		global_log->info() << "ExamplePlugin::endStep                        " << _message << std::endl;
 	}
 }
 
@@ -112,6 +111,6 @@ void ExamplePlugin::finish(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain) {
 	if (_displaySelector == WhereToDisplay::ALL
 			or _displaySelector == WhereToDisplay::AT_FINISH) {
-		global_log->info() << "ExamplePlugin::finish                         " << _message << endl;
+		global_log->info() << "ExamplePlugin::finish                         " << _message << std::endl;
 	}
 }

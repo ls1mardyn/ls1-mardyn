@@ -375,12 +375,12 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 									 << _xyzEkinDroplet[_outputFrequency] / (3 * particleDropletTrue) << " \t\t "
 									 << TxzGAS << " \t\t " << TxzDROPLET << " \t\t "
 									 << _xzEkinGas[_outputFrequency] / (2 * particleDropletFalse) << " \t\t "
-									 << _xzEkinDroplet[_outputFrequency] / (2 * particleDropletTrue) << endl;
+									 << _xzEkinDroplet[_outputFrequency] / (2 * particleDropletTrue) << std::endl;
 				}
 				_DPMGlobalStream.close();
 
 				// 2D DENSITY OUTPUT
-				DPMStreamDensity.open("drop_MK_DirectedPM_" + to_string(simstep) + ".NDpr", std::ios::out);
+				DPMStreamDensity.open("drop_MK_DirectedPM_" + std::to_string(simstep) + ".NDpr", std::ios::out);
 				DPMStreamDensity.precision(6);
 				// Write Header
 				DPMStreamDensity << "//Segment volume: " << _volumebox
@@ -413,7 +413,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 				DPMStreamDensity.close();
 
 				// 2D Temperature OUTPUT
-				DPMStreamTemperature.open("drop_MK_DirectedPM_" + to_string(simstep) + ".Temppr", std::ios::out);
+				DPMStreamTemperature.open("drop_MK_DirectedPM_" + std::to_string(simstep) + ".Temppr", std::ios::out);
 				DPMStreamTemperature.precision(6);
 				// Write Header
 				DPMStreamTemperature << "//Segment volume: " << _volumebox
@@ -438,7 +438,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 					for (unsigned phiID = 0; phiID < _phiIncrements; phiID++) {
 						for (unsigned r = 0; r < _rIncrements; r++) {
 							auto ID = (long)(h * _rIncrements * _phiIncrements + r * _phiIncrements + phiID);
-							if (isnan(_temperatureBox[ID])) {
+							if (std::isnan(_temperatureBox[ID])) {
 								_temperatureBox[ID] = 0.;
 							}
 							DPMStreamTemperature << _temperatureBox[ID] << "\t";
@@ -449,7 +449,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 				DPMStreamTemperature.close();
 
 				// 2D TemperatureXZ OUTPUT
-				DPMStreamTemperatureXZ.open("drop_MK_DirectedPM_" + to_string(simstep) + ".TempprXZ", std::ios::out);
+				DPMStreamTemperatureXZ.open("drop_MK_DirectedPM_" + std::to_string(simstep) + ".TempprXZ", std::ios::out);
 				DPMStreamTemperatureXZ.precision(6);
 				// Write Header
 				DPMStreamTemperatureXZ << "//Segment volume: " << _volumebox
@@ -475,7 +475,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 					for (unsigned phiID = 0; phiID < _phiIncrements; phiID++) {
 						for (unsigned r = 0; r < _rIncrements; r++) {
 							auto ID = (long)(h * _rIncrements * _phiIncrements + r * _phiIncrements + phiID);
-							if (isnan(_temperatureBoxXZ[ID])) {
+							if (std::isnan(_temperatureBoxXZ[ID])) {
 								_temperatureBoxXZ[ID] = 0.;
 							}
 							DPMStreamTemperatureXZ << _temperatureBoxXZ[ID] << "\t";
@@ -486,7 +486,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 				DPMStreamTemperatureXZ.close();
 
 				// 2D Ekin OUTPUT
-				DPMStreamEkin.open("drop_MK_DirectedPM_" + to_string(simstep) + ".Ekin", std::ios::out);
+				DPMStreamEkin.open("drop_MK_DirectedPM_" + std::to_string(simstep) + ".Ekin", std::ios::out);
 				DPMStreamEkin.precision(6);
 				// Write Header
 				DPMStreamEkin << "//Segment volume: " << _volumebox << "\n//Accumulated data sets: " << _outputFrequency
@@ -516,7 +516,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 				DPMStreamEkin.close();
 
 				// 2D VIRIAL OUTPUT
-				DPMStreamVirial.open("drop_MK_DirectedPM_" + to_string(simstep) + ".Vipr", std::ios::out);
+				DPMStreamVirial.open("drop_MK_DirectedPM_" + std::to_string(simstep) + ".Vipr", std::ios::out);
 				DPMStreamVirial.precision(6);
 				// Write Header
 				DPMStreamVirial << "//Segment volume: " << _volumebox
@@ -538,7 +538,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 					for (unsigned phiID = 0; phiID < _phiIncrements; phiID++) {
 						for (unsigned r = 0; r < _rIncrements; r++) {
 							auto ID = (long)(h * _rIncrements * _phiIncrements + r * _phiIncrements + phiID);
-							if (isnan(_virialBox[ID])) {
+							if (std::isnan(_virialBox[ID])) {
 								_virialBox[ID] = 0.;
 							}
 							DPMStreamVirial << _virialBox[ID] << "\t";

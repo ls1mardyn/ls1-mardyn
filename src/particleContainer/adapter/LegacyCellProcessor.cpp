@@ -12,8 +12,6 @@
 #include "utils/Logger.h"
 #include <vector>
 
-using namespace std;
-using namespace Log;
 
 LegacyCellProcessor::LegacyCellProcessor(const double cutoffRadius, const double LJCutoffRadius,
 		ParticlePairsHandler* particlePairsHandler)

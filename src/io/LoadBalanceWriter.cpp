@@ -17,11 +17,11 @@ LoadbalanceWriter::LoadbalanceWriter::LoadbalanceWriter() :
 
 void LoadbalanceWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("averageLength", _averageLength);
-	global_log->info() << "Average length: " << _averageLength << endl;
+	global_log->info() << "Average length: " << _averageLength << std::endl;
 	xmlconfig.getNodeValue("outputfilename", _outputFilename);
-	global_log->info() << "Output filename: " << _outputFilename << endl;
+	global_log->info() << "Output filename: " << _outputFilename << std::endl;
 
 	XMLfile::Query query = xmlconfig.query("timers/timer");
 	std::string oldpath = xmlconfig.getcurrentnodepath();
@@ -57,7 +57,7 @@ void LoadbalanceWriter::init(ParticleContainer */*particleContainer*/,
 	// memory of this timer is managed by TimerProfiler.
 	_defaultTimer = new Timer();
 
-	global_simulation->timers()->registerTimer(default_timer_name, vector<string>{"SIMULATION"}, _defaultTimer);
+	global_simulation->timers()->registerTimer(default_timer_name, std::vector<std::string>{"SIMULATION"}, _defaultTimer);
 	_timerNames.push_back(default_timer_name);
 
 	size_t timestep_entry_offset = 2 * _timerNames.size();
@@ -92,7 +92,7 @@ void LoadbalanceWriter::endStep(
 	_defaultTimer->reset();
 
 	if((simstep % _writeFrequency) == 0) {
-		  flush(domainDecomp);
+		  LoadbalanceWriter::flush(domainDecomp);
 	}
 	_defaultTimer->start();
 }

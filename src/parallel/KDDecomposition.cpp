@@ -28,8 +28,6 @@
 #include "KDNode.h"
 #include "ParticleData.h"
 
-using namespace std;
-using Log::global_log;
 
 KDDecomposition::KDDecomposition(double cutoffRadius, int numParticleTypes, int updateFrequency,
 								 int fullSearchThreshold)
@@ -67,8 +65,8 @@ void KDDecomposition::init(Domain* domain){
     if (!_decompTree->isResolvable()) {
         auto minCellCountPerProc = std::pow(KDDStaticValues::minNumCellsPerDimension, 3);
         global_log->error() << "KDDecomposition not possible. Each process needs at least " << minCellCountPerProc
-                            << " cells." << endl;
-        global_log->error() << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << endl;
+                            << " cells." << std::endl;
+        global_log->error() << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << std::endl;
         Simulation::exit(-1);
     }
     _decompTree->buildKDTree();
@@ -77,10 +75,10 @@ void KDDecomposition::init(Domain* domain){
     // initialize the mpi data type for particles once in the beginning
     KDNode::initMPIDataType();
 
-    global_log->info() << "Created KDDecomposition with updateFrequency=" << _frequency << ", fullSearchThreshold=" << _fullSearchThreshold << endl;
+    global_log->info() << "Created KDDecomposition with updateFrequency=" << _frequency << ", fullSearchThreshold=" << _fullSearchThreshold << std::endl;
 
 #ifdef DEBUG_DECOMP
-    global_log->info() << "Initial Decomposition: " << endl;
+    global_log->info() << "Initial Decomposition: " << std::endl;
 	if (_rank == 0) {
 		_decompTree->printTree("", std::cout);
 	}
@@ -88,7 +86,7 @@ void KDDecomposition::init(Domain* domain){
 }
 
 KDDecomposition::~KDDecomposition() {
-//	_decompTree->serialize(string("kddecomp.dat"));
+//	_decompTree->serialize(std::string("kddecomp.dat"));
 	if (_rank == 0) {
 		_decompTree->plotNode("kddecomp.vtu", &_processorSpeeds);
 	}
@@ -102,19 +100,19 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	/* TODO: Maybe add decomposition dimensions, default auto. */
     xmlconfig.getNodeValue("minNumCellsPerDimension", KDDStaticValues::minNumCellsPerDimension);
     global_log->info() << "KDDecomposition minNumCellsPerDimension: " << KDDStaticValues::minNumCellsPerDimension
-					   << endl;
+					   << std::endl;
 	if(KDDStaticValues::minNumCellsPerDimension==0u){
 		global_log->error() << "KDDecomposition minNumCellsPerDimension has to be bigger than zero!" << std::endl;
 		Simulation::exit(43);
 	}
 	xmlconfig.getNodeValue("updateFrequency", _frequency);
-	global_log->info() << "KDDecomposition update frequency: " << _frequency << endl;
+	global_log->info() << "KDDecomposition update frequency: " << _frequency << std::endl;
 	xmlconfig.getNodeValue("fullSearchThreshold", _fullSearchThreshold);
-	global_log->info() << "KDDecomposition full search threshold: " << _fullSearchThreshold << endl;
+	global_log->info() << "KDDecomposition full search threshold: " << _fullSearchThreshold << std::endl;
 	xmlconfig.getNodeValue("heterogeneousSystems", _heterogeneousSystems);
 	global_log->info() << "KDDecomposition for heterogeneous computing systems (old version, not compatible with new "
 						  "VecTuner version)?: "
-					   << (_heterogeneousSystems ? "yes" : "no") << endl;
+					   << (_heterogeneousSystems ? "yes" : "no") << std::endl;
 
    	{
 		std::string deviationReductionOperation;
@@ -131,39 +129,39 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 			}
 		}
 		global_log->info() << "KDDecomposition uses " << deviationReductionOperation
-					   << " to reduce the deviation within the decompose step." << endl;
+					   << " to reduce the deviation within the decompose step." << std::endl;
 	}
 
 	bool useVecTuner = false;
 	xmlconfig.getNodeValue("useVectorizationTuner", useVecTuner);
-	global_log->info() << "KDDecomposition using vectorization tuner: " << (useVecTuner?"yes":"no") << endl;
+	global_log->info() << "KDDecomposition using vectorization tuner: " << (useVecTuner?"yes":"no") << std::endl;
 	if (useVecTuner){
 		delete _loadCalc;
 		_loadCalc = new TunerLoad();
 	}
 
 	xmlconfig.getNodeValue("clusterHetSys", _clusteredHeterogeneouseSystems);
-	global_log->info() << "KDDecomposition for clustered heterogeneous systems?: " << (_clusteredHeterogeneouseSystems?"yes":"no") << endl;
+	global_log->info() << "KDDecomposition for clustered heterogeneous systems?: " << (_clusteredHeterogeneouseSystems?"yes":"no") << std::endl;
 	//TODO remove this check if the heterogenous Decomposition is updated to the vectorization tuner.
 	if(_heterogeneousSystems){
-		global_log->warning() << "The old version of the heterogeneous KDDecomposition shouldn't be used with the vectorization tuner!" << endl;
+		global_log->warning() << "The old version of the heterogeneous KDDecomposition shouldn't be used with the vectorization tuner!" << std::endl;
 	}
 	xmlconfig.getNodeValue("splitBiggestDimension", _splitBiggest);
-	global_log->info() << "KDDecomposition splits along biggest domain?: " << (_splitBiggest?"yes":"no") << endl;
+	global_log->info() << "KDDecomposition splits along biggest domain?: " << (_splitBiggest?"yes":"no") << std::endl;
 	xmlconfig.getNodeValue("forceRatio", _forceRatio);
-	global_log->info() << "KDDecomposition forces load/performance ratio?: " << (_forceRatio?"yes":"no") << endl;
+	global_log->info() << "KDDecomposition forces load/performance ratio?: " << (_forceRatio?"yes":"no") << std::endl;
 
 	xmlconfig.getNodeValue("rebalanceLimit", _rebalanceLimit);
 	if(_rebalanceLimit > 0) {
-		global_log->info() << "KDDecomposition automatic rebalancing: enabled" << endl;
-		global_log->info() << "KDDecomposition rebalance limit: " << _rebalanceLimit << endl;
+		global_log->info() << "KDDecomposition automatic rebalancing: enabled" << std::endl;
+		global_log->info() << "KDDecomposition rebalance limit: " << _rebalanceLimit << std::endl;
 	}
 	else {
-		global_log->info() << "KDDecomposition automatic rebalancing: disabled" << endl;
+		global_log->info() << "KDDecomposition automatic rebalancing: disabled" << std::endl;
 	}
 	xmlconfig.getNodeValue("splitThreshold", _splitThreshold);
 	if(!_splitBiggest){
-		global_log->info() << "KDDecomposition threshold for splitting not only the biggest Domain: " << _splitThreshold << endl;
+		global_log->info() << "KDDecomposition threshold for splitting not only the biggest Domain: " << _splitThreshold << std::endl;
 	}
 
 	/*
@@ -171,33 +169,33 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	 */
 	for(int i = 0; i < _numParticleTypes; ++i){
 		xmlconfig.getNodeValue("particleCount" + std::to_string(i+1), _vecTunParticleNums.at(i));
-		global_log->info() << "Maximum particle count in the vectorization tuner of type " << i+1 << ": " << _vecTunParticleNums.at(i) << endl;
+		global_log->info() << "Maximum particle count in the vectorization tuner of type " << i+1 << ": " << _vecTunParticleNums.at(i) << std::endl;
 	}
 	xmlconfig.getNodeValue("generateNewFiles", _generateNewFiles);
-	global_log->info() << "Generate new vectorization tuner files: " << (_generateNewFiles?"yes":"no") << endl;
+	global_log->info() << "Generate new vectorization tuner files: " << (_generateNewFiles?"yes":"no") << std::endl;
 	xmlconfig.getNodeValue("useExistingFiles", _useExistingFiles);
-	global_log->info() << "Use existing vectorization tuner files (if available)?: " << (_useExistingFiles?"yes":"no") << endl;
+	global_log->info() << "Use existing vectorization tuner files (if available)?: " << (_useExistingFiles?"yes":"no") << std::endl;
 	xmlconfig.getNodeValue("vecTunerAllowMPIReduce", _vecTunerAllowMPIReduce);
-	global_log->info() << "Allow an MPI Reduce for the vectorization tuner?: " << (_vecTunerAllowMPIReduce?"yes":"no") << endl;
+	global_log->info() << "Allow an MPI Reduce for the vectorization tuner?: " << (_vecTunerAllowMPIReduce?"yes":"no") << std::endl;
 
 	xmlconfig.getNodeValue("doMeasureLoadCalc", _doMeasureLoadCalc);
-	global_log->info() << "Use measureLoadCalc? (requires compilation with armadillo): " << (_doMeasureLoadCalc?"yes":"no") << endl;
+	global_log->info() << "Use measureLoadCalc? (requires compilation with armadillo): " << (_doMeasureLoadCalc?"yes":"no") << std::endl;
 
 	xmlconfig.getNodeValue("measureLoadInterpolationStartsAt", _measureLoadInterpolationStartsAt);
 	global_log->info() << "measureLoad: Interpolation is performed for cells with at least "
-	                   << _measureLoadInterpolationStartsAt << " particles." << endl;
+	                   << _measureLoadInterpolationStartsAt << " particles." << std::endl;
 
 	xmlconfig.getNodeValue("measureLoadIncreasingTimeValues", _measureLoadIncreasingTimeValues);
 	global_log->info() << "measureLoad: Ensure that cells with more particles take longer ? "
-					   << (_measureLoadIncreasingTimeValues ? "yes" : "no") << endl;
+					   << (_measureLoadIncreasingTimeValues ? "yes" : "no") << std::endl;
 
 	DomainDecompMPIBase::readXML(xmlconfig);
 
-	string oldPath(xmlconfig.getcurrentnodepath());
+	std::string oldPath(xmlconfig.getcurrentnodepath());
 
 	xmlconfig.changecurrentnode("../datastructure");
 	xmlconfig.getNodeValue("cellsInCutoffRadius", _cellsInCutoffRadius);
-	global_log->info() << "KDDecomposition using cellsInCutoffRadius: " << _cellsInCutoffRadius << endl;
+	global_log->info() << "KDDecomposition using cellsInCutoffRadius: " << _cellsInCutoffRadius << std::endl;
 
 	// reset path
 	xmlconfig.changecurrentnode(oldPath);
@@ -248,7 +246,7 @@ bool KDDecomposition::checkNeedRebalance(double lastTraversalTime) const {
 		MPI_CHECK(MPI_Allreduce(localTraversalTimes, globalTraversalTimes, 2, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD));
 		globalTraversalTimes[0] *= -1.0;
 		double timerCoeff = globalTraversalTimes[1] / globalTraversalTimes[0];
-		global_log->info() << "KDDecomposition timerCoeff: " << timerCoeff << endl;
+		global_log->info() << "KDDecomposition timerCoeff: " << timerCoeff << std::endl;
 		if (timerCoeff > _rebalanceLimit) {
 			needsRebalance = true;
 		}
@@ -303,7 +301,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 													  true /*doHaloPositionCheck*/, removeRecvDuplicates);
 		}
 	} else {
-		global_log->info() << "KDDecomposition: rebalancing..." << endl;
+		global_log->info() << "KDDecomposition: rebalancing..." << std::endl;
 		if (_steps != 1) {
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY,
 													  true /*doHaloPositionCheck*/, removeRecvDuplicates);
@@ -317,8 +315,8 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		constructNewTree(newDecompRoot, newOwnLeaf, moleculeContainer);
 		bool migrationSuccessful = migrateParticles(*newDecompRoot, *newOwnLeaf, moleculeContainer, domain);
 		if (not migrationSuccessful) {
-			global_log->error() << "A problem occurred during particle migration between old decomposition and new decomposition of the KDDecomposition." << endl;
-			global_log->error() << "Aborting. Please save your input files and last available checkpoint and contact TUM SCCS." << endl;
+			global_log->error() << "A problem occurred during particle migration between old decomposition and new decomposition of the KDDecomposition." << std::endl;
+			global_log->error() << "Aborting. Please save your input files and last available checkpoint and contact TUM SCCS." << std::endl;
 			Simulation::exit(1);
 		}
 		delete _decompTree;
@@ -356,21 +354,21 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 	// 4. issue Isend calls
 	// 5. get all
 
-	vector<CommunicationPartner> recvPartners;
+	std::vector<CommunicationPartner> recvPartners;
 	recvPartners.clear();
 	int numProcsRecv;
 
-	vector<Molecule*> migrateToSelf;
+	std::vector<Molecule*> migrateToSelf;
 	bool willMigrateToSelf = false;
 
 	// issue Recv calls
 	{
 		// process-leaving particles have been handled, so we only need actual area
-		vector<int> ranks;
-		vector<int> indices;
+		std::vector<int> ranks;
+		std::vector<int> indices;
 		_decompTree->getOwningProcs(newOwnLeaf._lowCorner, newOwnLeaf._highCorner, ranks, indices);
 
-		vector<int> numMolsToRecv;
+		std::vector<int> numMolsToRecv;
 		auto indexIt = indices.begin();
 		numProcsRecv = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
 		recvPartners.reserve(numProcsRecv);
@@ -408,14 +406,14 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		}
 	}
 
-	vector<CommunicationPartner> sendPartners;
+	std::vector<CommunicationPartner> sendPartners;
 	sendPartners.clear();
 	int numProcsSend;
 	// issue Send calls
 	{
 		// process-leaving particles have been handled, so we only need actual area
-		vector<int> ranks;
-		vector<int> indices;
+		std::vector<int> ranks;
+		std::vector<int> indices;
 		newRoot.getOwningProcs(_ownArea->_lowCorner, _ownArea->_highCorner, ranks, indices);
 
 		auto indexIt = indices.begin();
@@ -582,7 +580,7 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, 
 		result = decompose(newRoot, newOwnLeaf, MPI_COMM_WORLD);
 	}
 	if (result) {
-		global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
+		global_log->warning() << "Domain too small to achieve a perfect load balancing" << std::endl;
 	}
 
 	completeTreeInfo(newRoot, newOwnLeaf);
@@ -591,11 +589,11 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, 
 		_neighbourCommunicationScheme->setCoverWholeDomain(d, newOwnLeaf->_coversWholeDomain[d]);
 	}
 
-	global_log->info() << "KDDecomposition: rebalancing finished" << endl;
+	global_log->info() << "KDDecomposition: rebalancing finished" << std::endl;
 
 #ifndef NDEBUG
 	if (_rank == 0) {
-		stringstream fname;
+		std::stringstream fname;
 		fname << "kddecomp_" << _steps - 1 << ".vtu";
 		newRoot->plotNode(fname.str(), &_processorSpeeds);
 	}
@@ -709,9 +707,9 @@ double KDDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
 void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 
 	int numElementsToRecv = root->_numProcs * 2 - 1;
-	vector<KDNode*> ptrToAllNodes;
-	vector<int> child1;
-	vector<int> child2;
+	std::vector<KDNode*> ptrToAllNodes;
+	std::vector<int> child1;
+	std::vector<int> child2;
 	ptrToAllNodes.resize(numElementsToRecv);
 	child1.resize(numElementsToRecv);
 	child2.resize(numElementsToRecv);
@@ -773,15 +771,15 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 #ifdef DEBUG_DECOMP
 void printChildrenInfo(std::ofstream& filestream, KDNode* node, double minDev) {
 	for (int i = 0; i < node->_level; i++) { filestream << "   ";}
-	filestream << " * " << "load=" << node->_load << " optLoad=" << node->_optimalLoadPerProcess << " expDev=" << node->_deviationLowerBound << " minDev=" << minDev << endl;
+	filestream << " * " << "load=" << node->_load << " optLoad=" << node->_optimalLoadPerProcess << " expDev=" << node->_deviationLowerBound << " minDev=" << minDev << std::endl;
 	for (int i = 0; i < node->_level; i++) { filestream << "   ";}
 	filestream << "   [" << node->_child1->_lowCorner[0] << "," << node->_child1->_lowCorner[1] << "," << node->_child1->_lowCorner[2] << "]"
 			<< "[" << node->_child1->_highCorner[0] << "," << node->_child1->_highCorner[1] << "," << node->_child1->_highCorner[2] << "]"
-			<< " load=" << node->_child1->_load << " #procs=" << node->_child1->_numProcs << " avgLoad=" << node->_child1->calculateAvgLoadPerProc() << endl;
+			<< " load=" << node->_child1->_load << " #procs=" << node->_child1->_numProcs << " avgLoad=" << node->_child1->calculateAvgLoadPerProc() << std::endl;
 	for (int i = 0; i < node->_level; i++) { filestream << "   ";}
 	filestream << "   [" << node->_child2->_lowCorner[0] << "," << node->_child2->_lowCorner[1] << "," << node->_child2->_lowCorner[2] << "]"
 				<< "[" << node->_child2->_highCorner[0] << "," << node->_child2->_highCorner[1] << "," << node->_child2->_highCorner[2] << "]"
-				<< " load=" << node->_child2->_load << " #procs=" << node->_child2->_numProcs << " avgLoad=" << node->_child2->calculateAvgLoadPerProc() << endl;
+				<< " load=" << node->_child2->_load << " #procs=" << node->_child2->_numProcs << " avgLoad=" << node->_child2->calculateAvgLoadPerProc() << std::endl;
 }
 #endif
 
@@ -823,13 +821,13 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 #ifdef DEBUG_DECOMP
 	std::stringstream fname;
 	fname << "Div_proc_" << _rank << "_step_" << _steps << ".txt";
-	std::ofstream filestream(fname.str().c_str(), ios::app);
+	std::ofstream filestream(fname.str().c_str(), std::ios::app);
 	filestream.precision(8);
 	for (int i = 0; i < fatherNode->_level; i++) { filestream << "   ";}
 	filestream << "Division at rank=" << _rank << " for [" << fatherNode->_lowCorner[0]
                << ","<< fatherNode->_lowCorner[1] << "," << fatherNode->_lowCorner[2] << "] [" << fatherNode->_highCorner[0]
                << ","<< fatherNode->_highCorner[1] << "," << fatherNode->_highCorner[2] << "] " <<
-               "level=" << fatherNode->_level << " #divisions=" << possibleSubdivisions.size() << endl;
+               "level=" << fatherNode->_level << " #divisions=" << possibleSubdivisions.size() << std::endl;
 #endif
 
 	while (iter != possibleSubdivisions.end() && (iterations < maxIterations) && (*iter)->_deviationLowerBound < minimalDeviation) {
@@ -839,7 +837,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 #endif
 
 		// compute the next subdivision depending on the current rank (either first or second subdivision)
-		vector<int> origRanks;
+		std::vector<int> origRanks;
 		int newNumProcs;
 		if (_rank < (*iter)->_child2->_owningProc) {  // assign the current rank to either the first (child1)...
 			origRanks.resize((*iter)->_child1->_numProcs);
@@ -891,7 +889,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 		}
 #ifdef DEBUG_DECOMP
 		for (int i = 0; i < fatherNode->_level; i++) { filestream << "   ";}
-		filestream << "   deviation=" << (*iter)->_deviation << " (ch1:" << deviationChildren[0] << "ch2:" << deviationChildren[1] << endl;
+		filestream << "   deviation=" << (*iter)->_deviation << " (ch1:" << deviationChildren[0] << "ch2:" << deviationChildren[1] << std::endl;
 #endif
 		if ((*iter)->_deviation < minimalDeviation) {
 			delete bestSubdivision;// (deleting of nullptr is ok and does not produce errors, since delete checks for nullptr)
@@ -928,8 +926,8 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 
 bool KDDecomposition::calculateAllPossibleSubdivisions(KDNode* node, std::list<KDNode*>& subdividedNodes, MPI_Comm commGroup) {
 	bool domainTooSmall = false;
-	vector<vector<double> > costsLeft(3);
-	vector<vector<double> > costsRight(3);
+	std::vector<std::vector<double> > costsLeft(3);
+	std::vector<std::vector<double> > costsRight(3);
 	calculateCostsPar(node, costsLeft, costsRight, commGroup);
 	global_log->debug() << "calculateAllPossibleSubdivisions: " << std::endl;
 	double leftRightLoadRatio = 1.;  // divide load 50/50 -> this can be changed later on if the topology of the system should be taken into account.
@@ -948,11 +946,11 @@ bool KDDecomposition::calculateAllPossibleSubdivisions(KDNode* node, std::list<K
 
 	int leftRightLoadRatioIndex;
 	if (fabs(*(iter - 1) - searchSpeed) < fabs(*iter - searchSpeed)) { // iter-1 always exists, since _accumulatedProcessorSpeeds[0] = 0
-		leftRightLoadRatioIndex = min((int) (iter - 1 - _accumulatedProcessorSpeeds.begin() - node->_owningProc), node->_numProcs - 1);
+		leftRightLoadRatioIndex = std::min((int) (iter - 1 - _accumulatedProcessorSpeeds.begin() - node->_owningProc), node->_numProcs - 1);
 	} else {
-		leftRightLoadRatioIndex = min((int) (iter - _accumulatedProcessorSpeeds.begin() - node->_owningProc), node->_numProcs - 1);
+		leftRightLoadRatioIndex = std::min((int) (iter - _accumulatedProcessorSpeeds.begin() - node->_owningProc), node->_numProcs - 1);
 	}
-	leftRightLoadRatioIndex = max(1, leftRightLoadRatioIndex);
+	leftRightLoadRatioIndex = std::max(1, leftRightLoadRatioIndex);
 
 	leftRightLoadRatio = (_accumulatedProcessorSpeeds[node->_owningProc + leftRightLoadRatioIndex] - _accumulatedProcessorSpeeds[node->_owningProc]) /
 			(_accumulatedProcessorSpeeds[node->_owningProc + node->_numProcs] - _accumulatedProcessorSpeeds[node->_owningProc + leftRightLoadRatioIndex]);
@@ -1006,13 +1004,13 @@ bool KDDecomposition::calculateAllPossibleSubdivisions(KDNode* node, std::list<K
 						index = i;
 					}
 				}
-				startIndex = max((size_t)startIndex, index);
-				endIndex = min(startIndex + 1, endIndex);
+				startIndex = std::max((size_t)startIndex, index);
+				endIndex = std::min(startIndex + 1, endIndex);
 
 				global_log->debug() << "splitLoad: startindex " << index << " of " << costsLeft[dim].size() <<std::endl;
 			} else {  // If we have more than _fullSearchThreshold processes left, we split the domain in half.
-				startIndex = max(startIndex, (node->_highCorner[dim] - node->_lowCorner[dim] - 1) / 2);
-				endIndex = min(endIndex, startIndex + 1);
+				startIndex = std::max(startIndex, (node->_highCorner[dim] - node->_lowCorner[dim] - 1) / 2);
+				endIndex = std::min(endIndex, startIndex + 1);
 			}
 		}
 
@@ -1038,16 +1036,16 @@ bool KDDecomposition::calculateAllPossibleSubdivisions(KDNode* node, std::list<K
 				// G = L + R   => rho * (G - L) = L   => L = rho / (1 + rho) * G
 
 				if (fabs(*(iter - 1) - searchLoad) < fabs(*iter - searchLoad)) {  // iter-1 always exists, since _accumulatedProcessorSpeeds[0] = 0
-					optNumProcsLeft = min((int)(iter - 1 - _accumulatedProcessorSpeeds.begin() - node->_owningProc), node->_numProcs - 1);
+					optNumProcsLeft = std::min((int)(iter - 1 - _accumulatedProcessorSpeeds.begin() - node->_owningProc), node->_numProcs - 1);
 				} else {
-					optNumProcsLeft = min((int)(iter - _accumulatedProcessorSpeeds.begin() - node->_owningProc), node->_numProcs - 1);
+					optNumProcsLeft = std::min((int)(iter - _accumulatedProcessorSpeeds.begin() - node->_owningProc), node->_numProcs - 1);
 				}
 
 			} else{
-				optNumProcsLeft = min(round(costsLeft[dim][i] / optCostPerProc), (double) (node->_numProcs - 1));
+				optNumProcsLeft = std::min(round(costsLeft[dim][i] / optCostPerProc), (double) (node->_numProcs - 1));
 			}
 
-			int numProcsLeft = max(1, optNumProcsLeft);
+			int numProcsLeft = std::max(1, optNumProcsLeft);
 
 			auto* clone = new KDNode(*node);
 			if (clone->_level == 0) {
@@ -1088,7 +1086,7 @@ bool KDDecomposition::calculateAllPossibleSubdivisions(KDNode* node, std::list<K
 			if ((clone->_child1->_numProcs <= 0 || clone->_child1->_numProcs >= node->_numProcs) ||
 					(clone->_child2->_numProcs <= 0 || clone->_child2->_numProcs >= node->_numProcs) ){
 				//continue;
-				global_log->error_always_output() << "ERROR in calculateAllPossibleSubdivisions(), part of the domain was not assigned to a proc" << endl;
+				global_log->error_always_output() << "ERROR in calculateAllPossibleSubdivisions(), part of the domain was not assigned to a proc" << std::endl;
 				Simulation::exit(1);
 			}
 			mardyn_assert( clone->_child1->isResolvable() && clone->_child2->isResolvable() );
@@ -1118,8 +1116,8 @@ bool KDDecomposition::calculateAllPossibleSubdivisions(KDNode* node, std::list<K
  * - get the number of particle pairs per cell globally
  * - then calculate the costs for all possible subdivisions.
  */
-void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& costsLeft, vector<vector<double> >& costsRight, MPI_Comm commGroup) {
-	vector<vector<double> > cellCosts;
+void KDDecomposition::calculateCostsPar(KDNode* area, std::vector<std::vector<double> >& costsLeft, std::vector<std::vector<double> >& costsRight, MPI_Comm commGroup) {
+	std::vector<std::vector<double> > cellCosts;
 	cellCosts.resize(3);
 
 	int newRank;
@@ -1148,8 +1146,8 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 		// if this process doesn't has to do anything in this dimension, continue
 		if (startIndex > dimStopIndex[dim] || stopIndex < dimStartIndex[dim]) continue;
 
-		int loopstart = max(0, startIndex - dimStartIndex[dim]);
-		int loopend = min(area->_highCorner[dim] - area->_lowCorner[dim], (area->_highCorner[dim] - area->_lowCorner[dim]) + stopIndex - dimStopIndex[dim]);
+		int loopstart = std::max(0, startIndex - dimStartIndex[dim]);
+		int loopend = std::min(area->_highCorner[dim] - area->_lowCorner[dim], (area->_highCorner[dim] - area->_lowCorner[dim]) + stopIndex - dimStopIndex[dim]);
 
 		bool sendCostValue = false;
 		bool recvCostValue = false;
@@ -1185,9 +1183,9 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 					int numParts2 = _numParticleTypes == 1 ? 0 :
 							_numParticlesPerCell[_globalNumCells + getGlobalIndex(dim, dim1, dim2, i_dim, i_dim1, i_dim2, area)];
 
-					//_maxPars = max(_maxPars, numParts);
-					_maxPars = max(_maxPars, numParts1);
-					_maxPars2 = max(_maxPars2, numParts2);
+					//_maxPars = std::max(_maxPars, numParts);
+					_maxPars = std::max(_maxPars, numParts1);
+					_maxPars2 = std::max(_maxPars2, numParts2);
 					// #######################
 					// ## Cell Costs        ##
 					// #######################
@@ -1279,7 +1277,7 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 		}
 	}
 	for (int dim = 0; dim < 3; dim++) {
-		vector<double> cellCostsSum;
+		std::vector<double> cellCostsSum;
 		cellCostsSum.resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 
 		int size2 = cellCostsSum.size();
@@ -1330,7 +1328,7 @@ int KDDecomposition::ownMod(int number, int modulo) const {
 }
 
 // TODO: this method could or should be moved to KDNode.
-void KDDecomposition::getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* decompTree, KDNode* testNode, vector<int>* procIDs, vector<int>* neighbHaloAreas) const {
+void KDDecomposition::getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* decompTree, KDNode* testNode, std::vector<int>* procIDs, std::vector<int>* neighbHaloAreas) const {
 	// For areas overlapping the domain given by decompTree, the overlapping part is
 	// mapped to the corresponding area on the other side of the domain (periodic boundary)
 	// The boolean variable overlap stores for each coordinate direction whether the area overlaps.
@@ -1482,8 +1480,8 @@ std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(D
 
 	getCellIntCoordsFromRegionPeriodic(regToSendLo, regToSendHi, rmin, rmax, domain);
 
-	vector<int> ranks;
-	vector<int> ranges;
+	std::vector<int> ranks;
+	std::vector<int> ranges;
 	_decompTree->getOwningProcs(regToSendLo, regToSendHi, ranks, ranges);
 	int numNeighbours = ranks.size();
 	auto indexIt = ranges.begin();
@@ -1541,9 +1539,9 @@ std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(D
 	return communicationPartners;
 }
 
-void KDDecomposition::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double startRegion[3], const double endRegion[3], vector<Molecule*>& mols) const {
-	vector<vector<Molecule*>> threadData;
-	vector<int> prefixArray;
+void KDDecomposition::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double startRegion[3], const double endRegion[3], std::vector<Molecule*>& mols) const {
+	std::vector<std::vector<Molecule*>> threadData;
+	std::vector<int> prefixArray;
 
 	#if defined (_OPENMP)
 	#pragma omp parallel shared(mols, threadData)
@@ -1614,7 +1612,7 @@ bool KDDecomposition::heteroDecompose(KDNode* fatherNode, KDNode*& ownArea, MPI_
 	double minimalDeviation = std::numeric_limits<double>::max();
 
 	// compute the next subdivision depending on the current rank (either first or second subdivision)
-	vector<int> origRanks;
+	std::vector<int> origRanks;
 	int newNumProcs;
 
 	if (_rank < bestSubdivision->_child2->_owningProc) {
@@ -1704,8 +1702,8 @@ int KDDecomposition::calculatePartitionRank(){
 
 bool KDDecomposition::calculateHeteroSubdivision(KDNode* node, KDNode*& optimalNode, MPI_Comm commGroup) {
 	bool domainTooSmall = false;
-	vector<vector<double> > costsLeft(3);
-	vector<vector<double> > costsRight(3);
+	std::vector<std::vector<double> > costsLeft(3);
+	std::vector<std::vector<double> > costsRight(3);
 	{
 		MPI_Group group1, group2; //one group for each partition
 		std::vector<int> ranks1 {};
@@ -1726,7 +1724,7 @@ bool KDDecomposition::calculateHeteroSubdivision(KDNode* node, KDNode*& optimalN
 		MPI_CHECK( MPI_Comm_create(commGroup, newGroup2, &newComm2) );
 
 		int currNumProcs = node->_numProcs;
-		vector<vector<double>> dummyCosts {3};
+		std::vector<std::vector<double>> dummyCosts {3};
 		//calculate the load for one of the sides of each splitting plane
 		if(rank < _partitionRank){
 			node->_numProcs = _partitionRank;
@@ -1845,7 +1843,7 @@ bool KDDecomposition::calculateHeteroSubdivision(KDNode* node, KDNode*& optimalN
 	if ((optimalNode->_child1->_numProcs <= 0 || optimalNode->_child1->_numProcs >= node->_numProcs) ||
 			(optimalNode->_child2->_numProcs <= 0 || optimalNode->_child2->_numProcs >= node->_numProcs) ){
 		//continue;
-		global_log->error_always_output() << "ERROR in calculateHeteroSubdivision(), part of the domain was not assigned to a proc" << endl;
+		global_log->error_always_output() << "ERROR in calculateHeteroSubdivision(), part of the domain was not assigned to a proc" << std::endl;
 		Simulation::exit(1);
 	}
 	mardyn_assert( optimalNode->_child1->isResolvable() && optimalNode->_child2->isResolvable() );

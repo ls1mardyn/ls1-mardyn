@@ -22,13 +22,13 @@
 void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 	global_log->debug() << "[SpatialProfile] enabled" << std::endl;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "[SpatialProfile] Write frequency: " << _writeFrequency << endl;
+	global_log->info() << "[SpatialProfile] Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "[SpatialProfile] Output prefix: " << _outputPrefix << endl;
+	global_log->info() << "[SpatialProfile] Output prefix: " << _outputPrefix << std::endl;
 	xmlconfig.getNodeValue("mode", _mode);
-	global_log->info() << "[SpatialProfile] Mode " << _mode << endl;
+	global_log->info() << "[SpatialProfile] Mode " << _mode << std::endl;
 	xmlconfig.getNodeValue("profiledComponent", _profiledCompString);
-	global_log->info() << "[SpatialProfile] Profiled Component:" << _profiledCompString << endl;
+	global_log->info() << "[SpatialProfile] Profiled Component:" << _profiledCompString << std::endl;
 	
 	if (_profiledCompString != "all") {
 		_profiledComp = std::stoi(_profiledCompString);
@@ -45,7 +45,7 @@ void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("z", samplInfo.universalProfileUnit[2]);
 		samplInfo.cylinder = false;
 	} else {
-		global_log->error() << "[SpatialProfile] Invalid mode. cylinder/cartesian" << endl;
+		global_log->error() << "[SpatialProfile] Invalid mode. cylinder/cartesian" << std::endl;
 		Simulation::exit(-1);
 	}
 
@@ -127,9 +127,9 @@ void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	xmlconfig.getNodeValue("timesteps/init", _initStatistics);
-	global_log->info() << "[SpatialProfile] init statistics: " << _initStatistics << endl;
+	global_log->info() << "[SpatialProfile] init statistics: " << _initStatistics << std::endl;
 	xmlconfig.getNodeValue("timesteps/recording", _profileRecordingTimesteps);
-	global_log->info() << "[SpatialProfile] profile recording timesteps: " << _profileRecordingTimesteps << endl;
+	global_log->info() << "[SpatialProfile] profile recording timesteps: " << _profileRecordingTimesteps << std::endl;
 
 }
 
@@ -157,7 +157,7 @@ void SpatialProfile::init(ParticleContainer* particleContainer, DomainDecompBase
 	} else {
 		samplInfo.numMolFixRegion = 0;
 	}
-	global_log->info() << "getDomain was called with Molecules in Fix Region: " << samplInfo.numMolFixRegion << endl;
+	global_log->info() << "getDomain was called with Molecules in Fix Region: " << samplInfo.numMolFixRegion << std::endl;
 
 	// Calculate sampling units
 	if (samplInfo.cylinder) {

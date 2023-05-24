@@ -12,8 +12,6 @@
 #include "utils/Logger.h"
 #include "utils/Random.h"
 
-using namespace std;
-using Log::global_log;
 
 #define PRECISION 5
 #define VARFRACTION 0.125
@@ -26,13 +24,13 @@ void MkTcTSGenerator::readXML(XMLfileUnits& xmlconfig) {
 	//has to be between 0 and 1
 	l1_offset = 0.3;
 	xmlconfig.getNodeValue("layer1/l1_ratio", l1_ratio);
-	global_log->info() << "Layer 1, ratio: " << l1_ratio << endl;
+	global_log->info() << "Layer 1, ratio: " << l1_ratio << std::endl;
 	xmlconfig.getNodeValue("layer1/l1_offset", l1_offset);
 	xmlconfig.getNodeValue("layer1/density", rho1);
-	global_log->info() << "Layer 1, density: " << rho1 << endl;
+	global_log->info() << "Layer 1, density: " << rho1 << std::endl;
 	rho2 = rho1;
 	xmlconfig.getNodeValue("layer2/density", rho2);
-	global_log->info() << "Layer 2, density: " << rho2 << endl;
+	global_log->info() << "Layer 2, density: " << rho2 << std::endl;
 }
 
 void MkTcTSGenerator::readPhaseSpaceHeader(Domain* domain, double /*timestep*/) {
@@ -41,7 +39,7 @@ void MkTcTSGenerator::readPhaseSpaceHeader(Domain* domain, double /*timestep*/) 
 unsigned long
 MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase*) {
 	// Mixing coefficients
-	vector<double>& dmixcoeff = domain->getmixcoeff();
+	std::vector<double>& dmixcoeff = domain->getmixcoeff();
 	dmixcoeff.clear();
 
 	unsigned int numcomponents = _simulation.getEnsemble()->getComponents()->size();
@@ -80,7 +78,7 @@ MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* do
 		fl_units[2][i] = static_cast<size_t>(ceil(bxbz_id / fl_units[0][i]));
 		for(int d = 0; d < 3; d++) fl_unit[d][i] = ((d == 1) ? curr_ratio : 1.0) * box[d] / static_cast<double>(fl_units[d][i]);
 		global_log->debug() << "Elementary cell " << i << ": " << fl_unit[0][i] << " x " << fl_unit[1][i] << " x "
-							<< fl_unit[2][i] << endl;
+							<< fl_unit[2][i] << std::endl;
 	}
 
 	Random* rnd = new Random();
@@ -142,7 +140,7 @@ MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* do
 		}
 		global_log->debug() << "Filling " << N[l] << " of 3*"
 							<< fl_units[0][l] << "*" << fl_units[1][l] << "*" << fl_units[2][l]
-							<< " = " << slots[l] << " slots (ideally " << N_id[l] << ")" << endl;
+							<< " = " << slots[l] << " slots (ideally " << N_id[l] << ")" << std::endl;
 	}
 
 	double loffset[3][2];

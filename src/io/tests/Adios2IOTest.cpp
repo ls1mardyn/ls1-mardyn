@@ -133,10 +133,10 @@ void Adios2IOTest::testWriteCheckpoint() {
 	std::shared_ptr<DomainDecompBase> domaindecomp;
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
-	global_log->info() << "[Adios2IOTest] Creating standard domain decomposition ... " << endl;
+	global_log->info() << "[Adios2IOTest] Creating standard domain decomposition ... " << std::endl;
 	domaindecomp = std::make_shared<DomainDecomposition>();
 #else
-	global_log->info() << "[Adios2IOTest] Creating alibi domain decomposition ... " << endl;
+	global_log->info() << "[Adios2IOTest] Creating alibi domain decomposition ... " << std::endl;
 	domaindecomp = std::make_shared<DomainDecompBase>();
 #endif
 

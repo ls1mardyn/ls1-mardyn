@@ -10,8 +10,6 @@
 #include <cmath>
 #include <cstdlib>
 
-using namespace std;
-using Log::global_log;
 
 DriftCtrl::DriftCtrl()
 {
@@ -141,13 +139,13 @@ void DriftCtrl::readXML(XMLfileUnits& xmlconfig)
 				_directions.push_back(2);
 				break;
 			default:
-				global_log->warning() << "[DriftCtrl] Unknown direction: " << c << endl;
+				global_log->warning() << "[DriftCtrl] Unknown direction: " << c << std::endl;
 		}
 	}
 
-	global_log->info() << "[DriftCtrl] Directions to be controlled: " << strDirs << endl;
+	global_log->info() << "[DriftCtrl] Directions to be controlled: " << strDirs << std::endl;
 	global_log->info() << "[DriftCtrl] Target drift vx,vy,vz="
-		<< _target.drift.at(0) << "," << _target.drift.at(1) << "," << _target.drift.at(2) << ", cid=" << _target.cid << endl;
+		<< _target.drift.at(0) << "," << _target.drift.at(1) << "," << _target.drift.at(2) << ", cid=" << _target.cid << std::endl;
 }
 
 void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep)
@@ -202,7 +200,7 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 				numValsCheck += 4;
 			}
 		}
-		//~ cout << "numVals ?= numValsCheck: " << numVals << "?=" << numValsCheck << endl;
+		//~ cout << "numVals ?= numValsCheck: " << numVals << "?=" << numValsCheck << std::endl;
 		// reduce
 		domainDecomp->collCommAllreduceSum();
 		// collect global values
@@ -215,7 +213,7 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 					numParticles = 1;
 				double invNumParticles = 1./static_cast<double>(numParticles);
 				_sampling.at(cid).numParticles.global.at(yPosID) = numParticles;
-				//~ cout << "[" << nRank << "]: cid=" << cid << ",yPosID=" << yPosID << ",numParticles=" << numParticles << endl;
+				//~ cout << "[" << nRank << "]: cid=" << cid << ",yPosID=" << yPosID << ",numParticles=" << numParticles << std::endl;
 				_sampling.at(cid).velocity.at(0).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
 				_sampling.at(cid).velocity.at(1).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
 				_sampling.at(cid).velocity.at(2).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
@@ -271,7 +269,7 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			const std::string fname = "DriftCtrl_drift.dat";
 			std::ofstream ofs;
 			ofs.open(fname, std::ios::app);
-			ofs << setw(12) << simstep;
+			ofs << std::setw(12) << simstep;
 			for(const auto &veloGlobalY : _sampling.at(_target.cid).velocity.at(1).global) {
 				ofs << FORMAT_SCI_MAX_DIGITS << veloGlobalY;
 			}
@@ -282,9 +280,9 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			const std::string fname = "DriftCtrl_numParticles.dat";
 			std::ofstream ofs;
 			ofs.open(fname, std::ios::app);
-			ofs << setw(12) << simstep;
+			ofs << std::setw(12) << simstep;
 			for(const auto &numPartsGlobal : _sampling.at(_target.cid).numParticles.global) {
-				ofs << setw(12) << numPartsGlobal;
+				ofs << std::setw(12) << numPartsGlobal;
 			}
 			ofs << std::endl;
 			ofs.close();

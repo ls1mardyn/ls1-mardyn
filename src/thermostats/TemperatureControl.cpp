@@ -24,7 +24,6 @@
 #include <string>
 #include <vector>
 
-using namespace std;
 
 // init static ID --> instance counting
 unsigned short ControlRegionT::_nStaticID = 0;
@@ -105,7 +104,7 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 	for (uint8_t d = 0; d < 3; ++d) uc[d] = (strVal[d] == "box") ? domain->getGlobalLength(d) : atof(strVal[d].c_str());
 
 #ifndef NDEBUG
-	global_log->info() << "TemperatureControl: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
+	global_log->info() << "TemperatureControl: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << std::endl;
 #endif
 
 	for (uint8_t d = 0; d < 3; ++d) {
@@ -442,9 +441,9 @@ void ControlRegionT::InitBetaLogfile() {
 		const std::string fname = _strFilenamePrefixBetaLog + "_reg" + std::to_string(this->GetID()) + ".dat";
 		std::ofstream ofs;
 		ofs.open(fname, std::ios::out);
-		ofs << setw(12) << "simstep"
-			<< setw(24) << "dBetaTrans"
-			<< setw(24) << "dBetaRot"
+		ofs << std::setw(12) << "simstep"
+			<< std::setw(24) << "dBetaTrans"
+			<< std::setw(24) << "dBetaRot"
 			<< std::endl;
 		ofs.close();
 	}
@@ -474,7 +473,7 @@ void ControlRegionT::WriteBetaLogfile(unsigned long simstep) {
 	const std::string fname = _strFilenamePrefixBetaLog + "_reg" + std::to_string(this->GetID()) + ".dat";
 	std::ofstream ofs;
 	ofs.open(fname, std::ios::app);
-	ofs << setw(12) << simstep
+	ofs << std::setw(12) << simstep
 		<< FORMAT_SCI_MAX_DIGITS << dBetaTrans
 		<< FORMAT_SCI_MAX_DIGITS << dBetaRot
 		<< std::endl;
@@ -504,7 +503,7 @@ void ControlRegionT::registerAsObserver() {
 			distControl->registerObserver(this);
 		else {
 			global_log->error() << "TemperatureControl->region[" << this->GetID()
-								<< "]: Initialization of plugin DistControl is needed before! Program exit..." << endl;
+								<< "]: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
 			Simulation::exit(-1);
 		}
 	}
@@ -528,10 +527,10 @@ void ControlRegionT::InitAddedEkin() {
 		const std::string fname = "addedEkin_reg" + std::to_string(this->GetID()) + "_cid" + std::to_string(_nTargetComponentID) + ".dat";
 		std::ofstream ofs;
 		ofs.open(fname, std::ios::out);
-		ofs << setw(12) << "simstep";
+		ofs << std::setw(12) << "simstep";
 		for (int i = 0; i < _nNumSlabs; ++i) {
 			std::string s = "bin" + std::to_string(i+1);
-			ofs << setw(24) << s;
+			ofs << std::setw(24) << s;
 		}
 		ofs << std::endl;
 		ofs.close();
@@ -581,7 +580,7 @@ void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64
 	std::ofstream ofs;
 	ofs.open(fname, std::ios::app);
 	
-	ofs << setw(12) << simstep;
+	ofs << std::setw(12) << simstep;
 	for (double& it : vg) {
 		ofs << FORMAT_SCI_MAX_DIGITS << it;
 	}
@@ -603,9 +602,9 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("control/start", _nStart);
 	xmlconfig.getNodeValue("control/frequency", _nControlFreq);
 	xmlconfig.getNodeValue("control/stop", _nStop);
-	global_log->info() << "Start control from simstep: " << _nStart << endl;
-	global_log->info() << "Control with frequency: " << _nControlFreq << endl;
-	global_log->info() << "Stop control at simstep: " << _nStop << endl;
+	global_log->info() << "Start control from simstep: " << _nStart << std::endl;
+	global_log->info() << "Control with frequency: " << _nControlFreq << std::endl;
+	global_log->info() << "Stop control at simstep: " << _nStop << std::endl;
 
 	// turn on/off explosion heuristics
 	// domain->setExplosionHeuristics(bUseExplosionHeuristics);
@@ -614,11 +613,11 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig) {
 	uint32_t numRegions = 0;
 	XMLfile::Query query = xmlconfig.query("regions/region");
 	numRegions = query.card();
-	global_log->info() << "Number of control regions: " << numRegions << endl;
+	global_log->info() << "Number of control regions: " << numRegions << std::endl;
 	if (numRegions < 1) {
-		global_log->warning() << "No region parameters specified." << endl;
+		global_log->warning() << "No region parameters specified." << std::endl;
 	}
-	string oldpath = xmlconfig.getcurrentnodepath();
+	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator outputRegionIter;
 	for (outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++) {
 		xmlconfig.changecurrentnode(outputRegionIter);

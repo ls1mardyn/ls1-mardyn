@@ -143,20 +143,20 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 #ifdef ENABLE_MPI
 	std::stringstream logFileName, outputSuffix;
 
-	auto timeNow = chrono::system_clock::now();
+	auto timeNow = std::chrono::system_clock::now();
 	auto time_tNow = std::chrono::system_clock::to_time_t(timeNow);
 
 	auto maxRank = global_simulation->domainDecomposition().getNumProcs();
 	auto numDigitsMaxRank = std::to_string(maxRank).length();
 	auto myRank = global_simulation->domainDecomposition().getRank();
 
-	logFileName << "AutoPas_Rank" << setfill('0') << setw(numDigitsMaxRank) << myRank << "_"
+	logFileName << "AutoPas_Rank" << std::setfill('0') << std::setw(numDigitsMaxRank) << myRank << "_"
 				<< std::put_time(std::localtime(&time_tNow), "%Y-%m-%d_%H-%M-%S") << ".log";
 
 	_logFile.open(logFileName.str());
 	_autopasContainer = decltype(_autopasContainer)(_logFile);
 
-	outputSuffix << "Rank" << setfill('0') << setw(numDigitsMaxRank) << myRank << "_";
+	outputSuffix << "Rank" << std::setfill('0') << std::setw(numDigitsMaxRank) << myRank << "_";
 	_autopasContainer.setOutputSuffix(outputSuffix.str());
 #endif
 }
@@ -192,7 +192,7 @@ auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString,
 }
 
 void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
-	string oldPath(xmlconfig.getcurrentnodepath());
+	std::string oldPath(xmlconfig.getcurrentnodepath());
 
 	// if any option is not specified in the XML use the autopas defaults
 	// get option values from xml
@@ -312,49 +312,49 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 
 	// print full configuration to the command line
 	int valueOffset = 28;
-	global_log->info() << "AutoPas configuration:" << endl
-					   << setw(valueOffset) << left << "Data Layout "
+	global_log->info() << "AutoPas configuration:" << std::endl
+					   << std::setw(valueOffset) << left << "Data Layout "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts())
-					   << endl
-					   << setw(valueOffset) << left << "Container "
+					   << std::endl
+					   << std::setw(valueOffset) << left << "Container "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers())
-					   << endl
-					   << setw(valueOffset) << left << "Cell size Factor "
-					   << ": " << _autopasContainer.getAllowedCellSizeFactors() << endl
-					   << setw(valueOffset) << left << "Traversals "
+					   << std::endl
+					   << std::setw(valueOffset) << left << "Cell size Factor "
+					   << ": " << _autopasContainer.getAllowedCellSizeFactors() << std::endl
+					   << std::setw(valueOffset) << left << "Traversals "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals())
-					   << endl
-					   << setw(valueOffset) << left << "Newton3"
+					   << std::endl
+					   << std::setw(valueOffset) << left << "Newton3"
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options())
-					   << endl
-					   << setw(valueOffset) << left << "Tuning strategy "
-					   << ": " << _autopasContainer.getTuningStrategyOption() << endl
-					   << setw(valueOffset) << left << "Selector strategy "
-					   << ": " << _autopasContainer.getSelectorStrategy() << endl
-					   << setw(valueOffset) << left << "Tuning frequency"
-					   << ": " << _autopasContainer.getTuningInterval() << endl
-					   << setw(valueOffset) << left << "Number of samples "
-					   << ": " << _autopasContainer.getNumSamples() << endl
-					   << setw(valueOffset) << left << "Tuning Acquisition Function"
-					   << ": " << _autopasContainer.getAcquisitionFunction() << endl
-					   << setw(valueOffset) << left << "Number of evidence "
-					   << ": " << _autopasContainer.getMaxEvidence() << endl
-					   << setw(valueOffset) << left << "Verlet Cluster size "
-					   << ": " << _autopasContainer.getVerletClusterSize() << endl
-					   << setw(valueOffset) << left << "Rebuild frequency "
-					   << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
-					   << setw(valueOffset) << left << "Verlet Skin "
-					   << ": " << _autopasContainer.getVerletSkin() << endl
-					   << setw(valueOffset) << left << "Optimum Range "
-					   << ": " << _autopasContainer.getRelativeOptimumRange() << endl
-					   << setw(valueOffset) << left << "Tuning Phases without test "
-					   << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << endl
-					   << setw(valueOffset) << left << "Blacklist Range "
-					   << ": " << _autopasContainer.getRelativeBlacklistRange() << endl
-					   << setw(valueOffset) << left << "Evidence for prediction "
-					   << ": " << _autopasContainer.getEvidenceFirstPrediction() << endl
-					   << setw(valueOffset) << left << "Extrapolation method "
-					   << ": " << _autopasContainer.getExtrapolationMethodOption() << endl;
+					   << std::endl
+					   << std::setw(valueOffset) << left << "Tuning strategy "
+					   << ": " << _autopasContainer.getTuningStrategyOption() << std::endl
+					   << std::setw(valueOffset) << left << "Selector strategy "
+					   << ": " << _autopasContainer.getSelectorStrategy() << std::endl
+					   << std::setw(valueOffset) << left << "Tuning frequency"
+					   << ": " << _autopasContainer.getTuningInterval() << std::endl
+					   << std::setw(valueOffset) << left << "Number of samples "
+					   << ": " << _autopasContainer.getNumSamples() << std::endl
+					   << std::setw(valueOffset) << left << "Tuning Acquisition Function"
+					   << ": " << _autopasContainer.getAcquisitionFunction() << std::endl
+					   << std::setw(valueOffset) << left << "Number of evidence "
+					   << ": " << _autopasContainer.getMaxEvidence() << std::endl
+					   << std::setw(valueOffset) << left << "Verlet Cluster size "
+					   << ": " << _autopasContainer.getVerletClusterSize() << std::endl
+					   << std::setw(valueOffset) << left << "Rebuild frequency "
+					   << ": " << _autopasContainer.getVerletRebuildFrequency() << std::endl
+					   << std::setw(valueOffset) << left << "Verlet Skin "
+					   << ": " << _autopasContainer.getVerletSkin() << std::endl
+					   << std::setw(valueOffset) << left << "Optimum Range "
+					   << ": " << _autopasContainer.getRelativeOptimumRange() << std::endl
+					   << std::setw(valueOffset) << left << "Tuning Phases without test "
+					   << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << std::endl
+					   << std::setw(valueOffset) << left << "Blacklist Range "
+					   << ": " << _autopasContainer.getRelativeBlacklistRange() << std::endl
+					   << std::setw(valueOffset) << left << "Evidence for prediction "
+					   << ": " << _autopasContainer.getEvidenceFirstPrediction() << std::endl
+					   << std::setw(valueOffset) << left << "Extrapolation method "
+					   << ": " << _autopasContainer.getExtrapolationMethodOption() << std::endl;
 
 	/// @todo return sendHaloAndLeavingTogether, (always false) for simplicity.
 	return false;

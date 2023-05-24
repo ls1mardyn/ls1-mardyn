@@ -8,14 +8,14 @@
 #include "KineticProfile.h"
 #include "../FixRegion.h"
 
-void Virial2DProfile::output(string prefix, long unsigned accumulatedDatasets) {
+void Virial2DProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
 
 	global_log->info() << "[VirialProfile2D] output" << std::endl;
 
 	// Setup outfile
 	_accumulatedDatasets = accumulatedDatasets;
 	_profilePrefix = prefix + ".Vipr";
-	ofstream outfile(_profilePrefix.c_str());
+	std::ofstream outfile(_profilePrefix.c_str());
 	outfile.precision(6);
 	
 	
@@ -32,7 +32,7 @@ void Virial2DProfile::output(string prefix, long unsigned accumulatedDatasets) {
 	outfile.close();
 }
 	
-void Virial2DProfile::writeDataEntry(unsigned long uID, ofstream &outfile) const {
+void Virial2DProfile::writeDataEntry(unsigned long uID, std::ofstream &outfile) const {
 	
 	
 	// calculate global temperature

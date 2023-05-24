@@ -17,7 +17,6 @@
 #include "quicksched.h"
 #endif
 
-using Log::global_log;
 
 struct QuickschedTraversalData : CellPairTraversalData {
     std::array<unsigned long, 3> taskBlockSize;
@@ -52,7 +51,7 @@ private:
 
     static void runner(int type, void *data);
 
-    array<unsigned long, 3> _taskBlocksize;
+    std::array<unsigned long, 3> _taskBlocksize;
     CellProcessor           *_contextCellProcessor;
 
     struct qsched *_scheduler;
@@ -88,7 +87,7 @@ void QuickschedTraversal<CellTemplate>::rebuild(std::vector<CellTemplate> &cells
         _taskBlocksize = qui_data->taskBlockSize;
         init();
     } else {
-        global_log->error() << "QuickschedTraversal::rebuild was called with incompatible Traversal data!" << endl;
+        global_log->error() << "QuickschedTraversal::rebuild was called with incompatible Traversal data!" << std::endl;
     }
 #endif /* QUICKSCHED */
 }
@@ -100,9 +99,9 @@ void QuickschedTraversal<CellTemplate>::init() {
     qsched_task_t taskId;
     unsigned long cellIndex;
     // macro for easier access and to avoid aliasing
-//#define m_cells (*((vector<ParticleCellBase> *)(this->_cells)))
-//    vector<ParticleCellBase> m_cells = *(dynamic_cast<vector<ParticleCellBase> *>(this->_cells));
-    vector<ParticleCell> m_cells = *((vector<ParticleCell> *)(this->_cells));
+//#define m_cells (*((std::vector<ParticleCellBase> *)(this->_cells)))
+//    std::vector<ParticleCellBase> m_cells = *(dynamic_cast<std::vector<ParticleCellBase> *>(this->_cells));
+    std::vector<ParticleCell> m_cells = *((std::vector<ParticleCell> *)(this->_cells));
 
     switch (_taskTypeSelector) {
         case PackedAdjustable: {

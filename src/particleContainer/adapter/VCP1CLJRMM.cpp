@@ -42,7 +42,7 @@ VCP1CLJRMM::VCP1CLJRMM(Domain& domain, double cutoffRadius, double LJcutoffRadiu
 		double dt = global_simulation->getIntegrator()->getTimestepLength();
 		_dtInvm = dt / componentZero.m();
 	} else {
-		global_log->info() << "VCP1CLJRMM: initialize dtInv2m via setter method necessary." << endl;
+		global_log->info() << "VCP1CLJRMM: initialize dtInv2m via setter method necessary." << std::endl;
 	}
 
 	// initialize thread data

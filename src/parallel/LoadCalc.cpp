@@ -213,7 +213,7 @@ arma::vec nnls_coordinate_wise(const arma::mat &A, const arma::vec &b, int max_i
 
 	int i = 0;
 	double tmp;
-	while (i < max_iter && max(abs(x - x0)) > tol) {
+	while (i < max_iter && std::max(abs(x - x0)) > tol) {
 		x0 = x;
 		for (unsigned int k = 0; k < A.n_cols; k++) {
 			tmp = x[k] - mu[k] / H.at(k, k);

@@ -12,8 +12,6 @@
 #include <fstream>
 #include <map>
 
-using namespace std;
-using namespace Log;
 
 RDF::RDF() :
 	_intervalLength(0),
@@ -154,27 +152,27 @@ void RDF::init() {
 void RDF::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	_samplingFrequency = 1;
 	xmlconfig.getNodeValue("samplingfrequency", _samplingFrequency);
-	global_log->info() << "Sampling frequency: " << _samplingFrequency << endl;
+	global_log->info() << "Sampling frequency: " << _samplingFrequency << std::endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	_bins = 1;
 	xmlconfig.getNodeValue("bins", _bins);
-	global_log->info() << "Number of bins: " << _bins << endl;
+	global_log->info() << "Number of bins: " << _bins << std::endl;
 	
 	_angularBins = 1;
 	xmlconfig.getNodeValue("angularbins", _angularBins);
-	global_log->info() << "Number of angular bins: " << _angularBins << endl;
+	global_log->info() << "Number of angular bins: " << _angularBins << std::endl;
 
 	_intervalLength = 1;
 	xmlconfig.getNodeValueReduced("intervallength", _intervalLength);
-	global_log->info() << "Interval length: " << _intervalLength << endl;
+	global_log->info() << "Interval length: " << _intervalLength << std::endl;
 	_readConfig = true;
 }
 
@@ -192,7 +190,7 @@ RDF::~RDF() {
 	// nothing to do since refactoring to vectors
 }
 
-void RDF::accumulateNumberOfMolecules(vector<Component>& components) {
+void RDF::accumulateNumberOfMolecules(std::vector<Component>& components) {
 	for (size_t i = 0; i < components.size(); i++) {
 		_globalCtr[i] += components[i].getNumMolecules();
 	}
@@ -351,7 +349,7 @@ void RDF::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *d
 			accumulateRDF();
 			for (unsigned i = 0; i < _numberOfComponents; i++) {
 				for (unsigned j = i; j < _numberOfComponents; j++) {
-					ostringstream osstrm;
+					std::ostringstream osstrm;
 					osstrm << _outputPrefix << "_" << i << "-" << j << ".";
 					osstrm.fill('0');
 					osstrm.width(9);
@@ -360,7 +358,7 @@ void RDF::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *d
 				}
 				if( _doARDF) {
 					for (unsigned j = 0; j < _numberOfComponents; j++){
-						ostringstream osstrm2;
+						std::ostringstream osstrm2;
 						osstrm2 << _outputPrefix << "_" << i << "-" << j << ".";
 						osstrm2.fill('0');
 						osstrm2.width(9);
@@ -375,9 +373,9 @@ void RDF::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *d
 }
 
 void RDF::writeToFileARDF(const Domain* domain, const std::string& filename, unsigned i, unsigned j) const {
-	ofstream ardfout(filename);
+	std::ofstream ardfout(filename);
 	if( ardfout.fail() ) {
-		global_log->error() << "[ARDF] Failed opening output file '" << filename << "'" << endl;
+		global_log->error() << "[ARDF] Failed opening output file '" << filename << "'" << std::endl;
 		return;
 	}
 	double V = domain->getGlobalVolume();
@@ -455,13 +453,13 @@ void RDF::writeToFileARDF(const Domain* domain, const std::string& filename, uns
 
 
 void RDF::writeToFile(const Domain* domain, const std::string& filename, unsigned i, unsigned j) const {
-	ofstream rdfout(filename);
+	std::ofstream rdfout(filename);
 	if( rdfout.fail() ) {
-		global_log->error() << "[RDF] Failed opening output file '" << filename << "'" << endl;
+		global_log->error() << "[RDF] Failed opening output file '" << filename << "'" << std::endl;
 		return;
 	}
 
-	global_log->debug() << "[RDF] Writing output" << endl;
+	global_log->debug() << "[RDF] Writing output" << std::endl;
 	unsigned ni = (*_components)[i].numSites();
 	unsigned nj = (*_components)[j].numSites();
 
@@ -573,7 +571,7 @@ void RDF::writeToFile(const Domain* domain, const std::string& filename, unsigne
 void RDF::afterForces(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep) {
 	if (simstep % _samplingFrequency == 0 && simstep > global_simulation->getInitStatistics()) {
-		global_log->debug() << "Activating the RDF sampling" << endl;
+		global_log->debug() << "Activating the RDF sampling" << std::endl;
 		tickRDF();
 		accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
 		particleContainer->traverseCells(*_cellProcessor);

@@ -6,21 +6,21 @@
 void ODF::readXML(XMLfileUnits& xmlconfig) {
 	global_log->debug() << "[ODF] enabled. Dipole orientations must be set to [0 0 1]!" << std::endl;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "[ODF] Write frequency: " << _writeFrequency << endl;
+	global_log->info() << "[ODF] Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("initstatistics", _initStatistics);
-	global_log->info() << "[ODF] Init Statistics: " << _initStatistics << endl;
+	global_log->info() << "[ODF] Init Statistics: " << _initStatistics << std::endl;
 	xmlconfig.getNodeValue("recordingtimesteps", _recordingTimesteps);
-	global_log->info() << "[ODF] Recording Timesteps: " << _recordingTimesteps << endl;
+	global_log->info() << "[ODF] Recording Timesteps: " << _recordingTimesteps << std::endl;
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "[ODF] Output prefix: " << _outputPrefix << endl;
+	global_log->info() << "[ODF] Output prefix: " << _outputPrefix << std::endl;
 	xmlconfig.getNodeValue("phi1increments", _phi1Increments);
-	global_log->info() << "[ODF] Phi1 increments: " << _phi1Increments << endl;
+	global_log->info() << "[ODF] Phi1 increments: " << _phi1Increments << std::endl;
 	xmlconfig.getNodeValue("phi2increments", _phi2Increments);
-	global_log->info() << "[ODF] Phi2 increments: " << _phi2Increments << endl;
+	global_log->info() << "[ODF] Phi2 increments: " << _phi2Increments << std::endl;
 	xmlconfig.getNodeValue("gammaincrements", _gammaIncrements);
-	global_log->info() << "[ODF] Gamma increments: " << _gammaIncrements << endl;
+	global_log->info() << "[ODF] Gamma increments: " << _gammaIncrements << std::endl;
 	xmlconfig.getNodeValue("shellcutoff", _shellCutOff);
-	global_log->info() << "[ODF] Shell cutoff: " << _shellCutOff << endl;
+	global_log->info() << "[ODF] Shell cutoff: " << _shellCutOff << std::endl;
 }
 
 void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainDecomp*/, Domain* domain) {
@@ -41,7 +41,7 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainD
 		if (isDipole[i] == 1) {
 			bool orientationIsCorrect = ci.dipole(0).e() == std::array<double, 3>{0,0,1};
 			if(orientationIsCorrect == false){
-				global_log->error() << "Wrong dipole vector chosen! Please always choose [eMyx eMyy eMyz] = [0 0 1] when using the ODF plugin" << endl;
+				global_log->error() << "Wrong dipole vector chosen! Please always choose [eMyx eMyy eMyz] = [0 0 1] when using the ODF plugin" << std::endl;
 			}
 			numPairs++;
 		}
@@ -50,7 +50,7 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainD
 	_numPairs = numPairs * numPairs;
 	_numElements = _phi1Increments * _phi2Increments * _gammaIncrements + 1;
 	global_log->info() << "ODF arrays contains " << _numElements << " elements each for " << _numPairs << "pairings"
-					   << endl;
+					   << std::endl;
 	_ODF11.resize(_numElements);
 	_ODF12.resize(_numElements);
 	_ODF21.resize(_numElements);
@@ -69,10 +69,10 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainD
 	resize2D(_threadLocalODF22, mardyn_get_max_threads(), _numElements);
 
 	if (_numPairs < 1) {
-		global_log->error() << "No components with dipoles. ODF's not being calculated!" << endl;
+		global_log->error() << "No components with dipoles. ODF's not being calculated!" << std::endl;
 	} else if (_numPairs > 4) {
 		global_log->error()
-			<< "Number of pairings for ODF calculation too high. Current maximum number of ODF pairings is 4." << endl;
+			<< "Number of pairings for ODF calculation too high. Current maximum number of ODF pairings is 4." << std::endl;
 	}
 
 	reset();
@@ -102,7 +102,7 @@ void ODF::endStep(ParticleContainer* /*particleContainer*/, DomainDecompBase* do
 }
 
 void ODF::reset() {
-	global_log->info() << "[ODF] resetting data sets" << endl;
+	global_log->info() << "[ODF] resetting data sets" << std::endl;
 
 	//	// C++ 14:
 	//	auto fillZero = [](auto& vec) {std::fill(vec.begin(), vec.end(), 0);};
@@ -120,8 +120,8 @@ void ODF::reset() {
 	std::for_each(_threadLocalODF22.begin(), _threadLocalODF22.end(), fillZero);
 }
 
-void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecule& mol1, const Molecule& mol2,
-							   const array<double, 3>& orientationVector1) {
+void ODF::calculateOrientation(const std::array<double, 3>& simBoxSize, const Molecule& mol1, const Molecule& mol2,
+							   const std::array<double, 3>& orientationVector1) {
 
 	// TODO Implement rotation matrices to calculate orientations for dipole direction unit vectors other than [0 0 1];
 	
@@ -246,8 +246,8 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 		// determine array element
 		// NOTE: element 0 of array ODF is unused
 
-		maximumIncrements = max(_phi1Increments, _phi2Increments);
-		maximumIncrements = max(maximumIncrements, _gammaIncrements);
+		maximumIncrements = std::max(_phi1Increments, _phi2Increments);
+		maximumIncrements = std::max(maximumIncrements, _gammaIncrements);
 		
 		// calculate indices for phi1, phi2 and gamma12 for bin assignment
 		for (unsigned i = 0; i < maximumIncrements; i++) {
@@ -291,14 +291,14 @@ void ODF::calculateOrientation(const array<double, 3>& simBoxSize, const Molecul
 
 		// notification if anything goes wrong during calculataion
 		if (assignPhi1 == 0 || assignPhi2 == 0 || assignGamma12 == 0) {
-			global_log->warning() << "Array element in ODF calculation not properly assigned!" << endl;
-			global_log->warning() << "Mol-ID 1 = " << mol1.getID() << "  Mol-ID 2 = " << mol2.getID() << endl;
-			global_log->warning() << "orientationVector1=" << orientationVector1[0] << " " << orientationVector1[1] << " " << orientationVector1[2] << " " << endl;
-			global_log->warning() << "orientationVector2=" << orientationVector2[0] << " " << orientationVector2[1] << " " << orientationVector2[2] << " " << endl;
-			global_log->warning() << "distanceVector12=" << distanceVector12[0] << " " << distanceVector12[1] << " " << distanceVector12[2] << " " << endl;
+			global_log->warning() << "Array element in ODF calculation not properly assigned!" << std::endl;
+			global_log->warning() << "Mol-ID 1 = " << mol1.getID() << "  Mol-ID 2 = " << mol2.getID() << std::endl;
+			global_log->warning() << "orientationVector1=" << orientationVector1[0] << " " << orientationVector1[1] << " " << orientationVector1[2] << " " << std::endl;
+			global_log->warning() << "orientationVector2=" << orientationVector2[0] << " " << orientationVector2[1] << " " << orientationVector2[2] << " " << std::endl;
+			global_log->warning() << "distanceVector12=" << distanceVector12[0] << " " << distanceVector12[1] << " " << distanceVector12[2] << " " << std::endl;
 			global_log->warning() << "[cosphi1 cosphi2 cosgamma12] = [" << cosPhi1 << " " << cosPhi2 << " "
-								  << cosGamma12 << "]" << endl;
-			global_log->warning() << "indices are " << indexPhi1 << " " << indexPhi2 << " " << indexGamma12 << endl;
+								  << cosGamma12 << "]" << std::endl;
+			global_log->warning() << "indices are " << indexPhi1 << " " << indexPhi2 << " " << indexGamma12 << std::endl;
 		}
 		
 		// assignment of bin ID
@@ -391,19 +391,19 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 	double cosPhi2 = 1. - 2. / _phi2Increments;
 	double Gamma12 = 0.;
 	double averageODF11 = 0.;
-	string prefix;
-	ostringstream osstrm;
+	std::string prefix;
+	std::ostringstream osstrm;
 	osstrm << _outputPrefix;
 	osstrm.fill('0');
 	osstrm.width(7);
-	osstrm << right << timestep;
+	osstrm << std::right << timestep;
 	prefix = osstrm.str();
 	osstrm.str("");
 	osstrm.clear();
 
 	if (_numPairs == 1) {
-		string ODF11name = prefix + ".ODF11";
-		ofstream outfile(ODF11name.c_str());
+		std::string ODF11name = prefix + ".ODF11";
+		std::ofstream outfile(ODF11name.c_str());
 		outfile.precision(6);
 		
 		for (unsigned long i = 1; i < _numElements; i++) {
@@ -447,15 +447,15 @@ void ODF::output(Domain* /*domain*/, long unsigned timestep) {
 		averageODF21 /= ((double)_numElements - 1.);
 		averageODF22 /= ((double)_numElements - 1.);
 		
-		string ODF11name = prefix + ".ODF11";
-		string ODF12name = prefix + ".ODF12";
-		string ODF22name = prefix + ".ODF22";
-		string ODF21name = prefix + ".ODF21";
+		std::string ODF11name = prefix + ".ODF11";
+		std::string ODF12name = prefix + ".ODF12";
+		std::string ODF22name = prefix + ".ODF22";
+		std::string ODF21name = prefix + ".ODF21";
 
-		ofstream ODF11(ODF11name.c_str());
-		ofstream ODF12(ODF12name.c_str());
-		ofstream ODF22(ODF22name.c_str());
-		ofstream ODF21(ODF21name.c_str());
+		std::ofstream ODF11(ODF11name.c_str());
+		std::ofstream ODF12(ODF12name.c_str());
+		std::ofstream ODF22(ODF22name.c_str());
+		std::ofstream ODF21(ODF21name.c_str());
 		ODF11.precision(5);
 		ODF12.precision(5);
 		ODF22.precision(5);

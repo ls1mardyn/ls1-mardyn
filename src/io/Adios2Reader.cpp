@@ -18,8 +18,6 @@
 #endif
 #include "utils/xmlfile.h"
 
-using Log::global_log;
-
 void Adios2Reader::init(ParticleContainer* particleContainer,
         DomainDecompBase* domainDecomp, Domain* domain) {
 };
@@ -27,16 +25,16 @@ void Adios2Reader::init(ParticleContainer* particleContainer,
 void Adios2Reader::readXML(XMLfileUnits& xmlconfig) {
 	_mode = "rootOnly";
 	xmlconfig.getNodeValue("mode", _mode);
-	global_log->info() << "[Adios2Reader] Input mode: " << _mode << endl;
+	global_log->info() << "[Adios2Reader] Input mode: " << _mode << std::endl;
 	_inputfile = "mardyn.bp";
 	xmlconfig.getNodeValue("filename", _inputfile);
-	global_log->info() << "[Adios2Reader] Inputfile: " << _inputfile << endl;
+	global_log->info() << "[Adios2Reader] Inputfile: " << _inputfile << std::endl;
 	_adios2enginetype = "BP4";
 	xmlconfig.getNodeValue("adios2enginetype", _adios2enginetype);
-	global_log->info() << "[Adios2Reader] Adios2 engine type: " << _adios2enginetype << endl;
+	global_log->info() << "[Adios2Reader] Adios2 engine type: " << _adios2enginetype << std::endl;
 	_step = -1;
 	xmlconfig.getNodeValue("adios2Step", _step);
-	global_log->info() << "[Adios2Reader] step to load from input file: " << _step << endl;
+	global_log->info() << "[Adios2Reader] step to load from input file: " << _step << std::endl;
 
 	if (!mainInstance) initAdios2();
 };
@@ -44,13 +42,13 @@ void Adios2Reader::readXML(XMLfileUnits& xmlconfig) {
 void Adios2Reader::testInit(std::string infile, int step, std::string adios2enginetype, std::string mode) {
 	using std::endl;
 	_inputfile = infile;
-	global_log->info() << "[Adios2Reader] Inputfile: " << _inputfile << endl;
+	global_log->info() << "[Adios2Reader] Inputfile: " << _inputfile << std::endl;
 	_adios2enginetype = adios2enginetype;
-	global_log->info() << "[Adios2Reader] Adios2 engine type: " << _adios2enginetype << endl;
+	global_log->info() << "[Adios2Reader] Adios2 engine type: " << _adios2enginetype << std::endl;
 	_step = step;
-	global_log->info() << "[Adios2Reader] step to load from input file: " << _step << endl;
+	global_log->info() << "[Adios2Reader] step to load from input file: " << _step << std::endl;
 	_mode = mode;
-	global_log->info() << "[Adios2Reader] Input mode: " << _mode << endl;
+	global_log->info() << "[Adios2Reader] Input mode: " << _mode << std::endl;
 
 	if (!mainInstance) initAdios2();
 }
@@ -104,7 +102,7 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
 
 	if (domain->getglobalRho() == 0.) {
 		domain->setglobalRho(domain->getglobalNumMolecules(true, particleContainer, domainDecomp) / domain->getGlobalVolume());
-		global_log->info() << "[Adios2Reader] Calculated Rho_global = " << domain->getglobalRho() << endl;
+		global_log->info() << "[Adios2Reader] Calculated Rho_global = " << domain->getglobalRho() << std::endl;
 	}
 
 	engine->Close();
@@ -127,14 +125,14 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 
 	auto num_reads = particle_count / bufferSize;
 	if (particle_count % bufferSize != 0) num_reads += 1;
-	global_log->info() << "[Adios2Reader] Input is divided into " << num_reads << " sequential reads." << endl;
+	global_log->info() << "[Adios2Reader] Input is divided into " << num_reads << " sequential reads." << std::endl;
 
 	auto variables = io->AvailableVariables();
 
 	for (const auto &var : variables) {
 		if (var.first == "rx") {
 			if (var.second.at("Type") != "double") {
-				global_log->info() << "[Adios2Reader] Detected single precision" << endl;
+				global_log->info() << "[Adios2Reader] Detected single precision" << std::endl;
 				_single_precision = true;
 				rx = std::vector<float>();
 				ry = std::vector<float>();
@@ -150,7 +148,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 				Ly = std::vector<float>();
 				Lz = std::vector<float>();
 			} else {
-				global_log->info() << "[Adios2Reader] Detected double precision" << endl;
+				global_log->info() << "[Adios2Reader] Detected double precision" << std::endl;
 				rx = std::vector<double>();
 				ry = std::vector<double>();
 				rz = std::vector<double>();
@@ -169,7 +167,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 	}
 
 	for (int read = 0; read < num_reads; read++) {
-		global_log->info() << "[Adios2Reader] Performing read " << read << endl;
+		global_log->info() << "[Adios2Reader] Performing read " << read << std::endl;
 		const uint64_t offset = read * bufferSize;
 		if (read == num_reads - 1) bufferSize = particle_count % bufferSize;
 		if (domainDecomp->getRank() == 0) {
@@ -193,7 +191,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 		}
 
 		engine->PerformGets();
-		global_log->info() << "[Adios2Reader] Read " << read << " done." << endl;
+		global_log->info() << "[Adios2Reader] Read " << read << " done." << std::endl;
 
 		if (_simulation.getEnsemble()->getComponents()->empty()) {
 			auto attributes = io->AvailableAttributes();
@@ -322,7 +320,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 	for (const auto &var : variables) {
 		if (var.first == "rx") {
 			if (var.second.at("Type") != "double") {
-				global_log->info() << "[Adios2Reader] Detected single precision" << endl;
+				global_log->info() << "[Adios2Reader] Detected single precision" << std::endl;
 				_single_precision = true;
 				rx = std::vector<float>();
 				ry = std::vector<float>();
@@ -338,7 +336,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 				Ly = std::vector<float>();
 				Lz = std::vector<float>();
 			} else {
-				global_log->info() << "[Adios2Reader] Detected double precision" << endl;
+				global_log->info() << "[Adios2Reader] Detected double precision" << std::endl;
 				rx = std::vector<double>();
 				ry = std::vector<double>();
 				rz = std::vector<double>();
@@ -378,7 +376,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 	}
 
     engine->PerformGets();
-	global_log->debug() << "[Adios2Reader] Processed gets." << endl;
+	global_log->debug() << "[Adios2Reader] Processed gets." << std::endl;
 
 	std::vector<uint64_t> global_component_ids{};
 #ifdef ENABLE_MPI

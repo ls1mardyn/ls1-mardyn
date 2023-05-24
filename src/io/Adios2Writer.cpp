@@ -16,8 +16,6 @@
 #include "utils/mardyn_assert.h"
 #include "utils/xmlfile.h"
 
-using Log::global_log;
-
 constexpr char const* mol_id_name = "molecule_id";
 constexpr char const* comp_id_name = "component_id";
 constexpr char const* rx_name = "rx";
@@ -128,28 +126,28 @@ void Adios2Writer::readXML(XMLfileUnits& xmlconfig) {
 	using std::endl;
 	_outputfile = "mardyn.bp";
 	xmlconfig.getNodeValue("outputfile", _outputfile);
-	global_log->info() << "[Adios2Writer] Outputfile: " << _outputfile << endl;
+	global_log->info() << "[Adios2Writer] Outputfile: " << _outputfile << std::endl;
 	_adios2enginetype = "BP4";
 	xmlconfig.getNodeValue("adios2enginetype", _adios2enginetype);
-	global_log->info() << "[Adios2Writer] Adios2 engine type: " << _adios2enginetype << endl;
+	global_log->info() << "[Adios2Writer] Adios2 engine type: " << _adios2enginetype << std::endl;
 	_writefrequency = 50000;
 	xmlconfig.getNodeValue("writefrequency", _writefrequency);
-	global_log->info() << "[Adios2Writer] write frequency: " << _writefrequency << endl;
+	global_log->info() << "[Adios2Writer] write frequency: " << _writefrequency << std::endl;
 	_append_mode = "OFF";
 	xmlconfig.getNodeValue("appendmode", _append_mode);
-	global_log->info() << "[Adios2Writer] Append mode: " << _append_mode << endl;
+	global_log->info() << "[Adios2Writer] Append mode: " << _append_mode << std::endl;
 	_compression = "none";
 	xmlconfig.getNodeValue("compression", _compression);
-	global_log->info() << "[Adios2Writer] compression type: " << _compression << endl;
+	global_log->info() << "[Adios2Writer] compression type: " << _compression << std::endl;
 	_compression_accuracy = "0.00001";
 	xmlconfig.getNodeValue("compressionaccuracy", _compression_accuracy);
-	global_log->info() << "[Adios2Writer] compression accuracy (SZ): " << _compression_accuracy << endl;
+	global_log->info() << "[Adios2Writer] compression accuracy (SZ): " << _compression_accuracy << std::endl;
 	_compression_rate = "8";
 	xmlconfig.getNodeValue("compressionrate", _compression_rate);
-	global_log->info() << "[Adios2Writer] compression rate (ZFP): " << _compression_rate << endl;
+	global_log->info() << "[Adios2Writer] compression rate (ZFP): " << _compression_rate << std::endl;
 	_num_files = -1;
 	xmlconfig.getNodeValue("numfiles", _num_files);
-	global_log->info() << "[Adios2Writer] Number of files: " << _num_files << endl;
+	global_log->info() << "[Adios2Writer] Number of files: " << _num_files << std::endl;
 	
 	
 	xmlconfig.changecurrentnode("/");
@@ -163,17 +161,17 @@ void Adios2Writer::testInit(std::vector<Component>& comps, const std::string out
 							const std::string compression_rate) {
 	using std::endl;
 	_outputfile = outfile;
-	global_log->info() << "[Adios2Writer] Outputfile: " << _outputfile << endl;
+	global_log->info() << "[Adios2Writer] Outputfile: " << _outputfile << std::endl;
 	_adios2enginetype = adios2enginetype;
-	global_log->info() << "[Adios2Writer] Adios2 engine type: " << _adios2enginetype << endl;
+	global_log->info() << "[Adios2Writer] Adios2 engine type: " << _adios2enginetype << std::endl;
 	_writefrequency = writefrequency;
-	global_log->info() << "[Adios2Writer] write frequency: " << _writefrequency << endl;
+	global_log->info() << "[Adios2Writer] write frequency: " << _writefrequency << std::endl;
 	_compression = compression;
-	global_log->info() << "[Adios2Writer] compression type: " << _compression << endl;
+	global_log->info() << "[Adios2Writer] compression type: " << _compression << std::endl;
 	_compression_accuracy = compression_accuracy;
-	global_log->info() << "[Adios2Writer] compression accuracy (SZ): " << _compression_accuracy << endl;
+	global_log->info() << "[Adios2Writer] compression accuracy (SZ): " << _compression_accuracy << std::endl;
 	_compression_rate = compression_rate;
-	global_log->info() << "[Adios2Writer] compression rate (ZFP): " << _compression_rate << endl;
+	global_log->info() << "[Adios2Writer] compression rate (ZFP): " << _compression_rate << std::endl;
 	_comps = comps;
 	
 	if (!_inst) initAdios2();
@@ -238,7 +236,7 @@ void Adios2Writer::initAdios2() {
 				for (auto& site : sites) {
 					component_elements_vec.emplace_back(site.getName());
 				}
-				string component_elements =
+				std::string component_elements =
 					std::accumulate(component_elements_vec.begin(), component_elements_vec.end(), std::string(),
 									[](std::string& ss, std::string& s) { return ss.empty() ? s : ss + "," + s; });
 

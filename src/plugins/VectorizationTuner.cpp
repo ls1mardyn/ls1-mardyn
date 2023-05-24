@@ -33,7 +33,7 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 	} else if (mode == "file") {
 		vtWriter.reset(new VTWriter());
 	} else {
-		global_log->error() << R"(Unknown FlopRateOutputPlugin::mode. Choose "stdout" or "file".)" << endl;
+		global_log->error() << R"(Unknown FlopRateOutputPlugin::mode. Choose "stdout" or "file".)" << std::endl;
 		Simulation::exit(1);
 	}
 
@@ -62,7 +62,7 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 	} else {
 		global_log->error()
 			<< R"(Unknown FlopRateOutputPlugin::moleculecntincreasetype. Choose "linear" or "exponential" or "both".)"
-			<< endl;
+			<< std::endl;
 		Simulation::exit(798123);
 	}
 	global_log->info() << "Molecule count increase type: " << incTypeStr << std::endl;
@@ -91,19 +91,19 @@ void VectorizationTuner::finish(ParticleContainer * /*particleContainer*/,
 
 void VectorizationTuner::writeFile(const TunerLoad& vecs){
 		int rank = global_simulation->domainDecomposition().getRank();
-		ofstream myfile;
-		string resultfile(_outputPrefix + '.' + std::to_string(rank) + ".VT.data");
+		std::ofstream myfile;
+		std::string resultfile(_outputPrefix + '.' + std::to_string(rank) + ".VT.data");
 		global_log->info() << "VT: Writing to file " << resultfile << std::endl;
-		myfile.open(resultfile.c_str(), ofstream::out | ofstream::trunc);
+		myfile.open(resultfile.c_str(), std::ofstream::out | std::ofstream::trunc);
 		TunerLoad::write(myfile, vecs);
 }
 
 bool VectorizationTuner::readFile(TunerLoad& times) {
-		ifstream myfile;
+		std::ifstream myfile;
 		int rank = global_simulation->domainDecomposition().getRank();
-		string resultfile(_outputPrefix + '.' + std::to_string(rank) + ".VT.data");
+		std::string resultfile(_outputPrefix + '.' + std::to_string(rank) + ".VT.data");
 		global_log->info() << "VT: Reading from file " << resultfile << std::endl;
-		myfile.open(resultfile.c_str(), ifstream::in);
+		myfile.open(resultfile.c_str(), std::ifstream::in);
 		if(!myfile.good()){
 			return false;
 		}
@@ -754,11 +754,11 @@ void VectorizationTuner::init(ParticleContainer *particleContainer, DomainDecomp
 
 void VectorizationTuner::VTWriter::initWrite(const std::string& outputPrefix, double cutoffRadius,
 		double LJCutoffRadius, double cutoffRadiusBig, double LJCutoffRadiusBig) {
-	string resultfile(outputPrefix + ".VT.csv");
+	std::string resultfile(outputPrefix + ".VT.csv");
 	global_log->info() << "VT: Writing to file " << resultfile << std::endl;
 	_rank = global_simulation->domainDecomposition().getRank();
 	if (_rank == 0) {
-		_myfile.open(resultfile.c_str(), ofstream::out | ofstream::trunc);
+		_myfile.open(resultfile.c_str(), std::ofstream::out | std::ofstream::trunc);
 		_myfile << "Vectorization Tuner File" << std::endl << "The Cutoff Radii were: " << std::endl << "NormalRc="
 				<< cutoffRadius << " , LJCutoffRadiusNormal=" << LJCutoffRadius << std::endl << "BigRC="
 				<< cutoffRadiusBig << " , BigLJCR=" << LJCutoffRadiusBig << std::endl;

@@ -7,8 +7,6 @@
 #include "utils/xmlfileUnits.h"
 
 using Log::global_log;
-using namespace std;
-
 
 SysMonOutput::SysMonOutput() : _writeFrequency(1) {}
 
@@ -16,15 +14,15 @@ SysMonOutput::SysMonOutput() : _writeFrequency(1) {}
 void SysMonOutput::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 	SysMon* sysmon = SysMon::getSysMon();
 	XMLfile::Query query = xmlconfig.query("expression");
 	//string oldpath = xmlconfig.getcurrentnodepath();
 	for(XMLfile::Query::const_iterator exprIter = query.begin(); exprIter; exprIter++ )
 	{
 		xmlconfig.changecurrentnode(exprIter);
-		string expr(xmlconfig.getNodeValue_string("."));
-		string label(xmlconfig.getNodeValue_string(string("@label")));
+		std::string expr(xmlconfig.getNodeValue_string("."));
+		std::string label(xmlconfig.getNodeValue_string(std::string("@label")));
 		if(label.empty())
 		{
 			sysmon->addExpression(expr);
@@ -51,8 +49,8 @@ void SysMonOutput::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
 	if((simstep % _writeFrequency) == 0) {
 		SysMon* sysmon = SysMon::getSysMon();
 		sysmon->updateExpressionValues();
-		ostringstream oss;
-		oss << "System Monitor (simulation step " << simstep << ")" << endl;
+		std::ostringstream oss;
+		oss << "System Monitor (simulation step " << simstep << ")" << std::endl;
 		global_log->info() << sysmon->InfoString(oss.str(),"\t");
 	}
 }

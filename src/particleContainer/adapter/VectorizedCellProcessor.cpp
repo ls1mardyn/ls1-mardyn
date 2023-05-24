@@ -15,8 +15,6 @@
 #include <algorithm>
 #include "vectorization/MaskGatherChooser.h"
 
-using namespace Log;
-using namespace std;
 
 VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),

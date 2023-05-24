@@ -27,7 +27,6 @@
 #include <steereoMPIIntraCommunicator.h>
 #endif //ENABLE_MPI
 
-using Log::global_log;
 
 SteereoSimSteering* initSteereo(int ownRank, int numProcs) {
 

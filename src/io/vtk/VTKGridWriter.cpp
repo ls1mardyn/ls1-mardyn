@@ -16,7 +16,6 @@
 #include "utils/Logger.h"
 #include "parallel/DomainDecompBase.h"
 
-using namespace Log;
 
 VTKGridWriter::VTKGridWriter()
 : _numCells(0), _numVertices(0) {

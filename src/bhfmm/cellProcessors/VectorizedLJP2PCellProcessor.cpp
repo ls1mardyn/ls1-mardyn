@@ -15,8 +15,6 @@
 #include <algorithm>
 #include "particleContainer/adapter/vectorization/MaskGatherChooser.h"
 
-using namespace Log;
-using namespace std;
 namespace bhfmm {
 VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),

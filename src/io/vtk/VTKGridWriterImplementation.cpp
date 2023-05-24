@@ -13,7 +13,6 @@
 
 #include <fstream>
 
-using namespace Log;
 
 VTKGridWriterImplementation::VTKGridWriterImplementation(int rank, const std::vector<double>* processorSpeeds)
 : _vtkFile(NULL), _parallelVTKFile(NULL), _numCellsPlotted(0),

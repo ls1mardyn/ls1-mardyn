@@ -4,12 +4,14 @@
 #include <memory>
 #include <any>
 
-#include "ensemble/CavityEnsemble.h"
 #include "io/TimerProfiler.h"
 #include "thermostats/VelocityScalingThermostat.h"
 #include "utils/FixedSizeQueue.h"
 #include "utils/FunctionWrapper.h"
 #include "utils/SysMon.h"
+#include "utils/Random.h"
+
+using Log::global_log;
 
 // plugins
 #include "plugins/PluginFactory.h"

@@ -266,8 +266,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 	return _countReceived;
 }
 bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool force) {
-	using Log::global_log;
-	if (_countReceived and not _msgReceived) {
+		if (_countReceived and not _msgReceived) {
 		int flag = 1;
 		if (_countTested > 10) {
 			// some MPI (Intel, IBM) implementations can produce deadlocks using MPI_Test without any MPI_Wait
@@ -403,8 +402,7 @@ void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, cons
 }
 
 void CommunicationPartner::deadlockDiagnosticSendRecv() {
-	using Log::global_log;
-
+	
 	deadlockDiagnosticSend();
 
 	if (not _countReceived and _isReceiving) {
@@ -439,8 +437,8 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 													bool doHaloPositionCheck) {
 	using std::vector;
 	global_simulation->timers()->start("COMMUNICATION_PARTNER_INIT_SEND");
-	vector<vector<Molecule>> threadData;
-	vector<int> prefixArray;
+	std::vector<std::vector<Molecule>> threadData;
+	std::vector<int> prefixArray;
 
 	// compute how many molecules are already in of this type: - adjust for Forces
 	unsigned long numMolsAlreadyIn = 0;

@@ -129,7 +129,7 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 }
 
 void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContainer* particleContainer,
-												  array<double, 3> newMin, array<double, 3> newMax) {
+												  std::array<double, 3> newMin, std::array<double, 3> newMax) {
 	std::array<double, 3> oldBoxMin{particleContainer->getBoundingBoxMin(0), particleContainer->getBoundingBoxMin(1),
 									particleContainer->getBoundingBoxMin(2)};
 	std::array<double, 3> oldBoxMax{particleContainer->getBoundingBoxMax(0), particleContainer->getBoundingBoxMax(1),
@@ -252,25 +252,25 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 #endif
 
 	xmlconfig.getNodeValue("updateFrequency", _rebuildFrequency);
-	global_log->info() << "GeneralDomainDecomposition update frequency: " << _rebuildFrequency << endl;
+	global_log->info() << "GeneralDomainDecomposition update frequency: " << _rebuildFrequency << std::endl;
 
 	xmlconfig.getNodeValue("initialPhaseTime", _initPhase);
-	global_log->info() << "GeneralDomainDecomposition time for initial rebalancing phase: " << _initPhase << endl;
+	global_log->info() << "GeneralDomainDecomposition time for initial rebalancing phase: " << _initPhase << std::endl;
 
 	xmlconfig.getNodeValue("initialPhaseFrequency", _initFrequency);
 	global_log->info() << "GeneralDomainDecomposition frequency for initial rebalancing phase: " << _initFrequency
-					   << endl;
+					   << std::endl;
 
 	std::string gridSizeString;
 	if (xmlconfig.getNodeValue("gridSize", gridSizeString)) {
-		global_log->info() << "GeneralDomainDecomposition grid size: " << gridSizeString << endl;
+		global_log->info() << "GeneralDomainDecomposition grid size: " << gridSizeString << std::endl;
 
 		if (gridSizeString.find(',') != std::string::npos) {
 			auto strings = string_utils::split(gridSizeString, ',');
 			if (strings.size() != 3) {
 				global_log->error()
 					<< "GeneralDomainDecomposition's gridSize should have three entries if a list is given, but has "
-					<< strings.size() << "!" << endl;
+					<< strings.size() << "!" << std::endl;
 				Simulation::exit(8134);
 			}
 			_gridSize = {std::stod(strings[0]), std::stod(strings[1]), std::stod(strings[2])};
@@ -282,7 +282,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 			if (gridSize < _interactionLength) {
 				global_log->error() << "GeneralDomainDecomposition's gridSize (" << gridSize
 									<< ") is smaller than the interactionLength (" << _interactionLength
-									<< "). This is forbidden, as it leads to errors! " << endl;
+									<< "). This is forbidden, as it leads to errors! " << std::endl;
 				Simulation::exit(8136);
 			}
 		}

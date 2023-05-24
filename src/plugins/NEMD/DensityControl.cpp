@@ -112,7 +112,7 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 		global_log->error() << "[DensityControl] No target parameters specified. Program exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
-	const string oldpath = xmlconfig.getcurrentnodepath();
+	const std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator nodeIter;
 	for (nodeIter = query.begin(); nodeIter; nodeIter++) {
 		xmlconfig.changecurrentnode(nodeIter);
@@ -229,7 +229,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer, Domain
 	std::map<int, std::vector<uint64_t> > pidMap;
 	for (int32_t i = 0; i < numComponents + 1; i++) {
 		const std::vector<uint64_t> vec;
-		pidMap.insert(std::pair<int, vector<uint64_t> >(i, vec));
+		pidMap.insert(std::pair<int, std::vector<uint64_t> >(i, vec));
 	}
 	for (auto it : vec_pacID.global) {
 		pidMap[it.cid].push_back(it.pid);
@@ -276,7 +276,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer, Domain
 			}
 
 			if (cid_ub_send > 0 && cid_ub_recv > 0) {
-				const uint64_t numSwap = min(vecBalance[cid_ub_send], abs(vecBalance[cid_ub_recv]));
+				const uint64_t numSwap = std::min(vecBalance[cid_ub_send], abs(vecBalance[cid_ub_recv]));
 				global_log->debug() << "[DensityControl] numSwap = " << numSwap << std::endl;
 				for (uint64_t i = 0; i < numSwap; i++) {
 					const uint64_t pid = pidMap[cid_ub_send].back();
@@ -329,7 +329,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer, Domain
 			for (auto sid : swpMap[i]) {
 				if (pid == sid) {
 					global_log->debug() << "[DensityControl] Swap pid=" << pid << " with cid=" << it->componentid() + 1
-										<< " to cid=" << i << endl;
+										<< " to cid=" << i << std::endl;
 					it->setComponent(compNew);
 				}
 			}
@@ -340,7 +340,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer, Domain
 			std::vector<uint64_t>& vec = delMap[i];
 			if (std::find(vec.begin(), vec.end(), pid) != vec.end()) {  // found ID of to be deleted particle in vector
 				global_log->debug() << "[DensityControl] Delete particle with pid= " << pid
-									<< " ; cid_ub= " << it->componentid() + 1 << endl;
+									<< " ; cid_ub= " << it->componentid() + 1 << std::endl;
 				particleContainer->deleteMolecule(it, false);
 			}
 		}
@@ -403,7 +403,7 @@ void DensityControl::updateBalanceVector(std::vector<int64_t>& vecBalance,
 	}
 
 #ifndef NDEBUG
-	cout << "_densityTarget.count: ";
+	std::cout << "_densityTarget.count: ";
 	for (auto i : _densityTarget.count) std::cout << i << ' ';
 	std::cout << std::endl;
 
@@ -509,7 +509,7 @@ void DensityControl::initTargetValues(ParticleContainer* particleContainer, Doma
 	// show target values
 	for (uint32_t i = 0; i < numComponents + 1; i++) {
 		global_log->info() << "cID=" << i << ": target count=" << _densityTarget.count[i]
-						   << ", target density=" << _densityTarget.density[i] << endl;
+						   << ", target density=" << _densityTarget.density[i] << std::endl;
 	}
 #endif
 }

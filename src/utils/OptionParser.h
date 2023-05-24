@@ -50,10 +50,10 @@
  *                   .help("don't print status messages to stdout");
  * 
  * optparse::Values options = parser.parse_args(argc, argv);
- * vector<string> args = parser.args();
+ * std::vector<std::string> args = parser.args();
  *
  * if (options.get("verbose"))
- *     cout << options["filename"] << endl;
+ *     cout << options["filename"] << std::endl;
  *
  */
 

@@ -13,7 +13,6 @@
 #include <fstream>
 #include <sstream>
 
-using namespace std;
 using Log::global_log;
 
 SysMon* SysMon::s_sysmoninstance=NULL;
@@ -26,7 +25,7 @@ SysMon* SysMon::s_sysmoninstance=NULL;
 
 void SysMon::clear()
 {
-	for (list<Expression>::iterator exprit=_expressions.begin();exprit!=_expressions.end();++exprit)
+	for (std::list<Expression>::iterator exprit=_expressions.begin();exprit!=_expressions.end();++exprit)
 		exprit->clear();
 	_expressions.clear();
 	_values.clear();
@@ -39,7 +38,7 @@ void SysMon::clear()
 
 int SysMon::addExpression(const std::string& exprstr)
 {
-	_expressions.push_back(Expression(string(),_variableset));
+	_expressions.push_back(Expression(std::string(),_variableset));
 	Expression& expr=_expressions.back();
 	expr.initializeRPN(exprstr,true);	// generate a Label
 	//expr.genLabel();	// done at the end of initializeRPN
@@ -83,7 +82,7 @@ void SysMon::updateExpressionValues(bool resetMinMax)
 		++i;
 	}
 	
-	vector<Tvalue> valuesMaxMin(2*_values.size());
+	std::vector<Tvalue> valuesMaxMin(2*_values.size());
 	for(i=0;i<_values.size();++i)
 	{
 		valuesMaxMin[2*i]=_values[i];
@@ -116,7 +115,7 @@ void SysMon::updateExpressionValues(bool resetMinMax)
 int SysMon::getExpressionIndex(const std::string& label) const
 {
 	int idx=0;
-	for(list<Expression>::const_iterator it=_expressions.begin();it!=_expressions.end();++it)
+	for(std::list<Expression>::const_iterator it=_expressions.begin();it!=_expressions.end();++it)
 	{
 		if(it->getLabel()==label) return idx;
 		++idx;
@@ -125,19 +124,19 @@ int SysMon::getExpressionIndex(const std::string& label) const
 }
 
 #ifdef MPI_VERSION
-pair<SysMon::Tvalue,SysMon::Tvalue> SysMon::getExpressionMinMaxValues(unsigned int index) const
+std::pair<SysMon::Tvalue,SysMon::Tvalue> SysMon::getExpressionMinMaxValues(unsigned int index) const
 {
 	int myrank;
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD,&myrank) );
 	if(myrank==mpiRootRank&&index*2+1<_valuesMaxMin.size())
-		return make_pair(_valuesMaxMin[index*2],_valuesMaxMin[index*2+1]);
+		return std::make_pair(_valuesMaxMin[index*2],_valuesMaxMin[index*2+1]);
 	else
-		return make_pair(0,0);
+		return std::make_pair(0,0);
 }
 #endif
 
 
-void SysMon::writeExpressionValues(ostream& ostrm, string header, string lineprefix, string sep, string eol) const
+void SysMon::writeExpressionValues(std::ostream& ostrm, std::string header, std::string lineprefix, std::string sep, std::string eol) const
 {
 	size_t numvalues=_values.size();
 	size_t i=0;
@@ -305,32 +304,32 @@ unsigned int SysMon::updateVariables_procmeminfo()
 {	// 
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_PROCMEMINFO
-	ifstream ifstrm("/proc/meminfo");
+	std::ifstream ifstrm("/proc/meminfo");
 	if(!ifstrm) return 0;
 	long val=0;
-	string line,label,valunit;
+	std::string line,label,valunit;
 	unsigned int linenr=0;
 	while (getline(ifstrm, line))
 	{	// process line
 		++linenr;
-		istringstream iss(line);
+		std::istringstream iss(line);
 		if (!(iss >> label >> val)) { break; }
 		size_t i=label.find_first_of(" :");
-		while(i!=string::npos)
+		while(i!=std::string::npos)
 		{
 			label.erase(i,1);
 			i=label.find_first_of(" :");
 		}
-		valunit=string();	//=""
+		valunit=std::string();	//=""
 		if(!iss.eof()) if (!(iss >> valunit)) break;
-		//iss.str(string());iss.clear();
+		//iss.str(std::string());iss.clear();
 		if(!valunit.empty())
 		{
 			if(valunit=="kB")
 				val*=1024;
 			else
-				//cerr << "WARNING /proc/meminfo:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
-				global_log->warning() << "WARNING /proc/meminfo:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
+				//cerr << "WARNING /proc/meminfo:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << std::endl;
+				global_log->warning() << "WARNING /proc/meminfo:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << std::endl;
 		}
 		_variableset->setVariable("procmeminfo",label,val);
 		++numvalues;
@@ -344,17 +343,17 @@ unsigned int SysMon::updateVariables_procvmstat()
 {	//
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_PROCVMSTAT
-	ifstream ifstrm("/proc/vmstat");
+	std::ifstream ifstrm("/proc/vmstat");
 	if(!ifstrm) return 0;
 	long val=0;
-	string line,label;
+	std::string line,label;
 	unsigned int linenr=0;
 	while (getline(ifstrm, line))
 	{	// process line
 		++linenr;
-		istringstream iss(line);
+		std::istringstream iss(line);
 		if (!(iss >> label >> val)) { break; }
-		//iss.str(string());iss.clear();
+		//iss.str(std::string());iss.clear();
 		_variableset->setVariable("procvmstat",label,val);
 		++numvalues;
 	}
@@ -367,23 +366,23 @@ unsigned int SysMon::updateVariables_procloadavg()
 {	// see also `man 5 proc | grep -m 1 -A 12 /proc/loadavg`
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_PROCLOADAVG
-	ifstream ifstrm("/proc/loadavg");
+	std::ifstream ifstrm("/proc/loadavg");
 	if(!ifstrm) return 0;
-	string line,label;
+	std::string line,label;
 	if (!getline(ifstrm, line)) return 0;
 	ifstrm.close();
 	size_t i=line.find("/");
-	if(i!=string::npos)
+	if(i!=std::string::npos)
 	{
 		//line[i]=' ';
 		line.replace(i,1," ");
 	}
 	float loadavg1,loadavg5,loadavg15;
 	unsigned int numschedentexec,numschedentexist,pidrecent;
-	istringstream iss(line);
+	std::istringstream iss(line);
 	if (!(iss >> loadavg1 >> loadavg5 >> loadavg15
 	          >> numschedentexec >> numschedentexist >> pidrecent)) { return 0; }
-	//iss.str(string());iss.clear();
+	//iss.str(std::string());iss.clear();
 	_variableset->setVariable("procloadavg","loadavg1",double(loadavg1));
 	++numvalues;
 	_variableset->setVariable("procloadavg","loadavg5",double(loadavg5));
@@ -403,7 +402,7 @@ unsigned int SysMon::updateVariables_procselfstatm()
 {	// see also `man 5 proc | grep -m 1 -A 12 /statm`
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_PROCSELFSTATM
-	ifstream ifstrm("/proc/self/statm");
+	std::ifstream ifstrm("/proc/self/statm");
 	if(!ifstrm) return 0;
 	unsigned long size,resident,share,text,lib,data;
 	ifstrm >> size >> resident >> share >> text >> lib >> data;
@@ -428,17 +427,17 @@ unsigned int SysMon::updateVariables_procselfsched()
 {
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_PROCSELFSCHED
-	ifstream ifstrm("/proc/self/sched");
+	std::ifstream ifstrm("/proc/self/sched");
 	if(!ifstrm) return 0;
 	double val=0;
-	string line,label,colon;
+	std::string line,label,colon;
 	unsigned int linenr=0;
 	while (getline(ifstrm, line))
 	{	// process line
 		++linenr;
-		istringstream iss(line);
+		std::istringstream iss(line);
 		if (!(iss >> label >> colon >> val)) { continue; }
-		//iss.str(string());iss.clear();
+		//iss.str(std::string());iss.clear();
 		if(colon!=":") continue;
 		_variableset->setVariable("procselfsched",label,val);
 		++numvalues;
@@ -452,7 +451,7 @@ unsigned int SysMon::updateVariables_procselfschedstat()
 {
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_PROCSELFSCHEDSTAT
-	ifstream ifstrm("/proc/self/schedstat");
+	std::ifstream ifstrm("/proc/self/schedstat");
 	if(!ifstrm) return 0;
 	unsigned long runningtime, waitingtime;
 	unsigned int numtasks;
@@ -472,19 +471,19 @@ unsigned int SysMon::updateVariables_procselfstatus()
 {	// 
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_PROCSELFSTATUS
-	ifstream ifstrm("/proc/self/status");
+	std::ifstream ifstrm("/proc/self/status");
 	if(!ifstrm) return 0;
 	long val=0;
-	string line,label,valunit;
+	std::string line,label,valunit;
 	unsigned int linenr=0;
 	while (getline(ifstrm, line))
 	{	// process line
 		++linenr;
-		istringstream iss(line);
+		std::istringstream iss(line);
 		if (!(iss >> label)) { continue; }
-		//iss.str(string());iss.clear();
+		//iss.str(std::string());iss.clear();
 		size_t i=label.find_first_of(" :");
-		while(i!=string::npos)
+		while(i!=std::string::npos)
 		{
 			label.erase(i,1);
 			i=label.find_first_of(" :");
@@ -492,15 +491,15 @@ unsigned int SysMon::updateVariables_procselfstatus()
 		if(label.find("Vm")==0 || label.find("Rss")==0 || label.find("Hugetlb")==0)
 		{
 			if (!(iss >> val)) break;
-			valunit=string();	//=""
+			valunit=std::string();	//=""
 			if(!iss.eof()) if (!(iss >> valunit)) break;
 			if(!valunit.empty())
 			{
 				if(valunit=="kB")
 					val*=1024;
 				else
-					//cerr << "WARNING /proc/self/status:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
-					global_log->warning() << "WARNING /proc/self/status:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << endl;
+					//cerr << "WARNING /proc/self/status:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << std::endl;
+					global_log->warning() << "WARNING /proc/self/status:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << std::endl;
 			}
 			_variableset->setVariable("procselfstatus",label,val);
 		}

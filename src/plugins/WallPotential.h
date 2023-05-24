@@ -111,11 +111,11 @@ public:
 
     static PluginBase* createInstance(){return new WallPotential();}
 
-    void initializeLJ93(const vector<Component> *components, double in_rhoWall, double in_sigWall, double in_epsWall,
-                        vector<double> in_xi, vector<double> in_eta, double in_yOffWall, double in_yWallCut);
+    void initializeLJ93(const std::vector<Component> *components, double in_rhoWall, double in_sigWall, double in_epsWall,
+                        std::vector<double> in_xi, std::vector<double> in_eta, double in_yOffWall, double in_yWallCut);
 
-    void initializeLJ1043(const vector<Component> *components, double in_rhoWall, double in_sigWall, double in_epsWall,
-                          vector<double> in_xi, vector<double> in_eta, double in_yOffWall, double in_yWallCut);
+    void initializeLJ1043(const std::vector<Component> *components, double in_rhoWall, double in_sigWall, double in_epsWall,
+                          std::vector<double> in_xi, std::vector<double> in_eta, double in_yOffWall, double in_yWallCut);
 
     void calcTSLJ_9_3(ParticleContainer *partContainer);
 

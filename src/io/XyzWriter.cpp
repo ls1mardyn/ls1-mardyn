@@ -12,9 +12,6 @@
 #include "Simulation.h"
 
 
-using Log::global_log;
-using namespace std;
-
 void XyzWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
@@ -37,8 +34,8 @@ void XyzWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompBase
 void XyzWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain * /*domain*/,
                         unsigned long simstep) {
 	if( simstep % _writeFrequency == 0) {
-		vector<Component>*  components = _simulation.getEnsemble()->getComponents();
-		stringstream filenamestream;
+		std::vector<Component>*  components = _simulation.getEnsemble()->getComponents();
+		std::stringstream filenamestream;
 		filenamestream << _outputPrefix;
 
 		if(_incremental) {
@@ -54,7 +51,7 @@ void XyzWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *
 		
 		int ownRank = domainDecomp->getRank();
 		if( ownRank == 0 ) {
-			ofstream xyzfilestream( filenamestream.str(). c_str() );
+			std::ofstream xyzfilestream( filenamestream.str(). c_str() );
 			unsigned number = 0;
 			for (unsigned i=0; i< components->size(); i++){
 				number += (*components)[i].getNumMolecules()*((*components)[i].numLJcenters() + (*components)[i].numDipoles() + (*components)[i].numCharges() + (*components)[i].numQuadrupoles());
@@ -66,7 +63,7 @@ void XyzWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *
 		for( int process = 0; process < domainDecomp->getNumProcs(); process++ ){
 			domainDecomp->barrier();
 			if( ownRank == process ){
-				ofstream xyzfilestream( filenamestream.str().c_str(), ios::app );
+				std::ofstream xyzfilestream( filenamestream.str().c_str(), std::ios::app );
 				for(ParticleIterator tempMol = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol){
 					for (unsigned i=0; i< tempMol->numLJcenters(); i++){
 						if( tempMol->componentid() == 0) { xyzfilestream << "Ar ";}

@@ -17,8 +17,6 @@
 #include <map>
 #include <iostream>
 
-using namespace std;
-
 //struct storing a int[2] for the map
 struct pos {
 	int x, y;
@@ -60,7 +58,7 @@ public:
 			const int size_x, const int size_y);
 
 private:
-	map<pos, FFTW_API**, pos_comp> _fftw_api_map; //storage of the various FFTW_API required
+	std::map<pos, FFTW_API**, pos_comp> _fftw_api_map; //storage of the various FFTW_API required
 
 	FFTW_API* getFFTW_API(const int size_x, const int size_y); //memoized function using the map
 };

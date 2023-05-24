@@ -15,8 +15,6 @@
 #include <iostream>
 #include <vector>
 
-using namespace std;
-using namespace Log;
 
 #ifdef ENABLE_MPI
 #include <mpi.h>

@@ -11,7 +11,6 @@
 #include <stdint.h>
 #include <vector>
 
-using namespace std;
 
 TEST_SUITE_REGISTRATION(AlignedArrayTripletTest);
 
@@ -33,7 +32,7 @@ void AlignedArrayTripletTest::testAlignment() {
 }
 
 void AlignedArrayTripletTest::testAppending() {
-	vector<double> x, y, z;
+	std::vector<double> x, y, z;
 	for(int i = 0; i < 17; ++i) {
 		x.push_back(static_cast<double>(i));
 		y.push_back(static_cast<double>(i+1));
@@ -57,7 +56,7 @@ void AlignedArrayTripletTest::testAppending() {
 }
 
 template<typename T>
-void check(const vector<T>& x, const vector<T>& y, const vector<T>& z, const AlignedArrayTriplet<T>& A, int i) {
+void check(const std::vector<T>& x, const std::vector<T>& y, const std::vector<T>& z, const AlignedArrayTriplet<T>& A, int i) {
 	ASSERT_EQUAL(static_cast<int>(reinterpret_cast<intptr_t>(A.xBegin()) % 64), 0);
 	ASSERT_EQUAL(static_cast<int>(reinterpret_cast<intptr_t>(A.yBegin()) % 64), 0);
 	ASSERT_EQUAL(static_cast<int>(reinterpret_cast<intptr_t>(A.zBegin()) % 64), 0);
@@ -74,7 +73,7 @@ void check(const vector<T>& x, const vector<T>& y, const vector<T>& z, const Ali
 }
 
 void AlignedArrayTripletTest::testIncreasingStorage() {
-	vector<double> x, y, z;
+	std::vector<double> x, y, z;
 
 	for(int i = 0; i < 111; ++i) {
 		x.push_back(static_cast<double>(i));

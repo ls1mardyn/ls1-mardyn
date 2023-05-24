@@ -575,7 +575,7 @@ public:
 	void showActualBin() {
 		for(auto& p:_actual->_particles)
 			std::cout << p << ", ";
-		std::cout << endl;
+		std::cout << std::endl;
 	}
 
 	void connectTailToHead()

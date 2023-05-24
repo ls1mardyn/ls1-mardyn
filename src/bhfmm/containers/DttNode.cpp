@@ -265,14 +265,14 @@ int DttNode::getMaxDepth() const {
 	if (_isLeafNode) {
 		return 0;
 	} else {
-		int max = 0;
+		int maxVal = 0;
 
 		for (unsigned int i = 0; i < 8; i++) {
 			if (_children[i]->isOccupied()) {
-				max = std::max(max, _children[i]->getMaxDepth());
+				maxVal = std::max(maxVal, _children[i]->getMaxDepth());
 			}
 		}
-		return max + 1;
+		return maxVal + 1;
 	}
 
 }

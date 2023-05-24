@@ -21,7 +21,6 @@
 
 TEST_SUITE_REGISTRATION(KDDecompositionTest);
 
-using namespace std;
 
 KDDecompositionTest::KDDecompositionTest() :
 		_rank(0) {
@@ -401,15 +400,15 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 			fNew << "new_" << i << ".vtu";
 			newDecompRoot->plotNode(fNew.str());
 
-			cout << "current coeffs: " << std::endl;
-			cout << setprecision(17);
+			std::cout << "current coeffs: " << std::endl;
+			std::cout << std::setprecision(17);
 			for (double _currentCoeff : _currentCoeffs) {
-				cout << _currentCoeff << std::endl;
+				std::cout << _currentCoeff << std::endl;
 			}
-			cout << std::endl;
-			cout << "old coeffs: " << std::endl;
+			std::cout << std::endl;
+			std::cout << "old coeffs: " << std::endl;
 			for (double _oldCoeff : _oldCoeffs) {
-				cout << _oldCoeff << std::endl;
+				std::cout << _oldCoeff << std::endl;
 			}
 		}
 
@@ -548,18 +547,18 @@ void KDDecompositionTest::clearNumParticlesPerCell(std::vector<unsigned int> &v,
 
 void KDDecompositionTest::Write_VTK_Structured_Points(unsigned *A, int N[3], std::string& filename) const {
 	std::ofstream ofs(filename, std::ios::out);
-	ofs << "# vtk DataFile Version 3.0" << endl;
-	ofs << "Laplace" << endl;
-	ofs << "ASCII" << endl;
-	ofs << "DATASET STRUCTURED_POINTS" << endl;
-	ofs << "DIMENSIONS " << N[0] << " " << N[1] << " " << N[2] << endl;
-	ofs << "ORIGIN 0 0 0"<< endl;
-	ofs << "SPACING 1 1 1" << endl;
-	ofs << "POINT_DATA " << N[0]*N[1]*N[2] << endl;
-	ofs << "SCALARS nMols int 1" << endl;
-	ofs << "LOOKUP_TABLE default" << endl;
+	ofs << "# vtk DataFile Version 3.0" << std::endl;
+	ofs << "Laplace" << std::endl;
+	ofs << "ASCII" << std::endl;
+	ofs << "DATASET STRUCTURED_POINTS" << std::endl;
+	ofs << "DIMENSIONS " << N[0] << " " << N[1] << " " << N[2] << std::endl;
+	ofs << "ORIGIN 0 0 0"<< std::endl;
+	ofs << "SPACING 1 1 1" << std::endl;
+	ofs << "POINT_DATA " << N[0]*N[1]*N[2] << std::endl;
+	ofs << "SCALARS nMols int 1" << std::endl;
+	ofs << "LOOKUP_TABLE default" << std::endl;
 	for (int i = 0; i < N[0] * N[1] * N[2]; i++) {
-			ofs << A[i] << endl;
+			ofs << A[i] << std::endl;
 	}
 	ofs.close();
 }

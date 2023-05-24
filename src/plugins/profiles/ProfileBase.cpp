@@ -5,7 +5,7 @@
 #include "ProfileBase.h"
 #include "plugins/SpatialProfile.h"
 
-void ProfileBase::writeMatrix (ofstream& outfile) {
+void ProfileBase::writeMatrix (std::ofstream& outfile) {
 	if (_samplInfo.cylinder) {
 		writeCylMatrix(outfile);
 	} else {
@@ -13,7 +13,7 @@ void ProfileBase::writeMatrix (ofstream& outfile) {
 	}
 }
 
-void ProfileBase::writeKartMatrix (ofstream& outfile) {
+void ProfileBase::writeKartMatrix (std::ofstream& outfile) {
 	// Write Data
 	// Assuming x = 1 -> projection along x axis
 	// Z - axis label
@@ -42,11 +42,11 @@ void ProfileBase::writeKartMatrix (ofstream& outfile) {
 
 }
 
-void ProfileBase::writeSimpleMatrix (ofstream& outfile) {
+void ProfileBase::writeSimpleMatrix (std::ofstream& outfile) {
 	global_log->error() << "SIMPLE MATRIX OUTPUT NOT IMPLEMENTED!\n";
 }
 
-void ProfileBase::writeCylMatrix (ofstream& outfile) {
+void ProfileBase::writeCylMatrix (std::ofstream& outfile) {
 	// Write Data
 	// Assuming phi = 1 -> projection along phi axis
 	// R2 - axis label

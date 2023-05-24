@@ -70,7 +70,7 @@ bool PositionIsInBox3D(const T l[3], const T u[3], const T r[3]) {
 	return in;
 }
 
-unsigned long ParticleCellBase::initCubicGrid(const array<unsigned long, 3> &numMoleculesPerDimension,
+unsigned long ParticleCellBase::initCubicGrid(const std::array<unsigned long, 3> &numMoleculesPerDimension,
 											  const std::array<double, 3> &simBoxLength, Random &RNG) {
 
 	std::array<double, 3> spacing{};

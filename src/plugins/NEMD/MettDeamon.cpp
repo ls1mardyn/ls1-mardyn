@@ -30,7 +30,6 @@
 #include <random>
 #include <ctime>
 
-using namespace std;
 
 template < typename T > void shuffle( std::list<T>& lst ) // shuffle contents of a list
 {
@@ -65,9 +64,9 @@ void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const doub
 		std::vector<double>& vxi, std::vector<double>& vyi, std::vector<double>& vzi)
 {
 	double stdDev = sqrt(T);
-	vector<double> v2xi(numSamples);
-	vector<double> v2yi(numSamples);
-	vector<double> v2zi(numSamples);
+	std::vector<double> v2xi(numSamples);
+	std::vector<double> v2yi(numSamples);
+	std::vector<double> v2zi(numSamples);
 	vxi.resize(numSamples);
 	vyi.resize(numSamples);
 	vzi.resize(numSamples);
@@ -397,7 +396,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 
 	// reservoir
 	{
-		string oldpath = xmlconfig.getcurrentnodepath();
+		std::string oldpath = xmlconfig.getcurrentnodepath();
 		xmlconfig.changecurrentnode("reservoir");
 		_reservoir->readXML(xmlconfig);
 		xmlconfig.changecurrentnode(oldpath);
@@ -413,12 +412,12 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		uint8_t numChanges = 0;
 		XMLfile::Query query = xmlconfig.query("change");
 		numChanges = query.card();
-		global_log->info() << "[MettDeamon] Number of fixed molecules components: " << numChanges << endl;
+		global_log->info() << "[MettDeamon] Number of fixed molecules components: " << numChanges << std::endl;
 		if(numChanges < 1) {
-			global_log->error() << "[MettDeamon] No component change defined in XML-config file. Program exit ..." << endl;
+			global_log->error() << "[MettDeamon] No component change defined in XML-config file. Program exit ..." << std::endl;
 			Simulation::exit(-1);
 		}
-		string oldpath = xmlconfig.getcurrentnodepath();
+		std::string oldpath = xmlconfig.getcurrentnodepath();
 		XMLfile::Query::const_iterator changeIter;
 		for( changeIter = query.begin(); changeIter; changeIter++ ) {
 			xmlconfig.changecurrentnode(changeIter);
@@ -433,7 +432,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		xmlconfig.changecurrentnode("..");
 	}
 	else {
-		global_log->error() << "[MettDeamon] No component changes defined in XML-config file. Program exit ..." << endl;
+		global_log->error() << "[MettDeamon] No component changes defined in XML-config file. Program exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 }
@@ -495,7 +494,7 @@ void MettDeamon::prepare_start(DomainDecompBase* domainDecomp, ParticleContainer
 	_dInvDensityArea = 1. / (_dAreaXZ * _reservoir->getDensity() );
 	if(_reservoir->getDensity() < 1e-9) {
 		global_log->warning() << "[MettDeamon] ERROR: Reservoir density too low, _reservoir->getDensity()="
-							<< _reservoir->getDensity() << endl;
+							<< _reservoir->getDensity() << std::endl;
 	}
 	// Activate reservoir bin with respect to restart information
 	if(_bIsRestart)
@@ -838,9 +837,9 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 			this->calcDeltaY();
 		else if(FRM_DENSITY == _nFeedRateMethod)
 			this->calcDeltaYbyDensity();
-		global_log->debug() << "_numDeletedMolsSum = " << _numDeletedMolsSum << endl;
-		global_log->debug() << "_dDeletedMolsPerTimestep = " << _dDeletedMolsPerTimestep << endl;
-		global_log->debug() << "_feedrate.feed.actual = " << _feedrate.feed.actual << endl;
+		global_log->debug() << "_numDeletedMolsSum = " << _numDeletedMolsSum << std::endl;
+		global_log->debug() << "_dDeletedMolsPerTimestep = " << _dDeletedMolsPerTimestep << std::endl;
+		global_log->debug() << "_feedrate.feed.actual = " << _feedrate.feed.actual << std::endl;
 	}
 	else
 	{
@@ -887,7 +886,7 @@ void MettDeamon::writeRestartfile()
 		} else {
 			ofs.open(fname, std::ios::app);
 		}
-		ofs << setw(12) << simstep << setw(12) << _reservoir->getActualBinIndex();
+		ofs << std::setw(12) << simstep << std::setw(12) << _reservoir->getActualBinIndex();
 		ofs << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.sum << std::endl;
 		ofs.close();
 	}
@@ -899,13 +898,13 @@ void MettDeamon::writeRestartfile()
 		const std::string fname = "MettDeamonRestart_movdir-"+std::to_string(_nMovingDirection);
 		fnamestream << fname << "_TS" << fill_width('0', 9) << simstep << ".xml";
 		ofs.open(fnamestream.str().c_str(), std::ios::out);
-		ofs << "<?xml version='1.0' encoding='UTF-8'?>" << endl;
-		ofs << "<restart>" << endl;
-		ofs << "\t<binindex>" << _reservoir->getActualBinIndex() << "</binindex>" << endl;
-		ios::fmtflags f( ofs.flags() );
-		ofs << "\t<deltaY>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _feedrate.feed.sum << "</deltaY>" << endl;
+		ofs << "<?xml version='1.0' encoding='UTF-8'?>" << std::endl;
+		ofs << "<restart>" << std::endl;
+		ofs << "\t<binindex>" << _reservoir->getActualBinIndex() << "</binindex>" << std::endl;
+		std::ios::fmtflags f( ofs.flags() );
+		ofs << "\t<deltaY>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _feedrate.feed.sum << "</deltaY>" << std::endl;
 		ofs.flags(f);  // restore default format flags
-		ofs << "</restart>" << endl;
+		ofs << "</restart>" << std::endl;
 		ofs.close();
 	}
 }
@@ -935,7 +934,7 @@ void MettDeamon::logFeedrate()
 	} else {
 		ofs.open(fname, std::ios::app);
 	}
-	ofs << setw(12) << global_simulation->getSimulationStep();
+	ofs << std::setw(12) << global_simulation->getSimulationStep();
 	ofs << FORMAT_SCI_MAX_DIGITS << _feedrate.feed.actual << std::endl;
 	ofs.close();
 }
@@ -976,7 +975,7 @@ void MettDeamon::logReleased()
 	} else {
 		ofs.open(fname, std::ios::app);
 	}
-	ofs << setw(12) << global_simulation->getSimulationStep() << setw(12) << _released.count.global << setw(12) << _released.deleted.global << std::endl;
+	ofs << std::setw(12) << global_simulation->getSimulationStep() << std::setw(12) << _released.count.global << std::setw(12) << _released.deleted.global << std::endl;
 	ofs.close();
 }
 
@@ -1059,14 +1058,14 @@ void MettDeamon::getAvailableParticleIDs(ParticleContainer* particleContainer, D
 	domain->updateMaxMoleculeID(particleContainer, domainDecomp);
 	maxID = domain->getMaxMoleculeID();
 	numMolecules.global = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
-	global_log->debug() << "[" << nRank << "]: maxID.local, maxID.global=" << maxID.local << ", " << maxID.global << endl;
+	global_log->debug() << "[" << nRank << "]: maxID.local, maxID.global=" << maxID.local << ", " << maxID.global << std::endl;
 	uint64_t numMoleculesAfterInsertion = numMolecules.global + numParticleIDs.global;
 	uint64_t numIDs;
 	if(maxID.global >= numMoleculesAfterInsertion)
 		numIDs = maxID.global + 1;
 	else
 		numIDs = numMoleculesAfterInsertion + 1;
-	global_log->debug() << "[" << nRank << "]: numMoleculesAfterInsertion, numMolecules.global=" << numMoleculesAfterInsertion << ", " << numMolecules.global << endl;
+	global_log->debug() << "[" << nRank << "]: numMoleculesAfterInsertion, numMolecules.global=" << numMoleculesAfterInsertion << ", " << numMolecules.global << std::endl;
 
 	std::vector<uint32_t>& vl = particleIDs_assigned.local;
 	vl.resize(numIDs); std::fill(vl.begin(), vl.end(), 0);
@@ -1085,7 +1084,7 @@ void MettDeamon::getAvailableParticleIDs(ParticleContainer* particleContainer, D
 		vg.at(ii) = vl.at(ii);
 #endif
 
-	global_log->debug() << "[" << nRank << "]: assigned.local, assigned.global=" << particleIDs_assigned.local.size() << ", " << particleIDs_assigned.global.size() << endl;
+	global_log->debug() << "[" << nRank << "]: assigned.local, assigned.global=" << particleIDs_assigned.local.size() << ", " << particleIDs_assigned.global.size() << std::endl;
 
 	// check for available particle IDs
 	for(uint64_t pid=1; pid<vg.size() && particleIDs_available.global.size()<numParticleIDs.global; ++pid) {
@@ -1093,7 +1092,7 @@ void MettDeamon::getAvailableParticleIDs(ParticleContainer* particleContainer, D
 			particleIDs_available.global.push_back(pid);
 	}
 	particleIDs_available.local.resize(numParticleIDs.local);
-	global_log->debug() << "[" << nRank << "]: avail.local, avail.global=" << particleIDs_available.local.size() << ", " << particleIDs_available.global.size() << endl;
+	global_log->debug() << "[" << nRank << "]: avail.local, avail.global=" << particleIDs_available.local.size() << ", " << particleIDs_available.global.size() << std::endl;
 
 #ifdef ENABLE_MPI
 	// gather displacement (displs)
@@ -1187,10 +1186,10 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	}
 	_feedrate.feed.sum -= _reservoir->getBinWidth();  // reset feed sum
 	if(not _reservoir->nextBin(_nMaxMoleculeID.global) ) {
-		global_log->error() << "[MettDeamon] Failed to activate new bin of particle Reservoir's BinQueue => Program exit." << endl;
+		global_log->error() << "[MettDeamon] Failed to activate new bin of particle Reservoir's BinQueue => Program exit." << std::endl;
 		Simulation::exit(-1);
 	}
-	global_log->debug() << "[" << nRank << "]: ADDED " << numAdded.local << "/" << numParticlesCurrentSlab.local << " particles (" << numAdded.local/static_cast<float>(numParticlesCurrentSlab.local)*100 << ")%." << endl;
+	global_log->debug() << "[" << nRank << "]: ADDED " << numAdded.local << "/" << numParticlesCurrentSlab.local << " particles (" << numAdded.local/static_cast<float>(numParticlesCurrentSlab.local)*100 << ")%." << std::endl;
 	// calc global values
 	domainDecomp.collCommInit(1);
 	domainDecomp.collCommAppendUnsLong(numAdded.local);
@@ -1199,7 +1198,7 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	domainDecomp.collCommFinalize();
 
 	if(0 == nRank)
-		global_log->debug() << "[" << nRank << "]: ADDED " << numAdded.global << "/" << numParticlesCurrentSlab.global << " particles (" << numAdded.global/static_cast<float>(numParticlesCurrentSlab.global)*100 << ")%." << endl;
+		global_log->debug() << "[" << nRank << "]: ADDED " << numAdded.global << "/" << numParticlesCurrentSlab.global << " particles (" << numAdded.global/static_cast<float>(numParticlesCurrentSlab.global)*100 << ")%." << std::endl;
 }
 
 void MettDeamon::initRestart()
@@ -1207,7 +1206,7 @@ void MettDeamon::initRestart()
 	bool bRet = _reservoir->activateBin(_restartInfo.nBindindex);
 	if(not bRet)
 	{
-		global_log->info() << "[MettDeamon] Failed to activate reservoir bin after restart! Program exit ... " << endl;
+		global_log->info() << "[MettDeamon] Failed to activate reservoir bin after restart! Program exit ... " << std::endl;
 		Simulation::exit(-1);
 	}
 	_feedrate.feed.sum = _restartInfo.dYsum;
@@ -1255,7 +1254,7 @@ void MettDeamon::updateRandVecTrappedIns()
 		global_log->debug() << vi << ",";
 		nSum += vi;
 	}
-	global_log->debug() << "sum=" << nSum << endl;
+	global_log->debug() << "sum=" << nSum << std::endl;
 }
 
 // class Reservoir
@@ -1307,7 +1306,7 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 		xmlconfig.getNodeValue("file/data", _filepath.data);
 	}
 	else {
-		global_log->error() << "[MettDeamon] Reservoir file type not specified or unknown. Programm exit ..." << endl;
+		global_log->error() << "[MettDeamon] Reservoir file type not specified or unknown. Programm exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 
@@ -1317,10 +1316,10 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 		XMLfile::Query query = xmlconfig.query("change");
 		numChanges = query.card();
 		if(numChanges < 1) {
-			global_log->error() << "[MettDeamon] No component change defined in XML-config file. Program exit ..." << endl;
+			global_log->error() << "[MettDeamon] No component change defined in XML-config file. Program exit ..." << std::endl;
 			Simulation::exit(-1);
 		}
-		string oldpath = xmlconfig.getcurrentnodepath();
+		std::string oldpath = xmlconfig.getcurrentnodepath();
 		XMLfile::Query::const_iterator changeIter;
 		for( changeIter = query.begin(); changeIter; changeIter++ ) {
 			xmlconfig.changecurrentnode(changeIter);
@@ -1346,7 +1345,7 @@ void Reservoir::readParticleData(DomainDecompBase* domainDecomp, ParticleContain
 			this->readFromFileBinary(domainDecomp, particleContainer);
 			break;
 		default:
-			global_log->error() << "[MettDeamon] Unknown (or ambiguous) method to read reservoir for feature MettDeamon. Program exit ..." << endl;
+			global_log->error() << "[MettDeamon] Unknown (or ambiguous) method to read reservoir for feature MettDeamon. Program exit ..." << std::endl;
 			Simulation::exit(-1);
 	}
 
@@ -1382,7 +1381,7 @@ void Reservoir::updateParticleData(DomainDecompBase* domainDecomp, ParticleConta
 				ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], _particleVector[i]);
 				particle_buff_pos++;
 				if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i == num_particles - 1)) {
-					global_log->debug() << "broadcasting(sending) particles" << endl;
+					global_log->debug() << "broadcasting(sending) particles" << std::endl;
 					MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, rank, domainDecomp->getCommunicator());
 					particle_buff_pos = 0;
 				}
@@ -1391,7 +1390,7 @@ void Reservoir::updateParticleData(DomainDecompBase* domainDecomp, ParticleConta
 			uint64_t numParticlesAdd = 0;
 			for(unsigned long i = 0; i < num_particles; ++i) {
 				if(i % PARTICLE_BUFFER_SIZE == 0) {
-					global_log->debug() << "broadcasting(receiving) particles" << endl;
+					global_log->debug() << "broadcasting(receiving) particles" << std::endl;
 					MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, rank, domainDecomp->getCommunicator());
 					particle_buff_pos = 0;
 				}
@@ -1406,10 +1405,10 @@ void Reservoir::updateParticleData(DomainDecompBase* domainDecomp, ParticleConta
 				}
 			}
 			if(numParticlesAdd > 0) {
-				global_log->debug() << "Rank " << ownRank << " received " << numParticlesAdd << " particles from rank " << rank << "." << endl;
+				global_log->debug() << "Rank " << ownRank << " received " << numParticlesAdd << " particles from rank " << rank << "." << std::endl;
 			}
 		}
-		global_log->debug() << "broadcasting(sending/receiving) particles complete" << endl;
+		global_log->debug() << "broadcasting(sending/receiving) particles complete" << std::endl;
 	}
 
 	// delete particles out of bounding box
@@ -1424,7 +1423,7 @@ void Reservoir::updateParticleData(DomainDecompBase* domainDecomp, ParticleConta
 	_particleVector.resize(particleVectorTmp.size());
 	_particleVector = particleVectorTmp;
 	if(_particleVector.size() < numParticlesOld) {
-		global_log->debug() << "Rank " << ownRank << " deleted " << numParticlesOld - _particleVector.size() << " particles from particle vector." << endl;
+		global_log->debug() << "Rank " << ownRank << " deleted " << numParticlesOld - _particleVector.size() << " particles from particle vector." << std::endl;
 	}
 	// Refresh BinQueue
 	uint32_t actual = _binQueue->getActualBinIndex();
@@ -1441,10 +1440,10 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 	uint32_t numBins = _box.length.at(1) / _dBinWidthInit;
 	_dBinWidth = _box.length.at(1) / static_cast<double>(numBins);
 	if (_dBinWidthInit != _dBinWidth) { global_log->warning() << "[MettDeamon] Bin width changed from " << _dBinWidthInit << " to " << _dBinWidth << std::endl; }
-	global_log->debug() << "_arrBoxLength[1]="<<_box.length.at(1)<<endl;
-	global_log->debug() << "_dBinWidthInit="<<_dBinWidthInit<<endl;
-	global_log->debug() << "_numBins="<<numBins<<endl;
-	global_log->debug() << "_particleVector.size()=" << _particleVector.size() << endl;
+	global_log->debug() << "_arrBoxLength[1]="<<_box.length.at(1)<<std::endl;
+	global_log->debug() << "_dBinWidthInit="<<_dBinWidthInit<<std::endl;
+	global_log->debug() << "_numBins="<<numBins<<std::endl;
+	global_log->debug() << "_particleVector.size()=" << _particleVector.size() << std::endl;
 
 	global_log->debug() << "bbMin ="
 			<< domainDecomp->getBoundingBoxMin(0, domain) << ", "
@@ -1452,7 +1451,7 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 			<< domainDecomp->getBoundingBoxMin(2, domain) << "; bbMax = "
 			<< domainDecomp->getBoundingBoxMax(0, domain) << ", "
 			<< domainDecomp->getBoundingBoxMax(1, domain) << ", "
-			<< domainDecomp->getBoundingBoxMax(2, domain) << endl;
+			<< domainDecomp->getBoundingBoxMax(2, domain) << std::endl;
 	std::vector< std::vector<Molecule> > binVector;
 	binVector.resize(numBins);
 	uint32_t nBinIndex;
@@ -1462,7 +1461,7 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 		this->changeComponentID(mol, mol.componentid() );
 		double y = mol.r(1);
 		nBinIndex = floor(y / _dBinWidth);
-		global_log->debug() << "[MettDeamon] y="<<y<<", nBinIndex="<<nBinIndex<<", _binVector.size()="<<binVector.size()<<endl;
+		global_log->debug() << "[MettDeamon] y="<<y<<", nBinIndex="<<nBinIndex<<", _binVector.size()="<<binVector.size()<<std::endl;
 		mardyn_assert(nBinIndex < binVector.size() );
 		switch(_parent->getMovingDirection() )
 		{
@@ -1475,13 +1474,13 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 				mol.setr(1, y - nBinIndex*_dBinWidth + (domain->getGlobalLength(1) - _dBinWidth) );
 				break;
 			default:
-				global_log->error() << "[MettDeamon] Unknown moving direction" << endl;
+				global_log->error() << "[MettDeamon] Unknown moving direction" << std::endl;
 		}
 		// check if molecule is in bounding box of the process domain
 		bool bIsInsideBB = domainDecomp->procOwnsPos(mol.r(0), mol.r(1), mol.r(2), domain);
 		bool bIsInsidePC = particleContainer->isInBoundingBox(mol.r_arr().data());
 		if(bIsInsideBB != bIsInsidePC)
-			global_log->debug() << "[MettDeamon] bIsInsideBB=" << bIsInsideBB << ", bIsInsidePC=" << bIsInsidePC << endl;
+			global_log->debug() << "[MettDeamon] bIsInsideBB=" << bIsInsideBB << ", bIsInsidePC=" << bIsInsidePC << std::endl;
 		if (bIsInsideBB)
 			binVector.at(nBinIndex).push_back(mol);
 	}
@@ -1492,7 +1491,7 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 		case MD_LEFT_TO_RIGHT:
 			for (auto bit = binVector.rbegin(); bit != binVector.rend(); ++bit)
 			{
-				global_log->debug() << "(*bit).size()=" << (*bit).size() << endl;
+				global_log->debug() << "(*bit).size()=" << (*bit).size() << std::endl;
 				_binQueue->enque(*bit);
 			}
 			break;
@@ -1500,12 +1499,12 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 		case MD_RIGHT_TO_LEFT:
 			for(const auto& bin:binVector)
 			{
-				global_log->debug() << "bin.size()=" << bin.size() << endl;
+				global_log->debug() << "bin.size()=" << bin.size() << std::endl;
 				_binQueue->enque(bin);
 			}
 			break;
 		default:
-			global_log->error() << "[MettDeamon] Unknown moving direction" << endl;
+			global_log->error() << "[MettDeamon] Unknown moving direction" << std::endl;
 	}
 }
 
@@ -1513,19 +1512,19 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 {
 	Domain* domain = global_simulation->getDomain();
 	std::ifstream ifs;
-	global_log->info() << "[MettDeamon] Reservoir read in from ASCII file" << endl;
-	global_log->info() << "[MettDeamon] Opening Reservoirfile " << _filepath.data << endl;
+	global_log->info() << "[MettDeamon] Reservoir read in from ASCII file" << std::endl;
+	global_log->info() << "[MettDeamon] Opening Reservoirfile " << _filepath.data << std::endl;
 	ifs.open( _filepath.data.c_str() );
 	if (!ifs.is_open()) {
-		global_log->error() << "[MettDeamon] Could not open Mettdeamon Reservoirfile " << _filepath.data << endl;
+		global_log->error() << "[MettDeamon] Could not open Mettdeamon Reservoirfile " << _filepath.data << std::endl;
 		Simulation::exit(1);
 	}
-	global_log->info() << "[MettDeamon] Reading Mettdeamon Reservoirfile " << _filepath.data << endl;
+	global_log->info() << "[MettDeamon] Reading Mettdeamon Reservoirfile " << _filepath.data << std::endl;
 
-	string token;
-	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
+	std::string token;
+	std::vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
 	unsigned int numcomponents = dcomponents.size();
-	string ntypestring("ICRVQD");
+	std::string ntypestring("ICRVQD");
 	enum Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = ICRVQD;
 
 	double Xlength, Ylength, Zlength;
@@ -1546,14 +1545,14 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 	}
 
 	if((token != "NumberOfMolecules") && (token != "N")) {
-		global_log->error() << "[MettDeamon] Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << endl;
+		global_log->error() << "[MettDeamon] Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << std::endl;
 		Simulation::exit(1);
 	}
 	ifs >> _numMoleculesRead;
 
 	this->setDensity(_numMoleculesRead / dVolume);
 
-	streampos spos = ifs.tellg();
+	std::streampos spos = ifs.tellg();
 	ifs >> token;
 	if((token=="MoleculeFormat") || (token == "M"))
 	{
@@ -1566,16 +1565,16 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 		else if (ntypestring == "ICRV") ntype = ICRV;
 		else if (ntypestring == "IRV")  ntype = IRV;
 		else {
-			global_log->error() << "[MettDeamon] Unknown molecule format '" << ntypestring << "'" << endl;
+			global_log->error() << "[MettDeamon] Unknown molecule format '" << ntypestring << "'" << std::endl;
 			Simulation::exit(1);
 		}
 	} else {
 		ifs.seekg(spos);
 	}
-	global_log->info() << " molecule format: " << ntypestring << endl;
+	global_log->info() << " molecule format: " << ntypestring << std::endl;
 
 	if( numcomponents < 1 ) {
-		global_log->warning() << "[MettDeamon] No components defined! Setting up single one-centered LJ" << endl;
+		global_log->warning() << "[MettDeamon] No components defined! Setting up single one-centered LJ" << std::endl;
 		numcomponents = 1;
 		dcomponents.resize( numcomponents );
 		dcomponents[0].setID(0);
@@ -1608,7 +1607,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 				ifs >> id >> x >> y >> z >> vx >> vy >> vz;
 				break;
 			default:
-				global_log->error() << "[MettDeamon] Unknown molecule format" << endl;
+				global_log->error() << "[MettDeamon] Unknown molecule format" << std::endl;
 		}
 
 		if( componentid > numcomponents ) {
@@ -1616,7 +1615,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 								<< " has a component ID greater than the existing number of components: "
 								<< componentid
 								<< ">"
-								<< numcomponents << endl;
+								<< numcomponents << std::endl;
 			Simulation::exit(1);
 		}
 		// ComponentIDs are used as array IDs, hence need to start at 0.
@@ -1632,7 +1631,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 		// Print status message
 		unsigned long iph = _numMoleculesRead / 100;
 		if( iph != 0 && (i % iph) == 0 )
-			global_log->info() << "[MettDeamon] Finished reading molecules: " << i/iph << "%\r" << flush;
+			global_log->info() << "[MettDeamon] Finished reading molecules: " << i/iph << "%\r" << std::flush;
 	}
 
 	ifs.close();
@@ -1644,8 +1643,8 @@ void Reservoir::readFromFileBinaryHeader()
 	XMLfileUnits inp(_filepath.header);
 
 	if(not inp.changecurrentnode("/mardyn")) {
-		global_log->error() << "[MettDeamon] Could not find root node /mardyn in XML header file or file itself." << endl;
-		global_log->fatal() << "[MettDeamon] Not a valid MarDyn XML header file." << endl;
+		global_log->error() << "[MettDeamon] Could not find root node /mardyn in XML header file or file itself." << std::endl;
+		global_log->fatal() << "[MettDeamon] Not a valid MarDyn XML header file." << std::endl;
 		Simulation::exit(1);
 	}
 
@@ -1673,7 +1672,7 @@ void Reservoir::readFromFileBinaryHeader()
 
 	if(not bInputOk)
 	{
-		global_log->error() << "[MettDeamon] Content of file: '" << _filepath.header << "' corrupted! Program exit ..." << endl;
+		global_log->error() << "[MettDeamon] Content of file: '" << _filepath.header << "' corrupted! Program exit ..." << std::endl;
 		Simulation::exit(1);
 	}
 
@@ -1685,7 +1684,7 @@ void Reservoir::readFromFileBinaryHeader()
 		_nMoleculeFormat = ICRV;
 	else
 	{
-		global_log->error() << "[MettDeamon] Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << endl;
+		global_log->error() << "[MettDeamon] Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << std::endl;
 		Simulation::exit(1);
 	}
 }
@@ -1693,24 +1692,24 @@ void Reservoir::readFromFileBinaryHeader()
 void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer)
 {
 	Domain* domain = global_simulation->getDomain();
-	global_log->info() << "[MettDeamon] Reservoir read in from binary file" << endl;
+	global_log->info() << "[MettDeamon] Reservoir read in from binary file" << std::endl;
 	// read header
 	this->readFromFileBinaryHeader();
 
 #ifdef ENABLE_MPI
 	if(domainDecomp->getRank() == 0) {
 #endif
-	global_log->info() << "[MettDeamon] Opening phase space file " << _filepath.data << endl;
+	global_log->info() << "[MettDeamon] Opening phase space file " << _filepath.data << std::endl;
 	std::ifstream ifs;
-	ifs.open(_filepath.data.c_str(), ios::binary | ios::in);
+	ifs.open(_filepath.data.c_str(), std::ios::binary | std::ios::in);
 	if (!ifs.is_open()) {
-		global_log->error() << "[MettDeamon] Could not open reservoir phaseSpaceFile " << _filepath.data << endl;
+		global_log->error() << "[MettDeamon] Could not open reservoir phaseSpaceFile " << _filepath.data << std::endl;
 		Simulation::exit(1);
 	}
 
-	global_log->info() << "[MettDeamon] Reading phase space file " << _filepath.data << endl;
+	global_log->info() << "[MettDeamon] Reading phase space file " << _filepath.data << std::endl;
 
-	vector<Component>& components = *(_simulation.getEnsemble()->getComponents());
+	std::vector<Component>& components = *(_simulation.getEnsemble()->getComponents());
 
 	// Select appropriate reader
 	switch (_nMoleculeFormat) {
@@ -1723,7 +1722,7 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp, ParticleConta
 		case IRV:
 			_moleculeDataReader = std::make_unique<MoleculeDataReaderIRV>();
 			break;
-		default: global_log->error() << "[MettDeamon] Unknown molecule format" << endl;
+		default: global_log->error() << "[MettDeamon] Unknown molecule format" << std::endl;
 	}
 
 	for (uint64_t pi=0; pi<_numMoleculesRead; pi++) {
@@ -1752,7 +1751,7 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp, ParticleConta
 			ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], _particleVector[i]);
 			particle_buff_pos++;
 			if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i == num_particles - 1)) {
-				global_log->debug() << "broadcasting(sending) particles" << endl;
+				global_log->debug() << "broadcasting(sending) particles" << std::endl;
 				MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, domainDecomp->getCommunicator());
 				particle_buff_pos = 0;
 			}
@@ -1767,7 +1766,7 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp, ParticleConta
 	} else {
 		for(unsigned long i = 0; i < num_particles; ++i) {
 			if(i % PARTICLE_BUFFER_SIZE == 0) {
-				global_log->debug() << "broadcasting(receiving) particles" << endl;
+				global_log->debug() << "broadcasting(receiving) particles" << std::endl;
 				MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, domainDecomp->getCommunicator());
 				particle_buff_pos = 0;
 			}
@@ -1781,7 +1780,7 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp, ParticleConta
 			}
 		}
 	}
-	global_log->debug() << "broadcasting(sending/receiving) particles complete" << endl;
+	global_log->debug() << "broadcasting(sending/receiving) particles complete" << std::endl;
 #endif
 }
 
@@ -1806,7 +1805,7 @@ bool Reservoir::isRelevant(DomainDecompBase* domainDecomp, Domain* domain, Molec
 		dOffset = nBinIndex*_dBinWidth + (domain->getGlobalLength(1) - _dBinWidth);
 		break;
 	default:
-		global_log->error() << "[MettDeamon] Unknown moving direction" << endl;
+		global_log->error() << "[MettDeamon] Unknown moving direction" << std::endl;
 	}
 	return domainDecomp->procOwnsPos(mol.r(0), y-dOffset, mol.r(2), domain);
 }
@@ -1822,9 +1821,9 @@ bool Reservoir::activateBin(uint32_t nBinIndex){return _binQueue->activateBin(nB
 void Reservoir::clearBinQueue() {_binQueue->clear();}
 void Reservoir::printBinQueueInfo()
 {
-	global_log->debug() << "_binQueue->getActualBinIndex()=" << _binQueue->getActualBinIndex() << endl;
-	global_log->debug() << "_binQueue->getNumBins()=" << _binQueue->getNumBins() << endl;
-	global_log->debug() << "_binQueue->getRoundCount()=" << _binQueue->getRoundCount() << endl;
-	global_log->debug() << "_binQueue->getNumParticles()=" << _binQueue->getNumParticles() << endl;
-	global_log->debug() << "_binQueue->getMaxID()=" << _binQueue->getMaxID() << endl;
+	global_log->debug() << "_binQueue->getActualBinIndex()=" << _binQueue->getActualBinIndex() << std::endl;
+	global_log->debug() << "_binQueue->getNumBins()=" << _binQueue->getNumBins() << std::endl;
+	global_log->debug() << "_binQueue->getRoundCount()=" << _binQueue->getRoundCount() << std::endl;
+	global_log->debug() << "_binQueue->getNumParticles()=" << _binQueue->getNumParticles() << std::endl;
+	global_log->debug() << "_binQueue->getMaxID()=" << _binQueue->getMaxID() << std::endl;
 }

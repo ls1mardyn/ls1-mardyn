@@ -77,18 +77,18 @@ void VelocityExchange::readXML(XMLfileUnits& xmlconfig) {
     global_log->info() << "[VelocityExchange] Cold region:"
                         << " x = " << _cold_region.min[0] << " - " << _cold_region.max[0] << " ;"
                         << " y = " << _cold_region.min[1] << " - " << _cold_region.max[1] << " ;"
-                        << " z = " << _cold_region.min[2] << " - " << _cold_region.max[2] << endl;
+                        << " z = " << _cold_region.min[2] << " - " << _cold_region.max[2] << std::endl;
 
     global_log->info() << "[VelocityExchange] Warm region" << ((_symmetry) ? " (left)" : "") << ":"
                         << " x = " << _warm_region.min[0] << " - " << _warm_region.max[0] << " ;"
                         << " y = " << _warm_region.min[1] << " - " << _warm_region.max[1] << " ;"
-                        << " z = " << _warm_region.min[2] << " - " << _warm_region.max[2] << endl;
+                        << " z = " << _warm_region.min[2] << " - " << _warm_region.max[2] << std::endl;
 
     if (_symmetry) {
         global_log->info() << "[VelocityExchange] Warm region (right):"
                         << " x = " << _warm_region.min[0] << " - " << _warm_region.max[0] << " ;"
                         << " y = " << _boxLength[1]-_warm_region.max[1] << " - " << _boxLength[1]-_warm_region.min[1] << " ;"
-                        << " z = " << _warm_region.min[2] << " - " << _warm_region.max[2] << endl;
+                        << " z = " << _warm_region.min[2] << " - " << _warm_region.max[2] << std::endl;
     }
 }
 

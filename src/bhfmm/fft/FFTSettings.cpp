@@ -53,7 +53,7 @@ void FFTSettings::autoSetting(int order) {
 	}
 }
 
-void FFTSettings::setOptions(string option) {
+void FFTSettings::setOptions(std::string option) {
 	if (option == "off") {
 		FFTSettings::USE_FFT = false;
 	} else if (option == "fft") {
@@ -93,8 +93,8 @@ void FFTSettings::setOptions(string option) {
 	}
 }
 
-vector<string> FFTSettings::getAvailableOptions() {
-	vector<string> options;
+std::vector<std::string> FFTSettings::getAvailableOptions() {
+	std::vector<std::string> options;
 	options.push_back("off:     disable fft acceleration");
 	options.push_back("fft:     use opt. fft acceleration");
 	options.push_back("fftw:    use FFTW acceleration");

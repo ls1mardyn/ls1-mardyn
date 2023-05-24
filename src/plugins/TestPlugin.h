@@ -26,7 +26,7 @@ public:
     }
 
     void readXML(XMLfileUnits& xmlconfig) {
-        global_log -> debug() << "[TESTPLUGIN] READING XML" << endl;
+        global_log -> debug() << "[TESTPLUGIN] READING XML" << std::endl;
     }
 
     /** @brief Method will be called first thing in a new timestep. */
@@ -34,7 +34,7 @@ public:
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			unsigned long simstep
 	) {
-		global_log -> debug() << "[TESTPLUGIN] BEFORE EVENT NEW TIMESTEP" << endl;
+		global_log -> debug() << "[TESTPLUGIN] BEFORE EVENT NEW TIMESTEP" << std::endl;
 	};
 
     /** @brief Method beforeForces will be called before forcefields have been applied
@@ -46,7 +46,7 @@ public:
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
             unsigned long simstep
     ) {
-        global_log -> debug() << "[TESTPLUGIN] BEFORE FORCES" << endl;
+        global_log -> debug() << "[TESTPLUGIN] BEFORE FORCES" << std::endl;
     }
 
     /** @brief Method afterForces will be called after forcefields have been applied
@@ -57,7 +57,7 @@ public:
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
             unsigned long simstep
     ) {
-        global_log->debug()  << "[TESTPLUGIN] TESTPLUGIN AFTER FORCES" << endl;
+        global_log->debug()  << "[TESTPLUGIN] TESTPLUGIN AFTER FORCES" << std::endl;
     }
 
     /** @brief Method endStep will be called at the end of each time step.
@@ -72,7 +72,7 @@ public:
             ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
             Domain* domain, unsigned long simstep
     ) {
-        global_log->debug()  << "[TESTPLUGIN] ENDSTEP" << endl;
+        global_log->debug()  << "[TESTPLUGIN] ENDSTEP" << std::endl;
     }
 
     /** @brief Method finalOutput will be called at the end of the simulation
@@ -85,15 +85,15 @@ public:
      */
     void finish(ParticleContainer* particleContainer,
                         DomainDecompBase* domainDecomp, Domain* domain) {
-        global_log->debug()  << "[TESTPLUGIN] FINISHING" << endl;
+        global_log->debug()  << "[TESTPLUGIN] FINISHING" << std::endl;
     }
 
     /** @brief return the name of the plugin */
     std::string getPluginName()  {
-        global_log->debug()  << "[TESTPLUGIN] GETTING NAME" << endl;
+        global_log->debug()  << "[TESTPLUGIN] GETTING NAME" << std::endl;
         return "TestPlugin";}
     static PluginBase* createInstance() {
-        global_log->debug()  << "[TESTPLUGIN] CREATE INSTANCE" << endl;
+        global_log->debug()  << "[TESTPLUGIN] CREATE INSTANCE" << std::endl;
         return new TestPlugin(); }
 
 private:

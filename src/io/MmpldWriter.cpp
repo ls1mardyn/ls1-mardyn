@@ -36,8 +36,6 @@
 #define MMPLD_HEADER_DATA_SIZE 60
 #define MMPLD_SEEK_TABLE_OFFSET MMPLD_HEADER_DATA_SIZE
 
-using Log::global_log;
-
 std::string MmpldWriter::getOutputFilename() {
 	std::stringstream filenamestream;
 	filenamestream << _outputPrefix << "_" << fill_width('0', 4) << _fileCount << ".mmpld";
@@ -106,7 +104,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 		global_log->fatal() << "[MMPLD Writer] No site parameters specified." << std::endl;
 		Simulation::exit(48973);
 	}
-	string oldpath = xmlconfig.getcurrentnodepath();
+	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator outputSiteIter;
 	for( outputSiteIter = query.begin(); outputSiteIter; outputSiteIter++ )
 	{
@@ -150,7 +148,7 @@ void MmpldWriter::init(ParticleContainer *particleContainer,
 	_frameCount = 0;
 
 	// number of components / sites
-	vector<Component> *components = global_simulation->getEnsemble()->getComponents();
+	std::vector<Component> *components = global_simulation->getEnsemble()->getComponents();
 	_numComponents = components->size();
 	_numSitesPerComp.resize(_numComponents);
 	_nCompSitesOffset.resize(_numComponents);
@@ -171,7 +169,7 @@ void MmpldWriter::init(ParticleContainer *particleContainer,
 	this->InitSphereData();
 	this->SetNumSphereTypes();
 
-	string filename = getOutputFilename();
+	std::string filename = getOutputFilename();
 	uint8_t magicIdentifier[6] = {0x4D, 0x4D, 0x50, 0x4C, 0x44, 0x00}; // format marker
 	uint16_t mmpldversion_le = htole16(_mmpldversion);
 	uint32_t numframes = _numFramesPerFile; // number of frames
@@ -184,7 +182,7 @@ void MmpldWriter::init(ParticleContainer *particleContainer,
 	int rank = domainDecomp->getRank();
 	if (rank == 0){
 #endif
-	ofstream mmpldfstream(filename.c_str(), ios::binary|ios::out);
+	std::ofstream mmpldfstream(filename.c_str(), std::ios::binary|std::ios::out);
 	mmpldfstream.write((char*)magicIdentifier, sizeof(magicIdentifier));
 	mmpldfstream.write((char*)&mmpldversion_le, sizeof(mmpldversion_le));
 	mmpldfstream.write((char*)&numframes_le,sizeof(numframes_le));
@@ -222,7 +220,7 @@ void MmpldWriter::init(ParticleContainer *particleContainer,
 
 
 void MmpldWriter::write_frame(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp) {
-	string filename = getOutputFilename();
+	std::string filename = getOutputFilename();
 
 	// calculate local number of spheres per component|siteType
 	std::vector<uint64_t> numSpheresPerType(_numSphereTypes);
@@ -314,14 +312,14 @@ void MmpldWriter::endStep(ParticleContainer *particleContainer,
 		MultiFileApproachReset(particleContainer, domainDecomp, domain);  // begin new file
 	}
 
-	string filename = getOutputFilename();
+	std::string filename = getOutputFilename();
 	global_log->debug() << "[MMPLD Writer] Writing MMPLD frame " << _frameCount << " for simstep " << simstep << " to file " << filename << std::endl;
 	write_frame(particleContainer, domainDecomp);
 }
 
 void MmpldWriter::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp, Domain * /*domain*/)
 {
-	string filename = getOutputFilename();
+	std::string filename = getOutputFilename();
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();

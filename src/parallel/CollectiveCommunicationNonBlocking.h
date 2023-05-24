@@ -15,7 +15,6 @@
 
 #if MPI_VERSION >= 3
 
-using Log::global_log;
 /**
  * CollectiveCommunicationNonBlocking provides an interface to access multiple CollectiveCommunicationSingleNonBlocking objects.
  * This allows the use of multiple different collective calls, which is needed for the different ensembles.

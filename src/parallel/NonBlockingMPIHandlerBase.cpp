@@ -13,7 +13,6 @@
 #include "plugins/PluginBase.h"
 #include "utils/Logger.h"
 
-using Log::global_log;
 
 NonBlockingMPIHandlerBase::NonBlockingMPIHandlerBase(DomainDecompMPIBase* domainDecomposition,
 													 ParticleContainer* moleculeContainer, Domain* domain,

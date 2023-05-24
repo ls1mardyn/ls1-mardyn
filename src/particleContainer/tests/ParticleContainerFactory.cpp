@@ -26,7 +26,6 @@
 #include <io/BinaryReader.h>
 #include <list>
 
-using namespace Log;
 
 ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(Type type) {
 	if (type == LinkedCell) {

@@ -14,8 +14,6 @@
 
 #include "io/tests/CheckpointRestartTest.h"
 
-using namespace std;
-
 
 #if !defined(ENABLE_REDUCED_MEMORY_MODE)
 TEST_SUITE_REGISTRATION(CheckpointRestartTest);

@@ -13,8 +13,6 @@
 #include "particleContainer/adapter/vectorization/MaskGatherChooser.h"
 #include "VectorizedChargeP2PCellProcessor.h"
 
-using namespace Log;
-using namespace std;
 namespace bhfmm {
 
 VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
@@ -227,9 +225,9 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 			f[0] = static_cast<double>(soa_charges_f_x[iCharges]);
 			f[1] = static_cast<double>(soa_charges_f_y[iCharges]);
 			f[2] = static_cast<double>(soa_charges_f_z[iCharges]);
-			mardyn_assert(!isnan(f[0]));
-			mardyn_assert(!isnan(f[1]));
-			mardyn_assert(!isnan(f[2]));
+			mardyn_assert(!std::isnan(f[0]));
+			mardyn_assert(!std::isnan(f[1]));
+			mardyn_assert(!std::isnan(f[2]));
 			m.Fchargeadd(j, f);
 
 			// Store the resulting virial in the molecule.
@@ -237,9 +235,9 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 			V[0] = static_cast<double>(soa_charges_V_x[iCharges]*0.5);
 			V[1] = static_cast<double>(soa_charges_V_y[iCharges]*0.5);
 			V[2] = static_cast<double>(soa_charges_V_z[iCharges]*0.5);
-			mardyn_assert(!isnan(V[0]));
-			mardyn_assert(!isnan(V[1]));
-			mardyn_assert(!isnan(V[2]));
+			mardyn_assert(!std::isnan(V[0]));
+			mardyn_assert(!std::isnan(V[1]));
+			mardyn_assert(!std::isnan(V[2]));
 			m.Viadd(V);
 		}
 	}

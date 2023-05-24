@@ -110,7 +110,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_comm = domainDecomp.getCommunicator();
 #endif
 #if WIGNER == 1
-	//global_log->error() << "not supported yet" << endl;
+	//global_log->error() << "not supported yet" << std::endl;
 	Simulation::exit(-1);
 #endif
 #ifdef ENABLE_MPI
@@ -2635,19 +2635,19 @@ void UniformPseudoParticleContainer::M2LCompleteCell(int targetId, int level, in
 																	 cellSize);
 
 //                cout << "Level: " << level
-//                     << " | Target: " << setw(5) << targetId
-//                     << " (" << setw(2) << targetCoords[0]
-//                     << ", " << setw(2) << targetCoords[1]
-//                     << ", " << setw(2) << targetCoords[2]
-//                     << ") | Source: " << setw(5) << sourceId
-//                     << " (" << setw(2) << sourceCoords[0]
-//                     << ", " << setw(2) << sourceCoords[1]
-//                     << ", " << setw(2) << sourceCoords[2]
+//                     << " | Target: " << std::setw(5) << targetId
+//                     << " (" << std::setw(2) << targetCoords[0]
+//                     << ", " << std::setw(2) << targetCoords[1]
+//                     << ", " << std::setw(2) << targetCoords[2]
+//                     << ") | Source: " << std::setw(5) << sourceId
+//                     << " (" << std::setw(2) << sourceCoords[0]
+//                     << ", " << std::setw(2) << sourceCoords[1]
+//                     << ", " << std::setw(2) << sourceCoords[2]
 //                     << ") | tf: "
-//                     << "(" << setw(2) << sourceRootCoords[0] + x - targetCoords[0]
-//                     << ", " << setw(2) << sourceRootCoords[1] + y - targetCoords[1]
-//                     << ", " << setw(2) << sourceRootCoords[2] + z - targetCoords[2]
-//                     << ")" << endl;
+//                     << "(" << std::setw(2) << sourceRootCoords[0] + x - targetCoords[0]
+//                     << ", " << std::setw(2) << sourceRootCoords[1] + y - targetCoords[1]
+//                     << ", " << std::setw(2) << sourceRootCoords[2] + z - targetCoords[2]
+//                     << ")" << std::endl;
 
 				// calculate single M2L
 				if(FFTSettings::USE_ORDER_REDUCTION){
@@ -4406,7 +4406,7 @@ void UniformPseudoParticleContainer::printTimers() {
 #endif
 }
 
-vector<vector<MpCell>> &UniformPseudoParticleContainer::getMpCellGlobalTop() {
+std::vector<std::vector<MpCell>> &UniformPseudoParticleContainer::getMpCellGlobalTop() {
 	return _mpCellGlobalTop;
 }
 

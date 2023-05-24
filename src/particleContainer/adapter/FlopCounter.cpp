@@ -110,9 +110,8 @@ void FlopCounter::_Counts::allReduce() {
 
 void FlopCounter::_Counts::print() const {
 	using std::endl;
-	using Log::global_log;
-
-	global_log->info() << " Molecule distances: " << _moleculeDistances << endl;
+	
+	global_log->info() << " Molecule distances: " << _moleculeDistances << std::endl;
 
 	for (int i = 0; i < NUM_POTENTIALS; ++i) {
 		std::string str = _potCounts[i].printNameKernelAndMacroCalls();
@@ -451,9 +450,9 @@ void FlopCounter::_calculatePairs(const CellDataSoARMM & soa1, const CellDataSoA
 }
 
 void FlopCounter::printStats() const {
-	global_log->info() << "FlopCounter stats: " << endl;
+	global_log->info() << "FlopCounter stats: " << std::endl;
 	_currentCounts.print();
 	global_log->info()
 			<< "\tfraction of Flops for molecule dist: "
-			<< getTotalMoleculeDistanceFlopCount() / getTotalFlopCount() << endl;
+			<< getTotalMoleculeDistanceFlopCount() / getTotalFlopCount() << std::endl;
 }

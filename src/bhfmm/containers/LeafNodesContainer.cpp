@@ -15,9 +15,6 @@
 #include <cmath>
 #include <bhfmm/FastMultipoleMethod.h>
 
-using namespace std;
-using Log::global_log;
-
 namespace bhfmm {
 
 LeafNodesContainer::LeafNodesContainer(double bBoxMin[3],
@@ -143,7 +140,7 @@ void LeafNodesContainer::initializeCells() {
 }
 
 void LeafNodesContainer::calculateNeighbourIndices() {
-	global_log->debug() << "Setting up cell neighbour index lists." << endl;
+	global_log->debug() << "Setting up cell neighbour index lists." << std::endl;
 	_forwardNeighbourOffsets.clear();
 	_backwardNeighbourOffsets.clear();
 	_maxNeighbourOffset = 0;
@@ -169,7 +166,7 @@ void LeafNodesContainer::calculateNeighbourIndices() {
 	}
 
 	global_log->info() << "Neighbour offsets are bounded by "
-			<< _minNeighbourOffset << ", " << _maxNeighbourOffset << endl;
+			<< _minNeighbourOffset << ", " << _maxNeighbourOffset << std::endl;
 }
 
 long int LeafNodesContainer::cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const {
@@ -227,8 +224,8 @@ void LeafNodesContainer::traverseCells(SimpleCellProcessor& cellProcessor){
 
 void LeafNodesContainer::traverseCellPairs(VectorizedChargeP2PCellProcessor& cellProcessor) {
 	#ifndef NDEBUG
-		global_log->debug() << "LeafNodesContainer::traverseCells: Processing pairs." << endl;
-		global_log->debug() << "_minNeighbourOffset=" << _minNeighbourOffset << "; _maxNeighbourOffset=" << _maxNeighbourOffset<< endl;
+		global_log->debug() << "LeafNodesContainer::traverseCells: Processing pairs." << std::endl;
+		global_log->debug() << "_minNeighbourOffset=" << _minNeighbourOffset << "; _maxNeighbourOffset=" << _maxNeighbourOffset<< std::endl;
 	#endif
 
 	#if defined(_OPENMP)
@@ -238,7 +235,7 @@ void LeafNodesContainer::traverseCellPairs(VectorizedChargeP2PCellProcessor& cel
 	#endif
 }
 
-void LeafNodesContainer::traverseCellPairsOrig(VectorizedChargeP2PCellProcessor& cellProcessor) {	vector<unsigned long>::iterator neighbourOffsetsIter;
+void LeafNodesContainer::traverseCellPairsOrig(VectorizedChargeP2PCellProcessor& cellProcessor) {	std::vector<unsigned long>::iterator neighbourOffsetsIter;
 
 	cellProcessor.initTraversal();
 	// preprocess all cells
@@ -341,7 +338,7 @@ void LeafNodesContainer::traverseCellPairsC08(VectorizedChargeP2PCellProcessor& 
 void LeafNodesContainer::c08Step(long int baseIndex, VectorizedChargeP2PCellProcessor &cellProcessor) {
 	const int num_pairs = _cellPairOffsets.size();
 	for(int j = 0; j < num_pairs; ++j) {
-		pair<long int, long int> current_pair = _cellPairOffsets[j];
+		std::pair<long int, long int> current_pair = _cellPairOffsets[j];
 
 		long int offset1 = current_pair.first;
 		long int cellIndex1 = baseIndex + offset1;
@@ -392,33 +389,33 @@ void LeafNodesContainer::calculateCellPairOffsets() {
 
 	// minimize number of cells simultaneously in memory:
 
-	_cellPairOffsets.push_back(make_pair(o, xyz));
+	_cellPairOffsets.push_back(std::make_pair(o, xyz));
 	// evict xyz
 
-	_cellPairOffsets.push_back(make_pair(o, yz ));
-	_cellPairOffsets.push_back(make_pair(x, yz ));
+	_cellPairOffsets.push_back(std::make_pair(o, yz ));
+	_cellPairOffsets.push_back(std::make_pair(x, yz ));
 	// evict yz
 
-	_cellPairOffsets.push_back(make_pair(o, x  ));
+	_cellPairOffsets.push_back(std::make_pair(o, x  ));
 
-	_cellPairOffsets.push_back(make_pair(o, xy ));
-	_cellPairOffsets.push_back(make_pair(xy, z ));
+	_cellPairOffsets.push_back(std::make_pair(o, xy ));
+	_cellPairOffsets.push_back(std::make_pair(xy, z ));
 	// evict xy
 
-	_cellPairOffsets.push_back(make_pair(o, z  ));
-	_cellPairOffsets.push_back(make_pair(x, z  ));
-	_cellPairOffsets.push_back(make_pair(y, z  ));
+	_cellPairOffsets.push_back(std::make_pair(o, z  ));
+	_cellPairOffsets.push_back(std::make_pair(x, z  ));
+	_cellPairOffsets.push_back(std::make_pair(y, z  ));
 	// evict z
 
-	_cellPairOffsets.push_back(make_pair(o, y  ));
-	_cellPairOffsets.push_back(make_pair(x, y  ));
+	_cellPairOffsets.push_back(std::make_pair(o, y  ));
+	_cellPairOffsets.push_back(std::make_pair(x, y  ));
 	// evict x
 
-	_cellPairOffsets.push_back(make_pair(o, xz ));
-	_cellPairOffsets.push_back(make_pair(y, xz ));
+	_cellPairOffsets.push_back(std::make_pair(o, xz ));
+	_cellPairOffsets.push_back(std::make_pair(y, xz ));
 	// evict xz
 
-	_cellPairOffsets.push_back(make_pair(o, o  ));
+	_cellPairOffsets.push_back(std::make_pair(o, o  ));
 }
 
 void LeafNodesContainer::threeDIndexOfCellIndex(int ind, int r[3], int dim[3]) const {
@@ -431,7 +428,7 @@ void LeafNodesContainer::threeDIndexOfCellIndex(int ind, int r[3], int dim[3]) c
 		return _numCellsPerDimension;
 	}
 
-	vector<ParticleCellPointers> & LeafNodesContainer::getCells() {
+	std::vector<ParticleCellPointers> & LeafNodesContainer::getCells() {
 		return _cells;
 	}
 

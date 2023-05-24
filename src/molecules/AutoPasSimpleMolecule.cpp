@@ -45,7 +45,7 @@ void AutoPasSimpleMolecule::upd_postF(double dt_halve, double& summv2, double& s
 		_v[d] += dtInv2m * _f[d];
 		v2 += _v[d] * _v[d];
 	}
-	mardyn_assert(!isnan(v2));  // catches NaN
+	mardyn_assert(!std::isnan(v2));  // catches NaN
 	summv2 += mass * v2;
 }
 

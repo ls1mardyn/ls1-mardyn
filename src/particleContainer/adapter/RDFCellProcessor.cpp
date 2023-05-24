@@ -12,8 +12,6 @@
 #include "utils/Logger.h"
 #include <vector>
 
-using namespace std;
-using namespace Log;
 
 void RDFCellProcessor::processCell(ParticleCell& cell) {
 	if (cell.isInnerCell() || cell.isBoundaryCell()) {

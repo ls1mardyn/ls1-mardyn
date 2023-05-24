@@ -3,7 +3,6 @@
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
 
-using namespace std;
 using Log::global_log;
 
 void LorentzBerthelotMixingRule::readXML(XMLfileUnits& xmlconfig) {
@@ -11,5 +10,5 @@ void LorentzBerthelotMixingRule::readXML(XMLfileUnits& xmlconfig) {
 
 	xmlconfig.getNodeValue("eta", _eta);
 	xmlconfig.getNodeValue("xi", _xi);
-	global_log->info() << "Mixing coefficients: (eta, xi) = (" << _eta << ", " << _xi << ")" << endl;
+	global_log->info() << "Mixing coefficients: (eta, xi) = (" << _eta << ", " << _xi << ")" << std::endl;
 }

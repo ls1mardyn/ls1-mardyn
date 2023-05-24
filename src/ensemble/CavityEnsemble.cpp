@@ -9,8 +9,6 @@
 
 #define COMMUNICATION_THRESHOLD 3
 
-using Log::global_log;
-
 CavityEnsemble::CavityEnsemble() {
     this->ownrank = -1;
     this->initialized = false;
@@ -37,8 +35,8 @@ CavityEnsemble::CavityEnsemble() {
     control_top[1] = 1.0;
     control_top[2] = 1.0;
 
-    this->active = set<unsigned long>();
-    this->reservoir = map<unsigned long, Molecule *>();
+    this->active = std::set<unsigned long>();
+    this->reservoir = std::map<unsigned long, Molecule *>();
     this->globalActive = 0;
 
     this->boundarySpecified = false;
@@ -232,7 +230,7 @@ void CavityEnsemble::preprocessStep() {
     if (this->rotated) return;
     if (this->reservoir.size() == 0) return;
 
-    map<unsigned long, Molecule *>::iterator resit = this->reservoir.begin();
+    std::map<unsigned long, Molecule *>::iterator resit = this->reservoir.begin();
 
     double qtr[4];
     Component *tc = resit->second->component();
@@ -268,9 +266,9 @@ bool CavityEnsemble::decideActivity(double /*uPotTilde*/, unsigned long tmid) {
     return false;
 }
 
-map<unsigned long, Molecule *> CavityEnsemble::activeParticleContainer() {
-    map<unsigned long, Molecule *> retv;
-    set<unsigned long>::iterator resit;
+std::map<unsigned long, Molecule *> CavityEnsemble::activeParticleContainer() {
+    std::map<unsigned long, Molecule *> retv;
+    std::set<unsigned long>::iterator resit;
     for (resit = this->active.begin(); resit != active.end(); resit++) {
         retv[*resit] = this->reservoir[*resit];
     }
@@ -290,18 +288,18 @@ unsigned CavityEnsemble::countNeighbours(ParticleContainer *container, Molecule 
         lo[d] = std::max(0.0, m1->r(d) - R);
         hi[d] = std::min(system[d], m1->r(d) + R);
     }
-    //global_log->info() << "[CavityWriter] post_lo_hi" << endl;
+    //global_log->info() << "[CavityWriter] post_lo_hi" << std::endl;
 
-    //global_log->info() << "[CavityWriter] post region iterator" << endl;
+    //global_log->info() << "[CavityWriter] post region iterator" << std::endl;
 
 	for (auto m2 = container->regionIterator(lo, hi, ParticleIterator::ALL_CELLS); m2.isValid(); ++m2) {
 		if (m2->getID() == m1->getID()) {
-            //global_log->info() << "[CavityWriter] same ID" << endl;
+            //global_log->info() << "[CavityWriter] same ID" << std::endl;
             continue;
         }
         double distanceVectorDummy[3] = {0.0, 0.0, 0.0};
         double dd = m2->dist2(*m1, distanceVectorDummy);
-        //global_log->info() << "[CavityWriter] post distance" << endl;
+        //global_log->info() << "[CavityWriter] post distance" << std::endl;
         if (dd < RR) {
             ++m1neigh;
         }
@@ -313,18 +311,18 @@ unsigned CavityEnsemble::countNeighbours(ParticleContainer *container, Molecule 
 void CavityEnsemble::cavityStep(ParticleContainer *globalMoleculeContainer) {
 
     // don't confuse with the other ParticleContainer, the base-class of LinkedCells!
-    map<unsigned long, Molecule *> *pc = this->particleContainer();
+    std::map<unsigned long, Molecule *> *pc = this->particleContainer();
 
     for (auto pcit = pc->begin(); pcit != pc->end(); pcit++) {
         mardyn_assert(pcit->second != NULL);
         Molecule *m1 = pcit->second;
-        //global_log->info() << "[CavityWriter] pre-neighbors" << endl;
+        //global_log->info() << "[CavityWriter] pre-neighbors" << std::endl;
         unsigned neigh = this->countNeighbours(globalMoleculeContainer, m1);
-        //global_log->info() << "[CavityWriter] post-neighbors" << endl;
+        //global_log->info() << "[CavityWriter] post-neighbors" << std::endl;
         unsigned long m1id = pcit->first;
         mardyn_assert(m1id == m1->getID());
         this->decideActivity(neigh, m1id);
-        //global_log->info() << "[CavityWriter] post-activity" << endl;
+        //global_log->info() << "[CavityWriter] post-activity" << std::endl;
 
     }
 }

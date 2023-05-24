@@ -13,7 +13,6 @@
 
 #include <algorithm> /* for min and max ?*/
 
-using namespace Log;
 
 KDNode* KDNode::findAreaForProcess(int rank) {
 	if (_numProcs == 1) {

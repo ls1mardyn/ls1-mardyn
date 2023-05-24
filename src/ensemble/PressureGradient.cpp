@@ -9,15 +9,13 @@
 #include "utils/Logger.h"
 #include "Simulation.h"
 
-using namespace Log;
-using namespace std;
 
 PressureGradient::PressureGradient(int rank) {
 	this->_localRank = rank;
 	this->_universalConstantAccelerationTimesteps = 0;
 	if(!rank)
 		for(unsigned short int d=0; d < 3; d++)
-			this->_globalVelocitySum[d] = map<unsigned int, long double>();
+			this->_globalVelocitySum[d] = std::map<unsigned int, long double>();
 	this->_universalConstantTau = true;
 	this->_universalZetaFlow = 0.0;
 	this->_universalTauPrime = 0.0;
@@ -45,8 +43,8 @@ void PressureGradient::specifyComponentSet(unsigned int cosetid, double v[3], do
 				sqrt(this->_universalTau[cosetid] / (timestep*this->_universalConstantAccelerationTimesteps))
 				: this->_universalTauPrime / (timestep*this->_universalConstantAccelerationTimesteps)
 		);
-		cout << "coset " << cosetid << " will receive "
-			<< _globalVelocityQueuelength[cosetid] << " velocity queue entries." << endl;
+		std::cout << "coset " << cosetid << " will receive "
+			<< _globalVelocityQueuelength[cosetid] << " velocity queue entries." << std::endl;
 	}
 }
 
@@ -98,14 +96,14 @@ void PressureGradient::determineAdditionalAcceleration
 	}
 	domainDecomp->collCommFinalize();
 
-	map<unsigned int, long double>::iterator gVSit;
+	std::map<unsigned int, long double>::iterator gVSit;
 	if(!this->_localRank)
 	{
 		for(gVSit = _globalVelocitySum[0].begin(); gVSit != _globalVelocitySum[0].end(); gVSit++)
 		{
 #ifndef NDEBUG
-			global_log->debug() << "required entries in velocity queue: " << _globalVelocityQueuelength[gVSit->first] << endl;
-			global_log->debug() << "entries in velocity queue: " << _globalPriorVelocitySums[0][gVSit->first].size() << endl;
+			global_log->debug() << "required entries in velocity queue: " << _globalVelocityQueuelength[gVSit->first] << std::endl;
+			global_log->debug() << "entries in velocity queue: " << _globalPriorVelocitySums[0][gVSit->first].size() << std::endl;
 #endif
 			for(unsigned short int d = 0; d < 3; d++)
 			{
@@ -136,7 +134,7 @@ void PressureGradient::determineAdditionalAcceleration
 #ifndef NDEBUG
 			global_log->debug() << "accelerator no. " << gVSit->first 
 				<< "previous vz: " << previousVelocity[2] 
-				<< "current vz: " << _globalVelocitySum[2][gVSit->first]*invgN << endl;
+				<< "current vz: " << _globalVelocitySum[2][gVSit->first]*invgN << std::endl;
 #endif
 		}
 	}
@@ -225,11 +223,11 @@ void PressureGradient::specifyTauPrime(double tauPrime, double dt)
 		Simulation::exit(78);
 	}
 	unsigned int vql = (unsigned int)ceil(tauPrime / (dt*this->_universalConstantAccelerationTimesteps));
-	map<unsigned int, unsigned int>::iterator vqlit;
+	std::map<unsigned int, unsigned int>::iterator vqlit;
 	for(vqlit = _globalVelocityQueuelength.begin(); vqlit != _globalVelocityQueuelength.end(); vqlit++)
 	{
 		vqlit->second = vql;
-		cout << "coset " << vqlit->first << " will receive "
+		std::cout << "coset " << vqlit->first << " will receive "
 		     << vqlit->second << " velocity queue entries.\n";
 	}
 }
@@ -239,7 +237,7 @@ void PressureGradient::specifyTauPrime(double tauPrime, double dt)
  */
 void PressureGradient::adjustTau(double dt) {
 	if(this->_universalConstantTau) return;
-	map<unsigned int, double>::iterator tauit;
+	std::map<unsigned int, double>::iterator tauit;
 	double increment;
 	for(tauit = _universalTau.begin(); tauit != _universalTau.end(); tauit++)
 	{

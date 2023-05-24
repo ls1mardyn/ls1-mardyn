@@ -10,8 +10,6 @@
 #include <vector>
 #include <array>
 
-using Log::global_log;
-using namespace std;
 
 MaxWriter::MaxWriter()
 	:
@@ -37,11 +35,11 @@ void MaxWriter::readXML(XMLfileUnits& xmlconfig)
 
 	_writeFrequency = 1000;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	_outputPrefix = "maxvals";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	global_log->info() << "------------------------------------------------------------------------" << std::endl;
 }
@@ -107,8 +105,8 @@ void MaxWriter::init(ParticleContainer * /*particleContainer*/,
 
 	for(uint32_t qi=0; qi<_numQuantities; ++qi)
 	{
-		ofstream ofs(sstrFilename[qi].str().c_str(), ios::out);
-		sstrOutput[qi] << endl;
+		std::ofstream ofs(sstrFilename[qi].str().c_str(), std::ios::out);
+		sstrOutput[qi] << std::endl;
 		ofs << sstrOutput[qi].str();
 		ofs.close();
 	}
@@ -250,13 +248,13 @@ void MaxWriter::writeData(DomainDecompBase* domainDecomp)
 			for(uint32_t vi=1; vi<_numValsPerQuantity; ++vi)
 				sstrOutput[qi] << FORMAT_SCI_MAX_DIGITS << _dMaxValuesGlobal[nOffsetComponent+nOffsetQuantity+vi];
 		}
-		sstrOutput[qi] << endl;
+		sstrOutput[qi] << std::endl;
 	}
 
 	// write streams to files
 	for(uint32_t qi=0; qi<_numQuantities; ++qi)
 	{
-		ofstream ofs(sstrFilename[qi].str().c_str(), ios::app);
+		std::ofstream ofs(sstrFilename[qi].str().c_str(), std::ios::app);
 		ofs << sstrOutput[qi].str();
 		ofs.close();
 	}

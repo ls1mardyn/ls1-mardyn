@@ -28,7 +28,6 @@
 #include "particleContainer/Cell.h"
 
 #include <cassert>
-using Log::global_log;
 
 MPI_IOCheckpointWriter::MPI_IOCheckpointWriter(unsigned long writeFrequency,
 		std::string outputPrefix, bool incremental) {
@@ -107,8 +106,8 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		long realLocalNumCells = boxCellDimension[0]*boxCellDimension[1]*boxCellDimension[2];
 		long realGlobalNumCells = 0;
 		MPI_Allreduce(&realLocalNumCells, &realGlobalNumCells, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
-		cout << "Rank: " << domainDecomp->getRank() << " realGlobalNumCells: " << realGlobalNumCells << std::endl;
-		cout << "Rank: " << domainDecomp->getRank() << " BoundingBoxMin: " << domainDecomp->getBoundingBoxMin(0, domain) << "," << domainDecomp->getBoundingBoxMin(1, domain) << "," << domainDecomp->getBoundingBoxMin(2, domain) << " BoundingBoxMax: " << domainDecomp->getBoundingBoxMax(0, domain) << "," << domainDecomp->getBoundingBoxMax(1, domain) << "," << domainDecomp->getBoundingBoxMax(2, domain) << std::endl;
+		std::cout << "Rank: " << domainDecomp->getRank() << " realGlobalNumCells: " << realGlobalNumCells << std::endl;
+		std::cout << "Rank: " << domainDecomp->getRank() << " BoundingBoxMin: " << domainDecomp->getBoundingBoxMin(0, domain) << "," << domainDecomp->getBoundingBoxMin(1, domain) << "," << domainDecomp->getBoundingBoxMin(2, domain) << " BoundingBoxMax: " << domainDecomp->getBoundingBoxMax(0, domain) << "," << domainDecomp->getBoundingBoxMax(1, domain) << "," << domainDecomp->getBoundingBoxMax(2, domain) << std::endl;
 		domainDecomp->getBoundingBoxMin(0, domain);
 		*/
 

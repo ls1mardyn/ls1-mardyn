@@ -7,10 +7,9 @@
 #include "particleContainer/ParticleContainer.h"
 #include "utils/xmlfileUnits.h"
 
-using namespace std;
 
 void EnergyLogWriter::init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
-	global_log->info() << "Init global energy log." << endl;
+	global_log->info() << "Init global energy log." << std::endl;
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
@@ -22,7 +21,7 @@ void EnergyLogWriter::init(ParticleContainer *particleContainer, DomainDecompBas
 	std::stringstream outputstream;
 	outputstream.write(reinterpret_cast<const char*>(&_writeFrequency), 8);
 
-	ofstream fileout(_outputFilename, std::ios::out | std::ios::binary);
+	std::ofstream fileout(_outputFilename, std::ios::out | std::ios::binary);
 	fileout << outputstream.str();
 	fileout.close();
 }
@@ -30,10 +29,10 @@ void EnergyLogWriter::init(ParticleContainer *particleContainer, DomainDecompBas
 void EnergyLogWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 	_outputFilename = "global_energy.log";
 	xmlconfig.getNodeValue("outputfilename", _outputFilename);
-	global_log->info() << "Output filename: " << _outputFilename << endl;
+	global_log->info() << "Output filename: " << _outputFilename << std::endl;
 }
 
 void EnergyLogWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
@@ -92,7 +91,7 @@ void EnergyLogWriter::endStep(ParticleContainer *particleContainer, DomainDecomp
 	outputstream.write(reinterpret_cast<const char*>(&globalT), 8);
 	outputstream.write(reinterpret_cast<const char*>(&globalPressure), 8);
 
-	ofstream fileout(_outputFilename, std::ios::app | std::ios::binary);
+	std::ofstream fileout(_outputFilename, std::ios::app | std::ios::binary);
 	fileout << outputstream.str();
 	fileout.close();
 }

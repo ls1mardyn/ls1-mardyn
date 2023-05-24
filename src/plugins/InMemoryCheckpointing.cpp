@@ -14,7 +14,6 @@
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 
-using Log::global_log;
 
 void InMemoryCheckpointing::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 5;

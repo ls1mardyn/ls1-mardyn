@@ -12,8 +12,6 @@
 #include <cstdlib>
 #include <cstdint>
 
-using namespace std;
-using Log::global_log;
 
 void printInsertionStatus(std::pair<std::map<uint64_t,double>::iterator,bool> &status)
 {

@@ -9,7 +9,6 @@
 #include "NeighborAcquirerTest.h"
 #include "parallel/NeighborAcquirer.h"
 
-using namespace std;
 
 TEST_SUITE_REGISTRATION(NeighborAcquirerTest);
 

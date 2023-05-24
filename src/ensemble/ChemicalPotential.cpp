@@ -5,8 +5,6 @@
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "utils/Logger.h"
 
-using namespace std;
-using Log::global_log;
 
 ChemicalPotential::ChemicalPotential()
 {
@@ -27,11 +25,11 @@ ChemicalPotential::ChemicalPotential()
 	_globalV = 1.0;
 	_restrictedControlVolume = false;
 
-	_remainingDeletions = list<unsigned>();
+	_remainingDeletions = std::list<unsigned>();
 	for (int d = 0; d < 3; d++)
-		_remainingInsertions[d] = list<double>();
-	_remainingInsertionIDs = list<unsigned long>();
-	_remainingDecisions = list<float>();
+		_remainingInsertions[d] = std::list<double>();
+	_remainingInsertionIDs = std::list<unsigned long>();
+	_remainingDecisions = std::list<float>();
 	_reservoir = NULL;
 	_id_increment = 1;
 	_lambda = 1.0;
@@ -362,9 +360,9 @@ void ChemicalPotential::submitTemperature(double T_in)
 #endif
 	if (doOutput >= 0.01)
 		return;
-	cout << "rank " << _ownrank << " sets mu~ <- " << _muTilde;
-	cout << ", T <- " << _T << ", lambda <- " << _lambda;
-	cout << ", and Vred <- " << _globalReducedVolume << "\n";
+	std::cout << "rank " << _ownrank << " sets mu~ <- " << _muTilde;
+	std::cout << ", T <- " << _T << ", lambda <- " << _lambda;
+	std::cout << ", and Vred <- " << _globalReducedVolume << "\n";
 }
 
 void ChemicalPotential::assertSynchronization(DomainDecompBase* comm) {
@@ -480,13 +478,13 @@ void ChemicalPotential::grandcanonicalStep(
 				accept = this->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
 				if (accept) {
-					cout << "r" << this->rank() << "d" << m->getID() << " with energy " << DeltaUpot << endl;
-					cout.flush();
+					std::cout << "r" << this->rank() << "d" << m->getID() << " with energy " << DeltaUpot << std::endl;
+					std::cout.flush();
 				}
 				/*
 				 else
 				 cout << "   (r" << this->rank() << "-d" << m->getID()
-				 << ")" << endl;
+				 << ")" << std::endl;
 				 */
 #endif
 				if (accept) {
@@ -548,7 +546,7 @@ void ChemicalPotential::grandcanonicalStep(
 			/*
 			 cout << "rank " << this->rank() << ": insert "
 			 << m->getID() << " at the reduced position (" << ins[0] << "/"
-			 << ins[1] << "/" << ins[2] << ")? " << endl;
+			 << ins[1] << "/" << ins[2] << ")? " << std::endl;
 			 */
 #endif
 
@@ -561,14 +559,14 @@ void ChemicalPotential::grandcanonicalStep(
 
 #ifndef NDEBUG
 			if (accept) {
-				cout << "r" << this->rank() << "i" << mit->getID()
-						<< " with energy " << DeltaUpot << endl;
-				cout.flush();
+				std::cout << "r" << this->rank() << "i" << mit->getID()
+						<< " with energy " << DeltaUpot << std::endl;
+				std::cout.flush();
 			}
 			/*
 			 else
 			 cout << "   (r" << this->rank() << "-i"
-			 << mit->getID() << ")" << endl;
+			 << mit->getID() << ")" << std::endl;
 			 */
 #endif
 			if (accept) {

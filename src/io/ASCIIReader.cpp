@@ -21,21 +21,19 @@
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
 
-using Log::global_log;
-
 
 ASCIIReader::ASCIIReader() {}
 
-void ASCIIReader::setPhaseSpaceFile(string filename) {
+void ASCIIReader::setPhaseSpaceFile(std::string filename) {
 	_phaseSpaceFile = filename;
 }
 
-void ASCIIReader::setPhaseSpaceHeaderFile(string filename) {
+void ASCIIReader::setPhaseSpaceHeaderFile(std::string filename) {
 	_phaseSpaceHeaderFile = filename;
 }
 
 void ASCIIReader::readXML(XMLfileUnits& xmlconfig) {
-	string pspfile;
+	std::string pspfile;
 	if(xmlconfig.getNodeValue(".", pspfile)) {
 		pspfile = string_utils::trim(pspfile);
 		// only prefix xml dir if path is not absolute
@@ -48,7 +46,7 @@ void ASCIIReader::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
-	string token;
+	std::string token;
 
 	global_log->info() << "Opening phase space header file " << _phaseSpaceHeaderFile << std::endl;
 	_phaseSpaceHeaderFileStream.open(_phaseSpaceHeaderFile.c_str());
@@ -58,7 +56,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 		Simulation::exit(1);
 	}
 
-	string inputversion;
+	std::string inputversion;
 	_phaseSpaceHeaderFileStream >> token >> inputversion;
 	// FIXME: remove tag trunk from file specification?
 	if(token != "trunk") {
@@ -73,7 +71,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 	global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << std::endl;
 
-	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
+	std::vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
 	bool header = true; // When the last header element is reached, "header" is set to false
 
 	while(header) {
@@ -210,7 +208,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 #endif
 
 			// Mixing coefficients
-			vector<double>& dmixcoeff = domain->getmixcoeff();
+			std::vector<double>& dmixcoeff = domain->getmixcoeff();
 			dmixcoeff.clear();
 			for(unsigned int i = 1; i < numcomponents; i++) {
 				for(unsigned int j = i + 1; j <= numcomponents; j++) {
@@ -230,7 +228,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 				// find out the actual position, because the phase space definition will follow
 				// FIXME: is there a more elegant way?
 				fpos = _phaseSpaceHeaderFileStream.tellg();
-				_phaseSpaceFileStream.seekg(fpos, ios::beg);
+				_phaseSpaceFileStream.seekg(fpos, std::ios::beg);
 			}
 			// FIXME: Is there a better solution than skipping the rest of the file?
 			header = false;
@@ -272,12 +270,12 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 	} // Rank 0 only
 #endif
 
-	string token;
-	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
+	std::string token;
+	std::vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
 	unsigned int numcomponents = dcomponents.size();
 	unsigned long nummolecules = 0;
 	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
-	string ntypestring("ICRVQD");
+	std::string ntypestring("ICRVQD");
 	enum class Ndatatype {
 		ICRVQDV, ICRVQD, IRV, ICRV
 	} ntype = Ndatatype::ICRVQD;
@@ -306,7 +304,7 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 	if (domainDecomp->getRank() == 0)
 	{ // Rank 0 only
 #endif
-	streampos spos = _phaseSpaceFileStream.tellg();
+	std::streampos spos = _phaseSpaceFileStream.tellg();
 	_phaseSpaceFileStream >> token;
 	if((token == "MoleculeFormat") || (token == "M")) {
 		_phaseSpaceFileStream >> ntypestring;

@@ -5,7 +5,6 @@
 #include "LongRangeCorrection.h"
 
 #include "utils/Logger.h"
-using Log::global_log;
 
 class Simulation;
 class Domain;

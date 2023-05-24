@@ -12,7 +12,6 @@
 
 #include <sstream>
 #include "utils/Logger.h"
-using Log::global_log;
 
 //pretty much default
 ResilienceComm::ResilienceComm(int numProcs, int rank)

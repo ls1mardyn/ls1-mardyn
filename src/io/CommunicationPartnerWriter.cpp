@@ -8,17 +8,14 @@
 #include "utils/Logger.h"
 #include "parallel/DomainDecompBase.h"
 
-using Log::global_log;
-using namespace std;
-
 
 void CommunicationPartnerWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	if(_writeFrequency == 0) {
-		global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << endl;
+		global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
 		Simulation::exit(-1);
 	}
 	
@@ -27,12 +24,12 @@ void CommunicationPartnerWriter::readXML(XMLfileUnits& xmlconfig) {
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	int incremental = 1;
 	xmlconfig.getNodeValue("incremental", incremental);
 	_incremental = (incremental != 0);
-	global_log->info() << "Incremental numbers: " << _incremental << endl;
+	global_log->info() << "Incremental numbers: " << _incremental << std::endl;
 
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
@@ -41,7 +38,7 @@ void CommunicationPartnerWriter::readXML(XMLfileUnits& xmlconfig) {
 	}else{
 		_appendTimestamp = false;
 	}
-	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+	global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
 }
 
 void CommunicationPartnerWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
@@ -50,7 +47,7 @@ void CommunicationPartnerWriter::init(ParticleContainer * /*particleContainer*/,
 void CommunicationPartnerWriter::afterForces(ParticleContainer *particleContainer, DomainDecompBase* domainDecomp,
                                unsigned long simstep) {
 	if( simstep % _writeFrequency == 0 ) {
-		stringstream filenamestream;
+		std::stringstream filenamestream;
 		filenamestream << _outputPrefix << "-rank" << domainDecomp->getRank();
 
 		if(_incremental) {
@@ -65,7 +62,7 @@ void CommunicationPartnerWriter::afterForces(ParticleContainer *particleContaine
 
 		filenamestream << ".commPartners.dat";
 
-		string filename = filenamestream.str();
+		std::string filename = filenamestream.str();
 
 		domainDecomp->printCommunicationPartners(filename);
 
