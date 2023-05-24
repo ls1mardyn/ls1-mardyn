@@ -114,7 +114,7 @@ TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _opti
 #ifdef QUICKSCHED
 	struct QuickschedTraversalData *quiData = new QuickschedTraversalData;
 	quiData->taskBlockSize = {{2, 2, 2}};
-	if (is_base_of<ParticleCellBase, CellTemplate>::value) {
+	if (std::is_base_of<ParticleCellBase, CellTemplate>::value) {
 		_traversals.push_back(std::make_pair(nullptr, quiData));
 	}
 #endif
@@ -226,7 +226,7 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 			// nothing to do
 		} else if (traversalType.find("qui") != std::string::npos) {
 #ifdef QUICKSCHED
-			if (not is_base_of<ParticleCellBase, CellTemplate>::value) {
+			if (not std::is_base_of<ParticleCellBase, CellTemplate>::value) {
 				global_log->warning() << "Attempting to use Quicksched with cell type that does not store task data!"
 									  << std::endl;
 			}
@@ -301,7 +301,7 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells, con
 					traversalPointerReference = new C08CellPairTraversal<CellTemplate, true>(cells, dims);
 					break;
 				case traversalNames::QSCHED: {
-					mardyn_assert((is_base_of<ParticleCellBase, CellTemplate>::value));
+					mardyn_assert((std::is_base_of<ParticleCellBase, CellTemplate>::value));
 					auto *quiData = dynamic_cast<QuickschedTraversalData *>(traversalData);
 					traversalPointerReference = new QuickschedTraversal<CellTemplate>(cells, dims, quiData->taskBlockSize);
 				} break;

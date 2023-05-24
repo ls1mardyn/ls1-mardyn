@@ -721,7 +721,7 @@ class ContentXMLImporter(object):
 			currentNode = currentNode.parentNode
 			
 		if error:
-			std::string = "Error: "
+			string = "Error: "
 		else:
 			std::string = "Warning: "
 			

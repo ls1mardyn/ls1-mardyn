@@ -68,7 +68,7 @@ QuickschedTraversal<CellTemplate>::QuickschedTraversal(std::vector<CellTemplate>
           _contextCellProcessor(nullptr),
           _scheduler(new struct qsched),
           _taskTypeSelector(PackedAdjustable) {
-    mardyn_assert((is_base_of<ParticleCellBase, CellTemplate>::value));
+    mardyn_assert((std::is_base_of<ParticleCellBase, CellTemplate>::value));
     qsched_init(_scheduler, mardyn_get_max_threads(), qsched_flag_none);
 }
 
