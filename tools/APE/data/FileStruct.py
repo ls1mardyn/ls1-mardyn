@@ -403,12 +403,12 @@ class FileInformationXML(object):
 		if self.isValid():
 			string = 'XML-Path: "'
 			for element in self.xmlpath:
-				std::string += element
+				string += element
 				if element is not self.xmlpath[-1]:
-					std::string += '/'
-			std::string += '" '
+					string += '/'
+			string += '" '
 			if self.attribute != "":
-				std::string += 'Attribute: "' + self.attribute + '" '
+				string += 'Attribute: "' + self.attribute + '" '
 			return string
 		else:
 			return ""
