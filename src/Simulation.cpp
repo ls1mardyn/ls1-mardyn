@@ -1078,7 +1078,9 @@ void Simulation::simulate() {
 
 			decompositionTimer->stop();
 
+			timers()->start("SIMULATION_BOUNDARY_TREATMENT");
 			_domainDecomposition->removeNonPeriodicHalos();
+			timers()->start("SIMULATION_BOUNDARY_TREATMENT");
 
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
@@ -1330,7 +1332,9 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 		std::accumulate(_lastTraversalTimeHistory.begin(), _lastTraversalTimeHistory.end(), 0.) /
 		_lastTraversalTimeHistory.size();
 
+	timers()->start("SIMULATION_BOUNDARY_TREATMENT");
 	_domainDecomposition->processBoundaryConditions();
+	timers()->stop("SIMULATION_BOUNDARY_TREATMENT");
 
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");

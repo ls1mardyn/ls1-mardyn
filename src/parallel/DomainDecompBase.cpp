@@ -50,15 +50,11 @@ void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* en
 	_boundaryHandler.findBoundariesInLocalRegion();
 }
 
-void DomainDecompBase::processBoundaryConditions() {
-	
+void DomainDecompBase::processBoundaryConditions() {	
 	_boundaryHandler.processBoundaries();
-
-	//global_log->set_mpi_output_root();
 }
 
-void DomainDecompBase::removeNonPeriodicHalos()
-{
+void DomainDecompBase::removeNonPeriodicHalos() {
 	_boundaryHandler.removeHalos();
 }
 
