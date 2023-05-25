@@ -51,7 +51,7 @@ unsigned int getFileSize(const char* fileName);
  */
 struct fill_width
 {
-	fill_width( char f, uint8_t w )
+	fill_width( char f, std::uint8_t w )
 		: fill(f), width(w) {}
 	char fill;
 	int width;

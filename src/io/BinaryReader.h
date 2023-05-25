@@ -91,7 +91,7 @@ public:
 
 private:
 
-	uint32_t _nMoleculeFormat;
+	std::uint32_t _nMoleculeFormat;
 	std::string _moleculeFormat;
 	std::string _phaseSpaceFile;
 	std::string _phaseSpaceHeaderFile;

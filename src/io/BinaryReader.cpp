@@ -34,7 +34,7 @@
 using Log::global_log;
 using namespace std;
 
-enum MoleculeFormat : uint32_t {
+enum MoleculeFormat : std::uint32_t {
 	ICRVQD, IRV, ICRV
 };
 
@@ -85,7 +85,7 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	bool bInputOk = true;
 	double dCurrentTime = 0.;
 	double dBoxLength[3] = {0., 0., 0.};
-	uint64_t numMolecules = 0;
+	std::uint64_t numMolecules = 0;
 	std::string strMoleculeFormat;
 	bInputOk = bInputOk && inp.changecurrentnode("headerinfo");
 	bInputOk = bInputOk && inp.getNodeValue("time", dCurrentTime);
@@ -113,7 +113,7 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 	// Set parameters of Domain and Simulation class
 	_simulation.setSimulationTime(dCurrentTime);
-	for(uint8_t d = 0; d < 3; ++d) {
+	for(std::uint8_t d = 0; d < 3; ++d) {
 		domain->setGlobalLength(d, dBoxLength[d]);
 	}
 	domain->setglobalNumMolecules(numMolecules);
@@ -162,16 +162,16 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 #endif
 
 	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
-	uint64_t id;
-	uint32_t componentid = 0;
+	std::uint64_t id;
+	std::uint32_t componentid = 0;
 
 	x = y = z = vx = vy = vz = q1 = q2 = q3 = Dx = Dy = Dz = 0.;
 	q0 = 1.;
 
 	// Global number of particles must not be updated as this would result in numMolecules = 0
-	uint64_t numMolecules = domain->getglobalNumMolecules(false);
+	std::uint64_t numMolecules = domain->getglobalNumMolecules(false);
 
-	for(uint64_t i = 0; i < numMolecules; i++) {
+	for(std::uint64_t i = 0; i < numMolecules; i++) {
 
 #ifdef ENABLE_MPI
 		if (domainDecomp->getRank() == 0) { // Rank 0 only

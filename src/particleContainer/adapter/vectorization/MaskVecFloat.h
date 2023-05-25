@@ -20,14 +20,14 @@ class MaskVec<float> {
 private:
 	// own typedefs necessary
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		typedef uint8_t mask_vec;
-		typedef uint8_t mask_single;
+		typedef std::uint8_t mask_vec;
+		typedef std::uint8_t mask_single;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		typedef __m128i mask_vec;
-		typedef uint32_t mask_single;
+		typedef std::uint32_t mask_single;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		typedef __m256i mask_vec;
-		typedef uint32_t mask_single;
+		typedef std::uint32_t mask_single;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
 
 		// these can't be put in std::conditional, because it would just be too nice. warnings.
