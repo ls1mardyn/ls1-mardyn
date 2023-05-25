@@ -33,25 +33,41 @@ public:
             CIDs.insert(mol.cid);
         }
         CIDs.insert(0);
-        _molTypes = CIDs.size();
+        _molTypes = CIDs.size()/3;
     }
 
     ~Analysis() {}
 
-    std::vector<Density> computeDensities(int nSamples, float boxWidth, std::array<float,3> bbox) {
+    /**
+     * Computes density information
+     * slices up the domain according to the parameters.
+     * @param nSamples how often should a sample be taken per dimension
+     * @param boxWidth size of the box of one sample
+     * @param bbox bounding box of complete simulation
+     * @param check if check[i] is true, will slice domain in that dimension
+     * */
+    std::vector<Density> computeDensities(int nSamples, float boxWidth, std::array<float,3> bbox, std::array<bool,3> check) {
         std::vector<Density> buffer;
-        std::array<float,3> begin = {boxWidth/2, boxWidth/2, boxWidth/2};
-        std::array<float,3> end = {bbox[0] - boxWidth/2, bbox[1] - boxWidth/2, bbox[2] - boxWidth/2};
-        std::array<float,3> stepSize{ };
-        for(int d = 0; d < 3; d++) stepSize[d] = (end[d] - begin[d]) / static_cast<float>(nSamples - 1);
-        double volume = std::pow(boxWidth, 3);
+        std::array<float,3> begin = { }, end = { }, stepSize = { }, halfBoxSize = { };
+        std::array<int,3> steps { };
+        double volume = 1;
+        for(int d = 0; d < 3; d++) {
+            halfBoxSize[d] = check[d] ? boxWidth/2 : bbox[d]/2;
+
+            begin[d] = halfBoxSize[d];
+            end[d] = bbox[d] - halfBoxSize[d];
+            stepSize[d] = (end[d] - begin[d]) / static_cast<float>(nSamples - 1);
+            volume *= check[d] ? boxWidth : bbox[d];
+            steps[d] = check[d] ? nSamples : 1;
+        }
+
 
         #if defined(_OPENMP)
         #pragma omp parallel for collapse(3)
         #endif
-        for(int sz = 0; sz < nSamples; sz++) {
-            for(int sy = 0; sy < nSamples; sy++) {
-                for(int sx = 0; sx < nSamples; sx++) {
+        for(int sz = 0; sz < steps[2]; sz++) {
+            for(int sy = 0; sy < steps[1]; sy++) {
+                for(int sx = 0; sx < steps[0]; sx++) {
                     Density density{};
                     std::array<float,3> center{};
                     center[0] = sx * stepSize[0] + begin[0];
@@ -62,8 +78,8 @@ public:
                     std::array<float,3> boxLow {};
                     std::array<float,3> boxHigh {};
                     for(int d = 0; d < 3; d++) {
-                        boxLow[d] = center[d] - boxWidth/2;
-                        boxHigh[d] = center[d] + boxWidth/2;
+                        boxLow[d] = center[d] - halfBoxSize[d];
+                        boxHigh[d] = center[d] + halfBoxSize[d];
                     }
 
                     density.densityValues.resize(_molTypes);
@@ -73,7 +89,7 @@ public:
                         for(int d = 0; d < 3; d++) cond &= m.r.at(d) <= boxHigh[d];
                         if(!cond) return;
 
-                        density.densityValues.at(m.cid) += 1;
+                        density.densityValues.at(m.cid/3) += 1;
                     });
                     for(int i = 0; i < _molTypes; i++) density.densityValues[i] /= volume;
 
