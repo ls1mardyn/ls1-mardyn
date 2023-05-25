@@ -291,13 +291,15 @@ public:
 
 	virtual void printCommunicationPartners(std::string filename) const {};
 
-	void setBoundaryType(DimensionType dimension, BoundaryType boundary);
+	void setGlobalBoundaryType(DimensionType dimension, BoundaryType boundary);
 
-	bool hasInvalidBoundary() const { return boundaryHandler.hasInvalidBoundary();}
+	void setLocalBoundariesFromGlobal(Domain* domain, Ensemble* ensemble);
 
-	void processBoundaryConditions(Domain* domain, Ensemble* _ensemble);
+	bool hasInvalidBoundary() const { return _boundaryHandler.hasInvalidBoundary();}
 
-	void removeNonPeriodicHalos(Domain* domain);
+	void processBoundaryConditions();
+
+	void removeNonPeriodicHalos();
 
 protected:
 	void addLeavingMolecules(std::vector<Molecule>&& invalidMolecules, ParticleContainer* moleculeContainer);
@@ -348,7 +350,7 @@ protected:
 	//! total number of processes in the simulation
 	int _numProcs;
 
-	BoundaryHandler boundaryHandler;
+	BoundaryHandler _boundaryHandler;
 
 private:
 	CollectiveCommBase _collCommBase;

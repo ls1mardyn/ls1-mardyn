@@ -124,6 +124,8 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 			}
 		}
+		_boundaryHandler.setLocalRegion(_boxMin,_boxMax);
+		_boundaryHandler.findBoundariesInLocalRegion();
 	}
 	++_steps;
 }

@@ -27,11 +27,11 @@ DomainDecompBase::~DomainDecompBase() {
 void DomainDecompBase::readXML(XMLfileUnits& /* xmlconfig */) {
 }
 
-void DomainDecompBase::setBoundaryType(DimensionType dimension, BoundaryType boundary) {
-	boundaryHandler.setBoundary(dimension, boundary);
+void DomainDecompBase::setGlobalBoundaryType(DimensionType dimension, BoundaryType boundary) {
+	_boundaryHandler.setBoundary(dimension, boundary);
 }
 
-void DomainDecompBase::processBoundaryConditions(Domain* domain, Ensemble* ensemble) {
+void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* ensemble) {
 	//find which walls to consider
 	double startRegion[3], endRegion[3];
 	getBoundingBoxMinMax(domain, startRegion, endRegion);
@@ -45,36 +45,21 @@ void DomainDecompBase::processBoundaryConditions(Domain* domain, Ensemble* ensem
 										<< globEndRegion[0] << " " << globEndRegion[1] << " " << globEndRegion[2] << " " << std::endl;
 	**/
 	
+	_boundaryHandler.setLocalRegion(startRegion, endRegion);
+	_boundaryHandler.setGlobalRegion(globStartRegion, globEndRegion);
+	_boundaryHandler.findBoundariesInLocalRegion();
+}
 
-	std::map<DimensionType, bool> isOuterWall {{DimensionType::POSX, endRegion[0] == globEndRegion[0]},
-											{DimensionType::NEGX, startRegion[0] == globStartRegion[0]},
-											{DimensionType::POSY, endRegion[1] == globEndRegion[1]},
-											{DimensionType::NEGY, startRegion[1] == globStartRegion[1]},
-											{DimensionType::POSZ, endRegion[2] == globEndRegion[2]},
-											{DimensionType::NEGZ, startRegion[2] == globStartRegion[2]}};
+void DomainDecompBase::processBoundaryConditions() {
 	
-
-	boundaryHandler.setOuterWalls(isOuterWall);
-
-	std::array <double, 3> modernStyleStartRegion, modernStyleEndRegion;
-	std::move(std::begin(startRegion), std::end(startRegion), modernStyleStartRegion.begin());
-	std::move(std::begin(endRegion), std::end(endRegion), modernStyleEndRegion.begin());
-	
-	boundaryHandler.processBoundaries(modernStyleStartRegion, modernStyleEndRegion);
+	_boundaryHandler.processBoundaries();
 
 	//global_log->set_mpi_output_root();
 }
 
-void DomainDecompBase::removeNonPeriodicHalos(Domain* domain)
+void DomainDecompBase::removeNonPeriodicHalos()
 {
-	double startRegion[3], endRegion[3];
-	getBoundingBoxMinMax(domain, startRegion, endRegion);
-
-	std::array <double, 3> modernStyleStartRegion, modernStyleEndRegion;
-	std::move(std::begin(startRegion), std::end(startRegion), modernStyleStartRegion.begin());
-	std::move(std::begin(endRegion), std::end(endRegion), modernStyleEndRegion.begin());
-
-	boundaryHandler.removeHalos(modernStyleStartRegion, modernStyleEndRegion);
+	_boundaryHandler.removeHalos();
 }
 
 void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecules,

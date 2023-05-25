@@ -26,11 +26,19 @@ public:
 	BoundaryType getBoundary(int dimension) const;
 	bool hasInvalidBoundary() const;
 
-	void setOuterWalls(std::map<DimensionType, bool> isOuterWallOth) {isOuterWall = isOuterWallOth;}
-	bool processBoundaries(std::array<double,3> startRegion, std::array<double,3> endRegion);
-	void removeHalos(std::array<double,3> startRegion, std::array<double,3> endRegion);
+	void setGlobalRegion(double* start, double* end);
+	void setLocalRegion(double* start, double* end);
+
+	void setGlobalRegion(std::array<double,3> start, std::array<double,3> end);
+	void setLocalRegion(std::array<double,3> start, std::array<double,3> end);
+
+	void findBoundariesInLocalRegion();
+	bool processBoundaries();
+	void removeHalos();
 
 private:
 	std::map<DimensionType, BoundaryType> boundaries;
 	std::map<DimensionType, bool> isOuterWall;
+	std::array<double,3> globalRegionStart, globalRegionEnd;
+	std::array<double,3> localRegionStart, localRegionEnd;
 };

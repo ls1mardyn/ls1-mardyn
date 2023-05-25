@@ -64,6 +64,42 @@ BoundaryType BoundaryHandler::getBoundary(int dimension) const
 	return boundaries.at(toRet);
 }
 
+void BoundaryHandler::setGlobalRegion(double* start, double* end) 
+{
+	for(short int i = 0; i < 3; i++) {
+		globalRegionStart[i] = start[i];
+		globalRegionEnd[i] = end[i];
+	}
+}
+
+void BoundaryHandler::setLocalRegion(double* start, double* end) 
+{
+	for(short int i = 0; i < 3; i++) {
+		localRegionStart[i] = start[i];
+		localRegionEnd[i] = end[i];
+	}
+}
+
+void BoundaryHandler::setGlobalRegion(std::array<double, 3> start, std::array<double, 3> end) {
+	globalRegionStart = start;
+	globalRegionEnd = end;
+}
+
+void BoundaryHandler::setLocalRegion(std::array<double, 3> start, std::array<double, 3> end) {
+	localRegionStart = start;
+	localRegionEnd = end;
+}
+
+void BoundaryHandler::findBoundariesInLocalRegion() 
+{
+	isOuterWall[DimensionType::POSX] = (localRegionEnd[0] == globalRegionEnd[0]);
+	isOuterWall[DimensionType::NEGX] = (localRegionStart[0] == globalRegionStart[0]);
+	isOuterWall[DimensionType::POSY] = (localRegionEnd[1] == globalRegionEnd[1]);
+	isOuterWall[DimensionType::NEGY] = (localRegionStart[1] == globalRegionStart[1]);
+	isOuterWall[DimensionType::POSZ] = (localRegionEnd[2] == globalRegionEnd[2]);
+	isOuterWall[DimensionType::NEGZ] = (localRegionStart[2] == globalRegionStart[2]);
+}
+
 bool BoundaryHandler::hasInvalidBoundary() const
 {
 	return boundaries.at(DimensionType::POSX) == BoundaryType::ERROR ||
@@ -75,7 +111,7 @@ bool BoundaryHandler::hasInvalidBoundary() const
 
 }
 
-bool BoundaryHandler::processBoundaries(std::array<double,3> startRegion, std::array<double,3> endRegion)
+bool BoundaryHandler::processBoundaries()
 {
 	auto moleculeContainer = global_simulation->getMoleculeContainer(); // :-(
 	double timestepLength = (global_simulation->getIntegrator())->getTimestepLength(); 
@@ -97,7 +133,7 @@ bool BoundaryHandler::processBoundaries(std::array<double,3> startRegion, std::a
 			{
 				//create region
 				std::array<double,3> curWallRegionBegin, curWallRegionEnd;
-				std::tie(curWallRegionBegin, curWallRegionEnd) = BoundaryUtils::getInnerBuffer(startRegion, endRegion, currentWall.first, cutoff);
+				std::tie(curWallRegionBegin, curWallRegionEnd) = BoundaryUtils::getInnerBuffer(localRegionStart, localRegionEnd, currentWall.first, cutoff);
 				//conversion
 				const double cstylerbegin[] = {curWallRegionBegin[0], curWallRegionBegin[1], curWallRegionBegin[2]}; 
 				const double cstylerend[] = {curWallRegionEnd[0], curWallRegionEnd[1], curWallRegionEnd[2]};
@@ -130,7 +166,7 @@ bool BoundaryHandler::processBoundaries(std::array<double,3> startRegion, std::a
 	return true;
 }
 
-void BoundaryHandler::removeHalos(std::array<double,3> startRegion, std::array<double,3> endRegion)
+void BoundaryHandler::removeHalos()
 {
 	auto moleculeContainer = global_simulation->getMoleculeContainer();
 	double cutoff = moleculeContainer->getCutoff();
@@ -151,7 +187,7 @@ void BoundaryHandler::removeHalos(std::array<double,3> startRegion, std::array<d
 			{
 				//create region
 				std::array<double,3> curWallRegionBegin, curWallRegionEnd;
-				std::tie(curWallRegionBegin, curWallRegionEnd) = BoundaryUtils::getInnerBuffer(startRegion, endRegion, currentWall.first, cutoff);
+				std::tie(curWallRegionBegin, curWallRegionEnd) = BoundaryUtils::getInnerBuffer(localRegionStart, localRegionEnd, currentWall.first, cutoff);
 				//conversion
 				const double cstylerbegin[] = {curWallRegionBegin[0], curWallRegionBegin[1], curWallRegionBegin[2]}; 
 				const double cstylerend[] = {curWallRegionEnd[0], curWallRegionEnd[1], curWallRegionEnd[2]};

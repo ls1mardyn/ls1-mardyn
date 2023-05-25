@@ -407,21 +407,22 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				//xmlconfig.getNodeValue("boundaryType", tempBoundary);
 				xmlconfig.getNodeValue("x", tempBoundary);
 				global_log->info() << "x boundary " << tempBoundary << std::endl;
-				_domainDecomposition->setBoundaryType(DimensionType::POSX, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				_domainDecomposition->setBoundaryType(DimensionType::NEGX, BoundaryUtils::convertStringToBoundary(tempBoundary));
+				_domainDecomposition->setGlobalBoundaryType(DimensionType::POSX, BoundaryUtils::convertStringToBoundary(tempBoundary));
+				_domainDecomposition->setGlobalBoundaryType(DimensionType::NEGX, BoundaryUtils::convertStringToBoundary(tempBoundary));
 				xmlconfig.getNodeValue("y", tempBoundary);
 				global_log->info() << "y boundary " << tempBoundary << std::endl;
-				_domainDecomposition->setBoundaryType(DimensionType::POSY, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				_domainDecomposition->setBoundaryType(DimensionType::NEGY, BoundaryUtils::convertStringToBoundary(tempBoundary));
+				_domainDecomposition->setGlobalBoundaryType(DimensionType::POSY, BoundaryUtils::convertStringToBoundary(tempBoundary));
+				_domainDecomposition->setGlobalBoundaryType(DimensionType::NEGY, BoundaryUtils::convertStringToBoundary(tempBoundary));
 				xmlconfig.getNodeValue("z", tempBoundary);
 				global_log->info() << "z boundary " << tempBoundary << std::endl;
-				_domainDecomposition->setBoundaryType(DimensionType::POSZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				_domainDecomposition->setBoundaryType(DimensionType::NEGZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
+				_domainDecomposition->setGlobalBoundaryType(DimensionType::POSZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
+				_domainDecomposition->setGlobalBoundaryType(DimensionType::NEGZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
 
 				if (_domainDecomposition->hasInvalidBoundary()) {
 					global_log->error() << "Invalid boundary type! Please check the config file" << std::endl;
 					exit(1);
 				}
+				_domainDecomposition->setLocalBoundariesFromGlobal(_domain, _ensemble);
 				xmlconfig.changecurrentnode("..");
 			}
 
@@ -1077,7 +1078,7 @@ void Simulation::simulate() {
 
 			decompositionTimer->stop();
 
-			_domainDecomposition->removeNonPeriodicHalos(_domain);
+			_domainDecomposition->removeNonPeriodicHalos();
 
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
@@ -1329,7 +1330,7 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 		std::accumulate(_lastTraversalTimeHistory.begin(), _lastTraversalTimeHistory.end(), 0.) /
 		_lastTraversalTimeHistory.size();
 
-	_domainDecomposition->processBoundaryConditions(_domain, _ensemble);
+	_domainDecomposition->processBoundaryConditions();
 
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
