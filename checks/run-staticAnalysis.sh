@@ -111,10 +111,10 @@ done
 
 git switch ${currentVersion} &> /dev/null
 
-warnings+="\n# cpplint:\n   New or fixed warnings/errors (master <-> new commit):\n\`\`\`master $(printf '%54s' " ") | new\n"
+warnings+="\n# cpplint\n   New or fixed warnings/errors (master <-> new commit):\n\`\`\`master $(printf '%54s' " ") | new\n"
 
 # Delete "--suppress-common-lines" to see all errors/warnings
 warnings+=$(diff -y --suppress-common-lines $rootFolder/staticAnalysis_master_summary.log $rootFolder/staticAnalysis_new_summary.log)
 
-printf "\n\n$warnings\n"
+printf "\n\n$(echo $warnings | tr -d \`\`\`)\n"
 printf "$warnings\`\`\`\n" >> $GITHUB_STEP_SUMMARY
