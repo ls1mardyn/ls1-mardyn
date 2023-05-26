@@ -93,7 +93,7 @@ currentVersion=$(git rev-parse --abbrev-ref HEAD)
 
 for VERSION in "new" "master"
 do
-  echo ${VERSION}
+  echo "Checking ${VERSION} version"
 
   if [[ "${VERSION}" == "master" ]]
   then
@@ -112,7 +112,9 @@ git switch ${currentVersion} &> /dev/null
 
 warnings+="\ncpplint:\n   New or fixed warnings/errors (master <-> new commit):\nmaster $(printf '%54s' " ") | new\n"
 
-warnings+=$(diff -y --suppress-common-lines $rootFolder/staticAnalysis_master_summary.log $rootFolder/staticAnalysis_new_summary.log)
+warnings+=$(diff -y $rootFolder/staticAnalysis_master_summary.log $rootFolder/staticAnalysis_new_summary.log)
+
+tail $rootFolder/staticAnalysis*.log
 
 printf "$warnings\n"
 printf "$warnings\n" >> $GITHUB_STEP_SUMMARY
