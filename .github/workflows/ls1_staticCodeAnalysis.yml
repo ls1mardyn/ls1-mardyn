@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Setup
         run: |
-        sudo apt-get update
-        sudo apt-get install -y cpplint
+          sudo apt-get update
+          sudo apt-get install -y cpplint
       - name: Run static code analysis script
         run: ./checks/run-staticAnalysis.sh $PWD
