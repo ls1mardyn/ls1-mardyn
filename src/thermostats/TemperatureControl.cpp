@@ -104,7 +104,7 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 	for (uint8_t d = 0; d < 3; ++d) uc[d] = (strVal[d] == "box") ? domain->getGlobalLength(d) : atof(strVal[d].c_str());
 
 #ifndef NDEBUG
-	global_log->info() << "TemperatureControl: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << std::endl;
+	Log::global_log->info() << "TemperatureControl: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << std::endl;
 #endif
 
 	for (uint8_t d = 0; d < 3; ++d) {
@@ -140,7 +140,7 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 	bRet = bRet && xmlconfig.getNodeValue("target/ramp/update/freq", _ramp.update.freq);
 	if (bRet) {
 		_ramp.enabled = true;
-		global_log->info() << "[TemperatureControl] REGION " << _nStaticID
+		Log::global_log->info() << "[TemperatureControl] REGION " << _nStaticID
 						   << ": Temperature ramp enabled with start=" << _ramp.start << ", end=" << _ramp.end
 						   << ", update.start=" << _ramp.update.start << ", update.stop=" << _ramp.update.stop
 						   << ", update.freq=" << _ramp.update.freq << std::endl;
@@ -165,15 +165,15 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 			_timestep = global_simulation->getIntegrator()->getTimestepLength();
 			_nuDt = _nuAndersen * _timestep;
 		} else {
-			global_log->error() << "[TemperatureControl] REGION: Invalid 'method' param: " << methods << std::endl;
+			Log::global_log->error() << "[TemperatureControl] REGION: Invalid 'method' param: " << methods << std::endl;
 			Simulation::exit(-1);
 		}
-		global_log->info() << "[TemperatureControl] REGION 'method' param: " << methods << std::endl;
+		Log::global_log->info() << "[TemperatureControl] REGION 'method' param: " << methods << std::endl;
 	}
 	//
 	else {
 		_localMethod = VelocityScaling;
-		global_log->info() << "[TemperatureControl] REGION: no method specified, selecting VelocityScaling"
+		Log::global_log->info() << "[TemperatureControl] REGION: no method specified, selecting VelocityScaling"
 						   << std::endl;
 
 		// init data structures
@@ -189,7 +189,7 @@ void ControlRegionT::VelocityScalingInit(XMLfileUnits& xmlconfig, std::string st
 	// settings
 	xmlconfig.getNodeValue("settings/numslabs", _nNumSlabs);
 	if (_nNumSlabs < 1) {
-		global_log->fatal() << "TemperatureControl: need at least one slab! (settings/numslabs)";
+		Log::global_log->fatal() << "TemperatureControl: need at least one slab! (settings/numslabs)";
 		Simulation::exit(932);
 	}
 	xmlconfig.getNodeValue("settings/exponent", _dTemperatureExponent);
@@ -205,7 +205,7 @@ void ControlRegionT::VelocityScalingInit(XMLfileUnits& xmlconfig, std::string st
 	xmlconfig.getNodeValue("writefreq", _nWriteFreqBeta);
 	xmlconfig.getNodeValue("fileprefix", _strFilenamePrefixBetaLog);
 	if (_nWriteFreqBeta == 0) {
-		global_log->warning()
+		Log::global_log->warning()
 			<< "Temperature Control: write Frequency was specified to be zero. This is NOT allowed. Reset it to 1000."
 			<< std::endl;
 		_nWriteFreqBeta = 1000;
@@ -415,7 +415,7 @@ void ControlRegionT::ControlTemperature(Molecule* mol) {
 			}
 		}
 	} else {
-		global_log->error() << "[TemperatureControl] Invalid localMethod param: " << _localMethod << std::endl;
+		Log::global_log->error() << "[TemperatureControl] Invalid localMethod param: " << _localMethod << std::endl;
 		Simulation::exit(-1);
 	}
 }
@@ -502,7 +502,7 @@ void ControlRegionT::registerAsObserver() {
 		if (distControl != nullptr)
 			distControl->registerObserver(this);
 		else {
-			global_log->error() << "TemperatureControl->region[" << this->GetID()
+			Log::global_log->error() << "TemperatureControl->region[" << this->GetID()
 								<< "]: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
 			Simulation::exit(-1);
 		}
@@ -602,9 +602,9 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("control/start", _nStart);
 	xmlconfig.getNodeValue("control/frequency", _nControlFreq);
 	xmlconfig.getNodeValue("control/stop", _nStop);
-	global_log->info() << "Start control from simstep: " << _nStart << std::endl;
-	global_log->info() << "Control with frequency: " << _nControlFreq << std::endl;
-	global_log->info() << "Stop control at simstep: " << _nStop << std::endl;
+	Log::global_log->info() << "Start control from simstep: " << _nStart << std::endl;
+	Log::global_log->info() << "Control with frequency: " << _nControlFreq << std::endl;
+	Log::global_log->info() << "Stop control at simstep: " << _nStop << std::endl;
 
 	// turn on/off explosion heuristics
 	// domain->setExplosionHeuristics(bUseExplosionHeuristics);
@@ -613,9 +613,9 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig) {
 	uint32_t numRegions = 0;
 	XMLfile::Query query = xmlconfig.query("regions/region");
 	numRegions = query.card();
-	global_log->info() << "Number of control regions: " << numRegions << std::endl;
+	Log::global_log->info() << "Number of control regions: " << numRegions << std::endl;
 	if (numRegions < 1) {
-		global_log->warning() << "No region parameters specified." << std::endl;
+		Log::global_log->warning() << "No region parameters specified." << std::endl;
 	}
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator outputRegionIter;
@@ -637,13 +637,13 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig) {
 	}
 	if (Vel && And) {
 		_method = Mixed;
-		global_log->info() << "[TemperatureControl] Mixed methods across regions\n";
+		Log::global_log->info() << "[TemperatureControl] Mixed methods across regions\n";
 	} else if (!Vel && And) {
 		_method = Andersen;
-		global_log->info() << "[TemperatureControl] Andersen in all regions\n";
+		Log::global_log->info() << "[TemperatureControl] Andersen in all regions\n";
 	} else {
 		_method = VelocityScaling;
-		global_log->info() << "[TemperatureControl] VelocityControl in all regions\n";
+		Log::global_log->info() << "[TemperatureControl] VelocityControl in all regions\n";
 	}
 }
 
@@ -714,7 +714,7 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 											  ParticleContainer* particleContainer, const unsigned long simstep) {
 	if (_method == VelocityScaling || _method == Mixed) {
 		this->VelocityScalingPreparation(domainDecomposition, particleContainer, simstep);
-		global_log->debug() << "[TemperatureControl] VelocityScalingPreparation\n";
+		Log::global_log->debug() << "[TemperatureControl] VelocityScalingPreparation\n";
 	}
 
 	// iterate over all molecules. ControlTemperature depends on _localMethod for Region molecule is in

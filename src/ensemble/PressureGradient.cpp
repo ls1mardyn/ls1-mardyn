@@ -102,8 +102,8 @@ void PressureGradient::determineAdditionalAcceleration
 		for(gVSit = _globalVelocitySum[0].begin(); gVSit != _globalVelocitySum[0].end(); gVSit++)
 		{
 #ifndef NDEBUG
-			global_log->debug() << "required entries in velocity queue: " << _globalVelocityQueuelength[gVSit->first] << std::endl;
-			global_log->debug() << "entries in velocity queue: " << _globalPriorVelocitySums[0][gVSit->first].size() << std::endl;
+			Log::global_log->debug() << "required entries in velocity queue: " << _globalVelocityQueuelength[gVSit->first] << std::endl;
+			Log::global_log->debug() << "entries in velocity queue: " << _globalPriorVelocitySums[0][gVSit->first].size() << std::endl;
 #endif
 			for(unsigned short int d = 0; d < 3; d++)
 			{
@@ -132,7 +132,7 @@ void PressureGradient::determineAdditionalAcceleration
 					  + previousVelocity[d] );
 			}
 #ifndef NDEBUG
-			global_log->debug() << "accelerator no. " << gVSit->first 
+			Log::global_log->debug() << "accelerator no. " << gVSit->first 
 				<< "previous vz: " << previousVelocity[2] 
 				<< "current vz: " << _globalVelocitySum[2][gVSit->first]*invgN << std::endl;
 #endif
@@ -219,7 +219,7 @@ void PressureGradient::specifyTauPrime(double tauPrime, double dt)
 	if(this->_localRank != 0) return;
 	if(this->_universalConstantAccelerationTimesteps == 0)
 	{
-		global_log->error() << "SEVERE ERROR: unknown UCAT!\n";
+		Log::global_log->error() << "SEVERE ERROR: unknown UCAT!\n";
 		Simulation::exit(78);
 	}
 	unsigned int vql = (unsigned int)ceil(tauPrime / (dt*this->_universalConstantAccelerationTimesteps));

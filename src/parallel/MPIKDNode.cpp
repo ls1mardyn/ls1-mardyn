@@ -7,7 +7,7 @@
 #define assertion(x) mardyn_assert(x)
 #define assertion1(x,y) { if (!(x)) std::cerr << (y) << std::endl; mardyn_assert(x);}
 
-using Log::global_log;
+
 
 MPIKDNodePacked::MPIKDNodePacked(const std::bitset<3>& coversWholeDomain, const int& numProcs,
 		const int* lowCorner, const int* highCorner, const int& nodeID, const int& owningProc,
@@ -358,7 +358,7 @@ void MPIKDNodePacked::initDatatype() {
 
 	for (int i=1; i<Attributes; i++) {
 		if (!(disp[i] > disp[i-1])) {
-			global_log->debug() << "i=" << i << std::endl;
+			Log::global_log->debug() << "i=" << i << std::endl;
 		}
 		assertion1( disp[i] > disp[i-1], i );
 	}

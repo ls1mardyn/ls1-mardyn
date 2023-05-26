@@ -94,7 +94,7 @@ public:
     };
 
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override {
-        global_log -> debug() << "[WallPotential] Wall enabled" << std::endl;
+        Log::global_log -> debug() << "[WallPotential] Wall enabled" << std::endl;
         _domain = domain;
     }
 

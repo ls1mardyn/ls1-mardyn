@@ -30,23 +30,23 @@ void MkesferaGenerator::readXML(XMLfileUnits& xmlconfig) {
 			boxLength = length;
 		}
 	}
-	global_log->info() << "Box length: " << boxLength << std::endl;
+	Log::global_log->info() << "Box length: " << boxLength << std::endl;
 	R_o = boxLength / 2;
 
 	xmlconfig.getNodeValueReduced("outer-density", rho_o);
-	global_log->info() << "Outer density: " << rho_o << std::endl;
+	Log::global_log->info() << "Outer density: " << rho_o << std::endl;
 
 	xmlconfig.getNodeValueReduced("droplet/radius", R_i);
-	global_log->info() << "Droplet radius: " << R_i << std::endl;
+	Log::global_log->info() << "Droplet radius: " << R_i << std::endl;
 	xmlconfig.getNodeValueReduced("droplet/density", rho_i);
-	global_log->info() << "Droplet density: " << rho_i << std::endl;
+	Log::global_log->info() << "Droplet density: " << rho_i << std::endl;
 	for(int d = 0; d < 3; d++) {
 		center[d] = R_o;
 	}
 	xmlconfig.getNodeValueReduced("droplet/center/x", center[0]);
 	xmlconfig.getNodeValueReduced("droplet/center/y", center[1]);
 	xmlconfig.getNodeValueReduced("droplet/center/z", center[2]);
-	global_log->info() << "Droplet center: " << center[0] << ", " << center[0] << ", " << center[0] << std::endl;
+	Log::global_log->info() << "Droplet center: " << center[0] << ", " << center[0] << ", " << center[0] << std::endl;
 }
 
 unsigned long
@@ -96,7 +96,7 @@ MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* 
 	}
 
 	double T = _simulation.getEnsemble()->T();
-	global_log->info() << "Temperature: " << T << std::endl;
+	Log::global_log->info() << "Temperature: " << T << std::endl;
 
 	double cutoff = _simulation.getcutoffRadius();
 	Random* rnd = new Random();
@@ -118,10 +118,10 @@ MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* 
 	}
 	unsigned slots = 3.0 * fl_units * fl_units * fl_units;
 	double boxdensity = (double) slots / (8.0 * R_o * R_o * R_o);
-	global_log->debug() << "Box density: " << boxdensity << " (unit cell: " << fl_unit << ")" << std::endl;
+	Log::global_log->debug() << "Box density: " << boxdensity << " (unit cell: " << fl_unit << ")" << std::endl;
 	double P_in = rho_i / boxdensity;
 	double P_out = rho_o / boxdensity;
-	global_log->debug() << "Insertion probability: " << P_in << " inside, " << P_out << " outside" << std::endl;
+	Log::global_log->debug() << "Insertion probability: " << P_in << " inside, " << P_out << " outside" << std::endl;
 
 	/* box min is assumed to be 0 (not in parallel!)*/
 	for(int d = 0; d < 3; d++) {
@@ -174,7 +174,7 @@ MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* 
 					if(idx[0] - startx[0] >= fl_units_local[0] or idx[1] - startx[1] >= fl_units_local[1] or
 					   idx[2] - startx[2] >= fl_units_local[2] or startx[0] > idx[0] or startx[1] > idx[1] or
 					   startx[2] > idx[2]) {
-						global_log->error() << "Error in calculation of start and end values! \n";
+						Log::global_log->error() << "Error in calculation of start and end values! \n";
 						Simulation::exit(0);
 					}
 					fill[idx[0] - startx[0]][idx[1] - startx[1]][idx[2] - startx[2]][p] = tfill;
@@ -192,8 +192,8 @@ MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* 
 
 	MPI_Allreduce(MPI_IN_PLACE, &N, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 #endif
-	global_log->debug() << "Filling " << N << " out of " << slots << " slots" << std::endl;
-	global_log->debug() << "Density: " << N / (8.0 * R_o * R_o * R_o) << std::endl;
+	Log::global_log->debug() << "Filling " << N << " out of " << slots << " slots" << std::endl;
+	Log::global_log->debug() << "Density: " << N / (8.0 * R_o * R_o * R_o) << std::endl;
 
 
 	double v_avg = sqrt(3.0 * T);
@@ -258,7 +258,7 @@ MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* 
 	domain->setglobalNumMolecules(numberOfMolecules);
 	domain->setglobalRho(numberOfMolecules / _simulation.getEnsemble()->V());
 
-	global_log->info() << "Inserted number of molecules: " << numberOfMolecules << std::endl;
+	Log::global_log->info() << "Inserted number of molecules: " << numberOfMolecules << std::endl;
 	return ID;
 }
 

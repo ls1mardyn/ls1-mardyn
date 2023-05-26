@@ -12,10 +12,10 @@
 void HaloParticleWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	if(_writeFrequency == 0) {
-		global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
+		Log::global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
 		Simulation::exit(-1);
 	}
 	
@@ -24,17 +24,17 @@ void HaloParticleWriter::readXML(XMLfileUnits& xmlconfig) {
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	_incremental = true;
 	xmlconfig.getNodeValue("incremental", _incremental);
 
-	global_log->info() << "Incremental numbers: " << _incremental << std::endl;
+	Log::global_log->info() << "Incremental numbers: " << _incremental << std::endl;
 
 	_appendTimestamp = false;
 	xmlconfig.getNodeValue("appendTimestamp", _appendTimestamp);
 
-	global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
+	Log::global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
 }
 
 void HaloParticleWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,

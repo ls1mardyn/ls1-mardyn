@@ -12,7 +12,7 @@
 #include <algorithm>
 #include "WignerMatrix.h"
 #include "utils/Logger.h"
-using Log::global_log;
+
 
 namespace bhfmm {
 
@@ -217,7 +217,7 @@ void WignerMatrix::scale() {
 			}
 		}
 	} else {
-		global_log->error() << "type must be either L or M" << std::endl;
+		Log::global_log->error() << "type must be either L or M" << std::endl;
 	}
 }
 

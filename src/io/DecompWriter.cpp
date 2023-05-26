@@ -19,21 +19,21 @@ DecompWriter::DecompWriter() :
 
 void DecompWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	int incremental = 1;
 	xmlconfig.getNodeValue("incremental", incremental);
 	_incremental = (incremental != 0);
-	global_log->info() << "Incremental numbers: " << _incremental << std::endl;
+	Log::global_log->info() << "Incremental numbers: " << _incremental << std::endl;
 
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
 	}
-	global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
+	Log::global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
 }
 
 

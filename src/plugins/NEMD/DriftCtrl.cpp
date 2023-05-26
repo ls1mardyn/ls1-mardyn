@@ -51,7 +51,7 @@ void DriftCtrl::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 			_sampling.at(cid).velocity.at(2).local.at(yPosID) = 0.;
 		}
 	}
-	global_log->debug() << "[DriftCtrl] Init data structures for " << numComponents << " components." << std::endl;
+	Log::global_log->debug() << "[DriftCtrl] Init data structures for " << numComponents << " components." << std::endl;
 	
 	// init files
 	{
@@ -100,8 +100,8 @@ void DriftCtrl::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("range/yr", strVal);
 	// accept "box" as input
 	_range.yr = (strVal == "box") ? _simulation.getDomain()->getGlobalLength(1) : atof(strVal.c_str());
-	global_log->info() << "[DriftCtrl] Enabled in range yl,yr=" << _range.yl << "," << _range.yr << std::endl;
-	global_log->info() << "[DriftCtrl] Enabled between simstep " << _control.start << " and " << _control.stop << std::endl;
+	Log::global_log->info() << "[DriftCtrl] Enabled in range yl,yr=" << _range.yl << "," << _range.yr << std::endl;
+	Log::global_log->info() << "[DriftCtrl] Enabled between simstep " << _control.start << " and " << _control.stop << std::endl;
 	_range.width = _range.yr - _range.yl;
 	// subdivision
 	_range.subdivision.binWidth.init = 10.;
@@ -139,12 +139,12 @@ void DriftCtrl::readXML(XMLfileUnits& xmlconfig)
 				_directions.push_back(2);
 				break;
 			default:
-				global_log->warning() << "[DriftCtrl] Unknown direction: " << c << std::endl;
+				Log::global_log->warning() << "[DriftCtrl] Unknown direction: " << c << std::endl;
 		}
 	}
 
-	global_log->info() << "[DriftCtrl] Directions to be controlled: " << strDirs << std::endl;
-	global_log->info() << "[DriftCtrl] Target drift vx,vy,vz="
+	Log::global_log->info() << "[DriftCtrl] Directions to be controlled: " << strDirs << std::endl;
+	Log::global_log->info() << "[DriftCtrl] Target drift vx,vy,vz="
 		<< _target.drift.at(0) << "," << _target.drift.at(1) << "," << _target.drift.at(2) << ", cid=" << _target.cid << std::endl;
 }
 

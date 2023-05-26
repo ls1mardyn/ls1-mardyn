@@ -32,16 +32,16 @@ static void writePOVobjs(Component const &component, std::ostream& ostrm, std::s
 void PovWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	int incremental = 1;
 	xmlconfig.getNodeValue("incremental", incremental);
 	_incremental = (incremental != 0);
-	global_log->info() << "Incremental numbers: " << _incremental << std::endl;
+	Log::global_log->info() << "Incremental numbers: " << _incremental << std::endl;
 
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
@@ -50,7 +50,7 @@ void PovWriter::readXML(XMLfileUnits& xmlconfig) {
 	} else{
 		_appendTimestamp = false;
 	}
-	global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
+	Log::global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
 }
 
 void PovWriter::init(ParticleContainer * /*particleContainer*/,

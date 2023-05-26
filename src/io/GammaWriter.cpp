@@ -13,16 +13,16 @@
 
 void GammaWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "[GammaWriter] Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "[GammaWriter] Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "[GammaWriter] Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "[GammaWriter] Output prefix: " << _outputPrefix << std::endl;
 	xmlconfig.getNodeValue("numInterfaces", _numInterfaces);
-	global_log->info() << "[GammaWriter] Number of interfaces: " << _numInterfaces << std::endl;
+	Log::global_log->info() << "[GammaWriter] Number of interfaces: " << _numInterfaces << std::endl;
 
 	_range.ymax = global_simulation->getDomain()->getGlobalLength(1);
 	xmlconfig.getNodeValue("range/ymin", _range.ymin);
 	xmlconfig.getNodeValue("range/ymax", _range.ymax);
-	global_log->info() << "[GammaWriter] Range: y: " << _range.ymin << " - " << _range.ymax << std::endl;
+	Log::global_log->info() << "[GammaWriter] Range: y: " << _range.ymin << " - " << _range.ymax << std::endl;
 }
 
 void GammaWriter::init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {

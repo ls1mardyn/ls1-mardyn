@@ -30,18 +30,18 @@ MaxWriter::~MaxWriter() {}
 
 void MaxWriter::readXML(XMLfileUnits& xmlconfig)
 {
-	global_log->info() << "------------------------------------------------------------------------" << std::endl;
-	global_log->info() << "MaxWriter" << std::endl;
+	Log::global_log->info() << "------------------------------------------------------------------------" << std::endl;
+	Log::global_log->info() << "MaxWriter" << std::endl;
 
 	_writeFrequency = 1000;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	_outputPrefix = "maxvals";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
-	global_log->info() << "------------------------------------------------------------------------" << std::endl;
+	Log::global_log->info() << "------------------------------------------------------------------------" << std::endl;
 }
 
 void MaxWriter::init(ParticleContainer * /*particleContainer*/,

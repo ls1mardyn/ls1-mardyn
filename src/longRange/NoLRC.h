@@ -21,7 +21,7 @@ public:
     };
 	virtual ~NoLRC() {}
 
-	virtual void init() { global_log->info() << "No long range correction is used: UpotCorr = VirialCorr = 0" << std::endl; }
+	virtual void init() { Log::global_log->info() << "No long range correction is used: UpotCorr = VirialCorr = 0" << std::endl; }
 	virtual void readXML(XMLfileUnits& /* xmlconfig */) {}
 	virtual void calculateLongRange() {
         _domain->setUpotCorr(0.);

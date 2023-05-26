@@ -220,17 +220,17 @@ public:
 	void setActualFeedrate(const double& feed_actual) {
 		if (FRM_DIRECTED == _nFeedRateMethod) {
 			_feedrate.feed.actual = feed_actual;
-			global_log->info() << "[MettDeamon]: Set new feed rate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
+			Log::global_log->info() << "[MettDeamon]: Set new feed rate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
 		} else {
-			global_log->warning() << "[MettDeamon]: Feed rate not set because current feed method ( " << _nFeedRateMethod << " ) is not set to communicate with MDFRD (method " << FRM_DIRECTED << ")" << std::endl;
+			Log::global_log->warning() << "[MettDeamon]: Feed rate not set because current feed method ( " << _nFeedRateMethod << " ) is not set to communicate with MDFRD (method " << FRM_DIRECTED << ")" << std::endl;
 		}
 	}
 	void setInitFeedrate(const double& feed_init) {
 		if (FRM_DIRECTED == _nFeedRateMethod) {
 			_feedrate.feed.init = feed_init;
-			global_log->info() << "[MettDeamon]: Set init feed rate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
+			Log::global_log->info() << "[MettDeamon]: Set init feed rate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
 		} else {
-			global_log->warning() << "[MettDeamon]: Feed rate not set because current feed method ( " << _nFeedRateMethod << " ) is not set to communicate with MDFRD (method " << FRM_DIRECTED << ")" << std::endl;
+			Log::global_log->warning() << "[MettDeamon]: Feed rate not set because current feed method ( " << _nFeedRateMethod << " ) is not set to communicate with MDFRD (method " << FRM_DIRECTED << ")" << std::endl;
 		}
 	}
 	double getInvDensityArea() {return _dInvDensityArea;}

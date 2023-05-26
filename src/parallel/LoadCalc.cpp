@@ -120,22 +120,22 @@ TunerLoad::TunerLoad(int count1, int count2, std::vector<double>&& ownTime, std:
 				calcConsts(_cornerTime, false)) {
 
 	if (_ownTime.size() != size_t(_count1 * _count2)) {
-		global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _ownTime.size()
+		Log::global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _ownTime.size()
 				<< " expected: " << _count1 * _count2;
 	}
 
 	if (_faceTime.size() != size_t(count1 * _count2)) {
-		global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _faceTime.size()
+		Log::global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _faceTime.size()
 				<< " expected: " << _count1 * _count2;
 	}
 
 	if (_edgeTime.size() != size_t(_count1 * _count2)) {
-		global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _edgeTime.size()
+		Log::global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _edgeTime.size()
 				<< " expected: " << _count1 * _count2;
 	}
 
 	if (_cornerTime.size() != size_t(_count1 * _count2)) {
-		global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _cornerTime.size()
+		Log::global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _cornerTime.size()
 				<< " expected: " << _count1 * _count2;
 	}
 }
@@ -353,7 +353,7 @@ inline arma::vec getIncreasingSolutionVec(arma::mat arma_system_matrix, const ar
 int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 
 #ifndef MARDYN_ARMADILLO
-	global_log->info() << "not compiled with armadillo. MeasureLoad not usable." << std::endl;
+	Log::global_log->info() << "not compiled with armadillo. MeasureLoad not usable." << std::endl;
 	return 1;
 #else
 	int numRanks = decomp->getNumProcs();
@@ -446,7 +446,7 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 				coefficient_vec = nnls(arma_system_matrix, arma_rhs);
 			}
 			mardyn_assert(coefficient_vec.size() == num_dof);
-			global_log->info() << "coefficient_vec: " << std::endl;
+			Log::global_log->info() << "coefficient_vec: " << std::endl;
 			coefficient_vec.raw_print(std::cout);
 			std::cout << std::endl;
 			_times.resize(interpolationStartsAt);
@@ -461,7 +461,7 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 		} else if (_timeValuesShouldBeIncreasing) {
 			arma::vec cell_time_vec = getIncreasingSolutionVec(arma_system_matrix, arma_rhs, global_maxParticlesP1);
 
-			global_log->info() << "cell_time_vec:" << std::endl;
+			Log::global_log->info() << "cell_time_vec:" << std::endl;
 			cell_time_vec.raw_print(std::cout);
 			_times = arma::conv_to<std::vector<double> >::from(cell_time_vec);
 			mardyn_assert(_times.size() == global_maxParticlesP1);
@@ -469,7 +469,7 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 		} else {
 			arma::vec cell_time_vec = nnls(arma_system_matrix, arma_rhs);
 
-			global_log->info() << "cell_time_vec:\n" << cell_time_vec << std::endl;
+			Log::global_log->info() << "cell_time_vec:\n" << cell_time_vec << std::endl;
 			_times = arma::conv_to<std::vector<double> >::from(cell_time_vec);
 			mardyn_assert(_times.size() == global_maxParticlesP1);
 			MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
@@ -493,12 +493,12 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	}
 
 	if (not isFinite(_times.begin(), _times.end())) {
-		global_log->warning() << "Detected non-finite number in MeasureLoad" << std::endl;
+		Log::global_log->warning() << "Detected non-finite number in MeasureLoad" << std::endl;
 		return 1;
 	}
 
 	if (not isFinite(_interpolationConstants.begin(), _interpolationConstants.end())) {
-		global_log->warning() << "Detected non-finite number in MeasureLoad" << std::endl;
+		Log::global_log->warning() << "Detected non-finite number in MeasureLoad" << std::endl;
 		return 1;
 	}
 	_preparedLoad = true;
@@ -536,7 +536,7 @@ void MeasureLoad::calcConstants() {
 	for (size_t row = 0; row < 3ul; row++) {
 		_interpolationConstants[row] = solution[2 - row];
 	}
-	global_log->info() << "_interpolationConstants: " << std::endl << solution << std::endl;
+	Log::global_log->info() << "_interpolationConstants: " << std::endl << solution << std::endl;
 #endif
 
 }

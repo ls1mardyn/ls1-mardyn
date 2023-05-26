@@ -14,7 +14,7 @@
 #include "utils/mardyn_assert.h"
 #include "utils/xmlfileUnits.h"
 
-using Log::global_log;
+
 
 const std::string TimerProfiler::_baseTimerName = "_baseTimer";
 
@@ -26,7 +26,7 @@ TimerProfiler::TimerProfiler(): _numElapsedIterations(0), _displayMode(Displaymo
 void TimerProfiler::readXML(XMLfileUnits& xmlconfig) {
 	std::string displayMode;
 	if(xmlconfig.getNodeValue("displaymode", displayMode)) {
-		global_log->info() << "Timer display mode: " << displayMode << std::endl;
+		Log::global_log->info() << "Timer display mode: " << displayMode << std::endl;
 		if(displayMode == "all") {
 			setDisplayMode(Displaymode::ALL);
 		} else if (displayMode == "active") {
@@ -36,7 +36,7 @@ void TimerProfiler::readXML(XMLfileUnits& xmlconfig) {
 		} else if (displayMode == "none") {
 			setDisplayMode(Displaymode::NONE);
 		} else {
-			global_log->error() << "Unknown display mode: " << displayMode << std::endl;
+			Log::global_log->error() << "Unknown display mode: " << displayMode << std::endl;
 		}
 	}
 }
@@ -51,7 +51,7 @@ Timer* TimerProfiler::getTimer(std::string timerName){
 }
 
 void TimerProfiler::registerTimer(std::string timerName, std::vector<std::string> parentTimerNames, Timer *timer, bool activate){
-	global_log->debug() << "Registering timer: " << timerName << "  [parents: " << string_utils::join(parentTimerNames, std::string(", ")) << "]" << std::endl;
+	Log::global_log->debug() << "Registering timer: " << timerName << "  [parents: " << string_utils::join(parentTimerNames, std::string(", ")) << "]" << std::endl;
 
 	if (!activate && timer){
 		timer->deactivateTimer();
@@ -91,7 +91,7 @@ void TimerProfiler::print(std::string timerName, std::string outputPrefix){
 		(getDisplayMode() == Displaymode::ACTIVE && getTimer(timerName)->isActive()) ||
 		(getDisplayMode() == Displaymode::NON_ZERO && getTimer(timerName)->get_etime() > 0)
 	) {
-		global_log->info() << outputPrefix << getOutputString(timerName) << getTime(timerName) << " sec" << std::endl;
+		Log::global_log->info() << outputPrefix << getOutputString(timerName) << getTime(timerName) << " sec" << std::endl;
 	}
 }
 
@@ -269,9 +269,9 @@ bool TimerProfiler::_checkTimer(std::string timerName, bool checkActive){
 
 void TimerProfiler::_debugMessage(std::string timerName){
 	if(_timers.count(timerName)){
-		global_log->debug()<<"Timer "<<timerName<<" is not "<<(!_checkTimer(timerName, false) ? "a timer" : "active")<<".\n";
+		Log::global_log->debug()<<"Timer "<<timerName<<" is not "<<(!_checkTimer(timerName, false) ? "a timer" : "active")<<".\n";
 	}
 	else{
-		global_log->debug()<<"Timer "<<timerName<<" is not registered."<< std::endl;
+		Log::global_log->debug()<<"Timer "<<timerName<<" is not registered."<< std::endl;
 	}
 }

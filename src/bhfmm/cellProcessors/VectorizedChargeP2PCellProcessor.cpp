@@ -21,22 +21,22 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 		_upotXpoles(0.0), _virial(0.0){
 
 #if VCP_VEC_TYPE==VCP_NOVEC
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using no intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: using no intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using SSE3 intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: using SSE3 intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using AVX intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using AVX2 intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: using AVX2 intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_KNL) || (VCP_VEC_TYPE==VCP_VEC_KNL_GATHER)
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using KNL intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: using KNL intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_AVX512F) || (VCP_VEC_TYPE==VCP_VEC_AVX512F_GATHER)
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using SKX intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: using SKX intrinsics." << std::endl;
 #endif
 
 	// initialize thread data
 	_numThreads = mardyn_get_max_threads();
-	global_log->info() << "VectorizedChargeP2PCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
 	_threadData.resize(_numThreads);
 
 	#if defined(_OPENMP)

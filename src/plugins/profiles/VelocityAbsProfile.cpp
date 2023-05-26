@@ -6,7 +6,7 @@
 #include "plugins/profiles/DensityProfile.h"
 
 void VelocityAbsProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
-	global_log->info() << "[VelocityAbsProfile] output" << std::endl;
+	Log::global_log->info() << "[VelocityAbsProfile] output" << std::endl;
 
 	// Setup outfile
 	_accumulatedDatasets = accumulatedDatasets;

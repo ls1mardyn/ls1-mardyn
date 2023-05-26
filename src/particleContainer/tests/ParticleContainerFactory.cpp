@@ -41,7 +41,7 @@ ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(Type t
 		return container;
 
 	} else {
-		global_log->error() << "ParticleContainerFactory: Unsupported type requested! " << std::endl;
+		Log::global_log->error() << "ParticleContainerFactory: Unsupported type requested! " << std::endl;
 		return nullptr;
 	}
 }
@@ -87,7 +87,7 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 		}
 		#endif
 	} else {
-		global_log->error() << "ParticleContainerFactory: Unsupported type requested! " << std::endl;
+		Log::global_log->error() << "ParticleContainerFactory: Unsupported type requested! " << std::endl;
 		return nullptr;
 	}
 

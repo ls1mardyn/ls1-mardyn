@@ -93,7 +93,7 @@ void CavityEnsemble::setSubdomain(int rank, double x0, double x1, double y0, dou
 
 void CavityEnsemble::setControlVolume(double x0, double y0, double z0, double x1, double y1, double z1) {
     if ((x0 >= x1) || (y0 >= y1) || (z0 >= z1)) {
-        global_log->error() << "\nInvalid control volume (" << x0 << " / " << y0
+        Log::global_log->error() << "\nInvalid control volume (" << x0 << " / " << y0
                             << " / " << z0 << ") to (" << x1 << " / " << y1 << " / "
                             << z1 << ")." << std::endl;
         Simulation::exit(711);
@@ -111,19 +111,19 @@ void CavityEnsemble::setControlVolume(double x0, double y0, double z0, double x1
 
 void CavityEnsemble::init(Component *component, unsigned Nx, unsigned Ny, unsigned Nz) {
     if (this->ownrank < 0) {
-        global_log->error() << "\nInvalid rank " << ownrank << ".\n";
+        Log::global_log->error() << "\nInvalid rank " << ownrank << ".\n";
         Simulation::exit(712);
     }
     if (this->initialized) {
-        global_log->error() << "\nCavity ensemble initialized twice.\n";
+        Log::global_log->error() << "\nCavity ensemble initialized twice.\n";
         Simulation::exit(713);
     }
     if (0.0 >= this->T) {
-        global_log->error() << "\nInvalid temperature T = " << T << ".\n";
+        Log::global_log->error() << "\nInvalid temperature T = " << T << ".\n";
         Simulation::exit(714);
     }
     if (0.0 >= this->globalV) {
-        global_log->error() << "\nInvalid control volume V_ctrl = " << globalV << ".\n";
+        Log::global_log->error() << "\nInvalid control volume V_ctrl = " << globalV << ".\n";
         Simulation::exit(715);
     }
 

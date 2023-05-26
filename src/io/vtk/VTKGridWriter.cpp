@@ -29,9 +29,9 @@ VTKGridWriter::~VTKGridWriter() { }
 
 void VTKGridWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "VTKMoleculeWriter: Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "VTKMoleculeWriter: Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("outputprefix", _fileName);
-	global_log->info() << "VTKMoleculeWriter: Output prefix: " << _fileName << std::endl;
+	Log::global_log->info() << "VTKMoleculeWriter: Output prefix: " << _fileName << std::endl;
 
 	if (_writeFrequency <= 0) {
 		Log::global_log->error() << "VTKMoleculeWriter: writeFrequency must be > 0!" << std::endl;
@@ -47,7 +47,7 @@ void  VTKGridWriter::endStep(
 	LinkedCells* container = dynamic_cast<LinkedCells*>(particleContainer);
 #ifndef NDEBUG
 	if (container == NULL) {
-		global_log->error() << "VTKGridWriter works only with plottable LinkedCells!" << std::endl;
+		Log::global_log->error() << "VTKGridWriter works only with plottable LinkedCells!" << std::endl;
 		Simulation::exit(1);
 	}
 #endif
@@ -113,7 +113,7 @@ void  VTKGridWriter::init(ParticleContainer *particleContainer,
                           DomainDecompBase * /*domainDecomposition*/, Domain * /*domain*/) {
 #ifndef NDEBUG
 	if (dynamic_cast<LinkedCells*>(particleContainer) == NULL) {
-		global_log->error() << "VTKGridWriter works only with LinkCells!" << std::endl;
+		Log::global_log->error() << "VTKGridWriter works only with LinkCells!" << std::endl;
 		Simulation::exit(1);
 	}
 #endif

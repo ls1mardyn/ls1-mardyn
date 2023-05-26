@@ -115,7 +115,7 @@ void ChemicalPotential::prepareTimestep(ParticleContainer* moleculeContainer,
 	float maxrnd = 1.0;
 	_globalN = comm->Ndistribution(localN, &minrnd, &maxrnd);
 #ifndef NDEBUG
-	global_log->debug() << " believes N(" << _componentid << ")=" << _globalN
+	Log::global_log->debug() << " believes N(" << _componentid << ")=" << _globalN
 			<< ", rho=" << _globalN / _globalV
 			<< ", the decisive density quotient equals "
 			<< (float) _globalN / _globalReducedVolume << "\n";
@@ -146,7 +146,7 @@ void ChemicalPotential::prepareTimestep(ParticleContainer* moleculeContainer,
 
 	int insertions = _instances;
 #ifndef NDEBUG
-	global_log->debug() << "Number of insertions: " << insertions << ".\n";
+	Log::global_log->debug() << "Number of insertions: " << insertions << ".\n";
 #endif
 
 	// construct insertions
@@ -251,7 +251,7 @@ ParticleIterator ChemicalPotential::getDeletion(ParticleContainer* moleculeConta
 	}
 
 #ifndef NDEBUG
-	global_log->debug() << "ID " << m->getID() << " selected for deletion (index " << idx << ")." << std::endl;
+	Log::global_log->debug() << "ID " << m->getID() << " selected for deletion (index " << idx << ")." << std::endl;
 #endif
 
 	mardyn_assert(m->getID() < _nextid);
@@ -280,11 +280,11 @@ bool ChemicalPotential::decideDeletion(double deltaUTilde)
 
 	if (_remainingDecisions.empty()) {
 		if (_widom) {
-			global_log->error()
+			Log::global_log->error()
 					<< "SEVERE WARNING: The Widom method is (erroneously) trying to carry out test deletions.\n";
 			return false;
 		}
-		global_log->error() << "No decision is possible." << std::endl;
+		Log::global_log->error() << "No decision is possible." << std::endl;
 		Simulation::exit(1);
 	}
 	float dec = *_remainingDecisions.begin();
@@ -313,11 +313,11 @@ bool ChemicalPotential::decideInsertion(double deltaUTilde)
 {
 	if (_remainingDecisions.empty()) {
 		if (_widom) {
-			global_log->error() << "!!! SEVERE WARNING on rank " << _ownrank
+			Log::global_log->error() << "!!! SEVERE WARNING on rank " << _ownrank
 					<< ": no decision is possible !!!\n";
 			return false;
 		}
-		global_log->error() << "No decision is possible." << std::endl;
+		Log::global_log->error() << "No decision is possible." << std::endl;
 		Simulation::exit(1);
 	}
 	double acc = _globalReducedVolume * exp(_muTilde - deltaUTilde)
@@ -373,7 +373,7 @@ void ChemicalPotential::setControlVolume(double x0, double y0, double z0,
 		double x1, double y1, double z1)
 {
 	if ((x0 >= x1) || (y0 >= y1) || (z0 >= z1)) {
-		global_log->error() << "\nInvalid control volume (" << x0 << " / " << y0
+		Log::global_log->error() << "\nInvalid control volume (" << x0 << " / " << y0
 				<< " / " << z0 << ") to (" << x1 << " / " << y1 << " / " << z1
 				<< ")." << std::endl;
 		Simulation::exit(611);

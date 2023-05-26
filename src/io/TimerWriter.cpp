@@ -13,9 +13,9 @@
 
 void TimerWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	XMLfile::Query query = xmlconfig.query("timers/timer");
 	std::string oldpath = xmlconfig.getcurrentnodepath();
@@ -29,11 +29,11 @@ void TimerWriter::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("incremental", incrementalTimer);
 		_incremental.push_back(incrementalTimer);
 
-		global_log->info() << "Added timer for LB monitoring: " << timername << ", incremental: " << incrementalTimer
+		Log::global_log->info() << "Added timer for LB monitoring: " << timername << ", incremental: " << incrementalTimer
 						   << std::endl;
 	}
 	if (_timerNames.empty()) {
-		global_log->error() << "TimerWriter: no timers given. make sure you specify them correctly." << std::endl;
+		Log::global_log->error() << "TimerWriter: no timers given. make sure you specify them correctly." << std::endl;
 		Simulation::exit(242367);
 	}
 	xmlconfig.changecurrentnode(oldpath);

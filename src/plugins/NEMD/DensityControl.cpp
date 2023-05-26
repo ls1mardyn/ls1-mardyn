@@ -32,7 +32,7 @@ DensityControl::DensityControl() = default;
 DensityControl::~DensityControl() = default;
 
 void DensityControl::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
-	global_log->debug() << "DensityControl enabled" << std::endl;
+	Log::global_log->debug() << "DensityControl enabled" << std::endl;
 
 #ifdef ENABLE_MPI
 	// Create new MPI data type to transport particle ID and component ID together in one object
@@ -56,7 +56,7 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("control/start", _control.start);
 	xmlconfig.getNodeValue("control/frequency", _control.freq);
 	xmlconfig.getNodeValue("control/stop", _control.stop);
-	global_log->info() << "[DensityControl] is acting start:freq:stop = " << _control.start << ":" << _control.freq
+	Log::global_log->info() << "[DensityControl] is acting start:freq:stop = " << _control.start << ":" << _control.freq
 					   << ":" << _control.stop << std::endl;
 
 	// range
@@ -82,7 +82,7 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	_vecPriority.push_back(0);
 	const uint32_t nRet = this->tokenize_int_list(_vecPriority, strPrio);
 	if (nRet != numComponents) {
-		global_log->error() << "[DensityControl] Number of component IDs specified in element <priority>...</priority>"
+		Log::global_log->error() << "[DensityControl] Number of component IDs specified in element <priority>...</priority>"
 							<< " does not match the number of components in the simulation. Programm exit ..."
 							<< std::endl;
 		Simulation::exit(-1);
@@ -107,9 +107,9 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	uint32_t numTargets = 0;
 	const XMLfile::Query query = xmlconfig.query("targets/target");
 	numTargets = query.card();
-	global_log->info() << "[DensityControl] Number of component targets: " << numTargets << std::endl;
+	Log::global_log->info() << "[DensityControl] Number of component targets: " << numTargets << std::endl;
 	if (numTargets < 1) {
-		global_log->error() << "[DensityControl] No target parameters specified. Program exit ..." << std::endl;
+		Log::global_log->error() << "[DensityControl] No target parameters specified. Program exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 	const std::string oldpath = xmlconfig.getcurrentnodepath();
@@ -277,7 +277,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer, Domain
 
 			if (cid_ub_send > 0 && cid_ub_recv > 0) {
 				const uint64_t numSwap = std::min(vecBalance[cid_ub_send], abs(vecBalance[cid_ub_recv]));
-				global_log->debug() << "[DensityControl] numSwap = " << numSwap << std::endl;
+				Log::global_log->debug() << "[DensityControl] numSwap = " << numSwap << std::endl;
 				for (uint64_t i = 0; i < numSwap; i++) {
 					const uint64_t pid = pidMap[cid_ub_send].back();
 					pidMap[cid_ub_send].pop_back();
@@ -328,7 +328,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer, Domain
 			// search for pid
 			for (auto sid : swpMap[i]) {
 				if (pid == sid) {
-					global_log->debug() << "[DensityControl] Swap pid=" << pid << " with cid=" << it->componentid() + 1
+					Log::global_log->debug() << "[DensityControl] Swap pid=" << pid << " with cid=" << it->componentid() + 1
 										<< " to cid=" << i << std::endl;
 					it->setComponent(compNew);
 				}
@@ -339,7 +339,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer, Domain
 		for (uint32_t i = 1; i < numComponents + 1; i++) {
 			std::vector<uint64_t>& vec = delMap[i];
 			if (std::find(vec.begin(), vec.end(), pid) != vec.end()) {  // found ID of to be deleted particle in vector
-				global_log->debug() << "[DensityControl] Delete particle with pid= " << pid
+				Log::global_log->debug() << "[DensityControl] Delete particle with pid= " << pid
 									<< " ; cid_ub= " << it->componentid() + 1 << std::endl;
 				particleContainer->deleteMolecule(it, false);
 			}
@@ -508,7 +508,7 @@ void DensityControl::initTargetValues(ParticleContainer* particleContainer, Doma
 #ifndef NDEBUG
 	// show target values
 	for (uint32_t i = 0; i < numComponents + 1; i++) {
-		global_log->info() << "cID=" << i << ": target count=" << _densityTarget.count[i]
+		Log::global_log->info() << "cID=" << i << ": target count=" << _densityTarget.count[i]
 						   << ", target density=" << _densityTarget.density[i] << std::endl;
 	}
 #endif

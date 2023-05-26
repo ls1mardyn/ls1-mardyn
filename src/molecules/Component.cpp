@@ -28,14 +28,14 @@ Component::Component(unsigned int id) {
 }
 
 void Component::readXML(XMLfileUnits& xmlconfig) {
-	global_log->info() << "Reading in component" << std::endl;
+	Log::global_log->info() << "Reading in component" << std::endl;
 	unsigned int cid = 0;
 	xmlconfig.getNodeValue( "@id", cid );
-	global_log->info() << "Component ID:" << cid << std::endl;
+	Log::global_log->info() << "Component ID:" << cid << std::endl;
 	setID(cid - 1);
 	std::string name;
 	xmlconfig.getNodeValue( "@name", name );
-	global_log->info() << "Component name:" << name << std::endl;
+	Log::global_log->info() << "Component name:" << name << std::endl;
 	setName(name);
 
 	XMLfile::Query query = xmlconfig.query( "site" );
@@ -45,7 +45,7 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 
 		std::string siteType;
 		xmlconfig.getNodeValue("@type", siteType);
-		global_log->info() << "Adding site of type " << siteType << std::endl;
+		Log::global_log->info() << "Adding site of type " << siteType << std::endl;
 
 		if (siteType == "LJ126") {
 			LJcenter ljSite;
@@ -67,7 +67,7 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			_Ipa[1] = 1.0;
 			_Ipa[2] = 0.0;
 
-			global_log->info() << "Rotation enabled with [Ixx Iyy Izz] = [" << _Ipa[0] << " " << _Ipa[1] << " "
+			Log::global_log->info() << "Rotation enabled with [Ixx Iyy Izz] = [" << _Ipa[0] << " " << _Ipa[1] << " "
 							   << _Ipa[2] << "]. Dipole direction vector of the Stockmayer fluid should be [0 0 1]."
 							   << std::endl;
 
@@ -76,10 +76,10 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			quadrupoleSite.readXML(xmlconfig);
 			addQuadrupole(quadrupoleSite);
 		} else if (siteType == "Tersoff") {
-			global_log->error() << "Tersoff no longer supported:" << siteType << std::endl;
+			Log::global_log->error() << "Tersoff no longer supported:" << siteType << std::endl;
 			Simulation::exit(-1);
 		} else {
-			global_log->error() << "Unknown site type:" << siteType << std::endl;
+			Log::global_log->error() << "Unknown site type:" << siteType << std::endl;
 			Simulation::exit(-1);
 		}
 		// go back to initial level, to be consistent, even if no site information is found.
@@ -91,10 +91,10 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 		if(xmlconfig.getNodeValueReduced("Ixx", II[0]) > 0) { setI11(II[0]); }
 		if(xmlconfig.getNodeValueReduced("Iyy", II[1]) > 0) { setI22(II[1]); }
 		if(xmlconfig.getNodeValueReduced("Izz", II[2]) > 0) { setI33(II[2]); }
-		global_log->info() << "Using moments of inertia set in xml config: Ixx = " << I11() << " ; Iyy = " << I22() << " ; Izz = " << I33() << std::endl;
+		Log::global_log->info() << "Using moments of inertia set in xml config: Ixx = " << I11() << " ; Iyy = " << I22() << " ; Izz = " << I33() << std::endl;
 		xmlconfig.changecurrentnode("..");
 	} else {
-		global_log->info() << "Using calculated moments of inertia: Ixx = " << I11() << " ; Iyy = " << I22() << " ; Izz = " << I33() << std::endl;
+		Log::global_log->info() << "Using calculated moments of inertia: Ixx = " << I11() << " ; Iyy = " << I22() << " ; Izz = " << I33() << std::endl;
 	}
 }
 

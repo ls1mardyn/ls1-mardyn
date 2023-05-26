@@ -9,7 +9,7 @@
 #include <cmath>
 #include <cstdint>
 
-using Log::global_log;
+
 
 /** @brief The Site class is the basis for the implementation of physical interactions.
  *
@@ -57,7 +57,7 @@ public:
 		xmlconfig.getNodeValueReduced("mass", _m);
 		
 		if (!xmlconfig.getNodeValue("@name", _name)) {
-			global_log->error() << "Cannot find site name. Defaulting to type." << std::endl;
+			Log::global_log->error() << "Cannot find site name. Defaulting to type." << std::endl;
 			xmlconfig.getNodeValue("@type", _name);
 		}
 

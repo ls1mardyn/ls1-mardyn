@@ -43,7 +43,7 @@ void ProfileBase::writeKartMatrix (std::ofstream& outfile) {
 }
 
 void ProfileBase::writeSimpleMatrix (std::ofstream& outfile) {
-	global_log->error() << "SIMPLE MATRIX OUTPUT NOT IMPLEMENTED!\n";
+	Log::global_log->error() << "SIMPLE MATRIX OUTPUT NOT IMPLEMENTED!\n";
 }
 
 void ProfileBase::writeCylMatrix (std::ofstream& outfile) {

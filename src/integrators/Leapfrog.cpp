@@ -25,7 +25,7 @@ Leapfrog::~Leapfrog() {}
 void Leapfrog::readXML(XMLfileUnits& xmlconfig) {
 	_timestepLength = 0;
 	xmlconfig.getNodeValueReduced("timestep", _timestepLength);
-	global_log->info() << "Timestep: " << _timestepLength << std::endl;
+	Log::global_log->info() << "Timestep: " << _timestepLength << std::endl;
 	mardyn_assert(_timestepLength > 0);
 }
 
@@ -44,7 +44,7 @@ void Leapfrog::eventNewTimestep(ParticleContainer* molCont, Domain* domain) {
 
 void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* /*domain*/) {
 	if (this->_state != STATE_NEW_TIMESTEP) {
-		global_log->error() << "Leapfrog::transition1to2(...): Wrong state for state transition" << std::endl;
+		Log::global_log->error() << "Leapfrog::transition1to2(...): Wrong state for state transition" << std::endl;
 		return;
 	}
 
@@ -62,7 +62,7 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* /*domain*/) {
 
 void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 	if (this->_state != STATE_PRE_FORCE_CALCULATION) {
-		global_log->error() << "Leapfrog::transition2to3(...): Wrong state for state transition" << std::endl;
+		Log::global_log->error() << "Leapfrog::transition2to3(...): Wrong state for state transition" << std::endl;
 	}
 
 	/* TODO introduce
@@ -151,6 +151,6 @@ void Leapfrog::transition3to1(ParticleContainer* /*molCont*/, Domain* /*domain*/
 		this->_state = STATE_NEW_TIMESTEP;
 	}
 	else {
-		global_log->error() << "Leapfrog::transition3to1(...): Wrong state for state transition" << std::endl;
+		Log::global_log->error() << "Leapfrog::transition3to1(...): Wrong state for state transition" << std::endl;
 	}
 }

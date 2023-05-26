@@ -237,27 +237,27 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	// send only if neighbour is actually a neighbour.
 	for (int i = 0; i < numNeighbours; ++i) {
 		if (not _useSequentialFallback or (*_neighbours)[0][i].getRank() != domainDecomp->getRank()) {
-			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
+			Log::global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
 			(*_neighbours)[0][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType, invalidParticles, true, doHaloPositionCheck);
 		}
 
 	}
 	if(not invalidParticles.empty()){
-		global_log->error_always_output() << "NeighbourCommunicationScheme: Invalid particles that should have been "
+		Log::global_log->error_always_output() << "NeighbourCommunicationScheme: Invalid particles that should have been "
 											 "removed, are still existent. They would be lost. Aborting..."
 										  << std::endl;
-		global_log->error_always_output() << "The particles:" << std::endl;
+		Log::global_log->error_always_output() << "The particles:" << std::endl;
 		for (auto& invalidParticle : invalidParticles) {
 			std::stringstream ss;
 			invalidParticle.write(ss);
-			global_log->error_always_output() << ss.str() << std::endl;
+			Log::global_log->error_always_output() << ss.str() << std::endl;
 		}
-		global_log->error_always_output() << "The leavingExportNeighbours:" << std::endl;
+		Log::global_log->error_always_output() << "The leavingExportNeighbours:" << std::endl;
 		for (auto& neighbour : (*_leavingExportNeighbours)[0]) {
 			std::stringstream ss;
 			neighbour.print(ss);
-			global_log->error_always_output() << ss.str() << std::endl;
+			Log::global_log->error_always_output() << ss.str() << std::endl;
 		}
 		Simulation::exit(544);
 	}
@@ -318,7 +318,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 
 	double waitCounter = 50.0;
 	double deadlockTimeOut = 360.0;
-	global_log->set_mpi_output_all();
+	Log::global_log->set_mpi_output_all();
 	while (not allDone) {
 		allDone = true;
 		if (_pushPull) {
@@ -351,7 +351,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		// catch deadlocks
 		double waitingTime = MPI_Wtime() - startTime;
 		if (waitingTime > waitCounter) {
-			global_log->warning()
+			Log::global_log->warning()
 				<< "DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
 				<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds" << std::endl;
 			waitCounter += 5.0;
@@ -370,7 +370,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		}
 
 		if (waitingTime > deadlockTimeOut) {
-			global_log->error()
+			Log::global_log->error()
 				<< "DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
 				<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 				<< std::endl;
@@ -394,7 +394,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 
 	}  // while not allDone
 
-	global_log->set_mpi_output_root(0);
+	Log::global_log->set_mpi_output_root(0);
 }
 
 void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool import) {
@@ -415,7 +415,7 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 			else _neighbours = _haloImportForceExportNeighbours;
 			break;
 		case LEAVING_AND_HALO_COPIES:
-			global_log->error() << "WRONG type in selectNeighbours - this should not be used for push-pull-partners "
+			Log::global_log->error() << "WRONG type in selectNeighbours - this should not be used for push-pull-partners "
 								   "selectNeighbours method"
 								<< std::endl;
 			Simulation::exit(1);
@@ -523,7 +523,7 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 		const int numNeighbours = (*_neighbours)[d].size();
 		std::vector<Molecule> dummy;
 		for (int i = 0; i < numNeighbours; ++i) {
-			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
+			Log::global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
 			(*_neighbours)[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType, dummy, false, true/*do halo position change*/);
 		}
@@ -549,7 +549,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 
 	double waitCounter = 50.0;
 	double deadlockTimeOut = 360.0;
-	global_log->set_mpi_output_all();
+	Log::global_log->set_mpi_output_all();
 	for (int i = 0; i < numNeighbours; ++i) { // reset receive status
 		if (domainDecomp->getRank() != (*_neighbours)[d][i].getRank()) {
 			(*_neighbours)[d][i].resetReceive();
@@ -578,7 +578,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 		// catch deadlocks
 		double waitingTime = MPI_Wtime() - startTime;
 		if (waitingTime > waitCounter) {
-			global_log->warning()
+			Log::global_log->warning()
 					<< "IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
@@ -589,7 +589,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 		}
 
 		if (waitingTime > deadlockTimeOut) {
-			global_log->error()
+			Log::global_log->error()
 					<< "IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 					<< std::endl;
@@ -600,7 +600,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 		}
 
 	} // while not allDone
-	global_log->set_mpi_output_root(0);
+	Log::global_log->set_mpi_output_root(0);
 }
 
 void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI1D(ParticleContainer* moleculeContainer, Domain* domain,

@@ -33,18 +33,18 @@ MmspdBinWriter::~MmspdBinWriter(){}
 void MmspdBinWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 	
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
 	}
-	global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
+	Log::global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
 }
 
 void MmspdBinWriter::init(ParticleContainer * /*particleContainer*/,
@@ -222,7 +222,7 @@ void MmspdBinWriter::endStep(ParticleContainer *particleContainer,
 			offset += outputsize_get;
 		}
 
-		global_log->debug() << "MmspdBinWriter rank: " << rank << "; step: " << simstep << "; offset: " << offset << std::endl;
+		Log::global_log->debug() << "MmspdBinWriter rank: " << rank << "; step: " << simstep << "; offset: " << offset << std::endl;
 
 		MPI_File_seek(fh, offset, MPI_SEEK_END);
 

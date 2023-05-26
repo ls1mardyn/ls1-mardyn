@@ -169,59 +169,59 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("integrator")) {
 		std::string integratorType;
 		xmlconfig.getNodeValue("@type", integratorType);
-		global_log->info() << "Integrator type: " << integratorType << std::endl;
+		Log::global_log->info() << "Integrator type: " << integratorType << std::endl;
 		if(integratorType == "Leapfrog") {
 #ifdef ENABLE_REDUCED_MEMORY_MODE
-			global_log->error() << "The reduced memory mode (RMM) requires the LeapfrogRMM integrator." << std::endl;
+			Log::global_log->error() << "The reduced memory mode (RMM) requires the LeapfrogRMM integrator." << std::endl;
 			Simulation::exit(-1);
 #endif
 			_integrator = new Leapfrog();
 		} else if (integratorType == "LeapfrogRMM") {
 			_integrator = new LeapfrogRMM();
 		} else {
-			global_log-> error() << "Unknown integrator " << integratorType << std::endl;
+			Log::global_log-> error() << "Unknown integrator " << integratorType << std::endl;
 			Simulation::exit(1);
 		}
 		_integrator->readXML(xmlconfig);
 		_integrator->init();
 		xmlconfig.changecurrentnode("..");
 	} else {
-		global_log->error() << "Integrator section missing." << std::endl;
+		Log::global_log->error() << "Integrator section missing." << std::endl;
 	}
 
 	/* run section */
 	if(xmlconfig.changecurrentnode("run")) {
 		xmlconfig.getNodeValueReduced("currenttime", _simulationTime);
-		global_log->info() << "Simulation start time: " << _simulationTime << std::endl;
+		Log::global_log->info() << "Simulation start time: " << _simulationTime << std::endl;
 		/* steps */
 		xmlconfig.getNodeValue("equilibration/steps", _initStatistics);
-		global_log->info() << "Number of equilibration steps: " << _initStatistics << std::endl;
+		Log::global_log->info() << "Number of equilibration steps: " << _initStatistics << std::endl;
 		xmlconfig.getNodeValue("production/steps", _numberOfTimesteps);
-		global_log->info() << "Number of timesteps: " << _numberOfTimesteps << std::endl;
+		Log::global_log->info() << "Number of timesteps: " << _numberOfTimesteps << std::endl;
 		xmlconfig.getNodeValue("production/loop-abort-time", _maxWallTime);
 		if(_maxWallTime != -1) {
-			global_log->info() << "Max loop-abort-time set: " << _maxWallTime << std::endl;
+			Log::global_log->info() << "Max loop-abort-time set: " << _maxWallTime << std::endl;
 			_wallTimeEnabled = true;
 		}
 		xmlconfig.changecurrentnode("..");
 	} else {
-		global_log->error() << "Run section missing." << std::endl;
+		Log::global_log->error() << "Run section missing." << std::endl;
 	}
 
 	/* ensemble */
 	if(xmlconfig.changecurrentnode("ensemble")) {
 		std::string ensembletype;
 		xmlconfig.getNodeValue("@type", ensembletype);
-		global_log->info() << "Ensemble: " << ensembletype<< std::endl;
+		Log::global_log->info() << "Ensemble: " << ensembletype<< std::endl;
 		if (ensembletype == "NVT") {
 			delete _ensemble;
 			_ensemble = new CanonicalEnsemble();
 		} else if (ensembletype == "muVT") {
-			global_log->error() << "muVT ensemble not completely implemented via XML input." << std::endl;
+			Log::global_log->error() << "muVT ensemble not completely implemented via XML input." << std::endl;
 			/* TODO: GrandCanonical terminates as readXML is not implemented and it is not tested yet. */
 			_ensemble = new GrandCanonicalEnsemble();
 		} else {
-			global_log->error() << "Unknown ensemble type: " << ensembletype << std::endl;
+			Log::global_log->error() << "Unknown ensemble type: " << ensembletype << std::endl;
 			Simulation::exit(1);
 		}
 		_ensemble->readXML(xmlconfig);
@@ -234,7 +234,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode("..");
 	}
 	else {
-		global_log->error() << "Ensemble section missing." << std::endl;
+		Log::global_log->error() << "Ensemble section missing." << std::endl;
 		Simulation::exit(1);
 	}
 
@@ -245,8 +245,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	//1 Comps: 0 coeffs; 2 Comps: 2 coeffs; 3 Comps: 6 coeffs; 4 Comps 12 coeffs
 	const std::size_t neededCoeffs = compNum*(compNum-1);
 	if(dmixcoeff.size() < neededCoeffs){
-		global_log->warning() << "Not enough mixing coefficients were given! (Filling the missing ones with 1)" << '\n';
-		global_log->warning() << "This can happen because the xml-input doesn't support these yet!" << std::endl;
+		Log::global_log->warning() << "Not enough mixing coefficients were given! (Filling the missing ones with 1)" << '\n';
+		Log::global_log->warning() << "This can happen because the xml-input doesn't support these yet!" << std::endl;
 		unsigned int numcomponents = _simulation.getEnsemble()->getComponents()->size();
 		for (unsigned int i = dmixcoeff.size(); i < neededCoeffs; i++) {
 			dmixcoeff.push_back(1);
@@ -258,10 +258,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		/* cutoffs */
 		if(xmlconfig.changecurrentnode("cutoffs")) {
 			if(xmlconfig.getNodeValueReduced("defaultCutoff", _cutoffRadius)) {
-				global_log->info() << "dimensionless default cutoff radius:\t" << _cutoffRadius << std::endl;
+				Log::global_log->info() << "dimensionless default cutoff radius:\t" << _cutoffRadius << std::endl;
 			}
 			if(xmlconfig.getNodeValueReduced("radiusLJ", _LJCutoffRadius)) {
-				global_log->info() << "dimensionless LJ cutoff radius:\t" << _LJCutoffRadius << std::endl;
+				Log::global_log->info() << "dimensionless LJ cutoff radius:\t" << _LJCutoffRadius << std::endl;
 				for(auto &component: *(_ensemble->getComponents())) {
 					component.updateAllLJcentersShift(_LJCutoffRadius);
 				}
@@ -270,13 +270,13 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			 *        maybe use map/list to store cutoffs for different potentials? */
 			_cutoffRadius = std::max(_cutoffRadius, _LJCutoffRadius);
 			if(_cutoffRadius <= 0) {
-				global_log->error() << "cutoff radius <= 0." << std::endl;
+				Log::global_log->error() << "cutoff radius <= 0." << std::endl;
 				Simulation::exit(1);
 			}
-			global_log->info() << "dimensionless cutoff radius:\t" << _cutoffRadius << std::endl;
+			Log::global_log->info() << "dimensionless cutoff radius:\t" << _cutoffRadius << std::endl;
 			xmlconfig.changecurrentnode("..");
 		} else {
-			global_log->error() << "Cutoff section missing." << std::endl;
+			Log::global_log->error() << "Cutoff section missing." << std::endl;
 			Simulation::exit(1);
 		}
 
@@ -285,17 +285,17 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		if(xmlconfig.changecurrentnode("electrostatic[@type='ReactionField']")) {
 			double epsilonRF = 0;
 			xmlconfig.getNodeValueReduced("epsilon", epsilonRF);
-			global_log->info() << "Epsilon Reaction Field: " << epsilonRF << std::endl;
+			Log::global_log->info() << "Epsilon Reaction Field: " << epsilonRF << std::endl;
 			_domain->setepsilonRF(epsilonRF);
 			xmlconfig.changecurrentnode("..");
 		} else {
-			global_log->error() << "Electrostatics section for reaction field setup missing." << std::endl;
+			Log::global_log->error() << "Electrostatics section for reaction field setup missing." << std::endl;
 			Simulation::exit(1);
 		}
 
 		if (xmlconfig.changecurrentnode("electrostatic[@type='FastMultipoleMethod']")) {
 #ifdef MARDYN_AUTOPAS
-			global_log->fatal()
+			Log::global_log->fatal()
 				<< "The fast multipole method is not compatible with AutoPas. Please disable the AutoPas mode (ENABLE_AUTOPAS)!"
 				<< std::endl;
 			Simulation::exit(1);
@@ -309,13 +309,13 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		if(xmlconfig.changecurrentnode("parallelisation")) {
 			std::string parallelisationtype("DomainDecomposition");
 			xmlconfig.getNodeValue("@type", parallelisationtype);
-			global_log->info() << "Parallelisation type: " << parallelisationtype << std::endl;
+			Log::global_log->info() << "Parallelisation type: " << parallelisationtype << std::endl;
 			xmlconfig.getNodeValue("overlappingP2P", _overlappingP2P);
-			global_log->info() << "Using overlapping p2p communication: " << _overlappingP2P << std::endl;
+			Log::global_log->info() << "Using overlapping p2p communication: " << _overlappingP2P << std::endl;
 		#ifdef ENABLE_MPI
 			/// @todo Dummy Decomposition now included in DecompBase - still keep this name?
 			if(parallelisationtype == "DummyDecomposition") {
-				global_log->error() << "DummyDecomposition not available in parallel mode." << std::endl;
+				Log::global_log->error() << "DummyDecomposition not available in parallel mode." << std::endl;
 			}
 			else if(parallelisationtype == "DomainDecomposition") {
 				delete _domainDecomposition;
@@ -336,34 +336,34 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					if (datastructuretype == "AutoPas" or datastructuretype == "AutoPasContainer") {
 						xmlconfig.getNodeValue("skin", skin);
 					} else {
-						global_log->warning() << "Using the GeneralDomainDecomposition without AutoPas is not "
+						Log::global_log->warning() << "Using the GeneralDomainDecomposition without AutoPas is not "
 												 "thoroughly tested and considered BETA."
 											  << std::endl;
 						// Force grid! This is needed, as the linked cells container assumes a grid and the calculation
 						// of global values will be faulty without one!
-						global_log->info() << "Forcing a grid for the GeneralDomainDecomposition! This is required "
+						Log::global_log->info() << "Forcing a grid for the GeneralDomainDecomposition! This is required "
 												 "to get correct global values!"
 											  << std::endl;
 						forceLatchingToLinkedCellsGrid = true;
 					}
-					global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
+					Log::global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
 				} else {
-					global_log->error() << "Datastructure section missing" << std::endl;
+					Log::global_log->error() << "Datastructure section missing" << std::endl;
 					Simulation::exit(1);
 				}
 				if(not xmlconfig.changecurrentnode("../parallelisation")){
-					global_log->error() << "Could not go back to parallelisation path. Aborting." << std::endl;
+					Log::global_log->error() << "Could not go back to parallelisation path. Aborting." << std::endl;
 					Simulation::exit(1);
 				}
 				delete _domainDecomposition;
 				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid);
 			} else {
-				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << std::endl;
+				Log::global_log->error() << "Unknown parallelisation type: " << parallelisationtype << std::endl;
 				Simulation::exit(1);
 			}
 		#else /* serial */
 			if(parallelisationtype != "DummyDecomposition") {
-				global_log->warning()
+				Log::global_log->warning()
 						<< "Executable was compiled without support for parallel execution: "
 						<< parallelisationtype
 						<< " not available. Using serial mode." << std::endl;
@@ -380,20 +380,20 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 
 			std::string loadTimerStr("SIMULATION_FORCE_CALCULATION");
 			xmlconfig.getNodeValue("timerForLoad", loadTimerStr);
-			global_log->info() << "Using timer " << loadTimerStr << " for the load calculation." << std::endl;
+			Log::global_log->info() << "Using timer " << loadTimerStr << " for the load calculation." << std::endl;
 			_timerForLoad = timers()->getTimer(loadTimerStr);
 			if (not _timerForLoad) {
-				global_log->error() << "'timerForLoad' set to a timer that does not exist('" << loadTimerStr
+				Log::global_log->error() << "'timerForLoad' set to a timer that does not exist('" << loadTimerStr
 									<< "')! Aborting!" << std::endl;
 				exit(1);
 			}
 
 			std::size_t timerForLoadAveragingLength{1ul};
 			xmlconfig.getNodeValue("timerForLoad_AveragingLength", timerForLoadAveragingLength);
-			global_log->info() << "Averaging over " << timerForLoadAveragingLength
+			Log::global_log->info() << "Averaging over " << timerForLoadAveragingLength
 							   << "time steps for the load calculation." << std::endl;
 			if(timerForLoadAveragingLength < 1ul) {
-				global_log->fatal() << "timerForLoadAveragingLength has to be at least 1" << std::endl;
+				Log::global_log->fatal() << "timerForLoadAveragingLength has to be at least 1" << std::endl;
 				Simulation::exit(15843);
 			}
 			_lastTraversalTimeHistory.setCapacity(timerForLoadAveragingLength);
@@ -402,7 +402,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else {
 		#ifdef ENABLE_MPI
-			global_log->error() << "Parallelisation section missing." << std::endl;
+			Log::global_log->error() << "Parallelisation section missing." << std::endl;
 			Simulation::exit(1);
 		#else /* serial */
 			// set _timerForLoad, s.t. it always exists.
@@ -415,34 +415,34 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		if(xmlconfig.changecurrentnode("datastructure")) {
 			std::string datastructuretype;
 			xmlconfig.getNodeValue("@type", datastructuretype);
-			global_log->info() << "Datastructure type: " << datastructuretype << std::endl;
+			Log::global_log->info() << "Datastructure type: " << datastructuretype << std::endl;
 			if(datastructuretype == "LinkedCells") {
 #ifdef MARDYN_AUTOPAS
-				global_log->fatal()
+				Log::global_log->fatal()
 					<< "LinkedCells not compiled (use AutoPas instead, or compile with disabled autopas mode)!"
 					<< std::endl;
 				Simulation::exit(33);
 #else
 				_moleculeContainer = new LinkedCells();
 				/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
-				global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << std::endl;
+				Log::global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << std::endl;
 				_moleculeContainer->setCutoff(_cutoffRadius);
 #endif
 			} else if(datastructuretype == "AdaptiveSubCells") {
-				global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
+				Log::global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
 				Simulation::exit(-1);
 			} else if(datastructuretype == "AutoPas" || datastructuretype == "AutoPasContainer") {
 #ifdef MARDYN_AUTOPAS
-				global_log->info() << "Using AutoPas container." << std::endl;
+				Log::global_log->info() << "Using AutoPas container." << std::endl;
 				_moleculeContainer = new AutoPasContainer(_cutoffRadius);
-				global_log->info() << "Setting cell cutoff radius for AutoPas container to " << _cutoffRadius << std::endl;
+				Log::global_log->info() << "Setting cell cutoff radius for AutoPas container to " << _cutoffRadius << std::endl;
 #else
-				global_log->fatal() << "AutoPas not compiled (use LinkedCells instead, or compile with enabled autopas mode)!" << std::endl;
+				Log::global_log->fatal() << "AutoPas not compiled (use LinkedCells instead, or compile with enabled autopas mode)!" << std::endl;
 				Simulation::exit(33);
 #endif
 			}
 			else {
-				global_log->error() << "Unknown data structure type: " << datastructuretype << std::endl;
+				Log::global_log->error() << "Unknown data structure type: " << datastructuretype << std::endl;
 				Simulation::exit(1);
 			}
 			_moleculeContainer->readXML(xmlconfig);
@@ -454,7 +454,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_domainDecomposition->updateSendLeavingWithCopies(sendTogether);
 			xmlconfig.changecurrentnode("..");
 		} else {
-			global_log->error() << "Datastructure section missing" << std::endl;
+			Log::global_log->error() << "Datastructure section missing" << std::endl;
 			Simulation::exit(1);
 		}
 
@@ -464,9 +464,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			long numThermostats = 0;
 			XMLfile::Query query = xmlconfig.query("thermostat");
 			numThermostats = query.card();
-			global_log->info() << "Number of thermostats: " << numThermostats << std::endl;
+			Log::global_log->info() << "Number of thermostats: " << numThermostats << std::endl;
 			if(numThermostats > 1) {
-				global_log->info() << "Enabling component wise thermostat" << std::endl;
+				Log::global_log->info() << "Enabling component wise thermostat" << std::endl;
 				_velocityScalingThermostat.enableComponentwise();
 			}
 			std::string oldpath = xmlconfig.getcurrentnodepath();
@@ -482,14 +482,14 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					xmlconfig.getNodeValue("@componentId", componentName);
 					if(componentName == "global"){
 						_domain->setGlobalTemperature(temperature);
-						global_log->info() << "Adding global velocity scaling thermostat, T = " << temperature << std::endl;
+						Log::global_log->info() << "Adding global velocity scaling thermostat, T = " << temperature << std::endl;
 					}
 					else {
 						int componentId = 0;
 						componentId = getEnsemble()->getComponent(componentName)->ID();
 						int thermostatID = _domain->getThermostat(componentId);
 						_domain->setTargetTemperature(thermostatID, temperature);
-						global_log->info() << "Adding velocity scaling thermostat for component '" << componentName << "' (ID: " << componentId << "), T = " << temperature << std::endl;
+						Log::global_log->info() << "Adding velocity scaling thermostat for component '" << componentName << "' (ID: " << componentId << "), T = " << temperature << std::endl;
 					}
 				}
 				else if(thermostattype == "TemperatureControl") {
@@ -497,14 +497,14 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
                         _temperatureControl = new TemperatureControl();
                         _temperatureControl->readXML(xmlconfig);
                     } else {
-                        global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..."
+                        Log::global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..."
                                             << std::endl;
                         Simulation::exit(-1);
                     }
                 }
 				else
 				{
-					global_log->warning() << "Unknown thermostat " << thermostattype << std::endl;
+					Log::global_log->warning() << "Unknown thermostat " << thermostattype << std::endl;
 					continue;
 				}
 			}
@@ -512,7 +512,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.changecurrentnode("..");
 		}
 		else {
-			global_log->warning() << "Thermostats section missing." << std::endl;
+			Log::global_log->warning() << "Thermostats section missing." << std::endl;
 		}
 
 		/* long range correction */
@@ -521,21 +521,21 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			std::string type;
 			if( !xmlconfig.getNodeValue("@type", type) )
 			{
-				global_log->error() << "LongRangeCorrection: Missing type specification. Program exit ..." << std::endl;
+				Log::global_log->error() << "LongRangeCorrection: Missing type specification. Program exit ..." << std::endl;
 				Simulation::exit(-1);
 			}
 			if("planar" == type)
 			{
 				unsigned int nSlabs = 10;
 				delete _longRangeCorrection;
-				global_log->info() << "Initializing planar LRC." << std::endl;
+				Log::global_log->info() << "Initializing planar LRC." << std::endl;
 				_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, nSlabs, global_simulation);
 				_longRangeCorrection->readXML(xmlconfig);
 			}
 			else if("homogeneous" == type)
 			{
 				delete _longRangeCorrection;
-				global_log->info() << "Initializing homogeneous LRC." << std::endl;
+				Log::global_log->info() << "Initializing homogeneous LRC." << std::endl;
 				_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
 			}
 			else if("none" == type)
@@ -545,53 +545,53 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else
 			{
-				global_log->error() << "LongRangeCorrection: Wrong type. Expected type == homogeneous|planar|none. Program exit ..." << std::endl;
+				Log::global_log->error() << "LongRangeCorrection: Wrong type. Expected type == homogeneous|planar|none. Program exit ..." << std::endl;
                 Simulation::exit(-1);
 			}
 			xmlconfig.changecurrentnode("..");
 		} else {
 			delete _longRangeCorrection;
-			global_log->info() << "Initializing default homogeneous LRC, as no LRC was defined." << std::endl;
+			Log::global_log->info() << "Initializing default homogeneous LRC, as no LRC was defined." << std::endl;
 			_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
 		}
 
 		xmlconfig.changecurrentnode(".."); /* algorithm section */
 	}
 	else {
-		global_log->error() << "Algorithm section missing." << std::endl;
+		Log::global_log->error() << "Algorithm section missing." << std::endl;
 	}
 
-	global_log -> info() << "Registering default plugins..." << std::endl;
+	Log::global_log -> info() << "Registering default plugins..." << std::endl;
     // REGISTERING/ENABLING PLUGINS
 	PluginFactory<PluginBase> pluginFactory;
     pluginFactory.registerDefaultPlugins();
-	global_log -> info() << "Successfully registered plugins." << std::endl;
+	Log::global_log -> info() << "Successfully registered plugins." << std::endl;
 
 	long numPlugs = 0;
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "plugin", _domain);
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "output/outputplugin", _domain);
-	global_log -> info() << "Number of enabled Plugins: " << numPlugs << std::endl;
+	Log::global_log -> info() << "Number of enabled Plugins: " << numPlugs << std::endl;
 
-	global_log -> info() << "Registering callbacks." << std::endl;
+	Log::global_log -> info() << "Registering callbacks." << std::endl;
 	for(auto&& plugin : _plugins) {
 		plugin->registerCallbacks(_callbacks);
 	}
-	global_log -> info() << _callbacks.size() << " callbacks registered." << std::endl;
+	Log::global_log -> info() << _callbacks.size() << " callbacks registered." << std::endl;
 
-	global_log -> info() << "Accessing callbacks." << std::endl;
+	Log::global_log -> info() << "Accessing callbacks." << std::endl;
 	for(auto&& plugin : _plugins) {
 		plugin->accessAllCallbacks(_callbacks);
 	}
-	global_log -> info() << "Accessed callbacks." << std::endl;
+	Log::global_log -> info() << "Accessed callbacks." << std::endl;
 
 
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 
 	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/file")) {
-		global_log->info() << "Reading phase space from file." << std::endl;
+		Log::global_log->info() << "Reading phase space from file." << std::endl;
 		std::string pspfiletype;
 		xmlconfig.getNodeValue("@type", pspfiletype);
-		global_log->info() << "Phase space file type: " << pspfiletype << std::endl;
+		Log::global_log->info() << "Phase space file type: " << pspfiletype << std::endl;
 
 		if (pspfiletype == "ASCII") {
 			_inputReader = new ASCIIReader();
@@ -611,7 +611,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 #endif
 		else {
-			global_log->error() << "Unknown phase space file type" << std::endl;
+			Log::global_log->error() << "Unknown phase space file type" << std::endl;
 			Simulation::exit(-1);
 		}
 	}
@@ -621,7 +621,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/generator")) {
 		std::string generatorName;
 		xmlconfig.getNodeValue("@name", generatorName);
-		global_log->info() << "Initializing phase space using generator: " << generatorName << std::endl;
+		Log::global_log->info() << "Initializing phase space using generator: " << generatorName << std::endl;
 		if(generatorName == "MultiObjectGenerator") {
 			_inputReader = new MultiObjectGenerator();
 		}
@@ -641,7 +641,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_inputReader = new PerCellGenerator();
 		}
 		else {
-			global_log->error() << "Unknown generator: " << generatorName << std::endl;
+			Log::global_log->error() << "Unknown generator: " << generatorName << std::endl;
 			Simulation::exit(1);
 		}
 		_inputReader->readXML(xmlconfig);
@@ -668,7 +668,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		unsigned long numOptions = 0;
 		XMLfile::Query query = xmlconfig.query("option");
 		numOptions = query.card();
-		global_log->info() << "Number of prepare start options: " << numOptions << std::endl;
+		Log::global_log->info() << "Number of prepare start options: " << numOptions << std::endl;
 
 		XMLfile::Query::const_iterator optionIter;
 		for( optionIter = query.begin(); optionIter; optionIter++ ) {
@@ -680,13 +680,13 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				xmlconfig.getNodeValue(".", bVal);
 				_prepare_start_opt.refreshIDs = bVal;
 				if(_prepare_start_opt.refreshIDs)
-					global_log->info() << "Particle IDs will be refreshed before simulation start." << std::endl;
+					Log::global_log->info() << "Particle IDs will be refreshed before simulation start." << std::endl;
 				else
-					global_log->info() << "Particle IDs will NOT be refreshed before simulation start." << std::endl;
+					Log::global_log->info() << "Particle IDs will NOT be refreshed before simulation start." << std::endl;
 			}
 			else
 			{
-				global_log->warning() << "Unknown option '" << strOptionName << "'" << std::endl;
+				Log::global_log->warning() << "Unknown option '" << strOptionName << "'" << std::endl;
 			}
 		}
 	}
@@ -696,45 +696,45 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 
 void Simulation::readConfigFile(std::string filename) {
 	std::string extension(getFileExtension(filename.c_str()));
-	global_log->debug() << "Found config filename extension: " << extension << std::endl;
+	Log::global_log->debug() << "Found config filename extension: " << extension << std::endl;
 	if (extension == "xml") {
 		initConfigXML(filename);
 	}
 	else {
-		global_log->error() << "Unknown config file extension '" << extension << "'." << std::endl;
+		Log::global_log->error() << "Unknown config file extension '" << extension << "'." << std::endl;
 		Simulation::exit(1);
 	}
 }
 
 void Simulation::initConfigXML(const std::string& inputfilename) {
-	global_log->info() << "Initializing XML config file: " << inputfilename << std::endl;
+	Log::global_log->info() << "Initializing XML config file: " << inputfilename << std::endl;
 
 	try{
 		XMLfileUnits inp(inputfilename);
 
-		global_log->debug() << "Input XML:" << std::endl << std::string(inp) << std::endl;
+		Log::global_log->debug() << "Input XML:" << std::endl << std::string(inp) << std::endl;
 
 		if(inp.changecurrentnode("/mardyn") < 0) {
-			global_log->error() << "Cound not find root node /mardyn in XML input file." << std::endl;
-			global_log->fatal() << "Not a valid MarDyn XML input file." << std::endl;
+			Log::global_log->error() << "Cound not find root node /mardyn in XML input file." << std::endl;
+			Log::global_log->fatal() << "Not a valid MarDyn XML input file." << std::endl;
 			Simulation::exit(1);
 		}
 
 		std::string version("unknown");
 		inp.getNodeValue("@version", version);
-		global_log->info() << "MarDyn XML config file version: " << version << std::endl;
+		Log::global_log->info() << "MarDyn XML config file version: " << version << std::endl;
 
 		if(inp.changecurrentnode("simulation")) {
 			readXML(inp);
 			inp.changecurrentnode("..");
 		} // simulation-section
 		else {
-			global_log->error() << "Simulation section missing" << std::endl;
+			Log::global_log->error() << "Simulation section missing" << std::endl;
 			Simulation::exit(1);
 		}
 	} catch (const std::exception& e) {
-		global_log->error() << "Error in XML config. Please check your input file!" << std::endl;
-		global_log->error() << "Exception: " << e.what() << std::endl;
+		Log::global_log->error() << "Error in XML config. Please check your input file!" << std::endl;
+		Log::global_log->error() << "Exception: " << e.what() << std::endl;
 		Simulation::exit(7);
 	}
 
@@ -759,7 +759,7 @@ void Simulation::initConfigXML(const std::string& inputfilename) {
 
 	unsigned long globalNumMolecules = _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition);
 	double rho_global = globalNumMolecules / _ensemble->V();
-	global_log->info() << "Setting domain class parameters: N_global: " << globalNumMolecules
+	Log::global_log->info() << "Setting domain class parameters: N_global: " << globalNumMolecules
 					   << ", rho_global: " << rho_global << ", T_global: " << _ensemble->T() << std::endl;
 	_domain->setGlobalTemperature(_ensemble->T());
 	_domain->setglobalRho(rho_global);
@@ -783,19 +783,19 @@ void Simulation::updateForces() {
 }
 
 void Simulation::prepare_start() {
-	global_log->info() << "Initializing simulation" << std::endl;
+	Log::global_log->info() << "Initializing simulation" << std::endl;
 
-	global_log->info() << "Initialising cell processor" << std::endl;
+	Log::global_log->info() << "Initialising cell processor" << std::endl;
 	if (!_legacyCellProcessor) {
 #ifndef ENABLE_REDUCED_MEMORY_MODE
-		global_log->info() << "Using vectorized cell processor." << std::endl;
+		Log::global_log->info() << "Using vectorized cell processor." << std::endl;
 		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 #else
-		global_log->info() << "Using reduced memory mode (RMM) cell processor." << std::endl;
+		Log::global_log->info() << "Using reduced memory mode (RMM) cell processor." << std::endl;
 		_cellProcessor = new VCP1CLJRMM( *_domain, _cutoffRadius, _LJCutoffRadius);
 #endif
 	} else {
-		global_log->info() << "Using legacy cell processor." << std::endl;
+		Log::global_log->info() << "Using legacy cell processor." << std::endl;
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	}
 
@@ -823,9 +823,9 @@ void Simulation::prepare_start() {
 	}
 #endif
 
-	global_log->info() << "Clearing halos" << std::endl;
+	Log::global_log->info() << "Clearing halos" << std::endl;
 	_moleculeContainer->deleteOuterParticles();
-	global_log->info() << "Updating domain decomposition" << std::endl;
+	Log::global_log->info() << "Updating domain decomposition" << std::endl;
 
 	if(getMemoryProfiler()) {
 		getMemoryProfiler()->doOutput("without halo copies");
@@ -845,17 +845,17 @@ void Simulation::prepare_start() {
 	vcp1clj_wr_cellProcessor->setDtInvm(dt_inv_m * 0.5);
 #endif /* ENABLE_REDUCED_MEMORY_MODE */
 
-	global_log->info() << "Performing initial force calculation" << std::endl;
+	Log::global_log->info() << "Performing initial force calculation" << std::endl;
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
 
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 
 	if (_longRangeCorrection != nullptr) {
-		global_log->info() << "Initializing LongRangeCorrection" << std::endl;
+		Log::global_log->info() << "Initializing LongRangeCorrection" << std::endl;
 		_longRangeCorrection->init();
 	} else {
-		global_log->fatal() << "No _longRangeCorrection set!" << std::endl;
+		Log::global_log->fatal() << "No _longRangeCorrection set!" << std::endl;
 		Simulation::exit(93742);
 	}
 	// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
@@ -879,7 +879,7 @@ void Simulation::prepare_start() {
 	++_loopCompTimeSteps;
 
 	if (_FMM != nullptr) {
-		global_log->info() << "Performing initial FMM force calculation" << std::endl;
+		Log::global_log->info() << "Performing initial FMM force calculation" << std::endl;
 		_FMM->computeElectrostatics(_moleculeContainer);
 	}
 
@@ -889,7 +889,7 @@ void Simulation::prepare_start() {
 
 	// initializing plugins and starting plugin timers
 	for (auto& plugin : _plugins) {
-		global_log->info() << "Initializing plugin " << plugin->getPluginName() << std::endl;
+		Log::global_log->info() << "Initializing plugin " << plugin->getPluginName() << std::endl;
 		plugin->init(_moleculeContainer, _domainDecomposition, _domain);
 		std::string timer_name = plugin->getPluginName();
 		// TODO: real timer
@@ -899,17 +899,17 @@ void Simulation::prepare_start() {
 	}
 
 	//afterForces Plugin Call
-	global_log->debug() << "[AFTER FORCES] Performing AfterForces plugin call"
+	Log::global_log->debug() << "[AFTER FORCES] Performing AfterForces plugin call"
 						<< std::endl;
 	for (auto plugin : _plugins) {
-		global_log->debug() << "[AFTER FORCES] Plugin: "
+		Log::global_log->debug() << "[AFTER FORCES] Plugin: "
 							<< plugin->getPluginName() << std::endl;
 		plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
 	}
 
 #ifndef MARDYN_AUTOPAS
 	// clear halo
-	global_log->info() << "Clearing halos" << std::endl;
+	Log::global_log->info() << "Clearing halos" << std::endl;
 	_moleculeContainer->deleteOuterParticles();
 #endif
 
@@ -918,20 +918,20 @@ void Simulation::prepare_start() {
 	// integrator->eventForcesCalculated should not be called, since otherwise the velocities would already be updated.
 	//updateForces();
 
-	global_log->info() << "Calculating global values" << std::endl;
+	Log::global_log->info() << "Calculating global values" << std::endl;
 	_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
 
 	_domain->calculateVelocitySums(_moleculeContainer);
 
 	_domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer,
 			true, 1.0);
-	global_log->debug() << "Calculating global values finished." << std::endl;
+	Log::global_log->debug() << "Calculating global values finished." << std::endl;
 
 	_ensemble->prepare_start();
 
 	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
-	global_log->info() << "Set initial time step to start from to " << _initSimulation << std::endl;
-	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition) << " molecules." << std::endl;
+	Log::global_log->info() << "Set initial time step to start from to " << _initSimulation << std::endl;
+	Log::global_log->info() << "System initialised with " << _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition) << " molecules." << std::endl;
 
 	/** refresh particle IDs */
 	if(_prepare_start_opt.refreshIDs)
@@ -939,14 +939,14 @@ void Simulation::prepare_start() {
 }
 
 void Simulation::simulate() {
-	global_log->info() << "Started simulation" << std::endl;
+	Log::global_log->info() << "Started simulation" << std::endl;
 
 	_ensemble->updateGlobalVariable(_moleculeContainer, NUM_PARTICLES);
-	global_log->debug() << "Number of particles in the Ensemble: " << _ensemble->N() << std::endl;
+	Log::global_log->debug() << "Number of particles in the Ensemble: " << _ensemble->N() << std::endl;
 // 	ensemble.updateGlobalVariable(ENERGY);
-// 	global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << std::endl;
+// 	Log::global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << std::endl;
 // 	ensemble.updateGlobalVariable(TEMPERATURE);
-// 	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T() << std::endl;*/
+// 	Log::global_log->debug() << "Temperature of the Ensemble: " << ensemble.T() << std::endl;*/
 
 	/***************************************************************************/
 	/* BEGIN MAIN LOOP                                                         */
@@ -998,16 +998,16 @@ void Simulation::simulate() {
 	double previousTimeForLoad = 0.;
 
 	while (keepRunning()) {
-		global_log->debug() << "timestep: " << getSimulationStep() << std::endl;
-		global_log->debug() << "simulation time: " << getSimulationTime() << std::endl;
+		Log::global_log->debug() << "timestep: " << getSimulationStep() << std::endl;
+		Log::global_log->debug() << "simulation time: " << getSimulationTime() << std::endl;
 		global_simulation->timers()->incrementTimerTimestepCounter();
 
 		computationTimer->start();
 
         // beforeEventNewTimestep Plugin Call
-        global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Performing beforeEventNewTimestep plugin call" << std::endl;
+        Log::global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Performing beforeEventNewTimestep plugin call" << std::endl;
         for (auto plugin : _plugins) {
-            global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Plugin: " << plugin->getPluginName() << std::endl;
+            Log::global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Plugin: " << plugin->getPluginName() << std::endl;
             plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
         }
 
@@ -1016,9 +1016,9 @@ void Simulation::simulate() {
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
         // beforeForces Plugin Call
-        global_log -> debug() << "[BEFORE FORCES] Performing BeforeForces plugin call" << std::endl;
+        Log::global_log -> debug() << "[BEFORE FORCES] Performing BeforeForces plugin call" << std::endl;
         for (auto plugin : _plugins) {
-            global_log -> debug() << "[BEFORE FORCES] Plugin: " << plugin->getPluginName() << std::endl;
+            Log::global_log -> debug() << "[BEFORE FORCES] Plugin: " << plugin->getPluginName() << std::endl;
             plugin->beforeForces(_moleculeContainer, _domainDecomposition, _simstep);
         }
 
@@ -1042,7 +1042,7 @@ void Simulation::simulate() {
 		else {
 			decompositionTimer->start();
 			// ensure that all Particles are in the right cells and exchange Particles
-			global_log->debug() << "Updating container and decomposition" << std::endl;
+			Log::global_log->debug() << "Updating container and decomposition" << std::endl;
 
 			double currentTime = _timerForLoad->get_etime();
 			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad, true);
@@ -1051,7 +1051,7 @@ void Simulation::simulate() {
 			decompositionTimer->stop();
 
 			// Force calculation and other pair interaction related computations
-			global_log->debug() << "Traversing pairs" << std::endl;
+			Log::global_log->debug() << "Traversing pairs" << std::endl;
 			computationTimer->start();
 			forceCalculationTimer->start();
 
@@ -1060,9 +1060,9 @@ void Simulation::simulate() {
 		}
 
 		// siteWiseForces Plugin Call
-		global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin call" << std::endl;
+		Log::global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin call" << std::endl;
 		for (auto plugin : _plugins) {
-			global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << std::endl;
+			Log::global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << std::endl;
 			plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
 		}
 
@@ -1078,7 +1078,7 @@ void Simulation::simulate() {
 		decompositionTimer->start();
 		// Exchange forces if it's required by the cell container.
 		if(_moleculeContainer->requiresForceExchange()){
-			global_log->debug() << "Exchanging Forces" << std::endl;
+			Log::global_log->debug() << "Exchanging Forces" << std::endl;
 			_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
 		}
 		decompositionTimer->stop();
@@ -1089,21 +1089,21 @@ void Simulation::simulate() {
 
 
 		if (_FMM != nullptr) {
-			global_log->debug() << "Performing FMM calculation" << std::endl;
+			Log::global_log->debug() << "Performing FMM calculation" << std::endl;
 			_FMM->computeElectrostatics(_moleculeContainer);
 		}
 
 		//afterForces Plugin Call
-		global_log -> debug() << "[AFTER FORCES] Performing AfterForces plugin call" << std::endl;
+		Log::global_log -> debug() << "[AFTER FORCES] Performing AfterForces plugin call" << std::endl;
 		for (auto plugin : _plugins) {
-			global_log -> debug() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << std::endl;
+			Log::global_log -> debug() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << std::endl;
 			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
 		}
 
 		_ensemble->afterForces(_moleculeContainer, _domainDecomposition, _cellProcessor, _simstep);
 
 		// TODO: test deletions and insertions
-		global_log->debug() << "Deleting outer particles / clearing halo." << std::endl;
+		Log::global_log->debug() << "Deleting outer particles / clearing halo." << std::endl;
 #ifndef MARDYN_AUTOPAS
 		_moleculeContainer->deleteOuterParticles();
 #endif
@@ -1116,11 +1116,11 @@ void Simulation::simulate() {
 
 		_ensemble->beforeThermostat(_simstep, _initStatistics);
 
-		global_log->debug() << "Inform the integrator (forces calculated)" << std::endl;
+		Log::global_log->debug() << "Inform the integrator (forces calculated)" << std::endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
 
 		// calculate the global macroscopic values from the local values
-		global_log->debug() << "Calculate macroscopic values" << std::endl;
+		Log::global_log->debug() << "Calculate macroscopic values" << std::endl;
 		_domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer,
 				(!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(_simstep));
 
@@ -1128,14 +1128,14 @@ void Simulation::simulate() {
         // TODO: integrate into Temperature Control
 		if ( !_domain->NVE() && _temperatureControl == nullptr) {
 			if (_thermostatType ==VELSCALE_THERMOSTAT) {
-				global_log->debug() << "Velocity scaling" << std::endl;
+				Log::global_log->debug() << "Velocity scaling" << std::endl;
 				if (_domain->severalThermostats()) {
 					_velocityScalingThermostat.enableComponentwise();
 					for(unsigned int cid = 0; cid < global_simulation->getEnsemble()->getComponents()->size(); cid++) {
 						int thermostatId = _domain->getThermostat(cid);
 						_velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
 						_velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));
-						global_log->debug() << "Thermostat for CID: " << cid << " thermID: " << thermostatId
+						Log::global_log->debug() << "Thermostat for CID: " << cid << " thermID: " << thermostatId
 								<< " B_trans: " << _velocityScalingThermostat.getBetaTrans(thermostatId)
 								<< " B_rot: " << _velocityScalingThermostat.getBetaRot(thermostatId) << std::endl;
 						double v[3];
@@ -1171,12 +1171,12 @@ void Simulation::simulate() {
 		//! @todo the number of particles per component stored in components has to be
 		//!       updated here in case we insert/remove particles
 		// _ensemble->updateGlobalVariable(NUM_PARTICLES);
-		// global_log->debug() << "Number of particles in the Ensemble: " << _ensemble->N() << std::endl;
+		// Log::global_log->debug() << "Number of particles in the Ensemble: " << _ensemble->N() << std::endl;
 		/*
 		ensemble.updateGlobalVariable(ENERGY);
-		global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << std::endl;
+		Log::global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << std::endl;
 		ensemble.updateGlobalVariable(TEMPERATURE);
-		global_log->debug() << "Temperature of the Ensemble: " << ensemble.T() << std::endl;
+		Log::global_log->debug() << "Temperature of the Ensemble: " << ensemble.T() << std::endl;
 		*/
 		/* END PHYSICAL SECTION */
 
@@ -1190,7 +1190,7 @@ void Simulation::simulate() {
 		if( (_forced_checkpoint_time > 0) && (loopTimer->get_etime() >= _forced_checkpoint_time) ) {
 			/* force checkpoint for specified time */
 			std::string cpfile(_outputPrefix + ".timed.restart.dat");
-			global_log->info() << "Writing timed, forced checkpoint to file '" << cpfile << "'" << std::endl;
+			Log::global_log->info() << "Writing timed, forced checkpoint to file '" << cpfile << "'" << std::endl;
 			_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime);
 			_forced_checkpoint_time = -1; /* disable for further timesteps */
 		}
@@ -1208,28 +1208,28 @@ void Simulation::simulate() {
     if( _finalCheckpoint ) {
         /* write final checkpoint */
         std::string cpfile(_outputPrefix + ".restart.dat");
-        global_log->info() << "Writing final checkpoint to file '" << cpfile << "'" << std::endl;
+        Log::global_log->info() << "Writing final checkpoint to file '" << cpfile << "'" << std::endl;
         _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime, false);
     }
 
-	global_log->info() << "Finish plugins" << std::endl;
+	Log::global_log->info() << "Finish plugins" << std::endl;
 	for (auto plugin : _plugins) {
 		plugin->finish(_moleculeContainer, _domainDecomposition, _domain);
 	}
 	global_simulation->timers()->getTimer("SIMULATION_FINAL_IO")->stop();
 
-	global_log->info() << "Timing information:" << std::endl;
+	Log::global_log->info() << "Timing information:" << std::endl;
 	global_simulation->timers()->printTimers();
 	global_simulation->timers()->resetTimers();
 	if(getMemoryProfiler()) {
 		getMemoryProfiler()->doOutput();
 	}
-	global_log->info() << std::endl;
+	Log::global_log->info() << std::endl;
 
 #ifdef WITH_PAPI
-	global_log->info() << "PAPI counter values for loop timer:"  << std::endl;
+	Log::global_log->info() << "PAPI counter values for loop timer:"  << std::endl;
 	for(int i = 0; i < loopTimer->get_papi_num_counters(); i++) {
-		global_log->info() << "  " << papi_event_list[i] << ": " << loopTimer->get_global_papi_counter(i) << std::endl;
+		Log::global_log->info() << "  " << papi_event_list[i] << ": " << loopTimer->get_global_papi_counter(i) << std::endl;
 	}
 #endif /* WITH_PAPI */
 }
@@ -1239,7 +1239,7 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 	std::list<PluginBase*>::iterator pluginIter;
 	for (pluginIter = _plugins.begin(); pluginIter != _plugins.end(); pluginIter++) {
 		PluginBase* plugin = (*pluginIter);
-		global_log->debug() << "Plugin end of step: " << plugin->getPluginName() << std::endl;
+		Log::global_log->debug() << "Plugin end of step: " << plugin->getPluginName() << std::endl;
 		global_simulation->timers()->start(plugin->getPluginName());
 		plugin->endStep(_moleculeContainer, _domainDecomposition, _domain, simstep);
 		global_simulation->timers()->stop(plugin->getPluginName());
@@ -1247,14 +1247,14 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 
 
 	if (_domain->thermostatWarning())
-		global_log->warning() << "Thermostat!" << std::endl;
+		Log::global_log->warning() << "Thermostat!" << std::endl;
 	/* TODO: thermostat */
-	global_log->info() << "Simstep = " << simstep << "\tT = "
+	Log::global_log->info() << "Simstep = " << simstep << "\tT = "
 					   << _domain->getGlobalCurrentTemperature() << "\tU_pot = "
 					   << _domain->getGlobalUpot() << "\tp = "
 					   << _domain->getGlobalPressure() << std::endl;
 	if (std::isnan(_domain->getGlobalCurrentTemperature()) || std::isnan(_domain->getGlobalUpot()) || std::isnan(_domain->getGlobalPressure())) {
-		global_log->error() << "NaN detected, exiting." << std::endl;
+		Log::global_log->error() << "NaN detected, exiting." << std::endl;
 		Simulation::exit(1);
 	}
 }
@@ -1324,7 +1324,7 @@ void Simulation::performOverlappingDecompositionAndCellTraversalStep(double etim
 #ifdef ENABLE_MPI
 	auto* dd = dynamic_cast<DomainDecompMPIBase*>(_domainDecomposition);
 	if (not dd) {
-		global_log->fatal() << "DomainDecompMPIBase* required for overlapping comm, but dynamic_cast failed." << std::endl;
+		Log::global_log->fatal() << "DomainDecompMPIBase* required for overlapping comm, but dynamic_cast failed." << std::endl;
 		Simulation::exit(873456);
 	}
 	NonBlockingMPIMultiStepHandler nonBlockingMPIHandler {dd, _moleculeContainer, _domain, _cellProcessor};
@@ -1333,7 +1333,7 @@ void Simulation::performOverlappingDecompositionAndCellTraversalStep(double etim
 
 	nonBlockingMPIHandler.performOverlappingTasks(forceRebalancing, etime);
 #else
-	global_log->fatal() << "performOverlappingDecompositionAndCellTraversalStep() called with disabled MPI." << std::endl;
+	Log::global_log->fatal() << "performOverlappingDecompositionAndCellTraversalStep() called with disabled MPI." << std::endl;
 	Simulation::exit(873457);
 #endif
 }
@@ -1372,33 +1372,33 @@ void Simulation::initialize() {
 
 	delete _domainDecomposition;
 #ifndef ENABLE_MPI
-	global_log->info() << "Creating alibi domain decomposition ... " << std::endl;
+	Log::global_log->info() << "Creating alibi domain decomposition ... " << std::endl;
 	_domainDecomposition = new DomainDecompBase();
 #else
-	global_log->info() << "Creating standard domain decomposition ... " << std::endl;
+	Log::global_log->info() << "Creating standard domain decomposition ... " << std::endl;
 	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 #endif
 
 	_outputPrefix.append(gettimestring());
 
-	global_log->info() << "Creating domain ..." << std::endl;
+	Log::global_log->info() << "Creating domain ..." << std::endl;
 	_domain = new Domain(ownrank);
-	global_log->info() << "Creating ParticlePairs2PotForceAdapter ..." << std::endl;
+	Log::global_log->info() << "Creating ParticlePairs2PotForceAdapter ..." << std::endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
 
-	global_log->info() << "Initialization done" << std::endl;
+	Log::global_log->info() << "Initialization done" << std::endl;
 }
 
 bool Simulation::keepRunning() {
 
 	// Simstep Criterion
 	if (_simstep >= _numberOfTimesteps){
-		global_log->info() << "Maximum Simstep reached: " << _simstep << std::endl;
+		Log::global_log->info() << "Maximum Simstep reached: " << _simstep << std::endl;
 		return false;
 	}
 	// WallTime Criterion, elapsed time since Simulation constructor
 	else if(_wallTimeEnabled && _timeFromStart.get_etime_running() > _maxWallTime){
-		global_log->info() << "Maximum Walltime reached (s): " << _maxWallTime << std::endl;
+		Log::global_log->info() << "Maximum Walltime reached (s): " << _maxWallTime << std::endl;
 		return false;
 	}
 	else{

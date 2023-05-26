@@ -32,7 +32,7 @@ RDF::RDF() :
 
 void RDF::init() {
 	if(!_readConfig){
-		global_log->error() << "RDF initialized without reading the configuration, exiting" << std::endl;
+		Log::global_log->error() << "RDF initialized without reading the configuration, exiting" << std::endl;
 		Simulation::exit(25);
 	}
 
@@ -152,27 +152,27 @@ void RDF::init() {
 void RDF::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	_samplingFrequency = 1;
 	xmlconfig.getNodeValue("samplingfrequency", _samplingFrequency);
-	global_log->info() << "Sampling frequency: " << _samplingFrequency << std::endl;
+	Log::global_log->info() << "Sampling frequency: " << _samplingFrequency << std::endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	_bins = 1;
 	xmlconfig.getNodeValue("bins", _bins);
-	global_log->info() << "Number of bins: " << _bins << std::endl;
+	Log::global_log->info() << "Number of bins: " << _bins << std::endl;
 	
 	_angularBins = 1;
 	xmlconfig.getNodeValue("angularbins", _angularBins);
-	global_log->info() << "Number of angular bins: " << _angularBins << std::endl;
+	Log::global_log->info() << "Number of angular bins: " << _angularBins << std::endl;
 
 	_intervalLength = 1;
 	xmlconfig.getNodeValueReduced("intervallength", _intervalLength);
-	global_log->info() << "Interval length: " << _intervalLength << std::endl;
+	Log::global_log->info() << "Interval length: " << _intervalLength << std::endl;
 	_readConfig = true;
 }
 
@@ -375,7 +375,7 @@ void RDF::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *d
 void RDF::writeToFileARDF(const Domain* domain, const std::string& filename, unsigned i, unsigned j) const {
 	std::ofstream ardfout(filename);
 	if( ardfout.fail() ) {
-		global_log->error() << "[ARDF] Failed opening output file '" << filename << "'" << std::endl;
+		Log::global_log->error() << "[ARDF] Failed opening output file '" << filename << "'" << std::endl;
 		return;
 	}
 	double V = domain->getGlobalVolume();
@@ -455,11 +455,11 @@ void RDF::writeToFileARDF(const Domain* domain, const std::string& filename, uns
 void RDF::writeToFile(const Domain* domain, const std::string& filename, unsigned i, unsigned j) const {
 	std::ofstream rdfout(filename);
 	if( rdfout.fail() ) {
-		global_log->error() << "[RDF] Failed opening output file '" << filename << "'" << std::endl;
+		Log::global_log->error() << "[RDF] Failed opening output file '" << filename << "'" << std::endl;
 		return;
 	}
 
-	global_log->debug() << "[RDF] Writing output" << std::endl;
+	Log::global_log->debug() << "[RDF] Writing output" << std::endl;
 	unsigned ni = (*_components)[i].numSites();
 	unsigned nj = (*_components)[j].numSites();
 
@@ -571,7 +571,7 @@ void RDF::writeToFile(const Domain* domain, const std::string& filename, unsigne
 void RDF::afterForces(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep) {
 	if (simstep % _samplingFrequency == 0 && simstep > global_simulation->getInitStatistics()) {
-		global_log->debug() << "Activating the RDF sampling" << std::endl;
+		Log::global_log->debug() << "Activating the RDF sampling" << std::endl;
 		tickRDF();
 		accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
 		particleContainer->traverseCells(*_cellProcessor);

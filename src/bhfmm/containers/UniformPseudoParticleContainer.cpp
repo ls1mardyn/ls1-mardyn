@@ -1040,7 +1040,7 @@ void UniformPseudoParticleContainer::generateP2PTasks(qsched *scheduler) {
 	payload.leafNodesContainer = _leafContainer;
 
 
-	global_log->info() << "Generating P2P task ids" << std::endl;
+	Log::global_log->info() << "Generating P2P task ids" << std::endl;
 	for (auto z = 0; z < cellsPerDim; ++z) {
 		for (auto y = 0; y < cellsPerDim; ++y) {
 			for (auto x = 0; x < cellsPerDim; ++x) {
@@ -1092,7 +1092,7 @@ void UniformPseudoParticleContainer::generateP2PTasks(qsched *scheduler) {
 	} /* end for-z */
 
 	// set dependencies
-	global_log->info() << "Setting P2P task dependencies" << std::endl;
+	Log::global_log->info() << "Setting P2P task dependencies" << std::endl;
 	for (auto z = 0; z < cellsPerDim - 1; z += payload.taskBlockSize[2] - 1) {
 		for (auto y = 0; y < cellsPerDim - 1; y += payload.taskBlockSize[1] - 1) {
 			for (auto x = 0; x < cellsPerDim - 1; x += payload.taskBlockSize[0] - 1) {

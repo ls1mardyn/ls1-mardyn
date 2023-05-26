@@ -20,42 +20,42 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("filler")) {
 		std::string fillerType;
 		xmlconfig.getNodeValue("@type", fillerType);
-		global_log->debug() << "Filler type: " << fillerType << std::endl;
+		Log::global_log->debug() << "Filler type: " << fillerType << std::endl;
 		ObjectFillerFactory objectFillerFactory;
 		_filler = std::shared_ptr<ObjectFillerBase>(objectFillerFactory.create(fillerType));
 		if(!_filler) {
-			global_log->error() << "Object filler could not be created" << std::endl;
+			Log::global_log->error() << "Object filler could not be created" << std::endl;
 			Simulation::exit(1);
 		}
-		global_log->debug() << "Using object filler of type: " << _filler->getPluginName() << std::endl;
+		Log::global_log->debug() << "Using object filler of type: " << _filler->getPluginName() << std::endl;
 		_filler->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	} else {
-		global_log->error() << "No filler specified." << std::endl;
+		Log::global_log->error() << "No filler specified." << std::endl;
 		Simulation::exit(1);
 	}
 
 	if(xmlconfig.changecurrentnode("object")) {
 		std::string objectType;
 		xmlconfig.getNodeValue("@type", objectType);
-		global_log->debug() << "Obj name: " << objectType << std::endl;
+		Log::global_log->debug() << "Obj name: " << objectType << std::endl;
 		ObjectFactory objectFactory;
 		_object = std::shared_ptr<Object>(objectFactory.create(objectType));
 		if(!_object) {
-			global_log->error() << "Unknown object type: " << objectType << std::endl;
+			Log::global_log->error() << "Unknown object type: " << objectType << std::endl;
 		}
-		global_log->debug() << "Created object of type: " << _object->getPluginName() << std::endl;
+		Log::global_log->debug() << "Created object of type: " << _object->getPluginName() << std::endl;
 		_object->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	} else {
-		global_log->error() << "No object specified." << std::endl;
+		Log::global_log->error() << "No object specified." << std::endl;
 		Simulation::exit(1);
 	}
 
 	if(xmlconfig.changecurrentnode("velocityAssigner")) {
 		std::string velocityAssignerName;
 		xmlconfig.getNodeValue("@type", velocityAssignerName);
-		global_log->info() << "Velocity assigner: " << velocityAssignerName << std::endl;
+		Log::global_log->info() << "Velocity assigner: " << velocityAssignerName << std::endl;
 
 		const long seed = [&]() -> long {
 			bool enableRandomSeed = false;
@@ -72,21 +72,21 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 				return 0;
 			}
 		}();
-		global_log->info() << "Seed for velocity assigner: " << seed << std::endl;
+		Log::global_log->info() << "Seed for velocity assigner: " << seed << std::endl;
 		if(velocityAssignerName == "EqualVelocityDistribution") {
 			_velocityAssigner = std::make_shared<EqualVelocityAssigner>(0, seed);
 		} else if(velocityAssignerName == "MaxwellVelocityDistribution") {
 			_velocityAssigner = std::make_shared<MaxwellVelocityAssigner>(0, seed);
 		} else {
-			global_log->error() << "Unknown velocity assigner specified." << std::endl;
+			Log::global_log->error() << "Unknown velocity assigner specified." << std::endl;
 			Simulation::exit(1);
 		}
 		Ensemble* ensemble = _simulation.getEnsemble();
-		global_log->info() << "Setting temperature for velocity assigner to " << ensemble->T() << std::endl;
+		Log::global_log->info() << "Setting temperature for velocity assigner to " << ensemble->T() << std::endl;
 		_velocityAssigner->setTemperature(ensemble->T());
 		xmlconfig.changecurrentnode("..");
 	} else {
-		global_log->warning() << "No velocityAssigner specified.  Will not change velocities provided by filler."
+		Log::global_log->warning() << "No velocityAssigner specified.  Will not change velocities provided by filler."
 							  << std::endl;
 	}
 }

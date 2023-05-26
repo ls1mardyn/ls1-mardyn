@@ -133,14 +133,14 @@ void Adios2IOTest::testWriteCheckpoint() {
 	std::shared_ptr<DomainDecompBase> domaindecomp;
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
-	global_log->info() << "[Adios2IOTest] Creating standard domain decomposition ... " << std::endl;
+	Log::global_log->info() << "[Adios2IOTest] Creating standard domain decomposition ... " << std::endl;
 	domaindecomp = std::make_shared<DomainDecomposition>();
 #else
-	global_log->info() << "[Adios2IOTest] Creating alibi domain decomposition ... " << std::endl;
+	Log::global_log->info() << "[Adios2IOTest] Creating alibi domain decomposition ... " << std::endl;
 	domaindecomp = std::make_shared<DomainDecompBase>();
 #endif
 
-	global_log->info() << "[Adios2IOTest] ParticleContainer num particles:"
+	Log::global_log->info() << "[Adios2IOTest] ParticleContainer num particles:"
 					   << particleContainer->getNumberOfParticles() << std::endl;
 	
 	ASSERT_EQUAL(static_cast<unsigned long>(NUM_PARTICLES), particleContainer->getNumberOfParticles());
@@ -153,7 +153,7 @@ void Adios2IOTest::testWriteCheckpoint() {
 	adios2writer->endStep(particleContainer.get(), domaindecomp.get(), domain.get(), 0);
 	adios2writer->finish(nullptr, nullptr, nullptr);
 
-	global_log->info() << "[Adios2IOTest] Writing successful!" << std::endl;
+	Log::global_log->info() << "[Adios2IOTest] Writing successful!" << std::endl;
 	
 	ASSERT_EQUAL(true, std::filesystem::is_directory(_filename));
 }
@@ -193,7 +193,7 @@ void Adios2IOTest::testReadCheckpoint() {
 		pcount =
 			adios2read->readPhaseSpace(_inputPatricleContainer.get(), _inputDomain.get(), _inputDomainDecomp.get());
 	} catch (const std::exception& e) {
-		global_log->error() << "[Adios2IOTest] exception: " << e.what() << std::endl;
+		Log::global_log->error() << "[Adios2IOTest] exception: " << e.what() << std::endl;
 	}
 
 	ASSERT_EQUAL(static_cast<unsigned long>(NUM_PARTICLES * num_procs), pcount);

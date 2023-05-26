@@ -39,7 +39,7 @@ public:
 	//! @param numValues number of values that shall be communicated
 	void init(MPI_Comm communicator, int numValues, int key = 0) override {
 		if (_currentKey != -1) {
-			global_log->error() << "CollectiveCommunicationNonBlocking: previous communication with key " << _currentKey
+			Log::global_log->error() << "CollectiveCommunicationNonBlocking: previous communication with key " << _currentKey
 					<< " not yet finalized" << std::endl;
 			Simulation::exit(234);
 		}
@@ -49,15 +49,15 @@ public:
 		// add the key, if it is not yet existent:
 		if (_comms.count(_currentKey) == 1) {
 			// this happens, if the key is already existent.
-			global_log->debug() << "CollectiveCommunicationNonBlocking: key " << _currentKey
+			Log::global_log->debug() << "CollectiveCommunicationNonBlocking: key " << _currentKey
 					<< " already existent. Reusing information." << std::endl;
 		} else {
-			global_log->debug() << "CollectiveCommunicationNonBlocking: key " << _currentKey
+			Log::global_log->debug() << "CollectiveCommunicationNonBlocking: key " << _currentKey
 								<< " not existent. Cannot reuse information." << std::endl;
 			// Creates the CollectiveCommunicationSingleNonBlocking object
 			auto [_, inserted] = _comms.try_emplace(_currentKey);
 			if (not inserted) {
-				global_log->error() << "CollectiveCommunicationNonBlocking: key " << _currentKey
+				Log::global_log->error() << "CollectiveCommunicationNonBlocking: key " << _currentKey
 									<< " could not be inserted. Aborting!" << std::endl;
 				Simulation::exit(498789);
 			}
@@ -70,7 +70,7 @@ public:
 	void finalize() override {
 		_comms.at(_currentKey).finalize();
 		if (_currentKey == 0) {
-			global_log->debug() << "CollectiveCommunicationNonBlocking: finalizing with key " << _currentKey
+			Log::global_log->debug() << "CollectiveCommunicationNonBlocking: finalizing with key " << _currentKey
 					<< ", thus the entry is removed." << std::endl;
 			_comms.erase(_currentKey);
 		}

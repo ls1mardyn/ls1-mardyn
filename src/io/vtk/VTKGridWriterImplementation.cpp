@@ -132,7 +132,7 @@ void VTKGridWriterImplementation::plotCell(VTKGridCell& cell) {
 void  VTKGridWriterImplementation::writeVTKFile(const std::string& fileName) {
 #ifndef NDEBUG
 	if (!isVTKFileInitialized()) {
-		global_log->error() << "VTKMoleculeWriterImplementation::writeVTKFile(): vtkFile not initialized!" << std::endl;
+		Log::global_log->error() << "VTKMoleculeWriterImplementation::writeVTKFile(): vtkFile not initialized!" << std::endl;
 		return;
 	}
 #endif
@@ -189,7 +189,7 @@ void VTKGridWriterImplementation::initializeParallelVTKFile(const std::vector<st
 void VTKGridWriterImplementation::writeParallelVTKFile(const std::string& fileName) {
 #ifndef NDEBUG
 	if (!isParallelVTKFileInitialized()) {
-		global_log->error() << "VTKMoleculeWriterImplementation::writeParallelVTKFile(): parallelVTKFile not initialized!" << std::endl;
+		Log::global_log->error() << "VTKMoleculeWriterImplementation::writeParallelVTKFile(): parallelVTKFile not initialized!" << std::endl;
 		return;
 	}
 #endif

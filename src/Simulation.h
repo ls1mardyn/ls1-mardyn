@@ -11,7 +11,7 @@
 #include "utils/SysMon.h"
 #include "utils/Random.h"
 
-using Log::global_log;
+
 
 // plugins
 #include "plugins/PluginFactory.h"
@@ -237,7 +237,7 @@ public:
 	unsigned long getSimulationStep() { return _simstep; }
 	/** Set Loop Time Limit in seconds */
 	void setLoopAbortTime(double time) {
-		global_log->info() << "Max loop-abort-time set: " << time << "\n";
+		Log::global_log->info() << "Max loop-abort-time set: " << time << "\n";
 		_wallTimeEnabled = true;
 		_maxWallTime = time;
 	}

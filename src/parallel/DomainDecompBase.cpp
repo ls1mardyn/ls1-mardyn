@@ -51,7 +51,7 @@ void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecu
 void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
 	if (moleculeContainer->isInvalidParticleReturner()) {
 		// autopas mode!
-		global_log->debug() << "DDBase: Adding + shifting invalid particles." << std::endl;
+		Log::global_log->debug() << "DDBase: Adding + shifting invalid particles." << std::endl;
 		// in case the molecule container returns invalid particles using getInvalidParticles(), we have to handle them directly.
 		auto invalidParticles = moleculeContainer->getInvalidParticles();
 		addLeavingMolecules(std::move(invalidParticles), moleculeContainer);
@@ -66,7 +66,7 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 		HaloRegion ownRegion = {rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0, 0.};
 		bool coversWholeDomain[3];
 		double cellLengthDummy[3]{};
-		global_log->debug() << "DDBase: Populating halo." << std::endl;
+		Log::global_log->debug() << "DDBase: Populating halo." << std::endl;
 		auto haloExportRegions =
 			fs.getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(),
 																	coversWholeDomain, cellLengthDummy);
@@ -236,7 +236,7 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 
 	auto shiftAndAdd = [&moleculeContainer, haloRegion, shift](Molecule& m) {
 		if (not m.inBox(haloRegion.rmin, haloRegion.rmax)) {
-			global_log->error() << "trying to remove a particle that is not in the halo region" << std::endl;
+			Log::global_log->error() << "trying to remove a particle that is not in the halo region" << std::endl;
 			Simulation::exit(456);
 		}
 		for (int dim = 0; dim < 3; dim++) {
@@ -437,7 +437,7 @@ void DomainDecompBase::assertDisjunctivity(ParticleContainer* /* moleculeContain
 }
 
 void DomainDecompBase::printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) {
-	global_log->warning() << "printDecomp useless in serial mode" << std::endl;
+	Log::global_log->warning() << "printDecomp useless in serial mode" << std::endl;
 }
 
 int DomainDecompBase::getRank() const {

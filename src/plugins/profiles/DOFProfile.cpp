@@ -5,9 +5,9 @@
 #include "DOFProfile.h"
 
 void DOFProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
-    global_log->debug() << "[DOFProfile] has no output.\n";
+    Log::global_log->debug() << "[DOFProfile] has no output.\n";
 }
 
 void DOFProfile::writeDataEntry(unsigned long uID, std::ofstream &outfile) const {
-    global_log->debug() << "[DOFProfile] has no writeDataEntry.\n";
+    Log::global_log->debug() << "[DOFProfile] has no writeDataEntry.\n";
 }

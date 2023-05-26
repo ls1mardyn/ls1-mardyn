@@ -32,7 +32,7 @@ LeapfrogRMM::LeapfrogRMM(double timestepLength) :
 void LeapfrogRMM::readXML(XMLfileUnits & xmlconfig) {
 	_timestepLength = 0;
 	xmlconfig.getNodeValueReduced("timestep", _timestepLength);
-	global_log->info() << "Timestep: " << _timestepLength << std::endl;
+	Log::global_log->info() << "Timestep: " << _timestepLength << std::endl;
 	mardyn_assert(_timestepLength > 0);
 
 	mardyn_assert(_velocityCellProcessor == nullptr);

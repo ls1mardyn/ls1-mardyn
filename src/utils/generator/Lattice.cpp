@@ -19,7 +19,7 @@
 
 #include "utils/Logger.h"
 
-using Log::global_log;
+
 
 /** List of the names of the 7 Bravais lattices */
 static const char* LatticeSystemNames[] = {
@@ -77,11 +77,11 @@ static const double LatticeCenteringCoords[6][4][3] = {
 void Lattice::readXML(XMLfileUnits& xmlconfig) {
 	std::string latticeSystem;
 	xmlconfig.getNodeValue("@system", latticeSystem);
-	global_log->info() << "Lattice system type: " << latticeSystem << std::endl;
+	Log::global_log->info() << "Lattice system type: " << latticeSystem << std::endl;
 	
 	std::string latticeCentering;
 	xmlconfig.getNodeValue("@centering", latticeCentering);
-	global_log->info() << "Lattice centering: " << latticeCentering << std::endl;
+	Log::global_log->info() << "Lattice centering: " << latticeCentering << std::endl;
 
 	double a[3];
 	double b[3];
@@ -89,15 +89,15 @@ void Lattice::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValueReduced("vec[@id='a']/x", a[0]);
 	xmlconfig.getNodeValueReduced("vec[@id='a']/y", a[1]);
 	xmlconfig.getNodeValueReduced("vec[@id='a']/z", a[2]);
-	global_log->info() << "Vec a: " << a[0] << ", " << a[1] << ", " << a[2] << std::endl;
+	Log::global_log->info() << "Vec a: " << a[0] << ", " << a[1] << ", " << a[2] << std::endl;
 	xmlconfig.getNodeValueReduced("vec[@id='b']/x", b[0]);
 	xmlconfig.getNodeValueReduced("vec[@id='b']/y", b[1]);
 	xmlconfig.getNodeValueReduced("vec[@id='b']/z", b[2]);
-	global_log->info() << "Vec b: " << b[0] << ", " << b[1] << ", " << b[2] << std::endl;
+	Log::global_log->info() << "Vec b: " << b[0] << ", " << b[1] << ", " << b[2] << std::endl;
 	xmlconfig.getNodeValueReduced("vec[@id='c']/x", c[0]);
 	xmlconfig.getNodeValueReduced("vec[@id='c']/y", c[1]);
 	xmlconfig.getNodeValueReduced("vec[@id='c']/z", c[2]);
-	global_log->info() << "Vec c: " << c[0] << ", " << c[1] << ", " << c[2] << std::endl;
+	Log::global_log->info() << "Vec c: " << c[0] << ", " << c[1] << ", " << c[2] << std::endl;
 
 	init( Lattice::system(latticeSystem), Lattice::centering(latticeCentering), a, b, c);
 }

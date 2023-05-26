@@ -29,22 +29,22 @@ void DirectedPM::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("heightMembrane", _heightMembrane);    // height for neglecting the influence of the membrane
 	xmlconfig.getNodeValue("outputFrequency", _outputFrequency);  // Averaged time steps
 
-	global_log->info() << "[DirectedPM] settings:" << std::endl;
-	global_log->info() << "                  Component: " << _component << std::endl;
-	global_log->info() << "                  r: " << _rIncrements << std::endl;
-	global_log->info() << "                  h: " << _hIncrements << std::endl;
-	global_log->info() << "                  phi: " << _phiIncrements << std::endl;
-	global_log->info() << "                  rohCutLiq: " << _rohCutLiq << std::endl;
-	global_log->info() << "                  percent: " << _percent << std::endl;
-	global_log->info() << "                  heightWall: " << _heightWall << std::endl;
-	global_log->info() << "                  heightMembrane: " << _heightMembrane << std::endl;
-	global_log->info() << "                outputFrequency: " << _outputFrequency << std::endl;
+	Log::global_log->info() << "[DirectedPM] settings:" << std::endl;
+	Log::global_log->info() << "                  Component: " << _component << std::endl;
+	Log::global_log->info() << "                  r: " << _rIncrements << std::endl;
+	Log::global_log->info() << "                  h: " << _hIncrements << std::endl;
+	Log::global_log->info() << "                  phi: " << _phiIncrements << std::endl;
+	Log::global_log->info() << "                  rohCutLiq: " << _rohCutLiq << std::endl;
+	Log::global_log->info() << "                  percent: " << _percent << std::endl;
+	Log::global_log->info() << "                  heightWall: " << _heightWall << std::endl;
+	Log::global_log->info() << "                  heightMembrane: " << _heightMembrane << std::endl;
+	Log::global_log->info() << "                outputFrequency: " << _outputFrequency << std::endl;
 }
 
 void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 							  unsigned long simstep) {
 	if (_enabled) {
-		global_log->debug() << "[DirectedPM] before forces called" << std::endl;
+		Log::global_log->debug() << "[DirectedPM] before forces called" << std::endl;
 
 		// CALCULATE SYNSIMSTEP FOR MATRIX
 		double synsimstep;
@@ -100,18 +100,18 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 							(phiUN < _phiIncrements)) {
 							unID = (hUN * _rIncrements * _phiIncrements) + (rUN * _phiIncrements) + phiUN;
 						} else {
-							global_log->error()
+							Log::global_log->error()
 								<< "INV PROFILE UNITS " << _universalInvProfileUnit[0] << " "
 								<< _universalInvProfileUnit[1] << " " << _universalInvProfileUnit[2] << "\n";
-							global_log->error() << "PROFILE UNITS " << _rIncrements << " " << _hIncrements << " "
+							Log::global_log->error() << "PROFILE UNITS " << _rIncrements << " " << _hIncrements << " "
 												<< _phiIncrements << "\n";
-							global_log->error() << "Severe error!! Invalid profile ID (" << rUN << " / " << hUN << " / "
+							Log::global_log->error() << "Severe error!! Invalid profile ID (" << rUN << " / " << hUN << " / "
 												<< phiUN << ").\n\n";
-							global_log->error() << "Severe error!! Invalid profile unit (" << R2 << " / " << yc << " / "
+							Log::global_log->error() << "Severe error!! Invalid profile unit (" << R2 << " / " << yc << " / "
 												<< phi << ").\n\n";
-							global_log->error()
+							Log::global_log->error()
 								<< "Coordinates off center (" << xc << " / " << yc << " / " << zc << ").\n";
-							global_log->error() << "unID = " << unID << "\n";
+							Log::global_log->error() << "unID = " << unID << "\n";
 							Simulation::exit(707);
 						}
 						// ADD VELOCITCY AND VIRIAL TO RESPECTIVE BIN

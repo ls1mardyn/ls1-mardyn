@@ -10,7 +10,7 @@
 
 void Virial2DProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
 
-	global_log->info() << "[VirialProfile2D] output" << std::endl;
+	Log::global_log->info() << "[VirialProfile2D] output" << std::endl;
 
 	// Setup outfile
 	_accumulatedDatasets = accumulatedDatasets;

@@ -28,22 +28,22 @@ void Dropaccelerator::readXML(XMLfileUnits& xmlconfig) {
 	// SANITY CHECK
 	if (_interval < 1 || _steps <= 0 || _startSimStep < 0 || _xPosition <= 0. || _yPosition <= 0. || _zPosition <= 0. ||
 		_dropRadius <= 0) {
-		global_log->error() << "[Dropaccelerator] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
-		global_log->error() << "[Dropaccelerator] HALTING SIMULATION" << std::endl;
+		Log::global_log->error() << "[Dropaccelerator] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
+		Log::global_log->error() << "[Dropaccelerator] HALTING SIMULATION" << std::endl;
 		_enabled = false;
 		// HALT SIM
 		Simulation::exit(1);
 		return;
 	}
 
-	global_log->info() << "[Dropaccelerator] settings:" << std::endl;
-	global_log->info() << "                  xposition: " << _xPosition << std::endl;
-	global_log->info() << "                  yposition: " << _yPosition << std::endl;
-	global_log->info() << "                  zposition: " << _zPosition << std::endl;
-	global_log->info() << "                  dropradius: " << _dropRadius << std::endl;
-	global_log->info() << "                  velocity: " << _veloc << std::endl;
-	global_log->info() << "                  starttime: " << _startSimStep << std::endl;
-	global_log->info() << "                  steps: " << _steps << std::endl;
+	Log::global_log->info() << "[Dropaccelerator] settings:" << std::endl;
+	Log::global_log->info() << "                  xposition: " << _xPosition << std::endl;
+	Log::global_log->info() << "                  yposition: " << _yPosition << std::endl;
+	Log::global_log->info() << "                  zposition: " << _zPosition << std::endl;
+	Log::global_log->info() << "                  dropradius: " << _dropRadius << std::endl;
+	Log::global_log->info() << "                  velocity: " << _veloc << std::endl;
+	Log::global_log->info() << "                  starttime: " << _startSimStep << std::endl;
+	Log::global_log->info() << "                  steps: " << _steps << std::endl;
 }
 
 void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
@@ -51,7 +51,7 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 	double corrVeloc = _veloc / _steps;
 
 	if (_enabled) {
-		global_log->debug() << "[Dropaccelerator] after forces called" << std::endl;
+		Log::global_log->debug() << "[Dropaccelerator] after forces called" << std::endl;
 
 		if ((simstep - 1) % _interval != 0) {
 			return;

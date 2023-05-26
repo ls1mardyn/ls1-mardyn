@@ -4,23 +4,23 @@
 #include "WrapOpenMP.h"
 
 void ODF::readXML(XMLfileUnits& xmlconfig) {
-	global_log->debug() << "[ODF] enabled. Dipole orientations must be set to [0 0 1]!" << std::endl;
+	Log::global_log->debug() << "[ODF] enabled. Dipole orientations must be set to [0 0 1]!" << std::endl;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "[ODF] Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "[ODF] Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("initstatistics", _initStatistics);
-	global_log->info() << "[ODF] Init Statistics: " << _initStatistics << std::endl;
+	Log::global_log->info() << "[ODF] Init Statistics: " << _initStatistics << std::endl;
 	xmlconfig.getNodeValue("recordingtimesteps", _recordingTimesteps);
-	global_log->info() << "[ODF] Recording Timesteps: " << _recordingTimesteps << std::endl;
+	Log::global_log->info() << "[ODF] Recording Timesteps: " << _recordingTimesteps << std::endl;
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "[ODF] Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "[ODF] Output prefix: " << _outputPrefix << std::endl;
 	xmlconfig.getNodeValue("phi1increments", _phi1Increments);
-	global_log->info() << "[ODF] Phi1 increments: " << _phi1Increments << std::endl;
+	Log::global_log->info() << "[ODF] Phi1 increments: " << _phi1Increments << std::endl;
 	xmlconfig.getNodeValue("phi2increments", _phi2Increments);
-	global_log->info() << "[ODF] Phi2 increments: " << _phi2Increments << std::endl;
+	Log::global_log->info() << "[ODF] Phi2 increments: " << _phi2Increments << std::endl;
 	xmlconfig.getNodeValue("gammaincrements", _gammaIncrements);
-	global_log->info() << "[ODF] Gamma increments: " << _gammaIncrements << std::endl;
+	Log::global_log->info() << "[ODF] Gamma increments: " << _gammaIncrements << std::endl;
 	xmlconfig.getNodeValue("shellcutoff", _shellCutOff);
-	global_log->info() << "[ODF] Shell cutoff: " << _shellCutOff << std::endl;
+	Log::global_log->info() << "[ODF] Shell cutoff: " << _shellCutOff << std::endl;
 }
 
 void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainDecomp*/, Domain* domain) {
@@ -41,7 +41,7 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainD
 		if (isDipole[i] == 1) {
 			bool orientationIsCorrect = ci.dipole(0).e() == std::array<double, 3>{0,0,1};
 			if(orientationIsCorrect == false){
-				global_log->error() << "Wrong dipole vector chosen! Please always choose [eMyx eMyy eMyz] = [0 0 1] when using the ODF plugin" << std::endl;
+				Log::global_log->error() << "Wrong dipole vector chosen! Please always choose [eMyx eMyy eMyz] = [0 0 1] when using the ODF plugin" << std::endl;
 			}
 			numPairs++;
 		}
@@ -49,7 +49,7 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainD
 
 	_numPairs = numPairs * numPairs;
 	_numElements = _phi1Increments * _phi2Increments * _gammaIncrements + 1;
-	global_log->info() << "ODF arrays contains " << _numElements << " elements each for " << _numPairs << "pairings"
+	Log::global_log->info() << "ODF arrays contains " << _numElements << " elements each for " << _numPairs << "pairings"
 					   << std::endl;
 	_ODF11.resize(_numElements);
 	_ODF12.resize(_numElements);
@@ -69,9 +69,9 @@ void ODF::init(ParticleContainer* particleContainer, DomainDecompBase* /*domainD
 	resize2D(_threadLocalODF22, mardyn_get_max_threads(), _numElements);
 
 	if (_numPairs < 1) {
-		global_log->error() << "No components with dipoles. ODF's not being calculated!" << std::endl;
+		Log::global_log->error() << "No components with dipoles. ODF's not being calculated!" << std::endl;
 	} else if (_numPairs > 4) {
-		global_log->error()
+		Log::global_log->error()
 			<< "Number of pairings for ODF calculation too high. Current maximum number of ODF pairings is 4." << std::endl;
 	}
 
@@ -102,7 +102,7 @@ void ODF::endStep(ParticleContainer* /*particleContainer*/, DomainDecompBase* do
 }
 
 void ODF::reset() {
-	global_log->info() << "[ODF] resetting data sets" << std::endl;
+	Log::global_log->info() << "[ODF] resetting data sets" << std::endl;
 
 	//	// C++ 14:
 	//	auto fillZero = [](auto& vec) {std::fill(vec.begin(), vec.end(), 0);};
@@ -291,14 +291,14 @@ void ODF::calculateOrientation(const std::array<double, 3>& simBoxSize, const Mo
 
 		// notification if anything goes wrong during calculataion
 		if (assignPhi1 == 0 || assignPhi2 == 0 || assignGamma12 == 0) {
-			global_log->warning() << "Array element in ODF calculation not properly assigned!" << std::endl;
-			global_log->warning() << "Mol-ID 1 = " << mol1.getID() << "  Mol-ID 2 = " << mol2.getID() << std::endl;
-			global_log->warning() << "orientationVector1=" << orientationVector1[0] << " " << orientationVector1[1] << " " << orientationVector1[2] << " " << std::endl;
-			global_log->warning() << "orientationVector2=" << orientationVector2[0] << " " << orientationVector2[1] << " " << orientationVector2[2] << " " << std::endl;
-			global_log->warning() << "distanceVector12=" << distanceVector12[0] << " " << distanceVector12[1] << " " << distanceVector12[2] << " " << std::endl;
-			global_log->warning() << "[cosphi1 cosphi2 cosgamma12] = [" << cosPhi1 << " " << cosPhi2 << " "
+			Log::global_log->warning() << "Array element in ODF calculation not properly assigned!" << std::endl;
+			Log::global_log->warning() << "Mol-ID 1 = " << mol1.getID() << "  Mol-ID 2 = " << mol2.getID() << std::endl;
+			Log::global_log->warning() << "orientationVector1=" << orientationVector1[0] << " " << orientationVector1[1] << " " << orientationVector1[2] << " " << std::endl;
+			Log::global_log->warning() << "orientationVector2=" << orientationVector2[0] << " " << orientationVector2[1] << " " << orientationVector2[2] << " " << std::endl;
+			Log::global_log->warning() << "distanceVector12=" << distanceVector12[0] << " " << distanceVector12[1] << " " << distanceVector12[2] << " " << std::endl;
+			Log::global_log->warning() << "[cosphi1 cosphi2 cosgamma12] = [" << cosPhi1 << " " << cosPhi2 << " "
 								  << cosGamma12 << "]" << std::endl;
-			global_log->warning() << "indices are " << indexPhi1 << " " << indexPhi2 << " " << indexGamma12 << std::endl;
+			Log::global_log->warning() << "indices are " << indexPhi1 << " " << indexPhi2 << " " << indexGamma12 << std::endl;
 		}
 		
 		// assignment of bin ID
@@ -384,7 +384,7 @@ void ODF::collect(DomainDecompBase* domainDecomp) {
 }
 
 void ODF::output(Domain* /*domain*/, long unsigned timestep) {
-	global_log->info() << "[ODF] writing output" << std::endl;
+	Log::global_log->info() << "[ODF] writing output" << std::endl;
 	// Setup outfile
 	constexpr double piHalf = 0.5 * M_PI;
 	double cosPhi1 = 1. + 1. / (double)_phi1Increments;

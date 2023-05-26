@@ -7,7 +7,7 @@
 #include "DensityProfile.h"
 
 void Velocity3dProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
-	global_log->info() << "[Velocity3dProfile] output" << std::endl;
+	Log::global_log->info() << "[Velocity3dProfile] output" << std::endl;
 
 	// Setup outfile
 	_accumulatedDatasets = accumulatedDatasets;

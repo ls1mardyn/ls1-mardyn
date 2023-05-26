@@ -72,8 +72,8 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 		{
 			double betaTrans = _globalBetaTrans;
 			double betaRot = _globalBetaRot;
-			global_log->debug() << "Beta rot: " << betaRot << std::endl;
-			global_log->debug() << "Beta trans: " << betaTrans << std::endl;
+			Log::global_log->debug() << "Beta rot: " << betaRot << std::endl;
+			Log::global_log->debug() << "Beta trans: " << betaTrans << std::endl;
 
 			for (auto i = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); i.isValid(); ++i) {
 				if(this->_useGlobalVelocity) {

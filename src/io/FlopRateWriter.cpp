@@ -25,23 +25,23 @@ void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
 		_writeToStdout = true;
 		_writeToFile = true;
 	} else {
-		global_log->error() << "Unknown FlopRateOutputPlugin::mode. Choose \"stdout\", \"file\" or \"both\"." << std::endl;
+		Log::global_log->error() << "Unknown FlopRateOutputPlugin::mode. Choose \"stdout\", \"file\" or \"both\"." << std::endl;
 	}
 
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	// TODO:
 	if(_writeToFile) {
-		global_log->error() << "TODO: file output not yet supported." << std::endl;
+		Log::global_log->error() << "TODO: file output not yet supported." << std::endl;
 		Simulation::exit(1);
 	}
 
 	if(_writeToFile) {
 		_outputPrefix = "mardyn";
 		xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-		global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
+		Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 	}
 }
 
@@ -64,7 +64,7 @@ void FlopRateWriter::init(ParticleContainer * /*particleContainer*/,
 
 void FlopRateWriter::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 		unsigned long simstep){
-	global_log->debug()  << "[FLOPRATEWRITER] after forces FLOPs" << std::endl;
+	Log::global_log->debug()  << "[FLOPRATEWRITER] after forces FLOPs" << std::endl;
 	measureFLOPS(particleContainer, simstep);
 }
 
@@ -102,7 +102,7 @@ void FlopRateWriter::endStep(ParticleContainer *particleContainer,
 	setPrefix(flop_rate_loop, flop_rate_loop_normalized, prefix_flop_rate_loop);
 
 	if(_writeToStdout) {
-		global_log->info() << "FlopRateWriter (simulation step " << simstep << ")" << std::endl
+		Log::global_log->info() << "FlopRateWriter (simulation step " << simstep << ")" << std::endl
 			<< "\tFLOP-Count per Iteration           : " << flops_normalized << " " << prefix_flops << "FLOPs" << std::endl
 			<< "\tFLOP-rate in force calculation     : " << flop_rate_force_normalized << " " << prefix_flop_rate_force << "FLOP/sec" << std::endl
 			<< "\tFLOP-rate for main loop            : " << flop_rate_loop_normalized << " " << prefix_flop_rate_loop << "FLOP/sec (" << percentage << " %)" << std::endl;

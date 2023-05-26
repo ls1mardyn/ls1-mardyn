@@ -78,7 +78,7 @@ template<class CellTemplate, bool eighthShell>
 void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsOuter(
 		CellProcessor& cellProcessor) {
 	if(eighthShell){
-		global_log->error() << "eightshell + overlapping not yet supported." << std::endl;
+		Log::global_log->error() << "eightshell + overlapping not yet supported." << std::endl;
 		Simulation::exit(-2);
 	}
 	using std::array;

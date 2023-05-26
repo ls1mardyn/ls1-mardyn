@@ -6,7 +6,7 @@
 #include "utils/SysMon.h"
 #include "utils/xmlfileUnits.h"
 
-using Log::global_log;
+
 
 SysMonOutput::SysMonOutput() : _writeFrequency(1) {}
 
@@ -14,7 +14,7 @@ SysMonOutput::SysMonOutput() : _writeFrequency(1) {}
 void SysMonOutput::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 	SysMon* sysmon = SysMon::getSysMon();
 	XMLfile::Query query = xmlconfig.query("expression");
 	//string oldpath = xmlconfig.getcurrentnodepath();
@@ -40,7 +40,7 @@ void SysMonOutput::init(ParticleContainer * /*particleContainer*/, DomainDecompB
                         Domain * /*domain*/){
 	SysMon* sysmon = SysMon::getSysMon();
 	sysmon->updateExpressionValues();
-	global_log->info() << sysmon->InfoString("System Monitor (initial)\n","\t");
+	Log::global_log->info() << sysmon->InfoString("System Monitor (initial)\n","\t");
 }
 
 void SysMonOutput::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
@@ -51,7 +51,7 @@ void SysMonOutput::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
 		sysmon->updateExpressionValues();
 		std::ostringstream oss;
 		oss << "System Monitor (simulation step " << simstep << ")" << std::endl;
-		global_log->info() << sysmon->InfoString(oss.str(),"\t");
+		Log::global_log->info() << sysmon->InfoString(oss.str(),"\t");
 	}
 }
 
@@ -59,5 +59,5 @@ void SysMonOutput::finish(ParticleContainer * /*particleContainer*/, DomainDecom
 						  Domain * /*domain*/){
 	SysMon* sysmon = SysMon::getSysMon();
 	sysmon->updateExpressionValues();
-	global_log->info() << sysmon->InfoString("System Monitor (final)\n","\t");
+	Log::global_log->info() << sysmon->InfoString("System Monitor (final)\n","\t");
 }

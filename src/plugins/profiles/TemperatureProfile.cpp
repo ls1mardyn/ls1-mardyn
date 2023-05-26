@@ -9,7 +9,7 @@
 
 void TemperatureProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
 
-    global_log->info() << "[TemperatureProfile] output" << std::endl;
+    Log::global_log->info() << "[TemperatureProfile] output" << std::endl;
 
     // Generate Outfile
     _accumulatedDatasets = accumulatedDatasets;

@@ -82,17 +82,17 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	if ( xmlconfig.changecurrentnode( "volume" )) {
 		std::string type;
 		xmlconfig.getNodeValue( "@type", type );
-		global_log->info() << "Volume type: " << type << std::endl;
+		Log::global_log->info() << "Volume type: " << type << std::endl;
 		if( type == "box" ) {
 			xmlconfig.getNodeValueReduced( "lx", _globalLength[0] );
 			xmlconfig.getNodeValueReduced( "ly", _globalLength[1] );
 			xmlconfig.getNodeValueReduced( "lz", _globalLength[2] );
-			global_log->info() << "Box size: " << _globalLength[0] << ", "
+			Log::global_log->info() << "Box size: " << _globalLength[0] << ", "
 				<< _globalLength[1] << ", "
 				<< _globalLength[2] << std::endl;
 		}
 		else {
-			global_log->error() << "Unsupported volume type " << type << std::endl;
+			Log::global_log->error() << "Unsupported volume type " << type << std::endl;
 		}
 		xmlconfig.changecurrentnode("..");
 	}
@@ -104,7 +104,7 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 	bInputOk = bInputOk && xmlconfig.getNodeValueReduced("temperature", temperature);
 	if(bInputOk) {
 		setGlobalTemperature(temperature);
-		global_log->info() << "Temperature: " << temperature << std::endl;
+		Log::global_log->info() << "Temperature: " << temperature << std::endl;
 	}
 }
 
@@ -125,7 +125,7 @@ double Domain::getGlobalBetaRot(int thermostat) { return _universalBRot[thermost
 void Domain::setLocalSummv2(double summv2, int thermostat)
 {
 #ifndef NDEBUG
-	global_log->debug() << "* local thermostat " << thermostat << ":  mvv = " << summv2 << std::endl;
+	Log::global_log->debug() << "* local thermostat " << thermostat << ":  mvv = " << summv2 << std::endl;
 #endif
 	this->_local2KETrans[thermostat] = summv2;
 }
@@ -189,7 +189,7 @@ void Domain::calculateGlobalValues(
 	std::map<int, unsigned long>::iterator thermit;
 	if( _componentwiseThermostat )
 	{
-		global_log->debug() << "* applying a component-wise thermostat" << std::endl;
+		Log::global_log->debug() << "* applying a component-wise thermostat" << std::endl;
 		this->_localThermostatN[0] = 0;
 		this->_localRotationalDOF[0] = 0;
 		this->_local2KETrans[0] = 0;
@@ -224,7 +224,7 @@ void Domain::calculateGlobalValues(
 		numMolecules = domainDecomp->collCommGetUnsLong();
 		rotDOF = domainDecomp->collCommGetUnsLong();
 		domainDecomp->collCommFinalize();
-		global_log->debug() << "[ thermostat ID " << thermit->first << "]\tN = " << numMolecules << "\trotDOF = " << rotDOF
+		Log::global_log->debug() << "[ thermostat ID " << thermit->first << "]\tN = " << numMolecules << "\trotDOF = " << rotDOF
 			<< "\tmv2 = " <<  summv2 << "\tIw2 = " << sumIw2 << std::endl;
 
 		this->_universalThermostatN[thermit->first] = numMolecules;
@@ -257,8 +257,8 @@ void Domain::calculateGlobalValues(
 		if( ( (_universalBTrans[thermit->first] < MIN_BETA) || (_universalBRot[thermit->first] < MIN_BETA) )
 				&& (0 >= _universalSelectiveThermostatError)  && _bDoExplosionHeuristics == true)
 		{
-			global_log->warning() << "Explosion!" << std::endl;
-			global_log->debug() << "Selective thermostat will be applied to set " << thermit->first
+			Log::global_log->warning() << "Explosion!" << std::endl;
+			Log::global_log->debug() << "Selective thermostat will be applied to set " << thermit->first
 				<< " (beta_trans = " << this->_universalBTrans[thermit->first]
 				<< ", beta_rot = " << this->_universalBRot[thermit->first] << "!)" << std::endl;
 			int rot_dof;
@@ -274,7 +274,7 @@ void Domain::calculateGlobalValues(
 					Utrans = tM->U_trans();
 					if (Utrans > limit_energy) {
 						vcorr = sqrt(limit_energy / Utrans);
-						global_log->debug() << ": v(m" << tM->getID() << ") *= " << vcorr << std::endl;
+						Log::global_log->debug() << ": v(m" << tM->getID() << ") *= " << vcorr << std::endl;
 						tM->scale_v(vcorr);
 						tM->scale_F(vcorr);
 					}
@@ -285,7 +285,7 @@ void Domain::calculateGlobalValues(
 						Urot = tM->U_rot();
 						if (Urot > limit_rot_energy) {
 							Dcorr = sqrt(limit_rot_energy / Urot);
-							global_log->debug() << "D(m" << tM->getID() << ") *= " << Dcorr << std::endl;
+							Log::global_log->debug() << "D(m" << tM->getID() << ") *= " << Dcorr << std::endl;
 							tM->scale_D(Dcorr);
 							tM->scale_M(Dcorr);
 						}
@@ -316,7 +316,7 @@ void Domain::calculateGlobalValues(
 				((_universalSelectiveThermostatCounter % 20) == 10) )
 #endif
 			/* FIXME: why difference counters? */
-			global_log->debug() << "counter " << _universalSelectiveThermostatCounter
+			Log::global_log->debug() << "counter " << _universalSelectiveThermostatCounter
 				<< ",\t warning " << _universalSelectiveThermostatWarning
 				<< ",\t error " << _universalSelectiveThermostatError << std::endl;
 
@@ -339,7 +339,7 @@ void Domain::calculateGlobalValues(
 				_universalThermostatDirectedVelocity[thermit->first].fill(0.0);
 
 #ifndef NDEBUG
-			global_log->debug() << "* thermostat " << thermit->first
+			Log::global_log->debug() << "* thermostat " << thermit->first
 				<< " directed velocity: ("
 				<< _universalThermostatDirectedVelocity[thermit->first][0]
 				<< " / " << _universalThermostatDirectedVelocity[thermit->first][1]
@@ -349,7 +349,7 @@ void Domain::calculateGlobalValues(
 		}
 
 #ifndef NDEBUG
-		global_log->debug() << "* Th" << thermit->first << " N=" << numMolecules
+		Log::global_log->debug() << "* Th" << thermit->first << " N=" << numMolecules
 			<< " DOF=" << rotDOF + 3.0*numMolecules
 			<< " Tcur=" << _globalTemperatureMap[thermit->first]
 			<< " Ttar=" << _universalTargetTemperature[thermit->first]
@@ -478,7 +478,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 		this->_local2KETrans[0] = local2KETrans;
 		this->_local2KERot[0] = local2KERot;
 
-		global_log->debug() << "      * N = " << this->_localThermostatN[0]
+		Log::global_log->debug() << "      * N = " << this->_localThermostatN[0]
 			<< " rotDOF = " << this->_localRotationalDOF[0] << "   mv2 = "
 			<< _local2KETrans[0] << " Iw2 = " << _local2KERot[0] << std::endl;
 	}
@@ -603,8 +603,8 @@ void Domain::writeCheckpoint(std::string filename,
 		bool useBinaryFormat) {
 	domainDecomp->assertDisjunctivity(particleContainer);
 #ifdef ENABLE_REDUCED_MEMORY_MODE
-	global_log->warning() << "The checkpoints are not adapted for RMM-mode. Velocity will be one half-timestep ahead!" << std::endl;
-	global_log->warning() << "See Domain::writeCheckpoint() for a suggested workaround." << std::endl;
+	Log::global_log->warning() << "The checkpoints are not adapted for RMM-mode. Velocity will be one half-timestep ahead!" << std::endl;
+	Log::global_log->warning() << "See Domain::writeCheckpoint() for a suggested workaround." << std::endl;
 	//TODO: desired correctness (compatibility to normal mode) should be achievable by:
 	// 1. integrating positions by half a timestep forward (+ delta T / 2)
 	// 2. writing the checkpoint (with currentTime + delta T ? )
@@ -658,7 +658,7 @@ void Domain::setTargetTemperature(int thermostatID, double targetT)
 {
 	if(thermostatID < 0)
 	{
-		global_log->warning() << "Warning: thermostat \'" << thermostatID << "\' (T = "
+		Log::global_log->warning() << "Warning: thermostat \'" << thermostatID << "\' (T = "
 			<< targetT << ") will be ignored." << std::endl;
 		return;
 	}
@@ -670,14 +670,14 @@ void Domain::setTargetTemperature(int thermostatID, double targetT)
 	/* FIXME: Substantial change in program behavior! */
 	if(thermostatID == 0) {
 #ifndef UNIT_TESTS
-		global_log->warning() << "Disabling the component wise thermostat!" << std::endl;
+		Log::global_log->warning() << "Disabling the component wise thermostat!" << std::endl;
 #endif
 		disableComponentwiseThermostat();
 	}
 	if(thermostatID >= 1) {
 		if( ! _componentwiseThermostat ) {
 			/* FIXME: Substantial change in program behavior! */
-			global_log->warning() << "Enabling the component wise thermostat!" << std::endl;
+			Log::global_log->warning() << "Enabling the component wise thermostat!" << std::endl;
 			_componentwiseThermostat = true;
 			_universalTargetTemperature.erase(0);
 			_universalUndirectedThermostat.erase(0);
@@ -721,8 +721,8 @@ void Domain::setepsilonRF(double erf) { _epsilonRF = erf; }
 
 unsigned long Domain::getglobalNumMolecules(bool bUpdate, ParticleContainer* particleContainer, DomainDecompBase* domainDecomp) {
 	if (bUpdate) {
-		if (particleContainer == nullptr) { global_log->debug() << "ParticleCont unknown!" << std::endl; particleContainer = global_simulation->getMoleculeContainer(); }
-		if (domainDecomp == nullptr)      { global_log->debug() << "domainDecomp unknown!" << std::endl; domainDecomp = &(global_simulation->domainDecomposition()); }
+		if (particleContainer == nullptr) { Log::global_log->debug() << "ParticleCont unknown!" << std::endl; particleContainer = global_simulation->getMoleculeContainer(); }
+		if (domainDecomp == nullptr)      { Log::global_log->debug() << "domainDecomp unknown!" << std::endl; domainDecomp = &(global_simulation->domainDecomposition()); }
 		this->updateglobalNumMolecules(particleContainer, domainDecomp);
 	}
 	return _globalNumMolecules;
@@ -744,7 +744,7 @@ void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, Doma
 	numMolecules.global = numMolecules.local;
 #endif
 	this->setglobalNumMolecules(numMolecules.global);
-	global_log->debug() << "Updated global number of particles from " << oldNum << " to N_new = " << _globalNumMolecules << std::endl;
+	Log::global_log->debug() << "Updated global number of particles from " << oldNum << " to N_new = " << _globalNumMolecules << std::endl;
 }
 
 CommVar<uint64_t> Domain::getMaxMoleculeID() const {
@@ -842,7 +842,7 @@ void Domain::submitDU(unsigned /*cid*/, double DU, double* r)
 
 
 double Domain::getAverageGlobalUpotCSpec() {
-  global_log->debug() << "number of fluid molecules = " << getNumFluidMolecules() << "\n";
+  Log::global_log->debug() << "number of fluid molecules = " << getNumFluidMolecules() << "\n";
   return _globalUpotCspecif / getNumFluidMolecules();
 }
 

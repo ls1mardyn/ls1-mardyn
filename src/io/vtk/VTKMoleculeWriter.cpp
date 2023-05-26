@@ -24,16 +24,16 @@
 
 void VTKMoleculeWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "VTKMoleculeWriter: Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "VTKMoleculeWriter: Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("writefrequencyOffset", _writeFrequencyOffset);
-	global_log->info() << "VTKMoleculeWriter: Write frequency offset: " << _writeFrequencyOffset << std::endl;
+	Log::global_log->info() << "VTKMoleculeWriter: Write frequency offset: " << _writeFrequencyOffset << std::endl;
 	// _writeInitialState is only relevant if the offset is != 0
 	if (_writeFrequencyOffset != 0) {
 		xmlconfig.getNodeValue("writeInitialState", _writeInitialState);
-		global_log->info() << "VTKMoleculeWriter: Write initial state: " << _writeInitialState << std::endl;
+		Log::global_log->info() << "VTKMoleculeWriter: Write initial state: " << _writeInitialState << std::endl;
 	}
 	xmlconfig.getNodeValue("outputprefix", _fileName);
-	global_log->info() << "VTKMoleculeWriter: Output prefix: " << _fileName << std::endl;
+	Log::global_log->info() << "VTKMoleculeWriter: Output prefix: " << _fileName << std::endl;
 
 	if (_writeFrequency <= 0) {
 		Log::global_log->error() << "VTKMoleculeWriter: writeFrequency must be > 0!" << std::endl;

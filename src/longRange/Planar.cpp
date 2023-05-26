@@ -19,7 +19,7 @@
 Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition,
 		ParticleContainer* particleContainer, unsigned slabs, Simulation* simulation)
 {
-	global_log->info() << "Long Range Correction for planar interfaces is used" << std::endl;
+	Log::global_log->info() << "Long Range Correction for planar interfaces is used" << std::endl;
 	_nStartWritingProfiles = 1;
 	_nWriteFreqProfiles = 10;
 	_nStopWritingProfiles = 100;
@@ -146,9 +146,9 @@ void Planar::init()
 		if (nullptr != _subject) {
 			this->update(_subject);
 			_subject->registerObserver(this);
-			global_log->info() << "Long Range Correction: Subject registered" << std::endl;
+			Log::global_log->info() << "Long Range Correction: Subject registered" << std::endl;
 		} else {
-			global_log->error() << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
+			Log::global_log->error() << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
 			Simulation::exit(-1);
 		}
 	}
@@ -156,7 +156,7 @@ void Planar::init()
 
 void Planar::readXML(XMLfileUnits& xmlconfig)
 {
-	global_log->info() << "[Long Range Correction] Reading xml config" << std::endl;
+	Log::global_log->info() << "[Long Range Correction] Reading xml config" << std::endl;
 
 	xmlconfig.getNodeValue("slabs", _slabs);
 	xmlconfig.getNodeValue("smooth", _smooth);
@@ -181,11 +181,11 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 		_region.refPos[1] = _region.actPos[1] = _domain->getGlobalLength(1);
 	}
 	
-	global_log->info() << "Long Range Correction: using " << _slabs << " slabs for profiles to calculate LRC." << std::endl;
-	global_log->info() << "Long Range Correction: sampling profiles every " << frequency << "th simstep." << std::endl;
-	global_log->info() << "Long Range Correction: profiles are smoothed (averaged over time): " << std::boolalpha << _smooth << std::endl;
-	global_log->info() << "Long Range Correction: force corrections are applied to particles within yRef = " << _region.refPos[0] << " (refID: " << _region.refPosID[0] << ") and " << _region.refPos[1] << " (refID: " << _region.refPosID[1] << ")" << std::endl;
-	global_log->info() << "Long Range Correction: pot. energy and virial corrections are applied within whole domain" << std::endl;
+	Log::global_log->info() << "Long Range Correction: using " << _slabs << " slabs for profiles to calculate LRC." << std::endl;
+	Log::global_log->info() << "Long Range Correction: sampling profiles every " << frequency << "th simstep." << std::endl;
+	Log::global_log->info() << "Long Range Correction: profiles are smoothed (averaged over time): " << std::boolalpha << _smooth << std::endl;
+	Log::global_log->info() << "Long Range Correction: force corrections are applied to particles within yRef = " << _region.refPos[0] << " (refID: " << _region.refPosID[0] << ") and " << _region.refPos[1] << " (refID: " << _region.refPosID[1] << ")" << std::endl;
+	Log::global_log->info() << "Long Range Correction: pot. energy and virial corrections are applied within whole domain" << std::endl;
 	
 	// write control
 	bool bRet1 = xmlconfig.getNodeValue("writecontrol/start", _nStartWritingProfiles);
@@ -193,24 +193,24 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	bool bRet3 = xmlconfig.getNodeValue("writecontrol/stop", _nStopWritingProfiles);
 	if(_nWriteFreqProfiles < 1)
 	{
-		global_log->error() << "Long Range Correction: Write frequency < 1! Programm exit ..." << std::endl;
+		Log::global_log->error() << "Long Range Correction: Write frequency < 1! Programm exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 	if(_nStopWritingProfiles <= _nStartWritingProfiles)
 	{
-		global_log->error() << "Long Range Correction: Writing profiles 'stop' <= 'start'! Programm exit ..." << std::endl;
+		Log::global_log->error() << "Long Range Correction: Writing profiles 'stop' <= 'start'! Programm exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 	bool bInputIsValid = (bRet1 && bRet2 && bRet3);
 	if(true == bInputIsValid)
 	{
-		global_log->info() << "Long Range Correction->writecontrol: Start writing profiles at simstep: " << _nStartWritingProfiles << std::endl;
-		global_log->info() << "Long Range Correction->writecontrol: Writing profiles with frequency: " << _nWriteFreqProfiles << std::endl;
-		global_log->info() << "Long Range Correction->writecontrol: Stop writing profiles at simstep: " << _nStopWritingProfiles << std::endl;
+		Log::global_log->info() << "Long Range Correction->writecontrol: Start writing profiles at simstep: " << _nStartWritingProfiles << std::endl;
+		Log::global_log->info() << "Long Range Correction->writecontrol: Writing profiles with frequency: " << _nWriteFreqProfiles << std::endl;
+		Log::global_log->info() << "Long Range Correction->writecontrol: Stop writing profiles at simstep: " << _nStopWritingProfiles << std::endl;
 	}
 	else
 	{
-		global_log->error() << "Long Range Correction: Write control parameters not valid! Programm exit ..." << std::endl;
+		Log::global_log->error() << "Long Range Correction: Write control parameters not valid! Programm exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 }

@@ -38,7 +38,7 @@ MettDeamonFeedrateDirector::~MettDeamonFeedrateDirector()
 
 void MettDeamonFeedrateDirector::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain)
 {
-	global_log->debug() << "MettDeamonFeedrateDirector enabled." << std::endl;
+	Log::global_log->debug() << "MettDeamonFeedrateDirector enabled." << std::endl;
 
 	// set actual feedrate
 	MettDeamon* mettDeamon = nullptr;
@@ -69,7 +69,7 @@ void MettDeamonFeedrateDirector::readXML(XMLfileUnits& xmlconfig)
 	_updateControl.sampledTimestepCount = 0;
 	_updateControl.updateFreq = 1000;
 	xmlconfig.getNodeValue("mirror/control/update_freq", _updateControl.updateFreq);
-	global_log->info() << "[MettDeamonFeedrateDirector] Update frequency of Mirror = " << _updateControl.updateFreq << std::endl;
+	Log::global_log->info() << "[MettDeamonFeedrateDirector] Update frequency of Mirror = " << _updateControl.updateFreq << std::endl;
 
 	// feedrate
 	_feedrate.init = 0.;
@@ -105,7 +105,7 @@ void MettDeamonFeedrateDirector::readXML(XMLfileUnits& xmlconfig)
 
 //	_forceConstant = 100.;
 //	xmlconfig.getNodeValue("forceConstant", _forceConstant);
-//	global_log->info() << "MettDeamonFeedrateDirector: force constant = " << _forceConstant << std::endl;
+//	Log::global_log->info() << "MettDeamonFeedrateDirector: force constant = " << _forceConstant << std::endl;
 
 	// restart information
 	_restart.writefreq = 1000;
@@ -132,11 +132,11 @@ void MettDeamonFeedrateDirector::beforeForces(
 
 	// Check if other plugins were found
 	if(nullptr == mirror) {
-		global_log->error() << "[MettDeamonFeedrateDirector] No Mirror plugin found in plugin list. Program exit ..." << std::endl;
+		Log::global_log->error() << "[MettDeamonFeedrateDirector] No Mirror plugin found in plugin list. Program exit ..." << std::endl;
 		Simulation::exit(-2004);
 	}
 	if(nullptr == mettDeamon) {
-		global_log->error() << "[MettDeamonFeedrateDirector] No MettDeamon plugin found in plugin list. Program exit ..." << std::endl;
+		Log::global_log->error() << "[MettDeamonFeedrateDirector] No MettDeamon plugin found in plugin list. Program exit ..." << std::endl;
 		Simulation::exit(-2004);
 	}
 

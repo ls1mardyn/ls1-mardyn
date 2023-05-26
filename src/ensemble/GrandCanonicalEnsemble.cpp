@@ -99,7 +99,7 @@ void GrandCanonicalEnsemble::afterForces(ParticleContainer* moleculeContainer, D
 		std::list<ChemicalPotential>::iterator cpit;
 		for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 			if(!((simstep + 2 * j + 3) % cpit->getInterval())) {
-				global_log->debug() << "Grand canonical ensemble(" << j << "): test deletions and insertions"
+				Log::global_log->debug() << "Grand canonical ensemble(" << j << "): test deletions and insertions"
 									<< std::endl;
 				this->_simulationDomain->setLambda(cpit->getLambda());
 				this->_simulationDomain->setDensityCoefficient(cpit->getDensityCoefficient());
@@ -118,7 +118,7 @@ void GrandCanonicalEnsemble::afterForces(ParticleContainer* moleculeContainer, D
 
 				int localBalance = cpit->getLocalGrandcanonicalBalance();
 				int balance = cpit->grandcanonicalBalance(domainDecomposition);
-				global_log->debug() << "   b[" << ((balance > 0) ? "+" : "") << balance << "("
+				Log::global_log->debug() << "   b[" << ((balance > 0) ? "+" : "") << balance << "("
 									<< ((localBalance > 0) ? "+" : "") << localBalance << ")" << " / c = "
 									<< cpit->getComponentID() << "]   " << std::endl;
 				_simulationDomain->Nadd(cpit->getComponentID(), balance, localBalance);

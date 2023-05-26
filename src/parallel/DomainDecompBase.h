@@ -16,7 +16,7 @@
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "utils/Logger.h"  // is this used?
 
-using Log::global_log;
+
 
 class Component;
 class Domain;
@@ -204,7 +204,7 @@ public:
 		collCommFinalize();
 
 
-		global_log->info() << "Sending leaving particles and halo copies "
+		Log::global_log->info() << "Sending leaving particles and halo copies "
 				<< (sendLeavingWithCopies() ? "together" : "separately") << std::endl;
 	}
 

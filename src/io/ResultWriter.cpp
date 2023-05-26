@@ -10,21 +10,21 @@
 void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "[ResultWriter] Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "[ResultWriter] Write frequency: " << _writeFrequency << std::endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "[ResultWriter] Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "[ResultWriter] Output prefix: " << _outputPrefix << std::endl;
 
 	size_t acc_steps = 1000;
 	xmlconfig.getNodeValue("accumulation_steps", acc_steps);
 	_U_pot_acc = new Accumulator<double>(acc_steps);
 	_p_acc = new Accumulator<double>(acc_steps);
-	global_log->info() << "[ResultWriter] Accumulation steps: " << acc_steps << std::endl;
+	Log::global_log->info() << "[ResultWriter] Accumulation steps: " << acc_steps << std::endl;
 
 	_writePrecision = 5;
 	xmlconfig.getNodeValue("writeprecision", _writePrecision);
-	global_log->info() << "[ResultWriter] Write precision: " << _writePrecision << std::endl;
+	Log::global_log->info() << "[ResultWriter] Write precision: " << _writePrecision << std::endl;
 }
 
 void ResultWriter::init(ParticleContainer * /*particleContainer*/,

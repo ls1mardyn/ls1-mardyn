@@ -152,13 +152,13 @@ private:
 		PressureGradient* _pressureGradient;
  		//after: 	_longRangeCorrection->calculateLongRange(); in #######
 			if (_pressureGradient->isAcceleratingUniformly()) {
-			global_log->info() << "Initialising uniform acceleration." << std::endl;
+			Log::global_log->info() << "Initialising uniform acceleration." << std::endl;
 			unsigned long uCAT = _pressureGradient->getUCAT();
-			global_log->info() << "uCAT: " << uCAT << " steps." << std::endl;
+			Log::global_log->info() << "uCAT: " << uCAT << " steps." << std::endl;
 			_pressureGradient->determineAdditionalAcceleration(
 					_domainDecomposition, _moleculeContainer, uCAT
 							* _integrator->getTimestepLength());
-			global_log->info() << "Uniform acceleration initialised." << std::endl;
+			Log::global_log->info() << "Uniform acceleration initialised." << std::endl;
 			}
 
 		// first in simulate()
@@ -168,18 +168,18 @@ private:
 		// after: _domain->calculateThermostatDirectedVelocity(_moleculeContainer); in simulate()
 			if (_pressureGradient->isAcceleratingUniformly()) {
 				if (!(_simstep % uCAT)) {
-					global_log->debug() << "Determine the additional acceleration" << std::endl;
+					Log::global_log->debug() << "Determine the additional acceleration" << std::endl;
 					_pressureGradient->determineAdditionalAcceleration(
 							_domainDecomposition, _moleculeContainer, uCAT
 							* _integrator->getTimestepLength());
 				}
-				global_log->debug() << "Process the uniform acceleration" << std::endl;
+				Log::global_log->debug() << "Process the uniform acceleration" << std::endl;
 				_integrator->accelerateUniformly(_moleculeContainer, _domain);
 				_pressureGradient->adjustTau(this->_integrator->getTimestepLength());
 			}
 
 		// in initialize() before Domain()
-			global_log->info() << "Creating PressureGradient ... " << std::endl;
+			Log::global_log->info() << "Creating PressureGradient ... " << std::endl;
 			_pressureGradient = new PressureGradient(ownrank);
 
  	####### REMOVED FUNCTION ONLY CALLED BY PG FROM INTEGRATOR, LEAPFROG AND LEAPFROGRMM

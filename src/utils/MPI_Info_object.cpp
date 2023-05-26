@@ -21,7 +21,7 @@ void MPI_Info_object::readXML(XMLfile& xmlconfig) {
 	}
 	
 	XMLfile::Query query = xmlconfig.query("hint");
-	global_log->debug() << "[MPI_Info_object]\tNumber of hint key value pairs: " << query.card() << std::endl;
+	Log::global_log->debug() << "[MPI_Info_object]\tNumber of hint key value pairs: " << query.card() << std::endl;
 	
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	for(auto pairIter = query.begin(); pairIter; ++pairIter) {
@@ -29,7 +29,7 @@ void MPI_Info_object::readXML(XMLfile& xmlconfig) {
 		std::string key, value;
 		xmlconfig.getNodeValue("key", key);
 		xmlconfig.getNodeValue("value", value);
-		global_log->debug() << "[MPI_Info_object]\treadXML: found MPI Info hint '" << key << "': " << value << std::endl;
+		Log::global_log->debug() << "[MPI_Info_object]\treadXML: found MPI Info hint '" << key << "': " << value << std::endl;
 		add_hint(key, value);
 	}
 	xmlconfig.changecurrentnode(oldpath);
@@ -37,14 +37,14 @@ void MPI_Info_object::readXML(XMLfile& xmlconfig) {
 
 void MPI_Info_object::add_hint(std::string& key, std::string& value) {
 	if(key.size() > MPI_MAX_INFO_KEY) {
-		global_log->error() << "MPI Info key name longer than allowed." << std::endl;
+		Log::global_log->error() << "MPI Info key name longer than allowed." << std::endl;
 		return;
 	}
 	if(value.size() > MPI_MAX_INFO_VAL) {
-		global_log->error() << "MPI Info value longer than allowed." << std::endl;
+		Log::global_log->error() << "MPI Info value longer than allowed." << std::endl;
 		return;
 	}
-	global_log->info() << "[MPI_Info_object]\tsetting MPI Info hint " << key << "=" << value << std::endl;
+	Log::global_log->info() << "[MPI_Info_object]\tsetting MPI Info hint " << key << "=" << value << std::endl;
 	MPI_CHECK( MPI_Info_set(_mpi_info, const_cast<char*>(key.c_str()), const_cast<char*>(value.c_str())) );
 }
 

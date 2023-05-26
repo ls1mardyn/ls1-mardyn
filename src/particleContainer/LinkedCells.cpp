@@ -42,8 +42,8 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;
 
-	global_log->debug() << "cutoff: " << cutoffRadius << std::endl;
-	global_log->debug() << "# cells in cutoff hardcoded to 1 " << std::endl;
+	Log::global_log->debug() << "cutoff: " << cutoffRadius << std::endl;
+	Log::global_log->debug() << "# cells in cutoff hardcoded to 1 " << std::endl;
 
 	for (int d = 0; d < 3; d++) {
 		/* first calculate the cell length for this dimension */
@@ -69,9 +69,9 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 		numberOfCells *= _cellsPerDimension[d];
 		mardyn_assert(numberOfCells > 0);
 	}
-	global_log->debug() << "Cell size (" << _cellLength[0] << ", "
+	Log::global_log->debug() << "Cell size (" << _cellLength[0] << ", "
 			<< _cellLength[1] << ", " << _cellLength[2] << ")" << std::endl;
-	global_log->info() << "Cells per dimension (incl. halo): "
+	Log::global_log->info() << "Cells per dimension (incl. halo): "
 			<< _cellsPerDimension[0] << " x " << _cellsPerDimension[1] << " x "
 			<< _cellsPerDimension[2] << std::endl;
 
@@ -83,16 +83,16 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	if (_boxWidthInNumCells[0] < 2 * _haloWidthInNumCells[0]
 			|| _boxWidthInNumCells[1] < 2 * _haloWidthInNumCells[1]
 			|| _boxWidthInNumCells[2] < 2 * _haloWidthInNumCells[2]) {
-		global_log->error_always_output()
+		Log::global_log->error_always_output()
 				<< "LinkedCells (constructor): bounding box too small for calculated cell length"
 				<< std::endl;
-		global_log->error_always_output() << "_cellsPerDimension: " << _cellsPerDimension[0]
+		Log::global_log->error_always_output() << "_cellsPerDimension: " << _cellsPerDimension[0]
 				<< " / " << _cellsPerDimension[1] << " / "
 				<< _cellsPerDimension[2] << std::endl;
-		global_log->error_always_output() << "_haloWidthInNumCells: "
+		Log::global_log->error_always_output() << "_haloWidthInNumCells: "
 				<< _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1]
 				<< " / " << _haloWidthInNumCells[2] << std::endl;
-		global_log->error_always_output() << "_boxWidthInNumCells: " << _boxWidthInNumCells[0]
+		Log::global_log->error_always_output() << "_boxWidthInNumCells: " << _boxWidthInNumCells[0]
 				<< " / " << _boxWidthInNumCells[1] << " / "
 				<< _boxWidthInNumCells[2] << std::endl;
 		Simulation::exit(5);
@@ -131,7 +131,7 @@ void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
 }
 
 bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
-	global_log->info() << "REBUILD OF LinkedCells" << std::endl;
+	Log::global_log->info() << "REBUILD OF LinkedCells" << std::endl;
 
 	for (int i = 0; i < 3; i++) {
 		this->_boundingBoxMin[i] = bBoxMin[i];
@@ -139,13 +139,13 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 //		_haloWidthInNumCells[i] = ::ceil(_cellsInCutoff);
 		_haloWidthInNumCells[i] = _cellsInCutoff;
 	}
-	global_log->info() << "Bounding box: " << "[" << bBoxMin[0] << ", " << bBoxMax[0] << "]" << " x " << "["
+	Log::global_log->info() << "Bounding box: " << "[" << bBoxMin[0] << ", " << bBoxMax[0] << "]" << " x " << "["
 			<< bBoxMin[1] << ", " << bBoxMax[1] << "]" << " x " << "[" << bBoxMin[2] << ", " << bBoxMax[2] << "]"
 			<< std::endl;
 
 	int numberOfCells = 1;
 
-	global_log->info() << "Using " << _cellsInCutoff << " cells in cutoff." << std::endl;
+	Log::global_log->info() << "Using " << _cellsInCutoff << " cells in cutoff." << std::endl;
 	float rc = (_cutoffRadius / _cellsInCutoff);
 
 	for (int dim = 0; dim < 3; dim++) {
@@ -155,7 +155,7 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 		// in each dimension at least one layer of (inner+boundary) cells necessary
 		if (_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]) {
-			global_log->error_always_output() << "LinkedCells::rebuild: region too small" << std::endl;
+			Log::global_log->error_always_output() << "LinkedCells::rebuild: region too small" << std::endl;
 			Simulation::exit(1);
 		}
 
@@ -171,7 +171,7 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 		_haloBoundingBoxMax[dim] = _boundingBoxMax[dim] + _haloLength[dim];
 	}
 
-	global_log->info() << "Cells per dimension (incl. halo): " << _cellsPerDimension[0] << " x "
+	Log::global_log->info() << "Cells per dimension (incl. halo): " << _cellsPerDimension[0] << " x "
 			<< _cellsPerDimension[1] << " x " << _cellsPerDimension[2] << std::endl;
 
 
@@ -224,15 +224,15 @@ void LinkedCells::check_molecules_in_box() {
 	}
 
 	if (numBadMolecules > 0) {
-		global_log->error() << "Found " << numBadMolecules << " outside of bounding box:" << std::endl;
+		Log::global_log->error() << "Found " << numBadMolecules << " outside of bounding box:" << std::endl;
 		for (auto & m : badMolecules) {
-			global_log->error() << "Particle (id=" << m.getID() << "), (current position: x="
+			Log::global_log->error() << "Particle (id=" << m.getID() << "), (current position: x="
 					<< m.r(0) << ", y=" << m.r(1) << ", z=" << m.r(2) << ")" << std::endl;
 		}
-		global_log->error() << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
+		Log::global_log->error() << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
 				<< ") x [" << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMax[1] << ") x [" << _haloBoundingBoxMin[2]
 				<< ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
-		global_log->error() << "Particles will be lost. Aborting simulation." << std::endl;
+		Log::global_log->error() << "Particles will be lost. Aborting simulation." << std::endl;
 		Simulation::exit(311);
 	}
 }
@@ -276,10 +276,10 @@ void LinkedCells::update() {
 		for (ParticleIterator tM = iterator(ParticleIterator::ALL_CELLS); tM.isValid(); ++tM) {
 			if (not _cells[tM.getCellIndex()].testInBox(*tM)) {
 				numBadMolecules++;
-				global_log->error_always_output() << "particle " << tM->getID() << " in cell " << tM.getCellIndex()
+				Log::global_log->error_always_output() << "particle " << tM->getID() << " in cell " << tM.getCellIndex()
 						<< ", which is" << (_cells[tM.getCellIndex()].isBoundaryCell() ? "" : " NOT")
 						<< " a boundarycell is outside of its cell after LinkedCells::update()." << std::endl;
-				global_log->error_always_output() << "particle at (" << tM->r(0) << ", " << tM->r(1) << ", " << tM->r(2) << ")"
+				Log::global_log->error_always_output() << "particle at (" << tM->r(0) << ", " << tM->r(1) << ", " << tM->r(2) << ")"
 						<< std::endl << "cell: [" << _cells[tM.getCellIndex()].getBoxMin(0) << ", "
 						<< _cells[tM.getCellIndex()].getBoxMax(0) << "] x [" << _cells[tM.getCellIndex()].getBoxMin(1)
 						<< ", " << _cells[tM.getCellIndex()].getBoxMax(1) << "] x ["
@@ -292,7 +292,7 @@ void LinkedCells::update() {
 
 
 	if (numBadMolecules > 0) {
-		global_log->error() << "Found " << numBadMolecules << " outside of their correct cells. Aborting." << std::endl;
+		Log::global_log->error() << "Found " << numBadMolecules << " outside of their correct cells. Aborting." << std::endl;
 		Simulation::exit(311);
 	}
 #endif
@@ -478,7 +478,7 @@ void LinkedCells::addParticles(std::vector<Molecule>& particles, bool checkWheth
 
 			#ifndef NDEBUG
 				if(!particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)){
-					global_log->error()<<"At particle with ID "<< particle.getID()<<" assertion failed..."<<std::endl;
+					Log::global_log->error()<<"At particle with ID "<< particle.getID()<<" assertion failed..."<<std::endl;
 				}
 				mardyn_assert(particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax));
 			#endif
@@ -533,16 +533,16 @@ void LinkedCells::addParticles(std::vector<Molecule>& particles, bool checkWheth
 
 #ifndef NDEBUG
 	int numberOfAddedParticles = getNumberOfParticles() - oldNumberOfParticles;
-	global_log->debug()<<"In LinkedCells::addParticles :"<<std::endl;
-	global_log->debug()<<"\t#Particles to be added = "<<particles.size()<<std::endl;
-	global_log->debug()<<"\t#Particles actually added = "<<numberOfAddedParticles<<std::endl;
+	Log::global_log->debug()<<"In LinkedCells::addParticles :"<<std::endl;
+	Log::global_log->debug()<<"\t#Particles to be added = "<<particles.size()<<std::endl;
+	Log::global_log->debug()<<"\t#Particles actually added = "<<numberOfAddedParticles<<std::endl;
 #endif
 
 }
 
 void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {
 	if (not _cellsValid) {
-		global_log->error() << "Cell structure in LinkedCells (traverseNonInnermostCells) invalid, call update first" << std::endl;
+		Log::global_log->error() << "Cell structure in LinkedCells (traverseNonInnermostCells) invalid, call update first" << std::endl;
 		Simulation::exit(1);
 	}
 
@@ -551,7 +551,7 @@ void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {
 
 void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) {
 	if (not _cellsValid) {
-		global_log->error() << "Cell structure in LinkedCells (traversePartialInnermostCells) invalid, call update first" << std::endl;
+		Log::global_log->error() << "Cell structure in LinkedCells (traversePartialInnermostCells) invalid, call update first" << std::endl;
 		Simulation::exit(1);
 	}
 
@@ -560,7 +560,7 @@ void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, un
 
 void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	if (not _cellsValid) {
-		global_log->error()
+		Log::global_log->error()
 				<< "Cell structure in LinkedCells (traversePairs) invalid, call update first"
 				<< std::endl;
 		Simulation::exit(1);
@@ -609,7 +609,7 @@ void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) 
 
 void LinkedCells::deleteOuterParticles() {
 	/*if (_cellsValid == false) {
-		global_log->error()
+		Log::global_log->error()
 				<< "Cell structure in LinkedCells (deleteOuterParticles) invalid, call update first"
 				<< std::endl;
 		Simulation::exit(1);
@@ -718,7 +718,7 @@ void LinkedCells::initializeCells() {
 }
 
 void LinkedCells::calculateNeighbourIndices(std::vector<long>& forwardNeighbourOffsets, std::vector<long>& backwardNeighbourOffsets) const {
-	global_log->debug() << "Setting up cell neighbour indice lists." << std::endl;
+	Log::global_log->debug() << "Setting up cell neighbour indice lists." << std::endl;
 
 	// 13 neighbors for _haloWidthInNumCells = 1 or 64 for =2
 	int maxNNeighbours = ( (2*_haloWidthInNumCells[0]+1) * (2*_haloWidthInNumCells[1]+1) * (2*_haloWidthInNumCells[2]+1) - 1) / 2;
@@ -833,10 +833,10 @@ unsigned long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const 
 	for (int dim = 0; dim < 3; dim++) {
 		#ifndef NDEBUG
 		if (molecule->r(dim) < _haloBoundingBoxMin[dim] || molecule->r(dim) >= _haloBoundingBoxMax[dim]) {
-			global_log->error() << "Molecule is outside of bounding box" << std::endl;
-			global_log->error() << "Molecule:\n" << *molecule << std::endl;
-			global_log->error() << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << std::endl;
-			global_log->error() << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
+			Log::global_log->error() << "Molecule is outside of bounding box" << std::endl;
+			Log::global_log->error() << "Molecule:\n" << *molecule << std::endl;
+			Log::global_log->error() << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << std::endl;
+			Log::global_log->error() << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
 			Simulation::exit(1);
 		}
 		#endif
@@ -882,10 +882,10 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 		#ifndef NDEBUG
 		//this should never ever happen!
 		if (localPoint[dim] < _haloBoundingBoxMin[dim] || localPoint[dim] >= _haloBoundingBoxMax[dim]) {
-			global_log->error() << "Point is outside of halo bounding box" << std::endl;
-			global_log->error() << "Point p = (" << localPoint[0] << ", " << localPoint[1] << ", " << localPoint[2] << ")" << std::endl;
-			global_log->error() << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << std::endl;
-			global_log->error() << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
+			Log::global_log->error() << "Point is outside of halo bounding box" << std::endl;
+			Log::global_log->error() << "Point p = (" << localPoint[0] << ", " << localPoint[1] << ", " << localPoint[2] << ")" << std::endl;
+			Log::global_log->error() << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << std::endl;
+			Log::global_log->error() << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
 			Simulation::exit(1);
 		}
 		#endif
@@ -1006,7 +1006,7 @@ void LinkedCells::deleteMolecule(ParticleIterator &moleculeIter, const bool& reb
     if (rebuildCaches) {
         auto cellid = getCellIndexOfMolecule(&*moleculeIter);
         if (cellid >= _cells.size()) {
-          global_log->error_always_output()
+          Log::global_log->error_always_output()
               << "coordinates for atom deletion lie outside bounding box."
               << std::endl;
           Simulation::exit(1);
@@ -1129,12 +1129,12 @@ void LinkedCells::printSubInfo(int offset) {
 	for (int i = 0; i < offset; i++) {
 		offsetstream << "\t";
 	}
-	global_log->info() << offsetstream.str() << "own datastructures:\t" << ownSize / 1.e6 << " MB" << std::endl;
-	global_log->info() << offsetstream.str() << "cells total:\t\t" << cellTotal / 1.e6 << " MB" << std::endl;
-	global_log->info() << offsetstream.str() << "cells SoAs:\t\t" << cellSoA / 1.e6 << " MB" << std::endl;
-	global_log->info() << offsetstream.str() << "cells molecule vectors:\t" << cellMoleculeVectors / 1.e6 << " MB"
+	Log::global_log->info() << offsetstream.str() << "own datastructures:\t" << ownSize / 1.e6 << " MB" << std::endl;
+	Log::global_log->info() << offsetstream.str() << "cells total:\t\t" << cellTotal / 1.e6 << " MB" << std::endl;
+	Log::global_log->info() << offsetstream.str() << "cells SoAs:\t\t" << cellSoA / 1.e6 << " MB" << std::endl;
+	Log::global_log->info() << offsetstream.str() << "cells molecule vectors:\t" << cellMoleculeVectors / 1.e6 << " MB"
 			<< std::endl;
-	global_log->info() << offsetstream.str() << "indexVectors:\t\t" << indexVectors / 1.e6 << " MB" << std::endl;
+	Log::global_log->info() << offsetstream.str() << "indexVectors:\t\t" << indexVectors / 1.e6 << " MB" << std::endl;
 }
 std::string LinkedCells::getName() {
 	return "LinkedCells";

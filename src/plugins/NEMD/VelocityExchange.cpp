@@ -30,7 +30,7 @@ void VelocityExchange::readXML(XMLfileUnits& xmlconfig) {
     xmlconfig.getNodeValue("control/start", _control.start);
     xmlconfig.getNodeValue("control/frequency", _control.freq);
     xmlconfig.getNodeValue("control/stop", _control.stop);
-    global_log->info() << "[VelocityExchange] takes place start:freq:stop = " << _control.start << ":" << _control.freq << ":" << _control.stop << std::endl;
+    Log::global_log->info() << "[VelocityExchange] takes place start:freq:stop = " << _control.start << ":" << _control.freq << ":" << _control.stop << std::endl;
 
     // Needed here as readXML() is run before init()
     Domain* domain = global_simulation->getDomain();
@@ -74,18 +74,18 @@ void VelocityExchange::readXML(XMLfileUnits& xmlconfig) {
     _warm_region.max[1] = (strVal[4] == "box") ? _boxLength[1] : atof(strVal[4].c_str());
     _warm_region.max[2] = (strVal[5] == "box") ? _boxLength[2] : atof(strVal[5].c_str());
 
-    global_log->info() << "[VelocityExchange] Cold region:"
+    Log::global_log->info() << "[VelocityExchange] Cold region:"
                         << " x = " << _cold_region.min[0] << " - " << _cold_region.max[0] << " ;"
                         << " y = " << _cold_region.min[1] << " - " << _cold_region.max[1] << " ;"
                         << " z = " << _cold_region.min[2] << " - " << _cold_region.max[2] << std::endl;
 
-    global_log->info() << "[VelocityExchange] Warm region" << ((_symmetry) ? " (left)" : "") << ":"
+    Log::global_log->info() << "[VelocityExchange] Warm region" << ((_symmetry) ? " (left)" : "") << ":"
                         << " x = " << _warm_region.min[0] << " - " << _warm_region.max[0] << " ;"
                         << " y = " << _warm_region.min[1] << " - " << _warm_region.max[1] << " ;"
                         << " z = " << _warm_region.min[2] << " - " << _warm_region.max[2] << std::endl;
 
     if (_symmetry) {
-        global_log->info() << "[VelocityExchange] Warm region (right):"
+        Log::global_log->info() << "[VelocityExchange] Warm region (right):"
                         << " x = " << _warm_region.min[0] << " - " << _warm_region.max[0] << " ;"
                         << " y = " << _boxLength[1]-_warm_region.max[1] << " - " << _boxLength[1]-_warm_region.min[1] << " ;"
                         << " z = " << _warm_region.min[2] << " - " << _warm_region.max[2] << std::endl;
@@ -271,7 +271,7 @@ void VelocityExchange::exchangeVelocities(ParticleContainer* particleContainer, 
     }
 
     for (uint32_t cid = 0; cid < _numComp; cid++) {
-        global_log->info() << " [VelocityExchange] flipped velocities of molecules "
+        Log::global_log->info() << " [VelocityExchange] flipped velocities of molecules "
                             << molID_coldP.global[cid] << " (in warm region, v_new = " << velocity_abs_warmP.global[cid] << ") and "
                             << molID_warmP.global[cid] << " (in cold region v_new = "  << velocity_abs_coldP.global[cid] << ") of component " << cid+1 << std::endl;
     }

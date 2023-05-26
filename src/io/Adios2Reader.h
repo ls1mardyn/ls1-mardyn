@@ -157,7 +157,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, rx, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Positions should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Positions should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -165,7 +165,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, ry, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Positions should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Positions should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -173,7 +173,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, rz, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Positions should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Positions should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -181,7 +181,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, vx, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Velocities should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Velocities should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -189,7 +189,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, vy, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Velocities should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Velocities should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -197,7 +197,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, vz, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Velocities should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Velocities should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -205,7 +205,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, qw, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Quaternions should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Quaternions should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -213,7 +213,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, qx, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Quaternions should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Quaternions should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -221,7 +221,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, qy, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Quaternions should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Quaternions should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -229,7 +229,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, qz, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Quaternions should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Quaternions should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -237,7 +237,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, Lx, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Angular momentum should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Angular momentum should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -245,7 +245,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, Ly, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Angular momentum should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Angular momentum should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -253,7 +253,7 @@ private:
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, Lz, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Angular momentum should be doubles or floats (for now)."
+					Log::global_log->error() << "[Adios2Reader] Angular momentum should be doubles or floats (for now)."
 										<< std::endl;
 				}
 			}
@@ -261,21 +261,21 @@ private:
 				if (var.second["Type"] == "uint64_t") {
 					doTheRead(var.first, comp_id, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Component ids should be uint64_t (for now)." << std::endl;
+					Log::global_log->error() << "[Adios2Reader] Component ids should be uint64_t (for now)." << std::endl;
 				}
 			}
 			if (var.first == "molecule_id") {
 				if (var.second["Type"] == "uint64_t") {
 					doTheRead(var.first, mol_id, buffer, offset);
 				} else {
-					global_log->error() << "[Adios2Reader] Molecule ids should be uint64_t (for now)." << std::endl;
+					Log::global_log->error() << "[Adios2Reader] Molecule ids should be uint64_t (for now)." << std::endl;
 				}
 			}
 			if (var.first == "simulationtime") {
 				if (var.second["Type"] == "double" || var.second["Type"] == "float") {
 					doTheRead(var.first, _simtime);
 				} else {
-					global_log->error() << "[Adios2Reader] Simulation time should be double or float (for now)."
+					Log::global_log->error() << "[Adios2Reader] Simulation time should be double or float (for now)."
 										<< std::endl;
 				}
 			}

@@ -140,7 +140,7 @@ void LeafNodesContainer::initializeCells() {
 }
 
 void LeafNodesContainer::calculateNeighbourIndices() {
-	global_log->debug() << "Setting up cell neighbour index lists." << std::endl;
+	Log::global_log->debug() << "Setting up cell neighbour index lists." << std::endl;
 	_forwardNeighbourOffsets.clear();
 	_backwardNeighbourOffsets.clear();
 	_maxNeighbourOffset = 0;
@@ -165,7 +165,7 @@ void LeafNodesContainer::calculateNeighbourIndices() {
 		}
 	}
 
-	global_log->info() << "Neighbour offsets are bounded by "
+	Log::global_log->info() << "Neighbour offsets are bounded by "
 			<< _minNeighbourOffset << ", " << _maxNeighbourOffset << std::endl;
 }
 
@@ -224,8 +224,8 @@ void LeafNodesContainer::traverseCells(SimpleCellProcessor& cellProcessor){
 
 void LeafNodesContainer::traverseCellPairs(VectorizedChargeP2PCellProcessor& cellProcessor) {
 	#ifndef NDEBUG
-		global_log->debug() << "LeafNodesContainer::traverseCells: Processing pairs." << std::endl;
-		global_log->debug() << "_minNeighbourOffset=" << _minNeighbourOffset << "; _maxNeighbourOffset=" << _maxNeighbourOffset<< std::endl;
+		Log::global_log->debug() << "LeafNodesContainer::traverseCells: Processing pairs." << std::endl;
+		Log::global_log->debug() << "_minNeighbourOffset=" << _minNeighbourOffset << "; _maxNeighbourOffset=" << _maxNeighbourOffset<< std::endl;
 	#endif
 
 	#if defined(_OPENMP)

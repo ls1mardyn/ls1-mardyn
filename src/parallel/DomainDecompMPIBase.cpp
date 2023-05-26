@@ -64,7 +64,7 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	std::string neighbourCommunicationScheme = "direct-pp";
 #endif
 	if(_forceDirectPP){
-		global_log->info()
+		Log::global_log->info()
 			<< "Forcing direct-pp communication scheme, as _forceDirectPP is set (probably by a child class)."
 			<< std::endl;
 		neighbourCommunicationScheme = "direct-pp";
@@ -86,14 +86,14 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 		zonalMethod = "es";
 	}
 	else{
-		global_log->info() << "Defaulting to fs/c08" << std::endl;
+		Log::global_log->info() << "Defaulting to fs/c08" << std::endl;
 
 		zonalMethod = "fs";
 		traversal = "c08";
 	}
 
 	
-	global_log->info() << "variable zonalMethod is: " << zonalMethod << std::endl;
+	Log::global_log->info() << "variable zonalMethod is: " << zonalMethod << std::endl;
 	// reset path
 	xmlconfig.changecurrentnode(oldPath);
 
@@ -101,9 +101,9 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	bool useSequentialFallback = true;
 	xmlconfig.getNodeValue("useSequentialFallback", useSequentialFallback);
 	if (zonalMethod == "nt") {
-		global_log->info() << "Forcefully disabling sequential fallback, because Neutral Territory is used!" << std::endl;
+		Log::global_log->info() << "Forcefully disabling sequential fallback, because Neutral Territory is used!" << std::endl;
 		useSequentialFallback = false;
-		global_log->info() << "Enforcing direct-pp neighborcommunicationscheme, because NT is used!" << std::endl;
+		Log::global_log->info() << "Enforcing direct-pp neighborcommunicationscheme, because NT is used!" << std::endl;
 		neighbourCommunicationScheme = "direct-pp";
 	}
 	setCommunicationScheme(neighbourCommunicationScheme, zonalMethod);
@@ -112,17 +112,17 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	bool overlappingCollectives = false;
 	xmlconfig.getNodeValue("overlappingCollectives", overlappingCollectives);
 	if(overlappingCollectives) {
-		global_log->info() << "DomainDecompMPIBase: Using Overlapping Collectives" << std::endl;
+		Log::global_log->info() << "DomainDecompMPIBase: Using Overlapping Collectives" << std::endl;
 #if MPI_VERSION >= 3
 		_collCommunication = std::unique_ptr<CollectiveCommunicationInterface>(new CollectiveCommunicationNonBlocking());
 #else
-		global_log->warning() << "DomainDecompMPIBase: Can not use overlapping collectives, as the MPI version is less than MPI 3." << std::endl;
+		Log::global_log->warning() << "DomainDecompMPIBase: Can not use overlapping collectives, as the MPI version is less than MPI 3." << std::endl;
 #endif
 		xmlconfig.getNodeValue("overlappingStartAtStep", _overlappingStartAtStep);
-		global_log->info() << "DomainDecompMPIBase: Overlapping Collectives start at step " << _overlappingStartAtStep
+		Log::global_log->info() << "DomainDecompMPIBase: Overlapping Collectives start at step " << _overlappingStartAtStep
 						   << std::endl;
 	} else {
-		global_log->info() << "DomainDecompMPIBase: NOT Using Overlapping Collectives" << std::endl;
+		Log::global_log->info() << "DomainDecompMPIBase: NOT Using Overlapping Collectives" << std::endl;
 	}
 }
 
@@ -146,23 +146,23 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 	} else if(zonalMethod=="nt") {
 		zonalMethodP = new NeutralTerritory();
 	} else {
-		global_log->error() << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'es', 'hs', 'mp' and 'nt'"
+		Log::global_log->error() << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'es', 'hs', 'mp' and 'nt'"
 				<< std::endl;
 		Simulation::exit(1);
 	}
-	global_log->info() << "Using zonal method: " << zonalMethod << std::endl;
+	Log::global_log->info() << "Using zonal method: " << zonalMethod << std::endl;
 
 	if (scheme=="direct") {
-		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme without push-pull neighbors" << std::endl;
+		Log::global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme without push-pull neighbors" << std::endl;
 		_neighbourCommunicationScheme = std::make_unique<DirectNeighbourCommunicationScheme>(zonalMethodP, false);
 	} else if(scheme=="direct-pp") {
-		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme with push-pull neighbors" << std::endl;
+		Log::global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme with push-pull neighbors" << std::endl;
 		_neighbourCommunicationScheme = std::make_unique<DirectNeighbourCommunicationScheme>(zonalMethodP, true);
 	} else if(scheme=="indirect") {
-		global_log->info() << "DomainDecompMPIBase: Using IndirectCommunicationScheme" << std::endl;
+		Log::global_log->info() << "DomainDecompMPIBase: Using IndirectCommunicationScheme" << std::endl;
 		_neighbourCommunicationScheme = std::make_unique<IndirectNeighbourCommunicationScheme>(zonalMethodP);
 	} else {
-		global_log->error() << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'"
+		Log::global_log->error() << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'"
 				<< std::endl;
 		Simulation::exit(1);
 	}
@@ -193,11 +193,11 @@ void DomainDecompMPIBase::assertIntIdentity(int IX) {
 		for (int i = 1; i < _numProcs; i++) {
 			MPI_CHECK(MPI_Recv(&recv, 1, MPI_INT, i, 2 * i + 17, _comm, &s));
 			if (recv != IX) {
-				global_log->error() << "IX is " << IX << " for rank 0, but " << recv << " for rank " << i << ".\n";
+				Log::global_log->error() << "IX is " << IX << " for rank 0, but " << recv << " for rank " << i << ".\n";
 				MPI_Abort(_comm, 911);
 			}
 		}
-		global_log->info() << "IX = " << recv << " for all " << _numProcs << " ranks.\n";
+		Log::global_log->info() << "IX = " << recv << " for all " << _numProcs << " ranks.\n";
 	}
 }
 
@@ -214,14 +214,14 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 			tids.push_back(m->getID());
 		}
 		MPI_CHECK(MPI_Send(tids.data(), num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm));
-		global_log->info() << "Data consistency checked: for results see rank 0." << std::endl;
+		Log::global_log->info() << "Data consistency checked: for results see rank 0." << std::endl;
 	} else {
 		/** @todo FIXME: This implementation does not scale. */
 		std::map<unsigned long, int> check;
 
 		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 			if(check.find(m->getID()) != check.end()){
-				global_log->error() << "Rank 0 contains a duplicated particle with id " << m->getID() << std::endl;
+				Log::global_log->error() << "Rank 0 contains a duplicated particle with id " << m->getID() << std::endl;
 				MPI_Abort(_comm, 1);
 			}
 			check[m->getID()] = 0;
@@ -237,7 +237,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 			MPI_CHECK(MPI_Recv(recv.data(), num_recv, MPI_UNSIGNED_LONG, i, 2674 + i, _comm, &status));
 			for (int j = 0; j < num_recv; j++) {
 				if (check.find(recv[j]) != check.end()) {
-					global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID "
+					Log::global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID "
 							<< recv[j] << std::endl;
 					isOk = false;
 				} else
@@ -245,11 +245,11 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 			}
 		}
 		if (not isOk) {
-			global_log->error() << "Aborting because of duplicated partices." << std::endl;
+			Log::global_log->error() << "Aborting because of duplicated partices." << std::endl;
 			MPI_Abort(_comm, 1);
 		}
 
-		global_log->info() << "Data consistency checked: No duplicate IDs detected among " << check.size()
+		Log::global_log->info() << "Data consistency checked: No duplicate IDs detected among " << check.size()
 				<< " entries." << std::endl;
 	}
 }
@@ -276,23 +276,23 @@ void DomainDecompMPIBase::finishNonBlockingStageImpl(ParticleContainer* molecule
 void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool doHaloPositionCheck, bool removeRecvDuplicates) {
 
-	global_log->set_mpi_output_all();
+	Log::global_log->set_mpi_output_all();
 
 	_neighbourCommunicationScheme->exchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates,
 														this, doHaloPositionCheck);
 
-	global_log->set_mpi_output_root(0);
+	Log::global_log->set_mpi_output_root(0);
 }
 
 
 
 void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain) { 
-	global_log->set_mpi_output_all();
+	Log::global_log->set_mpi_output_all();
 
 	// Using molecule exchange method with the force message type
 	_neighbourCommunicationScheme->exchangeMoleculesMPI(moleculeContainer, domain, FORCES, false, this);
 
-	global_log->set_mpi_output_root(0);
+	Log::global_log->set_mpi_output_root(0);
 }
 
 size_t DomainDecompMPIBase::getTotalSize() { 
@@ -345,9 +345,9 @@ void DomainDecompMPIBase::printSubInfo(int offset) {
 	for (int i = 0; i < offset; i++) {
 		offsetstream << "\t";
 	}
-	global_log->info() << offsetstream.str() << "own datastructures:\t" << sizeof(DomainDecompMPIBase) / 1.e6 << " MB" << std::endl;
-	global_log->info() << offsetstream.str() << "neighbourCommunicationScheme:\t\t" << _neighbourCommunicationScheme->getDynamicSize() / 1.e6 << " MB" << std::endl;
-	global_log->info() << offsetstream.str() << "collective Communication:\t\t" << _collCommunication->getTotalSize() / 1.e6 << " MB" << std::endl;
+	Log::global_log->info() << offsetstream.str() << "own datastructures:\t" << sizeof(DomainDecompMPIBase) / 1.e6 << " MB" << std::endl;
+	Log::global_log->info() << offsetstream.str() << "neighbourCommunicationScheme:\t\t" << _neighbourCommunicationScheme->getDynamicSize() / 1.e6 << " MB" << std::endl;
+	Log::global_log->info() << offsetstream.str() << "collective Communication:\t\t" << _collCommunication->getTotalSize() / 1.e6 << " MB" << std::endl;
 
 }
 

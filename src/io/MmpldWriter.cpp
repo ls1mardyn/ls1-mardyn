@@ -74,11 +74,11 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("writecontrol/stop", _stopTimestep);
 	xmlconfig.getNodeValue("writecontrol/framesperfile", _numFramesPerFile);
 	xmlconfig.getNodeValue("writecontrol/writeBufferSize", _writeBufferSize);
-	global_log->info() << "[MMPLD Writer] Start sampling from simstep: " << _startTimestep << std::endl;
-	global_log->info() << "[MMPLD Writer] Write with frequency: " << _writeFrequency << std::endl;
-	global_log->info() << "[MMPLD Writer] Stop sampling at simstep: " << _stopTimestep << std::endl;
-	global_log->info() << "[MMPLD Writer] Split files every " << _numFramesPerFile << "th frame."<< std::endl;
-	global_log->info() << "[MMPLD Writer] Write buffer size: " << _writeBufferSize << " Byte" << std::endl;
+	Log::global_log->info() << "[MMPLD Writer] Start sampling from simstep: " << _startTimestep << std::endl;
+	Log::global_log->info() << "[MMPLD Writer] Write with frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "[MMPLD Writer] Stop sampling at simstep: " << _stopTimestep << std::endl;
+	Log::global_log->info() << "[MMPLD Writer] Split files every " << _numFramesPerFile << "th frame."<< std::endl;
+	Log::global_log->info() << "[MMPLD Writer] Write buffer size: " << _writeBufferSize << " Byte" << std::endl;
 
 	int mmpldversion = 100;
 	xmlconfig.getNodeValue("mmpldversion", mmpldversion);
@@ -88,20 +88,20 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 		case 102:
 			break;
 		default:
-			global_log->error() << "Unsupported MMPLD version:" << _mmpldversion << std::endl;
+			Log::global_log->error() << "Unsupported MMPLD version:" << _mmpldversion << std::endl;
 			Simulation::exit(1);
 			break;
 	}
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "[MMPLD Writer] Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "[MMPLD Writer] Output prefix: " << _outputPrefix << std::endl;
 
 	// sphere params: radius, colors
 	uint32_t numSites = 0;
 	XMLfile::Query query = xmlconfig.query("spheres/site");
 	numSites = query.card();
-	global_log->info() << "[MMPLD Writer] Number of sites: " << numSites << std::endl;
+	Log::global_log->info() << "[MMPLD Writer] Number of sites: " << numSites << std::endl;
 	if(numSites < 1) {
-		global_log->fatal() << "[MMPLD Writer] No site parameters specified." << std::endl;
+		Log::global_log->fatal() << "[MMPLD Writer] No site parameters specified." << std::endl;
 		Simulation::exit(48973);
 	}
 	std::string oldpath = xmlconfig.getcurrentnodepath();
@@ -129,10 +129,10 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 
 	if(xmlconfig.changecurrentnode("mpi_info")) {
 #ifdef ENABLE_MPI
-		global_log->info() << "[MMPLD Writer] Setting MPI info object for IO" << std::endl;
+		Log::global_log->info() << "[MMPLD Writer] Setting MPI info object for IO" << std::endl;
 		_mpiinfo.readXML(xmlconfig);
 #else
-		global_log->info() << "[MMPLD Writer] mpi_info only used in parallel/MPI version" << std::endl;
+		Log::global_log->info() << "[MMPLD Writer] mpi_info only used in parallel/MPI version" << std::endl;
 #endif
 		xmlconfig.changecurrentnode("..");
 	}
@@ -160,10 +160,10 @@ void MmpldWriter::init(ParticleContainer *particleContainer,
 		int numSites = component.numLJcenters();
 		_numSitesPerComp.at(cid) = numSites;
 		_nCompSitesOffset.at(cid) = _numSitesTotal; /* offset is total number of sites so far */
-		global_log->debug() << "[MMPLD Writer] Component[" << cid << "] numSites=" << numSites << " offset=" << unsigned(_nCompSitesOffset.at(cid)) << std::endl;
+		Log::global_log->debug() << "[MMPLD Writer] Component[" << cid << "] numSites=" << numSites << " offset=" << unsigned(_nCompSitesOffset.at(cid)) << std::endl;
 		_numSitesTotal += numSites;
 	}
-	global_log->debug() << "[MMPLD Writer] Total number of sites taken into account: " << unsigned(_numSitesTotal) << std::endl;
+	Log::global_log->debug() << "[MMPLD Writer] Total number of sites taken into account: " << unsigned(_numSitesTotal) << std::endl;
 
 	// init radius and color of spheres
 	this->InitSphereData();
@@ -186,7 +186,7 @@ void MmpldWriter::init(ParticleContainer *particleContainer,
 	mmpldfstream.write((char*)magicIdentifier, sizeof(magicIdentifier));
 	mmpldfstream.write((char*)&mmpldversion_le, sizeof(mmpldversion_le));
 	mmpldfstream.write((char*)&numframes_le,sizeof(numframes_le));
-	global_log->debug() << "[MMPLD Writer] Writing bounding box data." << std::endl;
+	Log::global_log->debug() << "[MMPLD Writer] Writing bounding box data." << std::endl;
 	float minbox[3] = {0, 0, 0};
 	float maxbox[3];
 	for (unsigned short d = 0; d < 3; ++d) {
@@ -194,7 +194,7 @@ void MmpldWriter::init(ParticleContainer *particleContainer,
 	}
 	mmpldfstream.write((char*)minbox, sizeof(minbox));
 	mmpldfstream.write((char*)maxbox, sizeof(maxbox));
-	global_log->debug() << "[MMPLD Writer] Writing clipping box data." << std::endl;
+	Log::global_log->debug() << "[MMPLD Writer] Writing clipping box data." << std::endl;
 	float inflateRadius = 0;
 	for(auto radius : _global_radius) {
 		if(inflateRadius < radius ) {
@@ -207,7 +207,7 @@ void MmpldWriter::init(ParticleContainer *particleContainer,
 	}
 	mmpldfstream.write((char*)minbox, sizeof(minbox));
 	mmpldfstream.write((char*)maxbox, sizeof(maxbox));
-	global_log->debug() << "[MMPLD Writer] Preallocating " << _numSeekEntries << " seek table entries for frames" << std::endl;
+	Log::global_log->debug() << "[MMPLD Writer] Preallocating " << _numSeekEntries << " seek table entries for frames" << std::endl;
 	for (uint32_t i = 0; i < _numSeekEntries; ++i) {
 		uint64_t offset_le = htole64(_seekTable.at(i));
 		mmpldfstream.write((char*) &offset_le, sizeof(offset_le));
@@ -313,7 +313,7 @@ void MmpldWriter::endStep(ParticleContainer *particleContainer,
 	}
 
 	std::string filename = getOutputFilename();
-	global_log->debug() << "[MMPLD Writer] Writing MMPLD frame " << _frameCount << " for simstep " << simstep << " to file " << filename << std::endl;
+	Log::global_log->debug() << "[MMPLD Writer] Writing MMPLD frame " << _frameCount << " for simstep " << simstep << " to file " << filename << std::endl;
 	write_frame(particleContainer, domainDecomp);
 }
 
@@ -390,10 +390,10 @@ void MmpldWriter::PrepareWriteControl()
 
 	_stopTimestep = std::min(_stopTimestep, _simulation.getNumTimesteps());
 
-	global_log->info() << "[MMPLD Writer] Setting start:stop to " << _startTimestep << ":" << _stopTimestep << std::endl;
+	Log::global_log->info() << "[MMPLD Writer] Setting start:stop to " << _startTimestep << ":" << _stopTimestep << std::endl;
 
 	if(_stopTimestep < _startTimestep) {
-		global_log->warning() << "[MMPLD Writer] Invalid time interval. No frames will be recorded!" << std::endl;
+		Log::global_log->warning() << "[MMPLD Writer] Invalid time interval. No frames will be recorded!" << std::endl;
 		return;
 	}
 
@@ -414,7 +414,7 @@ long MmpldWriter::get_data_frame_header_size() {
 			data_frame_header_size = sizeof(float) + sizeof(uint32_t);
 			break;
 		default:
-			global_log->error() << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << std::endl;
+			Log::global_log->error() << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << std::endl;
 			Simulation::exit(1);
 			break;
 	}

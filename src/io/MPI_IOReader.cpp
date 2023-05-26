@@ -53,11 +53,11 @@ void MPI_IOReader::setPhaseSpaceHeaderFile(std::string filename) {
 void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	std::string token, token2;
 
-	global_log->info() << "Opening phase space header file " << _phaseSpaceHeaderFile << std::endl;
+	Log::global_log->info() << "Opening phase space header file " << _phaseSpaceHeaderFile << std::endl;
 	_phaseSpaceHeaderFileStream.open(_phaseSpaceHeaderFile.c_str());
 	_phaseSpaceHeaderFileStream >> token;
 	if(token != "mardyn") {
-		global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << std::endl;
+		Log::global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << std::endl;
 		Simulation::exit(1);
 	}
 
@@ -65,16 +65,16 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_phaseSpaceHeaderFileStream >> token >> inputversion;
 	// FIXME: remove tag trunk from file specification?
 	if(token != "trunk") {
-		global_log->error() << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << std::endl;
+		Log::global_log->error() << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << std::endl;
 		Simulation::exit(1);
 	}
 
 	if(strtoul(inputversion.c_str(), NULL, 0) < 20080701) {
-		global_log->error() << "Input version tool old (" << inputversion << ")" << std::endl;
+		Log::global_log->error() << "Input version tool old (" << inputversion << ")" << std::endl;
 		Simulation::exit(1);
 	}
 
-	global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << std::endl;
+	Log::global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << std::endl;
 
 
 	std::vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
@@ -92,7 +92,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 		token.clear();
 		_phaseSpaceHeaderFileStream >> token;
-		global_log->info() << "{{" << token << "}}" << std::endl;
+		Log::global_log->info() << "{{" << token << "}}" << std::endl;
 
 		if((token == "currentTime") || (token == "t")) {
 			// set current simulation time
@@ -114,12 +114,12 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 			if(!(ntypestring == "ICRVQD" || ntypestring == "ICRV"
 				 || ntypestring == "IRV")) {
-				global_log->error() << "Unknown molecule format: '"
+				Log::global_log->error() << "Unknown molecule format: '"
 									<< ntypestring << "'" << std::endl;
 				Simulation::exit(1);
 			}
 			_moleculeFormat = ntypestring;
-			global_log->info() << " molecule format: " << ntypestring << std::endl;
+			Log::global_log->info() << " molecule format: " << ntypestring << std::endl;
 			header = false;
 		} else if((token == "ThermostatTemperature") || (token == "ThT") || (token == "h")) {
 			// set up a new thermostat
@@ -127,7 +127,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			double targetT;
 			_phaseSpaceHeaderFileStream >> thermostat_id;
 			_phaseSpaceHeaderFileStream >> targetT;
-			global_log->info() << "Thermostat number " << thermostat_id << " has T = " << targetT << ".\n";
+			Log::global_log->info() << "Thermostat number " << thermostat_id << " has T = " << targetT << ".\n";
 			domain->setTargetTemperature(thermostat_id, targetT);
 		} else if((token == "ComponentThermostat") || (token == "CT") || (token == "o")) {
 			// specify a thermostat for a component
@@ -136,7 +136,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			int component_id;
 			int thermostat_id;
 			_phaseSpaceHeaderFileStream >> component_id >> thermostat_id;
-			global_log->info() << "Component " << component_id << " (internally: "
+			Log::global_log->info() << "Component " << component_id << " (internally: "
 							   << component_id - 1 << ") is regulated by thermostat number " << thermostat_id << ".\n";
 			component_id--; // FIXME thermostat IDs start with 0 in the program but not in the config file?!
 			if(thermostat_id < 0) // thermostat IDs start with 0
@@ -168,10 +168,10 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			// components:
 			unsigned int numcomponents = 0;
 			_phaseSpaceHeaderFileStream >> numcomponents;
-			global_log->info() << "Reading " << numcomponents << " components" << std::endl;
+			Log::global_log->info() << "Reading " << numcomponents << " components" << std::endl;
 			dcomponents.resize(numcomponents);
 			for(unsigned int i = 0; i < numcomponents; i++) {
-				global_log->info() << "comp. i = " << i << ": " << std::endl;
+				Log::global_log->info() << "comp. i = " << i << ": " << std::endl;
 				dcomponents[i].setID(i);
 				unsigned int numljcenters = 0;
 				unsigned int numcharges = 0;
@@ -181,7 +181,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 				_phaseSpaceHeaderFileStream >> numljcenters >> numcharges >> numdipoles
 											>> numquadrupoles >> numtersoff;
 				if(numtersoff != 0) {
-					global_log->error() << "tersoff no longer supported." << std::endl;
+					Log::global_log->error() << "tersoff no longer supported." << std::endl;
 					Simulation::exit(-1);
 				}
 				double x, y, z, m;
@@ -189,27 +189,27 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 					double eps, sigma, tcutoff, do_shift;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> eps >> sigma >> tcutoff >> do_shift;
 					dcomponents[i].addLJcenter(x, y, z, m, eps, sigma, tcutoff, (do_shift != 0));
-					global_log->info() << "LJ at [" << x << " " << y << " " << z
+					Log::global_log->info() << "LJ at [" << x << " " << y << " " << z
 									   << "], mass: " << m << ", epsilon: " << eps << ", sigma: " << sigma << std::endl;
 				}
 				for(unsigned int j = 0; j < numcharges; j++) {
 					double q;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> q;
 					dcomponents[i].addCharge(x, y, z, m, q);
-					global_log->info() << "charge at [" << x << " " << y << " " << z
+					Log::global_log->info() << "charge at [" << x << " " << y << " " << z
 									   << "], mass: " << m << ", q: " << q << std::endl;
 				}
 				for(unsigned int j = 0; j < numdipoles; j++) {
 					double eMyx, eMyy, eMyz, absMy;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> eMyx >> eMyy >> eMyz >> absMy;
 					dcomponents[i].addDipole(x, y, z, eMyx, eMyy, eMyz, absMy);
-					global_log->info() << "dipole at [" << x << " " << y << " " << z << "] " << std::endl;
+					Log::global_log->info() << "dipole at [" << x << " " << y << " " << z << "] " << std::endl;
 				}
 				for(unsigned int j = 0; j < numquadrupoles; j++) {
 					double eQx, eQy, eQz, absQ;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> eQx >> eQy >> eQz >> absQ;
 					dcomponents[i].addQuadrupole(x, y, z, eQx, eQy, eQz, absQ);
-					global_log->info() << "quad at [" << x << " " << y << " " << z << "] " << std::endl;
+					Log::global_log->info() << "quad at [" << x << " " << y << " " << z << "] " << std::endl;
 				}
 				double IDummy1, IDummy2, IDummy3;
 				// FIXME! Was soll das hier? Was ist mit der Initialisierung im Fall I <= 0.
@@ -221,13 +221,13 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 				if(IDummy3 > 0.)
 					dcomponents[i].setI33(IDummy3);
 				domain->setProfiledComponentMass(dcomponents[i].m());
-				global_log->info() << std::endl;
+				Log::global_log->info() << std::endl;
 			}
 
 #ifndef NDEBUG
 			for(unsigned int i = 0; i < numcomponents; i++) {
-				global_log->debug() << "Component " << (i + 1) << " of " << numcomponents << std::endl;
-				global_log->debug() << dcomponents[i] << std::endl;
+				Log::global_log->debug() << "Component " << (i + 1) << " of " << numcomponents << std::endl;
+				Log::global_log->debug() << dcomponents[i] << std::endl;
 			}
 #endif
 
@@ -266,7 +266,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 		}
 		// LOCATION OF OLD PRESSURE GRADIENT TOKENS
 		else {
-			global_log->error() << "Invalid token \'" << token << "\' found. Skipping rest of the header." << std::endl;
+			Log::global_log->error() << "Invalid token \'" << token << "\' found. Skipping rest of the header." << std::endl;
 			header = false;
 		}
 	}
@@ -288,7 +288,7 @@ MPI_IOReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	unsigned long localMaxid = 0; // stores the highest molecule ID found in the phase space file
 
 	if (numcomponents < 1) {
-		global_log->warning()
+		Log::global_log->warning()
 				<< "No components defined! Setting up single one-centered LJ"
 				<< std::endl;
 		numcomponents = 1;
@@ -298,7 +298,7 @@ MPI_IOReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	}
 
 	if (domainDecomp->getRank() == 0) {
-		global_log->info() << "Opening phase space file " << _phaseSpaceFile
+		Log::global_log->info() << "Opening phase space file " << _phaseSpaceFile
 				<< std::endl;
 	}
 
@@ -418,7 +418,7 @@ MPI_IOReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 		gettimeofday(&timer2, NULL);
 		timeDiff = timer2.tv_sec - timer1.tv_sec + (timer2.tv_usec
 				- timer1.tv_usec) / 1.E6;
-		global_log->info() << "Das Lesen des MPI-IO Headers hat " << timeDiff
+		Log::global_log->info() << "Das Lesen des MPI-IO Headers hat " << timeDiff
 				<< " Sekunden benötigt" << std::endl;
 	}
 	*/
@@ -572,7 +572,7 @@ MPI_IOReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 				MPI_COMM_WORLD);
 	if (domainDecomp->getRank() == 0) {
 
-		global_log->info() << "Das Lesen der Zellen hat " << timeDiffGlobal
+		Log::global_log->info() << "Das Lesen der Zellen hat " << timeDiffGlobal
 				<< " Sekunden benötigt" << std::endl;
 	}
 	*/
@@ -617,19 +617,19 @@ MPI_IOReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 		gettimeofday(&timer2, NULL);
 		timeDiff = timer2.tv_sec - timer1.tv_sec + (timer2.tv_usec
 				- timer1.tv_usec) / 1.E6;
-		global_log->info() << "NumMolsInComps und globalRotDOF hat "
+		Log::global_log->info() << "NumMolsInComps und globalRotDOF hat "
 				<< timeDiff << " Sekunden benötigt" << std::endl;
 	}
 	*/
 
-	global_log->info() << "Finished reading molecules: 100%" << std::endl;
-	global_log->info() << "Reading Molecules done" << std::endl;
+	Log::global_log->info() << "Finished reading molecules: 100%" << std::endl;
+	Log::global_log->info() << "Reading Molecules done" << std::endl;
 
 	// TODO: Shouldn't we always calculate this?
 	if (domain->getglobalRho() < 1e-5) {
 		domain->setglobalRho(
 				domain->getglobalNumMolecules(true, particleContainer, domainDecomp) / domain->getGlobalVolume());
-		global_log->info() << "Calculated Rho_global = "
+		Log::global_log->info() << "Calculated Rho_global = "
 				<< domain->getglobalRho() << std::endl;
 	}
 	//get maximum I/O time of each process and output it
@@ -640,7 +640,7 @@ MPI_IOReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 
 	MPI_Reduce(&ioTime, &maxIOTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	if (domainDecomp->getRank() == 0) {
-		global_log->info() << "Initial IO took:                 " << maxIOTime
+		Log::global_log->info() << "Initial IO took:                 " << maxIOTime
 				<< " sec" << std::endl;
 	}
 
@@ -662,7 +662,7 @@ void MPI_IOReader::handle_error(int i) {
 
 	MPI_Error_string(i, error_string, &length_of_error_string);
 
-	global_log->error() << "Writing of file was not successfull " << " , " << i
+	Log::global_log->error() << "Writing of file was not successfull " << " , " << i
 			<< " , " << error_string << std::endl;
 	Simulation::exit(1);
 #endif

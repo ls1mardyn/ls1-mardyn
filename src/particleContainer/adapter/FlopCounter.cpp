@@ -111,12 +111,12 @@ void FlopCounter::_Counts::allReduce() {
 void FlopCounter::_Counts::print() const {
 	using std::endl;
 	
-	global_log->info() << " Molecule distances: " << _moleculeDistances << std::endl;
+	Log::global_log->info() << " Molecule distances: " << _moleculeDistances << std::endl;
 
 	for (int i = 0; i < NUM_POTENTIALS; ++i) {
 		std::string str = _potCounts[i].printNameKernelAndMacroCalls();
 		if (str.length() > 0)
-			global_log->info() << str;
+			Log::global_log->info() << str;
 	}
 }
 
@@ -125,7 +125,7 @@ FlopCounter::FlopCounter(double cutoffRadius, double LJCutoffRadius) : CellProce
 
 	const int numThreads = mardyn_get_max_threads();
 
-	global_log->info() << "FlopCounter: allocate data for " << numThreads << " threads." << std::endl;
+	Log::global_log->info() << "FlopCounter: allocate data for " << numThreads << " threads." << std::endl;
 
 	_threadData.resize(numThreads);
 
@@ -450,9 +450,9 @@ void FlopCounter::_calculatePairs(const CellDataSoARMM & soa1, const CellDataSoA
 }
 
 void FlopCounter::printStats() const {
-	global_log->info() << "FlopCounter stats: " << std::endl;
+	Log::global_log->info() << "FlopCounter stats: " << std::endl;
 	_currentCounts.print();
-	global_log->info()
+	Log::global_log->info()
 			<< "\tfraction of Flops for molecule dist: "
 			<< getTotalMoleculeDistanceFlopCount() / getTotalFlopCount() << std::endl;
 }

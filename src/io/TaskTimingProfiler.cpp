@@ -46,7 +46,7 @@ void TaskTimingProfiler::stop(unsigned long start, int taskId) {
 }
 
 void TaskTimingProfiler::dump(std::string filename) {
-    global_log->info() << "Writing task timings to " << filename << " ... " << std::flush;
+    Log::global_log->info() << "Writing task timings to " << filename << " ... " << std::flush;
 
     // find first tick to subtract from all others
     unsigned long startTick = ULLONG_MAX;
@@ -75,7 +75,7 @@ void TaskTimingProfiler::dump(std::string filename) {
     std::cout << "done!" << std::endl;
 
 #ifdef QUICKSCHED
-	global_log->info() << "Task ids:" << std::endl
+	Log::global_log->info() << "Task ids:" << std::endl
 					   << std::setw(42) << "" << "P2PPreprocessSingleCell  = "
 					   << bhfmm::FastMultipoleMethod::taskType::P2PPreprocessSingleCell << std::endl
 					   << std::setw(42) << "" << "P2Pc08StepBlock          = "

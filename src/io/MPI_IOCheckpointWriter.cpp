@@ -49,23 +49,23 @@ MPI_IOCheckpointWriter::~MPI_IOCheckpointWriter() {
 void MPI_IOCheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	int incremental = 1;
 	xmlconfig.getNodeValue("incremental", incremental);
 	_incremental = (incremental != 0);
-	global_log->info() << "Incremental numbers: " << _incremental << std::endl;
+	Log::global_log->info() << "Incremental numbers: " << _incremental << std::endl;
 
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if (appendTimestamp > 0) {
 		_appendTimestamp = true;
 	}
-	global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
+	Log::global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
 }
 
 void MPI_IOCheckpointWriter::init(ParticleContainer *particleContainer,
@@ -180,7 +180,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		for (int i = 0; i < globalNumCells; i++) {
 			if (localNumParticlesPerCell[i] > 0) {
 				if (globalNumParticlesPerCell[i] != localNumParticlesPerCell[i]) {
-					global_log->info() << "Allreduce ist fehlgeschlagen"
+					Log::global_log->info() << "Allreduce ist fehlgeschlagen"
 							<< std::endl;
 				}
 			}
@@ -191,7 +191,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 			gettimeofday(&timer2, NULL);
 			timeDiff = timer2.tv_sec - timer1.tv_sec + (timer2.tv_usec
 					- timer1.tv_usec) / 1.E6;
-			global_log->info() << "Das MPI-IO Allreduce hat " << timeDiff
+			Log::global_log->info() << "Das MPI-IO Allreduce hat " << timeDiff
 					<< " Sekunden benötigt" << std::endl;
 		}
 		*/
@@ -285,7 +285,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 			gettimeofday(&timer2, NULL);
 			timeDiff = timer2.tv_sec - timer1.tv_sec + (timer2.tv_usec
 					- timer1.tv_usec) / 1.E6;
-			global_log->info() << "Das Schreiben des MPI-IO Headers hat "
+			Log::global_log->info() << "Das Schreiben des MPI-IO Headers hat "
 					<< timeDiff << " Sekunden benötigt" << std::endl;
 		}
 
@@ -358,7 +358,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 			gettimeofday(&timer2, NULL);
 			timeDiff = timer2.tv_sec - timer1.tv_sec + (timer2.tv_usec
 					- timer1.tv_usec) / 1.E6;
-			global_log->info() << "Das Belegen des MPI-IO Schreibearrays hat "
+			Log::global_log->info() << "Das Belegen des MPI-IO Schreibearrays hat "
 					<< timeDiff << " Sekunden benötigt" << std::endl;
 		}
 
@@ -403,7 +403,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		/*
 		if (domainDecomp->getRank() == 0) {
 
-			global_log->info() << "Das Lesen der Zellen hat " << timeDiffGlobal
+			Log::global_log->info() << "Das Lesen der Zellen hat " << timeDiffGlobal
 					<< " Sekunden benötigt" << std::endl;
 		}
 
@@ -432,7 +432,7 @@ void MPI_IOCheckpointWriter::handle_error(int i) {
 
 	MPI_Error_string(i, error_string, &length_of_error_string);
 
-	global_log->error() << "Writing of file was not successfull " << " , " << i
+	Log::global_log->error() << "Writing of file was not successfull " << " , " << i
 			<< " , " << error_string << std::endl;
 	Simulation::exit(1);
 #endif

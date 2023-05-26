@@ -10,7 +10,7 @@
  // If a simulation is resumed from a restart file, then the existing running average file is ammended but the computation of the running averages starts anew at the time step of the restart file
 #include "Permittivity.h"
 void Permittivity::readXML(XMLfileUnits& xmlconfig) {
-	global_log->info() << "Calculation of relative permittivity enabled." << std::endl;
+	Log::global_log->info() << "Calculation of relative permittivity enabled." << std::endl;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	xmlconfig.getNodeValue("initstatistics", _initStatistics);
 	xmlconfig.getNodeValue("recordingtimesteps", _recordingTimesteps);
@@ -20,8 +20,8 @@ void Permittivity::readXML(XMLfileUnits& xmlconfig) {
 
 void Permittivity::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
 	_totalNumTimeSteps = _simulation.getNumTimesteps();
-	global_log->warning() << "Permittivity is being sampled. Using slab thermostat is not recommended" << std::endl;
-	global_log->info() << "Number of blocks for calculation of permittivity: "<<_numOutputs << std::endl;
+	Log::global_log->warning() << "Permittivity is being sampled. Using slab thermostat is not recommended" << std::endl;
+	Log::global_log->info() << "Number of blocks for calculation of permittivity: "<<_numOutputs << std::endl;
 	_readStartingStep = false;
 	_currentOutputNum = 0;
 	_accumulatedSteps = 1;
@@ -71,7 +71,7 @@ void Permittivity::init(ParticleContainer* particleContainer, DomainDecompBase* 
 			bool orientationIsCorrect = ci.dipole(0).e() == std::array<double, 3>{0,0,1};
 			_myAbs[i] = ci.dipole(0).abs();
 			if(not orientationIsCorrect){
-				global_log->error() << "Wrong dipole vector chosen! Please always choose [eMyx eMyy eMyz] = [0 0 1] when using the permittivity plugin" << std::endl;
+				Log::global_log->error() << "Wrong dipole vector chosen! Please always choose [eMyx eMyy eMyz] = [0 0 1] when using the permittivity plugin" << std::endl;
 			}
 		}
 	}

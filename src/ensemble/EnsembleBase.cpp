@@ -21,9 +21,9 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	long numComponents = 0;
 	XMLfile::Query query = xmlconfig.query("components/moleculetype");
 	numComponents = query.card();
-	global_log->info() << "Number of components: " << numComponents << std::endl;
+	Log::global_log->info() << "Number of components: " << numComponents << std::endl;
 	if (numComponents == 0) {
-		global_log->fatal() << "No components found. Please verify that you have input them correctly." << std::endl;
+		Log::global_log->fatal() << "No components found. Please verify that you have input them correctly." << std::endl;
 		Simulation::exit(96123);
 	}
 	_components.resize(numComponents);
@@ -35,7 +35,7 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("@id", cid);
 		_components[cid - 1].readXML(xmlconfig);
 		_componentnamesToIds[_components[cid - 1].getName()] = cid - 1;
-		global_log->debug() << _components[cid - 1].getName() << " --> " << cid - 1 << std::endl;
+		Log::global_log->debug() << _components[cid - 1].getName() << " --> " << cid - 1 << std::endl;
 	}
 	xmlconfig.changecurrentnode(oldpath);
 
@@ -44,7 +44,7 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	XMLfile::Query::const_iterator mixingruletIter;
 	uint32_t numMixingrules = 0;
 	numMixingrules = query.card();
-	global_log->info() << "Found " << numMixingrules << " mixing rules." << std::endl;
+	Log::global_log->info() << "Found " << numMixingrules << " mixing rules." << std::endl;
 	_mixingrules.resize(numMixingrules);
 
 	// data structure for mixing coefficients of domain class (still in use!!!)
@@ -57,12 +57,12 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		std::string mixingruletype;
 
 		xmlconfig.getNodeValue("@type", mixingruletype);
-		global_log->info() << "Mixing rule type: " << mixingruletype << std::endl;
+		Log::global_log->info() << "Mixing rule type: " << mixingruletype << std::endl;
 		if("LB" == mixingruletype) {
 			mixingrule = new LorentzBerthelotMixingRule();
 
 		} else {
-			global_log->error() << "Unknown mixing rule " << mixingruletype << std::endl;
+			Log::global_log->error() << "Unknown mixing rule " << mixingruletype << std::endl;
 			Simulation::exit(1);
 		}
 		mixingrule->readXML(xmlconfig);

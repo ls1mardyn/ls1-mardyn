@@ -32,7 +32,7 @@ void MirrorSystem::beforeEventNewTimestep(
 	if(_bDone)
 		return;
 
-	global_log->info() << "HELLO beforeEventNewTimestep() ..." << std::endl;
+	Log::global_log->info() << "HELLO beforeEventNewTimestep() ..." << std::endl;
 
 	Domain* domain = global_simulation->getDomain();
 
@@ -65,7 +65,7 @@ void MirrorSystem::beforeEventNewTimestep(
 			it->setr(2, newPos.at(2) );
 		}
 //		particleContainer->update();
-		global_log->info() << "System shifted." << std::endl;
+		Log::global_log->info() << "System shifted." << std::endl;
 	}
 	else if(_type == MST_ENLARGE) {
 		// add vapor
@@ -191,7 +191,7 @@ void MirrorSystem::beforeEventNewTimestep(
 		arr.at(1) = -1;
 		arr.at(2) = -1;
 
-		global_log->info() << "Adding new particles ..." << std::endl;
+		Log::global_log->info() << "Adding new particles ..." << std::endl;
 		uint64_t numAdded = 0;
 		double bbMin[3];
 		double bbMax[3];
@@ -255,7 +255,7 @@ void MirrorSystem::readXML(XMLfileUnits& xmlconfig) {
 	// mirror position
 	_yPos = 0.;
 	xmlconfig.getNodeValue("yPos", _yPos);
-	global_log->info() << "MirrorSystem: y position = " << _yPos << std::endl;
+	Log::global_log->info() << "MirrorSystem: y position = " << _yPos << std::endl;
 
 	// old box size
 	xmlconfig.getNodeValue("box/old/x", _box_old.at(0));

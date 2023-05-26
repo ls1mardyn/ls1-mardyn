@@ -79,7 +79,7 @@
  */
 template <>
 void PluginFactory<PluginBase>::registerDefaultPlugins() {
-	global_log->debug() << "REGISTERING PLUGINS" << std::endl;
+	Log::global_log->debug() << "REGISTERING PLUGINS" << std::endl;
 
 #ifdef ENABLE_ADIOS2
 	REGISTER_PLUGIN(Adios2Writer);
@@ -150,9 +150,9 @@ long PluginFactory<PluginBase>::enablePlugins(std::list<PluginBase*>& _plugins, 
 	long numPlugins = 0;
 	XMLfile::Query query = xmlconfig.query(category);
 	numPlugins = query.card();
-	global_log->info() << "Number of plugins with tag " << category << ": " << numPlugins << std::endl;
+	Log::global_log->info() << "Number of plugins with tag " << category << ": " << numPlugins << std::endl;
 	if (numPlugins < 1) {
-		global_log->warning() << "No plugins specified for tag " << category << "." << std::endl;
+		Log::global_log->warning() << "No plugins specified for tag " << category << "." << std::endl;
 	}
 
 	for (auto pluginIter = query.begin(); pluginIter; ++pluginIter) {
@@ -162,14 +162,14 @@ long PluginFactory<PluginBase>::enablePlugins(std::list<PluginBase*>& _plugins, 
 		bool enabled = true;
 		xmlconfig.getNodeValue("@enabled", enabled);
 		if (not enabled) {
-			global_log->debug() << "skipping disabled plugin: " << pluginname << std::endl;
+			Log::global_log->debug() << "skipping disabled plugin: " << pluginname << std::endl;
 			continue;
 		}
-		global_log->info() << "Enabling plugin: " << pluginname << std::endl;
+		Log::global_log->info() << "Enabling plugin: " << pluginname << std::endl;
 
 		PluginBase* plugin = this->create(pluginname);
 		if (plugin == nullptr) {
-			global_log->warning() << "Could not create plugin using factory: " << pluginname << std::endl;
+			Log::global_log->warning() << "Could not create plugin using factory: " << pluginname << std::endl;
 		}
 
 		//@TODO: add plugin specific functions
@@ -184,7 +184,7 @@ long PluginFactory<PluginBase>::enablePlugins(std::list<PluginBase*>& _plugins, 
 			} else if ("multi" == sphere_representation) {
 				plugin = new MmpldWriterMultiSphere();
 			} else {
-				global_log->error() << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation
+				Log::global_log->error() << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation
 									<< std::endl;
 				Simulation::exit(-1);
 			}
@@ -198,7 +198,7 @@ long PluginFactory<PluginBase>::enablePlugins(std::list<PluginBase*>& _plugins, 
 			plugin->readXML(xmlconfig);
 			_plugins.push_back(plugin);
 		} else {
-			global_log->warning() << "Unknown plugin " << pluginname << std::endl;
+			Log::global_log->warning() << "Unknown plugin " << pluginname << std::endl;
 		}
 	}
 

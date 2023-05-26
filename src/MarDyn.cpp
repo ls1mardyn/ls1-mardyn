@@ -25,7 +25,7 @@
 #include "autopas/Version.h"
 #endif
 
-using Log::global_log;
+
 using optparse::Values;
 
 /**
@@ -97,7 +97,7 @@ void program_execution_info(int argc, char **argv, Log::Logger *log) {
 
 #if defined(_OPENMP)
 	int num_threads = mardyn_get_max_threads();
-	global_log->info() << "	Running with " << num_threads << " OpenMP threads." << std::endl;
+	Log::global_log->info() << "	Running with " << num_threads << " OpenMP threads." << std::endl;
 	// print thread pinning info
 	PrintThreadPinningToCPU();
 #endif
@@ -105,7 +105,7 @@ void program_execution_info(int argc, char **argv, Log::Logger *log) {
 #ifdef ENABLE_MPI
 	int world_size = 1;
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &world_size));
-	global_log->info() << "	Running with " << world_size << " MPI processes." << std::endl;
+	Log::global_log->info() << "	Running with " << world_size << " MPI processes." << std::endl;
 #endif
 }
 
@@ -114,12 +114,12 @@ int run_unit_tests(const Values &options, const std::vector<std::string> &args) 
 	std::string testcases("");
 	if(args.size() == 1) {
 		testcases = args[0];
-		global_log->info() << "Running unit tests: " << testcases << std::endl;
+		Log::global_log->info() << "Running unit tests: " << testcases << std::endl;
 	} else {
-		global_log->info() << "Running all unit tests!" << std::endl;
+		Log::global_log->info() << "Running all unit tests!" << std::endl;
 	}
 	std::string testDataDirectory(options.get("testDataDirectory"));
-	global_log->info() << "Test data directory: " << testDataDirectory << std::endl;
+	Log::global_log->info() << "Test data directory: " << testDataDirectory << std::endl;
 	Log::logLevel testLogLevel = (options.is_set("verbose") && options.get("verbose")) ? Log::All : Log::Info;
 	int testresult = runTests(testLogLevel, testDataDirectory, testcases);
 	return testresult;
@@ -136,9 +136,9 @@ int main(int argc, char** argv) {
 #endif
 
 	/* Initialize the global log file */
-	global_log = new Log::Logger(Log::Info);
+	Log::global_log = new Log::Logger(Log::Info);
 #ifdef ENABLE_MPI
-	global_log->set_mpi_output_root(0);
+	Log::global_log->set_mpi_output_root(0);
 	//global_log->set_mpi_output_all();
 #endif
 
@@ -147,34 +147,34 @@ int main(int argc, char** argv) {
 	optparse::Values options = op.parse_args(argc, argv);
 	std::vector<std::string> args = op.args();
 
-	global_log->info() << "Running ls1-MarDyn version " << MARDYN_VERSION << std::endl;
+	Log::global_log->info() << "Running ls1-MarDyn version " << MARDYN_VERSION << std::endl;
 
 #ifdef MARDYN_AUTOPAS
-	global_log->info() << "Built with AutoPas version " << AutoPas_VERSION << std::endl;
+	Log::global_log->info() << "Built with AutoPas version " << AutoPas_VERSION << std::endl;
 #endif
 
 #ifndef NDEBUG
-	global_log->warning() << "This ls1-MarDyn binary is a DEBUG build!" << std::endl;
+	Log::global_log->warning() << "This ls1-MarDyn binary is a DEBUG build!" << std::endl;
 #endif
 
 	if( options.is_set_by_user("logfile") ) {
 		std::string logfileNamePrefix(options.get("logfile"));
-		global_log->info() << "Using logfile with prefix " << logfileNamePrefix << std::endl;
-		delete global_log;
-		global_log = new Log::Logger(Log::Info, logfileNamePrefix);
+		Log::global_log->info() << "Using logfile with prefix " << logfileNamePrefix << std::endl;
+		delete Log::global_log;
+		Log::global_log = new Log::Logger(Log::Info, logfileNamePrefix);
 	}
 	if( options.is_set_by_user("verbose") ) {
-		global_log->info() << "Enabling verbose log output." << std::endl;
-		global_log->set_log_level(Log::All);
+		Log::global_log->info() << "Enabling verbose log output." << std::endl;
+		Log::global_log->set_log_level(Log::All);
 	}
 #ifdef ENABLE_SIGHANDLER
 	if (options.is_set_by_user("sigsegvhandler")) {
-		global_log->info() << "Enabling sigsegvhandler." << std::endl;
+		Log::global_log->info() << "Enabling sigsegvhandler." << std::endl;
 		registerSigsegvHandler();  // from SigsegvHandler.h
 	}
 #endif
-	program_build_info(global_log);
-	program_execution_info(argc, argv, global_log);
+	program_build_info(Log::global_log);
+	program_execution_info(argc, argv, Log::global_log);
 
 
 	/* Run built in tests and exit */
@@ -192,38 +192,38 @@ int main(int argc, char** argv) {
 
 	auto numArgs = args.size();
 	if(numArgs != 1) {
-		global_log->error() << "Incorrect number of arguments provided." << std::endl;
+		Log::global_log->error() << "Incorrect number of arguments provided." << std::endl;
 		op.print_usage();
 		Simulation::exit(-1);
 	}
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
 	std::string configFileName(args[0]);
 	if( fileExists(configFileName.c_str()) ) {
-		global_log->info() << "Config file: " << configFileName << std::endl;
+		Log::global_log->info() << "Config file: " << configFileName << std::endl;
 		simulation.readConfigFile(configFileName);
 	} else {
-		global_log->error() << "Cannot open config file '" << configFileName << "'" << std::endl;
+		Log::global_log->error() << "Cannot open config file '" << configFileName << "'" << std::endl;
 		Simulation::exit(-2);
 	}
 
 	/* processing command line arguments */
 	if ( (int) options.get("legacy-cell-processor") > 0 ) {
 		simulation.useLegacyCellProcessor();
-		global_log->info() << "--legacy-cell-processor specified, using legacyCellProcessor" << std::endl;
+		Log::global_log->info() << "--legacy-cell-processor specified, using legacyCellProcessor" << std::endl;
 	}
 
 	if ( (int) options.get("final-checkpoint") > 0 ) {
 		simulation.enableFinalCheckpoint();
-		global_log->info() << "Final checkpoint enabled" << std::endl;
+		Log::global_log->info() << "Final checkpoint enabled" << std::endl;
 	} else {
 		simulation.disableFinalCheckpoint();
-		global_log->info() << "Final checkpoint disabled." << std::endl;
+		Log::global_log->info() << "Final checkpoint disabled." << std::endl;
 	}
 
 	if( options.is_set_by_user("timed-checkpoint") ) {
 		double checkpointtime = options.get("timed-checkpoint");
 		simulation.setForcedCheckpointTime(checkpointtime);
-		global_log->info() << "Enabling checkpoint after execution time: " << checkpointtime << " sec" << std::endl;
+		Log::global_log->info() << "Enabling checkpoint after execution time: " << checkpointtime << " sec" << std::endl;
 	}
 
 	if (options.is_set_by_user("timesteps")) {
@@ -232,10 +232,10 @@ int main(int argc, char** argv) {
 	if (options.is_set_by_user("loop-abort-time")) {
 		simulation.setLoopAbortTime(options.get("loop-abort-time").operator double());
 	}
-	global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << std::endl;
+	Log::global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << std::endl;
 
 	if(options.is_set_by_user("print-meminfo")) {
-		global_log->info() << "Enabling memory info output" << std::endl;
+		Log::global_log->info() << "Enabling memory info output" << std::endl;
 		simulation.enableMemoryProfiler();
 	}
 	size_t lastIndex = configFileName.rfind(".");
@@ -244,7 +244,7 @@ int main(int argc, char** argv) {
 		outPrefix = options["outputprefix"];
 	}
 	simulation.setOutputPrefix(outPrefix.c_str());
-	global_log->info() << "Default output prefix: " << simulation.getOutputPrefix() << std::endl;
+	Log::global_log->info() << "Default output prefix: " << simulation.getOutputPrefix() << std::endl;
 
 
 	simulation.prepare_start();
@@ -255,17 +255,17 @@ int main(int argc, char** argv) {
 	sim_timer.stop();
 	double runtime = sim_timer.get_etime();
 	//!@todo time only for simulation.simulate not "main"!
-	global_log->info() << "main: used " << std::fixed << std::setprecision(2) << runtime << " seconds" << std::endl << std::fixed << std::setprecision(5);
+	Log::global_log->info() << "main: used " << std::fixed << std::setprecision(2) << runtime << " seconds" << std::endl << std::fixed << std::setprecision(5);
 	//  FIXME: The statements "<< std::fixed << std::setprecision(5)" after endl are so that the next logger timestamp appears as expected. A better solution would be nice, of course.
 
 	// print out total simulation speed
 	const unsigned long numTimesteps = simulation.getNumTimesteps() - simulation.getNumInitTimesteps();
 	const double speed = simulation.getTotalNumberOfMolecules() * numTimesteps / runtime;
-	global_log->info() << "Simulation speed: " << std::scientific << std::setprecision(6) << speed << " Molecule-updates per second." << std::endl << std::fixed << std::setprecision(5);
+	Log::global_log->info() << "Simulation speed: " << std::scientific << std::setprecision(6) << speed << " Molecule-updates per second." << std::endl << std::fixed << std::setprecision(5);
 
 	const double iterationsPerSecond = numTimesteps / runtime;
-	global_log->info() << "Iterations per second: " << std::fixed << std::setprecision(3) << iterationsPerSecond << std::endl << std::fixed << std::setprecision(5);
-	global_log->info() << "Time per iteration: " << std::fixed << std::setprecision(3) << 1.0 / iterationsPerSecond << " seconds." << std::endl << std::fixed << std::setprecision(5);
+	Log::global_log->info() << "Iterations per second: " << std::fixed << std::setprecision(3) << iterationsPerSecond << std::endl << std::fixed << std::setprecision(5);
+	Log::global_log->info() << "Time per iteration: " << std::fixed << std::setprecision(3) << 1.0 / iterationsPerSecond << " seconds." << std::endl << std::fixed << std::setprecision(5);
 
 	double resources = runtime / 3600.0;
 #if defined(_OPENMP)
@@ -277,11 +277,11 @@ int main(int argc, char** argv) {
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &world_size));
 	resources *= world_size;
 #endif
-	global_log->info() << "Used resources: " << std::fixed << std::setprecision(3) << resources << " core-hours" << std::endl << std::fixed << std::setprecision(5);
+	Log::global_log->info() << "Used resources: " << std::fixed << std::setprecision(3) << resources << " core-hours" << std::endl << std::fixed << std::setprecision(5);
 
 	simulation.finalize();
 
-	delete global_log;
+	delete Log::global_log;
 
 #ifdef ENABLE_MPI
 	MPI_Finalize();

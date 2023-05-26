@@ -13,7 +13,7 @@
 #include <fstream>
 #include <sstream>
 
-using Log::global_log;
+
 
 SysMon* SysMon::s_sysmoninstance=NULL;
 
@@ -329,7 +329,7 @@ unsigned int SysMon::updateVariables_procmeminfo()
 				val*=1024;
 			else
 				//cerr << "WARNING /proc/meminfo:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << std::endl;
-				global_log->warning() << "WARNING /proc/meminfo:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << std::endl;
+				Log::global_log->warning() << "WARNING /proc/meminfo:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << std::endl;
 		}
 		_variableset->setVariable("procmeminfo",label,val);
 		++numvalues;
@@ -499,7 +499,7 @@ unsigned int SysMon::updateVariables_procselfstatus()
 					val*=1024;
 				else
 					//cerr << "WARNING /proc/self/status:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << std::endl;
-					global_log->warning() << "WARNING /proc/self/status:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << std::endl;
+					Log::global_log->warning() << "WARNING /proc/self/status:" << linenr << ": unknown unit " << valunit << " (no conversion): using " << label << "=" << val << std::endl;
 			}
 			_variableset->setVariable("procselfstatus",label,val);
 		}

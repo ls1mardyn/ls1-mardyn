@@ -9,7 +9,7 @@
 
 
 void EnergyLogWriter::init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
-	global_log->info() << "Init global energy log." << std::endl;
+	Log::global_log->info() << "Init global energy log." << std::endl;
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
@@ -29,10 +29,10 @@ void EnergyLogWriter::init(ParticleContainer *particleContainer, DomainDecompBas
 void EnergyLogWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 	_outputFilename = "global_energy.log";
 	xmlconfig.getNodeValue("outputfilename", _outputFilename);
-	global_log->info() << "Output filename: " << _outputFilename << std::endl;
+	Log::global_log->info() << "Output filename: " << _outputFilename << std::endl;
 }
 
 void EnergyLogWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,

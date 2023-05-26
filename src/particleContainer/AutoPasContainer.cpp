@@ -181,9 +181,9 @@ auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString,
 	try {
 		return OptionType::parseOptions(stringInXml);
 	} catch (const std::exception &e) {
-		global_log->error() << "AutoPasContainer: error when parsing " << xmlString << ":" << std::endl;
-		global_log->error() << e.what() << std::endl;
-		global_log->error() << "Possible options: "
+		Log::global_log->error() << "AutoPasContainer: error when parsing " << xmlString << ":" << std::endl;
+		Log::global_log->error() << e.what() << std::endl;
+		Log::global_log->error() << "Possible options: "
 							<< autopas::utils::ArrayUtils::to_string(OptionType::getAllOptions()) << std::endl;
 		Simulation::exit(4432);
 		// dummy return
@@ -239,21 +239,21 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	xmlconfig.getNodeValue("functor", functorChoiceStr);
 	if (functorChoiceStr.find("avx") != std::string::npos) {
 		functorOption = FunctorOption::AVX;
-		global_log->info() << "Selected AVX Functor." << std::endl;
+		Log::global_log->info() << "Selected AVX Functor." << std::endl;
 #ifndef __AVX__
-		global_log->warning() << "Selected AVX Functor but AVX is not supported! Switching to autoVec functor." << std::endl;
+		Log::global_log->warning() << "Selected AVX Functor but AVX is not supported! Switching to autoVec functor." << std::endl;
 		functorOption = FunctorOption::autoVec;
 #endif
 	} else if (functorChoiceStr.find("sve") != std::string::npos) {
 		functorOption = FunctorOption::SVE;
-		global_log->info() << "Selected SVE Functor." << std::endl;
+		Log::global_log->info() << "Selected SVE Functor." << std::endl;
 #ifndef __ARM_FEATURE_SVE
-		global_log->warning() << "Selected SVE Functor but SVE is not supported! Switching to autoVec functor." << std::endl;
+		Log::global_log->warning() << "Selected SVE Functor but SVE is not supported! Switching to autoVec functor." << std::endl;
 		functorOption = FunctorOption::autoVec;
 #endif
 	} else {
 		functorOption = FunctorOption::autoVec;
-		global_log->info() << "Selected autoVec Functor." << std::endl;
+		Log::global_log->info() << "Selected autoVec Functor." << std::endl;
 	}
 
 
@@ -312,7 +312,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 
 	// print full configuration to the command line
 	int valueOffset = 28;
-	global_log->info() << "AutoPas configuration:" << std::endl
+	Log::global_log->info() << "AutoPas configuration:" << std::endl
 					   << std::setw(valueOffset) << std::left << "Data Layout "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts())
 					   << std::endl
@@ -363,7 +363,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 void AutoPasContainer::update() {
 	// in case we update the container before handling the invalid particles, this might lead to lost particles.
 	if (not _invalidParticles.empty()) {
-		global_log->error() << "AutoPasContainer: trying to update container, even though invalidParticles still "
+		Log::global_log->error() << "AutoPasContainer: trying to update container, even though invalidParticles still "
 							   "exist. This would lead to lost particles => ERROR!"
 							<< std::endl;
 		Simulation::exit(434);
@@ -427,7 +427,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 	bool useMixing = not allSame;
 
 	if (useMixing) {
-		global_log->debug() << "AutoPasContainer: Using mixing." << std::endl;
+		Log::global_log->debug() << "AutoPasContainer: Using mixing." << std::endl;
 		switch (functorOption) {
 			case FunctorOption::SVE: {
 #ifdef __ARM_FEATURE_SVE
@@ -469,7 +469,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 			}
 		}
 	} else {
-		global_log->debug() << "AutoPasContainer: Not using mixing." << std::endl;
+		Log::global_log->debug() << "AutoPasContainer: Not using mixing." << std::endl;
 		switch (functorOption) {
 			case FunctorOption::SVE: {
 #ifdef __ARM_FEATURE_SVE
@@ -541,7 +541,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 					double ls1Shift6 = c.ljcenter(0).shift6();
 					if (std::fabs((autoPasShift6 - ls1Shift6) / ls1Shift6) > 1.e-10) {
 						// warn if shift differs relatively by more than 1.e-10
-						global_log->warning() << "Dangerous shift6 detected: AutoPas will use: " << autoPasShift6
+						Log::global_log->warning() << "Dangerous shift6 detected: AutoPas will use: " << autoPasShift6
 											  << ", while normal ls1 mode uses: " << ls1Shift6 << std::endl
 											  << "Please check that your shifts are calculated correctly." << std::endl;
 					}
@@ -563,7 +563,7 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		}
 
 	} else {
-		global_log->warning() << "only lj functors are supported for traversals." << std::endl;
+		Log::global_log->warning() << "only lj functors are supported for traversals." << std::endl;
 	}
 }
 
@@ -587,7 +587,7 @@ unsigned long AutoPasContainer::getNumberOfParticles(ParticleIterator::Type t /*
 void AutoPasContainer::clear() { _autopasContainer.deleteAllParticles(); }
 
 void AutoPasContainer::deleteOuterParticles() {
-	global_log->info() << "deleting outer particles by using forced update" << std::endl;
+	Log::global_log->info() << "deleting outer particles by using forced update" << std::endl;
 	auto invalidParticles = _autopasContainer.updateContainer();
 	if (not invalidParticles.empty()) {
 		throw std::runtime_error(

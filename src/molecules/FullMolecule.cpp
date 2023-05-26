@@ -529,11 +529,11 @@ void FullMolecule::calcFM_site(const std::array<double, 3>& dsite, const std::ar
 	 */
 	for (int d = 0; d < 3; d++) {
 		if (std::isnan(dsite[d])) {
-			global_log->error() << "Severe dsite[" << d << "] error for site of m" << _id << std::endl;
+			Log::global_log->error() << "Severe dsite[" << d << "] error for site of m" << _id << std::endl;
 			mardyn_assert(false);
 		}
 		if (std::isnan(Fsite[d])) {
-			global_log->error() << "Severe Fsite[" << d << "] error for site of m" << _id << std::endl;
+			Log::global_log->error() << "Severe Fsite[" << d << "] error for site of m" << _id << std::endl;
 			mardyn_assert(false);
 		}
 	}
