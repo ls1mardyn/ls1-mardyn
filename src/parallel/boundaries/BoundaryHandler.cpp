@@ -191,7 +191,7 @@ void BoundaryHandler::removeHalos()
 			{
 				//create region
 				std::array<double,3> curWallRegionBegin, curWallRegionEnd;
-				std::tie(curWallRegionBegin, curWallRegionEnd) = BoundaryUtils::getInnerBuffer(localRegionStart, localRegionEnd, currentWall.first, cutoff);
+				std::tie(curWallRegionBegin, curWallRegionEnd) = BoundaryUtils::getOuterBuffer(localRegionStart, localRegionEnd, currentWall.first, cutoff);
 				//conversion
 				const double cstylerbegin[] = {curWallRegionBegin[0], curWallRegionBegin[1], curWallRegionBegin[2]}; 
 				const double cstylerend[] = {curWallRegionEnd[0], curWallRegionEnd[1], curWallRegionEnd[2]};
