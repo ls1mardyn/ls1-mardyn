@@ -180,7 +180,7 @@ public:
 	//! This version uses, MPI IO.
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
-	void writeMoleculesToMPIFileBinary(const std::string& filename, ParticleContainer* moleculeContainer) const;
+	void writeMoleculesToMPIFileBinary(const std::string& filename, std::vector<ParticleContainer*>& particleContainers) const;
 #endif // ENABLE_MPI
 
 	//! @brief appends molecule data to the file. The format is the same as that of the input file
@@ -190,7 +190,7 @@ public:
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
 	//! @param binary flag, that is true if the output shall be binary
-	void writeMoleculesToFile(const std::string& filename, ParticleContainer* moleculeContainer, bool binary = false) const;
+	void writeMoleculesToFile(const std::string& filename, std::vector<ParticleContainer*>& particleContainers, bool binary = false) const;
 
 
 	void updateSendLeavingWithCopies(bool sendTogether){

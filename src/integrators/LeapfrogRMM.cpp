@@ -93,17 +93,17 @@ void LeapfrogRMM::computeVelocities(ParticleContainer* molCont, Domain* dom) {
 		sumIw2[0] += red_sumIw2;
 	}
 	for (map<int, double>::iterator thermit = summv2.begin(); thermit != summv2.end(); thermit++) {
-		dom->setLocalSummv2(thermit->second, thermit->first);
-		dom->setLocalSumIw2(sumIw2[thermit->first], thermit->first);
-		dom->setLocalNrotDOF(thermit->first, N[thermit->first], rotDOF[thermit->first]);
+        dom->addLocalSummv2(thermit->second, thermit->first);
+        dom->addLocalSumIw2(sumIw2[thermit->first], thermit->first);
+        dom->addLocalNrotDOF(thermit->first, N[thermit->first], rotDOF[thermit->first]);
 	}
 #else
 	molCont->traverseCells(*_velocityCellProcessor);
 	unsigned long N = _velocityCellProcessor->getN();
 	double summv2 = _velocityCellProcessor->getSummv2();
 
-	dom->setLocalSummv2(summv2, 0);
-	dom->setLocalSumIw2(0.0, 0);
-	dom->setLocalNrotDOF(0, N, 0);
+	dom->addLocalSummv2(summv2, 0);
+	dom->addLocalSumIw2(0.0, 0);
+	dom->addLocalNrotDOF(0, N, 0);
 #endif
 }

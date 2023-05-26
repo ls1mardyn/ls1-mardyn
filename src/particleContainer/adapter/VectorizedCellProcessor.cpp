@@ -152,8 +152,8 @@ void VectorizedCellProcessor::endTraversal() {
 	_upotXpoles = glob_upotXpoles;
 	_virial = glob_virial;
 	_myRF = glob_myRF;
-	_domain.setLocalVirial(_virial + 3.0 * _myRF);
-	_domain.setLocalUpot(_upot6lj / 6.0 + _upotXpoles + _myRF);
+	_domain.setLocalVirial(_virial + 3.0 * _myRF + _domain.getLocalVirial());
+	_domain.setLocalUpot(_upot6lj / 6.0 + _upotXpoles + _myRF + _domain.getLocalUpot());
 }
 
 	//const DoubleVec minus_one = DoubleVec::set1(-1.0); //currently not used, would produce warning

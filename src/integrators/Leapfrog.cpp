@@ -140,9 +140,9 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 		} // end pragma omp parallel
 	}
 	for (auto & thermit : summv2) {
-		domain->setLocalSummv2(thermit.second, thermit.first);
-		domain->setLocalSumIw2(sumIw2[thermit.first], thermit.first);
-		domain->setLocalNrotDOF(thermit.first, N[thermit.first], rotDOF[thermit.first]);
+		domain->addLocalSummv2(thermit.second, thermit.first);
+		domain->addLocalSumIw2(sumIw2[thermit.first], thermit.first);
+		domain->addLocalNrotDOF(thermit.first, N[thermit.first], rotDOF[thermit.first]);
 	}
 
 	this->_state = STATE_POST_FORCE_CALCULATION;

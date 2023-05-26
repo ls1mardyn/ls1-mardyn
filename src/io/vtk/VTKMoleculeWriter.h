@@ -42,6 +42,20 @@ private:
 
 	std::string _fileName{};
 
+    /**
+     * Counts how many particle containers exist in total.
+     * Is initialized by multiple calls to init.
+     * Added to support multiple particle containers.
+     * */
+    unsigned int _particleContainerCount{0ul};
+
+    /**
+     *
+     * Added to support multiple particle containers
+     * */
+    unsigned int _endStepCount{0ul};
+
+
 public:
 	VTKMoleculeWriter() = default;
 
@@ -50,11 +64,18 @@ public:
 
 	virtual ~VTKMoleculeWriter() {}
 
-	//! @todo document me!
+    /**
+     * With every call to init of this instance _particleContainerCount will rise by one.
+     * This was added to support multiple particle containers.
+     * */
 	virtual void init(ParticleContainer *particleContainer,
                       DomainDecompBase *domainDecomp, Domain *domain);
 
-	//! @todo document me!
+    /**
+     * Writes the final vtk file.
+     * Depending on the amount of particle containers, multiple calls to endStep are needed to actually write the file.
+     * The file only gets written if all particle containers have been handled.
+     * */
 	virtual void endStep(
             ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
             Domain *domain, unsigned long simstep

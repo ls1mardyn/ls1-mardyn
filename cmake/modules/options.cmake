@@ -38,3 +38,8 @@ option(REDUCED_MEMORY_MODE "Activates the reduced memory mode" OFF)
 if(REDUCED_MEMORY_MODE)
     add_definitions(-DENABLE_REDUCED_MEMORY_MODE=1)
 endif()
+
+option(ENABLE_ADRESS "Activates AdResS model (many features not compatible)" OFF)
+if(ENABLE_ADRESS)
+    add_definitions(-DENABLE_ADRESS=1)
+endif()

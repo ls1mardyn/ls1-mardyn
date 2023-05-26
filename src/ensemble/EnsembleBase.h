@@ -74,7 +74,7 @@ public:
 
 	//! @brief Calculate global variables
 	//! @param variable Variable to be updated.
-	virtual void updateGlobalVariable(ParticleContainer* particleContainer, GlobalVariable variable) = 0;
+	virtual void updateGlobalVariable(std::vector<ParticleContainer*>& particleContainers, GlobalVariable variable) = 0;
 
 	DomainBase*& domain() { return _domain; }
 
@@ -99,20 +99,20 @@ public:
 	virtual std::list<ChemicalPotential>* getLmu() { return nullptr; }
 
 	/*! runs steps only needed in GrandCanonicalEnsemble, does nothing for canonical */
-	virtual void initConfigXML(ParticleContainer* moleculeContainer) {};
+	virtual void initConfigXML(std::vector<ParticleContainer*>& particleContainers) {};
 
 	/*! runs steps only needed in GrandCanonicalEnsemble, does nothing for canonical */
 	virtual void prepare_start() {};
 
 	/*! runs simulate step needed in GrandCanonical, nothing for canonical */
 	virtual void
-	beforeEventNewTimestep(ParticleContainer* moleculeContainer, DomainDecompBase* domainDecomposition,
+	beforeEventNewTimestep(std::vector<ParticleContainer*>& particleContainers, DomainDecompBase* domainDecomposition,
 						   unsigned long simstep) {};
 
 	/*! runs after forces step for GrandCanonical, nothing for canonical */
 	virtual void
-	afterForces(ParticleContainer* /* moleculeContainer */, DomainDecompBase* /* domainDecomposition */,
-				CellProcessor* /* cellProcessor */,
+	afterForces(std::vector<ParticleContainer*>& /* moleculeContainer */, DomainDecompBase* /* domainDecomposition */,
+				std::vector<CellProcessor*>& /* cellProcessor */,
 				unsigned long /* simstep */) {};
 
 	/*! runs before temperature control is applied, but after force calculations */

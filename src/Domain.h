@@ -67,7 +67,7 @@ public:
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param currentTime The current time to be printed.
 	//! @param useBinaryFormat indicates wheter binary I/O is used or not
-	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
+	void writeCheckpoint( std::string filename, std::vector<ParticleContainer*>& particleContainers,
 			DomainDecompBase* domainDecomp, double currentTime, bool useBinaryFormat = false);
 
 	//! @brief writes a checkpoint file that can be used to continue the simulation
@@ -81,11 +81,11 @@ public:
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param currentTime The current time to be printed.
 	void writeCheckpointHeader(std::string filename,
-			ParticleContainer* particleContainer,
+            std::vector<ParticleContainer*>& particleContainers,
 			DomainDecompBase* domainDecomp, double currentTime);
 
 	void writeCheckpointHeaderXML(std::string filename,
-			ParticleContainer* particleContainer,
+            std::vector<ParticleContainer*>& particleContainers,
 			DomainDecompBase* domainDecomp, double currentTime);
 
 	//! @brief initialize far field correction parameters
@@ -143,7 +143,18 @@ public:
 	//! @brief get the fluid and fluid-solid potential of the local process
 	double getLocalUpotCompSpecific();
 
-	//! @brief set the virial of the local process
+    //! @brief sets local virial and upot to 0
+    void resetLocalVirialUpot() { _localVirial = 0; _localUpot = 0; }
+
+    //! @brief sets all entries for Summv2 SumIw2 N rotDOF to 0
+    void resetLocalSummv2SumIw2NrotDOF() {
+        for(auto& [_, d] : _local2KETrans) d = 0;
+        for(auto& [_, d] : _local2KERot) d = 0;
+        for(auto& [_, d] : _localThermostatN) d = 0;
+        for(auto& [_, d] : _localRotationalDOF) d = 0;
+    }
+
+    //! @brief set the virial of the local process
 	void setLocalVirial(double Virial);
 
 	//! @brief get the virial of the local process
@@ -196,14 +207,14 @@ public:
 	//! The global number must not be updated e.g. during the read-in of a binary checkpoint (BinaryReader.cpp:172).
 	//! @param particleContainer particleContainer to be used for update of global number of particles
 	//! @param domainDecomp Domain decomposition object to be used for update of global number of particles
-	unsigned long getglobalNumMolecules(bool bUpdate = true, ParticleContainer* particleContainer = nullptr, DomainDecompBase* domainDecomp = nullptr);
+	unsigned long getglobalNumMolecules(bool bUpdate = true, std::vector<ParticleContainer*>* particleContainers = nullptr, DomainDecompBase* domainDecomp = nullptr);
 
 	//! @brief set globalNumMolecules
 	void setglobalNumMolecules(unsigned long glnummol);
 	
 	//! @brief update globalNumMolecules
 	//! This method must be called by all processes and not just by root!
-	void updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
+	void updateglobalNumMolecules(std::vector<ParticleContainer*>& particleContainers, DomainDecompBase* domainDecomp);
 
 	//! @brief get local/global max. moleculeID
 	CommVar<uint64_t> getMaxMoleculeID() const;
@@ -233,6 +244,18 @@ public:
 	//! Before this method is called, it has to be sure that the
 	//! global virial has been calculated (method calculateGlobalValues)
 	double getAverageGlobalVirial();
+
+    //! @brief adds _localSummv2 to the given value
+    void addLocalSummv2(double summv2, int thermostat);
+
+    //! @brief adds _localSumIw2 to the given value
+    void addLocalSumIw2(double sumIw2, int thermostat);
+
+    //! @brief adds _localThermostatN and _localRotationalDOF for thermostat
+    void addLocalNrotDOF(int thermostat, unsigned long N, unsigned long rotDOF) {
+        this->_localThermostatN[thermostat] += N;
+        this->_localRotationalDOF[thermostat] += rotDOF;
+    }
 
 	//! @brief sets _localSummv2 to the given value
 	void setLocalSummv2(double summv2, int thermostat);
@@ -264,7 +287,7 @@ public:
 	//! @brief calculate the global macroscopic values
 	//!
 	//! @param domainDecomp domain decomposition
-	//! @param particleContainer particle Container
+	//! @param particleContainers particle Containers
 	//! @param collectThermostatVelocities flag stating whether the directed velocity should be collected for the corresponding thermostats
 	//! @param Tfactor temporary factor applied to the temperature during equilibration
 	//!
@@ -290,14 +313,14 @@ public:
 	//! That limit is implemented using the properties _universalSelectiveThermostatCounter,
 	//! _universalSelectiveThermostatWarning, and _universalSelectiveThermostatError.
 	void calculateGlobalValues(
-			DomainDecompBase* domainDecomp, ParticleContainer* particleContainer,
+			DomainDecompBase* domainDecomp, std::vector<ParticleContainer*>& particleContainers,
 			bool collectThermostatVelocities, double Tfactor
 	);
 
 	/* FIXME: alternatively: default values for function parameters */
 	//! @brief calls this->calculateGlobalValues with Tfactor = 1 and without velocity collection
-	void calculateGlobalValues(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer) {
-		this->calculateGlobalValues(domainDecomp, particleContainer, false, 1.0);
+	void calculateGlobalValues(DomainDecompBase* domainDecomp, std::vector<ParticleContainer*>& particleContainers) {
+		this->calculateGlobalValues(domainDecomp, particleContainers, false, 1.0);
 	}
 
 	//! @brief calculate _localSummv2 and _localSumIw2
@@ -310,11 +333,11 @@ public:
 	//! motion corresponding to the thermostat from the motion of each
 	//! individual particle, for the purpose of aggregating the kinetic
 	//! energy of the undirected motion.
-	void calculateVelocitySums(ParticleContainer* partCont);
+	void calculateVelocitySums(std::vector<ParticleContainer*>& particleContainers);
 
 	//! Calculates the LOCAL directed kinetic energy associated
 	//! with the appropriately marked thermostats
-	void calculateThermostatDirectedVelocity(ParticleContainer* partCont);
+	void calculateThermostatDirectedVelocity(std::vector<ParticleContainer*>& particleContainers);
 	//! A thermostat is referred to as undirected here if it
 	//! explicitly excludes the kinetic energy associated with
 	//! the directed motion of the respective components.

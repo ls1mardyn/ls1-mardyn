@@ -77,6 +77,9 @@ void MPI_IOCheckpointWriter::init(ParticleContainer *particleContainer,
 void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
                                      Domain *domain,
                                      unsigned long simstep) {
+#ifdef ENABLE_ADRESS
+    if(particleContainer != _simulation.getMoleculeContainer()) return;
+#endif
 #ifdef ENABLE_MPI
 	if (simstep % _writeFrequency == 0) {
 		//get the file name
@@ -95,7 +98,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 			filenamestream << "-" << gettimestring();
 		}
 		filenamestream << ".restart";
-		domain->writeCheckpointHeader(filenamestream.str(), particleContainer,
+		domain->writeCheckpointHeader(filenamestream.str(), _simulation.getMoleculeContainers(),
 				domainDecomp, _simulation.getSimulationTime());
 		filenamestream << ".mpi";
 		std::string filename = filenamestream.str();
@@ -146,22 +149,22 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 			isCellOfProcess[i] = false;
 		}
 
-
-		for (auto tempMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMolecule.isValid(); ++tempMolecule) {
-			int cellIndex[3];
-			for (unsigned short i = 0; i < 3; i++) {
-				cellIndex[i]
-						= (int) floor(tempMolecule->r(i) / cellLength[i]);
-			}
-			unsigned long index = (cellIndex[2] * lengthInCells[1]
-					+ cellIndex[1]) * lengthInCells[0] + cellIndex[0];
-			if (localNumParticlesPerCell[index] == 0) {
-				localNumCells++;
-				isCellOfProcess[index] = true;
-			}
-			localNumParticlesPerCell[index]++;
-
-		}
+        for(ParticleContainer* ptr : _simulation.getMoleculeContainers()) {
+            for (auto tempMolecule = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMolecule.isValid(); ++tempMolecule) {
+                int cellIndex[3];
+                for (unsigned short i = 0; i < 3; i++) {
+                    cellIndex[i]
+                            = (int) floor(tempMolecule->r(i) / cellLength[i]);
+                }
+                unsigned long index = (cellIndex[2] * lengthInCells[1]
+                                       + cellIndex[1]) * lengthInCells[0] + cellIndex[0];
+                if (localNumParticlesPerCell[index] == 0) {
+                    localNumCells++;
+                    isCellOfProcess[index] = true;
+                }
+                localNumParticlesPerCell[index]++;
+            }
+        }
 
 		/*
 		//Timer:
@@ -224,7 +227,7 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		//setGlobalNumCells, cellLength, NumParticles
 		long numCellsAndMolecules[2];
 		numCellsAndMolecules[0] = globalNumCells;
-		numCellsAndMolecules[1] = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
+		numCellsAndMolecules[1] = domain->getglobalNumMolecules(true, &_simulation.getMoleculeContainers(), domainDecomp);
 
 		if (domainDecomp->getRank() == 0) {
 			ret = MPI_File_seek(fh, 0, MPI_SEEK_SET);
@@ -334,19 +337,21 @@ void MPI_IOCheckpointWriter::endStep(ParticleContainer *particleContainer, Domai
 		}
 
 		//filling of the writeArray
-		for (auto tempMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMolecule.isValid(); ++tempMolecule) {
+        for(ParticleContainer* ptr : _simulation.getMoleculeContainers()) {
+            for (auto tempMolecule = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMolecule.isValid(); ++tempMolecule) {
 
-			int cellIndex[3];
-			for (unsigned short i = 0; i < 3; i++) {
-				cellIndex[i] = floor(tempMolecule->r(i) / cellLength[i]);
-			}
-			int index = (cellIndex[2] * lengthInCells[1] + cellIndex[1])
-					* lengthInCells[0] + cellIndex[0];
-			ParticleData::MoleculeToParticleData(
-					writeArray[globalToLocalCell[index]][cellCounter[globalToLocalCell[index]]],
-					*tempMolecule);
-			cellCounter[globalToLocalCell[index]]++;
-		}
+                int cellIndex[3];
+                for (unsigned short i = 0; i < 3; i++) {
+                    cellIndex[i] = floor(tempMolecule->r(i) / cellLength[i]);
+                }
+                int index = (cellIndex[2] * lengthInCells[1] + cellIndex[1])
+                            * lengthInCells[0] + cellIndex[0];
+                ParticleData::MoleculeToParticleData(
+                        writeArray[globalToLocalCell[index]][cellCounter[globalToLocalCell[index]]],
+                        *tempMolecule);
+                cellCounter[globalToLocalCell[index]]++;
+            }
+        }
 
 		for (int i = 0; i < globalNumCells; i++) {
 			if (isCellOfProcess[i] == true) {

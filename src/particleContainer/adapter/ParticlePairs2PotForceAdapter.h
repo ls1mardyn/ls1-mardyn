@@ -95,8 +95,8 @@ public:
 		_upotXpoles = glob_upotXpoles;
 		_myRF = glob_myRF;
 
-		_domain.setLocalUpot(_upot6LJ / 6. + _upotXpoles + _myRF);
-		_domain.setLocalVirial(_virial + 3.0 * _myRF);
+        _domain.setLocalUpot(_upot6LJ / 6. + _upotXpoles + _myRF + _domain.getLocalUpot());
+        _domain.setLocalVirial(_virial + 3.0 * _myRF + _domain.getLocalVirial());
 	}
 
 	struct PP2PFAThreadData {

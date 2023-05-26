@@ -191,8 +191,8 @@ public:
 	void WriteBetaLogfiles(unsigned long simstep);
 
 	// loops over molecule container
-	void DoLoopsOverMolecules(DomainDecompBase*, ParticleContainer* particleContainer, unsigned long simstep);
-	void VelocityScalingPreparation(DomainDecompBase*, ParticleContainer*, unsigned long simstep);
+	void DoLoopsOverMolecules(DomainDecompBase*, std::vector<ParticleContainer*> particleContainers, unsigned long simstep);
+	void VelocityScalingPreparation(DomainDecompBase*, std::vector<ParticleContainer*> particleContainers, unsigned long simstep);
 
 	// measure added kin. energy
 	void InitAddedEkin();

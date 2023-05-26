@@ -124,6 +124,22 @@ double Domain::getGlobalBetaTrans(int thermostat) { return _universalBTrans[ther
 double Domain::getGlobalBetaRot() { return _universalBRot[0]; }
 double Domain::getGlobalBetaRot(int thermostat) { return _universalBRot[thermostat]; }
 
+void Domain::addLocalSummv2(double summv2, int thermostat)
+{
+#ifndef NDEBUG
+    global_log->debug() << "* local thermostat " << thermostat << ":  mvv += " << summv2 << endl;
+#endif
+    this->_local2KETrans[thermostat] += summv2;
+#ifndef NDEBUG
+    global_log->debug() << "* local thermostat " << thermostat << ":  mvv = " << _local2KETrans[thermostat] << endl;
+#endif
+}
+
+void Domain::addLocalSumIw2(double sumIw2, int thermostat)
+{
+    _local2KERot[thermostat] += sumIw2;
+}
+
 void Domain::setLocalSummv2(double summv2, int thermostat)
 {
 #ifndef NDEBUG
@@ -154,7 +170,7 @@ Comp2Param& Domain::getComp2Params(){
 
 void Domain::calculateGlobalValues(
 		DomainDecompBase* domainDecomp,
-		ParticleContainer* particleContainer,
+        std::vector<ParticleContainer*>& particleContainers,
 		bool collectThermostatVelocities,
 		double Tfactor
 		) {
@@ -266,34 +282,36 @@ void Domain::calculateGlobalValues(
 			int rot_dof;
 			const double limit_energy =  KINLIMIT_PER_T * Ti;
 
-			#if defined(_OPENMP)
-			#pragma omp parallel
-			#endif
-			{
+            for(auto& particleContainer : particleContainers) {
+                #if defined(_OPENMP)
+                #pragma omp parallel
+                #endif
+                {
 
-				double Utrans, Urot, limit_rot_energy, vcorr, Dcorr;
-				for (auto tM = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
-					Utrans = tM->U_trans();
-					if (Utrans > limit_energy) {
-						vcorr = sqrt(limit_energy / Utrans);
-						global_log->debug() << ": v(m" << tM->getID() << ") *= " << vcorr << endl;
-						tM->scale_v(vcorr);
-						tM->scale_F(vcorr);
-					}
+                    double Utrans, Urot, limit_rot_energy, vcorr, Dcorr;
+                    for (auto tM = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
+                        Utrans = tM->U_trans();
+                        if (Utrans > limit_energy) {
+                            vcorr = sqrt(limit_energy / Utrans);
+                            global_log->debug() << ": v(m" << tM->getID() << ") *= " << vcorr << endl;
+                            tM->scale_v(vcorr);
+                            tM->scale_F(vcorr);
+                        }
 
-					rot_dof = tM->component()->getRotationalDegreesOfFreedom();
-					if (rot_dof > 0) {
-						limit_rot_energy = 3.0 * rot_dof * Ti;
-						Urot = tM->U_rot();
-						if (Urot > limit_rot_energy) {
-							Dcorr = sqrt(limit_rot_energy / Urot);
-							global_log->debug() << "D(m" << tM->getID() << ") *= " << Dcorr << endl;
-							tM->scale_D(Dcorr);
-							tM->scale_M(Dcorr);
-						}
-					}
-				}
-			} /*_OPENMP*/
+                        rot_dof = tM->component()->getRotationalDegreesOfFreedom();
+                        if (rot_dof > 0) {
+                            limit_rot_energy = 3.0 * rot_dof * Ti;
+                            Urot = tM->U_rot();
+                            if (Urot > limit_rot_energy) {
+                                Dcorr = sqrt(limit_rot_energy / Urot);
+                                global_log->debug() << "D(m" << tM->getID() << ") *= " << Dcorr << endl;
+                                tM->scale_D(Dcorr);
+                                tM->scale_M(Dcorr);
+                            }
+                        }
+                    }
+                } /*_OPENMP*/
+            } // end particle containers
 
 			// arbitrary values set by one of the thermodynamic guys (probs. Martin Horsch) :)
 			int explosionReappearanceLimit = 4000;
@@ -369,7 +387,7 @@ void Domain::calculateGlobalValues(
 		this->_universalSelectiveThermostatError--;
 }
 
-void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
+void Domain::calculateThermostatDirectedVelocity(std::vector<ParticleContainer*>& partConts)
 {
 	if(this->_componentwiseThermostat)
 	{
@@ -381,45 +399,48 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 				_localThermostatDirectedVelocity[thit->first].fill(0.0);
 		}
 
-		#if defined(_OPENMP)
-		#pragma omp parallel
-		#endif
-		{
-			std::map<int, std::array<double, 3> > localThermostatDirectedVelocity_thread;
+        for(auto& partCont : partConts) {
+            #if defined(_OPENMP)
+            #pragma omp parallel
+            #endif
+            {
+                std::map<int, std::array<double, 3> > localThermostatDirectedVelocity_thread;
 
-			for(auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
-				int cid = tM->componentid();
-				int thermostat = this->_componentToThermostatIdMap[cid];
+                for(auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
+                    int cid = tM->componentid();
+                    int thermostat = this->_componentToThermostatIdMap[cid];
 
-				if(this->_universalUndirectedThermostat[thermostat])
-					arrayMath::accumulate(localThermostatDirectedVelocity_thread[thermostat], tM->v_arr());
-			}
+                    if(this->_universalUndirectedThermostat[thermostat])
+                        arrayMath::accumulate(localThermostatDirectedVelocity_thread[thermostat], tM->v_arr());
+                }
 
-			#if defined(_OPENMP)
-			#pragma omp critical(collectVelocities1111)
-			#endif
-			{
-				for (auto it = localThermostatDirectedVelocity_thread.begin(); it != localThermostatDirectedVelocity_thread.end(); ++it) {
-					arrayMath::accumulate(_localThermostatDirectedVelocity[it->first], it->second);
-				}
-			}
-
-		}
+                #if defined(_OPENMP)
+                #pragma omp critical(collectVelocities1111)
+                #endif
+                {
+                    for (auto it = localThermostatDirectedVelocity_thread.begin(); it != localThermostatDirectedVelocity_thread.end(); ++it) {
+                        arrayMath::accumulate(_localThermostatDirectedVelocity[it->first], it->second);
+                    }
+                }
+            }
+        }
 	}
 	else if(this->_universalUndirectedThermostat[0])
 	{
 		double velX = 0.0, velY = 0.0, velZ = 0.0;
 
-		#if defined(_OPENMP)
-		#pragma omp parallel reduction(+ : velX, velY, velZ)
-		#endif
-		{
-			for(auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
-				velX += tM->v(0);
-				velY += tM->v(1);
-				velZ += tM->v(2);
-			}
-		}
+        for(auto& partCont : partConts) {
+            #if defined(_OPENMP)
+            #pragma omp parallel reduction(+ : velX, velY, velZ)
+            #endif
+            {
+                for(auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
+                    velX += tM->v(0);
+                    velY += tM->v(1);
+                    velZ += tM->v(2);
+                }
+            }
+        }
 
 		_localThermostatDirectedVelocity[0][0] = velX;
 		_localThermostatDirectedVelocity[0][1] = velY;
@@ -427,68 +448,73 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 	}
 }
 
-void Domain::calculateVelocitySums(ParticleContainer* partCont)
+void Domain::calculateVelocitySums(std::vector<ParticleContainer*>& partConts)
 {
-	if(this->_componentwiseThermostat)
-	{
-		for(auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM)
-		{
-			int cid = tM->componentid();
-			int thermostat = this->_componentToThermostatIdMap[cid];
-			this->_localThermostatN[thermostat]++;
-			this->_localRotationalDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
-			if(this->_universalUndirectedThermostat[thermostat])
-			{
-				tM->calculate_mv2_Iw2( this->_local2KETrans[thermostat],
-						this->_local2KERot[thermostat],
-						this->_universalThermostatDirectedVelocity[thermostat][0],
-						this->_universalThermostatDirectedVelocity[thermostat][1],
-						this->_universalThermostatDirectedVelocity[thermostat][2]  );
-			}
-			else
-			{
-				tM->calculate_mv2_Iw2(_local2KETrans[thermostat], _local2KERot[thermostat]);
-			}
-		}
-	}
-	else
-	{
-		unsigned long N = 0, rotationalDOF = 0;
-		double local2KETrans = 0.0, local2KERot = 0.0;
-		#if defined(_OPENMP)
-		#pragma omp parallel reduction(+:N, rotationalDOF, local2KETrans, local2KERot)
-		#endif
-		{
+    if(this->_componentwiseThermostat)
+    {
+        for(auto& partCont : partConts){
+            for(auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM)
+            {
+                int cid = tM->componentid();
+                int thermostat = this->_componentToThermostatIdMap[cid];
+                this->_localThermostatN[thermostat]++;
+                this->_localRotationalDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
+                if(this->_universalUndirectedThermostat[thermostat])
+                {
+                    tM->calculate_mv2_Iw2( this->_local2KETrans[thermostat],
+                                           this->_local2KERot[thermostat],
+                                           this->_universalThermostatDirectedVelocity[thermostat][0],
+                                           this->_universalThermostatDirectedVelocity[thermostat][1],
+                                           this->_universalThermostatDirectedVelocity[thermostat][2]  );
+                }
+                else
+                {
+                    tM->calculate_mv2_Iw2(_local2KETrans[thermostat], _local2KERot[thermostat]);
+                }
+            }
+        }
+    }
+    else
+    {
+        unsigned long N = 0, rotationalDOF = 0;
+        double local2KETrans = 0.0, local2KERot = 0.0;
 
-			for(auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
-				++N;
-				rotationalDOF += tM->component()->getRotationalDegreesOfFreedom();
-				if(this->_universalUndirectedThermostat[0]) {
-					tM->calculate_mv2_Iw2( local2KETrans,
-							local2KERot,
-							this->_universalThermostatDirectedVelocity[0][0],
-							this->_universalThermostatDirectedVelocity[0][1],
-							this->_universalThermostatDirectedVelocity[0][2]  );
-				} else {
-					tM->calculate_mv2_Iw2(local2KETrans, local2KERot);
-				}
-			}
-		} /* _OPENMP */
+        for(auto& partCont : partConts) {
+            #if defined(_OPENMP)
+            #pragma omp parallel reduction(+:N, rotationalDOF, local2KETrans, local2KERot)
+            #endif
+            {
 
-		this->_localThermostatN[0] = N;
-		this->_localRotationalDOF[0] = rotationalDOF;
-		this->_local2KETrans[0] = local2KETrans;
-		this->_local2KERot[0] = local2KERot;
+                for (auto tM = partCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
+                    ++N;
+                    rotationalDOF += tM->component()->getRotationalDegreesOfFreedom();
+                    if (this->_universalUndirectedThermostat[0]) {
+                        tM->calculate_mv2_Iw2(local2KETrans,
+                                              local2KERot,
+                                              this->_universalThermostatDirectedVelocity[0][0],
+                                              this->_universalThermostatDirectedVelocity[0][1],
+                                              this->_universalThermostatDirectedVelocity[0][2]);
+                    } else {
+                        tM->calculate_mv2_Iw2(local2KETrans, local2KERot);
+                    }
+                }
+            } /* _OPENMP */
+        }
 
-		global_log->debug() << "      * N = " << this->_localThermostatN[0]
-			<< " rotDOF = " << this->_localRotationalDOF[0] << "   mv2 = "
-			<< _local2KETrans[0] << " Iw2 = " << _local2KERot[0] << endl;
-	}
+        this->_localThermostatN[0] = N;
+        this->_localRotationalDOF[0] = rotationalDOF;
+        this->_local2KETrans[0] = local2KETrans;
+        this->_local2KERot[0] = local2KERot;
+
+        global_log->debug() << "      * N = " << this->_localThermostatN[0]
+                            << " rotDOF = " << this->_localRotationalDOF[0] << "   mv2 = "
+                            << _local2KETrans[0] << " Iw2 = " << _local2KERot[0] << endl;
+    }
 }
 
 void Domain::writeCheckpointHeader(string filename,
-		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, double currentTime) {
-		unsigned long globalNumMolecules = this->getglobalNumMolecules(true, particleContainer, domainDecomp);
+        std::vector<ParticleContainer*>& particleContainers, DomainDecompBase* domainDecomp, double currentTime) {
+		unsigned long globalNumMolecules = this->getglobalNumMolecules(true, &particleContainers, domainDecomp);
 		/* Rank 0 writes file header */
 		if(0 == this->_localRank) {
 			ofstream checkpointfilestream(filename.c_str());
@@ -574,10 +600,10 @@ void Domain::writeCheckpointHeader(string filename,
 
 }
 
-void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* particleContainer,
+void Domain::writeCheckpointHeaderXML(string filename, std::vector<ParticleContainer*>& particleContainers,
 		DomainDecompBase* domainDecomp, double currentTime)
 {
-	unsigned long globalNumMolecules = this->getglobalNumMolecules(true, particleContainer, domainDecomp);
+	unsigned long globalNumMolecules = this->getglobalNumMolecules(true, &particleContainers, domainDecomp);
 	if(0 != domainDecomp->getRank() )
 		return;
 
@@ -601,9 +627,11 @@ void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* partic
 }
 
 void Domain::writeCheckpoint(string filename,
-		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, double currentTime,
+        std::vector<ParticleContainer*>& particleContainers, DomainDecompBase* domainDecomp, double currentTime,
 		bool useBinaryFormat) {
-	domainDecomp->assertDisjunctivity(particleContainer);
+    for(ParticleContainer* ptr : particleContainers) {
+        domainDecomp->assertDisjunctivity(ptr);
+    }
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	global_log->warning() << "The checkpoints are not adapted for RMM-mode. Velocity will be one half-timestep ahead!" << std::endl;
 	global_log->warning() << "See Domain::writeCheckpoint() for a suggested workaround." << std::endl;
@@ -614,11 +642,11 @@ void Domain::writeCheckpoint(string filename,
 #endif
 
 	if (useBinaryFormat) {
-		this->writeCheckpointHeaderXML((filename + ".header.xml"), particleContainer, domainDecomp, currentTime);
+		this->writeCheckpointHeaderXML((filename + ".header.xml"), particleContainers, domainDecomp, currentTime);
 	} else {
-		this->writeCheckpointHeader(filename, particleContainer, domainDecomp, currentTime);
+		this->writeCheckpointHeader(filename, particleContainers, domainDecomp, currentTime);
 	}
-	domainDecomp->writeMoleculesToFile(filename, particleContainer, useBinaryFormat);
+	domainDecomp->writeMoleculesToFile(filename, particleContainers, useBinaryFormat);
 }
 
 
@@ -721,21 +749,28 @@ double Domain::getepsilonRF() const { return _epsilonRF; }
 
 void Domain::setepsilonRF(double erf) { _epsilonRF = erf; }
 
-unsigned long Domain::getglobalNumMolecules(bool bUpdate, ParticleContainer* particleContainer, DomainDecompBase* domainDecomp) {
+unsigned long Domain::getglobalNumMolecules(bool bUpdate, std::vector<ParticleContainer*>* particleContainers, DomainDecompBase* domainDecomp) {
 	if (bUpdate) {
-		if (particleContainer == nullptr) { global_log->debug() << "ParticleCont unknown!" << endl; particleContainer = global_simulation->getMoleculeContainer(); }
-		if (domainDecomp == nullptr)      { global_log->debug() << "domainDecomp unknown!" << endl; domainDecomp = &(global_simulation->domainDecomposition()); }
-		this->updateglobalNumMolecules(particleContainer, domainDecomp);
+        if(particleContainers == nullptr) particleContainers = &_simulation.getMoleculeContainers();
+        for(int index = 0; index < _simulation.getMoleculeContainers().size(); index++){
+            if ((*particleContainers)[index] == nullptr) { global_log->debug() << "ParticleCont unknown!" << endl; (*particleContainers)[index] = global_simulation->getMoleculeContainer(index); }
+            if (domainDecomp == nullptr)      { global_log->debug() << "domainDecomp unknown!" << endl; domainDecomp = &(global_simulation->domainDecomposition()); }
+        }
+
+		this->updateglobalNumMolecules(*particleContainers, domainDecomp);
 	}
 	return _globalNumMolecules;
 }
 
 void Domain::setglobalNumMolecules(unsigned long glnummol) { _globalNumMolecules = glnummol; }
 
-void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp) {
+void Domain::updateglobalNumMolecules(std::vector<ParticleContainer*>& particleContainers, DomainDecompBase* domainDecomp) {
 	unsigned long oldNum = _globalNumMolecules;
 	CommVar<uint64_t> numMolecules;
-	numMolecules.local = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+	numMolecules.local = 0;
+    for(ParticleContainer* ptr : particleContainers){
+        numMolecules.local += ptr->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+    }
 #ifdef ENABLE_MPI
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(numMolecules.local);

@@ -61,6 +61,9 @@ void CheckpointWriter::init(ParticleContainer * /*particleContainer*/, DomainDec
 
 void CheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                                unsigned long simstep) {
+#ifdef ENABLE_ADRESS
+    if(particleContainer != _simulation.getMoleculeContainer()) return;
+#endif
 	if( simstep % _writeFrequency == 0 ) {
 		stringstream filenamestream;
 		filenamestream << _outputPrefix;
@@ -82,7 +85,7 @@ void CheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecom
 		}
 
 		string filename = filenamestream.str();
-		domain->writeCheckpoint(filename, particleContainer, domainDecomp, _simulation.getSimulationTime(), _useBinaryFormat);
+		domain->writeCheckpoint(filename, _simulation.getMoleculeContainers(), domainDecomp, _simulation.getSimulationTime(), _useBinaryFormat);
 	}
 }
 

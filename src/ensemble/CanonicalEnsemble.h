@@ -55,7 +55,7 @@ public:
 		return _E;
 	}
 
-	void updateGlobalVariable(ParticleContainer* particleContainer, GlobalVariable variable) override;
+	void updateGlobalVariable(std::vector<ParticleContainer*>& particleContainers, GlobalVariable variable) override;
 
 	/*! runs before temperature control is applied, but after force calculations, triggers radial distribution call in Domain only for NVT */
 	void beforeThermostat(unsigned long simstep, unsigned long initStatistics) override;

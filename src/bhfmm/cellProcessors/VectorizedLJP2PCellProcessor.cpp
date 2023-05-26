@@ -154,8 +154,8 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 
 	_upot6lj = glob_upot6lj;
 	_virial = glob_virial;
-	_domain.setLocalVirial(_virial /*+ 3.0 * _myRF*/);
-	_domain.setLocalUpot(_upot6lj / 6.0 /*+ _upotXpoles + _myRF*/);
+    _domain.setLocalVirial(_virial /*+ 3.0 * _myRF*/ + _domain.getLocalVirial());
+    _domain.setLocalUpot(_upot6lj / 6.0 /*+ _upotXpoles + _myRF*/ + _domain.getLocalUpot());
 	global_simulation->timers()->stop("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P");
 }
 

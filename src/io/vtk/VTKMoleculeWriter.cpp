@@ -42,7 +42,7 @@ void VTKMoleculeWriter::readXML(XMLfileUnits& xmlconfig) {
 	}
 }
 
-
+static VTKMoleculeWriterImplementation* _VTK_imp = nullptr;
 void VTKMoleculeWriter::endStep(
         ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
         Domain * /*domain*/, unsigned long simstep) {
@@ -56,15 +56,21 @@ void VTKMoleculeWriter::endStep(
 
 	int rank = domainDecomp->getRank();
 
-	VTKMoleculeWriterImplementation impl(rank, true);
-
-	impl.initializeVTKFile();
+    if(_endStepCount == 0) {
+        _VTK_imp = new VTKMoleculeWriterImplementation(rank, true);
+        _VTK_imp->initializeVTKFile();
+    }
 
 	for (auto tmpMolecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-		 tmpMolecule.isValid(); ++tmpMolecule) {
-		impl.plotMolecule(*tmpMolecule);
+		tmpMolecule.isValid(); ++tmpMolecule) {
+        _VTK_imp->plotMolecule(*tmpMolecule);
 	}
+    _endStepCount++;
 
+    //do not write file yet, since not all particle container have been handled yet
+    if(_endStepCount < _particleContainerCount) return;
+
+    //write file
 	std::stringstream fileNameStream;
 	fileNameStream << _fileName;
 
@@ -74,11 +80,15 @@ void VTKMoleculeWriter::endStep(
 	if (rank == 0) {
 		int numProcs = 0;
 		MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &numProcs) );
-		outputParallelVTKFile(numProcs,simstep, impl);
+		outputParallelVTKFile(numProcs,simstep, *_VTK_imp);
 	}
 #endif
 	fileNameStream << "_" << simstep << ".vtu";
-	impl.writeVTKFile(fileNameStream.str());
+    _VTK_imp->writeVTKFile(fileNameStream.str());
+
+    _endStepCount = 0;
+    delete _VTK_imp;
+    _VTK_imp = nullptr;
 }
 
 
@@ -103,10 +113,10 @@ void VTKMoleculeWriter::outputParallelVTKFile(unsigned int numProcs, unsigned lo
 	impl.writeParallelVTKFile(fileNameStream.str());
 }
 
-
-//! NOP
 void VTKMoleculeWriter::init(ParticleContainer * /*particleContainer*/,
-                             DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/) {}
+                             DomainDecompBase * /*domainDecomp*/, Domain * /*domain*/) {
+    _particleContainerCount++;
+}
 
 //! NOP
 void VTKMoleculeWriter::finish(ParticleContainer * /*particleContainer*/,

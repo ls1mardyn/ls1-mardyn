@@ -7,7 +7,6 @@
 #include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
 #include "Domain.h"
-#include "AdResSRegionTraversal.h"
 
 #include <cmath>
 
@@ -16,12 +15,15 @@ using Log::global_log;
 
 double (*AdResS::weight)(std::array<double, 3> r, FPRegion& region) = nullptr;
 
-AdResS::AdResS() : _mesoVals(), _forceAdapter(_mesoVals), _fpRegions(), _particleContainer(nullptr),
+AdResS::AdResS() : _mesoVals(), _forceAdapter(nullptr), _fpRegions(), _particleContainers(_simulation.getMoleculeContainers()),
                    _components(nullptr), _comp_to_res(), _domain(nullptr) {};
 
 AdResS::~AdResS() = default;
 
-void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
+static bool is_init = false;
+void AdResS::init(ParticleContainer*, DomainDecompBase *domainDecomp, Domain *domain) {
+    if(is_init) return;
+    is_init = true;
     global_log->debug() << "[AdResS] Enabled " << std::endl;
     for(const auto& region : _fpRegions) {
         global_log->debug() << "[AdResS] FPRegion Box from ["
@@ -32,7 +34,6 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
 
     _components = _simulation.getEnsemble()->getComponents();
     _domain = domain;
-    _particleContainer = particleContainer;
 
     for(Component& comp : *_components) {
         unsigned int id = comp.ID();
@@ -99,6 +100,11 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
                             << region._high[0] << "," << region._high[1] << "," << region._high[2] << "] with hybrid dim "
                             << region._hybridDims[0] << "," << region._hybridDims[1] << "," << region._hybridDims[2] << "]" << std::endl;
     }
+
+    //need to set up force handler here
+    _forceAdapter = new AdResSForceAdapter(*this);
+    _simulation.setParticlePairsHandler(_forceAdapter);
+    _domain = _simulation.getDomain();
 }
 
 void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
@@ -120,42 +126,58 @@ void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsi
     #pragma omp parallel
     #endif
     for(auto itM = container->iterator(ParticleIterator::ALL_CELLS); itM.isValid(); ++itM) {
-        // molecule is in no Hybrid or FP region
-        checkMoleculeLOD(*itM, CoarseGrain);
-
-        //check if is in any hybrid region
-        for(auto& reg : _fpRegions) {
-            if(reg.isInnerPointDomain(_domain, Hybrid, itM->r_arr())) {
-                checkMoleculeLOD(*itM, Hybrid);
-            }
-        }
+        bool stop = false;
 
         //check if is in any full particle region
         for(auto& reg : _fpRegions) {
             if(reg.isInnerPointDomain(_domain, FullParticle, itM->r_arr())) {
-                checkMoleculeLOD(*itM, FullParticle);
+                checkMoleculeLOD(FullParticle, container, itM);
+                stop = true;
+                break;
             }
         }
+        if(stop) continue;
+
+        //check if is in any hybrid region
+        for(auto& reg : _fpRegions) {
+            if(reg.isInnerPointDomain(_domain, Hybrid, itM->r_arr())) {
+                checkMoleculeLOD(Hybrid, container, itM);
+                stop = true;
+                break;
+            }
+        }
+        if(stop) continue;
+
+        // molecule is in no Hybrid or FP region
+        checkMoleculeLOD(CoarseGrain, container, itM);
     }
+    container->updateMoleculeCaches();
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
-    _mesoVals.clear();
-    computeForce(true);
-    computeForce(false);
+    computeForce();
     _mesoVals.setInDomain(_domain);
+    _mesoVals.clear();
 }
 
-void AdResS::checkMoleculeLOD(Molecule &molecule, Resolution targetRes) {
-    auto id = molecule.component()->ID();
+void AdResS::checkMoleculeLOD(Resolution targetRes, ParticleContainer* container, ParticleIterator& it) {
+    auto id = it->component()->ID();
     //molecule has already correct component
-    if(_comp_to_res[id] == targetRes) return;
+    if(_comp_to_res[id] == targetRes && container == _particleContainers[targetRes]) return;
 
     int offset = static_cast<int>(targetRes) - static_cast<int>(_comp_to_res[id]);
-    molecule.setComponent(&_components->at(id + offset));
+    it->setComponent(&_components->at(id + offset));
+    Molecule m = *it;
+#if defined(_OPENMP)
+#pragma omp critical(AdResSCheckMolecule)
+    {
+        container->deleteMolecule(it, false);
+        _particleContainers[targetRes]->addParticle(m, true, true, false);
+    }
+#endif
 }
 
-void AdResS::computeForce(bool invert) {
+void AdResS::computeForce() {
     double cutoff = _simulation.getcutoffRadius();
     double cutoff2 = cutoff * cutoff;
     double LJCutoff2 = _simulation.getLJCutoff();
@@ -165,8 +187,8 @@ void AdResS::computeForce(bool invert) {
     std::array<double, 3> pc_high{0};
     for(int d = 0; d < 3; d++) {
         globLen[d] = _domain->getGlobalLength(d);
-        pc_low[d] = _particleContainer->getBoundingBoxMin(d);
-        pc_high[d] = _particleContainer->getBoundingBoxMax(d);
+        pc_low[d] = _particleContainers[FullParticle]->getBoundingBoxMin(d);
+        pc_high[d] = _particleContainers[FullParticle]->getBoundingBoxMax(d);
     }
 
     //check all regions
@@ -211,10 +233,43 @@ void AdResS::computeForce(bool invert) {
 
                     // now have created a box in which forces need to be calculated
                     // this we will multi-thread: for that we implement a simplified C08-Traversal
-                    _forceAdapter.init(_domain); // clear thread data
-                    AdResSRegionTraversal traversal{ checkLow, checkHigh, _particleContainer, _comp_to_res};
-                    traversal.traverse(_forceAdapter, region, invert);
-                    _forceAdapter.finish(); // gather thread data
+                    _forceAdapter->init(_domain); // clear thread data
+
+                    //FP - H
+                    {
+                        std::array<double, 3> dist = {0,0,0};
+                        // let every molecule in the box created by checkLow and checkHigh interact with the hybrid molecules in this region
+                        for(auto itOuter = _particleContainers[FullParticle]->regionIterator(checkLow.data(), checkHigh.data(), ParticleIterator::ALL_CELLS); itOuter.isValid(); ++itOuter) {
+                            Molecule& m1 = *itOuter; // this can be of any type
+                            for(auto itInner = _particleContainers[Hybrid]->regionIterator(checkLow.data(), checkHigh.data(), ParticleIterator::ALL_CELLS); itInner.isValid(); ++itInner) {
+                                Molecule& m2 = *itInner; // must be hybrid
+                                //check distance
+                                double dd = m1.dist2(m2, dist.data());
+                                if(dd < cutoff2) {
+                                    _forceAdapter->processPair(m1, m2, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
+                                }
+                            }
+                        }
+                    }
+
+                    //H - CG
+                    {
+                        std::array<double, 3> dist = {0,0,0};
+                        // let every molecule in the box created by checkLow and checkHigh interact with the hybrid molecules in this region
+                        for(auto itOuter = _particleContainers[Hybrid]->regionIterator(checkLow.data(), checkHigh.data(), ParticleIterator::ALL_CELLS); itOuter.isValid(); ++itOuter) {
+                            Molecule& m1 = *itOuter; // this can be of any type
+                            for(auto itInner = _particleContainers[CoarseGrain]->regionIterator(checkLow.data(), checkHigh.data(), ParticleIterator::ALL_CELLS); itInner.isValid(); ++itInner) {
+                                Molecule& m2 = *itInner; // must be hybrid
+                                //check distance
+                                double dd = m1.dist2(m2, dist.data());
+                                if(dd < cutoff2) {
+                                    _forceAdapter->processPair(m1, m2, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
+                                }
+                            }
+                        }
+                    }
+
+                    _forceAdapter->finish(); // gather thread data
                 }
             }
         }

@@ -712,9 +712,10 @@ void TemperatureControl::writeAddedEkin(DomainDecompBase* domainDecomp, const ui
  * @param simstep
  */
 void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposition,
-											  ParticleContainer* particleContainer, const unsigned long simstep) {
+                                              std::vector<ParticleContainer*> particleContainers,
+                                              const unsigned long simstep) {
 	if (_method == VelocityScaling || _method == Mixed) {
-		this->VelocityScalingPreparation(domainDecomposition, particleContainer, simstep);
+		this->VelocityScalingPreparation(domainDecomposition, particleContainers, simstep);
 		global_log->debug() << "[TemperatureControl] VelocityScalingPreparation\n";
 	}
 
@@ -724,12 +725,14 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 // Additionally, explicitly marking them as shared produces an error.
 // All other compilers need the explicit declaration when default is none.
 // Therefore set default to shared here...
-#pragma omp parallel default(shared) shared(particleContainer)
+#pragma omp parallel default(shared) shared(particleContainers)
 #endif
-	for (auto tM = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
-		// control temperature
-		this->ControlTemperature(&(*tM), simstep);
-	}
+    for(ParticleContainer* ptr : particleContainers){
+        for (auto tM = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
+            // control temperature
+            this->ControlTemperature(&(*tM), simstep);
+        }
+    }
 
 	// measure added kin. energy
 	this->writeAddedEkin(domainDecomposition, simstep);
@@ -743,7 +746,8 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
  * @param simstep
  */
 void TemperatureControl::VelocityScalingPreparation(DomainDecompBase* domainDecomposition,
-													ParticleContainer* particleContainer, const unsigned long simstep) {
+                                                    std::vector<ParticleContainer*> particleContainers,
+                                                    const unsigned long simstep) {
 	// respect start/stop
 	if (this->GetStart() <= simstep && this->GetStop() > simstep) {
 		// init temperature control
@@ -751,15 +755,17 @@ void TemperatureControl::VelocityScalingPreparation(DomainDecompBase* domainDeco
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
-		for (auto tM = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
-			// measure kinetic energy
-			this->MeasureKineticEnergy(&(*tM), domainDecomposition, simstep);
-		}
+        for(ParticleContainer* ptr : particleContainers){
+            for (auto tM = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
+                // measure kinetic energy
+                this->MeasureKineticEnergy(&(*tM), domainDecomposition, simstep);
+            }
 
-		// calc global values
-		this->CalcGlobalValues(domainDecomposition, simstep);
+            // calc global values
+            this->CalcGlobalValues(domainDecomposition, simstep);
 
-		// write beta_trans, beta_rot log-files
-		this->WriteBetaLogfiles(simstep);
+            // write beta_trans, beta_rot log-files
+            this->WriteBetaLogfiles(simstep);
+        }
 	}
 }

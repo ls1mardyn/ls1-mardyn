@@ -121,7 +121,7 @@ struct FPRegion {
      * @param region either FullParticle or Hybrid
      * @param point to check
      * */
-    bool isInnerPointDomain(Domain* domain, Resolution region, std::array<double, 3> point) {
+    bool isInnerPointDomain(Domain* domain, Resolution region, std::array<double, 3> point) const {
         std::array<double,3> globLen{0};
         for(int d = 0; d < 3; d++) {
             globLen[d] = domain->getGlobalLength(d);

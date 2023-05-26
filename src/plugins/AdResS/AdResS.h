@@ -12,7 +12,6 @@
 #include "molecules/potforce.h"
 #include "AdResSData.h"
 #include "AdResSForceAdapter.h"
-#include "InteractionLogProcessor.h"
 
 class ParticleContainer;
 class DomainDecompBase;
@@ -34,6 +33,7 @@ class Domain;
  * Regions cannot overlap, otherwise forces are computed multiple times.
  * */
 class AdResS : public PluginBase {
+    friend class AdResSForceAdapter;
 public:
     /**
      * Constructor, no params needed
@@ -61,7 +61,7 @@ public:
      *          <region id="1">
      *              <lowX>0.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
      *              <highX>0.0</highX><highY>0.0</highY><highZ>0.0</highZ>
-     *              <hybridDim>10.0</hybridDim>
+     *              <hybridDimX>10.0</hybridDimX><hybridDimY>10.0</hybridDimY><hybridDimZ>10.0</hybridDimZ>
      *          </region>
      *      </fpregions>
      *  </plugin>
@@ -126,7 +126,7 @@ private:
     /**
      * Handles force computation
      * */
-    AdResSForceAdapter _forceAdapter;
+    AdResSForceAdapter* _forceAdapter;
 
     /**
      * @brief Container for all areas of interest for AdResS. The ares are currently boxes.
@@ -136,7 +136,7 @@ private:
     /**
      * pointer to particle container, is set up during AdResS::init
      * */
-    ParticleContainer* _particleContainer;
+    std::vector<ParticleContainer*>& _particleContainers;
 
     /**
      * Ptr to all saved components in the current simulation.
@@ -153,19 +153,15 @@ private:
     Domain* _domain;
 
     /**
-     * @brief checks the component of @param molecule and sets it to the correct LOD depending the @param targetRes.
+     * @brief checks the component of the molecule pointed to by @param it and sets it to the correct LOD depending the @param targetRes.
+     * @param container is the currently viewed particle container
      * */
-    void checkMoleculeLOD(Molecule& molecule, Resolution targetRes);
+    void checkMoleculeLOD(Resolution targetRes, ParticleContainer* container, ParticleIterator& it);
 
     /**
-     * Computes all forces. Depending on "invert" all forces are applied with AdResS concepts or inverted with no weight.
-     *
-     * Invert = true:
-     * During the traversal of all cells, the default cell processor handles the cells without knowledge of AdResS.
-     * Therefore, all forces and mesoscopic values computed for FPRegions are incorrect.
-     * This method removes all force and meso contributions all FPRegions made.
+     * Computes all forces between different molecule resolutions.
      * */
-    void computeForce(bool invert);
+    void computeForce();
 
     /**
      * @brief Weighting function for AdResS force computation.

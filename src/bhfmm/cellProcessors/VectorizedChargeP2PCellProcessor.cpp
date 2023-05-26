@@ -109,8 +109,8 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 
 	_upotXpoles = glob_upotXpoles;
 	_virial = glob_virial;
-	_domain.setLocalVirial(currentVirial + _virial);
-	_domain.setLocalUpot(currentUpot + _upotXpoles);
+    _domain.setLocalVirial(currentVirial + _virial + _domain.getLocalVirial());
+    _domain.setLocalUpot(currentUpot + _upotXpoles + _domain.getLocalUpot());
 	global_simulation->timers()->stop("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
 }
 

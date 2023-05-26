@@ -10,6 +10,7 @@
 #include "utils/FixedSizeQueue.h"
 #include "utils/FunctionWrapper.h"
 #include "utils/SysMon.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 
 // plugins
 #include "plugins/PluginFactory.h"
@@ -219,11 +220,17 @@ public:
 	/** Get pointer to the domain */
 	Domain* getDomain() { return _domain; }
 
-	/** Get pointer to the integrator */
-	Integrator* getIntegrator() {return _integrator; }
+	/** Get pointer to the n-th integrator */
+	Integrator* getIntegrator(int n = 0) {return _integrators[n]; }
+
+    /** Get reference to all integrators */
+    std::vector<Integrator*>& getIntegrators() {return _integrators;}
 
 	/** Get pointer to the molecule container */
-	ParticleContainer* getMoleculeContainer() { return _moleculeContainer; }
+	ParticleContainer* getMoleculeContainer(int n = 0) { return _moleculeContainers[n]; }
+
+    /** Get reference to all molecule containers */
+    std::vector<ParticleContainer*>& getMoleculeContainers() {return _moleculeContainers;}
 
 	/** Set the number of time steps to be performed in the simulation */
 	void setNumTimesteps( unsigned long steps ) { _numberOfTimesteps = steps; }
@@ -355,19 +362,22 @@ private:
 	Ensemble* _ensemble;
 
 	/** Datastructure for finding neighbours efficiently */
-	ParticleContainer* _moleculeContainer;
+	std::vector<ParticleContainer*> _moleculeContainers;
 
 	/** Handler describing what action is to be done for each particle pair */
 	ParticlePairsHandler* _particlePairsHandler;
 
 	/** New cellhandler, which will one day replace the particlePairsHandler here completely. */
-	CellProcessor* _cellProcessor;
+	std::vector<CellProcessor*> _cellProcessors;
 
-	/** module which handles the domain decomposition */
+	/**
+	 * module which handles the domain decomposition
+	 * todo multi particle container support, works as is for AdResS but not necessarily for other schemes too
+	 * */
 	DomainDecompBase* _domainDecomposition;
 
 	/** numerical solver for the particles equations of motion */
-	Integrator* _integrator;
+	std::vector<Integrator*> _integrators;
 
 	/** all macroscopic (local and global) information */
 	Domain* _domain;
@@ -428,9 +438,18 @@ public:
 
 	void useLegacyCellProcessor() { _legacyCellProcessor = true; }
 
+    void setParticlePairsHandler(ParticlePairsHandler* handler) {
+        delete _particlePairsHandler;
+        _particlePairsHandler = handler;
+    }
+
+    ParticlePairsHandler* getParticlePairsHandler() { return _particlePairsHandler; }
+
 	void enableMemoryProfiler() {
 		_memoryProfiler = std::make_shared<MemoryProfiler>();
-		_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_moleculeContainer));
+        for(ParticleContainer* ptr : _moleculeContainers) {
+            _memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(ptr));
+        }
 		_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_domainDecomposition));
 	}
 
@@ -452,7 +471,7 @@ public:
 	void initGlobalEnergyLog();
 	void writeGlobalEnergyLog(const double& globalUpot, const double& globalT, const double& globalPressure);
 
-	CellProcessor *getCellProcessor() const;
+	CellProcessor *getCellProcessor(int i = 0) const;
 
 	/** @brief Refresh particle IDs to continuous numbering*/
 	void refreshParticleIDs();

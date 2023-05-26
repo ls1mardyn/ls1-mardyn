@@ -27,7 +27,11 @@ public:
 	void setSubdomain(int rank, double x0, double x1, double y0, double y1, double z0, double z1);
 	void setIncrement(unsigned idi) { _id_increment = idi; }
 
-	void prepareTimestep(ParticleContainer* moleculeContainer, DomainDecompBase* comm);  // C must not contain the halo!
+    /**
+     * Adapted to work with multiple particle containers for AdResS.
+     * If this does not behave as expected, that is because I have absolutely no clue what is going on here...
+     * */
+	void prepareTimestep(std::vector<ParticleContainer*>& particleContainers, DomainDecompBase* comm);  // C must not contain the halo!
 
 	// false if no deletion remains for this subdomain
 	ParticleIterator getDeletion(ParticleContainer* moleculeContainer, double* minco, double* maxcoy);
@@ -76,16 +80,16 @@ public:
 		return _localInsertionsMinusDeletions;
 	}
 	/* Moved from LinkedCells! */
-	void grandcanonicalStep(ParticleContainer * moleculeContainer, double T, Domain* domain, CellProcessor* cellProcessor);
+	void grandcanonicalStep(std::vector<ParticleContainer*>& particleContainers, double T, Domain* domain, std::vector<CellProcessor*>& cellProcessors);
 	/* Moved from LinkedCells! */
 	int grandcanonicalBalance(DomainDecompBase* comm);
 
 
 private:
 	//! @brief counts all particles inside the bounding box of this container
-	unsigned countParticles(ParticleContainer * moleculeContainer, unsigned int cid) const;
+	unsigned countParticles(std::vector<ParticleContainer*>& particleContainers, unsigned int cid) const;
 	//! @brief counts particles in the intersection of bounding box and control volume
-	unsigned countParticles(ParticleContainer * moleculeContainer, unsigned int cid, double * cbottom, double * ctop) const;
+	unsigned countParticles(std::vector<ParticleContainer*>& particleContainers, unsigned int cid, double * cbottom, double * ctop) const;
 
 	bool moleculeStrictlyNotInBox(const Molecule& m, const double l[3], const double u[3]) const;
 

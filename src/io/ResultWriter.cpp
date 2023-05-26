@@ -54,10 +54,12 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 
 void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                            unsigned long simstep) {
-
+#ifdef ENABLE_ADRESS
+    if(particleContainer != _simulation.getMoleculeContainer()) return;
+#endif
 	// Writing of cavities now handled by CavityWriter
 
-	unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
+	unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, &_simulation.getMoleculeContainers(), domainDecomp);
 	double cv = domain->cv();
 
 	_U_pot_acc->addEntry(domain->getGlobalUpot());

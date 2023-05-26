@@ -125,7 +125,7 @@ void MmspdWriter::endStep(ParticleContainer *particleContainer,
                           DomainDecompBase *domainDecomp, Domain *domain,
                           unsigned long simstep){
 	if (simstep % _writeFrequency == 0) {
-		unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
+		unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, &_simulation.getMoleculeContainers(), domainDecomp);
 #ifdef ENABLE_MPI
 		int rank = domainDecomp->getRank();
 		int tag = 4711;

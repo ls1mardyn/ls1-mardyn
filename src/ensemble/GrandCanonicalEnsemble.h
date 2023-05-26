@@ -69,24 +69,24 @@ public:
 	}
 
 	// TODO: Implement
-	void updateGlobalVariable(ParticleContainer* particleContainer, GlobalVariable variable) override {
+	void updateGlobalVariable(std::vector<ParticleContainer*>& particleContainers, GlobalVariable variable) override {
 		global_log->info() << "[GrandCanonicalEnsemble] updateGlobalVariable not implemented!" << std::endl;
 		Simulation::exit(-1);
 	};
 
 	/*! Runs steps formerly in initConfigXML in simulation.cpp */
-	void initConfigXML(ParticleContainer* moleculeContainer) override;
+	void initConfigXML(std::vector<ParticleContainer*>& particleContainers) override;
 
 	/*! Runs steps formerly in prepare_start in simulation.cpp */
 	void prepare_start() override;
 
 	/*! Runs steps formerly in simulate in simulation.cpp */
-	void beforeEventNewTimestep(ParticleContainer* moleculeContainer, DomainDecompBase* domainDecomposition,
+	void beforeEventNewTimestep(std::vector<ParticleContainer*>& particleContainers, DomainDecompBase* domainDecomposition,
 								unsigned long simstep) override;
 
 	/*! Runs steps formerly in afterForces(simulate) in simulation.cpp */
-	void afterForces(ParticleContainer* moleculeContainer, DomainDecompBase* domainDecomposition,
-					 CellProcessor* cellProcessor,
+	void afterForces(std::vector<ParticleContainer*>& particleContainers, DomainDecompBase* domainDecomposition,
+                     std::vector<CellProcessor*>& cellProcessors,
 					 unsigned long simstep) override;
 
 	/*! stores a molecule as a sample for a given component */

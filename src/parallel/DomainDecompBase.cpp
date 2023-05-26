@@ -451,7 +451,7 @@ int DomainDecompBase::getNumProcs() const {
 void DomainDecompBase::barrier() const {
 }
 #ifdef ENABLE_MPI
-void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename, ParticleContainer* moleculeContainer) const {
+void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename, std::vector<ParticleContainer*>& particleContainers) const {
 	int rank = getRank();
 
 	MPI_File mpifh;
@@ -462,15 +462,25 @@ void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename
 
 	uint64_t numParticles_local = 0;
 	uint64_t numParticles_exscan = 0;
-	auto begin = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-	for (auto it = begin; it.isValid(); ++it) numParticles_local++;
+    for(ParticleContainer* ptr : particleContainers) {
+        auto begin = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+        for (auto it = begin; it.isValid(); ++it) numParticles_local++;
+    }
 
 	MPI_Exscan(&numParticles_local, &numParticles_exscan, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
 
 	uint16_t particle_data_size = 0;
 	// if no particle is found (begin is not valid) particle_data_size is zero and provides no problem.
-	if(begin.isValid())
+	if(numParticles_local != 0)
 	{
+        ParticleIterator begin;
+        for(ParticleContainer* ptr : particleContainers) {
+            auto tmp = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+            if(tmp.isValid()) {
+                begin = tmp;
+                break;
+            }
+        }
 		std::stringstream str;
 		begin->writeBinary(str);
 		particle_data_size = str.str().size();
@@ -484,29 +494,31 @@ void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename
 	uint64_t offset = numParticles_exscan * particle_data_size;
 	MPI_File_seek(mpifh, offset, MPI_SEEK_SET);
 	uint64_t buffer_pos = 0;
+    for(ParticleContainer* ptr : particleContainers) {
+        auto begin = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+        for (auto it = begin; it.isValid(); ++it) {
+            it->writeBinary(write_buffer);
+            buffer_pos += particle_data_size;
 
-	for (auto it = begin; it.isValid(); ++it) {
-		it->writeBinary(write_buffer);
-		buffer_pos += particle_data_size;
-
-		if (buffer_pos > buffer_size - particle_data_size) {
-			// we cannot add any more particles to this buffer, so we write the buffer.
-			MPI_File_write(mpifh, write_buffer.str().c_str(), buffer_pos, MPI_BYTE, MPI_STATUS_IGNORE);
-			// reset buffer position and clear stream.
-			buffer_pos = 0;
-			write_buffer.str("");
-		}
-	}
+            if (buffer_pos > buffer_size - particle_data_size) {
+                // we cannot add any more particles to this buffer, so we write the buffer.
+                MPI_File_write(mpifh, write_buffer.str().c_str(), buffer_pos, MPI_BYTE, MPI_STATUS_IGNORE);
+                // reset buffer position and clear stream.
+                buffer_pos = 0;
+                write_buffer.str("");
+            }
+        }
+    }
 	MPI_File_write(mpifh, write_buffer.str().c_str(), buffer_pos, MPI_BYTE, MPI_STATUS_IGNORE);
 
 	MPI_File_close(&mpifh);
 }
 #endif
-void DomainDecompBase::writeMoleculesToFile(const std::string& filename, ParticleContainer* moleculeContainer,
+void DomainDecompBase::writeMoleculesToFile(const std::string& filename, std::vector<ParticleContainer*>& particleContainers,
                                             bool binary) const {
 #ifdef ENABLE_MPI
 	if (binary) {
-		writeMoleculesToMPIFileBinary(filename, moleculeContainer);
+		writeMoleculesToMPIFileBinary(filename, particleContainers);
 	} else {
 #else
 		{
@@ -525,14 +537,16 @@ void DomainDecompBase::writeMoleculesToFile(const std::string& filename, Particl
 					checkpointfilestream.precision(20);
 				}
 
-				for (auto tempMolecule = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-				     tempMolecule.isValid(); ++tempMolecule) {
-					if (binary) {
-						tempMolecule->writeBinary(checkpointfilestream);
-					} else {
-						tempMolecule->write(checkpointfilestream);
-					}
-				}
+                for(ParticleContainer* ptr : particleContainers) {
+                    for (auto tempMolecule = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+                         tempMolecule.isValid(); ++tempMolecule) {
+                        if (binary) {
+                            tempMolecule->writeBinary(checkpointfilestream);
+                        } else {
+                            tempMolecule->write(checkpointfilestream);
+                        }
+                    }
+                }
 				checkpointfilestream.close();
 			}
 			barrier();

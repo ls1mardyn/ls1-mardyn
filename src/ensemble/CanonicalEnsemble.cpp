@@ -28,7 +28,7 @@ CanonicalEnsemble::CanonicalEnsemble() :
 }
 
 
-void CanonicalEnsemble::updateGlobalVariable(ParticleContainer* particleContainer, GlobalVariable variable) {
+void CanonicalEnsemble::updateGlobalVariable(std::vector<ParticleContainer*>& particleContainers, GlobalVariable variable) {
 
 	const int numComponents = this->numComponents();
 
@@ -45,11 +45,12 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer* particleContaine
 #endif
 		{
 			std::vector<unsigned long> numMolecules_private(numComponents, 0ul);
-
-			for (auto molecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-				 molecule.isValid(); ++molecule) {
-				numMolecules_private[molecule->componentid()]++;
-			}
+            for(ParticleContainer* ptr : particleContainers) {
+                for (auto molecule = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+                     molecule.isValid(); ++molecule) {
+                    numMolecules_private[molecule->componentid()]++;
+                }
+            }
 
 #if defined(_OPENMP)
 #pragma omp critical
@@ -109,14 +110,16 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer* particleContaine
 			std::vector<unsigned long> E_trans_priv(numComponents, 0.);
 			std::vector<unsigned long> E_rot_priv(numComponents, 0.);
 
-			for(auto molecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molecule.isValid(); ++molecule) {
-				const int cid = molecule->componentid();
-				double E_trans_loc = 0.0;
-				double E_rot_loc = 0.0;
-				molecule->calculate_mv2_Iw2(E_trans_loc, E_rot_loc);
-				E_trans_priv[cid] += E_trans_loc;  // 2*k_{B} * E_{trans}
-				E_rot_priv[cid] += E_rot_loc;  // 2*k_{B} * E_{rot}
-			}
+            for(ParticleContainer* ptr : particleContainers){
+                for(auto molecule = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molecule.isValid(); ++molecule) {
+                    const int cid = molecule->componentid();
+                    double E_trans_loc = 0.0;
+                    double E_rot_loc = 0.0;
+                    molecule->calculate_mv2_Iw2(E_trans_loc, E_rot_loc);
+                    E_trans_priv[cid] += E_trans_loc;  // 2*k_{B} * E_{trans}
+                    E_rot_priv[cid] += E_rot_loc;  // 2*k_{B} * E_{rot}
+                }
+            }
 #if defined(_OPENMP)
 #pragma omp critical
 #endif

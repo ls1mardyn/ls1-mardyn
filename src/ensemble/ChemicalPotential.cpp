@@ -89,7 +89,7 @@ void ChemicalPotential::setSystem(double x, double y, double z, double m)
 // note that *C must not contain the halo
 // but when the decisions are evaluated, the halo must be taken into account!
 //
-void ChemicalPotential::prepareTimestep(ParticleContainer* moleculeContainer,
+void ChemicalPotential::prepareTimestep(std::vector<ParticleContainer*>& particleContainers,
 		DomainDecompBase* comm)
 {
 	_remainingDeletions.clear();
@@ -109,10 +109,10 @@ void ChemicalPotential::prepareTimestep(ParticleContainer* moleculeContainer,
 	else if ((_minredco[0] < 0.0) || (_minredco[1] < 0.0) || (_minredco[2] < 0.0)
 			|| (_maxredco[0] > 1.0) || (_maxredco[1] > 1.0)
 			|| (_maxredco[2] > 1.0))
-		localN = this->countParticles(moleculeContainer, _componentid, _control_bottom,
+		localN = this->countParticles(particleContainers, _componentid, _control_bottom,
 				_control_top);
 	else
-		localN = this->countParticles(moleculeContainer, _componentid);
+		localN = this->countParticles(particleContainers, _componentid);
 	float minrnd = 0.0;
 	float maxrnd = 1.0;
 	_globalN = comm->Ndistribution(localN, &minrnd, &maxrnd);
@@ -171,7 +171,7 @@ void ChemicalPotential::prepareTimestep(ParticleContainer* moleculeContainer,
 			//      << nextid << " (" << tc[0] << "/" << tc[1]
 			//      << "/" << tc[2] << ").\n";  // \\ //
 #endif
-			if (moleculeContainer->isInBoundingBox(tc)) { // necessary because of rounding errors
+			if (particleContainers[0]->isInBoundingBox(tc)) { // necessary because of rounding errors
 				for (int d = 0; d < 3; d++) {
 					_remainingInsertions[d].push_back(tc[d]);
 				}
@@ -449,13 +449,13 @@ int ChemicalPotential::grandcanonicalBalance(DomainDecompBase* comm) {
 }
 
 void ChemicalPotential::grandcanonicalStep(
-		ParticleContainer* moleculeContainer, double T, Domain* domain,
-		CellProcessor* cellProcessor)
+        std::vector<ParticleContainer*>& particleContainers, double T, Domain* domain,
+        std::vector<CellProcessor*>& cellProcessors)
 {
 	bool accept = true;
 	double DeltaUpot;
 
-	ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
+	ParticlePairsHandler* particlePairsHandler = _simulation.getParticlePairsHandler();
 
 	_localInsertionsMinusDeletions = 0;
 
@@ -463,143 +463,149 @@ void ChemicalPotential::grandcanonicalStep(
 	double minco[3];
 	double maxco[3];
 	for (int d = 0; d < 3; d++) {
-		minco[d] = moleculeContainer->getBoundingBoxMin(d);
-		maxco[d] = moleculeContainer->getBoundingBoxMax(d);
+		minco[d] = particleContainers[0]->getBoundingBoxMin(d);
+		maxco[d] = particleContainers[0]->getBoundingBoxMax(d);
 	}
 
-	bool hasDeletion = true;
-	bool hasInsertion = true;
-	double ins[3];
-	unsigned nextid = 0;
-	while (hasDeletion || hasInsertion) {
-		if (hasDeletion) {
-			auto m = this->getDeletion(moleculeContainer, minco, maxco);
-			if(m.isValid()) {
-				DeltaUpot = -1.0 * moleculeContainer->getEnergy(&particlePairsHandler, &(*m), *cellProcessor);
+    for(int index = 0; index < particleContainers.size(); index++){
+        ParticleContainer* moleculeContainer = particleContainers[index];
+        bool hasDeletion = true;
+        bool hasInsertion = true;
+        double ins[3];
+        unsigned nextid = 0;
+        while (hasDeletion || hasInsertion) {
+            if (hasDeletion) {
+                auto m = this->getDeletion(moleculeContainer, minco, maxco);
+                if(m.isValid()) {
+                    DeltaUpot = -1.0 * moleculeContainer->getEnergy(particlePairsHandler, &(*m), *cellProcessors[index]);
 
-				accept = this->decideDeletion(DeltaUpot / T);
+                    accept = this->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
-				if (accept) {
-					cout << "r" << this->rank() << "d" << m->getID() << " with energy " << DeltaUpot << endl;
-					cout.flush();
-				}
-				/*
-				 else
-				 cout << "   (r" << this->rank() << "-d" << m->getID()
-				 << ")" << endl;
-				 */
+                    if (accept) {
+                        cout << "r" << this->rank() << "d" << m->getID() << " with energy " << DeltaUpot << endl;
+                        cout.flush();
+                    }
+                    /*
+                     else
+                     cout << "   (r" << this->rank() << "-d" << m->getID()
+                     << ")" << endl;
+                     */
 #endif
-				if (accept) {
-					// m->upd_cache(); TODO what to do here? somebody deleted the method "upd_cache"!!! why???
-					// reset forces and momenta to zero
-					{
-						double zeroVec[3] = {0.0, 0.0, 0.0};
-						m->setF(zeroVec);
-						m->setM(zeroVec);
-						m->setVi(zeroVec);
-					}
+                    if (accept) {
+                        // m->upd_cache(); TODO what to do here? somebody deleted the method "upd_cache"!!! why???
+                        // reset forces and momenta to zero
+                        {
+                            double zeroVec[3] = {0.0, 0.0, 0.0};
+                            m->setF(zeroVec);
+                            m->setM(zeroVec);
+                            m->setVi(zeroVec);
+                        }
 
-					this->storeMolecule(*m);
+                        this->storeMolecule(*m);
 
-					moleculeContainer->deleteMolecule(m, true/*rebuildCaches*/);
-					m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-					_localInsertionsMinusDeletions--;
-				}
-			} else{
-				hasDeletion = false;
-			}
-		} /* end of second hasDeletion */
+                        moleculeContainer->deleteMolecule(m, true/*rebuildCaches*/);
+                        m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+                        _localInsertionsMinusDeletions--;
+                    }
+                } else{
+                    hasDeletion = false;
+                }
+            } /* end of second hasDeletion */
 
-		if (!this->hasSample()) {
-			for (auto mit = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mit.isValid(); ++mit) {
-				if (mit->componentid() == this->getComponentID()) {
+            if (!this->hasSample()) {
+                for (auto mit = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mit.isValid(); ++mit) {
+                    if (mit->componentid() == this->getComponentID()) {
 
-					this->storeMolecule(*mit);
-					break;
-				}
-			}
-		}
-		if (hasInsertion) {
-			nextid = this->getInsertion(ins);
-			hasInsertion = (nextid > 0);
-		}
-		if (hasInsertion) {
-			Molecule tmp = this->loadMolecule();
-			for (int d = 0; d < 3; d++)
-				tmp.setr(d, ins[d]);
-			tmp.setid(nextid);
-			// TODO: I (tchipevn) am changing the former code
-			// (add particle, compute energy and if rejected, delete particle)
-			// to: add particle only if accepted
+                        this->storeMolecule(*mit);
+                        break;
+                    }
+                }
+            }
+            if (hasInsertion) {
+                nextid = this->getInsertion(ins);
+                hasInsertion = (nextid > 0);
+            }
+            if (hasInsertion) {
+                Molecule tmp = this->loadMolecule();
+                for (int d = 0; d < 3; d++)
+                    tmp.setr(d, ins[d]);
+                tmp.setid(nextid);
+                // TODO: I (tchipevn) am changing the former code
+                // (add particle, compute energy and if rejected, delete particle)
+                // to: add particle only if accepted
 //			_particles.push_back(tmp);
 
 //			std::list<Molecule>::iterator mit = _particles.end();
-			Molecule* mit = &tmp;
-			// m->upd_cache(); TODO: what to do here? somebody deleted the method "upd_cache"!!! why??? -- update caches do no longer exist ;)
-			// reset forces and torques to zero
-			if (!this->isWidom()) {
-				double zeroVec[3] = { 0.0, 0.0, 0.0 };
-				mit->setF(zeroVec);
-				mit->setM(zeroVec);
-				mit->setVi(zeroVec);
-			}
-			mit->check(nextid);
+                Molecule* mit = &tmp;
+                // m->upd_cache(); TODO: what to do here? somebody deleted the method "upd_cache"!!! why??? -- update caches do no longer exist ;)
+                // reset forces and torques to zero
+                if (!this->isWidom()) {
+                    double zeroVec[3] = { 0.0, 0.0, 0.0 };
+                    mit->setF(zeroVec);
+                    mit->setM(zeroVec);
+                    mit->setVi(zeroVec);
+                }
+                mit->check(nextid);
 #ifndef NDEBUG
-			/*
-			 cout << "rank " << this->rank() << ": insert "
-			 << m->getID() << " at the reduced position (" << ins[0] << "/"
-			 << ins[1] << "/" << ins[2] << ")? " << endl;
-			 */
+                /*
+                 cout << "rank " << this->rank() << ": insert "
+                 << m->getID() << " at the reduced position (" << ins[0] << "/"
+                 << ins[1] << "/" << ins[2] << ")? " << endl;
+                 */
 #endif
 
 //			unsigned long cellid = moleculeContainer->getCellIndexOfMolecule(m);
 //			moleculeContainer->_cells[cellid].addParticle(m);
-			DeltaUpot = moleculeContainer->getEnergy(&particlePairsHandler, mit,
-					*cellProcessor);
-			domain->submitDU(this->getComponentID(), DeltaUpot, ins);
-			accept = this->decideInsertion(DeltaUpot / T);
+                DeltaUpot = moleculeContainer->getEnergy(particlePairsHandler, mit,
+                                                         *cellProcessors[index]);
+                domain->submitDU(this->getComponentID(), DeltaUpot, ins);
+                accept = this->decideInsertion(DeltaUpot / T);
 
 #ifndef NDEBUG
-			if (accept) {
-				cout << "r" << this->rank() << "i" << mit->getID()
-						<< " with energy " << DeltaUpot << endl;
-				cout.flush();
-			}
-			/*
-			 else
-			 cout << "   (r" << this->rank() << "-i"
-			 << mit->getID() << ")" << endl;
-			 */
+                if (accept) {
+                    cout << "r" << this->rank() << "i" << mit->getID()
+                         << " with energy " << DeltaUpot << endl;
+                    cout.flush();
+                }
+                /*
+                 else
+                 cout << "   (r" << this->rank() << "-i"
+                 << mit->getID() << ")" << endl;
+                 */
 #endif
-			if (accept) {
-				this->_localInsertionsMinusDeletions++;
-				double zeroVec[3] = { 0.0, 0.0, 0.0 };
-				tmp.setVi(zeroVec);
-				bool inBoxCheckedAlready = false, checkWhetherDuplicate = false, rebuildCaches = true;
-				moleculeContainer->addParticle(tmp, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches);
-			} else {
-				// moleculeContainer->deleteMolecule(m->getID(), m->r(0), m->r(1), m->r(2));
+                if (accept) {
+                    this->_localInsertionsMinusDeletions++;
+                    double zeroVec[3] = { 0.0, 0.0, 0.0 };
+                    tmp.setVi(zeroVec);
+                    bool inBoxCheckedAlready = false, checkWhetherDuplicate = false, rebuildCaches = true;
+                    moleculeContainer->addParticle(tmp, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches);
+                } else {
+                    // moleculeContainer->deleteMolecule(m->getID(), m->r(0), m->r(1), m->r(2));
 //				moleculeContainer->_cells[cellid].deleteMolecule(m->getID());
-				double zeroVec[3] = { 0.0, 0.0, 0.0 };
-				mit->setF(zeroVec);
-				mit->setM(zeroVec);
-				mit->setVi(zeroVec);
-				mit->check(mit->getID());
+                    double zeroVec[3] = { 0.0, 0.0, 0.0 };
+                    mit->setF(zeroVec);
+                    mit->setM(zeroVec);
+                    mit->setVi(zeroVec);
+                    mit->check(mit->getID());
 //				moleculeContainer->_particles.erase(mit);
-			}
-		}
-	}
+                }
+            }
+        }
+    }
+
 #ifndef NDEBUG
-	for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
-		// cout << *m << "\n";
-		// cout.flush();
-		m->check(m->getID());
-	}
+    for(ParticleContainer* moleculeContainer : particleContainers) {
+        for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
+            // cout << *m << "\n";
+            // cout.flush();
+            m->check(m->getID());
+        }
+    }
 #endif
 }
 
 unsigned ChemicalPotential::countParticles(
-		ParticleContainer* moleculeContainer, unsigned int cid) const
+        std::vector<ParticleContainer*>& particleContainers, unsigned int cid) const
 {
 	// ParticleContainer::countParticles functionality moved here as it was:
 	// i.e. halo-particles are NOT counted
@@ -611,20 +617,20 @@ unsigned ChemicalPotential::countParticles(
 	#endif
 	{
 
-		auto begin = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-
-		for (auto m = begin; m.isValid(); ++m) {
-			if (m->componentid() == cid)
-				++N;
-		}
-
+        for(ParticleContainer* ptr : particleContainers){
+            auto begin = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+            for (auto m = begin; m.isValid(); ++m) {
+                if (m->componentid() == cid)
+                    ++N;
+            }
+        }
 	}
 
 	return N;
 }
 
 unsigned ChemicalPotential::countParticles(
-		ParticleContainer* moleculeContainer, unsigned int cid,
+        std::vector<ParticleContainer*>& particleContainers, unsigned int cid,
 		double* cbottom, double* ctop) const
 {
 	// ParticleContainer::countParticles functionality moved here as it was:
@@ -637,13 +643,14 @@ unsigned ChemicalPotential::countParticles(
 	#endif
 	{
 
-		auto begin = moleculeContainer->regionIterator(cbottom, ctop, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-
-		for (auto m = begin; m.isValid(); ++m) {
-			if (m->componentid() == cid) {
-				++N;
-			}
-		}
+        for(ParticleContainer* ptr : particleContainers){
+            auto begin = ptr->regionIterator(cbottom, ctop, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+            for (auto m = begin; m.isValid(); ++m) {
+                if (m->componentid() == cid) {
+                    ++N;
+                }
+            }
+        }
 	}
 
 	return N;

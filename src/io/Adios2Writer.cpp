@@ -296,11 +296,17 @@ void Adios2Writer::afterForces(ParticleContainer* particleContainer, DomainDecom
 
 void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
 						   unsigned long simstep) {
+#ifdef ENABLE_ADRESS
+    if(particleContainer != _simulation.getMoleculeContainer()) return;
+#endif
 	if (simstep % _writefrequency != 0) return;
 
 	// for all outputs
-	const uint64_t globalNumParticles = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
-	const uint64_t localNumParticles = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+	const uint64_t globalNumParticles = domain->getglobalNumMolecules(true, &_simulation.getMoleculeContainers(), domainDecomp);
+	uint64_t localNumParticles = 0;
+    for(ParticleContainer* ptr : _simulation.getMoleculeContainers()) {
+        localNumParticles += ptr->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+    }
 	const auto numProcs = domainDecomp->getNumProcs();
 	int const rank = domainDecomp->getRank();
 
@@ -318,30 +324,32 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		}
 	}
 
-	for (auto m = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
-		std::get<std::vector<uint64_t>>(_vars[mol_id_name]).emplace_back(m->getID());
-		std::get<std::vector<uint64_t>>(_vars[comp_id_name]).emplace_back(m->componentid());
-		std::get<std::vector<PRECISION>>(_vars[rx_name]).emplace_back(m->r(0));
-		std::get<std::vector<PRECISION>>(_vars[ry_name]).emplace_back(m->r(1));
-		std::get<std::vector<PRECISION>>(_vars[rz_name]).emplace_back(m->r(2));
-		std::get<std::vector<PRECISION>>(_vars[vx_name]).emplace_back(m->v(0));
-		std::get<std::vector<PRECISION>>(_vars[vy_name]).emplace_back(m->v(1));
-		std::get<std::vector<PRECISION>>(_vars[vz_name]).emplace_back(m->v(2));
-		if (!_singleCenter) {
-			auto q = m->q();
-			std::get<std::vector<PRECISION>>(_vars[qw_name]).emplace_back(q.qw());
-			std::get<std::vector<PRECISION>>(_vars[qx_name]).emplace_back(q.qx());
-			std::get<std::vector<PRECISION>>(_vars[qy_name]).emplace_back(q.qy());
-			std::get<std::vector<PRECISION>>(_vars[qz_name]).emplace_back(q.qz());
-			std::get<std::vector<PRECISION>>(_vars[Lx_name]).emplace_back(m->D(0));
-			std::get<std::vector<PRECISION>>(_vars[Ly_name]).emplace_back(m->D(1));
-			std::get<std::vector<PRECISION>>(_vars[Lz_name]).emplace_back(m->D(2));
-		}
-		
-		m_id.emplace_back(m->getID());
-		comp_id.emplace_back(m->componentid());
+    for(ParticleContainer* ptr : _simulation.getMoleculeContainers()) {
+        for (auto m = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
+            std::get<std::vector<uint64_t>>(_vars[mol_id_name]).emplace_back(m->getID());
+            std::get<std::vector<uint64_t>>(_vars[comp_id_name]).emplace_back(m->componentid());
+            std::get<std::vector<PRECISION>>(_vars[rx_name]).emplace_back(m->r(0));
+            std::get<std::vector<PRECISION>>(_vars[ry_name]).emplace_back(m->r(1));
+            std::get<std::vector<PRECISION>>(_vars[rz_name]).emplace_back(m->r(2));
+            std::get<std::vector<PRECISION>>(_vars[vx_name]).emplace_back(m->v(0));
+            std::get<std::vector<PRECISION>>(_vars[vy_name]).emplace_back(m->v(1));
+            std::get<std::vector<PRECISION>>(_vars[vz_name]).emplace_back(m->v(2));
+            if (!_singleCenter) {
+                auto q = m->q();
+                std::get<std::vector<PRECISION>>(_vars[qw_name]).emplace_back(q.qw());
+                std::get<std::vector<PRECISION>>(_vars[qx_name]).emplace_back(q.qx());
+                std::get<std::vector<PRECISION>>(_vars[qy_name]).emplace_back(q.qy());
+                std::get<std::vector<PRECISION>>(_vars[qz_name]).emplace_back(q.qz());
+                std::get<std::vector<PRECISION>>(_vars[Lx_name]).emplace_back(m->D(0));
+                std::get<std::vector<PRECISION>>(_vars[Ly_name]).emplace_back(m->D(1));
+                std::get<std::vector<PRECISION>>(_vars[Lz_name]).emplace_back(m->D(2));
+            }
 
-	}
+            m_id.emplace_back(m->getID());
+            comp_id.emplace_back(m->componentid());
+
+        }
+    }
 
 	// gather offsets
 	global_log->debug() << "[Adios2Writer] numProcs: " << numProcs << std::endl;

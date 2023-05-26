@@ -14,9 +14,9 @@ GrandCanonicalEnsemble::GrandCanonicalEnsemble() :
 	_simulationDomain = global_simulation->getDomain();
 }
 
-void GrandCanonicalEnsemble::initConfigXML(ParticleContainer* moleculeContainer) {
+void GrandCanonicalEnsemble::initConfigXML(std::vector<ParticleContainer*>& particleContainers) {
 	int ownrank = 0;
-	unsigned long globalNumMolecules = _simulationDomain->getglobalNumMolecules(true, moleculeContainer, nullptr);
+	unsigned long globalNumMolecules = _simulationDomain->getglobalNumMolecules(true, &particleContainers, nullptr);
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 #endif
@@ -33,12 +33,12 @@ void GrandCanonicalEnsemble::initConfigXML(ParticleContainer* moleculeContainer)
 		cpit->setGlobalN(global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->getNumMolecules());
 		cpit->setNextID(j + (int) (1.001 * (256 + globalNumMolecules)));
 
-		cpit->setSubdomain(ownrank, moleculeContainer->getBoundingBoxMin(0),
-						   moleculeContainer->getBoundingBoxMax(0),
-						   moleculeContainer->getBoundingBoxMin(1),
-						   moleculeContainer->getBoundingBoxMax(1),
-						   moleculeContainer->getBoundingBoxMin(2),
-						   moleculeContainer->getBoundingBoxMax(2));
+		cpit->setSubdomain(ownrank, particleContainers[0]->getBoundingBoxMin(0),
+                           particleContainers[0]->getBoundingBoxMax(0),
+                           particleContainers[0]->getBoundingBoxMin(1),
+                           particleContainers[0]->getBoundingBoxMax(1),
+                           particleContainers[0]->getBoundingBoxMin(2),
+                           particleContainers[0]->getBoundingBoxMax(2));
 		/* TODO: thermostat */
 		double Tcur = _simulationDomain->getCurrentTemperature(0);
 		/* FIXME: target temperature from thermostat ID 0 or 1?  */
@@ -74,7 +74,7 @@ void GrandCanonicalEnsemble::prepare_start() {
 	}
 }
 
-void GrandCanonicalEnsemble::beforeEventNewTimestep(ParticleContainer* moleculeContainer,
+void GrandCanonicalEnsemble::beforeEventNewTimestep(std::vector<ParticleContainer*>& particleContainers,
 													DomainDecompBase* domainDecomposition,
 													unsigned long simstep) {
 	/** @todo What is this good for? Where come the numbers from? Needs documentation */
@@ -83,15 +83,15 @@ void GrandCanonicalEnsemble::beforeEventNewTimestep(ParticleContainer* moleculeC
 		list<ChemicalPotential>::iterator cpit;
 		for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 			if(!((simstep + 2 * j + 3) % cpit->getInterval())) {
-				cpit->prepareTimestep(moleculeContainer, domainDecomposition);
+				cpit->prepareTimestep(particleContainers, domainDecomposition);
 			}
 			j++;
 		}
 	}
 }
 
-void GrandCanonicalEnsemble::afterForces(ParticleContainer* moleculeContainer, DomainDecompBase* domainDecomposition,
-										 CellProcessor* cellProcessor,
+void GrandCanonicalEnsemble::afterForces(std::vector<ParticleContainer*>& particleContainers, DomainDecompBase* domainDecomposition,
+                                         std::vector<CellProcessor*>& cellProcessors,
 										 unsigned long simstep) {
 
 	if(simstep >= _initGrandCanonical) {
@@ -105,9 +105,9 @@ void GrandCanonicalEnsemble::afterForces(ParticleContainer* moleculeContainer, D
 				this->_simulationDomain->setDensityCoefficient(cpit->getDensityCoefficient());
 				double localUpotBackup = _simulationDomain->getLocalUpot();
 				double localVirialBackup = _simulationDomain->getLocalVirial();
-				cpit->grandcanonicalStep(moleculeContainer, _simulationDomain->getGlobalCurrentTemperature(),
+				cpit->grandcanonicalStep(particleContainers, _simulationDomain->getGlobalCurrentTemperature(),
 										 this->_simulationDomain,
-										 cellProcessor);
+										 cellProcessors);
 				_simulationDomain->setLocalUpot(localUpotBackup);
 				_simulationDomain->setLocalVirial(localVirialBackup);
 
@@ -129,7 +129,9 @@ void GrandCanonicalEnsemble::afterForces(ParticleContainer* moleculeContainer, D
 
 		// TODO: Originally this comes after the deleteOuterParticles call
 
-		_simulationDomain->evaluateRho(moleculeContainer->getNumberOfParticles(), domainDecomposition);
+        unsigned long numParticles = 0;
+        for(ParticleContainer* ptr : particleContainers) numParticles += ptr->getNumberOfParticles();
+		_simulationDomain->evaluateRho(numParticles, domainDecomposition);
 
 
 	}

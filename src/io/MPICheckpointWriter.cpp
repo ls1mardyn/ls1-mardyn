@@ -133,6 +133,9 @@ void MPICheckpointWriter::init(ParticleContainer * /*particleContainer*/, Domain
 
 void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                                   unsigned long simstep) {
+#ifdef ENABLE_ADRESS
+    if(particleContainer != _simulation.getMoleculeContainer()) return;
+#endif
 #ifdef ENABLE_MPI
 	const char *mpidatarep = NULL;
 	if (!_datarep.empty()) mpidatarep=_datarep.c_str();
@@ -167,8 +170,11 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 		string filename = filenamestream.str();
 		global_log->info() << "[MPICheckpointWriter]\tfilename: " << filename << endl;
 		
-		unsigned long numParticles_global = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
-		unsigned long numParticles = particleContainer->getNumberOfParticles();	// local
+		unsigned long numParticles_global = domain->getglobalNumMolecules(true, &_simulation.getMoleculeContainers(), domainDecomp);
+		unsigned long numParticles = 0;
+        for(ParticleContainer* ptr : _simulation.getMoleculeContainers()){
+            numParticles += ptr->getNumberOfParticles();
+        }
 		unsigned long numbb{1ul};
 #ifdef ENABLE_MPI
 		global_log->info() << "[MPICheckpointWriter]\tnumber of particles: " << numParticles_global
@@ -281,18 +287,20 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 		{
 			ParticleData* particleStructBuffer=new ParticleData[_particlesbuffersize];
 			unsigned long bufidx=0;
-			for (auto pos = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pos.isValid(); ++pos) {
-				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->getID() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
-				ParticleData::MoleculeToParticleData(particleStructBuffer[bufidx], *pos);
-				++bufidx;
-				if(bufidx==_particlesbuffersize)
-				{
-					//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\twriting" << _particlesbuffersize << " particles" << endl
-					MPI_CHECK( MPI_File_write(mpifh, particleStructBuffer, _particlesbuffersize, mpidtParticleD, &mpistat) );
-					//++writecounter;
-					bufidx=0;
-				}
-			}
+            for(ParticleContainer* ptr : _simulation.getMoleculeContainers()) {
+                for (auto pos = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pos.isValid(); ++pos) {
+                    //global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->getID() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
+                    ParticleData::MoleculeToParticleData(particleStructBuffer[bufidx], *pos);
+                    ++bufidx;
+                    if(bufidx==_particlesbuffersize)
+                    {
+                        //global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\twriting" << _particlesbuffersize << " particles" << endl
+                        MPI_CHECK( MPI_File_write(mpifh, particleStructBuffer, _particlesbuffersize, mpidtParticleD, &mpistat) );
+                        //++writecounter;
+                        bufidx=0;
+                    }
+                }
+            }
 			if(bufidx>0)
 			{
 				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\twriting" << bufidx << " particles" << endl
@@ -304,15 +312,17 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 		else
 		{
 			ParticleData particleStruct;
-			for (auto pos = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pos.isValid(); ++pos) {
-				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->getID() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
-				ParticleData::MoleculeToParticleData(particleStruct, *pos);
-				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\twriting particle" << endl
-				MPI_CHECK( MPI_File_write(mpifh, &particleStruct, 1, mpidtParticleD, &mpistat) );
-				//++writecounter;
-				// saving a struct directly will also save padding zeros... 
-				//mpioffset+=mpidtParticleMsize;
-			}
+            for(ParticleContainer* ptr : _simulation.getMoleculeContainers()) {
+                for (auto pos = ptr->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pos.isValid(); ++pos) {
+                    //global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\t" << pos->getID() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
+                    ParticleData::MoleculeToParticleData(particleStruct, *pos);
+                    //global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\twriting particle" << endl
+                    MPI_CHECK( MPI_File_write(mpifh, &particleStruct, 1, mpidtParticleD, &mpistat) );
+                    //++writecounter;
+                    // saving a struct directly will also save padding zeros...
+                    //mpioffset+=mpidtParticleMsize;
+                }
+            }
 		}
 		
 		MPI_CHECK( MPI_File_close(&mpifh) );

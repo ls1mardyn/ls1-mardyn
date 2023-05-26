@@ -103,7 +103,7 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
 	global_log->info() << "[Adios2Reader] Initial IO took: " << inputTimer.get_etime() << " sec" << std::endl;
 
 	if (domain->getglobalRho() == 0.) {
-		domain->setglobalRho(domain->getglobalNumMolecules(true, particleContainer, domainDecomp) / domain->getGlobalVolume());
+		domain->setglobalRho(domain->getglobalNumMolecules(true, &_simulation.getMoleculeContainers(), domainDecomp) / domain->getGlobalVolume());
 		global_log->info() << "[Adios2Reader] Calculated Rho_global = " << domain->getglobalRho() << endl;
 	}
 

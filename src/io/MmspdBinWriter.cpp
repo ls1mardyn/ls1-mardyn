@@ -229,7 +229,7 @@ void MmspdBinWriter::endStep(ParticleContainer *particleContainer,
 		MPI_File_seek(fh, offset, MPI_SEEK_END);
 
 		MPI_Barrier(MPI_COMM_WORLD);
-		unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
+		unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, &_simulation.getMoleculeContainers(), domainDecomp);
 		if (rank == 0){
 			MPI_File_write(fh, &globalNumMolecules, 1, MPI_UNSIGNED_LONG, &status);
 		}

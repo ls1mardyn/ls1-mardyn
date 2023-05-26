@@ -630,7 +630,7 @@ MPI_IOReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	// TODO: Shouldn't we always calculate this?
 	if (domain->getglobalRho() < 1e-5) {
 		domain->setglobalRho(
-				domain->getglobalNumMolecules(true, particleContainer, domainDecomp) / domain->getGlobalVolume());
+				domain->getglobalNumMolecules(true, &_simulation.getMoleculeContainers(), domainDecomp) / domain->getGlobalVolume());
 		global_log->info() << "Calculated Rho_global = "
 				<< domain->getglobalRho() << endl;
 	}
