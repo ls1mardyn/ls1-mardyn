@@ -116,5 +116,5 @@ warnings+="\n# cpplint\n   New or fixed warnings/errors (master <-> new commit):
 # Delete "--suppress-common-lines" to see all errors/warnings
 warnings+=$(diff -y --suppress-common-lines $rootFolder/staticAnalysis_master_summary.log $rootFolder/staticAnalysis_new_summary.log)
 
-printf "\n\n$(echo $warnings | tr -d \`\`\`)\n"
+printf "\n\n$warnings\n"
 printf "$warnings\`\`\`\n" >> $GITHUB_STEP_SUMMARY
