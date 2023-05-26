@@ -235,35 +235,132 @@ void AdResS::computeForce() {
                     // this we will multi-thread: for that we implement a simplified C08-Traversal
                     _forceAdapter->init(_domain); // clear thread data
 
-                    //FP - H
-                    {
+                    int splitDim = 0;
+                    double checkSize = 0;
+                    for(int d = 0; d < 3; d++) {
+                        if(checkHigh[d] - checkLow[d] > checkSize) {
+                            checkSize = checkHigh[d] - checkLow[d];
+                            splitDim = d;
+                        }
+                    }
+
+                    std::array<double,3> off_vec{0,0,0};
+                    int cells =std::max(1, static_cast<int>(checkSize/cutoff));
+                    off_vec[splitDim] = checkSize / cells;
+                    std::vector<RegionParticleIterator> tasks;
+                    tasks.resize(3* cells);
+                    for(int tID = 0; tID < tasks.size()/3; tID++){
+                        std::array<double, 3> start = {}, end = {};
+                        for(int d = 0; d < 3; d++) {
+                            start[d] = tID * off_vec[d] + checkLow[d];
+                            end[d] = (d == splitDim) ? (tID+1) * off_vec[d] + checkLow[d] : checkHigh[d];
+                        }
+                        tasks[3*tID + FullParticle] = _particleContainers[FullParticle]->regionIterator(start.data(), end.data(), ParticleIterator::ALL_CELLS);
+                        tasks[3*tID + Hybrid] = _particleContainers[Hybrid]->regionIterator(start.data(), end.data(), ParticleIterator::ALL_CELLS);
+                        tasks[3*tID + CoarseGrain] = _particleContainers[CoarseGrain]->regionIterator(start.data(), end.data(), ParticleIterator::ALL_CELLS);
+                    }
+
+                    #if defined(_OPENMP)
+                    #pragma omp parallel for
+                    #endif
+                    for(int tID = 0; tID < tasks.size()/3; tID++){
                         std::array<double, 3> dist = {0,0,0};
-                        // let every molecule in the box created by checkLow and checkHigh interact with the hybrid molecules in this region
-                        for(auto itOuter = _particleContainers[FullParticle]->regionIterator(checkLow.data(), checkHigh.data(), ParticleIterator::ALL_CELLS); itOuter.isValid(); ++itOuter) {
-                            Molecule& m1 = *itOuter; // this can be of any type
-                            for(auto itInner = _particleContainers[Hybrid]->regionIterator(checkLow.data(), checkHigh.data(), ParticleIterator::ALL_CELLS); itInner.isValid(); ++itInner) {
-                                Molecule& m2 = *itInner; // must be hybrid
-                                //check distance
-                                double dd = m1.dist2(m2, dist.data());
+                        for(auto itH = tasks[3*tID + Hybrid]; itH.isValid(); ++itH) {
+                            Molecule& mH = *itH;
+                            for(auto itFP = tasks[3*tID + FullParticle]; itFP.isValid(); ++itFP){
+                                Molecule& mFP = *itFP;
+                                double dd = mH.dist2(mFP, dist.data());
                                 if(dd < cutoff2) {
-                                    _forceAdapter->processPair(m1, m2, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
+                                    _forceAdapter->processPair(mH, mFP, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
+                                }
+                            }
+                            for(auto itCG = tasks[3*tID + CoarseGrain]; itCG.isValid(); ++itCG){
+                                Molecule& mCG = *itCG;
+                                double dd = mH.dist2(mCG, dist.data());
+                                if(dd < cutoff2) {
+                                    _forceAdapter->processPair(mH, mCG, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
                                 }
                             }
                         }
                     }
 
-                    //H - CG
-                    {
+                    #if defined(_OPENMP)
+                    #pragma omp parallel for
+                    #endif
+                    for(int tID = 0; tID < tasks.size()/6; tID+=2){
                         std::array<double, 3> dist = {0,0,0};
-                        // let every molecule in the box created by checkLow and checkHigh interact with the hybrid molecules in this region
-                        for(auto itOuter = _particleContainers[Hybrid]->regionIterator(checkLow.data(), checkHigh.data(), ParticleIterator::ALL_CELLS); itOuter.isValid(); ++itOuter) {
-                            Molecule& m1 = *itOuter; // this can be of any type
-                            for(auto itInner = _particleContainers[CoarseGrain]->regionIterator(checkLow.data(), checkHigh.data(), ParticleIterator::ALL_CELLS); itInner.isValid(); ++itInner) {
-                                Molecule& m2 = *itInner; // must be hybrid
-                                //check distance
-                                double dd = m1.dist2(m2, dist.data());
+                        for(auto itH = tasks[3*tID + Hybrid]; itH.isValid(); ++itH) {
+                            Molecule& mH = *itH;
+                            for(auto itFP = tasks[3*tID + FullParticle +3]; itFP.isValid(); ++itFP){
+                                Molecule& mFP = *itFP;
+                                double dd = mH.dist2(mFP, dist.data());
                                 if(dd < cutoff2) {
-                                    _forceAdapter->processPair(m1, m2, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
+                                    _forceAdapter->processPair(mH, mFP, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
+                                }
+                            }
+                            for(auto itCG = tasks[3*tID + CoarseGrain +3]; itCG.isValid(); ++itCG){
+                                Molecule& mCG = *itCG;
+                                double dd = mH.dist2(mCG, dist.data());
+                                if(dd < cutoff2) {
+                                    _forceAdapter->processPair(mH, mCG, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
+                                }
+                            }
+                        }
+                        for(auto itH = tasks[3*tID + Hybrid +3]; itH.isValid(); ++itH) {
+                            Molecule& mH = *itH;
+                            for(auto itFP = tasks[3*tID + FullParticle]; itFP.isValid(); ++itFP){
+                                Molecule& mFP = *itFP;
+                                double dd = mH.dist2(mFP, dist.data());
+                                if(dd < cutoff2) {
+                                    _forceAdapter->processPair(mH, mFP, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
+                                }
+                            }
+                            for(auto itCG = tasks[3*tID + CoarseGrain]; itCG.isValid(); ++itCG){
+                                Molecule& mCG = *itCG;
+                                double dd = mH.dist2(mCG, dist.data());
+                                if(dd < cutoff2) {
+                                    _forceAdapter->processPair(mH, mCG, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
+                                }
+                            }
+                        }
+                    }
+
+                    #if defined(_OPENMP)
+                    #pragma omp parallel for
+                    #endif
+                    for(int tID = 1; tID <= (tasks.size()-1)/6; tID+=2){
+                        std::array<double, 3> dist = {0,0,0};
+                        for(auto itH = tasks[3*tID + Hybrid]; itH.isValid(); ++itH) {
+                            Molecule& mH = *itH;
+                            for(auto itFP = tasks[3*tID + FullParticle +3]; itFP.isValid(); ++itFP){
+                                Molecule& mFP = *itFP;
+                                double dd = mH.dist2(mFP, dist.data());
+                                if(dd < cutoff2) {
+                                    _forceAdapter->processPair(mH, mFP, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
+                                }
+                            }
+                            for(auto itCG = tasks[3*tID + CoarseGrain +3]; itCG.isValid(); ++itCG){
+                                Molecule& mCG = *itCG;
+                                double dd = mH.dist2(mCG, dist.data());
+                                if(dd < cutoff2) {
+                                    _forceAdapter->processPair(mH, mCG, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
+                                }
+                            }
+                        }
+                        for(auto itH = tasks[3*tID + Hybrid +3]; itH.isValid(); ++itH) {
+                            Molecule& mH = *itH;
+                            for(auto itFP = tasks[3*tID + FullParticle]; itFP.isValid(); ++itFP){
+                                Molecule& mFP = *itFP;
+                                double dd = mH.dist2(mFP, dist.data());
+                                if(dd < cutoff2) {
+                                    _forceAdapter->processPair(mH, mFP, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
+                                }
+                            }
+                            for(auto itCG = tasks[3*tID + CoarseGrain]; itCG.isValid(); ++itCG){
+                                Molecule& mCG = *itCG;
+                                double dd = mH.dist2(mCG, dist.data());
+                                if(dd < cutoff2) {
+                                    _forceAdapter->processPair(mH, mCG, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
                                 }
                             }
                         }
