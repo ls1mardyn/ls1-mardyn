@@ -142,16 +142,20 @@ bool BoundaryHandler::processBoundaries()
 				for (auto it = particlesInRegion; it.isValid(); ++it)
 				{
 					Molecule curMolecule = *it;
+					global_log->info() << "Boundary particle found " << std::endl;
 					if (BoundaryUtils::isMoleculeLeaving(curMolecule, curWallRegionBegin, curWallRegionEnd, currentWall.first, timestepLength))
 					{
+						global_log->info() << "Boundary particle found leaving" << std::endl;
 						int currentDim = BoundaryUtils::convertDimensionToLS1Dims(currentWall.first);
 						if(getBoundary(currentWall.first) == BoundaryType::REFLECTING)
 						{
+							global_log->info() << "Reflection particle found " << std::endl;
 							double vel = it->v(currentDim);
 							it->setv(currentDim, -vel);
 						}
 						else
 						{
+							global_log->info() << "Outflow particle found " << std::endl;
 							moleculeContainer->deleteMolecule(it, false);
 						}
 					}
@@ -205,5 +209,7 @@ void BoundaryHandler::removeHalos()
 				Simulation::exit(1);
 		}
 	}
+	#ifndef MARDYN_AUTOPAS
 	moleculeContainer->updateBoundaryAndHaloMoleculeCaches();
+	#endif
 }

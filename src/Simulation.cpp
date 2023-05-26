@@ -990,6 +990,7 @@ void Simulation::simulate() {
 	global_simulation->timers()->setOutputString("SIMULATION_UPDATE_CACHES", "Cache update took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_INIT_SEND", "initSend() took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
+	global_simulation->timers()->setOutputString("SIMULATION_BOUNDARY_TREATMENT", "Enforcing boundary conditions took:");
 
 	// all timers except the ioTimer measure inside the main loop
 	Timer* loopTimer = global_simulation->timers()->getTimer("SIMULATION_LOOP"); ///< timer for the entire simulation loop (synced)
@@ -1078,9 +1079,10 @@ void Simulation::simulate() {
 
 			decompositionTimer->stop();
 
-			timers()->start("SIMULATION_BOUNDARY_TREATMENT");
+			global_simulation->timers()->start("SIMULATION_BOUNDARY_TREATMENT");
+			_domainDecomposition->processBoundaryConditions();
 			_domainDecomposition->removeNonPeriodicHalos();
-			timers()->start("SIMULATION_BOUNDARY_TREATMENT");
+			global_simulation->timers()->stop("SIMULATION_BOUNDARY_TREATMENT");
 
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
@@ -1331,10 +1333,6 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 	double averageLastTraversalTime =
 		std::accumulate(_lastTraversalTimeHistory.begin(), _lastTraversalTimeHistory.end(), 0.) /
 		_lastTraversalTimeHistory.size();
-
-	timers()->start("SIMULATION_BOUNDARY_TREATMENT");
-	_domainDecomposition->processBoundaryConditions();
-	timers()->stop("SIMULATION_BOUNDARY_TREATMENT");
 
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
