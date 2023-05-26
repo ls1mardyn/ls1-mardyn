@@ -97,6 +97,7 @@ do
 
   if [[ "${VERSION}" == "master" ]]
   then
+    git fetch
     git switch master &> /dev/null
   else
     git switch ${currentVersion} &> /dev/null
