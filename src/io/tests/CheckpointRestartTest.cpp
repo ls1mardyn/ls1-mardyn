@@ -44,10 +44,12 @@ void CheckpointRestartTest::testCheckpointRestart(bool binary) {
 	constexpr double cutoff = 10.5;
 	ParticleContainer* particleContainer
 		= initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials_50_molecules.inp", cutoff);
+    std::vector<ParticleContainer*> particleContainers;
+    particleContainers.emplace_back(particleContainer);
 	auto initialParticleCount = getGlobalParticleNumber(particleContainer);
 
 	std::string filename = binary ? "restart.test" : "restart.test.dat";
-	_domain->writeCheckpoint(getTestDataFilename(filename, false), particleContainer, _domainDecomposition,
+	_domain->writeCheckpoint(getTestDataFilename(filename, false), particleContainers, _domainDecomposition,
 	                         0., binary);
 
 	delete particleContainer;

@@ -155,6 +155,8 @@ void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsi
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
+    if(container != _particleContainers[FullParticle]) return;
+
     computeForce();
     _mesoVals.setInDomain(_domain);
     _mesoVals.clear();
@@ -287,7 +289,7 @@ void AdResS::computeForce() {
                     #if defined(_OPENMP)
                     #pragma omp parallel for
                     #endif
-                    for(int tID = 0; tID < tasks.size()/6; tID+=2){
+                    for(int tID = 0; tID < (tasks.size()-3)/3; tID+=2){
                         std::array<double, 3> dist = {0,0,0};
                         for(auto itH = tasks[3*tID + Hybrid]; itH.isValid(); ++itH) {
                             Molecule& mH = *itH;
@@ -328,7 +330,7 @@ void AdResS::computeForce() {
                     #if defined(_OPENMP)
                     #pragma omp parallel for
                     #endif
-                    for(int tID = 1; tID <= (tasks.size()-1)/6; tID+=2){
+                    for(int tID = 1; tID <= (tasks.size()-6)/3; tID+=2){
                         std::array<double, 3> dist = {0,0,0};
                         for(auto itH = tasks[3*tID + Hybrid]; itH.isValid(); ++itH) {
                             Molecule& mH = *itH;

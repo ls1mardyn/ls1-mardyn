@@ -60,6 +60,16 @@ struct FPRegion {
     //! @brief gets the upper corner of hybrid region
     [[nodiscard]] const std::array<double, 3>& getHighHybrid() const { return _highHybrid; }
 
+    //! @brief computes all fields according to input data low,high,dims
+    void init() {
+        for(int d = 0; d < 3; d++) {
+            _lowHybrid[d] = _low[d] - _hybridDims[d];
+            _highHybrid[d] = _high[d] + _hybridDims[d];
+            _center[d] = (_high[d] - _low[d])/2 + _low[d];
+            _dim[d] = _high[d] - _low[d];
+        }
+    }
+
     //! @brief initialized this FPRegion instance from XML data
     void readXML(XMLfileUnits &xmlconfig) {
         xmlconfig.getNodeValue("lowX", _low[0]);
@@ -72,13 +82,7 @@ struct FPRegion {
         xmlconfig.getNodeValue("hybridDimY", _hybridDims[1]);
         xmlconfig.getNodeValue("hybridDimZ", _hybridDims[2]);
 
-
-        for(int d = 0; d < 3; d++) {
-            _lowHybrid[d] = _low[d] - _hybridDims[d];
-            _highHybrid[d] = _high[d] + _hybridDims[d];
-            _center[d] = (_high[d] - _low[d])/2 + _low[d];
-            _dim[d] = _high[d] - _low[d];
-        }
+        init();
     }
 
     /**

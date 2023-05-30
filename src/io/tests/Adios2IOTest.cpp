@@ -101,10 +101,10 @@ void Adios2IOTest::testWriteCheckpoint() {
 	initParticles();
 
 #ifdef MARDYN_AUTOPAS
-	auto particleContainer = std::make_shared<AutoPasContainer>(_cutoff);
+	ParticleConatiner* particleContainer = new AutoPasContainer(_cutoff);
 	particleContainer->rebuild(_box_lower.data(), _box_upper.data());
 #else
-	auto particleContainer = std::make_shared<LinkedCells>(_box_lower.data(), _box_upper.data(), _cutoff);
+	ParticleContainer* particleContainer = new LinkedCells(_box_lower.data(), _box_upper.data(), _cutoff);
 #endif
 
 	std::vector<Molecule> particles(NUM_PARTICLES);
@@ -149,8 +149,9 @@ void Adios2IOTest::testWriteCheckpoint() {
 	domain->setGlobalLength(0, _box_upper[0]);
 	domain->setGlobalLength(1, _box_upper[1]);
 	domain->setGlobalLength(2, _box_upper[2]);
-	domain->updateglobalNumMolecules(particleContainer.get(), domaindecomp.get());
-	adios2writer->endStep(particleContainer.get(), domaindecomp.get(), domain.get(), 0);
+    _simulation.getMoleculeContainers().emplace_back(particleContainer);
+	domain->updateglobalNumMolecules(_simulation.getMoleculeContainers(), domaindecomp.get());
+	adios2writer->endStep(particleContainer, domaindecomp.get(), domain.get(), 0);
 	adios2writer->finish(nullptr, nullptr, nullptr);
 
 	global_log->info() << "[Adios2IOTest] Writing successful!" << std::endl;
