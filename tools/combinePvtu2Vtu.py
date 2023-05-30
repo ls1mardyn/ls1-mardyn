@@ -13,7 +13,7 @@ convertedPrefix = 'combined_'
 
 ################### VTU ####################
 
-def convertVtu(vtufilename, appender):
+def convertVtu(vtufilename, appender, deleteInput):
 
     reader = vtk.vtkXMLUnstructuredGridReader()
     reader.SetFileName(vtufilename)
@@ -21,10 +21,12 @@ def convertVtu(vtufilename, appender):
     readerOutput = reader.GetOutput()
 
     appender.AddInputData(readerOutput)
+    if deleteInput:
+        os.remove(vtufilename)
 
 ################### PVTU ###################
 
-def convertPVtu(pvtuFilename, outputDir):
+def convertPVtu(pvtuFilename, outputDir, deleteInput):
     pvtuDir = os.path.dirname(pvtuFilename)
     outputFile = os.path.join(outputDir, convertedPrefix + os.path.splitext(os.path.basename(pvtuFilename))[0] + '.vtu')
     print(pvtuFilename + ' -> ' + outputFile)
@@ -36,7 +38,7 @@ def convertPVtu(pvtuFilename, outputDir):
             if '<Piece Source' in line:
                 # extract sub vtu filenames
                 vtuFilename = line.split('"')[1]
-                convertVtu(os.path.join(pvtuDir, vtuFilename), appender)
+                convertVtu(os.path.join(pvtuDir, vtuFilename), appender, deleteInput)
 
     appender.Update()
     writer = vtk.vtkXMLUnstructuredGridWriter()
@@ -46,6 +48,8 @@ def convertPVtu(pvtuFilename, outputDir):
     # Create the output dir if it doesn't exist yet
     os.makedirs(outputDir, exist_ok=True)
     writer.Write()
+    if deleteInput:
+        os.remove(pvtuFilename)
 
 ############################################ Script ############################################
 if __name__ == '__main__':
@@ -54,12 +58,20 @@ if __name__ == '__main__':
          raise RuntimeError(f"""\
  Not enough input arguments.
 
- Usage: {os.path.basename(sys.argv[0])} outputDir files.pvtu...
+ Usage: {os.path.basename(sys.argv[0])} [--remove] outputDir files.pvtu...
+ 
+ --remove       If set, remove all input vtu and pvtu files.
  """)
 
-    outputDir = os.path.normpath(sys.argv[1])
-    files = sys.argv[2:]
+    optArgs = 0
+    remove = False
+    if sys.argv[1] == '--remove':
+        optArgs += 1
+        remove = True
+
+    outputDir = os.path.normpath(sys.argv[optArgs + 1])
+    files = sys.argv[optArgs + 2:]
     # bind the output dir argument to the function
-    convertPVtuWithOutputDir = functools.partial(convertPVtu, outputDir=outputDir)
+    convertPVtuWrapped = functools.partial(convertPVtu, outputDir=outputDir, deleteInput=remove)
     # parallelize over the file list
-    multiprocessing.Pool().map(convertPVtuWithOutputDir, files)
+    multiprocessing.Pool().map(convertPVtuWrapped, files)
