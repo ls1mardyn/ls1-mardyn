@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <components version="20100525">
-    <!--
+	<!--
 
 ************************************************************************
 *               Publishing with the MolMod Database                    *
@@ -107,6 +107,201 @@
 		<momentsofinertia rotaxes="xyz">
 			<Ixx>0</Ixx>
 			<Iyy>0</Iyy>
+			<Izz>0</Izz>
+		</momentsofinertia>
+	</moleculetype>
+	<!--
+    ************************************************************************
+    *               Publishing with the MolMod Database                    *
+    *  Every user agrees to cite the MolMod Database upon usage as follows *
+    *                                                                      *
+    *  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+    *  MolMod – an Open Access Database of Force Fields for Molecular      *
+    *  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+    ************************************************************************
+
+                                   Model data
+
+     Substance     CCl4_V
+     CAS-No        56-23-5
+     Reference     G. Guevara-Carrion, T. Janzen, Y. M. Muñoz-Muñoz and J.
+                    Vrabec: Mutual Diffusion of Binary Liquid Mixtures Conta
+                   ining Methanol, Ethanol, Acetone, Benzene, Cyclohexane, T
+                   oluene, and Carbon Tetrachloride, The Journal of Chemical
+                    Physics 144, 12, 124501 (2016), 10.1063/1.4943395
+-->
+	<moleculetype id="4" name="FP_CCl4">
+		<site type="LJ126" id="1">
+			<coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+			<sigma>2.81</sigma>
+			<epsilon>12.37</epsilon>
+			<mass>12.011</mass>
+		</site>
+		<site type="LJ126" id="2">
+			<coords><x>1.18</x><y>1.18</y><z>1.18</z>   </coords>
+			<sigma>3.25</sigma>
+			<epsilon>212.6</epsilon>
+			<mass>35.453</mass>
+		</site>
+		<site type="LJ126" id="3">
+			<coords><x>-1.18</x><y>-1.18</y><z>1.18</z>   </coords>
+			<sigma>3.25</sigma>
+			<epsilon>212.6</epsilon>
+			<mass>35.453</mass>
+		</site>
+		<site type="LJ126" id="4">
+			<coords><x>-1.18</x><y>1.18</y><z>-1.18</z>   </coords>
+			<sigma>3.25</sigma>
+			<epsilon>212.6</epsilon>
+			<mass>35.453</mass>
+		</site>
+		<site type="LJ126" id="5">
+			<coords><x>1.18</x><y>-1.18</y><z>-1.18</z>   </coords>
+			<sigma>3.25</sigma>
+			<epsilon>212.6</epsilon>
+			<mass>35.453</mass>
+		</site>
+		<site type="Charge" id="6">
+			<coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+			<charge>-147.97821695242</charge>
+		</site>
+		<site type="Charge" id="7">
+			<coords><x>1.18</x><y>1.18</y><z>1.18</z>   </coords>
+			<charge>36.994554238104</charge>
+		</site>
+		<site type="Charge" id="8">
+			<coords><x>-1.18</x><y>-1.18</y><z>1.18</z>   </coords>
+			<charge>36.994554238104</charge>
+		</site>
+		<site type="Charge" id="9">
+			<coords><x>-1.18</x><y>1.18</y><z>-1.18</z>   </coords>
+			<charge>36.994554238104</charge>
+		</site>
+		<site type="Charge" id="10">
+			<coords><x>1.18</x><y>-1.18</y><z>-1.18</z>   </coords>
+			<charge>36.994554238104</charge>
+		</site>
+		<momentsofinertia rotaxes="xyz">
+			<Ixx>394.9180576</Ixx>
+			<Iyy>394.9180576</Iyy>
+			<Izz>394.9180576</Izz>
+		</momentsofinertia>
+	</moleculetype>
+	<!-- Hybrid representation is combination of FP and CG version -->
+	<moleculetype id="5" name="H_CCl4">
+		<site type="LJ126" id="1">
+			<coords><x>0.0</x><y>0.0</y><z>-0.8473</z>   </coords>
+			<sigma>4.8471</sigma>
+			<epsilon>142.14</epsilon>
+			<mass>0.0</mass>
+		</site>
+		<site type="LJ126" id="2">
+			<coords><x>0.0</x><y>0.0</y><z>0.8473</z>   </coords>
+			<sigma>4.8471</sigma>
+			<epsilon>142.14</epsilon>
+			<mass>0.0</mass>
+		</site>
+		<site type="LJ126" id="3">
+			<coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+			<sigma>2.81</sigma>
+			<epsilon>12.37</epsilon>
+			<mass>12.011</mass>
+		</site>
+		<site type="LJ126" id="4">
+			<coords><x>1.18</x><y>1.18</y><z>1.18</z>   </coords>
+			<sigma>3.25</sigma>
+			<epsilon>212.6</epsilon>
+			<mass>35.453</mass>
+		</site>
+		<site type="LJ126" id="5">
+			<coords><x>-1.18</x><y>-1.18</y><z>1.18</z>   </coords>
+			<sigma>3.25</sigma>
+			<epsilon>212.6</epsilon>
+			<mass>35.453</mass>
+		</site>
+		<site type="LJ126" id="6">
+			<coords><x>-1.18</x><y>1.18</y><z>-1.18</z>   </coords>
+			<sigma>3.25</sigma>
+			<epsilon>212.6</epsilon>
+			<mass>35.453</mass>
+		</site>
+		<site type="LJ126" id="7">
+			<coords><x>1.18</x><y>-1.18</y><z>-1.18</z>   </coords>
+			<sigma>3.25</sigma>
+			<epsilon>212.6</epsilon>
+			<mass>35.453</mass>
+		</site>
+		<site type="Quadrupole" id="8">
+			<coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+			<quadrupolemoment><theta>0.0</theta><phi>0.0</phi><abs>1220.924740279</abs>   </quadrupolemoment>
+			<mass>0.0</mass>
+		</site>
+		<site type="Charge" id="9">
+			<coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+			<charge>-147.97821695242</charge>
+		</site>
+		<site type="Charge" id="10">
+			<coords><x>1.18</x><y>1.18</y><z>1.18</z>   </coords>
+			<charge>36.994554238104</charge>
+		</site>
+		<site type="Charge" id="11">
+			<coords><x>-1.18</x><y>-1.18</y><z>1.18</z>   </coords>
+			<charge>36.994554238104</charge>
+		</site>
+		<site type="Charge" id="12">
+			<coords><x>-1.18</x><y>1.18</y><z>-1.18</z>   </coords>
+			<charge>36.994554238104</charge>
+		</site>
+		<site type="Charge" id="13">
+			<coords><x>1.18</x><y>-1.18</y><z>-1.18</z>   </coords>
+			<charge>36.994554238104</charge>
+		</site>
+		<momentsofinertia rotaxes="xyz">
+			<Ixx>394.9180576</Ixx>
+			<Iyy>394.9180576</Iyy>
+			<Izz>394.9180576</Izz>
+		</momentsofinertia>
+	</moleculetype>
+	<!--
+    ************************************************************************
+    *               Publishing with the MolMod Database                    *
+    *  Every user agrees to cite the MolMod Database upon usage as follows *
+    *                                                                      *
+    *  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+    *  MolMod – an Open Access Database of Force Fields for Molecular      *
+    *  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+    ************************************************************************
+
+                                   Model data
+
+     Substance     CCl4_IV
+     CAS-No        56-23-5
+     Reference     J. Vrabec, J. Stoll and H. Hasse: A Set of Molecular Mode
+                   ls for Symmetric Quadrupolar Fluids, The Journal of Physi
+                   cal Chemistry B 105, 48, 12126-12133 (2001), 10.1021/jp01
+                   2542o
+    -->
+	<moleculetype id="6" name="CG_CCl4">
+		<site type="LJ126" id="1">
+			<coords><x>0.0</x><y>0.0</y><z>-0.8473</z>   </coords>
+			<sigma>4.8471</sigma>
+			<epsilon>142.14</epsilon>
+			<mass>76.912</mass>
+		</site>
+		<site type="LJ126" id="2">
+			<coords><x>0.0</x><y>0.0</y><z>0.8473</z>   </coords>
+			<sigma>4.8471</sigma>
+			<epsilon>142.14</epsilon>
+			<mass>76.912</mass>
+		</site>
+		<site type="Quadrupole" id="3">
+			<coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+			<quadrupolemoment><theta>0.0</theta><phi>0.0</phi><abs>1220.924740279</abs>   </quadrupolemoment>
+			<mass>0.0</mass>
+		</site>
+		<momentsofinertia rotaxes="xyz">
+			<Ixx>110.43290921696</Ixx>
+			<Iyy>110.43290921696</Iyy>
 			<Izz>0</Izz>
 		</momentsofinertia>
 	</moleculetype>
