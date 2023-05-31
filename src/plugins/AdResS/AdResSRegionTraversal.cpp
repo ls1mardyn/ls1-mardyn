@@ -11,7 +11,7 @@ AdResSRegionTraversal::AdResSRegionTraversal(std::array<double, 3> checkLow, std
                                              std::unordered_map<unsigned long, Resolution>& compMap) :
                                              _cellPairOffsets8Pack(), _particleContainer(particleContainer),
                                              _cells(), _end(), _dims(), _comp_to_res(compMap), _cutoff(0), _cutoff2(0),
-                                             _ljcutoff2(0), _cellSize(0){
+                                             _ljcutoff2(0), _cellSize(0), _globLen({0,0,0}){
     using threeDimensionalMapping::threeToOneD;
     using std::make_pair;
 
@@ -21,6 +21,10 @@ AdResSRegionTraversal::AdResSRegionTraversal(std::array<double, 3> checkLow, std
     _ljcutoff2 = _simulation.getLJCutoff();
     _ljcutoff2 *= _ljcutoff2;
     _cellSize = _cutoff;
+
+    for(int d = 0; d < 3; d++) {
+        _globLen[d] = _simulation.getDomain()->getGlobalLength(d);
+    }
 
     for (int d = 0; d < 3; ++d) {
         _dims[d] = static_cast<long>((checkHigh[d] - checkLow[d]) / _cellSize);
@@ -137,8 +141,14 @@ void AdResSRegionTraversal::processCell(RegionParticleIterator &cellIt, AdResSFo
             //check distance
             double dd = m1.dist2(m2, dist.data());
             if(dd < _cutoff2) {
+                PairType type = MOLECULE_MOLECULE;
+                if(!FPRegion::isInnerPoint(m1.r_arr(), {0,0,0}, _globLen) ||
+                   !FPRegion::isInnerPoint(m2.r_arr(), {0,0,0}, _globLen)) {
+                    type = MOLECULE_HALOMOLECULE;
+                }
+
                 //recompute force and invert it -> last bool param is true
-                forceAdapter.processPair(m1, m2, dist, MOLECULE_MOLECULE, dd, (dd < _ljcutoff2), invert,
+                forceAdapter.processPair(m1, m2, dist, type, dd, (dd < _ljcutoff2), invert,
                                           _comp_to_res, region);
             }
         }
@@ -157,8 +167,13 @@ void AdResSRegionTraversal::processCellPair(RegionParticleIterator &cell1, Regio
             //check distance
             double dd = m1.dist2(m2, dist.data());
             if(dd < _cutoff2) {
+                PairType type = MOLECULE_MOLECULE;
+                if(!FPRegion::isInnerPoint(m1.r_arr(), {0,0,0}, _globLen) ||
+                   !FPRegion::isInnerPoint(m2.r_arr(), {0,0,0}, _globLen)) {
+                    type = MOLECULE_HALOMOLECULE;
+                }
                 //recompute force and invert it -> last bool param is true
-                forceAdapter.processPair(m1, m2, dist, MOLECULE_MOLECULE, dd, (dd < _ljcutoff2), invert,
+                forceAdapter.processPair(m1, m2, dist, type, dd, (dd < _ljcutoff2), invert,
                                          _comp_to_res, region);
             }
         }
@@ -174,8 +189,13 @@ void AdResSRegionTraversal::processCellPair(RegionParticleIterator &cell1, Regio
             //check distance
             double dd = m1.dist2(m2, dist.data());
             if(dd < _cutoff2) {
+                PairType type = MOLECULE_MOLECULE;
+                if(!FPRegion::isInnerPoint(m1.r_arr(), {0,0,0}, _globLen) ||
+                   !FPRegion::isInnerPoint(m2.r_arr(), {0,0,0}, _globLen)) {
+                    type = MOLECULE_HALOMOLECULE;
+                }
                 //recompute force and invert it -> last bool param is true
-                forceAdapter.processPair(m1, m2, dist, MOLECULE_MOLECULE, dd, (dd < _ljcutoff2), invert,
+                forceAdapter.processPair(m1, m2, dist, type, dd, (dd < _ljcutoff2), invert,
                                          _comp_to_res, region);
             }
         }

@@ -55,6 +55,8 @@ private:
     double _ljcutoff2;
     //! @brief size in world coordinates of each cell
     double _cellSize;
+    //! @brief size of the simulation
+    std::array<double,3> _globLen;
 
     void processCell(RegionParticleIterator& cell, AdResSForceAdapter& forceAdapter, FPRegion& region, bool invert);
     void processCellPair(RegionParticleIterator& cell1, RegionParticleIterator& cell2, AdResSForceAdapter& forceAdapter, FPRegion& region, bool invert);
