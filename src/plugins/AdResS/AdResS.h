@@ -17,6 +17,8 @@
 class ParticleContainer;
 class DomainDecompBase;
 class Domain;
+class AdResSForceAdapterTest;
+class AdResSTest;
 
 /**
  * With the introduction of AdResS to ls1-MarDyn the simulation class owns two particle containers,
@@ -34,6 +36,8 @@ class Domain;
  * Regions cannot overlap, otherwise forces are computed multiple times.
  * */
 class AdResS : public PluginBase {
+    friend class AdResSForceAdapterTest;
+    friend class AdResSTest;
 public:
     /**
      * Constructor, no params needed
