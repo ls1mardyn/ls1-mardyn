@@ -70,6 +70,23 @@ DimensionType BoundaryUtils::convertNumericToDimension(int dim)
 	return DimensionType::ERROR;
 }
 
+DimensionType BoundaryUtils::convertLS1DimsToDimensionPos(int dim) 
+{
+	DimensionType toRet = DimensionType::ERROR;
+	switch(dim)
+	{
+		case 0:
+			toRet = DimensionType::POSX;
+			break;
+		case 1:
+			toRet = DimensionType::POSY;
+			break;
+		default: //case 2:
+			toRet = DimensionType::POSZ;
+	}
+	return toRet;
+}
+
 std::string BoundaryUtils::convertDimensionToString(DimensionType dimension) 
 { 
 	switch (dimension)

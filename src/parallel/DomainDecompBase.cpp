@@ -47,15 +47,15 @@ void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* en
 	
 	_boundaryHandler.setLocalRegion(startRegion, endRegion);
 	_boundaryHandler.setGlobalRegion(globStartRegion, globEndRegion);
-	_boundaryHandler.findBoundariesInLocalRegion();
+	_boundaryHandler.findOuterWallsInLocalRegion();
 }
 
 void DomainDecompBase::processBoundaryConditions() {	
-	_boundaryHandler.processBoundaries();
+	_boundaryHandler.processOuterWallLeavingParticles();
 }
 
 void DomainDecompBase::removeNonPeriodicHalos() {
-	_boundaryHandler.removeHalos();
+	_boundaryHandler.removeNonPeriodicHalos();
 }
 
 void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecules,
@@ -324,6 +324,11 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 }
 
 void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const {
+	
+	//reflecting and outflow boundaries do not expect halo particles
+	if(_boundaryHandler.getBoundary(dim) != BoundaryType::PERIODIC)
+		return;
+	
 	double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
 	// molecules that have crossed the lower boundary need a positive shift

@@ -32,13 +32,15 @@ public:
 	void setGlobalRegion(std::array<double,3> start, std::array<double,3> end);
 	void setLocalRegion(std::array<double,3> start, std::array<double,3> end);
 
-	void findBoundariesInLocalRegion();
-	bool processBoundaries();
-	void removeHalos();
+	void findOuterWallsInLocalRegion();
+	bool isOuterWall(DimensionType dimension) const;
+	bool isOuterWall(int dimension) const;
+	bool processOuterWallLeavingParticles();
+	void removeNonPeriodicHalos();
 
 private:
 	std::map<DimensionType, BoundaryType> boundaries;
-	std::map<DimensionType, bool> isOuterWall;
-	std::array<double,3> globalRegionStart, globalRegionEnd;
-	std::array<double,3> localRegionStart, localRegionEnd;
+	std::map<DimensionType, bool> _isOuterWall;
+	std::array<double,3> _globalRegionStart, _globalRegionEnd;
+	std::array<double,3> _localRegionStart, _localRegionEnd;
 };

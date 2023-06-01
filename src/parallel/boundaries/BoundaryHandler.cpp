@@ -22,23 +22,21 @@ BoundaryHandler::BoundaryHandler() : boundaries{
 	{DimensionType::ERROR, BoundaryType::ERROR}
 	} {}
 
-BoundaryType BoundaryHandler::getBoundary(std::string dimension) const
-{
-	DimensionType convertedDimension = BoundaryUtils::convertStringToDimension(dimension);
-	return boundaries.at(convertedDimension);
-}
-
-void BoundaryHandler::setBoundary(std::string dimension, BoundaryType value) 
-{
-	DimensionType convertedDimension = BoundaryUtils::convertStringToDimension(dimension);
-	if(convertedDimension == DimensionType::ERROR)
-		return;
-	boundaries[convertedDimension] = value;
-}
 
 BoundaryType BoundaryHandler::getBoundary(DimensionType dimension) const
 {
 	return boundaries.at(dimension);
+}
+
+BoundaryType BoundaryHandler::getBoundary(std::string dimension) const
+{
+	DimensionType convertedDimension = BoundaryUtils::convertStringToDimension(dimension);
+	return getBoundary(convertedDimension);
+}
+
+BoundaryType BoundaryHandler::getBoundary(int dimension) const 
+{
+	return getBoundary(BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
 }
 
 void BoundaryHandler::setBoundary(DimensionType dimension, BoundaryType value)
@@ -47,57 +45,46 @@ void BoundaryHandler::setBoundary(DimensionType dimension, BoundaryType value)
 		boundaries[dimension] = value;
 }
 
-BoundaryType BoundaryHandler::getBoundary(int dimension) const 
+void BoundaryHandler::setBoundary(std::string dimension, BoundaryType value) 
 {
-	DimensionType toRet = DimensionType::ERROR;
-	switch(dimension)
-	{
-		case 0:
-			toRet = DimensionType::POSX;
-			break;
-		case 1:
-			toRet = DimensionType::POSY;
-			break;
-		default: //case 2:
-			toRet = DimensionType::POSZ;
-	}
-	return boundaries.at(toRet);
+	DimensionType convertedDimension = BoundaryUtils::convertStringToDimension(dimension);
+	setBoundary(convertedDimension, value);
 }
 
 void BoundaryHandler::setGlobalRegion(double* start, double* end) 
 {
 	for(short int i = 0; i < 3; i++) {
-		globalRegionStart[i] = start[i];
-		globalRegionEnd[i] = end[i];
+		_globalRegionStart[i] = start[i];
+		_globalRegionEnd[i] = end[i];
 	}
 }
 
 void BoundaryHandler::setLocalRegion(double* start, double* end) 
 {
 	for(short int i = 0; i < 3; i++) {
-		localRegionStart[i] = start[i];
-		localRegionEnd[i] = end[i];
+		_localRegionStart[i] = start[i];
+		_localRegionEnd[i] = end[i];
 	}
 }
 
 void BoundaryHandler::setGlobalRegion(std::array<double, 3> start, std::array<double, 3> end) {
-	globalRegionStart = start;
-	globalRegionEnd = end;
+	_globalRegionStart = start;
+	_globalRegionEnd = end;
 }
 
 void BoundaryHandler::setLocalRegion(std::array<double, 3> start, std::array<double, 3> end) {
-	localRegionStart = start;
-	localRegionEnd = end;
+	_localRegionStart = start;
+	_localRegionEnd = end;
 }
 
-void BoundaryHandler::findBoundariesInLocalRegion() 
+void BoundaryHandler::findOuterWallsInLocalRegion() 
 {
-	isOuterWall[DimensionType::POSX] = (localRegionEnd[0] == globalRegionEnd[0]);
-	isOuterWall[DimensionType::NEGX] = (localRegionStart[0] == globalRegionStart[0]);
-	isOuterWall[DimensionType::POSY] = (localRegionEnd[1] == globalRegionEnd[1]);
-	isOuterWall[DimensionType::NEGY] = (localRegionStart[1] == globalRegionStart[1]);
-	isOuterWall[DimensionType::POSZ] = (localRegionEnd[2] == globalRegionEnd[2]);
-	isOuterWall[DimensionType::NEGZ] = (localRegionStart[2] == globalRegionStart[2]);
+	_isOuterWall[DimensionType::POSX] = (_localRegionEnd[0] == _globalRegionEnd[0]);
+	_isOuterWall[DimensionType::NEGX] = (_localRegionStart[0] == _globalRegionStart[0]);
+	_isOuterWall[DimensionType::POSY] = (_localRegionEnd[1] == _globalRegionEnd[1]);
+	_isOuterWall[DimensionType::NEGY] = (_localRegionStart[1] == _globalRegionStart[1]);
+	_isOuterWall[DimensionType::POSZ] = (_localRegionEnd[2] == _globalRegionEnd[2]);
+	_isOuterWall[DimensionType::NEGZ] = (_localRegionStart[2] == _globalRegionStart[2]);
 }
 
 bool BoundaryHandler::hasInvalidBoundary() const
@@ -108,15 +95,24 @@ bool BoundaryHandler::hasInvalidBoundary() const
 		boundaries.at(DimensionType::NEGX) == BoundaryType::ERROR ||
 		boundaries.at(DimensionType::NEGY) == BoundaryType::ERROR ||
 		boundaries.at(DimensionType::NEGZ) == BoundaryType::ERROR;
-
 }
 
-bool BoundaryHandler::processBoundaries()
+bool BoundaryHandler::isOuterWall(DimensionType dimension) const
+{
+	return _isOuterWall.at(dimension);
+}
+
+bool BoundaryHandler::isOuterWall(int dimension) const
+{
+	return isOuterWall(BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
+}
+
+bool BoundaryHandler::processOuterWallLeavingParticles()
 {
 	auto moleculeContainer = global_simulation->getMoleculeContainer(); // :-(
 	double timestepLength = (global_simulation->getIntegrator())->getTimestepLength(); 
 	double cutoff = moleculeContainer->getCutoff();
-	for (auto const& currentWall : isOuterWall)
+	for (auto const& currentWall : _isOuterWall)
 	{
 		//global_log->info() << "wall number " << BoundaryUtils::convertDimensionToString(currentWall.first) << " : " << currentWall.second << std::endl;
 		if(!currentWall.second)
@@ -133,7 +129,7 @@ bool BoundaryHandler::processBoundaries()
 			{
 				//create region
 				std::array<double,3> curWallRegionBegin, curWallRegionEnd;
-				std::tie(curWallRegionBegin, curWallRegionEnd) = BoundaryUtils::getInnerBuffer(localRegionStart, localRegionEnd, currentWall.first, cutoff);
+				std::tie(curWallRegionBegin, curWallRegionEnd) = BoundaryUtils::getInnerBuffer(_localRegionStart, _localRegionEnd, currentWall.first, cutoff);
 				//conversion
 				const double cstylerbegin[] = {curWallRegionBegin[0], curWallRegionBegin[1], curWallRegionBegin[2]}; 
 				const double cstylerend[] = {curWallRegionEnd[0], curWallRegionEnd[1], curWallRegionEnd[2]};
@@ -170,11 +166,11 @@ bool BoundaryHandler::processBoundaries()
 	return true;
 }
 
-void BoundaryHandler::removeHalos()
+void BoundaryHandler::removeNonPeriodicHalos()
 {
 	auto moleculeContainer = global_simulation->getMoleculeContainer();
 	double cutoff = moleculeContainer->getCutoff();
-	for (auto const& currentWall : isOuterWall)
+	for (auto const& currentWall : _isOuterWall)
 	{
 		//global_log->info() << "wall number " << BoundaryUtils::convertDimensionToString(currentWall.first) << " : " << currentWall.second << std::endl;
 		if(!currentWall.second) //not an outer wall
@@ -191,7 +187,7 @@ void BoundaryHandler::removeHalos()
 			{
 				//create region
 				std::array<double,3> curWallRegionBegin, curWallRegionEnd;
-				std::tie(curWallRegionBegin, curWallRegionEnd) = BoundaryUtils::getOuterBuffer(localRegionStart, localRegionEnd, currentWall.first, cutoff);
+				std::tie(curWallRegionBegin, curWallRegionEnd) = BoundaryUtils::getOuterBuffer(_localRegionStart, _localRegionEnd, currentWall.first, cutoff);
 				//conversion
 				const double cstylerbegin[] = {curWallRegionBegin[0], curWallRegionBegin[1], curWallRegionBegin[2]}; 
 				const double cstylerend[] = {curWallRegionEnd[0], curWallRegionEnd[1], curWallRegionEnd[2]};

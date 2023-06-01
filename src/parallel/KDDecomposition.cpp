@@ -332,7 +332,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		double startRegion[3], endRegion[3];
 		getBoundingBoxMinMax(domain, startRegion, endRegion);
 		_boundaryHandler.setLocalRegion(startRegion,endRegion);
-		_boundaryHandler.findBoundariesInLocalRegion();
+		_boundaryHandler.findOuterWallsInLocalRegion();
 	}
 }
 
