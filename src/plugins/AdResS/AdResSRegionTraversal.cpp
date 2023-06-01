@@ -148,8 +148,8 @@ void AdResSRegionTraversal::processCell(RegionParticleIterator &cellIt, AdResSFo
                 }
 
                 //recompute force and invert it -> last bool param is true
-                forceAdapter.processPair(m1, m2, dist, type, dd, (dd < _ljcutoff2), invert,
-                                          _comp_to_res, region);
+                //forceAdapter.processPair(m1, m2, dist, type, dd, (dd < _ljcutoff2), invert,
+                //                          _comp_to_res, region);
             }
         }
     }
@@ -173,8 +173,8 @@ void AdResSRegionTraversal::processCellPair(RegionParticleIterator &cell1, Regio
                     type = MOLECULE_HALOMOLECULE;
                 }
                 //recompute force and invert it -> last bool param is true
-                forceAdapter.processPair(m1, m2, dist, type, dd, (dd < _ljcutoff2), invert,
-                                         _comp_to_res, region);
+                //forceAdapter.processPair(m1, m2, dist, type, dd, (dd < _ljcutoff2), invert,
+                //                         _comp_to_res, region);
             }
         }
     }
@@ -195,8 +195,8 @@ void AdResSRegionTraversal::processCellPair(RegionParticleIterator &cell1, Regio
                     type = MOLECULE_HALOMOLECULE;
                 }
                 //recompute force and invert it -> last bool param is true
-                forceAdapter.processPair(m1, m2, dist, type, dd, (dd < _ljcutoff2), invert,
-                                         _comp_to_res, region);
+                //forceAdapter.processPair(m1, m2, dist, type, dd, (dd < _ljcutoff2), invert,
+                //                         _comp_to_res, region);
             }
         }
     }

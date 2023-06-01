@@ -17,6 +17,7 @@
 class ParticleContainer;
 class DomainDecompBase;
 class Domain;
+class AdResSForceAdapter;
 class AdResSForceAdapterTest;
 class AdResSTest;
 
@@ -36,6 +37,7 @@ class AdResSTest;
  * Regions cannot overlap, otherwise forces are computed multiple times.
  * */
 class AdResS : public PluginBase {
+    friend class AdResSForceAdapter;
     friend class AdResSForceAdapterTest;
     friend class AdResSTest;
 public:
@@ -130,7 +132,7 @@ private:
     /**
      * Handles force computation
      * */
-    AdResSForceAdapter _forceAdapter;
+    AdResSForceAdapter* _forceAdapter;
 
     /**
      * @brief Container for all areas of interest for AdResS. The ares are currently boxes.

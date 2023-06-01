@@ -8,6 +8,7 @@
 #include "ensemble/EnsembleBase.h"
 #include "Domain.h"
 #include "AdResSRegionTraversal.h"
+#include "particleContainer/adapter/LegacyCellProcessor.h"
 
 #include <cmath>
 
@@ -16,7 +17,7 @@ using Log::global_log;
 
 double (*AdResS::weight)(std::array<double, 3> r, FPRegion& region) = nullptr;
 
-AdResS::AdResS() : _mesoVals(), _forceAdapter(_mesoVals), _fpRegions(), _particleContainer(nullptr),
+AdResS::AdResS() : _mesoVals(), _forceAdapter(nullptr), _fpRegions(), _particleContainer(nullptr),
                    _components(nullptr), _comp_to_res(), _domain(nullptr) {};
 
 AdResS::~AdResS() = default;
@@ -33,6 +34,10 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
     _components = _simulation.getEnsemble()->getComponents();
     _domain = domain;
     _particleContainer = particleContainer;
+
+    _forceAdapter = new AdResSForceAdapter(*this);
+    _simulation.setParticlePairsHandler(_forceAdapter);
+    _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), _forceAdapter));
 
     for(Component& comp : *_components) {
         unsigned int id = comp.ID();
@@ -120,30 +125,37 @@ void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsi
     #pragma omp parallel
     #endif
     for(auto itM = container->iterator(ParticleIterator::ALL_CELLS); itM.isValid(); ++itM) {
-        // molecule is in no Hybrid or FP region
-        checkMoleculeLOD(*itM, CoarseGrain);
+        bool stop = false;
+        //check if is in any full particle region
+        for(auto& reg : _fpRegions) {
+            if(reg.isInnerPointDomain(_domain, FullParticle, itM->r_arr())) {
+                checkMoleculeLOD(*itM, FullParticle);
+                stop = true;
+                break;
+            }
+        }
+        if(stop) continue;
 
         //check if is in any hybrid region
         for(auto& reg : _fpRegions) {
             if(reg.isInnerPointDomain(_domain, Hybrid, itM->r_arr())) {
                 checkMoleculeLOD(*itM, Hybrid);
+                stop = true;
+                break;
             }
         }
+        if(stop) continue;
 
-        //check if is in any full particle region
-        for(auto& reg : _fpRegions) {
-            if(reg.isInnerPointDomain(_domain, FullParticle, itM->r_arr())) {
-                checkMoleculeLOD(*itM, FullParticle);
-            }
-        }
+        // molecule is in no Hybrid or FP region
+        checkMoleculeLOD(*itM, CoarseGrain);
     }
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
-    _mesoVals.clear();
-    computeForce(true);
-    computeForce(false);
+    //computeForce(true);
+    //computeForce(false);
     _mesoVals.setInDomain(_domain);
+    _mesoVals.clear();
 }
 
 void AdResS::checkMoleculeLOD(Molecule &molecule, Resolution targetRes) {
@@ -211,10 +223,10 @@ void AdResS::computeForce(bool invert) {
 
                     // now have created a box in which forces need to be calculated
                     // this we will multi-thread: for that we implement a simplified C08-Traversal
-                    _forceAdapter.init(_domain); // clear thread data
+                    _forceAdapter->init(_domain); // clear thread data
                     AdResSRegionTraversal traversal{ checkLow, checkHigh, _particleContainer, _comp_to_res};
-                    traversal.traverse(_forceAdapter, region, invert);
-                    _forceAdapter.finish(); // gather thread data
+                    traversal.traverse(*_forceAdapter, region, invert);
+                    _forceAdapter->finish(); // gather thread data
                 }
             }
         }

@@ -10,6 +10,8 @@
 #include "utils/FixedSizeQueue.h"
 #include "utils/FunctionWrapper.h"
 #include "utils/SysMon.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
+#include "particleContainer/adapter/CellProcessor.h"
 
 // plugins
 #include "plugins/PluginFactory.h"
@@ -459,6 +461,22 @@ public:
 
 	/** @brief Checks if Simsteps or MaxWallTime are reached */
 	bool keepRunning();
+
+    /**
+     * Sets the pairs handler to the provided one. Deletes the old one.
+     * */
+    void setParticlePairsHandler(ParticlePairsHandler* ptr) {
+        delete _particlePairsHandler;
+        _particlePairsHandler = ptr;
+    }
+
+    /**
+     * Sets the Cell processor to the provided one. Deletes the old one.
+     * */
+    void setCellProcessor(CellProcessor* cellProcessor) {
+        delete _cellProcessor;
+        _cellProcessor = cellProcessor;
+    }
 
 private:
 
