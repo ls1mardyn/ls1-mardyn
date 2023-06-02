@@ -87,6 +87,20 @@ DimensionType BoundaryUtils::convertLS1DimsToDimensionPos(int dim)
 	return toRet;
 }
 
+std::vector<DimensionType> BoundaryUtils::convertHaloOffsetToDimensionVector(int* offset) 
+{
+	std::vector<DimensionType> toRet;
+	for (int i = 0; i < 3; i++)
+	{
+		if(offset[i] != 0)
+		{
+			int numeric = (i+1) * offset[i];
+			toRet.push_back(convertNumericToDimension(numeric));
+		}
+	}
+	return toRet;
+}
+
 std::string BoundaryUtils::convertDimensionToString(DimensionType dimension) 
 { 
 	switch (dimension)

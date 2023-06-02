@@ -20,6 +20,7 @@ namespace BoundaryUtils
 	DimensionType convertStringToDimension(std::string dimension);
 	DimensionType convertNumericToDimension(int dim);
 	DimensionType convertLS1DimsToDimensionPos(int dim);
+	std::vector<DimensionType> convertHaloOffsetToDimensionVector(int* offset);
 
 	std::string convertDimensionToString(DimensionType dimension);
 	std::string convertDimensionToStringAbs(DimensionType dimension);
