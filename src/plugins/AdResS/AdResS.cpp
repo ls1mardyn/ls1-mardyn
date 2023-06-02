@@ -35,10 +35,6 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
     _domain = domain;
     _particleContainer = particleContainer;
 
-    _forceAdapter = new AdResSForceAdapter(*this);
-    _simulation.setParticlePairsHandler(_forceAdapter);
-    _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), _forceAdapter));
-
     for(Component& comp : *_components) {
         unsigned int id = comp.ID();
         if(id % Resolution::ResolutionCount == Resolution::FullParticle) {
@@ -97,6 +93,11 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
     }
     xmlconfig.changecurrentnode(oldpath);
     // todo add check that no region overlap even in hybrid considering periodic bounds
+
+    _forceAdapter = new AdResSForceAdapter(*this);
+    _simulation.setParticlePairsHandler(_forceAdapter);
+    _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), _forceAdapter));
+    _domain = _simulation.getDomain();
 
     for(const auto& region : _fpRegions) {
         global_log->info() << "[AdResS] FPRegion Box from ["
