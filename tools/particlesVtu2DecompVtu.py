@@ -156,8 +156,8 @@ def processVtu(particleFilePath, voxelFilePath):
         print(f"Could not find node number in {basename}")
         raise
 
-    leFile = open(particleFilePath, 'r')
-    coords=particleMinMax(leFile)
+    with open(particleFilePath, 'r') as leFile:
+        coords=particleMinMax(leFile)
     writeVoxelVtu(voxelFilePath, coords, rank)
     return coords
 
