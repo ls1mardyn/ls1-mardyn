@@ -282,7 +282,7 @@ void Domain::calculateGlobalValues(
 			int rot_dof;
 			const double limit_energy =  KINLIMIT_PER_T * Ti;
 
-            for(auto& particleContainer : particleContainers) {
+            for(auto* particleContainer : particleContainers) {
                 #if defined(_OPENMP)
                 #pragma omp parallel
                 #endif

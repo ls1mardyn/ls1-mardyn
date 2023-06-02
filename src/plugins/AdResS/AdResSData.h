@@ -138,9 +138,15 @@ struct FPRegion {
             inDomain &= inDim[d];
         }
 
+        //special case for interface situation
+        std::array<double,3> borderOffset{0,0,0};
+        for(int d = 0; d < 3; d++) {
+            borderOffset[d] = (_hybridDims[d] == 0) ? _simulation.getcutoffRadius() : 0;
+        }
+
         //region is within domain bounds
-        if(inDomain && region == FullParticle) return isInnerPoint(point, _low, _high);
-        if(inDomain && region == Hybrid) return isInnerPoint(point, _lowHybrid, _highHybrid);
+        if(inDomain && region == FullParticle) return isInnerPoint(point, {_low[0] - borderOffset[0], _low[1] - borderOffset[1], _low[2] - borderOffset[2]}, {_high[0] + borderOffset[0], _high[1] + borderOffset[1], _high[2] + borderOffset[2]});
+        if(inDomain && region == Hybrid) return isInnerPoint(point, {_lowHybrid[0] - borderOffset[0], _lowHybrid[1] - borderOffset[1], _lowHybrid[2] - borderOffset[2]}, {_highHybrid[0] + borderOffset[0], _highHybrid[1] + borderOffset[1], _highHybrid[2] + borderOffset[2]});
 
         //region crosses bound
         bool checkOuter = region == Hybrid;
