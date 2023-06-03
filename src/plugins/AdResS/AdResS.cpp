@@ -187,6 +187,7 @@ void AdResS::computeForce() {
     std::array<double,3> globLen{0};
     std::array<double, 3> pc_low{0};
     std::array<double, 3> pc_high{0};
+    std::array<double, 3> zero{0,0,0};
     for(int d = 0; d < 3; d++) {
         globLen[d] = _domain->getGlobalLength(d);
         pc_low[d] = _particleContainers[FullParticle]->getBoundingBoxMin(d);
@@ -271,6 +272,7 @@ void AdResS::computeForce() {
                             Molecule& mH = *itH;
                             for(auto itFP = tasks[3*tID + FullParticle]; itFP.isValid(); ++itFP){
                                 Molecule& mFP = *itFP;
+                                if(!mH.inBox(zero.data(), globLen.data()) && !mFP.inBox(zero.data(), globLen.data())) continue;
                                 double dd = mH.dist2(mFP, dist.data());
                                 if(dd < cutoff2) {
                                     _forceAdapter->processPair(mH, mFP, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
@@ -278,6 +280,7 @@ void AdResS::computeForce() {
                             }
                             for(auto itCG = tasks[3*tID + CoarseGrain]; itCG.isValid(); ++itCG){
                                 Molecule& mCG = *itCG;
+                                if(!mH.inBox(zero.data(), globLen.data()) && !mCG.inBox(zero.data(), globLen.data())) continue;
                                 double dd = mH.dist2(mCG, dist.data());
                                 if(dd < cutoff2) {
                                     _forceAdapter->processPair(mH, mCG, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
@@ -295,6 +298,7 @@ void AdResS::computeForce() {
                             Molecule& mH = *itH;
                             for(auto itFP = tasks[3*tID + FullParticle +3]; itFP.isValid(); ++itFP){
                                 Molecule& mFP = *itFP;
+                                if(!mH.inBox(zero.data(), globLen.data()) && !mFP.inBox(zero.data(), globLen.data())) continue;
                                 double dd = mH.dist2(mFP, dist.data());
                                 if(dd < cutoff2) {
                                     _forceAdapter->processPair(mH, mFP, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
@@ -302,6 +306,7 @@ void AdResS::computeForce() {
                             }
                             for(auto itCG = tasks[3*tID + CoarseGrain +3]; itCG.isValid(); ++itCG){
                                 Molecule& mCG = *itCG;
+                                if(!mH.inBox(zero.data(), globLen.data()) && !mCG.inBox(zero.data(), globLen.data())) continue;
                                 double dd = mH.dist2(mCG, dist.data());
                                 if(dd < cutoff2) {
                                     _forceAdapter->processPair(mH, mCG, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
@@ -312,6 +317,7 @@ void AdResS::computeForce() {
                             Molecule& mH = *itH;
                             for(auto itFP = tasks[3*tID + FullParticle]; itFP.isValid(); ++itFP){
                                 Molecule& mFP = *itFP;
+                                if(!mH.inBox(zero.data(), globLen.data()) && !mFP.inBox(zero.data(), globLen.data())) continue;
                                 double dd = mH.dist2(mFP, dist.data());
                                 if(dd < cutoff2) {
                                     _forceAdapter->processPair(mH, mFP, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
@@ -319,6 +325,7 @@ void AdResS::computeForce() {
                             }
                             for(auto itCG = tasks[3*tID + CoarseGrain]; itCG.isValid(); ++itCG){
                                 Molecule& mCG = *itCG;
+                                if(!mH.inBox(zero.data(), globLen.data()) && !mCG.inBox(zero.data(), globLen.data())) continue;
                                 double dd = mH.dist2(mCG, dist.data());
                                 if(dd < cutoff2) {
                                     _forceAdapter->processPair(mH, mCG, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
@@ -336,6 +343,7 @@ void AdResS::computeForce() {
                             Molecule& mH = *itH;
                             for(auto itFP = tasks[3*tID + FullParticle +3]; itFP.isValid(); ++itFP){
                                 Molecule& mFP = *itFP;
+                                if(!mH.inBox(zero.data(), globLen.data()) && !mFP.inBox(zero.data(), globLen.data())) continue;
                                 double dd = mH.dist2(mFP, dist.data());
                                 if(dd < cutoff2) {
                                     _forceAdapter->processPair(mH, mFP, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
@@ -343,6 +351,7 @@ void AdResS::computeForce() {
                             }
                             for(auto itCG = tasks[3*tID + CoarseGrain +3]; itCG.isValid(); ++itCG){
                                 Molecule& mCG = *itCG;
+                                if(!mH.inBox(zero.data(), globLen.data()) && !mCG.inBox(zero.data(), globLen.data())) continue;
                                 double dd = mH.dist2(mCG, dist.data());
                                 if(dd < cutoff2) {
                                     _forceAdapter->processPair(mH, mCG, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
@@ -353,6 +362,7 @@ void AdResS::computeForce() {
                             Molecule& mH = *itH;
                             for(auto itFP = tasks[3*tID + FullParticle]; itFP.isValid(); ++itFP){
                                 Molecule& mFP = *itFP;
+                                if(!mH.inBox(zero.data(), globLen.data()) && !mFP.inBox(zero.data(), globLen.data())) continue;
                                 double dd = mH.dist2(mFP, dist.data());
                                 if(dd < cutoff2) {
                                     _forceAdapter->processPair(mH, mFP, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
@@ -360,6 +370,7 @@ void AdResS::computeForce() {
                             }
                             for(auto itCG = tasks[3*tID + CoarseGrain]; itCG.isValid(); ++itCG){
                                 Molecule& mCG = *itCG;
+                                if(!mH.inBox(zero.data(), globLen.data()) && !mCG.inBox(zero.data(), globLen.data())) continue;
                                 double dd = mH.dist2(mCG, dist.data());
                                 if(dd < cutoff2) {
                                     _forceAdapter->processPair(mH, mCG, dist.data(), MOLECULE_MOLECULE, dd, (dd < LJCutoff2), _comp_to_res, false, region);
