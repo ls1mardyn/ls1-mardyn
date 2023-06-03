@@ -52,6 +52,8 @@ void AdResSForceAdapter::finish() {
         _plugin._mesoVals._upotXpoles += tLocal->_upotXpoles;
         _plugin._mesoVals._myRF += tLocal->_myRF;
     }
+    _plugin._interactionLog.writeLogFile();
+    _plugin._interactionLog.clearLog();
 }
 
 double
@@ -82,7 +84,7 @@ double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2,
     PP2PFAThreadData &my_threadData = *_threadData[tid];
     ParaStrm& params = (* my_threadData._comp2Param)(molecule1.componentid(), molecule2.componentid());
     params.reset_read();
-
+    _plugin._interactionLog.log(molecule1, molecule2);
     switch (pairType) {
 
         double dummy1, dummy2, dummy3, dummy4[3], Virial3[3];

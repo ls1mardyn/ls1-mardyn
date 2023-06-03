@@ -18,7 +18,7 @@ using Log::global_log;
 double (*AdResS::weight)(std::array<double, 3> r, FPRegion& region) = nullptr;
 
 AdResS::AdResS() : _mesoVals(), _forceAdapter(nullptr), _fpRegions(), _particleContainer(nullptr),
-                   _components(nullptr), _comp_to_res(), _domain(nullptr) {};
+                   _components(nullptr), _comp_to_res(), _domain(nullptr), _interactionLog() {};
 
 AdResS::~AdResS() = default;
 
