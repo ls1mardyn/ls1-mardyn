@@ -12,7 +12,6 @@
 #include "molecules/potforce.h"
 #include "AdResSData.h"
 #include "AdResSForceAdapter.h"
-#include "InteractionLogger.h"
 
 class ParticleContainer;
 class DomainDecompBase;
@@ -214,8 +213,6 @@ private:
      * @param region region of FP
      * */
     static double weightFlat(std::array<double, 3> r, FPRegion& region);
-
-    InteractionLogger _interactionLog;
 };
 
 #endif //MARDYN_ADRESS_H
