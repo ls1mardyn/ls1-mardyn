@@ -1004,11 +1004,6 @@ void Simulation::simulate() {
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 		global_simulation->timers()->incrementTimerTimestepCounter();
 
-        global_log->info() << "#start#"<<endl;
-            for(auto it = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-                global_log->info() << it->getID() << ":: " << "force: " << it->F(0) << "," << it->F(1) << "," << it->F(2) << " " << "pos: " << it->r(0) << "," << it->r(1) << "," << it->r(2) << " " << "vel: " << it->v(0) << "," << it->v(1) << "," << it->v(2) << endl;
-            }
-
 		computationTimer->start();
 
         // beforeEventNewTimestep Plugin Call
@@ -1021,20 +1016,14 @@ void Simulation::simulate() {
         _ensemble->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
-        global_log->info() << "#int1#"<<endl;
-            for(auto it = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-                global_log->info() << it->getID() << ":: " << "force: " << it->F(0) << "," << it->F(1) << "," << it->F(2) << " " << "pos: " << it->r(0) << "," << it->r(1) << "," << it->r(2) << " " << "vel: " << it->v(0) << "," << it->v(1) << "," << it->v(2) << endl;
-            }
+
         // beforeForces Plugin Call
         global_log -> debug() << "[BEFORE FORCES] Performing BeforeForces plugin call" << endl;
         for (auto plugin : _plugins) {
             global_log -> debug() << "[BEFORE FORCES] Plugin: " << plugin->getPluginName() << endl;
             plugin->beforeForces(_moleculeContainer, _domainDecomposition, _simstep);
         }
-        global_log->info() << "#plugin before F#"<<endl;
-            for(auto it = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-                global_log->info() << it->getID() << ":: " << "force: " << it->F(0) << "," << it->F(1) << "," << it->F(2) << " " << "pos: " << it->r(0) << "," << it->r(1) << "," << it->r(2) << " " << "vel: " << it->v(0) << "," << it->v(1) << "," << it->v(2) << endl;
-            }
+
 		computationTimer->stop();
 
 
@@ -1079,11 +1068,6 @@ void Simulation::simulate() {
 			plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
 		}
 
-        global_log->info() << "#after site F#"<<endl;
-            for(auto it = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-                global_log->info() << it->getID() << ":: " << "force: " << it->F(0) << "," << it->F(1) << "," << it->F(2) << " " << "pos: " << it->r(0) << "," << it->r(1) << "," << it->r(2) << " " << "vel: " << it->v(0) << "," << it->v(1) << "," << it->v(2) << endl;
-            }
-
 		// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
 		_longRangeCorrection->calculateLongRange();
 
@@ -1117,16 +1101,9 @@ void Simulation::simulate() {
 			global_log -> debug() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << endl;
 			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
 		}
-        global_log->info() << "#after all F#"<<endl;
-            for(auto it = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-                global_log->info() << it->getID() << ":: " << "force: " << it->F(0) << "," << it->F(1) << "," << it->F(2) << " " << "pos: " << it->r(0) << "," << it->r(1) << "," << it->r(2) << " " << "vel: " << it->v(0) << "," << it->v(1) << "," << it->v(2) << endl;
-            }
 
 		_ensemble->afterForces(_moleculeContainer, _domainDecomposition, _cellProcessor, _simstep);
-        global_log->info() << "#after ensemble F#"<<endl;
-            for(auto it = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-                global_log->info() << it->getID() << ":: " << "force: " << it->F(0) << "," << it->F(1) << "," << it->F(2) << " " << "pos: " << it->r(0) << "," << it->r(1) << "," << it->r(2) << " " << "vel: " << it->v(0) << "," << it->v(1) << "," << it->v(2) << endl;
-            }
+
 		// TODO: test deletions and insertions
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 #ifndef MARDYN_AUTOPAS
@@ -1143,10 +1120,6 @@ void Simulation::simulate() {
 
 		global_log->debug() << "Inform the integrator (forces calculated)" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
-        global_log->info() << "#int2#"<<endl;
-            for(auto it = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-                global_log->info() << it->getID() << ":: " << "force: " << it->F(0) << "," << it->F(1) << "," << it->F(2) << " " << "pos: " << it->r(0) << "," << it->r(1) << "," << it->r(2) << " " << "vel: " << it->v(0) << "," << it->v(1) << "," << it->v(2) << endl;
-            }
 
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
@@ -1189,11 +1162,6 @@ void Simulation::simulate() {
            _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
         }
         // <-- TEMPERATURE_CONTROL
-
-        global_log->info() << "#end#"<<endl;
-            for(auto it = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
-                global_log->info() << it->getID() << ":: " << "force: " << it->F(0) << "," << it->F(1) << "," << it->F(2) << " " << "pos: " << it->r(0) << "," << it->r(1) << "," << it->r(2) << " " << "vel: " << it->v(0) << "," << it->v(1) << "," << it->v(2) << endl;
-            }
 
 		advanceSimulationTime(_integrator->getTimestepLength());
 
