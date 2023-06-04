@@ -60,11 +60,8 @@ double
 AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2, double *distanceVector, PairType pairType,
                                 double dd, bool calculateLJ) {
     auto it = std::find_if(_plugin._fpRegions.begin(), _plugin._fpRegions.end(), [&](const FPRegion& region)->bool{
-        bool isHyb1 = (region.isInnerPointDomain(_plugin._domain, Hybrid, molecule1.r_arr()) && !region.isInnerPointDomain(_plugin._domain, FullParticle, molecule1.r_arr()));
-        bool isHyb2 = (region.isInnerPointDomain(_plugin._domain, Hybrid, molecule2.r_arr()) && !region.isInnerPointDomain(_plugin._domain, FullParticle, molecule2.r_arr()));
-        //if(isHyb1) _plugin.checkMoleculeLOD(molecule1, Hybrid);
-        //if(isHyb2) _plugin.checkMoleculeLOD(molecule2, Hybrid);
-        return isHyb1 || isHyb2;
+        return (region.isInnerPointDomain(_plugin._domain, Hybrid, molecule1.r_arr()) && !region.isInnerPointDomain(_plugin._domain, FullParticle, molecule1.r_arr())) ||
+               (region.isInnerPointDomain(_plugin._domain, Hybrid, molecule2.r_arr()) && !region.isInnerPointDomain(_plugin._domain, FullParticle, molecule2.r_arr()));
     });
     bool hasNoHybrid = false;
     if(it == _plugin._fpRegions.end()) {
@@ -83,19 +80,21 @@ double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2,
     const int tid = mardyn_get_thread_num();
     PP2PFAThreadData &my_threadData = *_threadData[tid];
     ParaStrm& params = (* my_threadData._comp2Param)(molecule1.componentid(), molecule2.componentid());
+    ParaStrm& paramsInv = (* my_threadData._comp2Param)(molecule2.componentid(), molecule1.componentid());
     params.reset_read();
+    paramsInv.reset_read();
     _plugin._interactionLog.log(molecule1, molecule2);
     switch (pairType) {
 
         double dummy1, dummy2, dummy3, dummy4[3], Virial3[3];
 
         case MOLECULE_MOLECULE :
-            potForce(molecule1, molecule2, params, distanceVector, my_threadData._upot6LJ, my_threadData._upotXpoles,
+            potForce(molecule1, molecule2, params, paramsInv, distanceVector, my_threadData._upot6LJ, my_threadData._upotXpoles,
                      my_threadData._myRF, Virial3, calculateLJ, noHybrid, compResMap, region);
             my_threadData._virial += 2*(Virial3[0]+Virial3[1]+Virial3[2]);
             return my_threadData._upot6LJ + my_threadData._upotXpoles;
         case MOLECULE_HALOMOLECULE :
-            potForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ, noHybrid,
+            potForce(molecule1, molecule2, params, paramsInv, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ, noHybrid,
                      compResMap, region);
             return 0.0;
         case MOLECULE_MOLECULE_FLUID :
@@ -103,7 +102,7 @@ double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2,
             dummy2 = 0.0; // U_polarity
             dummy3 = 0.0; // U_dipole_reaction_field
 
-            fluidPot(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, calculateLJ, noHybrid, compResMap, region);
+            fluidPot(molecule1, molecule2, params, paramsInv, distanceVector, dummy1, dummy2, dummy3, calculateLJ, noHybrid, compResMap, region);
             return dummy1 / 6.0 + dummy2 + dummy3;
         default:
             Simulation::exit(670); // not implemented
@@ -112,7 +111,7 @@ double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2,
 }
 
 void
-AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, double * drm, double &Upot6LJ,
+AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double * drm, double &Upot6LJ,
                              double &UpotXpoles,
                              double &MyRF, double Virial[3], bool calculateLJ, bool noHybrid,
                              std::unordered_map<unsigned long, Resolution> &compResMap, FPRegion &region) {
@@ -134,18 +133,18 @@ AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, doubl
         return;
     }
     if(isHybridJ) {
-        potForceSingleHybrid(mj, mi, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ, region, compResMap[mi.componentid()]);
+        potForceSingleHybrid(mj, mi, paramInv, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ, region, compResMap[mi.componentid()]);
         return;
     }
 
-    //Fall back -> molecules have no hybrid, so this is ok
-    //PotForce(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ);
     // we should never reach this point
-    //Simulation::exit(671);
-    global_log->warning() << "[AdResS] AdResSForceAdapter::potForce called with 2 non hybrid molecules" << std::endl;
+    // only get to here if some particles component is not set correctly, can happen during initialization
+    // fall back regular PotForce
+    PotForce(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ);
+    global_log->debug() << "[AdResS] AdResSForceAdapter::potForce called with 2 non hybrid molecules" << std::endl;
 }
 
-void AdResSForceAdapter::fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, double *drm, double &Upot6LJ,
+void AdResSForceAdapter::fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double *drm, double &Upot6LJ,
                                   double &UpotXpoles, double &MyRF, bool calculateLJ, bool noHybrid,
                                   unordered_map<unsigned long, Resolution> &compResMap, FPRegion &region) {
     if(noHybrid) {
@@ -166,7 +165,7 @@ void AdResSForceAdapter::fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, 
         return;
     }
     if(isHybridJ) {
-        fluidPotSingleHybrid(mj, mi, params, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ, region, compResMap[mi.componentid()]);
+        fluidPotSingleHybrid(mj, mi, paramInv, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ, region, compResMap[mi.componentid()]);
         return;
     }
 

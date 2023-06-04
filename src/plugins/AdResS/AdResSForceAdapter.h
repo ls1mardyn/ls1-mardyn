@@ -98,7 +98,7 @@ public:
      * @param[in] noHybrid if true both molecules must be non hybrid
      * @param[in] compResMap      a map from AdResS plugin instance that maps all component ids to the resolution
      */
-    static void potForce(Molecule &mi, Molecule &mj, ParaStrm &params, double * drm, double &Upot6LJ,
+    static void potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double * drm, double &Upot6LJ,
                          double &UpotXpoles,
                          double &MyRF, double Virial[3], bool calculateLJ, bool noHybrid,
                          std::unordered_map<unsigned long, Resolution> &compResMap, FPRegion &region);
@@ -122,7 +122,7 @@ public:
      * @param[in] noHybrid if true both molecules must be non hybrid
      * @param[in] compResMap      a map from AdResS plugin instance that maps all component ids to the resolution
      */
-    static void fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, double * drm, double &Upot6LJ,
+    static void fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double * drm, double &Upot6LJ,
                          double &UpotXpoles,
                          double &MyRF, bool calculateLJ, bool noHybrid,
                          std::unordered_map<unsigned long, Resolution> &compResMap, FPRegion &region);
