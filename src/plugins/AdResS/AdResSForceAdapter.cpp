@@ -80,19 +80,21 @@ double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2,
     const int tid = mardyn_get_thread_num();
     PP2PFAThreadData &my_threadData = *_threadData[tid];
     ParaStrm& params = (* my_threadData._comp2Param)(molecule1.componentid(), molecule2.componentid());
+    ParaStrm& paramsInv = (* my_threadData._comp2Param)(molecule2.componentid(), molecule1.componentid());
     params.reset_read();
+    paramsInv.reset_read();
     _plugin._interactionLog.log(molecule1, molecule2);
     switch (pairType) {
 
         double dummy1, dummy2, dummy3, dummy4[3], Virial3[3];
 
         case MOLECULE_MOLECULE :
-            potForce(molecule1, molecule2, params, distanceVector, my_threadData._upot6LJ, my_threadData._upotXpoles,
+            potForce(molecule1, molecule2, params, paramsInv, distanceVector, my_threadData._upot6LJ, my_threadData._upotXpoles,
                      my_threadData._myRF, Virial3, calculateLJ, noHybrid, compResMap, region);
             my_threadData._virial += 2*(Virial3[0]+Virial3[1]+Virial3[2]);
             return my_threadData._upot6LJ + my_threadData._upotXpoles;
         case MOLECULE_HALOMOLECULE :
-            potForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ, noHybrid,
+            potForce(molecule1, molecule2, params, paramsInv, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ, noHybrid,
                      compResMap, region);
             return 0.0;
         case MOLECULE_MOLECULE_FLUID :
@@ -100,7 +102,7 @@ double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2,
             dummy2 = 0.0; // U_polarity
             dummy3 = 0.0; // U_dipole_reaction_field
 
-            fluidPot(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, calculateLJ, noHybrid, compResMap, region);
+            fluidPot(molecule1, molecule2, params, paramsInv, distanceVector, dummy1, dummy2, dummy3, calculateLJ, noHybrid, compResMap, region);
             return dummy1 / 6.0 + dummy2 + dummy3;
         default:
             Simulation::exit(670); // not implemented
@@ -109,7 +111,7 @@ double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2,
 }
 
 void
-AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, double * drm, double &Upot6LJ,
+AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double * drm, double &Upot6LJ,
                              double &UpotXpoles,
                              double &MyRF, double Virial[3], bool calculateLJ, bool noHybrid,
                              std::unordered_map<unsigned long, Resolution> &compResMap, FPRegion &region) {
@@ -131,7 +133,7 @@ AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, doubl
         return;
     }
     if(isHybridJ) {
-        potForceSingleHybrid(mj, mi, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ, region, compResMap[mi.componentid()]);
+        potForceSingleHybrid(mj, mi, paramInv, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ, region, compResMap[mi.componentid()]);
         return;
     }
 
@@ -140,7 +142,7 @@ AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, doubl
     global_log->warning() << "[AdResS] AdResSForceAdapter::potForce called with 2 non hybrid molecules" << std::endl;
 }
 
-void AdResSForceAdapter::fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, double *drm, double &Upot6LJ,
+void AdResSForceAdapter::fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double *drm, double &Upot6LJ,
                                   double &UpotXpoles, double &MyRF, bool calculateLJ, bool noHybrid,
                                   unordered_map<unsigned long, Resolution> &compResMap, FPRegion &region) {
     if(noHybrid) {
@@ -161,7 +163,7 @@ void AdResSForceAdapter::fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, 
         return;
     }
     if(isHybridJ) {
-        fluidPotSingleHybrid(mj, mi, params, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ, region, compResMap[mi.componentid()]);
+        fluidPotSingleHybrid(mj, mi, paramInv, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ, region, compResMap[mi.componentid()]);
         return;
     }
 
