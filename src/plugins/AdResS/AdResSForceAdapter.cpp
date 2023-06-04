@@ -138,8 +138,10 @@ AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaS
     }
 
     // we should never reach this point
-    //Simulation::exit(671);
-    global_log->warning() << "[AdResS] AdResSForceAdapter::potForce called with 2 non hybrid molecules" << std::endl;
+    // only get to here if some particles component is not set correctly, can happen during initialization
+    // fall back regular PotForce
+    PotForce(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ);
+    global_log->debug() << "[AdResS] AdResSForceAdapter::potForce called with 2 non hybrid molecules" << std::endl;
 }
 
 void AdResSForceAdapter::fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double *drm, double &Upot6LJ,
