@@ -179,8 +179,8 @@ $(function() {
 <div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code hl_function" href="classLinkedCells.html#a8282385a6f87d92306cd26be0612e7d3">updateMoleculeCaches</a>() <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span> </div>
 <div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    <a class="code hl_class" href="classParticleIterator.html">ParticleIterator</a> iterator (ParticleIterator::Type t)<span class="keyword"> override </span>{</div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>        ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();</div>
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>        ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();</div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>        <span class="keyword">const</span> ParticleIterator::CellIndex_T offset = mardyn_get_thread_num();</div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>        <span class="keyword">const</span> ParticleIterator::CellIndex_T stride = mardyn_get_num_threads();</div>
 <div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span> </div>
 <div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>        <span class="keywordflow">return</span> <a class="code hl_class" href="classParticleIterator.html">ParticleIterator</a>(t, &amp;_cells, offset, stride);</div>
 <div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>    }</div>
@@ -279,9 +279,9 @@ $(function() {
 <div class="ttc" id="aclassLinkedCells_html_ae5a2eb4ee63005ee220a6381c11fc570"><div class="ttname"><a href="classLinkedCells.html#ae5a2eb4ee63005ee220a6381c11fc570">LinkedCells::get_halo_L</a></div><div class="ttdeci">double get_halo_L(int index) const override</div><div class="ttdoc">gets the width of the halo region in dimension index</div><div class="ttdef"><b>Definition:</b> LinkedCells.cpp:631</div></div>
 <div class="ttc" id="aclassLinkedCells_html_aed96d80f71556bf537fccbeea6d3c012"><div class="ttname"><a href="classLinkedCells.html#aed96d80f71556bf537fccbeea6d3c012">LinkedCells::getConfigurationAsString</a></div><div class="ttdeci">std::string getConfigurationAsString() override</div><div class="ttdef"><b>Definition:</b> LinkedCells.cpp:1185</div></div>
 <div class="ttc" id="aclassParticleContainer_html"><div class="ttname"><a href="classParticleContainer.html">ParticleContainer</a></div><div class="ttdoc">This Interface is used to get access to particles and pairs of particles.</div><div class="ttdef"><b>Definition:</b> ParticleContainer.h:69</div></div>
-<div class="ttc" id="aclassParticleIterator_html"><div class="ttname"><a href="classParticleIterator.html">ParticleIterator</a></div><div class="ttdef"><b>Definition:</b> ParticleIterator.h:50</div></div>
+<div class="ttc" id="aclassParticleIterator_html"><div class="ttname"><a href="classParticleIterator.html">ParticleIterator</a></div><div class="ttdef"><b>Definition:</b> ParticleIterator.h:60</div></div>
 <div class="ttc" id="aclassParticlePairsHandler_html"><div class="ttname"><a href="classParticlePairsHandler.html">ParticlePairsHandler</a></div><div class="ttdoc">interface for defining the action performed when processing a pair</div><div class="ttdef"><b>Definition:</b> ParticlePairsHandler.h:38</div></div>
-<div class="ttc" id="aclassRegionParticleIterator_html"><div class="ttname"><a href="classRegionParticleIterator.html">RegionParticleIterator</a></div><div class="ttdef"><b>Definition:</b> RegionParticleIterator.h:33</div></div>
+<div class="ttc" id="aclassRegionParticleIterator_html"><div class="ttname"><a href="classRegionParticleIterator.html">RegionParticleIterator</a></div><div class="ttdef"><b>Definition:</b> RegionParticleIterator.h:67</div></div>
 <div class="ttc" id="aclassResortCellProcessorSliced_html"><div class="ttname"><a href="classResortCellProcessorSliced.html">ResortCellProcessorSliced</a></div><div class="ttdef"><b>Definition:</b> ResortCellProcessorSliced.h:17</div></div>
 <div class="ttc" id="aclassTraversalTuner_html"><div class="ttname"><a href="classTraversalTuner.html">TraversalTuner</a></div><div class="ttdef"><b>Definition:</b> TraversalTuner.h:23</div></div>
 <div class="ttc" id="aclassVTKGridWriter_html"><div class="ttname"><a href="classVTKGridWriter.html">VTKGridWriter</a></div><div class="ttdef"><b>Definition:</b> VTKGridWriter.h:24</div></div>
@@ -292,7 +292,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jun 5 2023 08:34:06 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Jun 5 2023 12:32:43 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

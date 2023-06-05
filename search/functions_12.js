@@ -8,7 +8,7 @@ var searchData=
   ['serialize_5',['serialize',['../classKDNode.html#a63857c6b976e71aba36edf08a205b825',1,'KDNode']]],
   ['set_6',['set',['../classAutoPasSimpleMolecule.html#ae4150d3bf806e6a19a08de692ca4f8d3',1,'AutoPasSimpleMolecule']]],
   ['set_5fdo_5foutput_7',['set_do_output',['../classLog_1_1Logger.html#a6f6da8ba842b626eac0cad164a746f09',1,'Log::Logger']]],
-  ['set_5flog_5flevel_8',['set_log_level',['../classLog_1_1Logger.html#acc4f5a515203074f27b915e25f363d0a',1,'Log::Logger']]],
+  ['set_5flog_5flevel_8',['set_log_level',['../classLog_1_1Logger.html#acc4f5a515203074f27b915e25f363d0a',1,'Log::Logger::set_log_level(logLevel l)'],['../classLog_1_1Logger.html#ac4dd5952b02648320adb9811f129b9be',1,'Log::Logger::set_log_level(std::string l)']]],
   ['set_5fmpi_5foutput_5fall_9',['set_mpi_output_all',['../classLog_1_1Logger.html#ab155ed0ce791c19c799a6b570b4615dc',1,'Log::Logger']]],
   ['set_5fmpi_5foutput_5franks_10',['set_mpi_output_ranks',['../classLog_1_1Logger.html#a36c84ac1dfd62c7b990c32df3e1eb4cc',1,'Log::Logger']]],
   ['set_5fmpi_5foutput_5froot_11',['set_mpi_output_root',['../classLog_1_1Logger.html#a94823b4458dcac7bf5c710c8684752e2',1,'Log::Logger']]],

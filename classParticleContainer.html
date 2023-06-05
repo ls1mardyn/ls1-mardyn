@@ -195,9 +195,9 @@ virtual double *&#160;</td><td class="memItemRight" valign="bottom"><b>getCellLe
 <tr class="separator:aa4d61c3484dd8b1fccc1125196bee970"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a08d9cbd08f7141190aa140f3d2064d4e"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classParticleContainer.html#a08d9cbd08f7141190aa140f3d2064d4e">setCutoff</a> (double rc)</td></tr>
 <tr class="separator:a08d9cbd08f7141190aa140f3d2064d4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7c85a3cf8b68f301925430b4d4e4b6cc"><td class="memItemLeft" align="right" valign="top"><a id="a7c85a3cf8b68f301925430b4d4e4b6cc" name="a7c85a3cf8b68f301925430b4d4e4b6cc"></a>
-virtual std::vector&lt; <a class="el" href="classFullMolecule.html">Molecule</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getInvalidParticles</b> ()</td></tr>
-<tr class="separator:a7c85a3cf8b68f301925430b4d4e4b6cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69fdd249e95810de17aed2daa405347a"><td class="memItemLeft" align="right" valign="top"><a id="a69fdd249e95810de17aed2daa405347a" name="a69fdd249e95810de17aed2daa405347a"></a>
+std::vector&lt; <a class="el" href="classFullMolecule.html">Molecule</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getInvalidParticlesRef</b> ()</td></tr>
+<tr class="separator:a69fdd249e95810de17aed2daa405347a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af686aa97c6acbecc357738cb157d18cc"><td class="memItemLeft" align="right" valign="top"><a id="af686aa97c6acbecc357738cb157d18cc" name="af686aa97c6acbecc357738cb157d18cc"></a>
 virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>isInvalidParticleReturner</b> ()</td></tr>
 <tr class="separator:af686aa97c6acbecc357738cb157d18cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -224,6 +224,8 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>_boundingBoxMin</b>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>_boundingBoxMax</b> [3]</td></tr>
 <tr class="memdesc:af895921cd0683e8bc291a45fdadfea3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">coordinates of the right, upper, back corner of the bounding box <br /></td></tr>
 <tr class="separator:af895921cd0683e8bc291a45fdadfea3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5df549358c249b232a0530b58c5e3d7c"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classFullMolecule.html">Molecule</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classParticleContainer.html#a5df549358c249b232a0530b58c5e3d7c">_invalidParticles</a> {}</td></tr>
+<tr class="separator:a5df549358c249b232a0530b58c5e3d7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >This Interface is used to get access to particles and pairs of particles. </p>
@@ -1121,6 +1123,30 @@ This method has to be implemented in derived classes Precondition: All Particles
 
 </div>
 </div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="a5df549358c249b232a0530b58c5e3d7c" name="a5df549358c249b232a0530b58c5e3d7c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5df549358c249b232a0530b58c5e3d7c">&#9670;&nbsp;</a></span>_invalidParticles</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="classFullMolecule.html">Molecule</a>&gt; ParticleContainer::_invalidParticles {}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p >Vector of particles that are about to be removed from the container. Currently only used by <a class="el" href="classAutoPasContainer.html">AutoPasContainer</a> but here for interface reasons. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>src/particleContainer/<a class="el" href="ParticleContainer_8h_source.html">ParticleContainer.h</a></li>
 <li>src/particleContainer/ParticleContainer.cpp</li>
@@ -1128,7 +1154,7 @@ This method has to be implemented in derived classes Precondition: All Particles
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jun 5 2023 08:34:10 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Jun 5 2023 12:32:46 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
