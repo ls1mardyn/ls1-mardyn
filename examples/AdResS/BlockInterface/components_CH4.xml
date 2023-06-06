@@ -1,0 +1,240 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<components version="20100525">
+    <!--
+
+************************************************************************
+*               Publishing with the MolMod Database                    *
+*  Every user agrees to cite the MolMod Database upon usage as follows *
+*                                                                      *
+*  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+*  MolMod – an Open Access Database of Force Fields for Molecular      *
+*  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+************************************************************************
+
+                               Model data
+
+ Substance     O2_XVI
+ CAS-No        7782-44-7
+ Reference     N. Hansen, F. A. Agbor and F. J. Keil: New Force Fields f
+               or Nitrous Oxide and Oxygen and their Application to Phas
+               e Equilibria Simulations, Fluid Phase Equilibria 259, 2,
+               180-188 (2007), 10.1016/j.fluid.2007.07.014
+
+-->
+    <moleculetype id="1" name="FP_O2">
+        <site type="LJ126" id="1">
+            <coords><x>-1.21</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>3.02</sigma>
+            <epsilon>49.0</epsilon>
+            <mass>15.999</mass>
+        </site>
+        <site type="LJ126" id="2">
+            <coords><x>1.21</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>3.02</sigma>
+            <epsilon>49.0</epsilon>
+            <mass>15.999</mass>
+        </site>
+        <site type="Charge" id="3">
+            <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+            <charge>100.55978279087</charge>
+        </site>
+        <site type="Charge" id="4">
+            <coords><x>-1.21</x><y>0.0</y><z>0.0</z>   </coords>
+            <charge>-50.279891395435</charge>
+        </site>
+        <site type="Charge" id="5">
+            <coords><x>1.21</x><y>0.0</y><z>0.0</z>   </coords>
+            <charge>-50.279891395435</charge>
+        </site>
+        <momentsofinertia rotaxes="xyz">
+            <Ixx>0</Ixx>
+            <Iyy>46.8482718</Iyy>
+            <Izz>46.8482718</Izz>
+        </momentsofinertia>
+    </moleculetype>
+    <!-- Hybrid representation is combination of FP and CG version -->
+    <moleculetype id="2" name="H_O2">
+        <site type="LJ126" id="1">
+            <coords><x>-1.207</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>2.99</sigma>
+            <epsilon>163.6</epsilon>
+            <mass>0.0</mass>
+        </site>
+        <site type="LJ126" id="2">
+            <coords><x>1.207</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>2.99</sigma>
+            <epsilon>163.6</epsilon>
+            <mass>0.0</mass>
+        </site>
+        <site type="LJ126" id="3">
+            <coords><x>-1.21</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>3.02</sigma>
+            <epsilon>49.0</epsilon>
+            <mass>15.999</mass>
+        </site>
+        <site type="LJ126" id="4">
+            <coords><x>1.21</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>3.02</sigma>
+            <epsilon>49.0</epsilon>
+            <mass>15.999</mass>
+        </site>
+        <site type="Quadrupole" id="5">
+            <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+            <quadrupolemoment><theta>0.0</theta><phi>0.0</phi><abs>33.933646833945</abs>   </quadrupolemoment>
+            <mass>0.0</mass>
+        </site>
+        <site type="Charge" id="6">
+            <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+            <charge>100.55978279087</charge>
+        </site>
+        <site type="Charge" id="7">
+            <coords><x>-1.21</x><y>0.0</y><z>0.0</z>   </coords>
+            <charge>-50.279891395435</charge>
+        </site>
+        <site type="Charge" id="8">
+            <coords><x>1.21</x><y>0.0</y><z>0.0</z>   </coords>
+            <charge>-50.279891395435</charge>
+        </site>
+        <momentsofinertia rotaxes="xyz">
+            <Ixx>0</Ixx>
+            <Iyy>40.812167886</Iyy>
+            <Izz>40.812167886</Izz>
+        </momentsofinertia>
+    </moleculetype>
+    <!--
+
+    ************************************************************************
+    *               Publishing with the MolMod Database                    *
+    *  Every user agrees to cite the MolMod Database upon usage as follows *
+    *                                                                      *
+    *  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+    *  MolMod – an Open Access Database of Force Fields for Molecular      *
+    *  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+    ************************************************************************
+
+                                   Model data
+
+     Substance     O2_XV
+     CAS-No        7782-44-7
+     Reference     L. Meng and Y.-Y. Duan: Site-Site Potential Function and
+                   Second Virial Coefficients for Linear Molecules, Molecula
+                   r Physics 104, 18, 2891-2899 (2006), 10.1080/002689706008
+                   67338
+
+    -->
+    <moleculetype id="3" name="CG_O2">
+        <site type="LJ126" id="1">
+            <coords><x>-1.207</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>2.99</sigma>
+            <epsilon>163.6</epsilon>
+            <mass>14.007</mass>
+        </site>
+        <site type="LJ126" id="2">
+            <coords><x>1.207</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>2.99</sigma>
+            <epsilon>163.6</epsilon>
+            <mass>14.007</mass>
+        </site>
+        <site type="Quadrupole" id="3">
+            <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+            <quadrupolemoment><theta>0.0</theta><phi>0.0</phi><abs>33.933646833945</abs>   </quadrupolemoment>
+            <mass>0.0</mass>
+        </site>
+        <momentsofinertia rotaxes="xyz">
+            <Ixx>0</Ixx>
+            <Iyy>40.812167886</Iyy>
+            <Izz>40.812167886</Izz>
+        </momentsofinertia>
+    </moleculetype>
+
+    <!--
+
+************************************************************************
+*               Publishing with the MolMod Database                    *
+*  Every user agrees to cite the MolMod Database upon usage as follows *
+*                                                                      *
+*  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+*  MolMod – an Open Access Database of Force Fields for Molecular      *
+*  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+************************************************************************
+
+                               Model data
+
+ Substance     CH4_XIV
+ CAS-No        74-82-8
+ Reference     J. Vrabec, G. K. Kedia, G. Fuchs and H. Hasse: Comprehens
+               ive Study of the Vapour-Liquid Coexistence of the Truncat
+               ed and Shifted Lennard-Jones Fluid Including Planar and S
+               pherical Interface Properties, Molecular Physics 104, 9,
+               1509-1527 (2006), 10.1080/00268970600556774
+
+-->
+    <moleculetype id="4" name="FP_CH4">
+        <site type="LJ126" id="1">
+            <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>3.7241</sigma>
+            <epsilon>175.06</epsilon>
+            <mass>16.043</mass>
+        </site>
+        <momentsofinertia rotaxes="xyz">
+            <Ixx>0</Ixx>
+            <Iyy>0</Iyy>
+            <Izz>0</Izz>
+        </momentsofinertia>
+    </moleculetype>
+    <!-- Hybrid representation is combination of FP and CG version -->
+    <moleculetype id="5" name="H_CH4">
+        <site type="LJ126" id="1">
+            <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>3.7241</sigma>
+            <epsilon>175.06</epsilon>
+            <mass>0.0</mass>
+        </site>
+        <site type="LJ126" id="2">
+            <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>3.7241</sigma>
+            <epsilon>175.06</epsilon>
+            <mass>16.043</mass>
+        </site>
+        <momentsofinertia rotaxes="xyz">
+            <Ixx>0</Ixx>
+            <Iyy>0</Iyy>
+            <Izz>0</Izz>
+        </momentsofinertia>
+    </moleculetype>
+    <!--
+
+************************************************************************
+*               Publishing with the MolMod Database                    *
+*  Every user agrees to cite the MolMod Database upon usage as follows *
+*                                                                      *
+*  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+*  MolMod – an Open Access Database of Force Fields for Molecular      *
+*  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+************************************************************************
+
+                               Model data
+
+ Substance     CH4_XIV
+ CAS-No        74-82-8
+ Reference     J. Vrabec, G. K. Kedia, G. Fuchs and H. Hasse: Comprehens
+               ive Study of the Vapour-Liquid Coexistence of the Truncat
+               ed and Shifted Lennard-Jones Fluid Including Planar and S
+               pherical Interface Properties, Molecular Physics 104, 9,
+               1509-1527 (2006), 10.1080/00268970600556774
+
+-->
+    <moleculetype id="6" name="CG_CH4">
+        <site type="LJ126" id="1">
+            <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>3.7241</sigma>
+            <epsilon>175.06</epsilon>
+            <mass>16.043</mass>
+        </site>
+        <momentsofinertia rotaxes="xyz">
+            <Ixx>0</Ixx>
+            <Iyy>0</Iyy>
+            <Izz>0</Izz>
+        </momentsofinertia>
+    </moleculetype>
+</components>

@@ -12,7 +12,7 @@
         <run>
             <currenttime>0</currenttime>
             <production>
-                <steps>2</steps>
+                <steps>10000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -22,20 +22,19 @@
 
         <ensemble type="NVT">
             <!--Ensemble is the main topic of the simulation -->
-            <temperature unit="reduced" >100</temperature>	<!-- in future also units="K" -->
+            <temperature unit="reduced" >300</temperature>	<!-- in future also units="K" -->
             <domain type="box">
-                <lx unit="reduced">400.</lx>
-                <ly unit="reduced">100.</ly>
-                <lz unit="reduced">100.</lz>
+                <lx unit="reduced">710.</lx>
+                <ly unit="reduced">710.</ly>
+                <lz unit="reduced">710.</lz>
             </domain>
             <!-- instead of lx/ly/lz we might accept density -->
             <components>
-                <include query="/components/moleculetype">./components.xml</include>
+                <include query="/components/moleculetype">./../components_C6H12.xml</include>
             </components>
 
             <phasespacepoint>
-                <file type="ASCII">test.inp</file>
-                <!--generator name="MultiObjectGenerator">
+                <generator name="MultiObjectGenerator">
                     <objectgenerator>
                         <filler type="GridFiller">
                             <lattice system="cubic" centering="face">
@@ -45,16 +44,16 @@
                             </lattice>
                             <basis>
                                 <site>
-                                    <componentid>2</componentid>
+                                    <componentid>0</componentid>
                                     <coordinate> <x>.5</x> <y>.5</y> <z>.5</z> </coordinate>
                                 </site>
                             </basis>
                             <latticeOccupancy>1.</latticeOccupancy>
-                            <density>0.001</density>
+                            <density>0.00018</density>
                         </filler>
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>200</x> <y>100</y> <z>100</z> </upper>
+                            <upper> <x>355</x> <y>710</y> <z>710</z> </upper>
                         </object>
                         <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>
                     </objectgenerator>
@@ -67,20 +66,20 @@
                             </lattice>
                             <basis>
                                 <site>
-                                    <componentid>5</componentid>
+                                    <componentid>3</componentid>
                                     <coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
                                 </site>
                             </basis>
                             <latticeOccupancy>1.</latticeOccupancy>
-                            <density>0.001</density>
+                            <density>0.00018</density>
                         </filler>
                         <object type="Cuboid">
-                            <lower> <x>200</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>400</x> <y>100</y> <z>100</z> </upper>
+                            <lower> <x>355</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>710</x> <y>710</y> <z>710</z> </upper>
                         </object>
                         <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>
                     </objectgenerator>
-                </generator-->
+                </generator>
             </phasespacepoint>
         </ensemble>
 
@@ -91,7 +90,7 @@
                 <traversalSelector>c08</traversalSelector>
             </datastructure>
             <cutoffs type="CenterOfMass" >
-                <radiusLJ unit="reduced" >16.5351</radiusLJ>
+                <radiusLJ unit="reduced" >33.0702</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField" >
                 <epsilon>0</epsilon>
@@ -101,9 +100,9 @@
 
         <output>
             <outputplugin name="VTKMoleculeWriter">
-                <writefrequency>1</writefrequency>
+                <writefrequency>10</writefrequency>
                 <writefrequencyOffset>0</writefrequencyOffset>
-                <outputprefix>BlockTest</outputprefix>
+                <outputprefix>BlockInterface_64k_C6H12</outputprefix>
             </outputplugin>
         </output>
 
@@ -111,8 +110,8 @@
             <weightImpl>near</weightImpl>
             <fpregions>
                 <region id="1">
-                    <lowX>180.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
-                    <highX>220.0</highX><highY>100.0</highY><highZ>100.0</highZ>
+                    <lowX>335.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
+                    <highX>375.0</highX><highY>710.0</highY><highZ>710.0</highZ>
                     <hybridDimX>40.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
