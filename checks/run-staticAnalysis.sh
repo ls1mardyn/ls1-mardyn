@@ -28,7 +28,7 @@ for file in $codeFiles; do
   fi
 
   # Check if using Log::global_log is used
-  if grep -q "using namespace std;" "$file"; then
+  if grep -q "using Log::global_log;" "$file"; then
     echo "\"using Log::global_log;\" was used in $file"
     warnings+="Do not use \"using Log::global_log;\"\n"
   fi
@@ -36,42 +36,44 @@ for file in $codeFiles; do
   # Check if file is UTF-8 (or ASCII)
   encoding=$(file -b --mime-encoding "$file")
   if [[ $encoding != "us-ascii" && $encoding != "utf-8" ]]; then
-    # Fix
-    #tmp_file=$(mktemp)
-    #iconv -f "$encoding" -t utf-8 -o "$tmp_file" "$file"
-    #mv -f "$tmp_file" "$file"
-    echo "The following file is not ASCII/UTF-8 encoded: $file"
+    echo "The following file is not ASCII/UTF-8 encoded: $file ($encoding)"
+    echo "  Fix with:"
+    echo "    tmp_file=\$(mktemp)"
+    echo "    iconv -f \"\$(file -b --mime-encoding \"$file\")\" -t utf-8 -o \"\$tmp_file\" \"\$file\""
+    echo "    mv -f \"\$tmp_file\" \"\$file\""
     warnings+="At least one file is not ASCII/UTF-8 encoded\n"
   fi
 
   # Check if file contains CRLF line endings
   fileinfo=$(file -k "$file")
   if [[ $fileinfo == *"CRLF"* ]]; then
-    # Fix
-    #sed -i 's/\r$//' "$file"
     echo "The following file contains CRLF line endings: $file"
+    echo "  Fix with:"
+    echo "    sed -i 's/\r$//' \"$file\""
     warnings+="At least one file contains CRLF line endings\n"
   fi
 
   # Check if file starts with BOM
   if [[ $fileinfo == *"BOM"* ]]; then
-    # Fix
-    #sed -i '1s/^\xEF\xBB\xBF//' "$file"
     echo "The following file starts with BOM: $file"
+    echo "  Fix with:"
+    echo "    sed -i '1s/^\xEF\xBB\xBF//' \"$file\""
     warnings+="At least one file starts with BOM\n"
   fi
 
   # Check if file ends with newline
   if [[ -n "$(tail -c 1 "$file")" ]]; then
-    # Fix
-    #sed -i -e '$a\' "$file"
     echo "The following file does not end with newline: $file"
+    echo "  Fix with:"
+    echo "    sed -i -e '$a\' \"$file\""
     warnings+="At least one file does not end with newline\n"
   fi
 
 done
 
-# Only print warnings once
+printf "\n\n\n"  # Some space to make output clearer
+
+# Only print warnings once to job summary
 warnings=$(printf "$warnings" | sort | uniq)
 warnings="# Warnings\n"$warnings"\n\n"
 
@@ -111,10 +113,18 @@ done
 
 git switch ${currentVersion} &> /dev/null
 
-warnings+="\n# cpplint\n   New or fixed warnings/errors (master <-> new commit):\n\`\`\`master $(printf '%54s' " ") | new\n"
+# Use code block for monospace font in Markdown
+warnings+="\n# cpplint\n New or fixed warnings/errors (master <-> new commit):\n\`\`\`\nmaster $(printf '%54s' " ") | new\n"
 
 # Delete "--suppress-common-lines" to see all errors/warnings
-warnings+=$(diff -y --suppress-common-lines $rootFolder/staticAnalysis_master_summary.log $rootFolder/staticAnalysis_new_summary.log)
+warnings_cpplint+=$(diff -y --suppress-common-lines $rootFolder/staticAnalysis_master_summary.log $rootFolder/staticAnalysis_new_summary.log)
+warnings+=$warnings_cpplint
 
-printf "\n\n$warnings\n"
-printf "$warnings\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+# Counts the categories in which new errors were introduced
+exitcode=$(printf "$warnings_cpplint" | grep "Category" | awk '{if ($11 > $5) {count++}} END {print count}')
+
+warnings+="\n\`\`\`\n"  # Close code block for monospace font
+printf "\n$warnings\n"  # Print to job output
+printf "\n$warnings\n" >> $GITHUB_STEP_SUMMARY  # Print to job summary
+
+exit $exitcode
