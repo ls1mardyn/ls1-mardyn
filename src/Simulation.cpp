@@ -732,7 +732,7 @@ void Simulation::initConfigXML(const std::string& inputfilename) {
 		inp.getNodeValue("@version", version);
 		Log::global_log->info() << "MarDyn XML config file version: " << version << std::endl;
 
-		global_log->set_log_level(inp.getNodeValue_string("loglevel", "info"));
+		Log::global_log->set_log_level(inp.getNodeValue_string("loglevel", "info"));
 
 		if(inp.changecurrentnode("simulation")) {
 			readXML(inp);

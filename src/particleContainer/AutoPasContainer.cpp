@@ -238,7 +238,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	} else if (vlSkinPerTimestep == -1 ){
 		_verletSkin = vlSkin;
 	} else {
-		global_log->error() << "Input XML specifies skin AND skinPerTimestep. Please choose only one." << std::endl;
+		Log::global_log->error() << "Input XML specifies skin AND skinPerTimestep. Please choose only one." << std::endl;
 	}
 	_relativeOptimumRange = xmlconfig.getNodeValue_double("optimumRange", _relativeOptimumRange);
 	_relativeBlacklistRange = xmlconfig.getNodeValue_double("blacklistRange", _relativeBlacklistRange);
