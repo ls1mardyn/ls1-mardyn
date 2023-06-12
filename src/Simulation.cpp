@@ -336,11 +336,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					if (datastructuretype == "AutoPas" or datastructuretype == "AutoPasContainer") {
 						// check if skin is specified
 						if (xmlconfig.getNodeValue("skin", skin) == 0) {
-							global_log->error() << "Skin not set in datastructure/AutoPas. "
+							Log::global_log->error() << "Skin not set in datastructure/AutoPas. "
 												   "This will lead to a different interaction length in the container "
 												   "vs the GeneralDomainDecomposition which can lead ALL to shrink the "
 												   "domain too small."
-												  << endl;
+												  << std::endl;
 							this->exit(512435340);
 						}
 					} else {
