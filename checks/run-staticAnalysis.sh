@@ -114,10 +114,14 @@ done
 git switch ${currentVersion} &> /dev/null
 
 # Use code block for monospace font in Markdown
-warnings+="\n# cpplint\n New or fixed warnings/errors (master <-> new commit):\n\`\`\`\nmaster $(printf '%54s' " ") | new\n"
+warnings+="\n# cpplint\n"
+warnings+=" For details run \`cpplint --filter=-whitespace/tab --linelength=200 --counting=detailed $( find src -name "*.h" -or -name "*.cpp" -printf "%p " )\`"
+warnings+=" New or fixed warnings/errors (master <-> new commit):\n"
+warnings+="\`\`\`\n"
+warnings+="master $(printf '%54s' " ") | new\n"
 
 # Delete "--suppress-common-lines" to see all errors/warnings
-warnings_cpplint+=$(diff -y --suppress-common-lines $rootFolder/staticAnalysis_master_summary.log $rootFolder/staticAnalysis_new_summary.log)
+warnings_cpplint=$(diff -y --suppress-common-lines $rootFolder/staticAnalysis_master_summary.log $rootFolder/staticAnalysis_new_summary.log)
 warnings+=$warnings_cpplint
 
 # Counts the categories in which new errors were introduced

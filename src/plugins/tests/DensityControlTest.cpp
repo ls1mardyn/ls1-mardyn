@@ -3,6 +3,8 @@
 #include "utils/Testing.h"
 #include "utils/CommVar.h"
 
+#include <memory>
+
 TEST_SUITE_REGISTRATION(DensityControlTest);
 
 DensityControlTest::DensityControlTest() {}

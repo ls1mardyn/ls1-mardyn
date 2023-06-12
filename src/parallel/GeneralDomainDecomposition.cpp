@@ -13,6 +13,11 @@
 #include "NeighbourCommunicationScheme.h"
 
 #include <numeric>
+#include <memory>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <tuple>
 
 GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength, Domain* domain, bool forceGrid)
 	: _boxMin{0.},
