@@ -1,9 +1,9 @@
 #include "DensityControlTest.h"
 
+#include <memory>
+
 #include "utils/Testing.h"
 #include "utils/CommVar.h"
-
-#include <memory>
 
 TEST_SUITE_REGISTRATION(DensityControlTest);
 
