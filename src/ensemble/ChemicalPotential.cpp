@@ -634,10 +634,8 @@ unsigned ChemicalPotential::countParticles(
 	#pragma omp parallel reduction(+:N)
 	#endif
 	{
-
-		auto begin = moleculeContainer->regionIterator(cbottom, ctop, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-
-		for (auto m = begin; m.isValid(); ++m) {
+		for (auto m = moleculeContainer->regionIterator(cbottom, ctop, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+			 m.isValid(); ++m) {
 			if (m->componentid() == cid) {
 				++N;
 			}

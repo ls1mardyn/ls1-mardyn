@@ -290,7 +290,7 @@ public:
 	virtual void printCommunicationPartners(std::string filename) const {};
 
 protected:
-	void addLeavingMolecules(std::vector<Molecule>&& invalidMolecules, ParticleContainer* moleculeContainer);
+	void addLeavingMolecules(std::vector<Molecule>& invalidMolecules, ParticleContainer* moleculeContainer);
 
 	/**
 	 * Handles the sequential version of particles leaving the domain.

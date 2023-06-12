@@ -719,10 +719,21 @@ double Domain::getepsilonRF() const { return _epsilonRF; }
 
 void Domain::setepsilonRF(double erf) { _epsilonRF = erf; }
 
-unsigned long Domain::getglobalNumMolecules(bool bUpdate, ParticleContainer* particleContainer, DomainDecompBase* domainDecomp) {
+unsigned long Domain::getglobalNumMolecules(bool bUpdate, ParticleContainer* particleContainer,
+											DomainDecompBase* domainDecomp) {
 	if (bUpdate) {
-		if (particleContainer == nullptr) { Log::global_log->debug() << "ParticleCont unknown!" << std::endl; particleContainer = global_simulation->getMoleculeContainer(); }
-		if (domainDecomp == nullptr)      { Log::global_log->debug() << "domainDecomp unknown!" << std::endl; domainDecomp = &(global_simulation->domainDecomposition()); }
+		if (particleContainer == nullptr) {
+			Log::global_log->debug() << "Domain::getglobalNumMolecules: Passed Particle Container is null! Fetching pointer "
+								   "from global_simulation."
+								<< std::endl;
+			particleContainer = global_simulation->getMoleculeContainer();
+		}
+		if (domainDecomp == nullptr) {
+			Log::global_log->debug() << "Domain::getglobalNumMolecules: Passed Domain Decomposition is null! Fetching "
+								   "pointer from global_simulation."
+								<< std::endl;
+			domainDecomp = &(global_simulation->domainDecomposition());
+		}
 		this->updateglobalNumMolecules(particleContainer, domainDecomp);
 	}
 	return _globalNumMolecules;

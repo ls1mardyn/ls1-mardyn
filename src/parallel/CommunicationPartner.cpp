@@ -140,7 +140,6 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 									const MPI_Datatype& type, MessageType msgType,
 									std::vector<Molecule>& invalidParticles, bool mightUseInvalidParticles,
 									bool doHaloPositionCheck, bool removeFromContainer) {
-	Log::global_log->debug() << _rank << std::endl;
 	_sendBuf.clear();
 
 	const unsigned int numHaloInfo = _haloInfo.size();
@@ -402,7 +401,7 @@ void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, cons
 }
 
 void CommunicationPartner::deadlockDiagnosticSendRecv() {
-	
+
 	deadlockDiagnosticSend();
 
 	if (not _countReceived and _isReceiving) {
@@ -462,8 +461,6 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 				: ParticleIterator::Type::ALL_CELLS;
 		const int numThreads = mardyn_get_num_threads();
 		const int threadNum = mardyn_get_thread_num();
-		auto begin = moleculeContainer->regionIterator(lowCorner, highCorner, iteratorType);
-
 		#if defined (_OPENMP)
 		#pragma omp master
 		#endif
@@ -476,7 +473,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		#pragma omp barrier
 		#endif
 
-		for (auto i = begin; i.isValid(); ++i) {
+		for (auto i = moleculeContainer->regionIterator(lowCorner, highCorner, iteratorType); i.isValid(); ++i) {
 			//traverse and gather all molecules in the cells containing part of the box specified as parameter
 			//i is a pointer to a Molecule; (*i) is the Molecule
 			threadData[threadNum].push_back(*i);
@@ -585,14 +582,14 @@ void CommunicationPartner::collectLeavingMoleculesFromInvalidParticles(std::vect
 
 	// compute how many molecules are already in of this type: - adjust for Forces
 
-	auto removeBegin = std::partition(invalidParticles.begin(), invalidParticles.end(), [=](const Molecule& m) {
-	  // if this is true, it will be put in the first part of the partition, if it is false, in the second.
+	const auto removeBegin = std::partition(invalidParticles.begin(), invalidParticles.end(), [=](const Molecule& m) {
+	  // if this returns true, the particle will be put in the first part of the partition, else in the second.
 	  return not m.inBox(lowCorner, highCorner);
 	});
 
-	unsigned long numMolsAlreadyIn = _sendBuf.getNumLeaving();
-	int totalNumMolsAppended = invalidParticles.end() - removeBegin;
-	// resize the send buffer
+	auto numMolsAlreadyIn = _sendBuf.getNumLeaving();
+	const auto totalNumMolsAppended = invalidParticles.end() - removeBegin;
+	// resize the send-buffer
 	_sendBuf.resizeForAppendingLeavingMolecules(totalNumMolsAppended);
 
 	Domain* domain = global_simulation->getDomain();

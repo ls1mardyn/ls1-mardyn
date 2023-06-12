@@ -226,10 +226,12 @@ void Mirror::beforeForces(
 			for(auto& it:_particleManipCount.deleted.local)
 				it = 0;
 
-			auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);  // over all cell types
-			for(auto it = begin; it.isValid(); ++it) {
-				uint32_t cid_ub = it->componentid()+1;  // unity based componentid --> 0: arbitrary component, 1: first component
-				
+			for (auto it =
+					 particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);
+				 it.isValid(); ++it) {
+				uint32_t cid_ub =
+					it->componentid() + 1;  // unity based componentid --> 0: arbitrary component, 1: first component
+
 				if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
 				
 				double vy = it->v(1);
@@ -346,10 +348,11 @@ void Mirror::beforeForces(
 			for(auto& it:_particleManipCount.deleted.local)
 				it = 0;
 
-			auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);  // over all cell types
-			for(auto it = begin; it.isValid(); ++it) {
-				
-				uint32_t cid_ub = it->componentid()+1;  // unity based componentid --> 0: arbitrary component, 1: first component
+			for (auto it =
+					 particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);
+				 it.isValid(); ++it) {
+				uint32_t cid_ub =
+					it->componentid() + 1;  // unity based componentid --> 0: arbitrary component, 1: first component
 
 				if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
 
@@ -469,11 +472,9 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 		#pragma omp parallel shared(regionLowCorner, regionHighCorner)
 #endif
 		{
-			auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner,
-														   ParticleIterator::ALL_CELLS);  // over all cell types
-
-			for(auto it = begin; it.isValid(); ++it){
-
+			for (auto it =
+					 particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);
+				 it.isValid(); ++it) {
 				double vy = it->v(1);
 				uint32_t cid_ub = it->componentid()+1;
 
