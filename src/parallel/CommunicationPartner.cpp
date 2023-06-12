@@ -656,7 +656,6 @@ void CommunicationPartner::print(std::ostream& stream) const {
 				<< " ["	<< region._copiesLow[2] << ", " << region._copiesHigh[2] << ")" << std::endl;
 		stream << "  offset: (" << region._offset[0] << ", " << region._offset[1] << ", " << region._offset[2] << ")" << std::endl;
 		stream << "  shift:	(" << region._shift[0] << ", " << region._shift[1]	<< ", "<< region._shift[2] << ")" << std::endl;
-
 	}
 }
 
