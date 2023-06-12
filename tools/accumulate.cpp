@@ -7,7 +7,7 @@
 
 
 /**
- * This tool computes accumulated and averaged values for pressure and potential 
+ * This tool computes accumulated and averaged values for pressure and potential
  * energy, from Mardyn result files.
  */
 int main(int argc, char** argsv) {
@@ -25,7 +25,7 @@ int main(int argc, char** argsv) {
     std::cerr << "Could not open file " << argsv[1] << std::endl;
     exit(1);
   }
-  
+
   Accumulator<double> upot_acc(numSteps);
   Accumulator<double> p_acc(numSteps);
 
@@ -33,14 +33,14 @@ int main(int argc, char** argsv) {
   while(inputfilestream) {
     line.clear();
     getline(inputfilestream, line);
-  
+
      if (line.empty() || line[0] == '#') {
        std::cout << " skippiing: " << line << std::endl;
        continue;
     }
 
     std::stringstream lineStream(line);
-    double upot = 0; 
+    double upot = 0;
     double p = 0;
     double dummy = 0;
 
@@ -50,7 +50,7 @@ int main(int argc, char** argsv) {
     lineStream >> p;
     upot_acc.addEntry(upot);
     p_acc.addEntry(p);
-  } 
+  }
 
   std::cout << "==================  UPot = " << upot_acc.getAverage() << ", p = " << p_acc.getAverage() << std::endl;
   return 0;

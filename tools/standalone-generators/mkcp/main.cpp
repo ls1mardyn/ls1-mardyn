@@ -16,7 +16,7 @@
 // interlayer spacing MWCNT: 3.40 A
 //    (http://www.wag.caltech.edu/foresight/foresight_2.html)
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
    const char* usage = "usage: mkcp (-C|-P|-0) <prefix> [-a <initial acceleration>] [-A <C-C bond length>] -c <density> -d <layers> [-e] [-E] [-f <fluid>] [-g <second component>] -h <height> [-H <eta>] [-I <eta2>] [-J <fluid eta>] [-k] [-l] [-L] [-m <chemical potential>] [-M <CNT with m/n>] -N <N_fluid> [-p <polarity coefficient>] [-r] [-s <size unit [A]>] [-S] [-t <controller time parameter>] -T <temperature> [-u] -U <velocity> [-v <volume fraction without acceleration>] [-V <volume fraction without wall] [-w] [-W <energy and temperature unit [K]>] [-x <2nd comp. mole fract.>] [-Y <mass unit [u]>] [-3 <xi>] [-4 <xi2>] [-5 <fluid xi>] [-8]\n\n-A\treduced C-C bond length; default: 2.6853 a0 = 0.1421 nm, original Tersoff: 2.7609 a0\n-C\tCouette flow (flag followed by output prefix)\n-e\tuse B-e-rnreuther format\n-E\tgenerate an empty channel\n-f\tAr (default), Ave, CH4, C2H6, N2, CO2, H2O, CH3OH, or C6H14\n-H, -I\tdefault: eta according to Wang et al.\n-J\tdefault: eta = 1\n-k\tonly harmonic potentials active within the wall (default for polar walls)\n-l\tLJ interaction within the wall as well (default for unpolar walls)\n-L\tuse Lennard-Jones units instead of atomic units (cf. atomic_units.txt)\n-M\tgenerate a carbon nanotube (only for Poiseuille flow)\n-p\tdefault polarity coefficient: 0 (unpolar walls)\n-r\tuse b-r-anch format (active by default)\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A 0\n-S\tsymmetric system (with two identical fluid components)\n-t\tdefault: tau extremely large (about 30 us)\n-u\tuse B-u-chholz format\n-w\tWidom\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-x\tdefault value: 0 (i.e. pure first comp. fluid)\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n-0\tstatic scenario without flow (followed by output prefix)\n-3, -4\tdefault: xi according to Wang et al.\n-5\tdefault: xi = 1\n-8\toriginal Tersoff potential as published in the 80s\n";
    if((argc < 15) || (argc > 69))
@@ -136,7 +136,7 @@ int main(int argc, char** argv)
             else if(!strcmp(argv[i], "C6H14")) fluid = FLUID_C6H14;
             else
             {
-               std::cout << "Fluid '" << argv[i] 
+               std::cout << "Fluid '" << argv[i]
                     << "' is not available.\n\n" << usage;
                return 9;
             }
@@ -157,7 +157,7 @@ int main(int argc, char** argv)
             else if(!strcmp(argv[i], "C6H14")) fluid2 = FLUID_C6H14;
             else
             {
-               std::cout << "(Secondary) fluid '" << argv[i] 
+               std::cout << "(Secondary) fluid '" << argv[i]
                     << "' is not available.\n\n" << usage;
                return 99;
             }
@@ -335,7 +335,7 @@ int main(int argc, char** argv)
          {
             std::cout << "Invalid flag '-" << argv[i][j]
                  << "' was detected.\n\n" << usage;
-            return 2; 
+            return 2;
          }
       }
    }
@@ -525,7 +525,7 @@ int main(int argc, char** argv)
    if(!in_U) U = 0.0;
    else if(FLOW_NONE && (U != 0.0))
    {
-      std::cout << "Specified flow velocity U = " << U 
+      std::cout << "Specified flow velocity U = " << U
            << " is incompatible with -0 option (static scenario).\n\n"
            << usage;
       return 15;

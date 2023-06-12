@@ -4,32 +4,32 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( TestCallerTest, 
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( TestCallerTest,
                                        helperSuiteName() );
 
 
-void 
+void
 TestCallerTest::ExceptionThrower::testThrowFailureException()
 {
   throw FailureException();
 }
 
 
-void 
+void
 TestCallerTest::ExceptionThrower::testThrowException()
 {
   throw CPPUNIT_NS::Exception( CPPUNIT_NS::Message( "expected Exception" ) );
 }
 
 
-void 
+void
 TestCallerTest::ExceptionThrower::testThrowNothing()
 {
 }
 
 
 
-TestCallerTest::TestCallerTest() : 
+TestCallerTest::TestCallerTest() :
     m_testName( "TrackedTestCaseCaller" )
 {
 }
@@ -40,7 +40,7 @@ TestCallerTest::~TestCallerTest()
 }
 
 
-void 
+void
 TestCallerTest::setUp()
 {
   m_constructorCount = 0;
@@ -55,7 +55,7 @@ TestCallerTest::setUp()
 }
 
 
-void 
+void
 TestCallerTest::tearDown()
 {
   TrackedTestCase::removeTracker();
@@ -64,46 +64,46 @@ TestCallerTest::tearDown()
 }
 
 
-void 
+void
 TestCallerTest::onConstructor()
 {
   m_constructorCount++;
 }
 
 
-void 
+void
 TestCallerTest::onDestructor()
 {
   m_destructorCount++;
 }
 
 
-void 
+void
 TestCallerTest::onSetUp()
 {
   m_setUpCount++;
 }
 
 
-void 
+void
 TestCallerTest::onTearDown()
 {
   m_tearDownCount++;
 }
 
 
-void 
+void
 TestCallerTest::onTest()
 {
   m_testCount++;
 }
 
 
-void 
+void
 TestCallerTest::testBasicConstructor()
 {
   {
-    CPPUNIT_NS::TestCaller<TrackedTestCase> caller( m_testName, 
+    CPPUNIT_NS::TestCaller<TrackedTestCase> caller( m_testName,
                                                  &TrackedTestCase::test );
     checkTestName( caller.getName() );
     checkNothingButConstructorCalled();
@@ -116,13 +116,13 @@ TestCallerTest::testBasicConstructor()
 }
 
 
-void 
+void
 TestCallerTest::testReferenceConstructor()
 {
   TrackedTestCase testCase;
   {
-    CPPUNIT_NS::TestCaller<TrackedTestCase> caller( "TrackedTestCaseCaller", 
-                                                 &TrackedTestCase::test, 
+    CPPUNIT_NS::TestCaller<TrackedTestCase> caller( "TrackedTestCaseCaller",
+                                                 &TrackedTestCase::test,
                                                  testCase );
     checkTestName( caller.getName() );
     checkNothingButConstructorCalled();
@@ -135,13 +135,13 @@ TestCallerTest::testReferenceConstructor()
 }
 
 
-void 
+void
 TestCallerTest::testPointerConstructor()
 {
   TrackedTestCase *testCase = new TrackedTestCase();
   {
-    CPPUNIT_NS::TestCaller<TrackedTestCase> caller( m_testName, 
-                                                 &TrackedTestCase::test, 
+    CPPUNIT_NS::TestCaller<TrackedTestCase> caller( m_testName,
+                                                 &TrackedTestCase::test,
                                                  testCase );
     checkTestName( caller.getName() );
     checkNothingButConstructorCalled();
@@ -156,10 +156,10 @@ TestCallerTest::testPointerConstructor()
 /*
 // Now done by ExceptionTestCaseDecorator
 
-void 
+void
 TestCallerTest::testExpectFailureException()
 {
-  CPPUNIT_NS::TestCaller<ExceptionThrower,FailureException> caller( 
+  CPPUNIT_NS::TestCaller<ExceptionThrower,FailureException> caller(
       m_testName,
       &ExceptionThrower::testThrowFailureException );
   m_testListener->setExpectNoFailure();
@@ -168,10 +168,10 @@ TestCallerTest::testExpectFailureException()
 }
 
 
-void 
+void
 TestCallerTest::testExpectException()
 {
-  CPPUNIT_NS::TestCaller<ExceptionThrower,CPPUNIT_NS::Exception> caller( 
+  CPPUNIT_NS::TestCaller<ExceptionThrower,CPPUNIT_NS::Exception> caller(
       m_testName,
       &ExceptionThrower::testThrowException );
   m_testListener->setExpectNoFailure();
@@ -180,10 +180,10 @@ TestCallerTest::testExpectException()
 }
 
 
-void 
+void
 TestCallerTest::testExpectedExceptionNotCaught()
 {
-  CPPUNIT_NS::TestCaller<ExceptionThrower,FailureException> caller( 
+  CPPUNIT_NS::TestCaller<ExceptionThrower,FailureException> caller(
       m_testName,
       &ExceptionThrower::testThrowNothing );
   m_testListener->setExpectedAddFailureCall( 1 );
@@ -192,7 +192,7 @@ TestCallerTest::testExpectedExceptionNotCaught()
 }
 */
 
-void 
+void
 TestCallerTest::checkNothingButConstructorCalled()
 {
   CPPUNIT_ASSERT_EQUAL( 1, m_constructorCount );
@@ -203,7 +203,7 @@ TestCallerTest::checkNothingButConstructorCalled()
 }
 
 
-void 
+void
 TestCallerTest::checkRunningSequenceCalled()
 {
   CPPUNIT_ASSERT_EQUAL( 1, m_setUpCount );
@@ -212,7 +212,7 @@ TestCallerTest::checkRunningSequenceCalled()
 }
 
 
-void 
+void
 TestCallerTest::checkTestName( std::string testName )
 {
   CPPUNIT_ASSERT( testName == m_testName );

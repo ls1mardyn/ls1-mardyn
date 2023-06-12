@@ -159,14 +159,14 @@ void Domain::calculateGlobalValues(
 	double Upot = _localUpot;
 	double Virial = _localVirial;
 
-	// To calculate Upot, Ukin and Pressure, intermediate values from all      
-	// processes are needed. Here the         
-	// intermediate values of all processes are summed up so that the root    
-	// process can calculate the final values. to be able to calculate all     
-	// values at this point, the calculation of the intermediate value sum_v2  
-	// had to be moved from Thermostat to upd_postF and the final calculations  
-	// of m_Ukin, m_Upot and Pressure had to be moved from Thermostat / upd_F  
-	// to this point           
+	// To calculate Upot, Ukin and Pressure, intermediate values from all
+	// processes are needed. Here the
+	// intermediate values of all processes are summed up so that the root
+	// process can calculate the final values. to be able to calculate all
+	// values at this point, the calculation of the intermediate value sum_v2
+	// had to be moved from Thermostat to upd_postF and the final calculations
+	// of m_Ukin, m_Upot and Pressure had to be moved from Thermostat / upd_F
+	// to this point
 
 	/* FIXME stuff for the ensemble class */
 	domainDecomp->collCommInit(2, 654);

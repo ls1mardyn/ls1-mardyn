@@ -29,7 +29,7 @@ void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "[SpatialProfile] Mode " << _mode << std::endl;
 	xmlconfig.getNodeValue("profiledComponent", _profiledCompString);
 	Log::global_log->info() << "[SpatialProfile] Profiled Component:" << _profiledCompString << std::endl;
-	
+
 	if (_profiledCompString != "all") {
 		_profiledComp = std::stoi(_profiledCompString);
 	}
@@ -240,9 +240,9 @@ void SpatialProfile::endStep(ParticleContainer* particleContainer, DomainDecompB
 
 		// Loop over all particles and bin them with uIDs
 		for (auto thismol = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); thismol.isValid(); ++thismol) {
-			
+
 			if ((_profiledCompString != "all") && (thismol->componentid() == _profiledComp-1)) {
-				
+
 				// Get uID
 				if (samplInfo.cylinder) {
 					uID = getCylUID(thismol);
@@ -258,9 +258,9 @@ void SpatialProfile::endStep(ParticleContainer* particleContainer, DomainDecompB
 					_profiles[i]->record(*thismol, (unsigned) uID);
 				}
 			}
-			
+
 			if (_profiledCompString == "all"){
-							
+
 				// Get uID
 				if (samplInfo.cylinder) {
 					uID = getCylUID(thismol);

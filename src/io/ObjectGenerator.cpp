@@ -67,7 +67,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 				 *  at the same time
 				 */
 				return std::chrono::system_clock::now().time_since_epoch().count() + _simulation.domainDecomposition().getRank();
-			
+
 			} else {
 				return 0;
 			}

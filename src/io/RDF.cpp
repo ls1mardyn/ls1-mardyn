@@ -165,7 +165,7 @@ void RDF::readXML(XMLfileUnits& xmlconfig) {
 	_bins = 1;
 	xmlconfig.getNodeValue("bins", _bins);
 	Log::global_log->info() << "Number of bins: " << _bins << std::endl;
-	
+
 	_angularBins = 1;
 	xmlconfig.getNodeValue("angularbins", _angularBins);
 	Log::global_log->info() << "Number of angular bins: " << _angularBins << std::endl;
@@ -249,10 +249,10 @@ void RDF::collectRDF(DomainDecompBase* dode) {
 	dode->collCommFinalize();
 
 	// communicate component-component ARDFs
-	
+
 	if(_doARDF) {
 		dode->collCommInit(_ARDFBins * _numberOfComponents * _numberOfComponents);
-	
+
 		for(unsigned i=0; i < _numberOfComponents; i++) {
 			for(unsigned k=0; k < _numberOfComponents; k++) {
 				for(unsigned long l=0; l < _ARDFBins; l++) {
@@ -271,7 +271,7 @@ void RDF::collectRDF(DomainDecompBase* dode) {
 		}
 		dode->collCommFinalize();
 	}
-	
+
 	// communicate site-site RDFs
 	for(unsigned i=0; i < _numberOfComponents; i++) {
 		unsigned ni = (*_components)[i].numSites();
@@ -344,7 +344,7 @@ void RDF::endStep(ParticleContainer * /*particleContainer*/, DomainDecompBase *d
 
 	if((simStep > 0) && (simStep % _writeFrequency == 0)) {
 		collectRDF(domainDecomposition);
-		
+
 		if( domainDecomposition->getRank() == 0 ) {
 			accumulateRDF();
 			for (unsigned i = 0; i < _numberOfComponents; i++) {
@@ -389,7 +389,7 @@ void RDF::writeToFileARDF(const Domain* domain, const std::string& filename, uns
 	double rho_Aj = N_Aj / V;
 	unsigned long angularID = 0;
 	unsigned int radialID = 0;
-	
+
 	ardfout << "\n";
 	ardfout << "# \n# ctr_i: " << _globalCtr[i] << "\n# ctr_j: " << _globalCtr[j]
 	       << "\n# V: " << V << "\n# _universalRDFTimesteps: " << _numberOfRDFTimesteps
@@ -405,13 +405,13 @@ void RDF::writeToFileARDF(const Domain* domain, const std::string& filename, uns
 	double N_pair_int = 0.0;
 	double N_Apair_int = 0.0;
 	for(unsigned long l = 0; l < numARDFBins(); ++l) {
-		
+
 		if (l % _angularBins == 0 && l != 0) {
 			radialID++;
 		}
 		angularID = l - radialID * _angularBins;
-		
-		
+
+
 		double rmin = radialID * binwidth();
 		double rmid = (radialID+0.5) * binwidth();
 		double rmax = (radialID+1.0) * binwidth();
@@ -419,7 +419,7 @@ void RDF::writeToFileARDF(const Domain* domain, const std::string& filename, uns
 		double cosPhiMid = 1. -(angularID + 0.5) * angularbinwidth();
 		double cosPhiMax = 1. -(angularID + 1.0) * angularbinwidth();
 		double dV = 2./3. * M_PI * ((rmax * rmax * rmax - rmin * rmin * rmin) * (1. - cosPhiMax) + (rmin * rmin * rmin - rmax * rmax * rmax) * (1. - cosPhiMin));
-		
+
 		double N_pair = _ARDFdistribution.global[i][j][l] / (double)_numberOfRDFTimesteps;
 		N_pair_int += N_pair;
 		double N_Apair = _globalAccumulatedARDFDistribution[i][j][l] / (double)_accumulatedNumberOfRDFTimesteps;

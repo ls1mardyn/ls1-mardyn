@@ -7,13 +7,13 @@
 CPPUNIT_NS_BEGIN
 
 
-TestRunner::WrappingSuite::WrappingSuite( const std::string &name ) 
+TestRunner::WrappingSuite::WrappingSuite( const std::string &name )
     : TestSuite( name )
 {
 }
 
 
-int 
+int
 TestRunner::WrappingSuite::getChildTestCount() const
 {
   if ( hasOnlyOneTest() )
@@ -22,7 +22,7 @@ TestRunner::WrappingSuite::getChildTestCount() const
 }
 
 
-std::string 
+std::string
 TestRunner::WrappingSuite::getName() const
 {
   if ( hasOnlyOneTest() )
@@ -40,7 +40,7 @@ TestRunner::WrappingSuite::doGetChildTestAt( int index ) const
 }
 
 
-void 
+void
 TestRunner::WrappingSuite::run( TestResult *result )
 {
   if ( hasOnlyOneTest() )
@@ -50,7 +50,7 @@ TestRunner::WrappingSuite::run( TestResult *result )
 }
 
 
-bool 
+bool
 TestRunner::WrappingSuite::hasOnlyOneTest() const
 {
   return TestSuite::getChildTestCount() == 1;
@@ -79,14 +79,14 @@ TestRunner::~TestRunner()
 }
 
 
-void 
+void
 TestRunner::addTest( Test *test )
 {
-  m_suite->addTest( test ); 
+  m_suite->addTest( test );
 }
 
 
-void 
+void
 TestRunner::run( TestResult &controller,
                  const std::string &testPath )
 {

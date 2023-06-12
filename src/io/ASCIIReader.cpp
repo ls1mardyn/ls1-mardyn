@@ -233,7 +233,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			// FIXME: Is there a better solution than skipping the rest of the file?
 			header = false;
 		} else if((token == "NumberOfMolecules") || (token == "N")) {
-			// set number of Molecules 
+			// set number of Molecules
 			// FIXME: Is this part called in any case as the token is handled in the readPhaseSpace method?
 			_phaseSpaceHeaderFileStream >> token;
 			domain->setglobalNumMolecules( strtoul(token.c_str(),NULL,0) );

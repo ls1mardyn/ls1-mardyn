@@ -19,7 +19,7 @@ extern double LATTICE_CONST_WALL_LJTS;
 
 // @brief: implementing the constructor and destructor, respectively
 ConfigWriter::ConfigWriter(
-		char* in_prefix, std::string in_wall, int in_wallLays, double in_refTime, 
+		char* in_prefix, std::string in_wall, int in_wallLays, double in_refTime,
 		unsigned in_profilePhi, unsigned in_profileR, unsigned in_profile_H,
 		unsigned in_profileOutputTimesteps, unsigned initCanon, bool in_movie, Component& fluidComp
 		)
@@ -68,11 +68,11 @@ ConfigWriter::ConfigWriter(
 		sOutputVisittWriter(500);
 		sOutputMmspdWriter(500);
 	}
-	
+
 	//	std::cout << "\n**********************************\nConstructor of Configwriter finished\n**********************************\n";
 }
 
-ConfigWriter:: ConfigWriter(	char* in_prefix, std::string in_wall, int in_wallLays, double in_refTime, 
+ConfigWriter:: ConfigWriter(	char* in_prefix, std::string in_wall, int in_wallLays, double in_refTime,
 			unsigned in_profilePhi, unsigned in_profileR, unsigned in_profile_H,
 			unsigned in_profileOutputTimesteps, unsigned initCanon, bool in_movie, PhaseSpaceWriter& psw, Component& fluidComp,
 			double nuAndFac	){
@@ -120,13 +120,13 @@ ConfigWriter:: ConfigWriter(	char* in_prefix, std::string in_wall, int in_wallLa
 		sOutputVisittWriter(500);
 		sOutputMmspdWriter(500);
 	}
-	
+
 	double averageMassPerParticle = 1;// psw.gAverageMassPerParticle();
 	double diffCoeffLJ = 0.05; // estimate of the self-diffusion coefficient of the LJ-Fluid
 	nuAndersenSingle = psw.gTemperature()*timestepLength/ averageMassPerParticle/diffCoeffLJ;
 	nuAndersen = nuAndersenSingle*pow(psw.gNTotal(), -2.0/3.0)*nuAndFac;
 	std::cout << "nu Andersen: " << nuAndersen << "\n";
-	
+
 	//	std::cout << "\n**********************************\nConstructor of Configwriter finished\n**********************************\n";
 }
 

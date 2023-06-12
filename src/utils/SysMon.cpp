@@ -42,7 +42,7 @@ int SysMon::addExpression(const std::string& exprstr)
 	Expression& expr=_expressions.back();
 	expr.initializeRPN(exprstr,true);	// generate a Label
 	//expr.genLabel();	// done at the end of initializeRPN
-	
+
 	_values.push_back(0.);
 	//_values.resize(_expressions.size(),0.);
 	_initMinMax.push_back(true);
@@ -60,9 +60,9 @@ int SysMon::addExpression(const std::string& exprstr)
 void SysMon::updateExpressionValues(bool resetMinMax)
 {
 	if(_expressions.empty()) return;	// no expressions?
-	
+
 	if(resetMinMax) _initMinMax.assign(numExpressions(),true);
-	
+
 	//sync();
 	if(_variableset->existVariableGroup("sysconf")) updateVariables_sysconf();
 	if(_variableset->existVariableGroup("sysinfo")) updateVariables_sysinfo();
@@ -74,32 +74,32 @@ void SysMon::updateExpressionValues(bool resetMinMax)
 	if(_variableset->existVariableGroup("procselfschedstat")) updateVariables_procselfschedstat();
 	if(_variableset->existVariableGroup("procselfsched")) updateVariables_procselfsched();
 	if(_variableset->existVariableGroup("procselfstatus")) updateVariables_procselfstatus();
-	
+
 	size_t i=0;
 	for(std::list<Expression>::const_iterator exprit=_expressions.begin();exprit!=_expressions.end();++exprit)
 	{
 		_values[i]=exprit->evaluateFloat();
 		++i;
 	}
-	
+
 	std::vector<Tvalue> valuesMaxMin(2*_values.size());
 	for(i=0;i<_values.size();++i)
 	{
 		valuesMaxMin[2*i]=_values[i];
 		valuesMaxMin[2*i+1]=-_values[i];
 	}
-	
+
 	for(i=0;i<_valuesMaxMinPeak.size();++i)
 	{
 		if(_initMinMax[i/2] || valuesMaxMin[i]>_valuesMaxMinPeak[i])
 			_valuesMaxMinPeak[i]=valuesMaxMin[i];
 	}
-	
+
 #ifdef MPI_VERSION
 	int myrank;
 	MPI_CHECK( MPI_Comm_rank(_mpicomm,&myrank) );
 	MPI_CHECK( MPI_Reduce(&valuesMaxMin[0],&_valuesMaxMin[0],_valuesMaxMin.size(),mpiTvalue,MPI_MAX,0,MPI_COMM_WORLD) );
-	
+
 	if(myrank==mpiRootRank)
 	{
 		for(i=0;i<_valuesMaxMinPeak.size();++i)
@@ -184,7 +184,7 @@ unsigned int SysMon::updateVariables_sysconf()
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_SYSCONF
 	long val=0;
-	
+
 #ifdef __linux__
 	val=sysconf(_SC_PHYS_PAGES);
 	_variableset->setVariable("sysconf:PHYS_PAGES",val);
@@ -205,10 +205,10 @@ unsigned int SysMon::updateVariables_sysinfo()
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_SYSINFO
 	long val=0;
-	
+
 	struct sysinfo sysinfodata;
 	int rc=sysinfo(&sysinfodata);
-	
+
 	if(!rc)
 	{
 		val=long(sysinfodata.uptime);
@@ -263,9 +263,9 @@ unsigned int SysMon::updateVariables_mallinfo()
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_MALLINFO
 	long val=0;
-	
+
 	struct mallinfo mallinfodata=mallinfo();
-	
+
 	val=long(mallinfodata.arena);
 	_variableset->setVariable("mallinfo","arena",val);
 	++numvalues;
@@ -301,7 +301,7 @@ unsigned int SysMon::updateVariables_mallinfo()
 }
 
 unsigned int SysMon::updateVariables_procmeminfo()
-{	// 
+{	//
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_PROCMEMINFO
 	std::ifstream ifstrm("/proc/meminfo");
@@ -468,7 +468,7 @@ unsigned int SysMon::updateVariables_procselfschedstat()
 }
 
 unsigned int SysMon::updateVariables_procselfstatus()
-{	// 
+{	//
 	unsigned int numvalues=0;
 #ifdef SYSMON_ENABLE_PROCSELFSTATUS
 	std::ifstream ifstrm("/proc/self/status");

@@ -30,8 +30,8 @@ class RDFCellProcessor;
  * - for each bin: calculate the number density (i.e. number of particles per volume)
  *   of the corresponding shell
  * - divide the number density by the number density of the system.
- 
- *Update: Optionally, the RDF can be additionally resolved in angular direction, by chosing angularbins > 1 in the input. Phi is the angle between the central molecules orientation vector and the vector connecting the pair of molecules. 
+
+ *Update: Optionally, the RDF can be additionally resolved in angular direction, by chosing angularbins > 1 in the input. Phi is the angle between the central molecules orientation vector and the vector connecting the pair of molecules.
  *The angular coordinate is given and discretized in terms of the cosine of the angle cos(phi), to ensure equal control volume sizes for equal distance R
  */
 class RDF : public PluginBase {
@@ -89,9 +89,9 @@ public:
 	//! count the number of molecules per component
 	//! @todo: remove it and replace it by component.getNumMolecules()
 	void accumulateNumberOfMolecules(std::vector<Component>& components);
-	
+
 	void observeARDFMolecule(double dd, double cosPhi, double cosPhiReverse, unsigned cid1, unsigned cid2) {
-		
+
 		if(dd > _maxDistanceSquare) { return; }
 		size_t distanceBinID = floor( sqrt(dd) / binwidth() );
 		size_t angularBinID = floor( (-cosPhi + 1.)/ angularbinwidth() );
@@ -198,7 +198,7 @@ private:
 	//! The length of an interval
 	//! Only used for the output to scale the "radius"-axis.
 	double _intervalLength;
-	
+
 	//! The length of an angular interval
 	//! Only used for the output to scale the "phi"-axis.
 	double _angularIntervalLength;
@@ -206,11 +206,11 @@ private:
 	//! The number of bins, i.e. the number of intervals in which the cutoff
 	//! radius will be subdivided.
 	unsigned long _bins;
-	
+
 	//! The number of bins in angular direction in case the angular RDF is
 	//! being calculated
 	unsigned long _angularBins {1};
-	
+
 	//! The total number of bins for the ARDF is the product of the radial bins and
 	//! the angular bins
 	unsigned long _ARDFBins;
@@ -253,7 +253,7 @@ private:
 	//! holds the distribution of the neighbouring particles, globally accumulated.
 	std::vector<std::vector<std::vector<unsigned long>>> _globalAccumulatedDistribution;
 	std::vector<std::vector<std::vector<unsigned long>>> _globalAccumulatedARDFDistribution;
-	
+
 	bool _doCollectSiteRDF;
 	bool _doARDF;
 	// vector indices:

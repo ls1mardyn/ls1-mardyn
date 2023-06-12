@@ -45,7 +45,7 @@ public:
 	std::string getPluginName() override {
 		return std::string("XyzWriter");
 	}
-	
+
 	static PluginBase* createInstance() { return new XyzWriter(); }
 private:
 	std::string _outputPrefix;

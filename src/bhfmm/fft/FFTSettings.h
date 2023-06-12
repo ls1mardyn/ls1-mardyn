@@ -14,7 +14,7 @@
 
 /**
  * Static class containing all the FFT Acceleration's settings
- * 
+ *
  * All settings are public and can be changed dynamically, the FFTFactory
  * take them into account to provide the right FFTAcceleration and the FMM
  * algorithm should also take them into account

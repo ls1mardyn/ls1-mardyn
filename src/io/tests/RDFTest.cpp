@@ -130,7 +130,7 @@ void RDFTest::testRDFCountLinkedCell() {
 void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
-	
+
 	std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 

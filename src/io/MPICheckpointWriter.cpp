@@ -48,11 +48,11 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	Log::global_log->info() << "[MPICheckpointWriter]\twrite frequency: " << _writeFrequency << std::endl;
-	
+
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	Log::global_log->info() << "[MPICheckpointWriter]\toutput prefix: " << _outputPrefix << std::endl;
-	
+
 	_incremental = false;
 	int incremental = 1;
 	xmlconfig.getNodeValue("incremental", incremental);
@@ -61,7 +61,7 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 		_incremental = true;
 		Log::global_log->info() << "[MPICheckpointWriter]\tusing incremental numbers in file names" << std::endl;
 	}
-	
+
 	_appendTimestamp = false;
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
@@ -70,13 +70,13 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 		_appendTimestamp = true;
 		Log::global_log->info() << "[MPICheckpointWriter]\tappend timestamp to file names" << std::endl;
 	}
-	
+
 	_datarep = "";	// -> NULL
 	//_datarep = "external32";	// "native", "internal", "external32"
 	xmlconfig.getNodeValue("datarep", _datarep);
 	if(!_datarep.empty())
 		Log::global_log->info() << "[MPICheckpointWriter]\tdata representation: " << _datarep << std::endl;
-	
+
 	_measureTime = false;
 	int measureTime = 0;
 	xmlconfig.getNodeValue("measureTime", measureTime);
@@ -85,7 +85,7 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 		_measureTime = true;
 		Log::global_log->info() << "[MPICheckpointWriter]\texecution wall time will be measured" << std::endl;
 	}
-	
+
 	if(xmlconfig.changecurrentnode("mpi_info")) {
 #ifdef ENABLE_MPI
 		Log::global_log->info() << "[MPICheckpointWriter] Setting MPI info object for IO" << std::endl;
@@ -135,14 +135,14 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 	const char *mpidatarep = NULL;
 	if (!_datarep.empty()) mpidatarep=_datarep.c_str();
 #endif
-	
+
 	if( simstep % _writeFrequency == 0 ) {
 		std::stringstream filenamestream;
 		filenamestream << _outputPrefix;
-		
+
 		if(_incremental)
 		{	/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
-			
+
 			unsigned long numTimesteps = _simulation.getNumTimesteps();
 			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
 			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
@@ -164,7 +164,7 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 
 		std::string filename = filenamestream.str();
 		Log::global_log->info() << "[MPICheckpointWriter]\tfilename: " << filename << std::endl;
-		
+
 		unsigned long numParticles_global = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
 		unsigned long numParticles = particleContainer->getNumberOfParticles();	// local
 		unsigned long numbb{1ul};
@@ -308,11 +308,11 @@ void MPICheckpointWriter::endStep(ParticleContainer *particleContainer, DomainDe
 				//global_log->debug() << "MPICheckpointWriter[" << ownrank << "]\twriting particle" << std::endl
 				MPI_CHECK( MPI_File_write(mpifh, &particleStruct, 1, mpidtParticleD, &mpistat) );
 				//++writecounter;
-				// saving a struct directly will also save padding zeros... 
+				// saving a struct directly will also save padding zeros...
 				//mpioffset+=mpidtParticleMsize;
 			}
 		}
-		
+
 		MPI_CHECK( MPI_File_close(&mpifh) );
 		if(_measureTime)
 		{

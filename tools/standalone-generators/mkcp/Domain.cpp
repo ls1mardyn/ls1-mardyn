@@ -603,7 +603,7 @@ void Domain::writeGraphite(
          else if(tfluid == FLUID_CH3OH)
          {
             xdr << "2 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
-   
+
             xdr << R0_C_CH3OH/SIG_REF << " " << R1_C_CH3OH/SIG_REF << " " << R2_C_CH3OH/SIG_REF << "\t"
                 << CCH3OHMASS/REFMASS << " " << EPS_CCH3OH/EPS_REF << " " << SIG_CCH3OH/SIG_REF;
             if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
@@ -612,7 +612,7 @@ void Domain::writeGraphite(
                 << OCH3OHMASS/REFMASS << " " << EPS_OCH3OH/EPS_REF << " " << SIG_OCH3OH/SIG_REF;
             if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
             xdr << "\n";
-   
+
             xdr << R0_C_CH3OH/SIG_REF << " " << R1_C_CH3OH/SIG_REF << " " << R2_C_CH3OH/SIG_REF << "\t"
                 << "0.0 " << CHG_CCH3OH/REFCARG << "\n";
             xdr << R0_O_CH3OH/SIG_REF << " " << R1_O_CH3OH/SIG_REF << " " << R2_O_CH3OH/SIG_REF << "\t"
@@ -658,7 +658,7 @@ void Domain::writeGraphite(
             std::cout << "Fluid code " << tfluid << ": Not yet implemented.\n";
             exit(1000+tfluid);
          }
-      
+
          if(!symmetric)
          {
             tfluid = fluid2;
@@ -675,7 +675,7 @@ void Domain::writeGraphite(
       for(int r=0; r < repl; r++)
       {
          crga[1 + r*NCOMP_POLAR] = polarity/3.0;
-         crga[2 + r*NCOMP_POLAR] = -2.0*polarity/3.0;      
+         crga[2 + r*NCOMP_POLAR] = -2.0*polarity/3.0;
          crga[3 + r*NCOMP_POLAR] = -1.0*polarity/3.0;
       }
 
@@ -684,7 +684,7 @@ void Domain::writeGraphite(
          if(polarity == 0.0) xdr << "1 0 0 0 1\n";  // LJ, C, Q, D, Tersoff
          else if(crga[i] == 0.0) xdr << "1 0 0 0 1\n";
          else xdr << "1 1 0 0 1\n";
-         
+
          if(polarity == 0.0)
          {
             xdr << "0.0 0.0 0.0\t" << 0.5*ATOMIC_MASS_C/REFMASS << " "
@@ -895,7 +895,7 @@ void Domain::writeGraphite(
                    << " tests every 2 steps\n";
             }
          }
-	 txt << "planckConstant\t" 
+	 txt << "planckConstant\t"
 	     << sqrt(6.28319 * T/EPS_REF) << "\n";  // sqrt(2 pi kT)
          txt << "initGrandCanonical\t" << (muVT? 40001: 60001) << "\n";
       }
@@ -921,7 +921,7 @@ void Domain::writeGraphite(
       txt << "phaseSpaceFile\tOldStyle\t" << prefix << ".inp\nparallelization\tDomainDecomposition\n"
           << "datastructure\tLinkedCells\t1\noutput\t";
    }
-  
+
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
       txt << "ResultWriter\t40\t" << prefix

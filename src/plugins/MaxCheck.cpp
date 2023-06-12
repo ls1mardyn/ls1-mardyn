@@ -105,12 +105,12 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 		Log::global_log->info() << "[MaxCheck] vmax(cid=" << cid_ub << "): " << mv.v
 				<< std::endl;
 		mv.v2 = mv.v * mv.v;
-		
+
 		xmlconfig.getNodeValue("Mmax", mv.M);
 		Log::global_log->info() << "[MaxCheck] Mmax(cid=" << cid_ub << "): " << mv.M
 				<< std::endl;
 		mv.M2 = mv.M * mv.M;
-		
+
 		xmlconfig.getNodeValue("Lmax", mv.L);
 		Log::global_log->info() << "[MaxCheck] Lmax(cid=" << cid_ub << "): " << mv.L
 				<< std::endl;
@@ -199,7 +199,7 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 					double scale = mv.v / vabs;
 					it->scale_v(scale);
 				}
-				
+
 				if (mv.M > 0. && absVals.M2 > mv.M2) {
 					double Mabs = sqrt(absVals.M2);
 					double scale = mv.M / Mabs;

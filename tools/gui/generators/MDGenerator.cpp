@@ -73,7 +73,7 @@ void MDGenerator::createSampleObject() const {
 	std::vector<Component> components;
 	components.resize(1);
 	components[0].addLJcenter(0,0,0,1,1,1,1,false);
-	Molecule m(1, &(components[0]), 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0); 
+	Molecule m(1, &(components[0]), 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0);
 	ScenarioGeneratorApplication::getInstance()->addObject(
 			new DrawableMolecule(m, 1));
 #endif

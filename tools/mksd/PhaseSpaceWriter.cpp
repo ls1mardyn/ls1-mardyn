@@ -119,7 +119,7 @@ void PhaseSpaceWriter::write()
 	// writing the parameters of the LJ-fluid
 	for (unsigned i = 0; i < fluidComp.gNumberLJCenters(); i++){
 		psstrm << "0.0 0.0 0.0\t";  // center of mass in the local coordinate system
-		psstrm << fluidComp.gMass(i) <<" "<<fluidComp.gEps(i) << " " << fluidComp.gSigma(i) <<" " <<fluidComp.gRCutLJ() <<" "<< _LJShifted<<"\t";		
+		psstrm << fluidComp.gMass(i) <<" "<<fluidComp.gEps(i) << " " << fluidComp.gSigma(i) <<" " <<fluidComp.gRCutLJ() <<" "<< _LJShifted<<"\t";
 	}
 	psstrm << "0.0 0.0 0.0\n";  // Hauptträgheitsachsen des Gesamtmoleküls
 //***************************************************************************************************************************************
@@ -136,7 +136,7 @@ void PhaseSpaceWriter::write()
 		}
 		psstrm << "0.0 0.0 0.0\n"; // Hauptträgheitsachsen des Gesamtmoleküls
 	}
-	
+
 	_avMass = (_nFluid*fluidComp.gMass(0) + (_nTotal-_nFluid)*wallComp.gMass(0))/_nTotal;
 
 //	std::cout << "\n**********************************\nobject 'wallComp' of the 'Component' class generated.\n**********************************\n";
@@ -238,8 +238,8 @@ void PhaseSpaceWriter::write()
 		} 	// end for ii[1]
 	}	// end for ii[0]
 	//cid ++;
-	
-	
+
+
 	for(unsigned i = 0; i<4;i++) // resetting the counter to zero
 	  ii[i] = 0;
 	// vapour particles
@@ -279,7 +279,7 @@ void PhaseSpaceWriter::write()
 			}	// end for ii[2]
 		} 	// end for ii[1]
 	}	// end for ii[0]
-	
+
 
 	// wall molecules are being filled
 	wallMolecule.calculateVelocities();
@@ -315,9 +315,9 @@ unsigned PhaseSpaceWriter::gNTotal(){
 }
 
 double PhaseSpaceWriter::gTemperature(){
- return _temperature; 
+ return _temperature;
 }
 
 double PhaseSpaceWriter::gAverageMassPerParticle(){
- return _avMass; 
+ return _avMass;
 }

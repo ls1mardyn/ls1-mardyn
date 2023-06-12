@@ -24,7 +24,7 @@ DttNodeTest::DttNodeTest() {
 DttNodeTest::~DttNodeTest() {
 	// TODO Auto-generated destructor stub
 }
- 
+
 void DttNodeTest::testUpwardDownwardWithNoInteraction(){
 /*	double globalDomainLength[3] = {8., 8., 8.};
 	double ctr[3] = {4., 4., 4.};
@@ -40,24 +40,24 @@ void DttNodeTest::testUpwardDownwardWithNoInteraction(){
 	Molecule * it;
 	for(it = container->begin(); it != container->end(); it = container->next()) {
 		root.addParticle(it);
-		
+
 		if(check){
 			p_pos[0] = it->r(0);
 			p_pos[1] = it->r(1);
 			p_pos[2] = it->r(2);
 		check = false;
-		}		
+		}
 	}
 	int depth = log2((globalDomainLength[0] / 1.0));
-  
+
 	bhfmm::DttNode dummy(root, 0,ctr,globalDomainLength,globalDomainLength,orderOfExpansions,depth);
-  
+
 	dummy.upwardPass();
 //	dummy._mp_cell.local = dummy._mp_cell.multipole;
 	dummy.downwardPass();
 
 	dummy.getLeafParticleCell();
-	
+
 	ASSERT_DOUBLES_EQUAL_MSG("P(1) wrong x coordinate",p_pos[0],m.r(0), 1e-12);
 	ASSERT_DOUBLES_EQUAL_MSG("P(1) wrong y coordinate",p_pos[1],m.r(1), 1e-12);
 	ASSERT_DOUBLES_EQUAL_MSG("P(1) wrong z coordinate",p_pos[2],m.r(2), 1e-12);
@@ -133,13 +133,13 @@ void DttNodeTest::testDepth(double cutoffRadius){
 	for(auto it = container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
 		particles.push_back(&(*it));
 	}
-	
+
 	int depth = log2((globalDomainLength[0] / cutoffRadius));
-  
+
 	bhfmm::DttNode dummy(particles, 0,ctr,globalDomainLength,orderOfExpansions,depth);
 
 	ASSERT_EQUAL_MSG("WRONG DEPTH!",dummy.getMaxDepth(),depth);
-	
+
 	delete container;
 }
 

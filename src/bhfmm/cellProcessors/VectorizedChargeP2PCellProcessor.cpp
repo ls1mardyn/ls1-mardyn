@@ -113,7 +113,7 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 }
 
 void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) {
-	// as pre new integration of Caches in SoAs, 
+	// as pre new integration of Caches in SoAs,
 	// this function work as before, as it builds secondary SoAs
 
 	// Determine the total number of centers.
@@ -124,7 +124,7 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) 
 	size_t nCharges = 0;
 	size_t nDipoles = 0;
 	size_t nQuadrupoles = 0;
-	
+
 	for (size_t i = 0; i < numMolecules; ++i) {
 		nCharges += c.moleculesAt(i).numCharges();
 	}
@@ -190,7 +190,7 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) 
 }
 
 void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c) {
-	// as pre new integration of Caches in SoAs, 
+	// as pre new integration of Caches in SoAs,
 	// this function work as before, as it builds secondary SoAs
 	using std::isnan; // C++11 required
 

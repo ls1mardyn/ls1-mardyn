@@ -37,7 +37,7 @@ void VelocityExchange::readXML(XMLfileUnits& xmlconfig) {
     for (unsigned short d = 0; d < 3; d++) {
         _boxLength[d] = domain->getGlobalLength(d);
     }
-    
+
     // set default in x and z direction to box size
     // default case is symmetric with region sizes arbitrarily set to 5.0
     // cold region in middle of simulation box

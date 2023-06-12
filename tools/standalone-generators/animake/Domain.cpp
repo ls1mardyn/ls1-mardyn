@@ -118,7 +118,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
                if(tfill) N1++;
             }
    */
-   unsigned N1 = slots; 
+   unsigned N1 = slots;
    for(unsigned i=0; i < fl_units[0]; i++)
       for(unsigned j=0; j < fl_units[1]; j++)
          for(unsigned k=0; k < fl_units[2]; k++)
@@ -408,7 +408,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
       txt << "</moleculetype>\n";
 
       txt << "</components>\n"
-          << "<phasespacepoint><file type=\"ASCII\">" << prefix 
+          << "<phasespacepoint><file type=\"ASCII\">" << prefix
           << ".inp</file></phasespacepoint>\n"
           << "</ensemble>\n";
    }
@@ -481,7 +481,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
          xdr << "2 0 0 1 0\n";  // LJ, C, D, Q, Tersoff
       }
    }
-   
+
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
       if((fluid == FLUID_AR) || (fluid == FLUID_CH4))
@@ -936,7 +936,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
              << " " << this->box[2]/SIG_REF << " conduct "
              << 1 + (int)round(0.003 * N)
              << " tests every 3 steps\n";
-	 txt << "planckConstant\t" 
+	 txt << "planckConstant\t"
 	     << sqrt(6.28319 * T/EPS_REF) << "\n";  // sqrt(2 pi kT)
          txt << "initGrandCanonical\t100000\n";
       }

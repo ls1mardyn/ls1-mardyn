@@ -4,14 +4,14 @@
 CPPUNIT_NS_BEGIN
 
 
-void 
+void
 assertDoubleEquals( double expected,
                     double actual,
                     double delta,
                     SourceLine sourceLine,
                     const std::string &message )
 {
-  AdditionalMessage msg( "Delta   : " + 
+  AdditionalMessage msg( "Delta   : " +
                          assertion_traits<double>::toString(delta) );
   msg.addDetail( AdditionalMessage(message) );
 
@@ -25,7 +25,7 @@ assertDoubleEquals( double expected,
     // expected and actual have the same value (infinity sign).
     // NaN Value should always lead to a failed equality.
     if ( floatingPointIsUnordered(expected)  ||  floatingPointIsUnordered(actual) )
-    { 
+    {
        equal = false;  // expected or actual is a NaN
     }
     else // ordered values, +inf or -inf comparison
@@ -37,8 +37,8 @@ assertDoubleEquals( double expected,
   Asserter::failNotEqualIf( !equal,
                             assertion_traits<double>::toString(expected),
                             assertion_traits<double>::toString(actual),
-                            sourceLine, 
-                            msg, 
+                            sourceLine,
+                            msg,
                             "double equality assertion failed" );
 }
 

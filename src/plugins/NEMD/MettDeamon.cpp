@@ -172,7 +172,7 @@ void update_velocity_vectors(Random* rnd, const uint64_t& numSamples, const doub
 	sum_v2xi = std::accumulate(v2xi.begin(), v2xi.end(), 0.0);
 	sum_v2yi = std::accumulate(v2yi.begin(), v2yi.end(), 0.0);
 	sum_v2zi = std::accumulate(v2zi.begin(), v2zi.end(), 0.0);
-	
+
 	// <-- EKIN
 
 	// calc drift again
@@ -987,7 +987,7 @@ void MettDeamon::logReleasedVelocities()
 	uint64_t simstep = global_simulation->getSimulationStep();
 	if(0 != (simstep % _released.log_freq_vel) )
 		return;
-	
+
 	if( simstep == global_simulation->getNumInitTimesteps() ) // do not write data directly after (re)start
 		return;
 
@@ -1139,7 +1139,7 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 {
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	this->updateReservoir(&domainDecomp, particleContainer);
-	
+
 	int nRank = domainDecomp.getRank();
 	int numProcs = domainDecomp.getNumProcs();
 	std::vector<Component>* ptrComps = global_simulation->getEnsemble()->getComponents();
@@ -1288,7 +1288,7 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 	// update BinQueue before inserting new Reservoir slab
 	_bUpdateBinQueue = true;
 	xmlconfig.getNodeValue("@update", _bUpdateBinQueue);
-	
+
 	std::string strType = "unknown";
 	xmlconfig.getNodeValue("file@type", strType);
 	xmlconfig.getNodeValue("binwidth", _dBinWidthInit);
@@ -1397,7 +1397,7 @@ void Reservoir::updateParticleData(DomainDecompBase* domainDecomp, ParticleConta
 				Molecule mol;
 				ParticleData::ParticleDataToMolecule(particle_buff[particle_buff_pos], mol);
 				particle_buff_pos++;
-				
+
 				bool bIsRelevant = this->isRelevant(domainDecomp, domain, mol);
 				if (bIsRelevant) {
 					_particleVector.push_back(mol);
@@ -1773,7 +1773,7 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp, ParticleConta
 			Molecule mol;
 			ParticleData::ParticleDataToMolecule(particle_buff[particle_buff_pos], mol);
 			particle_buff_pos++;
-			
+
 			bool bIsRelevant = this->isRelevant(domainDecomp, domain, mol);
 			if (bIsRelevant) {
 				_particleVector.push_back(mol);

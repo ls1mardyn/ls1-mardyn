@@ -48,7 +48,7 @@ void XyzWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *
 			filenamestream << "-" << gettimestring();
 		}
 		filenamestream << ".xyz";
-		
+
 		int ownRank = domainDecomp->getRank();
 		if( ownRank == 0 ) {
 			std::ofstream xyzfilestream( filenamestream.str(). c_str() );

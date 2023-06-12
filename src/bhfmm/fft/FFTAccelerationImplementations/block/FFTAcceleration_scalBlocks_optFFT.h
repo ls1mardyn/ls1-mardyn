@@ -13,7 +13,7 @@
 #include "bhfmm/fft/FFTSettings.h"
 #include "bhfmm/fft/tools/optimizedFFT/optFFT_API_Factory.h"
 
-/* 
+/*
  * Use FFTDataContainer_scalBlocks as Data container (2 arrays of matrices)
  */
 class FFTAcceleration_scalBlocks_optFFT: public FFTAccelerationAPI_full {

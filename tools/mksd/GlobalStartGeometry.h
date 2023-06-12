@@ -92,6 +92,6 @@ private:
 	// => 3 diemsions for a vapour elementary box (due to 3 directions in space)
 	// and one dimension addressing one of three slots within an elementary box
 	std::map< unsigned, std::map<unsigned, std::map<unsigned, std::map<unsigned, bool> > > > _fillVap;
-	
+
 };
 #endif /* GLOBALSTARTGEOMETRY_H_ */

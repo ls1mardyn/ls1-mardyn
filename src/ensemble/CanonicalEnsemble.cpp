@@ -157,7 +157,7 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer* particleContaine
 
 	if(variable & TEMPERATURE) {
 		Log::global_log->debug() << "Updating temperature" << std::endl;
-		/* TODO: calculate actual temperature or return specified temperature as 
+		/* TODO: calculate actual temperature or return specified temperature as
 		 * the canonical ensemble should have a fixed temperature? */
 		long long totalDegreesOfFreedom = 0;
 		for(int cid = 0; cid < numComponents; cid++) {

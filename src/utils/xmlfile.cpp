@@ -20,7 +20,7 @@
 
 //#include <cstdio>	// fseek(),fread(); should be included after mpi.h
 //#ifdef __linux__
-//#include <sys/stat.h>   // stat() 
+//#include <sys/stat.h>   // stat()
 //#endif
 
 
@@ -143,7 +143,7 @@ XMLfile::Query XMLfile::query(const std::string& querystr) const
 	//queryresult.m_nodes.assign(nodes.begin(), nodes.end());
 	queryresult.m_nodes.reserve(nodes.size());
 	copy(nodes.begin(), nodes.end(), back_inserter(queryresult.m_nodes));
-*/	
+*/
 	return queryresult;
 }
 
@@ -190,7 +190,7 @@ bool XMLfile::initfile_local(const std::string& filepath) {
 		m_filedir=std::string();
 		m_filename=std::string(filepathTrimmed);
 	}
-	
+
 	//version using ifstream
 	std::ifstream fstrm(filepathTrimmed.c_str(),std::ifstream::binary|std::ifstream::ate);
 	if(!fstrm) {
@@ -204,13 +204,13 @@ bool XMLfile::initfile_local(const std::string& filepath) {
 	xmlstr[filesize]=0;
 	//                          std::ios::binary
 	fstrm.open(filepathTrimmed.c_str(),std::ifstream::binary);
-	//checking if(!fstrm) again should not be necessary 
+	//checking if(!fstrm) again should not be necessary
 	fstrm.read(xmlstr,filesize);
 	filesize-=fstrm.gcount();
 	fstrm.close();
-//	
+//
 	mardyn_assert(filesize == 0);
-	
+
 	m_xmldoc.parse<0>(xmlstr);
 	expandincludes();
 	m_currentnode=Node(&m_xmldoc,"/");
@@ -375,7 +375,7 @@ unsigned long XMLfile::query(std::list<Node>& nodeselection, const std::string& 
 		tokenpos=0;
 	}
 	// now nodequery should be separated into elename, condition, attrname
-	
+
 	std::string nodepath0(nodepath);
 	// remove trailing /
 	if(nodepath[nodepath.size()-1]=='/') nodepath0=nodepath.substr(0,nodepath.size()-1);

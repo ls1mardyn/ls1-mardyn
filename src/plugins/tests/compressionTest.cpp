@@ -21,7 +21,7 @@ void compressionTest::testNone() {
     std::uniform_int_distribution<> charsonly(0, 255);
     for (auto& elem : someData) {
         elem = charsonly(gen);
-    }    
+    }
     std::vector<char> compressedData;
     std::vector<char> decompressedData;
 
@@ -56,7 +56,7 @@ void compressionTest::testLz4Random() {
     std::uniform_int_distribution<> charsonly(0, 255);
     for (auto& elem : someData) {
         elem = charsonly(gen);
-    }    
+    }
     std::vector<char> compressedData;
     std::vector<char> decompressedData;
 
@@ -88,7 +88,7 @@ void compressionTest::testLz4Sine() {
     int t = 0;
     for (auto& elem : someData) {
         elem = static_cast<char>(sin(dphi*t++/datasize)*127.);
-    }    
+    }
     std::vector<char> compressedData;
     std::vector<char> decompressedData;
 

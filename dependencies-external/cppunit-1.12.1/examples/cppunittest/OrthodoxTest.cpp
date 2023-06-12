@@ -16,7 +16,7 @@ OrthodoxTest::~OrthodoxTest()
 }
 
 
-void 
+void
 OrthodoxTest::setUp()
 {
   m_testListener = new MockTestListener( "mock-listener" );
@@ -25,7 +25,7 @@ OrthodoxTest::setUp()
 }
 
 
-void 
+void
 OrthodoxTest::tearDown()
 {
   delete m_result;
@@ -33,7 +33,7 @@ OrthodoxTest::tearDown()
 }
 
 
-void 
+void
 OrthodoxTest::testValue()
 {
   CPPUNIT_NS::Orthodox<Value> test;
@@ -43,7 +43,7 @@ OrthodoxTest::testValue()
 }
 
 
-void 
+void
 OrthodoxTest::testValueBadConstructor()
 {
   CPPUNIT_NS::Orthodox<ValueBadConstructor> test;
@@ -53,7 +53,7 @@ OrthodoxTest::testValueBadConstructor()
 }
 
 
-void 
+void
 OrthodoxTest::testValueBadInvert()
 {
   CPPUNIT_NS::Orthodox<ValueBadInvert> test;
@@ -63,7 +63,7 @@ OrthodoxTest::testValueBadInvert()
 }
 
 
-void 
+void
 OrthodoxTest::testValueBadEqual()
 {
   CPPUNIT_NS::Orthodox<ValueBadEqual> test;
@@ -73,7 +73,7 @@ OrthodoxTest::testValueBadEqual()
 }
 
 
-void 
+void
 OrthodoxTest::testValueBadNotEqual()
 {
   CPPUNIT_NS::Orthodox<ValueBadNotEqual> test;
@@ -83,7 +83,7 @@ OrthodoxTest::testValueBadNotEqual()
 }
 
 
-void 
+void
 OrthodoxTest::testValueBadCall()
 {
   CPPUNIT_NS::Orthodox<ValueBadCall> test;
@@ -93,7 +93,7 @@ OrthodoxTest::testValueBadCall()
 }
 
 
-void 
+void
 OrthodoxTest::testValueBadAssignment()
 {
   CPPUNIT_NS::Orthodox<ValueBadAssignment> test;

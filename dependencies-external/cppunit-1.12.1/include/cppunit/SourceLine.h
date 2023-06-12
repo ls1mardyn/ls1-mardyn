@@ -21,7 +21,7 @@ CPPUNIT_NS_BEGIN
  * \ingroup BrowsingCollectedTestResult
  *
  * Used to capture the failure location in assertion.
- * 
+ *
  * Use the CPPUNIT_SOURCELINE() macro to construct that object. Typically used when
  * writing an assertion macro in association with Asserter.
  *

@@ -78,7 +78,7 @@ void Lattice::readXML(XMLfileUnits& xmlconfig) {
 	std::string latticeSystem;
 	xmlconfig.getNodeValue("@system", latticeSystem);
 	Log::global_log->info() << "Lattice system type: " << latticeSystem << std::endl;
-	
+
 	std::string latticeCentering;
 	xmlconfig.getNodeValue("@centering", latticeCentering);
 	Log::global_log->info() << "Lattice centering: " << latticeCentering << std::endl;

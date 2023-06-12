@@ -8,10 +8,10 @@
 
 class CheckpointWriter : public PluginBase {
 public:
-	
+
     CheckpointWriter() {}
 	~CheckpointWriter() {}
-	
+
 
 	/** @brief Read in XML configuration for CheckpointWriter.
 	 *
@@ -27,7 +27,7 @@ public:
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
-	
+
 	void init(ParticleContainer *particleContainer,
               DomainDecompBase *domainDecomp, Domain *domain);
 	void endStep(
@@ -37,7 +37,7 @@ public:
     );
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain);
-	
+
 	std::string getPluginName() {
 		return std::string("CheckpointWriter");
 	}

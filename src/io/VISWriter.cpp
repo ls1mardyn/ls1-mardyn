@@ -39,7 +39,7 @@ void VISWriter::readXML(XMLfileUnits& xmlconfig) {
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
-	
+
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if(appendTimestamp > 0) {
@@ -66,7 +66,7 @@ void VISWriter::endStep(ParticleContainer *particleContainer,
 			filenamestream << "-" << gettimestring();
 		}
 		filenamestream << ".vis";
-		
+
 		std::vector<char> filename(filenamestream.str().size()+1);
 		strcpy(filename.data(),filenamestream.str().c_str());
 

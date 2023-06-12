@@ -55,7 +55,7 @@ private:
   TestCaseTest( const TestCaseTest &copy );
   void operator =( const TestCaseTest &copy );
 
-  void checkFailure( bool failSetUp, 
+  void checkFailure( bool failSetUp,
                      bool failRunTest,
                      bool failTearDown );
 /*

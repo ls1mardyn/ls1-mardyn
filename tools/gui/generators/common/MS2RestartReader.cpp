@@ -98,7 +98,7 @@ MS2RestartReader::MoleculeData* MS2RestartReader::readMS2RestartFile(const std::
     for (int i = 0; i < numberOfComponents; i++) {
     	start_idx = readMolecules(inputfilestream, i, start_idx, molecules, hasRotationalDOF[i]);
     }
-    
+
 //    for (int i = 0; i < numberOfMolecules; i++) {
 //        molecules[i].print(cout);
 //    }
@@ -110,7 +110,7 @@ MS2RestartReader::MoleculeData* MS2RestartReader::readMS2RestartFile(const std::
     		molecules[i].x[j] = ( molecules[i].x[j] + 0.5 ) * boxLength;
     	}
     }
-    
+
     return molecules;
 }
 

@@ -18,14 +18,14 @@ int main(int argc, char** argv)
       std::cout << argv[0] << usage;
       exit(7);
    }
-   
+
    char* prefix = argv[1];
-   
+
    bool grid_specified = false;
    int grid;
    bool length_specified = false;
    double length;
-   
+
    bool integral = false;
    unsigned jump = 1;
    unsigned first_frame = 1;
@@ -35,11 +35,11 @@ int main(int argc, char** argv)
    char* suffix = (char*)0;
    unsigned digits_specified = false;
    unsigned digits = 0;
-   
+
    // unsigned num_threshold = 11;
    // unsigned min_threshold = 3;
    unsigned max_threshold = 2000;
-   
+
    for(int i=2; i < argc; i++)
    {
       if(*argv[i] != '-')
@@ -119,7 +119,7 @@ int main(int argc, char** argv)
          }
       }
    }
-   
+
    if(!grid_specified)
    {
       std::cout << "\nUnknown grid size.\n\n" << argv[0] << usage;
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
       std::cout << "\nUnknown box size.\n\n" << argv[0] << usage;
       exit(14);
    }
-   
+
    std::cout << "# frame\t\tN_cav\t";
    std::map<unsigned, unsigned> thresholds;
    /*
@@ -162,7 +162,7 @@ int main(int argc, char** argv)
    thresholds[max_threshold] = 0;
    std::cout << "\t(N_cav >= " << max_threshold << ")";
    std::cout << "\t\ti_cav(max)\n# \n";
-   
+
    char lnin[256];
    std::ifstream* dord;
    if(integral)
@@ -205,7 +205,7 @@ int main(int argc, char** argv)
             }
          }
       }
-      
+
       if(!integral)
       {
          bool opened = false;
@@ -213,7 +213,7 @@ int main(int argc, char** argv)
          {
             if(!digits_specified) digits++;
             unsigned fnlen = strlen(prefix) + digits + 1;
-            
+
             if(suffix_specified) fnlen += strlen(suffix);
             char dordname[fnlen];
             strcpy(dordname, prefix);
@@ -223,7 +223,7 @@ int main(int argc, char** argv)
             sprintf(framecode, fcformat, frame);
             strcat(dordname, framecode);
             if(suffix_specified) strcat(dordname, suffix);
-            
+
             dord = new std::ifstream(dordname);
             if(dord->fail())
             {
@@ -233,7 +233,7 @@ int main(int argc, char** argv)
          }
          digits_specified = true;
       }
-      
+
       if(dord->fail()) break;
       // dord->getline(lnin, 256);
       // int entries = atoi(lnin);
@@ -249,7 +249,7 @@ int main(int argc, char** argv)
       if(dord->fail()) { std::cout << "\nSkip failing at comment line.\n"; exit(18); }
       dord->getline(lnin, 256);
       // std::cout << "\n\tskipping comment line [" << lnin << "]\n";
-      
+
       Domain c(grid);
       std::string cavtype;
       double qabs[3];
@@ -274,10 +274,10 @@ int main(int argc, char** argv)
          c.insert(qgrid[0], qgrid[1], qgrid[2]);
       }
       std::cout << frame << "\t\t" << c.size() << "\t";
-      
+
       c.detectClusters();
       unsigned maxsize = c.countClusters(&thresholds);
-      
+
       std::map<unsigned, unsigned>::iterator threshit;
       for(threshit = thresholds.begin(); threshit != thresholds.end(); threshit++)
       {
@@ -286,7 +286,7 @@ int main(int argc, char** argv)
       }
       std::cout << "\t\t" << maxsize << "\n";
       std::cout.flush();
-      
+
       if(!integral)
       {
          dord->close();
@@ -298,7 +298,7 @@ int main(int argc, char** argv)
       dord->close();
       delete dord;
    }
-   
+
    std::cout << "\n";
    return 0;
 }

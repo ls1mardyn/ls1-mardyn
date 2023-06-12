@@ -31,7 +31,7 @@ void SysMonOutput::readXML(XMLfileUnits& xmlconfig) {
 		}
 	}
 	//xmlconfig.changecurrentnode(oldpath);
-	
+
 	//sysmon->updateExpressionValues();
 	//global_log->info() << sysmon->InfoString("System Monitor\n","\t");
 }

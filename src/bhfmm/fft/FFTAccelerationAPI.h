@@ -13,9 +13,9 @@
 #include "bhfmm/fft/FFTAccelerableExpansion.h"
 
 /**
- * Abstract class defining the interface of a class handling the M2L's 
+ * Abstract class defining the interface of a class handling the M2L's
  * FFT acceleration
- * 
+ *
  * Various implementations will offer various schemes and can be choosed
  * at runtime using a factory and strategy pattern (see FFTSetting and FFTFactory)
  */

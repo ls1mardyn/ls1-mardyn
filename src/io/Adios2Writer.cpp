@@ -73,7 +73,7 @@ void Adios2Writer::defineVariables(const uint64_t global, const uint64_t offset,
 		if (std::holds_alternative<std::vector<PRECISION>>(variableContainer)) {
 			auto advar_prec =
 				_io->DefineVariable<PRECISION>(variableName, {global}, {offset}, {local}, adios2::ConstantDims);
-			
+
 			if (!_compressionOperator.Type().empty()) {
 				if (_compression == "SZ" || _compression == "sz") {
 #ifdef ADIOS2_HAVE_SZ
@@ -148,8 +148,8 @@ void Adios2Writer::readXML(XMLfileUnits& xmlconfig) {
 	_num_files = -1;
 	xmlconfig.getNodeValue("numfiles", _num_files);
 	Log::global_log->info() << "[Adios2Writer] Number of files: " << _num_files << std::endl;
-	
-	
+
+
 	xmlconfig.changecurrentnode("/");
 	xmlconfig.printXML(_xmlstream);
 
@@ -173,7 +173,7 @@ void Adios2Writer::testInit(std::vector<Component>& comps, const std::string out
 	_compression_rate = compression_rate;
 	Log::global_log->info() << "[Adios2Writer] compression rate (ZFP): " << _compression_rate << std::endl;
 	_comps = comps;
-	
+
 	if (!_inst) initAdios2();
 }
 
@@ -212,7 +212,7 @@ void Adios2Writer::initAdios2() {
 			_compressionOperator = _inst->DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 #endif
 		}
-		
+
 		// Write information about this simulation using ADIOS2 attributes
 		_io->DefineAttribute<std::string>("config", _xmlstream.str());
 		auto& domainDecomp = _simulation.domainDecomposition();
@@ -335,7 +335,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 			std::get<std::vector<PRECISION>>(_vars[Ly_name]).emplace_back(m->D(1));
 			std::get<std::vector<PRECISION>>(_vars[Lz_name]).emplace_back(m->D(2));
 		}
-		
+
 		m_id.emplace_back(m->getID());
 		comp_id.emplace_back(m->componentid());
 
@@ -343,7 +343,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 	// gather offsets
 	Log::global_log->debug() << "[Adios2Writer] numProcs: " << numProcs << std::endl;
-	
+
 	uint64_t offset = 0;
 #ifdef ENABLE_MPI
 	MPI_Exscan(&localNumParticles, &offset, 1, MPI_UINT64_T, MPI_SUM, domainDecomp->getCommunicator());
@@ -414,7 +414,7 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 
 		// wait for completion of write
 		_engine->EndStep();
-		
+
 		clearContainers();
 	} catch (std::invalid_argument& e) {
 		Log::global_log->error() << "[Adios2Writer] Invalid argument exception, STOPPING PROGRAM";

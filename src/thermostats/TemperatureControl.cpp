@@ -579,7 +579,7 @@ void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64
 	const std::string fname = "addedEkin_reg" + std::to_string(this->GetID()) + "_cid" + std::to_string(_nTargetComponentID) + ".dat";
 	std::ofstream ofs;
 	ofs.open(fname, std::ios::app);
-	
+
 	ofs << std::setw(12) << simstep;
 	for (double& it : vg) {
 		ofs << FORMAT_SCI_MAX_DIGITS << it;

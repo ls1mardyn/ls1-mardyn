@@ -57,7 +57,7 @@ void DecompWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 		filenamestream << ".decomp";
 
 		domainDecomp->printDecomp(filenamestream.str(), domain, particleContainer);
-	}  
+	}
 }
 
 void DecompWriter::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,

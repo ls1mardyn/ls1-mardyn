@@ -113,11 +113,11 @@ void VCP1CLJRMM::processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool 
 	// This saves the Molecule::isLessThan checks
 	// and works similar to the "Half-Shell" scheme
 
-	const bool ApplyCutoff = true; 
-	
+	const bool ApplyCutoff = true;
+
         if(sumAll) { // sumAll
 		const bool CalculateMacroscopic = true; // is now always set to true
-        
+
 		if (calc_soa1_soa2) {
 		    _calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
 		} else {

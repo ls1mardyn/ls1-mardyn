@@ -132,8 +132,8 @@ void PressureGradient::determineAdditionalAcceleration
 					  + previousVelocity[d] );
 			}
 #ifndef NDEBUG
-			Log::global_log->debug() << "accelerator no. " << gVSit->first 
-				<< "previous vz: " << previousVelocity[2] 
+			Log::global_log->debug() << "accelerator no. " << gVSit->first
+				<< "previous vz: " << previousVelocity[2]
 				<< "current vz: " << _globalVelocitySum[2][gVSit->first]*invgN << std::endl;
 #endif
 		}
@@ -174,7 +174,7 @@ void PressureGradient::determineAdditionalAcceleration
 
 double PressureGradient::getDirectedVelocity(unsigned int cosetid, unsigned short int d)
 {
-	if(!this->_localRank) 
+	if(!this->_localRank)
 		return this->_globalVelocitySum[d][cosetid] / this->_globalN[cosetid];
 	else return 0.0;
 }

@@ -13,7 +13,7 @@
 //! have to care whether the program will be executed in parallel or sequentially.
 //! The only thing that the application developer should know that there might
 //! be several processes and at some point in the simulation those have to do a
-//! collective communication to broadcast or reduce values. Those values are 
+//! collective communication to broadcast or reduce values. Those values are
 //! given to the domain decomposition method, the communication command is executed
 //! by the domain decomp and the values can be read again. This class just has to
 //! ensure that this also works if there is no real domain decomposition but the

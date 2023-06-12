@@ -53,7 +53,7 @@ double LegacyCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& ce
 
 void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll /* = false */) {
 	double distanceVector[3];
-	
+
 	auto begin1 = cell1.iterator();
 	auto begin2 = cell2.iterator();
 
@@ -61,9 +61,9 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 
 		// loop over all particles in the cell
 		for (auto it1 = begin1; it1.isValid(); ++it1) {
-			Molecule& molecule1 = *it1; 
+			Molecule& molecule1 = *it1;
 			for (auto it2 = begin2; it2.isValid(); ++it2) {
-				Molecule& molecule2 = *it2; 
+				Molecule& molecule2 = *it2;
 				if(molecule1.getID() == molecule2.getID()) continue;  // for grand canonical ensemble and traversal of pseudocells
 				double dd = molecule2.dist2(molecule1, distanceVector);
 				if (dd < _cutoffRadiusSquare) {

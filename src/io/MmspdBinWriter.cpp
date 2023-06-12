@@ -38,7 +38,7 @@ void MmspdBinWriter::readXML(XMLfileUnits& xmlconfig) {
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
-	
+
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if(appendTimestamp > 0) {
@@ -77,7 +77,7 @@ void MmspdBinWriter::init(ParticleContainer * /*particleContainer*/,
 
   unsigned short version[2] = {1, 0};
   mmspdfstream.write((char*)&version,sizeof(version));
-  
+
   unsigned char padend = 128;
   for(int i=0; i<4; ++i) mmspdfstream.write((char*)&padend,sizeof(padend));
 
@@ -162,8 +162,8 @@ void MmspdBinWriter::init(ParticleContainer * /*particleContainer*/,
       else {
     	  mmspdfstream << "**************** Error: Unspecified component!*************\n Possible reason: more than 5 components?\n";
       }
-  } // end of particle definitions		
-  
+  } // end of particle definitions
+
   mmspdfstream.close();
 #ifdef ENABLE_MPI
 	}
@@ -181,7 +181,7 @@ void MmspdBinWriter::endStep(ParticleContainer *particleContainer,
 			filenamestream << "-" << gettimestring();
 		}
 		filenamestream << ".mmspd";
-		
+
 		std::vector<char> filename(filenamestream.str().size()+1);
 		strcpy(filename.data(),filenamestream.str().c_str());
 

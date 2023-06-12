@@ -150,7 +150,7 @@ void Component::updateMassInertia(Site& site) {
 	_m += site.m();
 	// assume the input is already transformed to the principal axes system
 	// (and therefore the origin is the center of mass)
-	
+
 	if ( not _isStockmayer){ //if the component is a Stockmayer fluid, the moments of inertia are fixed at [1 1 0]
 	//	_I[0] += m * (y * y + z * z);
 		_I[0] += site.m() * (site.ry() * site.ry() + site.rz() * site.rz());
@@ -166,8 +166,8 @@ void Component::updateMassInertia(Site& site) {
 		_I[5] -= site.m() * site.ry() * site.rz();
 
 		_rot_dof = 3;
-	
-	
+
+
 		for (unsigned short d = 0; d < 3; ++d) {
 			_Ipa[d] = _I[d];
 			if (_Ipa[d] == 0.) --_rot_dof;

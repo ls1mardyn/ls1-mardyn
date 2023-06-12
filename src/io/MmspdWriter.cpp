@@ -63,56 +63,56 @@ void MmspdWriter::init(ParticleContainer * /*particleContainer*/,
 	filenamestream << ".mmspd";
 	_filename = filenamestream.str();
 	std::ofstream mmspdfstream(_filename.c_str(), std::ios::binary|std::ios::out);
-  
-  
+
+
   /* writing the header of the mmspd file, i.e. writing the BOM, the format marker (UTF-8),  the header line and defining the particle types */
   // BOM
   short int bom1,bom2,bom3;
   bom1 = 0xef;
   bom2 = 0xbb;
   bom3 = 0xbf;
-  
+
   mmspdfstream.write(reinterpret_cast<const char*>(& bom1), 1);
   mmspdfstream.write(reinterpret_cast<const char*>(& bom2), 1);
   mmspdfstream.write(reinterpret_cast<const char*>(& bom3), 1);
-  
+
   // format marker
   mmspdfstream << "MMSPDu 1.0" << "\n";
   // header line
   unsigned long numTimesteps = _simulation.getNumTimesteps();
   mmspdfstream << "1 " << "0 0 0 " << domain->getGlobalLength(0) <<" "<< domain->getGlobalLength(1)<< " " << domain->getGlobalLength(2) << " "
 		       << numTimesteps / _writeFrequency+1    << " " << domain-> getNumberOfComponents() << " " << "0" << "\n";
-		       
-  
-  
-  /*mmspdfstream << "1 " << particleContainer->getBoundingBoxMin(0) << " " << particleContainer->getBoundingBoxMin(1) << " " 
-		       << particleContainer->getBoundingBoxMin(2) << " " << particleContainer->getBoundingBoxMax(0) << " " 
+
+
+
+  /*mmspdfstream << "1 " << particleContainer->getBoundingBoxMin(0) << " " << particleContainer->getBoundingBoxMin(1) << " "
+		       << particleContainer->getBoundingBoxMin(2) << " " << particleContainer->getBoundingBoxMax(0) << " "
 		       << particleContainer->getBoundingBoxMax(1) << " " << particleContainer->getBoundingBoxMax(2) << " "
 		       << _numberOfTimesteps / _writeFrequency+1    << " " << domain-> getNumberOfComponents() << " " << "0" << "\n";*/
-		       
+
   // particle definitions every single line specifies a particular particle type
   for(unsigned i = 0; i < domain->getNumberOfComponents() ; i++){
       if (i == 0){
-	mmspdfstream << "s 4 3 cr b 255 cg b 0 cb b 0 r f "; 
+	mmspdfstream << "s 4 3 cr b 255 cg b 0 cb b 0 r f ";
       }
       else if (i == 1){
-	mmspdfstream << "s 4 3 cr b 0 cg b 102 cb b 0 r f "; 
+	mmspdfstream << "s 4 3 cr b 0 cg b 102 cb b 0 r f ";
       }
       else if (i == 2){
-	mmspdfstream << "s 4 3 cr b 0 cg b 255 cb b 255 r f "; 
+	mmspdfstream << "s 4 3 cr b 0 cg b 255 cb b 255 r f ";
       }
       else if(i == 3){
-	mmspdfstream << "s 4 3 cr b 150 cg b 0 cb b 150 r f "; 
+	mmspdfstream << "s 4 3 cr b 150 cg b 0 cb b 150 r f ";
       }
       else if (i == 4){
-	mmspdfstream << "s 4 3 cr b 100 cg b 100 cb b 100 r f "; 
+	mmspdfstream << "s 4 3 cr b 100 cg b 100 cb b 100 r f ";
       }
       else {
-	mmspdfstream << "**************** Error: Unspecified component!*************\n Possible reason: more than 5 components?\n"; 
+	mmspdfstream << "**************** Error: Unspecified component!*************\n Possible reason: more than 5 components?\n";
       }
       mmspdfstream<< std::setprecision(4) << domain->getSigma(i,0)*0.7 << " x f y f z f" << "\n";
-  } // end of particle definitions		
-  
+  } // end of particle definitions
+
   mmspdfstream.close();
 #ifdef ENABLE_MPI
 	}
@@ -179,7 +179,7 @@ void MmspdWriter::endStep(ParticleContainer *particleContainer,
 				mmspdfstream << "\n";
 			}
 		}
-		
+
 		std::string sendbuff;
 		sendbuff = mmspdfstream.str();
 		MPI_Send(sendbuff.c_str(), sendbuff.length() + 1, MPI_CHAR, 0, tag, MPI_COMM_WORLD);

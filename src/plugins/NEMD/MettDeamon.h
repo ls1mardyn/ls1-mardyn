@@ -261,7 +261,7 @@ private:
 	void updateReservoir(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
 	void InsertReservoirSlab(ParticleContainer* particleContainer);
 	void initRestart();
-	
+
 	// stat. evap
 	void readNormDistr();
 
@@ -306,7 +306,7 @@ private:
 		uint32_t cid_ub;
 	} _manipfree;
 	FeedRateStruct _feedrate;
-	
+
 	// stat. evap.
 	struct{
 		bool enabled;
@@ -323,7 +323,7 @@ private:
 			} right;
 		} cid;
 	} _vap_trans_plane;
-	
+
 	struct NormMB{
 		struct NormFnames{
 			std::string vxz;
@@ -332,7 +332,7 @@ private:
 		std::list<double> vxz;
 		std::list<double> vy;
 	} _norm;
-	
+
 	struct{
 		CommVar<uint64_t> count;
 		CommVar<uint64_t> deleted;
@@ -556,7 +556,7 @@ public:
 			_last->_next = _first;  // connect tail to head
 		}
 	}
-	
+
 	void clear()
 	{
 		while (!isEmpty()) {

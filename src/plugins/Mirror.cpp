@@ -148,7 +148,7 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 				Log::global_log->info() << "[Mirror] Meland: FixedProb = " << _melandParams.fixed_probability_factor << std::endl;
 			}
 		}
-		
+
 		/** Diffuse mirror **/
 		_diffuse_mirror.enabled = false;
 		_diffuse_mirror.width = 0.0;
@@ -156,14 +156,14 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 		_diffuse_mirror.enabled = bRet;
 		if(_diffuse_mirror.width > 0.0) { Log::global_log->info() << "[Mirror] Using diffuse Mirror width = " << _diffuse_mirror.width << std::endl; }
 	}
-	
+
 	if(MT_RAMPING == _type)
 	{
 		bool bRet = true;
 		bRet = bRet && xmlconfig.getNodeValue("ramping/start", _rampingParams.startStep);
 		bRet = bRet && xmlconfig.getNodeValue("ramping/stop", _rampingParams.stopStep);
 		bRet = bRet && xmlconfig.getNodeValue("ramping/treatment", _rampingParams.treatment);
-		
+
 		if (not bRet) {
 			Log::global_log->error() << "[Mirror] Ramping: Parameters for method 5 (MT_RAMPING) provided in config-file *.xml corrupted/incomplete. Program exit ..." << std::endl;
 			Simulation::exit(-1);
@@ -233,7 +233,7 @@ void Mirror::beforeForces(
 					it->componentid() + 1;  // unity based componentid --> 0: arbitrary component, 1: first component
 
 				if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
-				
+
 				double vy = it->v(1);
 				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) ) {
 					continue;
@@ -341,7 +341,7 @@ void Mirror::beforeForces(
 				// ensure that we do not iterate over things outside of the container.
 				regionHighCorner[1] = std::min(_position.coord, regionHighCorner[1]);
 			}
-			
+
 			// reset local values
 			for(auto& it:_particleManipCount.reflected.local)
 				it = 0;
@@ -357,14 +357,14 @@ void Mirror::beforeForces(
 				if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
 
 				double vy = it->v(1);
-				
+
 				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) )
 					continue;
-				
+
 				float ratioRefl;
 				float frnd = _rnd->rnd();
 				uint64_t currentSimstep = global_simulation->getSimulationStep();
-				
+
 				if(currentSimstep <= _rampingParams.startStep) {
 					ratioRefl = 1;
 				}
@@ -374,7 +374,7 @@ void Mirror::beforeForces(
 				else {
 					ratioRefl = 0;
 				}
-				
+
 				if(frnd <= ratioRefl) {
 					it->setv(1, -vy);
 					_particleManipCount.reflected.local.at(0)++;
@@ -479,7 +479,7 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 				uint32_t cid_ub = it->componentid()+1;
 
 				if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
-				
+
 				if(MT_REFLECT == _type) {
 					if( (MD_RIGHT_MIRROR == _direction && vy > 0.) || (MD_LEFT_MIRROR == _direction && vy < 0.) ) {
 						it->setv(1, -vy);

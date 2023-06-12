@@ -53,7 +53,7 @@ void Adios2IOTest::initParticles() {
 
 	// init ids
 	std::iota(std::begin(_ids), std::end(_ids), 0);
-	
+
 	// init positions
     std::mt19937 rnd;
     rnd.seed(666);
@@ -125,7 +125,7 @@ void Adios2IOTest::testWriteCheckpoint() {
 	}
 	particleContainer->addParticles(particles);
 
-	
+
 	auto adios2writer = std::make_shared<Adios2Writer>();
 	adios2writer->init(nullptr, nullptr, nullptr);
 	adios2writer->testInit(_comp ,_filename);
@@ -142,9 +142,9 @@ void Adios2IOTest::testWriteCheckpoint() {
 
 	Log::global_log->info() << "[Adios2IOTest] ParticleContainer num particles:"
 					   << particleContainer->getNumberOfParticles() << std::endl;
-	
+
 	ASSERT_EQUAL(static_cast<unsigned long>(NUM_PARTICLES), particleContainer->getNumberOfParticles());
-	
+
 	auto domain = std::make_shared<Domain>(ownrank);
 	domain->setGlobalLength(0, _box_upper[0]);
 	domain->setGlobalLength(1, _box_upper[1]);
@@ -154,7 +154,7 @@ void Adios2IOTest::testWriteCheckpoint() {
 	adios2writer->finish(nullptr, nullptr, nullptr);
 
 	Log::global_log->info() << "[Adios2IOTest] Writing successful!" << std::endl;
-	
+
 	ASSERT_EQUAL(true, std::filesystem::is_directory(_filename));
 }
 
@@ -171,15 +171,15 @@ void Adios2IOTest::testReadCheckpoint() {
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
 	MPI_CHECK(MPI_Comm_rank(MPI_COMM_WORLD, &ownrank));
 #endif
-	
+
 #ifdef MARDYN_AUTOPAS
 	_inputPatricleContainer = std::make_shared<AutoPasContainer>(_cutoff);
 	_inputPatricleContainer->rebuild(_box_lower.data(), _box_upper.data());
 #else
 	_inputPatricleContainer = std::make_shared<LinkedCells>(_box_lower.data(), _box_upper.data(), _cutoff);
 #endif
-	
-	
+
+
 	_inputDomain = std::make_shared<Domain>(ownrank);
 	_inputDomain->setGlobalLength(0, _box_upper[0]);
 	_inputDomain->setGlobalLength(1, _box_upper[1]);
@@ -197,7 +197,7 @@ void Adios2IOTest::testReadCheckpoint() {
 	}
 
 	ASSERT_EQUAL(static_cast<unsigned long>(NUM_PARTICLES * num_procs), pcount);
-	
+
 	for (auto it = _inputPatricleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
 		auto i  = it->getID();
 		for (int j = 0; j < 3; ++j) {

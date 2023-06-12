@@ -20,7 +20,7 @@ void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 		Log::global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
 		Simulation::exit(-1);
 	}
-	
+
 	std::string checkpointType = "unknown";
 	xmlconfig.getNodeValue("type", checkpointType);
 	if("ASCII" == checkpointType) {

@@ -194,7 +194,7 @@ void Molecule::calculateCoordinatesOfWallMolecule(double xLength, double zLength
                } // end for(j)
        } // end for(i)
 
-  
+
 } // end of method
 */
 

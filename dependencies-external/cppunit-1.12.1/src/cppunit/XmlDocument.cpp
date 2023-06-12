@@ -23,28 +23,28 @@ XmlDocument::~XmlDocument()
 
 
 
-std::string 
+std::string
 XmlDocument::encoding() const
 {
   return m_encoding;
 }
 
 
-void 
+void
 XmlDocument::setEncoding( const std::string &encoding )
 {
   m_encoding = encoding.empty() ? std::string("ISO-8859-1") : encoding;
 }
 
 
-std::string 
+std::string
 XmlDocument::styleSheet() const
 {
   return m_styleSheet;
 }
 
 
-void 
+void
 XmlDocument::setStyleSheet( const std::string &styleSheet )
 {
   m_styleSheet = styleSheet;
@@ -65,7 +65,7 @@ XmlDocument::setStandalone( bool standalone )
 }
 
 
-void 
+void
 XmlDocument::setRootElement( XmlElement *rootElement )
 {
   if ( rootElement == m_rootElement )
@@ -83,7 +83,7 @@ XmlDocument::rootElement() const
 }
 
 
-std::string 
+std::string
 XmlDocument::toString() const
 {
   std::string asString = "<?xml version=\"1.0\" "
@@ -91,7 +91,7 @@ XmlDocument::toString() const
   if ( m_standalone )
       asString += " standalone='yes'";
 
-  asString += " ?>\n"; 
+  asString += " ?>\n";
 
   if ( !m_styleSheet.empty() )
     asString += "<?xml-stylesheet type=\"text/xsl\" href=\"" + m_styleSheet + "\"?>\n";

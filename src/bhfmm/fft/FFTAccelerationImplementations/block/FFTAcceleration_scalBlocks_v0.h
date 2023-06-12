@@ -15,7 +15,7 @@
 
 /*
  * v0 version of scaling block
- * 
+ *
  * Use FFTDataContainer_scalBlocks_v0 as Data container (2 arrays of matrices)
  */
 class FFTAcceleration_scalBlocks_v0: public FFTAccelerationAPI {

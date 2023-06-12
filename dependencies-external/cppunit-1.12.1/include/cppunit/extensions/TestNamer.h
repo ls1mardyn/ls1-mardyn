@@ -19,7 +19,7 @@
  * RTTI is used if CPPUNIT_USE_TYPEINFO_NAME is defined and not null.
  *
  * \code
- * void someMethod() 
+ * void someMethod()
  * {
  *   CPPUNIT_TESTNAMER_DECL( namer, AFixtureType );
  *   std::string fixtureName = namer.getFixtureName();
@@ -71,8 +71,8 @@ public:
 
   /*! \brief Returns the name of the test for the specified method.
    * \param testMethodName Name of the method that implements a test.
-   * \return A string that is the concatenation of the test fixture name 
-   *         (returned by getFixtureName()) and\a testMethodName, 
+   * \return A string that is the concatenation of the test fixture name
+   *         (returned by getFixtureName()) and\a testMethodName,
    *         separated using '::'. This provides a fairly unique name for a given
    *         test.
    */

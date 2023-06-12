@@ -55,7 +55,7 @@ public:
 		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
 		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
 		xmlconfig.getNodeValueReduced("mass", _m);
-		
+
 		if (!xmlconfig.getNodeValue("@name", _name)) {
 			Log::global_log->error() << "Cannot find site name. Defaulting to type." << std::endl;
 			xmlconfig.getNodeValue("@type", _name);
@@ -87,7 +87,7 @@ protected:
 
 /** @brief Lennard-Jones 12-6 center
  *
- * Lennard-Jones 12-6 interaction site. The potential between two LJ centers of the same type is 
+ * Lennard-Jones 12-6 interaction site. The potential between two LJ centers of the same type is
  * given by
  * \f[
  *  U_\text{LJ} = \epsilon \left[ \left(\frac{r}{\sigma}\right)^{6} - \left(\frac{r}{\sigma}\right)^{12} \right]
@@ -128,7 +128,7 @@ public:
 		xmlconfig.getNodeValueReduced("sigma", _sigma);
 		xmlconfig.getNodeValue("shifted", _shiftRequested);
 	}
-	
+
 	/// write to stream
 	void write(std::ostream& ostrm) const {
 		Site::write(ostrm);

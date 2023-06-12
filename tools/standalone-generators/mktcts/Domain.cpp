@@ -20,7 +20,7 @@ Domain::Domain(double t_h, unsigned t_N, double t_rho, double t_rho2)
    this->box[0] = sqrt(V / t_h);
    this->box[1] = t_h;
    this->box[2] = sqrt(V / t_h);
-   
+
    this->use_hato = false;
 }
 
@@ -34,7 +34,7 @@ Domain::Domain(unsigned t_N, double t_rho, double t_RDF)
    this->box[0] = pow((double)t_N/rho, 1.0/3.0);
    this->box[1] = this->box[0];
    this->box[2] = this->box[0];
-   
+
    this->use_hato = false;
 }
 
@@ -169,7 +169,7 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
       txt << "initCanonical\t10\ninitStatistics\t100000\n";
-      
+
       if(compute_autocorr)
       {
          double rho_max = (rho > rho2)? rho: rho2;

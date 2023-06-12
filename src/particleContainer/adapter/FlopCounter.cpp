@@ -110,7 +110,7 @@ void FlopCounter::_Counts::allReduce() {
 
 void FlopCounter::_Counts::print() const {
 	using std::endl;
-	
+
 	Log::global_log->info() << " Molecule distances: " << _moleculeDistances << std::endl;
 
 	for (int i = 0; i < NUM_POTENTIALS; ++i) {
@@ -246,8 +246,8 @@ void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2, bool sum
 	// is more efficient
 	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
 
-	
-	
+
+
 	if(sumAll) { // sumAll
 		// if one cell is empty skip
 		if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0) {
@@ -429,7 +429,7 @@ void FlopCounter::_calculatePairs(const CellDataSoARMM & soa1, const CellDataSoA
 
 	unsigned long int i_lj = 0;
 	unsigned long int i_mm = 0;
-	
+
 	const vcp_real_calc _ljCutSq_rc = static_cast<vcp_real_calc>(_LJCutoffRadiusSquare);
 
 	RealCalcVec cutoffRadiusSquare = RealCalcVec::set1(_ljCutSq_rc);

@@ -41,7 +41,7 @@ MockTestListener::MockTestListener( std::string name )
 }
 
 
-void 
+void
 MockTestListener::setExpectFailure( CPPUNIT_NS::Test *failedTest,
                                     CPPUNIT_NS::Exception *thrownException,
                                     bool isError )
@@ -55,7 +55,7 @@ MockTestListener::setExpectFailure( CPPUNIT_NS::Test *failedTest,
 }
 
 
-void 
+void
 MockTestListener::setExpectNoFailure()
 {
   m_hasExpectationForAddFailure = true;
@@ -63,14 +63,14 @@ MockTestListener::setExpectNoFailure()
 }
 
 
-void 
+void
 MockTestListener::setExpectFailure()
 {
   m_hasExpectationForSomeFailure = true;
 }
 
 
-void 
+void
 MockTestListener::setExpectedAddFailureCall( int callCount )
 {
   m_hasExpectationForAddFailure = true;
@@ -78,7 +78,7 @@ MockTestListener::setExpectedAddFailureCall( int callCount )
 }
 
 
-void 
+void
 MockTestListener::setExpectStartTest( CPPUNIT_NS::Test *test )
 {
   m_hasExpectationForStartTest = true;
@@ -88,7 +88,7 @@ MockTestListener::setExpectStartTest( CPPUNIT_NS::Test *test )
 }
 
 
-void 
+void
 MockTestListener::setExpectedStartTestCall( int callCount )
 {
   m_hasExpectationForStartTest = true;
@@ -96,7 +96,7 @@ MockTestListener::setExpectedStartTestCall( int callCount )
 }
 
 
-void 
+void
 MockTestListener::setExpectEndTest( CPPUNIT_NS::Test *test )
 {
   m_hasExpectationForEndTest = true;
@@ -106,7 +106,7 @@ MockTestListener::setExpectEndTest( CPPUNIT_NS::Test *test )
 }
 
 
-void 
+void
 MockTestListener::setExpectedEndTestCall( int callCount )
 {
   m_hasExpectationForEndTest = true;
@@ -114,7 +114,7 @@ MockTestListener::setExpectedEndTestCall( int callCount )
 }
 
 
-void 
+void
 MockTestListener::setExpectStartSuite( CPPUNIT_NS::Test *test )
 {
   m_hasExpectationForStartSuite = true;
@@ -124,7 +124,7 @@ MockTestListener::setExpectStartSuite( CPPUNIT_NS::Test *test )
 }
 
 
-void 
+void
 MockTestListener::setExpectedStartSuiteCall( int callCount )
 {
   m_hasExpectationForStartSuite = true;
@@ -132,7 +132,7 @@ MockTestListener::setExpectedStartSuiteCall( int callCount )
 }
 
 
-void 
+void
 MockTestListener::setExpectEndSuite( CPPUNIT_NS::Test *test )
 {
   m_hasExpectationForEndSuite = true;
@@ -142,7 +142,7 @@ MockTestListener::setExpectEndSuite( CPPUNIT_NS::Test *test )
 }
 
 
-void 
+void
 MockTestListener::setExpectedEndSuiteCall( int callCount )
 {
   m_hasExpectationForEndSuite = true;
@@ -150,7 +150,7 @@ MockTestListener::setExpectedEndSuiteCall( int callCount )
 }
 
 
-void 
+void
 MockTestListener::setExpectStartTestRun( CPPUNIT_NS::Test *test,
                                          CPPUNIT_NS::TestResult *eventManager )
 {
@@ -162,7 +162,7 @@ MockTestListener::setExpectStartTestRun( CPPUNIT_NS::Test *test,
 }
 
 
-void 
+void
 MockTestListener::setExpectedStartTestRunCall( int callCount )
 {
   m_hasExpectationForStartTestRun = true;
@@ -170,7 +170,7 @@ MockTestListener::setExpectedStartTestRunCall( int callCount )
 }
 
 
-void 
+void
 MockTestListener::setExpectEndTestRun( CPPUNIT_NS::Test *test,
                                        CPPUNIT_NS::TestResult *eventManager )
 {
@@ -182,7 +182,7 @@ MockTestListener::setExpectEndTestRun( CPPUNIT_NS::Test *test,
 }
 
 
-void 
+void
 MockTestListener::setExpectedEndTestRunCall( int callCount )
 {
   m_hasExpectationForEndTestRun = true;
@@ -190,7 +190,7 @@ MockTestListener::setExpectedEndTestRunCall( int callCount )
 }
 
 
-void 
+void
 MockTestListener::addFailure( const CPPUNIT_NS::TestFailure &failure )
 {
   if ( m_hasExpectationForAddFailure  ||  m_hasExpectationForSomeFailure )
@@ -214,7 +214,7 @@ MockTestListener::addFailure( const CPPUNIT_NS::TestFailure &failure )
 }
 
 
-void 
+void
 MockTestListener::startTest( CPPUNIT_NS::Test *test )
 {
   if ( m_hasExpectationForStartTest )
@@ -222,7 +222,7 @@ MockTestListener::startTest( CPPUNIT_NS::Test *test )
     ++m_startTestCall;
     CPPUNIT_ASSERT_MESSAGE( m_name + ": unexpected call",
                             m_startTestCall <= m_expectedStartTestCallCount );
-  
+
   }
 
   if ( m_hasParametersExpectationForStartTest )
@@ -233,7 +233,7 @@ MockTestListener::startTest( CPPUNIT_NS::Test *test )
 }
 
 
-void 
+void
 MockTestListener::endTest( CPPUNIT_NS::Test *test )
 {
   if ( m_hasExpectationForEndTest )
@@ -251,7 +251,7 @@ MockTestListener::endTest( CPPUNIT_NS::Test *test )
 }
 
 
-void 
+void
 MockTestListener::startSuite( CPPUNIT_NS::Test *test )
 {
   if ( m_hasExpectationForStartSuite )
@@ -269,7 +269,7 @@ MockTestListener::startSuite( CPPUNIT_NS::Test *test )
 }
 
 
-void 
+void
 MockTestListener::endSuite( CPPUNIT_NS::Test *test )
 {
   if ( m_hasExpectationForEndSuite )
@@ -287,8 +287,8 @@ MockTestListener::endSuite( CPPUNIT_NS::Test *test )
 }
 
 
-void 
-MockTestListener::startTestRun( CPPUNIT_NS::Test *test, 
+void
+MockTestListener::startTestRun( CPPUNIT_NS::Test *test,
                                 CPPUNIT_NS::TestResult *eventManager )
 {
   if ( m_hasExpectationForStartTestRun )
@@ -308,8 +308,8 @@ MockTestListener::startTestRun( CPPUNIT_NS::Test *test,
 }
 
 
-void 
-MockTestListener::endTestRun( CPPUNIT_NS::Test *test, 
+void
+MockTestListener::endTestRun( CPPUNIT_NS::Test *test,
                               CPPUNIT_NS::TestResult *eventManager )
 {
   if ( m_hasExpectationForEndTestRun )
@@ -329,55 +329,55 @@ MockTestListener::endTestRun( CPPUNIT_NS::Test *test,
 }
 
 
-void 
+void
 MockTestListener::verify()
 {
   if ( m_hasExpectationForStartTest )
   {
     CPPUNIT_ASSERT_EQUAL_MESSAGE( m_name + ": missing startTest calls",
-                                  m_expectedStartTestCallCount, 
+                                  m_expectedStartTestCallCount,
                                   m_startTestCall );
   }
 
   if ( m_hasExpectationForEndTest )
   {
     CPPUNIT_ASSERT_EQUAL_MESSAGE( m_name + ": missing endTest calls",
-                                  m_expectedEndTestCallCount, 
+                                  m_expectedEndTestCallCount,
                                   m_endTestCall );
   }
 
   if ( m_hasExpectationForStartSuite )
   {
     CPPUNIT_ASSERT_EQUAL_MESSAGE( m_name + ": missing startSuite calls",
-                                  m_expectedStartSuiteCallCount, 
+                                  m_expectedStartSuiteCallCount,
                                   m_startSuiteCall );
   }
 
   if ( m_hasExpectationForEndSuite )
   {
     CPPUNIT_ASSERT_EQUAL_MESSAGE( m_name + ": missing endSuite calls",
-                                  m_expectedEndSuiteCallCount, 
+                                  m_expectedEndSuiteCallCount,
                                   m_endSuiteCall );
   }
 
   if ( m_hasExpectationForStartTestRun )
   {
     CPPUNIT_ASSERT_EQUAL_MESSAGE( m_name + ": missing startTestRun calls",
-                                  m_expectedStartTestRunCallCount, 
+                                  m_expectedStartTestRunCallCount,
                                   m_startTestRunCall );
   }
 
   if ( m_hasExpectationForEndTestRun )
   {
     CPPUNIT_ASSERT_EQUAL_MESSAGE( m_name + ": missing endTestRun calls",
-                                  m_expectedEndTestRunCallCount, 
+                                  m_expectedEndTestRunCallCount,
                                   m_endTestRunCall );
   }
 
   if ( m_hasExpectationForAddFailure )
   {
     CPPUNIT_ASSERT_EQUAL_MESSAGE( m_name + ": missing addFailure calls",
-                                  m_expectedAddFailureCallCount, 
+                                  m_expectedAddFailureCallCount,
                                   m_addFailureCall );
   }
 

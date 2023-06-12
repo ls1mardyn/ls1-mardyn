@@ -24,16 +24,16 @@ const unsigned short THERMOSTAT_ANDERSEN = 2;
 class ConfigWriter{
 
 public:
-	ConfigWriter(	char* prefix, std::string in_wall, int in_wallLays, double in_refTime, 
+	ConfigWriter(	char* prefix, std::string in_wall, int in_wallLays, double in_refTime,
 			unsigned in_profilePhi, unsigned in_profileR, unsigned in_profile_H,
 			unsigned in_profileOutputTimesteps, unsigned initCanon, bool movie, Component& fluidComp
 			);
-	
-	ConfigWriter(	char* prefix, std::string in_wall, int in_wallLays, double in_refTime, 
+
+	ConfigWriter(	char* prefix, std::string in_wall, int in_wallLays, double in_refTime,
 			unsigned in_profilePhi, unsigned in_profileR, unsigned in_profile_H,
 			unsigned in_profileOutputTimesteps, unsigned initCanon, bool movie, PhaseSpaceWriter& psw, Component& fluidComp,
 			double nuAndFac	);
-	
+
 	~ConfigWriter();
 
 	//void buildString();

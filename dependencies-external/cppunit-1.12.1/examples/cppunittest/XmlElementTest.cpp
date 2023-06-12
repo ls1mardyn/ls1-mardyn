@@ -5,7 +5,7 @@
 #include "XmlUniformiser.h"
 
 
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( XmlElementTest, 
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( XmlElementTest,
                                        toolsSuiteName() );
 
 
@@ -19,19 +19,19 @@ XmlElementTest::~XmlElementTest()
 }
 
 
-void 
+void
 XmlElementTest::setUp()
 {
 }
 
 
-void 
+void
 XmlElementTest::tearDown()
 {
 }
 
 
-void 
+void
 XmlElementTest::testStringContentConstructor()
 {
   CPPUNIT_NS::XmlElement element( "aName", "someContent" );
@@ -40,7 +40,7 @@ XmlElementTest::testStringContentConstructor()
 }
 
 
-void 
+void
 XmlElementTest::testNumericContentConstructor()
 {
   CPPUNIT_NS::XmlElement element( "numericName", 123456789 );
@@ -49,7 +49,7 @@ XmlElementTest::testNumericContentConstructor()
 }
 
 
-void 
+void
 XmlElementTest::testSetName()
 {
   CPPUNIT_NS::XmlElement element( "aName" );
@@ -58,7 +58,7 @@ XmlElementTest::testSetName()
 }
 
 
-void 
+void
 XmlElementTest::testSetStringContent()
 {
   CPPUNIT_NS::XmlElement element( "aName", "someContent" );
@@ -67,7 +67,7 @@ XmlElementTest::testSetStringContent()
 }
 
 
-void 
+void
 XmlElementTest::testSetNumericContent()
 {
   CPPUNIT_NS::XmlElement element( "aName", "someContent" );
@@ -76,7 +76,7 @@ XmlElementTest::testSetNumericContent()
 }
 
 
-void 
+void
 XmlElementTest::testElementCount()
 {
   CPPUNIT_NS::XmlElement node( "element", "content" );
@@ -88,7 +88,7 @@ XmlElementTest::testElementCount()
 }
 
 
-void 
+void
 XmlElementTest::testElementAtNegativeIndexThrow()
 {
   CPPUNIT_NS::XmlElement node( "element" );
@@ -96,7 +96,7 @@ XmlElementTest::testElementAtNegativeIndexThrow()
 }
 
 
-void 
+void
 XmlElementTest::testElementAtTooLargeIndexThrow()
 {
   CPPUNIT_NS::XmlElement node( "element" );
@@ -104,7 +104,7 @@ XmlElementTest::testElementAtTooLargeIndexThrow()
 }
 
 
-void 
+void
 XmlElementTest::testElementAt()
 {
   CPPUNIT_NS::XmlElement node( "element" );
@@ -118,7 +118,7 @@ XmlElementTest::testElementAt()
 }
 
 
-void 
+void
 XmlElementTest::testElementForThrow()
 {
   CPPUNIT_NS::XmlElement node( "element" );
@@ -127,7 +127,7 @@ XmlElementTest::testElementForThrow()
 }
 
 
-void 
+void
 XmlElementTest::testElementFor()
 {
   CPPUNIT_NS::XmlElement node( "element" );
@@ -141,7 +141,7 @@ XmlElementTest::testElementFor()
 }
 
 
-void 
+void
 XmlElementTest::testEmptyNodeToString()
 {
   CPPUNIT_NS::XmlElement node( "element" );
@@ -150,7 +150,7 @@ XmlElementTest::testEmptyNodeToString()
 }
 
 
-void 
+void
 XmlElementTest::testElementWithAttributesToString()
 {
   CPPUNIT_NS::XmlElement node( "element" );
@@ -163,7 +163,7 @@ XmlElementTest::testElementWithAttributesToString()
 }
 
 
-void 
+void
 XmlElementTest::testEscapedAttributeValueToString()
 {
   CPPUNIT_NS::XmlElement node( "element" );
@@ -175,7 +175,7 @@ XmlElementTest::testEscapedAttributeValueToString()
 }
 
 
-void 
+void
 XmlElementTest::testElementToStringEscapeContent()
 {
   CPPUNIT_NS::XmlElement node( "element", "ChessTest<class Chess>" );
@@ -186,7 +186,7 @@ XmlElementTest::testElementToStringEscapeContent()
 }
 
 
-void 
+void
 XmlElementTest::testElementWithChildrenToString()
 {
   CPPUNIT_NS::XmlElement node( "element" );
@@ -198,7 +198,7 @@ XmlElementTest::testElementWithChildrenToString()
 }
 
 
-void 
+void
 XmlElementTest::testElementWithContentToString()
 {
   CPPUNIT_NS::XmlElement node( "element", "content\nline2" );
@@ -207,7 +207,7 @@ XmlElementTest::testElementWithContentToString()
 }
 
 
-void 
+void
 XmlElementTest::testElementWithNumericContentToString()
 {
   CPPUNIT_NS::XmlElement node( "element", 123456789 );
@@ -216,7 +216,7 @@ XmlElementTest::testElementWithNumericContentToString()
 }
 
 
-void 
+void
 XmlElementTest::testElementWithContentAndChildToString()
 {
   CPPUNIT_NS::XmlElement node( "element", "content" );

@@ -19,10 +19,10 @@ void MPI_Info_object::readXML(XMLfile& xmlconfig) {
 	if(_mpi_info == MPI_INFO_NULL) {
 		MPI_CHECK( MPI_Info_create(&_mpi_info) );
 	}
-	
+
 	XMLfile::Query query = xmlconfig.query("hint");
 	Log::global_log->debug() << "[MPI_Info_object]\tNumber of hint key value pairs: " << query.card() << std::endl;
-	
+
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	for(auto pairIter = query.begin(); pairIter; ++pairIter) {
 		xmlconfig.changecurrentnode(pairIter);

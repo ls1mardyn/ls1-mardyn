@@ -21,8 +21,8 @@ public:
 			}
 
 	~Virial2DProfile() final = default;
-	
-	
+
+
 	void record(Molecule& mol, unsigned long uID) final {
 		for (unsigned short d = 0; d < 3; d++) {
 			_local3dProfile[uID][d] += mol.Vi(d);

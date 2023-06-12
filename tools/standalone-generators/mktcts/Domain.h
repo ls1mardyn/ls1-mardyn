@@ -29,7 +29,7 @@ class Domain
    double rho;
    double rho2;
    double RDF;
-   
+
    bool use_hato;
    double p1, p2;
    double mu_low, mu_high;

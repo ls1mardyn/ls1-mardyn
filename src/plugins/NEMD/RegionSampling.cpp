@@ -276,7 +276,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			xmlconfig.getNodeValue("control/start", _initSamplingVDF);
 			xmlconfig.getNodeValue("control/frequency", _writeFrequencyVDF);
 			xmlconfig.getNodeValue("control/stop", _stopSamplingVDF);
-			
+
 			xmlconfig.getNodeValue("@single_component", _boolSingleComp);
 			if(_boolSingleComp)
 			{
@@ -319,7 +319,7 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 					csp.bSamplingEnabled = true;
 					xmlconfig.getNodeValue("numclasses", csp.numVelocityClasses);
 					xmlconfig.getNodeValue("maxvalue", csp.dVeloMax);
-	
+
 				}
 				xmlconfig.changecurrentnode(oldpath);
 			}
@@ -964,7 +964,7 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension, unsigned l
 {
 	if(not _SamplingEnabledProfiles)
 		return;
-	
+
 	if( (simstep <= _initSamplingProfiles) or (simstep > _stopSamplingProfiles) )
 		return;
 

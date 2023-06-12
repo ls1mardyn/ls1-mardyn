@@ -30,7 +30,7 @@ struct pos_comp {
 };
 
 /**
- * Implementation of the scheme of the optimized FFT that reconstruct the whole matrix 
+ * Implementation of the scheme of the optimized FFT that reconstruct the whole matrix
  * and use FFTW to perform the FFT/IFFT
  * Use a map<pos,FFTW_API*> to store the various FFTW_API needed to perform the optimized FFT
  */

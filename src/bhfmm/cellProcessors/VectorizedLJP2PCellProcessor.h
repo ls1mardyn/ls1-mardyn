@@ -57,7 +57,7 @@ public:
 	 * \brief Calculate forces between pairs of Molecules in cell.
 	 */
 	void processCell(ParticleCell& cell);
-        
+
         void processCellPair(ParticleCell& c1, ParticleCell& c2, bool sumAll = false);
 	/**
 	 * \brief Free the LennardJonesSoA for cell.

@@ -50,7 +50,7 @@ public:
   void testAssertXmlEqual();
 
 private:
-  void check( const std::string &xml, 
+  void check( const std::string &xml,
               const std::string &expectedStrippedXml );
 
   /// Prevents the use of the copy constructor.

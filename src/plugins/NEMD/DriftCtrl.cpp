@@ -52,7 +52,7 @@ void DriftCtrl::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 		}
 	}
 	Log::global_log->debug() << "[DriftCtrl] Init data structures for " << numComponents << " components." << std::endl;
-	
+
 	// init files
 	{
 		const std::string fname = "DriftCtrl_drift.dat";
@@ -91,7 +91,7 @@ void DriftCtrl::readXML(XMLfileUnits& xmlconfig)
 
 	xmlconfig.getNodeValue("control/start", _control.start);
 	xmlconfig.getNodeValue("control/stop", _control.stop);
-	
+
 	// range
 	_range.yl = 0.;
 	_range.yr = _simulation.getDomain()->getGlobalLength(1);
@@ -157,7 +157,7 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 	}
 
 	int nRank = domainDecomp->getRank();
-	
+
 	// sample
 	if(simstep % _control.freq.sample == 0)
 	{
@@ -166,7 +166,7 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			double yPos = it->r(1);
 			if(yPos <= _range.yl || yPos > _range.yr)
 				continue;
-			
+
 			const uint32_t cid_zb = it->componentid();
 			const uint32_t cid_ub = cid_zb+1;
 			const uint32_t yPosID = floor( (yPos-_range.yl) / _range.subdivision.binWidth.actual);
@@ -180,7 +180,7 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 			}
 		}
 	}
-	
+
 	// control
 	if(simstep % _control.freq.control == 0)
 	{
@@ -217,7 +217,7 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 				_sampling.at(cid).velocity.at(0).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
 				_sampling.at(cid).velocity.at(1).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
 				_sampling.at(cid).velocity.at(2).global.at(yPosID) = domainDecomp->collCommGetDouble() * invNumParticles;
-				
+
 				// reset local values
 				_sampling.at(cid).numParticles.local.at(yPosID) = 0;
 				_sampling.at(cid).velocity.at(0).local.at(yPosID) = 0.;
@@ -227,7 +227,7 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 		}
 		// finalize
 		domainDecomp->collCommFinalize();
-		
+
 		// calc correction
 		for(uint32_t cid = 0; cid < numComponents; ++cid)
 		{
@@ -238,14 +238,14 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 				_sampling.at(cid).velo_corr.at(2).at(yPosID) = _target.drift.at(2) - _sampling.at(cid).velocity.at(2).global.at(yPosID);
 			}
 		}
-		
+
 		// do correction
 		for(auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
 			// check if inside range
 			double yPos = it->r(1);
 			if(yPos <= _range.yl || yPos > _range.yr)
 				continue;
-			
+
 			// check if target component
 			uint32_t cid_ub = 0;
 			if (_target.cid != 0) {
@@ -254,14 +254,14 @@ void DriftCtrl::beforeForces(ParticleContainer* particleContainer, DomainDecompB
 					continue;
 				}
 			}
-			
+
 			uint32_t yPosID = floor( (yPos-_range.yl) / _range.subdivision.binWidth.actual);
 			for (const auto d : _directions) {
-				it->setv(d, it->v(d) + _sampling.at(cid_ub).velo_corr.at(d).at(yPosID) ); 
+				it->setv(d, it->v(d) + _sampling.at(cid_ub).velo_corr.at(d).at(yPosID) );
 			}
 		}
 	}
-	
+
 	// write to file
 	if(simstep % _control.freq.write == 0 && nRank == 0)
 	{

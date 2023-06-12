@@ -58,7 +58,7 @@ void GammaWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase
 		// Rank 0 writes data to file
 		if (domainDecomp->getRank() == 0) {
 			std::string resultfilename(_outputPrefix + ".dat");
-			
+
 			_gammaStream.open(resultfilename, std::ios::app);
 			_gammaStream << FORMAT_SCI_MAX_DIGITS << simstep;
 			for (unsigned int componentId = 0; componentId < _numComp; ++componentId) {

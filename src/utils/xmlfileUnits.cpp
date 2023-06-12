@@ -43,7 +43,7 @@ const char *const XMLfileUnits::unittypequalifiers[numUnitTypes] = { "no_unit"
                                                                     ,"substance"
                                                                     ,"luminous"
                                                                    };
-	
+
 const char *const XMLfileUnits::prefixsymbols[numPrefixes] = { "y"  // "yocto"
                                                               ,"z"  // "zepto"
                                                               ,"a"  // "atto"
@@ -89,7 +89,7 @@ const short XMLfileUnits::prefixquantifiers[numPrefixes] = { -24
                                                             ,21
                                                             ,24
                                                            };
-	
+
 size_t XMLfileUnits::ValueUnit::string_endswith(std::string str, const char* suffix)
 {
 	unsigned int suffixlength=strlen(suffix);

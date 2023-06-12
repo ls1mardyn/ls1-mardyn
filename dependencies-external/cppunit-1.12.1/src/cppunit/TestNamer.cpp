@@ -25,14 +25,14 @@ TestNamer::~TestNamer()
 }
 
 
-std::string 
+std::string
 TestNamer::getFixtureName() const
 {
   return m_fixtureName;
 }
 
 
-std::string 
+std::string
 TestNamer::getTestNameFor( const std::string &testMethodName ) const
 {
   return getFixtureName() + "::" + testMethodName;

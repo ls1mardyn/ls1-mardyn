@@ -6,7 +6,7 @@
 #include <string.h>
 
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
    const char* usage = "usage: mkTcTS <prefix> -c <density> [-a] [-d <second density>] [-e] [-H <pressure1> <pressure2> <mu_low> <mu_high>] [-h <height>] [-m <chemical potential>] -N <particles> [-p <pair correlation cutoff>] [-R <cutoff>] [-r] [-S] -T <temperature> [-U] [-u]\n\n-a\tcompute velocity autocorrelation\n-e\tuse B-e-rnreuther format\n-P\tcompute pseudomomenta\n-r\tuse b-r-anch format\n-S\tshift (active by default)\n-U\tunshift\n-u\tuse B-u-chholz format (active by default)\n";
    if((argc < 8) || (argc > 28))
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
    double rho = 0.319;
    double rho2 = 0.319;
    double T = 1.0779;
-   
+
    bool use_hato = false;
    double p1 = 0.0;
    double p2 = 0.0;
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
          {
             std::cout << "Invalid flag '-" << argv[i][j]
                  << "' was detected.\n\n" << usage;
-            return 2; 
+            return 2;
          }
       }
    }

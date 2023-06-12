@@ -21,7 +21,7 @@ CPPUNIT_NS_BEGIN
  *
  * \code
  *
- * class NetworkErrorTestCaseDecorator : 
+ * class NetworkErrorTestCaseDecorator :
  *           public ExceptionTestCaseDecorator<NetworkError>
  * {
  * public:
@@ -39,7 +39,7 @@ CPPUNIT_NS_BEGIN
  * };
  * \endcode
  *
- */ 
+ */
 template<class ExpectedException>
 class ExceptionTestCaseDecorator : public TestCaseDecorator
 {
@@ -79,8 +79,8 @@ public:
 #if CPPUNIT_USE_TYPEINFO_NAME
       throw Exception( Message(
                          "expected exception not thrown",
-                         "Expected exception type: " + 
-                           TypeInfoHelper::getClassName( 
+                         "Expected exception type: " +
+                           TypeInfoHelper::getClassName(
                                typeid( ExpectedExceptionType ) ) ) );
 #else
       throw Exception( Message("expected exception not thrown") );

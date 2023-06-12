@@ -72,7 +72,7 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 
 	std::string zonalMethod = "fs";
 	std::string traversal = "c08"; // currently useless, as traversal is set elsewhere
-	
+
 	xmlconfig.changecurrentnode("../datastructure");
 	xmlconfig.getNodeValue("traversalSelector", traversal);
 	transform(traversal.begin(),
@@ -92,7 +92,7 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 		traversal = "c08";
 	}
 
-	
+
 	Log::global_log->info() << "variable zonalMethod is: " << zonalMethod << std::endl;
 	// reset path
 	xmlconfig.changecurrentnode(oldPath);
@@ -286,7 +286,7 @@ void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContai
 
 
 
-void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain) { 
+void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain) {
 	Log::global_log->set_mpi_output_all();
 
 	// Using molecule exchange method with the force message type
@@ -295,7 +295,7 @@ void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, D
 	Log::global_log->set_mpi_output_root(0);
 }
 
-size_t DomainDecompMPIBase::getTotalSize() { 
+size_t DomainDecompMPIBase::getTotalSize() {
 	return DomainDecompBase::getTotalSize() + _neighbourCommunicationScheme->getDynamicSize()
 			+ _collCommunication->getTotalSize();
 }

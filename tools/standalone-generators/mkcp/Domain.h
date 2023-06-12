@@ -146,7 +146,7 @@ class Domain
    void specifyGraphite(double rho, unsigned N);
    void specifyNanotube(double rho, double m_per_n, unsigned N);
    void writeGraphite(
-      char* prefix, double a, bool empty, int format, double mu, 
+      char* prefix, double a, bool empty, int format, double mu,
       double TAU, double U, bool original, double wo_acceleration,
       double polarity, bool WLJ, bool symmetric, bool widom, double x
    );

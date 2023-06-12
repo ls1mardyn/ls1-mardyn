@@ -65,7 +65,7 @@ DataArrayList_t (const DataArrayList_t& o,
 }
 
 // DataArray_t
-// 
+//
 
 const DataArray_t::type_type& DataArray_t::
 type () const
@@ -171,7 +171,7 @@ offset (const offset_optional& x)
 
 
 // PieceUnstructuredGrid_t
-// 
+//
 
 const PieceUnstructuredGrid_t::PointData_type& PieceUnstructuredGrid_t::
 PointData () const
@@ -307,7 +307,7 @@ NumberOfCells (const NumberOfCells_type& x)
 
 
 // UnstructuredGrid_t
-// 
+//
 
 const UnstructuredGrid_t::Piece_type& UnstructuredGrid_t::
 Piece () const
@@ -335,7 +335,7 @@ Piece (::std::unique_ptr< Piece_type > x)
 
 
 // type
-// 
+//
 
 type::
 type (value v)
@@ -372,7 +372,7 @@ type (const type& v,
 type& type::
 operator= (value v)
 {
-  static_cast< ::xml_schema::string& > (*this) = 
+  static_cast< ::xml_schema::string& > (*this) =
   ::xml_schema::string (_xsd_type_literals_[v]);
 
   return *this;
@@ -380,7 +380,7 @@ operator= (value v)
 
 
 // PointData
-// 
+//
 
 const PointData::DataArray_sequence& PointData::
 DataArray () const
@@ -402,7 +402,7 @@ DataArray (const DataArray_sequence& s)
 
 
 // CellData
-// 
+//
 
 const CellData::DataArray_sequence& CellData::
 DataArray () const
@@ -424,7 +424,7 @@ DataArray (const DataArray_sequence& s)
 
 
 // Points
-// 
+//
 
 const Points::DataArray_sequence& Points::
 DataArray () const
@@ -446,7 +446,7 @@ DataArray (const DataArray_sequence& s)
 
 
 // Cells
-// 
+//
 
 const Cells::DataArray_sequence& Cells::
 DataArray () const

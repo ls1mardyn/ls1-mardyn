@@ -19,7 +19,7 @@ namespace bhfmm {
 VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
-		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))), 
+		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))),
 		_eps_sig(), _shift6(), _upot6lj(0.0), _virial(0.0){
 
 #if VCP_VEC_TYPE==VCP_NOVEC
@@ -490,7 +490,7 @@ void VectorizedLJP2PCellProcessor::processCellPair(ParticleCell & c1, ParticleCe
 	// is more efficient
 	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
 
-	
+
 	if(sumAll) { // sumAll
 		// if one cell is empty, skip
 		if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0) {
