@@ -50,6 +50,7 @@ for file in $codeFiles; do
     echo "The following file contains CRLF line endings: $file"
     echo "  Fix with:"
     echo "    sed -i 's/\r$//' \"$file\""
+              sed -i 's/\r$//' "$file"
     warnings+="At least one file contains CRLF line endings\n"
   fi
 
@@ -65,7 +66,7 @@ for file in $codeFiles; do
   if [[ -n "$(tail -c 1 "$file")" ]]; then
     echo "The following file does not end with newline: $file"
     echo "  Fix with:"
-    echo "    sed -i -e '$a\' \"$file\""
+    echo "    sed -i -e '\$a\' \"$file\""
     warnings+="At least one file does not end with newline\n"
   fi
 
@@ -115,7 +116,7 @@ git switch ${currentVersion} &> /dev/null
 
 # Use code block for monospace font in Markdown
 warnings+="\n# cpplint\n"
-warnings+=" For details run \`cpplint --filter=-whitespace/tab --linelength=200 --counting=detailed $( find src -name "*.h" -or -name "*.cpp" -printf "%p " )\`"
+warnings+=" For details run \`cpplint --filter=-whitespace/tab --linelength=200 --counting=detailed \$( find src -name \"*.h\" -or -name \"*.cpp\" -printf \"%%p \" )\`"
 warnings+=" New or fixed warnings/errors (master <-> new commit):\n"
 warnings+="\`\`\`\n"
 warnings+="master $(printf '%54s' " ") | new\n"
