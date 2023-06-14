@@ -1,5 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <mardyn version="20100525" >
+  <!-- Set the global log level. Possible values: NONE, FATAL ERROR, ERROR, WARNING, INFO, DEBUG, ALL. Defaults to INFO if unspecified -->
+  <loglevel>INFO</loglevel>
   <refunits type="SI" >
 <!-- standard units - should be  used for internal reduction one day, but default for all values in simulation remain "reduced" -->
     <length unit="nm">0.35</length>	<!-- default: nm - also m,pm,fm or Angstroem may be used in the future? -->
@@ -88,6 +90,11 @@
       <phasespacepoint>
         <!-- Read in old ASCII phase spcae file (skipping old phase space header information) -->
         <file type="ASCII" >test.inp</file>
+        <!-- Alternative: binary checkpoints -->
+        <file type="binary">
+            <header>cp_binary-1.restart.header.xml</header>
+            <data>cp_binary-1.restart.dat</data>
+        </file>
 
 
         <generator name="ReplicaGenerator">

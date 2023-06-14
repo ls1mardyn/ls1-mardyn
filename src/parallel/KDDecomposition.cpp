@@ -1552,8 +1552,6 @@ void KDDecomposition::collectMoleculesInRegion(ParticleContainer* moleculeContai
 		const int prevNumMols = mols.size();
 		const int numThreads = mardyn_get_num_threads();
 		const int threadNum = mardyn_get_thread_num();
-		auto begin = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-
 		#if defined (_OPENMP)
 		#pragma omp master
 		#endif
@@ -1566,9 +1564,11 @@ void KDDecomposition::collectMoleculesInRegion(ParticleContainer* moleculeContai
 		#pragma omp barrier
 		#endif
 
-		for (auto i = begin; i.isValid(); ++i) {
+		for (auto i =
+				 moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+			 i.isValid(); ++i) {
 			threadData[threadNum].push_back(new Molecule(*i));
-            moleculeContainer->deleteMolecule(i, false); //removeFromContainer = true;
+			moleculeContainer->deleteMolecule(i, false);  // removeFromContainer = true;
 		}
 
 		prefixArray[threadNum + 1] = threadData[threadNum].size();

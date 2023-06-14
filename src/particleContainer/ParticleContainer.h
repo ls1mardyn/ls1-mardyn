@@ -260,7 +260,9 @@ public:
 	 */
 	virtual void setCutoff(double rc){};
 
-	virtual std::vector<Molecule> getInvalidParticles() { return {}; }
+	std::vector<Molecule>& getInvalidParticlesRef() {
+		return _invalidParticles;
+	}
 
 	virtual bool isInvalidParticleReturner() { return false; }
 
@@ -281,6 +283,9 @@ protected:
 	double _boundingBoxMin[3];
 	//! coordinates of the right, upper, back corner of the bounding box
 	double _boundingBoxMax[3];
+	//! Vector of particles that are about to be removed from the container.
+	//! Currently only used by AutoPasContainer but here for interface reasons.
+	std::vector<Molecule> _invalidParticles{};
 
 };
 

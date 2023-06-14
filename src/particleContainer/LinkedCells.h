@@ -245,8 +245,8 @@ public:
 	virtual void updateMoleculeCaches() override;
 
 	ParticleIterator iterator (ParticleIterator::Type t) override {
-		ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();
-		ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();
+		const ParticleIterator::CellIndex_T offset = mardyn_get_thread_num();
+		const ParticleIterator::CellIndex_T stride = mardyn_get_num_threads();
 
 		return ParticleIterator(t, &_cells, offset, stride);
 	}

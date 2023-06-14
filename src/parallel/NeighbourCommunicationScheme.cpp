@@ -116,7 +116,6 @@ void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer*
 	//if (_pushPull) {
 		if (msgType == LEAVING_AND_HALO_COPIES) {
 			msgType = LEAVING_ONLY;
-
 			initExchangeMoleculesMPI(moleculeContainer, domain, msgType,
 					removeRecvDuplicates, domainDecomp, doHaloPositionCheck);
 			finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType,
@@ -140,7 +139,7 @@ void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(
 	if (_pushPull){
 		selectNeighbours(msgType, false /* export */);
 	}
-	
+
 	for (const HaloRegion& haloRegion : haloRegions) {
 		bool isInOwnProcess = true;
 		for (int d = 0; d < 3; d++) {
@@ -153,20 +152,21 @@ void DirectNeighbourCommunicationScheme::doDirectFallBackExchange(
 		}
 		// use the sequential version
 		switch (msgType) {
-		case LEAVING_AND_HALO_COPIES:
-			// this should not be called!
-			mardyn_assert(false);
-			break;
-		case LEAVING_ONLY:
-			domainDecomp->DomainDecompBase::handleDomainLeavingParticlesDirect(haloRegion, moleculeContainer,
-																			   invalidParticles);
-			break;
-		case HALO_COPIES:
-			domainDecomp->DomainDecompBase::populateHaloLayerWithCopiesDirect(haloRegion, moleculeContainer, doHaloPositionCheck);
-			break;
-		case FORCES:
-			domainDecomp->DomainDecompBase::handleForceExchangeDirect(haloRegion, moleculeContainer);
-			break;
+			case LEAVING_AND_HALO_COPIES:
+				// this should not be called!
+				mardyn_assert(false);
+				break;
+			case LEAVING_ONLY:
+				domainDecomp->DomainDecompBase::handleDomainLeavingParticlesDirect(haloRegion, moleculeContainer,
+																				   invalidParticles);
+				break;
+			case HALO_COPIES:
+				domainDecomp->DomainDecompBase::populateHaloLayerWithCopiesDirect(haloRegion, moleculeContainer,
+																				  doHaloPositionCheck);
+				break;
+			case FORCES:
+				domainDecomp->DomainDecompBase::handleForceExchangeDirect(haloRegion, moleculeContainer);
+				break;
 		}
 	}
 }
@@ -184,11 +184,11 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 	}
 
 	// halo position check needs to be done, unless it is a invalidParticle returner and it had no invalid particles.
-	auto invalidParticles = moleculeContainer->getInvalidParticles();
+	auto &invalidParticles = moleculeContainer->getInvalidParticlesRef();
 
-	if(_useSequentialFallback) {
-		std::array<double, DIMgeom> rmin;  // lower corner
-		std::array<double, DIMgeom> rmax;  // higher corner
+	if (_useSequentialFallback) {
+		std::array<double, DIMgeom> rmin{};  // lower corner
+		std::array<double, DIMgeom> rmax{};  // higher corner
 
 		for (int d = 0; d < DIMgeom; d++) {
 			rmin[d] = domainDecomp->getBoundingBoxMin(d, domain);
@@ -211,6 +211,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 										 doHaloPositionCheck);
 				break;
 			case LEAVING_ONLY:
+
 				haloRegions = _zonalMethod->getLeavingExportRegions(ownRegion, moleculeContainer->getCutoff(),
 																	_coversWholeDomain);
 				doDirectFallBackExchange(haloRegions, msgType, domainDecomp, moleculeContainer, invalidParticles,
@@ -233,25 +234,30 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 
 
 	// 1Stage=> only _neighbours[0] exists!
-	const int numNeighbours = (*_neighbours)[0].size();
 	// send only if neighbour is actually a neighbour.
-	for (int i = 0; i < numNeighbours; ++i) {
-		if (not _useSequentialFallback or (*_neighbours)[0][i].getRank() != domainDecomp->getRank()) {
-			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
-			(*_neighbours)[0][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleType(), msgType, invalidParticles, true, doHaloPositionCheck);
+	for (auto & neighbor: _neighbours->operator[](0)) {
+		if (not _useSequentialFallback or neighbor.getRank() != domainDecomp->getRank()) {
+			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication (type "
+								<< msgType << ") to " << neighbor.getRank() << std::endl;
+			neighbor.initSend(moleculeContainer, domainDecomp->getCommunicator(),
+										  domainDecomp->getMPIParticleType(), msgType, invalidParticles, true,
+										  doHaloPositionCheck);
 		}
-
 	}
 	if(not invalidParticles.empty()){
 		global_log->error_always_output() << "NeighbourCommunicationScheme: Invalid particles that should have been "
-											 "removed, are still existent. They would be lost. Aborting..."
-										  << std::endl;
-		global_log->error_always_output() << "The particles:" << std::endl;
+											 "sent, are still existent. They would be lost. Aborting...\n"
+										  << "BoxMin: "
+										  << moleculeContainer->getBoundingBoxMin(0) << ", "
+										  << moleculeContainer->getBoundingBoxMin(1) << ", "
+										  << moleculeContainer->getBoundingBoxMin(2) << "\n"
+										  << "BoxMax: "
+										  << moleculeContainer->getBoundingBoxMax(0) << ", "
+										  << moleculeContainer->getBoundingBoxMax(1) << ", "
+										  << moleculeContainer->getBoundingBoxMax(2) << "\n"
+										  << "The particles:" << std::endl;
 		for (auto& invalidParticle : invalidParticles) {
-			std::stringstream ss;
-			invalidParticle.write(ss);
-			global_log->error_always_output() << ss.str() << std::endl;
+			global_log->error_always_output() << invalidParticle << std::endl;
 		}
 		global_log->error_always_output() << "The leavingExportNeighbours:" << std::endl;
 		for (auto& neighbour : (*_leavingExportNeighbours)[0]) {
@@ -261,7 +267,6 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 		}
 		Simulation::exit(544);
 	}
-
 }
 
 void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
@@ -404,12 +409,12 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 			if(import) _neighbours = _leavingImportNeighbours;
 			else _neighbours = _leavingExportNeighbours;
 			break;
-		case HALO_COPIES: 
+		case HALO_COPIES:
 			// haloImport / haloExport
 			if(import) _neighbours = _haloImportForceExportNeighbours;
 			else _neighbours = _haloExportForceImportNeighbours;
 			break;
-		case FORCES: 
+		case FORCES:
 			// forceImport / forceExport
 			if(import) _neighbours = _haloExportForceImportNeighbours;
 			else _neighbours = _haloImportForceExportNeighbours;
@@ -426,9 +431,7 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 
 void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoffRadius, Domain * domain,
 		DomainDecompMPIBase* domainDecomp, ParticleContainer* moleculeContainer) {
-
-// corners of the process-specific domain
-	
+	// corners of the process-specific domain
 	double rmin[DIMgeom]; // lower corner
 	double rmax[DIMgeom]; // higher corner
 
@@ -439,7 +442,6 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 		// TODO: this should be safe, as long as molecules don't start flying around
 		// at the speed of one cutoffRadius per time step
 	}
-
 
 	if (_pushPull) {
 		for (unsigned int d = 0; d < _commDimms; d++) { // why free?
@@ -497,8 +499,6 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
 		Domain* /*domain*/, MessageType msgType, bool /*removeRecvDuplicates*/, unsigned short d,
 		DomainDecompMPIBase* domainDecomp) {
-	
-	
 	if (_coversWholeDomain[d]) {
 		// use the sequential version
 
@@ -534,13 +534,9 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
 		Domain* /*domain*/, MessageType msgType, bool removeRecvDuplicates, unsigned short d,
 		DomainDecompMPIBase* domainDecomp) {
-	
-	
 	if (_coversWholeDomain[d]) {
 		return;
 	}
-
-	
 	const int numNeighbours = (*_neighbours)[d].size();
 	// the following implements a non-blocking recv scheme, which overlaps unpacking of
 	// messages with waiting for other messages to arrive
