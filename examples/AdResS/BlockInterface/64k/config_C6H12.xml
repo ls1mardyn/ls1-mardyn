@@ -24,9 +24,9 @@
             <!--Ensemble is the main topic of the simulation -->
             <temperature unit="reduced" >300</temperature>	<!-- in future also units="K" -->
             <domain type="box">
-                <lx unit="reduced">710.</lx>
-                <ly unit="reduced">710.</ly>
-                <lz unit="reduced">710.</lz>
+                <lx unit="reduced">720.</lx>
+                <ly unit="reduced">720.</ly>
+                <lz unit="reduced">720.</lz>
             </domain>
             <!-- instead of lx/ly/lz we might accept density -->
             <components>
@@ -49,11 +49,11 @@
                                 </site>
                             </basis>
                             <latticeOccupancy>1.</latticeOccupancy>
-                            <density>0.00018</density>
+                            <density>0.00017</density>
                         </filler>
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>355</x> <y>710</y> <z>710</z> </upper>
+                            <upper> <x>360</x> <y>720</y> <z>720</z> </upper>
                         </object>
                         <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>
                     </objectgenerator>
@@ -71,11 +71,11 @@
                                 </site>
                             </basis>
                             <latticeOccupancy>1.</latticeOccupancy>
-                            <density>0.00018</density>
+                            <density>0.00017</density>
                         </filler>
                         <object type="Cuboid">
-                            <lower> <x>355</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>710</x> <y>710</y> <z>710</z> </upper>
+                            <lower> <x>360</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>720</x> <y>720</y> <z>720</z> </upper>
                         </object>
                         <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>
                     </objectgenerator>
@@ -110,8 +110,8 @@
             <weightImpl>near</weightImpl>
             <fpregions>
                 <region id="1">
-                    <lowX>335.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
-                    <highX>375.0</highX><highY>710.0</highY><highZ>710.0</highZ>
+                    <lowX>340.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
+                    <highX>380.0</highX><highY>720.0</highY><highZ>720.0</highZ>
                     <hybridDimX>40.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>

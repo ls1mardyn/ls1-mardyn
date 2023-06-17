@@ -100,7 +100,7 @@
 
         <output>
             <outputplugin name="VTKMoleculeWriter">
-                <writefrequency>10</writefrequency>
+                <writefrequency>10000</writefrequency>
                 <writefrequencyOffset>0</writefrequencyOffset>
                 <outputprefix>BlockInterface_256k_CH4</outputprefix>
             </outputplugin>
