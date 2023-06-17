@@ -46,9 +46,9 @@ void VTKFile::readXML(const std::string &file) {
                         index_to_mol[index++] = value;
                         if(value >= _molecules.size()) {
                             _molecules.resize(value+1);
-                            _molecules[value].id = value;
-                            _molecules[value].r = {0,0,0};
                         }
+                        _molecules[value].id = value;
+                        _molecules[value].r = {0,0,0};
                         mol_to_nParticles[value] += 1;
                     }
                 }

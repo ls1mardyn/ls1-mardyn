@@ -33,7 +33,8 @@ public:
             CIDs.insert(mol.cid);
         }
         CIDs.insert(0);
-        _molTypes = CIDs.size()/3;
+        if(CIDs.size()%3==0) _molTypes = CIDs.size()/3;
+        else _molTypes = CIDs.size();
     }
 
     ~Analysis() {}
@@ -46,7 +47,7 @@ public:
      * @param bbox bounding box of complete simulation
      * @param check if check[i] is true, will slice domain in that dimension
      * */
-    std::vector<Density> computeDensities(int nSamples, float boxWidth, std::array<float,3> bbox, std::array<bool,3> check) {
+    std::vector<Density> computeDensities(int nSamples, float boxWidth, std::array<float,3> bbox, std::array<int,3> check) {
         std::vector<Density> buffer;
         std::array<float,3> begin = { }, end = { }, stepSize = { }, halfBoxSize = { };
         std::array<int,3> steps { };

@@ -24,9 +24,9 @@ void initOptions(optparse::OptionParser& op) {
     op.add_option("--bbox1").dest("bbox1").type("float").metavar("NUM").set_default(100.0).help("size of bounding box in dim 1 of simulation (default: %default)");
     op.add_option("--bbox2").dest("bbox2").type("float").metavar("NUM").set_default(100.0).help("size of bounding box in dim 2 of simulation (default: %default)");
     op.add_option("-o", "--output").dest("output").type("string").metavar("PATH").set_default("vtk_analysis.txt").help("output file name (default: %default)");
-    op.add_option("--check0").dest("check0").type("bool").action("store_true").set_default(true).help("enables domain slicing in dimension 0 (default: %default)");
-    op.add_option("--check1").dest("check1").type("bool").action("store_true").set_default(false).help("enables domain slicing in dimension 0 (default: %default)");
-    op.add_option("--check2").dest("check2").type("bool").action("store_true").set_default(false).help("enables domain slicing in dimension 0 (default: %default)");
+    op.add_option("--check0").dest("check0").type("int").set_default(1).help("enables domain slicing in dimension 0 (default: %default)");
+    op.add_option("--check1").dest("check1").type("int").set_default(0).help("enables domain slicing in dimension 1 (default: %default)");
+    op.add_option("--check2").dest("check2").type("int").set_default(0).help("enables domain slicing in dimension 2 (default: %default)");
 }
 
 void writeOutput(const std::string& name, const std::vector<Analysis::Density>& data) {
@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
     }
 
     Analysis ana(vtk.getMolecules());
-    std::array<bool, 3> check { options.get("check0"), options.get("check1"), options.get("check2")};
+    std::array<int, 3> check { options.get("check0"), options.get("check1"), options.get("check2")};
     std::vector<Analysis::Density> densities = ana.computeDensities(nSamples, boxWidth, bbox, check);
 
 
