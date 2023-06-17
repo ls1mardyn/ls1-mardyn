@@ -223,8 +223,8 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
                     u += shift6;
 
                     //if mass 0 -> weight inv; if mass > 0 weight
-                    if(isCGi) for(double& d : f) d *= 1 - wi*wj;
-                    else for(double& d : f) d *= wi*wj;
+                    if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; }
+                    else { for (double &d: f) d *= wi * wj; u *= wi * wj; }
 
                     mi.Fljcenteradd(si, f);
                     mj.Fljcentersub(sj, f);
@@ -267,8 +267,8 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
             PotForce2Charge(drs, dr2, q1q2per4pie0, f, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCGi) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; }
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; }
             mi.Fchargeadd(si, f);
             mj.Fchargesub(sj, f);
 
@@ -291,8 +291,8 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
             PotForceChargeQuadrupole(drs, dr2, ejj.data(), qQ05per4pie0, f, m2, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCGi) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m2) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m2) m *= wi * wj;}
             mi.Fchargeadd(si, f);
             mj.Fquadrupolesub(sj, f);
             mj.Madd(m2);
@@ -316,8 +316,8 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
             PotForceChargeDipole(drs, dr2, ejj.data(), minusqmyper4pie0, f, m2, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCGi) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m2) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m2) m *= wi * wj;}
             mi.Fchargeadd(si, f);
             mj.Fdipolesub(sj, f);
             mj.Madd(m2);
@@ -346,8 +346,8 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
             PotForceChargeQuadrupole(drs, dr2, eii.data(), qQ05per4pie0, f, m1, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCGi) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m1) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m1) m *= wi * wj;}
             mi.Fquadrupolesub(si, f);
             mj.Fchargeadd(sj, f);
             mi.Madd(m1);
@@ -372,8 +372,8 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
             PotForce2Quadrupole(drs, dr2, eii.data(), ejj.data(), q2075, f, m1, m2, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCGi) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m1) m *= 1 - wi * wj; for(double& m: m2) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m1) m *= wi * wj; for(double& m: m2) m *= wi * wj;}
             mi.Fquadrupoleadd(si, f);
             mj.Fquadrupolesub(sj, f);
             mi.Madd(m1);
@@ -399,8 +399,8 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
             PotForceDiQuadrupole(drs, dr2, ejj.data(), eii.data(), qmy15, f, m2, m1, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCGi) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m1) m *= 1 - wi * wj; for(double& m: m2) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m1) m *= wi * wj; for(double& m: m2) m *= wi * wj;}
             mi.Fquadrupolesub(si, f);
             mj.Fdipoleadd(sj, f);
             mi.Madd(m1);
@@ -429,8 +429,8 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
             PotForceChargeDipole(drs, dr2, eii.data(), minusqmyper4pie0, f, m1, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCGi) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m1) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m1) m *= wi * wj;}
             mi.Fdipolesub(si, f);
             mj.Fchargeadd(sj, f);
             mi.Madd(m1);
@@ -455,8 +455,8 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
             PotForceDiQuadrupole(drs, dr2, eii.data(), ejj.data(), myq15, f, m1, m2, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCGi) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m1) m *= 1 - wi * wj; for(double& m: m2) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m1) m *= wi * wj; for(double& m: m2) m *= wi * wj;}
             mi.Fdipoleadd(si, f);
             mj.Fquadrupolesub(sj, f);
             mi.Madd(m1);
@@ -482,8 +482,8 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
             PotForce2Dipole(drs, dr2, eii.data(), ejj.data(), my2, rffac, f, m1, m2, u, MyRF);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCGi) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m1) m *= 1 - wi * wj; for(double& m: m2) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m1) m *= wi * wj; for(double& m: m2) m *= wi * wj;}
             mi.Fdipoleadd(si, f);
             mj.Fdipolesub(sj, f);
             mi.Madd(m1);
@@ -553,8 +553,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
                     u += shift6;
 
                     //if mass 0 -> weight inv; if mass > 0 weight
-                    if(isCGSiteI) for(double& d : f) d *= 1 - wi*wj;
-                    else for(double& d : f) d *= wi*wj;
+                    if(isCGSiteI) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj;}
+                    else { for (double &d: f) d *= wi * wj; u *= wi * wj;}
 
                     mi.Fljcenteradd(si, f);
                     mj.Fljcentersub(sj, f);
@@ -595,8 +595,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             PotForce2Charge(drs, dr2, q1q2per4pie0, f, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCG_i) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCG_i) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj;}
             mi.Fchargeadd(si, f);
             mj.Fchargesub(sj, f);
 
@@ -619,8 +619,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             PotForceChargeQuadrupole(drs, dr2, ejj.data(), qQ05per4pie0, f, m2, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCG_i) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCG_i) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m2) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m2) m *= wi * wj;}
             mi.Fchargeadd(si, f);
             mj.Fquadrupolesub(sj, f);
             mj.Madd(m2);
@@ -644,8 +644,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             PotForceChargeDipole(drs, dr2, ejj.data(), minusqmyper4pie0, f, m2, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCG_i) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCG_i) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m2) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m2) m *= wi * wj;}
             mi.Fchargeadd(si, f);
             mj.Fdipolesub(sj, f);
             mj.Madd(m2);
@@ -675,8 +675,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             PotForceChargeQuadrupole(drs, dr2, eii.data(), qQ05per4pie0, f, m1, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCG_i) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCG_i) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m1) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m1) m *= wi * wj;}
             mi.Fquadrupolesub(si, f);
             mj.Fchargeadd(sj, f);
             mi.Madd(m1);
@@ -701,8 +701,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             PotForce2Quadrupole(drs, dr2, eii.data(), ejj.data(), q2075, f, m1, m2, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCG_i) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCG_i) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m1) m *= 1 - wi * wj; for(double& m: m2) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m1) m *= wi * wj; for(double& m: m2) m *= wi * wj;}
             mi.Fquadrupoleadd(si, f);
             mj.Fquadrupolesub(sj, f);
             mi.Madd(m1);
@@ -728,8 +728,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             PotForceDiQuadrupole(drs, dr2, ejj.data(), eii.data(), qmy15, f, m2, m1, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCG_i) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCG_i) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m1) m *= 1 - wi * wj; for(double& m: m2) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m1) m *= wi * wj; for(double& m: m2) m *= wi * wj;}
             mi.Fquadrupolesub(si, f);
             mj.Fdipoleadd(sj, f);
             mi.Madd(m1);
@@ -758,8 +758,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             PotForceChargeDipole(drs, dr2, eii.data(), minusqmyper4pie0, f, m1, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCG_i) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCG_i) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m1) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m1) m *= wi * wj;}
             mi.Fdipolesub(si, f);
             mj.Fchargeadd(sj, f);
             mi.Madd(m1);
@@ -784,8 +784,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             PotForceDiQuadrupole(drs, dr2, eii.data(), ejj.data(), myq15, f, m1, m2, u);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCG_i) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCG_i) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m1) m *= 1 - wi * wj; for(double& m: m2) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m1) m *= wi * wj; for(double& m: m2) m *= wi * wj;}
             mi.Fdipoleadd(si, f);
             mj.Fquadrupolesub(sj, f);
             mi.Madd(m1);
@@ -811,8 +811,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             PotForce2Dipole(drs, dr2, eii.data(), ejj.data(), my2, rffac, f, m1, m2, u, MyRF);
 
             //if mass 0 -> weight inv; if mass > 0 weight
-            if(isCG_i) for(double& d : f) d *= 1 - wi*wj;
-            else for(double& d : f) d *= wi*wj;
+            if(isCG_i) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; for(double& m: m1) m *= 1 - wi * wj; for(double& m: m2) m *= 1 - wi * wj;}
+            else { for (double &d: f) d *= wi * wj; u *= wi * wj; for(double& m: m1) m *= wi * wj; for(double& m: m2) m *= wi * wj;}
             mi.Fdipoleadd(si, f);
             mj.Fdipolesub(sj, f);
             mi.Madd(m1);
@@ -873,6 +873,8 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
                 params >> shift6; // must be 0.0 for full LJ
                 if (calculateLJ) {
                     PotForceLJ(drs, dr2, eps24, sig2, f, u);
+                    if(isCGi) { u *= 1 - wi * wj;}
+                    else { u *= wi * wj;}
                     u += shift6;
                     Upot6LJ += u;
                 }
@@ -909,6 +911,8 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
             params >> q1q2per4pie0;
             SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             PotForce2Charge(drs, dr2, q1q2per4pie0, f, u);
+            if(isCGi) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
         // Charge-Quadrupole
@@ -924,6 +928,8 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
             SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             const std::array<double,3> ejj = mj.quadrupole_e(sj);
             PotForceChargeQuadrupole(drs, dr2, ejj.data(), qQ05per4pie0, f, m2, u);
+            if(isCGi) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
         // Charge-Dipole
@@ -939,6 +945,8 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
             SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             const std::array<double,3> ejj = mj.dipole_e(sj);
             PotForceChargeDipole(drs, dr2, ejj.data(), minusqmyper4pie0, f, m2, u);
+            if(isCGi) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
     }
@@ -959,6 +967,8 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
             params >> qQ05per4pie0;
             minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             PotForceChargeQuadrupole(drs, dr2, eii.data(), qQ05per4pie0, f, m1, u);
+            if(isCGi) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
         // Quadrupole-Quadrupole -------------------
@@ -975,6 +985,8 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
             SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             const std::array<double,3> ejj = mj.quadrupole_e(sj);
             PotForce2Quadrupole(drs, dr2, eii.data(), ejj.data(), q2075, f, m1, m2, u);
+            if(isCGi) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
         // Quadrupole-Dipole -----------------------
@@ -991,6 +1003,8 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
             minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             const std::array<double,3> ejj = mj.dipole_e(sj);
             PotForceDiQuadrupole(drs, dr2, ejj.data(), eii.data(), qmy15, f, m2, m1, u);
+            if(isCGi) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
     }
@@ -1011,6 +1025,8 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
             params >> minusqmyper4pie0;
             minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             PotForceChargeDipole(drs, dr2, eii.data(), minusqmyper4pie0, f, m1, u);
+            if(isCGi) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
         // Dipole-Quadrupole -----------------------
@@ -1027,6 +1043,8 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
             SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             const std::array<double,3> ejj = mj.quadrupole_e(sj);
             PotForceDiQuadrupole(drs, dr2, eii.data(), ejj.data(), myq15, f, m1, m2, u);
+            if(isCGi) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
         // Dipole-Dipole ---------------------------
@@ -1044,6 +1062,8 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
             SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             const std::array<double,3> ejj = mj.dipole_e(sj);
             PotForce2Dipole(drs, dr2, eii.data(), ejj.data(), my2, rffac, f, m1, m2, u, MyRF);
+            if(isCGi) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
     }
@@ -1095,6 +1115,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
                 params >> shift6; // must be 0.0 for full LJ
                 if (calculateLJ) {
                     PotForceLJ(drs, dr2, eps24, sig2, f, u);
+                    if(isCGSiteI) { u *= 1 - wi * wj;}
+                    else { u *= wi * wj;}
                     u += shift6;
                     Upot6LJ += u;
                 }
@@ -1129,6 +1151,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             params >> q1q2per4pie0;
             SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             PotForce2Charge(drs, dr2, q1q2per4pie0, f, u);
+            if(isCG_i) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
         // Charge-Quadrupole
@@ -1144,6 +1168,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             const std::array<double,3> ejj = mj.quadrupole_e(sj);
             PotForceChargeQuadrupole(drs, dr2, ejj.data(), qQ05per4pie0, f, m2, u);
+            if(isCG_i) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
         // Charge-Dipole
@@ -1159,6 +1185,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             const std::array<double,3> ejj = mj.dipole_e(sj);
             PotForceChargeDipole(drs, dr2, ejj.data(), minusqmyper4pie0, f, m2, u);
+            if(isCG_i) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
     }
@@ -1180,6 +1208,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             params >> qQ05per4pie0;
             minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             PotForceChargeQuadrupole(drs, dr2, eii.data(), qQ05per4pie0, f, m1, u);
+            if(isCG_i) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
         // Quadrupole-Quadrupole -------------------
@@ -1196,6 +1226,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             const std::array<double,3> ejj = mj.quadrupole_e(sj);
             PotForce2Quadrupole(drs, dr2, eii.data(), ejj.data(), q2075, f, m1, m2, u);
+            if(isCG_i) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
         // Quadrupole-Dipole -----------------------
@@ -1212,6 +1244,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             const std::array<double,3> ejj = mj.dipole_e(sj);
             PotForceDiQuadrupole(drs, dr2, ejj.data(), eii.data(), qmy15, f, m2, m1, u);
+            if(isCG_i) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
     }
@@ -1232,6 +1266,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             params >> minusqmyper4pie0;
             minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             PotForceChargeDipole(drs, dr2, eii.data(), minusqmyper4pie0, f, m1, u);
+            if(isCG_i) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
         // Dipole-Quadrupole -----------------------
@@ -1248,6 +1284,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             const std::array<double,3> ejj = mj.quadrupole_e(sj);
             PotForceDiQuadrupole(drs, dr2, eii.data(), ejj.data(), myq15, f, m1, m2, u);
+            if(isCG_i) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
         // Dipole-Dipole ---------------------------
@@ -1265,6 +1303,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
             const std::array<double,3> ejj = mj.dipole_e(sj);
             PotForce2Dipole(drs, dr2, eii.data(), ejj.data(), my2, rffac, f, m1, m2, u, MyRF);
+            if(isCG_i) { u *= 1 - wi * wj;}
+            else { u *= wi * wj;}
             UpotXpoles += u;
         }
     }
