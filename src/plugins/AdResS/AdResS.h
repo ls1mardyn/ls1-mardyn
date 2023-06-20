@@ -19,6 +19,7 @@ class Domain;
 class AdResSForceAdapter;
 class AdResSForceAdapterTest;
 class AdResSTest;
+class AdResSKDDecomposition;
 
 /**
  * With the introduction of AdResS to ls1-MarDyn the simulation class owns two particle containers,
@@ -37,6 +38,7 @@ class AdResSTest;
  * */
 class AdResS : public PluginBase {
     friend class AdResSForceAdapter;
+    friend class AdResSKDDecomposition;
     friend class AdResSForceAdapterTest;
     friend class AdResSTest;
 public:

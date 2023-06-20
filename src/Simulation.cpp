@@ -31,6 +31,7 @@
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
 #include "parallel/GeneralDomainDecomposition.h"
+#include "plugins/AdResS/AdResSKDDecomposition.h"
 #endif
 
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
@@ -326,7 +327,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			else if(parallelisationtype == "KDDecomposition") {
 				delete _domainDecomposition;
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _ensemble->getComponents()->size());
-			} else if (parallelisationtype == "GeneralDomainDecomposition") {
+			} else if(parallelisationtype == "AdResSKDDecomposition") {
+                delete _domainDecomposition;
+                _domainDecomposition = new AdResSKDDecomposition(getcutoffRadius(), _ensemble->getComponents()->size());
+            } else if (parallelisationtype == "GeneralDomainDecomposition") {
 				double skin = 0.;
 				bool forceLatchingToLinkedCellsGrid = false;
 				// We need the skin here (to specify the smallest possible partition), so we extract it from the AutoPas
@@ -378,6 +382,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
             if(auto kdd = dynamic_cast<KDDecomposition*>(_domainDecomposition)) {
                 kdd->init(_domain);
 			}
+            if(auto akdd = dynamic_cast<AdResSKDDecomposition*>(_domainDecomposition)) {
+                akdd->init(_domain);
+            }
         #endif
 
 			string loadTimerStr("SIMULATION_FORCE_CALCULATION");
@@ -823,6 +830,9 @@ void Simulation::prepare_start() {
 	if(auto *kdd = dynamic_cast<KDDecomposition*>(_domainDecomposition); kdd != nullptr){
 		kdd->fillTimeVecs(&_cellProcessor);
 	}
+    if(auto *akdd = dynamic_cast<AdResSKDDecomposition*>(_domainDecomposition); akdd != nullptr){
+        akdd->fillTimeVecs(&_cellProcessor);
+    }
 #endif
 
 	global_log->info() << "Clearing halos" << endl;

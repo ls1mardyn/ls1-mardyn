@@ -9,6 +9,7 @@
 #include "Domain.h"
 #include "AdResSRegionTraversal.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
+#include "AdResSKDDecomposition.h"
 
 #include <cmath>
 
@@ -98,6 +99,9 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
     _simulation.setParticlePairsHandler(_forceAdapter);
     _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), _forceAdapter));
     _domain = _simulation.getDomain();
+    if(auto decomp = dynamic_cast<AdResSKDDecomposition*>(&_simulation.domainDecomposition())) {
+        decomp->setAdResSPlugin(this);
+    }
 
     for(const auto& region : _fpRegions) {
         global_log->info() << "[AdResS] FPRegion Box from ["

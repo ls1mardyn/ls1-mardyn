@@ -84,7 +84,16 @@
         </ensemble>
 
         <algorithm>
-            <parallelisation type="DomainDecomposition"/>
+            <!--parallelisation type="DomainDecomposition"/-->
+            <parallelisation type="AdResSKDDecomposition">
+                <CommunicationScheme>direct</CommunicationScheme>
+                <updateFrequency>1000</updateFrequency>
+                <fullSearchThreshold>3</fullSearchThreshold>
+                <splitBiggestDimension>0</splitBiggestDimension>
+                <useVectorizationTuner>0</useVectorizationTuner>
+                <generateNewFiles>0</generateNewFiles>
+                <useExistingFiles>0</useExistingFiles>
+            </parallelisation>
             <datastructure type="LinkedCells">
                 <cellsInCutoffRadius>1</cellsInCutoffRadius>
                 <traversalSelector>c08</traversalSelector>
