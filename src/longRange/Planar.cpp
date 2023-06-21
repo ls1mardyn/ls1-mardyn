@@ -5,6 +5,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"
+#include "plugins/NEMD/DistControl.h"
 
 #include <vector>
 #include <cmath>
@@ -40,7 +41,6 @@ void Planar::init()
 {
 	//_smooth=true; // Deactivate this for transient simulations!
 	_smooth=false;  //true; <-- only applicable to static density profiles
-	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
 	
 	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
 	numComp=components.size();
@@ -142,17 +142,53 @@ void Planar::init()
 	simstep = 0;
 	
 	temp=_domain->getTargetTemperature(0);
+
+	if (_region.refPosID[0]+_region.refPosID[1] > 0) {
+		_subject = getSubject();
+		if (nullptr != _subject) {
+			this->update(_subject);
+			_subject->registerObserver(this);
+			global_log->info() << "Long Range Correction: Subject registered" << endl;
+		} else {
+			global_log->error() << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << endl;
+			Simulation::exit(-1);
+		}
+	}
 }
 
 void Planar::readXML(XMLfileUnits& xmlconfig)
 {
+	global_log->info() << "[Long Range Correction] Reading xml config" << endl;
+
 	xmlconfig.getNodeValue("slabs", _slabs);
 	xmlconfig.getNodeValue("smooth", _smooth);
 	xmlconfig.getNodeValue("frequency", frequency);
+	
+	std::string strVal;
+	_region.refPosID[0] = 0; _region.refPosID[1] = 0;
+	
+	// In some cases, like for density gradients in the bulk, the planar LRC may be wrong, since it was mainly developed for interfaces.
+	// Therefore, a region can be specified wherein the LRC for the force is applied.
+	// In order to still get correct state values in the bulks, the LRC for the virial and potential energy is also applied outside of the region.
+	if (xmlconfig.getNodeValue("region/left", _region.refPos[0]) && xmlconfig.getNodeValue("region/right", strVal)) {
+		// accept "box" as input
+		_region.refPos[1] = (strVal == "box") ? _domain->getGlobalLength(1) : atof(strVal.c_str() );
+		_region.actPos[0] = _region.refPos[0];
+		_region.actPos[1] = _region.refPos[1];
+		// read reference coords IDs
+		xmlconfig.getNodeValue("region/left@refcoordsID", _region.refPosID[0] );
+		xmlconfig.getNodeValue("region/right@refcoordsID", _region.refPosID[1] );
+	} else {
+		_region.refPos[0] = _region.actPos[0] = 0.0;
+		_region.refPos[1] = _region.actPos[1] = _domain->getGlobalLength(1);
+	}
+	
 	global_log->info() << "Long Range Correction: using " << _slabs << " slabs for profiles to calculate LRC." << endl;
 	global_log->info() << "Long Range Correction: sampling profiles every " << frequency << "th simstep." << endl;
 	global_log->info() << "Long Range Correction: profiles are smoothed (averaged over time): " << std::boolalpha << _smooth << endl;
-
+	global_log->info() << "Long Range Correction: force corrections are applied to particles within yRef = " << _region.refPos[0] << " (refID: " << _region.refPosID[0] << ") and " << _region.refPos[1] << " (refID: " << _region.refPosID[1] << ")" << endl;
+	global_log->info() << "Long Range Correction: pot. energy and virial corrections are applied within whole domain" << endl;
+	
 	// write control
 	bool bRet1 = xmlconfig.getNodeValue("writecontrol/start", _nStartWritingProfiles);
 	bool bRet2 = xmlconfig.getNodeValue("writecontrol/frequency", _nWriteFreqProfiles);
@@ -170,21 +206,19 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	bool bInputIsValid = (bRet1 && bRet2 && bRet3);
 	if(true == bInputIsValid)
 	{
-		global_log->error() << "Long Range Correction->writecontrol: Start writing profiles at simstep: " << _nStartWritingProfiles << endl;
-		global_log->error() << "Long Range Correction->writecontrol: Writing profiles with frequency: " << _nWriteFreqProfiles << endl;
-		global_log->error() << "Long Range Correction->writecontrol: Stop writing profiles at simstep: " << _nStopWritingProfiles << endl;
+		global_log->info() << "Long Range Correction->writecontrol: Start writing profiles at simstep: " << _nStartWritingProfiles << endl;
+		global_log->info() << "Long Range Correction->writecontrol: Writing profiles with frequency: " << _nWriteFreqProfiles << endl;
+		global_log->info() << "Long Range Correction->writecontrol: Stop writing profiles at simstep: " << _nStopWritingProfiles << endl;
 	}
 	else
 	{
 		global_log->error() << "Long Range Correction: Write control parameters not valid! Programm exit ..." << endl;
 		Simulation::exit(-1);
 	}
-
-	// init
-	this->init();
 }
 
-void Planar::calculateLongRange(){
+void Planar::calculateLongRange() {
+
 	if (_smooth){
 		const double delta_inv = 1.0 / delta;
 		const double slabsPerV = _slabs / V;
@@ -372,6 +406,10 @@ void Planar::calculateLongRange(){
 	double Upot_c=0.0;
 	double Virial_c=0.0; // Correction used for the Pressure Calculation
 
+#ifndef NDEBUG
+	std::cout << "Long Range Correction: Using region boundaries: " << _region.actPos[0] << " and " << _region.actPos[1] << std::endl;
+#endif
+
 	#if defined(_OPENMP)
 	#pragma omp parallel reduction(+:Upot_c, Virial_c)
 	#endif
@@ -392,30 +430,32 @@ void Planar::calculateLongRange(){
 			Fa[1] = fLJ[index];
 			Upot_c += uLJ[index];
 			Virial_c += 2 * vTLJ[index] + vNLJ[index];
-			double Via[3];
+			double Via[3] = {0.0, 0.0, 0.0};
 			Via[0] = vTLJ[index];
 			Via[1] = vNLJ[index];
 			Via[2] = vTLJ[index];
-			tempMol->Fljcenteradd(i, Fa);
-//			Virial_c=Via[1]; TODO: I, tchipevn, think that this line is a bug, so I'm commenting it out. Virial_c is a summation variable, it should not be overwritten by a value, dependent on the last molecule in the system.
+			if ((tempMol->r(1) >= _region.actPos[0]) && (tempMol->r(1) <= _region.actPos[1])) {
+				tempMol->Fljcenteradd(i, Fa);
+			}
 			tempMol->Viadd(Via);
-//			tempMol->Uadd(uLJ[loc+i*s+_slabs*numLJSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
+//			tempMol->Uadd(uLJ[loc+i*s+_slabs*numLJSum2[cid]]);      // Storing potential energy onto the molecules is currently not implemented!
 		}
 		if (numDipole[cid] != 0){
 			int loc = tempMol->r(1) * delta_inv;
-			double Fa[3] = { 0.0, 0.0, 0.0 };
+			double Fa[3] = {0.0, 0.0, 0.0};
 			const int index = loc + _slabs * numDipoleSum2[cid];
 			Fa[1] = fDipole[index];
 			Upot_c += uDipole[index];
 			Virial_c += 2 * vTDipole[index] + vNDipole[index];
-			double Via[3];
+			double Via[3] = {0.0, 0.0, 0.0};
 			Via[0] = vTDipole[index];
 			Via[1] = vNDipole[index];
 			Via[2] = vTDipole[index];
-			tempMol->Fadd(Fa); // Force is stored on the center of mass of the molecule!
+			if ((tempMol->r(1) >= _region.actPos[0]) && (tempMol->r(1) <= _region.actPos[1])) {
+				tempMol->Fadd(Fa); // Force is stored on the center of mass of the molecule!
+			}
 			tempMol->Viadd(Via);
-//			tempMol->Uadd(uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
-		//	}
+//			tempMol->Uadd(uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]); // Storing potential energy onto the molecules is currently not implemented!
 		}
 	}
 
@@ -430,7 +470,7 @@ void Planar::calculateLongRange(){
 
 	// Setting the Energy and Virial correction
 	_domain->setUpotCorr(Upot_c);
-	_domain->setVirialCorr(Virial_c);	
+	_domain->setVirialCorr(Virial_c);
 	
 	simstep++;
 }
@@ -583,7 +623,7 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 		for (unsigned j=i+1; j<i+_slabs/2; j++){
 			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
 
-			r=(j-i)*delta;
+			r=(j-i)*delta; // xi in Werth2014
 			r2=r*r;
 			rhoJ=rho_l[index_j];
 			if (j> i+cutoff_slabs){
@@ -647,8 +687,8 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				uLJ[index_j]+=rhoI*termU;
 				vNLJ[index_i]+=rhoJ*termVN*r2;
 				vNLJ[index_j]+=rhoI*termVN*r2;
-				vTLJ[index_j]+=rhoI*termVT2;
 				vTLJ[index_i]+=rhoJ*termVT2;
+				vTLJ[index_j]+=rhoI*termVT2;
 				fLJ[index_i]+=rhoJ*termF*r;
 				fLJ[index_j]+=-rhoI*termF*r;
 			}
@@ -657,8 +697,8 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				uLJ[index_j]+=rhoI*termURC;
 				vNLJ[index_i]+=rhoJ*termVNRC*r2;
 				vNLJ[index_j]+=rhoI*termVNRC*r2;
-				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				vTLJ[index_i]+=rhoJ*(termVTRC1*(rc2-r2)+termVTRC2);
+				vTLJ[index_j]+=rhoI*(termVTRC1*(rc2-r2)+termVTRC2);
 				fLJ[index_i]+=rhoJ*termFRC*r;
 				fLJ[index_j]+=-rhoI*termFRC*r;
 			}
@@ -1084,23 +1124,32 @@ void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsig
 #endif
 
 	std::stringstream outputstream;
+	double lengthPerSlab = _domain->getGlobalLength(1)/_slabs;
 
 	// header
-//		outputstream << "                     pos";
+	outputstream << "                     pos";
 	for(uint32_t si=0; si<numLJSum; ++si)
 	{
 		outputstream << "            rho_l_LRC[" << si << "]";
 		outputstream << "                F_LRC[" << si << "]";
+		outputstream << "                u_LRC[" << si << "]";
 	}
 	outputstream << endl;
 
 	// data
 	for(uint32_t pi=0; pi<_slabs; ++pi)
 	{
+		double pos = lengthPerSlab*(pi+0.5);
+		outputstream << std::setw(24) << pos;
 		for(uint32_t si=0; si<numLJSum; ++si)
 		{
 			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << rho_l[_slabs*si+pi];
-			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << fLJ[_slabs*si+pi];
+			if ((pos >= _region.actPos[0]) && (pos <= _region.actPos[1])) {
+				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << fLJ[_slabs*si+pi];
+			} else {
+				outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << 0.0;
+			}
+			outputstream << std::setw(24) << FORMAT_SCI_MAX_DIGITS << uLJ[_slabs*si+pi];
 		}
 		outputstream << std::endl;
 	} // loop: pos
@@ -1110,4 +1159,48 @@ void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsig
 	ofstream fileout(filenamestream.str().c_str(), ios::out);
 	fileout << outputstream.str();
 	fileout.close();
+}
+
+SubjectBase* Planar::getSubject() {
+	SubjectBase* subject = nullptr;
+	std::list<PluginBase*>& plugins = *(global_simulation->getPluginList() );
+	for (auto&& pit:plugins) {
+		std::string name = pit->getPluginName();
+		if(name == "DistControl") {
+			subject = dynamic_cast<SubjectBase*>(pit);
+		}
+	}
+	return subject;
+}
+
+void Planar::update(SubjectBase* subject) {
+	auto* distControl = dynamic_cast<DistControl*>(subject);
+	double dMidpointLeft, dMidpointRight, origin;
+	dMidpointLeft = dMidpointRight = 0.;
+	if(nullptr != distControl) {
+		dMidpointLeft = distControl->GetInterfaceMidLeft();
+		dMidpointRight = distControl->GetInterfaceMidRight();
+#ifndef NDEBUG
+		std::cout << "Long Range Correction: Received value for left interface position:  " << dMidpointLeft << std::endl;
+		std::cout << "Long Range Correction: Received value for right interface position: " << dMidpointRight << std::endl;
+#endif
+	}
+
+	for (unsigned short i=0; i<2; i++) {
+
+		switch(_region.refPosID[i]) {
+		case 0:
+			origin = 0.;
+			break;
+		case 1:
+			origin = dMidpointLeft;
+			break;
+		case 2:
+			origin = dMidpointRight;
+			break;
+		default:
+			origin = 0.;
+		}
+		_region.actPos[i] = origin + _region.refPos[i];
+	}
 }

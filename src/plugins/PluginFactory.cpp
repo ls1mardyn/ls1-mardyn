@@ -22,6 +22,7 @@
 #include "io/FlopRateWriter.h"
 #include "io/GammaWriter.h"
 #include "io/HaloParticleWriter.h"
+#include "io/KDTreePrinter.h"
 #include "io/LoadBalanceWriter.h"
 #include "io/MPICheckpointWriter.h"
 #include "io/MaxWriter.h"
@@ -40,23 +41,33 @@
 // General plugins
 #include "plugins/COMaligner.h"
 #include "plugins/COMalignerBubble.h"
+#include "plugins/DirectedPM.h"
+#include "plugins/Dropaccelerator.h"
+#include "plugins/Dropaligner.h"
 #include "plugins/ExamplePlugin.h"
+#include "plugins/FixRegion.h"
 #include "plugins/InMemoryCheckpointing.h"
+#include "plugins/LoadImbalanceThroughSleepPlugin.h"
 #include "plugins/MaxCheck.h"
 #include "plugins/Mirror.h"
 #include "plugins/MirrorSystem.h"
-#include "plugins/NEMD/RegionSampling.h"
-#include "plugins/Permittivity.h"
-#include "plugins/NEMD/MettDeamon.h"
-#include "plugins/NEMD/MettDeamonFeedrateDirector.h"
-#include "plugins/NEMD/PosNegComp.h"
+#include "plugins/NEMD/DensityControl.h"
 #include "plugins/NEMD/DistControl.h"
 #include "plugins/NEMD/DriftCtrl.h"
 #include "plugins/NEMD/ExtractPhase.h"
+#include "plugins/NEMD/MettDeamon.h"
+#include "plugins/NEMD/MettDeamonFeedrateDirector.h"
+#include "plugins/NEMD/PosNegComp.h"
+#include "plugins/NEMD/RegionSampling.h"
+#include "plugins/NEMD/VelocityExchange.h"
+#include "plugins/Permittivity.h"
 #include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
 #include "plugins/WallPotential.h"
+#ifdef ENABLE_ADIOS2
+#include "io/Adios2Writer.h"
+#endif
 
 #ifdef VTK
 #include "io/vtk/VTKGridWriter.h"
@@ -71,20 +82,29 @@ template <>
 void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	global_log->debug() << "REGISTERING PLUGINS" << endl;
 
+#ifdef ENABLE_ADIOS2
+	REGISTER_PLUGIN(Adios2Writer);
+#endif
 	REGISTER_PLUGIN(COMaligner);
 	REGISTER_PLUGIN(COMalignerBubble);
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(CommunicationPartnerWriter);
 	REGISTER_PLUGIN(DecompWriter);
+	REGISTER_PLUGIN(DirectedPM);
+	REGISTER_PLUGIN(Dropaccelerator);
+	REGISTER_PLUGIN(Dropaligner);
 	REGISTER_PLUGIN(EnergyLogWriter);
 	REGISTER_PLUGIN(ExamplePlugin);
+	REGISTER_PLUGIN(FixRegion);
 	REGISTER_PLUGIN(FlopRateWriter);
 	REGISTER_PLUGIN(GammaWriter);
 	REGISTER_PLUGIN(HaloParticleWriter);
 	REGISTER_PLUGIN(InMemoryCheckpointing);
 	REGISTER_PLUGIN(SpatialProfile);
+	REGISTER_PLUGIN(KDTreePrinter);
 	REGISTER_PLUGIN(LoadbalanceWriter);
+	REGISTER_PLUGIN(LoadImbalanceThroughSleepPlugin);
 	REGISTER_PLUGIN(MPICheckpointWriter);
 	REGISTER_PLUGIN(MaxCheck);
 	REGISTER_PLUGIN(MaxWriter);
@@ -98,9 +118,11 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(PovWriter);
 	REGISTER_PLUGIN(RDF);
 	REGISTER_PLUGIN(RegionSampling);
+	REGISTER_PLUGIN(VelocityExchange);
 	REGISTER_PLUGIN(MettDeamon);
 	REGISTER_PLUGIN(MettDeamonFeedrateDirector);
 	REGISTER_PLUGIN(PosNegComp);
+	REGISTER_PLUGIN(DensityControl);
 	REGISTER_PLUGIN(DistControl);
 	REGISTER_PLUGIN(DriftCtrl);
 	REGISTER_PLUGIN(ExtractPhase);

@@ -8,10 +8,10 @@
 #ifndef SRC_PARTICLECONTAINER_LINKEDCELLTRAVERSALS_C08CELLPAIRTRAVERSAL_H_
 #define SRC_PARTICLECONTAINER_LINKEDCELLTRAVERSALS_C08CELLPAIRTRAVERSAL_H_
 
-#include "particleContainer/LinkedCellTraversals/C08BasedTraversals.h"
-#include "utils/threeDimensionalMapping.h"
-#include "utils/mardyn_assert.h"
 #include "C08BasedTraversals.h"
+#include "utils/GetChunkSize.h"
+#include "utils/mardyn_assert.h"
+#include "utils/threeDimensionalMapping.h"
 
 struct C08CellPairTraversalData : CellPairTraversalData {
 };
@@ -205,8 +205,16 @@ void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsBackend(C
 	const unsigned long end_x = end[0], end_y = end[1], end_z = end[2];
 	const unsigned long stride_x = stride[0], stride_y = stride[1], stride_z = stride[2];
 
-	#if defined(_OPENMP)
-	#pragma omp for schedule(dynamic, 1) collapse(3) nowait
+	// number of iterations:
+	const auto loop_size = static_cast<size_t>(std::ceil(static_cast<double>(end_x - start_x) / stride_x) *
+											   std::ceil(static_cast<double>(end_y - start_y) / stride_y) *
+											   std::ceil(static_cast<double>(end_z - start_z) / stride_z));
+
+	// magic numbers: empirically determined to be somewhat efficient.
+	const int chunk_size = chunk_size::getChunkSize(loop_size, 10000, 100);
+
+#if defined(_OPENMP)
+	#pragma omp for schedule(dynamic, chunk_size) collapse(3) nowait
 	#endif
 	for (unsigned long z = start_z; z < end_z; z += stride_z) {
 		for (unsigned long y = start_y; y < end_y; y += stride_y) {

@@ -11,7 +11,13 @@ def printVariation(def it) {
 }
 
 def ciMatrix = [
-  ["SSE","NOVEC","AVX","AVX2","KNL_MASK","KNL_G_S"], // VECTORIZE_CODE
+  ["SSE",
+    "NOVEC",
+    "AVX",
+    "AVX2",
+    // "KNL_MASK",
+    // "KNL_G_S",
+  ], // VECTORIZE_CODE
   ["DEBUG","RELEASE"],                               // TARGET
   ["0","1"],                                         // OPENMP
   ["PAR","SEQ"],                                     // PARTYPE
@@ -76,39 +82,151 @@ pipeline {
         stash 'repo'
       }
     }
+    stage('check ADIOS2 integration') {
+      agent { label 'atsccs11' }
+      stages {
+        stage('build with ADIOS2 sequential') {
+          steps {
+            unstash 'repo'
+            dir ("build_adios"){
+              sh """
+                cmake -DENABLE_ADIOS2=ON -DENABLE_UNIT_TESTS=1 ..
+                make -j4
+              """
+            }
+            stash includes: "build_adios/src/MarDyn", name: "adios2_exec"
+          }
+        }
+        stage('build with ADIOS2 MPI') {
+          steps {
+            unstash 'repo'
+            dir ("build_adios_mpi"){
+              sh """
+                CC=mpicc CXX=mpicxx cmake -DENABLE_MPI=ON -DENABLE_ADIOS2=ON -DENABLE_UNIT_TESTS=1 ..
+                make -j4
+              """
+            }
+            stash includes: "build_adios_mpi/src/MarDyn", name: "adios2_mpi_exec"
+          }
+        }
+        stage('unit test with adios2') {
+          parallel {
+            stage('test sequential') {
+              steps {
+                dir("seq"){
+                  unstash 'repo'
+                  unstash 'adios2_exec'
+                  dir ("build_adios"){
+                    sh """
+                      ./src/MarDyn -t -d ../test_input/
+                    """
+                  }
+                }
+              }
+            }
+            stage('test mpi') {
+              steps {
+                dir("mpi"){
+                  unstash 'repo'
+                  unstash 'adios2_mpi_exec'
+                  dir ("build_adios_mpi"){
+                    sh """
+                      mpirun -n 1 ./src/MarDyn -t -d ../test_input/
+                      mpirun -n 4 ./src/MarDyn -t -d ../test_input/
+                    """
+                  }
+                }
+              }
+            }
+          }
+        }
+        stage('validation tests with adios2') {
+          parallel {
+            stage('run seq') {
+              steps {
+                dir('adios2test'){
+                  unstash 'repo'
+                  unstash 'adios2_exec'
+                  dir ("build_adios"){
+                    sh """
+                      pwd
+                      cd ../examples/adios/CO2_Merker
+                      rm -rf co2_merkers.bp
+                      ../../../build_adios/src/MarDyn config.xml --steps=20
+                      [ -d "co2_merkers.bp" ] && echo "File written."
+                    """
+                  }
+                }
+              }
+            }
+            stage('run mpi') {
+              steps {
+                dir('adios2test'){
+                  unstash 'repo'
+                  unstash 'adios2_mpi_exec'
+                  dir ("build_adios_mpi"){
+                    sh """
+                      pwd
+                      cd ../examples/adios/CO2_Merker
+                      rm -rf co2_merkers.bp
+                      mpirun -n 4 ../../../build_adios_mpi/src/MarDyn config.xml --steps=20
+                      [ -d "co2_merkers.bp" ] && echo "File written."
+                    """
+                  }
+                }
+              }
+            }
+            stage('parallel read') {
+              steps {
+                dir('adios2test'){
+                  unstash 'repo'
+                  unstash 'adios2_mpi_exec'
+                  dir ("build_adios_mpi"){
+                    sh """
+                      pwd
+                      cd ../examples/adios/read
+                      mpirun -n 4 ../../../build_adios_mpi/src/MarDyn config_parallel.xml --steps=20
+                    """
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
     stage('check AutoPas integration') {
       agent { label 'atsccs11' }
       stages {
-        stage('build with autopas') {
-          parallel {
-            stage('build sequential') {
+        // parallel build currently disabled, because of OOM errors on atsccs11, when compiling two builds in parallel.
+        //stage('build with autopas') {
+        //  parallel {
+            stage('build with autopas sequential') {
               steps {
                 unstash 'repo'
                 dir ("build"){
                   sh """
-                    cmake -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
+                    cmake -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 -DENABLE_ADIOS2=OFF ..
                     make -j4
                   """
                 }
                 stash includes: "build/src/MarDyn", name: "autopas_exec"
               }
             }
-            stage('build MPI') {
+            stage('build with autopas MPI') {
               steps {
                 unstash 'repo'
-                sh "rm -rf libs/ALL/ALL"
-                sh "cp -r /work/jenkins/ALL libs/ALL/ALL"
                 dir ("build-mpi"){
                   sh """
-                    CC=mpicc CXX=mpicxx cmake -DENABLE_ALLLBL=ON -DENABLE_MPI=ON -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 ..
+                    CC=mpicc CXX=mpicxx cmake -DENABLE_ALLLBL=ON -DENABLE_MPI=ON -DENABLE_AUTOPAS=ON -DOPENMP=ON -DENABLE_UNIT_TESTS=1 -DENABLE_ADIOS2= ..
                     make -j4
                   """
                 }
                 stash includes: "build-mpi/src/MarDyn", name: "autopas_mpi_exec"
               }
             }
-          }
-        }
+        //  }
+        //}
         stage('unit test with autopas') {
           parallel {
             stage('test sequential') {
@@ -455,6 +573,7 @@ pipeline {
             // Fail the entire pipeline if one step fails
             variations.failFast = false
             // HACK Jobs to manage resource allocation on the knl cluster
+            /*  // START temporary disabled knl-cluster
             variations["slurm"] = {
               try {
                 node("KNL_PRIO") { // Executor on the CoolMUC3 login node reserved for slurm allocation and management
@@ -509,7 +628,7 @@ pipeline {
               catch (err) {
                 println err
               }
-            }
+            }*/ // END temporary disabled knl-cluster
             // Assemble CI-Matrix in a map
             for ( entry in matrix[0] ) {
               matrixEntry[level] = entry

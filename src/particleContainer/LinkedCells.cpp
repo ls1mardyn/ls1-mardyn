@@ -1,20 +1,21 @@
 #include <cmath>
 #include "particleContainer/LinkedCells.h"
 
-
+#include <algorithm>
+#include <array>
+#include <variant>
 #include "Domain.h"
-#include "parallel/DomainDecompBase.h"
-#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
-#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
-#include "particleContainer/adapter/CellProcessor.h"
-#include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "ParticleCell.h"
 #include "molecules/Molecule.h"
+#include "parallel/DomainDecompBase.h"
+#include "particleContainer/adapter/CellProcessor.h"
+#include "particleContainer/adapter/LegacyCellProcessor.h"
+#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "utils/Logger.h"
-#include "utils/mardyn_assert.h"
 #include "utils/Random.h"
-#include <array>
-#include <algorithm>
+#include "utils/mardyn_assert.h"
+#include "utils/GetChunkSize.h"
 
 #include "particleContainer/TraversalTuner.h"
 
@@ -26,7 +27,6 @@
 #include "particleContainer/LinkedCellTraversals/SlicedCellPairTraversal.h"
 
 #include "ResortCellProcessorSliced.h"
-
 
 using namespace std;
 using Log::global_log;
@@ -180,7 +180,7 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	_cells.resize(numberOfCells);
 
 	bool sendParticlesTogether = true;
-	// If the with of the inner region is less than the width of the halo region
+	// If the width of the inner region is less than the width of the halo region
 	// leaving particles and halo copy must be sent separately.
 	if (_boxWidthInNumCells[0] < 2 * _haloWidthInNumCells[0]
 			|| _boxWidthInNumCells[1] < 2 * _haloWidthInNumCells[1]
@@ -306,19 +306,21 @@ void LinkedCells::update_via_copies() {
 	vector<long> backwardNeighbourOffsets; // now vector
 	calculateNeighbourIndices(forwardNeighbourOffsets, backwardNeighbourOffsets);
 
+	// magic numbers: empirically determined to be somewhat efficient.
+	const int chunk_size = chunk_size::getChunkSize(_cells.size(), 10000, 100);
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
 	{
 		#if defined(_OPENMP)
-		#pragma omp for schedule(static)
+		#pragma omp for schedule(dynamic, chunk_size)
 		#endif
 		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < numCells; cellIndex++) {
 			_cells[cellIndex].preUpdateLeavingMolecules();
 		}
 
 		#if defined(_OPENMP)
-		#pragma omp for schedule(static)
+		#pragma omp for schedule(dynamic, chunk_size)
 		#endif
 		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < numCells; cellIndex++) {
 			ParticleCell& cell = _cells[cellIndex];
@@ -344,7 +346,7 @@ void LinkedCells::update_via_copies() {
 		}
 
 		#if defined(_OPENMP)
-		#pragma omp for schedule(static)
+		#pragma omp for schedule(dynamic, chunk_size)
 		#endif
 		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 			_cells[cellIndex].postUpdateLeavingMolecules();
@@ -363,8 +365,14 @@ void LinkedCells::update_via_coloring() {
 			int startIndices[3];
 			threeDIndexOfCellIndex(col, startIndices, strides);
 
+			const auto loop_size = static_cast<size_t>(
+				std::ceil(static_cast<double>(_cellsPerDimension[0] - 1 - startIndices[0]) / strides[0]) *
+				std::ceil(static_cast<double>(_cellsPerDimension[1] - 1 - startIndices[1]) / strides[1]) *
+				std::ceil(static_cast<double>(_cellsPerDimension[2] - 1 - startIndices[2]) / strides[2]));
+			// magic numbers: empirically determined to be somewhat efficient.
+			const int chunk_size = chunk_size::getChunkSize(loop_size, 10000, 100);
 			#if defined (_OPENMP)
-			#pragma omp for schedule(dynamic, 1) collapse(3)
+			#pragma omp for schedule(dynamic, chunk_size) collapse(3)
 			#endif
 			for (int z = startIndices[2]; z < _cellsPerDimension[2]-1 ; z+= strides[2]) {
 				for (int y = startIndices[1]; y < _cellsPerDimension[1]-1; y += strides[1]) {
@@ -504,9 +512,9 @@ void LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDup
 		const cell_index_t my_cells_start = (thread_id    ) * numCells / num_threads;
 		const cell_index_t my_cells_end   = (thread_id + 1) * numCells / num_threads;
 
-		map<cell_index_t, vector<mol_index_t>>::const_iterator thread_begin = newPartsPerCell.begin();
+		auto thread_begin = newPartsPerCell.begin();
 		advance(thread_begin, my_cells_start);
-		map<cell_index_t, vector<mol_index_t>>::const_iterator thread_end = newPartsPerCell.begin();
+		auto thread_end = newPartsPerCell.begin();
 		advance(thread_end, my_cells_end);
 
 		for(auto it = thread_begin; it != thread_end; ++it) {
@@ -565,7 +573,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	cellProcessor.endTraversal();
 }
 
-unsigned long LinkedCells::getNumberOfParticles() {
+unsigned long LinkedCells::getNumberOfParticles(ParticleIterator::Type t /* = ParticleIterator::ALL_CELLS */) {
 	unsigned long N = 0;
 	unsigned long numCells = _cells.size();
 
@@ -573,7 +581,9 @@ unsigned long LinkedCells::getNumberOfParticles() {
 	#pragma omp parallel for reduction(+:N)
 	#endif
 	for (unsigned long i = 0; i < numCells; ++i) {
-		N += _cells.at(i).getMoleculeCount();
+		if ((t == ParticleIterator::ALL_CELLS) or (not _cells.at(i).isHaloCell())) {
+			N += _cells.at(i).getMoleculeCount();
+		}
 	}
 	return N;
 }
@@ -607,12 +617,12 @@ void LinkedCells::deleteOuterParticles() {
 		Simulation::exit(1);
 	}*/
 
-	const int numHaloCells = _haloCellIndices.size();
+	const size_t numHaloCells = _haloCellIndices.size();
 
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif
-	for (int i = 0; i < numHaloCells; i++) {
+	for (size_t i = 0; i < numHaloCells; i++) {
 		ParticleCell& currentCell = _cells[_haloCellIndices[i]];
 		currentCell.deallocateAllParticles();
 	}
@@ -629,9 +639,47 @@ RegionParticleIterator LinkedCells::regionIterator(const double startRegion[3], 
 	unsigned int startRegionCellIndex;
 	unsigned int endRegionCellIndex;
 
-	getCellIndicesOfRegion(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex);
+	// only include halo cells if iterator explicitly asks for all cells
+	const auto &localBoxOfInterestMin = type == ParticleIterator::ALL_CELLS ? _haloBoundingBoxMin : _boundingBoxMin;
+	const auto &localBoxOfInterestMax = type == ParticleIterator::ALL_CELLS ? _haloBoundingBoxMax : _boundingBoxMax;
 
-	return getRegionParticleIterator(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex, type);
+    // clamp iterated region to local MPI subdomain
+	const std::array<double, 3> startRegionClamped = {
+		std::clamp(startRegion[0], localBoxOfInterestMin[0], localBoxOfInterestMax[0]),
+		std::clamp(startRegion[1], localBoxOfInterestMin[1], localBoxOfInterestMax[1]),
+		std::clamp(startRegion[2], localBoxOfInterestMin[2], localBoxOfInterestMax[2]),
+	};
+	const std::array<double, 3> endRegionClamped = {
+		std::clamp(endRegion[0], localBoxOfInterestMin[0], localBoxOfInterestMax[0]),
+		std::clamp(endRegion[1], localBoxOfInterestMin[1], localBoxOfInterestMax[1]),
+		std::clamp(endRegion[2], localBoxOfInterestMin[2], localBoxOfInterestMax[2]),
+	};
+
+	// check if the clipping resulted in the region of interest box collapsing as it is not part of the local domain.
+	const auto localVolumeIsZero = localBoxOfInterestMin[0] == localBoxOfInterestMax[0]
+							  or localBoxOfInterestMin[1] == localBoxOfInterestMax[1]
+							  or localBoxOfInterestMin[2] == localBoxOfInterestMax[2];
+	if (localVolumeIsZero) {
+		// return invalid iterator (_cells == nullptr)
+		return RegionParticleIterator{};
+	}
+
+	getCellIndicesOfRegion(startRegionClamped.data(), endRegionClamped.data(), startRegionCellIndex, endRegionCellIndex);
+
+	std::array<int, 3> start3DIndices{}, end3DIndices{};
+	threeDIndexOfCellIndex(static_cast<int>(startRegionCellIndex), start3DIndices.data(), _cellsPerDimension);
+	threeDIndexOfCellIndex(static_cast<int>(endRegionCellIndex), end3DIndices.data(), _cellsPerDimension);
+	const std::array<int, 3> regionDimensions = {
+		end3DIndices[0] - start3DIndices[0] + 1,
+		end3DIndices[1] - start3DIndices[1] + 1,
+		end3DIndices[2] - start3DIndices[2] + 1,
+	};
+
+	// if the iterator on this rank has nothing to iterate over invalidate it by pushing its cell offset out of range.
+	const ParticleIterator::CellIndex_T offset = mardyn_get_thread_num(); // starting position
+	const ParticleIterator::CellIndex_T stride = mardyn_get_num_threads(); // stride
+
+	return {type, &_cells, offset, stride, static_cast<int>(startRegionCellIndex), regionDimensions.data(), _cellsPerDimension, startRegion, endRegion};
 }
 
 //################################################
@@ -953,23 +1001,6 @@ unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMolecul
 	return totalNumberOfMolecules;
 }
 
-RegionParticleIterator LinkedCells::getRegionParticleIterator(
-		const double startRegion[3], const double endRegion[3],
-		const unsigned int startRegionCellIndex,
-		const unsigned int endRegionCellIndex, ParticleIterator::Type type) {
-	int start3DIndices[3], end3DIndices[3];
-	int regionDimensions[3];
-	threeDIndexOfCellIndex(startRegionCellIndex, start3DIndices, _cellsPerDimension);
-	threeDIndexOfCellIndex(endRegionCellIndex, end3DIndices, _cellsPerDimension);
-	for(int d = 0; d < 3; d++){
-		regionDimensions[d] = end3DIndices[d] - start3DIndices[d] + 1;
-	}
-	ParticleIterator::CellIndex_T offset = mardyn_get_thread_num(); // starting position
-	ParticleIterator::CellIndex_T stride = mardyn_get_num_threads(); // stride
-
-	return RegionParticleIterator(type, &_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
-}
-
 void LinkedCells::deleteMolecule(ParticleIterator &moleculeIter, const bool& rebuildCaches) {
 
 	moleculeIter.deleteCurrentParticle();
@@ -1046,7 +1077,7 @@ void LinkedCells::updateInnerMoleculeCaches() {
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif
-	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+	for (size_t cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 		if(_cells[cellIndex].isInnerCell()){
 			_cells[cellIndex].buildSoACaches();
 		}
@@ -1057,7 +1088,7 @@ void LinkedCells::updateBoundaryAndHaloMoleculeCaches() {
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif
-	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+	for (size_t cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 		if (_cells[cellIndex].isHaloCell() or _cells[cellIndex].isBoundaryCell()) {
 			_cells[cellIndex].buildSoACaches();
 		}
@@ -1065,10 +1096,13 @@ void LinkedCells::updateBoundaryAndHaloMoleculeCaches() {
 }
 
 void LinkedCells::updateMoleculeCaches() {
+	// magic numbers: empirically determined to be somewhat efficient.
+	const int chunk_size = chunk_size::getChunkSize(_cells.size(), 10000, 100);
+
 	#if defined(_OPENMP)
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(dynamic, chunk_size)
 	#endif
-	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+	for (size_t cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 		_cells[cellIndex].buildSoACaches();
 	}
 }
@@ -1108,26 +1142,25 @@ std::string LinkedCells::getName() {
 	return "LinkedCells";
 }
 
-bool LinkedCells::getMoleculeAtPosition(const double pos[3], Molecule** result) {
+std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> LinkedCells::getMoleculeAtPosition(const double pos[3]) {
 	const double epsi = this->_cutoffRadius * 1e-6;
 	auto index = getCellIndexOfPoint(pos);
 	auto& cell = _cells.at(index);
 
 	// iterate through cell and compare position of molecules with given position
 
-	SingleCellIterator<ParticleCell> begin1 = cell.iterator();
 
-	for (SingleCellIterator<ParticleCell> it1 = begin1; it1.isValid(); ++it1) {
-		auto& mol = *it1;
+	for (auto cellIterator = cell.iterator(); cellIterator.isValid(); ++cellIterator) {
+		auto& mol = *cellIterator;
 
-		if (fabs(mol.r(0) - pos[0]) <= epsi && fabs(mol.r(1) - pos[1]) <= epsi && fabs(mol.r(2) - pos[2]) <= epsi) {
+		if (fabs(cellIterator->r(0) - pos[0]) <= epsi && fabs(cellIterator->r(1) - pos[1]) <= epsi &&
+			fabs(cellIterator->r(2) - pos[2]) <= epsi) {
 			// found
-			*result = &mol;
-			return true;
+			return cellIterator;
 		}
 	}
-	// not found
-	return false;
+	// not found -> return default initialized iter.
+	return {};
 }
 
 bool LinkedCells::requiresForceExchange() const {return _traversalTuner->getCurrentOptimalTraversal()->requiresForceExchange();}
@@ -1135,12 +1168,23 @@ bool LinkedCells::requiresForceExchange() const {return _traversalTuner->getCurr
 std::vector<unsigned long> LinkedCells::getParticleCellStatistics() {
 	int maxParticles = 0;
 	for (auto& cell : _cells) {
-		maxParticles = std::max(maxParticles, cell.getMoleculeCount());
+		if(not cell.isHaloCell()) {
+			maxParticles = std::max(maxParticles, cell.getMoleculeCount());
+		}
 	}
 
 	std::vector<unsigned long> statistics(maxParticles + 1, 0ul);
 	for (auto& cell : _cells) {
-		statistics[cell.getMoleculeCount()]++;
+		if(not cell.isHaloCell()) {
+			statistics[cell.getMoleculeCount()]++;
+		}
 	}
 	return statistics;
+}
+
+string LinkedCells::getConfigurationAsString() {
+	stringstream ss;
+	// TODO: propper string representation for ls1 traversal choices
+	ss <<  "{Container: ls1_linkedCells , Traversal: " << _traversalTuner->getSelectedTraversal() << "}";
+	return ss.str();
 }

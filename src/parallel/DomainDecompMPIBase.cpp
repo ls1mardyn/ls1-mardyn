@@ -13,14 +13,15 @@
 #include "Simulation.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "ParticleData.h"
+#include "Domain.h"
 
 #include "parallel/ZonalMethods/FullShell.h"
 #include "parallel/ZonalMethods/EighthShell.h"
 #include "parallel/ZonalMethods/HalfShell.h"
 #include "parallel/ZonalMethods/Midpoint.h"
 #include "parallel/ZonalMethods/NeutralTerritory.h"
-#include "parallel/CollectiveCommunication.h" // new
-#include "parallel/CollectiveCommunicationNonBlocking.h" // new
+#include "parallel/CollectiveCommunication.h"
+#include "parallel/CollectiveCommunicationNonBlocking.h"
 
 using Log::global_log;
 using std::endl;
@@ -28,10 +29,10 @@ using std::endl;
 DomainDecompMPIBase::DomainDecompMPIBase() :
 		_comm(MPI_COMM_WORLD) {
 #ifndef MARDYN_AUTOPAS
-	_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme(new FullShell());
+	_neighbourCommunicationScheme = std::make_unique<IndirectNeighbourCommunicationScheme>(new FullShell());
 #else
 	// direct push-pull
-	_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(new FullShell(), true);
+	_neighbourCommunicationScheme = std::make_unique<DirectNeighbourCommunicationScheme>(new FullShell(), true);
 #endif
 	//_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(new FullShell());
 
@@ -46,9 +47,6 @@ DomainDecompMPIBase::DomainDecompMPIBase() :
 }
 
 DomainDecompMPIBase::~DomainDecompMPIBase() {
-
-	delete _neighbourCommunicationScheme;
-	_neighbourCommunicationScheme = nullptr; // do you need both?
 
 	MPI_Type_free(&_mpiParticleType);
 
@@ -67,6 +65,12 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 #else
 	std::string neighbourCommunicationScheme = "direct-pp";
 #endif
+	if(_forceDirectPP){
+		global_log->info()
+			<< "Forcing direct-pp communication scheme, as _forceDirectPP is set (probably by a child class)."
+			<< std::endl;
+		neighbourCommunicationScheme = "direct-pp";
+	}
 
 	std::string zonalMethod = "fs";
 	std::string traversal = "c08"; // currently useless, as traversal is set elsewhere
@@ -98,7 +102,7 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	// Specifies if the sequential fallback shall be used.
 	bool useSequentialFallback = true;
 	xmlconfig.getNodeValue("useSequentialFallback", useSequentialFallback);
-	if(zonalMethod=="nt"){
+	if (zonalMethod == "nt") {
 		global_log->info() << "Forcefully disabling sequential fallback, because Neutral Territory is used!" << std::endl;
 		useSequentialFallback = false;
 		global_log->info() << "Enforcing direct-pp neighborcommunicationscheme, because NT is used!" << std::endl;
@@ -116,6 +120,9 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 #else
 		global_log->warning() << "DomainDecompMPIBase: Can not use overlapping collectives, as the MPI version is less than MPI 3." << endl;
 #endif
+		xmlconfig.getNodeValue("overlappingStartAtStep", _overlappingStartAtStep);
+		global_log->info() << "DomainDecompMPIBase: Overlapping Collectives start at step " << _overlappingStartAtStep
+						   << endl;
 	} else {
 		global_log->info() << "DomainDecompMPIBase: NOT Using Overlapping Collectives" << endl;
 	}
@@ -125,10 +132,7 @@ int DomainDecompMPIBase::getNonBlockingStageCount() {
 	return _neighbourCommunicationScheme->getCommDims();
 }
 
-void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string zonalMethod) {
-	// delete if it exists already
-	delete _neighbourCommunicationScheme;
-	_neighbourCommunicationScheme = nullptr;
+void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, const std::string& zonalMethod) {
 
 	ZonalMethod* zonalMethodP = nullptr;
 
@@ -144,7 +148,7 @@ void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string
 	} else if(zonalMethod=="nt") {
 		zonalMethodP = new NeutralTerritory();
 	} else {
-		global_log->error() << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'hs', 'mp' and 'nt'"
+		global_log->error() << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'es', 'hs', 'mp' and 'nt'"
 				<< std::endl;
 		Simulation::exit(1);
 	}
@@ -152,13 +156,13 @@ void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string
 
 	if (scheme=="direct") {
 		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme without push-pull neighbors" << std::endl;
-		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(zonalMethodP, false);
+		_neighbourCommunicationScheme = std::make_unique<DirectNeighbourCommunicationScheme>(zonalMethodP, false);
 	} else if(scheme=="direct-pp") {
 		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme with push-pull neighbors" << std::endl;
-		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme(zonalMethodP, true);
+		_neighbourCommunicationScheme = std::make_unique<DirectNeighbourCommunicationScheme>(zonalMethodP, true);
 	} else if(scheme=="indirect") {
 		global_log->info() << "DomainDecompMPIBase: Using IndirectCommunicationScheme" << std::endl;
-		_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme(zonalMethodP);
+		_neighbourCommunicationScheme = std::make_unique<IndirectNeighbourCommunicationScheme>(zonalMethodP);
 	} else {
 		global_log->error() << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'"
 				<< std::endl;
@@ -167,8 +171,8 @@ void DomainDecompMPIBase::setCommunicationScheme(std::string scheme, std::string
 }
 
 unsigned DomainDecompMPIBase::Ndistribution(unsigned localN, float* minrnd, float* maxrnd) {
-	unsigned* moldistribution = new unsigned[_numProcs];
-	MPI_CHECK(MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution, 1, MPI_UNSIGNED, _comm));
+	std::vector<unsigned> moldistribution(_numProcs);
+	MPI_CHECK(MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution.data(), 1, MPI_UNSIGNED, _comm));
 	unsigned globalN = 0;
 	for (int r = 0; r < _rank; r++)
 		globalN += moldistribution[r];
@@ -177,7 +181,6 @@ unsigned DomainDecompMPIBase::Ndistribution(unsigned localN, float* minrnd, floa
 	unsigned localNtop = globalN;
 	for (int r = _rank + 1; r < _numProcs; r++)
 		globalN += moldistribution[r];
-	delete[] moldistribution;
 	*minrnd = (float) localNbottom / globalN;
 	*maxrnd = (float) localNtop / globalN;
 	return globalN;
@@ -205,13 +208,12 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 	using std::endl;
 
 	if (_rank) {
-		unsigned long num_molecules = moleculeContainer->getNumberOfParticles();
-		std::vector<unsigned long> tids(num_molecules);
+		unsigned long num_molecules = moleculeContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+		std::vector<unsigned long> tids;
+		tids.reserve(num_molecules);
 
-		int i = 0;
 		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
-			tids[i] = m->getID();
-			i++;
+			tids.push_back(m->getID());
 		}
 		MPI_CHECK(MPI_Send(tids.data(), num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm));
 		global_log->info() << "Data consistency checked: for results see rank 0." << endl;
@@ -300,7 +302,47 @@ size_t DomainDecompMPIBase::getTotalSize() {
 			+ _collCommunication->getTotalSize();
 }
 
-void DomainDecompMPIBase::printSubInfo(int offset) { 
+void DomainDecompMPIBase::printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) {
+	if (_rank == 0) {
+		ofstream povcfgstrm(filename);
+		povcfgstrm << "size " << domain->getGlobalLength(0) << " " << domain->getGlobalLength(1) << " "
+				   << domain->getGlobalLength(2) << endl;
+		povcfgstrm << "rank boxMin_x boxMin_y boxMin_z boxMax_x boxMax_y boxMax_z Configuration" << endl;
+		povcfgstrm.close();
+	}
+
+	stringstream localCellInfo;
+	localCellInfo << _rank << " " << getBoundingBoxMin(0, domain) << " " << getBoundingBoxMin(1, domain) << " "
+			<< getBoundingBoxMin(2, domain) << " " << getBoundingBoxMax(0, domain) << " "
+			<< getBoundingBoxMax(1, domain) << " " << getBoundingBoxMax(2, domain) << " "
+			<< particleContainer->getConfigurationAsString() << "\n";
+	string localCellInfoStr = localCellInfo.str();
+
+#ifdef ENABLE_MPI
+	MPI_File fh;
+	MPI_File_open(_comm, filename.c_str(), MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+	uint64_t write_size = localCellInfoStr.size();
+	uint64_t offset = 0;
+	if (_rank == 0) {
+		MPI_Offset file_end_pos;
+		MPI_File_seek(fh, 0, MPI_SEEK_END);
+		MPI_File_get_position(fh, &file_end_pos);
+		write_size += file_end_pos;
+		MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
+		offset += file_end_pos;
+	} else {
+		MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
+	}
+	MPI_File_write_at(fh, static_cast<MPI_Offset>(offset), localCellInfoStr.c_str(), static_cast<int>(localCellInfoStr.size()), MPI_CHAR, MPI_STATUS_IGNORE);
+	MPI_File_close(&fh);
+#else
+	ofstream povcfgstrm(filename.c_str(), ios::app);
+	povcfgstrm << localCellInfoStr;
+	povcfgstrm.close();
+#endif
+}
+
+void DomainDecompMPIBase::printSubInfo(int offset) {
 	std::stringstream offsetstream;
 	for (int i = 0; i < offset; i++) {
 		offsetstream << "\t";
@@ -313,4 +355,12 @@ void DomainDecompMPIBase::printSubInfo(int offset) {
 
 void DomainDecompMPIBase::printCommunicationPartners(std::string filename) const{
 	_neighbourCommunicationScheme->printCommunicationPartners(filename);
+}
+
+void DomainDecompMPIBase::collCommAllreduceSumAllowPrevious() {
+	if (global_simulation->getSimulationStep() >= _overlappingStartAtStep) {
+		_collCommunication->allreduceSumAllowPrevious();
+	} else {
+		_collCommunication->allreduceSum();
+	}
 }

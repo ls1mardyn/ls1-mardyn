@@ -21,11 +21,14 @@
 #define PARTICLECONTAINER_H_
 
 #include <list>
+#include <variant>
 #include <vector>
+#include "ParticleCell.h"
 #include "ParticleIterator.h"
 #include "RegionParticleIterator.h"
-#include "molecules/MoleculeForwardDeclaration.h"
 #include "io/MemoryProfiler.h"
+#include "molecules/MoleculeForwardDeclaration.h"
+
 class CellProcessor;
 class ParticlePairsHandler;
 class XMLfileUnits;
@@ -101,11 +104,6 @@ public:
 	//! invalid. This method restores a valid representation.
 	virtual void update() = 0;
 
-	/**
-	 * Same as ParticleContainer:update() but forces the update.
-	 */
-	virtual void forcedUpdate() { update(); }
-
 	//! @brief add a single Molecule to the ParticleContainer.
 	//!
 	//! Note: a copy of the particle is pushed. Destroying the argument is
@@ -162,11 +160,11 @@ public:
 	virtual ParticleIterator iterator (ParticleIterator::Type t) = 0;
 	virtual RegionParticleIterator regionIterator (const double startCorner[3], const double endCorner[3], ParticleIterator::Type t) = 0;
 
-	//! @return the number of particles stored in this container
-	//!
-	//! This number may include particles which are outside of
+	//! @brief Gets number of particles stored in this container
+	//! @param t Type of particles to count, e.g. ONLY_INNER_AND_BOUNDARY to dismiss halo particles. Argument defaults to ALL_CELLS
+	//! @return the number of particles stored in this container; for ALL_CELLS, this number may include particles which are outside of
 	//! the bounding box
-	virtual unsigned long getNumberOfParticles() = 0;
+	virtual unsigned long getNumberOfParticles(ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
 
 	//! @brief returns one coordinate of the lower corner of the bounding box
 	//!
@@ -199,8 +197,6 @@ public:
 
 	virtual double getCutoff() const = 0;
 
-	virtual double getInteractionLength() const {return getCutoff();}
-
 	virtual double getSkin() const {return 0.;}
 
     /* TODO: Have a look on this */
@@ -225,15 +221,21 @@ public:
 	/**
 	 * @brief Gets a molecule by its position.
 	 * @param pos Molecule position
-	 * @param result Molecule will be returned by this pointer if found
-	 * @return Molecule was found?
+	 * @return Iterator to the molecule. The iterator is invalid if no molecule was found.
 	 */
-	virtual bool getMoleculeAtPosition(const double pos[3], Molecule** result) = 0;
+	virtual std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) = 0;
 
 	// @brief Should the domain decomposition exchange calculated forces at the boundaries,
 	// or does this particle container calculate all forces.
 	virtual bool requiresForceExchange() const {return false;}
-        
+
+    /**
+     * Generates a body-centered cubic grid.
+     * @param numMoleculesPerDimension
+     * @param simBoxLength
+     * @param seed_offset
+     * @return
+     */
 	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, size_t seed_offset) = 0;
 
 	virtual double* getCellLength() = 0;
@@ -258,11 +260,22 @@ public:
 	 */
 	virtual void setCutoff(double rc){};
 
-	virtual std::vector<Molecule> getInvalidParticles() { return {}; }
+	std::vector<Molecule>& getInvalidParticlesRef() {
+		return _invalidParticles;
+	}
 
 	virtual bool isInvalidParticleReturner() { return false; }
 
-	virtual bool hasInvalidParticles() { return false; }
+	/**
+	 * Return a string representation of the algorithmic configuration of the container.
+	 * Only used for logging / output.
+	 * @note: Formatting rules:
+	 *  - The whole configuration should be enclosed in curly brackets.
+	 *  - Different elements should be separated by a comma sourrounded by spaces: " , ".
+	 *  - Every element should be in the form "key: value"
+	 * @return
+	 */
+	virtual std::string getConfigurationAsString() = 0;
 
 protected:
 
@@ -270,6 +283,9 @@ protected:
 	double _boundingBoxMin[3];
 	//! coordinates of the right, upper, back corner of the bounding box
 	double _boundingBoxMax[3];
+	//! Vector of particles that are about to be removed from the container.
+	//! Currently only used by AutoPasContainer but here for interface reasons.
+	std::vector<Molecule> _invalidParticles{};
 
 };
 

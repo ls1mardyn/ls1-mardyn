@@ -82,7 +82,8 @@ public:
 
 	virtual void prefetchForForce() const {/*TODO*/}
 
-	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, Random & RNG);
+	unsigned long initCubicGrid(const std::array<unsigned long, 3> &numMoleculesPerDimension,
+								const std::array<double, 3> &simBoxLength, Random &RNG);
 
 //protected: Do not use! use SingleCellIterator instead!
 	// multipurpose:
@@ -97,16 +98,16 @@ public:
 
 
 	static CellBorderAndFlagManager _cellBorderAndFlagManager;
-	bool isHaloCell() const {
+	bool isHaloCell() const final {
 		return _cellBorderAndFlagManager.isHaloCell(_cellIndex);
 	}
-	bool isBoundaryCell() const {
+	bool isBoundaryCell() const final {
 		return _cellBorderAndFlagManager.isBoundaryCell(_cellIndex);
 	}
-	bool isInnerCell() const {
+	bool isInnerCell() const final {
 		return _cellBorderAndFlagManager.isInnerCell(_cellIndex);
 	}
-	bool isInnerMostCell() const {
+	bool isInnerMostCell() const final {
 		return _cellBorderAndFlagManager.isInnerMostCell(_cellIndex);
 	}
 

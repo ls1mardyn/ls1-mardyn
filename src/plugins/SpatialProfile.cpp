@@ -11,6 +11,7 @@
 #include "plugins/profiles/KineticProfile.h"
 #include "plugins/profiles/DOFProfile.h"
 #include "plugins/profiles/VirialProfile.h"
+#include "plugins/profiles/Virial2DProfile.h"
 
 /**
 * @brief Read in Information about write/record frequencies, Sampling Grid and which profiles are enabled.
@@ -78,6 +79,11 @@ void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "[SpatialProfile] VIRIAL PROFILE ENABLED\n";
 		numProfiles++;
 	}
+	xmlconfig.getNodeValue("profiles/virial2D", _VIRIAL2D);
+	if (_VIRIAL2D) {
+		global_log->info() << "[SpatialProfile] 2D VIRIAL PROFILE ENABLED\n";
+		numProfiles++;
+	}
 	global_log->info() << "[SpatialProfile] Number of profiles: " << numProfiles << "\n";
 	if (numProfiles < 1) {
 		global_log->warning() << "[SpatialProfile] NO PROFILES SPECIFIED -> Outputting all\n";
@@ -86,7 +92,7 @@ void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 
 	// ADDING PROFILES
 	// Need DensityProfile for Velocity*Profile / Temperature / Virial
-	if (_DENSITY || _VELOCITY || _VELOCITY3D || _VIRIAL || _ALL) {
+	if (_DENSITY || _VELOCITY || _VELOCITY3D || _VIRIAL || _VIRIAL2D || _ALL) {
 		_densProfile = new DensityProfile();
 		addProfile(_densProfile);
 	}
@@ -102,6 +108,14 @@ void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 	if (_VIRIAL || _ALL) {
 		_virialProfile = new VirialProfile(_densProfile);
 		addProfile(_virialProfile);
+	}
+	if (_VIRIAL2D || _ALL) {
+		_dofProfile = new DOFProfile();
+		addProfile(_dofProfile);
+		_kineticProfile = new KineticProfile();
+		addProfile(_kineticProfile);
+		_virial2DProfile = new Virial2DProfile(_densProfile, _dofProfile, _kineticProfile);
+		addProfile(_virial2DProfile);
 	}
 	if (_TEMPERATURE || _ALL) {
 		_dofProfile = new DOFProfile();
@@ -135,6 +149,16 @@ void SpatialProfile::init(ParticleContainer* particleContainer, DomainDecompBase
 		samplInfo.globalLength[d] = domain->getGlobalLength(d);
 		global_log->info() << "[SpatialProfile] globalLength " << samplInfo.globalLength[d] << "\n";
 	}
+	// Get global number of molecules
+	samplInfo.globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
+	// Get number of molecules in FixRegion
+	if (getNumFixRegion) {
+		samplInfo.numMolFixRegion = (*getNumFixRegion)();
+	} else {
+		samplInfo.numMolFixRegion = 0;
+	}
+	global_log->info() << "getDomain was called with Molecules in Fix Region: " << samplInfo.numMolFixRegion << endl;
+
 	// Calculate sampling units
 	if (samplInfo.cylinder) {
 		double minXZ = this->samplInfo.globalLength[0];

@@ -224,7 +224,7 @@ void Permittivity::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		_accumulatedSteps++;
 	}
 	
-	if (simstep > _initStatistics && simstep % _writeFrequency == 0 && simstep > 0) {
+	if (simstep > _initStatistics && simstep % _writeFrequency == 0) {
 		collect(domainDecomp);
 		reset();
 	}

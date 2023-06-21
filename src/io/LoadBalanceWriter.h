@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <deque>
 
 /** name of the LoadbalanceWriter's default timer */
 #define LB_WRITER_DEFAULT_TIMER_NAME "LoadbalanceWriter_default"
@@ -21,8 +22,17 @@
  * In each line the following values are stored for each LB timer:
  * - min, max times over all processes
  * - the factor max/min
+ * - the imbalance 1 - average / max. This describes lost performance due to imbalances for the current time step.
+ * - an averaged imbalance. Compared to the step-wise imbalance, the time-values are averaged for averageLength time
+ * steps. In the first few steps, this averaging is not fully possible, thus only the average of the first steps is
+ * taken. The averaged imbalance aims to reduce imbalances caused by noise and performance fluctuations and is thus a
+ * more accurate measure for the quality of the partitioning. It is (in average) lower than the step-wise imbalance. In
+ * addition, when comparing the step-wise imbalance and the averaged imbalance, information about the fluctuations can
+ * be retrieved.
  *
- * Warning levels for each timer can be set which will output a waring to the logfile.
+ * @note Warning thresholds (level) (for the ratio max / min) for each timer can be set (see documentation of
+ * readXML()) which will output a warning to the logfile if the ratio max_time / min_time is above the threshold. This
+ * warning level should be bigger than 1.!
  *
  * @todo This plugin may be extended to threads
  */
@@ -43,6 +53,7 @@ public:
 	 * \code{.xml}
 	   <outputplugin name="LoadbalanceWriter">
 	     <writefrequency>INTEGER</writefrequency>
+	     <averageLength>INTEGER</averageLength>
 	     <outputfilename>STRING</outputfilename>
 	     <timers> <!-- additional timers -->
 	        <timer> <name>LoadbalanceWriter_default</name> <warninglevel>DOUBLE</warninglevel> </timer>
@@ -81,18 +92,29 @@ private:
 	void displayWarning(unsigned long simstep, const std::string& timername, double f_LB);
 
 	unsigned long _writeFrequency;
+	unsigned long _averageLength{10};
 	std::string _outputFilename;
 	Timer *_defaultTimer;
 	std::vector<std::string> _timerNames;
 	std::vector<double> _times;
+
+	// Holds multiple time values (not flushed after write) to get averaged load values.
+	std::deque<double> _timesForAverageBuffer;
+	unsigned long _lastTimesOldValueCount{0};  // How many old values _lastTimes holds from before a flush.
+	std::vector<double> _global_sum_average_times;
+	std::vector<double> _global_max_average_times;
+
 	std::vector<double> _sum_times;
 	std::vector<double> _global_sum_times;
 	std::vector<double> _global_times;
 	std::vector<unsigned long> _simsteps;
 	std::map<std::string, double> _warninglevels;
-	std::map<std::string, bool> _incremental;  // describes whether the timer will continuously increase and the difference between two calls should be used as timer value
-	std::map<std::string, double> _incremental_previous_times;  // previous times of the incremental timers
+
+	/// describes whether the timer will continuously increase and the difference between two calls should be used as timer value
+	std::map<std::string, bool> _incremental;
+	/// previous times of the incremental timers
+	std::map<std::string, double> _incremental_previous_times;
+	std::vector<double> getAveragedTimes();
 };
 
 #endif  // SRC_IO_LOADBALANCEWRITER_H_
-

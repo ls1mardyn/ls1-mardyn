@@ -11,22 +11,24 @@ class Simulation;
 class Domain;
 class LongRangeCorrection;
 
+/**
+ * Dummy long-range correction class which provides no correction.
+ */
 class NoLRC: public LongRangeCorrection{
 
 public:
-	NoLRC(double cutoffRadius, double cutoffRadiusLJ,  Domain* domain, Simulation* simulation) {
-        global_log->info() << "No long range correction is used: UpotCorr = VirialCorr = 0" << std::endl;
+	NoLRC(double /* cutoffRadius */, double /* cutoffRadiusLJ */,  Domain* domain, Simulation* /* simulation */) {
         _domain = domain;
     };
 	virtual ~NoLRC() {}
 
-	virtual void init() {}
-	virtual void readXML(XMLfileUnits& xmlconfig) {}
+	virtual void init() { global_log->info() << "No long range correction is used: UpotCorr = VirialCorr = 0" << std::endl; }
+	virtual void readXML(XMLfileUnits& /* xmlconfig */) {}
 	virtual void calculateLongRange() {
         _domain->setUpotCorr(0.);
         _domain->setVirialCorr(0.);
       };
-	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) {}
+	virtual void writeProfiles(DomainDecompBase* /* domainDecomp */, Domain* /* domain */, unsigned long /* simstep */) {}
 
 private:
     Domain* _domain;

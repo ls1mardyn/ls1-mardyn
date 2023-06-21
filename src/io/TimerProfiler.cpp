@@ -200,7 +200,9 @@ void TimerProfiler::readInitialTimersFromFile(string fileName){
 #endif
 		make_tuple("SIMULATION_PER_STEP_IO", vector<string>{"SIMULATION_LOOP"}, true),
 		make_tuple("SIMULATION_IO", vector<string>{"SIMULATION"}, true),
+		make_tuple("SIMULATION_UPDATE_CONTAINER", vector<string>{"SIMULATION_DECOMPOSITION"}, true),
 		make_tuple("SIMULATION_MPI_OMP_COMMUNICATION", vector<string>{"SIMULATION_DECOMPOSITION"}, true),
+		make_tuple("SIMULATION_UPDATE_CACHES", vector<string>{"SIMULATION_DECOMPOSITION"}, true),
 		make_tuple("SIMULATION_FORCE_CALCULATION", vector<string>{"SIMULATION_COMPUTATION"}, true),
 		make_tuple("COMMUNICATION_PARTNER_INIT_SEND", vector<string>{"COMMUNICATION_PARTNER", "SIMULATION_MPI_OMP_COMMUNICATION"}, true),
 		make_tuple("COMMUNICATION_PARTNER_TEST_RECV", vector<string>{"COMMUNICATION_PARTNER", "SIMULATION_MPI_OMP_COMMUNICATION"}, true),

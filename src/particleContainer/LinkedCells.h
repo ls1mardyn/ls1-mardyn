@@ -102,9 +102,31 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <datastructure type="LinkedCells">
-	     <cellsInCutoffRadius>INTEGER</cellsInCutoffRadius>
-	   </datastructure>
+		<datastructure type="LinkedCells">
+			<cellsInCutoffRadius>INTEGER</cellsInCutoffRadius>
+			<!-- from TraversalTuner: -->
+			<!-- select traversal algorithm
+				possible values are:
+				- original
+				- c04
+				- c08        (default for >1 threads)
+				- c08es      (eight-shell)
+				- quicksched
+				- sliced     (default for <2 threads)
+				- hs         (half shell method)
+				- mp         (mid point method)
+				- nt         (neutral territory method)
+			-->
+			<traversalSelector>c08</traversalSelector>
+			<!-- override default block size (2x2x2) for quicksched tasks -->
+			<traversalData type="quicksched">
+				<taskBlockSize>
+					<lx>2</lx>
+					<ly>2</ly>
+					<lz>2</lz>
+				</taskBlockSize>
+			</traversalData>
+		</datastructure>
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
@@ -130,7 +152,7 @@ public:
 	void update_via_traversal();
 	void update_via_sliced_traversal();
 
-	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
+	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches = false) override;
 
 	void addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) override;
 
@@ -154,8 +176,10 @@ public:
 
 	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) override;
 
+	//! @brief Gets number of particles stored in Linked Cells
+	//! @param t Type of particles to count, e.g. ONLY_INNER_AND_BOUNDARY to dismiss halo particles. Argument defaults to ALL_CELLS
 	//! @return the number of particles stored in the Linked Cells
-	unsigned long getNumberOfParticles() override;
+	unsigned long getNumberOfParticles(ParticleIterator::Type t = ParticleIterator::ALL_CELLS) override;
 
 	// @todo: where is this function called?
 	void clear() override;
@@ -189,7 +213,7 @@ public:
 	 * @param result Molecule will be returned by this pointer if found
 	 * @return Molecule was found?
 	 */
-	bool getMoleculeAtPosition(const double pos[3], Molecule** result) override;
+	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override;
 
 	//! @brief Get the index in the cell vector to which this Molecule belongs
 	//!
@@ -221,8 +245,8 @@ public:
 	virtual void updateMoleculeCaches() override;
 
 	ParticleIterator iterator (ParticleIterator::Type t) override {
-		ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();
-		ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();
+		const ParticleIterator::CellIndex_T offset = mardyn_get_thread_num();
+		const ParticleIterator::CellIndex_T stride = mardyn_get_num_threads();
 
 		return ParticleIterator(t, &_cells, offset, stride);
 	}
@@ -239,6 +263,8 @@ public:
 								std::array<double, 3> simBoxLength, size_t seed_offset) override;
 
 	std::vector<unsigned long> getParticleCellStatistics() override;
+
+	std::string getConfigurationAsString() override;
 
 private:
 	//####################################
@@ -301,11 +327,6 @@ private:
 	void deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]);
 
 	void getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startRegionCellIndex, unsigned int &endRegionCellIndex);
-
-	RegionParticleIterator getRegionParticleIterator(
-			const double startRegion[3], const double endRegion[3],
-			const unsigned int startRegionCellIndex,
-			const unsigned int endRegionCellIndex, ParticleIterator::Type type);
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####

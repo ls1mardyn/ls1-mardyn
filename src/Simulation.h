@@ -2,11 +2,14 @@
 #define SIMULATION_H_
 
 #include <memory>
+#include <any>
 
 #include "ensemble/CavityEnsemble.h"
 #include "io/TimerProfiler.h"
-#include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
+#include "utils/FixedSizeQueue.h"
+#include "utils/FunctionWrapper.h"
+#include "utils/SysMon.h"
 
 // plugins
 #include "plugins/PluginFactory.h"
@@ -102,7 +105,8 @@ public:
 	       </electrostatic>
 	       <datastructure type=STRING><!-- see ParticleContainer class documentation --></datastructure>
 	       <parallelisation type=STRING><!-- see DomainDecompBase class documentation -->
-	         <timerForCalculation>STRING</timerForCalculation><!-- Timer to use as load. requires valid timer name! -->
+	         <timerForLoad>STRING</timerForLoad><!-- Timer to use as load. Requires valid timer name! -->
+	         <timerForLoad_AveragingLength>UINT</timerForLoad_AveragingLength><!-- Defines how many time measurements should be averaged as input for the load balancing.-->
 	       </parallelisation>
 	       <thermostats>
 	         <thermostat type='VelocityScaling' componentId=STRING><!-- componentId can be component id or 'global' -->
@@ -194,7 +198,7 @@ public:
 	 * - update the caches of the molecules
 	 * - update the ParticleContainer
 	 */
-	void updateParticleContainerAndDecomposition(double lastTraversalTime);
+	void updateParticleContainerAndDecomposition(double lastTraversalTime, bool useTimers);
 
 	/**
 	 * Performs both the decomposition and the cell traversal in an overlapping way.
@@ -471,8 +475,22 @@ private:
 	/** use legacyCellProcessor instead of vectorizedCellProcessor */
 	bool _legacyCellProcessor = false;
 
+	/**
+	 * Specifies whether to use overlapping p2p (peer-to-peer) communication or not.
+	 * If false: overlapping is only performed for unpacking and packing of particles.
+	 * If true: overlapping of the leaving and halo particle exchange with the actual force calculation is performed.
+	 */
+	bool _overlappingP2P {false};
+
 	/** List of plugins to use */
 	std::list<PluginBase*> _plugins;
+
+	/** Map of all call backs.
+	 * The key is the name of the callback.
+	 * Each element contains a std::function object.
+	 * Please check the specific plugins for the actual signature of the function and use an appropriate any_cast!
+	 */
+	std::map<std::string, FunctionWrapper> _callbacks;
 
 	VelocityScalingThermostat _velocityScalingThermostat;
 
@@ -506,5 +524,7 @@ private:
 	struct PrepareStartOptions {
 		bool refreshIDs;
 	} _prepare_start_opt;
+
+	FixedSizeQueue<double> _lastTraversalTimeHistory;
 };
 #endif /*SIMULATION_H_*/

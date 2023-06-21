@@ -9,6 +9,7 @@
 #include <limits>
 #include <list>
 #include <map>
+#include <numeric>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -49,13 +50,17 @@
 
 #include "io/ASCIIReader.h"
 #include "io/BinaryReader.h"
-#include "io/MultiObjectGenerator.h"
-#include "io/TcTS.h"
-#include "io/Mkesfera.h"
 #include "io/CubicGridGeneratorInternal.h"
-#include "io/ReplicaGenerator.h"
-#include "io/TimerProfiler.h"
 #include "io/MemoryProfiler.h"
+#include "io/Mkesfera.h"
+#include "io/MultiObjectGenerator.h"
+#include "io/PerCellGenerator.h"
+#include "io/ReplicaGenerator.h"
+#include "io/TcTS.h"
+#include "io/TimerProfiler.h"
+#ifdef ENABLE_ADIOS2
+#include "io/Adios2Reader.h"
+#endif
 
 #include "ensemble/GrandCanonicalEnsemble.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -75,8 +80,6 @@
 
 #include "bhfmm/FastMultipoleMethod.h"
 #include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
-
-#include "plugins/VectorizationTuner.h"
 
 using Log::global_log;
 using namespace std;
@@ -262,6 +265,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			if(xmlconfig.getNodeValueReduced("radiusLJ", _LJCutoffRadius)) {
 				global_log->info() << "dimensionless LJ cutoff radius:\t" << _LJCutoffRadius << endl;
+				for(auto &component: *(_ensemble->getComponents())) {
+					component.updateAllLJcentersShift(_LJCutoffRadius);
+				}
 			}
 			/** @todo introduce maxCutoffRadius here for datastructures, ...
 			 *        maybe use map/list to store cutoffs for different potentials? */
@@ -291,6 +297,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 
 		if (xmlconfig.changecurrentnode("electrostatic[@type='FastMultipoleMethod']")) {
+#ifdef MARDYN_AUTOPAS
+			global_log->fatal()
+				<< "The fast multipole method is not compatible with AutoPas. Please disable the AutoPas mode (ENABLE_AUTOPAS)!"
+				<< std::endl;
+			Simulation::exit(1);
+#endif
 			_FMM = new bhfmm::FastMultipoleMethod();
 			_FMM->readXML(xmlconfig);
 			xmlconfig.changecurrentnode("..");
@@ -301,6 +313,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			string parallelisationtype("DomainDecomposition");
 			xmlconfig.getNodeValue("@type", parallelisationtype);
 			global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
+			xmlconfig.getNodeValue("overlappingP2P", _overlappingP2P);
+			global_log->info() << "Using overlapping p2p communication: " << _overlappingP2P << endl;
 		#ifdef ENABLE_MPI
 			/// @todo Dummy Decomposition now included in DecompBase - still keep this name?
 			if(parallelisationtype == "DummyDecomposition") {
@@ -315,21 +329,35 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _ensemble->getComponents()->size());
 			} else if (parallelisationtype == "GeneralDomainDecomposition") {
 				double skin = 0.;
-				// we need the skin here, so we extract it from the AutoPas container's xml,
-				// because the ParticleContainer needs to be instantiated later. :/
+				bool forceLatchingToLinkedCellsGrid = false;
+				// We need the skin here (to specify the smallest possible partition), so we extract it from the AutoPas
+				// container's xml, because the ParticleContainer needs to be instantiated later. :/
 				xmlconfig.changecurrentnode("..");
 				if (xmlconfig.changecurrentnode("datastructure")) {
 					string datastructuretype;
 					xmlconfig.getNodeValue("@type", datastructuretype);
 					if (datastructuretype == "AutoPas" or datastructuretype == "AutoPasContainer") {
-						xmlconfig.getNodeValue("skin", skin);
-						global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
+						// check if skin is specified
+						if (xmlconfig.getNodeValue("skin", skin) == 0) {
+							global_log->error() << "Skin not set in datastructure/AutoPas. "
+												   "This will lead to a different interaction length in the container "
+												   "vs the GeneralDomainDecomposition which can lead ALL to shrink the "
+												   "domain too small."
+												  << endl;
+							this->exit(512435340);
+						}
 					} else {
-						global_log->error() << "Using the GeneralDomainDecomposition is only supported when using "
-											   "AutoPas, but the configuration file does not use it."
-											<< endl;
-						Simulation::exit(2);
+						global_log->warning() << "Using the GeneralDomainDecomposition without AutoPas is not "
+												 "thoroughly tested and considered BETA."
+											  << endl;
+						// Force grid! This is needed, as the linked cells container assumes a grid and the calculation
+						// of global values will be faulty without one!
+						global_log->info() << "Forcing a grid for the GeneralDomainDecomposition! This is required "
+												 "to get correct global values!"
+											  << endl;
+						forceLatchingToLinkedCellsGrid = true;
 					}
+					global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
 				} else {
 					global_log->error() << "Datastructure section missing" << endl;
 					Simulation::exit(1);
@@ -339,7 +367,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					Simulation::exit(1);
 				}
 				delete _domainDecomposition;
-				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain);
+				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid);
 			} else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
 				Simulation::exit(1);
@@ -361,7 +389,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
         #endif
 
-			string loadTimerStr("SIMULATION_COMPUTATION");
+			string loadTimerStr("SIMULATION_FORCE_CALCULATION");
 			xmlconfig.getNodeValue("timerForLoad", loadTimerStr);
 			global_log->info() << "Using timer " << loadTimerStr << " for the load calculation." << std::endl;
 			_timerForLoad = timers()->getTimer(loadTimerStr);
@@ -370,6 +398,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 									<< "')! Aborting!" << std::endl;
 				exit(1);
 			}
+
+			std::size_t timerForLoadAveragingLength{1ul};
+			xmlconfig.getNodeValue("timerForLoad_AveragingLength", timerForLoadAveragingLength);
+			global_log->info() << "Averaging over " << timerForLoadAveragingLength
+							   << "time steps for the load calculation." << std::endl;
+			if(timerForLoadAveragingLength < 1ul) {
+				global_log->fatal() << "timerForLoadAveragingLength has to be at least 1" << std::endl;
+				Simulation::exit(15843);
+			}
+			_lastTraversalTimeHistory.setCapacity(timerForLoadAveragingLength);
 
 			xmlconfig.changecurrentnode("..");
 		}
@@ -506,6 +544,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			{
 				unsigned int nSlabs = 10;
 				delete _longRangeCorrection;
+				global_log->info() << "Initializing planar LRC." << endl;
 				_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, nSlabs, global_simulation);
 				_longRangeCorrection->readXML(xmlconfig);
 			}
@@ -517,19 +556,25 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else if("homogeneous" == type)
 			{
-				/*
-				 * Needs to be initialized later for some reason, done in Simulation::prepare_start()
-				 * TODO: perhaps work on this, to make it more robust
-				 *
-				 *_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
-                 */
+				delete _longRangeCorrection;
+				global_log->info() << "Initializing homogeneous LRC." << endl;
+				_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
+			}
+			else if("none" == type)
+			{
+				delete _longRangeCorrection;
+				_longRangeCorrection = new NoLRC(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
 			}
 			else
 			{
-				global_log->error() << "LongRangeCorrection: Wrong type. Expected type == none|homogeneous|planar|spherical. Program exit ..." << endl;
+				global_log->error() << "LongRangeCorrection: Wrong type. Expected type == homogeneous|planar|none. Program exit ..." << endl;
                 Simulation::exit(-1);
 			}
 			xmlconfig.changecurrentnode("..");
+		} else {
+			delete _longRangeCorrection;
+			global_log->info() << "Initializing default homogeneous LRC, as no LRC was defined." << endl;
+			_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
 		}
 
 		xmlconfig.changecurrentnode(".."); /* algorithm section */
@@ -544,19 +589,31 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
     pluginFactory.registerDefaultPlugins();
 	global_log -> info() << "Successfully registered plugins." << endl;
 
-    long numPlugs = 0;
+	long numPlugs = 0;
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "plugin", _domain);
 	numPlugs += pluginFactory.enablePlugins(_plugins, xmlconfig, "output/outputplugin", _domain);
-    global_log -> info() << "Number of enabled Plugins: " << numPlugs << endl;
+	global_log -> info() << "Number of enabled Plugins: " << numPlugs << endl;
+
+	global_log -> info() << "Registering callbacks." << endl;
+	for(auto&& plugin : _plugins) {
+		plugin->registerCallbacks(_callbacks);
+	}
+	global_log -> info() << _callbacks.size() << " callbacks registered." << endl;
+
+	global_log -> info() << "Accessing callbacks." << endl;
+	for(auto&& plugin : _plugins) {
+		plugin->accessAllCallbacks(_callbacks);
+	}
+	global_log -> info() << "Accessed callbacks." << endl;
 
 
-    string oldpath = xmlconfig.getcurrentnodepath();
+	string oldpath = xmlconfig.getcurrentnodepath();
 
 	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/file")) {
 		global_log->info() << "Reading phase space from file." << endl;
 		string pspfiletype;
 		xmlconfig.getNodeValue("@type", pspfiletype);
-		global_log->info() << "Face space file type: " << pspfiletype << endl;
+		global_log->info() << "Phase space file type: " << pspfiletype << endl;
 
 		if (pspfiletype == "ASCII") {
 			_inputReader = new ASCIIReader();
@@ -569,6 +626,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
 			_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 		}
+#ifdef ENABLE_ADIOS2
+        else if (pspfiletype == "adios2") {
+			_inputReader = new Adios2Reader();
+			_inputReader->readXML(xmlconfig);
+		}
+#endif
 		else {
 			global_log->error() << "Unknown phase space file type" << endl;
 			Simulation::exit(-1);
@@ -596,12 +659,27 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if (generatorName == "ReplicaGenerator") {
 			_inputReader = new ReplicaGenerator();
 		}
+		else if (generatorName == "PerCellGenerator") {
+			_inputReader = new PerCellGenerator();
+		}
 		else {
 			global_log->error() << "Unknown generator: " << generatorName << endl;
 			Simulation::exit(1);
 		}
 		_inputReader->readXML(xmlconfig);
 	}
+	xmlconfig.changecurrentnode(oldpath);
+
+	oldpath = xmlconfig.getcurrentnodepath();
+
+	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint")) {
+		bool ignoreCheckpointTime = false;
+		if(xmlconfig.getNodeValue("ignoreCheckpointTime", ignoreCheckpointTime)) {
+			if(ignoreCheckpointTime)
+				_simulationTime = 0;
+		}
+	}
+
 	xmlconfig.changecurrentnode(oldpath);
 
 	/** Prepare start options, affecting behavior of method prepare_start() */
@@ -668,6 +746,8 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		inp.getNodeValue("@version", version);
 		global_log->info() << "MarDyn XML config file version: " << version << endl;
 
+		global_log->set_log_level(inp.getNodeValue_string("loglevel", "info"));
+
 		if(inp.changecurrentnode("simulation")) {
 			readXML(inp);
 			inp.changecurrentnode("..");
@@ -701,10 +781,10 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	_moleculeContainer->update();
 	_moleculeContainer->deleteOuterParticles();
 
-	_domain->updateglobalNumMolecules(_moleculeContainer, _domainDecomposition);
-	unsigned long globalNumMolecules = _domain->getglobalNumMolecules();
-	double rho_global = globalNumMolecules/ _ensemble->V();
-	global_log->info() << "Setting domain class parameters: N_global: " << globalNumMolecules << ", rho_global: " << rho_global << ", T_global: " << _ensemble->T() << endl;
+	unsigned long globalNumMolecules = _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition);
+	double rho_global = globalNumMolecules / _ensemble->V();
+	global_log->info() << "Setting domain class parameters: N_global: " << globalNumMolecules
+					   << ", rho_global: " << rho_global << ", T_global: " << _ensemble->T() << endl;
 	_domain->setGlobalTemperature(_ensemble->T());
 	_domain->setglobalRho(rho_global);
 
@@ -762,8 +842,8 @@ void Simulation::prepare_start() {
 	}
 
 #ifdef ENABLE_MPI
-	if(dynamic_cast<KDDecomposition*>(_domainDecomposition) != nullptr){
-		static_cast<KDDecomposition*>(_domainDecomposition)->fillTimeVecs(&_cellProcessor);
+	if(auto *kdd = dynamic_cast<KDDecomposition*>(_domainDecomposition); kdd != nullptr){
+		kdd->fillTimeVecs(&_cellProcessor);
 	}
 #endif
 
@@ -775,11 +855,7 @@ void Simulation::prepare_start() {
 		getMemoryProfiler()->doOutput("without halo copies");
 	}
 
-	// temporary addition until MPI communication is parallelized with OpenMP
-	// we don't actually need the mpiOMPCommunicationTimer here -> deactivate it..
-	global_simulation->timers()->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
-	updateParticleContainerAndDecomposition(1.0);
-	global_simulation->timers()->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+	updateParticleContainerAndDecomposition(1.0, false);
 
 	if(getMemoryProfiler()) {
 		getMemoryProfiler()->doOutput("with halo copies");
@@ -798,10 +874,13 @@ void Simulation::prepare_start() {
 	_moleculeContainer->traverseCells(*_cellProcessor);
 
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
-	global_log->info() << "Performing initial FLOP count (if necessary)" << endl;
 
-	if (_longRangeCorrection == nullptr) {
-		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, _moleculeContainer, this);
+	if (_longRangeCorrection != nullptr) {
+		global_log->info() << "Initializing LongRangeCorrection" << endl;
+		_longRangeCorrection->init();
+	} else {
+		global_log->fatal() << "No _longRangeCorrection set!" << endl;
+		Simulation::exit(93742);
 	}
 	// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
 	_longRangeCorrection->calculateLongRange();
@@ -876,7 +955,7 @@ void Simulation::prepare_start() {
 
 	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
-	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules() << " molecules." << endl;
+	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition) << " molecules." << endl;
 
 	/** refresh particle IDs */
 	if(_prepare_start_opt.refreshIDs)
@@ -903,6 +982,8 @@ void Simulation::simulate() {
 	global_simulation->timers()->setOutputString("SIMULATION_PER_STEP_IO", "IO in main loop took:");
 	global_simulation->timers()->setOutputString("SIMULATION_FORCE_CALCULATION", "Force calculation took:");
 	global_simulation->timers()->setOutputString("SIMULATION_MPI_OMP_COMMUNICATION", "Communication took:");
+	global_simulation->timers()->setOutputString("SIMULATION_UPDATE_CONTAINER", "Container update took:");
+	global_simulation->timers()->setOutputString("SIMULATION_UPDATE_CACHES", "Cache update took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_INIT_SEND", "initSend() took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
 
@@ -969,17 +1050,18 @@ void Simulation::simulate() {
 
 
 
-#if defined(ENABLE_MPI) && defined(ENABLE_OVERLAPPING)
-		bool overlapCommComp = true;
+#if defined(ENABLE_MPI)
+		bool overlapCommComp = _overlappingP2P;
 #else
 		bool overlapCommComp = false;
 #endif
 
-
+		double startEtime = computationTimer->get_etime();
 		if (overlapCommComp) {
 			double currentTime = _timerForLoad->get_etime();
 			performOverlappingDecompositionAndCellTraversalStep(currentTime - previousTimeForLoad);
 			previousTimeForLoad = currentTime;
+			// Force timer and computation timer are running at this point!
 		}
 		else {
 			decompositionTimer->start();
@@ -987,45 +1069,46 @@ void Simulation::simulate() {
 			global_log->debug() << "Updating container and decomposition" << endl;
 
 			double currentTime = _timerForLoad->get_etime();
-			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad);
+			updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad, true);
 			previousTimeForLoad = currentTime;
 
 			decompositionTimer->stop();
 
-			double startEtime = computationTimer->get_etime();
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
 			computationTimer->start();
 			forceCalculationTimer->start();
 
 			_moleculeContainer->traverseCells(*_cellProcessor);
-
-			// siteWiseForces Plugin Call
-			global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin call" << endl;
-			for (auto plugin : _plugins) {
-				global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << endl;
-				plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
-			}
-
-			// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
-			_longRangeCorrection->calculateLongRange();
-
-			// // Update forces in molecules so they can be exchanged
-			updateForces();
-
-			forceCalculationTimer->stop();
-			computationTimer->stop();
-
-			decompositionTimer->start();
-			// Exchange forces if it's required by the cell container.
-			if(_moleculeContainer->requiresForceExchange()){
-				global_log->debug() << "Exchanging Forces" << std::endl;
-				_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
-			}
-			decompositionTimer->stop();
-			_loopCompTime += computationTimer->get_etime() - startEtime;
-			_loopCompTimeSteps ++;
+			// Force timer and computation timer are running at this point!
 		}
+
+		// siteWiseForces Plugin Call
+		global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin call" << endl;
+		for (auto plugin : _plugins) {
+			global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << endl;
+			plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
+		}
+
+		// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
+		_longRangeCorrection->calculateLongRange();
+
+		// Update forces in molecules so they can be exchanged
+		updateForces();
+
+		forceCalculationTimer->stop();
+		computationTimer->stop();
+
+		decompositionTimer->start();
+		// Exchange forces if it's required by the cell container.
+		if(_moleculeContainer->requiresForceExchange()){
+			global_log->debug() << "Exchanging Forces" << std::endl;
+			_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
+		}
+		decompositionTimer->stop();
+		_loopCompTime += computationTimer->get_etime() - startEtime;
+		_loopCompTimeSteps ++;
+
 		computationTimer->start();
 
 
@@ -1224,34 +1307,60 @@ void Simulation::finalize() {
 	global_simulation = nullptr;
 }
 
-void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTime) {
-	// The particles have moved, so the neighborhood relations have
-	// changed and have to be adjusted
+void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTime, bool useTimers) {
+	// The particles have moved, so the leaving + halo particles have changed and have to be communicated.
+	if(not useTimers){
+		global_simulation->timers()->deactivateTimer("SIMULATION_UPDATE_CONTAINER");
+		global_simulation->timers()->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+		global_simulation->timers()->deactivateTimer("SIMULATION_UPDATE_CACHES");
+	}
+
+	global_simulation->timers()->start("SIMULATION_UPDATE_CONTAINER");
 	_moleculeContainer->update();
-	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
+	global_simulation->timers()->stop("SIMULATION_UPDATE_CONTAINER");
+
+	_lastTraversalTimeHistory.insert(lastTraversalTime);
+	double averageLastTraversalTime =
+		std::accumulate(_lastTraversalTimeHistory.begin(), _lastTraversalTimeHistory.end(), 0.) /
+		_lastTraversalTimeHistory.size();
+
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
-	_domainDecomposition->balanceAndExchange(lastTraversalTime, forceRebalancing, _moleculeContainer, _domain);
+	_domainDecomposition->balanceAndExchange(averageLastTraversalTime, forceRebalancing, _moleculeContainer,
+											 _domain);
 	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
+
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
+	global_simulation->timers()->start("SIMULATION_UPDATE_CACHES");
 	_moleculeContainer->updateMoleculeCaches();
+	global_simulation->timers()->stop("SIMULATION_UPDATE_CACHES");
+
+	if(not useTimers){
+		global_simulation->timers()->activateTimer("SIMULATION_UPDATE_CONTAINER");
+		global_simulation->timers()->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+		global_simulation->timers()->activateTimer("SIMULATION_UPDATE_CACHES");
+	}
 }
 
 void Simulation::performOverlappingDecompositionAndCellTraversalStep(double etime) {
 	bool forceRebalancing = false;
 
-	#ifdef ENABLE_MPI
-		#ifdef ENABLE_OVERLAPPING
-			NonBlockingMPIHandlerBase* nonBlockingMPIHandler =
-					new NonBlockingMPIMultiStepHandler(static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
-		#else
-			NonBlockingMPIHandlerBase* nonBlockingMPIHandler =
-					new NonBlockingMPIHandlerBase(static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
-		#endif
+#ifdef ENABLE_MPI
+	auto* dd = dynamic_cast<DomainDecompMPIBase*>(_domainDecomposition);
+	if (not dd) {
+		global_log->fatal() << "DomainDecompMPIBase* required for overlapping comm, but dynamic_cast failed." << std::endl;
+		Simulation::exit(873456);
+	}
+	NonBlockingMPIMultiStepHandler nonBlockingMPIHandler {dd, _moleculeContainer, _domain, _cellProcessor};
 
-		nonBlockingMPIHandler->performOverlappingTasks(forceRebalancing, etime);
-	#endif
+	//NonBlockingMPIHandlerBase nonBlockingMPIHandler {dd, _moleculeContainer, _domain, _cellProcessor};
+
+	nonBlockingMPIHandler.performOverlappingTasks(forceRebalancing, etime);
+#else
+	global_log->fatal() << "performOverlappingDecompositionAndCellTraversalStep() called with disabled MPI." << std::endl;
+	Simulation::exit(873457);
+#endif
 }
 
 void Simulation::setDomainDecomposition(DomainDecompBase* domainDecomposition) {

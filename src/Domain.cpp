@@ -13,6 +13,10 @@
 #include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
 
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif
+
 #include "utils/FileUtils.h"
 #include "utils/Logger.h"
 #include "utils/arrayMath.h"
@@ -139,9 +143,9 @@ double Domain::getGlobalPressure()
 	return globalTemperature * _globalRho + _globalRho * getAverageGlobalVirial()/3.;
 }
 
-double Domain::getAverageGlobalVirial() const { return _globalVirial/_globalNumMolecules; }
+double Domain::getAverageGlobalVirial() { return _globalVirial/_globalNumMolecules; }
 
-double Domain::getAverageGlobalUpot() const { return getGlobalUpot()/_globalNumMolecules; }
+double Domain::getAverageGlobalUpot() { return getGlobalUpot()/_globalNumMolecules; }
 double Domain::getGlobalUpot() const { return _globalUpot; }
 
 Comp2Param& Domain::getComp2Params(){
@@ -291,14 +295,20 @@ void Domain::calculateGlobalValues(
 				}
 			} /*_OPENMP*/
 
-			/* FIXME: Unnamed constant 3960... */
-			if(3960 >= _universalSelectiveThermostatCounter)
-			{
+			// arbitrary values set by one of the thermodynamic guys (probs. Martin Horsch) :)
+			int explosionReappearanceLimit = 4000;
+			int explosionVanishGracePeriod = 40;
+			int stepsSinceLastExplosion = explosionReappearanceLimit - _universalSelectiveThermostatCounter;
+			// We set warning to true if the explosion is not gone after 40 steps or if it reappears within 4000 steps.
+			// If it still persists after 80 steps or if it reappears twice with no more than 4000 steps between the
+			// occurrences, we set error to true.
+			// These counters are reduced in every step, s.t., the warning vanishes after 4000 steps without explosions.
+			if (stepsSinceLastExplosion >= explosionVanishGracePeriod) {
 				if( _universalSelectiveThermostatWarning > 0 )
 					_universalSelectiveThermostatError = _universalSelectiveThermostatWarning;
 				if( _universalSelectiveThermostatCounter > 0 )
 					_universalSelectiveThermostatWarning = _universalSelectiveThermostatCounter;
-				_universalSelectiveThermostatCounter = 4000;
+				_universalSelectiveThermostatCounter = explosionReappearanceLimit;
 			}
 			_universalBTrans[thermit->first] = 1.0;
 			_universalBRot[thermit->first] = pow(this->_universalBRot[thermit->first], 0.0091);
@@ -477,7 +487,8 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 }
 
 void Domain::writeCheckpointHeader(string filename,
-		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime) {
+		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, double currentTime) {
+		unsigned long globalNumMolecules = this->getglobalNumMolecules(true, particleContainer, domainDecomp);
 		/* Rank 0 writes file header */
 		if(0 == this->_localRank) {
 			ofstream checkpointfilestream(filename.c_str());
@@ -555,7 +566,7 @@ void Domain::writeCheckpointHeader(string filename,
 				if(0 > uutit->first) continue;
 				if(uutit->second) checkpointfilestream << " U\t" << uutit->first << "\n";
 			}
-			checkpointfilestream << " NumberOfMolecules\t" << _globalNumMolecules << endl;
+			checkpointfilestream << " NumberOfMolecules\t" << globalNumMolecules << endl;
 
 			checkpointfilestream << " MoleculeFormat\t" << Molecule::getWriteFormat() << endl;
 			checkpointfilestream.close();
@@ -564,8 +575,9 @@ void Domain::writeCheckpointHeader(string filename,
 }
 
 void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* particleContainer,
-		const DomainDecompBase* domainDecomp, double currentTime)
+		DomainDecompBase* domainDecomp, double currentTime)
 {
+	unsigned long globalNumMolecules = this->getglobalNumMolecules(true, particleContainer, domainDecomp);
 	if(0 != domainDecomp->getRank() )
 		return;
 
@@ -582,7 +594,7 @@ void Domain::writeCheckpointHeaderXML(string filename, ParticleContainer* partic
 				 "<z>" << FORMAT_SCI_MAX_DIGITS_WIDTH_21 << _globalLength[2] << "</z>" << endl;
 	ofs << "\t\t</length>" << endl;
 	ofs.flags(f);  // restore default format flags
-	ofs << "\t\t<number>" << _globalNumMolecules << "</number>" << endl;
+	ofs << "\t\t<number>" << globalNumMolecules << "</number>" << endl;
 	ofs << "\t\t<format type=\"" << Molecule::getWriteFormat() << "\"/>" << endl;
 	ofs << "\t</headerinfo>" << endl;
 	ofs << "</mardyn>" << endl;
@@ -600,9 +612,6 @@ void Domain::writeCheckpoint(string filename,
 	// 2. writing the checkpoint (with currentTime + delta T ? )
 	// 3. integrating positions by half a timestep backward (- delta T / 2)
 #endif
-
-	// update global number of particles
-	this->updateglobalNumMolecules(particleContainer, domainDecomp);
 
 	if (useBinaryFormat) {
 		this->writeCheckpointHeaderXML((filename + ".header.xml"), particleContainer, domainDecomp, currentTime);
@@ -622,7 +631,7 @@ void Domain::Nadd(unsigned cid, int N, int localN)
 	Ensemble* ensemble = _simulation.getEnsemble();
 	Component* component = ensemble->getComponent(cid);
 	component->incNumMolecules(N);
-	unsigned int rotationDegreesOfFreeedom = component->getRotationalDegreesOfFreedom();
+	unsigned long rotationDegreesOfFreeedom = static_cast<unsigned long>(component->getRotationalDegreesOfFreedom());
 
 	this->_globalNumMolecules += N;
 	if( (this->_componentwiseThermostat)
@@ -643,13 +652,7 @@ void Domain::Nadd(unsigned cid, int N, int localN)
 void Domain::evaluateRho(
 		unsigned long localN, DomainDecompBase* domainDecomp
 		) {
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(localN);
-	domainDecomp->collCommAllreduceSum();
-	this->_globalNumMolecules = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
-
-	this->_globalRho = this->_globalNumMolecules /
+	this->_globalRho = this->getglobalNumMolecules(true, nullptr, domainDecomp) /
 		(this->_globalLength[0] * this->_globalLength[1] * this->_globalLength[2]);
 }
 
@@ -718,19 +721,43 @@ double Domain::getepsilonRF() const { return _epsilonRF; }
 
 void Domain::setepsilonRF(double erf) { _epsilonRF = erf; }
 
-unsigned long Domain::getglobalNumMolecules() const { return _globalNumMolecules; }
+unsigned long Domain::getglobalNumMolecules(bool bUpdate, ParticleContainer* particleContainer,
+											DomainDecompBase* domainDecomp) {
+	if (bUpdate) {
+		if (particleContainer == nullptr) {
+			global_log->debug() << "Domain::getglobalNumMolecules: Passed Particle Container is null! Fetching pointer "
+								   "from global_simulation."
+								<< endl;
+			particleContainer = global_simulation->getMoleculeContainer();
+		}
+		if (domainDecomp == nullptr) {
+			global_log->debug() << "Domain::getglobalNumMolecules: Passed Domain Decomposition is null! Fetching "
+								   "pointer from global_simulation."
+								<< endl;
+			domainDecomp = &(global_simulation->domainDecomposition());
+		}
+		this->updateglobalNumMolecules(particleContainer, domainDecomp);
+	}
+	return _globalNumMolecules;
+}
 
 void Domain::setglobalNumMolecules(unsigned long glnummol) { _globalNumMolecules = glnummol; }
 
 void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp) {
+	unsigned long oldNum = _globalNumMolecules;
 	CommVar<uint64_t> numMolecules;
-	numMolecules.local = particleContainer->getNumberOfParticles();
+	numMolecules.local = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+#ifdef ENABLE_MPI
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(numMolecules.local);
 	domainDecomp->collCommAllreduceSum();
 	numMolecules.global = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
+#else
+	numMolecules.global = numMolecules.local;
+#endif
 	this->setglobalNumMolecules(numMolecules.global);
+	global_log->debug() << "Updated global number of particles from " << oldNum << " to N_new = " << _globalNumMolecules << std::endl;
 }
 
 CommVar<uint64_t> Domain::getMaxMoleculeID() const {
@@ -845,6 +872,3 @@ unsigned long Domain::getNumFluidMolecules(){
   }
   return numFluidMolecules;
 }
-
-
-

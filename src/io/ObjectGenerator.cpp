@@ -1,6 +1,7 @@
 #include "io/ObjectGenerator.h"
 
 #include <limits>
+#include <chrono>
 
 #include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
@@ -57,10 +58,27 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		std::string velocityAssignerName;
 		xmlconfig.getNodeValue("@type", velocityAssignerName);
 		global_log->info() << "Velocity assigner: " << velocityAssignerName << endl;
+
+		const long seed = [&]() -> long {
+			bool enableRandomSeed = false;
+			xmlconfig.getNodeValue("@enableRandomSeed", enableRandomSeed);
+			if(enableRandomSeed) {
+				/** A random seed for the velocity generator is created.
+				 *  The current rank is added to make sure that, if multiple simulations are instantiated across
+				 *  multiple ranks (for ex. when coupling to MaMiCo), the seeds will be unique if they are created
+				 *  at the same time
+				 */
+				return std::chrono::system_clock::now().time_since_epoch().count() + _simulation.domainDecomposition().getRank();
+			
+			} else {
+				return 0;
+			}
+		}();
+		global_log->info() << "Seed for velocity assigner: " << seed << endl;
 		if(velocityAssignerName == "EqualVelocityDistribution") {
-			_velocityAssigner = std::make_shared<EqualVelocityAssigner>();
+			_velocityAssigner = std::make_shared<EqualVelocityAssigner>(0, seed);
 		} else if(velocityAssignerName == "MaxwellVelocityDistribution") {
-			_velocityAssigner = std::make_shared<MaxwellVelocityAssigner>();
+			_velocityAssigner = std::make_shared<MaxwellVelocityAssigner>(0, seed);
 		} else {
 			global_log->error() << "Unknown velocity assigner specified." << endl;
 			Simulation::exit(1);

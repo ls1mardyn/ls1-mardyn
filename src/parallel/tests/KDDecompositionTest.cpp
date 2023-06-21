@@ -16,6 +16,8 @@
 
 #include <sstream>
 #include <cmath>
+#include <string>
+#include <fstream>
 
 TEST_SUITE_REGISTRATION(KDDecompositionTest);
 
@@ -128,9 +130,8 @@ void KDDecompositionTest::testHaloCorrect() {
 					// inside, so normal molecule
 					continue;
 				}
-				Molecule* m;
-				bool found = container->getMoleculeAtPosition(pos, &m);
-				ASSERT_TRUE_MSG("halo molecule not present", found);
+				auto iter = container->getMoleculeAtPosition(pos);
+				std::visit([](auto iter) { ASSERT_TRUE_MSG("halo molecule not present", iter.isValid()); }, iter);
 			}
 		}
 	}
@@ -238,7 +239,7 @@ void KDDecompositionTest::testNoLostParticlesFilename(const char * filename,
 		}
 	}
 
-	container->forcedUpdate();
+	container->update();
 
 	for(auto iter = container->iterator(ParticleIterator::Type::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter){
 		bool found = false;
@@ -509,13 +510,10 @@ void KDDecompositionTest::setNumParticlesPerCell(std::vector<unsigned int> &v,
 		}
 	}
 
-//	static int i = 0;
-//	char fname[100];
-//	sprintf(fname, "partsInCell_%i.vtk", i);
 //	if(_rank == 0) {
+//		std::string fname = "partsInCell_0.vtk";
 //		Write_VTK_Structured_Points(v, len, fname);
 //	}
-//	++i;
 }
 
 unsigned KDDecompositionTest::f(double x, double y, double z, int N[3],
@@ -548,22 +546,20 @@ void KDDecompositionTest::clearNumParticlesPerCell(std::vector<unsigned int> &v,
 		v[i] = 0;
 }
 
-void KDDecompositionTest::Write_VTK_Structured_Points(unsigned *A, int N[3],
-		const char *filename) const {
-	FILE *out;
-	out = fopen(filename, "w");
-	fprintf(out, "# vtk DataFile Version 3.0\n");
-	fprintf(out, "Laplace\n");
-	fprintf(out, "ASCII\n");
-	fprintf(out, "DATASET STRUCTURED_POINTS\n");
-	fprintf(out, "DIMENSIONS %d %d %d\n", N[0], N[1], N[2]);
-	fprintf(out, "ORIGIN %d %d %d\n", 0, 0, 0);
-	fprintf(out, "SPACING %d %d %d\n", 1, 1, 1);
-	fprintf(out, "POINT_DATA %d\n", N[0] * N[1] * N[2]);
-	fprintf(out, "SCALARS nMols int 1\n");
-	fprintf(out, "LOOKUP_TABLE default\n");
+void KDDecompositionTest::Write_VTK_Structured_Points(unsigned *A, int N[3], std::string& filename) const {
+	std::ofstream ofs(filename, std::ios::out);
+	ofs << "# vtk DataFile Version 3.0" << endl;
+	ofs << "Laplace" << endl;
+	ofs << "ASCII" << endl;
+	ofs << "DATASET STRUCTURED_POINTS" << endl;
+	ofs << "DIMENSIONS " << N[0] << " " << N[1] << " " << N[2] << endl;
+	ofs << "ORIGIN 0 0 0"<< endl;
+	ofs << "SPACING 1 1 1" << endl;
+	ofs << "POINT_DATA " << N[0]*N[1]*N[2] << endl;
+	ofs << "SCALARS nMols int 1" << endl;
+	ofs << "LOOKUP_TABLE default" << endl;
 	for (int i = 0; i < N[0] * N[1] * N[2]; i++) {
-		fprintf(out, "%i\n", A[i]);
+			ofs << A[i] << endl;
 	}
-	fclose(out);
+	ofs.close();
 }

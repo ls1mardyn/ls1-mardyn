@@ -34,7 +34,7 @@
 using Log::global_log;
 using namespace std;
 
-enum MoleculeFormat : uint32_t {
+enum MoleculeFormat : std::uint32_t {
 	ICRVQD, IRV, ICRV
 };
 
@@ -85,7 +85,7 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	bool bInputOk = true;
 	double dCurrentTime = 0.;
 	double dBoxLength[3] = {0., 0., 0.};
-	uint64_t numMolecules = 0;
+	std::uint64_t numMolecules = 0;
 	std::string strMoleculeFormat;
 	bInputOk = bInputOk && inp.changecurrentnode("headerinfo");
 	bInputOk = bInputOk && inp.getNodeValue("time", dCurrentTime);
@@ -113,7 +113,7 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 	// Set parameters of Domain and Simulation class
 	_simulation.setSimulationTime(dCurrentTime);
-	for(uint8_t d = 0; d < 3; ++d) {
+	for(std::uint8_t d = 0; d < 3; ++d) {
 		domain->setGlobalLength(d, dBoxLength[d]);
 	}
 	domain->setglobalNumMolecules(numMolecules);
@@ -162,18 +162,25 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 #endif
 
 	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
-	uint64_t id;
-	uint32_t componentid = 0;
+	std::uint64_t id;
+	std::uint32_t componentid = 0;
 
 	x = y = z = vx = vy = vz = q1 = q2 = q3 = Dx = Dy = Dz = 0.;
 	q0 = 1.;
 
-	uint64_t numMolecules = domain->getglobalNumMolecules();
-	for(uint64_t i = 0; i < numMolecules; i++) {
+	// Global number of particles must not be updated as this would result in numMolecules = 0
+	std::uint64_t numMolecules = domain->getglobalNumMolecules(false);
+
+	for(std::uint64_t i = 0; i < numMolecules; i++) {
 
 #ifdef ENABLE_MPI
 		if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif
+		if(_phaseSpaceFileStream.eof()) {
+			global_log->error() << "End of file was hit before all " << numMolecules << " expected molecules were read."
+				<< endl;
+			Simulation::exit(1);
+        }
 		_phaseSpaceFileStream.read(reinterpret_cast<char*> (&id), 8);
 		switch (_nMoleculeFormat) {
 			case ICRVQD:
@@ -222,13 +229,22 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 			global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << endl;
 		}
 
-		if(componentid > numcomponents || componentid == 0) {
+		if(componentid > numcomponents) {
 			global_log->error() << "Molecule id " << id
-								<< " has wrong componentid: " << componentid << ">"
+								<< " has a component ID greater than the existing number of components: "
+								<< componentid
+								<< ">"
 								<< numcomponents << endl;
 			Simulation::exit(1);
 		}
-		componentid--; // TODO: Component IDs start with 0 in the program.
+		if(componentid == 0) {
+			global_log->error() << "Molecule id " << id
+								<< " has componentID == 0." << endl;
+			Simulation::exit(1);
+		}
+		// ComponentIDs are used as array IDs, hence need to start at 0.
+		// In the input files they always start with 1 so we need to adapt that all the time.
+		componentid--;
 
 		// store only those molecules within the domain of this process
 		// The neccessary check is performed in the particleContainer addPartice method
@@ -242,7 +258,7 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 
 	particle_buff_pos++;
 	if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i
-			== domain->getglobalNumMolecules() - 1)) {
+			== numMolecules - 1)) {
 		MPI_Bcast(&particle_buff_pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
 		MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0,
 				MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD
@@ -286,7 +302,7 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 #endif
 
 		// Print status message
-		unsigned long iph = domain->getglobalNumMolecules() / 100;
+		unsigned long iph = numMolecules / 100;
 		if(iph != 0 && (i % iph) == 0)
 			global_log->info() << "Finished reading molecules: " << i / iph
 							   << "%\r" << flush;
@@ -296,9 +312,9 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	global_log->info() << "Reading Molecules done" << endl;
 
 	// TODO: Shouldn't we always calculate this?
-	if(domain->getglobalRho() == 0.) {
+	if (domain->getglobalRho() < 1e-5) {
 		domain->setglobalRho(
-				domain->getglobalNumMolecules() / domain->getGlobalVolume());
+				domain->getglobalNumMolecules(true, particleContainer, domainDecomp) / domain->getGlobalVolume());
 		global_log->info() << "Calculated Rho_global = "
 						   << domain->getglobalRho() << endl;
 	}

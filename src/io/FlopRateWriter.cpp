@@ -53,11 +53,11 @@ void FlopRateWriter::init(ParticleContainer * /*particleContainer*/,
 
 	// initialize result file
 	string resultfile(_outputPrefix+".res");
-	time_t now;
-	time(&now);
+	const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	tm unused{};
 	if(domainDecomp->getRank()==0){
 		_fileStream.open(resultfile.c_str());
-		_fileStream << "# ls1 MarDyn simulation started at " << ctime(&now) << endl;
+		_fileStream << "# ls1 MarDyn simulation started at " << std::put_time(localtime_r(&now, &unused), "%c") << endl;
 		_fileStream << "#step\tt\t\tFLOP-Count\tFLOP-Rate-force\t\tFLOP-Rate-loop\tefficiency(%)\t\n";
 	}
 }
@@ -119,9 +119,9 @@ void FlopRateWriter::finish(ParticleContainer *particleContainer,
 	if(_writeToFile != true)
 		return;
 
-	time_t now;
-	time(&now);
-	_fileStream << "# ls1 mardyn simulation finished at " << ctime(&now) << endl;
+	const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	tm unused{};
+	_fileStream << "# ls1 mardyn simulation finished at " << std::put_time(localtime_r(&now, &unused), "%c") << endl;
 	_fileStream << "# \n# Please address your questions and suggestions to the ls1 mardyn contact point:\n# \n# E-mail: contact@ls1-mardyn.de\n# \n# Phone: +49 631 205 3227\n# University of Kaiserslautern\n# Computational Molecular Engineering\n# Erwin-Schroedinger-Str. 44\n# D-67663 Kaiserslautern, Germany\n# \n# http://www.ls1-mardyn.de/\n";
 
 	_fileStream.close();

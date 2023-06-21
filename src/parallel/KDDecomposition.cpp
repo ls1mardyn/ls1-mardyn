@@ -5,6 +5,7 @@
 #include <fstream>
 #include <climits>
 #include <cmath>
+#include <limits>
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
@@ -30,31 +31,17 @@
 using namespace std;
 using Log::global_log;
 
-
-KDDecomposition::KDDecomposition() :
-		_globalNumCells(1), _decompTree(nullptr), _ownArea(nullptr), _numParticlesPerCell(), _steps(0), _frequency(1.),
-		_cutoffRadius(1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.),
-		_processorSpeedUpdateCount(0), _heterogeneousSystems(false), _clusteredHeterogeneouseSystems {false}, _splitBiggest(true), _forceRatio(false),
-		_splitThreshold(std::numeric_limits<int>::max()), _numParticleTypes {}, _maxPars{std::numeric_limits<int>::min()},
-		_maxPars2{std::numeric_limits<int>::min()}, _partitionRank {calculatePartitionRank()}, _vecTunParticleNums {}, _generateNewFiles {},
-		_useExistingFiles {}, _rebalanceLimit(0) {
-	_loadCalc = new TradLoad();
-	_measureLoadCalc = nullptr;
-}
-
-KDDecomposition::KDDecomposition(double cutoffRadius, int numParticleTypes, int updateFrequency, int fullSearchThreshold, bool hetero,
-		bool cutsmaller, bool forceRatio, int splitThresh) :
-		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
-		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0), _heterogeneousSystems(hetero), _clusteredHeterogeneouseSystems {false}, _splitBiggest(!cutsmaller),
-		_forceRatio(forceRatio), _splitThreshold{splitThresh},
-		_numParticleTypes {numParticleTypes}, _maxPars{std::numeric_limits<int>::min()}, _maxPars2{std::numeric_limits<int>::min()},
-		_partitionRank {calculatePartitionRank()}, _vecTunParticleNums (_numParticleTypes, 50), _generateNewFiles {true},
-		_useExistingFiles {true}, _rebalanceLimit(0) {
+KDDecomposition::KDDecomposition(double cutoffRadius, int numParticleTypes, int updateFrequency,
+								 int fullSearchThreshold)
+	: _frequency(updateFrequency),
+	  _fullSearchThreshold(fullSearchThreshold),
+	  _numParticleTypes{numParticleTypes},
+	  _partitionRank{calculatePartitionRank()},
+	  _vecTunParticleNums(_numParticleTypes, 50) {
 	_loadCalc = new TradLoad();
 	_measureLoadCalc = nullptr;
 
 	_cutoffRadius = cutoffRadius;
-
 }
 
 void KDDecomposition::init(Domain* domain){
@@ -72,7 +59,7 @@ void KDDecomposition::init(Domain* domain){
         coversWholeDomain[dim] = true;
     }
 
-    _numParticlesPerCell.resize(_numParticleTypes * _globalNumCells);
+    _numParticlesPerCell.resize(static_cast<size_t>(_numParticleTypes) * _globalNumCells);
 
     // create initial decomposition
     // ensure that enough cells for the number of procs are available
@@ -95,7 +82,7 @@ void KDDecomposition::init(Domain* domain){
 #ifdef DEBUG_DECOMP
     global_log->info() << "Initial Decomposition: " << endl;
 	if (_rank == 0) {
-		_decompTree->printTree("");
+		_decompTree->printTree("", std::cout);
 	}
 #endif
 }
@@ -176,7 +163,6 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	}
 	xmlconfig.getNodeValue("splitThreshold", _splitThreshold);
 	if(!_splitBiggest){
-		xmlconfig.getNodeValue("splitThreshold", _splitThreshold);
 		global_log->info() << "KDDecomposition threshold for splitting not only the biggest Domain: " << _splitThreshold << endl;
 	}
 
@@ -191,9 +177,20 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Generate new vectorization tuner files: " << (_generateNewFiles?"yes":"no") << endl;
 	xmlconfig.getNodeValue("useExistingFiles", _useExistingFiles);
 	global_log->info() << "Use existing vectorization tuner files (if available)?: " << (_useExistingFiles?"yes":"no") << endl;
+	xmlconfig.getNodeValue("vecTunerAllowMPIReduce", _vecTunerAllowMPIReduce);
+	global_log->info() << "Allow an MPI Reduce for the vectorization tuner?: " << (_vecTunerAllowMPIReduce?"yes":"no") << endl;
 
 	xmlconfig.getNodeValue("doMeasureLoadCalc", _doMeasureLoadCalc);
 	global_log->info() << "Use measureLoadCalc? (requires compilation with armadillo): " << (_doMeasureLoadCalc?"yes":"no") << endl;
+
+	xmlconfig.getNodeValue("measureLoadInterpolationStartsAt", _measureLoadInterpolationStartsAt);
+	global_log->info() << "measureLoad: Interpolation is performed for cells with at least "
+	                   << _measureLoadInterpolationStartsAt << " particles." << endl;
+
+	xmlconfig.getNodeValue("measureLoadIncreasingTimeValues", _measureLoadIncreasingTimeValues);
+	global_log->info() << "measureLoad: Ensure that cells with more particles take longer ? "
+					   << (_measureLoadIncreasingTimeValues ? "yes" : "no") << endl;
+
 	DomainDecompMPIBase::readXML(xmlconfig);
 
 	string oldPath(xmlconfig.getcurrentnodepath());
@@ -231,7 +228,7 @@ void KDDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/,
 }
 
 //check whether or not to do rebalancing in the specified step
-bool doRebalancing(bool forceRebalancing, bool needsRebalance, size_t steps, int frequency){
+bool KDDecomposition::doRebalancing(bool forceRebalancing, bool needsRebalance, size_t steps, int frequency){
 	return forceRebalancing or ((steps % frequency == 0 or steps <= 1) and needsRebalance);
 }
 
@@ -268,16 +265,21 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 	const bool removeRecvDuplicates = true;
 
 	size_t measureLoadInitTimers = 2;
-	if(_steps == measureLoadInitTimers and _doMeasureLoadCalc){
-		_measureLoadCalc = new MeasureLoad();
+	if (_steps == measureLoadInitTimers and _doMeasureLoadCalc) {
+		if(global_simulation->getEnsemble()->getComponents()->size() > 1){
+			global_log->warning() << "MeasureLoad is designed to work with one component. Using it with more than one "
+									 "component might produce bad results if their force calculation differs."
+								  << std::endl;
+		}
+		_measureLoadCalc = new MeasureLoad(_measureLoadIncreasingTimeValues, _measureLoadInterpolationStartsAt);
 	}
 	size_t measureLoadStart = 50;
 	if (_steps == measureLoadStart and _doMeasureLoadCalc) {
 		bool faulty = _measureLoadCalc->prepareLoads(this, _comm);
 		if (faulty) {
-			global_log->info() << "not using MeasureLoad as there are not enough processes. No rebalance forced." << std::endl;
+			global_log->info() << "Not using MeasureLoad as it failed. No rebalance forced." << std::endl;
 		} else {
-			global_log->info() << "start using MeasureLoad, will force rebalance." << std::endl;
+			global_log->info() << "Start using MeasureLoad, will force rebalance." << std::endl;
 			delete _loadCalc;
 			_loadCalc = _measureLoadCalc;
 			_measureLoadCalc = nullptr;
@@ -286,30 +288,22 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 	}
 
 	if (not rebalance) {
-		if (not moleculeContainer->isInvalidParticleReturner() or moleculeContainer->hasInvalidParticles()) {
-			if (sendLeavingWithCopies()) {
-				global_log->debug() << "kDD: Sending Leaving and Halos together." << std::endl;
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES,
-				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
-			} else {
-				global_log->debug() << "kDD: Sending Leaving, then Halos." << std::endl;
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY,
-				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
-#ifndef MARDYN_AUTOPAS
-				moleculeContainer->deleteOuterParticles();
-#endif
-				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES,
-				                                          true /*doHaloPositionCheck*/, removeRecvDuplicates);
-			}
+		if (sendLeavingWithCopies()) {
+			global_log->debug() << "kDD: Sending Leaving and Halos together." << std::endl;
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES,
+													  true /*doHaloPositionCheck*/, removeRecvDuplicates);
 		} else {
-			global_log->debug() << "kDD: Sending Halos." << std::endl;
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, false /*dohaloPositionCheck*/);
+			global_log->debug() << "kDD: Sending Leaving, then Halos." << std::endl;
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY,
+													  true /*doHaloPositionCheck*/, removeRecvDuplicates);
+#ifndef MARDYN_AUTOPAS
+			moleculeContainer->deleteOuterParticles();
+#endif
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES,
+													  true /*doHaloPositionCheck*/, removeRecvDuplicates);
 		}
 	} else {
 		global_log->info() << "KDDecomposition: rebalancing..." << endl;
-		if(moleculeContainer->isInvalidParticleReturner() and not moleculeContainer->hasInvalidParticles()){
-			moleculeContainer->forcedUpdate();
-		}
 		if (_steps != 1) {
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY,
 													  true /*doHaloPositionCheck*/, removeRecvDuplicates);
@@ -479,7 +473,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 	// the indirect neighborcommunicationscheme in combination with the kddecomposition is not allowed
 	// to send halo and leaving particles together, as long as halo particles are not send with all data (velocity, etc.)
 	bool neighborschemeAllowsDirect =
-		dynamic_cast<DirectNeighbourCommunicationScheme*>(_neighbourCommunicationScheme) != nullptr;
+		dynamic_cast<DirectNeighbourCommunicationScheme*>(_neighbourCommunicationScheme.get()) != nullptr;
 	sendTogether &= neighborschemeAllowsDirect;
 	updateSendLeavingWithCopies(sendTogether);
 
@@ -569,7 +563,7 @@ void KDDecomposition::fillTimeVecs(CellProcessor **cellProc){
 		VectorizationTuner tuner;
 		tuner.init(global_simulation->getMoleculeContainer(), &global_simulation->domainDecomposition(), global_simulation->getDomain());
 		mardyn_assert(cellProc && (*cellProc));
-		tuner.tune(*(_simulation.getEnsemble()->getComponents()), *_tunerLoadCalc, _vecTunParticleNums, _generateNewFiles, _useExistingFiles);
+		tuner.tune(*(_simulation.getEnsemble()->getComponents()), *_tunerLoadCalc, _vecTunParticleNums, _generateNewFiles, _useExistingFiles, _vecTunerAllowMPIReduce);
 	}
 
 
@@ -609,7 +603,7 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, 
 
 #ifdef DEBUG_DECOMP
 	if (_rank == 0) {
-		newRoot->printTree("");
+		newRoot->printTree("", std::cout);
 	}
 #endif
 }
@@ -708,44 +702,6 @@ double KDDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
 	}
 }
 
-void KDDecomposition::printDecomp(const std::string& filename, Domain* domain) {
-	if (_rank == 0) {
-		ofstream povcfgstrm(filename.c_str());
-		povcfgstrm << "size " << domain->getGlobalLength(0) << " " << domain->getGlobalLength(1) << " " << domain->getGlobalLength(2) << endl;
-		povcfgstrm << "decompData Regions" << endl;
-		povcfgstrm.close();
-	}
-
-	stringstream output;
-	output  << getBoundingBoxMin(0,domain) << " " << getBoundingBoxMin(1,domain) << " "
-			<< getBoundingBoxMin(2,domain) << " " << getBoundingBoxMax(0,domain) << " "
-			<< getBoundingBoxMax(1,domain) << " " << getBoundingBoxMax(2,domain) << "\n";
-	string output_str = output.str();
-#ifdef ENABLE_MPI
-	MPI_File fh;
-	MPI_File_open(_comm, filename.c_str(), MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
-	uint64_t write_size = output_str.size();
-	uint64_t offset = 0;
-	if(_rank == 0) {
-		MPI_Offset file_end_pos;
-		MPI_File_seek(fh, 0, MPI_SEEK_END);
-		MPI_File_get_position(fh, &file_end_pos);
-		write_size += file_end_pos;
-		MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
-		offset += file_end_pos;
-	} else {
-		MPI_Exscan(&write_size, &offset, 1, MPI_UINT64_T, MPI_SUM, _comm);
-	}
-	MPI_File_write_at(fh, offset, output_str.c_str(), output_str.size(), MPI_CHAR, MPI_STATUS_IGNORE);
-	MPI_File_close(&fh);
-#else
-	ofstream povcfgstrm(filename.c_str(), ios::app);
-	povcfgstrm << output_str;
-	povcfgstrm.close();
-#endif
-}
-
-
 //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 //$ private Methoden, die von exchangeMolecule benötigt werden $
 //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -830,7 +786,7 @@ void printChildrenInfo(std::ofstream& filestream, KDNode* node, double minDev) {
 #endif
 
 bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup) {
-	return decompose(fatherNode, ownArea, commGroup, FLT_MAX);
+	return decompose(fatherNode, ownArea, commGroup, std::numeric_limits<double>::max());
 }
 
 bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup, const double globalMinimalDeviation) {
@@ -956,7 +912,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 	// reassign children and delete cloned node, if a solution
 	// was found in this subtree.
 	if (bestSubdivision == nullptr) {
-		fatherNode->_deviation = FLT_MAX;
+		fatherNode->_deviation = std::numeric_limits<double>::max();
 	} else {
 		*fatherNode = *bestSubdivision;  // assignment operator (NOT copy operator) -> also assigns children to fatherNode
 		bestSubdivision->_child1 = nullptr;  // remove children from bestSubdivision, otherwise they will be deleted
@@ -1280,16 +1236,20 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 															_numParticlesPerCell[_globalNumCells + getGlobalIndex(dim, dim1, dim2, nI_dim, nI_dim1, nI_dim2, area)];
 
 								switch(zeroCount1+zeroCount2+zeroCount3){
-								case 0: //the current neighbour shares a corner
-									cellCosts[dim][i_dim] += _loadCalc->getCorner(numParts1, numParts2);
-									break;
-								case 1: //edge
-									cellCosts[dim][i_dim] += _loadCalc->getEdge(numParts1, numParts2);
-									break;
-								case 2: //face
-									cellCosts[dim][i_dim] += _loadCalc->getFace(numParts1, numParts2);
-									break;
-									//3 zeroes is the cell itself which was already counted
+									case 0: //the current neighbour shares a corner
+										cellCosts[dim][i_dim] += _loadCalc->getCorner(numParts1, numParts2);
+										break;
+									case 1: //edge
+										cellCosts[dim][i_dim] += _loadCalc->getEdge(numParts1, numParts2);
+										break;
+									case 2: //face
+										cellCosts[dim][i_dim] += _loadCalc->getFace(numParts1, numParts2);
+										break;
+									case 3: //3 zeroes is the cell itself which was already counted
+										break;
+									default:
+										global_log->error() << "[KDDecomposition] zeroCounts too large!" << std::endl;
+										Simulation::exit(1);
 								}
 							}
 						}
@@ -1301,7 +1261,7 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 		// exchange intermediate calc costs
 		MPI_Status recvStat;
 		double tempRecvCosts, tempSendCosts;
-		tempSendCosts = 0;
+		tempRecvCosts = tempSendCosts = 0;
 		if (recvCostValue) {
 			MPI_CHECK( MPI_Recv(&tempRecvCosts, 1, MPI_DOUBLE, _rank - 1, 123, MPI_COMM_WORLD, &recvStat) );
 			if (sendCostValue) {
@@ -1592,8 +1552,6 @@ void KDDecomposition::collectMoleculesInRegion(ParticleContainer* moleculeContai
 		const int prevNumMols = mols.size();
 		const int numThreads = mardyn_get_num_threads();
 		const int threadNum = mardyn_get_thread_num();
-		auto begin = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-
 		#if defined (_OPENMP)
 		#pragma omp master
 		#endif
@@ -1606,9 +1564,11 @@ void KDDecomposition::collectMoleculesInRegion(ParticleContainer* moleculeContai
 		#pragma omp barrier
 		#endif
 
-		for (auto i = begin; i.isValid(); ++i) {
+		for (auto i =
+				 moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+			 i.isValid(); ++i) {
 			threadData[threadNum].push_back(new Molecule(*i));
-            moleculeContainer->deleteMolecule(i, false); //removeFromContainer = true;
+			moleculeContainer->deleteMolecule(i, false);  // removeFromContainer = true;
 		}
 
 		prefixArray[threadNum + 1] = threadData[threadNum].size();
@@ -1651,7 +1611,7 @@ bool KDDecomposition::heteroDecompose(KDNode* fatherNode, KDNode*& ownArea, MPI_
 
 	KDNode *bestSubdivision = nullptr;
 	domainTooSmall = calculateHeteroSubdivision(fatherNode, bestSubdivision, commGroup);
-	double minimalDeviation = FLT_MAX;
+	double minimalDeviation = std::numeric_limits<double>::max();
 
 	// compute the next subdivision depending on the current rank (either first or second subdivision)
 	vector<int> origRanks;
@@ -1896,4 +1856,7 @@ bool KDDecomposition::calculateHeteroSubdivision(KDNode* node, KDNode*& optimalN
 	optimalNode->calculateDeviationLowerBound();
 
 	return domainTooSmall;
+}
+void KDDecomposition::printTree(std::ostream& ostream) {
+	_decompTree->printTree("", ostream);
 }

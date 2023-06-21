@@ -37,7 +37,7 @@ public:
 	     <lattice><!-- ... --></lattice>
 	     <basis><!-- ... --></basis>
 	     <latticeOrigin> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </latticeOrigin>
-	     <densit>DOUBLE</density>
+	     <density>DOUBLE</density>
 	     <latticeOccupancy>DOUBLE</latticeOccupancy>
 	   </filler>
 	   \endcode

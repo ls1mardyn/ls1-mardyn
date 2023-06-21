@@ -52,26 +52,15 @@
 
 		<algorithm>
 			<parallelisation type="DomainDecomposition">
-				 <!-- structure handled by DomainDecompMPIBase -->
+				<!-- structure handled by DomainDecompMPIBase -->
 				<MPIGridDims> <x>2</x> <y>2</y> <z>2</z> </MPIGridDims>
 			</parallelisation>
-<!--
-			<parallelisation type="KDDecomposition">
-				<CommunicationScheme>direct</CommunicationScheme>
-				<updateFrequency>100000</updateFrequency>
-				<fullSearchThreshold>3</fullSearchThreshold>
-				<splitBiggestDimension>0</splitBiggestDimension>
-				<useVectorizationTuner>0</useVectorizationTuner>
-				<generateNewFiles>0</generateNewFiles>
-				<useExistingFiles>0</useExistingFiles>
-			</parallelisation>
--->
 			<datastructure type="LinkedCells">
 				<cellsInCutoffRadius>1</cellsInCutoffRadius>
 			</datastructure>
 			<cutoffs type="CenterOfMass" >
-				<defaultCutoff unit="reduced" >4.0</defaultCutoff> <!-- sigma=1.0 => 3*sigma=3.0, 4*sigma=4.0, 5*sigma=5.0 -->
-				<radiusLJ unit="reduced" >4.0</radiusLJ>
+				<defaultCutoff unit="reduced" >2.0</defaultCutoff> <!-- sigma=1.0 => 3*sigma=3.0, 4*sigma=4.0, 5*sigma=5.0 -->
+				<radiusLJ unit="reduced" >2.0</radiusLJ>
 			</cutoffs>
 			<electrostatic type="ReactionField" >
 				<epsilon>1.0e+10</epsilon>
@@ -159,7 +148,7 @@
 				<frequency>1</frequency>
 				<stop>5000000000</stop>
 			</control>
-			<yrange> <min>0.0</min> <max>80.0</max> </yrange>
+			<range> <ymin>0.0</ymin> <ymax>80.0</ymax> </range>
 			<targets>
 				<target cid="1" method="1">
 						<Fmax>500</Fmax>

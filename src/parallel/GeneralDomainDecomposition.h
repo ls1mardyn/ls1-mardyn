@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include "DomainDecompMPIBase.h"
 #include "LoadBalancer.h"
 
@@ -18,8 +20,9 @@ public:
 	 * Constructor for the GeneralDomainDecomposition.
 	 * @param interactionLength
 	 * @param domain
+	 * @param forceGrid
 	 */
-	GeneralDomainDecomposition(double interactionLength, Domain* domain);
+	GeneralDomainDecomposition(double interactionLength, Domain* domain, bool forceGrid);
 
 	// documentation see father class (DomainDecompBase.h)
 	~GeneralDomainDecomposition() override;
@@ -32,6 +35,13 @@ public:
 		  <updateFrequency>INTEGER</updateFrequency>
 		  <initialPhaseTime>INTEGER</initialPhaseTime><!--time for initial rebalancing phase-->
 		  <initialPhaseFrequency>INTEGER</initialPhaseFrequency><!--frequency for initial rebalancing phase-->
+		  <gridSize>STRING</gridSize><!--default: 0; if non-zero, the process boundaries are fixed to multiples of
+				gridSize. Comma separated string to define three different grid sizes for the different dimensions is
+				possible.-->
+		  <loadBalancer type="STRING"><!--STRING...type of the load balancer, currently supported: ALL-->
+			<!--options for the load balancer-->
+			<!--for detailed information see the readXML functions from ALLLoadBalancer.-->
+		  </loadBalancer>
 	   </parallelisation>
 	   \endcode
 	 */
@@ -45,10 +55,6 @@ public:
 
 	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer,
 							Domain* domain) override;
-
-	//! @param filename name of the file into which the data will be written
-	//! @param domain e.g. needed to get the bounding boxes
-	void printDecomp(const std::string& filename, Domain* domain) override;
 
 	// returns a vector of the neighbour ranks in x y and z direction (only neighbours connected by an area to local
 	// area)
@@ -86,6 +92,11 @@ public:
 	}
 
 private:
+	/**
+	 * Method that initializes the ALLLoadBalancer
+	 */
+	void initializeALL();
+
 	/**
 	 * Get the optimal grid for the given dimensions of the box and the number of processes.
 	 * The grid is produced, s.t., the number of grid[0] * grid[1] * grid[2] == numProcs
@@ -148,17 +159,50 @@ private:
 	void migrateParticles(Domain* domain, ParticleContainer* particleContainer, std::array<double, 3> newMin,
 						  std::array<double, 3> newMax);
 
+	/**
+	 * Latches domain boundaries (given as boxMin and boxMax) to a grid, which is defined by _gridSize.
+	 * If boxMax matches the top boundary, it is not changed.
+	 * @param boxMin
+	 * @param boxMax
+	 * @return The new boundaries.
+	 */
+	std::pair<std::array<double, 3>, std::array<double, 3>> latchToGridSize(std::array<double, 3> boxMin,
+																			std::array<double, 3> boxMax) {
+		for (size_t ind = 0; ind < 3; ++ind) {
+			double currentGridSize = (*_gridSize)[ind];
+			// For boxmin, the lower domain boundary is 0, so that's always fine!
+			boxMin[ind] = std::round(boxMin[ind] / currentGridSize) * currentGridSize;
+			// update boxmax only if it isn't at the very top of the domain!
+			if (boxMax[ind] != _domainLength[ind]) {
+				boxMax[ind] = std::round(boxMax[ind] / currentGridSize) * currentGridSize;
+			}
+		}
+		return {boxMin, boxMax};
+	}
+
 	// variables
 	std::array<double, 3> _boxMin;
 	std::array<double, 3> _boxMax;
 
-	std::array<bool, 3> _coversWholeDomain{};
+	std::array<double, 3> _domainLength;
+	double _interactionLength;
 
 	size_t _steps{0};
 	size_t _rebuildFrequency{10000};
 
 	size_t _initPhase{0};
 	size_t _initFrequency{500};
+
+	/**
+	 * Optionally safe a given grid size on which the process boundaries are bound/latched.
+	 * If no value is given, it is not used.
+	 */
+	std::optional<std::array<double, 3>> _gridSize{};
+
+	/**
+	 * Bool that indicates whether a grid should be forced even if no gridSize is set.
+	 */
+	bool _forceLatchingToLinkedCellsGrid{false};
 
 	std::unique_ptr<LoadBalancer> _loadBalancer{nullptr};
 

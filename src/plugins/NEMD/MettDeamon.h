@@ -29,14 +29,8 @@
 #include <vector>
 template < typename T > void shuffle( std::list<T>& lst ); // shuffle contents of a list
 
-/*
-// normMB
-double generate_normMB_velocity(const double& temperature, const double& drift);
-double generate_normMB_velocity_neg(const double& temperature, const double& drift); 
-double generate_normMB_velocity_pos(const double& temperature, const double& drift); 
-*/
 void create_rand_vec_ones(const uint64_t& nCount, const double& percent, std::vector<int>& v);
-void update_velocity_vectors(std::unique_ptr<Random>& rnd, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
+void update_velocity_vectors(Random*, const uint64_t& numSamples, const double&T, const double&D, const double&v_neg, const double&e_neg,
 		std::vector<double>& vxi, std::vector<double>& vyi, std::vector<double>& vzi);
 
 #define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
@@ -46,9 +40,6 @@ enum ReadReservoirMethods : uint8_t
 	RRM_UNKNOWN = 0,
 	RRM_READ_FROM_FILE = 1,
 	RRM_READ_FROM_FILE_BINARY = 2,
-	RRM_READ_FROM_MEMORY = 3,
-	RRM_AMBIGUOUS = 4,
-	RRM_EMPTY = 5,
 };
 
 enum MovingDirections : uint8_t
@@ -111,14 +102,13 @@ struct FeedRateStruct
 	{
 		double init;
 		double actual;
-		double target;
 		double sum;
 
 	} feed;
 
 	struct ReleaseVelocityStruct
 	{
-		uint32_t method;
+		ReleaseVelocityMethod method;
 		double fix_value;
 		ParamsNormMB normMB;
 		std::vector<double> vx;
@@ -138,12 +128,6 @@ struct FeedRateStruct
 	// rand vector, containing 100 values 0|1 for insertion part of trapped particles
 	std::vector<int> vec_rand_ins;
 };
-
-//struct ColleagueStruct
-//{
-//	uint16_t index;
-//	MettDeamon* ptr;
-//};
 
 class Domain;
 class Ensemble;
@@ -172,7 +156,7 @@ public:
 			<feed>
 				<init>FLOAT</init>           <!-- initial feed rate  -->
 				<direction>INT</direction>   <!-- 0: left --> right | 1: left <-- right  -->
-				<method>INT</method>         <!-- feed rate method 1:count deleted particles | 4: fix rate -->
+				<method>INT</method>         <!-- feed rate method 1: count deleted and changed particles | 2: count changed particles | 3: meet target density | 4: fix rate | 5: get feedrate by MD Feedrate Director -->
 				<targetID>INT</targetID>     <!-- component ID of particles feed rate determined from -->
 				<target>FLOAT</target>       <!-- target value for feed rate, if method==4 -->
 				<release_velo>
@@ -183,8 +167,8 @@ public:
 			<z2method>1</z2method>                 <!-- choose zone2 method, 1:reset all i.e. also quaternion | 2:reset only y position od particles
 			<manipfree> <ymin>50</ymin> <ymax>100</ymax> </manipfree>   <!-- range that is not affected with any manipulations -->
 		</control>
-		<reservoir>
-			<file type="binary">
+		<reservoir update="1">   <!-- update="1": Update Reservoir's data structure before inserting new particles. This is mandatory when using kd-decomposition. Default: update="1"
+			<file type="binary">   <!-- file type can be ASCII or binary -->
 				<header>../../liq/run12/cp_binary-0.restart.header.xml</header>   <!-- checkpoint header file used for reservoir -->
 				<data>../../liq/run12/cp_binary-0.restart.dat</data>              <!-- checkpoint data file used for reservoir -->
 			</file>
@@ -234,12 +218,20 @@ public:
 
 	// connection to other general plugins
 	void setActualFeedrate(const double& feed_actual) {
-		_feedrate.feed.actual = feed_actual;
-		global_log->info() << "[MettDeamon]: Set new feedrate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
+		if (FRM_DIRECTED == _nFeedRateMethod) {
+			_feedrate.feed.actual = feed_actual;
+			global_log->info() << "[MettDeamon]: Set new feed rate by MDFRD to vf= " << _feedrate.feed.actual << std::endl;
+		} else {
+			global_log->warning() << "[MettDeamon]: Feed rate not set because current feed method ( " << _nFeedRateMethod << " ) is not set to communicate with MDFRD (method " << FRM_DIRECTED << ")" << std::endl;
+		}
 	}
 	void setInitFeedrate(const double& feed_init) {
-		_feedrate.feed.init = feed_init;
-		global_log->info() << "[MettDeamon]: Set init feedrate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
+		if (FRM_DIRECTED == _nFeedRateMethod) {
+			_feedrate.feed.init = feed_init;
+			global_log->info() << "[MettDeamon]: Set init feed rate by MDFRD to vf= " << _feedrate.feed.init << std::endl;
+		} else {
+			global_log->warning() << "[MettDeamon]: Feed rate not set because current feed method ( " << _nFeedRateMethod << " ) is not set to communicate with MDFRD (method " << FRM_DIRECTED << ")" << std::endl;
+		}
 	}
 	double getInvDensityArea() {return _dInvDensityArea;}
 
@@ -266,6 +258,7 @@ private:
 	void InitTransitionPlane(Domain* domain);
 	void getAvailableParticleIDs(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			CommVar<std::vector<uint64_t> >& particleIDs_available, const CommVar<uint64_t>& numParticleIDs);
+	void updateReservoir(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
 	void InsertReservoirSlab(ParticleContainer* particleContainer);
 	void initRestart();
 	
@@ -274,11 +267,6 @@ private:
 
 	// rand vector for trapped particle insertion
 	void updateRandVecTrappedIns();
-
-	// generate random numbers
-	double generate_normMB_velocity(const double& temperature, const double& drift);
-	double generate_normMB_velocity_neg(const double& temperature, const double& drift);
-	double generate_normMB_velocity_pos(const double& temperature, const double& drift);
 
 private:
 	std::unique_ptr<Reservoir> _reservoir;
@@ -298,9 +286,9 @@ private:
 	uint64_t _nMaxReservoirMoleculeID;
 	uint64_t _nNumMoleculesDeletedGlobalAlltime;
 	CommVar<uint64_t> _nNumMoleculesTooFast;
-	uint8_t _nMovingDirection;
-	uint8_t _nFeedRateMethod;
-	uint8_t _nZone2Method;
+	MovingDirections _nMovingDirection;
+	FeedRateMethod _nFeedRateMethod;
+	Zone2Method _nZone2Method;
 	uint32_t _nNumValsSummation;
 	int64_t _numDeletedMolsSum;
 	uint64_t _nDeleteNonVolatile;
@@ -311,8 +299,6 @@ private:
 	std::vector<uint32_t> _vecChangeCompIDsUnfreeze;
 	// keep gas phase density
 	std::vector<double> _vecDensityValues;
-
-//	ColleagueStruct _colleague;
 
 	RestartInfoType _restartInfo;
 	struct{
@@ -389,58 +375,60 @@ public:
 	void readXML(XMLfileUnits& xmlconfig);
 
 	// read particle data
-	void readParticleData(DomainDecompBase* domainDecomp);
+	void readParticleData(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
+	void updateParticleData(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
 private:
-	void readFromMemory(DomainDecompBase* domainDecomp);
-	void readFromFile(DomainDecompBase* domainDecomp);
-	void readFromFileBinary(DomainDecompBase* domainDecomp);
+	void readFromMemory(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
+	void readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
+	void readFromFileBinary(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
 	void readFromFileBinaryHeader();
-	void sortParticlesToBins();
+	void sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleContainer* particleContainer);
 
 public:
 	// Getters, Setters
-	double getDensity(const uint32_t& cid) {return _density.at(cid).density;}
-	void setDensity(const uint32_t& cid, const double& dVal) {_density.at(cid).density = dVal;}
+	double getDensity() const {return _density;}
+	void setDensity(const double& dVal) {_density = dVal;}
 	double getBoxLength(const uint32_t& nDim) {return _box.length.at(nDim);}
 	void setBoxLength(const uint32_t& nDim, const double& dVal) {_box.length.at(nDim)=dVal;}
-	double getVolume() {return _box.volume;}
+	double getVolume() const {return _box.volume;}
 	void setVolume(const double& dVal) {_box.volume = dVal;}
-	double getBinWidth() {return _dBinWidth;}
+	double getBinWidth() const {return _dBinWidth;}
 	double GetInsPercent() {return _dInsPercent;}
 	void setInsPercent(const double& dVal) {_dInsPercent = dVal;}
-	uint8_t getReadMethod() {return _nReadMethod;}
+	uint8_t getReadMethod() const {return _nReadMethod;}
 
 	// queue methods
 	uint32_t getActualBinIndex();
 	uint64_t getNumMoleculesLocal();
 	uint32_t getNumBins();
 	std::vector<Molecule>& getParticlesActualBin();
-	void nextBin(uint64_t& nMaxID);
+	bool nextBin(uint64_t& nMaxID);
 	uint64_t getMaxMoleculeID();
 	bool activateBin(uint32_t nBinIndex);
+	void clearBinQueue();
+	void printBinQueueInfo();
 
 private:
-	void calcPartialDensities(DomainDecompBase* domainDecomp);
 	void changeComponentID(Molecule& mol, const uint32_t& cid);
+	bool isRelevant(DomainDecompBase* domainDecomp, Domain* domain, Molecule& mol);
 
 private:
 	MettDeamon* _parent;
 	std::unique_ptr<MoleculeDataReader> _moleculeDataReader;
-	std::unique_ptr<BinQueue> _binQueue; // <-- Segmentation fault when PluginFactory creates MettDeamon plugin.
-//	BinQueue _binQueue;
+	std::unique_ptr<BinQueue> _binQueue;
 	uint64_t _numMoleculesRead;
 	uint64_t _nMaxMoleculeID;
-	uint32_t _nMoleculeFormat;
-	uint8_t _nReadMethod;
-	double _dReadWidthY;
+	MoleculeFormat _nMoleculeFormat;
+	ReadReservoirMethods _nReadMethod;
 	double _dBinWidthInit;
 	double _dBinWidth;
 	double _dInsPercent;  // only insert percentage of reservoir density
 	std::vector<Molecule> _particleVector;
 	std::vector<uint32_t> _vecChangeCompIDs;
-	std::vector<DensityStruct> _density;
+	double _density; // Global density of reservoir
 	FilepathStruct _filepath;
 	BoxStruct _box;
+	bool _bUpdateBinQueue;  // BinQueue have to be updated if bounding boxes changes, e.g. in case of using kd-decomposition
 };
 
 
@@ -456,6 +444,8 @@ class BinQueue
 			for(const auto& p:vec)
 				_particles.push_back(p);
 		}
+		uint32_t getIndex() {return _nIndex;}
+		uint64_t getNumParticles() {return _particles.size();}
 		Bin* _next;
 		uint32_t _nIndex;
 		std::vector<Molecule> _particles;
@@ -516,10 +506,12 @@ public:
 		if (isEmpty()) {
 			_last = ptr;
 			_first = ptr;
+			_actual = ptr;
 		} else {
 			_last->_next = ptr;
 			_last = ptr;
 		}
+		_last->_next = _first;  // connect tail to head
 		_numBins++;
 		_numParticles += vec.size();
 		// update max particle ID
@@ -538,6 +530,38 @@ public:
 		}
 		else
 			_maxID = 0;
+	}
+
+	void deque()
+	{
+		if (isEmpty()) {
+			return;
+		}
+		else if (_first == _last) {
+			_numParticles -= _first->getNumParticles();
+			delete _first;
+			_first = _last = nullptr;
+			_numBins--;
+		}
+		else {
+			Bin* ptr = _first;
+			while(ptr->_next != _last) {
+				ptr = ptr->_next;
+			}
+			_numParticles -= ptr->_next->getNumParticles();
+			delete ptr->_next;
+			ptr->_next = nullptr;
+			_last = ptr;
+			_numBins--;
+			_last->_next = _first;  // connect tail to head
+		}
+	}
+	
+	void clear()
+	{
+		while (!isEmpty()) {
+			deque();
+		}
 	}
 
 	std::vector<Molecule>& head() {
@@ -560,11 +584,13 @@ public:
 		_actual = _first;
 	}
 
-	void next()
+	bool next()
 	{
 		_actual = _actual->_next;
 		if(_actual == _first)
 			_nRoundCount++;
+		bool bSuccess = dynamic_cast<Bin*>(_actual);
+		return bSuccess;
 	}
 
 	bool activateBin(uint32_t nBinIndex)
@@ -572,7 +598,6 @@ public:
 		Bin* ptr = _first;
 		while(ptr != nullptr)
 		{
-//			cout << "ptr->_nIndex="<<ptr->_nIndex<<", nBinIndex="<<nBinIndex<<endl;
 			if(ptr->_nIndex == nBinIndex) {
 				_actual = ptr;
 				return true;

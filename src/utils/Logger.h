@@ -11,6 +11,7 @@
 #include <ctime>
 #include <string>
 #include <sstream>
+#include <chrono>
 
 #ifdef USE_GETTIMEOFDAY
 #include <sys/time.h>
@@ -65,7 +66,7 @@ typedef enum {
 	Warning = 4,  /* perhaps wrong */
 	Info    = 8,  /* user info */
 	Debug   = 16, /* detailed info for debugging */
-	All
+	All     = 32,
 } logLevel;
 
 /** @brief The Logger class provides a simple interface to handle log messages.
@@ -104,11 +105,13 @@ private:
 
 	/// initilaize the list of log levels with the corresponding short names
 	void init_log_levels() {
+		logLevelNames.insert(std::pair<logLevel, std::string>(None,    "NONE"));
 		logLevelNames.insert(std::pair<logLevel, std::string>(Fatal,   "FATAL ERROR"));
 		logLevelNames.insert(std::pair<logLevel, std::string>(Error,   "ERROR"      ));
 		logLevelNames.insert(std::pair<logLevel, std::string>(Warning, "WARNING"    ));
 		logLevelNames.insert(std::pair<logLevel, std::string>(Info,    "INFO"       ));
 		logLevelNames.insert(std::pair<logLevel, std::string>(Debug,   "DEBUG"      ));
+		logLevelNames.insert(std::pair<logLevel, std::string>(All,     "ALL"      ));
 	}
 
 	// don't allow copy-construction
@@ -163,9 +166,9 @@ public:
 		_msg_log_level = level;
 		if (_msg_log_level <= _log_level && _do_output) {
 			// Include timestamp
-			time_t t;
-			t = time(NULL);
-			tm* lt = localtime(&t);
+			const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+			tm unused{};
+			const auto* lt = localtime_r(&now, &unused);
 			//*_log_stream << ctime(&t) << " ";
 			stringstream timestampstream;
 			// maybe sprintf is easier here...
@@ -211,6 +214,21 @@ public:
 		_log_level = l;
 		return _log_level;
 	}
+	/// set log level from string
+	logLevel set_log_level(std::string l) {
+		// identify the loglevel by comparing the first char of the names
+		for (const auto& [lvl, name] : logLevelNames) {
+			// case-insensitive matching
+			if (std::toupper(name[0]) == std::toupper(l[0])) {
+				_log_level = lvl;
+				return _log_level;
+			}
+		}
+		error_always_output() << "Logger::set_log_level() unknown argument '" << l
+							  << "'. Falling back to output everything!" << std::endl;
+		return Log::All;
+	}
+
 	/// return log level
 	logLevel get_log_level() {
 		return _log_level;

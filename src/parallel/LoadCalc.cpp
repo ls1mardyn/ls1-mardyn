@@ -8,6 +8,7 @@
 #include <armadillo>
 #endif
 
+#include "utils/nnls.h"
 #include "LoadCalc.h"
 #include "DomainDecompBase.h"
 
@@ -189,17 +190,16 @@ TunerLoad TunerLoad::read(std::istream& stream) {
 // MEASURELOAD
 std::string MeasureLoad::TIMER_NAME = "SIMULATION_FORCE_CALCULATION";
 
-MeasureLoad::MeasureLoad() :
-		_times() {
+MeasureLoad::MeasureLoad(bool timeValuesShouldBeIncreasing, int interpolationStartsAt)
+	: _timeValuesShouldBeIncreasing{timeValuesShouldBeIncreasing},
+	  _interpolationStartsAt{interpolationStartsAt} {
 	_previousTime = global_simulation->timers()->getTime(TIMER_NAME);
-	_extrapolationConst = {0., 0., 0.};
-	_preparedLoad = false;
 }
 
 #ifdef MARDYN_ARMADILLO
 // this non-negative least-squares (nnls) algorithm is taken from:
 // https://github.com/linxihui/Misc/blob/master/Practice/NMF/nnls.cpp
-arma::vec nnls(const arma::mat &A, const arma::vec &b, int max_iter = 500, double tol = 1e-8) {
+arma::vec nnls_coordinate_wise(const arma::mat &A, const arma::vec &b, int max_iter = 500, double tol = 1e-8) {
 	/*
 	 * Description: sequential Coordinate-wise algorithm for non-negative least square regression A x = b, s.t. x >= 0
 	 * Reference: http://cmp.felk.cvut.cz/ftp/articles/franc/Franc-TR-2005-06.pdf
@@ -227,6 +227,126 @@ arma::vec nnls(const arma::mat &A, const arma::vec &b, int max_iter = 500, doubl
 	}
 	return x;
 }
+
+arma::vec nnls_lawson_hanson(const arma::mat &A, const arma::vec &b) {
+	int m = static_cast<int>(A.n_rows);
+	int n = static_cast<int>(A.n_cols);
+	// A_arr has to be column-major. This is ensured by arma::vectorise, as it returns a column-major matrix by default.
+	// (arma stores matrices column-major)
+	auto A_arr = arma::conv_to<std::vector<double>>::from(arma::vectorise(A));
+	auto b_vec = arma::conv_to<std::vector<double>>::from(b);
+	std::vector<double> w_vec(n);
+	std::vector<double> zz_vec(m);
+	std::vector<int> index_vec(n);
+	std::vector<double> x_vec(n);
+	int mode;
+	double rnorm;
+	nnls_c(A_arr.data(), &m, &m, &n, b_vec.data(), x_vec.data(), &rnorm, w_vec.data(), zz_vec.data(), index_vec.data(),
+		   &mode);
+	std::cout << "lawson_hanson: mode " << mode << std::endl;
+	std::cout << "lawson_hanson: rnorm " << rnorm << std::endl;
+	return x_vec;
+}
+
+arma::vec nnls(const arma::mat &A, const arma::vec &b){
+	auto coordinate_wise_solution = nnls_coordinate_wise(A, b);
+	auto coordinate_wise_residual = A * coordinate_wise_solution - b;
+	auto coordinate_wise_residual_norm = arma::norm(coordinate_wise_residual);
+	std::cout << "coordinate_wise_residual_norm = " << coordinate_wise_residual_norm << std::endl;
+	auto lawson_hanson_solution = nnls_lawson_hanson(A, b);
+	auto lawson_hanson_residual = A * lawson_hanson_solution - b;
+	auto lawson_hanson_residual_norm = arma::norm(lawson_hanson_residual);
+	std::cout << "lawson_hanson_residual_norm   = " << lawson_hanson_residual_norm << std::endl;
+	if (coordinate_wise_residual_norm < lawson_hanson_residual_norm) {
+		std::cout << "returning coordinate_wise_solution" << std::endl;
+		return coordinate_wise_solution;
+	} else {
+		std::cout << "returning lawson_hanson_solution" << std::endl;
+		return lawson_hanson_solution;
+	}
+}
+#endif
+
+template<typename iterator1, typename iterator2>
+bool isFinite(iterator1 start, iterator2 end) {
+	bool isProper = true;
+	for(auto iter = start; iter != end; ++iter){
+		isProper &= std::isfinite(*iter);
+	}
+	return isProper;
+}
+
+#ifdef MARDYN_ARMADILLO
+/**
+ * Generate an approximate solution vector (using least-squares) based on the following equation:
+ * arma_system_matrix * x = arma_rhs
+ * The following restrictions are applied:
+ * - x has to be component-wise non-negative.
+ * - The first elements (up to notIncreasingStartAt) are increasing. The elements after that are not restricted.
+ * @param arma_system_matrix The system matrix.
+ * @param arma_rhs The right hand side.
+ * @param quadraticInterpolationStartAt The index starting at which the quadratic interpolation starts. It is not
+ * allowed to be bigger than arma_system_matrix.n_cols.
+ * @return The solution as described above.
+ */
+inline arma::vec getIncreasingSolutionVec(arma::mat arma_system_matrix, const arma::vec& arma_rhs,
+								   const int quadraticInterpolationStartAt) {
+	// We multiply the matrix increasing_time_values_matrix (a lower-triangular matrix with only ones) to the
+	// system matrix, s.t., the solution vector is: [t_0, t_1-t_0, t_2-t_1, ..., t_n-t_n-1]
+	// (t_i is the time needed for a cell with i particles.)
+	// If we then solve this equation using a non-negative-least squares, we can guarantee that t_i+1 > t-i.
+	arma::mat increasing_time_values_matrix(arma_system_matrix.n_cols, arma_system_matrix.n_cols);
+
+	for (int row = 0; row < quadraticInterpolationStartAt; row++) {
+		for (int column = 0; column <= row; ++column) {
+			increasing_time_values_matrix(row, column) = 1.;
+		}
+		for (int column = row + 1; column < arma_system_matrix.n_cols; ++column) {
+			increasing_time_values_matrix(row, column) = 0.;
+		}
+	}
+
+	int num_extra = arma_system_matrix.n_cols - quadraticInterpolationStartAt;
+	mardyn_assert(num_extra == 0 or num_extra == 3);
+	if(num_extra == 3){
+		// Starting with notIncreasingStartAt, we want, that the quadratic fit is bigger than the last tn. So we modify
+		// the solution vector further. The last three lines will look like this:
+		//
+		// 0 ... 0   1   0  0
+		// 0 ... 0   0   1  0
+		// 1 ... 1 -N^2 -N  1
+		//
+		// N = quadraticInterpolationStartAt.
+		// If the last three values of the solution are positive, it can be guaranteed that the time values will further
+		// increase and are also bigger than t_{N-1}.
+		for (int last_rows_index = 0; last_rows_index < num_extra; last_rows_index++) {
+			for (int column = 0; column < quadraticInterpolationStartAt; ++column) {
+				increasing_time_values_matrix(quadraticInterpolationStartAt + last_rows_index, column) =
+					(last_rows_index == 2 ? 1. : 0.);
+			}
+		}
+		int N = quadraticInterpolationStartAt;
+
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 0, quadraticInterpolationStartAt + 0) = 1;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 0, quadraticInterpolationStartAt + 1) = 0;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 0, quadraticInterpolationStartAt + 2) = 0;
+
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 0) = 0;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 1) = 1;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 1, quadraticInterpolationStartAt + 2) = 0;
+
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 0) = -N * N;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 1) = -N;
+		increasing_time_values_matrix(quadraticInterpolationStartAt + 2, quadraticInterpolationStartAt + 2) = 1;
+	}
+
+	arma_system_matrix = arma_system_matrix * increasing_time_values_matrix;
+
+	arma::vec increasing_cell_time_vec = nnls(arma_system_matrix, arma_rhs);
+	// multiply increasing_time_values_matrix to increasing_cell_time_vec to obtain the original cell time
+	// values.
+	return increasing_time_values_matrix * increasing_cell_time_vec;
+}
 #endif
 
 #ifdef ENABLE_MPI
@@ -251,11 +371,22 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 	int global_maxParticlesP1 = 0;  // maxParticle Count + 1 = degrees of freedom
 	MPI_Allreduce(&maxParticlesP1, &global_maxParticlesP1, 1, MPI_INT, MPI_MAX, comm);
 
-	if (numRanks < global_maxParticlesP1) {
-		Log::global_log->warning() << "MeasureLoad: Not enough processes to sample from (maxParticlesP1: "
-				<< global_maxParticlesP1 << ", numRanks: " << numRanks << ")." << std::endl;
+	int interpolationStartsAt = std::min(_interpolationStartsAt, global_maxParticlesP1);
 
-		return 1;
+	if (_interpolationStartsAt >= 0) {
+		if (numRanks < _interpolationConstants.size() + interpolationStartsAt) {
+			Log::global_log->warning()
+				<< "MeasureLoad: Not enough processes to sample from (needed _interpolationConstants.size() + interpolationStartsAt: "
+				<< _interpolationConstants.size() + interpolationStartsAt << ", numRanks: " << numRanks << ")." << std::endl;
+			return 1;
+		}
+	} else {
+		// Here, we require as many ranks as particles!
+		if (numRanks < global_maxParticlesP1) {
+			Log::global_log->warning() << "MeasureLoad: Not enough processes to sample from (needed=maxParticlesP1: "
+									   << global_maxParticlesP1 << ", numRanks: " << numRanks << ")." << std::endl;
+			return 1;
+		}
 	}
 
 	statistics.resize(global_maxParticlesP1);
@@ -264,144 +395,148 @@ int MeasureLoad::prepareLoads(DomainDecompBase* decomp, MPI_Comm& comm) {
 		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, global_statistics.data(), statistics.size(),
 				MPI_UINT64_T, 0, comm);
 
+		// right hand side = neededTimes
+		arma::vec arma_rhs(neededTimes);
 
-
-
-		// right hand side = global_statistics ^ T \cdot neededTimes
-		std::vector<double> right_hand_side(global_maxParticlesP1, 0.);
-		for (int particleCount = 0; particleCount < global_maxParticlesP1; particleCount++) {
-			for (int rank = 0; rank < numRanks; rank++) {
-				right_hand_side[particleCount] += global_statistics[global_maxParticlesP1 * rank + particleCount]
-						* neededTimes[rank];
+		// system matrix is = global_statistics
+		arma::mat arma_system_matrix(numRanks, global_maxParticlesP1);
+		for (int rank /*row*/ = 0; rank < numRanks; rank++) {
+			for (int particleCount /*column*/ = 0; particleCount < global_maxParticlesP1; particleCount++) {
+				arma_system_matrix(rank, particleCount) = global_statistics[global_maxParticlesP1 * rank + particleCount];
 			}
 		}
-
-		// system matrix is: global_statistics ^ T \cdot global_statistics
-		std::vector<unsigned long> system_matrix(global_maxParticlesP1 * global_maxParticlesP1, 0ul);
-		for (int particleCount1 = 0; particleCount1 < global_maxParticlesP1; particleCount1++) {
-			for (int rank = 0; rank < numRanks; rank++) {
-				for (int particleCount2 = 0; particleCount2 < global_maxParticlesP1; particleCount2++) {
-					system_matrix[particleCount1 * global_maxParticlesP1 + particleCount2] +=
-							global_statistics[global_maxParticlesP1 * rank + particleCount1]
-									* global_statistics[global_maxParticlesP1 * rank + particleCount2];
+		if (interpolationStartsAt >= 0) {
+			int num_dof = interpolationStartsAt + 3;
+			arma::mat quadratic_equation_fit_matrix(global_maxParticlesP1, num_dof);
+			/*
+			 * The matrix looks like this (example for interpolationStartsAt = 3):
+			 * 1 0 0 0   0   0
+			 * 0 1 0 0   0   0
+			 * 0 0 1 0   0   0
+			 * 0 0 0 3^2 3^1 3^0
+			 * 0 0 0 4^2 4^1 4^0
+			 * 0 0 0 5^2 5^1 5^0
+			 * 0 0 0 6^2 6^1 6^0
+			 * ...
+			 *
+			 * The solution vector thus first contains the time values for the cells with < interpolationStartsAt
+			 * particles and, afterwards, the interpolation constants a, b and c for which a^2 * N + b * N + c holds.
+			 */
+			for (int row = 0; row < interpolationStartsAt; ++row) {
+				for (int col = 0; col < num_dof; ++col) {
+					quadratic_equation_fit_matrix.at(row, col) = (row == col ? 1. : 0.);
 				}
 			}
-		}
-
-		// now we have to solve: system_matrix \cdot cell_time_vector = right_hand_side
-		arma::mat arma_system_matrix(global_maxParticlesP1, global_maxParticlesP1);
-		for (int row = 0; row < global_maxParticlesP1; row++) {
-			for (int column = 0; column < global_maxParticlesP1; column++) {
-				arma_system_matrix[row * global_maxParticlesP1 + column] = system_matrix[row * global_maxParticlesP1
-						+ column];
+			for (int row = interpolationStartsAt; row < global_maxParticlesP1; ++row) {
+				for (int col = 0; col < interpolationStartsAt; ++col) {
+					quadratic_equation_fit_matrix.at(row, col) = 0.;
+				}
+				quadratic_equation_fit_matrix.at(row, interpolationStartsAt + 0) = row * row;
+				quadratic_equation_fit_matrix.at(row, interpolationStartsAt + 1) = row;
+				quadratic_equation_fit_matrix.at(row, interpolationStartsAt + 2) = 1.;
 			}
-		}
-#ifndef MARDYN_MEASURECALC_V1
-		arma::mat quadratic_equation_fit_matrix(global_maxParticlesP1, 3);
-		for (int row = 0; row < global_maxParticlesP1; row++) {
-			quadratic_equation_fit_matrix.at(row, 0) = row * row;
-			quadratic_equation_fit_matrix.at(row, 1) = row;
-			quadratic_equation_fit_matrix.at(row, 2) = 1;
-		}
-		arma_system_matrix = quadratic_equation_fit_matrix.t() * arma_system_matrix * quadratic_equation_fit_matrix;
-		arma::vec arma_rhs(right_hand_side);
-		arma_rhs = quadratic_equation_fit_matrix.t() * arma_rhs;
-		arma::vec coefficient_vec = nnls(arma_system_matrix, arma_rhs);
-		mardyn_assert(coefficient_vec.size() == 3);
-		global_log->info() << "coefficient_vec: " << std::endl << coefficient_vec << std::endl;
-		for (int i = 0; i < 3; i++) {
-			_extrapolationConst[i] = coefficient_vec[i];
-		}
-		MPI_Bcast(_extrapolationConst.data(), 3, MPI_DOUBLE, 0, comm);
-#else
-		// old version
-		arma::vec arma_rhs(right_hand_side);
-		arma::vec cell_time_vec = arma::solve(arma_system_matrix, arma_rhs);
+			// We multiply the system matrix with quadratic_equation_fit_matrix to be able to get the coefficients of a
+			// quadratic least squares fit (non-negative)
+			arma_system_matrix = arma_system_matrix * quadratic_equation_fit_matrix;
 
-		global_log->info() << "cell_time_vec: " << cell_time_vec << std::endl;
-		_times = arma::conv_to< std::vector<double> >::from(cell_time_vec);
-		mardyn_assert(_times.size() == global_maxParticlesP1);
-		MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
-#endif
+			arma::vec coefficient_vec;
+			if (_timeValuesShouldBeIncreasing) {
+				coefficient_vec = getIncreasingSolutionVec(arma_system_matrix, arma_rhs, interpolationStartsAt);
+			} else {
+				coefficient_vec = nnls(arma_system_matrix, arma_rhs);
+			}
+			mardyn_assert(coefficient_vec.size() == num_dof);
+			global_log->info() << "coefficient_vec: " << std::endl;
+			coefficient_vec.raw_print(std::cout);
+			std::cout << std::endl;
+			_times.resize(interpolationStartsAt);
+			for (int i = 0; i < interpolationStartsAt; ++i) {
+				_times[i] = coefficient_vec[i];
+			}
+			MPI_Bcast(_times.data(), interpolationStartsAt, MPI_DOUBLE, 0, comm);
+			for (int i = 0; i < 3; i++) {
+				_interpolationConstants[i] = coefficient_vec[interpolationStartsAt + i];
+			}
+			MPI_Bcast(_interpolationConstants.data(), 3, MPI_DOUBLE, 0, comm);
+		} else if (_timeValuesShouldBeIncreasing) {
+			arma::vec cell_time_vec = getIncreasingSolutionVec(arma_system_matrix, arma_rhs, global_maxParticlesP1);
+
+			global_log->info() << "cell_time_vec:" << std::endl;
+			cell_time_vec.raw_print(std::cout);
+			_times = arma::conv_to<std::vector<double> >::from(cell_time_vec);
+			mardyn_assert(_times.size() == global_maxParticlesP1);
+			MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
+		} else {
+			arma::vec cell_time_vec = nnls(arma_system_matrix, arma_rhs);
+
+			global_log->info() << "cell_time_vec:\n" << cell_time_vec << std::endl;
+			_times = arma::conv_to<std::vector<double> >::from(cell_time_vec);
+			mardyn_assert(_times.size() == global_maxParticlesP1);
+			MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
+		}
 	} else {
 		MPI_Gather(statistics.data(), statistics.size(), MPI_UINT64_T, nullptr, 0 /*here insignificant*/, MPI_UINT64_T,
 				0, comm);
-#ifndef MARDYN_MEASURECALC_V1
-		MPI_Bcast(_extrapolationConst.data(), 3, MPI_DOUBLE, 0, comm);
-#else
-		// old version
-		_times.resize(global_maxParticlesP1);
-		MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
-#endif
+		if (interpolationStartsAt >= 0) {
+			_times.resize(interpolationStartsAt);
+			MPI_Bcast(_times.data(), interpolationStartsAt, MPI_DOUBLE, 0, comm);
+			MPI_Bcast(_interpolationConstants.data(), 3, MPI_DOUBLE, 0, comm);
+		} else {
+			_times.resize(global_maxParticlesP1);
+			MPI_Bcast(_times.data(), global_maxParticlesP1, MPI_DOUBLE, 0, comm);
+		}
 	}
 
-	// extrapolation constants:
-#ifdef MARDYN_MEASURECALC_V1
-	// old version
-	calcConstants();
-#endif
+	// interpolation constants:
+	if (interpolationStartsAt < 0) {
+		calcConstants();
+	}
+
+	if (not isFinite(_times.begin(), _times.end())) {
+		global_log->warning() << "Detected non-finite number in MeasureLoad" << std::endl;
+		return 1;
+	}
+
+	if (not isFinite(_interpolationConstants.begin(), _interpolationConstants.end())) {
+		global_log->warning() << "Detected non-finite number in MeasureLoad" << std::endl;
+		return 1;
+	}
 	_preparedLoad = true;
 	return 0;
 #endif
 }
 #endif  // ENABLE_MPI
+
 void MeasureLoad::calcConstants() {
 	// we do a least squares fit of: y = a x^2 + b x + c
 
 	// we need at least three entries for that!
 	mardyn_assert(_times.size() >= 3);
 
-	// we do a least square fit of the last 50% of the data:
-	size_t start, numElements;
-	{
-		size_t one = _times.size() - 3;
-		size_t two = _times.size() * 0.5;
-		start = std::min(one, two);
-		numElements = _times.size() - start;
-	}
+	// We do a least square fit of the last 50% of the data or at least three elements.
+	size_t start = std::min(_times.size() - 3, _times.size() / 2);
+	size_t numElements = _times.size() - start;
 
-	std::array<double, 5> momentsX{};  // stores the moments of x: sum{t^i}
-	std::array<double, 3> momentsYX{};  // stores the following: sum{d* t^i}
-
-	momentsX[0] = numElements;
-
-	for (size_t i = start; i < _times.size(); i++) {
-		double x = i;
-		double x2 = x * x;
-		double x3 = x2 * x;
-		double x4 = x2 * x2;
-		double y = _times[i];
-		double yx = y * x;
-		double yx2 = y * x2;
-
-		momentsX[1] += x;
-		momentsX[2] += x2;
-		momentsX[3] += x3;
-		momentsX[4] += x4;
-		momentsYX[0] += y;
-		momentsYX[1] += yx;
-		momentsYX[2] += yx2;
-	}
 #ifdef MARDYN_ARMADILLO
-	// 3x3 matrix:
-	arma::mat system_matrix(3, 3);
+	// Nx3 matrix:
+	arma::mat system_matrix(numElements, 3);
 
-	// 3x1 vector from moments:
-	arma::vec rhs(3);
+	// Nx1 vector from moments:
+	arma::vec rhs(numElements);
 
-	for (size_t row = 0; row < 3ul; ++row) {
-		rhs[row] = momentsYX[row];
-		for (size_t col = 0; col < 3ul; ++col) {
-			system_matrix.at(row, col) = momentsX[row + col];
-		}
+	for (size_t row = 0; row < numElements; ++row) {
+		rhs[row] = _times[start + row];
+		system_matrix.at(row, 0) = static_cast<double>(row * row);
+		system_matrix.at(row, 1) = static_cast<double>(row);
+		system_matrix.at(row, 2) = 1;
 	}
 
-	arma::vec solution = arma::solve(system_matrix, rhs);
+	arma::vec solution = nnls(system_matrix, rhs);
 
 	for (size_t row = 0; row < 3ul; row++) {
-		_extrapolationConst[row] = solution[2 - row];
+		_interpolationConstants[row] = solution[2 - row];
 	}
-	global_log->info() << "extrapolationconst: " << solution << std::endl;
+	global_log->info() << "_interpolationConstants: " << std::endl << solution << std::endl;
 #endif
 
 }
@@ -410,16 +545,13 @@ double MeasureLoad::getValue(int numParticles) const {
 	mardyn_assert(numParticles >= 0);
 	mardyn_assert(_preparedLoad);
 
-#ifndef MARDYN_MEASURECALC_V1
-	return _extrapolationConst[0] * numParticles * numParticles + _extrapolationConst[1] * numParticles + _extrapolationConst[2];
-#else
 	size_t numPart = numParticles;
 	if (numPart < _times.size()) {
 		// if we are within the known (i.e. measured) particle count, just use the known values
 		return _times[numPart];
 	} else {
 		// otherwise we interpolate
-		return _extrapolationConst[0] * numPart * numPart + _extrapolationConst[1] * numPart + _extrapolationConst[2];
+		return _interpolationConstants[0] * numPart * numPart + _interpolationConstants[1] * numPart +
+			   _interpolationConstants[2];
 	}
-#endif
 }

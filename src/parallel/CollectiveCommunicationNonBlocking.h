@@ -20,6 +20,7 @@ using Log::global_log;
  * CollectiveCommunicationNonBlocking provides an interface to access multiple CollectiveCommunicationSingleNonBlocking objects.
  * This allows the use of multiple different collective calls, which is needed for the different ensembles.
  * @author Steffen Seckler
+ * @note requires MPI >= 3!
  */
 class CollectiveCommunicationNonBlocking: public CollectiveCommunicationInterface {
 public:
@@ -27,14 +28,11 @@ public:
 	CollectiveCommunicationNonBlocking() :
 			_currentKey(-1), _comms() {
 	}
+
 	/**
 	 * Destructor
 	 */
-	virtual ~CollectiveCommunicationNonBlocking() {
-		for (auto i : _comms){
-			i.second.destroy();
-		}
-	}
+	~CollectiveCommunicationNonBlocking() override = default;
 
 	//! @brief allocate memory for the values to be sent, initialize counters for specific
 	//! @param key The key of the collective communication, this key will be used
@@ -55,7 +53,15 @@ public:
 			global_log->debug() << "CollectiveCommunicationNonBlocking: key " << _currentKey
 					<< " already existent. Reusing information." << std::endl;
 		} else {
-			_comms[_currentKey].instantiate();  // also creates the CollectiveCommunicationSingleNonBlocking object
+			global_log->debug() << "CollectiveCommunicationNonBlocking: key " << _currentKey
+								<< " not existent. Cannot reuse information." << std::endl;
+			// Creates the CollectiveCommunicationSingleNonBlocking object
+			auto [_, inserted] = _comms.try_emplace(_currentKey);
+			if (not inserted) {
+				global_log->error() << "CollectiveCommunicationNonBlocking: key " << _currentKey
+									<< " could not be inserted. Aborting!" << std::endl;
+				Simulation::exit(498789);
+			}
 		}
 		_comms.at(_currentKey).init(communicator, numValues, _currentKey);
 	}
@@ -67,7 +73,6 @@ public:
 		if (_currentKey == 0) {
 			global_log->debug() << "CollectiveCommunicationNonBlocking: finalizing with key " << _currentKey
 					<< ", thus the entry is removed." << std::endl;
-			_comms.at(_currentKey).destroy();
 			_comms.erase(_currentKey);
 		}
 		_currentKey = -1;

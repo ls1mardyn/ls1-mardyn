@@ -82,11 +82,11 @@ public:
 	//! @param currentTime The current time to be printed.
 	void writeCheckpointHeader(std::string filename,
 			ParticleContainer* particleContainer,
-			const DomainDecompBase* domainDecomp, double currentTime);
+			DomainDecompBase* domainDecomp, double currentTime);
 
 	void writeCheckpointHeaderXML(std::string filename,
 			ParticleContainer* particleContainer,
-			const DomainDecompBase* domainDecomp, double currentTime);
+			DomainDecompBase* domainDecomp, double currentTime);
 
 	//! @brief initialize far field correction parameters
 	//!
@@ -187,12 +187,22 @@ public:
 	void setepsilonRF(double erf);
 
 	//! @brief get globalNumMolecules
-	unsigned long getglobalNumMolecules() const;
+	//! This method must be called by all processes and not just by root!
+	//! @param bUpdate bool to trigger update of global number of particles;
+	//! If bUpdate is set to false, the currently stored value for the global number of particles is returned.
+	//! This value could be wrong, if plugins deleted/added particles in the meantime.
+	//! If bUpdate is set to true, the global number of particles is calculated, stored and returned.
+	//! This ensures, the returned value is always correct.
+	//! The global number must not be updated e.g. during the read-in of a binary checkpoint (BinaryReader.cpp:172).
+	//! @param particleContainer particleContainer to be used for update of global number of particles
+	//! @param domainDecomp Domain decomposition object to be used for update of global number of particles
+	unsigned long getglobalNumMolecules(bool bUpdate = true, ParticleContainer* particleContainer = nullptr, DomainDecompBase* domainDecomp = nullptr);
 
 	//! @brief set globalNumMolecules
 	void setglobalNumMolecules(unsigned long glnummol);
-
+	
 	//! @brief update globalNumMolecules
+	//! This method must be called by all processes and not just by root!
 	void updateglobalNumMolecules(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
 
 	//! @brief get local/global max. moleculeID
@@ -208,7 +218,7 @@ public:
 	//!
 	//! Before this method is called, it has to be sure that the
 	//! global potential has been calculated (method calculateGlobalValues)
-	double getAverageGlobalUpot() const;
+	double getAverageGlobalUpot();
         double getGlobalUpot() const;
 
 	//! by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction)
@@ -222,7 +232,7 @@ public:
 	//!
 	//! Before this method is called, it has to be sure that the
 	//! global virial has been calculated (method calculateGlobalValues)
-	double getAverageGlobalVirial() const;
+	double getAverageGlobalVirial();
 
 	//! @brief sets _localSummv2 to the given value
 	void setLocalSummv2(double summv2, int thermostat);
@@ -384,7 +394,7 @@ public:
 	void setVirialCorr(double virialcorr){ _VirialCorr = virialcorr; }
 
     // explosion heuristics, NOTE: turn off when using slab thermostat
-    void SetExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
+    void setExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
 
 private:
 
@@ -465,7 +475,7 @@ private:
 	//! local sum (over all molecules) of the moment of inertia
 	//! multiplied with the squared  rotational velocity
 	std::map<int, double> _local2KERot; 
-
+	
 	//! reaction field
 	//!
 	//! This is neither "local" nor "global" but a parameter of the reaction field method.

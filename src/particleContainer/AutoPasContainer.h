@@ -46,7 +46,8 @@ public:
 		<skin>DOUBLE</skin>
 		<optimumRange>DOUBLE</optimumRange>
 		<blacklistRange>DOUBLE</blacklistRange>
-		<useAVXFunctor>BOOL</useAVXFunctor>
+		<functor>STRING</functor>
+	    <verletClusterSize>INTEGER</verletClusterSize>
 	   </datastructure>
 	   \endcode
 	 * If you are using MPI-parallel simulations, tuningSamples should be a multiple of rebuildFrequency!
@@ -61,8 +62,6 @@ public:
 	bool rebuild(double bBoxMin[3], double bBoxMax[3]) override;
 
 	void update() override;
-
-	void forcedUpdate() override;
 
 	bool addParticle(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
 					 const bool &rebuildCaches = false) override;
@@ -83,7 +82,7 @@ public:
 	RegionParticleIterator regionIterator(const double startCorner[3], const double endCorner[3],
 										  ParticleIterator::Type t) override;
 
-	unsigned long getNumberOfParticles() override;
+	unsigned long getNumberOfParticles(ParticleIterator::Type t = ParticleIterator::ONLY_INNER_AND_BOUNDARY) override;
 
 	void clear() override;
 
@@ -92,8 +91,6 @@ public:
 	double get_halo_L(int index) const override;
 
 	double getCutoff() const override;
-
-	double getInteractionLength() const override;
 
 	double getSkin() const override;
 
@@ -107,7 +104,8 @@ public:
 
 	void updateMoleculeCaches() override;
 
-	bool getMoleculeAtPosition(const double pos[3], Molecule **result) override;
+	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>>
+	getMoleculeAtPosition(const double pos[3]) override;
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
 								std::array<double, 3> simBoxLength, size_t seed_offset) override;
@@ -125,22 +123,26 @@ public:
 
 	void setCutoff(double cutoff) override { _cutoff = cutoff; }
 
-	std::vector<Molecule> getInvalidParticles() override {
-		_hasInvalidParticles = false;
-		return std::move(_invalidParticles);
-	}
-
-	bool hasInvalidParticles() override { return _hasInvalidParticles; }
-
 	bool isInvalidParticleReturner() override { return true; }
+
+	std::string getConfigurationAsString() override;
 
 private:
 	/**
 	 * Helper to get static value of shifting bool.
 	 * @tparam shifting
 	 */
-	template <bool shifting>
+	template<bool shifting>
 	void traverseTemplateHelper();
+
+	/**
+	 * Iterate with functor.
+	 * @tparam The functor type.
+	 * @param functor The functor.
+	 * @return Pair of upot, virial.
+	 */
+	template<typename F>
+	std::pair<double, double> iterateWithFunctor(F &&functor);
 
 	double _cutoff{0.};
 	double _verletSkin;
@@ -153,8 +155,8 @@ private:
 	unsigned int _maxEvidence;
 	unsigned int _maxTuningPhasesWithoutTest;
 	unsigned int _evidenceForPrediction;
-	using CellType = autopas::FullParticleCell<Molecule>;
-	autopas::AutoPas<Molecule, CellType> _autopasContainer;
+	autopas::AutoPas<Molecule> _autopasContainer;
+	bool _autopasContainerIsInitialized{false};
 
 	std::set<autopas::TraversalOption> _traversalChoices;
 	std::set<autopas::ContainerOption> _containerChoices;
@@ -164,10 +166,21 @@ private:
 	autopas::AcquisitionFunctionOption _tuningAcquisitionFunction;
 	std::set<autopas::DataLayoutOption> _dataLayoutChoices;
 	std::set<autopas::Newton3Option> _newton3Choices;
+	autopas::Logger::LogLevel _logLevel{autopas::Logger::LogLevel::info};
 
-	std::vector<Molecule> _invalidParticles;
-	bool _hasInvalidParticles{false};
-	bool _useAVXFunctor{false};
+	enum class FunctorOption {
+		autoVec,
+		AVX,
+		SVE
+	} functorOption{
+#if defined(__ARM_FEATURE_SVE)
+			FunctorOption::SVE
+#elif defined(__AVX__)
+			FunctorOption::AVX
+#else
+			FunctorOption::autoVec
+#endif
+	};
 
 	ParticlePropertiesLibrary<double, size_t> _particlePropertiesLibrary;
 

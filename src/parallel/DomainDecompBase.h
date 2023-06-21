@@ -7,12 +7,14 @@
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
+#include <particleContainer/RegionParticleIterator.h>
 #include <iostream>
+#include <variant>
 
-#include "molecules/MoleculeForwardDeclaration.h"
-#include "utils/Logger.h" // is this used?
-#include "io/MemoryProfiler.h"
 #include "HaloRegion.h"
+#include "io/MemoryProfiler.h"
+#include "molecules/MoleculeForwardDeclaration.h"
+#include "utils/Logger.h"  // is this used?
 
 class Component;
 class Domain;
@@ -135,10 +137,10 @@ public:
 	virtual double getBoundingBoxMax(int dimension, Domain* domain);
 
 	//! @brief writes information about the current decomposition into the given file
-	//!        The format is not strictly defined and depends on the decomposition
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	virtual void printDecomp(const std::string& filename, Domain* domain);
+	//! @param particleContainer needed to print information about the parts of the decomposition
+	virtual void printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer);
 
 
 	//! @brief returns the own rank
@@ -287,7 +289,7 @@ public:
 	virtual void printCommunicationPartners(std::string filename) const {};
 
 protected:
-	void addLeavingMolecules(std::vector<Molecule>&& invalidMolecules, ParticleContainer* moleculeContainer);
+	void addLeavingMolecules(std::vector<Molecule>& invalidMolecules, ParticleContainer* moleculeContainer);
 
 	/**
 	 * Handles the sequential version of particles leaving the domain.

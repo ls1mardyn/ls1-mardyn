@@ -21,6 +21,9 @@
 #include "utils/Testing.h"
 #include "utils/Timer.h"
 #include "utils/SigsegvHandler.h"
+#ifdef MARDYN_AUTOPAS
+#include "autopas/Version.h"
+#endif
 
 using Log::global_log;
 using std::endl;
@@ -146,6 +149,11 @@ int main(int argc, char** argv) {
 	vector<string> args = op.args();
 
 	global_log->info() << "Running ls1-MarDyn version " << MARDYN_VERSION << endl;
+
+#ifdef MARDYN_AUTOPAS
+	global_log->info() << "Built with AutoPas version " << AutoPas_VERSION << std::endl;
+#endif
+
 #ifndef NDEBUG
 	global_log->warning() << "This ls1-MarDyn binary is a DEBUG build!" << endl;
 #endif
@@ -252,14 +260,25 @@ int main(int argc, char** argv) {
 	//  FIXME: The statements "<< fixed << setprecision(5)" after endl are so that the next logger timestamp appears as expected. A better solution would be nice, of course.
 
 	// print out total simulation speed
-	//!@todo is this correct w.r.t. starting from time > 0 ? We keep changing this...
-	const unsigned long numForceCalculations = simulation.getNumTimesteps();
-	const double speed = simulation.getTotalNumberOfMolecules() * numForceCalculations / runtime;
+	const unsigned long numTimesteps = simulation.getNumTimesteps() - simulation.getNumInitTimesteps();
+	const double speed = simulation.getTotalNumberOfMolecules() * numTimesteps / runtime;
 	global_log->info() << "Simulation speed: " << scientific << setprecision(6) << speed << " Molecule-updates per second." << endl << fixed << setprecision(5);
 
-	const double iterationsPerSecond = simulation.getNumTimesteps() / runtime;
+	const double iterationsPerSecond = numTimesteps / runtime;
 	global_log->info() << "Iterations per second: " << fixed << setprecision(3) << iterationsPerSecond << endl << fixed << setprecision(5);
 	global_log->info() << "Time per iteration: " << fixed << setprecision(3) << 1.0 / iterationsPerSecond << " seconds." << endl << fixed << setprecision(5);
+
+	double resources = runtime / 3600.0;
+#if defined(_OPENMP)
+	resources *= mardyn_get_max_threads();
+#endif
+
+#ifdef ENABLE_MPI
+	int world_size = 1;
+	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &world_size));
+	resources *= world_size;
+#endif
+	global_log->info() << "Used resources: " << fixed << setprecision(3) << resources << " core-hours" << endl << fixed << setprecision(5);
 
 	simulation.finalize();
 

@@ -16,11 +16,45 @@
 #ifdef MARDYN_AUTOPAS
 
 #include "ParticleIterator.h"
-class RegionParticleIterator : public ParticleIterator {
+#include <autopas/iterators/ContainerIterator.h>
+#include "molecules/AutoPasSimpleMolecule.h"
+
+/**
+ * Wrapper class for AutoPas' region ContainerIterator.
+ * In contrast to the ls1-vanilla version this class does NOT inherit from ParticleIterator.
+ * Instead it offers implicit cast operations for compatibility reasons.
+ */
+class RegionParticleIterator : public autopas::ContainerIterator<AutoPasSimpleMolecule, true, true> {
 public:
 	RegionParticleIterator() = default;
-	explicit RegionParticleIterator(const autopas::IteratorTraits<AutoPasSimpleMolecule>::iterator_t& parent)
-		: ParticleIterator(parent){};
+
+	/**
+	 * Copy constructor that converts from anything that implements this IteratorTrait.
+	 * @param parent
+	 */
+	RegionParticleIterator(const autopas::ContainerIterator<AutoPasSimpleMolecule, true, true>& parent)
+		: autopas::ContainerIterator<AutoPasSimpleMolecule, true, true>(parent){};
+
+	/**
+	 * Move constructor that converts from anything that implements this IteratorTrait.
+	 * @param parent
+	 */
+	RegionParticleIterator(autopas::ContainerIterator<AutoPasSimpleMolecule, true, true>&& parent)
+		: autopas::ContainerIterator<AutoPasSimpleMolecule, true, true>(std::move(parent)){};
+
+	operator ParticleIterator() const{
+		const auto* nonRegionIter = reinterpret_cast<const autopas::ContainerIterator<AutoPasSimpleMolecule, true, false>*>(this);
+		return {*nonRegionIter};
+	}
+
+	operator ParticleIterator() {
+		auto* nonRegionIter = reinterpret_cast<autopas::ContainerIterator<AutoPasSimpleMolecule, true, false>*>(this);
+		return {*nonRegionIter};
+	}
+
+	operator ParticleIterator &() {
+		return *(reinterpret_cast<ParticleIterator *>(this));
+	}
 };
 
 #else
@@ -35,6 +69,10 @@ class RegionParticleIterator : public ParticleIterator {
 		RegionParticleIterator ();
 		RegionParticleIterator (Type t, CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const double startRegion_arg[3], const double endRegion_arg[3]);
 		RegionParticleIterator& operator=(const RegionParticleIterator& other);
+
+		~RegionParticleIterator() override = default;
+
+		constexpr RegionParticleIterator(const RegionParticleIterator&) = default;
 
 		void operator++() override;
 	private:
@@ -80,17 +118,10 @@ inline RegionParticleIterator :: RegionParticleIterator (Type t, CellContainer_T
 	mardyn_assert(_cells != nullptr);
 
 	const CellContainer_T& cells = *_cells;
-	const CellIndex_T numCellsInRegion = _regionDimensions[2] * _regionDimensions[1] * _regionDimensions[0]; //cells.size();
+	const CellIndex_T numCellsInRegion = _regionDimensions[2] * _regionDimensions[1] * _regionDimensions[0];
 
 	// if _cell_index is out of the region => invalid <=> (_localCellIndex >= numCellsInRegion)
 	if (_localCellIndex < numCellsInRegion) {
-		/*
-		if (cells[_cell_index].isEmpty()) {
-			next_non_empty_cell();
-		}
-		*/
-//		_currentParticleDeleted = true;
-
 		if (cells[_cell_index].isNotEmpty() and (this->operator*()).inBox(_startRegion, _endRegion)) {
 			// if the particle is good, leave it
 		} else {

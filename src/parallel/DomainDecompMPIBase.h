@@ -38,10 +38,10 @@ public:
 	}
 
 	//! @brief returns total number of molecules
-	unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
+	unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd) override;
 
 	//! @brief checks identity of random number generators
-	void assertIntIdentity(int IX);
+	void assertIntIdentity(int IX) override;
 	void assertDisjunctivity(ParticleContainer* moleculeContainer) const override;
 
 	//##################################################################
@@ -105,9 +105,7 @@ public:
 		_collCommunication->allreduceSum();
 	}
 
-	void collCommAllreduceSumAllowPrevious() override {
-		_collCommunication->allreduceSumAllowPrevious();
-	}
+	void collCommAllreduceSumAllowPrevious() override;
 
 	void collCommAllreduceCustom(ReduceType type) override {
 		_collCommunication->allreduceCustom(type);
@@ -194,19 +192,27 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <parallelisation type="DomainDecomposition" OR "KDDecomposition">
-	   	 <CommunicationScheme>indirect OR direct</CommunicationScheme><!--default: indirect, unless in autopas mode-->
-	   	 <overlappingCollectives>yes OR no</overlappingCollectives><!--default: no-->
-	   	 <useSequentialFallback>yes OR no</useSequentialFallback><!--default: yes-->
+	     <!--default: indirect, unless in autopas mode-->
+	   	 <CommunicationScheme>indirect OR direct OR direct-pp</CommunicationScheme>
+	   	 <!--default: no-->
+	   	 <overlappingCollectives>yes OR no</overlappingCollectives>
+	   	 <!--default: 5-->
+	   	 <overlappingStartAtStep></overlappingStartAtStep>
+	   	 <!--default: yes-->
+	   	 <useSequentialFallback>yes OR no</useSequentialFallback>
 	     <!-- structure handled by DomainDecomposition or KDDecomposition -->
 	   </parallelisation>
 	   \endcode
 	 */
-	virtual void readXML(XMLfileUnits& xmlconfig);
+	virtual void readXML(XMLfileUnits& xmlconfig) override;
 
-	//! Sets the communicationScheme.
-	//! If this function is called dynamically, make sure to reinitialise the CommunicationPartners before exchanging molecules!
-	//! @param scheme
-	virtual void setCommunicationScheme(std::string scheme,std::string comScheme);
+	/**
+	 * Sets the communicationScheme.
+	 * @note If this function is called dynamically, make sure to reinitialise the CommunicationPartners before exchanging molecules!
+	 * @param scheme
+	 * @param comScheme
+	 */
+	virtual void setCommunicationScheme(const std::string& scheme, const std::string& comScheme);
 
 	// documentation in base class
 	virtual int getNonBlockingStageCount() override;
@@ -214,6 +220,8 @@ public:
 	virtual size_t getTotalSize() override;
 
 	virtual void printSubInfo(int offset) override;
+
+    virtual void printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) override;
 
 	virtual std::string getName() override {
 		return "DomainDecompMPIBase";
@@ -248,9 +256,21 @@ protected:
 
 	MPI_Comm _comm;
 
-	NeighbourCommunicationScheme* _neighbourCommunicationScheme;
+	std::unique_ptr<NeighbourCommunicationScheme> _neighbourCommunicationScheme;
+
+	/**
+	 * Indicates whether the direct-pp communication scheme should be forced.
+	 * Flag to indicate necessity to use the direct-pp neighbour communication scheme. Can be overwritten by any child class.
+	 * @note Intended to be used in `readXML()`.
+	 */
+	bool _forceDirectPP{false};
 private:
 	std::unique_ptr<CollectiveCommunicationInterface> _collCommunication;
+	/// Defines when to start the overlapping collective communication.
+	/// In the very first steps, the thermostats heavily influence the simulation.
+	/// To prevent large deviations from a simulation without overlapping collectives, overlapping collectives can be disabled at the start.
+	/// Typically, around five steps are reasonable for this.
+	unsigned long _overlappingStartAtStep {5ul};
 };
 
 #endif /* DOMAINDECOMPMPIBASE_H_ */

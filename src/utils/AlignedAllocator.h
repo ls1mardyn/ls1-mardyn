@@ -101,7 +101,7 @@ struct AlignedAllocator {
 	 * \brief Construct object of type U at already allocated memory, pointed to by p
 	 */
 	template<class U, class ...Args>
-	void construct(U* p, Args&&... args) {
+	void construct(U* p, Args&&... args) noexcept(noexcept(U(std::forward<Args>(args)...))) {
 		::new ((void*) p) U(std::forward<Args>(args)...);
 	}
 
@@ -109,7 +109,7 @@ struct AlignedAllocator {
 	 * \brief Destroy object pointed to by p, but does not deallocate the memory
 	 */
 	template<class U>
-	void destroy(U* p) {
+	void destroy(U* p) noexcept(noexcept(p->~U())) {
 		p->~U();
 	}
 };

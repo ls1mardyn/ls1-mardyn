@@ -69,8 +69,8 @@ void PosNegComp::changeComponents(ParticleContainer* particleContainer)
 	regionLowCorner[1] = std::max(_limitY.left, regionLowCorner[1]);
 	regionHighCorner[1] = std::min(_limitY.right, regionHighCorner[1]);
 
-	auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);  // over all cell types
-	for(auto it = begin; it.isValid(); ++it) {
+	for (auto it = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);
+		 it.isValid(); ++it) {
 		// check if particle should be ignored because of its cid
 		const uint32_t cid_ub = it->componentid()+1;
 		if(cid_ub == _cid_ub.ignore)

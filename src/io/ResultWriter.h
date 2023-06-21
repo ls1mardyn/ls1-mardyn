@@ -61,8 +61,8 @@ public:
 
 private:
 	std::ofstream _resultStream;
-	unsigned long _writeFrequency;
-	unsigned int _writePrecision;
+	long _writeFrequency;
+	int _writePrecision;
 	std::string _outputPrefix;
 	Accumulator<double> *_U_pot_acc;
 	Accumulator<double> *_p_acc;
