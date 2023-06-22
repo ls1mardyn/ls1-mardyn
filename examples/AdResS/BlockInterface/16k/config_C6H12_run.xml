@@ -82,7 +82,7 @@
 
         <output>
             <outputplugin name="VTKMoleculeWriter">
-                <writefrequency>10000</writefrequency>
+                <writefrequency>100000</writefrequency>
                 <writefrequencyOffset>0</writefrequencyOffset>
                 <outputprefix>BlockInterface_16k_C6H12</outputprefix>
             </outputplugin>
