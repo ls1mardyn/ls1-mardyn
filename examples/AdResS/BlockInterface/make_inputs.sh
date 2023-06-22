@@ -1,6 +1,6 @@
 #!/usr/bin/zsh
 
-CLEAN=1
+CLEAN=0
 TYPES=('C6H12' 'CH4')
 
 if [[ $CLEAN -eq 1 ]]
@@ -43,8 +43,8 @@ do
     touch CI_INIT_${n}k_"${type}"_1.cmd
     echo "#!/bin/bash
 #SBATCH -J CI_INIT_${n}k_${type}_0
-#SBATCH -o ../../../../log/%x.out
-#SBATCH -D ../../../../ls1-mardyn
+#SBATCH -o ../log/%x.out
+#SBATCH -D ../../..
 #SBATCH --partition=medium
 #SBATCH --get-user-env
 #SBATCH --mail-type=all
@@ -55,7 +55,7 @@ do
 #SBATCH --nodes=16
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=72
-#SBATCH --error=../../../../log/%x.err
+#SBATCH --error=../log/%x.err
 
 export OMP_NUM_THREADS=72
 ulimit -s 1000000
@@ -67,8 +67,8 @@ mpiexec -n 16 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_$
 " > CI_INIT_${n}k_"${type}"_0.cmd
   echo "#!/bin/bash
 #SBATCH -J CI_INIT_${n}k_${type}_1
-#SBATCH -o ../../../../log/%x.out
-#SBATCH -D ../../../../ls1-mardyn
+#SBATCH -o ../log/%x.out
+#SBATCH -D ../../..
 #SBATCH --partition=medium
 #SBATCH --get-user-env
 #SBATCH --mail-type=all
@@ -79,7 +79,7 @@ mpiexec -n 16 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_$
 #SBATCH --nodes=16
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=72
-#SBATCH --error=../../../../log/%x.err
+#SBATCH --error=../log/%x.err
 
 export OMP_NUM_THREADS=72
 ulimit -s 1000000
