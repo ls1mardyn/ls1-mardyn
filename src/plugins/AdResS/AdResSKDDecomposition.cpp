@@ -1421,8 +1421,8 @@ void AdResSKDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeC
 				if (globalCellIdx[dim] >= _globalCellsPerDim[dim])
 					globalCellIdx[dim] -= _globalCellsPerDim[dim];
 			}
-            unsigned int particles = molPtr->numSites();
-            /*if (molPtr->componentid() % Resolution::ResolutionCount == Resolution::Hybrid) {
+            unsigned int particles;
+            if (molPtr->componentid() % Resolution::ResolutionCount == Resolution::Hybrid) {
                 if(!_plugin) particles = molPtr->numSites();
                 else {
                     auto it = std::find_if(_plugin->_fpRegions.begin(), _plugin->_fpRegions.end(), [&](const FPRegion& region)->bool{
@@ -1435,7 +1435,7 @@ void AdResSKDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeC
                 }
             } else {
                 particles = molPtr->numSites();
-            }*/
+            }
 			if(molPtr->componentid() == 0){
 				mardyn_assert(static_cast<int>(molPtr->componentid()) <= _numParticleTypes);
 				#if defined(_OPENMP)
