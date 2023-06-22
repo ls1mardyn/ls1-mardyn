@@ -1,6 +1,6 @@
 #!/usr/bin/zsh
 
-CLEAN=0
+: "${CLEAN:=0}"
 TYPES=('C6H12' 'CH4')
 
 if [[ $CLEAN -eq 1 ]]
