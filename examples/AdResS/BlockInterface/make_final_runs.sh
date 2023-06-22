@@ -45,7 +45,7 @@ do
 #SBATCH --mem=800mb
 #SBATCH --mail-user=hocksa@hsu-hh.de
 #SBATCH --export=NONE
-#SBATCH --time=00:10:00
+#SBATCH --time=00:40:00
 #SBATCH --nodes=8
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=72
@@ -57,7 +57,7 @@ ulimit -s 1000000
 module load slurm_setup
 module load mpi/2021.6.0
 
-mpiexec -n 8 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_${type}_run.xml --loop-abort-time=570 --final-checkpoint=0
+mpiexec -n 8 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_${type}_run.xml --loop-abort-time=2370 --final-checkpoint=0
 " > CI_RUN_${n}k_"${type}".cmd
   done
 done
