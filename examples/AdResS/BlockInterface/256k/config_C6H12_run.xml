@@ -22,62 +22,44 @@
 
         <ensemble type="NVT">
             <!--Ensemble is the main topic of the simulation -->
-            <temperature unit="reduced" >110</temperature>	<!-- in future also units="K" -->
+            <temperature unit="reduced" >300</temperature>	<!-- in future also units="K" -->
             <domain type="box">
-                <lx unit="reduced">1870.</lx>
-                <ly unit="reduced">1870.</ly>
-                <lz unit="reduced">1870.</lz>
+                <lx unit="reduced">1130.</lx>
+                <ly unit="reduced">1130.</ly>
+                <lz unit="reduced">1130.</lz>
             </domain>
             <!-- instead of lx/ly/lz we might accept density -->
             <components>
-                <include query="/components/moleculetype">./../components_CH4.xml</include>
+                <include query="/components/moleculetype">./../components_C6H12.xml</include>
             </components>
 
             <phasespacepoint>
                 <generator name="MultiObjectGenerator">
                     <objectgenerator>
-                        <filler type="GridFiller">
-                            <lattice system="cubic" centering="face">
-                                <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
-                                <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
-                                <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
-                            </lattice>
-                            <basis>
-                                <site>
-                                    <componentid>0</componentid>
-                                    <coordinate> <x>.5</x> <y>.5</y> <z>.5</z> </coordinate>
-                                </site>
-                            </basis>
-                            <latticeOccupancy>1.</latticeOccupancy>
-                            <density>0.00004</density>
+                        <filler type="ReplicaFiller">
+                            <input type="BinaryReader">
+                                <header>CP_BI_256k_C6H12_0-1.restart.header.xml</header>
+                                <data>CP_BI_256k_C6H12_0-1.restart.dat</data>
+                            </input>
                         </filler>
+
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>935</x> <y>1870</y> <z>1870</z> </upper>
+                            <upper> <x>565</x> <y>1130</y> <z>1130</z> </upper>
                         </object>
-                        <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>
                     </objectgenerator>
                     <objectgenerator>
-                        <filler type="GridFiller">
-                            <lattice system="cubic" centering="face">
-                                <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
-                                <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
-                                <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
-                            </lattice>
-                            <basis>
-                                <site>
-                                    <componentid>3</componentid>
-                                    <coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
-                                </site>
-                            </basis>
-                            <latticeOccupancy>1.</latticeOccupancy>
-                            <density>0.00004</density>
+                        <filler type="ReplicaFiller">
+                            <input type="BinaryReader">
+                                <header>CP_BI_256k_C6H12_1-1.restart.header.xml</header>
+                                <data>CP_BI_256k_C6H12_1-1.restart.dat</data>
+                            </input>
                         </filler>
+
                         <object type="Cuboid">
-                            <lower> <x>935</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>1870</x> <y>1870</y> <z>1870</z> </upper>
+                            <lower> <x>565</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>1130</x> <y>1130</y> <z>1130</z> </upper>
                         </object>
-                        <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>
                     </objectgenerator>
                 </generator>
             </phasespacepoint>
@@ -102,12 +84,7 @@
             <outputplugin name="VTKMoleculeWriter">
                 <writefrequency>10000</writefrequency>
                 <writefrequencyOffset>0</writefrequencyOffset>
-                <outputprefix>BlockInterface_256k_CH4</outputprefix>
-            </outputplugin>
-            <outputplugin name="CheckpointWriter">
-                <type>binary</type>
-                <writefrequency>10000</writefrequency>
-                <outputprefix>CP_BI_256k_CH4</outputprefix>
+                <outputprefix>BlockInterface_256k_C6H12</outputprefix>
             </outputplugin>
         </output>
 
@@ -115,8 +92,8 @@
             <weightImpl>near</weightImpl>
             <fpregions>
                 <region id="1">
-                    <lowX>915.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
-                    <highX>955.0</highX><highY>1870.0</highY><highZ>1870.0</highZ>
+                    <lowX>545.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
+                    <highX>585.0</highX><highY>1130.0</highY><highZ>1130.0</highZ>
                     <hybridDimX>40.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>

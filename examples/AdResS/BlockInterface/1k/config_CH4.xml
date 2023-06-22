@@ -100,9 +100,14 @@
 
         <output>
             <outputplugin name="VTKMoleculeWriter">
-                <writefrequency>10</writefrequency>
+                <writefrequency>10000</writefrequency>
                 <writefrequencyOffset>0</writefrequencyOffset>
                 <outputprefix>BlockInterface_1k_CH4</outputprefix>
+            </outputplugin>
+            <outputplugin name="CheckpointWriter">
+                <type>binary</type>
+                <writefrequency>10000</writefrequency>
+                <outputprefix>CP_BI_1k_CH4</outputprefix>
             </outputplugin>
         </output>
 

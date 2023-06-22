@@ -104,6 +104,11 @@
                 <writefrequencyOffset>0</writefrequencyOffset>
                 <outputprefix>BlockInterface_4k_C6H12</outputprefix>
             </outputplugin>
+            <outputplugin name="CheckpointWriter">
+                <type>binary</type>
+                <writefrequency>10000</writefrequency>
+                <outputprefix>CP_BI_4k_C6H12</outputprefix>
+            </outputplugin>
         </output>
 
         <plugin name="AdResS">

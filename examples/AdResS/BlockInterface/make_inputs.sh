@@ -13,6 +13,9 @@ then
       rm -f ./${n}k/config_"${type}"_1.xml
       rm -f CI_INIT_${n}k_"${type}"_0.cmd
       rm -f CI_INIT_${n}k_"${type}"_1.cmd
+      rm -f ./${n}k/CP_BI_${n}k_"${type}"_0-1.restart.*(N)
+      rm -f ./${n}k/CP_BI_${n}k_"${type}"_1-1.restart.*(N)
+      rm -f CI_RUN_${n}k_"${type}".cmd
     done
   done
   exit 0
@@ -31,10 +34,14 @@ do
     sed -i -r "s#<lx unit=\"reduced\">.*</lx>#<lx unit=\"reduced\">$((SIZE/2))\.</lx>#g" ./${n}k/config_"${type}"_1.xml
     sed -i -n '60,81!p' ./${n}k/config_"${type}"_0.xml
     sed -i -n '38,59!p' ./${n}k/config_"${type}"_1.xml
-    sed -i -n '79,96!p' ./${n}k/config_"${type}"_0.xml
-    sed -i -n '79,96!p' ./${n}k/config_"${type}"_1.xml
+    sed -i -n '80,84!p' ./${n}k/config_"${type}"_0.xml
+    sed -i -n '80,84!p' ./${n}k/config_"${type}"_1.xml
+    sed -i -n '87,96!p' ./${n}k/config_"${type}"_0.xml
+    sed -i -n '87,96!p' ./${n}k/config_"${type}"_1.xml
     sed -i -r "s#<lower> <x>.*</x>#<lower> <x>0</x>#g" ./${n}k/config_"${type}"_1.xml
     sed -i -r "s#<upper> <x>.*</x>#<upper> <x>$((SIZE/2))</x>#g" ./${n}k/config_"${type}"_1.xml
+    sed -i -r "s#<outputprefix>CP_BI_${n}k_${type}</outputprefix>#<outputprefix>CP_BI_${n}k_${type}_0</outputprefix>#g" ./${n}k/config_"${type}"_0.xml
+    sed -i -r "s#<outputprefix>CP_BI_${n}k_${type}</outputprefix>#<outputprefix>CP_BI_${n}k_${type}_1</outputprefix>#g" ./${n}k/config_"${type}"_1.xml
 
     rm -f CI_INIT_${n}k_"${type}"_0.cmd
     rm -f CI_INIT_${n}k_"${type}"_1.cmd
@@ -63,7 +70,7 @@ ulimit -s 1000000
 module load slurm_setup
 module load mpi/2021.6.0
 
-mpiexec -n 8 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_${type}_0.xml --loop-abort-time=570
+mpiexec -n 8 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_${type}_0.xml --loop-abort-time=570 --final-checkpoint=0
 " > CI_INIT_${n}k_"${type}"_0.cmd
   echo "#!/bin/bash
 #SBATCH -J CI_INIT_${n}k_${type}_1
@@ -87,7 +94,7 @@ ulimit -s 1000000
 module load slurm_setup
 module load mpi/2021.6.0
 
-mpiexec -n 8 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_${type}_1.xml --loop-abort-time=570
+mpiexec -n 8 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_${type}_1.xml --loop-abort-time=570 --final-checkpoint=0
 " > CI_INIT_${n}k_"${type}"_1.cmd
   done
 done
