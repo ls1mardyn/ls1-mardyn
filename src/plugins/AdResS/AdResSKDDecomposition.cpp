@@ -1460,6 +1460,7 @@ void AdResSKDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeC
 		}
 	}
 	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numMoleculesPerCell.data(), _globalNumCells * _numParticleTypes, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );
+	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell.data(), _globalNumCells * _numParticleTypes, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );
 }
 
 std::vector<int> AdResSKDDecomposition::getNeighbourRanks() {
