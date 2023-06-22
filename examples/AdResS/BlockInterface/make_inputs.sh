@@ -52,7 +52,7 @@ do
 #SBATCH --mail-user=hocksa@hsu-hh.de
 #SBATCH --export=NONE
 #SBATCH --time=00:10:00
-#SBATCH --nodes=16
+#SBATCH --nodes=8
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=72
 #SBATCH --error=../log/%x.err
@@ -63,7 +63,7 @@ ulimit -s 1000000
 module load slurm_setup
 module load mpi/2021.6.0
 
-mpiexec -n 16 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_${type}_0.xml --loop-abort-time=570
+mpiexec -n 8 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_${type}_0.xml --loop-abort-time=570
 " > CI_INIT_${n}k_"${type}"_0.cmd
   echo "#!/bin/bash
 #SBATCH -J CI_INIT_${n}k_${type}_1
@@ -76,7 +76,7 @@ mpiexec -n 16 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_$
 #SBATCH --mail-user=hocksa@hsu-hh.de
 #SBATCH --export=NONE
 #SBATCH --time=00:10:00
-#SBATCH --nodes=16
+#SBATCH --nodes=8
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=72
 #SBATCH --error=../log/%x.err
@@ -87,7 +87,7 @@ ulimit -s 1000000
 module load slurm_setup
 module load mpi/2021.6.0
 
-mpiexec -n 16 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_${type}_1.xml --loop-abort-time=570
+mpiexec -n 8 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_${type}_1.xml --loop-abort-time=570
 " > CI_INIT_${n}k_"${type}"_1.cmd
   done
 done
