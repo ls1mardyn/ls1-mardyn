@@ -37,8 +37,8 @@ do
     touch CI_RUN_${n}k_"${type}".cmd
     echo "#!/bin/bash
 #SBATCH -J CI_RUN_${n}k_${type}
-#SBATCH -o ../log/%x.out
-#SBATCH -D ../../..
+#SBATCH -o ../../../log/%x.out
+#SBATCH -D ../../../build/src
 #SBATCH --partition=medium
 #SBATCH --get-user-env
 #SBATCH --mail-type=all
@@ -49,7 +49,7 @@ do
 #SBATCH --nodes=8
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=72
-#SBATCH --error=../log/%x.err
+#SBATCH --error=../../../log/%x.err
 
 export OMP_NUM_THREADS=72
 ulimit -s 1000000
@@ -57,7 +57,7 @@ ulimit -s 1000000
 module load slurm_setup
 module load mpi/2021.6.0
 
-mpiexec -n 8 ./build/src/MarDyn ./examples/AdResS/BlockInterface/${n}k/config_${type}_run.xml --loop-abort-time=2370 --final-checkpoint=0
+mpiexec -n 8 ./MarDyn ../../examples/AdResS/BlockInterface/${n}k/config_${type}_run.xml --loop-abort-time=2370 --final-checkpoint=0
 " > CI_RUN_${n}k_"${type}".cmd
   done
 done
