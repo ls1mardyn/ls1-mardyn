@@ -1,6 +1,6 @@
 #!/usr/bin/zsh
 
-: "${CLEAN:=0}"
+: "${CLEAN:=1}"
 TYPES=('C6H12' 'CH4')
 
 if [[ $CLEAN -eq 1 ]]
@@ -16,6 +16,9 @@ then
       rm -f ./${n}k/CP_BI_${n}k_"${type}"_0-1.restart.*(N)
       rm -f ./${n}k/CP_BI_${n}k_"${type}"_1-1.restart.*(N)
       rm -f CI_RUN_${n}k_"${type}".cmd
+      rm -f CI_BENCH_${n}k_"${type}"_N*.cmd(N)
+      rm -f ./${n}k/config_"${type}"_H*.xml(N)
+      rm -f CI_BENCH_${n}k_"${type}"_H*_N*.cmd(N)
     done
   done
   exit 0
@@ -60,17 +63,17 @@ do
 #SBATCH --export=NONE
 #SBATCH --time=00:10:00
 #SBATCH --nodes=8
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=72
+#SBATCH --ntasks-per-node=4
+#SBATCH --cpus-per-task=18
 #SBATCH --error=../../../log/%x.err
 
-export OMP_NUM_THREADS=72
+export OMP_NUM_THREADS=18
 ulimit -s 1000000
 
 module load slurm_setup
 module load mpi/2021.6.0
 
-mpiexec -n 8 ./MarDyn ../../examples/AdResS/BlockInterface/${n}k/config_${type}_0.xml --loop-abort-time=570
+mpiexec -n 32 ./MarDyn ../../examples/AdResS/BlockInterface/${n}k/config_${type}_0.xml --loop-abort-time=570
 " > CI_INIT_${n}k_"${type}"_0.cmd
   echo "#!/bin/bash
 #SBATCH -J CI_INIT_${n}k_${type}_1
@@ -84,17 +87,17 @@ mpiexec -n 8 ./MarDyn ../../examples/AdResS/BlockInterface/${n}k/config_${type}_
 #SBATCH --export=NONE
 #SBATCH --time=00:10:00
 #SBATCH --nodes=8
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=72
+#SBATCH --ntasks-per-node=4
+#SBATCH --cpus-per-task=18
 #SBATCH --error=../../../log/%x.err
 
-export OMP_NUM_THREADS=72
+export OMP_NUM_THREADS=18
 ulimit -s 1000000
 
 module load slurm_setup
 module load mpi/2021.6.0
 
-mpiexec -n 8 ./MarDyn ../../examples/AdResS/BlockInterface/${n}k/config_${type}_1.xml --loop-abort-time=570
+mpiexec -n 32 ./MarDyn ../../examples/AdResS/BlockInterface/${n}k/config_${type}_1.xml --loop-abort-time=570
 " > CI_INIT_${n}k_"${type}"_1.cmd
   done
 done

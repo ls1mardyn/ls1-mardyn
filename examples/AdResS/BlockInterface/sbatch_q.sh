@@ -1,55 +1,89 @@
 #!/usr/bin/zsh
-: "${E_1k:=1}"
-: "${E_4k:=1}"
-: "${E_16k:=1}"
-: "${E_64k:=1}"
-: "${E_256k:=1}"
-: "${E_1024k:=1}"
+: "${INIT_BASE:=0}"
+: "${BENCH:=0}"
+: "${BENCH_H:=0}"
+: "${RUN:=0}"
+: "${INIT_XS:=0}"
+: "${BENCH_XS:=0}"
 
-if [[ $E_1k -gt 0 ]]
+TYPES=('C6H12' 'CH4')
+
+if [[ $INIT_BASE -gt 0 ]]
 then
-  sbatch ./CI_INIT_1k_C6H12_0.cmd
-  sbatch ./CI_INIT_1k_C6H12_1.cmd
-  sbatch ./CI_INIT_1k_CH4_0.cmd
-  sbatch ./CI_INIT_1k_CH4_1.cmd
+  for n in 1 4 16 64 256 1024
+  do
+    for type in "${TYPES[@]}"
+    do
+      sbatch ./CI_INIT_${n}k_"${type}"_0.cmd
+      sbatch ./CI_INIT_${n}k_"${type}"_1.cmd
+    done
+  done
 fi
 
-if [[ $E_4k -gt 0 ]]
+if [[ $RUN -gt 0 ]]
 then
-  sbatch ./CI_INIT_4k_C6H12_0.cmd
-  sbatch ./CI_INIT_4k_C6H12_1.cmd
-  sbatch ./CI_INIT_4k_CH4_0.cmd
-  sbatch ./CI_INIT_4k_CH4_1.cmd
+  for n in 1 4 16 64 256 1024
+  do
+    for type in "${TYPES[@]}"
+    do
+      sbatch ./CI_RUN_${n}k_"${type}".cmd
+    done
+  done
 fi
 
-if [[ $E_16k -gt 0 ]]
+if [[ $BENCH -gt 0 ]]
 then
-  sbatch ./CI_INIT_16k_C6H12_0.cmd
-  sbatch ./CI_INIT_16k_C6H12_1.cmd
-  sbatch ./CI_INIT_16k_CH4_0.cmd
-  sbatch ./CI_INIT_16k_CH4_1.cmd
+  for node in 1 4 8 12 16 20 24 28 32 48 64 80 96 112 128
+  do
+    for n in 1 4 16 64 256 1024
+    do
+      for type in "${TYPES[@]}"
+      do
+        sbatch ./CI_BENCH_${n}k_"${type}"_N"${node}".cmd
+      done
+    done
+  done
 fi
 
-if [[ $E_64k -gt 0 ]]
+if [[ $BENCH_H -gt 0 ]]
 then
-  sbatch ./CI_INIT_64k_C6H12_0.cmd
-  sbatch ./CI_INIT_64k_C6H12_1.cmd
-  sbatch ./CI_INIT_64k_CH4_0.cmd
-  sbatch ./CI_INIT_64k_CH4_1.cmd
+  for node in 1 4 8 12 16 20 24 28 32 48 64 80 96 112 128
+  do
+    for n in 1 4 16 64 256 1024
+    do
+      for type in "${TYPES[@]}"
+      do
+        for percent in {10..90..10}
+        do
+          sbatch ./CI_BENCH_${n}k_"${type}"_H"${percent}"_N"${node}".cmd
+        done
+      done
+    done
+  done
 fi
 
-if [[ $E_256k -gt 0 ]]
+if [[ $INIT_XS -gt 0 ]]
 then
-  sbatch ./CI_INIT_256k_C6H12_0.cmd
-  sbatch ./CI_INIT_256k_C6H12_1.cmd
-  sbatch ./CI_INIT_256k_CH4_0.cmd
-  sbatch ./CI_INIT_256k_CH4_1.cmd
+  for size in {0..1000..100}
+  do
+    for type in "${TYPES[@]}"
+    do
+      sbatch ./CI_INIT_XS"${size}"_"${type}"_0.cmd
+      sbatch ./CI_INIT_XS"${size}"_"${type}"_1.cmd
+    done
+  done
 fi
 
-if [[ $E_1024k -gt 0 ]]
+if [[ $BENCH_XS -gt 0 ]]
 then
-  sbatch ./CI_INIT_1024k_C6H12_0.cmd
-  sbatch ./CI_INIT_1024k_C6H12_1.cmd
-  sbatch ./CI_INIT_1024k_CH4_0.cmd
-  sbatch ./CI_INIT_1024k_CH4_1.cmd
+  for node in 1 4 8 12 16 20 24 28 32 48 64 80 96 112 128
+  do
+    for size in {0..1000..100}
+    do
+      for type in "${TYPES[@]}"
+      do
+        sbatch ./CI_BENCH_XS"${size}"_"${type}"_N"${node}".cmd
+      done
+    done
+  done
 fi
