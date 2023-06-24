@@ -62,52 +62,52 @@ do
     touch CI_INIT_XS"${size}"_"${type}"_0.cmd
     touch CI_INIT_XS"${size}"_"${type}"_1.cmd
     echo "#!/bin/bash
-  #SBATCH -J CI_INIT_XS${size}_${type}_0
-  #SBATCH -o ../../../log/%x.out
-  #SBATCH -D ../../../build/src
-  #SBATCH --partition=medium
-  #SBATCH --get-user-env
-  #SBATCH --mail-type=all
-  #SBATCH --mem=800mb
-  #SBATCH --mail-user=hocksa@hsu-hh.de
-  #SBATCH --export=NONE
-  #SBATCH --time=00:10:00
-  #SBATCH --nodes=8
-  #SBATCH --ntasks-per-node=4
-  #SBATCH --cpus-per-task=18
-  #SBATCH --error=../../../log/%x.err
+#SBATCH -J CI_INIT_XS${size}_${type}_0
+#SBATCH -o ../../../log/%x.out
+#SBATCH -D ../../../build/src
+#SBATCH --partition=medium
+#SBATCH --get-user-env
+#SBATCH --mail-type=all
+#SBATCH --mem=800mb
+#SBATCH --mail-user=hocksa@hsu-hh.de
+#SBATCH --export=NONE
+#SBATCH --time=00:10:00
+#SBATCH --nodes=8
+#SBATCH --ntasks-per-node=4
+#SBATCH --cpus-per-task=18
+#SBATCH --error=../../../log/%x.err
 
-  export OMP_NUM_THREADS=18
-  ulimit -s 1000000
+export OMP_NUM_THREADS=18
+ulimit -s 1000000
 
-  module load slurm_setup
-  module load mpi/2021.6.0
+module load slurm_setup
+module load mpi/2021.6.0
 
-  mpiexec -n 32 ./MarDyn ../../examples/AdResS/BlockInterface/xScale/config_${type}_XS${size}_0.xml --loop-abort-time=570
-  " > CI_INIT_XS"${size}"_"${type}"_0.cmd
+mpiexec -n 32 ./MarDyn ../../examples/AdResS/BlockInterface/xScale/config_${type}_XS${size}_0.xml --loop-abort-time=570
+" > CI_INIT_XS"${size}"_"${type}"_0.cmd
     echo "#!/bin/bash
-  #SBATCH -J CI_INIT_XS${size}_${type}_1
-  #SBATCH -o ../../../log/%x.out
-  #SBATCH -D ../../../build/src
-  #SBATCH --partition=medium
-  #SBATCH --get-user-env
-  #SBATCH --mail-type=all
-  #SBATCH --mem=800mb
-  #SBATCH --mail-user=hocksa@hsu-hh.de
-  #SBATCH --export=NONE
-  #SBATCH --time=00:10:00
-  #SBATCH --nodes=8
-  #SBATCH --ntasks-per-node=4
-  #SBATCH --cpus-per-task=18
-  #SBATCH --error=../../../log/%x.err
+#SBATCH -J CI_INIT_XS${size}_${type}_1
+#SBATCH -o ../../../log/%x.out
+#SBATCH -D ../../../build/src
+#SBATCH --partition=medium
+#SBATCH --get-user-env
+#SBATCH --mail-type=all
+#SBATCH --mem=800mb
+#SBATCH --mail-user=hocksa@hsu-hh.de
+#SBATCH --export=NONE
+#SBATCH --time=00:10:00
+#SBATCH --nodes=8
+#SBATCH --ntasks-per-node=4
+#SBATCH --cpus-per-task=18
+#SBATCH --error=../../../log/%x.err
 
-  export OMP_NUM_THREADS=18
-  ulimit -s 1000000
+export OMP_NUM_THREADS=18
+ulimit -s 1000000
 
-  module load slurm_setup
-  module load mpi/2021.6.0
+module load slurm_setup
+module load mpi/2021.6.0
 
-  mpiexec -n 32 ./MarDyn ../../examples/AdResS/BlockInterface/xScale/config_${type}_XS${size}_1.xml --loop-abort-time=570
-  " > CI_INIT_XS"${size}"_"${type}"_1.cmd
+mpiexec -n 32 ./MarDyn ../../examples/AdResS/BlockInterface/xScale/config_${type}_XS${size}_1.xml --loop-abort-time=570
+" > CI_INIT_XS"${size}"_"${type}"_1.cmd
   done
 done
