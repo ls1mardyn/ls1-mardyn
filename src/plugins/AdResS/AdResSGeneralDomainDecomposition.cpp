@@ -90,7 +90,15 @@ void AdResSGeneralDomainDecomposition::balanceAndExchange(double lastTraversalTi
 			// rebalance
 			global_log->info() << "rebalancing..." << std::endl;
 
-            unsigned long work = moleculeContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+            unsigned long work = 0;
+            moleculeContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+            #if defined(_OPENMP)
+            #pragma omp parallel reduction(+:work)
+            #endif
+            for(auto it = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
+                work += it->numSites();
+            }
+
 			global_log->set_mpi_output_all();
 			global_log->debug() << "work:" << work << std::endl;
 			global_log->set_mpi_output_root(0);
