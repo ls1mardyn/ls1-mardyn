@@ -80,6 +80,7 @@
 
 #include "bhfmm/FastMultipoleMethod.h"
 #include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
+#include "plugins/AdResS/AdResSGeneralDomainDecomposition.h"
 
 using Log::global_log;
 using namespace std;
@@ -363,7 +364,40 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				}
 				delete _domainDecomposition;
 				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid);
-			} else {
+			} else if (parallelisationtype == "AdResSGeneralDomainDecomposition") {
+                double skin = 0.;
+                bool forceLatchingToLinkedCellsGrid = false;
+                // We need the skin here (to specify the smallest possible partition), so we extract it from the AutoPas
+                // container's xml, because the ParticleContainer needs to be instantiated later. :/
+                xmlconfig.changecurrentnode("..");
+                if (xmlconfig.changecurrentnode("datastructure")) {
+                    string datastructuretype;
+                    xmlconfig.getNodeValue("@type", datastructuretype);
+                    if (datastructuretype == "AutoPas" or datastructuretype == "AutoPasContainer") {
+                        xmlconfig.getNodeValue("skin", skin);
+                    } else {
+                        global_log->warning() << "Using the AdResSGeneralDomainDecomposition without AutoPas is not "
+                                                 "thoroughly tested and considered BETA."
+                                              << endl;
+                        // Force grid! This is needed, as the linked cells container assumes a grid and the calculation
+                        // of global values will be faulty without one!
+                        global_log->info() << "Forcing a grid for the AdResSGeneralDomainDecomposition! This is required "
+                                              "to get correct global values!"
+                                           << endl;
+                        forceLatchingToLinkedCellsGrid = true;
+                    }
+                    global_log->info() << "Using skin = " << skin << " for the AdResSGeneralDomainDecomposition." << std::endl;
+                } else {
+                    global_log->error() << "Datastructure section missing" << endl;
+                    Simulation::exit(1);
+                }
+                if(not xmlconfig.changecurrentnode("../parallelisation")){
+                    global_log->error() << "Could not go back to parallelisation path. Aborting." << endl;
+                    Simulation::exit(1);
+                }
+                delete _domainDecomposition;
+                _domainDecomposition = new AdResSGeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid);
+            } else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
 				Simulation::exit(1);
 			}

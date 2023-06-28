@@ -24,7 +24,7 @@ fi
 # region copy
 if [ $COPY -gt 0 ]
 then
-  for size in {0..1000..100}
+  for size in {100..1000..100}
   do
     for type in "${TYPES[@]}"
     do
@@ -42,7 +42,7 @@ for node in 1 4 8 12 16 20 24 28 32 48 64 80 96 112 128
 do
   PART="medium"
   if [ $node -lt 7 ]; then PART="small"; fi
-  for size in {0..1000..100}
+  for size in {100..1000..100}
   do
     for type in "${TYPES[@]}"
     do

@@ -5,7 +5,7 @@ TYPES=('C6H12' 'CH4')
 
 if [[ $CLEAN -gt 0 ]]
 then
-  for size in {0..1000..100}
+  for size in {100..1000..100}
   do
     for type in "${TYPES[@]}"
     do
@@ -20,7 +20,7 @@ then
 fi
 
 
-for size in {0..1000..100}
+for size in {100..1000..100}
 do
   for type in "${TYPES[@]}"
   do

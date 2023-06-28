@@ -64,7 +64,7 @@ fi
 
 if [[ $INIT_XS -gt 0 ]]
 then
-  for size in {0..1000..100}
+  for size in {100..1000..100}
   do
     for type in "${TYPES[@]}"
     do
@@ -78,7 +78,7 @@ if [[ $BENCH_XS -gt 0 ]]
 then
   for node in 1 4 8 12 16 20 24 28 32 48 64 80 96 112 128
   do
-    for size in {0..1000..100}
+    for size in {100..1000..100}
     do
       for type in "${TYPES[@]}"
       do
