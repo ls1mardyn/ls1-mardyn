@@ -91,7 +91,7 @@ void AdResSGeneralDomainDecomposition::balanceAndExchange(double lastTraversalTi
 			global_log->info() << "rebalancing..." << std::endl;
 
             unsigned long work = 0;
-            moleculeContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+            //moleculeContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
             #if defined(_OPENMP)
             #pragma omp parallel reduction(+:work)
             #endif
