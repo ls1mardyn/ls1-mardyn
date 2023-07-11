@@ -18,6 +18,14 @@ then
       sbatch ./CI_INIT_${n}k_"${type}"_1.cmd
     done
   done
+  for n in 2 3
+    do
+      for type in "${TYPES[@]}"
+      do
+        sbatch ./CI_INIT_1024k${n}_"${type}"_0.cmd
+        sbatch ./CI_INIT_1024k${n}_"${type}"_1.cmd
+      done
+    done
 fi
 
 if [[ $RUN -gt 0 ]]
@@ -29,6 +37,13 @@ then
       sbatch ./CI_RUN_${n}k_"${type}".cmd
     done
   done
+  for n in 2 3
+    do
+      for type in "${TYPES[@]}"
+      do
+        sbatch ./CI_RUN_1024k${n}_"${type}".cmd
+      done
+    done
 fi
 
 if [[ $BENCH -gt 0 ]]
@@ -42,6 +57,13 @@ then
         sbatch ./CI_BENCH_${n}k_"${type}"_N"${node}".cmd
       done
     done
+    for n in 2 3
+      do
+        for type in "${TYPES[@]}"
+        do
+          sbatch ./CI_BENCH_1024k${n}_"${type}"_N"${node}".cmd
+        done
+      done
   done
 fi
 
@@ -49,7 +71,7 @@ if [[ $BENCH_H -gt 0 ]]
 then
   for node in 1 4 8 12 16 20 24 28 32 48 64 80 96 112 128
   do
-    for n in 1 4 16 64 256 1024
+    for n in 256 1024
     do
       for type in "${TYPES[@]}"
       do
@@ -59,6 +81,16 @@ then
         done
       done
     done
+    for n in 2 3
+      do
+        for type in "${TYPES[@]}"
+        do
+          for percent in {10..90..10}
+          do
+            sbatch ./CI_BENCH_1024k${n}_"${type}"_H"${percent}"_N"${node}".cmd
+          done
+        done
+      done
   done
 fi
 
