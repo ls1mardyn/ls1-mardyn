@@ -214,8 +214,8 @@ do
       rm -f ./1024k${n}/config_"${type}"_H"${percent}".xml
       cp ./1024k${n}/config_"${type}"_run.xml ./1024k${n}/config_"${type}"_H"${percent}".xml
       SIZE=$(sed '27q;d' ./1024k${n}/config_"${type}"_H"${percent}".xml | sed -r 's#.*<.*>([0-9]*).*</lx>#\1#g' -)
-      sed -Ei "s#<steps>100000#<steps>10000#g" ./${n}k/config_"${type}"_H"${percent}".xml
-      sed -Ei "s#<writefrequency>100000#<writefrequency>10000#g" ./${n}k/config_"${type}"_H"${percent}".xml
+      sed -Ei "s#<steps>100000#<steps>10000#g" ./1024k${n}/config_"${type}"_H"${percent}".xml
+      sed -Ei "s#<writefrequency>100000#<writefrequency>10000#g" ./1024k${n}/config_"${type}"_H"${percent}".xml
       sed -Ei "s#<outputprefix>BlockInterface_1024k${n}_${type}#<outputprefix>BlockInterface_1024k${n}_${type}_H${percent}#g" ./1024k${n}/config_"${type}"_H"${percent}".xml
       MAX_LEN=$(((SIZE/2)-20))
       LEN=$(((percent/100.0)*MAX_LEN))
