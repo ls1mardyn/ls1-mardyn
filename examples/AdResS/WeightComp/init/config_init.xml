@@ -12,7 +12,7 @@
         <run>
             <currenttime>0</currenttime>
             <production>
-                <steps>100000</steps>
+                <steps>10000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -119,22 +119,11 @@
             </components>
 
             <phasespacepoint>
-                <generator name="MultiObjectGenerator">
-                    <objectgenerator>
-                        <filler type="ReplicaFiller">
-                            <input type="BinaryReader">
-                                <header>CP_WC-1.restart.header.xml</header>
-                                <data>CP_WC-1.restart.dat</data>
-                            </input>
-                        </filler>
-
-                        <object type="Cuboid">
-                            <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>200</x> <y>200</y> <z>200</z> </upper>
-                        </object>
-                    </objectgenerator>
+                <generator name="CubicGridGenerator">
+                    <specification>density</specification>
+                    <density>0.0005</density>
+                    <binaryMixture>false</binaryMixture>
                 </generator>
-                <ignoreCheckpointTime>true</ignoreCheckpointTime>
             </phasespacepoint>
         </ensemble>
 
@@ -145,31 +134,20 @@
                 <traversalSelector>c08</traversalSelector>
             </datastructure>
             <cutoffs type="CenterOfMass" >
-                <radiusLJ unit="reduced" >16.5351</radiusLJ>
+                <radiusLJ unit="reduced" >40.0</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField" >
                 <epsilon>0</epsilon>
             </electrostatic>
+
         </algorithm>
 
         <output>
-            <outputplugin name="VTKMoleculeWriter">
+            <outputplugin name="CheckpointWriter">
+                <type>binary</type>
                 <writefrequency>10000</writefrequency>
-                <writefrequencyOffset>0</writefrequencyOffset>
-                <outputprefix>AdResS_wCOM</outputprefix>
+                <outputprefix>CP_WC</outputprefix>
             </outputplugin>
         </output>
-
-        <plugin name="AdResS">
-            <weightImpl>component</weightImpl>
-            <fpregions>
-                <region id="1">
-                    <lowX>80.0</lowX><lowY>80.0</lowY><lowZ>80.0</lowZ>
-                    <highX>120.0</highX><highY>120.0</highY><highZ>120.0</highZ>
-                    <hybridDimX>40.0</hybridDimX><hybridDimY>40.0</hybridDimY><hybridDimZ>40.0</hybridDimZ>
-                </region>
-            </fpregions>
-        </plugin>
-
     </simulation>
 </mardyn>

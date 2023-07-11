@@ -1,0 +1,203 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+
+	<refunits type="SI" >
+		<length unit="nm">0.1</length>
+		<mass unit="u">1</mass>
+		<energy unit="K">1</energy>
+	</refunits>
+
+	<simulation type="MD" >
+		<integrator type="Leapfrog" >
+			<timestep unit="reduced" >0.00182367</timestep>
+		</integrator>
+
+		<run>
+			<currenttime>0.0</currenttime> 
+			<production>
+				<steps>10000</steps>
+			</production>
+		</run>
+
+		<ensemble type="NVT">
+			<!-- Nparticles determined by the input file -->
+			<temperature unit="reduced" >110</temperature>
+			<domain type="box">
+				<lx>4000</lx>
+				<ly>6000</ly>
+				<lz>4000</lz>
+			</domain>
+
+			<components>
+				<include query="/components/moleculetype" >../components.xml</include>
+				<include query="/mixing/rule">../mixing_2c.xml</include>
+			</components>
+
+			<phasespacepoint>
+				<generator name="MultiObjectGenerator">
+					
+					<!-- vapor 1 -->
+					<objectgenerator>
+						<filler type="ReplicaFiller">
+							<input type="BinaryReader">
+								<header>../vap/cp_binary_repVap-1.restart.header.xml</header>
+								<data>../vap/cp_binary_repVap-1.restart.dat</data>
+							</input>
+						</filler>
+						
+						<object type="ObjectSubtractor">
+							<object1 type="Cuboid">
+								<lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+								<upper> <x>4000</x> <y>2998.3042</y> <z>4000</z> </upper> <!-- y=3000 - sigma*0.5-->
+							</object1>
+							<object2 type="Sphere">
+							 <center> <x>2000</x> <y>1998.3042</y> <z>2000</z> </center> <!-- y=2000 - sigma*0.5-->
+							 <radius>1003.3916</radius> <!-- y=1000 + sigma -->
+							</object2>
+						</object>
+					</objectgenerator>
+					
+					<!-- vapor 2 -->
+					<objectgenerator>
+						<filler type="ReplicaFiller">
+							<input type="BinaryReader">
+								<header>../vap/cp_binary_repVap-1.restart.header.xml</header>
+								<data>../vap/cp_binary_repVap-1.restart.dat</data>
+							</input>
+						</filler>
+						
+						<object type="ObjectSubtractor">
+							<object1 type="Cuboid">
+								<lower> <x>0</x> <y>3001.6958</y> <z>0</z> </lower> <!-- y=3000 + sigma*0.5-->
+								<upper> <x>4000</x> <y>6000</y> <z>4000</z> </upper>
+							</object1>
+							<object2 type="Sphere">
+							 <center> <x>2000</x> <y>4001.6958</y> <z>2000</z> </center> <!-- y=4000 + sigma*0.5-->
+							 <radius>1003.3916</radius> <!-- y=1000 + sigma -->
+							</object2>
+						</object>
+					</objectgenerator>
+					
+					<!-- droplet 1 -->
+					<objectgenerator>
+						<filler type="ReplicaFiller">
+							<input type="BinaryReader">
+								<header>../liq/cp_binary_repLiq-1.restart.header.xml</header>
+								<data>../liq/cp_binary_repLiq-1.restart.dat</data>
+							</input>
+						</filler>
+						
+						<object type="Sphere">
+						 <center> <x>2000</x> <y>1998.3042</y> <z>2000</z> </center> <!-- y=2000 - sigma*0.5-->
+						 <radius>1000</radius>
+						</object>
+					</objectgenerator>
+					
+					<!-- droplet 2 -->
+					<objectgenerator>
+						<filler type="ReplicaFiller">
+							<input type="BinaryReader">
+								<header>../liq/cp_binary_repLiq-1.restart.header.xml</header>
+								<data>../liq/cp_binary_repLiq-1.restart.dat</data>
+							</input>
+							<componentid>1</componentid>
+						</filler>
+
+						<object type="Sphere">
+						 <center> <x>2000</x> <y>4001.6958</y> <z>2000</z> </center> <!-- y=4000 + sigma*0.5-->
+						 <radius>1000</radius>
+						</object>
+					</objectgenerator>
+					
+				</generator>
+				<ignoreCheckpointTime>true</ignoreCheckpointTime>
+			</phasespacepoint>
+		</ensemble>
+
+		<algorithm>
+
+			<parallelisation type="DomainDecomposition"></parallelisation>
+<!--		<parallelisation type="KDDecomposition">
+				<CommunicationScheme>direct</CommunicationScheme>
+				<updateFrequency>1000</updateFrequency>
+				<fullSearchThreshold>3</fullSearchThreshold>
+				<splitBiggestDimension>0</splitBiggestDimension>
+				<useVectorizationTuner>1</useVectorizationTuner>
+				<generateNewFiles>0</generateNewFiles>
+				<useExistingFiles>0</useExistingFiles>
+			</parallelisation> -->
+<!--		<parallelisation type="AdResSKDDecomposition">
+				<CommunicationScheme>direct</CommunicationScheme>
+				<updateFrequency>1000</updateFrequency>
+				<fullSearchThreshold>3</fullSearchThreshold>
+				<splitBiggestDimension>0</splitBiggestDimension>
+				<useVectorizationTuner>1</useVectorizationTuner>
+				<generateNewFiles>0</generateNewFiles>
+				<useExistingFiles>0</useExistingFiles>
+			</parallelisation> -->
+			<!--<parallelisation type="GeneralDomainDecomposition">
+				<updateFrequency>1000</updateFrequency>
+				<loadBalancer type="ALL"/>
+			</parallelisation>-->
+			<datastructure type="LinkedCells">
+				<cellsInCutoffRadius>1</cellsInCutoffRadius>
+			</datastructure>
+			<cutoffs type="CenterOfMass" >
+		<defaultCutoff unit="reduced" >8.479</defaultCutoff>
+				<radiusLJ unit="reduced" >8.479</radiusLJ>
+			</cutoffs>
+			<electrostatic type="ReactionField" >
+				<epsilon>1.0e+10</epsilon>
+			</electrostatic>
+		</algorithm>
+
+		<output>
+		
+			<!--<outputplugin name="CheckpointWriter">
+				<type>binary</type>
+				<writefrequency>50</writefrequency>
+				<outputprefix>cp_binary</outputprefix>
+			</outputplugin>-->
+
+<!--
+			<outputplugin name="ResultWriter">
+				<writefrequency>10000</writefrequency>
+				<outputprefix>result</outputprefix>
+			</outputplugin>
+-->
+
+<!--			<outputplugin name="MmpldWriter" type="simple">
+				<include query="/spheres" >../../../sphereparams.xml</include>
+				<writecontrol>
+					<start>0</start>
+					<writefrequency>50</writefrequency>
+					<stop>10000</stop>
+					<framesperfile>0</framesperfile>
+				</writecontrol>
+				<outputprefix>megamol</outputprefix>  
+			</outputplugin>
+-->
+<!--
+			<outputplugin name="SysMonOutput">
+				<expression label="LoadAvg1">procloadavg:loadavg1</expression>
+				<expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
+				<writefrequency>100000</writefrequency>
+			</outputplugin>
+-->
+
+		</output>
+
+		<plugin name="AdResS">
+			<weightImpl>near</weightImpl>
+			<fpregions>
+				<region id="1">2000 3000 2000
+					<lowX>1850.0</lowX><lowY>2850.0</lowY><lowZ>1850.0</lowZ>
+					<highX>2150.0</highX><highY>3150.0</highY><highZ>2150.0</highZ>
+					<hybridDimX>50.0</hybridDimX><hybridDimY>50.0</hybridDimY><hybridDimZ>50.0</hybridDimZ>
+				</region>
+			</fpregions>
+		</plugin>
+	
+	</simulation>
+
+</mardyn>
