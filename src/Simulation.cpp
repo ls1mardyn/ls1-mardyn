@@ -916,7 +916,9 @@ void Simulation::prepare_start() {
 	for (auto plugin : _plugins) {
 		global_log->debug() << "[AFTER FORCES] Plugin: "
 							<< plugin->getPluginName() << endl;
+		global_simulation->timers()->start(plugin->getPluginName());
 		plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+		global_simulation->timers()->stop(plugin->getPluginName());
 	}
 
 #ifndef MARDYN_AUTOPAS
@@ -1234,7 +1236,9 @@ void Simulation::simulate() {
 
 	global_log->info() << "Finish plugins" << endl;
 	for (auto plugin : _plugins) {
+		global_simulation->timers()->start(plugin->getPluginName());
 		plugin->finish(_moleculeContainer, _domainDecomposition, _domain);
+		global_simulation->timers()->stop(plugin->getPluginName());
 	}
 	global_simulation->timers()->getTimer("SIMULATION_FINAL_IO")->stop();
 
