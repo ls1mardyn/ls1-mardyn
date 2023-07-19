@@ -15,7 +15,7 @@
 
 #include "utils/Logger.h" 
 
-BoundaryHandler::BoundaryHandler() : boundaries{
+BoundaryHandler::BoundaryHandler() : _boundaries{
 	{DimensionType::POSX, BoundaryType::PERIODIC}, {DimensionType::POSY, BoundaryType::PERIODIC}, 
 	{DimensionType::POSZ, BoundaryType::PERIODIC}, {DimensionType::NEGX, BoundaryType::PERIODIC}, 
 	{DimensionType::NEGY, BoundaryType::PERIODIC}, {DimensionType::NEGZ, BoundaryType::PERIODIC},
@@ -23,32 +23,32 @@ BoundaryHandler::BoundaryHandler() : boundaries{
 	} {}
 
 
-BoundaryType BoundaryHandler::getBoundary(DimensionType dimension) const
+BoundaryType BoundaryHandler::getGlobalWall(DimensionType dimension) const
 {
-	return boundaries.at(dimension);
+	return _boundaries.at(dimension);
 }
 
-BoundaryType BoundaryHandler::getBoundary(std::string dimension) const
+BoundaryType BoundaryHandler::getGlobalWall(std::string dimension) const
 {
 	DimensionType convertedDimension = BoundaryUtils::convertStringToDimension(dimension);
-	return getBoundary(convertedDimension);
+	return getGlobalWall(convertedDimension);
 }
 
-BoundaryType BoundaryHandler::getBoundary(int dimension) const 
+BoundaryType BoundaryHandler::getGlobalWall(int dimension) const 
 {
-	return getBoundary(BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
+	return getGlobalWall(BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
 }
 
-void BoundaryHandler::setBoundary(DimensionType dimension, BoundaryType value)
+void BoundaryHandler::setGlobalWall(DimensionType dimension, BoundaryType value)
 {
 	if(dimension != DimensionType::ERROR)
-		boundaries[dimension] = value;
+		_boundaries[dimension] = value;
 }
 
-void BoundaryHandler::setBoundary(std::string dimension, BoundaryType value) 
+void BoundaryHandler::setGlobalWall(std::string dimension, BoundaryType value) 
 {
 	DimensionType convertedDimension = BoundaryUtils::convertStringToDimension(dimension);
-	setBoundary(convertedDimension, value);
+	setGlobalWall(convertedDimension, value);
 }
 
 void BoundaryHandler::setGlobalRegion(double* start, double* end) 
@@ -89,12 +89,12 @@ void BoundaryHandler::findOuterWallsInLocalRegion()
 
 bool BoundaryHandler::hasInvalidBoundary() const
 {
-	return boundaries.at(DimensionType::POSX) == BoundaryType::ERROR ||
-		boundaries.at(DimensionType::POSY) == BoundaryType::ERROR ||
-		boundaries.at(DimensionType::POSZ) == BoundaryType::ERROR ||
-		boundaries.at(DimensionType::NEGX) == BoundaryType::ERROR ||
-		boundaries.at(DimensionType::NEGY) == BoundaryType::ERROR ||
-		boundaries.at(DimensionType::NEGZ) == BoundaryType::ERROR;
+	return _boundaries.at(DimensionType::POSX) == BoundaryType::ERROR ||
+		_boundaries.at(DimensionType::POSY) == BoundaryType::ERROR ||
+		_boundaries.at(DimensionType::POSZ) == BoundaryType::ERROR ||
+		_boundaries.at(DimensionType::NEGX) == BoundaryType::ERROR ||
+		_boundaries.at(DimensionType::NEGY) == BoundaryType::ERROR ||
+		_boundaries.at(DimensionType::NEGZ) == BoundaryType::ERROR;
 }
 
 bool BoundaryHandler::isOuterWall(DimensionType dimension) const
@@ -118,7 +118,7 @@ bool BoundaryHandler::processOuterWallLeavingParticles()
 		if(!currentWall.second)
 			continue;
 
-		switch(getBoundary(currentWall.first))
+		switch(getGlobalWall(currentWall.first))
 		{
 			case BoundaryType::PERIODIC:
 				//default behaviour
@@ -148,7 +148,7 @@ bool BoundaryHandler::processOuterWallLeavingParticles()
 					if (BoundaryUtils::isMoleculeLeaving(curMolecule, curWallRegionBegin, curWallRegionEnd, currentWall.first, timestepLength, nextStepVelAdjustment))
 					{
 						//global_log->info() << "Boundary particle found leaving" << std::endl;
-						if(getBoundary(currentWall.first) == BoundaryType::REFLECTING)
+						if(getGlobalWall(currentWall.first) == BoundaryType::REFLECTING)
 						{
 							//global_log->info() << "Reflection particle found " << std::endl;
 							double currentVel = it->v(currentDim);
@@ -181,7 +181,7 @@ void BoundaryHandler::removeNonPeriodicHalos()
 		if(!currentWall.second) //not an outer wall
 			continue;
 
-		switch(getBoundary(currentWall.first))
+		switch(getGlobalWall(currentWall.first))
 		{
 			case BoundaryType::PERIODIC:
 				//default behaviour

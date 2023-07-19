@@ -19,11 +19,11 @@ class BoundaryHandler
 {
 public:
 	BoundaryHandler();
-	BoundaryType getBoundary(std::string dimension) const;
-	void setBoundary(std::string dimension, BoundaryType value);
-	BoundaryType getBoundary(DimensionType dimension) const;
-	void setBoundary(DimensionType dimension, BoundaryType value);
-	BoundaryType getBoundary(int dimension) const;
+	BoundaryType getGlobalWall(std::string dimension) const;
+	void setGlobalWall(std::string dimension, BoundaryType value);
+	BoundaryType getGlobalWall(DimensionType dimension) const;
+	void setGlobalWall(DimensionType dimension, BoundaryType value);
+	BoundaryType getGlobalWall(int dimension) const;
 	bool hasInvalidBoundary() const;
 
 	void setGlobalRegion(double* start, double* end);
@@ -39,7 +39,7 @@ public:
 	void removeNonPeriodicHalos();
 
 private:
-	std::map<DimensionType, BoundaryType> boundaries;
+	std::map<DimensionType, BoundaryType> _boundaries;
 	std::map<DimensionType, bool> _isOuterWall;
 	std::array<double,3> _globalRegionStart, _globalRegionEnd;
 	std::array<double,3> _localRegionStart, _localRegionEnd;
