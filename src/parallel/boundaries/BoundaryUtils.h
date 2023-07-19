@@ -31,8 +31,8 @@ namespace BoundaryUtils
 	BoundaryType convertStringToBoundary(std::string boundary);
 
 	std::tuple<std::array<double,3>, std::array<double,3>> getInnerBuffer(const std::array<double,3> givenRegionBegin, const std::array<double,3> givenRegionEnd, DimensionType dimension, double regionWidth);
-	bool isMoleculeLeaving(const Molecule molecule, const std::array<double,3> regionBegin, const std::array<double,3> regionEnd, DimensionType dimension, double timestepLength);
-	std::tuple<std::array<double,3>, std::array<double,3>> getOuterBuffer(const std::array<double,3> givenRegionBegin, const std::array<double,3> givenRegionEnd, DimensionType dimension, double regionWidth);
+	bool isMoleculeLeaving(const Molecule molecule, const std::array<double,3> regionBegin, const std::array<double,3> regionEnd, DimensionType dimension, double timestepLength, double nextStepVelAdjustment);
+	std::tuple<std::array<double,3>, std::array<double,3>> getOuterBuffer(const std::array<double,3> givenRegionBegin, const std::array<double,3> givenRegionEnd, DimensionType dimension, double* regionWidth);
 
 	inline int findSign(int n) { return n < 0 ? -1 : 1; }
 	inline int findSign(DimensionType dimension) { return findSign(convertDimensionToNumeric(dimension)); }

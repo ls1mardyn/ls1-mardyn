@@ -1041,7 +1041,11 @@ void Simulation::simulate() {
         }
 
         _ensemble->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
-
+		
+		global_simulation->timers()->start("SIMULATION_BOUNDARY_TREATMENT");
+		_domainDecomposition->processBoundaryConditions();
+		global_simulation->timers()->stop("SIMULATION_BOUNDARY_TREATMENT");
+		
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
         // beforeForces Plugin Call
@@ -1080,7 +1084,6 @@ void Simulation::simulate() {
 			decompositionTimer->stop();
 
 			global_simulation->timers()->start("SIMULATION_BOUNDARY_TREATMENT");
-			_domainDecomposition->processBoundaryConditions();
 			_domainDecomposition->removeNonPeriodicHalos();
 			global_simulation->timers()->stop("SIMULATION_BOUNDARY_TREATMENT");
 

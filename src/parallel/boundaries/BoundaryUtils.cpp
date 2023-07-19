@@ -221,10 +221,10 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> BoundaryUtils::getInner
 }
 
 bool BoundaryUtils::isMoleculeLeaving(const Molecule molecule, const std::array<double,3> regionBegin, const std::array<double,3> regionEnd,
-									  DimensionType dimension, double timestepLength) {
+									  DimensionType dimension, double timestepLength, double nextStepVelAdjustment) {
 	int ls1dim = convertDimensionToLS1Dims(dimension);
 	int direction = findSign(dimension);
-	double newPos = molecule.r(ls1dim) + (timestepLength * molecule.v(ls1dim));
+	double newPos = molecule.r(ls1dim) + (timestepLength * (molecule.v(ls1dim) + nextStepVelAdjustment));
 	if (newPos < regionBegin[ls1dim] && direction < 0)
 		return true;
 	if (newPos > regionEnd[ls1dim] && direction > 0)
@@ -233,7 +233,7 @@ bool BoundaryUtils::isMoleculeLeaving(const Molecule molecule, const std::array<
 }
 
 std::tuple<std::array<double,3>, std::array<double,3>> BoundaryUtils::getOuterBuffer(const std::array<double,3> givenRegionBegin,
-								const std::array<double,3> givenRegionEnd, DimensionType dimension, double regionWidth) 
+								const std::array<double,3> givenRegionEnd, DimensionType dimension, double* regionWidth) 
 {
 	std::array<double, 3> returnRegionBegin, returnRegionEnd;
 	for (int i = 0; i < 3; i++)
@@ -243,21 +243,30 @@ std::tuple<std::array<double,3>, std::array<double,3>> BoundaryUtils::getOuterBu
 	}
 
 	int dimensionLS1 = convertDimensionToLS1Dims(dimension);
+
+	int extraDim1 = dimensionLS1 == 0 ? 1: 0;
+	int extraDim2 = dimensionLS1 == 2 ? 1: 2;
 	
+	returnRegionBegin[extraDim1] = returnRegionBegin[extraDim1] - regionWidth[extraDim1];
+	returnRegionEnd[extraDim1] = returnRegionEnd[extraDim1] + regionWidth[extraDim1];
+
+	returnRegionBegin[extraDim2] = returnRegionBegin[extraDim2] - regionWidth[extraDim2];
+	returnRegionEnd[extraDim2] = returnRegionEnd[extraDim2] + regionWidth[extraDim2];
+
 	switch (dimension) //can be done with findsign() too, but this is clearer
 	{
 	case DimensionType::POSX:
 	case DimensionType::POSY:
 	case DimensionType::POSZ:
 		returnRegionBegin[dimensionLS1] = returnRegionEnd[dimensionLS1];
-		returnRegionEnd[dimensionLS1] = returnRegionBegin[dimensionLS1] + regionWidth;
+		returnRegionEnd[dimensionLS1] = returnRegionBegin[dimensionLS1] + regionWidth[dimensionLS1];
 		break;
 	
 	case DimensionType::NEGX:
 	case DimensionType::NEGY:
 	case DimensionType::NEGZ:
 		returnRegionEnd[dimensionLS1] = returnRegionBegin[dimensionLS1];
-		returnRegionBegin[dimensionLS1] = returnRegionEnd[dimensionLS1] - regionWidth;
+		returnRegionBegin[dimensionLS1] = returnRegionEnd[dimensionLS1] - regionWidth[dimensionLS1];
 		break;
 	
 	default:
