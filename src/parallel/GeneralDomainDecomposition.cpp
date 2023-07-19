@@ -41,8 +41,8 @@ void GeneralDomainDecomposition::initializeALL() {
 	}
 #ifdef ENABLE_ALLLBL
 	// Increased slightly to prevent rounding errors.
-	double safetyFactor = 1. + 1.e-10;
-	std::array<double, 3> minimalDomainSize =
+	const double safetyFactor = 1. + 1.e-10;
+	const std::array<double, 3> minimalDomainSize =
 		_gridSize.has_value() ? *_gridSize
 							  : std::array{_interactionLength * safetyFactor, _interactionLength * safetyFactor,
 										   _interactionLength * safetyFactor};
@@ -71,7 +71,7 @@ bool GeneralDomainDecomposition::queryRebalancing(size_t step, size_t updateFreq
 
 void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
 													ParticleContainer* moleculeContainer, Domain* domain) {
-	bool rebalance =
+	const bool rebalance =
 		queryRebalancing(_steps, _rebuildFrequency, _initPhase, _initFrequency, lastTraversalTime) or forceRebalancing;
 	if (_steps == 0) {
 		// ensure that there are no outer particles
@@ -173,12 +173,23 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 	}
 	// TODO: copying own molecules out and reinserting them can be done within autopas more efficiently
 	std::vector<Molecule> ownMolecules{};
+	ownMolecules.reserve(particleContainer->getNumberOfParticles());
 	for (auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter) {
 		ownMolecules.push_back(*iter);
 		// TODO: This check should be in debug mode only
 		if (not iter->inBox(newMin.data(), newMax.data())) {
 			global_log->error_always_output()
-				<< "particle still in domain that should have been migrated." << std::endl;
+				<< "Particle still in domain that should have been migrated."
+				<< "BoxMin: "
+				<< particleContainer->getBoundingBoxMin(0) << ", "
+				<< particleContainer->getBoundingBoxMin(1) << ", "
+				<< particleContainer->getBoundingBoxMin(2) << "\n"
+				<< "BoxMax: "
+				<< particleContainer->getBoundingBoxMax(0) << ", "
+				<< particleContainer->getBoundingBoxMax(1) << ", "
+				<< particleContainer->getBoundingBoxMax(2) << "\n"
+				<< "Particle: \n" << *iter
+				<< std::endl;
 			Simulation::exit(2315);
 		}
 	}

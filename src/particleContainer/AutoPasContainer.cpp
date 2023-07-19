@@ -229,14 +229,29 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 		xmlconfig.getNodeValue_int("verletClusterSize", static_cast<int>(_verletClusterSize)));
 
 	// double
-	_verletSkin = static_cast<double>(xmlconfig.getNodeValue_double("skin", static_cast<double>(_verletSkin)));
-	_relativeOptimumRange =
-		static_cast<double>(xmlconfig.getNodeValue_double("optimumRange", static_cast<double>(_relativeOptimumRange)));
-	_relativeBlacklistRange = static_cast<double>(
-		xmlconfig.getNodeValue_double("blacklistRange", static_cast<double>(_relativeBlacklistRange)));
+	const auto vlSkin = xmlconfig.getNodeValue_double("skin", -1);
+	const auto vlSkinPerTimestep = xmlconfig.getNodeValue_double("skinPerTimestep", -1);
+	if (vlSkin == -1 and vlSkinPerTimestep == -1) {
+		// stick with the default value
+	} else if (vlSkin == -1) {
+		_verletSkin = vlSkinPerTimestep * _verletRebuildFrequency;
+	} else if (vlSkinPerTimestep == -1 ){
+		_verletSkin = vlSkin;
+	} else {
+		global_log->error() << "Input XML specifies skin AND skinPerTimestep. Please choose only one." << std::endl;
+	}
+	_relativeOptimumRange = xmlconfig.getNodeValue_double("optimumRange", _relativeOptimumRange);
+	_relativeBlacklistRange = xmlconfig.getNodeValue_double("blacklistRange", _relativeBlacklistRange);
 
 	std::string functorChoiceStr{};
 	xmlconfig.getNodeValue("functor", functorChoiceStr);
+    if (functorChoiceStr.empty()) {
+#ifdef __ARM_FEATURE_SVE
+        functorChoiceStr = "sve";
+#elif defined(__AVX__)
+        functorChoiceStr = "avx";
+#endif
+    }
 	if (functorChoiceStr.find("avx") != std::string::npos) {
 		functorOption = FunctorOption::AVX;
 		global_log->info() << "Selected AVX Functor." << std::endl;
@@ -278,7 +293,12 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 
 	// check if autopas is already initialized
 	if (_autopasContainerIsInitialized) {
-		_autopasContainer.resizeBox(boxMin, boxMax);
+		const auto emigrants = _autopasContainer.resizeBox(boxMin, boxMax);
+		if (not emigrants.empty()) {
+			throw std::runtime_error("AutoPasContainer::rebuild(): After resizing the container some particles"
+				" were dropped and no effort is made to reinsert them. They should have been collected earlier!" +
+				autopas::utils::ArrayUtils::to_string(emigrants, "\n", {"",""}));
+		}
 		// TODO: maybe only force this if the box and num particles changed too much?
 		_autopasContainer.forceRetune();
 		return false;
@@ -288,7 +308,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setBoxMin(boxMin);
 	_autopasContainer.setBoxMax(boxMax);
 	_autopasContainer.setCutoff(_cutoff);
-	_autopasContainer.setVerletSkin(_verletSkin);
+	_autopasContainer.setVerletSkinPerTimestep(_verletSkin / _verletRebuildFrequency);
 	_autopasContainer.setVerletRebuildFrequency(_verletRebuildFrequency);
 	_autopasContainer.setVerletClusterSize(_verletClusterSize);
 	_autopasContainer.setTuningInterval(_tuningFrequency);
@@ -364,7 +384,9 @@ void AutoPasContainer::update() {
 	// in case we update the container before handling the invalid particles, this might lead to lost particles.
 	if (not _invalidParticles.empty()) {
 		global_log->error() << "AutoPasContainer: trying to update container, even though invalidParticles still "
-							   "exist. This would lead to lost particles => ERROR!"
+							   "exist. This would lead to lost particles => ERROR!\n"
+							   "Remaining invalid particles:\n"
+							<< autopas::utils::ArrayUtils::to_string(_invalidParticles, "\n", {"", ""})
 							<< std::endl;
 		Simulation::exit(434);
 	}
@@ -708,13 +730,13 @@ autopas::IteratorBehavior convertBehaviorToAutoPas(ParticleIterator::Type t) {
 }
 
 ParticleIterator AutoPasContainer::iterator(ParticleIterator::Type t) {
-	return _autopasContainer.begin(convertBehaviorToAutoPas(t));
+	return ParticleIterator{_autopasContainer.begin(convertBehaviorToAutoPas(t))};
 }
 
 RegionParticleIterator AutoPasContainer::regionIterator(const double *startCorner, const double *endCorner,
 														ParticleIterator::Type t) {
-	std::array<double, 3> lowCorner{startCorner[0], startCorner[1], startCorner[2]};
-	std::array<double, 3> highCorner{endCorner[0], endCorner[1], endCorner[2]};
+	const std::array<double, 3> lowCorner{startCorner[0], startCorner[1], startCorner[2]};
+	const std::array<double, 3> highCorner{endCorner[0], endCorner[1], endCorner[2]};
 	return RegionParticleIterator{
 		_autopasContainer.getRegionIterator(lowCorner, highCorner, convertBehaviorToAutoPas(t))};
 }

@@ -302,7 +302,7 @@ public:
 	void removeNonPeriodicHalos();
 
 protected:
-	void addLeavingMolecules(std::vector<Molecule>&& invalidMolecules, ParticleContainer* moleculeContainer);
+	void addLeavingMolecules(std::vector<Molecule>& invalidMolecules, ParticleContainer* moleculeContainer);
 
 	/**
 	 * Handles the sequential version of particles leaving the domain.

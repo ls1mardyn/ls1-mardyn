@@ -176,9 +176,9 @@ void  VTKMoleculeWriterImplementation::writeVTKFile(const std::string& fileName)
 void VTKMoleculeWriterImplementation::initializeParallelVTKFile(const std::vector<std::string>& fileNames) {
 	// init parallel file
 	PPointData p_pointData;
-	DataArray_t p_moleculeId(type::Float32, "id", 1);
+	DataArray_t p_moleculeId(type::UInt64, "id", 1);
 	p_pointData.PDataArray().push_back(p_moleculeId);
-	DataArray_t p_componentId(type::Float32, "component-id", 1);
+	DataArray_t p_componentId(type::Int32, "component-id", 1);
 	p_pointData.PDataArray().push_back(p_componentId);
 	DataArray_t p_node_rank(type::Int32, "node-rank", 1);
 	p_pointData.PDataArray().push_back(p_node_rank);
