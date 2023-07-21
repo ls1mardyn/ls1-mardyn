@@ -1,5 +1,6 @@
 import ppls1.imp.chp as imp
 import ppls1.exp.chp as exp
+import numpy as np
 
 work_folder = 'PATHTOSIMULATION'
 in_file_path = work_folder+'cp_binary_half.restart.dat'

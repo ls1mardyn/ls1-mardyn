@@ -15,7 +15,7 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
 
     :param float T: Temperature (SI: in [K])
     :param float rho: Density (SI: in [mol/l])
-    :param str fluid: Name of fluid (Air|Argon|Nitrogon|Oxygen|LJTS|LJfull)
+    :param str fluid: Name of fluid (Air|Argon|Nitrogen|Oxygen|LJTS|LJfull)
     :param str units: System of input/output units (reduced|SI; default: reduced)
     :return: float lam: Thermal conductivity (SI: in [mW/(m K)])
     '''
@@ -154,10 +154,6 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         print(allFluids)
         return
     
-    if (fluid in ['LJTS','LJfull']) and (units == 'SI'):
-        print('LJTS and LJfull do not support SI units')
-        return
-
     na=6.02214076e23
     kb=1.380649e-23
     
@@ -179,10 +175,6 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         # rc=0.31
     else:
         units = 'SI'
-        sig=1.0
-        eps=1.0
-        mass=1.0
-        tc=1.0
     
     if units == 'reduced':
         T = T/tc*150.687
