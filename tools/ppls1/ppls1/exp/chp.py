@@ -86,11 +86,11 @@ def exp_chp_bin_DF(fname, chp, append=False):
     else:
         writeMode = 'wb'
     
-    numParticles=len(chp)
+    #numParticles=len(chp)
     #print('numParticles=',numParticles)
     with open(fname, writeMode) as f:
         ba=bytearray()
-        for pi in range(numParticles):
+        for pi, row in chp.iterrows():
             ba.extend(pack('<QIddddddddddddd',chp['pid'][pi],chp['cid'][pi],chp['rx'][pi],chp['ry'][pi],chp['rz'][pi],
                                               chp['vx'][pi], chp['vy'][pi], chp['vz'][pi],chp['q0'][pi],chp['q1'][pi],
                                               chp['q2'][pi], chp['q3'][pi], chp['Dx'][pi],chp['Dy'][pi],chp['Dz'][pi] ))
