@@ -24,7 +24,7 @@ def exp_chp_bin_DL(fname, chp, append=False):
         writeMode = 'wb'
     
     numParticles=len(chp['pid'])
-    #print('numParticles=',numParticles)
+    
     with open(fname, writeMode) as f:
         ba=bytearray()
         for pi in range(numParticles):
@@ -60,8 +60,6 @@ def exp_chp_bin_LD(fname, chp, append=False):
     else:
         writeMode = 'wb'
     
-    #numParticles=len(chp)
-    #print('numParticles=',numParticles)
     with open(fname, writeMode) as f:
         ba=bytearray()
         for pi in chp:

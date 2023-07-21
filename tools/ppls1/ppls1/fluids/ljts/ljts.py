@@ -6,7 +6,7 @@ import numpy as np
 #%% Get surface tension of LJTS fluid with correlation by Vrabec et al., Molecular Physics 104 (2006), DOI: 10.1080/00268970600556774
 def gamma_vrabec2006(T):
     '''
-    Get surface tension of LJTS fluid (Vrabec 2006). Equation numbers refer this paper.
+    Get surface tension of LJTS fluid (Vrabec 2006)
 
     :param float T: Temperature
     :return: float gamma: Surface tension
@@ -23,7 +23,7 @@ def gamma_vrabec2006(T):
 #%% Get saturated densities and pressure by Vrabec et al., Molecular Physics 104 (2006), DOI: 10.1080/00268970600556774.
 def sat_vrabec2006(T, radius=None):
     '''
-    Get saturated densities by Vrabec et al., Molecular Physics 104 (2006)
+    Get saturated densities by Vrabec et al., Molecular Physics 104 (2006). Equation numbers refer this paper.
 
     :param float T: Temperature
     :param float radius: reduced radius of spherical interface
