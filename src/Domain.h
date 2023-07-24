@@ -219,7 +219,14 @@ public:
 	//! Before this method is called, it has to be sure that the
 	//! global potential has been calculated (method calculateGlobalValues)
 	double getAverageGlobalUpot();
-        double getGlobalUpot() const;
+    double getGlobalUpot() const;
+
+	//! @brief get the global kinetic energy
+	//!
+	//! Before this method is called, it has to be sure that the
+	//! global energies has been calculated (method calculateGlobalValues)
+	double getGlobalUkinTrans() { return 0.5*_globalsummv2; }
+    double getGlobalUkinRot() { return 0.5*_globalsumIw2; }
 
 	//! by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction)
 	double getAverageGlobalUpotCSpec();
@@ -415,6 +422,10 @@ private:
 	double _globalUpot;
 	//! global component specific potential (fluid-fluid and fluid-solid but NOT solid-solid)
 	double _globalUpotCspecif;
+	//! global two times translational kinetic energy
+	double _globalsummv2;
+	//! global two times rotational kinetic energy
+	double _globalsumIw2;
 	//! global virial
 	double _globalVirial;
 	//! global density

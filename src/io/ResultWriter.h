@@ -60,10 +60,9 @@ private:
 	std::string _outputPrefix{"mardyn"};
 	uint64_t _numSamples{0UL};
 	double _uPot_acc{0.0F};
-	double _uKin_acc{0.0F};
+	double _p_acc{0.0F};
 	double _uKinTrans_acc{0.0F};
 	double _uKinRot_acc{0.0F};
-	double _p_acc{0.0F};
 };
 
 #endif  // SRC_IO_RESULTWRITER_H_

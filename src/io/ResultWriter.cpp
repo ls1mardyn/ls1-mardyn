@@ -50,36 +50,8 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 
 	_uPot_acc += domain->getGlobalUpot();
 	_p_acc += domain->getGlobalPressure();
-
-	double uKinLocal = 0.0F;
-	double uKinGlobal = 0.0F;
-	double uKinTransLocal = 0.0F;
-	double uKinTransGlobal = 0.0F;
-	double uKinRotLocal = 0.0F;
-	double uKinRotGlobal = 0.0F;
-	#if defined(_OPENMP)
-	#pragma omp parallel reduction(+:uKinLocal,uKinTransLocal,uKinRotLocal)
-	#endif
-	{
-		for (auto moleculeIter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-			 moleculeIter.isValid(); ++moleculeIter) {
-			uKinLocal += moleculeIter->U_kin();
-			uKinTransLocal += moleculeIter->U_trans();
-			uKinRotLocal += moleculeIter->U_rot();
-		}
-	}
-#ifdef ENABLE_MPI
-    MPI_Allreduce(&uKinLocal, &uKinGlobal, 1, MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
-	MPI_Allreduce(&uKinTransLocal, &uKinTransGlobal, 1, MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
-	MPI_Allreduce(&uKinRotLocal, &uKinRotGlobal, 1, MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
-#else
-    uKinGlobal = uKinLocal;
-	uKinTransGlobal = uKinTransLocal;
-	uKinRotGlobal = uKinRotLocal;
-#endif
-	_uKin_acc += uKinGlobal;
-	_uKinTrans_acc += uKinTransGlobal;
-	_uKinRot_acc += uKinRotGlobal;
+	_uKinTrans_acc += domain->getGlobalUkinTrans();
+	_uKinRot_acc += domain->getGlobalUkinRot();
 
 	_numSamples++;
 
@@ -95,7 +67,7 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 			resultStream << std::setw(10) << simstep;
 				printOutput(_simulation.getSimulationTime());
 				printOutput(_uPot_acc/_numSamples);
-				printOutput(_uKin_acc/_numSamples);
+				printOutput((_uKinTrans_acc+_uKinRot_acc)/_numSamples);
 				printOutput(_uKinTrans_acc/_numSamples);
 				printOutput(_uKinRot_acc/_numSamples);
 				printOutput(_p_acc/_numSamples);
@@ -108,9 +80,8 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 		// Reset values
 		_numSamples = 0UL;
 		_uPot_acc = 0.0F;
-		_uKin_acc = 0.0F;
+		_p_acc = 0.0F;
 		_uKinTrans_acc = 0.0F;
 		_uKinRot_acc = 0.0F;
-		_p_acc = 0.0F;
 	}
 }
