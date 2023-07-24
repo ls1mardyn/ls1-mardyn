@@ -212,8 +212,6 @@ def duplicate_droplet(in_file_path, out_file_path):
     headerXMLTree = et.parse(in_file_path_header)
     headerXML = headerXMLTree.getroot()
     
-    num_old = int(headerXML.find('headerinfo/number').text)
-    
     # Read in checkpoint data
     chp = imp.imp_chp_bin_DF(in_file_path)
     

@@ -35,23 +35,6 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         #eta0=(0.168729283*np.sqrt(T)) / (sig**2*Omega(Tstar,fluid))  # Monika
         return eta0 #8.18940 #22.7241 #8.18940 #eta0
 
-    def etar(tau,delta,fluid):
-        summe=0
-        for ri in range(0,len(tab3[fluid])):
-            i,Ni,ti,di,li=tab3[fluid]['i'][ri],tab3[fluid]['Ni'][ri],tab3[fluid]['ti'][ri],tab3[fluid]['di'][ri],tab3[fluid]['li'][ri]
-            if li==0:
-                gamma=0
-            else:
-                gamma=1
-            summe+=Ni*tau**ti*delta**di*np.exp(-gamma*delta**li)
-        return summe
-
-    def eta(T,rho,fluid):
-        Tc,rhoc=tab1[fluid][0],tab1[fluid][1]
-        tau,delta=Tc/T,rho/rhoc
-        eta=eta0(T,fluid)+etar(tau,delta,fluid)
-        return eta
-
     def lam0(T,fluid):
         Tc=tab1[fluid][0]
         tau=Tc/T
@@ -152,7 +135,7 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         print('Fluid not yet supported')
         print('Possible fluids:')
         print(allFluids)
-        return
+        return 0.0
     
     na=6.02214076e23
     kb=1.380649e-23
@@ -175,6 +158,10 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         # rc=0.31
     else:
         units = 'SI'
+        sig=1.0
+        eps=1.0
+        mass=1.0
+        tc=150.687
     
     if units == 'reduced':
         T = T/tc*150.687
@@ -186,7 +173,7 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         pass
     else:
         print('Unit unknown')
-        return
+        return 0.0
     
     Tc,rhoc=tab1[fluid][0],tab1[fluid][1]
     tau,delta=Tc/T,rho/rhoc

@@ -132,7 +132,7 @@ def eta_lemmon(T,rho,fluid,units='reduced'):
         print('Fluid not yet supported')
         print('Possible fluids:')
         print(allFluids)
-        return
+        return 0.0
     
     na=6.02214076e23
     kb=1.380649e-23
@@ -155,6 +155,10 @@ def eta_lemmon(T,rho,fluid,units='reduced'):
         # rc=0.31
     else:
         units = 'SI'
+        sig=1.0
+        eps=1.0
+        mass=1.0
+        tc=150.687
     
     if units == 'reduced':
         T = T/tc*150.687
@@ -166,7 +170,7 @@ def eta_lemmon(T,rho,fluid,units='reduced'):
         pass
     else:
         print('Unit unknown')
-        return
+        return 0.0
     
     eta_value=eta(T, rho, fluid)
     if units == 'reduced':
