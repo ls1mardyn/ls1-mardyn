@@ -39,6 +39,7 @@
             </parallelisation>
             <datastructure type="AutoPas">
                 <allowedContainers>linkedCells</allowedContainers>
+                <tuningStrategies>predictive,ruleBased</tuningStrategies>
                 <tuningInterval>10000</tuningInterval>
                 <tuningSamples>10</tuningSamples>
                 <rebuildFrequency>10</rebuildFrequency>

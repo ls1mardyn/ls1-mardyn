@@ -161,7 +161,7 @@ private:
 	std::set<autopas::TraversalOption> _traversalChoices;
 	std::set<autopas::ContainerOption> _containerChoices;
 	autopas::SelectorStrategyOption _selectorStrategy;
-	autopas::TuningStrategyOption _tuningStrategyOption;
+    std::vector<autopas::TuningStrategyOption> _tuningStrategyOptions;
 	autopas::ExtrapolationMethodOption _extrapolationMethod;
 	autopas::AcquisitionFunctionOption _tuningAcquisitionFunction;
 	std::set<autopas::DataLayoutOption> _dataLayoutChoices;

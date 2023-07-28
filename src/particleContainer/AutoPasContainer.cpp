@@ -129,7 +129,7 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	_traversalChoices = _autopasContainer.getAllowedTraversals();
 	_containerChoices = _autopasContainer.getAllowedContainers();
 	_selectorStrategy = _autopasContainer.getSelectorStrategy();
-	_tuningStrategyOption = _autopasContainer.getTuningStrategyOption();
+	_tuningStrategyOptions = _autopasContainer.getTuningStrategyOptions();
 	_tuningAcquisitionFunction = _autopasContainer.getAcquisitionFunction();
 	_dataLayoutChoices = _autopasContainer.getAllowedDataLayouts();
 	_newton3Choices = _autopasContainer.getAllowedNewton3Options();
@@ -171,15 +171,15 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
  * @param defaultValue Set of options that is returned if nothing was found in the xml
  * @return
  */
-template <class OptionType>
+template <class OptionType, class OutputContainer = std::set<OptionType>>
 auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString,
-						const std::set<OptionType> &defaultValue) {
+						const OutputContainer &defaultValue) {
 	auto stringInXml = string_utils::toLowercase(xmlconfig.getNodeValue_string(xmlString));
 	if (stringInXml.empty()) {
 		return defaultValue;
 	}
 	try {
-		return OptionType::parseOptions(stringInXml);
+		return OptionType::template parseOptions<OutputContainer>(stringInXml);
 	} catch (const std::exception &e) {
 		global_log->error() << "AutoPasContainer: error when parsing " << xmlString << ":" << std::endl;
 		global_log->error() << e.what() << std::endl;
@@ -187,7 +187,7 @@ auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString,
 							<< autopas::utils::ArrayUtils::to_string(OptionType::getAllOptions()) << std::endl;
 		Simulation::exit(4432);
 		// dummy return
-		return decltype(OptionType::parseOptions(""))();
+		return decltype(OptionType::template parseOptions<OutputContainer>(""))();
 	}
 }
 
@@ -201,9 +201,8 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_selectorStrategy =
 		*parseAutoPasOption<autopas::SelectorStrategyOption>(xmlconfig, "selectorStrategy", {_selectorStrategy})
 			 .begin();
-	_tuningStrategyOption =
-		*parseAutoPasOption<autopas::TuningStrategyOption>(xmlconfig, "tuningStrategy", {_tuningStrategyOption})
-			 .begin();
+	_tuningStrategyOptions =
+		parseAutoPasOption<autopas::TuningStrategyOption, std::vector<autopas::TuningStrategyOption>>(xmlconfig, "tuningStrategies", {_tuningStrategyOptions});
 	_extrapolationMethod = *parseAutoPasOption<autopas::ExtrapolationMethodOption>(xmlconfig, "extrapolationMethod",
 																				   {_extrapolationMethod})
 								.begin();
@@ -318,7 +317,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setAllowedTraversals(_traversalChoices);
 	_autopasContainer.setAllowedDataLayouts(_dataLayoutChoices);
 	_autopasContainer.setAllowedNewton3Options(_newton3Choices);
-	_autopasContainer.setTuningStrategyOption(_tuningStrategyOption);
+	_autopasContainer.setTuningStrategyOption(_tuningStrategyOptions);
 	_autopasContainer.setAcquisitionFunction(_tuningAcquisitionFunction);
 	_autopasContainer.setMaxEvidence(_maxEvidence);
 	_autopasContainer.setRelativeOptimumRange(_relativeOptimumRange);
@@ -347,8 +346,9 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 					   << setw(valueOffset) << left << "Newton3"
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options())
 					   << endl
-					   << setw(valueOffset) << left << "Tuning strategy "
-					   << ": " << _autopasContainer.getTuningStrategyOption() << endl
+					   << setw(valueOffset) << left << "Tuning strategies "
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getTuningStrategyOptions())
+                       << endl
 					   << setw(valueOffset) << left << "Selector strategy "
 					   << ": " << _autopasContainer.getSelectorStrategy() << endl
 					   << setw(valueOffset) << left << "Tuning frequency"
@@ -420,8 +420,8 @@ template <typename F>
 std::pair<double, double> AutoPasContainer::iterateWithFunctor(F &&functor) {
 	// here we call the actual autopas' iteratePairwise method to compute the forces.
 	_autopasContainer.iteratePairwise(&functor);
-	double upot = functor.getUpot();
-	double virial = functor.getVirial();
+	const double upot = functor.getPotentialEnergy();
+	const double virial = functor.getVirial();
 	return std::make_pair(upot, virial);
 }
 
@@ -438,17 +438,16 @@ void AutoPasContainer::traverseTemplateHelper() {
 
 	// Check if all components have the same eps24 and sigma. If that is the case, we can skip the mixing rules, which
 	// is faster!
-	auto numComponents = _particlePropertiesLibrary.getTypes().size();
-	double epsilon24FirstComponent = _particlePropertiesLibrary.get24Epsilon(0);
-	double sigmasqFirstComponent = _particlePropertiesLibrary.getSigmaSquare(0);
+	const auto numComponents = _particlePropertiesLibrary.getNumberRegisteredSiteTypes();
+	const double epsilonFirstComponent = _particlePropertiesLibrary.getEpsilon(0);
+	const double sigmaFirstComponent = _particlePropertiesLibrary.getSigma(0);
 	bool allSame = true;
 	for (auto i = 1ul; i < numComponents; ++i) {
-		allSame &= _particlePropertiesLibrary.get24Epsilon(i) == epsilon24FirstComponent;
-		allSame &= _particlePropertiesLibrary.getSigmaSquare(i) == sigmasqFirstComponent;
+		allSame &= _particlePropertiesLibrary.getEpsilon(i) == epsilonFirstComponent;
+		allSame &= _particlePropertiesLibrary.getSigma(i) == sigmaFirstComponent;
 	}
-	bool useMixing = not allSame;
 
-	if (useMixing) {
+	if (not allSame) {
 		global_log->debug() << "AutoPasContainer: Using mixing." << std::endl;
 		switch (functorOption) {
 			case FunctorOption::SVE: {
@@ -686,7 +685,7 @@ unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMo
 	vcp_real_calc T = global_simulation->getEnsemble()->T();
 
 	const std::array<double, 3> spacing = autopas::utils::ArrayMath::div(simBoxLength,
-																		 autopas::utils::ArrayUtils::static_cast_array<double>(
+																		 autopas::utils::ArrayUtils::static_cast_copy_array<double>(
 																				 numMoleculesPerDimension));
 	size_t numMolecules = 0;
 	for (int grid = 0; grid < 2; ++grid) {
