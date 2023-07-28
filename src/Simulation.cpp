@@ -916,7 +916,9 @@ void Simulation::prepare_start() {
 	for (auto plugin : _plugins) {
 		global_log->debug() << "[AFTER FORCES] Plugin: "
 							<< plugin->getPluginName() << endl;
+		global_simulation->timers()->start(plugin->getPluginName());
 		plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+		global_simulation->timers()->stop(plugin->getPluginName());
 	}
 
 #ifndef MARDYN_AUTOPAS
@@ -1020,7 +1022,9 @@ void Simulation::simulate() {
         global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Performing beforeEventNewTimestep plugin call" << endl;
         for (auto plugin : _plugins) {
             global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Plugin: " << plugin->getPluginName() << endl;
+			global_simulation->timers()->start(plugin->getPluginName());
             plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
+			global_simulation->timers()->stop(plugin->getPluginName());
         }
 
         _ensemble->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
@@ -1031,7 +1035,9 @@ void Simulation::simulate() {
         global_log -> debug() << "[BEFORE FORCES] Performing BeforeForces plugin call" << endl;
         for (auto plugin : _plugins) {
             global_log -> debug() << "[BEFORE FORCES] Plugin: " << plugin->getPluginName() << endl;
+			global_simulation->timers()->start(plugin->getPluginName());
             plugin->beforeForces(_moleculeContainer, _domainDecomposition, _simstep);
+			global_simulation->timers()->stop(plugin->getPluginName());
         }
 
 		computationTimer->stop();
@@ -1075,7 +1081,9 @@ void Simulation::simulate() {
 		global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin call" << endl;
 		for (auto plugin : _plugins) {
 			global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << endl;
+			global_simulation->timers()->start(plugin->getPluginName());
 			plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
+			global_simulation->timers()->stop(plugin->getPluginName());
 		}
 
 		// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
@@ -1109,7 +1117,9 @@ void Simulation::simulate() {
 		global_log -> debug() << "[AFTER FORCES] Performing AfterForces plugin call" << endl;
 		for (auto plugin : _plugins) {
 			global_log -> debug() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << endl;
+			global_simulation->timers()->start(plugin->getPluginName());
 			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+			global_simulation->timers()->stop(plugin->getPluginName());
 		}
 
 		_ensemble->afterForces(_moleculeContainer, _domainDecomposition, _cellProcessor, _simstep);
@@ -1226,7 +1236,9 @@ void Simulation::simulate() {
 
 	global_log->info() << "Finish plugins" << endl;
 	for (auto plugin : _plugins) {
+		global_simulation->timers()->start(plugin->getPluginName());
 		plugin->finish(_moleculeContainer, _domainDecomposition, _domain);
+		global_simulation->timers()->stop(plugin->getPluginName());
 	}
 	global_simulation->timers()->getTimer("SIMULATION_FINAL_IO")->stop();
 
