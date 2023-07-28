@@ -9,7 +9,7 @@
 #include "ParticleContainer.h"
 
 #include <autopas/AutoPas.h>
-#include <autopas/molecularDynamics/autopasmd.h>
+#include <molecularDynamicsLibrary/autopasmd.h>
 
 /**
  * A wrapper for the AutoPas library.

@@ -41,7 +41,8 @@ if (ENABLE_AUTOPAS)
         add_subdirectory(${autopasfetch_SOURCE_DIR} ${autopasfetch_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif ()
 
-    set(AUTOPAS_LIB "autopas")
+    # Linking the md lib also links AutoPas
+    set(AUTOPAS_LIB "molecularDynamicsLibrary")
 else ()
     message(STATUS "Not using AutoPas.")
     set(AUTOPAS_LIB "")

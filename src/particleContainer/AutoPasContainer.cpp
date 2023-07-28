@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 extern template class autopas::AutoPas<Molecule>;
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctor<
+		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ true,
@@ -26,7 +26,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctor<
+		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ false,
@@ -34,7 +34,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctor<
+		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ true,
@@ -42,7 +42,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctor<
+		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ false,
@@ -51,7 +51,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 		> *);
 #ifdef __AVX__
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorAVX<
+		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ true,
@@ -59,7 +59,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorAVX<
+		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ false,
@@ -67,7 +67,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorAVX<
+		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ true,
@@ -75,7 +75,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorAVX<
+		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ false,
@@ -85,7 +85,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 #endif
 #ifdef __ARM_FEATURE_SVE
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorSVE<
+		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ true,
@@ -93,7 +93,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorSVE<
+		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ false,
@@ -101,7 +101,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorSVE<
+		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ true,
@@ -109,7 +109,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorSVE<
+		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ false,
@@ -454,7 +454,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 			case FunctorOption::SVE: {
 #ifdef __ARM_FEATURE_SVE
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-				autopas::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+				mdLib::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff, _particlePropertiesLibrary);
 
@@ -467,7 +467,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 			case FunctorOption::AVX: {
 #ifdef __AVX__
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-				autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+				mdLib::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff, _particlePropertiesLibrary);
 
@@ -479,7 +479,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 			}
 			case FunctorOption::autoVec: {
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-				autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+				mdLib::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff, _particlePropertiesLibrary);
 
@@ -496,10 +496,10 @@ void AutoPasContainer::traverseTemplateHelper() {
 			case FunctorOption::SVE: {
 #ifdef __ARM_FEATURE_SVE
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-				autopas::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+				mdLib::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff);
-				functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
+				functor.setParticleProperties(epsilonFirstComponent * 24, sigmaFirstComponent * sigmaFirstComponent);
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 #else
 				throw std::runtime_error("SVE Functor not compiled due to lack of compiler support!");
@@ -509,10 +509,10 @@ void AutoPasContainer::traverseTemplateHelper() {
 			case FunctorOption::AVX: {
 #ifdef __AVX__
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-				autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+				mdLib::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff);
-				functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
+				functor.setParticleProperties(epsilonFirstComponent * 24, sigmaFirstComponent * sigmaFirstComponent);
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 #else
 				throw std::runtime_error("AVX Functor not compiled due to lack of compiler support!");
@@ -521,10 +521,10 @@ void AutoPasContainer::traverseTemplateHelper() {
 			}
 			case FunctorOption::autoVec: {
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-				autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+				mdLib::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff);
-				functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
+				functor.setParticleProperties(epsilonFirstComponent * 24, sigmaFirstComponent * sigmaFirstComponent);
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 				break;
 			}
@@ -547,20 +547,20 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		bool hasShift = false;
 		bool hasNoShift = false;
 
-		if (_particlePropertiesLibrary.getTypes().empty()) {
-			auto components = global_simulation->getEnsemble()->getComponents();
-			for (auto &c : *components) {
-				_particlePropertiesLibrary.addType(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma(),
+		if (_particlePropertiesLibrary.getNumberRegisteredSiteTypes() == 0) {
+			const auto components = global_simulation->getEnsemble()->getComponents();
+			for (const auto &c : *components) {
+				_particlePropertiesLibrary.addSiteType(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma(),
 												   c.ljcenter(0).m());
 			}
 			_particlePropertiesLibrary.calculateMixingCoefficients();
 			size_t numComponentsAdded = 0;
-			for (auto &c : *components) {
+			for (const auto &c : *components) {
 				if (c.ljcenter(0).shift6() != 0.) {
 					hasShift = true;
-					double autoPasShift6 =
-						_particlePropertiesLibrary.mixingShift6(numComponentsAdded, numComponentsAdded);
-					double ls1Shift6 = c.ljcenter(0).shift6();
+					const double autoPasShift6 =
+						_particlePropertiesLibrary.getMixingShift6(numComponentsAdded, numComponentsAdded);
+					const double ls1Shift6 = c.ljcenter(0).shift6();
 					if (std::fabs((autoPasShift6 - ls1Shift6) / ls1Shift6) > 1.e-10) {
 						// warn if shift differs relatively by more than 1.e-10
 						global_log->warning() << "Dangerous shift6 detected: AutoPas will use: " << autoPasShift6

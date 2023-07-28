@@ -6,11 +6,11 @@
 
 #include "autopas/AutoPasImpl.h"
 #include "molecules/Molecule.h"
-#include "autopas/molecularDynamics/LJFunctor.h"
+#include "molecularDynamicsLibrary/LJFunctor.h"
 
 //! @cond Doxygen_Suppress
 template bool autopas::AutoPas<AutoPasSimpleMolecule>::iteratePairwise(
-		autopas::LJFunctor<
+		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ false,

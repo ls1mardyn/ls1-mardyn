@@ -7,11 +7,11 @@
 #ifdef __ARM_FEATURE_SVE
 #include "autopas/AutoPasImpl.h"
 #include "molecules/Molecule.h"
-#include "autopas/molecularDynamics/LJFunctorSVE.h"
+#include "molecularDynamicsLibrary/LJFunctorSVE.h"
 
 //! @cond Doxygen_Suppress
 template bool autopas::AutoPas<AutoPasSimpleMolecule>::iteratePairwise(
-		autopas::LJFunctorSVE<
+		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ true,
