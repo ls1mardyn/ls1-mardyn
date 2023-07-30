@@ -246,13 +246,13 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	xmlconfig.getNodeValue("ruleFile", _ruleFileName);
 	std::string functorChoiceStr{};
 	xmlconfig.getNodeValue("functor", functorChoiceStr);
-    if (functorChoiceStr.empty()) {
+	if (functorChoiceStr.empty()) {
 #ifdef __ARM_FEATURE_SVE
-        functorChoiceStr = "sve";
+		functorChoiceStr = "sve";
 #elif defined(__AVX__)
-        functorChoiceStr = "avx";
+		functorChoiceStr = "avx";
 #endif
-    }
+	}
 	if (functorChoiceStr.find("avx") != std::string::npos) {
 		functorOption = FunctorOption::AVX;
 		global_log->info() << "Selected AVX Functor." << std::endl;
@@ -351,7 +351,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 					   << endl
 					   << setw(valueOffset) << left << "Tuning strategies "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getTuningStrategyOptions())
-                       << endl
+					   << endl
 					   << setw(valueOffset) << left << "Selector strategy "
 					   << ": " << _autopasContainer.getSelectorStrategy() << endl
 					   << setw(valueOffset) << left << "Tuning frequency"

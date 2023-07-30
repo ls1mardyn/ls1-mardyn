@@ -32,7 +32,8 @@ public:
 		<allowedTraversals>STRINGLIST</allowedTraversals>
 		<allowedContainers>STRINGLIST</allowedContainers>
 		<selectorStrategy>STRING</selectorStrategy>
-		<tuningStrategy>STRING</tuningStrategy>
+		<tuningStrategies>STRING</tuningStrategies>
+		<ruleFile>STRING</ruleFile>
 		<extrapolationMethod>STRING</extrapolationMethod>
 		<dataLayouts>STRINGLIST</dataLayouts>
 		<newton3>STRINGLIST</newton3>
@@ -47,8 +48,8 @@ public:
 		<optimumRange>DOUBLE</optimumRange>
 		<blacklistRange>DOUBLE</blacklistRange>
 		<functor>STRING</functor>
-	    <verletClusterSize>INTEGER</verletClusterSize>
-	   </datastructure>
+		<verletClusterSize>INTEGER</verletClusterSize>
+		</datastructure>
 	   \endcode
 	 * If you are using MPI-parallel simulations, tuningSamples should be a multiple of rebuildFrequency!
 	 * A list of the different Options can be found here:
@@ -157,11 +158,12 @@ private:
 	unsigned int _evidenceForPrediction;
 	autopas::AutoPas<Molecule> _autopasContainer;
 	bool _autopasContainerIsInitialized{false};
+	std::string _ruleFileName{};
 
 	std::set<autopas::TraversalOption> _traversalChoices;
 	std::set<autopas::ContainerOption> _containerChoices;
 	autopas::SelectorStrategyOption _selectorStrategy;
-    std::vector<autopas::TuningStrategyOption> _tuningStrategyOptions;
+	std::vector<autopas::TuningStrategyOption> _tuningStrategyOptions;
 	autopas::ExtrapolationMethodOption _extrapolationMethod;
 	autopas::AcquisitionFunctionOption _tuningAcquisitionFunction;
 	std::set<autopas::DataLayoutOption> _dataLayoutChoices;
