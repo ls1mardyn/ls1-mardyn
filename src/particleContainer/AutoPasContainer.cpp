@@ -242,6 +242,8 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_relativeOptimumRange = xmlconfig.getNodeValue_double("optimumRange", _relativeOptimumRange);
 	_relativeBlacklistRange = xmlconfig.getNodeValue_double("blacklistRange", _relativeBlacklistRange);
 
+	// string
+	xmlconfig.getNodeValue("ruleFile", _ruleFileName);
 	std::string functorChoiceStr{};
 	xmlconfig.getNodeValue("functor", functorChoiceStr);
     if (functorChoiceStr.empty()) {
@@ -318,6 +320,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setAllowedDataLayouts(_dataLayoutChoices);
 	_autopasContainer.setAllowedNewton3Options(_newton3Choices);
 	_autopasContainer.setTuningStrategyOption(_tuningStrategyOptions);
+	_autopasContainer.setRuleFileName(_ruleFileName);
 	_autopasContainer.setAcquisitionFunction(_tuningAcquisitionFunction);
 	_autopasContainer.setMaxEvidence(_maxEvidence);
 	_autopasContainer.setRelativeOptimumRange(_relativeOptimumRange);
