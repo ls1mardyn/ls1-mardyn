@@ -286,7 +286,10 @@ def duplicate_droplet(in_file_path, out_file_path):
 #%% Main program which can be called from the command line
 if __name__ == '__main__':
     
-    
+    ###########################################################################
+    ############################## CONFIGURATION ##############################
+    ###########################################################################
+
     #%% Initial conditions
     
     radius = 30        # Approximate radius of droplet
@@ -294,7 +297,8 @@ if __name__ == '__main__':
     temperature = 0.7  # Initial temperature of system
     distance = 10      # Distance between droplets measured between surfaces
     
-    
+    ############################ END CONFIGURATION ############################
+
     # Other
     num_reps = 10
     timestep = 0.003647347

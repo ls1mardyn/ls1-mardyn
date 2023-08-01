@@ -84,8 +84,6 @@ def exp_chp_bin_DF(fname, chp, append=False):
     else:
         writeMode = 'wb'
     
-    #numParticles=len(chp)
-    #print('numParticles=',numParticles)
     with open(fname, writeMode) as f:
         ba=bytearray()
         for pi, row in chp.iterrows():
