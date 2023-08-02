@@ -333,51 +333,53 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainerIsInitialized = true;
 
 	// print full configuration to the command line
-	int valueOffset = 28;
-	global_log->info() << "AutoPas configuration:" << endl
+	constexpr int valueOffset = 28;
+	global_log->info() << "AutoPas configuration:\n"
 					   << setw(valueOffset) << left << "Data Layout "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts())
-					   << endl
+					   << "\n"
 					   << setw(valueOffset) << left << "Container "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers())
-					   << endl
+					   << "\n"
 					   << setw(valueOffset) << left << "Cell size Factor "
-					   << ": " << _autopasContainer.getAllowedCellSizeFactors() << endl
+					   << ": " << _autopasContainer.getAllowedCellSizeFactors() << "\n"
 					   << setw(valueOffset) << left << "Traversals "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals())
-					   << endl
+					   << "\n"
 					   << setw(valueOffset) << left << "Newton3"
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options())
-					   << endl
+					   << "\n"
 					   << setw(valueOffset) << left << "Tuning strategies "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getTuningStrategyOptions())
-					   << endl
+					   << "\n"
 					   << setw(valueOffset) << left << "Selector strategy "
-					   << ": " << _autopasContainer.getSelectorStrategy() << endl
+					   << ": " << _autopasContainer.getSelectorStrategy() << "\n"
 					   << setw(valueOffset) << left << "Tuning frequency"
-					   << ": " << _autopasContainer.getTuningInterval() << endl
+					   << ": " << _autopasContainer.getTuningInterval() << "\n"
 					   << setw(valueOffset) << left << "Number of samples "
-					   << ": " << _autopasContainer.getNumSamples() << endl
+					   << ": " << _autopasContainer.getNumSamples() << "\n"
 					   << setw(valueOffset) << left << "Tuning Acquisition Function"
-					   << ": " << _autopasContainer.getAcquisitionFunction() << endl
+					   << ": " << _autopasContainer.getAcquisitionFunction() << "\n"
 					   << setw(valueOffset) << left << "Number of evidence "
-					   << ": " << _autopasContainer.getMaxEvidence() << endl
+					   << ": " << _autopasContainer.getMaxEvidence() << "\n"
 					   << setw(valueOffset) << left << "Verlet Cluster size "
-					   << ": " << _autopasContainer.getVerletClusterSize() << endl
+					   << ": " << _autopasContainer.getVerletClusterSize() << "\n"
 					   << setw(valueOffset) << left << "Rebuild frequency "
-					   << ": " << _autopasContainer.getVerletRebuildFrequency() << endl
+					   << ": " << _autopasContainer.getVerletRebuildFrequency() << "\n"
 					   << setw(valueOffset) << left << "Verlet Skin "
-					   << ": " << _autopasContainer.getVerletSkin() << endl
+					   << ": " << _autopasContainer.getVerletSkin() << "\n"
 					   << setw(valueOffset) << left << "Optimum Range "
-					   << ": " << _autopasContainer.getRelativeOptimumRange() << endl
+					   << ": " << _autopasContainer.getRelativeOptimumRange() << "\n"
 					   << setw(valueOffset) << left << "Tuning Phases without test "
-					   << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << endl
+					   << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << "\n"
 					   << setw(valueOffset) << left << "Blacklist Range "
-					   << ": " << _autopasContainer.getRelativeBlacklistRange() << endl
+					   << ": " << _autopasContainer.getRelativeBlacklistRange() << "\n"
 					   << setw(valueOffset) << left << "Evidence for prediction "
-					   << ": " << _autopasContainer.getEvidenceFirstPrediction() << endl
+					   << ": " << _autopasContainer.getEvidenceFirstPrediction() << "\n"
 					   << setw(valueOffset) << left << "Extrapolation method "
-					   << ": " << _autopasContainer.getExtrapolationMethodOption() << endl;
+					   << ": " << _autopasContainer.getExtrapolationMethodOption() << "\n"
+					   << setw(valueOffset) << left << "Rule File "
+					   << ": " << _autopasContainer.getRuleFileName() << endl;
 
 	/// @todo return sendHaloAndLeavingTogether, (always false) for simplicity.
 	return false;
