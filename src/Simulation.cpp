@@ -744,6 +744,13 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			global_log->error() << "Simulation section missing" << endl;
 			Simulation::exit(1);
 		}
+	
+		inp.getNodeValue("simulation/options/option", _prepare_start_opt.refreshIDs);
+		if(_prepare_start_opt.refreshIDs)
+				global_log->info() << "Particle IDs will be refreshed before simulation start." << endl;
+			else
+				global_log->info() << "Particle IDs will NOT be refreshed before simulation start." << endl;
+	
 	} catch (const std::exception& e) {
 		global_log->error() << "Error in XML config. Please check your input file!" << std::endl;
 		global_log->error() << "Exception: " << e.what() << std::endl;
@@ -768,6 +775,10 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 	_moleculeContainer->update();
 	_moleculeContainer->deleteOuterParticles();
+
+	/** refresh particle IDs */
+	if(_prepare_start_opt.refreshIDs)
+		this->refreshParticleIDs();
 
 	unsigned long globalNumMolecules = _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition);
 	double rho_global = globalNumMolecules / _ensemble->V();
@@ -1460,6 +1471,6 @@ void Simulation::refreshParticleIDs()
 
 	for (auto pit = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit)
 	{
-		pit->setid(++start_ID);
+		pit->setid(start_ID++);
 	}
 }
