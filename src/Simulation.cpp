@@ -669,38 +669,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	xmlconfig.changecurrentnode(oldpath);
-
-	/** Prepare start options, affecting behavior of method prepare_start() */
-	_prepare_start_opt.refreshIDs = false;
-
-	oldpath = xmlconfig.getcurrentnodepath();
-	if(xmlconfig.changecurrentnode("options")) {
-		unsigned long numOptions = 0;
-		XMLfile::Query query = xmlconfig.query("option");
-		numOptions = query.card();
-		global_log->info() << "Number of prepare start options: " << numOptions << endl;
-
-		XMLfile::Query::const_iterator optionIter;
-		for( optionIter = query.begin(); optionIter; optionIter++ ) {
-			xmlconfig.changecurrentnode(optionIter);
-			std::string strOptionName;
-			xmlconfig.getNodeValue("@name", strOptionName);
-			if(strOptionName == "refreshIDs") {
-				bool bVal = false;
-				xmlconfig.getNodeValue(".", bVal);
-				_prepare_start_opt.refreshIDs = bVal;
-				if(_prepare_start_opt.refreshIDs)
-					global_log->info() << "Particle IDs will be refreshed before simulation start." << endl;
-				else
-					global_log->info() << "Particle IDs will NOT be refreshed before simulation start." << endl;
-			}
-			else
-			{
-				global_log->warning() << "Unknown option '" << strOptionName << "'" << endl;
-			}
-		}
-	}
-	xmlconfig.changecurrentnode(oldpath);
 }
 
 
@@ -744,13 +712,14 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			global_log->error() << "Simulation section missing" << endl;
 			Simulation::exit(1);
 		}
-	
-		inp.getNodeValue("simulation/options/option", _prepare_start_opt.refreshIDs);
-		if(_prepare_start_opt.refreshIDs)
-				global_log->info() << "Particle IDs will be refreshed before simulation start." << endl;
-			else
-				global_log->info() << "Particle IDs will NOT be refreshed before simulation start." << endl;
-	
+
+		parseMiscOptions(inp);
+		if(_miscOptions["refreshIDs"]) {
+			global_log->info() << "Particle IDs will be refreshed before simulation start." << endl;
+		} else {
+			global_log->info() << "Particle IDs will NOT be refreshed before simulation start." << endl;
+		}
+
 	} catch (const std::exception& e) {
 		global_log->error() << "Error in XML config. Please check your input file!" << std::endl;
 		global_log->error() << "Exception: " << e.what() << std::endl;
@@ -776,9 +745,10 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	_moleculeContainer->update();
 	_moleculeContainer->deleteOuterParticles();
 
-	/** refresh particle IDs */
-	if(_prepare_start_opt.refreshIDs)
+	/** reset particle IDs */
+	if(_miscOptions["refreshIDs"]) {
 		this->refreshParticleIDs();
+	}
 
 	unsigned long globalNumMolecules = _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition);
 	double rho_global = globalNumMolecules / _ensemble->V();
@@ -958,9 +928,6 @@ void Simulation::prepare_start() {
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
 	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition) << " molecules." << endl;
 
-	/** refresh particle IDs */
-	if(_prepare_start_opt.refreshIDs)
-		this->refreshParticleIDs();
 }
 
 void Simulation::simulate() {
@@ -1473,4 +1440,22 @@ void Simulation::refreshParticleIDs()
 	{
 		pit->setid(start_ID++);
 	}
+}
+
+void Simulation::parseMiscOptions(XMLfileUnits& xmlconfig) {
+	const auto oldpath = xmlconfig.getcurrentnodepath();
+	const XMLfile::Query optionNodes = xmlconfig.query("/mardyn/simulation/options/option");
+	// parse everything in this path
+	for (auto optionIter = optionNodes.begin(); optionIter; optionIter++) {
+		xmlconfig.changecurrentnode(optionIter);
+		std::string strOptionName;
+		xmlconfig.getNodeValue("@name", strOptionName);
+		xmlconfig.getNodeValue(".", _miscOptions[strOptionName]);
+	}
+	// log what was parsed
+	global_log->info() << "Parsed " << optionNodes.card() << " misc options: \n" << std::boolalpha;
+	for (const auto& [name, value] : _miscOptions) {
+		global_log->info() << "  " << name << ": " << value << std::endl;
+	}
+	xmlconfig.changecurrentnode(oldpath);
 }
