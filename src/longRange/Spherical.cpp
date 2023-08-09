@@ -34,6 +34,8 @@ Spherical::Spherical(double /*cutoffT*/, double cutoffLJ, Domain* domain, Domain
 	NSMean = 50;
 	numComp = 1;
 	globalNumMols = 31000;
+	global_log->info() << "[Long Range Correction] golbalNumMols set to: " << globalNumMols << endl;
+
 	rcmax = 8.0;
 	UpotKorrLJ = 0.0;
 	VirialKorrLJ = 0.0;
@@ -49,6 +51,9 @@ Spherical::~Spherical() {
 void Spherical::init()
 {
 	global_log->info() << "[Long Range Correction] Initializing" << endl;
+
+	globalNumMols = _domain->getglobalNumMolecules(true, _particleContainer, _domainDecomposition);
+	global_log->info() << "[Long Range Correction] global number of molecules: " << globalNumMols << endl;
 
 	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
 	numComp=components.size();
@@ -225,6 +230,8 @@ void Spherical::readXML(XMLfileUnits& xmlconfig)
 }
 
 void Spherical::calculateLongRange(){
+
+	global_log->info() << "[Long Range Correction] calculateLongRange has been called"  << endl;
 
 	int rank = _domainDecomposition->getRank();
 	uint64_t simstep = _simulation.getSimulationStep();
