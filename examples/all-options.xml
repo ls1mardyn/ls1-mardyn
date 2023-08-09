@@ -11,6 +11,12 @@
 
   <!-- simulation options -->
   <simulation type="MD" >
+    <!-- block for misc options -->
+    <options>
+      <!-- immediately after filling the simulation with particles, reset all id's to start at zero and are consecutive -->
+      <option name="refreshIDs">true</option>
+    </options>
+
     <run>
       <currenttime>0</currenttime>
       <production>
