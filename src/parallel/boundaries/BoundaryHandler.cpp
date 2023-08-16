@@ -174,7 +174,9 @@ bool BoundaryHandler::processOuterWallLeavingParticles()
 void BoundaryHandler::removeNonPeriodicHalos()
 {
 	auto moleculeContainer = global_simulation->getMoleculeContainer();
-	double buffers[] = {moleculeContainer->get_halo_L(0), moleculeContainer->get_halo_L(1), moleculeContainer->get_halo_L(2)};
+	double buffers[] = {moleculeContainer->get_halo_L(0) + moleculeContainer->getSkin(), 
+						moleculeContainer->get_halo_L(1) + moleculeContainer->getSkin(), 
+						moleculeContainer->get_halo_L(2) + moleculeContainer->getSkin()};
 	for (auto const& currentWall : _isOuterWall)
 	{
 		//global_log->info() << "wall number " << BoundaryUtils::convertDimensionToString(currentWall.first) << " : " << currentWall.second << std::endl;
