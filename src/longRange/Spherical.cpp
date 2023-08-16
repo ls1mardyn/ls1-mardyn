@@ -231,7 +231,7 @@ void Spherical::readXML(XMLfileUnits& xmlconfig)
 
 void Spherical::calculateLongRange(){
 
-	global_log->info() << "[Long Range Correction] calculateLongRange has been called"  << endl;
+	//global_log->info() << "[Long Range Correction] calculateLongRange has been called"  << std::endl;
 
 	int rank = _domainDecomposition->getRank();
 	uint64_t simstep = _simulation.getSimulationStep();
@@ -489,8 +489,8 @@ void Spherical::calculateLongRange(){
 				VirialKorrLJ *= 2.0*M_PI/3.0;
 			}
 		}
-		global_log->info() << "Homogeneous term: UpotKorrLJ = " << UpotKorrLJ << endl;
-		global_log->info() << "Homogeneous term: VirialKorrLJ = " << VirialKorrLJ << endl;
+		//global_log->info() << "Homogeneous term: UpotKorrLJ = " << UpotKorrLJ << std::endl;
+		//global_log->info() << "Homogeneous term: VirialKorrLJ = " << VirialKorrLJ << std::endl;
 
 
 		// Korrektur je Schale
