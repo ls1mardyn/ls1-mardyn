@@ -38,12 +38,6 @@ void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* en
 
 	double* globStartRegion = ensemble->domain()->rmin();
 	double* globEndRegion = ensemble->domain()->rmax();
-	//global_log->set_mpi_output_all();
-	/**global_log->info() << "local: " << startRegion[0] << " " << startRegion[1] << " " << startRegion[2] << " "
-										<< endRegion[0] << " " << endRegion[1] << " " << endRegion[2] << " "
-							<< "global: " << globStartRegion[0] << " " << globStartRegion[1] << " " << globStartRegion[2] << " "
-										<< globEndRegion[0] << " " << globEndRegion[1] << " " << globEndRegion[2] << " " << std::endl;
-	**/
 	
 	_boundaryHandler.setLocalRegion(startRegion, endRegion);
 	_boundaryHandler.setGlobalRegion(globStartRegion, globEndRegion);

@@ -114,8 +114,7 @@ bool BoundaryHandler::processOuterWallLeavingParticles()
 	double cutoff = moleculeContainer->getCutoff();
 	for (auto const& currentWall : _isOuterWall)
 	{
-		//global_log->info() << "wall number " << BoundaryUtils::convertDimensionToString(currentWall.first) << " : " << currentWall.second << std::endl;
-		if(!currentWall.second)
+		if(!currentWall.second) // not an outer wall
 			continue;
 
 		switch(getGlobalWall(currentWall.first))
@@ -147,16 +146,13 @@ bool BoundaryHandler::processOuterWallLeavingParticles()
 
 					if (BoundaryUtils::isMoleculeLeaving(curMolecule, curWallRegionBegin, curWallRegionEnd, currentWall.first, timestepLength, nextStepVelAdjustment))
 					{
-						//global_log->info() << "Boundary particle found leaving" << std::endl;
 						if(getGlobalWall(currentWall.first) == BoundaryType::REFLECTING)
 						{
-							//global_log->info() << "Reflection particle found " << std::endl;
 							double currentVel = it->v(currentDim);
 							it->setv(currentDim, -currentVel-nextStepVelAdjustment-nextStepVelAdjustment);
 						}
-						else
+						else // outflow
 						{
-							//global_log->info() << "Outflow particle found " << std::endl;
 							moleculeContainer->deleteMolecule(it, false);
 						}
 					}
@@ -179,7 +175,6 @@ void BoundaryHandler::removeNonPeriodicHalos()
 						moleculeContainer->get_halo_L(2) + moleculeContainer->getSkin()};
 	for (auto const& currentWall : _isOuterWall)
 	{
-		//global_log->info() << "wall number " << BoundaryUtils::convertDimensionToString(currentWall.first) << " : " << currentWall.second << std::endl;
 		if(!currentWall.second) //not an outer wall
 			continue;
 
@@ -202,7 +197,6 @@ void BoundaryHandler::removeNonPeriodicHalos()
 				auto particlesInRegion = moleculeContainer->regionIterator(cstylerbegin, cstylerend, ParticleIterator::ALL_CELLS);
 				for (auto it = particlesInRegion; it.isValid(); ++it)
 				{
-					//global_log->info() << "Halo particle found " << std::endl;
 					moleculeContainer->deleteMolecule(it, false);
 				}
 				break;
