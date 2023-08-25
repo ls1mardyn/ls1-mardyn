@@ -18,13 +18,13 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-using namespace std;
+using namespace std;  // TODO: remove (Fabio says this is bad practice!)
 using Log::global_log;
 
 Spherical::Spherical(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition,
 		ParticleContainer* particleContainer, Simulation* simulation)
 {
-	global_log->info() << "Long Range Correction for spherical interfaces is used" << endl;
+	global_log->info() << "Long Range Correction for spherical interfaces is used" << std::endl;
 	 // default values
 	rc = cutoffLJ;
 	_domain = domain;
@@ -34,7 +34,7 @@ Spherical::Spherical(double /*cutoffT*/, double cutoffLJ, Domain* domain, Domain
 	NSMean = 50;
 	numComp = 1;
 	globalNumMols = 31000;
-	global_log->info() << "[Long Range Correction] golbalNumMols set to: " << globalNumMols << endl;
+	global_log->info() << "[Long Range Correction] golbalNumMols set to: " << globalNumMols << " during initialization" << std::endl;
 
 	rcmax = 8.0;
 	UpotKorrLJ = 0.0;
@@ -50,14 +50,14 @@ Spherical::~Spherical() {
 
 void Spherical::init()
 {
-	global_log->info() << "[Long Range Correction] Initializing" << endl;
+	global_log->info() << "[Long Range Correction] Initializing. Is this function called twice?!" << std::endl;
 
 	globalNumMols = _domain->getglobalNumMolecules(true, _particleContainer, _domainDecomposition);
-	global_log->info() << "[Long Range Correction] global number of molecules: " << globalNumMols << endl;
+	global_log->info() << "[Long Range Correction] global number of molecules: " << globalNumMols << std::endl;
 
 	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
 	numComp=components.size();
-	global_log->info() << "[Long Range Correction] Anzahl Comps: " << numComp << endl;
+	global_log->info() << "[Long Range Correction] Anzahl Comps: " << numComp << std::endl;
 	resizeExactly(numLJ, numComp);
 	numLJSum = 0;
 	resizeExactly(numLJSum2, numComp);
@@ -213,16 +213,17 @@ void Spherical::init()
 
 void Spherical::readXML(XMLfileUnits& xmlconfig)
 {
+	global_log->info() << "[Long Range Correction] reading XML for paramters of SphericalLRC."  << std::endl;
 	xmlconfig.getNodeValue("shells", NShells);
 	xmlconfig.getNodeValue("droplet", droplet);
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	xmlconfig.getNodeValue("temperature", _T);
 	//xmlconfig.getNodeValue("frequency", frequency);
-	global_log->info() << "[Long Range Correction] Using " << NShells << " shells for profiles to calculate LRC." << endl;
+	global_log->info() << "[Long Range Correction] Using " << NShells << " shells for profiles to calculate LRC." << std::endl;
 	if (droplet){
-		global_log->info() << "[Long Range Correction] System contains a droplet. COMaligner plugin is required."  << endl;
+		global_log->info() << "[Long Range Correction] System contains a droplet. COMaligner plugin is required."  << std::endl;
 	}else{
-		global_log->info() << "[Long Range Correction] System contains a bubble. COMalignerBubble plugin is required."  << endl;
+		global_log->info() << "[Long Range Correction] System contains a bubble. COMalignerBubble plugin is required."  << std::endl;
 	}
 	
 	// init
@@ -1012,7 +1013,7 @@ void Spherical::calculateLongRange(){
 // 	// double sig2=sig*sig;
 // 	// double sig3=sig2*sig;
 // 	// double t = eLong[numLJSum2[ci]+si] + eLong[numLJSum2[cj]+sj]; // one of them is equal to zero.
-// 	global_log->error() << "[LongRangeCorrection] Center-Site correction not yet supported. Program exit ..." << endl;
+// 	global_log->error() << "[LongRangeCorrection] Center-Site correction not yet supported. Program exit ..." << std::endl;
 //     Simulation::exit(-1);
 // }
 
@@ -1026,7 +1027,7 @@ void Spherical::calculateLongRange(){
 // 	// double tP = t1 + t2; // tau+ 
 // 	// double tM = t1 - t2; // tau-
 
-// 	// global_log->error() << "[LongRangeCorrection] Site-Site correction not yet supported. Program exit ..." << endl;
+// 	// global_log->error() << "[LongRangeCorrection] Site-Site correction not yet supported. Program exit ..." << std::endl;
 //     // Simulation::exit(-1);
 // }
 
