@@ -45,7 +45,7 @@ void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
 		_macroscopicCellService->distributeMass(simstep);
 		_macroscopicCellService->applyTemperatureToMolecules(simstep);
 #ifndef MARDYN_AUTOPAS
-		_moleculeContainer->deleteOuterParticles();
+		particleContainer->deleteOuterParticles();
 #endif
     }
 	#endif
