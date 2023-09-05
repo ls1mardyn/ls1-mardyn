@@ -453,13 +453,20 @@ public:
 
 	CellProcessor *getCellProcessor() const;
 
-	/** @brief Refresh particle IDs to continuous numbering*/
+	/** @brief Refresh particle IDs to continuous numbering starting at zero*/
 	void refreshParticleIDs();
 
 	/** @brief Checks if Simsteps or MaxWallTime are reached */
 	bool keepRunning();
 
 private:
+
+	/**
+	 * Parse everything in the XML path </mardyn/simulation/options/option>
+	 * and store it in _miscOptions.
+	 * @param xmlconfig
+	 */
+	void parseMiscOptions(XMLfileUnits& xmlconfig);
 
 	/// the timer used for the load calculation.
 	Timer* _timerForLoad{nullptr};
@@ -514,15 +521,16 @@ private:
 	unsigned long _nWriteFreqGlobalEnergy;
 	std::string _globalEnergyLogFilename;
 
-	/** Prepare start options, affecting behavior of method prepare_start()
-	 * Options
-	 * -------
-	 * refreshIDs: Refresh particle IDs to continuous numbering by method refreshParticleIDs()
+	/**
+	 * Mechanism to easily add arbitrary options via the XML path <mardyn/simulation/options/option>
+	 * Any option is identified via the label "name"
 	 *
+	 * @note Currently, only bool options are supported.
+	 *
+	 * Example:
+	 *   <option name="refreshIDs">true</option>
 	 */
-	struct PrepareStartOptions {
-		bool refreshIDs;
-	} _prepare_start_opt;
+	std::map<std::string, bool> _miscOptions;
 
 	FixedSizeQueue<double> _lastTraversalTimeHistory;
 

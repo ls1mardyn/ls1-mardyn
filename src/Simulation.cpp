@@ -678,38 +678,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	xmlconfig.changecurrentnode(oldpath);
-
-	/** Prepare start options, affecting behavior of method prepare_start() */
-	_prepare_start_opt.refreshIDs = false;
-
-	oldpath = xmlconfig.getcurrentnodepath();
-	if(xmlconfig.changecurrentnode("options")) {
-		unsigned long numOptions = 0;
-		XMLfile::Query query = xmlconfig.query("option");
-		numOptions = query.card();
-		global_log->info() << "Number of prepare start options: " << numOptions << endl;
-
-		XMLfile::Query::const_iterator optionIter;
-		for( optionIter = query.begin(); optionIter; optionIter++ ) {
-			xmlconfig.changecurrentnode(optionIter);
-			std::string strOptionName;
-			xmlconfig.getNodeValue("@name", strOptionName);
-			if(strOptionName == "refreshIDs") {
-				bool bVal = false;
-				xmlconfig.getNodeValue(".", bVal);
-				_prepare_start_opt.refreshIDs = bVal;
-				if(_prepare_start_opt.refreshIDs)
-					global_log->info() << "Particle IDs will be refreshed before simulation start." << endl;
-				else
-					global_log->info() << "Particle IDs will NOT be refreshed before simulation start." << endl;
-			}
-			else
-			{
-				global_log->warning() << "Unknown option '" << strOptionName << "'" << endl;
-			}
-		}
-	}
-	xmlconfig.changecurrentnode(oldpath);
 }
 
 
@@ -753,6 +721,14 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			global_log->error() << "Simulation section missing" << endl;
 			Simulation::exit(1);
 		}
+
+		parseMiscOptions(inp);
+		if(_miscOptions["refreshIDs"]) {
+			global_log->info() << "Particle IDs will be refreshed before simulation start." << endl;
+		} else {
+			global_log->info() << "Particle IDs will NOT be refreshed before simulation start." << endl;
+		}
+
 	} catch (const std::exception& e) {
 		global_log->error() << "Error in XML config. Please check your input file!" << std::endl;
 		global_log->error() << "Exception: " << e.what() << std::endl;
@@ -777,6 +753,11 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 	_moleculeContainer->update();
 	_moleculeContainer->deleteOuterParticles();
+
+	/** reset particle IDs */
+	if(_miscOptions["refreshIDs"]) {
+		this->refreshParticleIDs();
+	}
 
 	unsigned long globalNumMolecules = _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition);
 	double rho_global = globalNumMolecules / _ensemble->V();
@@ -925,7 +906,9 @@ void Simulation::prepare_start() {
 	for (auto plugin : _plugins) {
 		global_log->debug() << "[AFTER FORCES] Plugin: "
 							<< plugin->getPluginName() << endl;
+		global_simulation->timers()->start(plugin->getPluginName());
 		plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+		global_simulation->timers()->stop(plugin->getPluginName());
 	}
 
 #ifndef MARDYN_AUTOPAS
@@ -954,9 +937,6 @@ void Simulation::prepare_start() {
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
 	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition) << " molecules." << endl;
 
-	/** refresh particle IDs */
-	if(_prepare_start_opt.refreshIDs)
-		this->refreshParticleIDs();
 }
 
 void Simulation::simulate() {
@@ -1059,23 +1039,27 @@ void Simulation::simulateOneTimestep()
 
 	computationTimer->start();
 
-	// beforeEventNewTimestep Plugin Call
-	global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Performing beforeEventNewTimestep plugin call" << endl;
-	for (auto plugin : _plugins) {
-		global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Plugin: " << plugin->getPluginName() << endl;
-		plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
-	}
+        // beforeEventNewTimestep Plugin Call
+        global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Performing beforeEventNewTimestep plugin call" << endl;
+        for (auto plugin : _plugins) {
+            global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Plugin: " << plugin->getPluginName() << endl;
+			global_simulation->timers()->start(plugin->getPluginName());
+            plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
+			global_simulation->timers()->stop(plugin->getPluginName());
+        }
 
 	_ensemble->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
 
 	_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
-	// beforeForces Plugin Call
-	global_log -> debug() << "[BEFORE FORCES] Performing BeforeForces plugin call" << endl;
-	for (auto plugin : _plugins) {
-		global_log -> debug() << "[BEFORE FORCES] Plugin: " << plugin->getPluginName() << endl;
-		plugin->beforeForces(_moleculeContainer, _domainDecomposition, _simstep);
-	}
+        // beforeForces Plugin Call
+        global_log -> debug() << "[BEFORE FORCES] Performing BeforeForces plugin call" << endl;
+        for (auto plugin : _plugins) {
+            global_log -> debug() << "[BEFORE FORCES] Plugin: " << plugin->getPluginName() << endl;
+			global_simulation->timers()->start(plugin->getPluginName());
+            plugin->beforeForces(_moleculeContainer, _domainDecomposition, _simstep);
+			global_simulation->timers()->stop(plugin->getPluginName());
+        }
 
 	computationTimer->stop();
 
@@ -1114,12 +1098,14 @@ void Simulation::simulateOneTimestep()
 		// Force timer and computation timer are running at this point!
 	}
 
-	// siteWiseForces Plugin Call
-	global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin call" << endl;
-	for (auto plugin : _plugins) {
-		global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << endl;
-		plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
-	}
+		// siteWiseForces Plugin Call
+		global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin call" << endl;
+		for (auto plugin : _plugins) {
+			global_log -> debug() << "[SITEWISE FORCES] Plugin: " << plugin->getPluginName() << endl;
+			global_simulation->timers()->start(plugin->getPluginName());
+			plugin->siteWiseForces(_moleculeContainer, _domainDecomposition, _simstep);
+			global_simulation->timers()->stop(plugin->getPluginName());
+		}
 
 	// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
 	_longRangeCorrection->calculateLongRange();
@@ -1148,12 +1134,14 @@ void Simulation::simulateOneTimestep()
 		_FMM->computeElectrostatics(_moleculeContainer);
 	}
 
-	//afterForces Plugin Call
-	global_log -> debug() << "[AFTER FORCES] Performing AfterForces plugin call" << endl;
-	for (auto plugin : _plugins) {
-		global_log -> debug() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << endl;
-		plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
-	}
+		//afterForces Plugin Call
+		global_log -> debug() << "[AFTER FORCES] Performing AfterForces plugin call" << endl;
+		for (auto plugin : _plugins) {
+			global_log -> debug() << "[AFTER FORCES] Plugin: " << plugin->getPluginName() << endl;
+			global_simulation->timers()->start(plugin->getPluginName());
+			plugin->afterForces(_moleculeContainer, _domainDecomposition, _simstep);
+			global_simulation->timers()->stop(plugin->getPluginName());
+		}
 
 	_ensemble->afterForces(_moleculeContainer, _domainDecomposition, _cellProcessor, _simstep);
 
@@ -1287,7 +1275,9 @@ void Simulation::postSimLoopSteps()
 
 	global_log->info() << "Finish plugins" << endl;
 	for (auto plugin : _plugins) {
+		global_simulation->timers()->start(plugin->getPluginName());
 		plugin->finish(_moleculeContainer, _domainDecomposition, _domain);
+		global_simulation->timers()->stop(plugin->getPluginName());
 	}
 	global_simulation->timers()->getTimer("SIMULATION_FINAL_IO")->stop();
 
@@ -1512,6 +1502,24 @@ void Simulation::refreshParticleIDs()
 
 	for (auto pit = _moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit)
 	{
-		pit->setid(++start_ID);
+		pit->setid(start_ID++);
 	}
+}
+
+void Simulation::parseMiscOptions(XMLfileUnits& xmlconfig) {
+	const auto oldpath = xmlconfig.getcurrentnodepath();
+	const XMLfile::Query optionNodes = xmlconfig.query("/mardyn/simulation/options/option");
+	// parse everything in this path
+	for (auto optionIter = optionNodes.begin(); optionIter; optionIter++) {
+		xmlconfig.changecurrentnode(optionIter);
+		std::string strOptionName;
+		xmlconfig.getNodeValue("@name", strOptionName);
+		xmlconfig.getNodeValue(".", _miscOptions[strOptionName]);
+	}
+	// log what was parsed
+	global_log->info() << "Parsed " << optionNodes.card() << " misc options: \n" << std::boolalpha;
+	for (const auto& [name, value] : _miscOptions) {
+		global_log->info() << "  " << name << ": " << value << std::endl;
+	}
+	xmlconfig.changecurrentnode(oldpath);
 }
