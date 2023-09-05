@@ -32,6 +32,9 @@ void MamicoCoupling::beforeEventNewTimestep(ParticleContainer* particleContainer
  * - Iterate over cells to average values like momentum and mass, to pass to macroscopic solvers
  * - Distribute incoming mass from macroscopic solver by inserting perticles (if enabled)
  * - Run the MaMiCo thermostat cell by cell
+ * 
+ * The distributeMass method calls the updateParticleContainerAndDecomposition() function at the end, so we end up with a container with halo particles present.
+ * Hence a manual halo clearance is done to restore the state of the container.
  * */
 void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, unsigned long simstep)        
