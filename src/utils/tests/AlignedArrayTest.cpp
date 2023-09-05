@@ -7,7 +7,7 @@
 #include "AlignedArrayTest.h"
 #include "../AlignedArray.h"
 
-#include <stdint.h>
+#include <cstdint>
 #include <vector>
 
 using namespace std;
