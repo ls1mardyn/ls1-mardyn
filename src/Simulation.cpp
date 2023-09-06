@@ -325,12 +325,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else if(parallelisationtype == "DomainDecomposition") {
 				delete _domainDecomposition;
-				#ifndef MAMICO_COUPLING
-				_domainDecomposition = new DomainDecomposition();
-				#else
-				_domainDecomposition = new DomainDecomposition(coupling::interface::LS1StaticCommData::getInstance().getLocalCommunicator(),
-															coupling::interface::LS1StaticCommData::getInstance().getDomainGridDecomp());
-				#endif
+				_domainDecomposition = new DomainDecomposition(
+#ifdef MAMICO_COUPLING	coupling::interface::LS1StaticCommData::getInstance().getLocalCommunicator(),
+															coupling::interface::LS1StaticCommData::getInstance().getDomainGridDecomp()
+#endif
+				);
 			}
 			else if(parallelisationtype == "KDDecomposition") {
 				delete _domainDecomposition;
