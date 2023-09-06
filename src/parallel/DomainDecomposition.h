@@ -23,7 +23,7 @@ public:
 	//!        sets up the topology
 	DomainDecomposition();
 
-	DomainDecomposition(MPI_Comm comm, const int* gridSize);
+	DomainDecomposition(MPI_Comm comm, array<int, DIMgeom> gridSize);
 	// documentation see father class (DomainDecompBase.h)
 	~DomainDecomposition();
 
@@ -77,7 +77,7 @@ public:
 protected:
 	void initMPIGridDims();
 
-	int _gridSize[DIMgeom]; //!< Number of processes in each dimension of the MPI process grid
+	std::array<int, DIMgeom> _gridSize; //!< Number of processes in each dimension of the MPI process grid
 	int _coords[DIMgeom]; //!< Coordinate of the process in the MPI process grid
 };
 

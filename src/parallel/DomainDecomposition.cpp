@@ -12,9 +12,9 @@
 using Log::global_log;
 using namespace std;
 
-DomainDecomposition::DomainDecomposition() : DomainDecomposition(MPI_COMM_WORLD, new int[3]{0,0,0}) {}
+DomainDecomposition::DomainDecomposition() : DomainDecomposition(MPI_COMM_WORLD, {0,0,0}) {}
 
-DomainDecomposition::DomainDecomposition(MPI_Comm comm, const int* gridSize) : DomainDecompMPIBase(comm), _gridSize{gridSize[0], gridSize[1], gridSize[2]}, _coords{0} {
+DomainDecomposition::DomainDecomposition(MPI_Comm comm, std::array<int, DIMgeom> gridSize) : DomainDecompMPIBase(comm), _gridSize(gridSize), _coords{0} {
 	initMPIGridDims();
 }
 
@@ -34,8 +34,13 @@ void DomainDecomposition::initMPIGridDims() {
 		}
 	}
 
-	MPI_CHECK(MPI_Dims_create( _numProcs, DIMgeom, (int *) &_gridSize ));
-	MPI_CHECK(MPI_Cart_create(_comm, DIMgeom, _gridSize, period, reorder, &_comm));
+	int cStyleGridSize[DIMgeom];
+	for(int i = 0; i < DIMgeom; i++){
+		cStyleGridSize[i] = _gridSize[i];
+	}
+
+	MPI_CHECK(MPI_Dims_create( _numProcs, DIMgeom, (int *) &cStyleGridSize ));
+	MPI_CHECK(MPI_Cart_create(_comm, DIMgeom, cStyleGridSize, period, reorder, &_comm));
 	global_log->info() << "MPI grid dimensions: " << _gridSize[0] << ", " << _gridSize[1] << ", " << _gridSize[2] << endl;
 	MPI_CHECK(MPI_Comm_rank(_comm, &_rank));
 	MPI_CHECK(MPI_Cart_coords(_comm, _rank, DIMgeom, _coords));
