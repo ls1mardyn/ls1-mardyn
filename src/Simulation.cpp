@@ -125,12 +125,12 @@ Simulation::Simulation()
 	_forced_checkpoint_time(0),
 	_loopCompTime(0.0),
 	_loopCompTimeSteps(0),
-	_loopTimer(*global_simulation->timers()->getTimer("SIMULATION_LOOP")), ///< timer for the entire simulation loop (synced)
-	_decompositionTimer(*global_simulation->timers()->getTimer("SIMULATION_DECOMPOSITION")), ///< timer for decomposition: sub-timer of loopTimer
-	_computationTimer(*global_simulation->timers()->getTimer("SIMULATION_COMPUTATION")), ///< timer for computation: sub-timer of loopTimer
-	_perStepIoTimer(*global_simulation->timers()->getTimer("SIMULATION_PER_STEP_IO")), ///< timer for io in simulation loop: sub-timer of loopTimer
-	_forceCalculationTimer(*global_simulation->timers()->getTimer("SIMULATION_FORCE_CALCULATION")), ///< timer for force calculation: sub-timer of computationTimer
-	_mpiOMPCommunicationTimer(*global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION")) ///< timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
+	_loopTimer(*timers()->getTimer("SIMULATION_LOOP")), ///< timer for the entire simulation loop (synced)
+	_decompositionTimer(*timers()->getTimer("SIMULATION_DECOMPOSITION")), ///< timer for decomposition: sub-timer of loopTimer
+	_computationTimer(*timers()->getTimer("SIMULATION_COMPUTATION")), ///< timer for computation: sub-timer of loopTimer
+	_perStepIoTimer(*timers()->getTimer("SIMULATION_PER_STEP_IO")), ///< timer for io in simulation loop: sub-timer of loopTimer
+	_forceCalculationTimer(*timers()->getTimer("SIMULATION_FORCE_CALCULATION")), ///< timer for force calculation: sub-timer of computationTimer
+	_mpiOMPCommunicationTimer(*timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION")) ///< timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
 {
 	_timeFromStart.start();
 	_ensemble = new CanonicalEnsemble();

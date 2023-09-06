@@ -41,6 +41,11 @@ void DomainDecomposition::initMPIGridDims() {
 
 	MPI_CHECK(MPI_Dims_create( _numProcs, DIMgeom, (int *) &cStyleGridSize ));
 	MPI_CHECK(MPI_Cart_create(_comm, DIMgeom, cStyleGridSize, period, reorder, &_comm));
+	
+	for(int i = 0; i < DIMgeom; i++){
+		_gridSize[i] = cStyleGridSize[i];
+	}
+	
 	global_log->info() << "MPI grid dimensions: " << _gridSize[0] << ", " << _gridSize[1] << ", " << _gridSize[2] << endl;
 	MPI_CHECK(MPI_Comm_rank(_comm, &_rank));
 	MPI_CHECK(MPI_Cart_coords(_comm, _rank, DIMgeom, _coords));
