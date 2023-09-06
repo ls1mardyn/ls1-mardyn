@@ -124,7 +124,13 @@ Simulation::Simulation()
 #endif /* TASKTIMINGPROFILE */
 	_forced_checkpoint_time(0),
 	_loopCompTime(0.0),
-	_loopCompTimeSteps(0)
+	_loopCompTimeSteps(0),
+	_loopTimer(*global_simulation->timers()->getTimer("SIMULATION_LOOP")), ///< timer for the entire simulation loop (synced)
+	_decompositionTimer(*global_simulation->timers()->getTimer("SIMULATION_DECOMPOSITION")), ///< timer for decomposition: sub-timer of loopTimer
+	_computationTimer(*global_simulation->timers()->getTimer("SIMULATION_COMPUTATION")), ///< timer for computation: sub-timer of loopTimer
+	_perStepIoTimer(*global_simulation->timers()->getTimer("SIMULATION_PER_STEP_IO")), ///< timer for io in simulation loop: sub-timer of loopTimer
+	_forceCalculationTimer(*global_simulation->timers()->getTimer("SIMULATION_FORCE_CALCULATION")), ///< timer for force calculation: sub-timer of computationTimer
+	_mpiOMPCommunicationTimer(*global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION")) ///< timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
 {
 	_timeFromStart.start();
 	_ensemble = new CanonicalEnsemble();
@@ -984,19 +990,13 @@ void Simulation::preSimLoopSteps()
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
 
 	// all timers except the ioTimer measure inside the main loop
-	loopTimer = global_simulation->timers()->getTimer("SIMULATION_LOOP"); ///< timer for the entire simulation loop (synced)
-	decompositionTimer = global_simulation->timers()->getTimer("SIMULATION_DECOMPOSITION"); ///< timer for decomposition: sub-timer of loopTimer
-	computationTimer = global_simulation->timers()->getTimer("SIMULATION_COMPUTATION"); ///< timer for computation: sub-timer of loopTimer
-	perStepIoTimer = global_simulation->timers()->getTimer("SIMULATION_PER_STEP_IO"); ///< timer for io in simulation loop: sub-timer of loopTimer
-	forceCalculationTimer = global_simulation->timers()->getTimer("SIMULATION_FORCE_CALCULATION"); ///< timer for force calculation: sub-timer of computationTimer
-	mpiOMPCommunicationTimer = global_simulation->timers()->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); ///< timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
 
-	//loopTimer->set_sync(true);
+	//_loopTimer.set_sync(true);
 	//global_simulation->timers()->setSyncTimer("SIMULATION_LOOP", true);
 #ifdef WITH_PAPI
 	const char *papi_event_list[] = { "PAPI_TOT_CYC", "PAPI_TOT_INS" /*, "PAPI_VEC_DP", "PAPI_L2_DCM", "PAPI_L2_ICM", "PAPI_L1_ICM", "PAPI_DP_OPS", "PAPI_VEC_INS" }; */
 	int num_papi_events = sizeof(papi_event_list) / sizeof(papi_event_list[0]);
-	loopTimer->add_papi_counters(num_papi_events, (char**) papi_event_list);
+	_loopTimer.add_papi_counters(num_papi_events, (char**) papi_event_list);
 #endif
 	
 #ifndef NDEBUG
@@ -1032,12 +1032,12 @@ void Simulation::simulateOneTimestep()
 	#endif
 
 	
-	loopTimer->start();
+	_loopTimer.start();
 	global_log->debug() << "timestep: " << getSimulationStep() << endl;
 	global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 	global_simulation->timers()->incrementTimerTimestepCounter();
 
-	computationTimer->start();
+	_computationTimer.start();
 
         // beforeEventNewTimestep Plugin Call
         global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Performing beforeEventNewTimestep plugin call" << endl;
@@ -1061,7 +1061,7 @@ void Simulation::simulateOneTimestep()
 			global_simulation->timers()->stop(plugin->getPluginName());
         }
 
-	computationTimer->stop();
+	_computationTimer.stop();
 
 
 
@@ -1071,7 +1071,7 @@ void Simulation::simulateOneTimestep()
 	bool overlapCommComp = false;
 #endif
 
-	double startEtime = computationTimer->get_etime();
+	double startEtime = _computationTimer.get_etime();
 	if (overlapCommComp) {
 		double currentTime = _timerForLoad->get_etime();
 		performOverlappingDecompositionAndCellTraversalStep(currentTime - previousTimeForLoad);
@@ -1079,7 +1079,7 @@ void Simulation::simulateOneTimestep()
 		// Force timer and computation timer are running at this point!
 	}
 	else {
-		decompositionTimer->start();
+		_decompositionTimer.start();
 		// ensure that all Particles are in the right cells and exchange Particles
 		global_log->debug() << "Updating container and decomposition" << endl;
 
@@ -1087,12 +1087,12 @@ void Simulation::simulateOneTimestep()
 		updateParticleContainerAndDecomposition(currentTime - previousTimeForLoad, true);
 		previousTimeForLoad = currentTime;
 
-		decompositionTimer->stop();
+		_decompositionTimer.stop();
 
 		// Force calculation and other pair interaction related computations
 		global_log->debug() << "Traversing pairs" << endl;
-		computationTimer->start();
-		forceCalculationTimer->start();
+		_computationTimer.start();
+		_forceCalculationTimer.start();
 
 		_moleculeContainer->traverseCells(*_cellProcessor);
 		// Force timer and computation timer are running at this point!
@@ -1113,20 +1113,20 @@ void Simulation::simulateOneTimestep()
 	// Update forces in molecules so they can be exchanged
 	updateForces();
 
-	forceCalculationTimer->stop();
-	computationTimer->stop();
+	_forceCalculationTimer.stop();
+	_computationTimer.stop();
 
-	decompositionTimer->start();
+	_decompositionTimer.start();
 	// Exchange forces if it's required by the cell container.
 	if(_moleculeContainer->requiresForceExchange()){
 		global_log->debug() << "Exchanging Forces" << std::endl;
 		_domainDecomposition->exchangeForces(_moleculeContainer, _domain);
 	}
-	decompositionTimer->stop();
-	_loopCompTime += computationTimer->get_etime() - startEtime;
+	_decompositionTimer.stop();
+	_loopCompTime += _computationTimer.get_etime() - startEtime;
 	_loopCompTimeSteps ++;
 
-	computationTimer->start();
+	_computationTimer.start();
 
 
 	if (_FMM != nullptr) {
@@ -1224,22 +1224,22 @@ void Simulation::simulateOneTimestep()
 	/* END PHYSICAL SECTION */
 
 
-	computationTimer->stop();
-	perStepIoTimer->start();
+	_computationTimer.stop();
+	_perStepIoTimer.start();
 
 	// CALL ALL PLUGIN ENDSTEP METHODS
 	pluginEndStepCall(_simstep);
 
-	if( (_forced_checkpoint_time > 0) && (loopTimer->get_etime() >= _forced_checkpoint_time) ) {
+	if( (_forced_checkpoint_time > 0) && (_loopTimer.get_etime() >= _forced_checkpoint_time) ) {
 		/* force checkpoint for specified time */
 		string cpfile(_outputPrefix + ".timed.restart.dat");
 		global_log->info() << "Writing timed, forced checkpoint to file '" << cpfile << "'" << endl;
 		_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime);
 		_forced_checkpoint_time = -1; /* disable for further timesteps */
 	}
-	perStepIoTimer->stop();
+	_perStepIoTimer.stop();
 
-	loopTimer->stop();
+	_loopTimer.stop();
 }
 
 void Simulation::markSimAsDone()
@@ -1291,8 +1291,8 @@ void Simulation::postSimLoopSteps()
 
 #ifdef WITH_PAPI
 	global_log->info() << "PAPI counter values for loop timer:"  << endl;
-	for(int i = 0; i < loopTimer->get_papi_num_counters(); i++) {
-		global_log->info() << "  " << papi_event_list[i] << ": " << loopTimer->get_global_papi_counter(i) << endl;
+	for(int i = 0; i < _loopTimer.get_papi_num_counters(); i++) {
+		global_log->info() << "  " << papi_event_list[i] << ": " << _loopTimer.get_global_papi_counter(i) << endl;
 	}
 #endif /* WITH_PAPI */
 	postSimLoopStepsDone = true;
