@@ -23,7 +23,7 @@ public:
 	MamicoCoupling() {}
 	virtual ~MamicoCoupling() {}
 
-	/** @brief Prints to log that mamico coupling is inited
+	/** @brief Prints to log that mamico coupling is initialized
 	 * 
 	 * */
 	void init(ParticleContainer* particleContainer,

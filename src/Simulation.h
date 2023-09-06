@@ -183,10 +183,10 @@ public:
 	 *
 	 * The present method serves as a redirection to the actual plugins.
 	 * That includes
-     * a) particular plugin objects included in _plugins,
+	 * a) particular plugin objects included in _plugins,
 	 *
 	 * @param[in]  simstep timestep of the plugins
-     */
+	 */
 	void pluginEndStepCall(unsigned long simstep);
 
 	/** @brief clean up simulation */
@@ -296,7 +296,7 @@ public:
 	//! get Planck constant
 	double getH() {return h;}
 	//! set Planck constant
-    void setH(double h_extern) {h = h_extern;}
+	void setH(double h_extern) {h = h_extern;}
 
 private:
 
@@ -335,10 +335,10 @@ private:
 
 	unsigned long _numberOfTimesteps;
 public:
-    unsigned long getNumberOfTimesteps() const;
+	unsigned long getNumberOfTimesteps() const;
 
 private:
-    /**< Number of discrete time steps to be performed in the simulation */
+	/**< Number of discrete time steps to be performed in the simulation */
 
 	unsigned long _simstep;             /**< Actual time step in the simulation. */
 
@@ -404,9 +404,9 @@ private:
 #endif
 public:
 #ifdef TASKTIMINGPROFILE
-    TaskTimingProfiler* getTaskTimingProfiler(){
-        return _taskTimingProfiler;
-    }
+	TaskTimingProfiler* getTaskTimingProfiler(){
+		return _taskTimingProfiler;
+	}
 #endif
 	//! computational time for one execution of traverseCell
 	double getAndResetOneLoopCompTime() {

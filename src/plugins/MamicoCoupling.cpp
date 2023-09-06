@@ -22,7 +22,7 @@ void MamicoCoupling::beforeEventNewTimestep(ParticleContainer* particleContainer
 }
 
 void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, unsigned long simstep)        
+		DomainDecompBase* domainDecomp, unsigned long simstep)
 {
 #ifdef MAMICO_COUPLING
 	if(_couplingEnabled)
@@ -60,5 +60,5 @@ void MamicoCoupling::endStep(ParticleContainer* particleContainer,
 void MamicoCoupling::finish(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain)
 {
-	
+
 }
