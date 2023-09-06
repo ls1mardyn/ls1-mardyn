@@ -326,8 +326,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			else if(parallelisationtype == "DomainDecomposition") {
 				delete _domainDecomposition;
 				_domainDecomposition = new DomainDecomposition(
-#ifdef MAMICO_COUPLING	coupling::interface::LS1StaticCommData::getInstance().getLocalCommunicator(),
-															coupling::interface::LS1StaticCommData::getInstance().getDomainGridDecomp()
+#ifdef MAMICO_COUPLING	
+				coupling::interface::LS1StaticCommData::getInstance().getLocalCommunicator(),
+				coupling::interface::LS1StaticCommData::getInstance().getDomainGridDecomp()
 #endif
 				);
 			}
