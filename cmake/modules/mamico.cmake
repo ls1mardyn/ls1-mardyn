@@ -1,6 +1,6 @@
 option(MAMICO_COUPLING "Couple with MaMiCo" OFF)
 if (MAMICO_COUPLING)
-	message(STATUS "MaMiCo coupling enabled. mardyn will compile as library. No executable will be created.")
+	message(STATUS "MaMiCo coupling enabled. ls1 mardyn will compile as library. No executable will be created.")
 	set(MAMICO_COMPILE_DEFINITIONS MAMICO_COUPLING MDDim3)
 	set(MAMICO_SRC_DIR CACHE PATH "Root directory of the MaMiCo codebase")
     if(NOT MAMICO_SRC_DIR)
