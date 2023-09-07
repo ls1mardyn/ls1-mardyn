@@ -23,7 +23,7 @@ public:
 	//!        sets up the topology
 	DomainDecomposition();
 
-	DomainDecomposition(MPI_Comm comm, std::array<int, DIMgeom> gridSize);
+	DomainDecomposition(MPI_Comm comm, const std::array<int, DIMgeom> &gridSize);
 	// documentation see father class (DomainDecompBase.h)
 	~DomainDecomposition();
 

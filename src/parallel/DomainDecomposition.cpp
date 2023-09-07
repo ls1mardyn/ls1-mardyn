@@ -14,7 +14,7 @@ using namespace std;
 
 DomainDecomposition::DomainDecomposition() : DomainDecomposition(MPI_COMM_WORLD, {0,0,0}) {}
 
-DomainDecomposition::DomainDecomposition(MPI_Comm comm, std::array<int, DIMgeom> gridSize) : DomainDecompMPIBase(comm), _gridSize(gridSize), _coords{0} {
+DomainDecomposition::DomainDecomposition(MPI_Comm comm, const std::array<int, DIMgeom> &gridSize) : DomainDecompMPIBase(comm), _gridSize(gridSize), _coords{0} {
 	initMPIGridDims();
 }
 
