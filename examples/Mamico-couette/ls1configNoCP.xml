@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mardyn version="20100525">
+    <loglevel>INFO</loglevel>
 	<refunits type="SI">
 		<length unit="nm">0.34</length>
 		<mass unit="u">39.948</mass> 
@@ -62,7 +63,8 @@
 		</ensemble>
 		<algorithm>
 			<parallelisation type="DomainDecomposition"/>
-			<datastructure type="AutoPas">
+			<datastructure type="LinkedCells">
+			<cellsInCutoffRadius>1</cellsInCutoffRadius>
 			</datastructure>
 			<cutoffs type="CenterOfMass">
 				<radiusLJ unit="reduced">2.2</radiusLJ>
