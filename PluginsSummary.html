@@ -134,63 +134,65 @@ $(function() {
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classLoadImbalanceThroughSleepPlugin.html">LoadImbalanceThroughSleepPlugin</a>   </td><td class="markdownTableBodyNone">mpi, overlapping   </td><td class="markdownTableBodyNone">Artificially introduces a load imbalance at different plugin steps. Primarily used for testing.    </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><a class="el" href="classMamicoCoupling.html" title="Allows execution of MaMiCo code to enable coupling with MaMiCo.">MamicoCoupling</a>   </td><td class="markdownTableBodyNone">coupling, compile as library   </td><td class="markdownTableBodyNone">Allows the coupling code MaMiCo to couple with ls1. Requires ls1 to be compiled as library. This is automatically done when passing MAMICO_COUPLING=ON to cmake. This plugin always switches the ls1 thermostat off.    </td></tr>
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classMaxCheck.html">MaxCheck</a>   </td><td class="markdownTableBodyNone">limit, maximum values, overlaps, explosion   </td><td class="markdownTableBodyNone">Limit velocity and force of individual particles to maximum values to avoid overlaps and consequently exploding systems.    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classMaxWriter.html" title="Writes max values of velocity angular momentum and force to a file.">MaxWriter</a>   </td><td class="markdownTableBodyNone">sampling, maximum values, force, velocity   </td><td class="markdownTableBodyNone">Sampling maximum force and velocities values occuring in the system.    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classMettDeamon.html">MettDeamon</a>   </td><td class="markdownTableBodyNone">particle-insertion, reservoir, replenish, stationary, evaporation   </td><td class="markdownTableBodyNone">Replenish a liquid film by a particle reservoir, to attain stationary conditons in an e.g. evaporation simulation.    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classMettDeamonFeedrateDirector.html">MettDeamonFeedrateDirector</a>   </td><td class="markdownTableBodyNone">feed rate, director, reservoir, stationary, evaporation   </td><td class="markdownTableBodyNone">Directing the feed rate of <a class="el" href="classMettDeamon.html">MettDeamon</a> plugin, co-working with a special mirror type of <a class="el" href="classMirror.html">Mirror</a> plugin.    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classMirror.html">Mirror</a>   </td><td class="markdownTableBodyNone">reflection, mirror plane, wall, boundary condition   </td><td class="markdownTableBodyNone">Reflect particles at a mirror plane employing different algorithms. This can be used as a simple wall or even more complex boundary conditions.    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classMmpldWriter.html" title="Output plugin to generate a MegaMol™ Particle List Data file (*.mmpld).">MmpldWriter</a>   </td><td class="markdownTableBodyNone">visualization, particle configurations, MegaMol, mmpld, binary   </td><td class="markdownTableBodyNone">Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the binary MegaMol Particle List Data file format (MMPLD).    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classMmspdBinWriter.html">MmspdBinWriter</a>   </td><td class="markdownTableBodyNone">visualization, particle configurations, MegaMol, mmspd, binary   </td><td class="markdownTableBodyNone">Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the binary MegaMol Simple Particle Data file format (MMSPD).    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classMPI__IOCheckpointWriter.html">MPI_IOCheckpointWriter</a>   </td><td class="markdownTableBodyNone">checkpointing   </td><td class="markdownTableBodyNone">WIP, not functionable    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classMPICheckpointWriter.html">MPICheckpointWriter</a>   </td><td class="markdownTableBodyNone">checkpointing   </td><td class="markdownTableBodyNone">WIP, not functionable (no proper reader existing)    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classODF.html">ODF</a>   </td><td class="markdownTableBodyNone">orientation distribution function   </td><td class="markdownTableBodyNone">Calculates the distribution of mutual orientations between dipolar molecules and writes them into an output. Always use dipolar vector [0 0 1] in the input when using this plugin. Only tested for molecules with exactly one dipole site. Application to other molecules should be possible with minor adjustments and some testing.    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classPermittivity.html">Permittivity</a>   </td><td class="markdownTableBodyNone">todo   </td><td class="markdownTableBodyNone">Samples the relative permittivity for pure/mixed Stockmayer fluids and mixtures containing Stockmayer fluids and unpolar fluids. Requires long sampling times (i.e. several million steps). Using global thermostat is recommended.    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classPovWriter.html">PovWriter</a>   </td><td class="markdownTableBodyNone">visualization?, todo   </td><td class="markdownTableBodyNone">todo    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classPosNegComp.html">PosNegComp</a>   </td><td class="markdownTableBodyNone">component change, moving direction, visualization, particle fluxes   </td><td class="markdownTableBodyNone">Change component according to the moving direction (y axis) of individual particles. This can be used to visualize forward and backward particle fluxes.    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classRDF.html" title="This class calculates the Radial Distribution Function (RDF).">RDF</a>   </td><td class="markdownTableBodyNone">radial distribution function   </td><td class="markdownTableBodyNone">Calculate and write the radial distribution function to file. Slows down visibly, set sampling frequency &gt; 1. Optional angular resolution of the <a class="el" href="classRDF.html" title="This class calculates the Radial Distribution Function (RDF).">RDF</a> possible by choosing angular bins &gt; 1    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classRegionSampling.html">RegionSampling</a>   </td><td class="markdownTableBodyNone">sampling, region, profiles, velocity distribution function (VDF), cylinder shells   </td><td class="markdownTableBodyNone">Sampling profiles of various scalar and vector quantities within multiple regions, e.g. temperature, density, force, hydrodynamic velocity. Moreover velocity distribution function (VDF) and sampling of a density field rho(y,r) in cylinder shells, depending on a cartesian coordinate y and radius r is supported.    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classResultWriter.html" title="Writes thermodynamic properties to a file.">ResultWriter</a>   </td><td class="markdownTableBodyNone">print, macroscopic thermodynamic quantities, file   </td><td class="markdownTableBodyNone">Write macroscopic thermodynamic quantities to file, such as temperature, pressure, BetaTrans, BetaRot, cv, number of molecules and number of cavities (?).    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classSysMonOutput.html">SysMonOutput</a>   </td><td class="markdownTableBodyNone">todo   </td><td class="markdownTableBodyNone">todo    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classTestPlugin.html">TestPlugin</a>   </td><td class="markdownTableBodyNone">test   </td><td class="markdownTableBodyNone">Test correctness of plugin calls within <a class="el" href="classSimulation.html" title="Controls the simulation process.">Simulation</a>. Simpler version without XML input of <a class="el" href="classExamplePlugin.html">ExamplePlugin</a>    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classTimerWriter.html">TimerWriter</a>   </td><td class="markdownTableBodyNone">Timers, mpi, print, load balance   </td><td class="markdownTableBodyNone">Prints the average time for the specified timers as a transient. Separate output for each rank. Can be used to gather information of the load balance.    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classVectorizationTuner.html" title="VectorizationTuner class.">VectorizationTuner</a>   </td><td class="markdownTableBodyNone">todo   </td><td class="markdownTableBodyNone">todo    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classVelocityExchange.html" title="Read in XML configuration for VelocityExchange.">VelocityExchange</a>   </td><td class="markdownTableBodyNone">temperature gradient   </td><td class="markdownTableBodyNone">Swap the velocities and angular momentum of two particles. One particle is the warmest (fastest) in the specified cold region, the other one is the coldest (slowest) in the specified warm region.    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classVISWriter.html">VISWriter</a>   </td><td class="markdownTableBodyNone">visualization, particle configurations, MegaMol   </td><td class="markdownTableBodyNone">Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the deprecated *.vis MegaMol file format.    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classVTKGridWriter.html">VTKGridWriter</a>   </td><td class="markdownTableBodyNone">vtk, grid   </td><td class="markdownTableBodyNone">Write MPI rank, number of molecules in each cell in a .vtu or .pvtu file. Requires compiling with VTK=1.    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><a class="el" href="classVTKMoleculeWriter.html">VTKMoleculeWriter</a>   </td><td class="markdownTableBodyNone">vtk, visualization   </td><td class="markdownTableBodyNone">Write a .vtu or .pvtu file with the molecules for visualiziation in ParaView. Requires compiling with VTK=1.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><a class="el" href="classWallPotential.html" title="WallPotential exerts the force of a Lennard-Jones potential on the Lennard-Jones centers of particles...">WallPotential</a>   </td><td class="markdownTableBodyNone">potential, Wall, Lennard-Jones   </td><td class="markdownTableBodyNone">Exerts the force of a Lennard-Jones (9-3 or 10-4) potential on the specified components or all particles.    </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classVTKMoleculeWriter.html">VTKMoleculeWriter</a>   </td><td class="markdownTableBodyNone">vtk, visualization   </td><td class="markdownTableBodyNone">Write a .vtu or .pvtu file with the molecules for visualiziation in ParaView. Requires compiling with VTK=1.    </td></tr>
 <tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a class="el" href="classWallPotential.html" title="WallPotential exerts the force of a Lennard-Jones potential on the Lennard-Jones centers of particles...">WallPotential</a>   </td><td class="markdownTableBodyNone">potential, Wall, Lennard-Jones   </td><td class="markdownTableBodyNone">Exerts the force of a Lennard-Jones (9-3 or 10-4) potential on the specified components or all particles.    </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classXyzWriter.html" title="Writes out an ASCII file in the *.xyz-format containing coordinates of each molecule.">XyzWriter</a>   </td><td class="markdownTableBodyNone">visualization?, todo   </td><td class="markdownTableBodyNone">todo   </td></tr>
 </table>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 9 2023 10:05:32 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Sep 8 2023 08:55:40 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

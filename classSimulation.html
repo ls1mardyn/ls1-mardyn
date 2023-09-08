@@ -242,6 +242,17 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>refreshParticleIDs</b
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>keepRunning</b> ()</td></tr>
 <tr class="memdesc:aa4287cb4a8ef6d7ac4f0b0e28a0f3605"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if Simsteps or MaxWallTime are reached. <br /></td></tr>
 <tr class="separator:aa4287cb4a8ef6d7ac4f0b0e28a0f3605"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e856d7a1dd948fabfc018d71850d692"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSimulation.html#a2e856d7a1dd948fabfc018d71850d692">simulateOneTimestep</a> ()</td></tr>
+<tr class="separator:a2e856d7a1dd948fabfc018d71850d692"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05943d43c8ebd76918b356d496bcc2d3"><td class="memItemLeft" align="right" valign="top"><a id="a05943d43c8ebd76918b356d496bcc2d3" name="a05943d43c8ebd76918b356d496bcc2d3"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>preSimLoopSteps</b> ()</td></tr>
+<tr class="separator:a05943d43c8ebd76918b356d496bcc2d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d6f52a15304e6209f3c95eddf4951d6"><td class="memItemLeft" align="right" valign="top"><a id="a9d6f52a15304e6209f3c95eddf4951d6" name="a9d6f52a15304e6209f3c95eddf4951d6"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>postSimLoopSteps</b> ()</td></tr>
+<tr class="separator:a9d6f52a15304e6209f3c95eddf4951d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa62c9aa4cbfdeec74a00123007c57502"><td class="memItemLeft" align="right" valign="top"><a id="aa62c9aa4cbfdeec74a00123007c57502" name="aa62c9aa4cbfdeec74a00123007c57502"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>markSimAsDone</b> ()</td></tr>
+<tr class="separator:aa62c9aa4cbfdeec74a00123007c57502"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -844,12 +855,23 @@ For the integration, a seperate integration object is used. This method is writt
 <li>The iterator should now have finished everything to be done in this time step, so the macroscopic values can be calculated</li>
 <li>velocity and angular momentum have to be scaled </li>
 </ul>
-<p >&lt; timer for the entire simulation loop (synced)</p>
-<p >&lt; timer for decomposition: sub-timer of loopTimer</p>
-<p >&lt; timer for computation: sub-timer of loopTimer</p>
-<p >&lt; timer for io in simulation loop: sub-timer of loopTimer</p>
-<p >&lt; timer for force calculation: sub-timer of computationTimer</p>
-<p >&lt; timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer</p>
+
+</div>
+</div>
+<a id="a2e856d7a1dd948fabfc018d71850d692" name="a2e856d7a1dd948fabfc018d71850d692"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e856d7a1dd948fabfc018d71850d692">&#9670;&nbsp;</a></span>simulateOneTimestep()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Simulation::simulateOneTimestep </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 <dl class="todo"><dt><b><a class="el" href="todo.html#_todo000058">Todo:</a></b></dt><dd>the number of particles per component stored in components has to be updated here in case we insert/remove particles </dd></dl>
 
 </div>
@@ -924,7 +946,7 @@ For the integration, a seperate integration object is used. This method is writt
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 9 2023 10:05:35 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Sep 8 2023 08:55:44 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

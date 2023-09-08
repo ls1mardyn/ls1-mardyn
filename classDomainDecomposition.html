@@ -65,6 +65,8 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
+<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="classDomainDecomposition-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">DomainDecomposition Class Reference</div></div>
 </div><!--header-->
@@ -92,6 +94,9 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>DomainDecomposition</b> ()</td></tr>
 <tr class="memdesc:a6a63802fa75ed5692d3a802bbb0f1946"><td class="mdescLeft">&#160;</td><td class="mdescRight">The constructor has to determine the own rank and the number of neighbours and sets up the topology. <br /></td></tr>
 <tr class="separator:a6a63802fa75ed5692d3a802bbb0f1946"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2b227b8437ff7d61eb309d36a788230"><td class="memItemLeft" align="right" valign="top"><a id="aa2b227b8437ff7d61eb309d36a788230" name="aa2b227b8437ff7d61eb309d36a788230"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>DomainDecomposition</b> (MPI_Comm comm, const std::array&lt; int, DIMgeom &gt; &amp;gridSize)</td></tr>
+<tr class="separator:aa2b227b8437ff7d61eb309d36a788230"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4da5e28631b20b8a676caf624e315939"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecomposition.html#a4da5e28631b20b8a676caf624e315939">readXML</a> (<a class="el" href="classXMLfileUnits.html">XMLfileUnits</a> &amp;xmlconfig) override</td></tr>
 <tr class="memdesc:a4da5e28631b20b8a676caf624e315939"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read in XML configuration for <a class="el" href="classDomainDecomposition.html" title="Basic domain decomposition based parallelisation, dividing the domain into #procs equal sized cuboids...">DomainDecomposition</a> and all its included objects.  <a href="classDomainDecomposition.html#a4da5e28631b20b8a676caf624e315939">More...</a><br /></td></tr>
 <tr class="separator:a4da5e28631b20b8a676caf624e315939"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -123,6 +128,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>initCommunicationPart
 <tr class="memitem:a49069fb4fb653661835890c3f91572c6"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classCommunicationPartner.html">CommunicationPartner</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecomposition.html#a49069fb4fb653661835890c3f91572c6">getNeighboursFromHaloRegion</a> (<a class="el" href="classDomain.html">Domain</a> *domain, const <a class="el" href="structHaloRegion.html">HaloRegion</a> &amp;haloRegion, double cutoff) override</td></tr>
 <tr class="separator:a49069fb4fb653661835890c3f91572c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classDomainDecompMPIBase"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classDomainDecompMPIBase')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classDomainDecompMPIBase.html">DomainDecompMPIBase</a></td></tr>
+<tr class="memitem:ac588f83982ea27c645dcd286c1b51cb9 inherit pub_methods_classDomainDecompMPIBase"><td class="memItemLeft" align="right" valign="top"><a id="ac588f83982ea27c645dcd286c1b51cb9" name="ac588f83982ea27c645dcd286c1b51cb9"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>DomainDecompMPIBase</b> (MPI_Comm comm)</td></tr>
+<tr class="separator:ac588f83982ea27c645dcd286c1b51cb9 inherit pub_methods_classDomainDecompMPIBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a058b252cd9b375a9f49a252581b28c2c inherit pub_methods_classDomainDecompMPIBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#a058b252cd9b375a9f49a252581b28c2c">barrier</a> () const override</td></tr>
 <tr class="memdesc:a058b252cd9b375a9f49a252581b28c2c inherit pub_methods_classDomainDecompMPIBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">synchronizes all processes  <a href="classDomainDecompMPIBase.html#a058b252cd9b375a9f49a252581b28c2c">More...</a><br /></td></tr>
 <tr class="separator:a058b252cd9b375a9f49a252581b28c2c inherit pub_methods_classDomainDecompMPIBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -260,8 +268,11 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>updateSendLeavingWith
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>sendLeavingWithCopies</b> () const</td></tr>
 <tr class="separator:a1ce40c3c75b94f03fc4e06452e6d3093 inherit pub_methods_classDomainDecompBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:a7818125525f32318477fbf1393ab9166"><td class="memItemLeft" align="right" valign="top"><a id="a7818125525f32318477fbf1393ab9166" name="a7818125525f32318477fbf1393ab9166"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>initMPIGridDims</b> ()</td></tr>
+<tr class="separator:a7818125525f32318477fbf1393ab9166"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classDomainDecompMPIBase"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classDomainDecompMPIBase')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classDomainDecompMPIBase.html">DomainDecompMPIBase</a></td></tr>
 <tr class="memitem:a59a92f7bf66f227e00ae83ea1d51e3a3 inherit pro_methods_classDomainDecompMPIBase"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompMPIBase.html#a59a92f7bf66f227e00ae83ea1d51e3a3">prepareNonBlockingStageImpl</a> (<a class="el" href="classParticleContainer.html">ParticleContainer</a> *moleculeContainer, <a class="el" href="classDomain.html">Domain</a> *domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates=false)</td></tr>
 <tr class="separator:a59a92f7bf66f227e00ae83ea1d51e3a3 inherit pro_methods_classDomainDecompMPIBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -286,6 +297,17 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>populateHaloLayerWith
 <tr class="memitem:ac831452bf30cac442d8b0901b3e28e3f inherit pro_methods_classDomainDecompBase"><td class="memItemLeft" align="right" valign="top"><a id="ac831452bf30cac442d8b0901b3e28e3f" name="ac831452bf30cac442d8b0901b3e28e3f"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>populateHaloLayerWithCopiesDirect</b> (const <a class="el" href="structHaloRegion.html">HaloRegion</a> &amp;haloRegion, <a class="el" href="classParticleContainer.html">ParticleContainer</a> *moleculeContainer, bool positionCheck=true) const</td></tr>
 <tr class="separator:ac831452bf30cac442d8b0901b3e28e3f inherit pro_methods_classDomainDecompBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
+Protected Attributes</h2></td></tr>
+<tr class="memitem:a2e2b53493fbd9047f24892fb48e6bd95"><td class="memItemLeft" align="right" valign="top"><a id="a2e2b53493fbd9047f24892fb48e6bd95" name="a2e2b53493fbd9047f24892fb48e6bd95"></a>
+std::array&lt; int, DIMgeom &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>_gridSize</b></td></tr>
+<tr class="memdesc:a2e2b53493fbd9047f24892fb48e6bd95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of processes in each dimension of the MPI process grid. <br /></td></tr>
+<tr class="separator:a2e2b53493fbd9047f24892fb48e6bd95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6054039903bf115754c1d8fa78091f91"><td class="memItemLeft" align="right" valign="top"><a id="a6054039903bf115754c1d8fa78091f91" name="a6054039903bf115754c1d8fa78091f91"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>_coords</b> [DIMgeom]</td></tr>
+<tr class="memdesc:a6054039903bf115754c1d8fa78091f91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coordinate of the process in the MPI process grid. <br /></td></tr>
+<tr class="separator:a6054039903bf115754c1d8fa78091f91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_classDomainDecompMPIBase"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classDomainDecompMPIBase')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classDomainDecompMPIBase.html">DomainDecompMPIBase</a></td></tr>
 <tr class="memitem:a758eeaebd74d2711da60cbc79e00ef6b inherit pro_attribs_classDomainDecompMPIBase"><td class="memItemLeft" align="right" valign="top"><a id="a758eeaebd74d2711da60cbc79e00ef6b" name="a758eeaebd74d2711da60cbc79e00ef6b"></a>
 MPI_Datatype&#160;</td><td class="memItemRight" valign="bottom"><b>_mpiParticleType</b></td></tr>
@@ -816,7 +838,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 9 2023 10:05:33 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Sep 8 2023 08:55:41 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
