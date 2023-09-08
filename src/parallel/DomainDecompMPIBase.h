@@ -30,6 +30,7 @@ struct HaloRegion;
 class DomainDecompMPIBase: public DomainDecompBase {
 public:
 	DomainDecompMPIBase();
+	DomainDecompMPIBase(MPI_Comm comm);
 	virtual ~DomainDecompMPIBase();
 
 	// documentation see father class (DomainDecompBase.h)
