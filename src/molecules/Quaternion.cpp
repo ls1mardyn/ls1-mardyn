@@ -1,6 +1,8 @@
 #include "Quaternion.h"
 #include <cmath>
 
+#define VECTOR3_ZERO ((std::array<double, 3>){ 0, 0, 0 })
+
 Quaternion::Quaternion(const double& alpha_rad, const std::array<double,3>& n)
 {
 	// normalize rotation axis vector n
@@ -41,44 +43,48 @@ void Quaternion::multiply_left(const Quaternion& q) {
 }
 
 std::array<double, 3> Quaternion::rotate(const std::array<double, 3>& d) const {
-	std::array<double, 3> drot;
-	double ww = m_qw*m_qw;
-	double xx = m_qx*m_qx;
-	double yy = m_qy*m_qy;
-	double zz = m_qz*m_qz;
-	double wx = m_qw*m_qx;
-	double wy = m_qw*m_qy;
-	double wz = m_qw*m_qz;
-	double xy = m_qx*m_qy;
-	double xz = m_qx*m_qz;
-	double yz = m_qy*m_qz;
-	//          1-2*(yy+zz)
-	drot[0] = (ww+xx-yy-zz)*d[0] + 2.*(xy-wz)*d[1] + 2.*(wy+xz)*d[2];
-	//                            1-2*(xx+zz)
-	drot[1] = 2.*(wz+xy)*d[0] + (ww-xx+yy-zz)*d[1] + 2.*(yz-wx)*d[2];
-	//                                              1-2*(xx+yy)
-	drot[2] = 2.*(xz-wy)*d[0] + 2.*(wx+yz)*d[1] + (ww-xx-yy+zz)*d[2];
+	std::array<double, 3> drot VECTOR3_ZERO;
+	if(VECTOR3_ZERO != d) { // GH#267
+		double ww = m_qw*m_qw;
+		double xx = m_qx*m_qx;
+		double yy = m_qy*m_qy;
+		double zz = m_qz*m_qz;
+		double wx = m_qw*m_qx;
+		double wy = m_qw*m_qy;
+		double wz = m_qw*m_qz;
+		double xy = m_qx*m_qy;
+		double xz = m_qx*m_qz;
+		double yz = m_qy*m_qz;
+		//          1-2*(yy+zz)
+		drot[0] = (ww+xx-yy-zz)*d[0] + 2.*(xy-wz)*d[1] + 2.*(wy+xz)*d[2];
+		//                            1-2*(xx+zz)
+		drot[1] = 2.*(wz+xy)*d[0] + (ww-xx+yy-zz)*d[1] + 2.*(yz-wx)*d[2];
+		//                                              1-2*(xx+yy)
+		drot[2] = 2.*(xz-wy)*d[0] + 2.*(wx+yz)*d[1] + (ww-xx-yy+zz)*d[2];
+	}
 	return drot;
 }
 
 std::array<double, 3> Quaternion::rotateinv(const std::array<double, 3>& d) const {
-	std::array<double, 3> drot;
-	double ww = m_qw*m_qw;
-	double xx = m_qx*m_qx;
-	double yy = m_qy*m_qy;
-	double zz = m_qz*m_qz;
-	double wx = m_qw*m_qx;
-	double wy = m_qw*m_qy;
-	double wz = m_qw*m_qz;
-	double xy = m_qx*m_qy;
-	double xz = m_qx*m_qz;
-	double yz = m_qy*m_qz;
-	//          1-2*(yy+zz)
-	drot[0] = (ww+xx-yy-zz)*d[0] + 2.*(xy+wz)*d[1] + 2.*(xz-wy)*d[2];
-	//                            1-2*(xx+zz)
-	drot[1] = 2.*(xy-wz)*d[0] + (ww-xx+yy-zz)*d[1] + 2.*(yz+wx)*d[2];
-	//                                              1-2*(xx+yy)
-	drot[2] = 2.*(xz+wy)*d[0] + 2.*(yz-wx)*d[1] + (ww-xx-yy+zz)*d[2];
+	std::array<double, 3> drot VECTOR3_ZERO;
+	if (VECTOR3_ZERO != d) { // GH#267
+		double ww = m_qw*m_qw;
+		double xx = m_qx*m_qx;
+		double yy = m_qy*m_qy;
+		double zz = m_qz*m_qz;
+		double wx = m_qw*m_qx;
+		double wy = m_qw*m_qy;
+		double wz = m_qw*m_qz;
+		double xy = m_qx*m_qy;
+		double xz = m_qx*m_qz;
+		double yz = m_qy*m_qz;
+		//          1-2*(yy+zz)
+		drot[0] = (ww+xx-yy-zz)*d[0] + 2.*(xy+wz)*d[1] + 2.*(xz-wy)*d[2];
+		//                            1-2*(xx+zz)
+		drot[1] = 2.*(xy-wz)*d[0] + (ww-xx+yy-zz)*d[1] + 2.*(yz+wx)*d[2];
+		//                                              1-2*(xx+yy)
+		drot[2] = 2.*(xz+wy)*d[0] + 2.*(yz-wx)*d[1] + (ww-xx-yy+zz)*d[2];
+	}
 	return drot;
 }
 
@@ -92,6 +98,11 @@ std::array<double, 3> Quaternion::rotateinv(const std::array<double, 3>& d) cons
  */
 
 void Quaternion::differentiate(const std::array<double, 3>& w, Quaternion& dqdt) const {
+	if(VECTOR3_ZERO == w) { // GH#267
+		dqdt.m_qw = 0; dqdt.m_qx = 0; dqdt.m_qy = 0; dqdt.m_qz = 0;
+		return;
+	}
+
 	dqdt.m_qw = .5 * ( -m_qx*w[0] - m_qy*w[1] - m_qz*w[2] );
 	dqdt.m_qx = .5 * (  m_qw*w[0] - m_qz*w[1] + m_qy*w[2] );
 	dqdt.m_qy = .5 * (  m_qz*w[0] + m_qw*w[1] - m_qx*w[2] );
