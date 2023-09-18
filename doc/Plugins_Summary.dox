@@ -13,6 +13,7 @@ CavityWriter | cavity, output, profile, grid | Sets up a grid of pseudo-molecule
 CheckpointWriter | checkpoint, legacy | (Legacy) Checkpoint writer. Hint: use <type>binary</type> to speed-up. See also MPICheckpointWriter and MPI_IOCheckpointWriter.
 COMaligner | alignment, particleContainer utility, visualization | Calculates Center of Mass (COM) of all particles and aligns it with center of simulation box. Dimension/frequency/speed of alignment can be controlled via XML.
 CommunicationPartnerWriter | mpi, communication, output, debugging | Prints the CommunicationPartners for each rank in a separate file.
+CsvWriter | output, visualization, general | Output particle names and positions as a .csv-file separated by ",". Mostly copied from XyzWriter and should replace it BUT is still a work in progress (TODO).
 DecompWriter | mpi, print | Writes information on the MPI Domain Decomposition. For each rank the boxmin and boxmax is printed.
 DensityControl | density, composition, control, checkpoint | Establishes the specified target partial densities of all components within a specified region.
 DensityProfileWriter | todo | todo
