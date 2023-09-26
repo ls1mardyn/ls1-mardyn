@@ -569,8 +569,6 @@ public:
 	void markSimAsDone();
 
 private:
-	/*** @brief Various timers used to keep track of simulation performance. */
-	Timer& _loopTimer, _decompositionTimer, _computationTimer, _perStepIoTimer, _forceCalculationTimer, _mpiOMPCommunicationTimer;
 	// stores the timing info for the previous load. This is used for the load calculation and the rebalancing.
 	double previousTimeForLoad = 0.;
 	/*** @brief Act as safeguards for the preSimLoopSteps(), simulateOneTimestep() and postSimLoopSteps() functions.
