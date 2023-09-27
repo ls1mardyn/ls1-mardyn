@@ -25,6 +25,7 @@ public:
 	void setGlobalWall(DimensionType dimension, BoundaryType value);
 	BoundaryType getGlobalWall(int dimension) const;
 	bool hasInvalidBoundary() const;
+	bool hasNonPeriodicBoundary() const;
 
 	void setGlobalRegion(double* start, double* end);
 	void setLocalRegion(double* start, double* end);

@@ -97,6 +97,16 @@ bool BoundaryHandler::hasInvalidBoundary() const
 		_boundaries.at(DimensionType::NEGZ) == BoundaryType::ERROR;
 }
 
+bool BoundaryHandler::hasNonPeriodicBoundary() const
+{
+	return _boundaries.at(DimensionType::POSX) != BoundaryType::PERIODIC ||
+		_boundaries.at(DimensionType::POSY) != BoundaryType::PERIODIC ||
+		_boundaries.at(DimensionType::POSZ) != BoundaryType::PERIODIC ||
+		_boundaries.at(DimensionType::NEGX) != BoundaryType::PERIODIC ||
+		_boundaries.at(DimensionType::NEGY) != BoundaryType::PERIODIC ||
+		_boundaries.at(DimensionType::NEGZ) != BoundaryType::PERIODIC;
+}
+
 bool BoundaryHandler::isOuterWall(DimensionType dimension) const
 {
 	return _isOuterWall.at(dimension);
