@@ -292,13 +292,24 @@ public:
 	}
 
 	void writeBinary(std::ostream& ostrm) const override {
+		unsigned int cid = _component->ID() + 1;
+		double zero = 0.0;
+		double one = 1.0;
 		ostrm.write(reinterpret_cast<const char*>(&_id), 8);
+		ostrm.write(reinterpret_cast<const char*>(&cid), 4);
 		ostrm.write(reinterpret_cast<const char*>(&(_r[0])), 8);
 		ostrm.write(reinterpret_cast<const char*>(&(_r[1])), 8);
 		ostrm.write(reinterpret_cast<const char*>(&(_r[2])), 8);
 		ostrm.write(reinterpret_cast<const char*>(&(_v[0])), 8);
 		ostrm.write(reinterpret_cast<const char*>(&(_v[1])), 8);
 		ostrm.write(reinterpret_cast<const char*>(&(_v[2])), 8);
+		ostrm.write(reinterpret_cast<const char*>(&one), 8);   // qw
+		ostrm.write(reinterpret_cast<const char*>(&zero), 8);  // qx
+		ostrm.write(reinterpret_cast<const char*>(&zero), 8);  // qy
+		ostrm.write(reinterpret_cast<const char*>(&zero), 8);  // qz
+		ostrm.write(reinterpret_cast<const char*>(&zero), 8);  // Lx
+		ostrm.write(reinterpret_cast<const char*>(&zero), 8);  // Ly
+		ostrm.write(reinterpret_cast<const char*>(&zero), 8);  // Lz
 	}
 
 	void clearFM() override {
