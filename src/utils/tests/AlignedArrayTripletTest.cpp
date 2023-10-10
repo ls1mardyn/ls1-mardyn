@@ -8,7 +8,7 @@
 #include "AlignedArrayTripletTest.h"
 #include "../AlignedArrayTriplet.h"
 
-#include <stdint.h>
+#include <cstdint>
 #include <vector>
 
 

@@ -10,10 +10,10 @@
 
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 
-#include <stdint.h>
+#include <cstdint>
 #include <vector>
 
-typedef ConcatenatedAlignedArrayRMM<float, float, uint64_t>::Quantity_t Quantity_t;
+typedef ConcatenatedAlignedArrayRMM<float, float, std::uint64_t>::Quantity_t Quantity_t;
 
 TEST_SUITE_REGISTRATION(ConcatenatedAlignedArrayRMMTest);
 
@@ -30,14 +30,14 @@ void ConcatenatedAlignedArrayRMMTest::testAlignment() {
 
 	for (int i = 0; i < 11; ++i) {
 		const size_t length = i;
-		ConcatenatedAlignedArrayRMM<float, float, uint64_t> a(length);
+		ConcatenatedAlignedArrayRMM<float, float, std::uint64_t> a(length);
 		float * rx = a.begin_calc(Quantity_t::RX);
 		float * ry = a.begin_calc(Quantity_t::RY);
 		float * rz = a.begin_calc(Quantity_t::RZ);
 		float * vx = a.begin_accum(Quantity_t::VX);
 		float * vy = a.begin_accum(Quantity_t::VY);
 		float * vz = a.begin_accum(Quantity_t::VZ);
-		uint64_t * uid = a.begin_uid(Quantity_t::UID);
+		std::uint64_t * uid = a.begin_uid(Quantity_t::UID);
 
 		ASSERT_EQUAL(static_cast<int>(reinterpret_cast<intptr_t>(rx) % CACHE_LINE_SIZE), 0);
 		ASSERT_EQUAL(static_cast<int>(reinterpret_cast<intptr_t>(ry) % VCP_ALIGNMENT), 0);
@@ -50,7 +50,7 @@ void ConcatenatedAlignedArrayRMMTest::testAlignment() {
 }
 
 void ConcatenatedAlignedArrayRMMTest::testGetters() {
-	ConcatenatedAlignedArrayRMM<float, float, uint64_t> a(5);
+	ConcatenatedAlignedArrayRMM<float, float, std::uint64_t> a(5);
 	for (int i = static_cast<int>(Quantity_t::RX); i < static_cast<int>(Quantity_t::VX); ++i) {
 		Quantity_t j = static_cast<Quantity_t>(i);
 		a.get_calc(j,0) = i;
@@ -70,7 +70,7 @@ void ConcatenatedAlignedArrayRMMTest::testGetters() {
 	ASSERT_EQUAL(13ul, a.get_uid(Quantity_t::UID, 0));
 
 	// try out the const methods
-	const ConcatenatedAlignedArrayRMM<float, float, uint64_t> & b = a;
+	const ConcatenatedAlignedArrayRMM<float, float, std::uint64_t> & b = a;
 	ASSERT_DOUBLES_EQUAL(0.0, b.get_calc(Quantity_t::RX, 0), 1e-10);
 	ASSERT_DOUBLES_EQUAL(1.0, b.get_calc(Quantity_t::RY, 0), 1e-10);
 	ASSERT_DOUBLES_EQUAL(2.0, b.get_calc(Quantity_t::RZ, 0), 1e-10);
@@ -81,7 +81,7 @@ void ConcatenatedAlignedArrayRMMTest::testGetters() {
 }
 
 void ConcatenatedAlignedArrayRMMTest::testZero() {
-	ConcatenatedAlignedArrayRMM<float, float, uint64_t> a(8);
+	ConcatenatedAlignedArrayRMM<float, float, std::uint64_t> a(8);
 	const int qbegin = static_cast<int>(Quantity_t::RX);
 	const int qmid = static_cast<int>(Quantity_t::VX);
 	const int qend = static_cast<int>(Quantity_t::UID);
@@ -180,7 +180,7 @@ void ConcatenatedAlignedArrayRMMTest::testAppending() {
 		z.push_back(static_cast<float>(i+2));
 	}
 
-	ConcatenatedAlignedArrayRMM<float, float, uint64_t> A;
+	ConcatenatedAlignedArrayRMM<float, float, std::uint64_t> A;
 	for(int i = 0; i < 17; ++i) {
 		std::array<float,3> val = {
 			static_cast<float>(i),
@@ -201,7 +201,7 @@ void ConcatenatedAlignedArrayRMMTest::testAppending() {
 	float * vx = A.begin_accum(Quantity_t::VX);
 	float * vy = A.begin_accum(Quantity_t::VY);
 	float * vz = A.begin_accum(Quantity_t::VZ);
-	uint64_t * uid = A.begin_uid(Quantity_t::UID);
+	std::uint64_t * uid = A.begin_uid(Quantity_t::UID);
 
 	ASSERT_EQUAL(static_cast<int>(reinterpret_cast<intptr_t>(rx) % CACHE_LINE_SIZE), 0);
 	ASSERT_EQUAL(static_cast<int>(reinterpret_cast<intptr_t>(ry) % VCP_ALIGNMENT), 0);
@@ -223,7 +223,7 @@ void ConcatenatedAlignedArrayRMMTest::testIncreasingStorage() {
 		z.push_back(static_cast<float>(i+2));
 	}
 
-	ConcatenatedAlignedArrayRMM<float, float, uint64_t> A;
+	ConcatenatedAlignedArrayRMM<float, float, std::uint64_t> A;
 	for(int i = 0; i < 11; ++i) {
 		std::array<float, 3> val = {
 			static_cast<float>(i),

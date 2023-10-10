@@ -64,6 +64,7 @@
 #define PP_GWP20                                  49        /*         20-year global warming potential                          */
 #define PP_GWP500                                 50        /*         500-year global warming potential                         */
 #define PP_GMASS                                  51        /* J/kg    Mass specific Gibbs energy                                */
+#define PP_GMASS_MS2                              512       /* J/kg    Chemical potential in accordance with ms2                     */
 #define PP_HELMHOLTZMASS                          52        /* J/kg    Mass specific Helmholtz energy                            */
 #define PP_HELMHOLTZMOLAR                         53        /* J/mol   Molar specific Helmholtz energy                           */
 #define PP_HH                                     54        /*         Health hazard                                             */

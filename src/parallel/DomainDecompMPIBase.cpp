@@ -24,8 +24,10 @@
 #include "parallel/CollectiveCommunicationNonBlocking.h"
 
 
-DomainDecompMPIBase::DomainDecompMPIBase() :
-		_comm(MPI_COMM_WORLD) {
+DomainDecompMPIBase::DomainDecompMPIBase() : DomainDecompMPIBase(MPI_COMM_WORLD) {}
+
+DomainDecompMPIBase::DomainDecompMPIBase(MPI_Comm comm) :
+		_comm(comm) {
 #ifndef MARDYN_AUTOPAS
 	_neighbourCommunicationScheme = std::make_unique<IndirectNeighbourCommunicationScheme>(new FullShell());
 #else

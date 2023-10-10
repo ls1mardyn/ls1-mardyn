@@ -181,15 +181,14 @@ public:
 	 */
 	void simulate();
 
-
 	/** @brief call plugins every nth-simstep
 	 *
 	 * The present method serves as a redirection to the actual plugins.
 	 * That includes
-     * a) particular plugin objects included in _plugins,
+	 * a) particular plugin objects included in _plugins,
 	 *
 	 * @param[in]  simstep timestep of the plugins
-     */
+	 */
 	void pluginEndStepCall(unsigned long simstep);
 
 	/** @brief clean up simulation */
@@ -299,7 +298,7 @@ public:
 	//! get Planck constant
 	double getH() {return h;}
 	//! set Planck constant
-    void setH(double h_extern) {h = h_extern;}
+	void setH(double h_extern) {h = h_extern;}
 
 private:
 
@@ -338,10 +337,10 @@ private:
 
 	unsigned long _numberOfTimesteps;
 public:
-    unsigned long getNumberOfTimesteps() const;
+	unsigned long getNumberOfTimesteps() const;
 
 private:
-    /**< Number of discrete time steps to be performed in the simulation */
+	/**< Number of discrete time steps to be performed in the simulation */
 
 	unsigned long _simstep;             /**< Actual time step in the simulation. */
 
@@ -407,9 +406,9 @@ private:
 #endif
 public:
 #ifdef TASKTIMINGPROFILE
-    TaskTimingProfiler* getTaskTimingProfiler(){
-        return _taskTimingProfiler;
-    }
+	TaskTimingProfiler* getTaskTimingProfiler(){
+		return _taskTimingProfiler;
+	}
 #endif
 	//! computational time for one execution of traverseCell
 	double getAndResetOneLoopCompTime() {
@@ -456,13 +455,20 @@ public:
 
 	CellProcessor *getCellProcessor() const;
 
-	/** @brief Refresh particle IDs to continuous numbering*/
+	/** @brief Refresh particle IDs to continuous numbering starting at zero*/
 	void refreshParticleIDs();
 
 	/** @brief Checks if Simsteps or MaxWallTime are reached */
 	bool keepRunning();
 
 private:
+
+	/**
+	 * Parse everything in the XML path </mardyn/simulation/options/option>
+	 * and store it in _miscOptions.
+	 * @param xmlconfig
+	 */
+	void parseMiscOptions(XMLfileUnits& xmlconfig);
 
 	/// the timer used for the load calculation.
 	Timer* _timerForLoad{nullptr};
@@ -517,16 +523,63 @@ private:
 	unsigned long _nWriteFreqGlobalEnergy;
 	std::string _globalEnergyLogFilename;
 
-	/** Prepare start options, affecting behavior of method prepare_start()
-	 * Options
-	 * -------
-	 * refreshIDs: Refresh particle IDs to continuous numbering by method refreshParticleIDs()
+	/**
+	 * Mechanism to easily add arbitrary options via the XML path <mardyn/simulation/options/option>
+	 * Any option is identified via the label "name"
 	 *
+	 * @note Currently, only bool options are supported.
+	 *
+	 * Example:
+	 *   <option name="refreshIDs">true</option>
 	 */
-	struct PrepareStartOptions {
-		bool refreshIDs;
-	} _prepare_start_opt;
+	std::map<std::string, bool> _miscOptions;
 
 	FixedSizeQueue<double> _lastTraversalTimeHistory;
+
+
+public:
+	/*** @brief Performs one time step. Is called as many times as timesteps are needed for the full simulation.
+	 * 
+	 * In library mode, this function is used to externally control the simulation. In normal usage, this function is 
+	 * only called in the simulate() function, within the simulation loop.
+	 * preSimLoopSteps() needs to be called before this function is called.
+	*/
+	void simulateOneTimestep();
+
+	/*** @brief Performs necessary setup before the first timestep, which includes initializing all timers. */
+	void preSimLoopSteps();
+
+	/*** @brief Performs immediate cleanup after the simulation ends.
+	 * 
+	 * The final checkpoint is written, the final plugin call is made, and all timers are stopped. 
+	 * Relevant timer information is printed.
+	 */
+	void postSimLoopSteps();
+
+	/*** @brief Used to flag simulation as finished and to proceed to cleanup. Only used when ls1 is compiled and used
+	 * as a library, and not in normal usage.
+	 * 
+	 * Normally, the simulation is controlled entirely by the simulate() function, which determines whether the 
+	 * simulation is complete by checking the keepRunning() function.
+	 * However in library mode, it is expected that the external code will manually control the simulation by calling
+	 * simulateOneTimeStep(). As such, the keepRunning() function will never be called, and the exit conditions will 
+	 * never be checked on ls1's side. \n
+	 * This function acts as a way for the external code to perform some cleanup steps, before ending the simulation
+	 * on the ls1 side. For now, it only sets the simulationDone boolean to true, which is used as a check within
+	 * the postSimLoopSteps() function.
+	 * */
+	void markSimAsDone();
+
+private:
+	// stores the timing info for the previous load. This is used for the load calculation and the rebalancing.
+	double previousTimeForLoad = 0.;
+	/*** @brief Act as safeguards for the preSimLoopSteps(), simulateOneTimestep() and postSimLoopSteps() functions.
+	 * 
+	 * These three functions are public, since they need to be reachable by external code when ls1 is compiled
+	 * as a library. However it is possible to call them out of order, causing unexpected behaviour. As such,
+	 * these bool values help keep track of the simulation and can be used to verify the state the simulation is in. 
+	 */
+	bool preSimLoopStepsDone = false, simulationDone = false, postSimLoopStepsDone = false;
+
 };
 #endif /*SIMULATION_H_*/

@@ -12,8 +12,6 @@
 #include <cstring>
 #include <cstdio>
 
-using namespace Log;
-
 bool fileExists(const char* fileName) {
 	struct stat status;
 	int retVal = stat(fileName, &status);
