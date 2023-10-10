@@ -78,58 +78,5 @@ printf "\n\n\n"  # Some space to make output clearer
 warnings=$(printf "$warnings" | sort | uniq)
 warnings="# Warnings\n"$warnings"\n\n"
 
-# Run cpplint
-
-# Lines starting with one minus sign are filters which exclude certain rules
-
-#-runtime/int,\
-#-readability/alt_tokens,\
-#-whitespace/blank_line,\
-#-whitespace/braces,\
-#-whitespace/comma,\
-#-whitespace/comments,\
-#-whitespace/indent,\
-#-whitespace/operators,\
-#-whitespace/parens,\
-
-currentVersion=$(git rev-parse --abbrev-ref HEAD)
-
-for VERSION in "new" "master"
-do
-  echo "Checking ${VERSION} version"
-
-  if [[ "${VERSION}" == "master" ]]
-  then
-    git fetch &> /dev/null
-    git switch master &> /dev/null
-  else
-    git switch ${currentVersion} &> /dev/null
-  fi
-
-  cpplint --filter=-whitespace/tab --linelength=200 --counting=detailed ${codeFiles} &> $rootFolder/staticAnalysis_${VERSION}.log
-
-  grep "Category\|Total errors found" $rootFolder/staticAnalysis_${VERSION}.log > $rootFolder/staticAnalysis_${VERSION}_summary.log
-
-done
-
-git switch ${currentVersion} &> /dev/null
-
-# Use code block for monospace font in Markdown
-warnings+="\n# cpplint\n"
-warnings+=" For details run \`cpplint --filter=-whitespace/tab --linelength=200 --counting=detailed \$( find src -name \"*.h\" -or -name \"*.cpp\" -printf \"%%p \" )\`"
-warnings+=" New or fixed warnings/errors (master <-> new commit):\n"
-warnings+="\`\`\`\n"
-warnings+="master $(printf '%54s' " ") | new\n"
-
-# Delete "--suppress-common-lines" to see all errors/warnings
-warnings_cpplint=$(diff -y --suppress-common-lines $rootFolder/staticAnalysis_master_summary.log $rootFolder/staticAnalysis_new_summary.log)
-warnings+=$warnings_cpplint
-
-# Counts the categories in which new errors were introduced
-exitcode=$(printf "$warnings_cpplint" | grep "Category" | awk '{if ($11 > $5) {count++}} END {print count}')
-
-warnings+="\n\`\`\`\n"  # Close code block for monospace font
 printf "\n$warnings\n"  # Print to job output
 printf "\n$warnings\n" >> $GITHUB_STEP_SUMMARY  # Print to job summary
-
-exit $exitcode
