@@ -146,12 +146,12 @@ const char *const&#160;</td><td class="memItemRight" valign="bottom"><b>SUPPRESS
 <p >using <a class="el" href="classoptparse_1_1OptionParser.html">optparse::OptionParser</a>;</p>
 <p ><a class="el" href="classoptparse_1_1OptionParser.html">OptionParser</a> parser = OptionParser() .description("just an example");</p>
 <p >parser.add_option("-f", "--file") .dest("filename") .help("write report to FILE") .metavar("FILE"); parser.add_option("-q", "--quiet") .action("store_false") .dest("verbose") .set_default("1") .help("don't print status messages to stdout");</p>
-<p ><a class="el" href="classoptparse_1_1Values.html">optparse::Values</a> options = parser.parse_args(argc, argv); vector&lt;string&gt; args = parser.args();</p>
-<p >if (options.get("verbose")) cout &lt;&lt; options["filename"] &lt;&lt; endl; </p>
+<p ><a class="el" href="classoptparse_1_1Values.html">optparse::Values</a> options = parser.parse_args(argc, argv); std::vector&lt;std::string&gt; args = parser.args();</p>
+<p >if (options.get("verbose")) cout &lt;&lt; options["filename"] &lt;&lt; std::endl; </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:56 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:43 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

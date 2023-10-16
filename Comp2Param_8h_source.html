@@ -84,8 +84,8 @@ $(function() {
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>    <span class="keyword">public</span>:</div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno"><a class="line" href="classComp2Param.html#afd59b275447bfc4c81bd739240ed9031">   18</a></span>        <a class="code hl_function" href="classComp2Param.html#afd59b275447bfc4c81bd739240ed9031">Comp2Param</a>() : m_numcomp(0), m_ssparatbl(0,0) {}</div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="classComp2Param.html#af91cd0729b73def2f1e538eb91c92959">   23</a></span>        <a class="code hl_function" href="classComp2Param.html#af91cd0729b73def2f1e538eb91c92959">Comp2Param</a>(<span class="keyword">const</span> std::vector&lt;Component&gt;&amp; components, </div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>                   <span class="keyword">const</span> std::vector&lt;double&gt;&amp; mixcoeff, </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="classComp2Param.html#af91cd0729b73def2f1e538eb91c92959">   23</a></span>        <a class="code hl_function" href="classComp2Param.html#af91cd0729b73def2f1e538eb91c92959">Comp2Param</a>(<span class="keyword">const</span> std::vector&lt;Component&gt;&amp; components,</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>                   <span class="keyword">const</span> std::vector&lt;double&gt;&amp; mixcoeff,</div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>                   <span class="keywordtype">double</span> epsRF, <span class="keywordtype">double</span> rc, <span class="keywordtype">double</span> rcLJ) :</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>            m_numcomp(components.size()), m_ssparatbl(m_numcomp,m_numcomp)</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        {</div>
@@ -105,7 +105,7 @@ $(function() {
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="preprocessor">#endif </span><span class="comment">/* COMP2PARAM_H_ */</span><span class="preprocessor"></span></div>
 <div class="ttc" id="aclassArray2D_html"><div class="ttname"><a href="classArray2D.html">Array2D</a></div><div class="ttdef"><b>Definition:</b> Array2D.h:15</div></div>
 <div class="ttc" id="aclassComp2Param_html"><div class="ttname"><a href="classComp2Param.html">Comp2Param</a></div><div class="ttdef"><b>Definition:</b> Comp2Param.h:15</div></div>
-<div class="ttc" id="aclassComp2Param_html_a2b735b7bcf7c1d43ed8834231a9cf952"><div class="ttname"><a href="classComp2Param.html#a2b735b7bcf7c1d43ed8834231a9cf952">Comp2Param::initialize</a></div><div class="ttdeci">void initialize(const std::vector&lt; Component &gt; &amp;components, const std::vector&lt; double &gt; &amp;mixcoeff, double epsRF, double rc, double rcLJ)</div><div class="ttdoc">Initialize the parameter streams for each component-component table entry.</div><div class="ttdef"><b>Definition:</b> Comp2Param.cpp:10</div></div>
+<div class="ttc" id="aclassComp2Param_html_a2b735b7bcf7c1d43ed8834231a9cf952"><div class="ttname"><a href="classComp2Param.html#a2b735b7bcf7c1d43ed8834231a9cf952">Comp2Param::initialize</a></div><div class="ttdeci">void initialize(const std::vector&lt; Component &gt; &amp;components, const std::vector&lt; double &gt; &amp;mixcoeff, double epsRF, double rc, double rcLJ)</div><div class="ttdoc">Initialize the parameter streams for each component-component table entry.</div><div class="ttdef"><b>Definition:</b> Comp2Param.cpp:8</div></div>
 <div class="ttc" id="aclassComp2Param_html_a631c97613129c821d2c4ee05234231b2"><div class="ttname"><a href="classComp2Param.html#a631c97613129c821d2c4ee05234231b2">Comp2Param::operator()</a></div><div class="ttdeci">ParaStrm &amp; operator()(unsigned int i, unsigned int j)</div><div class="ttdef"><b>Definition:</b> Comp2Param.h:32</div></div>
 <div class="ttc" id="aclassComp2Param_html_af91cd0729b73def2f1e538eb91c92959"><div class="ttname"><a href="classComp2Param.html#af91cd0729b73def2f1e538eb91c92959">Comp2Param::Comp2Param</a></div><div class="ttdeci">Comp2Param(const std::vector&lt; Component &gt; &amp;components, const std::vector&lt; double &gt; &amp;mixcoeff, double epsRF, double rc, double rcLJ)</div><div class="ttdef"><b>Definition:</b> Comp2Param.h:23</div></div>
 <div class="ttc" id="aclassComp2Param_html_afd59b275447bfc4c81bd739240ed9031"><div class="ttname"><a href="classComp2Param.html#afd59b275447bfc4c81bd739240ed9031">Comp2Param::Comp2Param</a></div><div class="ttdeci">Comp2Param()</div><div class="ttdef"><b>Definition:</b> Comp2Param.h:18</div></div>
@@ -113,7 +113,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:51 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:37 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

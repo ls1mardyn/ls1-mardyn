@@ -103,9 +103,9 @@ $(function() {
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="classPermittivity.html#a145face54fec7875ae1df376c8dac898">   31</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classPermittivity.html#a145face54fec7875ae1df376c8dac898">finish</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a>* domain)<span class="keyword"> override</span>{};</div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="classPermittivity.html#a7a66e424371d552be8280f1169cb9853">   32</a></span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> <a class="code hl_function" href="classPermittivity.html#a7a66e424371d552be8280f1169cb9853">getPluginName</a>()<span class="keyword"> override </span>{ <span class="keywordflow">return</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a>(<span class="stringliteral">&quot;Permittivity&quot;</span>); }</div>
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="keyword">static</span> <a class="code hl_class" href="classPluginBase.html">PluginBase</a>* createInstance() { <span class="keywordflow">return</span> <span class="keyword">new</span> <a class="code hl_class" href="classPermittivity.html">Permittivity</a>();}</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    </div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    </div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="keywordtype">bool</span> _readStartingStep;             <span class="comment">// Auxiliary bool variable to read the current time step during the first iteration of endStep</span></div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> _writeFrequency;      <span class="comment">// Write frequency for all profiles -&gt; Length of recording frame before output</span></div>
@@ -139,7 +139,7 @@ $(function() {
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>};</div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="preprocessor">#endif </span><span class="comment">/*SRC_PLUGINS_PERMITTIVITY_H_*/</span><span class="preprocessor"></span></div>
-<div class="ttc" id="aclassDomainDecompBase_html"><div class="ttname"><a href="classDomainDecompBase.html">DomainDecompBase</a></div><div class="ttdoc">handle boundary region and multiple processes</div><div class="ttdef"><b>Definition:</b> DomainDecompBase.h:51</div></div>
+<div class="ttc" id="aclassDomainDecompBase_html"><div class="ttname"><a href="classDomainDecompBase.html">DomainDecompBase</a></div><div class="ttdoc">handle boundary region and multiple processes</div><div class="ttdef"><b>Definition:</b> DomainDecompBase.h:53</div></div>
 <div class="ttc" id="aclassDomain_html"><div class="ttname"><a href="classDomain.html">Domain</a></div><div class="ttdoc">This class is used to read in the phasespace and to handle macroscopic values.</div><div class="ttdef"><b>Definition:</b> Domain.h:47</div></div>
 <div class="ttc" id="aclassParticleContainer_html"><div class="ttname"><a href="classParticleContainer.html">ParticleContainer</a></div><div class="ttdoc">This Interface is used to get access to particles and pairs of particles.</div><div class="ttdef"><b>Definition:</b> ParticleContainer.h:69</div></div>
 <div class="ttc" id="aclassPermittivity_html"><div class="ttname"><a href="classPermittivity.html">Permittivity</a></div><div class="ttdef"><b>Definition:</b> Permittivity.h:19</div></div>
@@ -154,7 +154,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:51 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:38 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

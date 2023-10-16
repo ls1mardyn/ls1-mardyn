@@ -119,7 +119,7 @@ $(function() {
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>        v.resize(numElements);</div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    }</div>
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    <span class="keywordtype">void</span> centerCenter(<span class="keywordtype">double</span> sig,<span class="keywordtype">double</span> eps,<span class="keywordtype">unsigned</span> ci,<span class="keywordtype">unsigned</span> cj,<span class="keywordtype">unsigned</span> si, <span class="keywordtype">unsigned</span> sj); </div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    <span class="keywordtype">void</span> centerCenter(<span class="keywordtype">double</span> sig,<span class="keywordtype">double</span> eps,<span class="keywordtype">unsigned</span> ci,<span class="keywordtype">unsigned</span> cj,<span class="keywordtype">unsigned</span> si, <span class="keywordtype">unsigned</span> sj);</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keywordtype">void</span> centerSite(<span class="keywordtype">double</span> sig,<span class="keywordtype">double</span> eps,<span class="keywordtype">unsigned</span> ci,<span class="keywordtype">unsigned</span> cj,<span class="keywordtype">unsigned</span> si, <span class="keywordtype">unsigned</span> sj);</div>
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    <span class="keywordtype">void</span> siteSite(<span class="keywordtype">double</span> sig,<span class="keywordtype">double</span> eps,<span class="keywordtype">unsigned</span> ci,<span class="keywordtype">unsigned</span> cj,<span class="keywordtype">unsigned</span> si, <span class="keywordtype">unsigned</span> sj);</div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="keywordtype">void</span> dipoleDipole(<span class="keywordtype">unsigned</span> ci,<span class="keywordtype">unsigned</span> cj,<span class="keywordtype">unsigned</span> si,<span class="keywordtype">unsigned</span> sj);</div>
@@ -164,11 +164,11 @@ $(function() {
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    <span class="keywordtype">int</span> sint;</div>
 <div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="keywordtype">double</span> temp;</div>
 <div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="keywordtype">unsigned</span> simstep;</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    </div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
 <div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* _particleContainer;</div>
 <div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    <a class="code hl_class" href="classDomain.html">Domain</a>* _domain;</div>
 <div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* _domainDecomposition;</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    </div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span> </div>
 <div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <span class="comment">// write control</span></div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    uint64_t _nStartWritingProfiles;</div>
 <div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    uint64_t _nWriteFreqProfiles;</div>
@@ -178,22 +178,22 @@ $(function() {
 <div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span> </div>
 <div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="preprocessor">#endif </span><span class="comment">/*Planar_H_*/</span><span class="preprocessor"></span></div>
 <div class="ttc" id="aclassControlInstance_html"><div class="ttname"><a href="classControlInstance.html">ControlInstance</a></div><div class="ttdef"><b>Definition:</b> Region.h:29</div></div>
-<div class="ttc" id="aclassDomainDecompBase_html"><div class="ttname"><a href="classDomainDecompBase.html">DomainDecompBase</a></div><div class="ttdoc">handle boundary region and multiple processes</div><div class="ttdef"><b>Definition:</b> DomainDecompBase.h:51</div></div>
+<div class="ttc" id="aclassDomainDecompBase_html"><div class="ttname"><a href="classDomainDecompBase.html">DomainDecompBase</a></div><div class="ttdoc">handle boundary region and multiple processes</div><div class="ttdef"><b>Definition:</b> DomainDecompBase.h:53</div></div>
 <div class="ttc" id="aclassDomain_html"><div class="ttname"><a href="classDomain.html">Domain</a></div><div class="ttdoc">This class is used to read in the phasespace and to handle macroscopic values.</div><div class="ttdef"><b>Definition:</b> Domain.h:47</div></div>
 <div class="ttc" id="aclassFullMolecule_html"><div class="ttname"><a href="classFullMolecule.html">FullMolecule</a></div><div class="ttdoc">FullMolecule modeled as LJ sphere with point polarities.</div><div class="ttdef"><b>Definition:</b> FullMolecule.h:18</div></div>
 <div class="ttc" id="aclassLongRangeCorrection_html"><div class="ttname"><a href="classLongRangeCorrection.html">LongRangeCorrection</a></div><div class="ttdef"><b>Definition:</b> LongRangeCorrection.h:12</div></div>
 <div class="ttc" id="aclassObserverBase_html"><div class="ttname"><a href="classObserverBase.html">ObserverBase</a></div><div class="ttdef"><b>Definition:</b> ObserverBase.h:13</div></div>
 <div class="ttc" id="aclassParticleContainer_html"><div class="ttname"><a href="classParticleContainer.html">ParticleContainer</a></div><div class="ttdoc">This Interface is used to get access to particles and pairs of particles.</div><div class="ttdef"><b>Definition:</b> ParticleContainer.h:69</div></div>
 <div class="ttc" id="aclassPlanar_html"><div class="ttname"><a href="classPlanar.html">Planar</a></div><div class="ttdef"><b>Definition:</b> Planar.h:24</div></div>
-<div class="ttc" id="aclassPlanar_html_ac0d886b07958951b143576bcb06f2be3"><div class="ttname"><a href="classPlanar.html#ac0d886b07958951b143576bcb06f2be3">Planar::init</a></div><div class="ttdeci">void init() override</div><div class="ttdoc">Read in XML configuration for Planar and all its included objects.</div><div class="ttdef"><b>Definition:</b> Planar.cpp:40</div></div>
-<div class="ttc" id="aclassSimulation_html"><div class="ttname"><a href="classSimulation.html">Simulation</a></div><div class="ttdoc">Controls the simulation process.</div><div class="ttdef"><b>Definition:</b> Simulation.h:70</div></div>
+<div class="ttc" id="aclassPlanar_html_ac0d886b07958951b143576bcb06f2be3"><div class="ttname"><a href="classPlanar.html#ac0d886b07958951b143576bcb06f2be3">Planar::init</a></div><div class="ttdeci">void init() override</div><div class="ttdoc">Read in XML configuration for Planar and all its included objects.</div><div class="ttdef"><b>Definition:</b> Planar.cpp:38</div></div>
+<div class="ttc" id="aclassSimulation_html"><div class="ttname"><a href="classSimulation.html">Simulation</a></div><div class="ttdoc">Controls the simulation process.</div><div class="ttdef"><b>Definition:</b> Simulation.h:72</div></div>
 <div class="ttc" id="aclassSubjectBase_html"><div class="ttname"><a href="classSubjectBase.html">SubjectBase</a></div><div class="ttdef"><b>Definition:</b> ObserverBase.h:20</div></div>
 <div class="ttc" id="aclassXMLfileUnits_html"><div class="ttname"><a href="classXMLfileUnits.html">XMLfileUnits</a></div><div class="ttdoc">XML file with unit attributes abstraction.</div><div class="ttdef"><b>Definition:</b> xmlfileUnits.h:25</div></div>
 <div class="ttc" id="anamespacexml__schema_html_aefbaf353f9a0043af46d23d9040ef268"><div class="ttname"><a href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:268</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:50 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:37 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

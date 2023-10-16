@@ -119,8 +119,8 @@ $(function() {
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        <a class="code hl_class" href="classCellProcessor.html">CellProcessor</a>&amp; cellProcessor) {</div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keyword">using</span> std::array;</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keyword">const</span> array&lt;unsigned long, 3&gt; strides = { 2, 2, 2 };</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    array&lt;unsigned long, 3&gt; end;</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keyword">const</span> std::array&lt;unsigned long, 3&gt; strides = { 2, 2, 2 };</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    std::array&lt;unsigned long, 3&gt; end;</div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> d = 0; d &lt; 3; ++d) {</div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        end[d] = this-&gt;_dims[d] - 1;</div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    }</div>
@@ -150,13 +150,13 @@ $(function() {
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="keywordtype">void</span> <a class="code hl_class" href="classC08CellPairTraversal.html">C08CellPairTraversal&lt;CellTemplate, eighthShell&gt;::traverseCellPairsOuter</a>(</div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>        <a class="code hl_class" href="classCellProcessor.html">CellProcessor</a>&amp; cellProcessor) {</div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="keywordflow">if</span>(eighthShell){</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        global_log-&gt;error() &lt;&lt; <span class="stringliteral">&quot;eightshell + overlapping not yet supported.&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        Log::global_log-&gt;error() &lt;&lt; <span class="stringliteral">&quot;eightshell + overlapping not yet supported.&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        <a class="code hl_function" href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a>(-2);</div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    }</div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    <span class="keyword">using</span> std::array;</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span> </div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    {</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> minsize = min(this-&gt;_dims[0], min(this-&gt;_dims[1], this-&gt;_dims[2]));</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> minsize = std::min(this-&gt;_dims[0], std::min(this-&gt;_dims[1], this-&gt;_dims[2]));</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        <span class="keywordflow">if</span> (minsize &lt;= 5) {</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>            <span class="comment">// iterating in the inner region didn&#39;t do anything. Iterate normally.</span></div>
@@ -165,7 +165,7 @@ $(function() {
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        }</div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    }</div>
 <div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keyword">const</span> array&lt;unsigned long, 3&gt; strides2 = { 2, 2, 2 };</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keyword">const</span> std::array&lt;unsigned long, 3&gt; strides2 = { 2, 2, 2 };</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="preprocessor">    #if defined(_OPENMP)</span></div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="preprocessor">    #pragma omp parallel</span></div>
@@ -173,26 +173,26 @@ $(function() {
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    {</div>
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>        <span class="keywordflow">for</span> (<span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> col = 0; col &lt; 8; ++col) {</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>            <span class="comment">// halo &amp; boundaries in z direction</span></div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>            <span class="keyword">const</span> array&lt; unsigned long, 3&gt; begin = threeDimensionalMapping::oneToThreeD(col, strides2);</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>            <span class="keyword">const</span> std::array&lt; unsigned long, 3&gt; begin = threeDimensionalMapping::oneToThreeD(col, strides2);</div>
 <div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>            <span class="comment">// values, which are modified by 2 are actually modified by the respective stride, which is always 2</span></div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>            array&lt;unsigned long, 3&gt; startZ = { begin[0], begin[1], begin[2] };                                  <span class="comment">// default</span></div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>            array&lt;unsigned long, 3&gt; endZ = { this-&gt;_dims[0] - 1, this-&gt;_dims[1] - 1, this-&gt;_dims[2] - 1 };      <span class="comment">// default</span></div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>            array&lt;unsigned long, 3&gt; stridesZ = {strides2[0], strides2[1], this-&gt;_dims[2] - 3};                  <span class="comment">// mod z</span></div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>            std::array&lt;unsigned long, 3&gt; startZ = { begin[0], begin[1], begin[2] };                                     <span class="comment">// default</span></div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>            std::array&lt;unsigned long, 3&gt; endZ = { this-&gt;_dims[0] - 1, this-&gt;_dims[1] - 1, this-&gt;_dims[2] - 1 };     <span class="comment">// default</span></div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>            std::array&lt;unsigned long, 3&gt; stridesZ = {strides2[0], strides2[1], this-&gt;_dims[2] - 3};                 <span class="comment">// mod z</span></div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>            traverseCellPairsBackend(cellProcessor, startZ, endZ, stridesZ);</div>
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span> </div>
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>            <span class="comment">// halo &amp; boundaries in y direction</span></div>
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>            <span class="comment">// boundaries in z direction are excluded!</span></div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>            array&lt;unsigned long, 3&gt; startY = { begin[0], begin[1], begin[2] + 2 };                              <span class="comment">// mod z</span></div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>            array&lt;unsigned long, 3&gt; endY = { this-&gt;_dims[0] - 1, this-&gt;_dims[1] - 1, this-&gt;_dims[2] - 3 };      <span class="comment">// mod z</span></div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>            array&lt;unsigned long, 3&gt; stridesY = {strides2[0], this-&gt;_dims[1] - 3, strides2[2]};                  <span class="comment">// mod y</span></div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>            std::array&lt;unsigned long, 3&gt; startY = { begin[0], begin[1], begin[2] + 2 };                             <span class="comment">// mod z</span></div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>            std::array&lt;unsigned long, 3&gt; endY = { this-&gt;_dims[0] - 1, this-&gt;_dims[1] - 1, this-&gt;_dims[2] - 3 };     <span class="comment">// mod z</span></div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>            std::array&lt;unsigned long, 3&gt; stridesY = {strides2[0], this-&gt;_dims[1] - 3, strides2[2]};                 <span class="comment">// mod y</span></div>
 <div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>            traverseCellPairsBackend(cellProcessor, startY, endY, stridesY);</div>
 <div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span> </div>
 <div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>            <span class="comment">// halo &amp; boundaries in x direction</span></div>
 <div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>            <span class="comment">// boundaries in z and y direction are excluded!</span></div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>            array&lt;unsigned long, 3&gt; startX = { begin[0], begin[1] + 2, begin[2] + 2 };                          <span class="comment">// mod yz</span></div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>            array&lt;unsigned long, 3&gt; endX = { this-&gt;_dims[0] - 1, this-&gt;_dims[1] - 3, this-&gt;_dims[2] - 3 };      <span class="comment">// mod yz</span></div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>            array&lt;unsigned long, 3&gt; stridesX = {this-&gt;_dims[0] - 3, strides2[1], strides2[2]};                  <span class="comment">// mod x</span></div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>            std::array&lt;unsigned long, 3&gt; startX = { begin[0], begin[1] + 2, begin[2] + 2 };                         <span class="comment">// mod yz</span></div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>            std::array&lt;unsigned long, 3&gt; endX = { this-&gt;_dims[0] - 1, this-&gt;_dims[1] - 3, this-&gt;_dims[2] - 3 };     <span class="comment">// mod yz</span></div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>            std::array&lt;unsigned long, 3&gt; stridesX = {this-&gt;_dims[0] - 3, strides2[1], strides2[2]};                 <span class="comment">// mod x</span></div>
 <div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>            traverseCellPairsBackend(cellProcessor, startX, endX, stridesX);</div>
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span><span class="preprocessor">            #if defined(_OPENMP)</span></div>
@@ -221,7 +221,7 @@ $(function() {
 <div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>        }</div>
 <div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    }</div>
 <div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> splitsize = maxcellsize - 5;</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> minsize = min(this-&gt;_dims[0], min(this-&gt;_dims[1], this-&gt;_dims[2]));</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> minsize = std::min(this-&gt;_dims[0], std::min(this-&gt;_dims[1], this-&gt;_dims[2]));</div>
 <div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span> </div>
 <div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    mardyn_assert(minsize &gt;= 4);  <span class="comment">// there should be at least 4 cells in each dimension, otherwise we did something stupid!</span></div>
 <div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span> </div>
@@ -229,8 +229,8 @@ $(function() {
 <div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>        <span class="keywordflow">return</span>;  <span class="comment">// we can not iterate over any inner cells, that do not depend on boundary or halo cells</span></div>
 <div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    }</div>
 <div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span> </div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    array&lt;unsigned long, 3&gt; lower;</div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>    array&lt;unsigned long, 3&gt; upper;</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    std::array&lt;unsigned long, 3&gt; lower;</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>    std::array&lt;unsigned long, 3&gt; upper;</div>
 <div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>    <span class="keywordflow">for</span> (<span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> i = 0; i &lt; 3; i++) {</div>
 <div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        lower[i] = 2;</div>
 <div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        upper[i] = this-&gt;_dims[i] - 3;</div>
@@ -243,10 +243,10 @@ $(function() {
 <div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span><span class="preprocessor">        #pragma omp parallel</span></div>
 <div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span><span class="preprocessor">    #endif</span></div>
 <div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    {</div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>        array&lt;unsigned long, 3&gt; strides = {2, 2, 2};</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>        std::array&lt;unsigned long, 3&gt; strides = {2, 2, 2};</div>
 <div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span> </div>
 <div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>        <span class="keywordflow">for</span> (<span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> col = 0; col &lt; 8; ++col) {</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>            array&lt;unsigned long, 3&gt; startIndices = threeDimensionalMapping::oneToThreeD(col, strides);</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>            std::array&lt;unsigned long, 3&gt; startIndices = threeDimensionalMapping::oneToThreeD(col, strides);</div>
 <div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; 3; i++) {</div>
 <div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>                startIndices[i] = startIndices[i] + lower[i];</div>
 <div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>            }</div>
@@ -303,13 +303,13 @@ $(function() {
 <div class="ttc" id="aclassC08BasedTraversals_html"><div class="ttname"><a href="classC08BasedTraversals.html">C08BasedTraversals</a></div><div class="ttdef"><b>Definition:</b> C08BasedTraversals.h:17</div></div>
 <div class="ttc" id="aclassC08CellPairTraversal_html"><div class="ttname"><a href="classC08CellPairTraversal.html">C08CellPairTraversal</a></div><div class="ttdef"><b>Definition:</b> C08CellPairTraversal.h:20</div></div>
 <div class="ttc" id="aclassCellProcessor_html"><div class="ttname"><a href="classCellProcessor.html">CellProcessor</a></div><div class="ttdef"><b>Definition:</b> CellProcessor.h:29</div></div>
-<div class="ttc" id="aclassSimulation_html_a68f442306f18038e0f5fc04522e44359"><div class="ttname"><a href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a></div><div class="ttdeci">static void exit(int exitcode)</div><div class="ttdoc">Terminate simulation with given exit code.</div><div class="ttdef"><b>Definition:</b> Simulation.cpp:162</div></div>
+<div class="ttc" id="aclassSimulation_html_a68f442306f18038e0f5fc04522e44359"><div class="ttname"><a href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a></div><div class="ttdeci">static void exit(int exitcode)</div><div class="ttdoc">Terminate simulation with given exit code.</div><div class="ttdef"><b>Definition:</b> Simulation.cpp:159</div></div>
 <div class="ttc" id="astructC08CellPairTraversalData_html"><div class="ttname"><a href="structC08CellPairTraversalData.html">C08CellPairTraversalData</a></div><div class="ttdef"><b>Definition:</b> C08CellPairTraversal.h:16</div></div>
 <div class="ttc" id="astructCellPairTraversalData_html"><div class="ttname"><a href="structCellPairTraversalData.html">CellPairTraversalData</a></div><div class="ttdef"><b>Definition:</b> CellPairTraversals.h:16</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:51 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:38 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

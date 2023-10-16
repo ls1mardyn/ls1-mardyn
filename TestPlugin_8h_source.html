@@ -89,51 +89,51 @@ $(function() {
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="classTestPlugin.html#a9ac7cc1ee3555a2cd2fc26c3bfb2286c">   23</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classTestPlugin.html#a9ac7cc1ee3555a2cd2fc26c3bfb2286c">init</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer,</div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>                    <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a>* domain) {</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>        global_log-&gt;debug()  &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] TESTPLUGIN INIT&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>        Log::global_log-&gt;debug()  &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] TESTPLUGIN INIT&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    }</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno"><a class="line" href="classTestPlugin.html#a37c176887473ffc9d09044ee5d7b4608">   28</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classTestPlugin.html#a37c176887473ffc9d09044ee5d7b4608">readXML</a>(<a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>&amp; xmlconfig) {</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>        global_log -&gt; debug() &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] READING XML&quot;</span> &lt;&lt; endl;</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>        Log::global_log -&gt; debug() &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] READING XML&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    }</div>
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="classTestPlugin.html#ad034dcc8c41e3ce6e8551ac1c1b191e5">   33</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classTestPlugin.html#ad034dcc8c41e3ce6e8551ac1c1b191e5">beforeEventNewTimestep</a>(</div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>            <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep</div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    ) {</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        global_log -&gt; debug() &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] BEFORE EVENT NEW TIMESTEP&quot;</span> &lt;&lt; endl;</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        Log::global_log -&gt; debug() &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] BEFORE EVENT NEW TIMESTEP&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    };</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="classTestPlugin.html#a1ce8184997fd6461e5111e24eafee95b">   45</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classTestPlugin.html#a1ce8184997fd6461e5111e24eafee95b">beforeForces</a>(</div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>            <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep</div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    ) {</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        global_log -&gt; debug() &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] BEFORE FORCES&quot;</span> &lt;&lt; endl;</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        Log::global_log -&gt; debug() &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] BEFORE FORCES&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    }</div>
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno"><a class="line" href="classTestPlugin.html#ae0a45fd2ca58c8e2e41b248f193e8345">   56</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classTestPlugin.html#ae0a45fd2ca58c8e2e41b248f193e8345">afterForces</a>(</div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>            <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    ) {</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        global_log-&gt;debug()  &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] TESTPLUGIN AFTER FORCES&quot;</span> &lt;&lt; endl;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        Log::global_log-&gt;debug()  &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] TESTPLUGIN AFTER FORCES&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    }</div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="classTestPlugin.html#aa6cffd70c683b6b8eada8560afb42825">   71</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classTestPlugin.html#aa6cffd70c683b6b8eada8560afb42825">endStep</a>(</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>            <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>            <a class="code hl_class" href="classDomain.html">Domain</a>* domain, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep</div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    ) {</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>        global_log-&gt;debug()  &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] ENDSTEP&quot;</span> &lt;&lt; endl;</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>        Log::global_log-&gt;debug()  &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] ENDSTEP&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    }</div>
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno"><a class="line" href="classTestPlugin.html#a9a3c81ee363e2780a4a02cb14f847454">   86</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classTestPlugin.html#a9a3c81ee363e2780a4a02cb14f847454">finish</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer,</div>
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>                        <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a>* domain) {</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        global_log-&gt;debug()  &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] FINISHING&quot;</span> &lt;&lt; endl;</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        Log::global_log-&gt;debug()  &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] FINISHING&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    }</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno"><a class="line" href="classTestPlugin.html#a611431e8533c23ec7046e94869dbc4d1">   92</a></span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> <a class="code hl_function" href="classTestPlugin.html#a611431e8533c23ec7046e94869dbc4d1">getPluginName</a>()  {</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        global_log-&gt;debug()  &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] GETTING NAME&quot;</span> &lt;&lt; endl;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        Log::global_log-&gt;debug()  &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] GETTING NAME&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        <span class="keywordflow">return</span> <span class="stringliteral">&quot;TestPlugin&quot;</span>;}</div>
 <div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="keyword">static</span> <a class="code hl_class" href="classPluginBase.html">PluginBase</a>* createInstance() {</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        global_log-&gt;debug()  &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] CREATE INSTANCE&quot;</span> &lt;&lt; endl;</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        Log::global_log-&gt;debug()  &lt;&lt; <span class="stringliteral">&quot;[TESTPLUGIN] CREATE INSTANCE&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>        <span class="keywordflow">return</span> <span class="keyword">new</span> <a class="code hl_class" href="classTestPlugin.html">TestPlugin</a>(); }</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="keyword">private</span>:</div>
@@ -144,7 +144,7 @@ $(function() {
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>};</div>
 <div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="preprocessor">#endif </span><span class="comment">/* SRC_UTILS_TESTPLUGIN_H_ */</span><span class="preprocessor"></span></div>
-<div class="ttc" id="aclassDomainDecompBase_html"><div class="ttname"><a href="classDomainDecompBase.html">DomainDecompBase</a></div><div class="ttdoc">handle boundary region and multiple processes</div><div class="ttdef"><b>Definition:</b> DomainDecompBase.h:51</div></div>
+<div class="ttc" id="aclassDomainDecompBase_html"><div class="ttname"><a href="classDomainDecompBase.html">DomainDecompBase</a></div><div class="ttdoc">handle boundary region and multiple processes</div><div class="ttdef"><b>Definition:</b> DomainDecompBase.h:53</div></div>
 <div class="ttc" id="aclassDomain_html"><div class="ttname"><a href="classDomain.html">Domain</a></div><div class="ttdoc">This class is used to read in the phasespace and to handle macroscopic values.</div><div class="ttdef"><b>Definition:</b> Domain.h:47</div></div>
 <div class="ttc" id="aclassParticleContainer_html"><div class="ttname"><a href="classParticleContainer.html">ParticleContainer</a></div><div class="ttdoc">This Interface is used to get access to particles and pairs of particles.</div><div class="ttdef"><b>Definition:</b> ParticleContainer.h:69</div></div>
 <div class="ttc" id="aclassPluginBase_html"><div class="ttname"><a href="classPluginBase.html">PluginBase</a></div><div class="ttdoc">The PluginBase class provides the interface for any kind of output/plugin classes - called &quot;(output) ...</div><div class="ttdef"><b>Definition:</b> PluginBase.h:47</div></div>
@@ -162,7 +162,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:51 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:38 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

@@ -91,186 +91,185 @@ $(function() {
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &quot;utils/CommVar.h&quot;</span></div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#include &quot;molecules/MoleculeForwardDeclaration.h&quot;</span></div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">using namespace </span>std;</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="keyword">class </span><a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>;</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="keyword">class </span><a class="code hl_class" href="classDomain.html">Domain</a>;</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">class </span><a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>;</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="keyword">class </span><a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>;</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="preprocessor">#define FORMAT_SCI_MAX_DIGITS std::setw(24) &lt;&lt; std::scientific &lt;&lt; std::setprecision(std::numeric_limits&lt;double&gt;::digits10)</span></div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="keyword">enum</span> DistControlUpdateMethods</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>{</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    DCUM_UNKNOWN = 0,</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    DCUM_DENSITY_PROFILE = 1,</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    DCUM_DENSITY_PROFILE_DERIVATION = 2,</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="comment">//  DCUM_FORCE_PROFILE = 3,</span></div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>};</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="keyword">enum</span> DistControlInitMethods</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>{</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    DCIM_UNKNOWN = 0,</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    DCIM_START_CONFIGURATION = 1,</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    DCIM_MIDPOINT_VALUES = 2,</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    DCIM_READ_FROM_FILE = 3,</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>};</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno"><a class="line" href="classDistControl.html">   47</a></span><span class="keyword">class </span><a class="code hl_class" href="classDistControl.html">DistControl</a> : <span class="keyword">public</span> <a class="code hl_class" href="classPluginBase.html">PluginBase</a>, <span class="keyword">public</span> <a class="code hl_class" href="classControlInstance.html">ControlInstance</a>, <span class="keyword">public</span> <a class="code hl_class" href="classSubjectBase.html">SubjectBase</a></div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>{</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <a class="code hl_class" href="classDistControl.html">DistControl</a>();</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    <span class="keyword">virtual</span> <a class="code hl_class" href="classDistControl.html">~DistControl</a>();</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> getShortName()<span class="keyword"> override </span>{<span class="keywordflow">return</span> <span class="stringliteral">&quot;DiC&quot;</span>;}</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#a62733e3b24b61b1b9c725dc852f2f892">readXML</a>(<a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>&amp; xmlconfig) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#acc7bdbc7eb5331de7acbb1635276eaed">init</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>            <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno"><a class="line" href="classDistControl.html#a6e18536a6467cacce840e62e4fe02b54">   90</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#a6e18536a6467cacce840e62e4fe02b54">beforeEventNewTimestep</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep)<span class="keyword"> override </span>{};</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#a9b79cfc0d4d8284458306062c6408c47">beforeForces</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno"><a class="line" href="classDistControl.html#adcf122909213420ab9a2f2ef52a0cee5">   96</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#adcf122909213420ab9a2f2ef52a0cee5">siteWiseForces</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep)<span class="keyword"> override </span>{};</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno"><a class="line" href="classDistControl.html#a3e1834a77b771e51ea41e30d2ba88831">   98</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#a3e1834a77b771e51ea41e30d2ba88831">afterForces</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep)<span class="keyword"> override </span>{}</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span> </div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno"><a class="line" href="classDistControl.html#ac7a0cd9b7acbef93d4e6f62313aed2f7">  101</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#ac7a0cd9b7acbef93d4e6f62313aed2f7">endStep</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>            <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain,</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep)<span class="keyword"> override </span>{};</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno"><a class="line" href="classDistControl.html#a5fd169366b72afc9cd2331329341cdaf">  105</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#a5fd169366b72afc9cd2331329341cdaf">finish</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain)<span class="keyword"> override </span>{}</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno"><a class="line" href="classDistControl.html#a562ebe4e67c395cbaeabecd03315ef7e">  108</a></span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> <a class="code hl_function" href="classDistControl.html#a562ebe4e67c395cbaeabecd03315ef7e">getPluginName</a>()<span class="keyword"> override </span>{<span class="keywordflow">return</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a>(<span class="stringliteral">&quot;DistControl&quot;</span>);}</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keyword">static</span> <a class="code hl_class" href="classPluginBase.html">PluginBase</a>* createInstance() {<span class="keywordflow">return</span> <span class="keyword">new</span> <a class="code hl_class" href="classDistControl.html">DistControl</a>();}</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    <span class="comment">// set subdivision</span></div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="keywordtype">void</span> SetSubdivision(<span class="keyword">const</span> uint32_t&amp; numBins) {_binParams.count = numBins; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    <span class="keywordtype">void</span> SetSubdivision(<span class="keyword">const</span> <span class="keywordtype">double</span>&amp; dBinWidth) {_binParams.width = dBinWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="keywordtype">void</span> PrepareSubdivision();  <span class="comment">// need to be called before PrepareDataStructures()</span></div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    <span class="comment">// data structures</span></div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    <span class="keywordtype">void</span> PrepareDataStructures();</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span> </div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <span class="comment">// init</span></div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    <span class="keywordtype">void</span> InitPositions(<span class="keyword">const</span> <span class="keywordtype">double</span>&amp; dInterfaceMidLeft, <span class="keyword">const</span> <span class="keywordtype">double</span>&amp; dInterfaceMidRight);</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="keywordtype">double</span> GetInterfaceMidLeft() {<span class="keywordflow">return</span> _dInterfaceMidLeft;}</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    <span class="keywordtype">double</span> GetInterfaceMidRight() {<span class="keywordflow">return</span> _dInterfaceMidRight;}</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> GetUpdateFreq() {<span class="keywordflow">return</span> _controlFreqs.update;}</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> GetWriteFreqProfiles() {<span class="keywordflow">return</span> _controlFreqs.write.profiles;}</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <span class="keywordtype">void</span> Init(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer);</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    <span class="keywordtype">void</span> WriteHeader();</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <span class="keywordtype">void</span> WriteData(<span class="keyword">const</span> uint64_t&amp; simstep);</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <span class="keywordtype">void</span> WriteDataProfiles(<span class="keyword">const</span> uint64_t&amp; simstep);</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    <span class="comment">// place method inside loop over molecule container</span></div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    <span class="keywordtype">void</span> SampleProfiles(<a class="code hl_class" href="classFullMolecule.html">Molecule</a>* mol);</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span> </div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    <span class="keywordtype">void</span> UpdatePositionsInit(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer);  <span class="comment">// call in Simulation::prepare_start()</span></div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    <span class="keywordtype">void</span> UpdatePositions(<span class="keyword">const</span> uint64_t&amp; simstep);</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    <span class="comment">// SubjectBase methods</span></div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>    <span class="keywordtype">void</span> registerObserver(<a class="code hl_class" href="classObserverBase.html">ObserverBase</a>* observer) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>    <span class="keywordtype">void</span> unregisterObserver(<a class="code hl_class" href="classObserverBase.html">ObserverBase</a>* observer) <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    <span class="keywordtype">void</span> informObserver() <span class="keyword">override</span>;</div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span> </div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    <span class="comment">// place methods after the loop</span></div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    <span class="keywordtype">void</span> CalcProfiles();</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    <span class="keywordtype">void</span> EstimateInterfaceMidpoint();  <span class="comment">// called by UpdatePositions</span></div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    <span class="keywordtype">void</span> EstimateInterfaceMidpointsByForce();</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>    <span class="keywordtype">void</span> ResetLocalValues();</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span> </div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    <span class="comment">// data structures</span></div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    <span class="keywordtype">void</span> InitDataStructures();</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span> </div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    <span class="comment">// processing profiles</span></div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    <span class="keywordtype">void</span> SmoothProfile(<span class="keywordtype">double</span>* dData, <span class="keywordtype">double</span>* dSmoothData, <span class="keyword">const</span> uint64_t&amp; nNumVals, <span class="keyword">const</span> uint32_t&amp; nNeighbourVals);</div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>    <span class="keywordtype">void</span> SmoothProfiles(<span class="keyword">const</span> uint32_t&amp; nNeighbourVals);</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    <span class="keywordtype">void</span> DerivateProfile(<span class="keywordtype">double</span>* dDataX, <span class="keywordtype">double</span>* dDataY, <span class="keywordtype">double</span>* dDerivDataY, <span class="keyword">const</span> uint64_t&amp; nNumVals, <span class="keyword">const</span> uint32_t&amp; nNeighbourVals);</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    <span class="keywordtype">void</span> DerivateProfiles(<span class="keyword">const</span> uint32_t&amp; nNeighbourVals);</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="keyword">class </span><a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>;</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="keyword">class </span><a class="code hl_class" href="classDomain.html">Domain</a>;</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="keyword">class </span><a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>;</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">class </span><a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>;</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="preprocessor">#define FORMAT_SCI_MAX_DIGITS std::setw(24) &lt;&lt; std::scientific &lt;&lt; std::setprecision(std::numeric_limits&lt;double&gt;::digits10)</span></div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="keyword">enum</span> DistControlUpdateMethods</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>{</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    DCUM_UNKNOWN = 0,</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    DCUM_DENSITY_PROFILE = 1,</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    DCUM_DENSITY_PROFILE_DERIVATION = 2,</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="comment">//  DCUM_FORCE_PROFILE = 3,</span></div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>};</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="keyword">enum</span> DistControlInitMethods</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>{</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    DCIM_UNKNOWN = 0,</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    DCIM_START_CONFIGURATION = 1,</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    DCIM_MIDPOINT_VALUES = 2,</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    DCIM_READ_FROM_FILE = 3,</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>};</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="classDistControl.html">   46</a></span><span class="keyword">class </span><a class="code hl_class" href="classDistControl.html">DistControl</a> : <span class="keyword">public</span> <a class="code hl_class" href="classPluginBase.html">PluginBase</a>, <span class="keyword">public</span> <a class="code hl_class" href="classControlInstance.html">ControlInstance</a>, <span class="keyword">public</span> <a class="code hl_class" href="classSubjectBase.html">SubjectBase</a></div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>{</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <a class="code hl_class" href="classDistControl.html">DistControl</a>();</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keyword">virtual</span> <a class="code hl_class" href="classDistControl.html">~DistControl</a>();</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> getShortName()<span class="keyword"> override </span>{<span class="keywordflow">return</span> <span class="stringliteral">&quot;DiC&quot;</span>;}</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#a62733e3b24b61b1b9c725dc852f2f892">readXML</a>(<a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>&amp; xmlconfig) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span> </div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#acc7bdbc7eb5331de7acbb1635276eaed">init</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>            <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno"><a class="line" href="classDistControl.html#a6e18536a6467cacce840e62e4fe02b54">   89</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#a6e18536a6467cacce840e62e4fe02b54">beforeEventNewTimestep</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep)<span class="keyword"> override </span>{};</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#a9b79cfc0d4d8284458306062c6408c47">beforeForces</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span> </div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno"><a class="line" href="classDistControl.html#adcf122909213420ab9a2f2ef52a0cee5">   95</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#adcf122909213420ab9a2f2ef52a0cee5">siteWiseForces</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep)<span class="keyword"> override </span>{};</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno"><a class="line" href="classDistControl.html#a3e1834a77b771e51ea41e30d2ba88831">   97</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#a3e1834a77b771e51ea41e30d2ba88831">afterForces</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp,</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep)<span class="keyword"> override </span>{}</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno"><a class="line" href="classDistControl.html#ac7a0cd9b7acbef93d4e6f62313aed2f7">  100</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#ac7a0cd9b7acbef93d4e6f62313aed2f7">endStep</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>            <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain,</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>            <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep)<span class="keyword"> override </span>{};</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno"><a class="line" href="classDistControl.html#a5fd169366b72afc9cd2331329341cdaf">  104</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classDistControl.html#a5fd169366b72afc9cd2331329341cdaf">finish</a>(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a> *particleContainer,</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                <a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a> *domain)<span class="keyword"> override </span>{}</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno"><a class="line" href="classDistControl.html#a562ebe4e67c395cbaeabecd03315ef7e">  107</a></span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> <a class="code hl_function" href="classDistControl.html#a562ebe4e67c395cbaeabecd03315ef7e">getPluginName</a>()<span class="keyword"> override </span>{<span class="keywordflow">return</span> <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a>(<span class="stringliteral">&quot;DistControl&quot;</span>);}</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keyword">static</span> <a class="code hl_class" href="classPluginBase.html">PluginBase</a>* createInstance() {<span class="keywordflow">return</span> <span class="keyword">new</span> <a class="code hl_class" href="classDistControl.html">DistControl</a>();}</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    <span class="comment">// set subdivision</span></div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    <span class="keywordtype">void</span> SetSubdivision(<span class="keyword">const</span> uint32_t&amp; numBins) {_binParams.count = numBins; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="keywordtype">void</span> SetSubdivision(<span class="keyword">const</span> <span class="keywordtype">double</span>&amp; dBinWidth) {_binParams.width = dBinWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    <span class="keywordtype">void</span> PrepareSubdivision();  <span class="comment">// need to be called before PrepareDataStructures()</span></div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span> </div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="comment">// data structures</span></div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    <span class="keywordtype">void</span> PrepareDataStructures();</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    <span class="comment">// init</span></div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <span class="keywordtype">void</span> InitPositions(<span class="keyword">const</span> <span class="keywordtype">double</span>&amp; dInterfaceMidLeft, <span class="keyword">const</span> <span class="keywordtype">double</span>&amp; dInterfaceMidRight);</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span> </div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <span class="keywordtype">double</span> GetInterfaceMidLeft() {<span class="keywordflow">return</span> _dInterfaceMidLeft;}</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="keywordtype">double</span> GetInterfaceMidRight() {<span class="keywordflow">return</span> _dInterfaceMidRight;}</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> GetUpdateFreq() {<span class="keywordflow">return</span> _controlFreqs.update;}</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> GetWriteFreqProfiles() {<span class="keywordflow">return</span> _controlFreqs.write.profiles;}</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="keywordtype">void</span> Init(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer);</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <span class="keywordtype">void</span> WriteHeader();</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    <span class="keywordtype">void</span> WriteData(<span class="keyword">const</span> uint64_t&amp; simstep);</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <span class="keywordtype">void</span> WriteDataProfiles(<span class="keyword">const</span> uint64_t&amp; simstep);</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    <span class="comment">// place method inside loop over molecule container</span></div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    <span class="keywordtype">void</span> SampleProfiles(<a class="code hl_class" href="classFullMolecule.html">Molecule</a>* mol);</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span> </div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    <span class="keywordtype">void</span> UpdatePositionsInit(<a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer);  <span class="comment">// call in Simulation::prepare_start()</span></div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    <span class="keywordtype">void</span> UpdatePositions(<span class="keyword">const</span> uint64_t&amp; simstep);</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span> </div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    <span class="comment">// SubjectBase methods</span></div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    <span class="keywordtype">void</span> registerObserver(<a class="code hl_class" href="classObserverBase.html">ObserverBase</a>* observer) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>    <span class="keywordtype">void</span> unregisterObserver(<a class="code hl_class" href="classObserverBase.html">ObserverBase</a>* observer) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>    <span class="keywordtype">void</span> informObserver() <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span> </div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    <span class="comment">// place methods after the loop</span></div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    <span class="keywordtype">void</span> CalcProfiles();</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    <span class="keywordtype">void</span> EstimateInterfaceMidpoint();  <span class="comment">// called by UpdatePositions</span></div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    <span class="keywordtype">void</span> EstimateInterfaceMidpointsByForce();</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    <span class="keywordtype">void</span> ResetLocalValues();</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span> </div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    <span class="comment">// data structures</span></div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    <span class="keywordtype">void</span> InitDataStructures();</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span> </div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>    <span class="comment">// processing profiles</span></div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    <span class="keywordtype">void</span> SmoothProfile(<span class="keywordtype">double</span>* dData, <span class="keywordtype">double</span>* dSmoothData, <span class="keyword">const</span> uint64_t&amp; nNumVals, <span class="keyword">const</span> uint32_t&amp; nNeighbourVals);</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    <span class="keywordtype">void</span> SmoothProfiles(<span class="keyword">const</span> uint32_t&amp; nNeighbourVals);</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>    <span class="keywordtype">void</span> DerivateProfile(<span class="keywordtype">double</span>* dDataX, <span class="keywordtype">double</span>* dDataY, <span class="keywordtype">double</span>* dDerivDataY, <span class="keyword">const</span> uint64_t&amp; nNumVals, <span class="keyword">const</span> uint32_t&amp; nNeighbourVals);</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    <span class="keywordtype">void</span> DerivateProfiles(<span class="keyword">const</span> uint32_t&amp; nNeighbourVals);</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span> </div>
 <div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span> </div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span> </div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>    <span class="keywordtype">double</span> _dInterfaceMidLeft;</div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>    <span class="keywordtype">double</span> _dInterfaceMidRight;</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span> </div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    uint16_t _nNumComponents;</div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    uint16_t _nTargetCompID;</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    uint64_t _nNumValuesScalar;</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>    std::vector&lt;uint64_t&gt; _nOffsets;</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span> </div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>    <a class="code hl_class" href="classCommVar.html">CommVar&lt;std::vector&lt;uint64_t&gt;</a> &gt; _nNumMolecules;</div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>    <a class="code hl_class" href="classCommVar.html">CommVar&lt;std::vector&lt;uint64_t&gt;</a> &gt; _dForceSum;</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    std::vector&lt;double&gt; _dMidpointPositions;</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>    std::vector&lt;double&gt; _dDensityProfile;</div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    std::vector&lt;double&gt; _dDensityProfileSmoothed;</div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    std::vector&lt;double&gt; _dDensityProfileSmoothedDerivation;</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    std::vector&lt;double&gt; _dForceProfile;</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    std::vector&lt;double&gt; _dForceProfileSmoothed;</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span> </div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <span class="comment">// update method</span></div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <span class="keywordtype">int</span> _nMethod;</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>    <span class="keywordtype">double</span> _dVaporDensity;</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    uint16_t _nNeighbourValsSmooth;</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    uint16_t _nNeighbourValsDerivate;</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span> </div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    <span class="keywordtype">int</span> _nMethodInit;</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> _strFilenameInit;</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    uint64_t _nRestartTimestep;</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span> </div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="comment">// write data</span></div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> _strFilename;</div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> _strFilenameProfilesPrefix;</div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span> </div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    <span class="comment">// observer</span></div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    std::vector&lt;ObserverBase*&gt; _observer;</div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span> </div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    <span class="keywordtype">int</span> _nSubdivisionOpt;</div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span> </div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    <span class="keyword">struct </span>BinParamsType</div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    {</div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>        uint32_t count;</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>        <span class="keywordtype">double</span> width;</div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>        <span class="keywordtype">double</span> invWidth;</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        <span class="keywordtype">double</span> volume;</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    } _binParams;</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span> </div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>    <span class="keyword">struct </span>ControlFreqType</div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>    {</div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>        uint32_t update;</div>
-<div class="line"><a id="l00208" name="l00208"></a><span class="lineno"><a class="line" href="structDistControl_1_1ControlFreqType_1_1WriteFreqType.html">  208</a></span>        <span class="keyword">struct </span><a class="code hl_struct" href="structDistControl_1_1ControlFreqType_1_1WriteFreqType.html">WriteFreqType</a></div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>        {</div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>            uint32_t data;</div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>            uint32_t profiles;</div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>        } write;</div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>    } _controlFreqs;</div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span> </div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>};  <span class="comment">// class DistControl</span></div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    <span class="keywordtype">double</span> _dInterfaceMidLeft;</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>    <span class="keywordtype">double</span> _dInterfaceMidRight;</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span> </div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>    uint16_t _nNumComponents;</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    uint16_t _nTargetCompID;</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    uint64_t _nNumValuesScalar;</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    std::vector&lt;uint64_t&gt; _nOffsets;</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span> </div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    <a class="code hl_class" href="classCommVar.html">CommVar&lt;std::vector&lt;uint64_t&gt;</a> &gt; _nNumMolecules;</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>    <a class="code hl_class" href="classCommVar.html">CommVar&lt;std::vector&lt;uint64_t&gt;</a> &gt; _dForceSum;</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>    std::vector&lt;double&gt; _dMidpointPositions;</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    std::vector&lt;double&gt; _dDensityProfile;</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>    std::vector&lt;double&gt; _dDensityProfileSmoothed;</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    std::vector&lt;double&gt; _dDensityProfileSmoothedDerivation;</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    std::vector&lt;double&gt; _dForceProfile;</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    std::vector&lt;double&gt; _dForceProfileSmoothed;</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span> </div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>    <span class="comment">// update method</span></div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <span class="keywordtype">int</span> _nMethod;</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <span class="keywordtype">double</span> _dVaporDensity;</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>    uint16_t _nNeighbourValsSmooth;</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    uint16_t _nNeighbourValsDerivate;</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span> </div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    <span class="keywordtype">int</span> _nMethodInit;</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> _strFilenameInit;</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    uint64_t _nRestartTimestep;</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span> </div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    <span class="comment">// write data</span></div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> _strFilename;</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <a class="code hl_typedef" href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">std::string</a> _strFilenameProfilesPrefix;</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span> </div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>    <span class="comment">// observer</span></div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    std::vector&lt;ObserverBase*&gt; _observer;</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span> </div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>    <span class="keywordtype">int</span> _nSubdivisionOpt;</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span> </div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    <span class="keyword">struct </span>BinParamsType</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    {</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>        uint32_t count;</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>        <span class="keywordtype">double</span> width;</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>        <span class="keywordtype">double</span> invWidth;</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>        <span class="keywordtype">double</span> volume;</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>    } _binParams;</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span> </div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    <span class="keyword">struct </span>ControlFreqType</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>    {</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>        uint32_t update;</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno"><a class="line" href="structDistControl_1_1ControlFreqType_1_1WriteFreqType.html">  207</a></span>        <span class="keyword">struct </span><a class="code hl_struct" href="structDistControl_1_1ControlFreqType_1_1WriteFreqType.html">WriteFreqType</a></div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>        {</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>            uint32_t data;</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>            uint32_t profiles;</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>        } write;</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>    } _controlFreqs;</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span> </div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>};  <span class="comment">// class DistControl</span></div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span> </div>
 <div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span> </div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span> </div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span><span class="preprocessor">#endif </span><span class="comment">/* DISTCONTROL_H_ */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span><span class="preprocessor">#endif </span><span class="comment">/* DISTCONTROL_H_ */</span><span class="preprocessor"></span></div>
 <div class="ttc" id="aclassCommVar_html"><div class="ttname"><a href="classCommVar.html">CommVar</a></div><div class="ttdef"><b>Definition:</b> CommVar.h:17</div></div>
 <div class="ttc" id="aclassControlInstance_html"><div class="ttname"><a href="classControlInstance.html">ControlInstance</a></div><div class="ttdef"><b>Definition:</b> Region.h:29</div></div>
-<div class="ttc" id="aclassDistControl_html"><div class="ttname"><a href="classDistControl.html">DistControl</a></div><div class="ttdef"><b>Definition:</b> DistControl.h:48</div></div>
-<div class="ttc" id="aclassDistControl_html_a3e1834a77b771e51ea41e30d2ba88831"><div class="ttname"><a href="classDistControl.html#a3e1834a77b771e51ea41e30d2ba88831">DistControl::afterForces</a></div><div class="ttdeci">void afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, unsigned long simstep) override</div><div class="ttdoc">Method afterForces will be called after forcefields have been applied no sitewise Forces can be appli...</div><div class="ttdef"><b>Definition:</b> DistControl.h:98</div></div>
-<div class="ttc" id="aclassDistControl_html_a562ebe4e67c395cbaeabecd03315ef7e"><div class="ttname"><a href="classDistControl.html#a562ebe4e67c395cbaeabecd03315ef7e">DistControl::getPluginName</a></div><div class="ttdeci">std::string getPluginName() override</div><div class="ttdoc">return the name of the plugin</div><div class="ttdef"><b>Definition:</b> DistControl.h:108</div></div>
-<div class="ttc" id="aclassDistControl_html_a5fd169366b72afc9cd2331329341cdaf"><div class="ttname"><a href="classDistControl.html#a5fd169366b72afc9cd2331329341cdaf">DistControl::finish</a></div><div class="ttdeci">void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) override</div><div class="ttdoc">Method finish will be called at the end of the simulation.</div><div class="ttdef"><b>Definition:</b> DistControl.h:105</div></div>
-<div class="ttc" id="aclassDistControl_html_a62733e3b24b61b1b9c725dc852f2f892"><div class="ttname"><a href="classDistControl.html#a62733e3b24b61b1b9c725dc852f2f892">DistControl::readXML</a></div><div class="ttdeci">void readXML(XMLfileUnits &amp;xmlconfig) override</div><div class="ttdoc">Read in XML configuration for DistControl and all its included objects.</div><div class="ttdef"><b>Definition:</b> DistControl.cpp:59</div></div>
-<div class="ttc" id="aclassDistControl_html_a6e18536a6467cacce840e62e4fe02b54"><div class="ttname"><a href="classDistControl.html#a6e18536a6467cacce840e62e4fe02b54">DistControl::beforeEventNewTimestep</a></div><div class="ttdeci">void beforeEventNewTimestep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, unsigned long simstep) override</div><div class="ttdoc">Method will be called first thing in a new timestep.</div><div class="ttdef"><b>Definition:</b> DistControl.h:90</div></div>
-<div class="ttc" id="aclassDistControl_html_a9b79cfc0d4d8284458306062c6408c47"><div class="ttname"><a href="classDistControl.html#a9b79cfc0d4d8284458306062c6408c47">DistControl::beforeForces</a></div><div class="ttdeci">void beforeForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, unsigned long simstep) override</div><div class="ttdoc">Method beforeForces will be called before forcefields have been applied no alterations w....</div><div class="ttdef"><b>Definition:</b> DistControl.cpp:237</div></div>
-<div class="ttc" id="aclassDistControl_html_ac7a0cd9b7acbef93d4e6f62313aed2f7"><div class="ttname"><a href="classDistControl.html#ac7a0cd9b7acbef93d4e6f62313aed2f7">DistControl::endStep</a></div><div class="ttdeci">void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain, unsigned long simstep) override</div><div class="ttdoc">Method endStep will be called at the end of each time step.</div><div class="ttdef"><b>Definition:</b> DistControl.h:101</div></div>
-<div class="ttc" id="aclassDistControl_html_acc7bdbc7eb5331de7acbb1635276eaed"><div class="ttname"><a href="classDistControl.html#acc7bdbc7eb5331de7acbb1635276eaed">DistControl::init</a></div><div class="ttdeci">void init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) override</div><div class="ttdoc">Method init will be called at the begin of the simulation.</div><div class="ttdef"><b>Definition:</b> DistControl.cpp:228</div></div>
-<div class="ttc" id="aclassDistControl_html_adcf122909213420ab9a2f2ef52a0cee5"><div class="ttname"><a href="classDistControl.html#adcf122909213420ab9a2f2ef52a0cee5">DistControl::siteWiseForces</a></div><div class="ttdeci">void siteWiseForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, unsigned long simstep) override</div><div class="ttdoc">Method siteWiseForces will be called before forcefields have been applied alterations to sitewise for...</div><div class="ttdef"><b>Definition:</b> DistControl.h:96</div></div>
-<div class="ttc" id="aclassDomainDecompBase_html"><div class="ttname"><a href="classDomainDecompBase.html">DomainDecompBase</a></div><div class="ttdoc">handle boundary region and multiple processes</div><div class="ttdef"><b>Definition:</b> DomainDecompBase.h:51</div></div>
+<div class="ttc" id="aclassDistControl_html"><div class="ttname"><a href="classDistControl.html">DistControl</a></div><div class="ttdef"><b>Definition:</b> DistControl.h:47</div></div>
+<div class="ttc" id="aclassDistControl_html_a3e1834a77b771e51ea41e30d2ba88831"><div class="ttname"><a href="classDistControl.html#a3e1834a77b771e51ea41e30d2ba88831">DistControl::afterForces</a></div><div class="ttdeci">void afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, unsigned long simstep) override</div><div class="ttdoc">Method afterForces will be called after forcefields have been applied no sitewise Forces can be appli...</div><div class="ttdef"><b>Definition:</b> DistControl.h:97</div></div>
+<div class="ttc" id="aclassDistControl_html_a562ebe4e67c395cbaeabecd03315ef7e"><div class="ttname"><a href="classDistControl.html#a562ebe4e67c395cbaeabecd03315ef7e">DistControl::getPluginName</a></div><div class="ttdeci">std::string getPluginName() override</div><div class="ttdoc">return the name of the plugin</div><div class="ttdef"><b>Definition:</b> DistControl.h:107</div></div>
+<div class="ttc" id="aclassDistControl_html_a5fd169366b72afc9cd2331329341cdaf"><div class="ttname"><a href="classDistControl.html#a5fd169366b72afc9cd2331329341cdaf">DistControl::finish</a></div><div class="ttdeci">void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) override</div><div class="ttdoc">Method finish will be called at the end of the simulation.</div><div class="ttdef"><b>Definition:</b> DistControl.h:104</div></div>
+<div class="ttc" id="aclassDistControl_html_a62733e3b24b61b1b9c725dc852f2f892"><div class="ttname"><a href="classDistControl.html#a62733e3b24b61b1b9c725dc852f2f892">DistControl::readXML</a></div><div class="ttdeci">void readXML(XMLfileUnits &amp;xmlconfig) override</div><div class="ttdoc">Read in XML configuration for DistControl and all its included objects.</div><div class="ttdef"><b>Definition:</b> DistControl.cpp:58</div></div>
+<div class="ttc" id="aclassDistControl_html_a6e18536a6467cacce840e62e4fe02b54"><div class="ttname"><a href="classDistControl.html#a6e18536a6467cacce840e62e4fe02b54">DistControl::beforeEventNewTimestep</a></div><div class="ttdeci">void beforeEventNewTimestep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, unsigned long simstep) override</div><div class="ttdoc">Method will be called first thing in a new timestep.</div><div class="ttdef"><b>Definition:</b> DistControl.h:89</div></div>
+<div class="ttc" id="aclassDistControl_html_a9b79cfc0d4d8284458306062c6408c47"><div class="ttname"><a href="classDistControl.html#a9b79cfc0d4d8284458306062c6408c47">DistControl::beforeForces</a></div><div class="ttdeci">void beforeForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, unsigned long simstep) override</div><div class="ttdoc">Method beforeForces will be called before forcefields have been applied no alterations w....</div><div class="ttdef"><b>Definition:</b> DistControl.cpp:236</div></div>
+<div class="ttc" id="aclassDistControl_html_ac7a0cd9b7acbef93d4e6f62313aed2f7"><div class="ttname"><a href="classDistControl.html#ac7a0cd9b7acbef93d4e6f62313aed2f7">DistControl::endStep</a></div><div class="ttdeci">void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain, unsigned long simstep) override</div><div class="ttdoc">Method endStep will be called at the end of each time step.</div><div class="ttdef"><b>Definition:</b> DistControl.h:100</div></div>
+<div class="ttc" id="aclassDistControl_html_acc7bdbc7eb5331de7acbb1635276eaed"><div class="ttname"><a href="classDistControl.html#acc7bdbc7eb5331de7acbb1635276eaed">DistControl::init</a></div><div class="ttdeci">void init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) override</div><div class="ttdoc">Method init will be called at the begin of the simulation.</div><div class="ttdef"><b>Definition:</b> DistControl.cpp:227</div></div>
+<div class="ttc" id="aclassDistControl_html_adcf122909213420ab9a2f2ef52a0cee5"><div class="ttname"><a href="classDistControl.html#adcf122909213420ab9a2f2ef52a0cee5">DistControl::siteWiseForces</a></div><div class="ttdeci">void siteWiseForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, unsigned long simstep) override</div><div class="ttdoc">Method siteWiseForces will be called before forcefields have been applied alterations to sitewise for...</div><div class="ttdef"><b>Definition:</b> DistControl.h:95</div></div>
+<div class="ttc" id="aclassDomainDecompBase_html"><div class="ttname"><a href="classDomainDecompBase.html">DomainDecompBase</a></div><div class="ttdoc">handle boundary region and multiple processes</div><div class="ttdef"><b>Definition:</b> DomainDecompBase.h:53</div></div>
 <div class="ttc" id="aclassDomain_html"><div class="ttname"><a href="classDomain.html">Domain</a></div><div class="ttdoc">This class is used to read in the phasespace and to handle macroscopic values.</div><div class="ttdef"><b>Definition:</b> Domain.h:47</div></div>
 <div class="ttc" id="aclassFullMolecule_html"><div class="ttname"><a href="classFullMolecule.html">FullMolecule</a></div><div class="ttdoc">FullMolecule modeled as LJ sphere with point polarities.</div><div class="ttdef"><b>Definition:</b> FullMolecule.h:18</div></div>
 <div class="ttc" id="aclassObserverBase_html"><div class="ttname"><a href="classObserverBase.html">ObserverBase</a></div><div class="ttdef"><b>Definition:</b> ObserverBase.h:13</div></div>
@@ -279,11 +278,11 @@ $(function() {
 <div class="ttc" id="aclassSubjectBase_html"><div class="ttname"><a href="classSubjectBase.html">SubjectBase</a></div><div class="ttdef"><b>Definition:</b> ObserverBase.h:20</div></div>
 <div class="ttc" id="aclassXMLfileUnits_html"><div class="ttname"><a href="classXMLfileUnits.html">XMLfileUnits</a></div><div class="ttdoc">XML file with unit attributes abstraction.</div><div class="ttdef"><b>Definition:</b> xmlfileUnits.h:25</div></div>
 <div class="ttc" id="anamespacexml__schema_html_aefbaf353f9a0043af46d23d9040ef268"><div class="ttname"><a href="namespacexml__schema.html#aefbaf353f9a0043af46d23d9040ef268">xml_schema::string</a></div><div class="ttdeci">::xsd::cxx::tree::string&lt; char, simple_type &gt; string</div><div class="ttdoc">C++ type corresponding to the string XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:268</div></div>
-<div class="ttc" id="astructDistControl_1_1ControlFreqType_1_1WriteFreqType_html"><div class="ttname"><a href="structDistControl_1_1ControlFreqType_1_1WriteFreqType.html">DistControl::ControlFreqType::WriteFreqType</a></div><div class="ttdef"><b>Definition:</b> DistControl.h:209</div></div>
+<div class="ttc" id="astructDistControl_1_1ControlFreqType_1_1WriteFreqType_html"><div class="ttname"><a href="structDistControl_1_1ControlFreqType_1_1WriteFreqType.html">DistControl::ControlFreqType::WriteFreqType</a></div><div class="ttdef"><b>Definition:</b> DistControl.h:208</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:51 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:38 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

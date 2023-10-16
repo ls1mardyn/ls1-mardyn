@@ -77,43 +77,42 @@ $(function() {
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;LongRangeCorrection.h&quot;</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &quot;utils/Logger.h&quot;</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="keyword">using</span> Log::global_log;</div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">class </span><a class="code hl_class" href="classSimulation.html">Simulation</a>;</div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">class </span><a class="code hl_class" href="classDomain.html">Domain</a>;</div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">class </span><a class="code hl_class" href="classLongRangeCorrection.html">LongRangeCorrection</a>;</div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="classNoLRC.html">   17</a></span><span class="keyword">class </span><a class="code hl_class" href="classNoLRC.html">NoLRC</a>: <span class="keyword">public</span> <a class="code hl_class" href="classLongRangeCorrection.html">LongRangeCorrection</a>{</div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <a class="code hl_class" href="classNoLRC.html">NoLRC</a>(<span class="keywordtype">double</span> <span class="comment">/* cutoffRadius */</span>, <span class="keywordtype">double</span> <span class="comment">/* cutoffRadiusLJ */</span>,  <a class="code hl_class" href="classDomain.html">Domain</a>* domain, <a class="code hl_class" href="classSimulation.html">Simulation</a>* <span class="comment">/* simulation */</span>) {</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>        _domain = domain;</div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    };</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keyword">virtual</span> <a class="code hl_class" href="classNoLRC.html">~NoLRC</a>() {}</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> init() { global_log-&gt;info() &lt;&lt; <span class="stringliteral">&quot;No long range correction is used: UpotCorr = VirialCorr = 0&quot;</span> &lt;&lt; std::endl; }</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> readXML(<a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>&amp; <span class="comment">/* xmlconfig */</span>) {}</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> calculateLongRange() {</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>        _domain-&gt;setUpotCorr(0.);</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>        _domain-&gt;setVirialCorr(0.);</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>      };</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> writeProfiles(<a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* <span class="comment">/* domainDecomp */</span>, <a class="code hl_class" href="classDomain.html">Domain</a>* <span class="comment">/* domain */</span>, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> <span class="comment">/* simstep */</span>) {}</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    <a class="code hl_class" href="classDomain.html">Domain</a>* _domain;</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>};</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="preprocessor">#endif </span><span class="comment">/* __NOLRC_H__ */</span><span class="preprocessor"></span></div>
-<div class="ttc" id="aclassDomainDecompBase_html"><div class="ttname"><a href="classDomainDecompBase.html">DomainDecompBase</a></div><div class="ttdoc">handle boundary region and multiple processes</div><div class="ttdef"><b>Definition:</b> DomainDecompBase.h:51</div></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="keyword">class </span><a class="code hl_class" href="classSimulation.html">Simulation</a>;</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">class </span><a class="code hl_class" href="classDomain.html">Domain</a>;</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">class </span><a class="code hl_class" href="classLongRangeCorrection.html">LongRangeCorrection</a>;</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="classNoLRC.html">   16</a></span><span class="keyword">class </span><a class="code hl_class" href="classNoLRC.html">NoLRC</a>: <span class="keyword">public</span> <a class="code hl_class" href="classLongRangeCorrection.html">LongRangeCorrection</a>{</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    <a class="code hl_class" href="classNoLRC.html">NoLRC</a>(<span class="keywordtype">double</span> <span class="comment">/* cutoffRadius */</span>, <span class="keywordtype">double</span> <span class="comment">/* cutoffRadiusLJ */</span>,  <a class="code hl_class" href="classDomain.html">Domain</a>* domain, <a class="code hl_class" href="classSimulation.html">Simulation</a>* <span class="comment">/* simulation */</span>) {</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>        _domain = domain;</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    };</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keyword">virtual</span> <a class="code hl_class" href="classNoLRC.html">~NoLRC</a>() {}</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> init() { Log::global_log-&gt;info() &lt;&lt; <span class="stringliteral">&quot;No long range correction is used: UpotCorr = VirialCorr = 0&quot;</span> &lt;&lt; std::endl; }</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> readXML(<a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>&amp; <span class="comment">/* xmlconfig */</span>) {}</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> calculateLongRange() {</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        _domain-&gt;setUpotCorr(0.);</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>        _domain-&gt;setVirialCorr(0.);</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>      };</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> writeProfiles(<a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* <span class="comment">/* domainDecomp */</span>, <a class="code hl_class" href="classDomain.html">Domain</a>* <span class="comment">/* domain */</span>, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> <span class="comment">/* simstep */</span>) {}</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <a class="code hl_class" href="classDomain.html">Domain</a>* _domain;</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>};</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="preprocessor">#endif </span><span class="comment">/* __NOLRC_H__ */</span><span class="preprocessor"></span></div>
+<div class="ttc" id="aclassDomainDecompBase_html"><div class="ttname"><a href="classDomainDecompBase.html">DomainDecompBase</a></div><div class="ttdoc">handle boundary region and multiple processes</div><div class="ttdef"><b>Definition:</b> DomainDecompBase.h:53</div></div>
 <div class="ttc" id="aclassDomain_html"><div class="ttname"><a href="classDomain.html">Domain</a></div><div class="ttdoc">This class is used to read in the phasespace and to handle macroscopic values.</div><div class="ttdef"><b>Definition:</b> Domain.h:47</div></div>
 <div class="ttc" id="aclassLongRangeCorrection_html"><div class="ttname"><a href="classLongRangeCorrection.html">LongRangeCorrection</a></div><div class="ttdef"><b>Definition:</b> LongRangeCorrection.h:12</div></div>
-<div class="ttc" id="aclassNoLRC_html"><div class="ttname"><a href="classNoLRC.html">NoLRC</a></div><div class="ttdef"><b>Definition:</b> NoLRC.h:17</div></div>
-<div class="ttc" id="aclassSimulation_html"><div class="ttname"><a href="classSimulation.html">Simulation</a></div><div class="ttdoc">Controls the simulation process.</div><div class="ttdef"><b>Definition:</b> Simulation.h:70</div></div>
+<div class="ttc" id="aclassNoLRC_html"><div class="ttname"><a href="classNoLRC.html">NoLRC</a></div><div class="ttdef"><b>Definition:</b> NoLRC.h:16</div></div>
+<div class="ttc" id="aclassSimulation_html"><div class="ttname"><a href="classSimulation.html">Simulation</a></div><div class="ttdoc">Controls the simulation process.</div><div class="ttdef"><b>Definition:</b> Simulation.h:72</div></div>
 <div class="ttc" id="aclassXMLfileUnits_html"><div class="ttname"><a href="classXMLfileUnits.html">XMLfileUnits</a></div><div class="ttdoc">XML file with unit attributes abstraction.</div><div class="ttdef"><b>Definition:</b> xmlfileUnits.h:25</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:50 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:37 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

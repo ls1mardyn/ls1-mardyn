@@ -164,10 +164,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setGlobalTemperature<
 <tr class="memitem:aede63e632d78fa684587fb86082e304c"><td class="memItemLeft" align="right" valign="top"><a id="aede63e632d78fa684587fb86082e304c" name="aede63e632d78fa684587fb86082e304c"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setTargetTemperature</b> (int thermostatID, double T)</td></tr>
 <tr class="separator:aede63e632d78fa684587fb86082e304c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0eeae0e2f20508fc05a580e58390a74c"><td class="memItemLeft" align="right" valign="top"><a id="a0eeae0e2f20508fc05a580e58390a74c" name="a0eeae0e2f20508fc05a580e58390a74c"></a>
+<tr class="memitem:a01cb27660825b8134fc74261c4091b9a"><td class="memItemLeft" align="right" valign="top"><a id="a01cb27660825b8134fc74261c4091b9a" name="a01cb27660825b8134fc74261c4091b9a"></a>
 std::vector&lt; double &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getmixcoeff</b> ()</td></tr>
-<tr class="memdesc:a0eeae0e2f20508fc05a580e58390a74c"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the mixcoeff <br /></td></tr>
-<tr class="separator:a0eeae0e2f20508fc05a580e58390a74c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:a01cb27660825b8134fc74261c4091b9a"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the mixcoeff <br /></td></tr>
+<tr class="separator:a01cb27660825b8134fc74261c4091b9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a4ab3ace488e74d2a2c81f043e3d61e"><td class="memItemLeft" align="right" valign="top"><a id="a9a4ab3ace488e74d2a2c81f043e3d61e" name="a9a4ab3ace488e74d2a2c81f043e3d61e"></a>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>getepsilonRF</b> () const</td></tr>
 <tr class="memdesc:a9a4ab3ace488e74d2a2c81f043e3d61e"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the epsilonRF <br /></td></tr>
@@ -355,8 +355,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
 <p>This class is responsible for all macroscopic values. It is important to differentiate between local and global version of those values Macroscopic values are values that aggregate some property of a set of molecules. As this program is designed to run on a parallel computer, there are typically several processes. Each process has an instance of this class, but with a different subset of molecules. Therefore, also the macroscopic values are only representative for the "local" domain of that process.</p>
 <p >member variables that represent "local" macroscopic values begin with _local</p>
 <p >properties of the global system begin with _global if only the rank 0 process obtains the correct value (e.g., as a sum over corresponding local properties) and with _universal if the global value must be communicated to all processes.</p>
-<p >At some points of the simulation, macroscopic values for the whole set of molecules have to be calculated. Those values are stored in member variables beginning with _global. <br  />
- </p>
+<p >At some points of the simulation, macroscopic values for the whole set of molecules have to be calculated. Those values are stored in member variables beginning with _global. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="aed30b88d4a385684b442cae6679b5884" name="aed30b88d4a385684b442cae6679b5884"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aed30b88d4a385684b442cae6679b5884">&#9670;&nbsp;</a></span>calculateGlobalValues()</h2>
@@ -615,8 +614,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
         </tr>
       </table>
 </div><div class="memdoc">
-<p >by Stefan Becker: determine and return the totel number of fluid molecules this method assumes all molecules with a component-ID less than _numFluidComponent to be fluid molecules <br  />
- </p>
+<p >by Stefan Becker: determine and return the totel number of fluid molecules this method assumes all molecules with a component-ID less than _numFluidComponent to be fluid molecules </p>
 
 </div>
 </div>
@@ -1020,7 +1018,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:53 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:39 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

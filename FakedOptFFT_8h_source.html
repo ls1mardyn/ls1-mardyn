@@ -89,61 +89,59 @@ $(function() {
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &lt;map&gt;</span></div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &lt;iostream&gt;</span></div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">using namespace </span>std;</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment">//struct storing a int[2] for the map</span></div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="structpos.html">   23</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structpos.html">pos</a> {</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="keywordtype">int</span> x, y;</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>};</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment">//comparator of pos (=int[2])</span></div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno"><a class="line" href="structpos__comp.html">   28</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structpos__comp.html">pos_comp</a> {</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> <a class="code hl_struct" href="structpos.html">pos</a> &amp;l, <span class="keyword">const</span> <a class="code hl_struct" href="structpos.html">pos</a> &amp;r)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>        <span class="keywordflow">return</span> (l.x &lt; r.x || (l.x == r.x &amp;&amp; l.y &lt; r.y));</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    }</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>};</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno"><a class="line" href="classFakedOptFFT.html">   39</a></span><span class="keyword">class </span><a class="code hl_class" href="classFakedOptFFT.html">FakedOptFFT</a>: <span class="keyword">public</span> <a class="code hl_class" href="classoptFFT__API.html">optFFT_API</a> {</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="comment">//struct storing a int[2] for the map</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno"><a class="line" href="structpos.html">   21</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structpos.html">pos</a> {</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keywordtype">int</span> x, y;</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>};</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment">//comparator of pos (=int[2])</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="structpos__comp.html">   26</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structpos__comp.html">pos_comp</a> {</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> <a class="code hl_struct" href="structpos.html">pos</a> &amp;l, <span class="keyword">const</span> <a class="code hl_struct" href="structpos.html">pos</a> &amp;r)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>        <span class="keywordflow">return</span> (l.x &lt; r.x || (l.x == r.x &amp;&amp; l.y &lt; r.y));</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    }</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>};</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno"><a class="line" href="classFakedOptFFT.html">   37</a></span><span class="keyword">class </span><a class="code hl_class" href="classFakedOptFFT.html">FakedOptFFT</a>: <span class="keyword">public</span> <a class="code hl_class" href="classoptFFT__API.html">optFFT_API</a> {</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="keyword">public</span>:</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <a class="code hl_class" href="classFakedOptFFT.html">FakedOptFFT</a>() {</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    } <span class="comment">//cout &lt;&lt; &quot;Using faked opt FFT (see bhfmm/fft/tools/optimizedFFT)&quot; &lt;&lt;  endl;}</span></div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <a class="code hl_class" href="classFakedOptFFT.html">~FakedOptFFT</a>() { <span class="comment">//free all entry of the map and the map</span></div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        <span class="keyword">auto</span> itr = _fftw_api_map.begin();</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        <span class="keywordflow">while</span> (itr != _fftw_api_map.end()) {</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; mardyn_get_max_threads(); ++i) {</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>                <span class="keyword">delete</span> ((*itr).second[i]);</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>            }</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>            <span class="keyword">delete</span> ((*itr).second);</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>            _fftw_api_map.erase(itr++);</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        }</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        _fftw_api_map.clear();</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    }</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classFakedOptFFT.html#ab67dd4d9e84e3ee5f769f08084e66e1f">optimizedFFT</a>(FFT_precision** &amp; Real, FFT_precision** &amp; Imag,</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <a class="code hl_class" href="classFakedOptFFT.html">FakedOptFFT</a>() {</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    } <span class="comment">//cout &lt;&lt; &quot;Using faked opt FFT (see bhfmm/fft/tools/optimizedFFT)&quot; &lt;&lt;  endl;}</span></div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <a class="code hl_class" href="classFakedOptFFT.html">~FakedOptFFT</a>() { <span class="comment">//free all entry of the map and the map</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        <span class="keyword">auto</span> itr = _fftw_api_map.begin();</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>        <span class="keywordflow">while</span> (itr != _fftw_api_map.end()) {</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; mardyn_get_max_threads(); ++i) {</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>                <span class="keyword">delete</span> ((*itr).second[i]);</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>            }</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>            <span class="keyword">delete</span> ((*itr).second);</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>            _fftw_api_map.erase(itr++);</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        }</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        _fftw_api_map.clear();</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    }</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classFakedOptFFT.html#ab67dd4d9e84e3ee5f769f08084e66e1f">optimizedFFT</a>(FFT_precision** &amp; Real, FFT_precision** &amp; Imag,</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>            <span class="keyword">const</span> <span class="keywordtype">int</span> size_x, <span class="keyword">const</span> <span class="keywordtype">int</span> size_y);</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classFakedOptFFT.html#a4601f52548f038e44d26c7e6f8d1faf6">optimizedIFFT</a>(FFT_precision** &amp; Real, FFT_precision** &amp; Imag,</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>            <span class="keyword">const</span> <span class="keywordtype">int</span> size_x, <span class="keyword">const</span> <span class="keywordtype">int</span> size_y);</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classFakedOptFFT.html#a4601f52548f038e44d26c7e6f8d1faf6">optimizedIFFT</a>(FFT_precision** &amp; Real, FFT_precision** &amp; Imag,</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>            <span class="keyword">const</span> <span class="keywordtype">int</span> size_x, <span class="keyword">const</span> <span class="keywordtype">int</span> size_y);</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span> </div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    map&lt;pos, FFTW_API**, pos_comp&gt; _fftw_api_map; <span class="comment">//storage of the various FFTW_API required</span></div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <a class="code hl_class" href="classFFTW__API.html">FFTW_API</a>* getFFTW_API(<span class="keyword">const</span> <span class="keywordtype">int</span> size_x, <span class="keyword">const</span> <span class="keywordtype">int</span> size_y); <span class="comment">//memoized function using the map</span></div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>};</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    std::map&lt;pos, FFTW_API**, pos_comp&gt; _fftw_api_map; <span class="comment">//storage of the various FFTW_API required</span></div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <a class="code hl_class" href="classFFTW__API.html">FFTW_API</a>* getFFTW_API(<span class="keyword">const</span> <span class="keywordtype">int</span> size_x, <span class="keyword">const</span> <span class="keywordtype">int</span> size_y); <span class="comment">//memoized function using the map</span></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>};</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="aclassFFTW__API_html"><div class="ttname"><a href="classFFTW__API.html">FFTW_API</a></div><div class="ttdef"><b>Definition:</b> FFTW_API.h:25</div></div>
-<div class="ttc" id="aclassFakedOptFFT_html"><div class="ttname"><a href="classFakedOptFFT.html">FakedOptFFT</a></div><div class="ttdef"><b>Definition:</b> FakedOptFFT.h:39</div></div>
+<div class="ttc" id="aclassFakedOptFFT_html"><div class="ttname"><a href="classFakedOptFFT.html">FakedOptFFT</a></div><div class="ttdef"><b>Definition:</b> FakedOptFFT.h:37</div></div>
 <div class="ttc" id="aclassFakedOptFFT_html_a4601f52548f038e44d26c7e6f8d1faf6"><div class="ttname"><a href="classFakedOptFFT.html#a4601f52548f038e44d26c7e6f8d1faf6">FakedOptFFT::optimizedIFFT</a></div><div class="ttdeci">void optimizedIFFT(FFT_precision **&amp;Real, FFT_precision **&amp;Imag, const int size_x, const int size_y)</div><div class="ttdef"><b>Definition:</b> FakedOptFFT.cpp:135</div></div>
 <div class="ttc" id="aclassFakedOptFFT_html_ab67dd4d9e84e3ee5f769f08084e66e1f"><div class="ttname"><a href="classFakedOptFFT.html#ab67dd4d9e84e3ee5f769f08084e66e1f">FakedOptFFT::optimizedFFT</a></div><div class="ttdeci">void optimizedFFT(FFT_precision **&amp;Real, FFT_precision **&amp;Imag, const int size_x, const int size_y)</div><div class="ttdef"><b>Definition:</b> FakedOptFFT.cpp:72</div></div>
 <div class="ttc" id="aclassoptFFT__API_html"><div class="ttname"><a href="classoptFFT__API.html">optFFT_API</a></div><div class="ttdef"><b>Definition:</b> optFFT_API.h:18</div></div>
-<div class="ttc" id="astructpos__comp_html"><div class="ttname"><a href="structpos__comp.html">pos_comp</a></div><div class="ttdef"><b>Definition:</b> FakedOptFFT.h:28</div></div>
-<div class="ttc" id="astructpos_html"><div class="ttname"><a href="structpos.html">pos</a></div><div class="ttdef"><b>Definition:</b> FakedOptFFT.h:23</div></div>
+<div class="ttc" id="astructpos__comp_html"><div class="ttname"><a href="structpos__comp.html">pos_comp</a></div><div class="ttdef"><b>Definition:</b> FakedOptFFT.h:26</div></div>
+<div class="ttc" id="astructpos_html"><div class="ttname"><a href="structpos.html">pos</a></div><div class="ttdef"><b>Definition:</b> FakedOptFFT.h:21</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:50 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:37 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

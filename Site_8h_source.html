@@ -81,7 +81,7 @@ $(function() {
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;cmath&gt;</span></div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;cstdint&gt;</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">using</span> Log::global_log;</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno"><a class="line" href="classSite.html">   20</a></span><span class="keyword">class </span><a class="code hl_class" href="classSite.html">Site</a> {</div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">public</span>:</div>
@@ -106,9 +106,9 @@ $(function() {
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        xmlconfig.getNodeValueReduced(<span class="stringliteral">&quot;coords/y&quot;</span>, <a class="code hl_variable" href="classSite.html#af192eaaefaa5c0e81d91bbc440c68118">_r</a>[1]);</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        xmlconfig.getNodeValueReduced(<span class="stringliteral">&quot;coords/z&quot;</span>, <a class="code hl_variable" href="classSite.html#af192eaaefaa5c0e81d91bbc440c68118">_r</a>[2]);</div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        xmlconfig.getNodeValueReduced(<span class="stringliteral">&quot;mass&quot;</span>, <a class="code hl_variable" href="classSite.html#af7e75765659659da39e1fe84f979d5b1">_m</a>);</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        </div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        <span class="keywordflow">if</span> (!xmlconfig.<a class="code hl_function" href="classXMLfile.html#ac46e2da0709ed1eaf3ae1ee626612373">getNodeValue</a>(<span class="stringliteral">&quot;@name&quot;</span>, _name)) {</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>            global_log-&gt;error() &lt;&lt; <span class="stringliteral">&quot;Cannot find site name. Defaulting to type.&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>            Log::global_log-&gt;error() &lt;&lt; <span class="stringliteral">&quot;Cannot find site name. Defaulting to type.&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>            xmlconfig.<a class="code hl_function" href="classXMLfile.html#ac46e2da0709ed1eaf3ae1ee626612373">getNodeValue</a>(<span class="stringliteral">&quot;@type&quot;</span>, _name);</div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        }</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
@@ -142,7 +142,7 @@ $(function() {
 <div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>        xmlconfig.getNodeValueReduced(<span class="stringliteral">&quot;sigma&quot;</span>, _sigma);</div>
 <div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>        xmlconfig.<a class="code hl_function" href="classXMLfile.html#ac46e2da0709ed1eaf3ae1ee626612373">getNodeValue</a>(<span class="stringliteral">&quot;shifted&quot;</span>, _shiftRequested);</div>
 <div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    }</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    </div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno"><a class="line" href="classLJcenter.html#a61b792928ac75fa6175f7a44f7915216">  133</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classLJcenter.html#a61b792928ac75fa6175f7a44f7915216">write</a>(std::ostream&amp; ostrm)<span class="keyword"> const </span>{</div>
 <div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>        Site::write(ostrm);</div>
 <div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>        ostrm &lt;&lt; <span class="stringliteral">&quot;\t&quot;</span> &lt;&lt; <a class="code hl_function" href="classLJcenter.html#adec3ec635c860cceb80a072115c782a9">eps</a>() &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; <a class="code hl_function" href="classLJcenter.html#a3979e25bffa8362972db3618a0f5b030">sigma</a>() &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; <a class="code hl_function" href="classLJcenter.html#aff43624211b34a563404f5d70cef7f22">shift6</a>();</div>
@@ -345,7 +345,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:51 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:38 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

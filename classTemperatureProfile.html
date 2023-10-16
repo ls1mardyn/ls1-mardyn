@@ -98,9 +98,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5d1c323ef3844b8c84118a9838879891"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTemperatureProfile.html#a5d1c323ef3844b8c84118a9838879891">collectRetrieve</a> (<a class="el" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, unsigned long uID) final</td></tr>
 <tr class="memdesc:a5d1c323ef3844b8c84118a9838879891"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get global values after AllReduceSum per bin. Write to e.g. _globalProfile.  <a href="classTemperatureProfile.html#a5d1c323ef3844b8c84118a9838879891">More...</a><br /></td></tr>
 <tr class="separator:a5d1c323ef3844b8c84118a9838879891"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7cdc0b895ed23fbc254d76850ab3cbc0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTemperatureProfile.html#a7cdc0b895ed23fbc254d76850ab3cbc0">output</a> (string prefix, long unsigned accumulatedDatasets) final</td></tr>
-<tr class="memdesc:a7cdc0b895ed23fbc254d76850ab3cbc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whatever is necessary to output for this profile.  <a href="classTemperatureProfile.html#a7cdc0b895ed23fbc254d76850ab3cbc0">More...</a><br /></td></tr>
-<tr class="separator:a7cdc0b895ed23fbc254d76850ab3cbc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af2bd31f1e6a0b77dffdb7a2b792bf446"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTemperatureProfile.html#af2bd31f1e6a0b77dffdb7a2b792bf446">output</a> (std::string prefix, long unsigned accumulatedDatasets) final</td></tr>
+<tr class="memdesc:af2bd31f1e6a0b77dffdb7a2b792bf446"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whatever is necessary to output for this profile.  <a href="classTemperatureProfile.html#af2bd31f1e6a0b77dffdb7a2b792bf446">More...</a><br /></td></tr>
+<tr class="separator:af2bd31f1e6a0b77dffdb7a2b792bf446"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a166578019d874bd8de85fbd57cdd9e16"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTemperatureProfile.html#a166578019d874bd8de85fbd57cdd9e16">reset</a> (unsigned long uID) final</td></tr>
 <tr class="memdesc:a166578019d874bd8de85fbd57cdd9e16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Used to reset all array contents for a specific uID in order to start the next recording timeframe.  <a href="classTemperatureProfile.html#a166578019d874bd8de85fbd57cdd9e16">More...</a><br /></td></tr>
 <tr class="separator:a166578019d874bd8de85fbd57cdd9e16"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -115,22 +115,22 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_methods_classProfileBase"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classProfileBase')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classProfileBase.html">ProfileBase</a></td></tr>
-<tr class="memitem:a7c2a5222350e961b5e0cfaa1bd47591e inherit pro_methods_classProfileBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classProfileBase.html#a7c2a5222350e961b5e0cfaa1bd47591e">writeMatrix</a> (ofstream &amp;outfile)</td></tr>
-<tr class="memdesc:a7c2a5222350e961b5e0cfaa1bd47591e inherit pro_methods_classProfileBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Matrix writing routine to avoid code duplication.  <a href="classProfileBase.html#a7c2a5222350e961b5e0cfaa1bd47591e">More...</a><br /></td></tr>
-<tr class="separator:a7c2a5222350e961b5e0cfaa1bd47591e inherit pro_methods_classProfileBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa14b111cd227d7f73efdf9d00fb1787b inherit pro_methods_classProfileBase"><td class="memItemLeft" align="right" valign="top"><a id="aa14b111cd227d7f73efdf9d00fb1787b" name="aa14b111cd227d7f73efdf9d00fb1787b"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>writeKartMatrix</b> (ofstream &amp;outfile)</td></tr>
-<tr class="separator:aa14b111cd227d7f73efdf9d00fb1787b inherit pro_methods_classProfileBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae503922d471a254794591191a4f23a4c inherit pro_methods_classProfileBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classProfileBase.html#ae503922d471a254794591191a4f23a4c">writeSimpleMatrix</a> (ofstream &amp;outfile)</td></tr>
-<tr class="memdesc:ae503922d471a254794591191a4f23a4c inherit pro_methods_classProfileBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">STUB for simple Matrix output without headers.  <a href="classProfileBase.html#ae503922d471a254794591191a4f23a4c">More...</a><br /></td></tr>
-<tr class="separator:ae503922d471a254794591191a4f23a4c inherit pro_methods_classProfileBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5d02737d7690dff217c56d05f66052e9 inherit pro_methods_classProfileBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classProfileBase.html#a5d02737d7690dff217c56d05f66052e9">writeCylMatrix</a> (ofstream &amp;outfile)</td></tr>
-<tr class="memdesc:a5d02737d7690dff217c56d05f66052e9 inherit pro_methods_classProfileBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">cylinder Matrix output  <a href="classProfileBase.html#a5d02737d7690dff217c56d05f66052e9">More...</a><br /></td></tr>
-<tr class="separator:a5d02737d7690dff217c56d05f66052e9 inherit pro_methods_classProfileBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22adc45a704422ab99034925ad4ddde9 inherit pro_methods_classProfileBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classProfileBase.html#a22adc45a704422ab99034925ad4ddde9">writeMatrix</a> (std::ofstream &amp;outfile)</td></tr>
+<tr class="memdesc:a22adc45a704422ab99034925ad4ddde9 inherit pro_methods_classProfileBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Matrix writing routine to avoid code duplication.  <a href="classProfileBase.html#a22adc45a704422ab99034925ad4ddde9">More...</a><br /></td></tr>
+<tr class="separator:a22adc45a704422ab99034925ad4ddde9 inherit pro_methods_classProfileBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a970dab3eb458fd893cccbf9be863eb6c inherit pro_methods_classProfileBase"><td class="memItemLeft" align="right" valign="top"><a id="a970dab3eb458fd893cccbf9be863eb6c" name="a970dab3eb458fd893cccbf9be863eb6c"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>writeKartMatrix</b> (std::ofstream &amp;outfile)</td></tr>
+<tr class="separator:a970dab3eb458fd893cccbf9be863eb6c inherit pro_methods_classProfileBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f878622895e6135f77d223d75fe5eb9 inherit pro_methods_classProfileBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classProfileBase.html#a2f878622895e6135f77d223d75fe5eb9">writeSimpleMatrix</a> (std::ofstream &amp;outfile)</td></tr>
+<tr class="memdesc:a2f878622895e6135f77d223d75fe5eb9 inherit pro_methods_classProfileBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">STUB for simple Matrix output without headers.  <a href="classProfileBase.html#a2f878622895e6135f77d223d75fe5eb9">More...</a><br /></td></tr>
+<tr class="separator:a2f878622895e6135f77d223d75fe5eb9 inherit pro_methods_classProfileBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1179acd259bfe3da1e6b18306d2b970d inherit pro_methods_classProfileBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classProfileBase.html#a1179acd259bfe3da1e6b18306d2b970d">writeCylMatrix</a> (std::ofstream &amp;outfile)</td></tr>
+<tr class="memdesc:a1179acd259bfe3da1e6b18306d2b970d inherit pro_methods_classProfileBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">cylinder Matrix output  <a href="classProfileBase.html#a1179acd259bfe3da1e6b18306d2b970d">More...</a><br /></td></tr>
+<tr class="separator:a1179acd259bfe3da1e6b18306d2b970d inherit pro_methods_classProfileBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_classProfileBase"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classProfileBase')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classProfileBase.html">ProfileBase</a></td></tr>
-<tr class="memitem:a455ed8552b3b2dd79aba6eebbeb2dbba inherit pro_attribs_classProfileBase"><td class="memItemLeft" align="right" valign="top"><a id="a455ed8552b3b2dd79aba6eebbeb2dbba" name="a455ed8552b3b2dd79aba6eebbeb2dbba"></a>
-string&#160;</td><td class="memItemRight" valign="bottom"><b>_profilePrefix</b></td></tr>
-<tr class="separator:a455ed8552b3b2dd79aba6eebbeb2dbba inherit pro_attribs_classProfileBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a770a240ab6013a8648f78cd7fe65e4f5 inherit pro_attribs_classProfileBase"><td class="memItemLeft" align="right" valign="top"><a id="a770a240ab6013a8648f78cd7fe65e4f5" name="a770a240ab6013a8648f78cd7fe65e4f5"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>_profilePrefix</b></td></tr>
+<tr class="separator:a770a240ab6013a8648f78cd7fe65e4f5 inherit pro_attribs_classProfileBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a11f3c17ece3f1c6380330ccfdff64486 inherit pro_attribs_classProfileBase"><td class="memItemLeft" align="right" valign="top"><a id="a11f3c17ece3f1c6380330ccfdff64486" name="a11f3c17ece3f1c6380330ccfdff64486"></a>
 <a class="el" href="structSamplingInformation.html">SamplingInformation</a>&#160;</td><td class="memItemRight" valign="bottom"><b>_samplInfo</b></td></tr>
 <tr class="separator:a11f3c17ece3f1c6380330ccfdff64486 inherit pro_attribs_classProfileBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -265,8 +265,8 @@ long&#160;</td><td class="memItemRight" valign="bottom"><b>_accumulatedDatasets<
 
 </div>
 </div>
-<a id="a7cdc0b895ed23fbc254d76850ab3cbc0" name="a7cdc0b895ed23fbc254d76850ab3cbc0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7cdc0b895ed23fbc254d76850ab3cbc0">&#9670;&nbsp;</a></span>output()</h2>
+<a id="af2bd31f1e6a0b77dffdb7a2b792bf446" name="af2bd31f1e6a0b77dffdb7a2b792bf446"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af2bd31f1e6a0b77dffdb7a2b792bf446">&#9670;&nbsp;</a></span>output()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -277,7 +277,7 @@ long&#160;</td><td class="memItemRight" valign="bottom"><b>_accumulatedDatasets<
         <tr>
           <td class="memname">void TemperatureProfile::output </td>
           <td>(</td>
-          <td class="paramtype">string&#160;</td>
+          <td class="paramtype">std::string&#160;</td>
           <td class="paramname"><em>prefix</em>, </td>
         </tr>
         <tr>
@@ -307,7 +307,7 @@ long&#160;</td><td class="memItemRight" valign="bottom"><b>_accumulatedDatasets<
   </dd>
 </dl>
 
-<p>Implements <a class="el" href="classProfileBase.html#a2216b78ddc671397bdfe9744f9126ba8">ProfileBase</a>.</p>
+<p>Implements <a class="el" href="classProfileBase.html#a5c1f14f4c09e8aaae16f3606ccd7fedc">ProfileBase</a>.</p>
 
 </div>
 </div>
@@ -401,7 +401,7 @@ long&#160;</td><td class="memItemRight" valign="bottom"><b>_accumulatedDatasets<
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:56 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:42 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

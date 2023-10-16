@@ -11,7 +11,7 @@ var searchData=
   ['value_5ffloat_8',['value_float',['../classXMLfile_1_1Node.html#a6385b40f743e655729ac574981eb04d2',1,'XMLfile::Node']]],
   ['value_5fint_9',['value_int',['../classXMLfile_1_1Node.html#a7db58d2bc9fdde114ea1a08cb2a200c0',1,'XMLfile::Node']]],
   ['value_5flong_10',['value_long',['../classXMLfile_1_1Node.html#aedffa92ca053aa07030297b31f65ae8b',1,'XMLfile::Node']]],
-  ['value_5fstring_11',['value_string',['../classXMLfile_1_1Node.html#a988349f270589c9e041304b9fb1342fc',1,'XMLfile::Node']]],
+  ['value_5fstring_11',['value_string',['../classXMLfile_1_1Node.html#a5624a3dcf1dd501508ed167f35b6257d',1,'XMLfile::Node']]],
   ['values_12',['Values',['../classoptparse_1_1Values.html',1,'optparse']]],
   ['valueunit_13',['ValueUnit',['../classXMLfileUnits_1_1ValueUnit.html#a1cda5ce8cad623b7c1a0a6a9ed5b4c58',1,'XMLfileUnits::ValueUnit::ValueUnit(const ValueUnit &amp;vu)'],['../classXMLfileUnits_1_1ValueUnit.html#aaaeaba61ea9b6868d1869bb5e9f6a5a5',1,'XMLfileUnits::ValueUnit::ValueUnit(double value, const std::string &amp;symbol)'],['../classXMLfileUnits_1_1ValueUnit.html#a9049b1d4b47a835084fe945839d96616',1,'XMLfileUnits::ValueUnit::ValueUnit(double value=0.)'],['../classXMLfileUnits_1_1ValueUnit.html',1,'XMLfileUnits::ValueUnit']]],
   ['variable_14',['Variable',['../classExpression_1_1Variable.html',1,'Expression']]],

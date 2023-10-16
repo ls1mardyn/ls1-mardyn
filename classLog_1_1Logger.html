@@ -167,7 +167,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>set_mpi_output_ranks<
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >The <a class="el" href="classLog_1_1Logger.html" title="The Logger class provides a simple interface to handle log messages.">Logger</a> class provides a simple interface to handle log messages. </p>
 <p >Provides easy interface to handle log messages. Initialize either with output level and stream or output level and filename or use default constructor values (Error, &amp;(std::cout)). With a given file basename and MPI Support each rank will create and write to his own file. For writing log messages use <a class="el" href="classLog_1_1Logger.html#a83d2bc6bc77e16ff495e63fb149e6649" title="shorthand versions for easy usage of the different log levels">fatal()</a>, <a class="el" href="namespacexml__schema.html#a13e2122658f2abee3c2da9829f2de129" title="Error condition.">error()</a>, warning(), info() or debug() as with normal streams, e.g. </p><blockquote class="doxtable">
-<p ><a class="el" href="namespacexml__schema.html#a13e2122658f2abee3c2da9829f2de129" title="Error condition.">log.error()</a> &lt;&lt; "Wrong parameter." &lt;&lt; endl; </p>
+<p ><a class="el" href="namespacexml__schema.html#a13e2122658f2abee3c2da9829f2de129" title="Error condition.">log.error()</a> &lt;&lt; "Wrong parameter." &lt;&lt; std::endl; </p>
 </blockquote>
 <p>For easy handling of output within MPI applications there are the following methods: <a class="el" href="classLog_1_1Logger.html#a94823b4458dcac7bf5c710c8684752e2" title="allow logging only for a single process">set_mpi_output_root(int root)</a> set_mpi_output_rall() <a class="el" href="classLog_1_1Logger.html#a36c84ac1dfd62c7b990c32df3e1eb4cc" title="allow a set of processes for logging">set_mpi_output_ranks(int num_ranks, int * ranks)</a> Please include std::endl statements at the end of output as they will flush the stream buffers. If ENABLE_MPI is enabled logger initialization has to take place after the MPI_Init call. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -207,7 +207,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>set_mpi_output_ranks<
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Sep 27 2023 09:33:56 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Oct 16 2023 14:20:43 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
