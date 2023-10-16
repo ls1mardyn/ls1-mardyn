@@ -34,7 +34,7 @@ public:
 	virtual ~Adios2IOTest() = default;
 
 	void initParticles();
-	
+
 	void testWriteCheckpoint();
 
 	void testReadCheckpoint();
@@ -59,7 +59,7 @@ private:
 
 	double _cutoff = 2.5;
 	std::string _filename = "adios2restart.bp";
-	
+
 };
 
 #endif

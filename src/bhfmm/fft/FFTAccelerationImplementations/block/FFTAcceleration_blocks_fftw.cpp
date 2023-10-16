@@ -39,7 +39,7 @@ void FFTAcceleration_blocks_fftw::FFT_initialize_Source(
 #else
 	fftw_complex* in = _fftw_api->getIn_Forward();
 	fftw_complex* out;
-#endif  
+#endif
 
 	for (b = 0; b < _nbBlocks; b++) {
 		minus_one_power_i = 1.0;
@@ -114,7 +114,7 @@ void FFTAcceleration_blocks_fftw::FFT_initialize_TransferFunction(
 #else
 	fftw_complex* in = _fftw_api->getIn_Forward();
 	fftw_complex* out;
-#endif  
+#endif
 
 	for (b = 0; b < _nbBlocks; b++) {
 
@@ -180,7 +180,7 @@ void FFTAcceleration_blocks_fftw::FFT_finalize_Target(
 #else
 	fftw_complex* in = _fftw_api->getIn_Backward();
 	fftw_complex* out;
-#endif 
+#endif
 
 	for (b = 0; b < _nbBlocks; b++) {
 		for (i = 0; i < _fft_nx; i++)

@@ -49,15 +49,15 @@ protected:
     SynchronizationObject *m_syncObject;
 
   public:
-    ExclusiveZone( SynchronizationObject *syncObject ) 
-        : m_syncObject( syncObject ) 
-    { 
-      m_syncObject->lock(); 
+    ExclusiveZone( SynchronizationObject *syncObject )
+        : m_syncObject( syncObject )
+    {
+      m_syncObject->lock();
     }
 
-    ~ExclusiveZone() 
-    { 
-      m_syncObject->unlock (); 
+    ~ExclusiveZone()
+    {
+      m_syncObject->unlock ();
     }
   };
 

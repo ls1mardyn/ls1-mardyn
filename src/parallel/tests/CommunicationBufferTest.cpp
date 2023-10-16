@@ -16,7 +16,6 @@
 #include "ensemble/CanonicalEnsemble.h"
 
 #include <iostream>
-using namespace std;
 
 TEST_SUITE_REGISTRATION(CommunicationBufferTest);
 

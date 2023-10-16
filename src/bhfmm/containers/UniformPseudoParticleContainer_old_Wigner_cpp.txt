@@ -44,7 +44,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_comm = domainDecomp.getCommunicator();
 #endif
 #if WIGNER == 1
-	//global_log->error() << "not supported yet" << endl;
+	//global_log->error() << "not supported yet" << std::endl;
 	Simulation::exit(-1);
 #endif
 #ifdef ENABLE_MPI

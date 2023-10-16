@@ -15,17 +15,17 @@
 VCP1CLJRMM::VCP1CLJRMM(Domain& domain, double cutoffRadius, double LJcutoffRadius) :
 	CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain), _eps24(), _sig2(), _shift6(), _dtInvm(0.0), _upot6lj(0.0), _virial(0.0) {
 #if VCP_VEC_TYPE==VCP_NOVEC
-	global_log->info() << "VCP1CLJRMM: using no intrinsics." << std::endl;
+	Log::global_log->info() << "VCP1CLJRMM: using no intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	global_log->info() << "VCP1CLJRMM: using SSE3 intrinsics." << std::endl;
+	Log::global_log->info() << "VCP1CLJRMM: using SSE3 intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
-	global_log->info() << "VCP1CLJRMM: using AVX intrinsics." << std::endl;
+	Log::global_log->info() << "VCP1CLJRMM: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
-	global_log->info() << "VCP1CLJRMM: using AVX2 intrinsics." << std::endl;
+	Log::global_log->info() << "VCP1CLJRMM: using AVX2 intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_KNL) || (VCP_VEC_TYPE==VCP_VEC_KNL_GATHER)
-	global_log->info() << "VCP1CLJRMM: using KNL intrinsics." << std::endl;
+	Log::global_log->info() << "VCP1CLJRMM: using KNL intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_AVX512F) || (VCP_VEC_TYPE==VCP_VEC_AVX512F_GATHER)
-	global_log->info() << "VCP1CLJRMM: using SKX intrinsics." << std::endl;
+	Log::global_log->info() << "VCP1CLJRMM: using SKX intrinsics." << std::endl;
 #endif
 
 	const Component& componentZero = _simulation.getEnsemble()->getComponents()->front();
@@ -42,12 +42,12 @@ VCP1CLJRMM::VCP1CLJRMM(Domain& domain, double cutoffRadius, double LJcutoffRadiu
 		double dt = global_simulation->getIntegrator()->getTimestepLength();
 		_dtInvm = dt / componentZero.m();
 	} else {
-		global_log->info() << "VCP1CLJRMM: initialize dtInv2m via setter method necessary." << endl;
+		Log::global_log->info() << "VCP1CLJRMM: initialize dtInv2m via setter method necessary." << std::endl;
 	}
 
 	// initialize thread data
 	_numThreads = mardyn_get_max_threads();
-	global_log->info() << "VCP1CLJRMM: allocate data for "
+	Log::global_log->info() << "VCP1CLJRMM: allocate data for "
 			<< _numThreads << " threads." << std::endl;
 	_threadData.resize(_numThreads);
 
@@ -82,7 +82,7 @@ void VCP1CLJRMM::initTraversal() {
 		_virial = 0.0;
 	} // end pragma omp master
 
-	global_log->debug() << "VCP1CLJRMM::initTraversal()." << std::endl;
+	Log::global_log->debug() << "VCP1CLJRMM::initTraversal()." << std::endl;
 }
 
 void VCP1CLJRMM::processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll) {
@@ -113,11 +113,11 @@ void VCP1CLJRMM::processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool 
 	// This saves the Molecule::isLessThan checks
 	// and works similar to the "Half-Shell" scheme
 
-	const bool ApplyCutoff = true; 
-	
+	const bool ApplyCutoff = true;
+
         if(sumAll) { // sumAll
 		const bool CalculateMacroscopic = true; // is now always set to true
-        
+
 		if (calc_soa1_soa2) {
 		    _calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
 		} else {

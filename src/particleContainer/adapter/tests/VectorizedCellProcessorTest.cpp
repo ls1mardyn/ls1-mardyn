@@ -322,15 +322,15 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 	}
 
 	if(printStats) {
-		test_log->info() << endl;
-		test_log->info() << "max_abs_F: " << max_abs_F << endl;
-		test_log->info() << "max_abs_M: " << max_abs_M << endl;
-		test_log->info() << "max_abs_Vi: " << max_abs_Vi << endl;
-		test_log->info() << "mean_abs_F: "  << mean_abs_F  / counter << endl;
-		test_log->info() << "mean_abs_M: "  << mean_abs_M  / counter << endl;
-		test_log->info() << "mean_abs_Vi: " << mean_abs_Vi / counter << endl;
-		test_log->info() << "upot: " << std::abs(legacy_u_pot - vectorized_u_pot) << endl;
-		test_log->info() << "viri: " << std::abs(legacy_virial - vectorized_virial) << endl;
+		test_log->info() << std::endl;
+		test_log->info() << "max_abs_F: " << max_abs_F << std::endl;
+		test_log->info() << "max_abs_M: " << max_abs_M << std::endl;
+		test_log->info() << "max_abs_Vi: " << max_abs_Vi << std::endl;
+		test_log->info() << "mean_abs_F: "  << mean_abs_F  / counter << std::endl;
+		test_log->info() << "mean_abs_M: "  << mean_abs_M  / counter << std::endl;
+		test_log->info() << "mean_abs_Vi: " << mean_abs_Vi / counter << std::endl;
+		test_log->info() << "upot: " << std::abs(legacy_u_pot - vectorized_u_pot) << std::endl;
+		test_log->info() << "viri: " << std::abs(legacy_virial - vectorized_virial) << std::endl;
 	}
 
 	// Assert that macroscopic quantities are the same

@@ -12,26 +12,26 @@ SubclassedTestCase::~SubclassedTestCase()
 }
 
 
-void 
+void
 SubclassedTestCase::setUp()
 {
 }
 
 
-void 
+void
 SubclassedTestCase::tearDown()
 {
 }
 
 
-void 
+void
 SubclassedTestCase::checkIt()
 {
   CPPUNIT_ASSERT( false );
 }
 
 
-void 
+void
 SubclassedTestCase::testSubclassing()
 {
 }

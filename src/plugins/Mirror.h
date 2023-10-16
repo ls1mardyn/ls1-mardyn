@@ -141,7 +141,7 @@ private:
 		double velo_target {0.4};
 		float fixed_probability_factor {-1};
 	} _melandParams;
-	
+
 	struct RampingParams {
 		unsigned long startStep {1000};
 		unsigned long stopStep {2000};
@@ -152,13 +152,13 @@ private:
 		CommVar<std::vector<uint64_t> > reflected;
 		CommVar<std::vector<uint64_t> > deleted;
 	} _particleManipCount;
-	
+
 	struct DiffuseMirror {
 		bool enabled;
 		float width;
 		std::map<uint64_t,double> pos_map;
 	} _diffuse_mirror;
-	
+
 	struct SwitchComp {
 		bool enabled;
 		uint32_t cid_ub;  // component id unity based

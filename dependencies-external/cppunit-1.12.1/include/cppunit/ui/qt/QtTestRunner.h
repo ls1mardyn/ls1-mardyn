@@ -16,7 +16,7 @@ CPPUNIT_NS_BEGIN
   class TestSuite;
 
 
-/*! 
+/*!
  * \brief QT test runner.
  * \ingroup ExecutingTest
  *
@@ -27,7 +27,7 @@ CPPUNIT_NS_BEGIN
  *
  * [...]
  *
- * void 
+ * void
  * QDepWindow::runTests()
  * {
  *   CppUnit::QtUi::TestRunner runner;

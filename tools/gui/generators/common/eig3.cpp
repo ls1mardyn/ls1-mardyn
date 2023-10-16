@@ -131,7 +131,7 @@ static void tred2(double V[n][n], double d[n], double e[n]) {
   }
   V[n-1][n-1] = 1.0;
   e[0] = 0.0;
-} 
+}
 
 // Symmetric tridiagonal QL algorithm.
 
@@ -229,7 +229,7 @@ static void tql2(double V[n][n], double d[n], double e[n]) {
     d[l] = d[l] + f;
     e[l] = 0.0;
   }
-  
+
   // Sort eigenvalues and corresponding vectors.
 
   for (int i = 0; i < n-1; i++) {

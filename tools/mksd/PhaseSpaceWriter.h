@@ -18,15 +18,14 @@
 #include"Component.h"
 #include"RandomNumber.h"
 
-using namespace std;
 
 
 class PhaseSpaceWriter{
 
 public:
 	// constructor + destructor
-	PhaseSpaceWriter(string in_prefix, double in_Temperature, double in_densFac, unsigned in_nFluid, string in_fluidComponent,
-					string in_wallComponent, unsigned in_wallLayers, double in_xi12, double in_xi13, double in_eta,  double in_alpha, double in_beta, double in_gamma, double in_edgeProp, bool in_stripes,
+	PhaseSpaceWriter(std::string in_prefix, double in_Temperature, double in_densFac, unsigned in_nFluid, std::string in_fluidComponent,
+					std::string in_wallComponent, unsigned in_wallLayers, double in_xi12, double in_xi13, double in_eta,  double in_alpha, double in_beta, double in_gamma, double in_edgeProp, bool in_stripes,
 					unsigned in_numberOfStripes, bool in_LJShifted, bool in_LJunits);
 
 	~PhaseSpaceWriter();
@@ -41,10 +40,10 @@ public:
 
 private:
 
-	string _fileName;
-	string _fileNameXyz;
-	string _fluidComponentName;
-	string _wallComponentName;
+	std::string _fileName;
+	std::string _fileNameXyz;
+	std::string _fluidComponentName;
+	std::string _wallComponentName;
 	unsigned _nFluid;
 	unsigned _nTotal;
 	unsigned _wallLayers;
@@ -64,8 +63,8 @@ private:
 	bool _LJunits;
 
 	// ofstream: phase space stream
-//	ofstream _psstrm;
-	// stringstream
+//	std::ofstream _psstrm;
+	// std::stringstream
 	//stringstream _strstrm;
 
 };

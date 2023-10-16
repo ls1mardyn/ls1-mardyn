@@ -15,7 +15,7 @@ class TestPath;
  *
  * All test objects should be a subclass of Test.  Some test objects,
  * TestCase for example, represent one individual test.  Other test
- * objects, such as TestSuite, are comprised of several tests.  
+ * objects, such as TestSuite, are comprised of several tests.
  *
  * When a Test is run, the result is collected by a TestResult object.
  *
@@ -45,11 +45,11 @@ public:
 
   /*! \brief Returns the child test of the specified index.
    *
-   * This method test if the index is valid, then call doGetChildTestAt() if 
+   * This method test if the index is valid, then call doGetChildTestAt() if
    * the index is valid. Otherwise std::out_of_range exception is thrown.
    *
    * You should override doGetChildTestAt() method.
-   * 
+   *
    * \param index Zero based index of the child test to return.
    * \return Pointer on the test. Never \c NULL.
    * \exception std::out_of_range is \a index is < 0 or >= getChildTestCount().
@@ -57,7 +57,7 @@ public:
   virtual Test *getChildTestAt( int index ) const;
 
   /*! \brief Returns the test name.
-   * 
+   *
    * Each test has a name.  This name may be used to find the
    * test in a suite or registry of tests.
    */
@@ -90,7 +90,7 @@ public:
 
   /*! \brief Resolved the specified test path with this test acting as 'root'.
    * \param testPath Test path string to resolve.
-   * \return Resolved TestPath. 
+   * \return Resolved TestPath.
    * \exception std::invalid_argument if \a testPath could not be resolved.
    * \see TestPath.
    */

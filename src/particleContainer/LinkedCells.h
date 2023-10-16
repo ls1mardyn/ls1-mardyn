@@ -206,7 +206,7 @@ public:
 	double* getCellLength() override {
 		return _cellLength;
 	}
-	
+
 	/**
 	 * @brief Gets a molecule by its position.
 	 * @param pos Molecule position

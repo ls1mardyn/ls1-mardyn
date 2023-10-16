@@ -10,7 +10,6 @@
 #include <cstdint>
 #include <vector>
 
-using namespace std;
 
 TEST_SUITE_REGISTRATION(AlignedArrayTest);
 
@@ -33,7 +32,7 @@ void AlignedArrayTest::testAlignment() {
 }
 
 void AlignedArrayTest::testAppending() {
-	vector<double> a;
+	std::vector<double> a;
 	for(int i = 0; i < 17; ++i) {
 		a.push_back(static_cast<double>(i));
 	}
@@ -51,7 +50,7 @@ void AlignedArrayTest::testAppending() {
 }
 
 template<typename T>
-void check(const vector<T>& a, const AlignedArray<T>& aligned_a, int i) {
+void check(const std::vector<T>& a, const AlignedArray<T>& aligned_a, int i) {
 	ASSERT_EQUAL(static_cast<int>(reinterpret_cast<intptr_t>(&aligned_a[0]) % 64), 0);
 
 	for (int j = 0; j < i; ++j) {
@@ -61,7 +60,7 @@ void check(const vector<T>& a, const AlignedArray<T>& aligned_a, int i) {
 }
 
 void AlignedArrayTest::testIncreasingStorage() {
-	vector<double> a;
+	std::vector<double> a;
 
 	for(int i = 0; i < 111; ++i) {
 		a.push_back(static_cast<double>(i));

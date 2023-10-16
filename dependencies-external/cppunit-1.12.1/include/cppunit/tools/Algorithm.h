@@ -7,7 +7,7 @@ CPPUNIT_NS_BEGIN
 
 template<class SequenceType, class ValueType>
 void
-removeFromSequence( SequenceType &sequence, 
+removeFromSequence( SequenceType &sequence,
                     const ValueType &valueToRemove )
 {
    for ( unsigned int index =0; index < sequence.size(); ++index )

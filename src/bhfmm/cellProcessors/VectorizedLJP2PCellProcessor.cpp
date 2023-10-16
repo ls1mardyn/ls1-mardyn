@@ -15,27 +15,25 @@
 #include <algorithm>
 #include "particleContainer/adapter/vectorization/MaskGatherChooser.h"
 
-using namespace Log;
-using namespace std;
 namespace bhfmm {
 VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
-		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))), 
+		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))),
 		_eps_sig(), _shift6(), _upot6lj(0.0), _virial(0.0){
 
 #if VCP_VEC_TYPE==VCP_NOVEC
-	global_log->info() << "VectorizedLJP2PCellProcessor: using no intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedLJP2PCellProcessor: using no intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	global_log->info() << "VectorizedLJP2PCellProcessor: using SSE3 intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedLJP2PCellProcessor: using SSE3 intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
-	global_log->info() << "VectorizedLJP2PCellProcessor: using AVX intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedLJP2PCellProcessor: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
-	global_log->info() << "VectorizedLJP2PCellProcessor: using AVX2 intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedLJP2PCellProcessor: using AVX2 intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_KNL) || (VCP_VEC_TYPE==VCP_VEC_KNL_GATHER)
-	global_log->info() << "VectorizedLJP2PCellProcessor: using KNL intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedLJP2PCellProcessor: using KNL intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_AVX512F) || (VCP_VEC_TYPE==VCP_VEC_AVX512F_GATHER)
-	global_log->info() << "VectorizedLJP2PCellProcessor: using SKX intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedLJP2PCellProcessor: using SKX intrinsics." << std::endl;
 #endif
 
 	ComponentList components = *(_simulation.getEnsemble()->getComponents());
@@ -84,7 +82,7 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 
 	// initialize thread data
 	_numThreads = mardyn_get_max_threads();
-	global_log->info() << "VectorizedLJP2PCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
+	Log::global_log->info() << "VectorizedLJP2PCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
 	_threadData.resize(_numThreads);
 
 	#if defined(_OPENMP)
@@ -128,7 +126,7 @@ void VectorizedLJP2PCellProcessor::initTraversal() {
 		_virial = 0.0;
 	} // end pragma omp master
 
-	global_log->debug() << "VectorizedLJP2PCellProcessor::initTraversal()." << std::endl;
+	Log::global_log->debug() << "VectorizedLJP2PCellProcessor::initTraversal()." << std::endl;
 }
 
 void VectorizedLJP2PCellProcessor::endTraversal() {
@@ -492,7 +490,7 @@ void VectorizedLJP2PCellProcessor::processCellPair(ParticleCell & c1, ParticleCe
 	// is more efficient
 	const bool calc_soa1_soa2 = (soa1.getMolNum() <= soa2.getMolNum());
 
-	
+
 	if(sumAll) { // sumAll
 		// if one cell is empty, skip
 		if (soa1.getMolNum() == 0 or soa2.getMolNum() == 0) {

@@ -11,39 +11,38 @@
 #include <fstream>
 #include <cstdlib>
 
-using namespace std;
 
-const string nSiteTypesTag = "NSiteTypes";
-const string nSitesTag = "NSites";
+const std::string nSiteTypesTag = "NSiteTypes";
+const std::string nSitesTag = "NSites";
 
-const string siteTypeTag = "SiteType";
-const string siteTypeLJ126Tag = "LJ126";
-const string siteTypeChargeTag = "Charge";
-const string siteTypeDipoleTag = "D";
-const string siteTypeQuadrupoleTag = "Q";
+const std::string siteTypeTag = "SiteType";
+const std::string siteTypeLJ126Tag = "LJ126";
+const std::string siteTypeChargeTag = "Charge";
+const std::string siteTypeDipoleTag = "D";
+const std::string siteTypeQuadrupoleTag = "Q";
 
-const string LJ126Tags[] = {"x", "y", "z", "sigma", "epsilon", "mass"};
-const string ChargeTags[] = {"x", "y", "z", "charge", "mass", "shielding"};
-const string DipoleTags[] = {"x", "y", "z", "theta", "phi", "dipole", "mass", "shielding"};
-const string QuadrupoleTags[] = {"x", "y", "z", "theta", "phi", "quadrupole", "mass", "shielding"};
+const std::string LJ126Tags[] = {"x", "y", "z", "sigma", "epsilon", "mass"};
+const std::string ChargeTags[] = {"x", "y", "z", "charge", "mass", "shielding"};
+const std::string DipoleTags[] = {"x", "y", "z", "theta", "phi", "dipole", "mass", "shielding"};
+const std::string QuadrupoleTags[] = {"x", "y", "z", "theta", "phi", "quadrupole", "mass", "shielding"};
 
 
 
 template <typename T>
-void readTag(const std::string tagToRead, T& value, ifstream& input) {
-	string line;
+void readTag(const std::string tagToRead, T& value, std::ifstream& input) {
+	std::string line;
 	do {
 		getline(input, line);
-		std::cout << "Read Line: " << line << endl;
+		std::cout << "Read Line: " << line << std::endl;
 	} while (line.size() == 0 || line[0] == '#');
 
-	istringstream linestream(line);
-	string tag;
+	std::istringstream linestream(line);
+	std::string tag;
 	linestream >> tag;
 
 	if (tag != tagToRead) {
 		std::cout << "Error in PMFile: expected tag " << tagToRead <<
-				" but got " << tag << endl;
+				" but got " << tag << std::endl;
 		// todo: we'll replace this by throwing an exception in the case we
 		//       build it with gui, otherwise we simply exit!
 		exit(-1);
@@ -51,9 +50,9 @@ void readTag(const std::string tagToRead, T& value, ifstream& input) {
 
 	linestream >> tag;
 	if (tag != "=") {
-		std::cout << "Error in PMFile: expected \"=\" " << " but got " << tag << endl;
+		std::cout << "Error in PMFile: expected \"=\" " << " but got " << tag << std::endl;
 		if (tag.size() > 0 && tag[0] == '=') {
-			std::cout << "\t YOU PROBABLY FORGOT A WHITESPACE?" << endl;
+			std::cout << "\t YOU PROBABLY FORGOT A WHITESPACE?" << std::endl;
 		}
 		exit(-1);
 	}
@@ -61,10 +60,10 @@ void readTag(const std::string tagToRead, T& value, ifstream& input) {
 	linestream >> value;
 }
 
-void readLJ126(ComponentParameters* parameters, Generator* generator, ifstream& input, const int nSites) {
+void readLJ126(ComponentParameters* parameters, Generator* generator, std::ifstream& input, const int nSites) {
 	for (int i = 0; i < nSites; i++) {
 		double LJ126Value = 0;
-		string baseName = parameters->getNameId() + ".LJCenter" + convertToString(i);
+		std::string baseName = parameters->getNameId() + ".LJCenter" + convertToString(i);
 
 		for (int k = 0; k < 6; k++) {
 			readTag(LJ126Tags[k], LJ126Value, input);
@@ -76,16 +75,16 @@ void readLJ126(ComponentParameters* parameters, Generator* generator, ifstream& 
 	}
 }
 
-void readCharge(ComponentParameters* parameters, Generator* generator, ifstream& input, const int nSites) {
+void readCharge(ComponentParameters* parameters, Generator* generator, std::ifstream& input, const int nSites) {
 	for (int i = 0; i < nSites; i++) {
 		double value = 0;
-		string baseName = parameters->getNameId() + ".Charge" + convertToString(i);
+		std::string baseName = parameters->getNameId() + ".Charge" + convertToString(i);
 
 		for (int k = 0; k < 6; k++) {
 			readTag(ChargeTags[k], value, input);
 
 			if (ChargeTags[k] == "shielding") {
-				std::cout << "PMFileReader: Ignoring value " << "\"shielding\"!" << endl;
+				std::cout << "PMFileReader: Ignoring value " << "\"shielding\"!" << std::endl;
 				continue;
 			}
 
@@ -98,16 +97,16 @@ void readCharge(ComponentParameters* parameters, Generator* generator, ifstream&
 }
 
 
-void readDipole(ComponentParameters* parameters, Generator* generator, ifstream& input, const int nSites) {
+void readDipole(ComponentParameters* parameters, Generator* generator, std::ifstream& input, const int nSites) {
 	for (int i = 0; i < nSites; i++) {
 		double value = 0;
-		string baseName = parameters->getNameId() + ".Dipole" + convertToString(i);
+		std::string baseName = parameters->getNameId() + ".Dipole" + convertToString(i);
 
 		for (int k = 0; k < 8; k++) {
 			readTag(DipoleTags[k], value, input);
 
 			if (DipoleTags[k] == "shielding" || DipoleTags[k] == "phi" || DipoleTags[k] == "theta" || DipoleTags[k] == "mass") {
-				std::cout << "PMFileReader: Ignoring value " << DipoleTags[k] << endl;
+				std::cout << "PMFileReader: Ignoring value " << DipoleTags[k] << std::endl;
 				continue;
 			}
 
@@ -126,16 +125,16 @@ void readDipole(ComponentParameters* parameters, Generator* generator, ifstream&
 }
 
 
-void readQuadrupole(ComponentParameters* parameters, Generator* generator, ifstream& input, const int nSites) {
+void readQuadrupole(ComponentParameters* parameters, Generator* generator, std::ifstream& input, const int nSites) {
 	for (int i = 0; i < nSites; i++) {
 		double value = 0;
-		string baseName = parameters->getNameId() + ".Quadrupole" + convertToString(i);
+		std::string baseName = parameters->getNameId() + ".Quadrupole" + convertToString(i);
 
 		for (int k = 0; k < 8; k++) {
 			readTag(QuadrupoleTags[k], value, input);
 
 			if (QuadrupoleTags[k] == "shielding" || QuadrupoleTags[k] == "phi" || QuadrupoleTags[k] == "theta" || QuadrupoleTags[k] == "mass") {
-				std::cout << "PMFileReader: Ignoring value " << QuadrupoleTags[k] << endl;
+				std::cout << "PMFileReader: Ignoring value " << QuadrupoleTags[k] << std::endl;
 				continue;
 			}
 
@@ -153,7 +152,7 @@ void readQuadrupole(ComponentParameters* parameters, Generator* generator, ifstr
 }
 
 void reset(Generator* generator, ComponentParameters* parameters) {
-	string numberSitesNames[] = { ".NumberOfLJCenters", ".NumberOfCharges",
+	std::string numberSitesNames[] = { ".NumberOfLJCenters", ".NumberOfCharges",
 								  ".NumberOfDipoles", ".NumberOfQuadrupoles" };
 
 	for (int i = 0; i < 4; i++) {
@@ -167,14 +166,14 @@ void reset(Generator* generator, ComponentParameters* parameters) {
 void PMFileReader::readPMFile(const std::string& filename, Generator* generator, ComponentParameters* parameters) {
 	reset(generator, parameters);
 
-	ifstream input(filename.c_str());
+	std::ifstream input(filename.c_str());
 
 	int nSiteTypes = 0;
 	readTag(nSiteTypesTag, nSiteTypes, input);
 
-	string siteType;
+	std::string siteType;
 	int nSites = 0;
-	string numberSitesName;
+	std::string numberSitesName;
 
 	for (int i = 0; i < nSiteTypes; i++) {
 		readTag(siteTypeTag, siteType, input);
@@ -189,7 +188,7 @@ void PMFileReader::readPMFile(const std::string& filename, Generator* generator,
 		} else if (siteType == siteTypeQuadrupoleTag) {
 			numberSitesName = ".NumberOfQuadrupoles";
 		} else {
-			std::cout << "Error in PMFile: unexpected siteType " << siteType << endl;
+			std::cout << "Error in PMFile: unexpected siteType " << siteType << std::endl;
 			exit(-1);
 		}
 
@@ -199,7 +198,7 @@ void PMFileReader::readPMFile(const std::string& filename, Generator* generator,
 		numLJParameters->setValue(nSites);
 		generator->setParameter(numLJParameters);
 
-		vector<ParameterCollection*> newGeneratorParameters = generator->getParameters();
+		std::vector<ParameterCollection*> newGeneratorParameters = generator->getParameters();
 		ComponentParameters* newParameters = NULL;
 		for (size_t i = 0; i < newGeneratorParameters.size(); i++) {
 			newParameters =
@@ -218,7 +217,7 @@ void PMFileReader::readPMFile(const std::string& filename, Generator* generator,
 		} else if (siteType == siteTypeQuadrupoleTag) {
 			readQuadrupole(newParameters, generator, input, nSites);
 		} else {
-			std::cout << "Error in PMFile: unexpected siteType " << siteType << endl;
+			std::cout << "Error in PMFile: unexpected siteType " << siteType << std::endl;
 			exit(-1);
 		}
 

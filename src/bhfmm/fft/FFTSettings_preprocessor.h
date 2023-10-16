@@ -14,6 +14,6 @@ typedef double FFT_precision;
 //#define __TEST_FAKE_VECTORIZATION__ //To fake vectorization on a computer not supporting it (replace _mm_malloc with malloc and _mm_free with free)
 //!Vectorization settings are defined at compile time
 //Intel SSE = 16, AVX = 32, AVX-512 = 64 (https://software.intel.com/en-us/articles/fdiag15126)
-#define __FFT_MATRIX_ALIGNMENT__  32 
+#define __FFT_MATRIX_ALIGNMENT__  32
 
 #endif

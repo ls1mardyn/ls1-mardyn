@@ -4,12 +4,14 @@
 #include <memory>
 #include <any>
 
-#include "ensemble/CavityEnsemble.h"
 #include "io/TimerProfiler.h"
 #include "thermostats/VelocityScalingThermostat.h"
 #include "utils/FixedSizeQueue.h"
 #include "utils/FunctionWrapper.h"
 #include "utils/SysMon.h"
+#include "utils/Random.h"
+
+
 
 // plugins
 #include "plugins/PluginFactory.h"
@@ -234,7 +236,7 @@ public:
 	unsigned long getSimulationStep() { return _simstep; }
 	/** Set Loop Time Limit in seconds */
 	void setLoopAbortTime(double time) {
-		global_log->info() << "Max loop-abort-time set: " << time << "\n";
+		Log::global_log->info() << "Max loop-abort-time set: " << time << "\n";
 		_wallTimeEnabled = true;
 		_maxWallTime = time;
 	}

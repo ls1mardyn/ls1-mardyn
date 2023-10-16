@@ -51,7 +51,7 @@ public:
 	//! @brief initialize macroscopic values
 	//!
 	//! each pair contributes to the macroscopic values (potential energy,...)
-	//! All those values are initialized with zero, and then for each pair, 
+	//! All those values are initialized with zero, and then for each pair,
 	//! they are increased by the pairs contribution
 	void init() {
 		_virial = 0;
@@ -157,17 +157,17 @@ public:
 		switch (pairType) {
 
             double dummy1, dummy2, dummy3, dummy4[3], Virial3[3];
-            
-            case MOLECULE_MOLECULE : 
+
+            case MOLECULE_MOLECULE :
 //                if ( _rdf != NULL ) _rdf->observeRDF(molecule1, molecule2, dd); // moved to RDFCellProcessor
                 PotForce(molecule1, molecule2, params, distanceVector, my_threadData._upot6LJ, my_threadData._upotXpoles, my_threadData._myRF, Virial3, calculateLJ );
                 my_threadData._virial += 2*(Virial3[0]+Virial3[1]+Virial3[2]);
                 return my_threadData._upot6LJ + my_threadData._upotXpoles;
-            case MOLECULE_HALOMOLECULE : 
+            case MOLECULE_HALOMOLECULE :
 
                 PotForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ);
                 return 0.0;
-            case MOLECULE_MOLECULE_FLUID : 
+            case MOLECULE_MOLECULE_FLUID :
                 dummy1 = 0.0; // 6*U_LJ
                 dummy2 = 0.0; // U_polarity
                 dummy3 = 0.0; // U_dipole_reaction_field

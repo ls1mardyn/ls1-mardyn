@@ -23,15 +23,15 @@ public:
    * \param message Message associated to the exception.
    * \param sourceLine Source location related to the exception.
    */
-  Exception( const Message &message = Message(), 
+  Exception( const Message &message = Message(),
              const SourceLine &sourceLine = SourceLine() );
 
 #ifdef CPPUNIT_ENABLE_SOURCELINE_DEPRECATED
   /*!
    * \deprecated Use other constructor instead.
    */
-  Exception( std::string  message, 
-	     long lineNumber, 
+  Exception( std::string  message,
+	     long lineNumber,
 	     std::string fileName );
 #endif
 

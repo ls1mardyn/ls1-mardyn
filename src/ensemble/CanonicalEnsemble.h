@@ -6,9 +6,9 @@
 #include "ensemble/EnsembleBase.h"
 #include "particleContainer/ParticleContainer.h"
 
-/** @brief Canonical ensemble (NVT) 
+/** @brief Canonical ensemble (NVT)
  *  @author Christoph Niethammer <niethammer@hlrs.de>
- *  
+ *
  * This class provides access to all global variables of the canonical ensemble (NVT).
  **/
 class Component;

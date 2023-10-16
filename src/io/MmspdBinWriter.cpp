@@ -15,10 +15,8 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 
-using Log::global_log;
-using namespace std;
 
-MmspdBinWriter::MmspdBinWriter(unsigned long writeFrequency, string outputPrefix) {
+MmspdBinWriter::MmspdBinWriter(unsigned long writeFrequency, std::string outputPrefix) {
 	_outputPrefix = outputPrefix;
 	_writeFrequency = writeFrequency;
 
@@ -35,23 +33,23 @@ MmspdBinWriter::~MmspdBinWriter(){}
 void MmspdBinWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << endl;
-	
+	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
+
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
 	}
-	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+	Log::global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
 }
 
 void MmspdBinWriter::init(ParticleContainer * /*particleContainer*/,
                           DomainDecompBase *domainDecomp, Domain *domain) {
-	stringstream filenamestream;
+	std::stringstream filenamestream;
 	filenamestream << _outputPrefix;
 
 	if(_appendTimestamp) {
@@ -66,7 +64,7 @@ void MmspdBinWriter::init(ParticleContainer * /*particleContainer*/,
 	int rank = domainDecomp->getRank();
 	if (rank == 0){
 #endif
-	ofstream mmspdfstream(filename.data(), ios::binary|ios::out);
+	std::ofstream mmspdfstream(filename.data(), std::ios::binary|std::ios::out);
 
   // format marker
   mmspdfstream << "MMSPDb";
@@ -79,7 +77,7 @@ void MmspdBinWriter::init(ParticleContainer * /*particleContainer*/,
 
   unsigned short version[2] = {1, 0};
   mmspdfstream.write((char*)&version,sizeof(version));
-  
+
   unsigned char padend = 128;
   for(int i=0; i<4; ++i) mmspdfstream.write((char*)&padend,sizeof(padend));
 
@@ -164,8 +162,8 @@ void MmspdBinWriter::init(ParticleContainer * /*particleContainer*/,
       else {
     	  mmspdfstream << "**************** Error: Unspecified component!*************\n Possible reason: more than 5 components?\n";
       }
-  } // end of particle definitions		
-  
+  } // end of particle definitions
+
   mmspdfstream.close();
 #ifdef ENABLE_MPI
 	}
@@ -176,14 +174,14 @@ void MmspdBinWriter::endStep(ParticleContainer *particleContainer,
                              DomainDecompBase *domainDecomp, Domain *domain,
                              unsigned long simstep){
 	if (simstep % _writeFrequency == 0) {
-		stringstream filenamestream, outputstream;
+		std::stringstream filenamestream, outputstream;
 		filenamestream << _outputPrefix;
 
 		if(_appendTimestamp) {
 			filenamestream << "-" << gettimestring();
 		}
 		filenamestream << ".mmspd";
-		
+
 		std::vector<char> filename(filenamestream.str().size()+1);
 		strcpy(filename.data(),filenamestream.str().c_str());
 
@@ -224,7 +222,7 @@ void MmspdBinWriter::endStep(ParticleContainer *particleContainer,
 			offset += outputsize_get;
 		}
 
-		global_log->debug() << "MmspdBinWriter rank: " << rank << "; step: " << simstep << "; offset: " << offset << endl;
+		Log::global_log->debug() << "MmspdBinWriter rank: " << rank << "; step: " << simstep << "; offset: " << offset << std::endl;
 
 		MPI_File_seek(fh, offset, MPI_SEEK_END);
 

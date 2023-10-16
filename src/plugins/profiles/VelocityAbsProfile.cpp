@@ -5,13 +5,13 @@
 #include "VelocityAbsProfile.h"
 #include "plugins/profiles/DensityProfile.h"
 
-void VelocityAbsProfile::output(string prefix, long unsigned accumulatedDatasets) {
-	global_log->info() << "[VelocityAbsProfile] output" << std::endl;
+void VelocityAbsProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
+	Log::global_log->info() << "[VelocityAbsProfile] output" << std::endl;
 
 	// Setup outfile
 	_accumulatedDatasets = accumulatedDatasets;
 	_profilePrefix = prefix + ".VAbspr";
-	ofstream outfile(_profilePrefix.c_str());
+	std::ofstream outfile(_profilePrefix.c_str());
 	outfile.precision(6);
 
 	// Write header
@@ -30,7 +30,7 @@ void VelocityAbsProfile::output(string prefix, long unsigned accumulatedDatasets
 	outfile.close();
 }
 
-void VelocityAbsProfile::writeDataEntry (unsigned long uID, ofstream& outfile) const {
+void VelocityAbsProfile::writeDataEntry (unsigned long uID, std::ofstream& outfile) const {
 	// Check for division by 0
 	long double vd;
 	int numberDensity = _densityProfile->getGlobalNumber(uID);

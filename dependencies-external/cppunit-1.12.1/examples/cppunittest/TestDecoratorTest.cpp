@@ -17,7 +17,7 @@ TestDecoratorTest::~TestDecoratorTest()
 }
 
 
-void 
+void
 TestDecoratorTest::setUp()
 {
   m_test = new MockTestCase( "mocktest" );
@@ -25,14 +25,14 @@ TestDecoratorTest::setUp()
 }
 
 
-void 
+void
 TestDecoratorTest::tearDown()
 {
   delete m_decorator;
 }
 
 
-void 
+void
 TestDecoratorTest::testCountTestCases()
 {
   m_test->setExpectedCountTestCasesCall( 1 );
@@ -41,7 +41,7 @@ TestDecoratorTest::testCountTestCases()
 }
 
 
-void 
+void
 TestDecoratorTest::testRun()
 {
   m_test->setExpectedSetUpCall( 1 );
@@ -54,7 +54,7 @@ TestDecoratorTest::testRun()
 }
 
 
-void 
+void
 TestDecoratorTest::testGetName()
 {
   CPPUNIT_ASSERT_EQUAL( m_test->getName(), m_decorator->getName() );

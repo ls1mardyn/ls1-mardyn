@@ -13,8 +13,6 @@
 #include "utils/Logger.h"
 #include <array>
 
-using namespace std;
-using Log::global_log;
 
 MaxCheck::MaxCheck() {
 }
@@ -24,7 +22,7 @@ MaxCheck::~MaxCheck() {
 
 void MaxCheck::init(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain) {
-	global_log->debug() << "MaxCheck enabled" << std::endl;
+	Log::global_log->debug() << "MaxCheck enabled" << std::endl;
 }
 
 void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
@@ -36,9 +34,9 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("control/start", _control.start);
 	xmlconfig.getNodeValue("control/frequency", _control.freq);
 	xmlconfig.getNodeValue("control/stop", _control.stop);
-	global_log->info() << "[MaxCheck] Active period: start:freq:stop = "
+	Log::global_log->info() << "[MaxCheck] Active period: start:freq:stop = "
 			<< _control.start << ":" << _control.freq << ":" << _control.stop
-			<< endl;
+			<< std::endl;
 
 	// range
 	Domain* domain = global_simulation->getDomain();
@@ -59,27 +57,27 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 
 	// Warn if old config style is used as it has big influence on the simulation
 	if (not xmlconfig.query("yrange").empty()) {
-		global_log->warning() << "[MaxCheck] <yrange> is deprecated! Use <range> and <ymin>/<ymax> instead." << endl;
+		Log::global_log->warning() << "[MaxCheck] <yrange> is deprecated! Use <range> and <ymin>/<ymax> instead." << std::endl;
 	}
 
-	global_log->info() << "[MaxCheck] Apply " << ((_range.inclusive) ? "inside" : "outside") << " range:"
+	Log::global_log->info() << "[MaxCheck] Apply " << ((_range.inclusive) ? "inside" : "outside") << " range:"
 					   << " x = " << _range.xmin << " - " << _range.xmax << " ;"
 					   << " y = " << _range.ymin << " - " << _range.ymax << " ;"
-					   << " z = " << _range.zmin << " - " << _range.zmax << endl;
+					   << " z = " << _range.zmin << " - " << _range.zmax << std::endl;
 
 	// targets
 	uint32_t numTargets = 0;
 	XMLfile::Query query = xmlconfig.query("targets/target");
 	numTargets = query.card();
-	global_log->info() << "[MaxCheck] Number of component targets: "
-			<< numTargets << endl;
+	Log::global_log->info() << "[MaxCheck] Number of component targets: "
+			<< numTargets << std::endl;
 	if (numTargets < 1) {
-		global_log->warning()
+		Log::global_log->warning()
 				<< "[MaxCheck] No target parameters specified. Program exit ..."
-				<< endl;
+				<< std::endl;
 		Simulation::exit(-1);
 	}
-	string oldpath = xmlconfig.getcurrentnodepath();
+	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator nodeIter;
 	for (nodeIter = query.begin(); nodeIter; nodeIter++) {
 		xmlconfig.changecurrentnode(nodeIter);
@@ -95,27 +93,27 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 		mv.method = MCM_UNKNOWN;
 
 		xmlconfig.getNodeValue("@method", mv.method);
-		global_log->info() << "[MaxCheck] Method(cid=" << cid_ub << "): "
-				<< mv.method << endl;
+		Log::global_log->info() << "[MaxCheck] Method(cid=" << cid_ub << "): "
+				<< mv.method << std::endl;
 
 		xmlconfig.getNodeValue("Fmax", mv.F);
-		global_log->info() << "[MaxCheck] Fmax(cid=" << cid_ub << "): " << mv.F
-				<< endl;
+		Log::global_log->info() << "[MaxCheck] Fmax(cid=" << cid_ub << "): " << mv.F
+				<< std::endl;
 		mv.F2 = mv.F * mv.F;
 
 		xmlconfig.getNodeValue("vmax", mv.v);
-		global_log->info() << "[MaxCheck] vmax(cid=" << cid_ub << "): " << mv.v
-				<< endl;
+		Log::global_log->info() << "[MaxCheck] vmax(cid=" << cid_ub << "): " << mv.v
+				<< std::endl;
 		mv.v2 = mv.v * mv.v;
-		
+
 		xmlconfig.getNodeValue("Mmax", mv.M);
-		global_log->info() << "[MaxCheck] Mmax(cid=" << cid_ub << "): " << mv.M
-				<< endl;
+		Log::global_log->info() << "[MaxCheck] Mmax(cid=" << cid_ub << "): " << mv.M
+				<< std::endl;
 		mv.M2 = mv.M * mv.M;
-		
+
 		xmlconfig.getNodeValue("Lmax", mv.L);
-		global_log->info() << "[MaxCheck] Lmax(cid=" << cid_ub << "): " << mv.L
-				<< endl;
+		Log::global_log->info() << "[MaxCheck] Lmax(cid=" << cid_ub << "): " << mv.L
+				<< std::endl;
 		mv.L2 = mv.L * mv.L;
 
 		_maxVals[cid_ub] = mv;
@@ -201,7 +199,7 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 					double scale = mv.v / vabs;
 					it->scale_v(scale);
 				}
-				
+
 				if (mv.M > 0. && absVals.M2 > mv.M2) {
 					double Mabs = sqrt(absVals.M2);
 					double scale = mv.M / Mabs;

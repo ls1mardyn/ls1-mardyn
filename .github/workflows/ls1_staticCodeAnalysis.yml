@@ -1,0 +1,21 @@
+name: Static-Code-Analysis
+
+on:
+  push:
+    # pushes to master
+    branches: [ master ]
+  pull_request:
+    # PRs to master
+    branches: [ master ]
+
+jobs:
+  static_analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cpplint
+      - name: Run static code analysis script
+        run: ./checks/run-staticAnalysis.sh $PWD

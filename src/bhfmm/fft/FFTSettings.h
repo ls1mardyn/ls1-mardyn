@@ -12,11 +12,9 @@
 #include <string>
 #include "bhfmm/fft/FFTSettings_preprocessor.h"
 
-using namespace std;
-
 /**
  * Static class containing all the FFT Acceleration's settings
- * 
+ *
  * All settings are public and can be changed dynamically, the FFTFactory
  * take them into account to provide the right FFTAcceleration and the FMM
  * algorithm should also take them into account
@@ -53,8 +51,8 @@ public:
 	}
 
 	//Used in the bhfmm code for command line interface
-	static void setOptions(string option);
-	static vector<string> getAvailableOptions();
+	static void setOptions(std::string option);
+	static std::vector<std::string> getAvailableOptions();
 	static void printCurrentOptions();
 
 };

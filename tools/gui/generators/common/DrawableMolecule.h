@@ -42,9 +42,9 @@ public:
 	 * @param numMols - number of molecules to be drawn, used for being able to specify the ID
 	 */
 
-	vector<string> getDrawableValues() const;
+	std::vector<std::string> getDrawableValues() const;
 
-	vtkSmartPointer<vtkActor> draw(string valueName);
+	vtkSmartPointer<vtkActor> draw(std::string valueName);
 
 };
 

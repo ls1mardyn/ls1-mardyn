@@ -16,12 +16,12 @@ void PermutationTest::testPermutations() {
 
 	Log::global_log->info() << "Testing ThreeElementPermutations." << std::endl ;
 
-	array<int, 3> a_012 = {0, 1, 2};
-	array<int, 3> a_021 = {0, 2, 1};
-	array<int, 3> a_102 = {1, 0, 2};
-	array<int, 3> a_120 = {1, 2, 0};
-	array<int, 3> a_201 = {2, 0, 1};
-	array<int, 3> a_210 = {2, 1, 0};
+	std::array<int, 3> a_012 = {0, 1, 2};
+	std::array<int, 3> a_021 = {0, 2, 1};
+	std::array<int, 3> a_102 = {1, 0, 2};
+	std::array<int, 3> a_120 = {1, 2, 0};
+	std::array<int, 3> a_201 = {2, 0, 1};
+	std::array<int, 3> a_210 = {2, 1, 0};
 
 	Permutation p_012 = getPermutationForIncreasingSorting(a_012);
 	Permutation p_021 = getPermutationForIncreasingSorting(a_021);
@@ -40,8 +40,8 @@ void PermutationTest::testPermutations() {
 
 	// test the forward and backward permutations
 
-	array<int, 3> v = {5, 6, -1};
-	array<int, 3> v1, v2;
+	std::array<int, 3> v = {5, 6, -1};
+	std::array<int, 3> v1, v2;
 
 	v1 = permuteForward (p_012, v);
 	v2 = permuteBackward(p_012, v1);

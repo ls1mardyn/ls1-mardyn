@@ -61,7 +61,7 @@ public:
 	static const MPI_Datatype mpiTvalue;
 	static const int mpiRootRank;
 #endif
-	
+
 private:	// Singleton
 	static SysMon* s_sysmoninstance;
 	SysMon(const SysMon&);
@@ -71,7 +71,7 @@ private:	// Singleton
 	SysMon() { _variableset=new Expression::VariableSet(); }
 #endif
 	~SysMon() { clear(); delete(_variableset); s_sysmoninstance=NULL; }
-	
+
 public:
 	static SysMon* getSysMon()
 	{
@@ -79,7 +79,7 @@ public:
 			s_sysmoninstance = new SysMon();
 		return s_sysmoninstance;
 	}
-	
+
 	void clear();
 	int addExpression(const std::string& exprstr);
 	int addExpression(const std::string& exprstr, const std::string& label)
@@ -111,7 +111,7 @@ public:
 		return oss.str();
 	}
 	operator std::string() const { return InfoString(); }
-	
+
 private:
 	Expression::VariableSet* _variableset;
 	std::list<Expression> _expressions;
@@ -124,7 +124,7 @@ private:
 	std::vector<Tvalue> _valuesMaxMin;
 	MPI_Comm _mpicomm;
 #endif
-	
+
 private:
 	unsigned int updateVariables_sysconf();
 	unsigned int updateVariables_sysinfo();

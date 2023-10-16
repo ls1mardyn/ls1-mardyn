@@ -8,36 +8,33 @@
 #include "utils/Logger.h"
 #include "parallel/DomainDecompBase.h"
 
-using Log::global_log;
-using namespace std;
-
 
 void HaloParticleWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	if(_writeFrequency == 0) {
-		global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << endl;
+		Log::global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
 		Simulation::exit(-1);
 	}
-	
+
 	std::string HaloParticleType = "unknown";
 	xmlconfig.getNodeValue("type", HaloParticleType);
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	_incremental = true;
 	xmlconfig.getNodeValue("incremental", _incremental);
 
-	global_log->info() << "Incremental numbers: " << _incremental << endl;
+	Log::global_log->info() << "Incremental numbers: " << _incremental << std::endl;
 
 	_appendTimestamp = false;
 	xmlconfig.getNodeValue("appendTimestamp", _appendTimestamp);
 
-	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+	Log::global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
 }
 
 void HaloParticleWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,
@@ -46,7 +43,7 @@ void HaloParticleWriter::init(ParticleContainer * /*particleContainer*/, DomainD
 void HaloParticleWriter::afterForces(ParticleContainer *particleContainer, DomainDecompBase* domainDecomp,
                                unsigned long simstep) {
 	if( simstep % _writeFrequency == 0 ) {
-		stringstream filenamestream;
+		std::stringstream filenamestream;
 		filenamestream << _outputPrefix << "-rank" << domainDecomp->getRank();
 
 		if(_incremental) {
@@ -61,7 +58,7 @@ void HaloParticleWriter::afterForces(ParticleContainer *particleContainer, Domai
 
 		filenamestream << ".halos.dat";
 
-		string filename = filenamestream.str();
+		std::string filename = filenamestream.str();
 
 		//global_simulation->getDomain()->writeCheckpoint(filename, particleContainer, domainDecomp, _simulation.getSimulationTime(), false);
 		double rmin[3],rmax[3];

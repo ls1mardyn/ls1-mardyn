@@ -11,9 +11,6 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 
-using Log::global_log;
-using namespace std;
-
 
 DecompWriter::DecompWriter() :
 	_writeFrequency(1), _appendTimestamp(false), _incremental(true), _outputPrefix("mardyn")
@@ -22,21 +19,21 @@ DecompWriter::DecompWriter() :
 
 void DecompWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	int incremental = 1;
 	xmlconfig.getNodeValue("incremental", incremental);
 	_incremental = (incremental != 0);
-	global_log->info() << "Incremental numbers: " << _incremental << endl;
+	Log::global_log->info() << "Incremental numbers: " << _incremental << std::endl;
 
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
 	}
-	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+	Log::global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
 }
 
 
@@ -46,7 +43,7 @@ void DecompWriter::init(ParticleContainer * /*particleContainer*/, DomainDecompB
 void DecompWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                            unsigned long simstep) {
 	if(simstep % _writeFrequency == 0) {
-		stringstream filenamestream;
+		std::stringstream filenamestream;
 		filenamestream << _outputPrefix;
 		if(_incremental) {
 			/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
@@ -60,7 +57,7 @@ void DecompWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 		filenamestream << ".decomp";
 
 		domainDecomp->printDecomp(filenamestream.str(), domain, particleContainer);
-	}  
+	}
 }
 
 void DecompWriter::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase * /*domainDecomp*/,

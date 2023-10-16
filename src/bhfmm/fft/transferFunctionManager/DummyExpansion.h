@@ -12,7 +12,7 @@
 
 /*
  * Dummy SH_Expansion used to compute the transfer function from the vector
- * 
+ *
  * Use a DummyStorage (truncated version of SH_Storage)
  */
 
@@ -54,7 +54,7 @@ private:
 /**
  * Truncated version of SH_Expansion used by to compute the transferfunction
  * from the vector
- * 
+ *
  * Extend FFTAccelerableExpansion so it can be used by a FFTAcceleration
  * evaluate_M_at_r(double X, double Y, double Z) convert the DummyExpansion to a Transferfunction
  * expansion of vector [X,Y,Z] (carthesian coordinates)

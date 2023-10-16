@@ -31,7 +31,7 @@ private:
     {
     }
 
-    void setUp() 
+    void setUp()
     {
       m_setUpCalled = true;
     }

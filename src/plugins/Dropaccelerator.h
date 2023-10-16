@@ -55,7 +55,7 @@ private:
 
 public:
 	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override {
-		global_log->debug() << "DropletAccelerator enabled" << std::endl;
+		Log::global_log->debug() << "DropletAccelerator enabled" << std::endl;
 
 		for (unsigned d = 0; d < 3; d++) {
 			_boxLength[d] = domain->getGlobalLength(d);

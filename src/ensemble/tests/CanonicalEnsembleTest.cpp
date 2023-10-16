@@ -13,8 +13,6 @@
 
 #include <vector>
 
-using namespace std;
-
 TEST_SUITE_REGISTRATION(CanonicalEnsembleTest);
 
 CanonicalEnsembleTest::CanonicalEnsembleTest() { }

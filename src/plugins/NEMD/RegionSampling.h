@@ -312,7 +312,7 @@ private:
 	// output file
 	std::string _strFilePrefixFieldYR;
 	uint8_t _nFileTypeFieldYR;
-	
+
 	bool _boolSingleComp;
 };
 
@@ -426,7 +426,7 @@ protected:
 
 private:
 	std::vector<SampleRegion*> _vecSampleRegions;
-	
+
 	unsigned long _initSamplingProfiles;
 	unsigned long _writeFrequencyProfiles;
 	unsigned long _initSamplingVDF;

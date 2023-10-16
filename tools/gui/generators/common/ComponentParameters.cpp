@@ -42,9 +42,9 @@ ComponentParameters::ComponentParameters(const std::string& id,
 					"Number of Quadrupoles",Parameter::SPINBOX,true, component.numQuadrupoles()));
 
 	for (size_t i = 0; i < component.numCharges(); i++) {
-		stringstream baseNameStream;
+		std::stringstream baseNameStream;
 		baseNameStream << name << ".Charge" << i;
-		string baseName = baseNameStream.str();
+		std::string baseName = baseNameStream.str();
 		ParameterCollection* chargeCollection = new ParameterCollection(
 				baseName, baseName, baseName, Parameter::BUTTON);
 		Charge charge = component.charge(i);
@@ -67,9 +67,9 @@ ComponentParameters::ComponentParameters(const std::string& id,
 		addParameter(chargeCollection);
 	}
 	for (unsigned int i = 0; i < component.numLJcenters(); i++) {
-		stringstream baseNameStream;
+		std::stringstream baseNameStream;
 		baseNameStream << name << ".LJCenter" << i;
-		string baseName = baseNameStream.str();
+		std::string baseName = baseNameStream.str();
 		ParameterCollection* ljCenterCollection = new ParameterCollection(
 				baseName, baseName, baseName, Parameter::BUTTON);
 		LJcenter ljCenter = component.ljcenter(i);
@@ -98,9 +98,9 @@ ComponentParameters::ComponentParameters(const std::string& id,
 	}
 
 	for (unsigned int i = 0; i < component.numDipoles(); i++) {
-		stringstream baseNameStream;
+		std::stringstream baseNameStream;
 		baseNameStream << name << ".Dipole" << i;
-		string baseName = baseNameStream.str();
+		std::string baseName = baseNameStream.str();
 		ParameterCollection* dipoleCollection = new ParameterCollection(
 				baseName, baseName, baseName, Parameter::BUTTON);
 		Dipole dipole = component.dipole(i);
@@ -122,9 +122,9 @@ ComponentParameters::ComponentParameters(const std::string& id,
 
 	}
 	for (unsigned int i = 0; i < component.numQuadrupoles(); i++) {
-		stringstream baseNameStream;
+		std::stringstream baseNameStream;
 		baseNameStream << name << ".Quadrupole" << i;
-		string baseName = baseNameStream.str();
+		std::string baseName = baseNameStream.str();
 		Quadrupole quad = component.quadrupole(i);
 		ParameterCollection* quadrupoleCollection = new ParameterCollection(baseName, baseName, baseName, Parameter::BUTTON);
 		quadrupoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".x", baseName + ".x [Angstrom]", baseName + ".x",
@@ -154,7 +154,7 @@ void ComponentParameters::setParameterValue(Component& component, Parameter* p,
 #ifdef DEBUG
 	std::cout
 			<< "ComponentParameters::setParameterValue() from Parameter Object to component: name is "
-			<< valueName << endl;
+			<< valueName << std::endl;
 #endif
 
 	if (valueName == "NumberOfCharges") {
@@ -195,45 +195,45 @@ void ComponentParameters::setParameterValue(Component& component, Parameter* p,
  	} else if (valueName == "Temperature") {
  		component.setT(static_cast<ParameterWithDoubleValue*> (p)->getValue());
 #ifdef DEBUG
- 		std::cout<<"Temperature set to "<<static_cast<ParameterWithDoubleValue*> (p)->getValue()<<endl;
+ 		std::cout<<"Temperature set to "<<static_cast<ParameterWithDoubleValue*> (p)->getValue()<<std::endl;
 #endif
- 	} else if (valueName.find("Charge") != string::npos) {
+ 	} else if (valueName.find("Charge") != std::string::npos) {
 		int chargeIndex = convertFromChar<int> (valueName.at(6));
 		std::string part = valueName.substr(8);
 #ifdef DEBUG
-		std::cout << "Index of charge: " << chargeIndex << endl;
+		std::cout << "Index of charge: " << chargeIndex << std::endl;
 		std::cout << "part is: " << part << std::endl;
 #endif
 		setParameterValue(component.charge(chargeIndex),
 				static_cast<ParameterWithDoubleValue*> (p), part);
-	} else if (valueName.find("LJCenter") != string::npos) {
+	} else if (valueName.find("LJCenter") != std::string::npos) {
 		int ljCenterIndex = convertFromChar<int> (valueName.at(8));
 		std::string part = valueName.substr(10);
 #ifdef DEBUG
-		std::cout << "Index of LJ Center: " << ljCenterIndex << endl;
+		std::cout << "Index of LJ Center: " << ljCenterIndex << std::endl;
 		std::cout << "part is: " << part << std::endl;
 #endif
 		setParameterValue(component.ljcenter(ljCenterIndex),
 				static_cast<ParameterWithDoubleValue*> (p), part);
-	} else if (valueName.find("Dipole") != string::npos) {
+	} else if (valueName.find("Dipole") != std::string::npos) {
 		int dipoleIndex = convertFromChar<int> (valueName.at(6));
 		std::string part = valueName.substr(8);
 #ifdef DEBUG
-		std::cout << "Index of Dipole: " << dipoleIndex << endl;
+		std::cout << "Index of Dipole: " << dipoleIndex << std::endl;
 		std::cout << "part is: " << part << std::endl;
 #endif
 		setParameterValue(component.dipole(dipoleIndex), static_cast<ParameterWithDoubleValue*> (p), part);
-	} else if (valueName.find("Quadrupole") != string::npos){
+	} else if (valueName.find("Quadrupole") != std::string::npos){
 		int quadIndex = convertFromChar<int> (valueName.at(10));
 		std::string part = valueName.substr(12);
 #ifdef DEBUG
-		std::cout<< "Index of Quadrupole: " << quadIndex << endl;
+		std::cout<< "Index of Quadrupole: " << quadIndex << std::endl;
 		std::cout << "part is: " << part << std::endl;
 #endif
 		setParameterValue(component.quadrupole(quadIndex), static_cast<ParameterWithDoubleValue*> (p), part);
 	} else {
 		std::cout << "ComponentParameters::setParameterValue(): unkown parameter! (valueName="
-				<< valueName << ")" << endl;
+				<< valueName << ")" << std::endl;
 		exit(-1);
 	}
 }
@@ -242,7 +242,7 @@ void ComponentParameters::setParameterValue(Charge& charge,
 		ParameterWithDoubleValue* p, std::string& valueName) {
 #ifdef DEBUG
 	std::cout << "SetParameterValue in Charge! valueName=" << valueName
-			<< "value: " << p->getValue() << endl;
+			<< "value: " << p->getValue() << std::endl;
 #endif
 
 	if (valueName == "x") {
@@ -257,7 +257,7 @@ void ComponentParameters::setParameterValue(Charge& charge,
 		charge.setQ(p->getValue());
 	} else {
 		std::cout << "ComponentParameters::setParameterValue(Charge): unkown parameter! (valueName="
-				<< valueName << ")" << endl;
+				<< valueName << ")" << std::endl;
 		exit(-1);
 	}
 
@@ -267,7 +267,7 @@ void ComponentParameters::setParameterValue(LJcenter& ljCenter,
 		ParameterWithDoubleValue* p, std::string& valueName) {
 #ifdef DEBUG
 	std::cout << "SetParameterValue in LJCenter! valueName =" << valueName
-			<< "value: " << p->getValue() << endl;
+			<< "value: " << p->getValue() << std::endl;
 #endif
 
 	if (valueName == "x") {
@@ -284,14 +284,14 @@ void ComponentParameters::setParameterValue(LJcenter& ljCenter,
 		ljCenter.setSigma(p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else {
 		std::cout << "ComponentParameters::setParameterValue(LJCenter): unkown parameter! (valueName="
-				<< valueName << ")" << endl;
+				<< valueName << ")" << std::endl;
 		exit(-1);
 	}
 }
 
 void ComponentParameters::setParameterValue(Dipole& dipole, ParameterWithDoubleValue* p, std::string& valueName){
 #ifdef DEBUG
-	std::cout << "SetParameterValue in Dipole! valueName =" << valueName << "value: " << p->getValue() << endl;
+	std::cout << "SetParameterValue in Dipole! valueName =" << valueName << "value: " << p->getValue() << std::endl;
 #endif
 
 	if (valueName == "x") {
@@ -310,14 +310,14 @@ void ComponentParameters::setParameterValue(Dipole& dipole, ParameterWithDoubleV
 		dipole.setAbyMy(p->getValue() * MDGenerator::debye_2_mardyn);
 	} else {
 		std::cout << "ComponentParameters::setParameterValue(Dipole): unkown parameter! (valueName="
-				<< valueName << ")" << endl;
+				<< valueName << ")" << std::endl;
 		exit(-1);
 	}
 }
 
 void ComponentParameters::setParameterValue(Quadrupole& quadrupole, ParameterWithDoubleValue* p, std::string& valueName){
 #ifdef DEBUG
-	std::cout << "SetParameterValue in Quadrupole! valueName =" << valueName << "value: " << p->getValue() << endl;
+	std::cout << "SetParameterValue in Quadrupole! valueName =" << valueName << "value: " << p->getValue() << std::endl;
 #endif
 
 	if (valueName == "x") {
@@ -336,7 +336,7 @@ void ComponentParameters::setParameterValue(Quadrupole& quadrupole, ParameterWit
 		quadrupole.setAbsQ(p->getValue() * MDGenerator::buckingham_2_mardyn);
 	} else {
 		std::cout << "ComponentParameters::setParameterValue(Quadrupole): unkown parameter! (valueName="
-				<< valueName << ")" << endl;
+				<< valueName << ")" << std::endl;
 		exit(-1);
 	}
 }

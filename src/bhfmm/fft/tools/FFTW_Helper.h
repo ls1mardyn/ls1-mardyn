@@ -24,7 +24,7 @@ public:
 	void FFT2Local(FFTAccelerableExpansion & Expansion, double radius);
 
 	inline void execute_S2FFT() {
-#if defined(__SINGLE_PRECISION_FFT__) 
+#if defined(__SINGLE_PRECISION_FFT__)
 		fftwf_execute(S2FFT);
 #else
 		fftw_execute(S2FFT);
@@ -32,7 +32,7 @@ public:
 	}
 
 	inline void execute_T2FFT() {
-#if defined(__SINGLE_PRECISION_FFT__) 
+#if defined(__SINGLE_PRECISION_FFT__)
 		fftwf_execute(T2FFT);
 #else
 		fftw_execute(T2FFT);
@@ -40,14 +40,14 @@ public:
 	}
 
 	inline void execute_FFT2L() {
-#if defined(__SINGLE_PRECISION_FFT__) 
+#if defined(__SINGLE_PRECISION_FFT__)
 		fftwf_execute(FFT2L);
 #else
 		fftw_execute(FFT2L);
 #endif
 	}
 
-#if defined(__SINGLE_PRECISION_FFT__) 
+#if defined(__SINGLE_PRECISION_FFT__)
 
 	fftwf_complex* Source2FFT(FFTAccelerableExpansion & Expansion, double radius);
 	fftwf_complex* TransferFunction2FFT(FFTAccelerableExpansion & Expansion);

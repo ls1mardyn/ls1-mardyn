@@ -28,10 +28,10 @@ class XmlOutputterHook;
 /*! \brief Outputs a TestResultCollector in XML format.
  * \ingroup WritingTestResult
  *
- * Save the test result as a XML stream. 
+ * Save the test result as a XML stream.
  *
- * Additional datas can be added to the XML document using XmlOutputterHook. 
- * Hook are not owned by the XmlOutputter. They should be valid until 
+ * Additional datas can be added to the XML document using XmlOutputterHook.
+ * Hook are not owned by the XmlOutputter. They should be valid until
  * destruction of the XmlOutputter. They can be removed with removeHook().
  *
  * \see XmlDocument, XmlElement, XmlOutputterHook.
@@ -42,7 +42,7 @@ public:
   /*! \brief Constructs a XmlOutputter object.
    * \param result Result of the test run.
    * \param stream Stream used to output the XML output.
-   * \param encoding Encoding used in the XML file (default is Latin-1). 
+   * \param encoding Encoding used in the XML file (default is Latin-1).
    */
   XmlOutputter( TestResultCollector *result,
                 OStream &stream,
@@ -104,7 +104,7 @@ public:
                                    XmlElement *rootNode );
 
   /*! \brief Adds the statics element to the root node.
-   * 
+   *
    * Creates a new element containing statistics data and adds it to the root element.
    * Then, for all hooks, call statisticsAdded().
    * \param rootNode Root element.
@@ -112,7 +112,7 @@ public:
   virtual void addStatistics( XmlElement *rootNode );
 
   /*! \brief Adds a failed test to the failed tests node.
-   * Creates a new element containing datas about the failed test, and adds it to 
+   * Creates a new element containing datas about the failed test, and adds it to
    * the failed tests element.
    * Then, for all hooks, call failTestAdded().
    */
@@ -126,11 +126,11 @@ public:
 
 
   /*! \brief Adds a successful test to the successful tests node.
-   * Creates a new element containing datas about the successful test, and adds it to 
+   * Creates a new element containing datas about the successful test, and adds it to
    * the successful tests element.
    * Then, for all hooks, call successfulTestAdded().
    */
-  virtual void addSuccessfulTest( Test *test, 
+  virtual void addSuccessfulTest( Test *test,
                                   int testNumber,
                                   XmlElement *testsNode );
 protected:

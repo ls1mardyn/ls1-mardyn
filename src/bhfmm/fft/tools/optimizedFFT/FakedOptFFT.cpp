@@ -139,7 +139,7 @@ void FakedOptFFT::optimizedIFFT(FFT_precision** & Real, FFT_precision** & Imag,
 	fftwf_complex* in, *out;
 #else
 	fftw_complex* in, *out;
-#endif 
+#endif
 
 	int i, j;
 	const int size_y_fft = size_y * 2;

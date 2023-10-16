@@ -11,10 +11,10 @@
 #include <cstddef>
 
 /**
- * Interface of the expansion used by the FFTAcceleration, 
+ * Interface of the expansion used by the FFTAcceleration,
  * Expansions have to inherit it
- * 
- * Requires accessor to the expansion's values and set a FFTDataContainer 
+ *
+ * Requires accessor to the expansion's values and set a FFTDataContainer
  * storage (abstract class by itself)
  * Delete the storage by itself in its virtual destructor.
  */

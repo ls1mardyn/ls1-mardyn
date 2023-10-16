@@ -21,7 +21,7 @@ class MmspdWriter : public PluginBase{
 	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
     MmspdWriter(unsigned long writeFrequency, std::string outputPrefix);
 	~MmspdWriter();
-    
+
 	void readXML(XMLfileUnits& xmlconfig);
 
     void init(ParticleContainer *particleContainer,

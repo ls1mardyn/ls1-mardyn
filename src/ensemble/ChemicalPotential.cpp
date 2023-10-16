@@ -5,8 +5,6 @@
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "utils/Logger.h"
 
-using namespace std;
-using Log::global_log;
 
 ChemicalPotential::ChemicalPotential()
 {
@@ -27,11 +25,11 @@ ChemicalPotential::ChemicalPotential()
 	_globalV = 1.0;
 	_restrictedControlVolume = false;
 
-	_remainingDeletions = list<unsigned>();
+	_remainingDeletions = std::list<unsigned>();
 	for (int d = 0; d < 3; d++)
-		_remainingInsertions[d] = list<double>();
-	_remainingInsertionIDs = list<unsigned long>();
-	_remainingDecisions = list<float>();
+		_remainingInsertions[d] = std::list<double>();
+	_remainingInsertionIDs = std::list<unsigned long>();
+	_remainingDecisions = std::list<float>();
 	_reservoir = NULL;
 	_id_increment = 1;
 	_lambda = 1.0;
@@ -117,7 +115,7 @@ void ChemicalPotential::prepareTimestep(ParticleContainer* moleculeContainer,
 	float maxrnd = 1.0;
 	_globalN = comm->Ndistribution(localN, &minrnd, &maxrnd);
 #ifndef NDEBUG
-	global_log->debug() << " believes N(" << _componentid << ")=" << _globalN
+	Log::global_log->debug() << " believes N(" << _componentid << ")=" << _globalN
 			<< ", rho=" << _globalN / _globalV
 			<< ", the decisive density quotient equals "
 			<< (float) _globalN / _globalReducedVolume << "\n";
@@ -148,7 +146,7 @@ void ChemicalPotential::prepareTimestep(ParticleContainer* moleculeContainer,
 
 	int insertions = _instances;
 #ifndef NDEBUG
-	global_log->debug() << "Number of insertions: " << insertions << ".\n";
+	Log::global_log->debug() << "Number of insertions: " << insertions << ".\n";
 #endif
 
 	// construct insertions
@@ -253,7 +251,7 @@ ParticleIterator ChemicalPotential::getDeletion(ParticleContainer* moleculeConta
 	}
 
 #ifndef NDEBUG
-	global_log->debug() << "ID " << m->getID() << " selected for deletion (index " << idx << ")." << std::endl;
+	Log::global_log->debug() << "ID " << m->getID() << " selected for deletion (index " << idx << ")." << std::endl;
 #endif
 
 	mardyn_assert(m->getID() < _nextid);
@@ -282,11 +280,11 @@ bool ChemicalPotential::decideDeletion(double deltaUTilde)
 
 	if (_remainingDecisions.empty()) {
 		if (_widom) {
-			global_log->error()
+			Log::global_log->error()
 					<< "SEVERE WARNING: The Widom method is (erroneously) trying to carry out test deletions.\n";
 			return false;
 		}
-		global_log->error() << "No decision is possible." << std::endl;
+		Log::global_log->error() << "No decision is possible." << std::endl;
 		Simulation::exit(1);
 	}
 	float dec = *_remainingDecisions.begin();
@@ -315,11 +313,11 @@ bool ChemicalPotential::decideInsertion(double deltaUTilde)
 {
 	if (_remainingDecisions.empty()) {
 		if (_widom) {
-			global_log->error() << "!!! SEVERE WARNING on rank " << _ownrank
+			Log::global_log->error() << "!!! SEVERE WARNING on rank " << _ownrank
 					<< ": no decision is possible !!!\n";
 			return false;
 		}
-		global_log->error() << "No decision is possible." << std::endl;
+		Log::global_log->error() << "No decision is possible." << std::endl;
 		Simulation::exit(1);
 	}
 	double acc = _globalReducedVolume * exp(_muTilde - deltaUTilde)
@@ -362,9 +360,9 @@ void ChemicalPotential::submitTemperature(double T_in)
 #endif
 	if (doOutput >= 0.01)
 		return;
-	cout << "rank " << _ownrank << " sets mu~ <- " << _muTilde;
-	cout << ", T <- " << _T << ", lambda <- " << _lambda;
-	cout << ", and Vred <- " << _globalReducedVolume << "\n";
+	std::cout << "rank " << _ownrank << " sets mu~ <- " << _muTilde;
+	std::cout << ", T <- " << _T << ", lambda <- " << _lambda;
+	std::cout << ", and Vred <- " << _globalReducedVolume << "\n";
 }
 
 void ChemicalPotential::assertSynchronization(DomainDecompBase* comm) {
@@ -375,7 +373,7 @@ void ChemicalPotential::setControlVolume(double x0, double y0, double z0,
 		double x1, double y1, double z1)
 {
 	if ((x0 >= x1) || (y0 >= y1) || (z0 >= z1)) {
-		global_log->error() << "\nInvalid control volume (" << x0 << " / " << y0
+		Log::global_log->error() << "\nInvalid control volume (" << x0 << " / " << y0
 				<< " / " << z0 << ") to (" << x1 << " / " << y1 << " / " << z1
 				<< ")." << std::endl;
 		Simulation::exit(611);
@@ -480,13 +478,13 @@ void ChemicalPotential::grandcanonicalStep(
 				accept = this->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
 				if (accept) {
-					cout << "r" << this->rank() << "d" << m->getID() << " with energy " << DeltaUpot << endl;
-					cout.flush();
+					std::cout << "r" << this->rank() << "d" << m->getID() << " with energy " << DeltaUpot << std::endl;
+					std::cout.flush();
 				}
 				/*
 				 else
 				 cout << "   (r" << this->rank() << "-d" << m->getID()
-				 << ")" << endl;
+				 << ")" << std::endl;
 				 */
 #endif
 				if (accept) {
@@ -548,7 +546,7 @@ void ChemicalPotential::grandcanonicalStep(
 			/*
 			 cout << "rank " << this->rank() << ": insert "
 			 << m->getID() << " at the reduced position (" << ins[0] << "/"
-			 << ins[1] << "/" << ins[2] << ")? " << endl;
+			 << ins[1] << "/" << ins[2] << ")? " << std::endl;
 			 */
 #endif
 
@@ -561,14 +559,14 @@ void ChemicalPotential::grandcanonicalStep(
 
 #ifndef NDEBUG
 			if (accept) {
-				cout << "r" << this->rank() << "i" << mit->getID()
-						<< " with energy " << DeltaUpot << endl;
-				cout.flush();
+				std::cout << "r" << this->rank() << "i" << mit->getID()
+						<< " with energy " << DeltaUpot << std::endl;
+				std::cout.flush();
 			}
 			/*
 			 else
 			 cout << "   (r" << this->rank() << "-i"
-			 << mit->getID() << ")" << endl;
+			 << mit->getID() << ")" << std::endl;
 			 */
 #endif
 			if (accept) {

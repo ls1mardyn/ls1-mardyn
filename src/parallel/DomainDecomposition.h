@@ -51,7 +51,7 @@ public:
 
     //returns a vector of the neighbour ranks in x y and z direction (only neighbours connected by an area to local area)
 	std::vector<int> getNeighbourRanks() override;
-	
+
     //returns a vector of all 26 neighbour ranks in x y and z direction
 	std::vector<int> getNeighbourRanksFullShell() override;
 
