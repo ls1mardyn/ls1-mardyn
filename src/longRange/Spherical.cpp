@@ -98,12 +98,16 @@ void Spherical::init()
 
 	resizeExactly(RShells, NShells);
 	resizeExactly(RShells2, NShells);
+	resizeExactly(RShells3, NShells);
 	resizeExactly(VShells, NShells);
 	resizeExactly(rhoShellsTemp, NShells);
 	resizeExactly(rhoShellsTemp_global, NShells);
 	resizeExactly(rhoShellsMean, NShells*NSMean);
 	resizeExactly(rhoShellsAvg, NShells);
 	resizeExactly(rhoShellsAvg_global, NShells);
+	resizeExactly(TShellsAvg_global, NShells);
+	resizeExactly(TShellsTemp, NShells);
+	resizeExactly(TShellsAvg, NShells);
 	resizeExactly(rhoShells, NShells);
 	resizeExactly(rhoShells_global, NShells);
 	resizeExactly(rhoShellsT, NShells);
@@ -128,12 +132,16 @@ void Spherical::init()
 
 	std::fill(RShells.begin(), RShells.end(), 0.0);
 	std::fill(RShells2.begin(), RShells2.end(), 0.0);
+	std::fill(RShells3.begin(), RShells3.end(), 0.0);
 	std::fill(VShells.begin(), VShells.end(), 0.0);
 	std::fill(rhoShellsTemp.begin(), rhoShellsTemp.end(), 0.0);
 	std::fill(rhoShellsTemp_global.begin(), rhoShellsTemp_global.end(), 0.0);
 	std::fill(rhoShellsMean.begin(), rhoShellsMean.end(), 0.0);
 	std::fill(rhoShellsAvg.begin(), rhoShellsAvg.end(), 0.0);
 	std::fill(rhoShellsAvg_global.begin(), rhoShellsAvg_global.end(), 0.0);
+	std::fill(TShellsAvg_global.begin(), TShellsAvg_global.end(), 0.0);
+	std::fill(TShellsTemp.begin(), TShellsTemp.end(), 0.0);
+	std::fill(TShellsAvg.begin(), TShellsAvg.end(), 0.0);
 	std::fill(rhoShells.begin(), rhoShells.end(), 0.0);
 	std::fill(rhoShells_global.begin(), rhoShells_global.end(), 0.0);
 	std::fill(rhoShellsT.begin(), rhoShellsT.end(), 0.0);
@@ -187,17 +195,18 @@ void Spherical::init()
 	for (unsigned int i=0; i< NShells-1; i++){
 		RShells[i] = (i+1) * _drShells;
 		RShells2[i] = RShells[i]*RShells[i];
+		RShells3[i] = RShells2[i]*RShells[i];
 		VShells[i] = (4./3.)*M_PI * ( pow((RShells[i]+drShells05),3) - pow((RShells[i]-drShells05),3) );
 	}
 	RShells[NShells-1] = NShells * _drShells;
 	RShells2[NShells-1] = RShells[NShells-1] * RShells[NShells-1];
+	RShells3[NShells-1] = RShells2[NShells-1] * RShells[NShells-1];
 	VShells[NShells-1] = (boxlength[0]*boxlength[1]*boxlength[2]) - (4./3.)*M_PI * pow((RShells[NShells-1]-drShells05),3);
 
 	// Set names for output files and write header
 	if (_domainDecomposition->getRank() == 0) {
-		filenameTanhParams << _outputPrefix;
-		filenameTanhParams << "_LRCspherical_tanh.dat";
-		ofstream outfilestreamTanhParams(filenameTanhParams.str().c_str(), ios::out);
+		filenameTanhParams = _outputPrefix +  "_LRCspherical_tanh.dat";
+		ofstream outfilestreamTanhParams(filenameTanhParams, ios::out);
 		outfilestreamTanhParams << std::setw(24) << "simstep";
 		outfilestreamTanhParams << std::setw(24) << "rhov";
 		outfilestreamTanhParams << std::setw(24) << "rhol";
@@ -205,8 +214,23 @@ void Spherical::init()
 		outfilestreamTanhParams << std::setw(24) << "R0";
 		outfilestreamTanhParams << std::endl;
 		outfilestreamTanhParams.close();
-		filenameGlobalCorrs << _outputPrefix;
-		filenameGlobalCorrs << "_LRCspherical_globalCorrections.csv";
+
+		filenameThermData = _outputPrefix + "_ThermData.csv";
+		ofstream outfilestreamThermData(filenameThermData, ios::out);
+		outfilestreamThermData << std::setw(24) << "simstep;";  
+		// outfilestreamThermData << std::setw(24) << "gamma (iterative);";  
+		outfilestreamThermData << std::setw(24) << "gamma;";  
+		outfilestreamThermData << std::setw(24) << "R_gamma;";
+		outfilestreamThermData << std::setw(24) << "R_e;";
+		outfilestreamThermData << std::setw(24) << "delta;";
+		outfilestreamThermData << std::setw(24) << "rhoInside ;";
+		outfilestreamThermData << std::setw(24) << "rhoOutside ;";
+		outfilestreamThermData << std::setw(24) << "pInside ;";
+		outfilestreamThermData << std::setw(24) << "pOutside ;";
+		outfilestreamThermData << std::endl;
+		outfilestreamThermData.close();
+
+		filenameGlobalCorrs = _outputPrefix + "_globalCorrections_0.csv";
 	}
 
 }
@@ -232,14 +256,24 @@ void Spherical::readXML(XMLfileUnits& xmlconfig)
 
 void Spherical::calculateLongRange(){
 
-	//global_log->info() << "[Long Range Correction] calculateLongRange has been called"  << std::endl;
+	// global_log->info() << "[Long Range Correction] calculateLongRange has been called"  << std::endl;
 
 	int rank = _domainDecomposition->getRank();
 	uint64_t simstep = _simulation.getSimulationStep();
+	// global_log->info() << "[Long Range Correction] simstep = "<< simstep  << std::endl;
+
 
 	std::fill(rhoShellsTemp.begin(), rhoShellsTemp.end(), 0.0);
+	std::fill(TShellsTemp.begin(), TShellsTemp.end(), 0.0);
+
+	// global_log->info() << "[Long Range Correction] Checkpoint 1"  << std::endl;
 
 	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
+		
+		double v2i = tempMol->v(0)*tempMol->v(0)+tempMol->v(1)*tempMol->v(1)+tempMol->v(2)*tempMol->v(2); // velocity^2 of tempMol	
+		
+		// global_log->info() << "[Long Range Correction] Checkpoint 2.i"  u<< std::endl;
+
 		unsigned long molID = tempMol->getID();
 		for(unsigned short d=0;d<3;++d) {
 			FcorrX[molID] = systemcenter[0] - tempMol->r(0);
@@ -256,30 +290,44 @@ void Spherical::calculateLongRange(){
 		unsigned long k = std::round( realk );
 		if (k > NShells-1) {
 			rhoShellsTemp[NShells-1] += 1.; 
+			TShellsTemp[NShells-1] += v2i;
 			PartShells[molID] = NShells-1;
 		} else if (k == 0) {
 			//rhoShellsTemp[k] += 1.; besser?
 			PartShells[molID] = k;
 		} else {
 			rhoShellsTemp[k-1] += 1.;
+			TShellsTemp[k-1] += v2i;
 			PartShells[molID] = k-1;
 		}
 	}
+	// global_log->info() << "[Long Range Correction] Checkpoint 3"  << std::endl;
 
 	for (unsigned int i=0; i< NShells; i++){
+		// TShellsTemp[i] /= 3.*rhoShellsTemp[i] -3; //up to this point, rhoShellsTemp[i] is just # of Particles in Cell i
+		TShellsAvg[i] = (TShellsAvg[i]*simstep+TShellsTemp[i])/(simstep+1); // not used
+
 		rhoShellsTemp[i] = rhoShellsTemp[i] / VShells[i];
 		rhoShellsAvg[i] += rhoShellsTemp[i];
 	}
-	// Distribution of the Density Profile to every node 
-	_domainDecomposition->collCommInit(NShells);
+		// global_log->info() << "[Long Range Correction] Checkpoint 3.1"  << std::endl;
+	// Distribution of the Density Profile and local Temperature to every node 
+	_domainDecomposition->collCommInit(2*NShells);
 	for (unsigned i=0; i < NShells; i++) {
-		_domainDecomposition->collCommAppendDouble(rhoShellsAvg[i]);
+		_domainDecomposition->collCommAppendDouble(rhoShellsAvg[i]);			
+		_domainDecomposition->collCommAppendDouble(TShellsAvg[i]);
 	}
+	// global_log->info() << "[Long Range Correction] Checkpoint 3.2"  << std::endl;
 	_domainDecomposition->collCommAllreduceSum();
+	// global_log->info() << "[Long Range Correction] Checkpoint 3.3"  << std::endl;
 	for (unsigned i=0; i < NShells; i++) {
 		rhoShellsAvg_global[i] = _domainDecomposition->collCommGetDouble();
+		TShellsAvg_global[i] = _domainDecomposition->collCommGetDouble() / (3*rhoShells_global[i]*VShells[i]);
 	}
+	// global_log->info() << "[Long Range Correction] Checkpoint 3.4"  << std::endl;
 	_domainDecomposition->collCommFinalize();
+	
+	// global_log->info() << "[Long Range Correction] Checkpoint 4"  << std::endl;
 
 	unsigned long MeanIndex = (static_cast<int>(std::floor( (simstep)/100.0 ))) % NSMean; // 1000
 	if (((simstep-1) % 100) == 0) { // 1000
@@ -306,6 +354,7 @@ void Spherical::calculateLongRange(){
 				rhoShells[j] += 0.01/NSMean*rhoShellsMean[i*NShells+j]; // 1000 --- 0.001
 			}
 		}
+		// global_log->info() << "[Long Range Correction] Checkpoint 5"  << std::endl;
 
 		// Distribution of the Density Profile to every node 
 		_domainDecomposition->collCommInit(NShells);
@@ -399,9 +448,9 @@ void Spherical::calculateLongRange(){
 			rhoShellsT[i] = RhoP(RShells[i], rhov, rhol, D0, R0);
 		}
         
-        if ( (simstep) % 1000 == 0) {
+        if ( (simstep) % 2000 == 0) {
             if (rank == 0) {
-                ofstream outfilestreamTanhParams(filenameTanhParams.str().c_str(), ios::app);
+                ofstream outfilestreamTanhParams(filenameTanhParams, ios::app);
                 outfilestreamTanhParams << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
                 outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rhov;
                 outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rhol;
@@ -876,7 +925,6 @@ void Spherical::calculateLongRange(){
 			_domainDecomposition->collCommAppendDouble(FShells_Mean[i]);
 			_domainDecomposition->collCommAppendDouble(PNShells_Mean[i]);
 			_domainDecomposition->collCommAppendDouble(PTShells_Mean[i]);
-
 		}
 		_domainDecomposition->collCommAllreduceSum();
 		for (unsigned i=0; i < NShells; i++) {
@@ -897,9 +945,99 @@ void Spherical::calculateLongRange(){
 			}
 		}
 		// Only Root writes to files
-        if ( (simstep) % 100 == 0) {
+        if ( (simstep) % 1000 == 0) { //reduced from 100 to 1000, should be enough, no?
             if (rank == 0) {
-                ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs.str().c_str(), ios::out);
+
+				// calculating and writing thermoData:
+
+				int inside_from = NShells/20;
+				int inside_to = inside_from+6;	
+				int outside_from = NShells - 6;
+				int outside_to = NShells;
+				
+				double pInside = 0;
+				double rhoInside = 0;
+				for (unsigned int i = inside_from; i< inside_to; i++){
+					pInside +=  _T*rhoShellsAvg_global[i]+VirShells_T_global[i];
+					pInside +=  _T*rhoShellsAvg_global[i]+VirShells_N_global[i];
+					rhoInside += rhoShellsAvg_global[i];
+				}
+				pInside /= (inside_to - inside_from)*2;
+				rhoInside /= inside_to - inside_from;
+
+				double pOutside = 0;
+				double rhoOutside = 0;
+				for (unsigned int i = outside_from; i< outside_to; i++){
+					pOutside +=  _T*rhoShellsAvg_global[i]+VirShells_N_global[i];
+					pOutside +=  _T*rhoShellsAvg_global[i]+VirShells_T_global[i];
+					rhoOutside += rhoShellsAvg_global[i];
+				}
+				pOutside /= (outside_to - outside_from)*2;
+				rhoOutside /= outside_to - outside_from;
+
+				double rhoDiff_Avg = 0;
+				double pDiff_Avg = 0;
+				if(rhoInside > rhoOutside){ //bubble
+					rhoDiff_Avg =  rhoOutside - rhoInside; // rho_vap - rho_liq
+					pDiff_Avg = pInside-pOutside;      //p_liq - p_vap
+				}else{
+					rhoDiff_Avg =   rhoInside-rhoOutside; // rho_vap - rho_liq
+					pDiff_Avg = pOutside-pInside;      //p_liq - p_vap
+				}
+				double pDiff2_Avg = pow(pInside-pOutside, 2);
+
+				double dpN_Avg[NShells] = { 0 };
+				double drho_Avg[NShells] = { 0 };
+				double R_e3 =  0. ;
+				double R_e = 0;
+
+				// double integral_term_Avg[NShells] = { 0 };
+				// double gamma_Avg_iterative[NShells] = { 0 }; 
+				double gamma_integral_Avg = 0;
+				double gamma_Avg = 0;
+
+
+				gamma_integral_Avg = 0;
+				// calculation of gamma:
+				for (unsigned i=1; i < NShells; i++) { // not considering index 0!
+					dpN_Avg[i] = (_T*rhoShellsAvg_global[i]+VirShells_N_global[i])-(_T*rhoShellsAvg_global[i-1]+VirShells_N_global[i-1]);
+					drho_Avg[i] = rhoShellsAvg_global[i]-rhoShellsAvg_global[i-1];
+
+					R_e3 += RShells3[i]*drho_Avg[i];
+					// //------- TODO: remove these two, once everything checks out
+					// integral_term_Avg[i] = integral_term_Avg[i-1] + RShells3[i] * dpN_Avg[i];
+					// gamma_Avg_iterative[i] =  pow(-(integral_term_Avg[i] * pDiff2_Avg)/8., 1/3.);
+					// // ----------------- //
+					gamma_integral_Avg += RShells3[i] * dpN_Avg[i]; 
+				}
+				R_e3 /= rhoDiff_Avg;
+				R_e = pow(R_e3, 1/3.);
+				gamma_Avg =  pow( -(pDiff2_Avg*gamma_integral_Avg)/8., 1/3.);
+
+				double R_gamma = 2*gamma_Avg/pDiff_Avg;
+
+				ofstream outfilestreamThermData(filenameThermData, ios::app);
+                outfilestreamThermData << std::setw(24) << simstep << ";";  
+                // outfilestreamThermData << std::setw(24) << gamma_Avg_iterative[NShells-1] << ";";  
+                outfilestreamThermData << std::setw(24) << gamma_Avg << ";";  
+                outfilestreamThermData << std::setw(24) << R_gamma << ";";
+                outfilestreamThermData << std::setw(24) << R_e << ";";
+                outfilestreamThermData << std::setw(24) << R_gamma-R_e << ";";
+                outfilestreamThermData << std::setw(24) << rhoInside << ";";
+                outfilestreamThermData << std::setw(24) << rhoOutside << ";";
+                outfilestreamThermData << std::setw(24) << pInside << ";";
+                outfilestreamThermData << std::setw(24) << pOutside << ";";
+				outfilestreamThermData << std::endl;
+
+                outfilestreamThermData.close();
+
+
+
+				// output for GlobalCorrs:
+				if(simstep % 5000 == 0){
+					filenameGlobalCorrs = _outputPrefix + "_globalCorrections_"+std::to_string(simstep)+".csv";
+				}
+                ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs, ios::out);
                 outfilestreamGlobalCorrs << std::setw(24) << "Radius;";
                 outfilestreamGlobalCorrs << std::setw(24) << "RhoShells_Avg;";
                 outfilestreamGlobalCorrs << std::setw(24) << "UShells_Mean;";
@@ -908,7 +1046,9 @@ void Spherical::calculateLongRange(){
                 outfilestreamGlobalCorrs << std::setw(24) << "PTShells_Mean;";
                 outfilestreamGlobalCorrs << std::setw(24) << "Virial_Corr_Avg;";
                 outfilestreamGlobalCorrs << std::setw(24) << "P_N_Avg;";
-                outfilestreamGlobalCorrs << std::setw(24) << "P_T_Avg";
+                outfilestreamGlobalCorrs << std::setw(24) << "P_T_Avg;";
+                outfilestreamGlobalCorrs << std::setw(24) << "T_Avg;";
+                // outfilestreamGlobalCorrs << std::setw(24) << "gamma";
 
                 outfilestreamGlobalCorrs << std::endl;
                 for (unsigned int i=0; i<NShells; i++){
@@ -920,7 +1060,9 @@ void Spherical::calculateLongRange(){
                     outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << PTShells_Mean_global[i] << ";";
                     outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << -VirShells_Corr_global[i] << ";";
                     outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << _T*rhoShellsAvg_global[i]+VirShells_N_global[i] << ";";
-                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << _T*rhoShellsAvg_global[i]+VirShells_T_global[i] ;
+                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << _T*rhoShellsAvg_global[i]+VirShells_T_global[i] << ";" ;
+                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << TShellsAvg_global[i]<< ";" ;
+                    // outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << gamma_Avg_iterative[i]<< ";" ;
                     outfilestreamGlobalCorrs << std::endl;
 
                 }

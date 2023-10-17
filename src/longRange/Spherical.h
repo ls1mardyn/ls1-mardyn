@@ -72,12 +72,16 @@ private:
 	double _deltaShells;
 	std::vector<double> RShells;
 	std::vector<double> RShells2;
+	std::vector<double> RShells3;
 	std::vector<double> VShells;
 	std::vector<double> rhoShellsTemp;
 	std::vector<double> rhoShellsTemp_global;
 	std::vector<double> rhoShellsMean;
 	std::vector<double> rhoShellsAvg;
 	std::vector<double> rhoShellsAvg_global;
+	std::vector<double> TShellsTemp;
+	std::vector<double> TShellsAvg;
+	std::vector<double> TShellsAvg_global;
 	std::vector<double> rhoShells;
 	std::vector<double> rhoShellsT;
 	std::vector<double> rhoShells_global;
@@ -115,8 +119,9 @@ private:
 	double boxlength[3];
 	double systemcenter[3];
 
-	std::stringstream filenameTanhParams;
-	std::stringstream filenameGlobalCorrs;
+	std::string filenameTanhParams;
+	std::string filenameGlobalCorrs;
+	std::string filenameThermData;
 	
 	ParticleContainer* _particleContainer;
 	Domain* _domain;
