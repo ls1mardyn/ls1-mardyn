@@ -223,10 +223,10 @@ void Spherical::init()
 		outfilestreamThermData << std::setw(24) << "R_gamma;";
 		outfilestreamThermData << std::setw(24) << "R_e;";
 		outfilestreamThermData << std::setw(24) << "delta;";
-		outfilestreamThermData << std::setw(24) << "rhoInside ;";
-		outfilestreamThermData << std::setw(24) << "rhoOutside ;";
-		outfilestreamThermData << std::setw(24) << "pInside ;";
-		outfilestreamThermData << std::setw(24) << "pOutside ;";
+		// outfilestreamThermData << std::setw(24) << "rhoInside ;";
+		// outfilestreamThermData << std::setw(24) << "rhoOutside ;";
+		// outfilestreamThermData << std::setw(24) << "pInside ;";
+		// outfilestreamThermData << std::setw(24) << "pOutside ;";
 		outfilestreamThermData << std::endl;
 		outfilestreamThermData.close();
 
@@ -448,7 +448,7 @@ void Spherical::calculateLongRange(){
 			rhoShellsT[i] = RhoP(RShells[i], rhov, rhol, D0, R0);
 		}
         
-        if ( (simstep) % 2000 == 0) {
+        if ( (simstep) % 100000 == 0) {
             if (rank == 0) {
                 ofstream outfilestreamTanhParams(filenameTanhParams, ios::app);
                 outfilestreamTanhParams << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
@@ -945,8 +945,8 @@ void Spherical::calculateLongRange(){
 			}
 		}
 		// Only Root writes to files
-        if ( (simstep) % 1000 == 0) { //reduced from 100 to 1000, should be enough, no?
-            if (rank == 0) {
+        if (rank == 0) {
+        	if ( (simstep) % 10000 == 0) { //reduced from 100 to 10000, should be enough, no?
 
 				// calculating and writing thermoData:
 
@@ -1023,10 +1023,10 @@ void Spherical::calculateLongRange(){
                 outfilestreamThermData << std::setw(24) << R_gamma << ";";
                 outfilestreamThermData << std::setw(24) << R_e << ";";
                 outfilestreamThermData << std::setw(24) << R_e  - R_gamma<< ";";
-                outfilestreamThermData << std::setw(24) << rhoInside << ";";
-                outfilestreamThermData << std::setw(24) << rhoOutside << ";";
-                outfilestreamThermData << std::setw(24) << pInside << ";";
-                outfilestreamThermData << std::setw(24) << pOutside << ";";
+                // outfilestreamThermData << std::setw(24) << rhoInside << ";";
+                // outfilestreamThermData << std::setw(24) << rhoOutside << ";";
+                // outfilestreamThermData << std::setw(24) << pInside << ";";
+                // outfilestreamThermData << std::setw(24) << pOutside << ";";
 				outfilestreamThermData << std::endl;
 
                 outfilestreamThermData.close();
@@ -1034,7 +1034,7 @@ void Spherical::calculateLongRange(){
 
 
 				// output for GlobalCorrs:
-				if(simstep % 5000 == 0){
+				if(simstep % 1000000 == 0){
 					filenameGlobalCorrs = _outputPrefix + "_globalCorrections_"+std::to_string(simstep)+".csv";
 				}
                 ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs, ios::out);
