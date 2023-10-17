@@ -322,7 +322,7 @@ void Spherical::calculateLongRange(){
 	// global_log->info() << "[Long Range Correction] Checkpoint 3.3"  << std::endl;
 	for (unsigned i=0; i < NShells; i++) {
 		rhoShellsAvg_global[i] = _domainDecomposition->collCommGetDouble();
-		TShellsAvg_global[i] = _domainDecomposition->collCommGetDouble() / (3*rhoShells_global[i]*VShells[i]);
+		TShellsAvg_global[i] = _domainDecomposition->collCommGetDouble() / (3*rhoShellsAvg_global[i]/(simstep+1)*VShells[i]);
 	}
 	// global_log->info() << "[Long Range Correction] Checkpoint 3.4"  << std::endl;
 	_domainDecomposition->collCommFinalize();
@@ -1022,7 +1022,7 @@ void Spherical::calculateLongRange(){
                 outfilestreamThermData << std::setw(24) << gamma_Avg << ";";  
                 outfilestreamThermData << std::setw(24) << R_gamma << ";";
                 outfilestreamThermData << std::setw(24) << R_e << ";";
-                outfilestreamThermData << std::setw(24) << R_gamma-R_e << ";";
+                outfilestreamThermData << std::setw(24) << R_e  - R_gamma<< ";";
                 outfilestreamThermData << std::setw(24) << rhoInside << ";";
                 outfilestreamThermData << std::setw(24) << rhoOutside << ";";
                 outfilestreamThermData << std::setw(24) << pInside << ";";
