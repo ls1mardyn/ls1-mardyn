@@ -64,7 +64,7 @@ void ExtendedProfileSamplingTest::testEPSampling() {
             ASSERT_DOUBLES_EQUAL(rho_actual_all, rho_actual_cid1, delta);
             ASSERT_DOUBLES_EQUAL(ekin_actual_all, ekin_actual_cid1, delta);
         }
-        cout << endl;
+        std::cout << std::endl;
     }
 
 }
