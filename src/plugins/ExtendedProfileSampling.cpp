@@ -179,57 +179,57 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         std::fill(hmDelta_step.global.begin(), hmDelta_step.global.end(), 0.0f);
 
         for (unsigned short d = 0; d < 3; d++) {
-            hmHeatflux_step.at(d).local.resize(_lenVector);
-            hmHeatflux_step.at(d).global.resize(_lenVector);
+            hmHeatflux_step[d].local.resize(_lenVector);
+            hmHeatflux_step[d].global.resize(_lenVector);
 
-            std::fill(hmHeatflux_step.at(d).local.begin(),  hmHeatflux_step.at(d).local.end(), 0.0f);
-            std::fill(hmHeatflux_step.at(d).global.begin(), hmHeatflux_step.at(d).global.end(), 0.0f);
+            std::fill(hmHeatflux_step[d].local.begin(),  hmHeatflux_step[d].local.end(), 0.0f);
+            std::fill(hmHeatflux_step[d].global.begin(), hmHeatflux_step[d].global.end(), 0.0f);
         }
 
         for (unsigned short d = 0; d < 9; d++) {
-            hmPressure_step.at(d).local.resize(_lenVector);
-            hmR_step.at(d).local.resize(_lenVector);
-            hmM_step.at(d).local.resize(_lenVector);
-            hmM_step.at(d+9u).local.resize(_lenVector);
-            hmM_step.at(d+18u).local.resize(_lenVector);
+            hmPressure_step[d].local.resize(_lenVector);
+            hmR_step[d].local.resize(_lenVector);
+            hmM_step[d].local.resize(_lenVector);
+            hmM_step[d+9u].local.resize(_lenVector);
+            hmM_step[d+18u].local.resize(_lenVector);
 
-            hmPressure_step.at(d).global.resize(_lenVector);
-            hmR_step.at(d).global.resize(_lenVector);
-            hmM_step.at(d).global.resize(_lenVector);
-            hmM_step.at(d+9u).global.resize(_lenVector);
-            hmM_step.at(d+18u).global.resize(_lenVector);
+            hmPressure_step[d].global.resize(_lenVector);
+            hmR_step[d].global.resize(_lenVector);
+            hmM_step[d].global.resize(_lenVector);
+            hmM_step[d+9u].global.resize(_lenVector);
+            hmM_step[d+18u].global.resize(_lenVector);
 
-            std::fill(hmPressure_step.at(d).local.begin(), hmPressure_step.at(d).local.end(), 0.0f);
-            std::fill(hmR_step.at(d).local.begin(),        hmR_step.at(d).local.end(), 0.0f);
-            std::fill(hmM_step.at(d).local.begin(),        hmM_step.at(d).local.end(), 0.0f);
-            std::fill(hmM_step.at(d+9u).local.begin(),     hmM_step.at(d+9u).local.end(), 0.0f);
-            std::fill(hmM_step.at(d+18u).local.begin(),    hmM_step.at(d+18u).local.end(), 0.0f);
+            std::fill(hmPressure_step[d].local.begin(), hmPressure_step[d].local.end(), 0.0f);
+            std::fill(hmR_step[d].local.begin(),        hmR_step[d].local.end(), 0.0f);
+            std::fill(hmM_step[d].local.begin(),        hmM_step[d].local.end(), 0.0f);
+            std::fill(hmM_step[d+9u].local.begin(),     hmM_step[d+9u].local.end(), 0.0f);
+            std::fill(hmM_step[d+18u].local.begin(),    hmM_step[d+18u].local.end(), 0.0f);
 
-            std::fill(hmPressure_step.at(d).global.begin(), hmPressure_step.at(d).global.end(), 0.0f);
-            std::fill(hmR_step.at(d).global.begin(),        hmR_step.at(d).global.end(), 0.0f);
-            std::fill(hmM_step.at(d).global.begin(),        hmM_step.at(d).global.end(), 0.0f);
-            std::fill(hmM_step.at(d+9u).global.begin(),     hmM_step.at(d+9u).global.end(), 0.0f);
-            std::fill(hmM_step.at(d+18u).global.begin(),    hmM_step.at(d+18u).global.end(), 0.0f);
+            std::fill(hmPressure_step[d].global.begin(), hmPressure_step[d].global.end(), 0.0f);
+            std::fill(hmR_step[d].global.begin(),        hmR_step[d].global.end(), 0.0f);
+            std::fill(hmM_step[d].global.begin(),        hmM_step[d].global.end(), 0.0f);
+            std::fill(hmM_step[d+9u].global.begin(),     hmM_step[d+9u].global.end(), 0.0f);
+            std::fill(hmM_step[d+18u].global.begin(),    hmM_step[d+18u].global.end(), 0.0f);
         }
 
     } else {
         hmDelta_step.local.clear();
         hmDelta_step.global.clear();
         for (unsigned short d = 0; d < 3; d++) {
-            hmHeatflux_step.at(d).local.clear();
-            hmHeatflux_step.at(d).global.clear();
+            hmHeatflux_step[d].local.clear();
+            hmHeatflux_step[d].global.clear();
         }
         for (unsigned short d = 0; d < 9; d++) {
-            hmPressure_step.at(d).local.clear();
-            hmR_step.at(d).local.clear();
-            hmM_step.at(d).local.clear();
-            hmM_step.at(d+9u).local.clear();
-            hmM_step.at(d+18u).local.clear();
-            hmPressure_step.at(d).global.clear();
-            hmR_step.at(d).global.clear();
-            hmM_step.at(d).global.clear();
-            hmM_step.at(d+9u).global.clear();
-            hmM_step.at(d+18u).global.clear();
+            hmPressure_step[d].local.clear();
+            hmR_step[d].local.clear();
+            hmM_step[d].local.clear();
+            hmM_step[d+9u].local.clear();
+            hmM_step[d+18u].local.clear();
+            hmPressure_step[d].global.clear();
+            hmR_step[d].global.clear();
+            hmM_step[d].global.clear();
+            hmM_step[d+9u].global.clear();
+            hmM_step[d+18u].global.clear();
         }
     }
 
@@ -250,19 +250,19 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     countNTest_step.global.resize(_lenVector);
     
     for (unsigned short d = 0; d < 3; d++) {
-        ekinVect_step.at(d).local.resize(_lenVector);
-        velocityVect_step.at(d).local.resize(_lenVector);
-        virialVect_step.at(d).local.resize(_lenVector);
-        forceVect_step.at(d).local.resize(_lenVector);
-        energyfluxVect_step.at(d).local.resize(_lenVector);
+        ekinVect_step[d].local.resize(_lenVector);
+        velocityVect_step[d].local.resize(_lenVector);
+        virialVect_step[d].local.resize(_lenVector);
+        forceVect_step[d].local.resize(_lenVector);
+        energyfluxVect_step[d].local.resize(_lenVector);
 
-        ekinVect_step.at(d).global.resize(_lenVector);
-        velocityVect_step.at(d).global.resize(_lenVector);
-        virialVect_step.at(d).global.resize(_lenVector);
-        forceVect_step.at(d).global.resize(_lenVector);
-        energyfluxVect_step.at(d).global.resize(_lenVector);
+        ekinVect_step[d].global.resize(_lenVector);
+        velocityVect_step[d].global.resize(_lenVector);
+        virialVect_step[d].global.resize(_lenVector);
+        forceVect_step[d].global.resize(_lenVector);
+        energyfluxVect_step[d].global.resize(_lenVector);
 
-        veloDrift_step_global.at(d).resize(_lenVector);
+        veloDrift_step_global[d].resize(_lenVector);
     }
 
     std::fill(numMolecules_step.local.begin(), numMolecules_step.local.end(), 0ul);
@@ -282,35 +282,47 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     std::fill(countNTest_step.global.begin(),   countNTest_step.global.end(), 0ul);
     
     for (unsigned short d = 0; d < 3; d++) {
-        std::fill(ekinVect_step.at(d).local.begin(),      ekinVect_step.at(d).local.end(), 0.0f);
-        std::fill(velocityVect_step.at(d).local.begin(),   velocityVect_step.at(d).local.end(), 0.0f);
-        std::fill(virialVect_step.at(d).local.begin(),     virialVect_step.at(d).local.end(), 0.0f);
-        std::fill(forceVect_step.at(d).local.begin(),      forceVect_step.at(d).local.end(), 0.0f);
-        std::fill(energyfluxVect_step.at(d).local.begin(), energyfluxVect_step.at(d).local.end(), 0.0f);
+        std::fill(ekinVect_step[d].local.begin(),      ekinVect_step[d].local.end(), 0.0f);
+        std::fill(velocityVect_step[d].local.begin(),   velocityVect_step[d].local.end(), 0.0f);
+        std::fill(virialVect_step[d].local.begin(),     virialVect_step[d].local.end(), 0.0f);
+        std::fill(forceVect_step[d].local.begin(),      forceVect_step[d].local.end(), 0.0f);
+        std::fill(energyfluxVect_step[d].local.begin(), energyfluxVect_step[d].local.end(), 0.0f);
 
-        std::fill(ekinVect_step.at(d).global.begin(),      ekinVect_step.at(d).global.end(), 0.0f);
-        std::fill(velocityVect_step.at(d).global.begin(),   velocityVect_step.at(d).global.end(), 0.0f);
-        std::fill(virialVect_step.at(d).global.begin(),     virialVect_step.at(d).global.end(), 0.0f);
-        std::fill(forceVect_step.at(d).global.begin(),      forceVect_step.at(d).global.end(), 0.0f);
-        std::fill(energyfluxVect_step.at(d).global.begin(), energyfluxVect_step.at(d).global.end(), 0.0f);
+        std::fill(ekinVect_step[d].global.begin(),      ekinVect_step[d].global.end(), 0.0f);
+        std::fill(velocityVect_step[d].global.begin(),   velocityVect_step[d].global.end(), 0.0f);
+        std::fill(virialVect_step[d].global.begin(),     virialVect_step[d].global.end(), 0.0f);
+        std::fill(forceVect_step[d].global.begin(),      forceVect_step[d].global.end(), 0.0f);
+        std::fill(energyfluxVect_step[d].global.begin(), energyfluxVect_step[d].global.end(), 0.0f);
 
-        std::fill(veloDrift_step_global.at(d).begin(),      veloDrift_step_global.at(d).end(), 0.0f);
+        std::fill(veloDrift_step_global[d].begin(),      veloDrift_step_global[d].end(), 0.0f);
     }
 
     // Calculate drift as it is needed first
+    std::vector<unsigned int> cids = {0};
     for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
         const double ry = pit->r(1);
         const unsigned int index = std::min(_numBinsGlobal, static_cast<unsigned int>(ry/_binwidth));  // Index of bin
 
-        std::vector<unsigned int> cids = {0};  // add velocities to "all components" (0) and respective component
-        if (!_singleComp) { cids.push_back(pit->componentid() + 1); }
+        const std::array<double, 3> velo {
+            pit->v(0), pit->v(1), pit->v(2)
+        };
+
+        // add velocities to "all components" (0) and respective component
+        if (!_singleComp) {
+            cids.push_back(pit->componentid() + 1);
+        }
 
         for (unsigned int cid : cids) {
             const uint32_t indexCID = cid*_numBinsGlobal + index;
-            numMolecules_step.local.at(indexCID) ++;
-            velocityVect_step.at(0).local.at(indexCID) += pit->v(0);
-            velocityVect_step.at(1).local.at(indexCID) += pit->v(1);
-            velocityVect_step.at(2).local.at(indexCID) += pit->v(2);
+            numMolecules_step.local[indexCID] ++;
+            for (unsigned short d = 0; d < 3; d++) {
+                velocityVect_step[d].local[indexCID] += velo[d];
+            }
+        }
+
+        // delete componentID
+        if (!_singleComp) {
+            cids.pop_back();
         }
     }
 
@@ -321,82 +333,108 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     MPI_Allreduce(velocityVect_step[2].local.data(), velocityVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #else
     for (unsigned long i = 0; i < _lenVector; i++) {
-        numMolecules_step.global.at(i) = numMolecules_step.local.at(i);
-        velocityVect_step[0].global.at(i) = velocityVect_step[0].local.at(i);
-        velocityVect_step[1].global.at(i) = velocityVect_step[1].local.at(i);
-        velocityVect_step[2].global.at(i) = velocityVect_step[2].local.at(i);
+        numMolecules_step.global[i] = numMolecules_step.local[i];
+        velocityVect_step[0].global[i] = velocityVect_step[0].local[i];
+        velocityVect_step[1].global[i] = velocityVect_step[1].local[i];
+        velocityVect_step[2].global[i] = velocityVect_step[2].local[i];
     }
 #endif
 
     for (unsigned long i = 0; i < _lenVector; i++) {
-        if (numMolecules_step.global.at(i) > 0ul) {
-            veloDrift_step_global[0].at(i) = velocityVect_step[0].global.at(i) / numMolecules_step.global.at(i);
-            veloDrift_step_global[1].at(i) = velocityVect_step[1].global.at(i) / numMolecules_step.global.at(i);
-            veloDrift_step_global[2].at(i) = velocityVect_step[2].global.at(i) / numMolecules_step.global.at(i);
+        if (numMolecules_step.global[i] > 0ul) {
+            veloDrift_step_global[0][i] = velocityVect_step[0].global[i] / numMolecules_step.global[i];
+            veloDrift_step_global[1][i] = velocityVect_step[1].global[i] / numMolecules_step.global[i];
+            veloDrift_step_global[2][i] = velocityVect_step[2].global[i] / numMolecules_step.global[i];
         }
     }
 
+    cids.clear();
+    cids.push_back(0u);
     for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
         const double ry = pit->r(1);
         const unsigned int index = std::min(_numBinsGlobal, static_cast<unsigned int>(ry/_binwidth));  // Index of bin
 
-        const double veloX = pit->v(0);
-        const double veloY = pit->v(1);
-        const double veloZ = pit->v(2);
         const double mass = pit->mass();
         const double epot = pit->U_pot();
+        const double ekin = pit->U_kin();
+        const double etot = ekin + epot;
 
-        std::vector<unsigned int> cids = {0};  // add quantities to "all components" (0) and respective component
-        if (!_singleComp) { cids.push_back(pit->componentid() + 1); }
+        const std::array<double, 9> virial {
+            pit->Vi(0), pit->Vi(1), pit->Vi(2),
+            pit->Vi(3), pit->Vi(4), pit->Vi(5),
+            pit->Vi(6), pit->Vi(7), pit->Vi(8)
+        };
+
+        const std::array<double, 3> force {
+            pit->F(0), pit->F(1), pit->F(2)
+        };
+
+        const std::array<double, 3> velo {
+            pit->v(0), pit->v(1), pit->v(2)
+        };
+
+        const std::array<double, 3> ekinVect {
+            0.5*mass*velo[0]*velo[0],
+            0.5*mass*velo[1]*velo[1],
+            0.5*mass*velo[2]*velo[2]
+        };
+
+        const std::array<double, 3> energyflux {
+            etot*velo[0] + (virial[0]*velo[0] + virial[3]*velo[1] + virial[4]*velo[2]),
+            etot*velo[1] + (virial[6]*velo[0] + virial[1]*velo[1] + virial[5]*velo[2]),
+            etot*velo[2] + (virial[7]*velo[0] + virial[8]*velo[1] + virial[2]*velo[2])
+        };
+
+        // Molecule should be elongated (ie. main axis) in z direction
+        const std::array<double, 3> pos_rot = pit->q().rotate({0., 0., 1.});
+        // Orientation order parameter, cf. Eq. 29 in Mecke2001
+        // cos^2(theta) = dy^2 = pos_rot[1]^2 since length of rotated vector (hypotenuse) is 1
+        const double orientation = 3.*pos_rot[1]*pos_rot[1] - 1.;
+        // Angle between normal vector of y plane and z axis of molecule
+        // const double angle = 90 - (std::atan(abs(pos_rot[1])/(std::sqrt(pos_rot[0]*pos_rot[0]+pos_rot[2]*pos_rot[2])))*(180/3.14159265));
+
+
+        // add quantities to "all components" (0) and respective component
+        if (!_singleComp) {
+            cids.push_back(pit->componentid() + 1);
+        }
 
         for (unsigned int cid : cids) {
             const uint32_t indexCID = cid*_numBinsGlobal + index;
-            mass_step.local.at(indexCID) += pit->mass();
-            ekin_step.local.at(indexCID) += pit->U_kin();
-            epot_step.local.at(indexCID) += epot;
+            mass_step.local[indexCID] += mass;
+            ekin_step.local[indexCID] += ekin;
+            epot_step.local[indexCID] += epot;
 
-            Quaternion q_pit = pit->q();
-            // Molecule should be elongated (ie. main axis) in z direction
-            std::array<double, 3> pos_rot = q_pit.rotate({0., 0., 1.});
-            // Orientation order parameter, cf. Eq. 29 in Mecke2001
-            // cos^2(theta) = dy^2 = pos_rot[1]^2 since length of rotated vector (hypotenuse) is 1
-            orientation_step.local.at(indexCID) += 3.*pos_rot[1]*pos_rot[1] - 1.;
-            // Angle between normal vector of y plane and z axis of molecule
-            // const double angle = 90 - (std::atan(abs(pos_rot[1])/(std::sqrt(pos_rot[0]*pos_rot[0]+pos_rot[2]*pos_rot[2])))*(180/3.14159265));
+            orientation_step.local[indexCID] = orientation;
 
-            ekinVect_step[0].local.at(indexCID) += 0.5*mass*veloX*veloX;
-            ekinVect_step[1].local.at(indexCID) += 0.5*mass*veloY*veloY;
-            ekinVect_step[2].local.at(indexCID) += 0.5*mass*veloZ*veloZ;
-            virialVect_step[0].local.at(indexCID) += pit->Vi(0);
-            virialVect_step[1].local.at(indexCID) += pit->Vi(1);
-            virialVect_step[2].local.at(indexCID) += pit->Vi(2);
-            forceVect_step[0].local.at(indexCID) += pit->F(0);
-            forceVect_step[1].local.at(indexCID) += pit->F(1);
-            forceVect_step[2].local.at(indexCID) += pit->F(2);
-            energyfluxVect_step[0].local.at(indexCID) += (pit->U_kin() + epot)*veloX + (pit->Vi(0)*veloX + pit->Vi(3)*veloY + pit->Vi(4)*veloZ);
-            energyfluxVect_step[1].local.at(indexCID) += (pit->U_kin() + epot)*veloY + (pit->Vi(6)*veloX + pit->Vi(1)*veloY + pit->Vi(5)*veloZ);
-            energyfluxVect_step[2].local.at(indexCID) += (pit->U_kin() + epot)*veloZ + (pit->Vi(7)*veloX + pit->Vi(8)*veloY + pit->Vi(2)*veloZ);
+            for (unsigned short d = 0; d < 3; d++) {
+                ekinVect_step[d].local[indexCID] += ekinVect[d];
+                virialVect_step[d].local[indexCID] += virial[d];
+                forceVect_step[d].local[indexCID] += force[d];
+                energyfluxVect_step[d].local[indexCID] += energyflux[d];
+            }
 
             if (_sampleHigherMoms) {
-                const double veloCorrX = veloX - veloDrift_step_global[0].at(index);
-                const double veloCorrY = veloY - veloDrift_step_global[1].at(index);
-                const double veloCorrZ = veloZ - veloDrift_step_global[2].at(index);
-                const double veloCorrSqrt = veloCorrX*veloCorrX + veloCorrY*veloCorrY + veloCorrZ*veloCorrZ;  // Squared velocity of particle without drift
-                const std::array<double, 3> velos = {veloCorrX, veloCorrY, veloCorrZ};
+                const std::array<double, 3> veloCorr {
+                    velo[0] - veloDrift_step_global[0][index],
+                    velo[1] - veloDrift_step_global[1][index],
+                    velo[2] - veloDrift_step_global[2][index]
+                };
+                const double veloCorrSqrt = veloCorr[0]*veloCorr[0] + veloCorr[1]*veloCorr[1] + veloCorr[2]*veloCorr[2];  // Squared velocity of particle without drift
 
-                hmDelta_step.local.at(indexCID) += veloCorrSqrt*veloCorrSqrt;
+                hmDelta_step.local[indexCID] += veloCorrSqrt*veloCorrSqrt;
 
                 for (unsigned short i = 0; i < 3; i++) {
 
-                    hmHeatflux_step[i].local.at(indexCID)     += 0.5*veloCorrSqrt*velos[i];
+                    hmHeatflux_step[i].local[indexCID]     += 0.5*veloCorrSqrt*veloCorr[i];
 
                     for (unsigned short j = 0; j < 3; j++) {
                         if (i == j) {  // Trace elements
-                            hmPressure_step[3*i+j].local.at(indexCID) += velos[i]*velos[j] - (1./3.)*veloCorrSqrt;  // Pressure; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
-                            hmR_step[3u*i+j].local.at(indexCID)        += (velos[i]*velos[j] - (1./3.)*veloCorrSqrt)*veloCorrSqrt;   // R; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
+                            hmPressure_step[3*i+j].local[indexCID] += veloCorr[i]*veloCorr[j] - (1./3.)*veloCorrSqrt;  // Pressure; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
+                            hmR_step[3u*i+j].local[indexCID]        += (veloCorr[i]*veloCorr[j] - (1./3.)*veloCorrSqrt)*veloCorrSqrt;   // R; cxcx, cxcy, cxcz, cycx, cycy, cycz, czcx, czcy, czcz
                         } else {
-                            hmPressure_step[3u*i+j].local.at(indexCID) += velos[i]*velos[j];
-                            hmR_step[3u*i+j].local.at(indexCID)        += velos[i]*velos[j]*veloCorrSqrt;
+                            hmPressure_step[3u*i+j].local[indexCID] += veloCorr[i]*veloCorr[j];
+                            hmR_step[3u*i+j].local[indexCID]        += veloCorr[i]*veloCorr[j]*veloCorrSqrt;
                         }
                     }
                 }
@@ -405,7 +443,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 for (unsigned short i = 0; i < 3; i++) {
                     for (unsigned short j = 0; j < 3; j++) {
                         for (unsigned short k = 0; k < 3; k++) {
-                            m[i][j][k] = velos[i]*velos[j]*velos[k];
+                            m[i][j][k] = veloCorr[i]*veloCorr[j]*veloCorr[k];
                         }
                     }
                 }
@@ -416,36 +454,41 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     m[2][0][0] + m[2][1][1] + m[2][2][2]
                 };
 
-                hmM_step[0].local.at(indexCID) += m[0][0][0] - 0.6*(mSum[0]);  // m: cxcxcx
-                hmM_step[1].local.at(indexCID) += m[0][0][1] - 0.2*(mSum[1]);  // m: cxcxcy
-                hmM_step[2].local.at(indexCID) += m[0][0][2] - 0.2*(mSum[2]);  // m: cxcxcz
-                hmM_step[3].local.at(indexCID) += m[0][1][0] - 0.2*(mSum[1]);  // m: cxcycx
-                hmM_step[4].local.at(indexCID) += m[0][1][1] - 0.2*(mSum[0]);  // m: cxcycy
-                hmM_step[5].local.at(indexCID) += m[0][1][2];                  // m: cxcycz
-                hmM_step[6].local.at(indexCID) += m[0][2][0] - 0.2*(mSum[2]);  // m: cxczcx
-                hmM_step[7].local.at(indexCID) += m[0][2][1];                  // m: cxczcy
-                hmM_step[8].local.at(indexCID) += m[0][2][2] - 0.2*(mSum[0]);  // m: cxczcz
+                hmM_step[0].local[indexCID] += m[0][0][0] - 0.6*(mSum[0]);  // m: cxcxcx
+                hmM_step[1].local[indexCID] += m[0][0][1] - 0.2*(mSum[1]);  // m: cxcxcy
+                hmM_step[2].local[indexCID] += m[0][0][2] - 0.2*(mSum[2]);  // m: cxcxcz
+                hmM_step[3].local[indexCID] += m[0][1][0] - 0.2*(mSum[1]);  // m: cxcycx
+                hmM_step[4].local[indexCID] += m[0][1][1] - 0.2*(mSum[0]);  // m: cxcycy
+                hmM_step[5].local[indexCID] += m[0][1][2];                  // m: cxcycz
+                hmM_step[6].local[indexCID] += m[0][2][0] - 0.2*(mSum[2]);  // m: cxczcx
+                hmM_step[7].local[indexCID] += m[0][2][1];                  // m: cxczcy
+                hmM_step[8].local[indexCID] += m[0][2][2] - 0.2*(mSum[0]);  // m: cxczcz
 
-                hmM_step[9].local.at(indexCID) += m[1][0][0] - 0.2*(mSum[1]);  // m: cycxcx
-                hmM_step[10].local.at(indexCID) += m[1][0][1] - 0.2*(mSum[0]); // m: cycxcy
-                hmM_step[11].local.at(indexCID) += m[1][0][2];                 // m: cycxcz
-                hmM_step[12].local.at(indexCID) += m[1][1][0] - 0.2*(mSum[0]); // m: cycycx
-                hmM_step[13].local.at(indexCID) += m[1][1][1] - 0.6*(mSum[1]); // m: cycycy
-                hmM_step[14].local.at(indexCID) += m[1][1][2] - 0.2*(mSum[2]); // m: cycycz
-                hmM_step[15].local.at(indexCID) += m[1][2][0];                 // m: cyczcx
-                hmM_step[16].local.at(indexCID) += m[1][2][1] - 0.2*(mSum[2]); // m: cyczcy
-                hmM_step[17].local.at(indexCID) += m[1][2][2] - 0.2*(mSum[1]); // m: cyczcz
+                hmM_step[9].local[indexCID] += m[1][0][0] - 0.2*(mSum[1]);  // m: cycxcx
+                hmM_step[10].local[indexCID] += m[1][0][1] - 0.2*(mSum[0]); // m: cycxcy
+                hmM_step[11].local[indexCID] += m[1][0][2];                 // m: cycxcz
+                hmM_step[12].local[indexCID] += m[1][1][0] - 0.2*(mSum[0]); // m: cycycx
+                hmM_step[13].local[indexCID] += m[1][1][1] - 0.6*(mSum[1]); // m: cycycy
+                hmM_step[14].local[indexCID] += m[1][1][2] - 0.2*(mSum[2]); // m: cycycz
+                hmM_step[15].local[indexCID] += m[1][2][0];                 // m: cyczcx
+                hmM_step[16].local[indexCID] += m[1][2][1] - 0.2*(mSum[2]); // m: cyczcy
+                hmM_step[17].local[indexCID] += m[1][2][2] - 0.2*(mSum[1]); // m: cyczcz
 
-                hmM_step[18].local.at(indexCID) += m[2][0][0] - 0.2*(mSum[2]); // m: czcxcx
-                hmM_step[19].local.at(indexCID) += m[2][0][1];                 // m: czcxcy
-                hmM_step[20].local.at(indexCID) += m[2][0][2] - 0.2*(mSum[0]); // m: czcxcz
-                hmM_step[21].local.at(indexCID) += m[2][1][0];                 // m: czcycx
-                hmM_step[22].local.at(indexCID) += m[2][1][1] - 0.2*(mSum[2]); // m: czcycy
-                hmM_step[23].local.at(indexCID) += m[2][1][2] - 0.2*(mSum[1]); // m: czcycz
-                hmM_step[24].local.at(indexCID) += m[2][2][0] - 0.2*(mSum[0]); // m: czczcx
-                hmM_step[25].local.at(indexCID) += m[2][2][1] - 0.2*(mSum[1]); // m: czczcy
-                hmM_step[26].local.at(indexCID) += m[2][2][2] - 0.6*(mSum[2]); // m: czczcz
+                hmM_step[18].local[indexCID] += m[2][0][0] - 0.2*(mSum[2]); // m: czcxcx
+                hmM_step[19].local[indexCID] += m[2][0][1];                 // m: czcxcy
+                hmM_step[20].local[indexCID] += m[2][0][2] - 0.2*(mSum[0]); // m: czcxcz
+                hmM_step[21].local[indexCID] += m[2][1][0];                 // m: czcycx
+                hmM_step[22].local[indexCID] += m[2][1][1] - 0.2*(mSum[2]); // m: czcycy
+                hmM_step[23].local[indexCID] += m[2][1][2] - 0.2*(mSum[1]); // m: czcycz
+                hmM_step[24].local[indexCID] += m[2][2][0] - 0.2*(mSum[0]); // m: czczcx
+                hmM_step[25].local[indexCID] += m[2][2][1] - 0.2*(mSum[1]); // m: czczcy
+                hmM_step[26].local[indexCID] += m[2][2][2] - 0.6*(mSum[2]); // m: czczcz
             }
+        }
+
+        // delete componentID
+        if (!_singleComp) {
+            cids.pop_back();
         }
     }
 
@@ -461,11 +504,11 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         // and propagates it to other processes
         if (domainDecomp->getRank() == 0) {
             for (unsigned long index = 0; index < _lenVector; index++) {
-                const double v_x = _velocityVect_accum[0].at(index) / _countSamples.at(index);
-                const double v_y = _velocityVect_accum[1].at(index) / _countSamples.at(index);
-                const double v_z = _velocityVect_accum[2].at(index) / _countSamples.at(index);
+                const double v_x = _velocityVect_accum[0][index] / _countSamples[index];
+                const double v_y = _velocityVect_accum[1][index] / _countSamples[index];
+                const double v_z = _velocityVect_accum[2][index] / _countSamples[index];
                 double v_drift_sqr = v_x*v_x + v_y*v_y + v_z*v_z;
-                temperature_step_global.at(index) = (2*_ekin_accum.at(index) - v_drift_sqr*_mass_accum.at(index)) / _doftotal_accum.at(index);
+                temperature_step_global[index] = (2*_ekin_accum[index] - v_drift_sqr*_mass_accum[index]) / _doftotal_accum[index];
             }
         }
 #ifdef ENABLE_MPI
@@ -484,16 +527,16 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
 
         for (unsigned int i = 0; i < _numBinsGlobal; i++) {
             // Make sure, number of test particles is never zero and number of test particles per direction is at least 1
-            const unsigned long nTest = std::max(1ul,static_cast<unsigned long>(_factorNumTest*numMolecules_step.global.at(i)));
+            const unsigned long nTest = std::max(1ul,static_cast<unsigned long>(_factorNumTest*numMolecules_step.global[i]));
 
-            nY.at(i) = std::max(1.0,std::pow((nTest*_binwidth*_binwidth)/(_globalBoxLength[0]*_globalBoxLength[2]),(1./3.)));
-            dY.at(i) = std::min(static_cast<float>(_binwidth/nY.at(i)), static_cast<float>(0.5*regionSize[1]));
+            nY[i] = std::max(1.0,std::pow((nTest*_binwidth*_binwidth)/(_globalBoxLength[0]*_globalBoxLength[2]),(1./3.)));
+            dY[i] = std::min(static_cast<float>(_binwidth/nY[i]), static_cast<float>(0.5*regionSize[1]));
 
-            nX.at(i) = std::max(1.0,std::pow((nTest*_globalBoxLength[0]*_globalBoxLength[0])/(_binwidth*_globalBoxLength[2]),(1./3.)));
-            dX.at(i) = std::min(static_cast<float>(_globalBoxLength[0]/nX.at(i)), static_cast<float>(0.5*regionSize[0]));
+            nX[i] = std::max(1.0,std::pow((nTest*_globalBoxLength[0]*_globalBoxLength[0])/(_binwidth*_globalBoxLength[2]),(1./3.)));
+            dX[i] = std::min(static_cast<float>(_globalBoxLength[0]/nX[i]), static_cast<float>(0.5*regionSize[0]));
 
-            nZ.at(i) = std::max(1ul,nTest/(nX.at(i)*nY.at(i)));
-            dZ.at(i) = std::min(static_cast<float>(_globalBoxLength[2]/nZ.at(i)), static_cast<float>(0.5*regionSize[2]));
+            nZ[i] = std::max(1ul,nTest/(nX[i]*nY[i]));
+            dZ[i] = std::min(static_cast<float>(_globalBoxLength[2]/nZ[i]), static_cast<float>(0.5*regionSize[2]));
             
             nTestGlobal += nTest;
         }
@@ -503,16 +546,16 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
 
             // Index of bin in which the left region boundary (y-dir) is in; std::min if particle position is precisely at right boundary
             const unsigned int idxStart = std::min(_numBinsGlobal, static_cast<unsigned int>(regionLowCorner[1]/_binwidth));
-            double rY = regionLowCorner[1]+0.5*dY.at(idxStart);
+            double rY = regionLowCorner[1]+0.5*dY[idxStart];
             while (rY < regionHighCorner[1]) {
                 const unsigned int index = std::min(_numBinsGlobal, static_cast<unsigned int>(rY/_binwidth));  // Index of bin
 
-                double rX = regionLowCorner[0]+0.5*dX.at(idxStart);
+                double rX = regionLowCorner[0]+0.5*dX[idxStart];
                 while (rX < regionHighCorner[0]) {
 
-                    double rZ = regionLowCorner[2]+0.5*dZ.at(idxStart);
+                    double rZ = regionLowCorner[2]+0.5*dZ[idxStart];
                     while (rZ < regionHighCorner[2]) {
-                        if (temperature_step_global.at(index) > 1e-9) {
+                        if (temperature_step_global[index] > 1e-9) {
                             _mTest.setr(0,rX);
                             _mTest.setr(1,rY);
                             _mTest.setr(2,rZ);
@@ -521,30 +564,30 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                                 _mTest.setComponent(&(_simulation.getEnsemble()->getComponents()->at(cid-1)));
                                 const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler.get(), &_mTest, *_cellProcessor)
                                                         + 2.0*_simulation.getLongRangeCorrection()->getUpotCorr(&_mTest);
-                                double chemPot = exp(-deltaUpot/temperature_step_global.at(index));  // Global temperature of all components
+                                double chemPot = exp(-deltaUpot/temperature_step_global[index]);  // Global temperature of all components
                                 if (std::isfinite(chemPot)) {
                                     // For component 0 (single component)
-                                    chemPot_step.local.at(index) += chemPot;
-                                    countNTest_step.local.at(index)++;
+                                    chemPot_step.local[index] += chemPot;
+                                    countNTest_step.local[index]++;
                                     // Also add to specific component record if no single-component-sampling
                                     if (!_singleComp) {
-                                        chemPot_step.local.at(indexCID) += chemPot;
-                                        countNTest_step.local.at(indexCID)++;
+                                        chemPot_step.local[indexCID] += chemPot;
+                                        countNTest_step.local[indexCID]++;
                                     }
 #ifndef NDEBUG
                                     std::cout << "[ExtendedProfileSampling] Rank " << domainDecomp->getRank() << " : Inserting molecule at x,y,z = "
                                             << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
                                             << " ; cid = " << _mTest.componentid()
-                                            << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperature_step_global.at(index) << " ; index = " << index << std::endl;
+                                            << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperature_step_global[index] << " ; index = " << index << std::endl;
 #endif
                                 }
                             }
                         }
-                        rZ += dZ.at(index);
+                        rZ += dZ[index];
                     }
-                    rX += dX.at(index);
+                    rX += dX[index];
                 }
-                rY += dY.at(index);
+                rY += dY[index];
             }
         } else {
             // Random insertion
@@ -560,7 +603,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 const double rY = regionLowCorner[1] + rnd->rnd()*regionSize[1];
                 const double rZ = regionLowCorner[2] + rnd->rnd()*regionSize[2];
                 const unsigned int index = std::min(_numBinsGlobal, static_cast<unsigned int>(rY/_binwidth));  // Index of bin
-                if (temperature_step_global.at(index) > 1e-9) {
+                if (temperature_step_global[index] > 1e-9) {
                     _mTest.setr(0,rX);
                     _mTest.setr(1,rY);
                     _mTest.setr(2,rZ);
@@ -569,21 +612,21 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         _mTest.setComponent(&(_simulation.getEnsemble()->getComponents()->at(cid-1)));
                         const double deltaUpot = particleContainer->getEnergy(_particlePairsHandler.get(), &_mTest, *_cellProcessor)
                                                 + _simulation.getLongRangeCorrection()->getUpotCorr(&_mTest);
-                        double chemPot = exp(-deltaUpot/temperature_step_global.at(index));
+                        double chemPot = exp(-deltaUpot/temperature_step_global[index]);
                         if (std::isfinite(chemPot)) {
                             // For component 0 (single component)
-                            chemPot_step.local.at(index) += chemPot;
-                            countNTest_step.local.at(index)++;
+                            chemPot_step.local[index] += chemPot;
+                            countNTest_step.local[index]++;
                             // Also add to specific component record if no single-component-sampling
                             if (!_singleComp) {
-                                chemPot_step.local.at(indexCID) += chemPot;
-                                countNTest_step.local.at(indexCID)++;
+                                chemPot_step.local[indexCID] += chemPot;
+                                countNTest_step.local[indexCID]++;
                             }
 #ifndef NDEBUG
                             std::cout << "[ExtendedProfileSampling] Rank " << domainDecomp->getRank() << " : Inserting molecule at x,y,z = "
                                     << _mTest.r(0) << " , " << _mTest.r(1) << " , " << _mTest.r(2)
                                     << " ; cid = " << _mTest.componentid()
-                                    << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperature_step_global.at(index) << " ; index = " << index << std::endl;
+                                    << " ; chemPot = " << chemPot << " ; dU = " << deltaUpot << " ; T = " << temperature_step_global[index] << " ; index = " << index << std::endl;
 #endif
                         }
                     }
@@ -627,35 +670,35 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     }
 #else
     for (unsigned long i = 0; i < _lenVector; i++) {
-        mass_step.global.at(i) = mass_step.local.at(i);
-        ekin_step.global.at(i) = ekin_step.local.at(i);
-        epot_step.global.at(i) = epot_step.local.at(i);
-        orientation_step.global.at(i) = orientation_step.local.at(i);
-        virialVect_step[0].global.at(i) = virialVect_step[0].local.at(i);
-        virialVect_step[1].global.at(i) = virialVect_step[1].local.at(i);
-        virialVect_step[2].global.at(i) = virialVect_step[2].local.at(i);
-        forceVect_step[0].global.at(i) = forceVect_step[0].local.at(i);
-        forceVect_step[1].global.at(i) = forceVect_step[1].local.at(i);
-        forceVect_step[2].global.at(i) = forceVect_step[2].local.at(i);
-        ekinVect_step[0].global.at(i) = ekinVect_step[0].local.at(i);
-        ekinVect_step[1].global.at(i) = ekinVect_step[1].local.at(i);
-        ekinVect_step[2].global.at(i) = ekinVect_step[2].local.at(i);
-        energyfluxVect_step[0].global.at(i) = energyfluxVect_step[0].local.at(i);
-        energyfluxVect_step[1].global.at(i) = energyfluxVect_step[1].local.at(i);
-        energyfluxVect_step[2].global.at(i) = energyfluxVect_step[2].local.at(i);
-        chemPot_step.global.at(i) = chemPot_step.local.at(i);
-        countNTest_step.global.at(i) = countNTest_step.local.at(i);
+        mass_step.global[i] = mass_step.local[i];
+        ekin_step.global[i] = ekin_step.local[i];
+        epot_step.global[i] = epot_step.local[i];
+        orientation_step.global[i] = orientation_step.local[i];
+        virialVect_step[0].global[i] = virialVect_step[0].local[i];
+        virialVect_step[1].global[i] = virialVect_step[1].local[i];
+        virialVect_step[2].global[i] = virialVect_step[2].local[i];
+        forceVect_step[0].global[i] = forceVect_step[0].local[i];
+        forceVect_step[1].global[i] = forceVect_step[1].local[i];
+        forceVect_step[2].global[i] = forceVect_step[2].local[i];
+        ekinVect_step[0].global[i] = ekinVect_step[0].local[i];
+        ekinVect_step[1].global[i] = ekinVect_step[1].local[i];
+        ekinVect_step[2].global[i] = ekinVect_step[2].local[i];
+        energyfluxVect_step[0].global[i] = energyfluxVect_step[0].local[i];
+        energyfluxVect_step[1].global[i] = energyfluxVect_step[1].local[i];
+        energyfluxVect_step[2].global[i] = energyfluxVect_step[2].local[i];
+        chemPot_step.global[i] = chemPot_step.local[i];
+        countNTest_step.global[i] = countNTest_step.local[i];
         if (_sampleHigherMoms) {
-            hmDelta_step.global.at(i) = hmDelta_step.local.at(i);
+            hmDelta_step.global[i] = hmDelta_step.local[i];
             for (unsigned short d = 0; d < 3; d++) {
-                hmHeatflux_step[d].global.at(i) = hmHeatflux_step[d].local.at(i);
+                hmHeatflux_step[d].global[i] = hmHeatflux_step[d].local[i];
             }
             for (unsigned short d = 0; d < 9; d++) {
-                hmPressure_step[d].global.at(i) = hmPressure_step[d].local.at(i);
-                hmR_step[d].global.at(i)    = hmR_step[d].local.at(i);
-                hmM_step[d].global.at(i)    = hmM_step[d].local.at(i);
-                hmM_step[d+9u].global.at(i)  = hmM_step[d+9u].local.at(i);
-                hmM_step[d+18u].global.at(i) = hmM_step[d+18u].local.at(i);
+                hmPressure_step[d].global[i] = hmPressure_step[d].local[i];
+                hmR_step[d].global[i]    = hmR_step[d].local[i];
+                hmM_step[d].global[i]    = hmM_step[d].local[i];
+                hmM_step[d+9u].global[i]  = hmM_step[d+9u].local[i];
+                hmM_step[d+18u].global[i] = hmM_step[d+18u].local[i];
             }
         }
     }
@@ -665,7 +708,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     // Accumulate data
     if (domainDecomp->getRank() == 0) {
         for (unsigned long i = 0; i < _lenVector; i++) {
-            const unsigned long numMols = numMolecules_step.global.at(i);
+            const unsigned long numMols = numMolecules_step.global[i];
             const unsigned int cid = i/_numBinsGlobal;
             unsigned int dof_rot {0};
             unsigned int dof_total {0};
@@ -673,7 +716,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 if (cid == 0) {
                     for (unsigned long cj = 0; cj < _numComps; cj++) {
                         dof_rot = _simulation.getEnsemble()->getComponent(cj)->getRotationalDegreesOfFreedom();
-                        dof_total += (3 + dof_rot)*numMolecules_step.global.at((cj+1)*_numBinsGlobal + i);
+                        dof_total += (3 + dof_rot)*numMolecules_step.global[(cj+1)*_numBinsGlobal + i];
                     }
                 } else {
                     dof_rot = _simulation.getEnsemble()->getComponent(cid-1)->getRotationalDegreesOfFreedom();
@@ -685,49 +728,49 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 dof_total = (3 + dof_rot)*numMols;
             }
             
-            const double ViX = virialVect_step[0].global.at(i);
-            const double ViY = virialVect_step[1].global.at(i);
-            const double ViZ = virialVect_step[2].global.at(i);
+            const double ViX = virialVect_step[0].global[i];
+            const double ViY = virialVect_step[1].global[i];
+            const double ViZ = virialVect_step[2].global[i];
 
-            _doftotal_accum.at(i)                += dof_total;
-            _numMolecules_accum.at(i)            += numMols;
-            _mass_accum.at(i)                    += mass_step.global.at(i);
-            _ekin_accum.at(i)                    += ekin_step.global.at(i);
-            _epot_accum.at(i)                    += epot_step.global.at(i);
-            _orientation_accum.at(i)             += orientation_step.global.at(i);
-            _virial_accum.at(i)                  += ViX + ViY + ViZ;
-            _chemPot_accum.at(i)                 += chemPot_step.global.at(i);
-            _countNTest_accum.at(i)              += countNTest_step.global.at(i);
+            _doftotal_accum[i]                += dof_total;
+            _numMolecules_accum[i]            += numMols;
+            _mass_accum[i]                    += mass_step.global[i];
+            _ekin_accum[i]                    += ekin_step.global[i];
+            _epot_accum[i]                    += epot_step.global[i];
+            _orientation_accum[i]             += orientation_step.global[i];
+            _virial_accum[i]                  += ViX + ViY + ViZ;
+            _chemPot_accum[i]                 += chemPot_step.global[i];
+            _countNTest_accum[i]              += countNTest_step.global[i];
 
-            _ekinVect_accum[0].at(i)             += ekinVect_step[0].global.at(i);
-            _ekinVect_accum[1].at(i)             += ekinVect_step[1].global.at(i);
-            _ekinVect_accum[2].at(i)             += ekinVect_step[2].global.at(i);
-            _velocityVect_accum[0].at(i)         += veloDrift_step_global[0].at(i);
-            _velocityVect_accum[1].at(i)         += veloDrift_step_global[1].at(i);
-            _velocityVect_accum[2].at(i)         += veloDrift_step_global[2].at(i);
-            _virialVect_accum[0].at(i)           += ViX;
-            _virialVect_accum[1].at(i)           += ViY;
-            _virialVect_accum[2].at(i)           += ViZ;
-            _forceVect_accum[0].at(i)            += forceVect_step[0].global.at(i);
-            _forceVect_accum[1].at(i)            += forceVect_step[1].global.at(i);
-            _forceVect_accum[2].at(i)            += forceVect_step[2].global.at(i);
-            _energyfluxVect_accum[0].at(i)       += energyfluxVect_step[0].global.at(i) / _slabVolume;
-            _energyfluxVect_accum[1].at(i)       += energyfluxVect_step[1].global.at(i) / _slabVolume;
-            _energyfluxVect_accum[2].at(i)       += energyfluxVect_step[2].global.at(i) / _slabVolume;
+            _ekinVect_accum[0][i]             += ekinVect_step[0].global[i];
+            _ekinVect_accum[1][i]             += ekinVect_step[1].global[i];
+            _ekinVect_accum[2][i]             += ekinVect_step[2].global[i];
+            _velocityVect_accum[0][i]         += veloDrift_step_global[0][i];
+            _velocityVect_accum[1][i]         += veloDrift_step_global[1][i];
+            _velocityVect_accum[2][i]         += veloDrift_step_global[2][i];
+            _virialVect_accum[0][i]           += ViX;
+            _virialVect_accum[1][i]           += ViY;
+            _virialVect_accum[2][i]           += ViZ;
+            _forceVect_accum[0][i]            += forceVect_step[0].global[i];
+            _forceVect_accum[1][i]            += forceVect_step[1].global[i];
+            _forceVect_accum[2][i]            += forceVect_step[2].global[i];
+            _energyfluxVect_accum[0][i]       += energyfluxVect_step[0].global[i] / _slabVolume;
+            _energyfluxVect_accum[1][i]       += energyfluxVect_step[1].global[i] / _slabVolume;
+            _energyfluxVect_accum[2][i]       += energyfluxVect_step[2].global[i] / _slabVolume;
 
-            _countSamples.at(i)++;
+            _countSamples[i]++;
 
             if (_sampleHigherMoms) {
-                _hmDelta_accum.at(i)             += hmDelta_step.global.at(i) / _slabVolume;
+                _hmDelta_accum[i]             += hmDelta_step.global[i] / _slabVolume;
                 for (unsigned short d = 0; d < 3; d++) {
-                    _hmHeatflux_accum[d].at(i)   += hmHeatflux_step[d].global.at(i) / _slabVolume;
+                    _hmHeatflux_accum[d][i]   += hmHeatflux_step[d].global[i] / _slabVolume;
                 }
                 for (unsigned short d = 0; d < 9; d++) {
-                    _hmPressure_accum[d].at(i)   += hmPressure_step[d].global.at(i) / _slabVolume;
-                    _hmR_accum[d].at(i)          += hmR_step[d].global.at(i) / _slabVolume;
-                    _hmM_accum[d].at(i)          += hmM_step[d].global.at(i) / _slabVolume;
-                    _hmM_accum[d+9u].at(i)        += hmM_step[d+9u].global.at(i) / _slabVolume;
-                    _hmM_accum[d+18u].at(i)       += hmM_step[d+18u].global.at(i) / _slabVolume;
+                    _hmPressure_accum[d][i]   += hmPressure_step[d].global[i] / _slabVolume;
+                    _hmR_accum[d][i]          += hmR_step[d].global[i] / _slabVolume;
+                    _hmM_accum[d][i]          += hmM_step[d].global[i] / _slabVolume;
+                    _hmM_accum[d+9u][i]        += hmM_step[d+9u].global[i] / _slabVolume;
+                    _hmM_accum[d+18u][i]       += hmM_step[d+18u].global[i] / _slabVolume;
                 }
             }
         }
@@ -804,42 +847,42 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     double jEF_y {std::nan("0")};
                     double jEF_z {std::nan("0")};
                     double numSamples {std::nan("0")};
-                    if ((_countSamples.at(i) > 0ul) and (_doftotal_accum.at(i)) > 0ul) {
-                        const unsigned long countSamples = _countSamples.at(i);
-                        const double numMols_accum = static_cast<double>(_numMolecules_accum.at(i));
+                    if ((_countSamples[i] > 0ul) and (_doftotal_accum[i]) > 0ul) {
+                        const unsigned long countSamples = _countSamples[i];
+                        const double numMols_accum = static_cast<double>(_numMolecules_accum[i]);
 
                         numMolsPerStep = numMols_accum/countSamples;
                         rho         = numMolsPerStep           / _slabVolume;
-                        v_x         = _velocityVect_accum[0].at(i)   / countSamples;
-                        v_y         = _velocityVect_accum[1].at(i)   / countSamples;
-                        v_z         = _velocityVect_accum[2].at(i)   / countSamples;
+                        v_x         = _velocityVect_accum[0][i]   / countSamples;
+                        v_y         = _velocityVect_accum[1][i]   / countSamples;
+                        v_z         = _velocityVect_accum[2][i]   / countSamples;
 
                         double v_drift_sqr = v_x*v_x + v_y*v_y + v_z*v_z;
 
-                        T           = (2*_ekin_accum.at(i) - v_drift_sqr*_mass_accum.at(i)) / _doftotal_accum.at(i);
-                        ekin        = _ekin_accum.at(i) / numMols_accum;
-                        epot        = _epot_accum.at(i) / numMols_accum;
-                        orderparam  = 0.5*_orientation_accum.at(i) / numMols_accum;;
-                        p           = rho * ( (_virial_accum.at(i))/(3.0*numMols_accum) + T);
+                        T           = (2*_ekin_accum[i] - v_drift_sqr*_mass_accum[i]) / _doftotal_accum[i];
+                        ekin        = _ekin_accum[i] / numMols_accum;
+                        epot        = _epot_accum[i] / numMols_accum;
+                        orderparam  = 0.5*_orientation_accum[i] / numMols_accum;;
+                        p           = rho * ( (_virial_accum[i])/(3.0*numMols_accum) + T);
 
-                        T_x         = (2*_ekinVect_accum[0].at(i) - (v_x*v_x)*_mass_accum.at(i)) / numMols_accum;
-                        T_y         = (2*_ekinVect_accum[1].at(i) - (v_y*v_y)*_mass_accum.at(i)) / numMols_accum;
-                        T_z         = (2*_ekinVect_accum[2].at(i) - (v_z*v_z)*_mass_accum.at(i)) / numMols_accum;
-                        p_x         = rho * ( _virialVect_accum[0].at(i)/numMols_accum + T);
-                        p_y         = rho * ( _virialVect_accum[1].at(i)/numMols_accum + T);
-                        p_z         = rho * ( _virialVect_accum[2].at(i)/numMols_accum + T);
-                        F_x         = _forceVect_accum[0].at(i)      / numMols_accum;
-                        F_y         = _forceVect_accum[1].at(i)      / numMols_accum;
-                        F_z         = _forceVect_accum[2].at(i)      / numMols_accum;
-                        jEF_x       = _energyfluxVect_accum[0].at(i) / countSamples;
-                        jEF_y       = _energyfluxVect_accum[1].at(i) / countSamples;
-                        jEF_z       = _energyfluxVect_accum[2].at(i) / countSamples;
+                        T_x         = (2*_ekinVect_accum[0][i] - (v_x*v_x)*_mass_accum[i]) / numMols_accum;
+                        T_y         = (2*_ekinVect_accum[1][i] - (v_y*v_y)*_mass_accum[i]) / numMols_accum;
+                        T_z         = (2*_ekinVect_accum[2][i] - (v_z*v_z)*_mass_accum[i]) / numMols_accum;
+                        p_x         = rho * ( _virialVect_accum[0][i]/numMols_accum + T);
+                        p_y         = rho * ( _virialVect_accum[1][i]/numMols_accum + T);
+                        p_z         = rho * ( _virialVect_accum[2][i]/numMols_accum + T);
+                        F_x         = _forceVect_accum[0][i]      / numMols_accum;
+                        F_y         = _forceVect_accum[1][i]      / numMols_accum;
+                        F_z         = _forceVect_accum[2][i]      / numMols_accum;
+                        jEF_x       = _energyfluxVect_accum[0][i] / countSamples;
+                        jEF_y       = _energyfluxVect_accum[1][i] / countSamples;
+                        jEF_z       = _energyfluxVect_accum[2][i] / countSamples;
 
                         numSamples  = countSamples;
                     }
-                    if ((_chemPot_accum.at(i) > 0.0) and (_countNTest_accum.at(i) > 0ul)) {
-                        numTest     = static_cast<double>(_countNTest_accum.at(i)*_samplefrequency) / (2*_writeFrequency);
-                        chemPot_res = -log(_chemPot_accum.at(i)/_countNTest_accum.at(i)) + log(rho);  // Implemented in accordance to ms2
+                    if ((_chemPot_accum[i] > 0.0) and (_countNTest_accum[i] > 0ul)) {
+                        numTest     = static_cast<double>(_countNTest_accum[i]*_samplefrequency) / (2*_writeFrequency);
+                        chemPot_res = -log(_chemPot_accum[i]/_countNTest_accum[i]) + log(rho);  // Implemented in accordance to ms2
                     }
                     ofs << FORMAT_SCI_MAX_DIGITS << numMolsPerStep
                         << FORMAT_SCI_MAX_DIGITS << rho
@@ -916,17 +959,17 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         std::array<double, 9> p = {0.0};
                         std::array<double, 9> R = {0.0};
                         std::array<double, 27> m = {0.0};
-                        if (_countSamples.at(i) > 0ul) {
-                            delta = _hmDelta_accum.at(i)/_countSamples.at(i);
+                        if (_countSamples[i] > 0ul) {
+                            delta = _hmDelta_accum[i]/_countSamples[i];
                             for (unsigned short d = 0; d < 3; d++) {
-                                q[d] = _hmHeatflux_accum[d].at(i)/_countSamples.at(i);
+                                q[d] = _hmHeatflux_accum[d][i]/_countSamples[i];
                             }
                             for (unsigned short d = 0; d < 9; d++) {
-                                p[d] = _hmPressure_accum[d].at(i)/_countSamples.at(i);
-                                R[d] = _hmR_accum[d].at(i)/_countSamples.at(i);
-                                m[d]    = _hmM_accum[d].at(i)/_countSamples.at(i);
-                                m[d+9u]  = _hmM_accum[d+9u].at(i)/_countSamples.at(i);
-                                m[d+18u] = _hmM_accum[d+18u].at(i)/_countSamples.at(i);
+                                p[d] = _hmPressure_accum[d][i]/_countSamples[i];
+                                R[d] = _hmR_accum[d][i]/_countSamples[i];
+                                m[d]    = _hmM_accum[d][i]/_countSamples[i];
+                                m[d+9u]  = _hmM_accum[d+9u][i]/_countSamples[i];
+                                m[d+18u] = _hmM_accum[d+18u][i]/_countSamples[i];
                             }
                         }
                         ofs << FORMAT_SCI_MAX_DIGITS << delta;
@@ -977,11 +1020,11 @@ void ExtendedProfileSampling::resizeVectors() {
     _countNTest_accum.resize(_lenVector);
 
     for (unsigned short d = 0; d < 3; d++) {
-        _ekinVect_accum.at(d).resize(_lenVector);
-        _velocityVect_accum.at(d).resize(_lenVector);
-        _virialVect_accum.at(d).resize(_lenVector);
-        _forceVect_accum.at(d).resize(_lenVector);
-        _energyfluxVect_accum.at(d).resize(_lenVector);
+        _ekinVect_accum[d].resize(_lenVector);
+        _velocityVect_accum[d].resize(_lenVector);
+        _virialVect_accum[d].resize(_lenVector);
+        _forceVect_accum[d].resize(_lenVector);
+        _energyfluxVect_accum[d].resize(_lenVector);
     }
 
     _countSamples.resize(_lenVector);
@@ -989,26 +1032,26 @@ void ExtendedProfileSampling::resizeVectors() {
     if (_sampleHigherMoms) {
         _hmDelta_accum.resize(_lenVector);
         for (unsigned short d = 0; d < 3; d++) {
-            _hmHeatflux_accum.at(d).resize(_lenVector);
+            _hmHeatflux_accum[d].resize(_lenVector);
         }
         for (unsigned short d = 0; d < 9; d++) {
-            _hmPressure_accum.at(d).resize(_lenVector);
-            _hmR_accum.at(d).resize(_lenVector);
-            _hmM_accum.at(d).resize(_lenVector);
-            _hmM_accum.at(d+9u).resize(_lenVector);
-            _hmM_accum.at(d+18u).resize(_lenVector);
+            _hmPressure_accum[d].resize(_lenVector);
+            _hmR_accum[d].resize(_lenVector);
+            _hmM_accum[d].resize(_lenVector);
+            _hmM_accum[d+9u].resize(_lenVector);
+            _hmM_accum[d+18u].resize(_lenVector);
         }
     } else {
         _hmDelta_accum.clear();
         for (unsigned short d = 0; d < 3; d++) {
-            _hmHeatflux_accum.at(d).clear();
+            _hmHeatflux_accum[d].clear();
         }
         for (unsigned short d = 0; d < 9; d++) {
-            _hmPressure_accum.at(d).clear();
-            _hmR_accum.at(d).clear();
-            _hmM_accum.at(d).clear();
-            _hmM_accum.at(d+9u).clear();
-            _hmM_accum.at(d+18u).clear();
+            _hmPressure_accum[d].clear();
+            _hmR_accum[d].clear();
+            _hmM_accum[d].clear();
+            _hmM_accum[d+9u].clear();
+            _hmM_accum[d+18u].clear();
         }
     }
 
@@ -1027,11 +1070,11 @@ void ExtendedProfileSampling::resetVectors() {
     std::fill(_countNTest_accum.begin(), _countNTest_accum.end(), 0ul);
 
     for (unsigned short d = 0; d < 3; d++) {
-        std::fill(_ekinVect_accum.at(d).begin(), _ekinVect_accum.at(d).end(), 0.0f);
-        std::fill(_velocityVect_accum.at(d).begin(), _velocityVect_accum.at(d).end(), 0.0f);
-        std::fill(_virialVect_accum.at(d).begin(), _virialVect_accum.at(d).end(), 0.0f);
-        std::fill(_forceVect_accum.at(d).begin(), _forceVect_accum.at(d).end(), 0.0f);
-        std::fill(_energyfluxVect_accum.at(d).begin(), _energyfluxVect_accum.at(d).end(), 0.0f);
+        std::fill(_ekinVect_accum[d].begin(), _ekinVect_accum[d].end(), 0.0f);
+        std::fill(_velocityVect_accum[d].begin(), _velocityVect_accum[d].end(), 0.0f);
+        std::fill(_virialVect_accum[d].begin(), _virialVect_accum[d].end(), 0.0f);
+        std::fill(_forceVect_accum[d].begin(), _forceVect_accum[d].end(), 0.0f);
+        std::fill(_energyfluxVect_accum[d].begin(), _energyfluxVect_accum[d].end(), 0.0f);
     }
 
     std::fill(_countSamples.begin(), _countSamples.end(), 0ul);
@@ -1039,14 +1082,14 @@ void ExtendedProfileSampling::resetVectors() {
     if (_sampleHigherMoms) {
         std::fill(_hmDelta_accum.begin(), _hmDelta_accum.end(), 0.0f);
         for (unsigned short d = 0; d < 3; d++) {
-            std::fill(_hmHeatflux_accum.at(d).begin(), _hmHeatflux_accum.at(d).end(), 0.0f);
+            std::fill(_hmHeatflux_accum[d].begin(), _hmHeatflux_accum[d].end(), 0.0f);
         }
         for (unsigned short d = 0; d < 9; d++) {
-            std::fill(_hmPressure_accum.at(d).begin(), _hmPressure_accum.at(d).end(), 0.0f);
-            std::fill(_hmR_accum.at(d).begin(), _hmR_accum.at(d).end(), 0.0f);
-            std::fill(_hmM_accum.at(d).begin(), _hmM_accum.at(d).end(), 0.0f);
-            std::fill(_hmM_accum.at(d+9u).begin(), _hmM_accum.at(d+9u).end(), 0.0f);
-            std::fill(_hmM_accum.at(d+18u).begin(), _hmM_accum.at(d+18u).end(), 0.0f);
+            std::fill(_hmPressure_accum[d].begin(), _hmPressure_accum[d].end(), 0.0f);
+            std::fill(_hmR_accum[d].begin(), _hmR_accum[d].end(), 0.0f);
+            std::fill(_hmM_accum[d].begin(), _hmM_accum[d].end(), 0.0f);
+            std::fill(_hmM_accum[d+9u].begin(), _hmM_accum[d+9u].end(), 0.0f);
+            std::fill(_hmM_accum[d+18u].begin(), _hmM_accum[d+18u].end(), 0.0f);
         }
     }
 }
@@ -1063,21 +1106,21 @@ double ExtendedProfileSampling::getQuantity(DomainDecompBase* domainDecomp, std:
         return 0.0;
     }
 
-    if (_countSamples.at(index) == 0) {
+    if (_countSamples[index] == 0) {
         Log::global_log->error() << "[ExtendedProfileSampling] Nothing sampled yet at given index" << std::endl;
         return 0.0;
     }
 
     if (quantityName == "T") {
-        const double v_x = _velocityVect_accum[0].at(index) / _countSamples.at(index);
-        const double v_y = _velocityVect_accum[1].at(index) / _countSamples.at(index);
-        const double v_z = _velocityVect_accum[2].at(index) / _countSamples.at(index);
+        const double v_x = _velocityVect_accum[0][index] / _countSamples[index];
+        const double v_y = _velocityVect_accum[1][index] / _countSamples[index];
+        const double v_z = _velocityVect_accum[2][index] / _countSamples[index];
         double v_drift_sqr = v_x*v_x + v_y*v_y + v_z*v_z;
-        return (2*_ekin_accum.at(index) - v_drift_sqr*_mass_accum.at(index)) / _doftotal_accum.at(index);
+        return (2*_ekin_accum[index] - v_drift_sqr*_mass_accum[index]) / _doftotal_accum[index];
     } else if (quantityName == "rho") {
-        return _numMolecules_accum.at(index) / (_slabVolume * _countSamples.at(index));
+        return _numMolecules_accum[index] / (_slabVolume * _countSamples[index]);
     } else if (quantityName == "ekin") {
-        return _ekin_accum.at(index) / _countSamples.at(index);
+        return _ekin_accum[index] / _countSamples[index];
     }
     
     Log::global_log->error() << "[ExtendedProfileSampling] Quantity (" << quantityName << ") unknown!" << std::endl;
