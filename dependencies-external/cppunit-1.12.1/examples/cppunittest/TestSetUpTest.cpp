@@ -18,19 +18,19 @@ TestSetUpTest::~TestSetUpTest()
 }
 
 
-void 
+void
 TestSetUpTest::setUp()
 {
 }
 
 
-void 
+void
 TestSetUpTest::tearDown()
 {
 }
 
 
-void 
+void
 TestSetUpTest::testRun()
 {
   CPPUNIT_NS::TestResult result;
@@ -39,7 +39,7 @@ TestSetUpTest::testRun()
   test->setExpectedRunTestCall();
   test->setExpectedTearDownCall();
   MockSetUp setUpTest( test );
-  
+
   setUpTest.run( &result );
 
   setUpTest.verify();

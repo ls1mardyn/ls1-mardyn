@@ -19,7 +19,7 @@ TestResultTest::~TestResultTest()
 }
 
 
-void 
+void
 TestResultTest::setUp()
 {
   m_result = new CPPUNIT_NS::TestResult();
@@ -29,7 +29,7 @@ TestResultTest::setUp()
 }
 
 
-void 
+void
 TestResultTest::tearDown()
 {
   delete m_dummyTest;
@@ -39,14 +39,14 @@ TestResultTest::tearDown()
 }
 
 
-void 
+void
 TestResultTest::testConstructor()
 {
   CPPUNIT_ASSERT( !m_result->shouldStop() );
 }
 
 
-void 
+void
 TestResultTest::testStop()
 {
   m_result->stop();
@@ -54,10 +54,10 @@ TestResultTest::testStop()
 }
 
 
-void 
+void
 TestResultTest::testAddError()
 {
-  CPPUNIT_NS::Exception *dummyException = new CPPUNIT_NS::Exception( 
+  CPPUNIT_NS::Exception *dummyException = new CPPUNIT_NS::Exception(
                                            CPPUNIT_NS::Message( "some_error" ) );
   m_listener1->setExpectFailure( m_dummyTest, dummyException, true );
   m_result->addListener( m_listener1 );
@@ -68,10 +68,10 @@ TestResultTest::testAddError()
 }
 
 
-void 
+void
 TestResultTest::testAddFailure()
 {
-  CPPUNIT_NS::Exception *dummyException = new CPPUNIT_NS::Exception( 
+  CPPUNIT_NS::Exception *dummyException = new CPPUNIT_NS::Exception(
                                             CPPUNIT_NS::Message("some_error" ) );
   m_listener1->setExpectFailure( m_dummyTest, dummyException, false );
   m_result->addListener( m_listener1 );
@@ -82,73 +82,73 @@ TestResultTest::testAddFailure()
 }
 
 
-void 
+void
 TestResultTest::testStartTest()
 {
   m_listener1->setExpectStartTest( m_dummyTest );
   m_result->addListener( m_listener1 );
-  
+
   m_result->startTest( m_dummyTest );
 
   m_listener1->verify();
 }
 
 
-void 
+void
 TestResultTest::testEndTest()
 {
   m_listener1->setExpectEndTest( m_dummyTest );
   m_result->addListener( m_listener1 );
-  
+
   m_result->endTest( m_dummyTest );
 
   m_listener1->verify();
 }
 
 
-void 
+void
 TestResultTest::testStartSuite()
 {
   m_listener1->setExpectStartSuite( m_dummyTest );
   m_result->addListener( m_listener1 );
-  
+
   m_result->startSuite( m_dummyTest );
 
   m_listener1->verify();
 }
 
 
-void 
+void
 TestResultTest::testEndSuite()
 {
   m_listener1->setExpectEndSuite( m_dummyTest );
   m_result->addListener( m_listener1 );
-  
+
   m_result->endSuite( m_dummyTest );
 
   m_listener1->verify();
 }
 
 
-void 
+void
 TestResultTest::testRunTest()
 {
   m_listener1->setExpectStartTestRun( m_dummyTest, m_result );
   m_listener1->setExpectEndTestRun( m_dummyTest, m_result );
   m_result->addListener( m_listener1 );
-  
+
   m_result->runTest( m_dummyTest );
 
   m_listener1->verify();
 }
 
 
-void 
+void
 TestResultTest::testTwoListener()
 {
   m_listener1->setExpectStartTest( m_dummyTest );
   m_listener2->setExpectStartTest( m_dummyTest );
-  CPPUNIT_NS::Exception *dummyException1 = new CPPUNIT_NS::Exception( 
+  CPPUNIT_NS::Exception *dummyException1 = new CPPUNIT_NS::Exception(
                                              CPPUNIT_NS::Message( "some_error" ) );
   m_listener1->setExpectFailure( m_dummyTest, dummyException1, true );
   m_listener2->setExpectFailure( m_dummyTest, dummyException1, true );
@@ -166,7 +166,7 @@ TestResultTest::testTwoListener()
 }
 
 
-void 
+void
 TestResultTest::testDefaultProtectSucceed()
 {
   MockFunctor functor;
@@ -180,7 +180,7 @@ TestResultTest::testDefaultProtectSucceed()
 }
 
 
-void 
+void
 TestResultTest::testDefaultProtectFail()
 {
   MockFunctor functor;
@@ -194,7 +194,7 @@ TestResultTest::testDefaultProtectFail()
 }
 
 
-void 
+void
 TestResultTest::testDefaultProtectFailIfThrow()
 {
   MockFunctor functor;
@@ -208,7 +208,7 @@ TestResultTest::testDefaultProtectFailIfThrow()
 }
 
 
-void 
+void
 TestResultTest::testProtectChainPushOneTrap()
 {
   MockFunctor functor;
@@ -226,7 +226,7 @@ TestResultTest::testProtectChainPushOneTrap()
 }
 
 
-void 
+void
 TestResultTest::testProtectChainPushOnePassThrough()
 {
   MockFunctor functor;
@@ -244,7 +244,7 @@ TestResultTest::testProtectChainPushOnePassThrough()
 }
 
 
-void 
+void
 TestResultTest::testProtectChainPushTwoTrap()
 {
   MockFunctor functor;

@@ -1,5 +1,7 @@
 #include "DensityControlTest.h"
 
+#include <memory>
+
 #include "utils/Testing.h"
 #include "utils/CommVar.h"
 

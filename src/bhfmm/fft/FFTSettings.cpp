@@ -13,14 +13,14 @@ bool FFTSettings::USE_FFTW = false; //set to use fftw instead of optFFT
 bool FFTSettings::USE_TFMANAGER_UNIFORMGRID = true; //set to use memoized transfer function (require uniform grid)
 bool FFTSettings::TFMANAGER_VERBOSE = true;
 bool FFTSettings::USE_VECTORIZATION = false; //set to use vectorized FFT
-bool FFTSettings::USE_2WAY_M2L = false; //set to use a 2way M2L (best on non uniform grid, requires vectorization)  
+bool FFTSettings::USE_2WAY_M2L = false; //set to use a 2way M2L (best on non uniform grid, requires vectorization)
 bool FFTSettings::USE_BLOCK = false;
 bool FFTSettings::USE_ADVBLOCK = false;
 bool FFTSettings::USE_ORDER_REDUCTION = false;
 
 /*
  * Default settings:
- * 
+ *
  bool FFTSettings::USE_FFT = true; // set to use FFT acceleration
  bool FFTSettings::USE_FFTW = false; //set to use fftw instead of optFFT
  bool FFTSettings::USE_TFMANAGER_UNIFORMGRID = true; //set to use memoized transfer function (require uniform grid)
@@ -53,7 +53,7 @@ void FFTSettings::autoSetting(int order) {
 	}
 }
 
-void FFTSettings::setOptions(string option) {
+void FFTSettings::setOptions(std::string option) {
 	if (option == "off") {
 		FFTSettings::USE_FFT = false;
 	} else if (option == "fft") {
@@ -93,8 +93,8 @@ void FFTSettings::setOptions(string option) {
 	}
 }
 
-vector<string> FFTSettings::getAvailableOptions() {
-	vector<string> options;
+std::vector<std::string> FFTSettings::getAvailableOptions() {
+	std::vector<std::string> options;
 	options.push_back("off:     disable fft acceleration");
 	options.push_back("fft:     use opt. fft acceleration");
 	options.push_back("fftw:    use FFTW acceleration");

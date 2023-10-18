@@ -70,7 +70,7 @@ private:
 		v.resize(numElements);
 	}
 
-	void centerCenter(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj); 
+	void centerCenter(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj);
 	void centerSite(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj);
 	void siteSite(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj);
 	void dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj);
@@ -116,11 +116,11 @@ private:
 	int sint;
 	double temp;
 	unsigned simstep;
-	
+
 	ParticleContainer* _particleContainer;
 	Domain* _domain;
 	DomainDecompBase* _domainDecomposition;
-	
+
 	// write control
 	uint64_t _nStartWritingProfiles;
 	uint64_t _nWriteFreqProfiles;

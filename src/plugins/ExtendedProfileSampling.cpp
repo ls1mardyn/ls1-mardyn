@@ -30,13 +30,13 @@ void ExtendedProfileSampling::init(ParticleContainer* /* particleContainer */, D
 
     _numBinsGlobal = static_cast<unsigned int>(_globalBoxLength[1]/_binwidth);
     if (_globalBoxLength[1]/_binwidth != static_cast<float>(_numBinsGlobal)) {
-        global_log->error() << "[ExtendedProfileSampling] Can not divide domain without remainder! Change binwidth" << std::endl;
+        Log::global_log->error() << "[ExtendedProfileSampling] Can not divide domain without remainder! Change binwidth" << std::endl;
         Simulation::exit(-1);
     }
     _slabVolume = _globalBoxLength[0]*_globalBoxLength[2]*_binwidth;
 
     if (_slabVolume < 1e-12) {
-        global_log->error() << "[ExtendedProfileSampling] Slab volume too small (<1e-12)!" << std::endl;
+        Log::global_log->error() << "[ExtendedProfileSampling] Slab volume too small (<1e-12)!" << std::endl;
         Simulation::exit(-1);
     }
 
@@ -79,7 +79,7 @@ void ExtendedProfileSampling::readXML(XMLfileUnits& xmlconfig) {
             if (ssCids.peek() == ',' || ssCids.peek() == ' ') {
                 ssCids.ignore();
             } else if ((i <= 0) || (i > _numComps)) {
-                global_log->warning() << "[ExtendedProfileSampling] cid " << i << " is not valid! cids must be between 1 and " << _numComps << std::endl;
+                Log::global_log->warning() << "[ExtendedProfileSampling] cid " << i << " is not valid! cids must be between 1 and " << _numComps << std::endl;
             }
         }
     } else {
@@ -95,31 +95,31 @@ void ExtendedProfileSampling::readXML(XMLfileUnits& xmlconfig) {
         insMethod = "randomly";
     }
 
-    global_log->info() << "[ExtendedProfileSampling] Start:WriteFreq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
-    global_log->info() << "[ExtendedProfileSampling] Binwidth: " << _binwidth << std::endl;
+    Log::global_log->info() << "[ExtendedProfileSampling] Start:WriteFreq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
+    Log::global_log->info() << "[ExtendedProfileSampling] Binwidth: " << _binwidth << std::endl;
     if (_singleComp) {
-        global_log->info() << "[ExtendedProfileSampling] All components treated as single one" << std::endl;
+        Log::global_log->info() << "[ExtendedProfileSampling] All components treated as single one" << std::endl;
     } else {
-        global_log->info() << "[ExtendedProfileSampling] All components sampled individually" << std::endl;
+        Log::global_log->info() << "[ExtendedProfileSampling] All components sampled individually" << std::endl;
     }
     if (_sampleHigherMoms) {
-        global_log->info() << "[ExtendedProfileSampling] Sampling of higher moments enabled" << std::endl;
+        Log::global_log->info() << "[ExtendedProfileSampling] Sampling of higher moments enabled" << std::endl;
     } else {
-        global_log->info() << "[ExtendedProfileSampling] Sampling of higher moments disabled" << std::endl;
+        Log::global_log->info() << "[ExtendedProfileSampling] Sampling of higher moments disabled" << std::endl;
     }
     if (_sampleChemPot) {
-        global_log->info() << "[ExtendedProfileSampling] Sampling of chemical potential enabled with a sampling frequency of " << _samplefrequency << std::endl;
-        global_log->info() << "[ExtendedProfileSampling] " << _factorNumTest << " * numParticles will be inserted " << insMethod << std::endl;
-        global_log->info() << "[ExtendedProfileSampling] Inserting particles with cids = " << strCids << std::endl;
+        Log::global_log->info() << "[ExtendedProfileSampling] Sampling of chemical potential enabled with a sampling frequency of " << _samplefrequency << std::endl;
+        Log::global_log->info() << "[ExtendedProfileSampling] " << _factorNumTest << " * numParticles will be inserted " << insMethod << std::endl;
+        Log::global_log->info() << "[ExtendedProfileSampling] Inserting particles with cids = " << strCids << std::endl;
         if (_samplefrequency > _writeFrequency) {
-            global_log->warning() << "[ExtendedProfileSampling] Sample frequency (" << _samplefrequency << ") is greater than write frequency ("
+            Log::global_log->warning() << "[ExtendedProfileSampling] Sample frequency (" << _samplefrequency << ") is greater than write frequency ("
                                   << _writeFrequency << ")! " << std::endl;
         }
         if ((_cidsTest.size() > 1) and (_singleComp)) {
-            global_log->warning() << "[ExtendedProfileSampling] <singlecomponent> and <cids> set! Output may not include all specified components" << std::endl;
+            Log::global_log->warning() << "[ExtendedProfileSampling] <singlecomponent> and <cids> set! Output may not include all specified components" << std::endl;
         }
     } else {
-        global_log->info() << "[ExtendedProfileSampling] Sampling of chemical potential disabled" << std::endl;
+        Log::global_log->info() << "[ExtendedProfileSampling] Sampling of chemical potential disabled" << std::endl;
     }
 }
 
@@ -745,33 +745,33 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
             const std::string fname = "ExtendedProfileSampling_TS"+ss.str()+".dat";
             std::ofstream ofs;
             ofs.open(fname, std::ios::out);
-            ofs << setw(24) << "pos";                           // Bin position
+            ofs << std::setw(24) << "pos";                           // Bin position
             for (unsigned long cid = 0; cid < numOutputs; cid++) {
-                ofs << setw(22) << "numParts[" << cid << "]"        // Average number of molecules in bin per step
-                    << setw(22) << "rho["      << cid << "]"        // Density
-                    << setw(22) << "T["        << cid << "]"        // Temperature without drift (i.e. "real" temperature)
-                    << setw(22) << "ekin["     << cid << "]"        // Kinetic energy including drift
-                    << setw(22) << "epot["     << cid << "]"        // Potential energy
-                    << setw(22) << "orientation[" << cid << "]"     // Orientation order parameter, cf. Eq. 29 in Mecke2001
-                    << setw(22) << "p["        << cid << "]"        // Pressure
-                    << setw(22) << "chemPot_res[" << cid << "]"     // Chemical potential as known as mu_tilde (equals the ms2 value)
-                    << setw(22) << "numTest["     << cid << "]"     // Number of inserted test particles per sample step
-                    << setw(22) << "T_x["      << cid << "]"        // Temperature in x-direction
-                    << setw(22) << "T_y["      << cid << "]"        // Temperature in y-direction
-                    << setw(22) << "T_z["      << cid << "]"        // Temperature in z-direction
-                    << setw(22) << "v_x["      << cid << "]"        // Drift velocity in x-direction
-                    << setw(22) << "v_y["      << cid << "]"        // Drift velocity in y-direction
-                    << setw(22) << "v_z["      << cid << "]"        // Drift velocity in z-direction
-                    << setw(22) << "p_x["      << cid << "]"        // Pressure in x-direction
-                    << setw(22) << "p_y["      << cid << "]"        // Pressure in y-direction
-                    << setw(22) << "p_z["      << cid << "]"        // Pressure in z-direction
-                    << setw(22) << "F_x["      << cid << "]"        // Force in x-direction
-                    << setw(22) << "F_y["      << cid << "]"        // Force in y-direction
-                    << setw(22) << "F_z["      << cid << "]"        // Force in z-direction
-                    << setw(22) << "jEF_x["    << cid << "]"        // Energy flux in x-direction
-                    << setw(22) << "jEF_y["    << cid << "]"        // Energy flux in y-direction
-                    << setw(22) << "jEF_z["    << cid << "]"        // Energy flux in z-direction
-                    << setw(22) << "numSamples["  << cid << "]";    // Number of samples (<= _writeFrequency)
+                ofs << std::setw(22) << "numParts[" << cid << "]"        // Average number of molecules in bin per step
+                    << std::setw(22) << "rho["      << cid << "]"        // Density
+                    << std::setw(22) << "T["        << cid << "]"        // Temperature without drift (i.e. "real" temperature)
+                    << std::setw(22) << "ekin["     << cid << "]"        // Kinetic energy including drift
+                    << std::setw(22) << "epot["     << cid << "]"        // Potential energy
+                    << std::setw(22) << "orientation[" << cid << "]"     // Orientation order parameter, cf. Eq. 29 in Mecke2001
+                    << std::setw(22) << "p["        << cid << "]"        // Pressure
+                    << std::setw(22) << "chemPot_res[" << cid << "]"     // Chemical potential as known as mu_tilde (equals the ms2 value)
+                    << std::setw(22) << "numTest["     << cid << "]"     // Number of inserted test particles per sample step
+                    << std::setw(22) << "T_x["      << cid << "]"        // Temperature in x-direction
+                    << std::setw(22) << "T_y["      << cid << "]"        // Temperature in y-direction
+                    << std::setw(22) << "T_z["      << cid << "]"        // Temperature in z-direction
+                    << std::setw(22) << "v_x["      << cid << "]"        // Drift velocity in x-direction
+                    << std::setw(22) << "v_y["      << cid << "]"        // Drift velocity in y-direction
+                    << std::setw(22) << "v_z["      << cid << "]"        // Drift velocity in z-direction
+                    << std::setw(22) << "p_x["      << cid << "]"        // Pressure in x-direction
+                    << std::setw(22) << "p_y["      << cid << "]"        // Pressure in y-direction
+                    << std::setw(22) << "p_z["      << cid << "]"        // Pressure in z-direction
+                    << std::setw(22) << "F_x["      << cid << "]"        // Force in x-direction
+                    << std::setw(22) << "F_y["      << cid << "]"        // Force in y-direction
+                    << std::setw(22) << "F_z["      << cid << "]"        // Force in z-direction
+                    << std::setw(22) << "jEF_x["    << cid << "]"        // Energy flux in x-direction
+                    << std::setw(22) << "jEF_y["    << cid << "]"        // Energy flux in y-direction
+                    << std::setw(22) << "jEF_z["    << cid << "]"        // Energy flux in z-direction
+                    << std::setw(22) << "numSamples["  << cid << "]";    // Number of samples (<= _writeFrequency)
             }
             ofs << std::endl;
 
@@ -880,27 +880,27 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                 const std::string fname = "ExtendedProfileSampling_HigherMoments_TS"+ss.str()+".dat";
                 std::ofstream ofs;
                 ofs.open(fname, std::ios::out);
-                ofs << setw(24) << "pos";                           // Bin position
+                ofs << std::setw(24) << "pos";                           // Bin position
                 for (unsigned long cid = 0; cid < numOutputs; cid++) {
-                    ofs << setw(22) << "delta[" << cid << "]";
+                    ofs << std::setw(22) << "delta[" << cid << "]";
                     // key k_i and value v_i
                     for (auto& [k_i, v_i] : dirs) {
-                        ofs << setw(20) << "q_" << k_i << "[" << cid << "]";
+                        ofs << std::setw(20) << "q_" << k_i << "[" << cid << "]";
                     }
                     for (auto& [k_i, v_i] : dirs) {
                         for (auto& [k_j, v_j] : dirs) {
-                            ofs << setw(19) << "p_" << k_i << k_j << "[" << cid << "]";
+                            ofs << std::setw(19) << "p_" << k_i << k_j << "[" << cid << "]";
                         }
                     }
                     for (auto& [k_i, v_i] : dirs) {
                         for (auto& [k_j, v_j] : dirs) {
-                            ofs << setw(19) << "R_" << k_i << k_j << "[" << cid << "]";
+                            ofs << std::setw(19) << "R_" << k_i << k_j << "[" << cid << "]";
                         }
                     }
                     for (auto& [k_i, v_i] : dirs) {
                         for (auto& [k_j, v_j] : dirs) {
                             for (auto& [k_k, v_k] : dirs) {
-                                ofs << setw(18) << "m_" << k_i << k_j << k_k << "[" << cid << "]";
+                                ofs << std::setw(18) << "m_" << k_i << k_j << k_k << "[" << cid << "]";
                             }
                         }
                     }
@@ -1054,17 +1054,17 @@ void ExtendedProfileSampling::resetVectors() {
 // Get value of quantity at certain index; Mainly used for unit test
 double ExtendedProfileSampling::getQuantity(DomainDecompBase* domainDecomp, std::string quantityName, unsigned long index) {
     if (index > _lenVector) {
-        global_log->error() << "[ExtendedProfileSampling] Trying to get value but index (" << index << ") is greater than possible (" << _lenVector << ")" << std::endl;
+        Log::global_log->error() << "[ExtendedProfileSampling] Trying to get value but index (" << index << ") is greater than possible (" << _lenVector << ")" << std::endl;
         return 0.0;
     }
     // Only root knows real quantities (MPI_Reduce instead of MPI_Allreduce at accumulation)
     if (domainDecomp->getRank() != 0) {
-        global_log->error() << "[ExtendedProfileSampling] Non-root process tried to get value" << std::endl;
+        Log::global_log->error() << "[ExtendedProfileSampling] Non-root process tried to get value" << std::endl;
         return 0.0;
     }
 
     if (_countSamples.at(index) == 0) {
-        global_log->error() << "[ExtendedProfileSampling] Nothing sampled yet at given index" << std::endl;
+        Log::global_log->error() << "[ExtendedProfileSampling] Nothing sampled yet at given index" << std::endl;
         return 0.0;
     }
 
@@ -1080,6 +1080,6 @@ double ExtendedProfileSampling::getQuantity(DomainDecompBase* domainDecomp, std:
         return _ekin_accum.at(index) / _countSamples.at(index);
     }
     
-    global_log->error() << "[ExtendedProfileSampling] Quantity (" << quantityName << ") unknown!" << std::endl;
+    Log::global_log->error() << "[ExtendedProfileSampling] Quantity (" << quantityName << ") unknown!" << std::endl;
     return 0.0;
 }

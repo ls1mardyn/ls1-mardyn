@@ -387,8 +387,8 @@ class PUnstructuredGrid_t: public ::xml_schema::type
    *
    * @param s A sequence to copy elements from.
    *
-   * For each element in @a s this function makes a copy and adds it 
-   * to the sequence. Note that this operation completely changes the 
+   * For each element in @a s this function makes a copy and adds it
+   * to the sequence. Note that this operation completely changes the
    * sequence and all old elements will be lost.
    */
   void
@@ -515,7 +515,7 @@ class PUnstructuredGrid_t: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~PUnstructuredGrid_t ();
 
   // Implementation.
@@ -603,7 +603,7 @@ class VTKFile_t: public ::xml_schema::type
    *
    * @param x An optional container with the new value to set.
    *
-   * If the value is present in @a x then this function makes a copy 
+   * If the value is present in @a x then this function makes a copy
    * of this value and sets it as the new value of the element.
    * Otherwise the element container is set the 'not present' state.
    */
@@ -679,7 +679,7 @@ class VTKFile_t: public ::xml_schema::type
    *
    * @param x An optional container with the new value to set.
    *
-   * If the value is present in @a x then this function makes a copy 
+   * If the value is present in @a x then this function makes a copy
    * of this value and sets it as the new value of the element.
    * Otherwise the element container is set the 'not present' state.
    */
@@ -898,7 +898,7 @@ class VTKFile_t: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~VTKFile_t ();
 
   // Implementation.
@@ -986,8 +986,8 @@ class PPointData: public ::xml_schema::type
    *
    * @param s A sequence to copy elements from.
    *
-   * For each element in @a s this function makes a copy and adds it 
-   * to the sequence. Note that this operation completely changes the 
+   * For each element in @a s this function makes a copy and adds it
+   * to the sequence. Note that this operation completely changes the
    * sequence and all old elements will be lost.
    */
   void
@@ -1062,7 +1062,7 @@ class PPointData: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~PPointData ();
 
   // Implementation.
@@ -1144,8 +1144,8 @@ class PCellData: public ::xml_schema::type
    *
    * @param s A sequence to copy elements from.
    *
-   * For each element in @a s this function makes a copy and adds it 
-   * to the sequence. Note that this operation completely changes the 
+   * For each element in @a s this function makes a copy and adds it
+   * to the sequence. Note that this operation completely changes the
    * sequence and all old elements will be lost.
    */
   void
@@ -1220,7 +1220,7 @@ class PCellData: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~PCellData ();
 
   // Implementation.
@@ -1302,8 +1302,8 @@ class PPoints: public ::xml_schema::type
    *
    * @param s A sequence to copy elements from.
    *
-   * For each element in @a s this function makes a copy and adds it 
-   * to the sequence. Note that this operation completely changes the 
+   * For each element in @a s this function makes a copy and adds it
+   * to the sequence. Note that this operation completely changes the
    * sequence and all old elements will be lost.
    */
   void
@@ -1378,7 +1378,7 @@ class PPoints: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~PPoints ();
 
   // Implementation.
@@ -1460,8 +1460,8 @@ class PCells: public ::xml_schema::type
    *
    * @param s A sequence to copy elements from.
    *
-   * For each element in @a s this function makes a copy and adds it 
-   * to the sequence. Note that this operation completely changes the 
+   * For each element in @a s this function makes a copy and adds it
+   * to the sequence. Note that this operation completely changes the
    * sequence and all old elements will be lost.
    */
   void
@@ -1536,7 +1536,7 @@ class PCells: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~PCells ();
 
   // Implementation.
@@ -1688,7 +1688,7 @@ class Piece: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~Piece ();
 
   // Implementation.
@@ -1726,7 +1726,7 @@ class Piece: public ::xml_schema::type
  *
  * @param uri A URI or a local file name.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * This function uses exceptions to report parsing errors.
@@ -1742,7 +1742,7 @@ VTKFile (const ::std::string& uri,
  * @param uri A URI or a local file name.
  * @param eh An error handler.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * This function reports parsing errors by calling the error handler.
@@ -1760,7 +1760,7 @@ VTKFile (const ::std::string& uri,
  * @param uri A URI or a local file name.
  * @param eh A Xerces-C++ DOM error handler.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * This function reports parsing errors by calling the error handler.
@@ -1776,7 +1776,7 @@ VTKFile (const ::std::string& uri,
  *
  * @param is A standrad input stream.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * This function uses exceptions to report parsing errors.
@@ -1792,7 +1792,7 @@ VTKFile (::std::istream& is,
  * @param is A standrad input stream.
  * @param eh An error handler.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * This function reports parsing errors by calling the error handler.
@@ -1810,7 +1810,7 @@ VTKFile (::std::istream& is,
  * @param is A standrad input stream.
  * @param eh A Xerces-C++ DOM error handler.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * This function reports parsing errors by calling the error handler.
@@ -1827,7 +1827,7 @@ VTKFile (::std::istream& is,
  * @param is A standrad input stream.
  * @param id A resource id.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * The resource id is used to identify the document being parsed in
@@ -1849,7 +1849,7 @@ VTKFile (::std::istream& is,
  * @param id A resource id.
  * @param eh An error handler.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * The resource id is used to identify the document being parsed in
@@ -1872,7 +1872,7 @@ VTKFile (::std::istream& is,
  * @param id A resource id.
  * @param eh A Xerces-C++ DOM error handler.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * The resource id is used to identify the document being parsed in
@@ -1892,7 +1892,7 @@ VTKFile (::std::istream& is,
  *
  * @param is A Xerces-C++ input source.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * This function uses exceptions to report parsing errors.
@@ -1908,7 +1908,7 @@ VTKFile (::xercesc::InputSource& is,
  * @param is A Xerces-C++ input source.
  * @param eh An error handler.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * This function reports parsing errors by calling the error handler.
@@ -1926,7 +1926,7 @@ VTKFile (::xercesc::InputSource& is,
  * @param is A Xerces-C++ input source.
  * @param eh A Xerces-C++ DOM error handler.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * This function reports parsing errors by calling the error handler.
@@ -1942,7 +1942,7 @@ VTKFile (::xercesc::InputSource& is,
  *
  * @param d A Xerces-C++ DOM document.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  */
 ::std::unique_ptr< ::VTKFile_t >
@@ -1955,7 +1955,7 @@ VTKFile (const ::xercesc::DOMDocument& d,
  *
  * @param d A pointer to the Xerces-C++ DOM document.
  * @param f Parsing flags.
- * @param p Parsing properties. 
+ * @param p Parsing properties.
  * @return A pointer to the root of the object model.
  *
  * This function is normally used together with the keep_dom and
@@ -2004,7 +2004,7 @@ operator<< (::xercesc::DOMElement&, const VTKFile_t&);
  */
 void
 VTKFile (::std::ostream& os,
-         const ::VTKFile_t& x, 
+         const ::VTKFile_t& x,
          const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
          const ::std::string& e = "UTF-8",
          ::xml_schema::flags f = 0);
@@ -2024,7 +2024,7 @@ VTKFile (::std::ostream& os,
  */
 void
 VTKFile (::std::ostream& os,
-         const ::VTKFile_t& x, 
+         const ::VTKFile_t& x,
          ::xml_schema::error_handler& eh,
          const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
          const ::std::string& e = "UTF-8",
@@ -2046,7 +2046,7 @@ VTKFile (::std::ostream& os,
  */
 void
 VTKFile (::std::ostream& os,
-         const ::VTKFile_t& x, 
+         const ::VTKFile_t& x,
          ::xercesc::DOMErrorHandler& eh,
          const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
          const ::std::string& e = "UTF-8",
@@ -2065,7 +2065,7 @@ VTKFile (::std::ostream& os,
  */
 void
 VTKFile (::xercesc::XMLFormatTarget& ft,
-         const ::VTKFile_t& x, 
+         const ::VTKFile_t& x,
          const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
          const ::std::string& e = "UTF-8",
          ::xml_schema::flags f = 0);
@@ -2086,7 +2086,7 @@ VTKFile (::xercesc::XMLFormatTarget& ft,
  */
 void
 VTKFile (::xercesc::XMLFormatTarget& ft,
-         const ::VTKFile_t& x, 
+         const ::VTKFile_t& x,
          ::xml_schema::error_handler& eh,
          const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
          const ::std::string& e = "UTF-8",
@@ -2108,7 +2108,7 @@ VTKFile (::xercesc::XMLFormatTarget& ft,
  */
 void
 VTKFile (::xercesc::XMLFormatTarget& ft,
-         const ::VTKFile_t& x, 
+         const ::VTKFile_t& x,
          ::xercesc::DOMErrorHandler& eh,
          const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
          const ::std::string& e = "UTF-8",
@@ -2139,7 +2139,7 @@ VTKFile (::xercesc::DOMDocument& d,
  * @return A pointer to the new Xerces-C++ DOM document.
  */
 ::xml_schema::dom::unique_ptr< ::xercesc::DOMDocument >
-VTKFile (const ::VTKFile_t& x, 
+VTKFile (const ::VTKFile_t& x,
          const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
          ::xml_schema::flags f = 0);
 

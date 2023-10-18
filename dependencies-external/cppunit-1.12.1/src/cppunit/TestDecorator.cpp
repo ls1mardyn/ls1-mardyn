@@ -5,7 +5,7 @@ CPPUNIT_NS_BEGIN
 
 TestDecorator::TestDecorator( Test *test )
     : m_test( test)
-{ 
+{
 }
 
 
@@ -15,28 +15,28 @@ TestDecorator::~TestDecorator()
 }
 
 
-int 
+int
 TestDecorator::countTestCases() const
-{ 
-  return m_test->countTestCases(); 
+{
+  return m_test->countTestCases();
 }
 
 
-void 
+void
 TestDecorator::run( TestResult *result )
-{ 
-  m_test->run(result); 
+{
+  m_test->run(result);
 }
 
 
-std::string 
+std::string
 TestDecorator::getName() const
-{ 
-  return m_test->getName(); 
+{
+  return m_test->getName();
 }
 
 
-int 
+int
 TestDecorator::getChildTestCount() const
 {
   return m_test->getChildTestCount();

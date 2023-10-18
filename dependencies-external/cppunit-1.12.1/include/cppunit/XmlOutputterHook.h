@@ -26,13 +26,13 @@ class XmlElement;
  *
  * See examples/ClockerPlugIn which makes use of most the hook.
  *
- * Another simple example of an outputter hook is shown below. It may be  
+ * Another simple example of an outputter hook is shown below. It may be
  * used to add some meta information to your result files. In the example,
  * the author name as well as the project name and test creation date is
  * added to the head of the xml file.
  *
- * In order to make this information stored within the xml file, the virtual 
- * member function beginDocument() is overriden where a new 
+ * In order to make this information stored within the xml file, the virtual
+ * member function beginDocument() is overriden where a new
  * XmlElement object is created.
  *
  * This element is simply added to the root node of the document which
@@ -43,9 +43,9 @@ class XmlElement;
  * #include <cppunit/XmlOutputterHook.h>
  * #include <cppunit/XmlElement.h>
  * #include <cppunit/tools/StringTools.h>
- * 
+ *
  * ...
- * 
+ *
  * class MyXmlOutputterHook : public CppUnit::XmlOutputterHook
  * {
  * public:
@@ -55,11 +55,11 @@ class XmlElement;
  *      m_projectName = projectName;
  *      m_author      = author;
  *   };
- * 
+ *
  *   virtual ~MyXmlOutputterHook()
  *   {
  *   };
- * 
+ *
  *   void beginDocument(CppUnit::XmlDocument* document)
  *   {
  *     if (!document)
@@ -67,34 +67,34 @@ class XmlElement;
  *
  *     // dump current time
  *     std::string szDate          = CppUnit::StringTools::toString( (int)time(0) );
- *     CppUnit::XmlElement* metaEl = new CppUnit::XmlElement("SuiteInfo", 
+ *     CppUnit::XmlElement* metaEl = new CppUnit::XmlElement("SuiteInfo",
  *                                                           "");
  *
  *     metaEl->addElement( new CppUnit::XmlElement("Author", m_author) );
  *     metaEl->addElement( new CppUnit::XmlElement("Project", m_projectName) );
  *     metaEl->addElement( new CppUnit::XmlElement("Date", szDate ) );
- *    
+ *
  *     document->rootElement().addElement(metaEl);
  *   };
  * private:
  *   std::string m_projectName;
  *   std::string m_author;
- * }; 
+ * };
  * \endcode
  *
- * Within your application's main code, you need to snap the hook 
+ * Within your application's main code, you need to snap the hook
  * object into your xml outputter object like shown below:
  *
  * \code
  * CppUnit::TextUi::TestRunner runner;
  * std::ofstream outputFile("testResults.xml");
- * 
+ *
  * CppUnit::XmlOutputter* outputter = new CppUnit::XmlOutputter( &runner.result(),
- *                                                               outputFile );    
+ *                                                               outputFile );
  * MyXmlOutputterHook hook("myProject", "meAuthor");
  * outputter->addHook(&hook);
- * runner.setOutputter(outputter);    
- * runner.addTest( VectorFixture::suite() );   
+ * runner.setOutputter(outputter);
+ * runner.addTest( VectorFixture::suite() );
  * runner.run();
  * outputFile.close();
  * \endcode

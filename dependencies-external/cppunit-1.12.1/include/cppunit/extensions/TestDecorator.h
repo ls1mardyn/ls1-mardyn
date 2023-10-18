@@ -17,7 +17,7 @@ class TestResult;
  * subclass the decorater and use it to wrap the test class.
  *
  * Does not assume ownership of the test it decorates
- */ 
+ */
 class CPPUNIT_API TestDecorator : public Test
 {
 public:

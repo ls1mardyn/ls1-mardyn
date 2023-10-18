@@ -34,12 +34,12 @@ private:
 	double _TICCv(int n,double rc,double sigma2);
 	double _TICSv(int n,double rc,double sigma2,double tau);
 	double _TISSv(int n,double rc,double sigma2,double tau1,double tau2);
-	
+
 	//! Components resp. molecule types
 	std::vector<Component>* _components{nullptr};
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;
-	
+
 	Domain* _domain{nullptr};
 	ParticleContainer* _particleContainer{nullptr};
 

@@ -21,7 +21,7 @@ class Test;
  * TestFailure assumes lifetime control for any exception
  * passed to it.
  */
-class CPPUNIT_API TestFailure 
+class CPPUNIT_API TestFailure
 {
 public:
   TestFailure( Test *failedTest,
@@ -47,9 +47,9 @@ protected:
   Exception *m_thrownException;
   bool m_isError;
 
-private: 
-  TestFailure( const TestFailure &other ); 
-  TestFailure &operator =( const TestFailure& other ); 
+private:
+  TestFailure( const TestFailure &other );
+  TestFailure &operator =( const TestFailure& other );
 };
 
 

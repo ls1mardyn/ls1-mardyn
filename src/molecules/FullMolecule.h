@@ -57,7 +57,7 @@ public:
 	void setv(unsigned short d, double v) override { _v[d] = v; }
 	/** get molecule's mass */
 	double mass() const override { return _m; }
-        
+
 	void setF(unsigned short d, double F) override { _F[d] = F; }
 	/** get coordinate of current force onto molecule */
 	double F(unsigned short d) const override {return _F[d]; }
@@ -102,7 +102,7 @@ public:
 
 	/** calculate and return the square velocity */
 	double v2() const override {return _v[0]*_v[0]+_v[1]*_v[1]+_v[2]*_v[2]; }
-	
+
 	/** calculate and return the square angular momentum */
 	double L2() const override {return _L[0]*_L[0]+_L[1]*_L[1]+_L[2]*_L[2]; }
 
@@ -131,7 +131,7 @@ public:
 	void setStartIndexSoA_D(unsigned i) override {_soa_index_d = i;}
 	void setStartIndexSoA_Q(unsigned i) override {_soa_index_q = i;}
 
-	/* TODO: Maybe we should better do this using the component directly? 
+	/* TODO: Maybe we should better do this using the component directly?
 	 * In the GNU STL vector.size() causes two memory accesses and one subtraction!
 	 */
 	/** get number of sites */
@@ -263,13 +263,13 @@ public:
 		}
 		return d2;
 	}
-	
+
 	/** set force acting on molecule
 	 * @param[out] F force vector (x,y,z)
 	 */
 	void setF(double F[3]) override { for(int d = 0; d < 3; d++ ) { _F[d] = F[d]; } }
 
-	/** set momentum acting on molecule 
+	/** set momentum acting on molecule
 	 * @param M force vector (x,y,z)
 	 */
 	void setM(double M[3]) override { for(int d = 0; d < 3; d++ ) { _M[d] = M[d]; } }
@@ -323,7 +323,7 @@ public:
 	void clearFM() override;
 	/** calculate forces and moments for already given site forces */
 	void calcFM() override;
-	
+
 	/** perform data consistency check for the molecule (only debug mode) */
 	void check(unsigned long id) override;
 

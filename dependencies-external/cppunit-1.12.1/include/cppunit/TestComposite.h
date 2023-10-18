@@ -11,7 +11,7 @@ CPPUNIT_NS_BEGIN
  *
  * Base class for all test composites. Subclass this class if you need to implement
  * a custom TestSuite.
- * 
+ *
  * \see Test, TestSuite.
  */
 class CPPUNIT_API TestComposite : public Test
@@ -24,12 +24,12 @@ public:
   void run( TestResult *result );
 
   int countTestCases() const;
-  
+
   std::string getName() const;
 
 private:
   TestComposite( const TestComposite &other );
-  TestComposite &operator =( const TestComposite &other ); 
+  TestComposite &operator =( const TestComposite &other );
 
   virtual void doStartSuite( TestResult *controller );
   virtual void doRunChildTests( TestResult *controller );

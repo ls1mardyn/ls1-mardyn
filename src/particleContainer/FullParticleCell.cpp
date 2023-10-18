@@ -14,7 +14,6 @@
 #include "utils/mardyn_assert.h"
 #include <vector>
 
-using namespace std;
 
 FullParticleCell::FullParticleCell() :
 		_molecules(), _cellDataSoA(0, 0, 0, 0, 0) {

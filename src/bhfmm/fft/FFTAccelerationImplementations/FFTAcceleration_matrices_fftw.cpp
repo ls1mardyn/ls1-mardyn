@@ -47,7 +47,7 @@ void FFTAcceleration_matrices_fftw::FFT_initialize_TransferFunction(
 	fftwf_complex* out = _fftw_h->TransferFunction2FFT(Expansion);
 #else
 	fftw_complex* out = _fftw_h->TransferFunction2FFT(Expansion);
-#endif  
+#endif
 
 	for (n = 0; n < _fft_nx; n++)
 		for (m = 0; m < _fft_ny; m++) {

@@ -3,76 +3,54 @@
 import numpy as np
 
 
-#%% Get saturated densities by Vrabec et al., Molecular Physics 104 (2006).
-def rho_vrabec2006(T):
+#%% Get surface tension of LJTS fluid with correlation by Vrabec et al., Molecular Physics 104 (2006), DOI: 10.1080/00268970600556774
+def gamma_vrabec2006(T):
     '''
-    Get saturated densities by Vrabec et al., Molecular Physics 104 (2006)
+    Get surface tension of LJTS fluid (Vrabec 2006)
 
     :param float T: Temperature
-    :return: float rhol, float rhov: Saturated liquid and vapor density
+    :return: float gamma: Surface tension
+    '''
+    
+    # Equation 15
+    T_c = 1.0779
+    a = 2.08
+    b = 1.21
+    gamma = a*(1-(T/T_c))**b
+    return gamma
+
+
+#%% Get saturated densities and pressure by Vrabec et al., Molecular Physics 104 (2006), DOI: 10.1080/00268970600556774.
+def sat_vrabec2006(T, radius=None):
+    '''
+    Get saturated densities by Vrabec et al., Molecular Physics 104 (2006). Equation numbers refer this paper.
+
+    :param float T: Temperature
+    :param float radius: reduced radius of spherical interface
+    :return: float rhol, float rhov, float pv: Saturated liquid and vapor density and pressure
     '''
     
     tc,rc=1.0779,0.3190
-    dt=tc-t
+    dt=tc-T
     a,b,c=0.5649,0.1314,0.0413
-    rhol=rc+a*dt**(1/3.)+b*dt+c*dt**(3/2.)
+    rhol=rc+a*dt**(1/3.)+b*dt+c*dt**(3/2.)                      # equation 4
     a,b,c=0.5649,0.2128,0.0702
     rhov=rc-a*dt**(1/3.)+b*dt+c*dt**(3/2.)
     return rhol,rhov
 
-#%% Convert Gibbs free energy from PeTS to ms2 value
-def g_PeTS2ms2(g_pets, T, rho):
-    '''
-    Convert Gibbs free energy from PeTS to ms2 value
-    
-    :param float g_pets: Gibbs free energy from PeTS
-    :param float T: Temperature
-    :param float rho: Density
-    :return: float g_ms2: Gibbs free energy from ms2
-    '''
-    
-    rhocrit = 0.319
-    Tcrit   = 1.086
-    delta0 = (0.001/0.8)/rhocrit
-    tau0   = Tcrit/0.8
-    ig1 = -2.5/tau0
-    ig2 = 1.5 - np.log(delta0) - 1.5*np.log(tau0)
-    tau   = Tcrit/T
-    delta = rho/rhocrit
-    alphaId = np.log(delta) + 1.5*np.log(tau) + ig1*tau + ig2
-    g_res = g_pets/T - 1.0 - alphaId
-    g_ms2 = g_res + np.log(rho)
-    return g_ms2
-
-#%% Convert Gibbs free energy from ms2 to PeTS value
-def g_ms22PeTS(g_ms2, T, rho):
-    '''
-    Convert Gibbs free energy from ms2 to PeTS value
-    
-    :param float g_ms2: Gibbs free energy from ms2
-    :param float T: Temperature
-    :param float rho: Density
-    :return: float g_pets: Gibbs free energy from PeTS
-    '''
-    
-    rhocrit = 0.319
-    Tcrit   = 1.086
-    delta0 = (0.001/0.8)/rhocrit
-    tau0   = Tcrit/0.8
-    ig1 = -2.5/tau0
-    ig2 = 1.5 - np.log(delta0) - 1.5*np.log(tau0)
-    tau   = Tcrit/T
-    delta = rho/rhocrit
-    alphaId = np.log(delta) + 1.5*np.log(tau) + ig1*tau + ig2
-    g_res = g_ms2 - np.log(rho)
-    g_pets = T*(1.0 + alphaId + g_res)
-    return g_pets
-
 if __name__ == "__main__":
     print('Running test with T = 0.8 ...')
     T = 0.8
-    rhol,rhov = rho_vrabec2006(T)
+    rhol_vrabec,rhov_vrabec,pv_vrabec = sat_vrabec2006(T)
+    rhol_thol,rhov_thol,pv_thol = sat_thol2015(T)
     
-    print('Sat. liquid dens. (Vrabec2006): '+str(rhol))
-    print('Sat. vapor dens. (Vrabec2006):  '+str(rhov))
-
+    print('Sat. liquid dens. (Vrabec2006): '+str(rhol_vrabec))
+    print('Sat. vapor dens. (Vrabec2006):  '+str(rhov_vrabec))
+    print('Vapor pressure (Vrabec2006):  '+str(pv_vrabec))
+    
+    print('Sat. liquid dens. (Thol2015): '+str(rhol_thol))
+    print('Sat. vapor dens. (Thol2015):  '+str(rhov_thol))
+    print('Vapor pressure (Thol2015):  '+str(pv_thol))
+    
+    print('gamma Vrabec2006: '+str(gamma_vrabec2006(T)))
+    

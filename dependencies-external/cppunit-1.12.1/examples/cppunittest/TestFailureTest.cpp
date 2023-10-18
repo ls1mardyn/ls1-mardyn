@@ -18,20 +18,20 @@ TestFailureTest::~TestFailureTest()
 }
 
 
-void 
+void
 TestFailureTest::setUp()
 {
   m_exceptionDestroyed = false;
 }
 
 
-void 
+void
 TestFailureTest::tearDown()
 {
 }
 
 
-void 
+void
 TestFailureTest::testConstructorAndGetters()
 {
   CPPUNIT_NS::TestCase test;
@@ -41,7 +41,7 @@ TestFailureTest::testConstructorAndGetters()
 }
 
 
-void 
+void
 TestFailureTest::testConstructorAndGettersForError()
 {
   CPPUNIT_NS::TestCase test;
@@ -51,15 +51,15 @@ TestFailureTest::testConstructorAndGettersForError()
 }
 
 
-void 
+void
 TestFailureTest::exceptionDestroyed()
 {
   m_exceptionDestroyed = true;
 }
 
 
-void 
-TestFailureTest::checkTestFailure( CPPUNIT_NS::Test *test, 
+void
+TestFailureTest::checkTestFailure( CPPUNIT_NS::Test *test,
                                    CPPUNIT_NS::Exception *error,
                                    bool isError )
 {

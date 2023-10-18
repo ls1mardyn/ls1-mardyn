@@ -17,7 +17,7 @@ CPPUNIT_NS_BEGIN
  *
  * If an error occurs, a DynamicLibraryManagerException is thrown.
  *
- * \internal Implementation of the OS independent methods is in 
+ * \internal Implementation of the OS independent methods is in
  * DynamicLibraryManager.cpp.
  *
  * \internal Porting to a new platform:
@@ -27,7 +27,7 @@ CPPUNIT_NS_BEGIN
  * - Makes a copy of UnixDynamicLibraryManager.cpp and named it after the platform.
  * - Updated the 'guard' in your file (CPPUNIT_HAVE_XYZ_DLL_LOADER) so that it is
  *   only processed if the matching platform has been detected.
- * - Change the implementation of methods doLoadLibrary(), doReleaseLibrary(), 
+ * - Change the implementation of methods doLoadLibrary(), doReleaseLibrary(),
  *   doFindSymbol() in your copy. Those methods usually maps directly to OS calls.
  * - Adds the file to the project.
  */
@@ -63,13 +63,13 @@ private:
   void loadLibrary( const std::string &libraryName );
 
   /*! Releases the loaded library.
-   * 
+   *
    * \warning Must NOT throw any exceptions (called from destructor).
    */
   void releaseLibrary();
 
   /*! Loads the specified library.
-   * 
+   *
    * May throw any exceptions (indicates failure).
    * \param libraryName Name of the library to load.
    * \return Handle of the loaded library. \c NULL indicates failure.
@@ -85,7 +85,7 @@ private:
   void doReleaseLibrary();
 
   /*! Returns a pointer on the specified symbol exported by the library.
-   * 
+   *
    * May throw any exceptions (indicates failure).
    * \param symbol Name of the symbol exported by the library.
    * \return Pointer on the symbol. \c NULL indicates failure.

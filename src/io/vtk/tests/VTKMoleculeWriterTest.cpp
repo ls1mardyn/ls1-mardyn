@@ -23,7 +23,6 @@
 
 #include <sstream>
 
-using namespace Log;
 
 TEST_SUITE_REGISTRATION(VTKMoleculeWriterTest);
 

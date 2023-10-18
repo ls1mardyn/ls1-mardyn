@@ -1,4 +1,4 @@
-import petspy      # petsEOS python wrapper
+import ppls1.fluids.ljts.petspy.petspy as pets # petsEOS python wrapper
 import argparse
 
 
@@ -21,7 +21,7 @@ variables = {'density':12,
             'isochoricHeatCapacity':32,
             'isobaricHeatCapacity':34,
             'gibbsEnergy':51,
-            'chemicalPot':512}
+            'chemicalPot':512}  # chem. pot. in accordance with ms2
 
 arguments = {'temperature':None, 'density':None, 'pressure':None}
 
@@ -51,7 +51,7 @@ if (len(input_int) > 2) or (len(input_val) > 2): print('WARNING: Too many argume
 
 integer_z = variables[output]
 
-var_z = petspy.petseos(input_int[0],input_val[0],input_int[1],input_val[1],integer_z)
+var_z = pets.petseos(input_int[0],input_val[0],input_int[1],input_val[1],integer_z)
 
 if args.verbosity >= 1:
     print(f'{output} : {var_z[0]}')

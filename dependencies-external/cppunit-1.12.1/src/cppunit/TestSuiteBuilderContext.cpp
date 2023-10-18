@@ -6,7 +6,7 @@
 
 CPPUNIT_NS_BEGIN
 
-TestSuiteBuilderContextBase::TestSuiteBuilderContextBase( 
+TestSuiteBuilderContextBase::TestSuiteBuilderContextBase(
                                  TestSuite &suite,
                                  const TestNamer &namer,
                                  TestFixtureFactory &factory )
@@ -22,22 +22,22 @@ TestSuiteBuilderContextBase::~TestSuiteBuilderContextBase()
 }
 
 
-void 
+void
 TestSuiteBuilderContextBase::addTest( Test *test )
 {
   m_suite.addTest( test );
 }
 
 
-std::string 
+std::string
 TestSuiteBuilderContextBase::getFixtureName() const
 {
   return m_namer.getFixtureName();
 }
 
 
-std::string 
-TestSuiteBuilderContextBase::getTestNameFor( 
+std::string
+TestSuiteBuilderContextBase::getTestNameFor(
                                  const std::string &testMethodName ) const
 {
   return m_namer.getTestNameFor( testMethodName );
@@ -51,8 +51,8 @@ TestSuiteBuilderContextBase::makeTestFixture() const
 }
 
 
-void 
-TestSuiteBuilderContextBase::addProperty( const std::string &key, 
+void
+TestSuiteBuilderContextBase::addProperty( const std::string &key,
                                           const std::string &value )
 {
   Properties::iterator it = m_properties.begin();
@@ -69,7 +69,7 @@ TestSuiteBuilderContextBase::addProperty( const std::string &key,
   m_properties.push_back( property );
 }
 
-const std::string 
+const std::string
 TestSuiteBuilderContextBase::getStringProperty( const std::string &key ) const
 {
   Properties::const_iterator it = m_properties.begin();

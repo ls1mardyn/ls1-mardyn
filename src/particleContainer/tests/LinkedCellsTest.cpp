@@ -102,14 +102,13 @@ void LinkedCellsTest::testRegionIteratorFile() {
 	// Cutoff might be too small, but has no effect anyway
 	std::unique_ptr<ParticleContainer> container{initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials.inp", 6.0)};
 
-	const auto begin_regionIter = container->regionIterator(testRegionMin, testRegionMax, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-
 	// Search for exchanged particles
-	for (auto it = begin_regionIter; it.isValid(); ++it) {
+	for (auto it = container->regionIterator(testRegionMin, testRegionMax, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+		 it.isValid(); ++it) {
 		const unsigned long pid = it->getID();
 		for (unsigned short d = 0; d < 3; d++) {
-			const bool insideBox {(it->r(d) >= testRegionMin[d]) and (it->r(d) <= testRegionMax[d])};
-			ASSERT_EQUAL_MSG("Particle "+std::to_string(pid)+" not in test region", true, insideBox);
+			const bool insideBox{(it->r(d) >= testRegionMin[d]) and (it->r(d) <= testRegionMax[d])};
+			ASSERT_EQUAL_MSG("Particle " + std::to_string(pid) + " not in test region", true, insideBox);
 		}
 	}
 }

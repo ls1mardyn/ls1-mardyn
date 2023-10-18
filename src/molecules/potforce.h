@@ -184,7 +184,7 @@ inline void PotForceDiQuadrupole(const double dr[3], const double& dr2, const do
 }
 
 
-/** @brief Calculate potential and force between two point charges. 
+/** @brief Calculate potential and force between two point charges.
  * Coulomb's law.
  */
 inline void PotForce2Charge(const double dr[3], const double& dr2,

@@ -13,8 +13,8 @@ CPPUNIT_NS_BEGIN
  * of test cases.
  *
  * To define a test fixture, do the following:
- * - implement a subclass of TestCase 
- * - the fixture is defined by instance variables 
+ * - implement a subclass of TestCase
+ * - the fixture is defined by instance variables
  * - initialize the fixture state by overriding setUp
  *   (i.e. construct the instance variables of the fixture)
  * - clean-up after a test by overriding tearDown.
@@ -22,7 +22,7 @@ CPPUNIT_NS_BEGIN
  * Each test runs in its own fixture so there
  * can be no side effects among test runs.
  * Here is an example:
- * 
+ *
  * \code
  * class MathTest : public CppUnit::TestFixture {
  * protected:
@@ -41,29 +41,29 @@ CPPUNIT_NS_BEGIN
  * For each test implement a method which interacts
  * with the fixture. Verify the expected results with assertions specified
  * by calling CPPUNIT_ASSERT on the expression you want to test:
- * 
+ *
  * \code
- * public: 
+ * public:
  *   void testAdd () {
  *     int result = m_value1 + m_value2;
  *     CPPUNIT_ASSERT( result == 5 );
  *   }
  * \endcode
- * 
+ *
  * Once the methods are defined you can run them. To do this, use
  * a TestCaller.
  *
  * \code
- * CppUnit::Test *test = new CppUnit::TestCaller<MathTest>( "testAdd", 
+ * CppUnit::Test *test = new CppUnit::TestCaller<MathTest>( "testAdd",
  *                                                          &MathTest::testAdd );
  * test->run();
  * \endcode
  *
  *
- * The tests to be run can be collected into a TestSuite. 
- * 
+ * The tests to be run can be collected into a TestSuite.
+ *
  * \code
- * public: 
+ * public:
  *   static CppUnit::TestSuite *MathTest::suite () {
  *      CppUnit::TestSuite *suiteOfTests = new CppUnit::TestSuite;
  *      suiteOfTests->addTest(new CppUnit::TestCaller<MathTest>(
@@ -73,11 +73,11 @@ CPPUNIT_NS_BEGIN
  *      return suiteOfTests;
  *  }
  * \endcode
- * 
+ *
  * A set of macros have been created for convenience. They are located in HelperMacros.h.
  *
  * \see TestResult, TestSuite, TestCaller,
- * \see CPPUNIT_TEST_SUB_SUITE, CPPUNIT_TEST, CPPUNIT_TEST_SUITE_END, 
+ * \see CPPUNIT_TEST_SUB_SUITE, CPPUNIT_TEST, CPPUNIT_TEST_SUITE_END,
  * \see CPPUNIT_TEST_SUITE_REGISTRATION, CPPUNIT_TEST_EXCEPTION, CPPUNIT_TEST_FAIL.
  */
 class CPPUNIT_API TestFixture

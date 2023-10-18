@@ -16,11 +16,10 @@
 #include<vector>
 #include<cmath>  // for pow()
 
-using namespace std;
 
 class Component{
 private:
-	string _substance;
+	std::string _substance;
 	unsigned _numberLJCenters;
 	unsigned _numberCharges;
 	unsigned _numberQuadrupoles;
@@ -28,15 +27,15 @@ private:
 	unsigned _numberTersoff;
 	// LJ centers
 	// LJ center position, vector quantities to account for multicenter LJ potentials
-	vector<double> _vecLJx;
-	vector<double> _vecLJy;
-	vector<double> _vecLJz;
+	std::vector<double> _vecLJx;
+	std::vector<double> _vecLJy;
+	std::vector<double> _vecLJz;
 	// mass of each LJ center
-	vector<double> _vecLJMass;
+	std::vector<double> _vecLJMass;
 	// energy of each LJ center => eps
-	vector<double> _vecLJEps;
+	std::vector<double> _vecLJEps;
 	// length of each LJ center =>sigma
-	vector<double> _vecLJSigma;
+	std::vector<double> _vecLJSigma;
 	// Lennard-Jones cut off radius
 	double _TSLJCutOff;
 
@@ -57,11 +56,11 @@ private:
 public:
 	// the constructor and destructor, respectively
 	// formal arguments of the constructor: substance, reference energy, reference length, reference mass
-	//Component(string substance);
+	//Component(std::string substance);
 	// second Constructor, in case reference quantities different from atomic units are allowed
-//	Component(string in_substance, double refNRG, double refLgth, double refM);
+//	Component(std::string in_substance, double refNRG, double refLgth, double refM);
 	// another constructor, called if the reference quantities are atomic units
-	Component(string in_substance, bool in_LJunits);
+	Component(std::string in_substance, bool in_LJunits);
 	~Component();
 
 	// the methods
@@ -92,7 +91,7 @@ public:
 	void sNumberTersoff(unsigned NTers);*/
 
 	// (ii) initializing a 1CLJ fluid, parameters depend on the specific fluid (e.g. Argon, CH4, etc.)
-	void init1CLJ(string substance);
+	void init1CLJ(std::string substance);
 
 	// calculating the liquid and vapor densities, respectively
 	double calculateLiquidDensity(double T);

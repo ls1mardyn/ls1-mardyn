@@ -14,7 +14,7 @@
 
 /*
  * Basic implemtation using the FFTW library
- * 
+ *
  * Use FFTDataContainer_arrays as Data container (2 arrays, here aligned)
  * initialize_target, M2L and protected function to get the DataContainer defined in abstract FFTAcceleration_2wayM2L
  */

@@ -23,12 +23,12 @@ public:
   void setExpectedTearDownCall( int callCount = 1 );
   void setExpectedRunTestCall( int callCount = 1 );
   void setExpectedCountTestCasesCall( int callCount = 1 );
-  
+
   void makeSetUpThrow();
   void makeTearDownThrow();
   void makeRunTestThrow();
   void makeFindTestPathPassFor( const CPPUNIT_NS::Test *testFound );
-  
+
   void verify();
 
 protected:

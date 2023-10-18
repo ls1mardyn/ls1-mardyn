@@ -27,25 +27,25 @@ CubicGridGeneratorInternal::CubicGridGeneratorInternal() :
 }
 
 void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
-	global_log->info() << "------------------------------------------------------------------------" << std::endl;
-	global_log->info() << "CubicGridGeneratorInternal (CGG)" << std::endl;
+	Log::global_log->info() << "------------------------------------------------------------------------" << std::endl;
+	Log::global_log->info() << "CubicGridGeneratorInternal (CGG)" << std::endl;
 	xmlconfig.getNodeValue("numMolecules", _numMolecules);
-	if(_numMolecules)global_log->info() << "numMolecules: " << _numMolecules << std::endl;
+	if(_numMolecules)Log::global_log->info() << "numMolecules: " << _numMolecules << std::endl;
 	double density = -1.;
 	xmlconfig.getNodeValue("density", density);
-	global_log->info() << "density: " << density << std::endl;
+	Log::global_log->info() << "density: " << density << std::endl;
 	xmlconfig.getNodeValue("binaryMixture", _binaryMixture);
-	global_log->info() << "binaryMixture: " << _binaryMixture << std::endl;
+	Log::global_log->info() << "binaryMixture: " << _binaryMixture << std::endl;
 	// setting both or none is not allowed!
 	if((_numMolecules == 0 && density == -1.) || (_numMolecules != 0 && density != -1.) ){
-		global_log->error() << "Error in CubicGridGeneratorInternal: You have to set either density or numMolecules!" << std::endl;
+		Log::global_log->error() << "Error in CubicGridGeneratorInternal: You have to set either density or numMolecules!" << std::endl;
 		Simulation::exit(2341);
 	}
 
 	if(density != -1.){
 		// density has been set
 		if(density <= 0){
-			global_log->error()
+			Log::global_log->error()
 					<< "Error in CubicGridGeneratorInternal: Density has to be positive and non-zero!"
 					<< std::endl;
 			Simulation::exit(2342);
@@ -54,7 +54,7 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 		for (int d = 0; d < 3; ++d)
 			vol *= global_simulation->getDomain()->getGlobalLength(d);
 		_numMolecules = density * vol;
-		global_log->info() << "numMolecules: " << _numMolecules << std::endl;
+		Log::global_log->info() << "numMolecules: " << _numMolecules << std::endl;
 	}
 }
 
@@ -63,7 +63,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 	Log::global_log->info() << "Reading phase space file (CubicGridGenerator)." << std::endl;
 
 	if(_numMolecules == 0){
-		global_log->error() << "Error in CubicGridGeneratorInternal: numMolecules is not set!"
+		Log::global_log->error() << "Error in CubicGridGeneratorInternal: numMolecules is not set!"
 				<< std::endl << "Please make sure to run readXML()!" << std::endl;
 		Simulation::exit(2341);
 	}
@@ -117,7 +117,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 	global_simulation->timers()->setOutputString("CUBIC_GRID_GENERATOR_INPUT", "Initial IO took:                 ");
 	Log::global_log->info() << "Initial IO took:                 "
 			<< global_simulation->timers()->getTime("CUBIC_GRID_GENERATOR_INPUT") << " sec" << std::endl;
-	global_log->info() << "------------------------------------------------------------------------" << std::endl;
+	Log::global_log->info() << "------------------------------------------------------------------------" << std::endl;
 	return id + idOffset;
 }
 
@@ -143,8 +143,8 @@ std::array<unsigned long, 3> CubicGridGeneratorInternal::determineMolsPerDimensi
 		mardyn_assert(answer >= 1);
 
 		if (answer < 1) {
-			global_log->error() << "computed num Molecules along dimension " << d << ": " << answer << std::endl;
-			global_log->error() << "Should be larger than 1. Exiting." << std::endl;
+			Log::global_log->error() << "computed num Molecules along dimension " << d << ": " << answer << std::endl;
+			Log::global_log->error() << "Should be larger than 1. Exiting." << std::endl;
 			mardyn_exit(1);
 		}
 

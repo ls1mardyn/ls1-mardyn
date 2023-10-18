@@ -18,8 +18,8 @@ TestPath::TestPath( Test *root )
 }
 
 
-TestPath::TestPath( const TestPath &other, 
-                    int indexFirst, 
+TestPath::TestPath( const TestPath &other,
+                    int indexFirst,
                     int count )
 {
   int countAdjustment = 0;
@@ -40,7 +40,7 @@ TestPath::TestPath( const TestPath &other,
 }
 
 
-TestPath::TestPath( Test *searchRoot, 
+TestPath::TestPath( Test *searchRoot,
                     const std::string &pathAsString )
 {
   PathTestNames testNames;
@@ -90,21 +90,21 @@ TestPath::operator =( const TestPath &other )
 }
 
 
-bool 
+bool
 TestPath::isValid() const
 {
   return getTestCount() > 0;
 }
 
 
-void 
+void
 TestPath::add( Test *test )
 {
   m_tests.push_back( test );
 }
 
 
-void 
+void
 TestPath::add( const TestPath &path )
 {
   for ( int index =0; index < path.getTestCount(); ++index )
@@ -112,8 +112,8 @@ TestPath::add( const TestPath &path )
 }
 
 
-void 
-TestPath::insert( Test *test, 
+void
+TestPath::insert( Test *test,
                   int index )
 {
   if ( index < 0  ||  index > getTestCount() )
@@ -121,8 +121,8 @@ TestPath::insert( Test *test,
   m_tests.insert( m_tests.begin() + index, test );
 }
 
-void 
-TestPath::insert( const TestPath &path, 
+void
+TestPath::insert( const TestPath &path,
                   int index )
 {
   int itemIndex = path.getTestCount() -1;
@@ -131,7 +131,7 @@ TestPath::insert( const TestPath &path,
 }
 
 
-void 
+void
 TestPath::removeTests()
 {
   while ( isValid() )
@@ -139,7 +139,7 @@ TestPath::removeTests()
 }
 
 
-void 
+void
 TestPath::removeTest( int index )
 {
   checkIndexValid( index );
@@ -147,7 +147,7 @@ TestPath::removeTest( int index )
 }
 
 
-void 
+void
 TestPath::up()
 {
   checkIndexValid( 0 );
@@ -155,7 +155,7 @@ TestPath::up()
 }
 
 
-int 
+int
 TestPath::getTestCount() const
 {
   return m_tests.size();
@@ -177,7 +177,7 @@ TestPath::getChildTest() const
 }
 
 
-void 
+void
 TestPath::checkIndexValid( int index ) const
 {
   if ( index < 0  ||  index >= getTestCount() )
@@ -185,7 +185,7 @@ TestPath::checkIndexValid( int index ) const
 }
 
 
-std::string 
+std::string
 TestPath::toString() const
 {
   std::string asString( "/" );
@@ -249,6 +249,6 @@ TestPath::splitPathString( const std::string &pathAsString,
 
   return isRelative;
 }
-  
+
 
 CPPUNIT_NS_END

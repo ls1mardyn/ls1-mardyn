@@ -7,7 +7,7 @@
 			<mass>0.039948</mass>
 			<sigma>6.4160007</sigma>
 			<epsilon>0.000369852537</epsilon>
-			<shifted>0</shifted>
+			<shifted>false</shifted>
 		</site>
 		<momentsofinertia rotaxes="xyz" >
 		<Ixx>0.0</Ixx>

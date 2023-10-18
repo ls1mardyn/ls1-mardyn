@@ -37,9 +37,9 @@ public:
 	 * \brief Load the CellDataSoA for cell.
 	 */
 	void preprocessCell(ParticleCell& /*cell*/) {}
-         
+
         void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false /* related to ZonalMethod */);
-        
+
 	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) {
 		return 0.0;
 	}
@@ -64,7 +64,7 @@ public:
 	double getDtInvm() const {
 		return _dtInvm;
 	}
-        
+
 private:
 	/**
 	 * \brief The Domain where macroscopic values will be stored.

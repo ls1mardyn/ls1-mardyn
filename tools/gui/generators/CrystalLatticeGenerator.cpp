@@ -37,8 +37,8 @@ CrystalLatticeGenerator::CrystalLatticeGenerator() :
 	calculateSimulationBoxLength();
 }
 
-vector<ParameterCollection*> CrystalLatticeGenerator::getParameters() {
-	vector<ParameterCollection*> parameters;
+std::vector<ParameterCollection*> CrystalLatticeGenerator::getParameters() {
+	std::vector<ParameterCollection*> parameters;
 	parameters.push_back(new MardynConfigurationParameters(_configuration));
 
 	ParameterCollection* tab = new ParameterCollection("CrystalLatticeParameters", "Parameters of CrystalLatticeGenerator",
@@ -63,7 +63,7 @@ vector<ParameterCollection*> CrystalLatticeGenerator::getParameters() {
 
 
 void CrystalLatticeGenerator::setParameter(Parameter* p) {
-	string id = p->getNameId();
+	std::string id = p->getNameId();
 	if (id == "numMolecules") {
 		_numMoleculesPerDim = static_cast<ParameterWithLongIntValue*> (p)->getValue();
 		calculateSimulationBoxLength();
@@ -89,7 +89,7 @@ void CrystalLatticeGenerator::calculateSimulationBoxLength() {
 
 
 void CrystalLatticeGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
-	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator..." << endl;
+	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator..." << std::endl;
 	//domain->setCurrentTime(0);
 
 	domain->disableComponentwiseThermostat();
@@ -99,7 +99,7 @@ void CrystalLatticeGenerator::readPhaseSpaceHeader(Domain* domain, double timest
 	domain->setGlobalLength(2, _simBoxLength);
 
 	domain->setepsilonRF(1e+10);
-	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator done." << endl;
+	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator done." << std::endl;
 
     /* silence compiler warnings */
     (void) timestep;
@@ -112,7 +112,7 @@ unsigned long CrystalLatticeGenerator::readPhaseSpace(ParticleContainer* particl
 		Domain* domain, DomainDecompBase* domainDecomp) {
 
 	global_simulation->timers()->start("CRYSTAL_LATTICE_GENERATOR_INPUT");
-	_logger->info() << "Reading phase space file (CubicGridGenerator)." << endl;
+	_logger->info() << "Reading phase space file (CubicGridGenerator)." << std::endl;
 
 	unsigned long int id = 1;
 	double spacing = _simBoxLength / _numMoleculesPerDim;
@@ -161,14 +161,14 @@ unsigned long CrystalLatticeGenerator::readPhaseSpace(ParticleContainer* particl
 		}
 
 		percentageRead = i * percentage;
-		_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << flush;
+		_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << std::flush;
 	}
 
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
-	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
+	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << std::endl;
 	global_simulation->timers()->stop("CRYSTAL_LATTICE_GENERATOR_INPUT");
 	global_simulation->timers()->setOutputString("CRYSTAL_LATTICE_GENERATOR_INPUT", "Initial IO took:                 ");
-	_logger->info() << "Initial IO took:                 " << global_simulation->timers()->getTime("CRYSTAL_LATTICE_GENERATOR_INPUT") << " sec" << endl;
+	_logger->info() << "Initial IO took:                 " << global_simulation->timers()->getTime("CRYSTAL_LATTICE_GENERATOR_INPUT") << " sec" << std::endl;
 	return id;
 }
 
@@ -189,24 +189,24 @@ bool CrystalLatticeGenerator::validateParameters() {
 
 	if (_configuration.getScenarioName() == "") {
 		valid = false;
-		_logger->error() << "ScenarioName not set!" << endl;
+		_logger->error() << "ScenarioName not set!" << std::endl;
 	}
 
 	if (_configuration.getOutputFormat() == MardynConfiguration::XML) {
 		valid = false;
-		_logger->error() << "OutputFormat XML not yet supported!" << endl;
+		_logger->error() << "OutputFormat XML not yet supported!" << std::endl;
 	}
 
 	if (_simBoxLength < 2. * _configuration.getCutoffRadius()) {
 		valid = false;
-		_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << endl;
+		_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << std::endl;
 		_logger->error() << "Cutoff radius=" << _configuration.getCutoffRadius()
-							<< " domain size=" << _simBoxLength << endl;
+							<< " domain size=" << _simBoxLength << std::endl;
 	}
 
 	if (_numMoleculesPerDim % 2) {
 		valid = false;
-		_logger->error() << "Number of molecules per dimension must be even!" << endl;
+		_logger->error() << "Number of molecules per dimension must be even!" << std::endl;
 	}
 	return valid;
 }

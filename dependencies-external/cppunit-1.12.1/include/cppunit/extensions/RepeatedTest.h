@@ -15,13 +15,13 @@ class TestResult;
  *
  * Does not assume ownership of the test it decorates
  */
-class CPPUNIT_API RepeatedTest : public TestDecorator 
+class CPPUNIT_API RepeatedTest : public TestDecorator
 {
 public:
-  RepeatedTest( Test *test, 
-                int timesRepeat ) : 
-      TestDecorator( test ), 
-      m_timesRepeat(timesRepeat) 
+  RepeatedTest( Test *test,
+                int timesRepeat ) :
+      TestDecorator( test ),
+      m_timesRepeat(timesRepeat)
   {
   }
 

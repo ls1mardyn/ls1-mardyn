@@ -246,7 +246,7 @@ IF((integer_x.EQ.PP_DMASS.AND.integer_y.EQ.PP_T).OR.(integer_x.EQ.PP_T.AND.integ
       ! gibbs energy
       CALL dT2g_PeTS(var_z(i_z),rho,T)
     ELSEIF(integer_z(i_z).EQ.PP_GMASS_MS2) THEN
-      ! gibbs energy
+      ! gibbs energy in accordance with ms2
       CALL dT2g_PeTS_ms2(var_z(i_z),rho,T)
     ELSEIF(integer_z(i_z).EQ.PP_PIP) THEN
       ! phase indication parameter
@@ -398,7 +398,7 @@ ELSEIF((integer_x.EQ.PP_P.AND.integer_y.EQ.PP_T).OR.(integer_x.EQ.PP_T.AND.integ
       ! gibbs energy
       CALL dT2g_PeTS(var_z(i_z),rho,var_y_calc)
     ELSEIF(integer_z(i_z).EQ.PP_GMASS_MS2) THEN
-      ! gibbs energy
+      ! gibbs energy in accordance with ms2
       CALL dT2g_PeTS_ms2(var_z(i_z),rho,var_y_calc)
     ELSEIF(integer_z(i_z).EQ.PP_PIP) THEN
       ! phase indication parameter
@@ -539,7 +539,7 @@ ELSE
       ! gibbs energy
       CALL dT2g_PeTS(var_z(i_z),rho,T)
     ELSEIF(integer_z(i_z).EQ.PP_GMASS_MS2) THEN
-      ! gibbs energy
+      ! gibbs energy in accordance with ms2
       CALL dT2g_PeTS_ms2(var_z(i_z),rho,T)
     ELSEIF(integer_z(i_z).EQ.PP_PIP) THEN
       ! phase indication parameter
@@ -1748,7 +1748,7 @@ END SUBROUTINE dT2g_PeTS
 
 
 !==================================================================================================================================!
-!> (rho,T) -> (g_ms2) in analogy to ms2
+!> (rho,T) -> (g_ms2) with gibbs energy in accordance with ms2
 !==================================================================================================================================!
 SUBROUTINE dT2g_PeTS_ms2(g,rho,T)
 !----------------------------------------------------------------------------------------------------------------------------------!

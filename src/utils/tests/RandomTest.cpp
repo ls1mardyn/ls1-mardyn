@@ -10,7 +10,6 @@
 #include "../../WrapOpenMP.h"
 
 #include <iostream>
-using namespace std;
 
 TEST_SUITE_REGISTRATION(RandomTest);
 
@@ -39,7 +38,7 @@ void RandomTest::testRnd() {
 			ASSERT_TRUE(bin < 10);
 //
 //#pragma omp critical
-//			cout << myID << " " << threadPrivateRNG.rnd() << endl;
+//			std::cout << myID << " " << threadPrivateRNG.rnd() << std::endl;
 		}
 	}
 }

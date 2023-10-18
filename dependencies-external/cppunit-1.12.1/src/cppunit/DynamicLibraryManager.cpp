@@ -20,7 +20,7 @@ DynamicLibraryManager::~DynamicLibraryManager()
 }
 
 
-DynamicLibraryManager::Symbol 
+DynamicLibraryManager::Symbol
 DynamicLibraryManager::findSymbol( const std::string &symbol )
 {
   try
@@ -33,7 +33,7 @@ DynamicLibraryManager::findSymbol( const std::string &symbol )
   {
   }
 
-  throw DynamicLibraryManagerException( m_libraryName, 
+  throw DynamicLibraryManagerException( m_libraryName,
                                         symbol,
                                         DynamicLibraryManagerException::symbolNotFound );
   return NULL;    // keep compiler happy
@@ -60,7 +60,7 @@ DynamicLibraryManager::loadLibrary( const std::string &libraryName )
 }
 
 
-void 
+void
 DynamicLibraryManager::releaseLibrary()
 {
   if ( m_libraryHandle != NULL )

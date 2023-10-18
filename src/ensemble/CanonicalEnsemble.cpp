@@ -19,9 +19,6 @@
 #include "utils/xmlfileUnits.h"
 
 
-using namespace std;
-using Log::global_log;
-
 CanonicalEnsemble::CanonicalEnsemble() :
 		_N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0) {
 	_type = NVT;
@@ -36,7 +33,7 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer* particleContaine
 
 	/* "fixed" variables of this ensemble */
 	if((variable & NUM_PARTICLES) | (variable & TEMPERATURE)) {
-		global_log->debug() << "Updating particle counts" << endl;
+		Log::global_log->debug() << "Updating particle counts" << std::endl;
 		/* initializes the number of molecules present in each component! */
 		std::vector<unsigned long> numMolecules(numComponents, 0ul);
 
@@ -72,7 +69,7 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer* particleContaine
 #ifdef ENABLE_MPI
 			numMolecules[cid] =  _simulation.domainDecomposition().collCommGetUnsLong();
 #endif
-			global_log->debug() << "Number of molecules in component " << cid << ": " << numMolecules[cid] << endl;
+			Log::global_log->debug() << "Number of molecules in component " << cid << ": " << numMolecules[cid] << std::endl;
 			_N += numMolecules[cid];
 			_components[cid].setNumMolecules(numMolecules[cid]);
 		}
@@ -82,22 +79,22 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer* particleContaine
 	}
 
 	if(variable & VOLUME) {
-		global_log->debug() << "Updating volume" << endl;
+		Log::global_log->debug() << "Updating volume" << std::endl;
 		/* TODO: calculate actual volume or return specified volume as
 		 * the canonical ensemble should have a fixed volume? */
 	}
 
 	/* variable variables of this ensemble */
 	if(variable & CHEMICAL_POTENTIAL) {
-		global_log->debug() << "Updating chemical potential" << endl;
+		Log::global_log->debug() << "Updating chemical potential" << std::endl;
 	}
 
 	if(variable & PRESSURE) {
-		global_log->info() << "Updating pressure" << endl;
+		Log::global_log->info() << "Updating pressure" << std::endl;
 	}
 
 	if((variable & ENERGY) | (variable & TEMPERATURE)) {
-		global_log->debug() << "Updating energy" << endl;
+		Log::global_log->debug() << "Updating energy" << std::endl;
 		std::vector<double> E_trans(numComponents, 0.);
 		std::vector<double> E_rot(numComponents, 0.);
 
@@ -142,8 +139,8 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer* particleContaine
 			E_trans[cid] =  _simulation.domainDecomposition().collCommGetDouble();
 		  E_rot[cid]   =  _simulation.domainDecomposition().collCommGetDouble();
 #endif
-			global_log->debug() << "Kinetic energy in component " << cid << ": " <<
-								"E_trans = " << E_trans[cid] << ", E_rot = " << E_rot[cid] << endl;
+			Log::global_log->debug() << "Kinetic energy in component " << cid << ": " <<
+								"E_trans = " << E_trans[cid] << ", E_rot = " << E_rot[cid] << std::endl;
 			_components[cid].setE_trans(E_trans[cid]);
 			_components[cid].setE_rot(E_rot[cid]);
 			_E_trans += E_trans[cid];
@@ -153,14 +150,14 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer* particleContaine
 		_simulation.domainDecomposition().collCommFinalize();
 #endif
 
-		global_log->debug() << "Total Kinetic energy: 2*E_trans = " << _E_trans
-							<< ", 2*E_rot = " << _E_rot << endl;
+		Log::global_log->debug() << "Total Kinetic energy: 2*E_trans = " << _E_trans
+							<< ", 2*E_rot = " << _E_rot << std::endl;
 		_E = _E_trans + _E_rot;
 	}
 
 	if(variable & TEMPERATURE) {
-		global_log->debug() << "Updating temperature" << endl;
-		/* TODO: calculate actual temperature or return specified temperature as 
+		Log::global_log->debug() << "Updating temperature" << std::endl;
+		/* TODO: calculate actual temperature or return specified temperature as
 		 * the canonical ensemble should have a fixed temperature? */
 		long long totalDegreesOfFreedom = 0;
 		for(int cid = 0; cid < numComponents; cid++) {
@@ -171,8 +168,8 @@ void CanonicalEnsemble::updateGlobalVariable(ParticleContainer* particleContaine
 
 			double E_kin = _components[cid].E();
 			double T = E_kin / degreesOfFreedom;
-			global_log->debug() << "Temperature of component " << cid << ": " <<
-								"T = " << T << endl;
+			Log::global_log->debug() << "Temperature of component " << cid << ": " <<
+								"T = " << T << std::endl;
 			_components[cid].setT(T);
 		}
 		_T = _E / totalDegreesOfFreedom;
@@ -190,22 +187,22 @@ void CanonicalEnsemble::readXML(XMLfileUnits& xmlconfig) {
 	Ensemble::readXML(xmlconfig);
 
 	xmlconfig.getNodeValueReduced("temperature", _T);
-	global_log->info() << "Temperature: " << _T << endl;
-	string domaintype;
+	Log::global_log->info() << "Temperature: " << _T << std::endl;
+	std::string domaintype;
 	xmlconfig.getNodeValue("domain@type", domaintype);
-	global_log->info() << "Domain type: " << domaintype << endl;
+	Log::global_log->info() << "Domain type: " << domaintype << std::endl;
 	if("box" == domaintype) {
 		_domain = new BoxDomain();
 	} else {
-		global_log->error() << "Volume type not supported." << endl;
+		Log::global_log->error() << "Volume type not supported." << std::endl;
 		Simulation::exit(1);
 	}
 	xmlconfig.changecurrentnode("domain");
 	_domain->readXML(xmlconfig);
 	xmlconfig.changecurrentnode("..");
 	_V = _domain->V();
-	global_log->info() << "Volume: " << _V << endl;
-	global_log->warning() << "Box dimensions not set yet in domain class" << endl;
+	Log::global_log->info() << "Volume: " << _V << std::endl;
+	Log::global_log->warning() << "Box dimensions not set yet in domain class" << std::endl;
 }
 
 void CanonicalEnsemble::beforeThermostat(unsigned long simstep, unsigned long initStatistics) {

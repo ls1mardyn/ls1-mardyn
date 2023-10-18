@@ -7,9 +7,6 @@
 
 #include "utils/Logger.h"
 
-using namespace std;
-using Log::global_log;
-
 
 FullMolecule::FullMolecule(unsigned long id, Component *component,
 	                 double rx,  double ry,  double rz,
@@ -396,7 +393,7 @@ void FullMolecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 		v2 += _v[d] * _v[d];
 		_L[d] += dt_halve * _M[d];
 	}
-    mardyn_assert(!isnan(v2)); // catches NaN
+    mardyn_assert(!std::isnan(v2)); // catches NaN
     summv2 += _m * v2;
 
 	std::array<double, 3> w = _q.rotateinv(D_arr()); // L = D = Iw
@@ -405,7 +402,7 @@ void FullMolecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 		w[d] *= _invI[d];
 		Iw2 += _I[d] * w[d] * w[d];
 	}
-    mardyn_assert(!isnan(Iw2)); // catches NaN
+    mardyn_assert(!std::isnan(Iw2)); // catches NaN
 	sumIw2 += Iw2;
 }
 
@@ -460,7 +457,7 @@ std::string FullMolecule::getWriteFormat(){
 	return std::string("ICRVQD");
 }
 
-void FullMolecule::write(ostream& ostrm) const {
+void FullMolecule::write(std::ostream& ostrm) const {
 	ostrm << _id << "\t" << (_component->ID() + 1) << "\t"
 	      << _r[0] << " " << _r[1] << " " << _r[2] << "\t"
 	      << _v[0] << " " << _v[1] << " " << _v[2] << "\t"
@@ -561,12 +558,12 @@ void FullMolecule::calcFM_site(const std::array<double, 3>& dsite, const std::ar
 	 * catches NaN assignments
 	 */
 	for (int d = 0; d < 3; d++) {
-		if (isnan(dsite[d])) {
-			global_log->error() << "Severe dsite[" << d << "] error for site of m" << _id << endl;
+		if (std::isnan(dsite[d])) {
+			Log::global_log->error() << "Severe dsite[" << d << "] error for site of m" << _id << std::endl;
 			mardyn_assert(false);
 		}
-		if (isnan(Fsite[d])) {
-			global_log->error() << "Severe Fsite[" << d << "] error for site of m" << _id << endl;
+		if (std::isnan(Fsite[d])) {
+			Log::global_log->error() << "Severe Fsite[" << d << "] error for site of m" << _id << std::endl;
 			mardyn_assert(false);
 		}
 	}
@@ -700,7 +697,7 @@ void FullMolecule::calcFM() {
 	}
 	for (unsigned i = 0; i < 9; ++i) {
 		temp_Vi[i] *= 0.5;
-		mardyn_assert(!isnan(temp_Vi[i]));
+		mardyn_assert(!std::isnan(temp_Vi[i]));
 	}
 	Viadd(temp_Vi);
 	Madd(temp_M);
@@ -724,17 +721,17 @@ void FullMolecule::check(unsigned long id) {
     mardyn_assert(isfinite(_F[d]));
     mardyn_assert(isfinite(_M[d]));
     mardyn_assert(isfinite(_I[d]));
-    // mardyn_assert(!isnan(_Vi[d]));
+    // mardyn_assert(!std::isnan(_Vi[d]));
     mardyn_assert(isfinite(_invI[d]));
   }
   _q.check();
   if (!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2]
    || !isfinite(_Vi[3]) || !isfinite(_Vi[4]) || !isfinite(_Vi[5])
    || !isfinite(_Vi[6]) || !isfinite(_Vi[7]) || !isfinite(_Vi[8]))) {
-    cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = ("
+    std::cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = ("
          << _Vi[0] << ", " << _Vi[3] << ", " << _Vi[4] << ", "
          << _Vi[6] << ", " << _Vi[1] << ", " << _Vi[5] << ", "
-         << _Vi[7] << ", " << _Vi[8] << ", " << _Vi[2] << ")" << endl;
+         << _Vi[7] << ", " << _Vi[8] << ", " << _Vi[2] << ")" << std::endl;
     _Vi[0] = 0.0;
     _Vi[1] = 0.0;
     _Vi[2] = 0.0;

@@ -17,7 +17,6 @@
 #include "LinkedCellTraversals/NeutralTerritoryTraversal.h"
 #include "LinkedCellTraversals/SlicedCellPairTraversal.h"
 
-using Log::global_log;
 
 template<class CellTemplate>
 class TraversalTuner {
@@ -103,20 +102,20 @@ TraversalTuner<CellTemplate>::TraversalTuner() : _cells(nullptr), _dims(), _opti
 	auto *c08esData = new C08CellPairTraversalData;
 
 	_traversals = {
-			make_pair(nullptr, origData),
-			make_pair(nullptr, c08Data),
-			make_pair(nullptr, c04Data),
-			make_pair(nullptr, slicedData),
-			make_pair(nullptr, hsData),
-			make_pair(nullptr, mpData),
-			make_pair(nullptr, ntData),
-			make_pair(nullptr, c08esData)
+			std::make_pair(nullptr, origData),
+			std::make_pair(nullptr, c08Data),
+			std::make_pair(nullptr, c04Data),
+			std::make_pair(nullptr, slicedData),
+			std::make_pair(nullptr, hsData),
+			std::make_pair(nullptr, mpData),
+			std::make_pair(nullptr, ntData),
+			std::make_pair(nullptr, c08esData)
 	};
 #ifdef QUICKSCHED
 	struct QuickschedTraversalData *quiData = new QuickschedTraversalData;
 	quiData->taskBlockSize = {{2, 2, 2}};
-	if (is_base_of<ParticleCellBase, CellTemplate>::value) {
-		_traversals.push_back(make_pair(nullptr, quiData));
+	if (std::is_base_of<ParticleCellBase, CellTemplate>::value) {
+		_traversals.push_back(std::make_pair(nullptr, quiData));
 	}
 #endif
 }
@@ -139,32 +138,32 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 
 	// log traversal
 	if (dynamic_cast<HalfShellTraversal<CellTemplate> *>(_optimalTraversal))
-		global_log->info() << "Using HalfShellTraversal." << endl;
+		Log::global_log->info() << "Using HalfShellTraversal." << std::endl;
 	else if (dynamic_cast<OriginalCellPairTraversal<CellTemplate> *>(_optimalTraversal))
-		global_log->info() << "Using OriginalCellPairTraversal." << endl;
+		Log::global_log->info() << "Using OriginalCellPairTraversal." << std::endl;
 	else if (dynamic_cast<C08CellPairTraversal<CellTemplate> *>(_optimalTraversal))
-		global_log->info() << "Using C08CellPairTraversal without eighthShell." << endl;
+		Log::global_log->info() << "Using C08CellPairTraversal without eighthShell." << std::endl;
 	else if (dynamic_cast<C08CellPairTraversal<CellTemplate, true> *>(_optimalTraversal))
-		global_log->info() << "Using C08CellPairTraversal with eighthShell." << endl;
+		Log::global_log->info() << "Using C08CellPairTraversal with eighthShell." << std::endl;
 	else if (dynamic_cast<C04CellPairTraversal<CellTemplate> *>(_optimalTraversal))
-		global_log->info() << "Using C04CellPairTraversal." << endl;
+		Log::global_log->info() << "Using C04CellPairTraversal." << std::endl;
 	else if (dynamic_cast<MidpointTraversal<CellTemplate> *>(_optimalTraversal))
-		global_log->info() << "Using MidpointTraversal." << endl;
+		Log::global_log->info() << "Using MidpointTraversal." << std::endl;
 	else if (dynamic_cast<NeutralTerritoryTraversal<CellTemplate> *>(_optimalTraversal))
-		global_log->info() << "Using NeutralTerritoryTraversal." << endl;
+		Log::global_log->info() << "Using NeutralTerritoryTraversal." << std::endl;
 	else if (dynamic_cast<QuickschedTraversal<CellTemplate> *>(_optimalTraversal)) {
-		global_log->info() << "Using QuickschedTraversal." << endl;
+		Log::global_log->info() << "Using QuickschedTraversal." << std::endl;
 #ifndef QUICKSCHED
-		global_log->error() << "MarDyn was compiled without Quicksched Support. Aborting!" << endl;
+		Log::global_log->error() << "MarDyn was compiled without Quicksched Support. Aborting!" << std::endl;
 		Simulation::exit(1);
 #endif
 	} else if (dynamic_cast<SlicedCellPairTraversal<CellTemplate> *>(_optimalTraversal))
-		global_log->info() << "Using SlicedCellPairTraversal." << endl;
+		Log::global_log->info() << "Using SlicedCellPairTraversal." << std::endl;
 	else
-		global_log->warning() << "Using unknown traversal." << endl;
+		Log::global_log->warning() << "Using unknown traversal." << std::endl;
 
 	if (_cellsInCutoff > _optimalTraversal->maxCellsInCutoff()) {
-		global_log->error() << "Traversal supports up to " << _optimalTraversal->maxCellsInCutoff()
+		Log::global_log->error() << "Traversal supports up to " << _optimalTraversal->maxCellsInCutoff()
 							<< " cells in cutoff, but value is chosen as " << _cellsInCutoff << std::endl;
 		Simulation::exit(45);
 	}
@@ -172,37 +171,37 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
-	string oldPath(xmlconfig.getcurrentnodepath());
+	std::string oldPath(xmlconfig.getcurrentnodepath());
 	// read traversal type default values
-	string traversalType;
+	std::string traversalType;
 
 	xmlconfig.getNodeValue("traversalSelector", traversalType);
 	transform(traversalType.begin(), traversalType.end(), traversalType.begin(), ::tolower);
 
-	if (traversalType.find("c08es") != string::npos)
+	if (traversalType.find("c08es") != std::string::npos)
 		selectedTraversal = C08ES;
-	else if (traversalType.find("c08") != string::npos)
+	else if (traversalType.find("c08") != std::string::npos)
 		selectedTraversal = C08;
-	else if (traversalType.find("c04") != string::npos)
+	else if (traversalType.find("c04") != std::string::npos)
 		selectedTraversal = C04;
-	else if (traversalType.find("qui") != string::npos)
+	else if (traversalType.find("qui") != std::string::npos)
 		selectedTraversal = QSCHED;
-	else if (traversalType.find("slice") != string::npos)
+	else if (traversalType.find("slice") != std::string::npos)
 		selectedTraversal = SLICED;
-	else if (traversalType.find("ori") != string::npos)
+	else if (traversalType.find("ori") != std::string::npos)
 		selectedTraversal = ORIGINAL;
-	else if (traversalType.find("hs") != string::npos)
+	else if (traversalType.find("hs") != std::string::npos)
 		selectedTraversal = HS;
-	else if (traversalType.find("mp") != string::npos)
+	else if (traversalType.find("mp") != std::string::npos)
 		selectedTraversal = MP;
-	else if (traversalType.find("nt") != string::npos) {
+	else if (traversalType.find("nt") != std::string::npos) {
 		selectedTraversal = NT;
 	} else {
 		// selector already set in constructor, just print a warning here
 		if (mardyn_get_max_threads() > 1) {
-			global_log->warning() << "No traversal type selected. Defaulting to c08 traversal." << endl;
+			Log::global_log->warning() << "No traversal type selected. Defaulting to c08 traversal." << std::endl;
 		} else {
-			global_log->warning() << "No traversal type selected. Defaulting to sliced traversal." << endl;
+			Log::global_log->warning() << "No traversal type selected. Defaulting to sliced traversal." << std::endl;
 		}
 	}
 
@@ -213,39 +212,39 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 	// xmlconfig.changecurrentnode(traversalIterator);
 	// does not work resolve paths to traversals manually
 	// use iterator only to resolve number of traversals (==iterations)
-	string basePath(xmlconfig.getcurrentnodepath());
+	std::string basePath(xmlconfig.getcurrentnodepath());
 
 	int i = 1;
 	XMLfile::Query qry = xmlconfig.query("traversalData");
 	for (XMLfile::Query::const_iterator traversalIterator = qry.begin(); traversalIterator; ++traversalIterator) {
-		string path(basePath + "/traversalData[" + to_string(i) + "]");
+		std::string path(basePath + "/traversalData[" + std::to_string(i) + "]");
 		xmlconfig.changecurrentnode(path);
 
 		traversalType = xmlconfig.getNodeValue_string("@type", "NOTHING FOUND");
 		transform(traversalType.begin(), traversalType.end(), traversalType.begin(), ::tolower);
 		if (traversalType == "c08") {
 			// nothing to do
-		} else if (traversalType.find("qui") != string::npos) {
+		} else if (traversalType.find("qui") != std::string::npos) {
 #ifdef QUICKSCHED
-			if (not is_base_of<ParticleCellBase, CellTemplate>::value) {
-				global_log->warning() << "Attempting to use Quicksched with cell type that does not store task data!"
-									  << endl;
+			if (not std::is_base_of<ParticleCellBase, CellTemplate>::value) {
+				Log::global_log->warning() << "Attempting to use Quicksched with cell type that does not store task data!"
+									  << std::endl;
 			}
 			for (auto p : _traversals) {
 				if (struct QuickschedTraversalData *quiData = dynamic_cast<QuickschedTraversalData *>(p.second)) {
 					// read task block size
-					string tag       = "taskBlockSize/l";
+					std::string tag       = "taskBlockSize/l";
 					char   dimension = 'x';
 
 					for (int j = 0; j < 3; ++j) {
 						tag += (dimension + j);
 						xmlconfig.getNodeValue(tag, quiData->taskBlockSize[j]);
 						if (quiData->taskBlockSize[j] < 2) {
-							global_log->error() << "Task block size in "
+							Log::global_log->error() << "Task block size in "
 												<< (char) (dimension + j)
 												<< " direction is <2 and thereby invalid! ("
 												<< quiData->taskBlockSize[j] << ")"
-												<< endl;
+												<< std::endl;
 							Simulation::exit(1);
 						}
 					}
@@ -253,12 +252,12 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 				}
 			}
 #else
-			global_log->warning() << "Found quicksched traversal data in config "
+			Log::global_log->warning() << "Found quicksched traversal data in config "
 								  << "but mardyn was compiled without quicksched support! "
-								  << "(make ENABLE_QUICKSCHED=1)" << endl;
+								  << "(make ENABLE_QUICKSCHED=1)" << std::endl;
 #endif
 		} else {
-			global_log->warning() << "Unknown traversal type: " << traversalType << endl;
+			Log::global_log->warning() << "Unknown traversal type: " << traversalType << std::endl;
 		}
 		++i;
 	}
@@ -302,12 +301,12 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells, con
 					traversalPointerReference = new C08CellPairTraversal<CellTemplate, true>(cells, dims);
 					break;
 				case traversalNames::QSCHED: {
-					mardyn_assert((is_base_of<ParticleCellBase, CellTemplate>::value));
+					mardyn_assert((std::is_base_of<ParticleCellBase, CellTemplate>::value));
 					auto *quiData = dynamic_cast<QuickschedTraversalData *>(traversalData);
 					traversalPointerReference = new QuickschedTraversal<CellTemplate>(cells, dims, quiData->taskBlockSize);
 				} break;
 				default:
-					global_log->error() << "Unknown traversal data found in TraversalTuner._traversals!" << endl;
+					Log::global_log->error() << "Unknown traversal data found in TraversalTuner._traversals!" << std::endl;
 					Simulation::exit(1);
 			}
 		}
@@ -385,7 +384,7 @@ inline bool TraversalTuner<CellTemplate>::isTraversalApplicable(
 		ret = true;
 		break;
 	default:
-		global_log->warning() << "unknown traversal given in TraversalTuner::isTraversalApplicable, assuming that is applicable" << std::endl;
+		Log::global_log->warning() << "unknown traversal given in TraversalTuner::isTraversalApplicable, assuming that is applicable" << std::endl;
 	}
 	return ret;
 }

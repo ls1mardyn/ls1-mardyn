@@ -26,7 +26,7 @@ MardynConfigurationParameters::MardynConfigurationParameters(const MardynConfigu
 	addParameter(new ParameterWithStringValue("ConfigurationParameters.ScenarioName", "Scenario name", "Name of the scenario (determines the base name of the output files)",
 			Parameter::LINE_EDIT, false, other.getScenarioName()));
 
-	std::vector<string> choices;
+	std::vector<std::string> choices;
 	choices.push_back(MardynConfiguration::OutputFormat_XML);
 	choices.push_back(MardynConfiguration::OutputFormat_LEGACY);
 	addParameter(new ParameterWithChoice("ConfigurationParameters.fileformat", "Configuration File Format",
@@ -48,7 +48,7 @@ MardynConfigurationParameters::MardynConfigurationParameters(const MardynConfigu
 	addParameter(new ParameterWithBool("ConfigurationParameters.principalAxisTrafo", "Perform principal axis transformation", "Perform a principal axis transformation for each component\nwhen writing the Mardyn phasespace file.",
 				Parameter::CHECKBOX, false, other.performPrincipalAxisTransformation()));
 
-	std::vector<string> parChoices;
+	std::vector<std::string> parChoices;
 	parChoices.push_back(MardynConfiguration::ParallelisationType_DOMAINDECOMPOSITION);
 	parChoices.push_back(MardynConfiguration::ParallelisationType_KDDECOMPOSITION);
 	parChoices.push_back(MardynConfiguration::ParallelisationType_NONE);
@@ -56,7 +56,7 @@ MardynConfigurationParameters::MardynConfigurationParameters(const MardynConfigu
 				"- DomainDecomposition: standard parallelisation method\n- KDDecomposition: parallelisation with dynamic load balancing (recommended)\n- NONE: no parallelisation",
 				Parameter::COMBOBOX, false, parChoices, other.getParallelisationTypeString()));
 
-	std::vector<string> containerChoices;
+	std::vector<std::string> containerChoices;
 	containerChoices.push_back(MardynConfiguration::ContainerType_LINKEDCELLS);
 	containerChoices.push_back(MardynConfiguration::ContainerType_ADAPTIVELINKEDCELLS);
 	addParameter(new ParameterWithChoice("ConfigurationParameters.ContainerType", "Container Type",
@@ -92,10 +92,10 @@ MardynConfigurationParameters::~MardynConfigurationParameters() {
 
 void MardynConfigurationParameters::setParameterValue(MardynConfiguration& config, const Parameter* parameter, const std::string valueName) {
 	if (valueName == "ScenarioName") {
-		string scenarioName = dynamic_cast<const ParameterWithStringValue*>(parameter)->getStringValue();
+		std::string scenarioName = dynamic_cast<const ParameterWithStringValue*>(parameter)->getStringValue();
 		config.setScenarioName(scenarioName);
 	} else if (valueName == "fileformat") {
-		string choice = dynamic_cast<const ParameterWithChoice*>(parameter)->getStringValue();
+		std::string choice = dynamic_cast<const ParameterWithChoice*>(parameter)->getStringValue();
 		config.setOutputFormat(choice);
 	} else if (valueName == "timesteplength") {
 		double timestepLength = dynamic_cast<const ParameterWithDoubleValue*>(parameter)->getValue();
@@ -113,10 +113,10 @@ void MardynConfigurationParameters::setParameterValue(MardynConfiguration& confi
 		bool NVE = dynamic_cast<const ParameterWithBool*>(parameter)->getValue();
 		config.setNVE(NVE);
 	} else if (valueName == "ParallelisationType") {
-		string choice = dynamic_cast<const ParameterWithChoice*>(parameter)->getStringValue();
+		std::string choice = dynamic_cast<const ParameterWithChoice*>(parameter)->getStringValue();
 		config.setParallelisationType(choice);
 	} else if (valueName == "ContainerType") {
-		string choice = dynamic_cast<const ParameterWithChoice*>(parameter)->getStringValue();
+		std::string choice = dynamic_cast<const ParameterWithChoice*>(parameter)->getStringValue();
 		config.setContainerType(choice);
 	} else if (valueName == "hasStatisticsWriter") {
 		bool hasStatisticsWriter = dynamic_cast<const ParameterWithBool*>(parameter)->getValue();
@@ -131,8 +131,8 @@ void MardynConfigurationParameters::setParameterValue(MardynConfiguration& confi
 		bool hasResultWriter = dynamic_cast<const ParameterWithBool*>(parameter)->getValue();
 		config.setHasResultWriter(hasResultWriter);
 	} else {
-		const string firstPart = firstSubString(".", valueName);
-		const string secondPart = remainingSubString(".", valueName);
+		const std::string firstPart = firstSubString(".", valueName);
+		const std::string secondPart = remainingSubString(".", valueName);
 
 		if (firstPart == "ResultWriter") {
 			setOutputConfigurationParameter(config.getResultWriterConfig(), parameter, secondPart);
@@ -143,7 +143,7 @@ void MardynConfigurationParameters::setParameterValue(MardynConfiguration& confi
 		} else if (firstPart == "VTKGridWriter") {
 			setOutputConfigurationParameter(config.getVtkGridWriterConfig(), parameter, secondPart);
 		} else {
-			std::cout << "Invalid Parameter in ConfigurationParameters::setParameterValue(): " << endl;
+			std::cout << "Invalid Parameter in ConfigurationParameters::setParameterValue(): " << std::endl;
 			parameter->print();
 			exit(-1);
 		}
@@ -160,13 +160,13 @@ void MardynConfigurationParameters::addOutputConfigurationParameters(const Outpu
 
 void MardynConfigurationParameters::setOutputConfigurationParameter(OutputConfiguration& config, const Parameter* parameter, const std::string& valueName) {
 	if (valueName == "Prefix") {
-		string prefix = dynamic_cast<const ParameterWithStringValue*>(parameter)->getStringValue();
+		std::string prefix = dynamic_cast<const ParameterWithStringValue*>(parameter)->getStringValue();
 		config.setOutputPrefix(prefix);
 	} else if (valueName == "Frequency") {
 		int frequency = dynamic_cast<const ParameterWithIntValue*>(parameter)->getValue();
 		config.setOutputFrequency(frequency);
 	} else {
-		std::cout << "Invalid Parameter in ConfigurationParameters::setParameterValue(): " << endl;
+		std::cout << "Invalid Parameter in ConfigurationParameters::setParameterValue(): " << std::endl;
 		parameter->print();
 		exit(-1);
 	}

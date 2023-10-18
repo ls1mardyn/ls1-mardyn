@@ -10,14 +10,14 @@
 #include "bhfmm/fft/FFTSettings_preprocessor.h" //tmp include for the typedef FFT_precision
 #include "bhfmm/fft/FFTDataContainer.h"
 #include "bhfmm/fft/tools/fft_utils.h"
-#include <stdlib.h> 
+#include <stdlib.h>
 
 /*
  * Storage for blocks, can be used with scaling Blocks (scalBlock)
- * 
+ *
  * blocks[i] is a matrix reprensenting the ith block
  * Convention: block 0 contain the terms of lowest order
- *  => source matrix in ascending block (block 0 is the top of the matrix), 
+ *  => source matrix in ascending block (block 0 is the top of the matrix),
  *      tf and target matrices in descending blocks (block 0 is the lower part of the matrix)
  */
 class FFTDataContainer_scalBlocks_v0: public FFTDataContainer {

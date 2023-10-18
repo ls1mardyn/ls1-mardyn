@@ -140,13 +140,12 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 									const MPI_Datatype& type, MessageType msgType,
 									std::vector<Molecule>& invalidParticles, bool mightUseInvalidParticles,
 									bool doHaloPositionCheck, bool removeFromContainer) {
-	global_log->debug() << _rank << std::endl;
 	_sendBuf.clear();
 
 	const unsigned int numHaloInfo = _haloInfo.size();
 	switch (msgType){
 		case MessageType::LEAVING_AND_HALO_COPIES: {
-			global_log->debug() << "sending halo and boundary particles together" << std::endl;
+			Log::global_log->debug() << "sending halo and boundary particles together" << std::endl;
 			// first leaving particles:
 			for (unsigned int p = 0; p < numHaloInfo; p++) {
 				if (moleculeContainer->isInvalidParticleReturner() and mightUseInvalidParticles) {
@@ -166,7 +165,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			break;
 		}
 		case MessageType::LEAVING_ONLY: {
-			global_log->debug() << "sending leaving particles only" << std::endl;
+			Log::global_log->debug() << "sending leaving particles only" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
 				if (moleculeContainer->isInvalidParticleReturner() and mightUseInvalidParticles) {
 					collectLeavingMoleculesFromInvalidParticles(invalidParticles, _haloInfo[p]._leavingLow,
@@ -179,7 +178,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			break;
 		}
 		case MessageType::HALO_COPIES: {
-			global_log->debug() << "sending halo particles only" << std::endl;
+			Log::global_log->debug() << "sending halo particles only" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
 				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh,
 						_haloInfo[p]._shift, false, HALO, doHaloPositionCheck);
@@ -187,7 +186,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			break;
 		}
 		case MessageType::FORCES: {
-			global_log->debug() << "sending forces" << std::endl;
+			Log::global_log->debug() << "sending forces" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
 				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh,
 					_haloInfo[p]._shift, false, FORCES);
@@ -195,30 +194,30 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			break;
 		}
 		default:
-			global_log->error() << "[CommunicationPartner] MessageType unknown!" << std::endl;
+			Log::global_log->error() << "[CommunicationPartner] MessageType unknown!" << std::endl;
 			Simulation::exit(1);
 	}
 
 	#ifndef NDEBUG
 		const int numLeaving = _sendBuf.getNumLeaving();
 		const int numHalo = _sendBuf.getNumHalo();
-		global_log->debug() << "Buffer contains " << numLeaving << " leaving particles with IDs " << std::endl;
+		Log::global_log->debug() << "Buffer contains " << numLeaving << " leaving particles with IDs " << std::endl;
 		std::ostringstream buf1;
 		for (int i = 0; i < numLeaving; ++i) {
 			Molecule m;
 			_sendBuf.readLeavingMolecule(i, m);
 			buf1 << m.getID() << " ";
 		}
-		global_log->debug() << buf1.str() << std::endl;
+		Log::global_log->debug() << buf1.str() << std::endl;
 
-		global_log->debug() << "and " << numHalo << " halo particles with IDs " << std::endl;
+		Log::global_log->debug() << "and " << numHalo << " halo particles with IDs " << std::endl;
 		std::ostringstream buf2;
 		for (int i = 0; i < numHalo; ++i) {
 			Molecule m;
 			_sendBuf.readHaloMolecule(i, m);
 			buf2 << m.getID() << " ";
 		}
-		global_log->debug() << buf2.str() << std::endl;
+		Log::global_log->debug() << buf2.str() << std::endl;
 
 
 	#endif
@@ -256,8 +255,8 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 			int numrecv;
 			MPI_CHECK(MPI_Get_count(_recvStatus, _sendBuf.getMPIDataType(), &numrecv));
                         #ifndef NDEBUG
-                                global_log->debug() << "Received byteCount from " << _rank << std::endl;
-                                global_log->debug() << "Preparing to receive " << numrecv << " bytes." << std::endl;
+                                Log::global_log->debug() << "Received byteCount from " << _rank << std::endl;
+                                Log::global_log->debug() << "Preparing to receive " << numrecv << " bytes." << std::endl;
                         #endif
 			_recvBuf.resizeForRawBytes(numrecv);
 			MPI_CHECK(MPI_Irecv(_recvBuf.getDataForSending(), numrecv, _sendBuf.getMPIDataType(), _rank, 99, comm, _recvRequest));
@@ -266,8 +265,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 	return _countReceived;
 }
 bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool force) {
-	using Log::global_log;
-	if (_countReceived and not _msgReceived) {
+		if (_countReceived and not _msgReceived) {
 		int flag = 1;
 		if (_countTested > 10) {
 			// some MPI (Intel, IBM) implementations can produce deadlocks using MPI_Test without any MPI_Wait
@@ -288,24 +286,24 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				_recvBuf.resizeForReceivingMolecules(numLeaving, numHalo);
 
 #ifndef NDEBUG
-				global_log->debug() << "Receiving particles from " << _rank << std::endl;
-				global_log->debug() << "Buffer contains " << numLeaving << " leaving particles with IDs " << std::endl;
+				Log::global_log->debug() << "Receiving particles from " << _rank << std::endl;
+				Log::global_log->debug() << "Buffer contains " << numLeaving << " leaving particles with IDs " << std::endl;
 				std::ostringstream buf1;
 				for (unsigned long i = 0; i < numLeaving; ++i) {
 					Molecule m;
 					_recvBuf.readLeavingMolecule(i, m);
 					buf1 << m.getID() << " ";
 				}
-				global_log->debug() << buf1.str() << std::endl;
+				Log::global_log->debug() << buf1.str() << std::endl;
 
-				global_log->debug() << "and " << numHalo << " halo particles with IDs " << std::endl;
+				Log::global_log->debug() << "and " << numHalo << " halo particles with IDs " << std::endl;
 				std::ostringstream buf2;
 				for (unsigned long i = 0; i < numHalo; ++i) {
 					Molecule m;
 					_recvBuf.readHaloMolecule(i, m);
 					buf2 << m.getID() << " ";
 				}
-				global_log->debug() << buf2.str() << std::endl;
+				Log::global_log->debug() << buf2.str() << std::endl;
 #endif
 
 				global_simulation->timers()->start("COMMUNICATION_PARTNER_TEST_RECV");
@@ -340,8 +338,8 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 
 
 #ifndef NDEBUG
-				global_log->debug() << "Receiving particles from " << _rank << std::endl;
-				global_log->debug() << "Buffer contains " << numForces << " force particles with IDs " << std::endl;
+				Log::global_log->debug() << "Receiving particles from " << _rank << std::endl;
+				Log::global_log->debug() << "Buffer contains " << numForces << " force particles with IDs " << std::endl;
 				std::ostringstream buf1;
 
 				for(unsigned long i = 0; i < numForces; ++i) {
@@ -349,7 +347,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 					_recvBuf.readForceMolecule(i, m);
 					buf1 << m.getID() << " ";
 				}
-				global_log->debug() << buf1.str() << std::endl;
+				Log::global_log->debug() << buf1.str() << std::endl;
 
 
 #endif
@@ -403,19 +401,18 @@ void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, cons
 }
 
 void CommunicationPartner::deadlockDiagnosticSendRecv() {
-	using Log::global_log;
 
 	deadlockDiagnosticSend();
 
 	if (not _countReceived and _isReceiving) {
-		global_log->warning() << "Probe request to " << _rank << " not yet completed" << std::endl;
+		Log::global_log->warning() << "Probe request to " << _rank << " not yet completed" << std::endl;
 	}
 
 	deadlockDiagnosticRecv();
 }
 
 void CommunicationPartner::deadlockDiagnosticSend() {
-	// intentionally using std::cout instead of global_log, we want the messages from all processes
+	// intentionally using std::cout instead of Log::global_log, we want the messages from all processes
 	if (not _msgSent and _isSending) {
 		Log::global_log->warning() << "Send request to " << _rank << " not yet completed" << std::endl;
 	}
@@ -439,8 +436,8 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 													bool doHaloPositionCheck) {
 	using std::vector;
 	global_simulation->timers()->start("COMMUNICATION_PARTNER_INIT_SEND");
-	vector<vector<Molecule>> threadData;
-	vector<int> prefixArray;
+	std::vector<std::vector<Molecule>> threadData;
+	std::vector<int> prefixArray;
 
 	// compute how many molecules are already in of this type: - adjust for Forces
 	unsigned long numMolsAlreadyIn = 0;
@@ -464,8 +461,6 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 				: ParticleIterator::Type::ALL_CELLS;
 		const int numThreads = mardyn_get_num_threads();
 		const int threadNum = mardyn_get_thread_num();
-		auto begin = moleculeContainer->regionIterator(lowCorner, highCorner, iteratorType);
-
 		#if defined (_OPENMP)
 		#pragma omp master
 		#endif
@@ -478,7 +473,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		#pragma omp barrier
 		#endif
 
-		for (auto i = begin; i.isValid(); ++i) {
+		for (auto i = moleculeContainer->regionIterator(lowCorner, highCorner, iteratorType); i.isValid(); ++i) {
 			//traverse and gather all molecules in the cells containing part of the box specified as parameter
 			//i is a pointer to a Molecule; (*i) is the Molecule
 			threadData[threadNum].push_back(*i);
@@ -587,14 +582,14 @@ void CommunicationPartner::collectLeavingMoleculesFromInvalidParticles(std::vect
 
 	// compute how many molecules are already in of this type: - adjust for Forces
 
-	auto removeBegin = std::partition(invalidParticles.begin(), invalidParticles.end(), [=](const Molecule& m) {
-	  // if this is true, it will be put in the first part of the partition, if it is false, in the second.
+	const auto removeBegin = std::partition(invalidParticles.begin(), invalidParticles.end(), [=](const Molecule& m) {
+	  // if this returns true, the particle will be put in the first part of the partition, else in the second.
 	  return not m.inBox(lowCorner, highCorner);
 	});
 
-	unsigned long numMolsAlreadyIn = _sendBuf.getNumLeaving();
-	int totalNumMolsAppended = invalidParticles.end() - removeBegin;
-	// resize the send buffer
+	auto numMolsAlreadyIn = _sendBuf.getNumLeaving();
+	const auto totalNumMolsAppended = invalidParticles.end() - removeBegin;
+	// resize the send-buffer
 	_sendBuf.resizeForAppendingLeavingMolecules(totalNumMolsAppended);
 
 	Domain* domain = global_simulation->getDomain();
@@ -603,7 +598,7 @@ void CommunicationPartner::collectLeavingMoleculesFromInvalidParticles(std::vect
 	// it will add the given molecule to _sendBuf with the necessary shift.
 	auto shiftAndAdd = [domain, lowCorner, highCorner, shift, this, &numMolsAlreadyIn](Molecule& m) {
 		if (not m.inBox(lowCorner, highCorner)) {
-			global_log->error() << "trying to remove a particle that is not in the halo region" << std::endl;
+			Log::global_log->error() << "trying to remove a particle that is not in the halo region" << std::endl;
 			Simulation::exit(456);
 		}
 		for (int dim = 0; dim < 3; dim++) {
@@ -661,7 +656,6 @@ void CommunicationPartner::print(std::ostream& stream) const {
 				<< " ["	<< region._copiesLow[2] << ", " << region._copiesHigh[2] << ")" << std::endl;
 		stream << "  offset: (" << region._offset[0] << ", " << region._offset[1] << ", " << region._offset[2] << ")" << std::endl;
 		stream << "  shift:	(" << region._shift[0] << ", " << region._shift[1]	<< ", "<< region._shift[2] << ")" << std::endl;
-
 	}
 }
 

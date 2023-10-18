@@ -10,14 +10,14 @@
 /*!
  * \def CPPUNIT_NO_TESTPLUGIN
  * \brief If defined, then plug-in related classes and functions will not be compiled.
- * 
+ *
  * \internal
  * CPPUNIT_HAVE_WIN32_DLL_LOADER
  * If defined, Win32 implementation of DynamicLibraryManager will be used.
- * 
+ *
  * CPPUNIT_HAVE_BEOS_DLL_LOADER
  * If defined, BeOs implementation of DynamicLibraryManager will be used.
- * 
+ *
  * CPPUNIT_HAVE_UNIX_DLL_LOADER
  * If defined, Unix implementation (dlfcn.h) of DynamicLibraryManager will be used.
  */
@@ -27,7 +27,7 @@
  * \ingroup WritingTestPlugIn
  * \brief A macro to export a function from a dynamic library
  *
- * This macro export the C function following it from a dynamic library. 
+ * This macro export the C function following it from a dynamic library.
  * Exporting the function makes it accessible to the DynamicLibraryManager.
  *
  * Example of usage:

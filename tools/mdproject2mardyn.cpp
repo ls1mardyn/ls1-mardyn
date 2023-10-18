@@ -5,20 +5,19 @@
 #include <libgen.h>
 #include "../src/External/tinyxpath/xpath_static.h"
 
-using namespace std;
 
 int main(int argc, char *argv[], char *env[])
 {
 
   if (argc < 4)
   {
-    cout
+    std::cout
         << "Syntax: mdproject2mardyn <inputfile.cfg> <inputfile.inp> <outputfile.xml>"
-        << endl;
+        << std::endl;
     exit(1);
   }
   // define the output filename
-  string outfile_name = "new-";
+  std::string outfile_name = "new-";
   outfile_name.append(argv[2]);
 
   TiXmlDocument doc;
@@ -70,15 +69,15 @@ int main(int argc, char *argv[], char *env[])
   experiment->LinkEndChild(data_structure);
 
   // Frist parse the .cfg file
-  string token;
+  std::string token;
   fstream inputfstream;
   inputfstream.open(argv[1]);
   if (!inputfstream.is_open())
   {
-    cout << "Error opening file " << argv[1] << " for reading.";
+    std::cout << "Error opening file " << argv[1] << " for reading.";
     exit(1);
   }
-  string output_format, output_freq, output_file = "";
+  std::string output_format, output_freq, output_file = "";
 
   while (inputfstream)
   {
@@ -133,9 +132,9 @@ int main(int argc, char *argv[], char *env[])
       }
     } else if (token == "cellsInCutoffRadius")
     {
-      cout
+      std::cout
           << "Warning: Can't handle datastructures which are not linked cells."
-          << endl;
+          << std::endl;
       inputfstream >> token;
     } else if (token == "output")
     {
@@ -157,8 +156,8 @@ int main(int argc, char *argv[], char *env[])
       }
     } else
     {
-      cerr << "Warning: Unknown token '" << token << "' at position "
-          << inputfstream.tellg() << endl;
+      std::cerr << "Warning: Unknown token '" << token << "' at position "
+          << inputfstream.tellg() << std::endl;
     }
   }
 
@@ -168,7 +167,7 @@ int main(int argc, char *argv[], char *env[])
   inputfstream.open(argv[2]);
   if (!inputfstream.is_open())
   {
-    cout << "Error opening file " << argv[2] << " for reading.";
+    std::cout << "Error opening file " << argv[2] << " for reading.";
     exit(1);
   }
 
@@ -216,7 +215,7 @@ int main(int argc, char *argv[], char *env[])
       dcomponents->SetAttribute("amount", numcomponents);
       components_data->LinkEndChild(dcomponents);
 
-      string x, y, z, m, sigma, eps, xi, eta;
+      std::string x, y, z, m, sigma, eps, xi, eta;
       unsigned int i, j;
 
       for (i=0; i<numcomponents; ++i)
@@ -267,7 +266,7 @@ int main(int argc, char *argv[], char *env[])
         }
         for (j=0; j<numdipoles; ++j)
         {
-          string eMyx, eMyy, eMyz, absMy;
+          std::string eMyx, eMyy, eMyz, absMy;
           TiXmlElement * dipole = new TiXmlElement( "dipole" );
           dipole->SetAttribute("id", j+1);
           comp->LinkEndChild(dipole);
@@ -308,7 +307,7 @@ int main(int argc, char *argv[], char *env[])
         }
         for (j=0; j<numquadrupoles; ++j)
         {
-          string eQx, eQy, eQz, absQ;
+          std::string eQx, eQy, eQz, absQ;
           TiXmlElement * quadrupole = new TiXmlElement( "quadrupole" );
           quadrupole->SetAttribute("id", j+1);
           comp->LinkEndChild(quadrupole);
@@ -348,7 +347,7 @@ int main(int argc, char *argv[], char *env[])
           quadrupole->LinkEndChild(ljabsQ);
         }
 
-        string IDummy1, IDummy2, IDummy3;
+        std::string IDummy1, IDummy2, IDummy3;
         inputfstream >> IDummy1 >> IDummy2 >> IDummy3;
 
         TiXmlElement * dummy1 = new TiXmlElement( "dummy1" );
@@ -398,7 +397,7 @@ int main(int argc, char *argv[], char *env[])
 
       // the rest of the file reflects the new phase space point file
       // and is thus written to a file.
-      ofstream outfile;
+      std::ofstream outfile;
       outfile.open(outfile_name.c_str() );
       if (outfile.is_open())
       {
@@ -406,18 +405,18 @@ int main(int argc, char *argv[], char *env[])
         while (inputfstream)
         {
           getline(inputfstream, token);
-          outfile << token << endl;
+          outfile << token << std::endl;
         }
         outfile.close();
       } else
       {
-        cout << "Unable to open file " << outfile_name << " for writing.";
+        std::cout << "Unable to open file " << outfile_name << " for writing.";
         exit(1);
       }
     } else
     {
-      cerr << "Warning: Unknown token '" << token << "' at position "
-          << inputfstream.tellg() << endl;
+      std::cerr << "Warning: Unknown token '" << token << "' at position "
+          << inputfstream.tellg() << std::endl;
     }
   }
 
@@ -426,23 +425,23 @@ int main(int argc, char *argv[], char *env[])
   // Inform the user which command line arguments to use
   if (output_format != "")
   {
-    cout << " * Detected an output token. Please invoke mardyn like this:"
-        << endl << endl;
+    std::cout << " * Detected an output token. Please invoke mardyn like this:"
+        << std::endl << std::endl;
     if (output_freq == "")
     {
-      cout << "   MarDyn -o " << output_format.substr(1) << " -p "
-          << output_file << endl << endl;
+      std::cout << "   MarDyn -o " << output_format.substr(1) << " -p "
+          << output_file << std::endl << std::endl;
     } else
     {
-      cout << "   MarDyn -o " << output_format.substr(1) << " -p "
-          << output_file << " -f " << output_freq << endl << endl;
+      std::cout << "   MarDyn -o " << output_format.substr(1) << " -p "
+          << output_file << " -f " << output_freq << std::endl << std::endl;
     }
-    cout
+    std::cout
         << "   Alternatively you can use an appropriate input-file (not yet generated with this tool)."
-        << endl;
+        << std::endl;
   }
-  cout << " * the phase space point file has been saved in '" << outfile_name
-      << "'" << endl;
+  std::cout << " * the phase space point file has been saved in '" << outfile_name
+      << "'" << std::endl;
 
   // Write the resulting XML tree to the file specified
   doc.LinkEndChild(decl);

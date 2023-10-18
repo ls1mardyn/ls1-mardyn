@@ -5,7 +5,6 @@
 #include "LongRangeCorrection.h"
 
 #include "utils/Logger.h"
-using Log::global_log;
 
 class Simulation;
 class Domain;
@@ -22,9 +21,9 @@ public:
     };
 	~NoLRC() override = default;
 
-	void init() override { global_log->info() << "No long range correction is used: UpotCorr = VirialCorr = 0" << std::endl; }
-	void readXML(XMLfileUnits& /* xmlconfig */) {}
-	void calculateLongRange() {
+	virtual void init() { Log::global_log->info() << "No long range correction is used: UpotCorr = VirialCorr = 0" << std::endl; }
+	virtual void readXML(XMLfileUnits& /* xmlconfig */) {}
+	virtual void calculateLongRange() {
         _domain->setUpotCorr(0.);
         _domain->setVirialCorr(0.);
       };

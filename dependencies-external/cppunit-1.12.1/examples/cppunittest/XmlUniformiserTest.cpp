@@ -3,7 +3,7 @@
 #include "XmlUniformiserTest.h"
 #include "XmlUniformiser.h"
 
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( XmlUniformiserTest, 
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( XmlUniformiserTest,
                                        unitTestToolSuiteName() );
 
 
@@ -17,26 +17,26 @@ XmlUniformiserTest::~XmlUniformiserTest()
 }
 
 
-void 
+void
 XmlUniformiserTest::setUp()
 {
 }
 
 
-void 
+void
 XmlUniformiserTest::tearDown()
 {
 }
 
 
-void 
+void
 XmlUniformiserTest::testEmpty()
 {
   check( "", "" );
 }
 
 
-void 
+void
 XmlUniformiserTest::testSkipProcessed()
 {
   check( "<?xml version=\"1.0\" encoding='ISO-8859-1' ?>",
@@ -44,15 +44,15 @@ XmlUniformiserTest::testSkipProcessed()
 }
 
 
-void 
+void
 XmlUniformiserTest::testOpenElementWithoutAttributeButSomeSpaces()
 {
-  check( "   <Test   >   ", 
+  check( "   <Test   >   ",
          "<Test>" );
 }
 
 
-void 
+void
 XmlUniformiserTest::testOpenCloseElement()
 {
   check( "  <TestName  >   </TestName  >  ",
@@ -60,7 +60,7 @@ XmlUniformiserTest::testOpenCloseElement()
 }
 
 
-void 
+void
 XmlUniformiserTest::testElementWithEmptyAttribute()
 {
   check( "<TestName id=\"\">",
@@ -68,7 +68,7 @@ XmlUniformiserTest::testElementWithEmptyAttribute()
 }
 
 
-void 
+void
 XmlUniformiserTest::testElementWithEmptyAttributeButSomeSpaces()
 {
   check( "<TestName  id  = \"\" >",
@@ -76,7 +76,7 @@ XmlUniformiserTest::testElementWithEmptyAttributeButSomeSpaces()
 }
 
 
-void 
+void
 XmlUniformiserTest::testElementWithOneAttribute()
 {
   check( "<FailedTest id=\"123\">",
@@ -84,7 +84,7 @@ XmlUniformiserTest::testElementWithOneAttribute()
 }
 
 
-void 
+void
 XmlUniformiserTest::testElementWithThreeAttributes()
 {
   check( "<FailedTest  id = \"7\" date-format= \"iso-8901\"  "
@@ -93,7 +93,7 @@ XmlUniformiserTest::testElementWithThreeAttributes()
 }
 
 
-void 
+void
 XmlUniformiserTest::testElementWithContent()
 {
   check( "<Element>\nContent\n</Element>\n",
@@ -101,7 +101,7 @@ XmlUniformiserTest::testElementWithContent()
 }
 
 
-void 
+void
 XmlUniformiserTest::testElementsHierarchyWithContents()
 {
   check( "<TestRuns date-format=\"iso-8901\">\n"
@@ -117,7 +117,7 @@ XmlUniformiserTest::testElementsHierarchyWithContents()
 }
 
 
-void 
+void
 XmlUniformiserTest::testSkipComment()
 {
   check( "<!-- skip comment-->",
@@ -125,18 +125,18 @@ XmlUniformiserTest::testSkipComment()
 }
 
 
-void 
+void
 XmlUniformiserTest::testAssertXmlEqual()
 {
-  CPPUNIT_ASSERT_ASSERTION_FAIL( 
+  CPPUNIT_ASSERT_ASSERTION_FAIL(
      CPPUNITTEST_ASSERT_XML_EQUAL( "<Test>", "<Tes>" ) );
-  CPPUNIT_ASSERT_ASSERTION_PASS( 
+  CPPUNIT_ASSERT_ASSERTION_PASS(
      CPPUNITTEST_ASSERT_XML_EQUAL( "<Test>", "<Test>" ) );
 }
 
 
-void 
-XmlUniformiserTest::check( const std::string &xml, 
+void
+XmlUniformiserTest::check( const std::string &xml,
                            const std::string &expectedStrippedXml )
 {
   std::string actual = XmlUniformiser( xml ).stripped();

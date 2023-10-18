@@ -75,7 +75,7 @@ public:
 	const Quadrupole& quadrupole(unsigned int i) const { return _quadrupoles[i]; }
 
 	void setNumMolecules(unsigned long num) { _numMolecules = num; }  /**< set the number of molecules for this component */
-	void incNumMolecules() { ++_numMolecules; }  /**< increase the number of molecules for this component by 1 */ 
+	void incNumMolecules() { ++_numMolecules; }  /**< increase the number of molecules for this component by 1 */
 	void incNumMolecules(int N) { _numMolecules += N; }  /**< increase the number of molecules for this component by N */
 	unsigned long getNumMolecules() const { return _numMolecules; }  /**< get the number of molecules (global) of the component */
 
@@ -92,6 +92,9 @@ public:
 	void addQuadrupole(Quadrupole& quadrupolesite);
 	void addQuadrupole(double x, double y, double z,
 	                   double eQx, double eQy, double eQz, double eQabs);
+
+	/** functions to fix the LJTS after rc is read in the simulation*/
+	void updateAllLJcentersShift(double rc);
 
 	/** delete the last site stored in the vector -- these are used by the external generators*/
 	void deleteLJCenter() { _ljcenters.pop_back() ;}
@@ -136,6 +139,7 @@ public:
 private:
 
 	void updateMassInertia(Site& site);
+	double calculateLJshift(double eps, double sigma, double rc) const;
 
 	unsigned int _id; /**< component ID */
 	// LJcenter,Dipole,Quadrupole have different size -> not suitable to store in a _Site_-array
@@ -159,9 +163,9 @@ private:
 	double _E_trans; // translational energy
 	double _E_rot; // rotational energy
 	double _T; // temperature
-	
+
 	bool _isStockmayer; //Checks whether component is a Stockmayer fluid to determine moments of inertia
-	
+
 	std::string _name; /**< name of the component/molecule type */
 
 	/**

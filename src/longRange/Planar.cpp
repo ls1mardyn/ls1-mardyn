@@ -15,13 +15,11 @@
 #include "utils/xmlfileUnits.h"
 #include "utils/FileUtils.h"
 
-using namespace std;
-using Log::global_log;
 
 Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition,
 		ParticleContainer* particleContainer, unsigned slabs, Simulation* simulation)
 {
-	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
+	Log::global_log->info() << "Long Range Correction for planar interfaces is used" << std::endl;
 	_nStartWritingProfiles = 1;
 	_nWriteFreqProfiles = 10;
 	_nStopWritingProfiles = 100;
@@ -36,12 +34,12 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 
 void Planar::init()
 {
-	global_log->info() << "[Long Range Correction] Initializing" << endl;
+	Log::global_log->info() << "[Long Range Correction] Initializing" << std::endl;
 
 	//_smooth=true; // Deactivate this for transient simulations!
 	_smooth=false;  //true; <-- only applicable to static density profiles
-	
-	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
+
+	std::vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
 	numComp=components.size();
 	resizeExactly(numLJ, numComp);
 	resizeExactly(numDipole, numComp);
@@ -82,7 +80,7 @@ void Planar::init()
 	resizeExactly(rhoDipole, _slabs*numDipoleSum);
 	resizeExactly(rhoDipoleL, _slabs*numDipoleSum);
 	resizeExactly(eLong, numLJSum);
-	
+
 	unsigned counter=0;
 	for (unsigned i =0; i< numComp; i++){		// Determination of the elongation of the Lennard-Jones sites
 		for (unsigned j=0; j< components[i].numLJcenters(); j++){
@@ -104,7 +102,7 @@ void Planar::init()
 	for (unsigned i=0; i < _slabs*numDipoleSum; i++){
 		rhoDipole[i]=0;
 	}
-	
+
 	unsigned dpcount=0;
 	for (unsigned i=0; i<numComp; i++){
 	//	for (unsigned j=0; j<numDipole[i]; j++){
@@ -126,21 +124,21 @@ void Planar::init()
 			muSquare[dpcount]=my2;//dipolej.absMy()*dipolej.absMy();
 			dpcount++;
 #ifndef NDEBUG
-			cout << dpcount << "\tmu: " << muSquare[dpcount-1] << endl;
+			std::cout << dpcount << "\tmu: " << muSquare[dpcount-1] << std::endl;
 #endif
 		}
-	} 	
-	
+	}
+
 	ymax=_domain->getGlobalLength(1);
 	boxlength[0]=_domain->getGlobalLength(0);
 	boxlength[2]=_domain->getGlobalLength(2);
 	cutoff_slabs=cutoff*_slabs/ymax; // Number of slabs to cutoff
-	delta=ymax/_slabs;	
+	delta=ymax/_slabs;
 	V=ymax*_domain->getGlobalLength(0)*_domain->getGlobalLength(2); // Volume
-	
+
 	sint=_slabs;
 	simstep = 0;
-	
+
 	temp=_domain->getTargetTemperature(0);
 
 	if (_region.refPosID[0]+_region.refPosID[1] > 0) {
@@ -148,9 +146,9 @@ void Planar::init()
 		if (nullptr != _subject) {
 			this->update(_subject);
 			_subject->registerObserver(this);
-			global_log->info() << "Long Range Correction: Subject registered" << endl;
+			Log::global_log->info() << "Long Range Correction: Subject registered" << std::endl;
 		} else {
-			global_log->error() << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << endl;
+			Log::global_log->error() << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
 			Simulation::exit(-1);
 		}
 	}
@@ -158,15 +156,15 @@ void Planar::init()
 
 void Planar::readXML(XMLfileUnits& xmlconfig)
 {
-	global_log->info() << "[Long Range Correction] Reading xml config" << endl;
+	Log::global_log->info() << "[Long Range Correction] Reading xml config" << std::endl;
 
 	xmlconfig.getNodeValue("slabs", _slabs);
 	xmlconfig.getNodeValue("smooth", _smooth);
 	xmlconfig.getNodeValue("frequency", frequency);
-	
+
 	std::string strVal;
 	_region.refPosID[0] = 0; _region.refPosID[1] = 0;
-	
+
 	// In some cases, like for density gradients in the bulk, the planar LRC may be wrong, since it was mainly developed for interfaces.
 	// Therefore, a region can be specified wherein the LRC for the force is applied.
 	// In order to still get correct state values in the bulks, the LRC for the virial and potential energy is also applied outside of the region.
@@ -182,37 +180,37 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 		_region.refPos[0] = _region.actPos[0] = 0.0;
 		_region.refPos[1] = _region.actPos[1] = _domain->getGlobalLength(1);
 	}
-	
-	global_log->info() << "Long Range Correction: using " << _slabs << " slabs for profiles to calculate LRC." << endl;
-	global_log->info() << "Long Range Correction: sampling profiles every " << frequency << "th simstep." << endl;
-	global_log->info() << "Long Range Correction: profiles are smoothed (averaged over time): " << std::boolalpha << _smooth << endl;
-	global_log->info() << "Long Range Correction: force corrections are applied to particles within yRef = " << _region.refPos[0] << " (refID: " << _region.refPosID[0] << ") and " << _region.refPos[1] << " (refID: " << _region.refPosID[1] << ")" << endl;
-	global_log->info() << "Long Range Correction: pot. energy and virial corrections are applied within whole domain" << endl;
-	
+
+	Log::global_log->info() << "Long Range Correction: using " << _slabs << " slabs for profiles to calculate LRC." << std::endl;
+	Log::global_log->info() << "Long Range Correction: sampling profiles every " << frequency << "th simstep." << std::endl;
+	Log::global_log->info() << "Long Range Correction: profiles are smoothed (averaged over time): " << std::boolalpha << _smooth << std::endl;
+	Log::global_log->info() << "Long Range Correction: force corrections are applied to particles within yRef = " << _region.refPos[0] << " (refID: " << _region.refPosID[0] << ") and " << _region.refPos[1] << " (refID: " << _region.refPosID[1] << ")" << std::endl;
+	Log::global_log->info() << "Long Range Correction: pot. energy and virial corrections are applied within whole domain" << std::endl;
+
 	// write control
 	bool bRet1 = xmlconfig.getNodeValue("writecontrol/start", _nStartWritingProfiles);
 	bool bRet2 = xmlconfig.getNodeValue("writecontrol/frequency", _nWriteFreqProfiles);
 	bool bRet3 = xmlconfig.getNodeValue("writecontrol/stop", _nStopWritingProfiles);
 	if(_nWriteFreqProfiles < 1)
 	{
-		global_log->error() << "Long Range Correction: Write frequency < 1! Programm exit ..." << endl;
+		Log::global_log->error() << "Long Range Correction: Write frequency < 1! Programm exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 	if(_nStopWritingProfiles <= _nStartWritingProfiles)
 	{
-		global_log->error() << "Long Range Correction: Writing profiles 'stop' <= 'start'! Programm exit ..." << endl;
+		Log::global_log->error() << "Long Range Correction: Writing profiles 'stop' <= 'start'! Programm exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 	bool bInputIsValid = (bRet1 && bRet2 && bRet3);
 	if(true == bInputIsValid)
 	{
-		global_log->info() << "Long Range Correction->writecontrol: Start writing profiles at simstep: " << _nStartWritingProfiles << endl;
-		global_log->info() << "Long Range Correction->writecontrol: Writing profiles with frequency: " << _nWriteFreqProfiles << endl;
-		global_log->info() << "Long Range Correction->writecontrol: Stop writing profiles at simstep: " << _nStopWritingProfiles << endl;
+		Log::global_log->info() << "Long Range Correction->writecontrol: Start writing profiles at simstep: " << _nStartWritingProfiles << std::endl;
+		Log::global_log->info() << "Long Range Correction->writecontrol: Writing profiles with frequency: " << _nWriteFreqProfiles << std::endl;
+		Log::global_log->info() << "Long Range Correction->writecontrol: Stop writing profiles at simstep: " << _nStopWritingProfiles << std::endl;
 	}
 	else
 	{
-		global_log->error() << "Long Range Correction: Write control parameters not valid! Programm exit ..." << endl;
+		Log::global_log->error() << "Long Range Correction: Write control parameters not valid! Programm exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 }
@@ -255,7 +253,7 @@ void Planar::calculateLongRange() {
 				rhoDipole[index] += slabsPerV;
 			}
 		}
-	} 
+	}
 	if (simstep % frequency == 0){	// The Density Profile is only calculated once in 10 simulation steps
 
 		std::fill(rho_l.begin(), rho_l.end(), 0.0);
@@ -264,7 +262,7 @@ void Planar::calculateLongRange() {
 		std::fill(vTLJ.begin(), vTLJ.end(), 0.0);
 		std::fill(vNDLJ.begin(), vNDLJ.end(), 0.0);
 		std::fill(fLJ.begin(), fLJ.end(), 0.0);
-		
+
 		std::fill(fDipole.begin(), fDipole.end(), 0.0);
 		std::fill(uDipole.begin(), uDipole.end(), 0.0);
 		std::fill(vNDipole.begin(), vNDipole.end(), 0.0);
@@ -316,7 +314,7 @@ void Planar::calculateLongRange() {
 				rhoDipoleL[i]=rhoDipole[i]/(simstep+1);
 			}
 		}
-		
+
 		// Distribution of the Density Profile to every node
 		_domainDecomposition->collCommInit(_slabs*(numLJSum+numDipoleSum));
 		for (unsigned i=0; i < _slabs*numLJSum; i++) {
@@ -325,7 +323,7 @@ void Planar::calculateLongRange() {
 		for (unsigned i=0; i< _slabs*numDipoleSum; i++){
 			_domainDecomposition->collCommAppendDouble(rhoDipoleL[i]);
 		}
-	
+
 		_domainDecomposition->collCommAllreduceSum();
 		for (unsigned i=0; i < _slabs*numLJSum; i++) {
 			rho_l[i] = _domainDecomposition->collCommGetDouble();
@@ -333,11 +331,11 @@ void Planar::calculateLongRange() {
 		for (unsigned i=0; i< _slabs*numDipoleSum; i++){
 			rhoDipoleL[i] = _domainDecomposition->collCommGetDouble();
 		}
-		
+
 		_domainDecomposition->collCommFinalize();
 
-		for (unsigned ci = 0; ci < numComp; ++ci){		
-			for (unsigned cj = 0; cj < numComp; ++cj){	
+		for (unsigned ci = 0; ci < numComp; ++ci){
+			for (unsigned cj = 0; cj < numComp; ++cj){
 				ParaStrm& params = _domain->getComp2Params()(ci,cj);
 				params.reset_read();
 				for (unsigned si = 0; si < numLJ[ci]; ++si) { // Long Range Correction for Lennard-Jones sites
@@ -362,15 +360,15 @@ void Planar::calculateLongRange() {
 						}
 					}
 				}
-		
+
 				for (unsigned si=0; si< numDipole[ci]; si++){	//Long Range Correction for Dipoles
 					for (unsigned sj=0; sj< numDipole[cj]; sj++){
-						 dipoleDipole(ci,cj,si,sj);	
+						 dipoleDipole(ci,cj,si,sj);
 					}
 				}
 			}
-	 	} 
-	     
+	 	}
+
 		// Distribution of the Force, Energy and Virial to every Node
 		_domainDecomposition->collCommInit(_slabs*(5*numLJSum+4*numDipoleSum));
 		for (unsigned i=0; i<_slabs*numLJSum; i++){
@@ -385,7 +383,7 @@ void Planar::calculateLongRange() {
 			_domainDecomposition->collCommAppendDouble(fDipole[i]);
 			_domainDecomposition->collCommAppendDouble(vNDipole[i]);
 			_domainDecomposition->collCommAppendDouble(vTDipole[i]);
-		}	
+		}
 		_domainDecomposition->collCommAllreduceSum();
 		for (unsigned i=0; i<_slabs*numLJSum; i++){
 			uLJ[i]=_domainDecomposition->collCommGetDouble();
@@ -490,7 +488,7 @@ void Planar::calculateLongRange() {
 	// Setting the Energy and Virial correction
 	_domain->setUpotCorr(Upot_c);
 	_domain->setVirialCorr(Virial_c);
-	
+
 	simstep++;
 }
 
@@ -543,7 +541,7 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 			fLJ[index_i] += -termF*rhoJ*(r12-r6)/r;
 			fLJ[index_j] += termF*rhoI*(r12-r6)/r;
 		}
-		// Calculation of the Periodic boundary 
+		// Calculation of the Periodic boundary
 		for (unsigned j=slabsHalf+i; j<_slabs; j++){
 			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
 
@@ -693,7 +691,7 @@ void Planar::centerSite(double sig, double eps,unsigned ci,unsigned cj,unsigned 
 				fLJ[index_j]+=rhoI*termFRC*r;
 			}
 		}
-		// Calculation of the Periodic boundary 
+		// Calculation of the Periodic boundary
 		for (unsigned j=_slabs/2+i; j<_slabs; j++) {
 			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
 
@@ -808,7 +806,7 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 	double sig4=sig2*sig2;
 	double t1 = eLong[numLJSum2[ci]+si];
 	double t2 = eLong[numLJSum2[cj]+sj];
-	double tP = t1 + t2; // tau+ 
+	double tP = t1 + t2; // tau+
 	double tM = t1 - t2; // tau-
 	double rcPtP=sig/(cutoff+tP);
 	double rcPtP2=rcPtP*rcPtP;
@@ -906,7 +904,7 @@ void Planar::siteSite(double sig, double eps,unsigned ci,unsigned cj,unsigned si
 				fLJ[index_j]+=rhoI*termFRC*r;
 			}
 		}
-		// Calculation of the Periodic boundary 
+		// Calculation of the Periodic boundary
 		for (unsigned j=_slabs/2+i; j<_slabs; j++) {
 			const int index_j = j+sj*_slabs+_slabs*numLJSum2[cj];
 
@@ -1072,9 +1070,9 @@ void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
 			vNDipole[index_j]-= termVN*rhoI/r6 *r*r;
 			vTDipole[index_i]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
 			vTDipole[index_j]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
-			
+
 		}
-		// Calculation of the Periodic boundary 
+		// Calculation of the Periodic boundary
 		for (unsigned j=_slabs/2+i; j<_slabs; j++){
 			const int index_j = j+sj*_slabs+_slabs*numDipoleSum2[cj];
 
@@ -1132,7 +1130,7 @@ void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
 			vTDipole[index_i]-= termVT*rhoJ/r6 *(1.5*r2 - r*r);
 			vTDipole[index_j]-= termVT*rhoI/r6 *(1.5*r2 - r*r);
 		}
-	}  
+	}
 }
 
 double Planar::getUpotCorr(Molecule* mol){
@@ -1192,7 +1190,7 @@ void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsig
 		outputstream << "                F_LRC[" << si << "]";
 		outputstream << "                u_LRC[" << si << "]";
 	}
-	outputstream << endl;
+	outputstream << std::endl;
 
 	// data
 	for(uint32_t pi=0; pi<_slabs; ++pi)
@@ -1214,7 +1212,7 @@ void Planar::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsig
 
 	// open file for writing
 	// scalar
-	ofstream fileout(filenamestream.str().c_str(), ios::out);
+	std::ofstream fileout(filenamestream.str().c_str(), std::ios::out);
 	fileout << outputstream.str();
 	fileout.close();
 }

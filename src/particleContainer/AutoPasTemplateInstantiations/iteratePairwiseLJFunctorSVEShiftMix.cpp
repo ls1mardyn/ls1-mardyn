@@ -4,6 +4,7 @@
  * @date 25.06.22
  */
 
+#ifdef __ARM_FEATURE_SVE
 #include "autopas/AutoPasImpl.h"
 #include "molecules/Molecule.h"
 #include "autopas/molecularDynamics/LJFunctorSVE.h"
@@ -18,3 +19,4 @@ template bool autopas::AutoPas<AutoPasSimpleMolecule>::iteratePairwise(
 				/*calculateGlobals*/ true>
 		*);
 //! @endcond
+#endif

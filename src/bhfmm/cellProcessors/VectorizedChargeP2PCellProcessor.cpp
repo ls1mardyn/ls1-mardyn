@@ -13,8 +13,6 @@
 #include "particleContainer/adapter/vectorization/MaskGatherChooser.h"
 #include "VectorizedChargeP2PCellProcessor.h"
 
-using namespace Log;
-using namespace std;
 namespace bhfmm {
 
 VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
@@ -23,22 +21,22 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 		_upotXpoles(0.0), _virial(0.0){
 
 #if VCP_VEC_TYPE==VCP_NOVEC
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using no intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: using no intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using SSE3 intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: using SSE3 intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using AVX intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using AVX2 intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: using AVX2 intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_KNL) || (VCP_VEC_TYPE==VCP_VEC_KNL_GATHER)
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using KNL intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: using KNL intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_AVX512F) || (VCP_VEC_TYPE==VCP_VEC_AVX512F_GATHER)
-	global_log->info() << "VectorizedChargeP2PCellProcessor: using SKX intrinsics." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: using SKX intrinsics." << std::endl;
 #endif
 
 	// initialize thread data
 	_numThreads = mardyn_get_max_threads();
-	global_log->info() << "VectorizedChargeP2PCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
+	Log::global_log->info() << "VectorizedChargeP2PCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
 	_threadData.resize(_numThreads);
 
 	#if defined(_OPENMP)
@@ -115,7 +113,7 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 }
 
 void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) {
-	// as pre new integration of Caches in SoAs, 
+	// as pre new integration of Caches in SoAs,
 	// this function work as before, as it builds secondary SoAs
 
 	// Determine the total number of centers.
@@ -126,7 +124,7 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) 
 	size_t nCharges = 0;
 	size_t nDipoles = 0;
 	size_t nQuadrupoles = 0;
-	
+
 	for (size_t i = 0; i < numMolecules; ++i) {
 		nCharges += c.moleculesAt(i).numCharges();
 	}
@@ -204,7 +202,7 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) 
 }
 
 void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c) {
-	// as pre new integration of Caches in SoAs, 
+	// as pre new integration of Caches in SoAs,
 	// this function work as before, as it builds secondary SoAs
 	using std::isnan; // C++11 required
 
@@ -245,9 +243,9 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 			f[0] = static_cast<double>(soa_charges_f_x[iCharges]);
 			f[1] = static_cast<double>(soa_charges_f_y[iCharges]);
 			f[2] = static_cast<double>(soa_charges_f_z[iCharges]);
-			mardyn_assert(!isnan(f[0]));
-			mardyn_assert(!isnan(f[1]));
-			mardyn_assert(!isnan(f[2]));
+			mardyn_assert(!std::isnan(f[0]));
+			mardyn_assert(!std::isnan(f[1]));
+			mardyn_assert(!std::isnan(f[2]));
 			m.Fchargeadd(j, f);
 
 			// Store the resulting virial in the molecule.
@@ -261,15 +259,15 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 			V[6] = static_cast<double>(soa_charges_V_yx[iCharges]*0.5);
 			V[7] = static_cast<double>(soa_charges_V_zx[iCharges]*0.5);
 			V[8] = static_cast<double>(soa_charges_V_zy[iCharges]*0.5);
-			mardyn_assert(!isnan(V[0]));
-			mardyn_assert(!isnan(V[1]));
-			mardyn_assert(!isnan(V[2]));
-			mardyn_assert(!isnan(V[3]));
-			mardyn_assert(!isnan(V[4]));
-			mardyn_assert(!isnan(V[5]));
-			mardyn_assert(!isnan(V[6]));
-			mardyn_assert(!isnan(V[7]));
-			mardyn_assert(!isnan(V[8]));
+			mardyn_assert(!std::isnan(V[0]));
+			mardyn_assert(!std::isnan(V[1]));
+			mardyn_assert(!std::isnan(V[2]));
+			mardyn_assert(!std::isnan(V[3]));
+			mardyn_assert(!std::isnan(V[4]));
+			mardyn_assert(!std::isnan(V[5]));
+			mardyn_assert(!std::isnan(V[6]));
+			mardyn_assert(!std::isnan(V[7]));
+			mardyn_assert(!std::isnan(V[8]));
 			m.Viadd(V);
 		}
 	}

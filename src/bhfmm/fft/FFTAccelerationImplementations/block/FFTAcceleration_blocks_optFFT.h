@@ -15,7 +15,7 @@
 
 /*
  * Basic implementation using the optFFT
- * 
+ *
  * Use FFTDataContainer_blocks as Data container (2 matrices)
  * initialize_target, M2L and protected function to get the DataContainer defined in abstract FFTAcceleration_blocks
  */

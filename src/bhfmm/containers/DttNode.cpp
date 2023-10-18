@@ -223,7 +223,7 @@ void DttNode::p2p(std::vector<ParticleCellPointers> leafParticlesFar,
 //		_leafParticles.convertAoSToSoACharge();
 		v_c_p2p_c_p->preprocessCell(_leafParticles);
 		for (unsigned int i = 0; i < leafParticlesFar.size(); i++) {
-			//TODO only convert once!! 
+			//TODO only convert once!!
 //			leafParticlesFar[i].convertAoSToSoACharge(_shift);
 			v_c_p2p_c_p->preprocessCell(leafParticlesFar[i]);
 			v_c_p2p_c_p->processCellPair(_leafParticles, leafParticlesFar[i]);
@@ -265,14 +265,14 @@ int DttNode::getMaxDepth() const {
 	if (_isLeafNode) {
 		return 0;
 	} else {
-		int max = 0;
+		int maxVal = 0;
 
 		for (unsigned int i = 0; i < 8; i++) {
 			if (_children[i]->isOccupied()) {
-				max = std::max(max, _children[i]->getMaxDepth());
+				maxVal = std::max(maxVal, _children[i]->getMaxDepth());
 			}
 		}
-		return max + 1;
+		return maxVal + 1;
 	}
 
 }

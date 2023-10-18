@@ -2,7 +2,7 @@
 #define CPPUNIT_PORTABILITY_CPPUNITSTACK_H
 
 // The technic used is similar to the wrapper of STLPort.
- 
+
 #include <cppunit/Portability.h>
 #include <deque>
 #include <stack>
