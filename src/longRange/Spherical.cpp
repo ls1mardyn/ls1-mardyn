@@ -950,10 +950,10 @@ void Spherical::calculateLongRange(){
 
 				// calculating and writing thermoData:
 
-				int inside_from = NShells/20;
-				int inside_to = inside_from+6;	
-				int outside_from = NShells - 6;
-				int outside_to = NShells;
+				int inside_from = NShells/10;
+				int inside_to = NShells/6;	
+				int outside_from = NShells - NShells/20-1;
+				int outside_to = NShells-1;
 				
 				double pInside = 0;
 				double rhoInside = 0;
