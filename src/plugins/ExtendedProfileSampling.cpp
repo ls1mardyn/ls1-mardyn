@@ -709,68 +709,70 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     if (domainDecomp->getRank() == 0) {
         for (unsigned long i = 0; i < _lenVector; i++) {
             const unsigned long numMols = numMolecules_step.global[i];
-            const unsigned int cid = i/_numBinsGlobal;
-            unsigned int dof_rot {0};
-            unsigned int dof_total {0};
-            if (!_singleComp) {
-                if (cid == 0) {
-                    for (unsigned long cj = 0; cj < _numComps; cj++) {
-                        dof_rot = _simulation.getEnsemble()->getComponent(cj)->getRotationalDegreesOfFreedom();
-                        dof_total += (3 + dof_rot)*numMolecules_step.global[(cj+1)*_numBinsGlobal + i];
+            if (numMols > 0ul) {
+                const unsigned int cid = i/_numBinsGlobal;
+                unsigned int dof_rot {0};
+                unsigned int dof_total {0};
+                if (!_singleComp) {
+                    if (cid == 0) {
+                        for (unsigned long cj = 0; cj < _numComps; cj++) {
+                            dof_rot = _simulation.getEnsemble()->getComponent(cj)->getRotationalDegreesOfFreedom();
+                            dof_total += (3 + dof_rot)*numMolecules_step.global[(cj+1)*_numBinsGlobal + i];
+                        }
+                    } else {
+                        dof_rot = _simulation.getEnsemble()->getComponent(cid-1)->getRotationalDegreesOfFreedom();
+                        dof_total = (3 + dof_rot)*numMols;
                     }
                 } else {
-                    dof_rot = _simulation.getEnsemble()->getComponent(cid-1)->getRotationalDegreesOfFreedom();
+                    // For single component sampling, the rot. DOF of component 0 is taken
+                    dof_rot = _simulation.getEnsemble()->getComponent(0)->getRotationalDegreesOfFreedom();
                     dof_total = (3 + dof_rot)*numMols;
                 }
-            } else {
-                // For single component sampling, the rot. DOF of component 0 is taken
-                dof_rot = _simulation.getEnsemble()->getComponent(0)->getRotationalDegreesOfFreedom();
-                dof_total = (3 + dof_rot)*numMols;
-            }
-            
-            const double ViX = virialVect_step[0].global[i];
-            const double ViY = virialVect_step[1].global[i];
-            const double ViZ = virialVect_step[2].global[i];
 
-            _doftotal_accum[i]                += dof_total;
-            _numMolecules_accum[i]            += numMols;
-            _mass_accum[i]                    += mass_step.global[i];
-            _ekin_accum[i]                    += ekin_step.global[i];
-            _epot_accum[i]                    += epot_step.global[i];
-            _orientation_accum[i]             += orientation_step.global[i];
-            _virial_accum[i]                  += ViX + ViY + ViZ;
-            _chemPot_accum[i]                 += chemPot_step.global[i];
-            _countNTest_accum[i]              += countNTest_step.global[i];
+                const double ViX = virialVect_step[0].global[i];
+                const double ViY = virialVect_step[1].global[i];
+                const double ViZ = virialVect_step[2].global[i];
 
-            _ekinVect_accum[0][i]             += ekinVect_step[0].global[i];
-            _ekinVect_accum[1][i]             += ekinVect_step[1].global[i];
-            _ekinVect_accum[2][i]             += ekinVect_step[2].global[i];
-            _velocityVect_accum[0][i]         += veloDrift_step_global[0][i];
-            _velocityVect_accum[1][i]         += veloDrift_step_global[1][i];
-            _velocityVect_accum[2][i]         += veloDrift_step_global[2][i];
-            _virialVect_accum[0][i]           += ViX;
-            _virialVect_accum[1][i]           += ViY;
-            _virialVect_accum[2][i]           += ViZ;
-            _forceVect_accum[0][i]            += forceVect_step[0].global[i];
-            _forceVect_accum[1][i]            += forceVect_step[1].global[i];
-            _forceVect_accum[2][i]            += forceVect_step[2].global[i];
-            _energyfluxVect_accum[0][i]       += energyfluxVect_step[0].global[i] / _slabVolume;
-            _energyfluxVect_accum[1][i]       += energyfluxVect_step[1].global[i] / _slabVolume;
-            _energyfluxVect_accum[2][i]       += energyfluxVect_step[2].global[i] / _slabVolume;
+                _doftotal_accum[i]                += dof_total;
+                _numMolecules_accum[i]            += numMols;
+                _mass_accum[i]                    += mass_step.global[i];
+                _ekin_accum[i]                    += ekin_step.global[i];
+                _epot_accum[i]                    += epot_step.global[i];
+                _orientation_accum[i]             += orientation_step.global[i];
+                _virial_accum[i]                  += ViX + ViY + ViZ;
+                _chemPot_accum[i]                 += chemPot_step.global[i];
+                _countNTest_accum[i]              += countNTest_step.global[i];
 
-            _countSamples[i]++;
+                _ekinVect_accum[0][i]             += ekinVect_step[0].global[i];
+                _ekinVect_accum[1][i]             += ekinVect_step[1].global[i];
+                _ekinVect_accum[2][i]             += ekinVect_step[2].global[i];
+                _velocityVect_accum[0][i]         += veloDrift_step_global[0][i];
+                _velocityVect_accum[1][i]         += veloDrift_step_global[1][i];
+                _velocityVect_accum[2][i]         += veloDrift_step_global[2][i];
+                _virialVect_accum[0][i]           += ViX;
+                _virialVect_accum[1][i]           += ViY;
+                _virialVect_accum[2][i]           += ViZ;
+                _forceVect_accum[0][i]            += forceVect_step[0].global[i];
+                _forceVect_accum[1][i]            += forceVect_step[1].global[i];
+                _forceVect_accum[2][i]            += forceVect_step[2].global[i];
+                _energyfluxVect_accum[0][i]       += energyfluxVect_step[0].global[i] / _slabVolume;
+                _energyfluxVect_accum[1][i]       += energyfluxVect_step[1].global[i] / _slabVolume;
+                _energyfluxVect_accum[2][i]       += energyfluxVect_step[2].global[i] / _slabVolume;
 
-            if (_sampleHigherMoms) {
-                _hmDelta_accum[i]             += hmDelta_step.global[i] / _slabVolume;
-                for (unsigned short d = 0; d < 3; d++) {
-                    _hmHeatflux_accum[d][i]   += hmHeatflux_step[d].global[i] / _slabVolume;
-                }
-                for (unsigned short d = 0; d < 9; d++) {
-                    _hmPressure_accum[d][i]   += hmPressure_step[d].global[i] / _slabVolume;
-                    _hmR_accum[d][i]          += hmR_step[d].global[i] / _slabVolume;
-                    _hmM_accum[d][i]          += hmM_step[d].global[i] / _slabVolume;
-                    _hmM_accum[d+9u][i]        += hmM_step[d+9u].global[i] / _slabVolume;
-                    _hmM_accum[d+18u][i]       += hmM_step[d+18u].global[i] / _slabVolume;
+                _countSamples[i]++;
+
+                if (_sampleHigherMoms) {
+                    _hmDelta_accum[i]             += hmDelta_step.global[i] / _slabVolume;
+                    for (unsigned short d = 0; d < 3; d++) {
+                        _hmHeatflux_accum[d][i]   += hmHeatflux_step[d].global[i] / _slabVolume;
+                    }
+                    for (unsigned short d = 0; d < 9; d++) {
+                        _hmPressure_accum[d][i]   += hmPressure_step[d].global[i] / _slabVolume;
+                        _hmR_accum[d][i]          += hmR_step[d].global[i] / _slabVolume;
+                        _hmM_accum[d][i]          += hmM_step[d].global[i] / _slabVolume;
+                        _hmM_accum[d+9u][i]        += hmM_step[d+9u].global[i] / _slabVolume;
+                        _hmM_accum[d+18u][i]       += hmM_step[d+18u].global[i] / _slabVolume;
+                    }
                 }
             }
         }
