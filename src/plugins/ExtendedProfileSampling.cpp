@@ -853,7 +853,7 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         const unsigned long countSamples = _countSamples[i];
                         const double numMols_accum = static_cast<double>(_numMolecules_accum[i]);
 
-                        numMolsPerStep = numMols_accum/countSamples;
+                        numMolsPerStep = numMols_accum/_writeFrequency;
                         rho         = numMolsPerStep           / _slabVolume;
                         v_x         = _velocityVect_accum[0][i]   / countSamples;
                         v_y         = _velocityVect_accum[1][i]   / countSamples;
@@ -876,9 +876,9 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                         F_x         = _forceVect_accum[0][i]      / numMols_accum;
                         F_y         = _forceVect_accum[1][i]      / numMols_accum;
                         F_z         = _forceVect_accum[2][i]      / numMols_accum;
-                        jEF_x       = _energyfluxVect_accum[0][i] / countSamples;
-                        jEF_y       = _energyfluxVect_accum[1][i] / countSamples;
-                        jEF_z       = _energyfluxVect_accum[2][i] / countSamples;
+                        jEF_x       = _energyfluxVect_accum[0][i] / _writeFrequency;
+                        jEF_y       = _energyfluxVect_accum[1][i] / _writeFrequency;
+                        jEF_z       = _energyfluxVect_accum[2][i] / _writeFrequency;
 
                         numSamples  = countSamples;
                     }
