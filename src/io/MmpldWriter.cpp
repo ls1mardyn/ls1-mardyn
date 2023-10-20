@@ -32,7 +32,7 @@
 
 
 // default version to use for mmpld format writing. possible values: 100 or 102
-#define MMPLD_DEFAULT_VERSION 102
+#define MMPLD_DEFAULT_VERSION 100
 #define MMPLD_HEADER_DATA_SIZE 60
 #define MMPLD_SEEK_TABLE_OFFSET MMPLD_HEADER_DATA_SIZE
 
@@ -82,7 +82,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	global_log->info() << "[MMPLD Writer] Split files every " << _numFramesPerFile << "th frame."<< std::endl;
 	global_log->info() << "[MMPLD Writer] Write buffer size: " << _writeBufferSize << " Byte" << std::endl;
 
-	int mmpldversion = 100;
+	int mmpldversion = MMPLD_DEFAULT_VERSION;
 	xmlconfig.getNodeValue("mmpldversion", mmpldversion);
 	_mmpldversion = mmpldversion;
 	switch(_mmpldversion) {
@@ -332,7 +332,7 @@ void MmpldWriter::finish(ParticleContainer * /*particleContainer*/, DomainDecomp
 		MPI_File_get_position(_mpifh, &endPosition);
 
 		uint64_t seektablePos = MMPLD_HEADER_DATA_SIZE + (_frameCount * sizeof(uint64_t));
-		uint64_t seekPosition = htole64(endPosition); /** @todo end of frame offset may not be identical to file end! */
+		uint64_t seekPosition = std::max(_seekTable.back(), htole64(endPosition)); /** @todo end of frame offset may not be identical to file end! */
 		MPI_Status status;
 		MPI_File_write_at(_mpifh, seektablePos, &seekPosition, sizeof(seekPosition), MPI_BYTE, &status);
 		uint32_t frameCount = htole32(_frameCount);  // set final number of frames
