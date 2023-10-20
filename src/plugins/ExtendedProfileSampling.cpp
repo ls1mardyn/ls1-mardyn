@@ -504,11 +504,15 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         // and propagates it to other processes
         if (domainDecomp->getRank() == 0) {
             for (unsigned long index = 0; index < _lenVector; index++) {
-                const double v_x = _velocityVect_accum[0][index] / _countSamples[index];
-                const double v_y = _velocityVect_accum[1][index] / _countSamples[index];
-                const double v_z = _velocityVect_accum[2][index] / _countSamples[index];
-                double v_drift_sqr = v_x*v_x + v_y*v_y + v_z*v_z;
-                temperature_step_global[index] = (2*_ekin_accum[index] - v_drift_sqr*_mass_accum[index]) / _doftotal_accum[index];
+                if (_countSamples[index] > 0ul) {
+                    const double v_x = _velocityVect_accum[0][index] / _countSamples[index];
+                    const double v_y = _velocityVect_accum[1][index] / _countSamples[index];
+                    const double v_z = _velocityVect_accum[2][index] / _countSamples[index];
+                    double v_drift_sqr = v_x*v_x + v_y*v_y + v_z*v_z;
+                    temperature_step_global[index] = (2*_ekin_accum[index] - v_drift_sqr*_mass_accum[index]) / _doftotal_accum[index];
+                } else {
+                    temperature_step_global[index] = 0.0;
+                }
             }
         }
 #ifdef ENABLE_MPI
@@ -954,23 +958,20 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
                     ofs << FORMAT_SCI_MAX_DIGITS << (idx+0.5)*_binwidth;
                     for (unsigned long cid = 0; cid < numOutputs; cid++) {
                         unsigned long i = idx + cid*_numBinsGlobal;
-                        double delta {0.0};
                         std::array<double, 3> q = {0.0};
                         std::array<double, 9> p = {0.0};
                         std::array<double, 9> R = {0.0};
                         std::array<double, 27> m = {0.0};
-                        if (_countSamples[i] > 0ul) {
-                            delta = _hmDelta_accum[i]/_countSamples[i];
-                            for (unsigned short d = 0; d < 3; d++) {
-                                q[d] = _hmHeatflux_accum[d][i]/_countSamples[i];
-                            }
-                            for (unsigned short d = 0; d < 9; d++) {
-                                p[d] = _hmPressure_accum[d][i]/_countSamples[i];
-                                R[d] = _hmR_accum[d][i]/_countSamples[i];
-                                m[d]    = _hmM_accum[d][i]/_countSamples[i];
-                                m[d+9u]  = _hmM_accum[d+9u][i]/_countSamples[i];
-                                m[d+18u] = _hmM_accum[d+18u][i]/_countSamples[i];
-                            }
+                        double delta = _hmDelta_accum[i]/_writeFrequency;
+                        for (unsigned short d = 0; d < 3; d++) {
+                            q[d] = _hmHeatflux_accum[d][i]/_writeFrequency;
+                        }
+                        for (unsigned short d = 0; d < 9; d++) {
+                            p[d] = _hmPressure_accum[d][i]/_writeFrequency;
+                            R[d] = _hmR_accum[d][i]/_writeFrequency;
+                            m[d]    = _hmM_accum[d][i]/_writeFrequency;
+                            m[d+9u]  = _hmM_accum[d+9u][i]/_writeFrequency;
+                            m[d+18u] = _hmM_accum[d+18u][i]/_writeFrequency;
                         }
                         ofs << FORMAT_SCI_MAX_DIGITS << delta;
                         // key k_i and value v_i
@@ -1095,7 +1096,7 @@ void ExtendedProfileSampling::resetVectors() {
 }
 
 // Get value of quantity at certain index; Mainly used for unit test
-double ExtendedProfileSampling::getQuantity(DomainDecompBase* domainDecomp, std::string quantityName, unsigned long index) {
+double ExtendedProfileSampling::getQuantity(DomainDecompBase* domainDecomp, std::string quantityName, unsigned long index, unsigned long simstep) {
     if (index > _lenVector) {
         Log::global_log->error() << "[ExtendedProfileSampling] Trying to get value but index (" << index << ") is greater than possible (" << _lenVector << ")" << std::endl;
         return 0.0;
@@ -1111,6 +1112,11 @@ double ExtendedProfileSampling::getQuantity(DomainDecompBase* domainDecomp, std:
         return 0.0;
     }
 
+    if (simstep <= _startSampling) {
+        Log::global_log->error() << "[ExtendedProfileSampling] Sampling not possible for simstep<=_startSampling" << std::endl;
+        return 0.0;
+    }
+
     if (quantityName == "T") {
         const double v_x = _velocityVect_accum[0][index] / _countSamples[index];
         const double v_y = _velocityVect_accum[1][index] / _countSamples[index];
@@ -1118,9 +1124,9 @@ double ExtendedProfileSampling::getQuantity(DomainDecompBase* domainDecomp, std:
         double v_drift_sqr = v_x*v_x + v_y*v_y + v_z*v_z;
         return (2*_ekin_accum[index] - v_drift_sqr*_mass_accum[index]) / _doftotal_accum[index];
     } else if (quantityName == "rho") {
-        return _numMolecules_accum[index] / (_slabVolume * _countSamples[index]);
+        return _numMolecules_accum[index] / (_slabVolume * ((simstep-_startSampling)%_writeFrequency));
     } else if (quantityName == "ekin") {
-        return _ekin_accum[index] / _countSamples[index];
+        return _ekin_accum[index] / static_cast<double>(_numMolecules_accum[index]);
     }
     
     Log::global_log->error() << "[ExtendedProfileSampling] Quantity (" << quantityName << ") unknown!" << std::endl;

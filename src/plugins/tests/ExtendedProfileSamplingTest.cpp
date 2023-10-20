@@ -49,17 +49,17 @@ void ExtendedProfileSamplingTest::testEPSampling() {
         // Default binwidth is 1 and global domain length of test system is 20; therefore 20 bins in total
         for (unsigned int i = 0; i < 20; i++) {
 
-            const double temp_actual_all = plugin->getQuantity(_domainDecomposition, "T", i);
-            const double rho_actual_all  = plugin->getQuantity(_domainDecomposition, "rho", i);
-            const double ekin_actual_all = plugin->getQuantity(_domainDecomposition, "ekin", i);
+            const double temp_actual_all = plugin->getQuantity(_domainDecomposition, "T", i, 1ul);
+            const double rho_actual_all  = plugin->getQuantity(_domainDecomposition, "rho", i, 1ul);
+            const double ekin_actual_all = plugin->getQuantity(_domainDecomposition, "ekin", i, 1ul);
             ASSERT_DOUBLES_EQUAL_MSG("Temperature at index "+std::to_string(i)+" not as expected", temp_expected[i], temp_actual_all, delta);
             ASSERT_DOUBLES_EQUAL_MSG("Temperature at index "+std::to_string(i)+" not as expected", temp_expected[i], temp_actual_all, delta);
             ASSERT_DOUBLES_EQUAL_MSG("Temperature at index "+std::to_string(i)+" not as expected", temp_expected[i], temp_actual_all, delta);
 
             // As there is only one component in the test system, the componentwise and overall values are supposed to be equal
-            const double temp_actual_cid1 = plugin->getQuantity(_domainDecomposition, "T", i+20u);
-            const double rho_actual_cid1  = plugin->getQuantity(_domainDecomposition, "rho", i+20u);
-            const double ekin_actual_cid1 = plugin->getQuantity(_domainDecomposition, "ekin", i+20u);
+            const double temp_actual_cid1 = plugin->getQuantity(_domainDecomposition, "T", i+20u, 1ul);
+            const double rho_actual_cid1  = plugin->getQuantity(_domainDecomposition, "rho", i+20u, 1ul);
+            const double ekin_actual_cid1 = plugin->getQuantity(_domainDecomposition, "ekin", i+20u, 1ul);
             ASSERT_DOUBLES_EQUAL(temp_actual_all, temp_actual_cid1, delta);
             ASSERT_DOUBLES_EQUAL(rho_actual_all, rho_actual_cid1, delta);
             ASSERT_DOUBLES_EQUAL(ekin_actual_all, ekin_actual_cid1, delta);

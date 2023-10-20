@@ -126,7 +126,7 @@ class ExtendedProfileSampling : public PluginBase {
     static PluginBase* createInstance() { return new ExtendedProfileSampling(); }
 
     // Get value of quantity at certain index; Mainly used for unit test
-    double getQuantity(DomainDecompBase* domainDecomp, std::string quantityName, unsigned long index);
+    double getQuantity(DomainDecompBase* domainDecomp, std::string quantityName, unsigned long index, unsigned long simstep);
 };
 
 
