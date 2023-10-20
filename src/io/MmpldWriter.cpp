@@ -32,7 +32,7 @@
 
 
 // default version to use for mmpld format writing. possible values: 100 or 102
-#define MMPLD_DEFAULT_VERSION 100
+#define MMPLD_DEFAULT_VERSION 102
 #define MMPLD_HEADER_DATA_SIZE 60
 #define MMPLD_SEEK_TABLE_OFFSET MMPLD_HEADER_DATA_SIZE
 
