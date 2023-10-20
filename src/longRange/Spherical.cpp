@@ -448,7 +448,7 @@ void Spherical::calculateLongRange(){
 			rhoShellsT[i] = RhoP(RShells[i], rhov, rhol, D0, R0);
 		}
         
-        if ( (simstep) % 100000 == 0) {
+        if ( (simstep) % 100 == 0) {  //todo: correct: 100000
             if (rank == 0) {
                 ofstream outfilestreamTanhParams(filenameTanhParams, ios::app);
                 outfilestreamTanhParams << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
@@ -946,7 +946,7 @@ void Spherical::calculateLongRange(){
 		}
 		// Only Root writes to files
         if (rank == 0) {
-        	if ( (simstep) % 10000 == 0) { //reduced from 100 to 10000, should be enough, no?
+        	if ( (simstep) % 10 == 0) { //reduced from 100 to 10000, should be enough, no?  //todo: correct: 100000
 
 				// calculating and writing thermoData:
 
@@ -997,24 +997,39 @@ void Spherical::calculateLongRange(){
 				double gamma_Avg = 0;
 
 
+				std::cout << "--------------------------------------------------------- "<< std::endl;
+				std::cout << "--------------Simstep = "<< simstep << "----------------------"<< std::endl;
 				gamma_integral_Avg = 0;
-				// calculation of gamma:
+				// calculation of gamma / R_e:
 				for (unsigned i=1; i < NShells; i++) { // not considering index 0!
 					dpN_Avg[i] = (_T*rhoShellsAvg_global[i]+VirShells_N_global[i])-(_T*rhoShellsAvg_global[i-1]+VirShells_N_global[i-1]);
 					drho_Avg[i] = rhoShellsAvg_global[i]-rhoShellsAvg_global[i-1];
 
 					R_e3 += RShells3[i]*drho_Avg[i];
-					// //------- TODO: remove these two, once everything checks out
+					// //------- TODO: remove these two, once everything checks out:
 					// integral_term_Avg[i] = integral_term_Avg[i-1] + RShells3[i] * dpN_Avg[i];
 					// gamma_Avg_iterative[i] =  pow(-(integral_term_Avg[i] * pDiff2_Avg)/8., 1/3.);
 					// // ----------------- //
 					gamma_integral_Avg += RShells3[i] * dpN_Avg[i]; 
+					std::cout << "i = "<< i << ";"<< std::endl;
+					std::cout << "dpN_Avg[ "<<i<<"] = " << dpN_Avg[i] << ";"<< std::endl;
+					std::cout << "drho_Avg [ "<<i<<"] = " << drho_Avg[i] << ";"<< std::endl;
+					std::cout << "R_e3 = "<< R_e3 << ";"<< std::endl;
+					std::cout << "gamma_integral_Avg = "<< gamma_integral_Avg << std::endl;
 				}
+
+				std::cout << "--------------------------------------------------------- "<< std::endl;
+				std::cout << "rhoDiff = "<< rhoDiff_Avg << ";"<< std::endl;
+				std::cout << "pDiff   = "<< pDiff_Avg << "; pOutside = "<<pOutside <<"; pInside="<< pInside<< std::endl;
 				R_e3 /= rhoDiff_Avg;
-				R_e = pow(R_e3, 1/3.);
-				gamma_Avg =  pow( -(pDiff2_Avg*gamma_integral_Avg)/8., 1/3.);
+				std::cout << "R_e3    = "<< R_e3 << ";"<< std::endl;
+				R_e = std::cbrt(R_e3);
+				std::cout << "R_e     = "<< R_e << ";"<< std::endl;
+				gamma_Avg =  std::cbrt(-(pDiff2_Avg*gamma_integral_Avg)/8.);
+				std::cout << "gamma   = "<< gamma_Avg << ";"<< std::endl;
 
 				double R_gamma = 2*gamma_Avg/pDiff_Avg;
+				std::cout << "R_gamma = "<< R_gamma << ";"<< std::endl;
 
 				ofstream outfilestreamThermData(filenameThermData, ios::app);
                 outfilestreamThermData << std::setw(24) << simstep << ";";  
@@ -1034,7 +1049,7 @@ void Spherical::calculateLongRange(){
 
 
 				// output for GlobalCorrs:
-				if(simstep % 1000000 == 0){
+				if(simstep % 100 == 0){ //todo: correct: 1000000
 					filenameGlobalCorrs = _outputPrefix + "_globalCorrections_"+std::to_string(simstep)+".csv";
 				}
                 ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs, ios::out);
