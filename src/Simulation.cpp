@@ -195,7 +195,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	/* run section */
 	if(xmlconfig.changecurrentnode("run")) {
 		xmlconfig.getNodeValueReduced("currenttime", _simulationTime);
-		setSimulationTime(_simulationTime);
 		Log::global_log->info() << "Simulation start time: " << getSimulationTime() << std::endl;
 		/* steps */
 		xmlconfig.getNodeValue("equilibration/steps", _initStatistics);
@@ -676,6 +675,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	xmlconfig.changecurrentnode(oldpath);
+
+	// _simulationTime might be updated by readers -> also update _initSimulation
+	_initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
 }
 
 

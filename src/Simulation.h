@@ -281,11 +281,7 @@ public:
 	void initStatistics(unsigned long t) { this->_initStatistics = t; }
 	unsigned long getInitStatistics() const { return this->_initStatistics; }
 
-	void setSimulationTime(double curtime) {
-		_simulationTime = curtime;
-		// Also change corresponding initial timestep
-		_initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
-	}
+	void setSimulationTime(double curtime) { _simulationTime = curtime; }
 	void advanceSimulationTime(double timestep) { _simulationTime += timestep; }
 	double getSimulationTime() { return _simulationTime; }
 
