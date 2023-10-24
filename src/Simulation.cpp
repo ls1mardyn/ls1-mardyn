@@ -194,7 +194,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	/* run section */
 	if(xmlconfig.changecurrentnode("run")) {
 		xmlconfig.getNodeValueReduced("currenttime", _simulationTime);
-		global_log->info() << "Simulation start time: " << _simulationTime << endl;
+		setSimulationTime(_simulationTime);
+		global_log->info() << "Simulation start time: " << getSimulationTime() << endl;
 		/* steps */
 		xmlconfig.getNodeValue("equilibration/steps", _initStatistics);
 		global_log->info() << "Number of equilibration steps: " << _initStatistics << endl;
@@ -656,7 +657,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		bool ignoreCheckpointTime = false;
 		if(xmlconfig.getNodeValue("ignoreCheckpointTime", ignoreCheckpointTime)) {
 			if(ignoreCheckpointTime)
-				_simulationTime = 0;
+				setSimulationTime(0);
 		}
 	}
 
