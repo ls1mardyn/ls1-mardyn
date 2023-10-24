@@ -63,19 +63,19 @@ protected:
 	void InitSphereData();
 
 public:
-	void readXML(XMLfileUnits& xmlconfig);
+	void readXML(XMLfileUnits& xmlconfig) override;
 
 	void init(ParticleContainer *particleContainer,
-              DomainDecompBase *domainDecomp, Domain *domain);
+              DomainDecompBase *domainDecomp, Domain *domain) override;
 	void endStep(
             ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain,
-            unsigned long simstep
-    );
+            unsigned long simstep) override;
+
 	void finish(ParticleContainer *particleContainer,
-				DomainDecompBase *domainDecomp, Domain *domain);
+				DomainDecompBase *domainDecomp, Domain *domain) override {};
 	
-	std::string getPluginName() {
+	std::string getPluginName() override {
 		return std::string("MmpldWriter");
 	}
 	static PluginBase* createInstance() { return new MmpldWriter(); }

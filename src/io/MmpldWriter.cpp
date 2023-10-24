@@ -319,34 +319,6 @@ void MmpldWriter::endStep(ParticleContainer *particleContainer,
 	write_frame(particleContainer, domainDecomp);
 }
 
-void MmpldWriter::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp, Domain * /*domain*/)
-{
-	string filename = getOutputFilename();
-
-#ifdef ENABLE_MPI
-	int rank = domainDecomp->getRank();
-	if (rank == 0){
-		MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY, MPI_INFO_NULL, &_mpifh);
-		MPI_File_seek(_mpifh, 0, MPI_SEEK_END);
-		MPI_Offset endPosition;
-		MPI_File_get_position(_mpifh, &endPosition);
-
-		uint64_t seektablePos = MMPLD_HEADER_DATA_SIZE + (_frameCount * sizeof(uint64_t));
-		uint64_t seekPosition = std::max(_seekTable.back(), htole64(endPosition)); /** @todo end of frame offset may not be identical to file end! */
-		MPI_Status status;
-		MPI_File_write_at(_mpifh, seektablePos, &seekPosition, sizeof(seekPosition), MPI_BYTE, &status);
-		uint32_t frameCount = htole32(_frameCount);  // set final number of frames
-		// 8: frame count position in file header
-		MPI_File_write_at(_mpifh, 8, &frameCount, sizeof(frameCount), MPI_BYTE, &status);
-		MPI_File_close(&_mpifh);
-	}else{
-		MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY, MPI_INFO_NULL, &_mpifh);
-		MPI_File_close(&_mpifh);
-	}
-	_seekTable.clear();
-#endif
-}
-
 void MmpldWriter::InitSphereData()
 {
 	if(_bInitSphereData == ISD_READ_FROM_XML)
