@@ -138,7 +138,7 @@ public:
 		if (strShifted == "true" || strShifted == "false") {
 			std::istringstream(strShifted) >> std::boolalpha >> _shiftRequested;
 		} else {
-			global_log->error() << "Parameter <shifted> of components has to be either set to 'true' or 'false'" << std::endl;
+			Log::global_log->error() << "Parameter <shifted> of components has to be either set to 'true' or 'false'" << std::endl;
 			mardyn_exit(1);
 		}
 	}
