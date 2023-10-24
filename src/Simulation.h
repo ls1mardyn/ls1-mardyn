@@ -5,6 +5,7 @@
 #include <any>
 
 #include "ensemble/CavityEnsemble.h"
+#include "integrators/Integrator.h"
 #include "io/TimerProfiler.h"
 #include "thermostats/VelocityScalingThermostat.h"
 #include "utils/FixedSizeQueue.h"
@@ -279,7 +280,11 @@ public:
 	void initStatistics(unsigned long t) { this->_initStatistics = t; }
 	unsigned long getInitStatistics() const { return this->_initStatistics; }
 
-	void setSimulationTime(double curtime) { _simulationTime = curtime; }
+	void setSimulationTime(double curtime) {
+		_simulationTime = curtime;
+		// Also change corresponding initial timestep
+		_initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
+	}
 	void advanceSimulationTime(double timestep) { _simulationTime += timestep; }
 	double getSimulationTime() { return _simulationTime; }
 

@@ -931,7 +931,7 @@ void Simulation::prepare_start() {
 
 	_ensemble->prepare_start();
 
-	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
+	_simstep = _initSimulation;
 	global_log->info() << "Set initial time step to start from to " << _initSimulation << endl;
 	global_log->info() << "System initialised with " << _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition) << " molecules." << endl;
 
