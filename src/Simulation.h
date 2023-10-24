@@ -4,7 +4,6 @@
 #include <memory>
 #include <any>
 
-#include "integrators/Integrator.h"
 #include "io/TimerProfiler.h"
 #include "thermostats/VelocityScalingThermostat.h"
 #include "utils/FixedSizeQueue.h"
