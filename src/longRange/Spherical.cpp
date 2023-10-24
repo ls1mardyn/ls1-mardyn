@@ -448,7 +448,7 @@ void Spherical::calculateLongRange(){
 			rhoShellsT[i] = RhoP(RShells[i], rhov, rhol, D0, R0);
 		}
         
-        if ( (simstep) % 100 == 0) {  //todo: correct: 100000
+        if ( (simstep) % 100000 == 0) {  
             if (rank == 0) {
                 ofstream outfilestreamTanhParams(filenameTanhParams, ios::app);
                 outfilestreamTanhParams << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
@@ -946,7 +946,7 @@ void Spherical::calculateLongRange(){
 		}
 		// Only Root writes to files
         if (rank == 0) {
-        	if ( (simstep) % 10 == 0) { //reduced from 100 to 10000, should be enough, no?  //todo: correct: 100000
+        	if ( (simstep) % 100000 == 0) { //reduced from 100 to 100000, should be enough, no?  
 
 				// calculating and writing thermoData:
 
@@ -1049,7 +1049,7 @@ void Spherical::calculateLongRange(){
 
 
 				// output for GlobalCorrs:
-				if(simstep % 100 == 0){ //todo: correct: 1000000
+				if(simstep % 1000000 == 0){
 					filenameGlobalCorrs = _outputPrefix + "_globalCorrections_"+std::to_string(simstep)+".csv";
 				}
                 ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs, ios::out);
