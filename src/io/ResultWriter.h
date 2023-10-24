@@ -49,7 +49,7 @@ public:
 
 	void finish(ParticleContainer* /* particleContainer */,
 				DomainDecompBase* /* domainDecomp */, Domain* /* domain */) override {}
-	
+
 	std::string getPluginName() override {return std::string("ResultWriter");}
 	static PluginBase* createInstance() { return new ResultWriter(); }
 

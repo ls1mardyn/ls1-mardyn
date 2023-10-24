@@ -17,19 +17,19 @@ Protector::~Protector()
 }
 
 
-void 
+void
 Protector::reportError( const ProtectorContext &context,
                         const Exception &error ) const
 {
   std::auto_ptr<Exception> actualError( error.clone() );
   actualError->setMessage( actualMessage( actualError->message(), context ) );
-  context.m_result->addError( context.m_test, 
+  context.m_result->addError( context.m_test,
                               actualError.release() );
 }
 
 
 
-void 
+void
 Protector::reportError( const ProtectorContext &context,
                         const Message &message,
                         const SourceLine &sourceLine ) const
@@ -38,18 +38,18 @@ Protector::reportError( const ProtectorContext &context,
 }
 
 
-void 
+void
 Protector::reportFailure( const ProtectorContext &context,
                           const Exception &failure ) const
 {
   std::auto_ptr<Exception> actualFailure( failure.clone() );
   actualFailure->setMessage( actualMessage( actualFailure->message(), context ) );
-  context.m_result->addFailure( context.m_test, 
+  context.m_result->addFailure( context.m_test,
                                 actualFailure.release() );
 }
 
 
-Message 
+Message
 Protector::actualMessage( const Message &message,
                           const ProtectorContext &context ) const
 {
@@ -58,7 +58,7 @@ Protector::actualMessage( const Message &message,
     theActualMessage = message;
   else
   {
-    theActualMessage = Message( context.m_shortDescription, 
+    theActualMessage = Message( context.m_shortDescription,
                                 message.shortDescription() );
     theActualMessage.addDetail( message );
   }

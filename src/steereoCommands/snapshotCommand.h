@@ -6,7 +6,7 @@
 #include <steereo/steereoCommand.h>
 
 
-class SnapshotCommand : public SteereoCommand 
+class SnapshotCommand : public SteereoCommand
 {
  public:
   SnapshotCommand ();
@@ -15,17 +15,17 @@ class SnapshotCommand : public SteereoCommand
   void setParameters (std::list<std::string> params);
   static void setSimData (Simulation* simu) {sim = simu;};
   static SteereoCommand* generateNewInstance ();
-  
+
   bool condition ();
   void setStepInterval (int interval) {stepInterval = interval;};
-    
-  
+
+
  private:
   // parameters needed for execution
   int sockfd;
   static Simulation* sim;
   static int startStep;
-  int stepInterval;   
+  int stepInterval;
   bool sendVelocity;
   bool sendForces;
   bool sendV2;

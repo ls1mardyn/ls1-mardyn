@@ -12,7 +12,7 @@
 
 /**
  * API of the optimized FFT
- * 
+ *
  * Perform all operations in place
  */
 class optFFT_API {

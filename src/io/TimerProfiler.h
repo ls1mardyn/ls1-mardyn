@@ -217,7 +217,7 @@ private:
 
 	/**
 	@fn void _debugMessage(std::string timerName)
-	@brief Prints in global_log->debug() information message about timer.
+	@brief Prints in Log::global_log->debug() information message about timer.
 	@param timerName The name of the timer
 	*/
 	void _debugMessage(std::string timerName);

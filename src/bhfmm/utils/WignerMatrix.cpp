@@ -12,7 +12,7 @@
 #include <algorithm>
 #include "WignerMatrix.h"
 #include "utils/Logger.h"
-using Log::global_log;
+
 
 namespace bhfmm {
 
@@ -148,24 +148,23 @@ void WignerMatrix::apply_minus_one_pow() {
 
 
 void WignerMatrix::print(int maxl) {
-	using namespace std;
-	int precisionSetting = cout.precision( );
-	ios::fmtflags flagSettings = cout.flags();
+	int precisionSetting = std::cout.precision( );
+	std::ios::fmtflags flagSettings = std::cout.flags();
 
-	cout.setf(ios::fixed | ios::showpos | ios::showpoint);
-	cout.precision(5);
+	std::cout.setf(std::ios::fixed | std::ios::showpos | std::ios::showpoint);
+	std::cout.precision(5);
 	for(int l = 0; l <= maxl; ++l) {
 		for(int m = 0; m <= l; ++m) {
 			for (int k = -l; k <= l; ++k) {
-				cout << left << setw(10) << this->acc_c(l,m,k);
+				std::cout << std::left << std::setw(10) << this->acc_c(l,m,k);
 			}
-			cout << endl;
+			std::cout << std::endl;
 		}
-		cout << endl;
+		std::cout << std::endl;
 	}
 
-	cout.precision(precisionSetting);
-	cout.flags(flagSettings);
+	std::cout.precision(precisionSetting);
+	std::cout.flags(flagSettings);
 }
 
 void WignerMatrix::initializeSqrtLookUp() {
@@ -218,7 +217,7 @@ void WignerMatrix::scale() {
 			}
 		}
 	} else {
-		global_log->error() << "type must be either L or M" << std::endl;
+		Log::global_log->error() << "type must be either L or M" << std::endl;
 	}
 }
 

@@ -18,8 +18,6 @@
 #endif
 #include "utils/xmlfile.h"
 
-using Log::global_log;
-
 void Adios2Reader::init(ParticleContainer* particleContainer,
         DomainDecompBase* domainDecomp, Domain* domain) {
 };
@@ -27,16 +25,16 @@ void Adios2Reader::init(ParticleContainer* particleContainer,
 void Adios2Reader::readXML(XMLfileUnits& xmlconfig) {
 	_mode = "rootOnly";
 	xmlconfig.getNodeValue("mode", _mode);
-	global_log->info() << "[Adios2Reader] Input mode: " << _mode << endl;
+	Log::global_log->info() << "[Adios2Reader] Input mode: " << _mode << std::endl;
 	_inputfile = "mardyn.bp";
 	xmlconfig.getNodeValue("filename", _inputfile);
-	global_log->info() << "[Adios2Reader] Inputfile: " << _inputfile << endl;
+	Log::global_log->info() << "[Adios2Reader] Inputfile: " << _inputfile << std::endl;
 	_adios2enginetype = "BP4";
 	xmlconfig.getNodeValue("adios2enginetype", _adios2enginetype);
-	global_log->info() << "[Adios2Reader] Adios2 engine type: " << _adios2enginetype << endl;
+	Log::global_log->info() << "[Adios2Reader] Adios2 engine type: " << _adios2enginetype << std::endl;
 	_step = -1;
 	xmlconfig.getNodeValue("adios2Step", _step);
-	global_log->info() << "[Adios2Reader] step to load from input file: " << _step << endl;
+	Log::global_log->info() << "[Adios2Reader] step to load from input file: " << _step << std::endl;
 
 	if (!mainInstance) initAdios2();
 };
@@ -44,13 +42,13 @@ void Adios2Reader::readXML(XMLfileUnits& xmlconfig) {
 void Adios2Reader::testInit(std::string infile, int step, std::string adios2enginetype, std::string mode) {
 	using std::endl;
 	_inputfile = infile;
-	global_log->info() << "[Adios2Reader] Inputfile: " << _inputfile << endl;
+	Log::global_log->info() << "[Adios2Reader] Inputfile: " << _inputfile << std::endl;
 	_adios2enginetype = adios2enginetype;
-	global_log->info() << "[Adios2Reader] Adios2 engine type: " << _adios2enginetype << endl;
+	Log::global_log->info() << "[Adios2Reader] Adios2 engine type: " << _adios2enginetype << std::endl;
 	_step = step;
-	global_log->info() << "[Adios2Reader] step to load from input file: " << _step << endl;
+	Log::global_log->info() << "[Adios2Reader] step to load from input file: " << _step << std::endl;
 	_mode = mode;
-	global_log->info() << "[Adios2Reader] Input mode: " << _mode << endl;
+	Log::global_log->info() << "[Adios2Reader] Input mode: " << _mode << std::endl;
 
 	if (!mainInstance) initAdios2();
 }
@@ -65,19 +63,19 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
 	auto variables = io->AvailableVariables();
 
 	auto total_steps = std::stoi(variables["simulationtime"]["AvailableStepsCount"]);
-	global_log->info() << "[Adios2Reader] Total Steps in adios file " << total_steps << std::endl;
+	Log::global_log->info() << "[Adios2Reader] Total Steps in adios file " << total_steps << std::endl;
 
 	if (_step == -1) {
 		_step = total_steps - 1;
 	}
 	if (_step > total_steps) {
-		global_log->error() << "[Adios2Reader] Specified step is out of scope" << std::endl;
+		Log::global_log->error() << "[Adios2Reader] Specified step is out of scope" << std::endl;
 	}
 	if (_step < 0) {
 		_step = total_steps + (_step + 1);
 	}
 	particle_count = std::stoi(variables["rx"]["Shape"]);
-	global_log->info() << "[Adios2Reader] Particle count: " << particle_count << std::endl;
+	Log::global_log->info() << "[Adios2Reader] Particle count: " << particle_count << std::endl;
 
 	Timer inputTimer;
 	inputTimer.start();
@@ -90,25 +88,25 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
 	} else if (_mode == "parallelRead") {
 		parallelRead(particleContainer, domain, domainDecomp);
 	} else {
-		global_log->error() << "[Adios2Reader] Unknown _mode '" << _mode << "'" << std::endl;
+		Log::global_log->error() << "[Adios2Reader] Unknown _mode '" << _mode << "'" << std::endl;
 	}
 
 	_simulation.setSimulationTime(_simtime);
-	global_log->info() << "[Adios2Reader] simulation time is: " << _simtime << std::endl;
+	Log::global_log->info() << "[Adios2Reader] simulation time is: " << _simtime << std::endl;
 
-	global_log->info() << "[Adios2Reader] Finished reading molecules: 100%" << std::endl;
-	global_log->info() << "[Adios2Reader] Reading Molecules done" << std::endl;
+	Log::global_log->info() << "[Adios2Reader] Finished reading molecules: 100%" << std::endl;
+	Log::global_log->info() << "[Adios2Reader] Reading Molecules done" << std::endl;
 
 	inputTimer.stop();
-	global_log->info() << "[Adios2Reader] Initial IO took: " << inputTimer.get_etime() << " sec" << std::endl;
+	Log::global_log->info() << "[Adios2Reader] Initial IO took: " << inputTimer.get_etime() << " sec" << std::endl;
 
 	if (domain->getglobalRho() == 0.) {
 		domain->setglobalRho(domain->getglobalNumMolecules(true, particleContainer, domainDecomp) / domain->getGlobalVolume());
-		global_log->info() << "[Adios2Reader] Calculated Rho_global = " << domain->getglobalRho() << endl;
+		Log::global_log->info() << "[Adios2Reader] Calculated Rho_global = " << domain->getglobalRho() << std::endl;
 	}
 
 	engine->Close();
-	global_log->info() << "[Adios2Reader] finish." << std::endl;
+	Log::global_log->info() << "[Adios2Reader] finish." << std::endl;
 
 	return particle_count;
 };
@@ -127,14 +125,14 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 
 	auto num_reads = particle_count / bufferSize;
 	if (particle_count % bufferSize != 0) num_reads += 1;
-	global_log->info() << "[Adios2Reader] Input is divided into " << num_reads << " sequential reads." << endl;
+	Log::global_log->info() << "[Adios2Reader] Input is divided into " << num_reads << " sequential reads." << std::endl;
 
 	auto variables = io->AvailableVariables();
 
 	for (const auto &var : variables) {
 		if (var.first == "rx") {
 			if (var.second.at("Type") != "double") {
-				global_log->info() << "[Adios2Reader] Detected single precision" << endl;
+				Log::global_log->info() << "[Adios2Reader] Detected single precision" << std::endl;
 				_single_precision = true;
 				rx = std::vector<float>();
 				ry = std::vector<float>();
@@ -150,7 +148,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 				Ly = std::vector<float>();
 				Lz = std::vector<float>();
 			} else {
-				global_log->info() << "[Adios2Reader] Detected double precision" << endl;
+				Log::global_log->info() << "[Adios2Reader] Detected double precision" << std::endl;
 				rx = std::vector<double>();
 				ry = std::vector<double>();
 				rz = std::vector<double>();
@@ -169,7 +167,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 	}
 
 	for (int read = 0; read < num_reads; read++) {
-		global_log->info() << "[Adios2Reader] Performing read " << read << endl;
+		Log::global_log->info() << "[Adios2Reader] Performing read " << read << std::endl;
 		const uint64_t offset = read * bufferSize;
 		if (read == num_reads - 1) bufferSize = particle_count % bufferSize;
 		if (domainDecomp->getRank() == 0) {
@@ -193,7 +191,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 		}
 
 		engine->PerformGets();
-		global_log->info() << "[Adios2Reader] Read " << read << " done." << endl;
+		Log::global_log->info() << "[Adios2Reader] Read " << read << " done." << std::endl;
 
 		if (_simulation.getEnsemble()->getComponents()->empty()) {
 			auto attributes = io->AvailableAttributes();
@@ -226,7 +224,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 		} else {
 			_dcomponents = *(_simulation.getEnsemble()->getComponents());
 		}
-		global_log->info() << "[Adios2Reader] Gathered components." << std::endl;
+		Log::global_log->info() << "[Adios2Reader] Gathered components." << std::endl;
 
 #ifdef ENABLE_MPI
 		std::vector<ParticleData> particle_buff(bufferSize);
@@ -273,7 +271,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 		}
 #else
 		for (int i = 0; i < bufferSize; i++) {
-			global_log->debug() << "[Adios2Reader] Processing particle " << offset + i << std::endl;
+			Log::global_log->debug() << "[Adios2Reader] Processing particle " << offset + i << std::endl;
 			Molecule m;
 			if (_single_precision) {
 				m = fillMolecule(i, mol_id, comp_id, std::get<std::vector<float>>(rx), std::get<std::vector<float>>(ry),
@@ -307,7 +305,7 @@ void Adios2Reader::rootOnlyRead(ParticleContainer* particleContainer, Domain* do
 		// Print status message
 		unsigned long iph = num_reads / 100;
 		if (iph != 0 && (read % iph) == 0)
-			global_log->info() << "[Adios2Read] Finished reading molecules: " << read / iph << "%\r" << std::flush;
+			Log::global_log->info() << "[Adios2Read] Finished reading molecules: " << read / iph << "%\r" << std::flush;
 	}
 }
 
@@ -322,7 +320,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 	for (const auto &var : variables) {
 		if (var.first == "rx") {
 			if (var.second.at("Type") != "double") {
-				global_log->info() << "[Adios2Reader] Detected single precision" << endl;
+				Log::global_log->info() << "[Adios2Reader] Detected single precision" << std::endl;
 				_single_precision = true;
 				rx = std::vector<float>();
 				ry = std::vector<float>();
@@ -338,7 +336,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 				Ly = std::vector<float>();
 				Lz = std::vector<float>();
 			} else {
-				global_log->info() << "[Adios2Reader] Detected double precision" << endl;
+				Log::global_log->info() << "[Adios2Reader] Detected double precision" << std::endl;
 				rx = std::vector<double>();
 				ry = std::vector<double>();
 				rz = std::vector<double>();
@@ -378,7 +376,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 	}
 
     engine->PerformGets();
-	global_log->debug() << "[Adios2Reader] Processed gets." << endl;
+	Log::global_log->debug() << "[Adios2Reader] Processed gets." << std::endl;
 
 	std::vector<uint64_t> global_component_ids{};
 #ifdef ENABLE_MPI
@@ -404,7 +402,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 #endif
 
     if (_simulation.getEnsemble()->getComponents()->empty()) {
-		global_log->debug() << "[Adios2Reader] getComponents is empty. Reading components from Adios file ..." << std::endl;
+		Log::global_log->debug() << "[Adios2Reader] getComponents is empty. Reading components from Adios file ..." << std::endl;
         auto attributes = io->AvailableAttributes();
 		auto comp_id_copy = global_component_ids.empty() ? comp_id : global_component_ids;
 		std::sort(comp_id_copy.begin(), comp_id_copy.end());
@@ -435,7 +433,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
     } else {
 		_dcomponents = *(_simulation.getEnsemble()->getComponents());
     }
-	global_log->debug() << "[Adios2Reader] Gathered components." << std::endl;
+	Log::global_log->debug() << "[Adios2Reader] Gathered components." << std::endl;
 
 
 #ifdef ENABLE_MPI
@@ -460,7 +458,7 @@ void Adios2Reader::parallelRead(ParticleContainer* particleContainer, Domain* do
 		ParticleData::MoleculeToParticleData(particle_buff[i + offset], m1);
     }
 
-	global_log->debug() << "[Adios2Reader] performing allgather" << std::endl;
+	Log::global_log->debug() << "[Adios2Reader] performing allgather" << std::endl;
 	MPI_Allgatherv(&particle_buff[offset], bufferSize, mpi_Particle, particle_buff.data(),
 				  counts_array.data(), displacements_array.data(),
 				  mpi_Particle,
@@ -529,30 +527,30 @@ void Adios2Reader::initAdios2() {
         io->SetEngine(_adios2enginetype);
 
         if (!engine) {
-            global_log->info() << "[Adios2Reader] Opening File for reading: " << _inputfile.c_str() << std::endl;
+            Log::global_log->info() << "[Adios2Reader] Opening File for reading: " << _inputfile.c_str() << std::endl;
 			engine = std::make_shared<adios2::Engine>(io->Open(_inputfile, adios2::Mode::Read));
         }
   }
     catch (std::invalid_argument& e) {
-        global_log->fatal()
+        Log::global_log->fatal()
                 << "[Adios2Reader] Invalid argument exception, STOPPING PROGRAM from rank"
                 << domainDecomp.getRank()
                 << ": " << e.what() << std::endl;
 	mardyn_exit(1);
     } catch (std::ios_base::failure& e) {
-        global_log->fatal()
+        Log::global_log->fatal()
                 << "[Adios2Reader] IO System base failure exception, STOPPING PROGRAM from rank "
                 << domainDecomp.getRank()
                 << ": " << e.what() << std::endl;
 	mardyn_exit(1);
     } catch (std::exception& e) {
-        global_log->fatal()
+        Log::global_log->fatal()
                 << "[Adios2Reader] Exception, STOPPING PROGRAM from rank"
                 << domainDecomp.getRank()
                 << ": " << e.what() << std::endl;
 	mardyn_exit(1);
     }
-    global_log->info() << "[Adios2Reader] Init complete." << std::endl;
+    Log::global_log->info() << "[Adios2Reader] Init complete." << std::endl;
 };
 
 #endif // ENABLE_ADIOS2

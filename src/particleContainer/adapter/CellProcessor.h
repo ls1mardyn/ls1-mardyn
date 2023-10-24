@@ -32,11 +32,11 @@ protected:
 	double _LJCutoffRadiusSquare;
 
 public:
-	CellProcessor(const double cutoffRadius, const double LJCutoffRadius) : 
-		_cutoffRadiusSquare(cutoffRadius * cutoffRadius), 
+	CellProcessor(const double cutoffRadius, const double LJCutoffRadius) :
+		_cutoffRadiusSquare(cutoffRadius * cutoffRadius),
 		_LJCutoffRadiusSquare(LJCutoffRadius * LJCutoffRadius) {}
-    /** 
-     * virtual destructor 
+    /**
+     * virtual destructor
      */
 	virtual ~CellProcessor() {}
 

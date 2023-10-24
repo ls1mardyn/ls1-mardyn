@@ -20,21 +20,20 @@
 const unsigned short THERMOSTAT_VELSCALE = 1;
 const unsigned short THERMOSTAT_ANDERSEN = 2;
 
-using namespace std;
 
 class ConfigWriter{
 
 public:
-	ConfigWriter(	char* prefix, string in_wall, int in_wallLays, double in_refTime, 
+	ConfigWriter(	char* prefix, std::string in_wall, int in_wallLays, double in_refTime,
 			unsigned in_profilePhi, unsigned in_profileR, unsigned in_profile_H,
 			unsigned in_profileOutputTimesteps, unsigned initCanon, bool movie, Component& fluidComp
 			);
-	
-	ConfigWriter(	char* prefix, string in_wall, int in_wallLays, double in_refTime, 
+
+	ConfigWriter(	char* prefix, std::string in_wall, int in_wallLays, double in_refTime,
 			unsigned in_profilePhi, unsigned in_profileR, unsigned in_profile_H,
 			unsigned in_profileOutputTimesteps, unsigned initCanon, bool movie, PhaseSpaceWriter& psw, Component& fluidComp,
 			double nuAndFac	);
-	
+
 	~ConfigWriter();
 
 	//void buildString();
@@ -99,7 +98,7 @@ private:
 	double nuAndersenSingle;
 	double nuAndersen;
 
-	string wall; // depicts the wall model
+	std::string wall; // depicts the wall model
 
 	unsigned initCanonical;
 	unsigned initStatistics;
@@ -121,8 +120,8 @@ private:
 	bool _movie;
 
 	// declaration of the output streams
-	ofstream confStrm;			// Ausgabe-Stream für programminterne Nutzung: wohin C++ primär schreibt
-	stringstream confFile;		// "physikalisch" vorhandene Datei prefix.cfg
+	std::ofstream confStrm;			// Ausgabe-Stream für programminterne Nutzung: wohin C++ primär schreibt
+	std::stringstream confFile;		// "physikalisch" vorhandene Datei prefix.cfg
 	//char* outputString;	// used in case the entire data are written as a single string in the config file
 };
 

@@ -11,6 +11,7 @@
 #include <string>
 #include <cstddef>
 #include <limits>
+#include <cstdint>
 
 // write out data in scientific format with max. number of digits
 #define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
@@ -50,7 +51,7 @@ unsigned int getFileSize(const char* fileName);
  */
 struct fill_width
 {
-	fill_width( char f, uint8_t w )
+	fill_width( char f, std::uint8_t w )
 		: fill(f), width(w) {}
 	char fill;
 	int width;
@@ -64,7 +65,7 @@ std::ostream& operator<<( std::ostream& o, const fill_width& a );
  *
  * call e.g. like this:
  *
- * std::vector<string> fields;
+ * std::vector<std::string> fields;
  * std::string str = "split:this:string";
  * fields = split( fields, str, ":", split_type::no_empties );
  *

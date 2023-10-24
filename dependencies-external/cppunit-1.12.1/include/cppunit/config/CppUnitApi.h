@@ -29,5 +29,5 @@
 #define CPPUNIT_NEED_DLL_DECL 0
 #endif
 
- 
+
 #endif  // CPPUNIT_CONFIG_CPPUNITAPI

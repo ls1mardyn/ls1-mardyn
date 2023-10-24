@@ -45,10 +45,10 @@ void calculateDistances( float * __restrict__ valuesA[3], float* __restrict__ co
 		float ** __restrict__ distances, float *** __restrict__ distanceVectors ) {
 
 /*	for (int i = 0; i < numValuesA; i++) {
-		std::cout << "A Points: " << valuesA[0][i] << "," << valuesA[1][i] << "," << valuesA[2][i] << endl;
+		std::cout << "A Points: " << valuesA[0][i] << "," << valuesA[1][i] << "," << valuesA[2][i] << std::endl;
 	}
 	for (int i = 0; i < numValuesB; i++) {
-			std::cout << "B Points: " << valuesB[0][i] << "," << valuesB[1][i] << "," << valuesB[2][i] << endl;
+			std::cout << "B Points: " << valuesB[0][i] << "," << valuesB[1][i] << "," << valuesB[2][i] << std::endl;
 	}
 */
 

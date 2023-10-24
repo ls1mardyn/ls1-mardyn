@@ -75,7 +75,7 @@ public:
 	const Quadrupole& quadrupole(unsigned int i) const { return _quadrupoles[i]; }
 
 	void setNumMolecules(unsigned long num) { _numMolecules = num; }  /**< set the number of molecules for this component */
-	void incNumMolecules() { ++_numMolecules; }  /**< increase the number of molecules for this component by 1 */ 
+	void incNumMolecules() { ++_numMolecules; }  /**< increase the number of molecules for this component by 1 */
 	void incNumMolecules(int N) { _numMolecules += N; }  /**< increase the number of molecules for this component by N */
 	unsigned long getNumMolecules() const { return _numMolecules; }  /**< get the number of molecules (global) of the component */
 
@@ -163,9 +163,9 @@ private:
 	double _E_trans; // translational energy
 	double _E_rot; // rotational energy
 	double _T; // temperature
-	
+
 	bool _isStockmayer; //Checks whether component is a Stockmayer fluid to determine moments of inertia
-	
+
 	std::string _name; /**< name of the component/molecule type */
 
 	/**

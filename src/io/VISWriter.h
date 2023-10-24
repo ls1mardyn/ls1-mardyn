@@ -7,7 +7,7 @@
 #include <list>
 
 class ParticleContainer;
-class DomainDecompBase; 
+class DomainDecompBase;
 class Domain;
 
 class VISWriter : public PluginBase {
@@ -40,7 +40,7 @@ public:
     );
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain);
-	
+
 	std::string getPluginName() {
 		return std::string("VISWriter");
 	}

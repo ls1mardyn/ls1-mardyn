@@ -289,7 +289,7 @@ private:
 	 *        it so that all division costs for
 	 */
 	bool calculateAllPossibleSubdivisions(KDNode* node, std::list<KDNode*>& subdividedNodes, MPI_Comm commGroup);
-	
+
 	/**
 	 * Calculates the splitting plane for the "cluster" heterogeneous decomposition
 	 *

@@ -11,14 +11,14 @@ typedef enum {
 
 //! @brief interface for defining the action performed when processing a pair
 //! @author Martin Buchholz
-//! 
+//!
 //! The idea of a ParticleContainer is, that the container itself only knows
 //! about how to efficiently store and access Particles (or neighbouring pairs
-//! of Particles) It doesn't know anything (exception follows) about the 
-//! internal structure of a Particle, or what action should be performed for 
+//! of Particles) It doesn't know anything (exception follows) about the
+//! internal structure of a Particle, or what action should be performed for
 //! a pair of particles (an action could e.g. be to calculate the force).
 //! The only thing that has to be known from a particle is it's position.
-//! 
+//!
 //! An application e.g. wants to find all neighbouring particle pairs and
 //! calculate the forces between them. The retrieval of the pairs has to be
 //! done by the ParticleContainer, but the force calculation has to be

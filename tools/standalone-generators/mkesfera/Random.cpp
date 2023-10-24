@@ -15,7 +15,7 @@ float Random::rnd()
    float rnd;
    const int IA = 16807;
    const int IM = 2147483647;
-   const int IQ = 127773; 
+   const int IQ = 127773;
    const int IR = 2836;
 
    ix_muVT ^= (ix_muVT >> 13);

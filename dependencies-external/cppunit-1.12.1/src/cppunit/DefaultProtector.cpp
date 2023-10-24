@@ -6,7 +6,7 @@
 CPPUNIT_NS_BEGIN
 
 
-bool 
+bool
 DefaultProtector::protect( const Functor &functor,
                            const ProtectorContext &context )
 {
@@ -34,7 +34,7 @@ DefaultProtector::protect( const Functor &functor,
     reportError( context,
                  Message( "uncaught exception of unknown type") );
   }
-  
+
   return false;
 }
 

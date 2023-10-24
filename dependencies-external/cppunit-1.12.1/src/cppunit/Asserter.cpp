@@ -6,25 +6,25 @@
 CPPUNIT_NS_BEGIN
 
 
-void 
-Asserter::fail( std::string message, 
+void
+Asserter::fail( std::string message,
                 const SourceLine &sourceLine )
 {
   fail( Message( "assertion failed", message ), sourceLine );
 }
 
 
-void 
-Asserter::fail( const Message &message, 
+void
+Asserter::fail( const Message &message,
                 const SourceLine &sourceLine )
 {
   throw Exception( message, sourceLine );
 }
 
 
-void 
-Asserter::failIf( bool shouldFail, 
-                  const Message &message, 
+void
+Asserter::failIf( bool shouldFail,
+                  const Message &message,
                   const SourceLine &sourceLine )
 {
   if ( shouldFail )
@@ -32,30 +32,30 @@ Asserter::failIf( bool shouldFail,
 }
 
 
-void 
-Asserter::failIf( bool shouldFail, 
-                  std::string message, 
+void
+Asserter::failIf( bool shouldFail,
+                  std::string message,
                   const SourceLine &sourceLine )
 {
   failIf( shouldFail, Message( "assertion failed", message ), sourceLine );
 }
 
 
-std::string 
+std::string
 Asserter::makeExpected( const std::string &expectedValue )
 {
   return "Expected: " + expectedValue;
 }
 
 
-std::string 
+std::string
 Asserter::makeActual( const std::string &actualValue )
 {
   return "Actual  : " + actualValue;
 }
 
 
-Message 
+Message
 Asserter::makeNotEqualMessage( const std::string &expectedValue,
                                const std::string &actualValue,
                                const AdditionalMessage &additionalMessage,
@@ -70,9 +70,9 @@ Asserter::makeNotEqualMessage( const std::string &expectedValue,
 }
 
 
-void 
-Asserter::failNotEqual( std::string expected, 
-                        std::string actual, 
+void
+Asserter::failNotEqual( std::string expected,
+                        std::string actual,
                         const SourceLine &sourceLine,
                         const AdditionalMessage &additionalMessage,
                         std::string shortDescription )
@@ -80,15 +80,15 @@ Asserter::failNotEqual( std::string expected,
   fail( makeNotEqualMessage( expected,
                              actual,
                              additionalMessage,
-                             shortDescription ), 
+                             shortDescription ),
         sourceLine );
 }
 
 
-void 
+void
 Asserter::failNotEqualIf( bool shouldFail,
-                          std::string expected, 
-                          std::string actual, 
+                          std::string expected,
+                          std::string actual,
                           const SourceLine &sourceLine,
                           const AdditionalMessage &additionalMessage,
                           std::string shortDescription )

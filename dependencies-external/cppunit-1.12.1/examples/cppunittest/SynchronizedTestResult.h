@@ -24,16 +24,16 @@ public:
     {
     }
 
-    virtual ~ObservedSynchronizationObject() 
+    virtual ~ObservedSynchronizationObject()
     {
     }
 
-    virtual void lock() 
+    virtual void lock()
     {
       m_listener->locked();
     }
 
-    virtual void unlock() 
+    virtual void unlock()
     {
       m_listener->unlocked();
     }

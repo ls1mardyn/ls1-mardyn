@@ -35,7 +35,7 @@ class CPPUNIT_API TestPath
 {
 public:
   /*! \brief Constructs an invalid path.
-   * 
+   *
    * The path is invalid until a test is added with add().
    */
   TestPath();
@@ -53,16 +53,16 @@ public:
    * \param count Number of tests to copy. If < 0 then all test starting from index
    *              \a indexFirst are copied.
    */
-  TestPath( const TestPath &otherPath, 
-            int indexFirst, 
+  TestPath( const TestPath &otherPath,
+            int indexFirst,
             int count = -1 );
 
   /*! \brief Resolves a path from a string returned by toString().
    *
    * If \a pathAsString is an absolute path (begins with '/'), then the first test name
-   * of the path must be the name of \a searchRoot. Otherwise, \a pathAsString is a 
+   * of the path must be the name of \a searchRoot. Otherwise, \a pathAsString is a
    * relative path, and the first test found using Test::findTest() matching the first
-   * test name is used as root. An empty string resolve to a path containing 
+   * test name is used as root. An empty string resolve to a path containing
    * \a searchRoot.
    *
    * The resolved path is always valid.
@@ -72,7 +72,7 @@ public:
    * \exception std::invalid_argument if one of the test names can not be resolved.
    * \see toString().
    */
-  TestPath( Test *searchRoot, 
+  TestPath( Test *searchRoot,
             const std::string &pathAsString );
 
   /*! \brief Copy constructor.
@@ -154,7 +154,7 @@ public:
    * "Math::testAdd", toString() will return:
    *
    * "All Tests/Math/Math::testAdd".
-   * 
+   *
    * \return A string composed of the test names separated with a '/'. It is a relative
    *         path.
    */

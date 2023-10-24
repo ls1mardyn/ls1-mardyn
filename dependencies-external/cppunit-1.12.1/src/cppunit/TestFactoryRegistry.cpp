@@ -64,8 +64,8 @@ public:
 
   static TestFactoryRegistry *getRegistry( const std::string &name )
   {
-    // If the following assertion failed, then TestFactoryRegistry::getRegistry() 
-    // was called during static variable destruction without checking the registry 
+    // If the following assertion failed, then TestFactoryRegistry::getRegistry()
+    // was called during static variable destruction without checking the registry
     // validity beforehand using TestFactoryRegistry::isValid() beforehand.
     assert( isValid() );
     if ( !isValid() )         // release mode
@@ -100,7 +100,7 @@ TestFactoryRegistry::getRegistry( const std::string &name )
 }
 
 
-void 
+void
 TestFactoryRegistry::registerFactory( const std::string &name,
                                       TestFactory *factory )
 {
@@ -108,21 +108,21 @@ TestFactoryRegistry::registerFactory( const std::string &name,
 }
 
 
-void 
+void
 TestFactoryRegistry::registerFactory( TestFactory *factory )
 {
   m_factories.insert( factory );
 }
 
 
-void 
+void
 TestFactoryRegistry::unregisterFactory( TestFactory *factory )
 {
   m_factories.erase( factory );
 }
 
 
-void 
+void
 TestFactoryRegistry::addRegistry( const std::string &name )
 {
   registerFactory( &getRegistry( name ) );
@@ -138,11 +138,11 @@ TestFactoryRegistry::makeTest()
 }
 
 
-void 
+void
 TestFactoryRegistry::addTestToSuite( TestSuite *suite )
 {
-  for ( Factories::iterator it = m_factories.begin(); 
-        it != m_factories.end(); 
+  for ( Factories::iterator it = m_factories.begin();
+        it != m_factories.end();
         ++it )
   {
     TestFactory *factory = *it;
@@ -151,7 +151,7 @@ TestFactoryRegistry::addTestToSuite( TestSuite *suite )
 }
 
 
-bool 
+bool
 TestFactoryRegistry::isValid()
 {
   return TestFactoryRegistryList::isValid();

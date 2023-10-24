@@ -68,7 +68,7 @@ public: // overridden from StreamBuffer
          fwrite( text, sizeof(char), length, file_ );
    }
 
-   void flush() 
+   void flush()
    {
       if ( file_ )
          fflush( file_ );
@@ -265,13 +265,13 @@ private:
    bool ownFile_;
 };
 
-inline OStream &stdCOut() 
+inline OStream &stdCOut()
 {
    static OFileStream stream( stdout );
    return stream;
 }
 
-inline OStream &stdCErr() 
+inline OStream &stdCErr()
 {
    static OFileStream stream( stderr );
    return stream;
@@ -299,7 +299,7 @@ CPPUNIT_NS_END
 
     CPPUNIT_NS_BEGIN
 
-    class OStringStream : public std::ostrstream 
+    class OStringStream : public std::ostrstream
     {
     public:
         std::string str()
@@ -329,18 +329,18 @@ CPPUNIT_NS_END
 
     typedef std::ostream OStream;
 
-    inline OStream &stdCOut() 
+    inline OStream &stdCOut()
     {
         return std::cout;
     }
 
-    inline OStream &stdCErr() 
+    inline OStream &stdCErr()
     {
        return std::cerr;
     }
 
     CPPUNIT_NS_END
-   
+
 #endif // #if !defined( CPPUNIT_NO_STREAM )
 
 #endif // CPPUNIT_PORTABILITY_STREAM_H_INCLUDED

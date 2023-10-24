@@ -7,7 +7,7 @@
 #define assertion(x) mardyn_assert(x)
 #define assertion1(x,y) { if (!(x)) std::cerr << (y) << std::endl; mardyn_assert(x);}
 
-using Log::global_log;
+
 
 MPIKDNodePacked::MPIKDNodePacked(const std::bitset<3>& coversWholeDomain, const int& numProcs,
 		const int* lowCorner, const int* highCorner, const int& nodeID, const int& owningProc,
@@ -31,7 +31,7 @@ _level(level) {
     setHighCorner(i, highCorner[i]);
   }
   assertion((31 < (8 * sizeof(int))));
-  
+
 }
 
 MPIKDNodePacked::~MPIKDNodePacked() { }
@@ -70,7 +70,7 @@ void MPIKDNodePacked::setCoversWholeDomain(int elementIndex, const bool& coversW
   assertion(elementIndex>=0);
   assertion(elementIndex<3);
   //assertion(!coversWholeDomain || coversWholeDomain==1);
-  int shift        = 0 + elementIndex; 
+  int shift        = 0 + elementIndex;
   int mask         = 1     << (shift);
   int shiftedValue = coversWholeDomain << (shift);
   _packedRecords0 = _packedRecords0 & ~mask;
@@ -118,7 +118,7 @@ int MPIKDNodePacked::getLowCorner(int elementIndex) const {
   assertion(elementIndex>=0);
   assertion(elementIndex<3);
   return _lowCorner[elementIndex];
-  
+
 }
 
 
@@ -126,7 +126,7 @@ void MPIKDNodePacked::setLowCorner(int elementIndex, const int& lowCorner) {
   assertion(elementIndex>=0);
   assertion(elementIndex<3);
   _lowCorner[elementIndex]= lowCorner;
-  
+
 }
 
 
@@ -139,7 +139,7 @@ int MPIKDNodePacked::getHighCorner(int elementIndex) const {
   assertion(elementIndex>=0);
   assertion(elementIndex<3);
   return _highCorner[elementIndex];
-  
+
 }
 
 
@@ -148,7 +148,7 @@ void MPIKDNodePacked::setHighCorner(int elementIndex, const int& highCorner) {
   assertion(elementIndex>=0);
   assertion(elementIndex<3);
   _highCorner[elementIndex]= highCorner;
-  
+
 }
 
 
@@ -257,7 +257,7 @@ std::string MPIKDNodePacked::toString() const {
 }
 
 void MPIKDNodePacked::toString (std::ostream& out) const {
-  out << "("; 
+  out << "(";
   out << "coversWholeDomain:[";
   for (int i = 0; i < 3-1; i++) {
     out << getCoversWholeDomain(i) << ",";
@@ -358,7 +358,7 @@ void MPIKDNodePacked::initDatatype() {
 
 	for (int i=1; i<Attributes; i++) {
 		if (!(disp[i] > disp[i-1])) {
-			global_log->debug() << "i=" << i << std::endl;
+			Log::global_log->debug() << "i=" << i << std::endl;
 		}
 		assertion1( disp[i] > disp[i-1], i );
 	}

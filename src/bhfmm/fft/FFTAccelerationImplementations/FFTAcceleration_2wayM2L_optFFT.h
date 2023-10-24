@@ -14,7 +14,7 @@
 
 /*
  * Basic implemtation using optimized FFT
- * 
+ *
  * Use FFTDataContainer_matrices as Data container (2 matrices)
  * initialize_target, M2L and protected function to get the DataContainer
  * defined in parent class

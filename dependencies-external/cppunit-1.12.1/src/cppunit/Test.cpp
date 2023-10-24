@@ -28,7 +28,7 @@ Test::findTest( const std::string &testName ) const
 }
 
 
-bool 
+bool
 Test::findTestPath( const std::string &testName,
                     TestPath &testPath ) const
 {
@@ -53,7 +53,7 @@ Test::findTestPath( const std::string &testName,
 }
 
 
-bool 
+bool
 Test::findTestPath( const Test *test,
                     TestPath &testPath ) const
 {
@@ -78,7 +78,7 @@ Test::findTestPath( const Test *test,
 }
 
 
-TestPath 
+TestPath
 Test::resolveTestPath( const std::string &testPath ) const
 {
   Test *mutableThis = CPPUNIT_CONST_CAST( Test *, this );
@@ -86,12 +86,12 @@ Test::resolveTestPath( const std::string &testPath ) const
 }
 
 
-void 
+void
 Test::checkIsValidIndex( int index ) const
 {
   if ( index < 0  ||  index >= getChildTestCount() )
     throw std::out_of_range( "Test::checkValidIndex(): invalid index" );
 }
-  
+
 
 CPPUNIT_NS_END

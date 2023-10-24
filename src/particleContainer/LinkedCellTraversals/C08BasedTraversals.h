@@ -65,7 +65,7 @@ void C08BasedTraversals<CellTemplate>::processBaseCell(CellProcessor& cellProces
 
 	const int num_pairs = _cellPairOffsets8Pack.size();
 	for(int j = 0; j < num_pairs; ++j) {
-		pair<long, long> current_pair = _cellPairOffsets8Pack[j];
+		std::pair<long, long> current_pair = _cellPairOffsets8Pack[j];
 
 		unsigned offset1 = current_pair.first;
 		unsigned cellIndex1 = baseIndex + offset1;
@@ -119,21 +119,21 @@ void C08BasedTraversals<CellTemplate>::computeOffsets() {
 
 	int i = 0;
 	// if incrementing along X, the following order will be more cache-efficient:
-	_cellPairOffsets8Pack[i++] = make_pair(o, o  );
-	_cellPairOffsets8Pack[i++] = make_pair(o, y  );
-	_cellPairOffsets8Pack[i++] = make_pair(y, z  );
-	_cellPairOffsets8Pack[i++] = make_pair(o, z  );
-	_cellPairOffsets8Pack[i++] = make_pair(o, yz );
+	_cellPairOffsets8Pack[i++] = std::make_pair(o, o  );
+	_cellPairOffsets8Pack[i++] = std::make_pair(o, y  );
+	_cellPairOffsets8Pack[i++] = std::make_pair(y, z  );
+	_cellPairOffsets8Pack[i++] = std::make_pair(o, z  );
+	_cellPairOffsets8Pack[i++] = std::make_pair(o, yz );
 
-	_cellPairOffsets8Pack[i++] = make_pair(x, yz );
-	_cellPairOffsets8Pack[i++] = make_pair(x, y  );
-	_cellPairOffsets8Pack[i++] = make_pair(x, z  );
-	_cellPairOffsets8Pack[i++] = make_pair(o, x  );
-	_cellPairOffsets8Pack[i++] = make_pair(o, xy );
-	_cellPairOffsets8Pack[i++] = make_pair(xy, z );
-	_cellPairOffsets8Pack[i++] = make_pair(y, xz );
-	_cellPairOffsets8Pack[i++] = make_pair(o, xz );
-	_cellPairOffsets8Pack[i++] = make_pair(o, xyz);
+	_cellPairOffsets8Pack[i++] = std::make_pair(x, yz );
+	_cellPairOffsets8Pack[i++] = std::make_pair(x, y  );
+	_cellPairOffsets8Pack[i++] = std::make_pair(x, z  );
+	_cellPairOffsets8Pack[i++] = std::make_pair(o, x  );
+	_cellPairOffsets8Pack[i++] = std::make_pair(o, xy );
+	_cellPairOffsets8Pack[i++] = std::make_pair(xy, z );
+	_cellPairOffsets8Pack[i++] = std::make_pair(y, xz );
+	_cellPairOffsets8Pack[i++] = std::make_pair(o, xz );
+	_cellPairOffsets8Pack[i++] = std::make_pair(o, xyz);
 
 	i = 0;
 	_cellOffsets8Pack[i++] =   o;

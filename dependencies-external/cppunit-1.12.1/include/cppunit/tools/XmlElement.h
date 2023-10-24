@@ -23,7 +23,7 @@ class XmlElement;
 
 
 /*! \brief A XML Element.
- * 
+ *
  * A XML element has:
  * - a name, specified on construction,
  * - a content, specified on construction (may be empty),

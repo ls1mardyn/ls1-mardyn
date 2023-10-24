@@ -8,7 +8,7 @@
 class MockProtectorException : public std::runtime_error
 {
 public:
-  MockProtectorException() 
+  MockProtectorException()
     : std::runtime_error( "MockProtectorException" )
   {
   }

@@ -215,7 +215,7 @@ public:
 		mardyn_assert(false);
 		return sizeof(*this);
 	}
-        
+
 	void setF(double /*F*/ [3]) override {}
 	void setM(double /*M*/[3]) override {}
 	void setVi(double /*Vi*/[3]) override {}
@@ -284,7 +284,7 @@ public:
 	StorageState getStorageState() const {
 		return _state;
 	}
-        
+
 
 	void buildOwnSoA() override {
 		mardyn_assert(_state == STORAGE_AOS);

@@ -7,17 +7,16 @@
 
 #include <fstream>
 
-using Log::global_log;
 
 void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "[ResultWriter] Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "[ResultWriter] Write frequency: " << _writeFrequency << std::endl;
 
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "[ResultWriter] Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "[ResultWriter] Output prefix: " << _outputPrefix << std::endl;
 
 	xmlconfig.getNodeValue("writeprecision", _writePrecision);
-	global_log->info() << "[ResultWriter] Write precision: " << _writePrecision << std::endl;
+	Log::global_log->info() << "[ResultWriter] Write precision: " << _writePrecision << std::endl;
 	_writeWidth = _writePrecision + 15; // Adding a width of 15 to have enough whitespace between chars
 }
 
@@ -26,7 +25,7 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 
 	// Only main rank writes data to file
 	if(domainDecomp->getRank() == 0) {
-		const string resultfile(_outputPrefix+".res");
+		const std::string resultfile(_outputPrefix+".res");
 		std::ofstream resultStream;
 		resultStream.open(resultfile.c_str(), std::ios::out);
 		resultStream << std::setw(10) << "timestep"
@@ -58,7 +57,7 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 	if ((simstep % _writeFrequency == 0) and (simstep > 0UL)) {
 		// Only main rank writes data to file
 		if (domainDecomp->getRank() == 0) {
-			const string resultfile(_outputPrefix+".res");
+			const std::string resultfile(_outputPrefix+".res");
 			std::ofstream resultStream;
 			resultStream.open(resultfile.c_str(), std::ios::app);
 			auto printOutput = [&](auto value) {

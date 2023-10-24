@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mardyn version="20100525">
+  <loglevel>info</loglevel>
   <refunits type="SI">
     <length unit="nm">0.0529177</length>
     <mass unit="u">1000</mass>

@@ -270,7 +270,7 @@ private:
 				double gflopsOwnZero, double gflopsPairZero) override;
 		void close() override;
 	private:
-		ofstream _myfile;
+		std::ofstream _myfile;
 	};
 
 	class VTWriterStatistics: public VTWriterI {

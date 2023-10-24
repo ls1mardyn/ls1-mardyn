@@ -27,20 +27,20 @@ void COMaligner::readXML(XMLfileUnits& xmlconfig){
 
     // SANITY CHECK
     if(_interval < 1 || _alignmentCorrection < 0 || _alignmentCorrection > 1){
-        global_log -> error() << "[COMaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
-        global_log -> error() << "[COMaligner] HALTING SIMULATION" << std::endl;
+        Log::global_log -> error() << "[COMaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
+        Log::global_log -> error() << "[COMaligner] HALTING SIMULATION" << std::endl;
         _enabled = false;
         // HALT SIM
         Simulation::exit(1);
         return;
     }
 
-    global_log -> info() << "[COMaligner] settings:" << std::endl;
-    global_log -> info() << "                  x: " << _alignX << std::endl;
-    global_log -> info() << "                  y: " << _alignY << std::endl;
-    global_log -> info() << "                  z: " << _alignZ << std::endl;
-    global_log -> info() << "                  interval: " << _interval << std::endl;
-    global_log -> info() << "                  correctionFactor: " << _alignmentCorrection << std::endl;
+    Log::global_log -> info() << "[COMaligner] settings:" << std::endl;
+    Log::global_log -> info() << "                  x: " << _alignX << std::endl;
+    Log::global_log -> info() << "                  y: " << _alignY << std::endl;
+    Log::global_log -> info() << "                  z: " << _alignZ << std::endl;
+    Log::global_log -> info() << "                  interval: " << _interval << std::endl;
+    Log::global_log -> info() << "                  correctionFactor: " << _alignmentCorrection << std::endl;
 
     // Setting up different cases here to save on if statements in the simulation phase
     _dim_step = 1;
@@ -86,7 +86,7 @@ void COMaligner::readXML(XMLfileUnits& xmlconfig){
         _enabled = false;
     }
 
-    global_log -> debug() << "[COMaligner] dim settings are: " << _dim_start << " " << _dim_end << " " << _dim_step << std::endl;
+    Log::global_log -> debug() << "[COMaligner] dim settings are: " << _dim_start << " " << _dim_end << " " << _dim_step << std::endl;
 
 }
 
@@ -103,7 +103,7 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
 
     if(_enabled) {
 
-        global_log->debug() << "[COMaligner] before forces called" << std::endl;
+        Log::global_log->debug() << "[COMaligner] before forces called" << std::endl;
 
         if ((simstep - 1) % _interval != 0) {
             return;
@@ -142,7 +142,7 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
         for (int d = _dim_start; d < _dim_end; d += _dim_step) {
             _motion[d] = -_alignmentCorrection * ((_balance[d] / _mass) - .5 * _boxLength[d]);
         }
-        global_log->info() << "[COMaligner] motion is x: " << _motion[0] << " y: " << _motion[1] << " z: " << _motion[2]
+        Log::global_log->info() << "[COMaligner] motion is x: " << _motion[0] << " y: " << _motion[1] << " z: " << _motion[2]
                            << std::endl;
 
         // AVOID MOVES LARGER THAN ONE CUTOFF RADIUS
@@ -152,9 +152,9 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
             for(int d = 0; d < 3; d++){
                 _motion[d] *= factor;
             }
-            global_log->info() << "[COMaligner] Motion larger than Cutoff Radius. Reducing Motion" << _motion[2]
+            Log::global_log->info() << "[COMaligner] Motion larger than Cutoff Radius. Reducing Motion" << _motion[2]
                                << std::endl;
-            global_log->info() << "[COMaligner] New motion is x: " << _motion[0] << " y: " << _motion[1] << " z: " << _motion[2]
+            Log::global_log->info() << "[COMaligner] New motion is x: " << _motion[0] << " y: " << _motion[1] << " z: " << _motion[2]
                                << std::endl;
         }
 
@@ -167,7 +167,7 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
 
     }
     else{
-        global_log->info() << "[COMaligner] DISABLED, all dims set to 0" << std::endl;
+        Log::global_log->info() << "[COMaligner] DISABLED, all dims set to 0" << std::endl;
     }
 
     // TODO: Check for OpenMP implementation of above for-loop

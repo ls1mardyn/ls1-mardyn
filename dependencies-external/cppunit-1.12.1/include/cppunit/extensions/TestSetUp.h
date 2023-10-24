@@ -11,7 +11,7 @@ class TestResult;
 
 /*! \brief Decorates a test by providing a specific setUp() and tearDown().
  */
-class CPPUNIT_API TestSetUp : public TestDecorator 
+class CPPUNIT_API TestSetUp : public TestDecorator
 {
 public:
   TestSetUp( Test *test );

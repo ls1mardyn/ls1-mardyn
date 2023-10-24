@@ -25,7 +25,7 @@ class TestResultCollector;
  *
  * The test runner manage the life cycle of the added tests.
  *
- * The test runner can run only one of the added tests or all the tests. 
+ * The test runner can run only one of the added tests or all the tests.
  *
  * TestRunner prints out a trace as the tests are executed followed by a
  * summary at the end. The trace and summary print are optional.
@@ -39,10 +39,10 @@ class TestResultCollector;
  * \endcode
  *
  * The trace is printed using a TextTestProgressListener. The summary is printed
- * using a TextOutputter. 
+ * using a TextOutputter.
  *
  * You can specify an alternate Outputter at construction
- * or later with setOutputter(). 
+ * or later with setOutputter().
  *
  * After construction, you can register additional TestListener to eventManager(),
  * for a custom progress trace, for example.
@@ -50,7 +50,7 @@ class TestResultCollector;
  * \code
  * CppUnit::TextTestRunner runner;
  * runner.addTest( ExampleTestCase::suite() );
- * runner.setOutputter( CppUnit::CompilerOutputter::defaultOutputter( 
+ * runner.setOutputter( CppUnit::CompilerOutputter::defaultOutputter(
  *                          &runner.result(),
  *                          std::cerr ) );
  * MyCustomProgressTestListener progress;

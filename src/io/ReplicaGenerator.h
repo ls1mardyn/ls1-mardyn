@@ -10,7 +10,6 @@
 #include <iostream>
 #include <cstdint>
 
-using namespace std;
 
 enum SystemTypes : uint8_t {
 	ST_UNKNOWN = 0,

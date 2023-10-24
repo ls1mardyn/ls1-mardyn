@@ -14,14 +14,14 @@
 
 
 class NeighborAcquirerTest : public utils::TestWithSimulationSetup {
-	
+
 	TEST_SUITE(NeighborAcquirerTest);
 	TEST_METHOD(testShiftIfNecessary);
 	TEST_METHOD(testOverlap);
 	TEST_METHOD(testIOwnThis);
 	TEST_METHOD(testCorrectNeighborAcquisition);
 	TEST_SUITE_END();
-	
+
 	public:
 		NeighborAcquirerTest();
 		~NeighborAcquirerTest();
