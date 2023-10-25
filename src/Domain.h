@@ -422,9 +422,9 @@ private:
 	double _globalUpot;
 	//! global component specific potential (fluid-fluid and fluid-solid but NOT solid-solid)
 	double _globalUpotCspecif;
-	//! global two times translational kinetic energy
+	//! global translational kinetic energy times two
 	double _globalsummv2;
-	//! global two times rotational kinetic energy
+	//! global rotational kinetic energy times two
 	double _globalsumIw2;
 	//! global virial
 	double _globalVirial;

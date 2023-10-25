@@ -11,6 +11,10 @@
 void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	Log::global_log->info() << "[ResultWriter] Write frequency: " << _writeFrequency << std::endl;
+	if (_writeFrequency == 0) {
+		Log::global_log->error() << "[ResultWriter] Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
+		Simulation::exit(-1);
+	}
 
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	Log::global_log->info() << "[ResultWriter] Output prefix: " << _outputPrefix << std::endl;
