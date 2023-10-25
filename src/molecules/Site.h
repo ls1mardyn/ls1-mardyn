@@ -130,17 +130,7 @@ public:
 		Site::readXML(xmlconfig);
 		xmlconfig.getNodeValueReduced("epsilon", _epsilon);
 		xmlconfig.getNodeValueReduced("sigma", _sigma);
-		// Read shifted value and check if its boolean (true/false) to avoid legacy-errors
-		std::string strShifted = "false";
-		xmlconfig.getNodeValue("shifted", strShifted);
-		// Convert to lower case to avoid input errors
-		std::transform(strShifted.begin(), strShifted.end(), strShifted.begin(), [](auto c) { return std::tolower(c); });
-		if (strShifted == "true" || strShifted == "false") {
-			std::istringstream(strShifted) >> std::boolalpha >> _shiftRequested;
-		} else {
-			Log::global_log->error() << "Parameter <shifted> of components has to be either set to 'true' or 'false'" << std::endl;
-			mardyn_exit(1);
-		}
+		xmlconfig.getNodeValue("shifted", _shiftRequested);
 	}
 
 	/// write to stream
