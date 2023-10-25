@@ -590,20 +590,20 @@ template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 	std::string v;
 	bool found=getValue(v);
 	if (found) {
-        // Remove white spaces
-        v.erase(std::remove_if(v.begin(), v.end(), ::isspace), v.end());
-        // Convert to upper case letters
-        std::transform(v.begin(), v.end(), v.begin(), ::toupper);
+		// Remove white spaces
+		v.erase(std::remove_if(v.begin(), v.end(), ::isspace), v.end());
+		// Convert to upper case letters
+		std::transform(v.begin(), v.end(), v.begin(), ::toupper);
 
-        if (v == "TRUE" || v == "YES" || v == "ON" || v == "1") {
-            value = true;
-        } else if (v == "FALSE" || v == "NO" || v == "OFF" || v == "0") {
-            value = false;
-        } else {
-			std::cerr << "ERROR parsing \"" << v << "\" from xml file to boolean" << std::endl;
-            Simulation::exit(1);
-        }
-    }
+		if (v == "TRUE" || v == "YES" || v == "ON" || v == "1") {
+			value = true;
+		} else if (v == "FALSE" || v == "NO" || v == "OFF" || v == "0") {
+			value = false;
+		} else {
+			std::cerr << "ERROR parsing \"" << v << "\" to boolean from tag \"<" << name() << ">\" in xml file" << std::endl;
+			Simulation::exit(1);
+		}
+	}
 	return found;
 }
 
