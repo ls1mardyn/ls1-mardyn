@@ -687,10 +687,6 @@ inline std::ostream& operator << (std::ostream& ostrm, const XMLfile& xmlfile)
 /*
 // explicit instantiation
 template bool XMLfile::Node::getValue<std::string>(std::string& value)const;
-template bool XMLfile::Node::getValue<int>(int& value)const;
-template bool XMLfile::Node::getValue<long>(long& value)const;
-template bool XMLfile::Node::getValue<float>(float& value)const;
-template bool XMLfile::Node::getValue<double>(double& value)const;
 template bool XMLfile::Node::getValue<bool>(bool& value)const;
 */
 
