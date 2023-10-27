@@ -533,15 +533,15 @@ template<typename T> bool XMLfile::Node::getValue(T& value) const
 	if(m_xmlnode)
 	{
 		std::stringstream ss(m_xmlnode->value());
-		ss >> value;
 		// Check if input has correct sign
 		if (std::is_unsigned_v<T>) {
-			if (ss.str().at(0) == '-') {
+			if (ss.str().find_first_of("-") != std::string::npos) {
 				std::cerr << "ERROR parsing \"" << ss.str() << "\" to data type " << typeid(T).name() << " from tag \"<" << name() << ">\" in xml file" << std::endl;
 				std::cerr << "The tag contains a negative value but an unsigned value was expected." << std::endl;
 				Simulation::exit(1);
 			}
 		}
+		ss >> value;
 		// Check if the entire string was consumed
 		if (!ss.eof() || ss.fail()) {
 			std::cerr << "ERROR parsing all chars of \"" << ss.str() << "\" from tag \"<" << name() << ">\" in xml file" << std::endl;
