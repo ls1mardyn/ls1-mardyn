@@ -997,8 +997,8 @@ void Spherical::calculateLongRange(){
 				double gamma_Avg = 0;
 
 
-				std::cout << "--------------------------------------------------------- "<< std::endl;
-				std::cout << "--------------Simstep = "<< simstep << "----------------------"<< std::endl;
+				// std::cout << "--------------------------------------------------------- "<< std::endl;
+				// std::cout << "--------------Simstep = "<< simstep << "----------------------"<< std::endl;
 				gamma_integral_Avg = 0;
 				// calculation of gamma / R_e:
 				for (unsigned i=1; i < NShells; i++) { // not considering index 0!
@@ -1011,25 +1011,25 @@ void Spherical::calculateLongRange(){
 					// gamma_Avg_iterative[i] =  pow(-(integral_term_Avg[i] * pDiff2_Avg)/8., 1/3.);
 					// // ----------------- //
 					gamma_integral_Avg += RShells3[i] * dpN_Avg[i]; 
-					std::cout << "i = "<< i << ";"<< std::endl;
-					std::cout << "dpN_Avg[ "<<i<<"] = " << dpN_Avg[i] << ";"<< std::endl;
-					std::cout << "drho_Avg [ "<<i<<"] = " << drho_Avg[i] << ";"<< std::endl;
-					std::cout << "R_e3 = "<< R_e3 << ";"<< std::endl;
-					std::cout << "gamma_integral_Avg = "<< gamma_integral_Avg << std::endl;
+					// std::cout << "i = "<< i << ";"<< std::endl;
+					// std::cout << "dpN_Avg[ "<<i<<"] = " << dpN_Avg[i] << ";"<< std::endl;
+					// std::cout << "drho_Avg [ "<<i<<"] = " << drho_Avg[i] << ";"<< std::endl;
+					// std::cout << "R_e3 = "<< R_e3 << ";"<< std::endl;
+					// std::cout << "gamma_integral_Avg = "<< gamma_integral_Avg << std::endl;
 				}
 
-				std::cout << "--------------------------------------------------------- "<< std::endl;
-				std::cout << "rhoDiff = "<< rhoDiff_Avg << ";"<< std::endl;
-				std::cout << "pDiff   = "<< pDiff_Avg << "; pOutside = "<<pOutside <<"; pInside="<< pInside<< std::endl;
+				// std::cout << "--------------------------------------------------------- "<< std::endl;
+				// std::cout << "rhoDiff = "<< rhoDiff_Avg << ";"<< std::endl;
+				// std::cout << "pDiff   = "<< pDiff_Avg << "; pOutside = "<<pOutside <<"; pInside="<< pInside<< std::endl;
 				R_e3 /= rhoDiff_Avg;
-				std::cout << "R_e3    = "<< R_e3 << ";"<< std::endl;
+				// std::cout << "R_e3    = "<< R_e3 << ";"<< std::endl;
 				R_e = std::cbrt(R_e3);
-				std::cout << "R_e     = "<< R_e << ";"<< std::endl;
+				// std::cout << "R_e     = "<< R_e << ";"<< std::endl;
 				gamma_Avg =  std::cbrt(-(pDiff2_Avg*gamma_integral_Avg)/8.);
-				std::cout << "gamma   = "<< gamma_Avg << ";"<< std::endl;
+				// std::cout << "gamma   = "<< gamma_Avg << ";"<< std::endl;
 
 				double R_gamma = 2*gamma_Avg/pDiff_Avg;
-				std::cout << "R_gamma = "<< R_gamma << ";"<< std::endl;
+				// std::cout << "R_gamma = "<< R_gamma << ";"<< std::endl;
 
 				ofstream outfilestreamThermData(filenameThermData, ios::app);
                 outfilestreamThermData << std::setw(24) << simstep << ";";  
