@@ -962,12 +962,12 @@ void Spherical::calculateLongRange(){
 				double pInside = 0;
 				double rhoInside = 0;
 				for (unsigned int i = inside_from; i< inside_to; i++){
-					pInside +=  _T*rhoShellsAvg_global[i]+VirShells_T_global[i];
-					pInside +=  _T*rhoShellsAvg_global[i]+VirShells_N_global[i];
+					pInside +=  _T*rhoShellsAvg_global[i];
+					pInside +=  (VirShells_T_global[i]+VirShells_N_global[i])/2;
 					rhoInside += rhoShellsAvg_global[i];
 				}
-				pInside /= (inside_to - inside_from)*2;
-				rhoInside /= inside_to - inside_from;
+				pInside /= (inside_to - inside_from); 
+				rhoInside /= (inside_to - inside_from);
 
 				double pOutside = 0;
 				double rhoOutside = 0;
@@ -1029,7 +1029,7 @@ void Spherical::calculateLongRange(){
 				// std::cout << "R_e3    = "<< R_e3 << ";"<< std::endl;
 				R_e = std::cbrt(R_e3);
 				// std::cout << "R_e     = "<< R_e << ";"<< std::endl;
-				gamma_Avg =  std::cbrt(-(pDiff2_Avg*gamma_integral_Avg)/8.);
+				gamma_Avg =  -std::cbrt((pDiff2_Avg*gamma_integral_Avg)/8.);
 				// std::cout << "gamma   = "<< gamma_Avg << ";"<< std::endl;
 
 				double R_gamma = 2*gamma_Avg/pDiff_Avg;
