@@ -223,10 +223,14 @@ void Spherical::init()
 		outfilestreamThermData << std::setw(24) << "R_gamma;";
 		outfilestreamThermData << std::setw(24) << "R_e;";
 		outfilestreamThermData << std::setw(24) << "delta;";
-		// outfilestreamThermData << std::setw(24) << "rhoInside ;";
-		// outfilestreamThermData << std::setw(24) << "rhoOutside ;";
-		// outfilestreamThermData << std::setw(24) << "pInside ;";
-		// outfilestreamThermData << std::setw(24) << "pOutside ;";
+		outfilestreamThermData << std::setw(24) << "rhoInside;";
+		outfilestreamThermData << std::setw(24) << "rhoOutside ;";
+		outfilestreamThermData << std::setw(24) << "pInside;";
+		outfilestreamThermData << std::setw(24) << "pOutside;";
+		outfilestreamThermData << std::setw(24) << "inside_from" << ";";
+		outfilestreamThermData << std::setw(24) << "inside_to" << ";";
+		outfilestreamThermData << std::setw(24) << "outside_from" << ";";
+		outfilestreamThermData << std::setw(24) << "outside_to" << ";";
 		outfilestreamThermData << std::endl;
 		outfilestreamThermData.close();
 
@@ -1038,10 +1042,14 @@ void Spherical::calculateLongRange(){
                 outfilestreamThermData << std::setw(24) << R_gamma << ";";
                 outfilestreamThermData << std::setw(24) << R_e << ";";
                 outfilestreamThermData << std::setw(24) << R_e  - R_gamma<< ";";
-                // outfilestreamThermData << std::setw(24) << rhoInside << ";";
-                // outfilestreamThermData << std::setw(24) << rhoOutside << ";";
-                // outfilestreamThermData << std::setw(24) << pInside << ";";
-                // outfilestreamThermData << std::setw(24) << pOutside << ";";
+                outfilestreamThermData << std::setw(24) << rhoInside << ";";
+                outfilestreamThermData << std::setw(24) << rhoOutside << ";";
+                outfilestreamThermData << std::setw(24) << pInside << ";";
+                outfilestreamThermData << std::setw(24) << pOutside << ";";
+                outfilestreamThermData << std::setw(24) << inside_from << ";";
+                outfilestreamThermData << std::setw(24) << inside_to << ";";
+                outfilestreamThermData << std::setw(24) << outside_from << ";";
+                outfilestreamThermData << std::setw(24) << outside_to << ";";
 				outfilestreamThermData << std::endl;
 
                 outfilestreamThermData.close();
