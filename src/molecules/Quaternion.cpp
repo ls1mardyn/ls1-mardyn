@@ -1,8 +1,6 @@
 #include "Quaternion.h"
 #include <cmath>
 
-#define VECTOR3_ZERO ((std::array<double, 3>){ 0, 0, 0 })
-
 Quaternion::Quaternion(const double& alpha_rad, const std::array<double,3>& n)
 {
 	// normalize rotation axis vector n
@@ -43,8 +41,8 @@ void Quaternion::multiply_left(const Quaternion& q) {
 }
 
 std::array<double, 3> Quaternion::rotate(const std::array<double, 3>& d) const {
-	std::array<double, 3> drot VECTOR3_ZERO;
-	if(VECTOR3_ZERO != d) {
+	std::array<double, 3> drot{};
+	if(std::array<double, 3>{} != d) {
 		double ww = m_qw*m_qw;
 		double xx = m_qx*m_qx;
 		double yy = m_qy*m_qy;
@@ -66,8 +64,8 @@ std::array<double, 3> Quaternion::rotate(const std::array<double, 3>& d) const {
 }
 
 std::array<double, 3> Quaternion::rotateinv(const std::array<double, 3>& d) const {
-	std::array<double, 3> drot VECTOR3_ZERO;
-	if (VECTOR3_ZERO != d) {
+	std::array<double, 3> drot{};
+	if (std::array<double, 3>{} != d) {
 		double ww = m_qw*m_qw;
 		double xx = m_qx*m_qx;
 		double yy = m_qy*m_qy;
@@ -98,11 +96,6 @@ std::array<double, 3> Quaternion::rotateinv(const std::array<double, 3>& d) cons
  */
 
 void Quaternion::differentiate(const std::array<double, 3>& w, Quaternion& dqdt) const {
-	if(VECTOR3_ZERO == w) {
-		dqdt.m_qw = 0; dqdt.m_qx = 0; dqdt.m_qy = 0; dqdt.m_qz = 0;
-		return;
-	}
-
 	dqdt.m_qw = .5 * ( -m_qx*w[0] - m_qy*w[1] - m_qz*w[2] );
 	dqdt.m_qx = .5 * (  m_qw*w[0] - m_qz*w[1] + m_qy*w[2] );
 	dqdt.m_qy = .5 * (  m_qz*w[0] + m_qw*w[1] - m_qx*w[2] );

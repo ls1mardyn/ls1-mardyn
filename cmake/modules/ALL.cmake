@@ -2,7 +2,7 @@
 
 option(ENABLE_GPROF "Use the GNU profiler (gprof)" OFF)
 if(ENABLE_GPROF)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
 endif()
 
 option(ENABLE_ALLLBL "Enable ALL load balancing library" OFF)
