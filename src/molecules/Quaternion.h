@@ -38,7 +38,9 @@ public:
 		scale( 1./ s);
 	}
 	void normalize() {
-		scaleinv(sqrt(magnitude2()));
+		if (!isNormalized()) { // GH#267 Avoid ASM `call sqrt` for identity
+			scaleinv(sqrt(magnitude2()));
+		}
 	}
 	void conjugate() {
 		m_qx = -m_qx;
@@ -87,7 +89,7 @@ public:
 	void getRotMatrix(double R[3][3]) const;
 	void getRotinvMatrix(double R[3][3]) const;
 
-	bool isNormalized() const {
+	inline bool isNormalized() const {
 		return fabs(magnitude2() - 1.0) <= 1e-15;
 	}
 	void check() const{
