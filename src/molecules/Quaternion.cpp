@@ -44,7 +44,7 @@ void Quaternion::multiply_left(const Quaternion& q) {
 
 std::array<double, 3> Quaternion::rotate(const std::array<double, 3>& d) const {
 	std::array<double, 3> drot VECTOR3_ZERO;
-	if(VECTOR3_ZERO != d) { // GH#267
+	if(VECTOR3_ZERO != d) {
 		double ww = m_qw*m_qw;
 		double xx = m_qx*m_qx;
 		double yy = m_qy*m_qy;
@@ -67,7 +67,7 @@ std::array<double, 3> Quaternion::rotate(const std::array<double, 3>& d) const {
 
 std::array<double, 3> Quaternion::rotateinv(const std::array<double, 3>& d) const {
 	std::array<double, 3> drot VECTOR3_ZERO;
-	if (VECTOR3_ZERO != d) { // GH#267
+	if (VECTOR3_ZERO != d) {
 		double ww = m_qw*m_qw;
 		double xx = m_qx*m_qx;
 		double yy = m_qy*m_qy;
@@ -98,7 +98,7 @@ std::array<double, 3> Quaternion::rotateinv(const std::array<double, 3>& d) cons
  */
 
 void Quaternion::differentiate(const std::array<double, 3>& w, Quaternion& dqdt) const {
-	if(VECTOR3_ZERO == w) { // GH#267
+	if(VECTOR3_ZERO == w) {
 		dqdt.m_qw = 0; dqdt.m_qx = 0; dqdt.m_qy = 0; dqdt.m_qz = 0;
 		return;
 	}
