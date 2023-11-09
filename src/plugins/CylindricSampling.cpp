@@ -93,8 +93,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
     std::array<CommVar<std::vector<double>>, 3> virialVect_step;
     std::array<CommVar<std::vector<double>>, 3> forceVect_step;
 
-    std::array<std::vector<double>, 3> veloDrift_step_global;       // Drift velocity
-
     numMolecules_step.local.resize(_lenVector);
     mass_step.local.resize(_lenVector);
     ekin_step.local.resize(_lenVector);
@@ -113,8 +111,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         velocityVect_step[d].global.resize(_lenVector);
         virialVect_step[d].global.resize(_lenVector);
         forceVect_step[d].global.resize(_lenVector);
-
-        veloDrift_step_global[d].resize(_lenVector);
     }
 
     std::fill(numMolecules_step.local.begin(), numMolecules_step.local.end(), 0ul);
@@ -135,46 +131,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         std::fill(velocityVect_step[d].global.begin(),   velocityVect_step[d].global.end(), 0.0f);
         std::fill(virialVect_step[d].global.begin(),     virialVect_step[d].global.end(), 0.0f);
         std::fill(forceVect_step[d].global.begin(),      forceVect_step[d].global.end(), 0.0f);
-
-        std::fill(veloDrift_step_global[d].begin(),      veloDrift_step_global[d].end(), 0.0f);
-    }
-
-    // Calculate drift as it is needed first
-    for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
-        const double ry = pit->r(1);
-        const double distCenter = std::sqrt(std::pow(pit->r(0)-0.5*_globalBoxLength[0],2) + std::pow(pit->r(2)-0.5*_globalBoxLength[0],2));
-        // Do not consider particles outside of most outer radius
-        if (distCenter >= _distMax) { continue; }
-        const unsigned int indexH = std::min(_numBinsGlobalHeight, static_cast<unsigned int>(ry/_binwidth));  // Index of bin of height
-        const unsigned int indexR = std::min(_numBinsGlobalRadius, static_cast<unsigned int>(distCenter/_binwidth));  // Index of bin of radius
-        const unsigned int index = _numBinsGlobalHeight*indexR + indexH;
-
-        numMolecules_step.local[index]) ++;
-        velocityVect_step[0].local[index]) += pit->v(0);
-        velocityVect_step[1].local[index]) += pit->v(1);
-        velocityVect_step[2].local[index]) += pit->v(2);
-    }
-
-#ifdef ENABLE_MPI
-    MPI_Allreduce(numMolecules_step.local.data(), numMolecules_step.global.data(), _lenVector, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(velocityVect_step[0].local.data(), velocityVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(velocityVect_step[1].local.data(), velocityVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(velocityVect_step[2].local.data(), velocityVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#else
-    for (unsigned long i = 0; i < _lenVector; i++) {
-        numMolecules_step.global[i] = numMolecules_step.local[i];
-        velocityVect_step[0].global[i] = velocityVect_step[0].local[i];
-        velocityVect_step[1].global[i] = velocityVect_step[1].local[i];
-        velocityVect_step[2].global[i] = velocityVect_step[2].local[i];
-    }
-#endif
-
-    for (unsigned long i = 0; i < _lenVector; i++) {
-        if (numMolecules_step.global[i] > 0ul) {
-            veloDrift_step_global[0][i] = velocityVect_step[0].global[i] / numMolecules_step.global[i];
-            veloDrift_step_global[1][i] = velocityVect_step[1].global[i] / numMolecules_step.global[i];
-            veloDrift_step_global[2][i] = velocityVect_step[2].global[i] / numMolecules_step.global[i];
-        }
     }
 
     for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
@@ -185,29 +141,39 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         const unsigned int indexH = std::min(_numBinsGlobalHeight, static_cast<unsigned int>(ry/_binwidth));  // Index of bin of height
         const unsigned int indexR = std::min(_numBinsGlobalRadius, static_cast<unsigned int>(distCenter/_binwidth));  // Index of bin of radius
         const unsigned int index = _numBinsGlobalHeight*indexR + indexH;
+
+        numMolecules_step.local[index] ++;
 
         const double veloX = pit->v(0);
         const double veloY = pit->v(1);
         const double veloZ = pit->v(2);
         const double mass = pit->mass();
 
-        mass_step.local[index]) += pit->mass();
-        ekin_step.local[index]) += pit->U_kin();
+        velocityVect_step[0].local[index] += veloX;
+        velocityVect_step[1].local[index] += veloY;
+        velocityVect_step[2].local[index] += veloZ;
 
-        ekinVect_step[0].local[index]) += 0.5*mass*veloX*veloX;
-        ekinVect_step[1].local[index]) += 0.5*mass*veloY*veloY;
-        ekinVect_step[2].local[index]) += 0.5*mass*veloZ*veloZ;
-        virialVect_step[0].local[index]) += pit->Vi(0);
-        virialVect_step[1].local[index]) += pit->Vi(1);
-        virialVect_step[2].local[index]) += pit->Vi(2);
-        forceVect_step[0].local[index]) += pit->F(0);
-        forceVect_step[1].local[index]) += pit->F(1);
-        forceVect_step[2].local[index]) += pit->F(2);
+        mass_step.local[index] += mass;
+        ekin_step.local[index] += pit->U_kin();
+
+        ekinVect_step[0].local[index] += 0.5*mass*veloX*veloX;
+        ekinVect_step[1].local[index] += 0.5*mass*veloY*veloY;
+        ekinVect_step[2].local[index] += 0.5*mass*veloZ*veloZ;
+        virialVect_step[0].local[index] += pit->Vi(0);
+        virialVect_step[1].local[index] += pit->Vi(1);
+        virialVect_step[2].local[index] += pit->Vi(2);
+        forceVect_step[0].local[index] += pit->F(0);
+        forceVect_step[1].local[index] += pit->F(1);
+        forceVect_step[2].local[index] += pit->F(2);
 
     }
 
     // Gather quantities of all processes. Note: MPI_Reduce instead of MPI_Allreduce!
 #ifdef ENABLE_MPI
+    MPI_Allreduce(numMolecules_step.local.data(), numMolecules_step.global.data(), _lenVector, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(velocityVect_step[0].local.data(), velocityVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(velocityVect_step[1].local.data(), velocityVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(velocityVect_step[2].local.data(), velocityVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     MPI_Reduce(mass_step.local.data(), mass_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekin_step.local.data(), ekin_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[0].local.data(), virialVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -221,6 +187,10 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
     MPI_Reduce(ekinVect_step[2].local.data(), ekinVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #else
     for (unsigned long i = 0; i < _lenVector; i++) {
+        numMolecules_step.global[i] = numMolecules_step.local[i];
+        velocityVect_step[0].global[i] = velocityVect_step[0].local[i];
+        velocityVect_step[1].global[i] = velocityVect_step[1].local[i];
+        velocityVect_step[2].global[i] = velocityVect_step[2].local[i];
         mass_step.global[i] = mass_step.local[i];
         ekin_step.global[i] = ekin_step.local[i];
         virialVect_step[0].global[i] = virialVect_step[0].local[i];
@@ -260,9 +230,9 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
             _ekinVect_accum[0][i]             += ekinVect_step[0].global[i];
             _ekinVect_accum[1][i]             += ekinVect_step[1].global[i];
             _ekinVect_accum[2][i]             += ekinVect_step[2].global[i];
-            _velocityVect_accum[0][i]         += veloDrift_step_global[0][i];
-            _velocityVect_accum[1][i]         += veloDrift_step_global[1][i];
-            _velocityVect_accum[2][i]         += veloDrift_step_global[2][i];
+            _velocityVect_accum[0][i]         += velocityVect_step[0].global[i];
+            _velocityVect_accum[1][i]         += velocityVect_step[1].global[i];
+            _velocityVect_accum[2][i]         += velocityVect_step[2].global[i];
             _virialVect_accum[0][i]           += ViX;
             _virialVect_accum[1][i]           += ViY;
             _virialVect_accum[2][i]           += ViZ;
@@ -336,9 +306,9 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
 
                     numMolsPerStep = numMols_accum/_writeFrequency;
                     rho         = numMolsPerStep           / slabVolume;
-                    v_x         = _velocityVect_accum[0][i]   / countSamples;
-                    v_y         = _velocityVect_accum[1][i]   / countSamples;
-                    v_z         = _velocityVect_accum[2][i]   / countSamples;
+                    v_x         = _velocityVect_accum[0][i]   / numMols_accum;
+                    v_y         = _velocityVect_accum[1][i]   / numMols_accum;
+                    v_z         = _velocityVect_accum[2][i]   / numMols_accum;
 
                     double v_drift_sqr = v_x*v_x + v_y*v_y + v_z*v_z;
 
