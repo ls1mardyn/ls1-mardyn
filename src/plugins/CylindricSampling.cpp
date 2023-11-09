@@ -42,7 +42,7 @@ void CylindricSampling::init(ParticleContainer* /* particleContainer */, DomainD
         Simulation::exit(-1);
     }
 
-     // Entry per component and bin; 0 represents all components combined
+     // Entry per bin; all components sampled as one
     _lenVector = _numBinsGlobalRadius * _numBinsGlobalHeight;
 
     resizeVectors();
@@ -270,7 +270,7 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
             _forceVect_accum[1].at(i)            += forceVect_step[1].global.at(i);
             _forceVect_accum[2].at(i)            += forceVect_step[2].global.at(i);
 
-            _countSamples.at(i)++;
+            if (numMols > 0ul) { _countSamples[i]++; }
         }
     }
 
@@ -334,7 +334,7 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
                     const double numMols_accum = static_cast<double>(_numMolecules_accum.at(i));
                     const double slabVolume = 3.1415926536*_binwidth*(std::pow((idxR+1)*_binwidth,2)-std::pow(idxR*_binwidth,2));
 
-                    numMolsPerStep = numMols_accum/countSamples;
+                    numMolsPerStep = numMols_accum/_writeFrequency;
                     rho         = numMolsPerStep           / slabVolume;
                     v_x         = _velocityVect_accum[0].at(i)   / countSamples;
                     v_y         = _velocityVect_accum[1].at(i)   / countSamples;
