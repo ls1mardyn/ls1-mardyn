@@ -21,7 +21,7 @@ public:
 	MoleculeRMM(unsigned long id = 0, Component *component = nullptr,
         double rx = 0., double ry = 0., double rz = 0.,
         double vx = 0., double vy = 0., double vz = 0.,
-        double = 0., double = 0., double = 0., double = 0., /*q0, q1, q2, q3*/
+        double = 1., double = 0., double = 0., double = 0., /*q0, q1, q2, q3*/
         double = 0., double = 0., double = 0. /*Dx, Dy, Dz*/
 	) {
 		_state = STORAGE_AOS;

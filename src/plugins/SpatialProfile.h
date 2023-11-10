@@ -48,6 +48,7 @@ class Virial2DProfile;
  * \code{.xml}
 * <plugin name="SpatialProfile">
  *    <mode>cylinder</mode> (cartesian)
+      <profiledComponent>all</profiledComponent> 
       <x>1</x>
       <y>20</y>
       <z>20</z>
@@ -59,7 +60,7 @@ class Virial2DProfile;
         <init>1</init>
         <recording>1</recording>
       </timesteps>
-      <outputprefix>comparison</outputprefix>
+      <outputprefix>profile</outputprefix>
       <profiles>
         <density>1</density>
         <temperature>0</temperature>
@@ -115,14 +116,14 @@ private:
 	VirialProfile* _virialProfile;
 	Virial2DProfile* _virial2DProfile;
 
-	unsigned long _writeFrequency; // Write frequency for all profiles -> Length of recording frame before output
-	unsigned long _initStatistics; // Timesteps to skip at start of the simulation
-	unsigned long _profileRecordingTimesteps; // Record every Nth timestep during recording frame
-	long _accumulatedDatasets; // Number of Datasets between output writes / profile resets
-	std::string _outputPrefix; // File prefix for all profiles
-	std::string _mode;
-	std::string _profiledCompString;
-	unsigned int _profiledComp;
+	unsigned long _writeFrequency {100}; // Write frequency for all profiles -> Length of recording frame before output
+	unsigned long _initStatistics {1}; // Timesteps to skip at start of the simulation
+	unsigned long _profileRecordingTimesteps {1UL}; // Record every Nth timestep during recording frame
+	long _accumulatedDatasets {0}; // Number of Datasets between output writes / profile resets
+	std::string _outputPrefix {"profile"}; // File prefix for all profiles
+	std::string _mode {"cylinder"};
+	std::string _profiledCompString {"all"};
+	unsigned int _profiledComp {0};
 
 
 	unsigned long _uIDs; //!< Total number of unique IDs with the selected Grid. This is the number of total bins in the Sampling grid.

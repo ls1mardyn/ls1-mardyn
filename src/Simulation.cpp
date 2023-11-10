@@ -195,7 +195,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	/* run section */
 	if(xmlconfig.changecurrentnode("run")) {
 		xmlconfig.getNodeValueReduced("currenttime", _simulationTime);
-		Log::global_log->info() << "Simulation start time: " << _simulationTime << std::endl;
+		Log::global_log->info() << "Simulation start time: " << getSimulationTime() << std::endl;
 		/* steps */
 		xmlconfig.getNodeValue("equilibration/steps", _initStatistics);
 		Log::global_log->info() << "Number of equilibration steps: " << _initStatistics << std::endl;
@@ -670,11 +670,14 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		bool ignoreCheckpointTime = false;
 		if(xmlconfig.getNodeValue("ignoreCheckpointTime", ignoreCheckpointTime)) {
 			if(ignoreCheckpointTime)
-				_simulationTime = 0;
+				setSimulationTime(0);
 		}
 	}
 
 	xmlconfig.changecurrentnode(oldpath);
+
+	// _simulationTime might be updated by readers -> also update _initSimulation
+	_initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
 }
 
 
@@ -930,7 +933,7 @@ void Simulation::prepare_start() {
 
 	_ensemble->prepare_start();
 
-	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
+	_simstep = _initSimulation;
 	Log::global_log->info() << "Set initial time step to start from to " << _initSimulation << std::endl;
 	Log::global_log->info() << "System initialised with " << _domain->getglobalNumMolecules(true, _moleculeContainer, _domainDecomposition) << " molecules." << std::endl;
 
