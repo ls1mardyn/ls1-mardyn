@@ -559,7 +559,7 @@ template<> bool XMLfile::Node::getValue<std::string>(std::string& value) const
 	if(m_xmlnode)
 	{
 		value=std::string(m_xmlnode->value());
-				return true;
+		return true;
 	}
 	else
 		return false;
