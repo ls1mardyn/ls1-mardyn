@@ -532,15 +532,27 @@ template<typename T> bool XMLfile::Node::getValue(T& value) const
 {
 	if(m_xmlnode)
 	{
-		//value=T(m_xmlnode->value());
 		std::stringstream ss(m_xmlnode->value());
-		ss>>value;
+		// Check if input has correct sign
+		if (std::is_unsigned_v<T>) {
+			if (ss.str().find_first_of("-") != std::string::npos) {
+				std::cerr << "ERROR parsing \"" << ss.str() << "\" to data type " << typeid(T).name() << " from tag \"<" << name() << ">\" in xml file" << std::endl;
+				std::cerr << "The tag contains a negative value but an unsigned value was expected." << std::endl;
+				Simulation::exit(1);
+			}
+		}
+		ss >> value;
+		// Check if the entire string was consumed
+		if (!ss.eof() || ss.fail()) {
+			std::cerr << "ERROR parsing all chars of \"" << ss.str() << "\" from tag \"<" << name() << ">\" in xml file" << std::endl;
+			std::cerr << "This might be the result of using a float while an integer is expected." << std::endl;
+			Simulation::exit(1);
+		}
 		return true;
 	}
 	else
 		return false;
 }
-
 
 template<> bool XMLfile::Node::getValue<std::string>(std::string& value) const
 {
@@ -553,62 +565,27 @@ template<> bool XMLfile::Node::getValue<std::string>(std::string& value) const
 		return false;
 }
 
-template<> bool XMLfile::Node::getValue<int>(int& value) const
-{
-	std::string v;
-	bool found=getValue(v);
-	if(found) value=atoi(v.c_str());
-	return found;
-}
-
-template<> bool XMLfile::Node::getValue<long>(long& value) const
-{
-	std::string v;
-	bool found=getValue(v);
-	if(found) value=atol(v.c_str());
-	return found;
-}
-
-template<> bool XMLfile::Node::getValue<float>(float& value) const
-{
-	std::string v;
-	bool found=getValue(v);
-	if(found) value=static_cast<float>(atof(v.c_str()));
-	return found;
-}
-
-template<> bool XMLfile::Node::getValue<double>(double& value) const
-{
-	std::string v;
-	bool found=getValue(v);
-	if(found) value=atof(v.c_str());
-	return found;
-}
-
 template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 {
 	std::string v;
 	bool found=getValue(v);
-	if(found)
-	{
-		int i=atoi(v.c_str());
-		if(i!=0)
-		{
-			/* found integer value unequal 0 */
-			value=true;
-		}
-		else
-		{
-			/* remove white spaces */
-			v.erase( std::remove_if( v.begin(), v.end(), ::isspace ), v.end() );
-			/* convert to upper case letters */
-			std::transform(v.begin(), v.end(), v.begin(), ::toupper);
-			value=(v == "TRUE" || v == "YES" || v == "ON");
+	if (found) {
+		// Remove white spaces
+		v.erase(std::remove_if(v.begin(), v.end(), ::isspace), v.end());
+		// Convert to upper case letters
+		std::transform(v.begin(), v.end(), v.begin(), ::toupper);
+
+		if (v == "TRUE" || v == "YES" || v == "ON" || v == "1") {
+			value = true;
+		} else if (v == "FALSE" || v == "NO" || v == "OFF" || v == "0") {
+			value = false;
+		} else {
+			std::cerr << "ERROR parsing \"" << v << "\" to boolean from tag \"<" << name() << ">\" in xml file" << std::endl;
+			Simulation::exit(1);
 		}
 	}
 	return found;
 }
-
 
 std::string XMLfile::Node::value_string(std::string defaultvalue) const
 {
