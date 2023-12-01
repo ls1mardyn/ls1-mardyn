@@ -219,7 +219,8 @@ void Spherical::init()
 		ofstream outfilestreamThermData(filenameThermData, ios::out);
 		outfilestreamThermData << std::setw(24) << "simstep;";  
 		// outfilestreamThermData << std::setw(24) << "gamma (iterative);";  
-		outfilestreamThermData << std::setw(24) << "gamma;";  
+		outfilestreamThermData << std::setw(24) << "gamma[nShl-1];";  
+		outfilestreamThermData << std::setw(24) << "gamma[nShl];";  
 		outfilestreamThermData << std::setw(24) << "R_gamma;";
 		outfilestreamThermData << std::setw(24) << "R_e;";
 		outfilestreamThermData << std::setw(24) << "delta;";
@@ -452,7 +453,7 @@ void Spherical::calculateLongRange(){
 			rhoShellsT[i] = RhoP(RShells[i], rhov, rhol, D0, R0);
 		}
         
-        if ( (simstep) % 100000 == 0) {  
+        if ( simstep % 100000 == 0) {  
             if (rank == 0) {
                 ofstream outfilestreamTanhParams(filenameTanhParams, ios::app);
                 outfilestreamTanhParams << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
@@ -950,7 +951,7 @@ void Spherical::calculateLongRange(){
 		}
 		// Only Root writes to files
         if (rank == 0) {
-        	if ( (simstep) % 100000 == 0) { //reduced from 100 to 100000, should be enough, no?  
+        	if ( simstep % 100000 == 0) { //reduced from 100 to 100000, should be enough, no?  
 
 				// calculating and writing thermoData:
 
@@ -997,13 +998,14 @@ void Spherical::calculateLongRange(){
 
 				// double integral_term_Avg[NShells] = { 0 };
 				// double gamma_Avg_iterative[NShells] = { 0 }; 
-				double gamma_integral_Avg = 0;
-				double gamma_Avg = 0;
+				double gamma_integral_Avg[NShells] = { 0 };
+				double gamma_Avg[NShells] = { 0 };
 
 
 				// std::cout << "--------------------------------------------------------- "<< std::endl;
 				// std::cout << "--------------Simstep = "<< simstep << "----------------------"<< std::endl;
-				gamma_integral_Avg = 0;
+				gamma_integral_Avg[0] = 0.;
+				gamma_Avg[0] = 0.;
 				// calculation of gamma / R_e:
 				for (unsigned i=1; i < NShells; i++) { // not considering index 0!
 					dpN_Avg[i] = (_T*rhoShellsAvg_global[i]+VirShells_N_global[i])-(_T*rhoShellsAvg_global[i-1]+VirShells_N_global[i-1]);
@@ -1014,7 +1016,8 @@ void Spherical::calculateLongRange(){
 					// integral_term_Avg[i] = integral_term_Avg[i-1] + RShells3[i] * dpN_Avg[i];
 					// gamma_Avg_iterative[i] =  pow(-(integral_term_Avg[i] * pDiff2_Avg)/8., 1/3.);
 					// // ----------------- //
-					gamma_integral_Avg += RShells3[i] * dpN_Avg[i]; 
+					gamma_integral_Avg[i] = gamma_integral_Avg[i-1] + RShells3[i] * dpN_Avg[i]; 
+					gamma_Avg[i] =  -std::cbrt((pDiff2_Avg*gamma_integral_Avg[i])/8.);
 					// std::cout << "i = "<< i << ";"<< std::endl;
 					// std::cout << "dpN_Avg[ "<<i<<"] = " << dpN_Avg[i] << ";"<< std::endl;
 					// std::cout << "drho_Avg [ "<<i<<"] = " << drho_Avg[i] << ";"<< std::endl;
@@ -1029,16 +1032,17 @@ void Spherical::calculateLongRange(){
 				// std::cout << "R_e3    = "<< R_e3 << ";"<< std::endl;
 				R_e = std::cbrt(R_e3);
 				// std::cout << "R_e     = "<< R_e << ";"<< std::endl;
-				gamma_Avg =  -std::cbrt((pDiff2_Avg*gamma_integral_Avg)/8.);
 				// std::cout << "gamma   = "<< gamma_Avg << ";"<< std::endl;
+					// gamma_Avg[i] =  -std::cbrt((pDiff2_Avg*gamma_integral_Avg[i])/8.);
 
-				double R_gamma = 2*gamma_Avg/pDiff_Avg;
+				double R_gamma = 2*gamma_Avg[NShells-1]/pDiff_Avg;
 				// std::cout << "R_gamma = "<< R_gamma << ";"<< std::endl;
 
 				ofstream outfilestreamThermData(filenameThermData, ios::app);
                 outfilestreamThermData << std::setw(24) << simstep << ";";  
                 // outfilestreamThermData << std::setw(24) << gamma_Avg_iterative[NShells-1] << ";";  
-                outfilestreamThermData << std::setw(24) << gamma_Avg << ";";  
+                outfilestreamThermData << std::setw(24) << gamma_Avg[nShells-1] << ";";  
+                outfilestreamThermData << std::setw(24) << gamma_Avg[nShells] << ";";  
                 outfilestreamThermData << std::setw(24) << R_gamma << ";";
                 outfilestreamThermData << std::setw(24) << R_e << ";";
                 outfilestreamThermData << std::setw(24) << R_e  - R_gamma<< ";";
