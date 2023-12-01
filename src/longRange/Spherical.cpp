@@ -219,8 +219,8 @@ void Spherical::init()
 		ofstream outfilestreamThermData(filenameThermData, ios::out);
 		outfilestreamThermData << std::setw(24) << "simstep;";  
 		// outfilestreamThermData << std::setw(24) << "gamma (iterative);";  
-		outfilestreamThermData << std::setw(24) << "gamma[nShl-1];";  
-		outfilestreamThermData << std::setw(24) << "gamma[nShl];";  
+		outfilestreamThermData << std::setw(24) << "gamma[-2];";  
+		outfilestreamThermData << std::setw(24) << "gamma[-1];";  
 		outfilestreamThermData << std::setw(24) << "R_gamma;";
 		outfilestreamThermData << std::setw(24) << "R_e;";
 		outfilestreamThermData << std::setw(24) << "delta;";
@@ -1035,14 +1035,14 @@ void Spherical::calculateLongRange(){
 				// std::cout << "gamma   = "<< gamma_Avg << ";"<< std::endl;
 					// gamma_Avg[i] =  -std::cbrt((pDiff2_Avg*gamma_integral_Avg[i])/8.);
 
-				double R_gamma = 2*gamma_Avg[NShells-1]/pDiff_Avg;
+				double R_gamma = 2*gamma_Avg[NShells-2]/pDiff_Avg;
 				// std::cout << "R_gamma = "<< R_gamma << ";"<< std::endl;
 
 				ofstream outfilestreamThermData(filenameThermData, ios::app);
                 outfilestreamThermData << std::setw(24) << simstep << ";";  
                 // outfilestreamThermData << std::setw(24) << gamma_Avg_iterative[NShells-1] << ";";  
+                outfilestreamThermData << std::setw(24) << gamma_Avg[NShells-2] << ";";  
                 outfilestreamThermData << std::setw(24) << gamma_Avg[NShells-1] << ";";  
-                outfilestreamThermData << std::setw(24) << gamma_Avg[NShells] << ";";  
                 outfilestreamThermData << std::setw(24) << R_gamma << ";";
                 outfilestreamThermData << std::setw(24) << R_e << ";";
                 outfilestreamThermData << std::setw(24) << R_e  - R_gamma<< ";";
