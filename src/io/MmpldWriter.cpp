@@ -80,7 +80,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	Log::global_log->info() << "[MMPLD Writer] Split files every " << _numFramesPerFile << "th frame."<< std::endl;
 	Log::global_log->info() << "[MMPLD Writer] Write buffer size: " << _writeBufferSize << " Byte" << std::endl;
 
-	int mmpldversion = 100;
+	int mmpldversion = MMPLD_DEFAULT_VERSION;
 	xmlconfig.getNodeValue("mmpldversion", mmpldversion);
 	_mmpldversion = mmpldversion;
 	switch(_mmpldversion) {
