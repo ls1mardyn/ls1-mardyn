@@ -13,7 +13,6 @@
 #include <endian.h>
 #endif
 
-
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -27,8 +26,9 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
-#include "utils/Logger.h"
 #include "utils/FileUtils.h"
+#include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
 
 
 // default version to use for mmpld format writing. possible values: 100 or 102
@@ -142,6 +142,11 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 void MmpldWriter::init(ParticleContainer *particleContainer,
 						DomainDecompBase *domainDecomp, Domain *domain)
 {
+	if ( (htole32(1) != 1) || (htole64(1.0) != 1.0) ) {
+		Log::global_log->error() << "[MMPLD Writer] The MMPLD Writer currently only supports running on little endian systems." << std::endl;
+		mardyn_exit(1);
+	}
+
 	// only executed once
 	this->PrepareWriteControl();
 
