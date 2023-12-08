@@ -17,10 +17,11 @@
  */
 class AutoPasSimpleMolecule final : public MoleculeInterface, public autopas::ParticleFP64 {
 public:
-	explicit AutoPasSimpleMolecule(unsigned long id = 0, Component* component = nullptr, double rx = 0., double ry = 0.,
-								   double rz = 0., double vx = 0., double vy = 0., double vz = 0., double q0 = 1.,
-								   double q1 = 1., double q2 = 0., double q3 = 0., double Dx = 0., double Dy = 0.,
-								   double Dz = 0.);
+	explicit AutoPasSimpleMolecule(unsigned long id = 0, Component* component = nullptr,
+								   double rx = 0., double ry = 0., double rz = 0.,
+								   double vx = 0., double vy = 0., double vz = 0.,
+								   double q0 = 1., double q1 = 0., double q2 = 0., double q3 = 0.,
+								   double Dx = 0., double Dy = 0., double Dz = 0.);
 
 	AutoPasSimpleMolecule(const AutoPasSimpleMolecule& m) = default;
 
@@ -149,6 +150,8 @@ public:
 
 	double U_rot_2() override { return 0.; }
 
+	double U_pot() override { return 0.; }
+
 	void updateMassInertia() override {}
 
 	void setupSoACache(CellDataSoABase* const s, unsigned iLJ, unsigned iC, unsigned iD, unsigned iQ) override {}
@@ -233,7 +236,9 @@ public:
 
 	void setM(double M[3]) override {}
 
-	void setVi(double Vi[3]) override {}
+	void setVi(double Vi[9]) override {}
+
+	void setU(const double upot) override {}
 
 	void Fadd(const double F[]) override {
 		for (unsigned short i = 0; i < 3; i++) _f[i] += F[i];
@@ -252,6 +257,8 @@ public:
 		std::array<double, 3> addV_arr{-ax, -ay, -az};
 		addV(addV_arr);
 	}
+
+	void Uadd(const double upot) override {}
 
 	void Fljcenteradd(unsigned int i, double a[]) override { vadd(a[0], a[1], a[2]); }
 
