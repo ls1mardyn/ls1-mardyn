@@ -417,7 +417,9 @@ bool AdResS::checkF_TH_Convergence() {
         current_density[i] = std::abs(current_density[i] - _targetDensity[i]) / _targetDensity[i];
     }
     auto it = std::max_element(current_density.begin(), current_density.end());
-    return *it <= _convergenceThreshold;
+    double max_val = *it;
+    global_log->info() << "[AdResS] F_TH conv error: " << max_val << std::endl;
+    return max_val <= _convergenceThreshold;
 }
 
 void AdResS::applyF_TH() {
