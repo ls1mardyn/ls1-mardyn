@@ -159,6 +159,90 @@ private:
     //! @brief reference to the domain is needed to store the calculated macroscopic values
     Domain* _domain;
 
+    //! @brief Thermodynamic force used to correct the density difference created by plain AdResS
+    InterpolatedFunction _thermodynamicForce;
+
+    //! @brief Density function of a FP simulation, used to find convergence of F_th
+    InterpolatedFunction _targetDensity;
+
+    //! @brief Describes a accuracy measure in terms of: max|rho(x)-rho_target(x)|/rho_target(x) <= threshold
+    //! used to find convergence of F_th
+    double _convergenceThreshold;
+
+    //! @brief Controls speed of convergence for F_th
+    double _convergenceFactor;
+
+    //! @brief step size of density sampling
+    double _samplingStepSize;
+
+    /**
+     * Splits then simulation domain into equal slices along dim 0 and computes the density for each bin.
+     * Assumes, there is only a single molecule type.
+     * @param densities output buffer
+     * @param begin start position
+     * @param end end position
+     * @param step bin width
+     * */
+    void loadDensities(std::vector<double>& densities, double begin, double end, double step);
+
+    /**
+     * Numerically computes the gradient of the input vector. Uses finite difference coefficients (based on Lagrange Polynomials).
+     * Input and output have equal size. The output on the borders use forward or backward differences respectively, the rest central.
+     * @param input sample points of f(x)
+     * @param output sample points of f'(x)
+     * */
+    void computeGradient(std::vector<double>& input, std::vector<double>& output);
+
+    /**
+     * Solves the equation system Ax=d, where A is a tridiagonal matrix composed of the diagonals a, b, and c.
+     * The lengths of a,b, and c should be equal. Pad with 0.
+     * Solves it in O(n).
+     * Implementation from: https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm
+     * @param a lower diagonal (0, a_2 to a_n) padded with 0 in front
+     * @param b middle diagonal (b_1 to b_n)
+     * @param c upper diagonal (c_1 to c_(n-1), 0) padded with 0 in the end
+     * @param x output vector
+     * @param d right vector
+     * */
+    void solveTriDiagonalMatrix(std::vector<double>& a, std::vector<double>& b, std::vector<double>& c,
+                                std::vector<double>& x, std::vector<double>& d);
+
+    /**
+     * Evaluates the Cubic Hermite interpolation spline at position x.
+     * @param x evaluation point
+     * @param fun function representation
+     * */
+    double computeHermiteAt(double x, InterpolatedFunction& fun);
+
+    /**
+     * Creates the Cubic Hermite interpolation spline based on the specified knots and stores them in fun.
+     * fun will take ownership of knots.
+     * Assumes that the boundary gradients are zero.
+     * @param begin starting point of knots, x_0
+     * @param knots sample points of f(x)
+     * @param step distance between each knot, i.e. x_i - x_(i+1)
+     * @param samples total number of samples
+     * @param fun output buffer
+     * */
+    void computeHermite(double begin, std::vector<double>& knots, double step, int samples, InterpolatedFunction& fun);
+
+    /**
+     * Recomputes F_th in _thermodynamicForce by sampling densities and interpolating the gradient.
+     * According to: F_k+1(x) = F_k(x) - c * d'(x)
+     * */
+    void computeF_TH();
+
+    /**
+     * Checks if the current simulation density is at most _convergenceThreshold apart from _targetDensity.
+     * @returns true iff converged
+     * */
+    bool checkF_TH_Convergence();
+
+    /**
+     * Applies the thermodynamic force to ?all? molecules.
+     * */
+    void applyF_TH();
+
     /**
      * @brief checks the component of @param molecule and sets it to the correct LOD depending the @param targetRes.
      * */

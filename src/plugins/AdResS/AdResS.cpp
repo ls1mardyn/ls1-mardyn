@@ -10,6 +10,7 @@
 #include "AdResSRegionTraversal.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "AdResSKDDecomposition.h"
+#include "utils/mardyn_assert.h"
 
 #include <cmath>
 
@@ -161,6 +162,186 @@ void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base
     //computeForce(false);
     _mesoVals.setInDomain(_domain);
     _mesoVals.clear();
+}
+
+void AdResS::loadDensities(vector<double> &densities, double begin, double end, double step) {
+    std::array<double, 3> low {0, _particleContainer->getBoundingBoxMin(1), _particleContainer->getBoundingBoxMin(2)};
+    std::array<double, 3> high {0, _particleContainer->getBoundingBoxMax(1), _particleContainer->getBoundingBoxMax(2)};
+    double slice_volume = step * (high[1] - low[1]) * (high[2] - low[2]);
+    int max_steps = (end - begin) / step;
+    for (int i = 0; i < max_steps; i++) {
+        low[0] = begin + i * step;
+        high[0] = low[0] + step;
+
+        int count = 0;
+        #if defined(_OPENMP)
+        #pragma omp parallel reduction(+: count)
+        #endif
+        for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
+            count += 1;
+        }
+
+        densities.push_back(count/slice_volume);
+    }
+}
+
+/**
+ * @param begin starting index of folding
+ * @param end end index of folding (exclusive)
+ * @param write_offset, writes with offset 0 to same position as begin
+ * */
+template<std::size_t N>
+static inline void fold(const std::array<double, N>& mask, std::vector<double>& input, std::vector<double>& output, int begin, int end, int write_offset) {
+    for(int i = begin; i < end; i++) {
+        double tmp = 0.0;
+        for(int j = 0; j < N; j++) {
+            tmp += mask[j] * input[i + j];
+        }
+        output[i + write_offset] = tmp;
+    }
+}
+
+void AdResS::computeGradient(std::vector<double> &input, std::vector<double> &output) {
+    static const std::array<double, 5> c_central = {1.0/12.0, -2.0/3.0, 0.0, 2.0/3.0, -1.0/12.0};
+    static const std::array<double, 3> c_forward = {-3.0/2.0, 2.0, -1.0/2.0};
+    static const std::array<double, 3> c_backward = {1.0/2.0, -2.0, 3.0/2.0};
+
+    if(input.size() < 5) {
+        global_log->fatal() << "[AdResS] gradient computation requires at least 5 sample points" << std::endl;
+        Simulation::exit(670);
+    }
+
+    output.resize(input.size(), 0.0);
+    fold(c_forward, input, output, 0, 2, 0);
+    fold(c_backward, input, output, input.size()-1-2-1, input.size()-2, 2);
+    fold(c_central, input, output, 0, input.size()-4, 2);
+}
+
+void AdResS::solveTriDiagonalMatrix(vector<double> &a, vector<double> &b, vector<double> &c, vector<double> &x,
+                                    vector<double> &d) {
+    std::size_t n = b.size();
+    mardyn_assert(n == a.size());
+    mardyn_assert(n == c.size());
+    mardyn_assert(n == d.size());
+    x.resize(n, 0.0);
+
+    for (int i = 1; i < n; i++) {
+        double w = a[i] / b[i - 1];
+        b[i] = b[i] - w * c[i - 1];
+        d[i] = d[i] - w * c[i - 1];
+    }
+    x[n-1] = d[n-1] / b[n-1];
+    for (int i = n - 1 - 1; i >= 0; i--) {
+        x[i] = (d[i] - c[i] * x[i + 1]) / b[i];
+    }
+}
+
+static inline double bernstein_3(double t, int k) {
+    static const double bc[4] = {1, 3, 3, 1};
+    mardyn_assert(t >= 0.0);
+    mardyn_assert(t <= 1.0);
+    mardyn_assert(k >= 0);
+    mardyn_assert(k <= 3);
+
+    double t_k = pow(t, k);
+    double inv_t_k = pow((1.0-t), (3-k));
+    return bc[k] * t_k * inv_t_k;
+}
+
+double AdResS::computeHermiteAt(double x, InterpolatedFunction &fun) {
+    //get active spline and conv x to t
+    int c_step = static_cast<int>((fun.begin - x) / fun.step_width);
+    mardyn_assert((c_step >= 0) && (c_step < (fun.n-1)));
+    double t = (x - c_step * fun.step_width) / fun.step_width;
+
+    //cache bernstein values
+    double b0 = bernstein_3(t, 0);
+    double b1 = bernstein_3(t, 1);
+    double b2 = bernstein_3(t, 2);
+    double b3 = bernstein_3(t, 3);
+
+    //compute base functions
+    double h00 = b0 + b1;
+    double h10 = 1.0/3.0 * b1;
+    double h01 = b3 + b2;
+    double h11 = -1.0/3.0 * b2;
+
+    double result = h00 * fun.function_values[c_step] +
+                    h01 * fun.function_values[c_step + 1] +
+                    h10 * fun.step_width * fun.gradients[c_step] +
+                    h11 * fun.step_width * fun.gradients[c_step + 1];
+
+    return result;
+}
+
+void AdResS::computeHermite(double begin, vector<double> &knots, double step, int samples, InterpolatedFunction &fun) {
+    std::vector<double> a, b, c, x, d;
+    a.resize(samples - 2, 1.0);
+    b.resize(samples - 2, 4.0);
+    c.resize(samples - 2, 1.0);
+    d.resize(samples - 2, 0.0);
+    const double scaler = 3.0 / step;
+
+    // create the hermite matrix
+    // 4 1   | y1'            y2 - y0 - h/3 * y0'
+    // 1 4 1 | y2'  =  3/h *  y_i+2 - y_i
+    //   1 4 | y3'            y4 - y2 - h/3 * y4'
+    a[0] = 0.0;
+    c[samples - 2 - 1] = 0.0;
+    d[0] = scaler * (knots[2] - knots[0]);
+    d[samples - 2 - 1] = scaler * (knots[samples - 1] - knots[samples - 2 - 1]);
+    for(int i = 1; i < samples - 2 - 1; i++) {
+        d[i] = scaler * (knots[i + 2] - knots[i]);
+    }
+
+    solveTriDiagonalMatrix(a, b, c, x, d);
+    fun.begin = begin;
+    fun.step_width = step;
+    fun.n = samples;
+    fun.function_values = std::move(knots);
+    fun.gradients = std::move(x);
+
+    //insert gradients x_0 and x_n (equal to 0)
+    fun.gradients.resize(fun.gradients.size()+2, 0.0); //make two larger
+    std::rotate(fun.gradients.rbegin(), fun.gradients.rbegin() + 1, fun.gradients.rend()); //rotate right for correct position
+}
+
+void AdResS::computeF_TH() {
+    std::vector<double> d;
+    loadDensities(d, _particleContainer->getBoundingBoxMin(0), _particleContainer->getBoundingBoxMax(0), _samplingStepSize);
+    std::vector<double> d_prime;
+    computeGradient(d, d_prime);
+    InterpolatedFunction d_prime_fun;
+    computeHermite(_particleContainer->getBoundingBoxMin(0), d_prime, _samplingStepSize, d_prime.size(), d_prime_fun);
+
+    for(int i = 0; i < d_prime_fun.n; i++) {
+        _thermodynamicForce.function_values[i] -= _convergenceFactor * d_prime_fun.function_values[i];
+        _thermodynamicForce.gradients[i] -= _convergenceFactor * d_prime_fun.gradients[i];
+    }
+}
+
+bool AdResS::checkF_TH_Convergence() {
+    std::vector<double> current_density;
+    loadDensities(current_density,
+                  _particleContainer->getBoundingBoxMin(0), _particleContainer->getBoundingBoxMax(0),
+                  _samplingStepSize);
+    for(int i = 0; i < current_density.size(); i++) {
+        current_density[i] = std::abs(current_density[i] - _targetDensity.function_values[i]) / _targetDensity.function_values[i];
+    }
+    auto it = std::max_element(current_density.begin(), current_density.end());
+    return *it <= _convergenceThreshold;
+}
+
+void AdResS::applyF_TH() {
+    #if defined(_OPENMP)
+    #pragma omp parallel
+    #endif
+    for (auto itM = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
+        double x = itM->r(0);
+        double F = computeHermiteAt(x, _thermodynamicForce);
+        std::array<double, 3> force = {F, 0.0, 0.0};
+        itM->Fadd(std::data(force));
+    }
 }
 
 void AdResS::checkMoleculeLOD(Molecule &molecule, Resolution targetRes) {

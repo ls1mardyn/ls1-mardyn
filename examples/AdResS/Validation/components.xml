@@ -1,0 +1,87 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<components version="20100525">
+    <moleculetype id="1" name="FP_M">
+        <site type="LJ126" id="1" >
+            <coords> <x>0.57735027</x> <y>0.57735027</y> <z>0.57735027</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>1.0</epsilon>
+        </site>
+        <site type="LJ126" id="2" >
+            <coords> <x>-0.57735027</x> <y>-0.57735027</y> <z>0.57735027</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>1.0</epsilon>
+        </site>
+        <site type="LJ126" id="3" >
+            <coords> <x>-0.57735027</x> <y>0.57735027</y> <z>-0.57735027</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>1.0</epsilon>
+        </site>
+        <site type="LJ126" id="4" >
+            <coords> <x>0.57735027</x> <y>-0.57735027</y> <z>-0.57735027</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>1.0</epsilon>
+        </site>
+        <momentsofinertia rotates="xyz">
+            <Ixx>0.0</Ixx>
+            <Iyy>0.0</Iyy>
+            <Izz>0.0</Izz>
+        </momentsofinertia>
+    </moleculetype>
+    <moleculetype id="2" name="H_M">
+        <site type="LJ126" id="1" >
+            <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+            <mass>0.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>0.1</epsilon>
+            <shifted>false</shifted>
+        </site>
+        <site type="LJ126" id="2" >
+            <coords> <x>0.57735027</x> <y>0.57735027</y> <z>0.57735027</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>1.0</epsilon>
+        </site>
+        <site type="LJ126" id="3" >
+            <coords> <x>-0.57735027</x> <y>-0.57735027</y> <z>0.57735027</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>1.0</epsilon>
+        </site>
+        <site type="LJ126" id="4" >
+            <coords> <x>-0.57735027</x> <y>0.57735027</y> <z>-0.57735027</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>1.0</epsilon>
+        </site>
+        <site type="LJ126" id="5" >
+            <coords> <x>0.57735027</x> <y>-0.57735027</y> <z>-0.57735027</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>1.0</epsilon>
+        </site>
+        <momentsofinertia rotates="xyz">
+            <Ixx>0.0</Ixx>
+            <Iyy>0.0</Iyy>
+            <Izz>0.0</Izz>
+        </momentsofinertia>
+    </moleculetype>
+    <moleculetype id="3" name="CG_M">
+        <coord_base>principal_axes</coord_base>
+        <site type="LJ126" id="1" >
+            <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+            <mass>4.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>0.1</epsilon>
+            <shifted>false</shifted>
+        </site>
+        <momentsofinertia rotates="xyz">
+            <Ixx>0.0</Ixx>
+            <Iyy>0.0</Iyy>
+            <Izz>0.0</Izz>
+        </momentsofinertia>
+    </moleculetype>
+</components>
