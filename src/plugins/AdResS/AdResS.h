@@ -159,11 +159,23 @@ private:
     //! @brief reference to the domain is needed to store the calculated macroscopic values
     Domain* _domain;
 
+    //! @brief True iff F_th functionality should be used
+    bool _enableThermodynamicForce;
+
+    //! @brief True iff F_th must be sampled first
+    bool _createThermodynamicForce;
+
+    //! @brief Simulation iterations between each F_th recalculation
+    int _thermodynamicForceSampleGap;
+
+    //! @brief Iterations since last sampling
+    int _thermodynamicForceSampleCounter;
+
     //! @brief Thermodynamic force used to correct the density difference created by plain AdResS
     InterpolatedFunction _thermodynamicForce;
 
     //! @brief Density function of a FP simulation, used to find convergence of F_th
-    InterpolatedFunction _targetDensity;
+    std::vector<double> _targetDensity;
 
     //! @brief Describes a accuracy measure in terms of: max|rho(x)-rho_target(x)|/rho_target(x) <= threshold
     //! used to find convergence of F_th

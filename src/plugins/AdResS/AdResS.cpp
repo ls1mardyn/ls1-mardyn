@@ -64,6 +64,16 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
             }
         }
     }
+
+    if(_enableThermodynamicForce && _createThermodynamicForce) {
+        loadDensities(_targetDensity, _particleContainer->getBoundingBoxMin(0), _particleContainer->getBoundingBoxMax(0), _samplingStepSize);
+        _thermodynamicForceSampleCounter = 0;
+        _thermodynamicForce.n = _targetDensity.size();
+        _thermodynamicForce.begin = _particleContainer->getBoundingBoxMin(0);
+        _thermodynamicForce.step_width = _samplingStepSize;
+        _thermodynamicForce.gradients.resize(_thermodynamicForce.n, 0.0);
+        _thermodynamicForce.function_values.resize(_thermodynamicForce.n, 0.0);
+    }
 }
 
 void AdResS::readXML(XMLfileUnits &xmlconfig) {
@@ -76,8 +86,65 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
     AdResS::weight = impls[index >= 5 ? 0 : index];
     global_log->info() << "[AdResS] Using weight implementation " << weight_impls[index >= 5 ? 0 : index] << std::endl;
 
+    XMLfile::Query query = xmlconfig.query("enableFTH");
+    _enableThermodynamicForce = false;
+    unsigned long count = query.card();
+    if (count > 1) {
+        global_log->fatal() << "[AdResS] Only specify one enableFTH block in config file!" << std::endl;
+        Simulation::exit(668);
+    }
+    //F_TH enabled
+    if(count == 1) {
+        _enableThermodynamicForce = true;
+        query = xmlconfig.query("enableFTH/createFTH");
+        count = query.card();
+        if (count > 1) {
+            global_log->fatal() << "[AdResS] Only specify one createFTH block in config file!" << std::endl;
+            Simulation::exit(668);
+        }
+
+        if(count == 1) { // sample FTH function
+            _createThermodynamicForce = true;
+            _thermodynamicForceSampleGap = xmlconfig.getNodeValue_int("enableFTH/createFTH/sampleGap", 100);
+            _convergenceThreshold = xmlconfig.getNodeValue_double("enableFTH/createFTH/threshold", 0.02);
+            _convergenceFactor = xmlconfig.getNodeValue_double("enableFTH/createFTH/convFactor", 0.2);
+            _samplingStepSize = xmlconfig.getNodeValue_double("enableFTH/createFTH/sampleBinSize", 0.2);
+        }
+        else { // use existing FTH function
+            query = xmlconfig.query("enableFTH/forceFunction");
+            count = query.card();
+            if (count != 1) {
+                global_log->fatal() << "[AdResS] Must specify one forceFunction block in config file!" << std::endl;
+                Simulation::exit(668);
+            }
+
+            _thermodynamicForce.begin = xmlconfig.getNodeValue_double("enableFTH/forceFunction/startX");
+            _thermodynamicForce.step_width = xmlconfig.getNodeValue_double("enableFTH/forceFunction/sampleBinSize");
+            query = xmlconfig.query("enableFTH/forceFunction/samplePoint");
+            count = query.card();
+            if(count < 5) {
+                global_log->fatal() << "[AdResS] Force function must have at least 5 sample points!" << std::endl;
+                Simulation::exit(668);
+            }
+
+            _thermodynamicForce.n = count;
+            _thermodynamicForce.gradients.resize(count, 0.0);
+            _thermodynamicForce.function_values.resize(count, 0.0);
+            XMLfile::Query::const_iterator sampleIter;
+            std::string oldpath = xmlconfig.getcurrentnodepath();
+            for(sampleIter = query.begin(); sampleIter; sampleIter++) {
+                xmlconfig.changecurrentnode(sampleIter);
+                unsigned long id = 0;
+                xmlconfig.getNodeValue("@id", id);
+                xmlconfig.getNodeValue("grad", _thermodynamicForce.gradients[id - 1]);
+                xmlconfig.getNodeValue("func", _thermodynamicForce.function_values[id - 1]);
+            }
+            xmlconfig.changecurrentnode(oldpath);
+        }
+    }
+
     long numRegions = 0;
-    XMLfile::Query query = xmlconfig.query("fpregions/region");
+    query = xmlconfig.query("fpregions/region");
     numRegions = query.card();
     if (numRegions == 0) {
         global_log->fatal() << "No AdResS regions specified: Falling back to dynamic region selection. ERROR: not implemented yet!" << std::endl;
@@ -155,6 +222,19 @@ void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsi
         // molecule is in no Hybrid or FP region
         checkMoleculeLOD(*itM, CoarseGrain);
     }
+
+    // handle thermodynamic force
+    if(_enableThermodynamicForce) {
+        if(_createThermodynamicForce && _thermodynamicForceSampleCounter >= _thermodynamicForceSampleGap) {
+            if(checkF_TH_Convergence()) {
+                global_log->info() << "[AdResS] F_TH has converged." << std::endl;
+                Simulation::exit(0);
+            }
+            else computeF_TH();
+            _thermodynamicForceSampleCounter = -1;
+        }
+        _thermodynamicForceSampleCounter++;
+    }
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
@@ -162,6 +242,10 @@ void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base
     //computeForce(false);
     _mesoVals.setInDomain(_domain);
     _mesoVals.clear();
+
+    if(_enableThermodynamicForce) {
+        applyF_TH();
+    }
 }
 
 void AdResS::loadDensities(vector<double> &densities, double begin, double end, double step) {
@@ -250,7 +334,7 @@ static inline double bernstein_3(double t, int k) {
 
 double AdResS::computeHermiteAt(double x, InterpolatedFunction &fun) {
     //get active spline and conv x to t
-    int c_step = static_cast<int>((fun.begin - x) / fun.step_width);
+    int c_step = static_cast<int>((x - fun.begin) / fun.step_width);
     mardyn_assert((c_step >= 0) && (c_step < (fun.n-1)));
     double t = (x - c_step * fun.step_width) / fun.step_width;
 
@@ -326,17 +410,23 @@ bool AdResS::checkF_TH_Convergence() {
                   _particleContainer->getBoundingBoxMin(0), _particleContainer->getBoundingBoxMax(0),
                   _samplingStepSize);
     for(int i = 0; i < current_density.size(); i++) {
-        current_density[i] = std::abs(current_density[i] - _targetDensity.function_values[i]) / _targetDensity.function_values[i];
+        if(_targetDensity[i] == 0.0) {
+            current_density[i] = 0.0;
+            continue;
+        }
+        current_density[i] = std::abs(current_density[i] - _targetDensity[i]) / _targetDensity[i];
     }
     auto it = std::max_element(current_density.begin(), current_density.end());
     return *it <= _convergenceThreshold;
 }
 
 void AdResS::applyF_TH() {
+    std::array<double, 3> low = {2*_samplingStepSize, _particleContainer->getBoundingBoxMin(1), _particleContainer->getBoundingBoxMin(2)};
+    std::array<double, 3> high= {_particleContainer->getBoundingBoxMax(0) - 2*_samplingStepSize, _particleContainer->getBoundingBoxMax(1), _particleContainer->getBoundingBoxMax(2)};
     #if defined(_OPENMP)
     #pragma omp parallel
     #endif
-    for (auto itM = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
+    for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
         double x = itM->r(0);
         double F = computeHermiteAt(x, _thermodynamicForce);
         std::array<double, 3> force = {F, 0.0, 0.0};

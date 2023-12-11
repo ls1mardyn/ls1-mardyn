@@ -240,7 +240,7 @@ struct MesoValues {
  * */
 struct InterpolatedFunction {
     //! @brief number of knots
-    int n;
+    unsigned long n;
     //! @brief distance between each knot, assuming homogenous distances
     double step_width;
     //! @brief starting point of samples, x_0

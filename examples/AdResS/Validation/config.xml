@@ -87,16 +87,24 @@
             </outputplugin>
         </output>
 
-        <!--plugin name="AdResS">
+        <plugin name="AdResS">
             <weightImpl>near</weightImpl>
+            <enableFTH>
+                <createFTH>
+                    <sampleGap>200</sampleGap>
+                    <threshold>0.05</threshold>
+                    <convFactor>0.3</convFactor>
+                    <sampleBinSize>0.1</sampleBinSize>
+                </createFTH>
+            </enableFTH>
             <fpregions>
                 <region id="1">
-                    <lowX>70.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
-                    <highX>110.0</highX><highY>180.0</highY><highZ>180.0</highZ>
+                    <lowX>80.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
+                    <highX>120.0</highX><highY>200.0</highY><highZ>200.0</highZ>
                     <hybridDimX>40.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
-        </plugin-->
+        </plugin>
 
     </simulation>
 </mardyn>
