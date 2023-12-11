@@ -30,90 +30,151 @@
             </domain>
             <!-- instead of lx/ly/lz we might accept density -->
             <components>
-                <moleculetype id="1" name="FP_Mol">
-                    <coord_base>principal_axes</coord_base>
-                    <site type="LJ126" id="1" >
-                        <coords> <x>0.57735027</x> <y>0.57735027</y> <z>0.57735027</z> </coords>
-                        <mass>1.0</mass>
-                        <sigma>5.0</sigma>
-                        <epsilon>10.0</epsilon>
+                <!--
+
+************************************************************************
+*               Publishing with the MolMod Database                    *
+*  Every user agrees to cite the MolMod Database upon usage as follows *
+*                                                                      *
+*  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+*  MolMod – an Open Access Database of Force Fields for Molecular      *
+*  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+************************************************************************
+
+                               Model data
+
+ Substance     C6H12_VII
+ CAS-No        110-82-7
+ Reference     Y. M. Muñoz-Muñoz, G. Guevara-Carrion, M. Llano-Restrep
+               o and J. Vrabec: Lennard-Jones Force Field Parameters for
+                Cyclic Alkanes from Cyclopropane to Cyclohexane, Fluid P
+               hase Equilibria 404, 150-160 (2015), 10.1016/j.fluid.2015
+               .06.033
+
+-->
+                <moleculetype id="1" name="FP_C6H12">
+                    <site type="LJ126" id="1">
+                        <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
                     </site>
-                    <site type="LJ126" id="2" >
-                        <coords> <x>-0.57735027</x> <y>-0.57735027</y> <z>0.57735027</z> </coords>
-                        <mass>1.0</mass>
-                        <sigma>5.0</sigma>
-                        <epsilon>10.0</epsilon>
+                    <site type="LJ126" id="2">
+                        <coords><x>-1.9038</x><y>0.0</y><z>0.0</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
                     </site>
-                    <site type="LJ126" id="3" >
-                        <coords> <x>-0.57735027</x> <y>0.57735027</y> <z>-0.57735027</z> </coords>
-                        <mass>1.0</mass>
-                        <sigma>5.0</sigma>
-                        <epsilon>10.0</epsilon>
+                    <site type="LJ126" id="3">
+                        <coords><x>-2.591241</x><y>1.775353</y><z>0</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
                     </site>
-                    <site type="LJ126" id="4" >
-                        <coords> <x>0.57735027</x> <y>-0.57735027</y> <z>-0.57735027</z> </coords>
-                        <mass>1.0</mass>
-                        <sigma>5.0</sigma>
-                        <epsilon>10.0</epsilon>
+                    <site type="LJ126" id="4">
+                        <coords><x>-1.903799</x><y>2.778719</y><z>1.464628</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
                     </site>
-                    <momentsofinertia rotates="xyz">
-                        <Ixx>0.0</Ixx>
-                        <Iyy>0.0</Iyy>
-                        <Izz>0.0</Izz>
+                    <site type="LJ126" id="5">
+                        <coords><x>0.0</x><y>2.778719</y><z>1.464627</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <site type="LJ126" id="6">
+                        <coords><x>0.687441</x><y>1.003366</y><z>1.464627</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <momentsofinertia rotaxes="xyz">
+                        <Ixx>365.21510545957</Ixx>
+                        <Iyy>292.76326523101</Iyy>
+                        <Izz>477.43966816206</Izz>
                     </momentsofinertia>
                 </moleculetype>
-                <moleculetype id="2" name="H_Mol">
-                    <coord_base>principal_axes</coord_base>
-                    <site type="LJ126" id="1" >
-                        <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+                <!-- Hybrid representation is combination of FP and CG version -->
+                <moleculetype id="2" name="H_C6H12">
+                    <site type="LJ126" id="1">
+                        <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+                        <sigma>6.093</sigma>
+                        <epsilon>324.0</epsilon>
                         <mass>0.0</mass>
-                        <sigma>5.0</sigma>
-                        <epsilon>40.0</epsilon>
-                        <shifted>false</shifted>
                     </site>
-                    <site type="LJ126" id="2" >
-                        <coords> <x>0.57735027</x> <y>0.57735027</y> <z>0.57735027</z> </coords>
-                        <mass>1.0</mass>
-                        <sigma>5.0</sigma>
-                        <epsilon>10.0</epsilon>
+                    <site type="LJ126" id="2">
+                        <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
                     </site>
-                    <site type="LJ126" id="3" >
-                        <coords> <x>-0.57735027</x> <y>-0.57735027</y> <z>0.57735027</z> </coords>
-                        <mass>1.0</mass>
-                        <sigma>5.0</sigma>
-                        <epsilon>10.0</epsilon>
+                    <site type="LJ126" id="3">
+                        <coords><x>-1.9038</x><y>0.0</y><z>0.0</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
                     </site>
-                    <site type="LJ126" id="4" >
-                        <coords> <x>-0.57735027</x> <y>0.57735027</y> <z>-0.57735027</z> </coords>
-                        <mass>1.0</mass>
-                        <sigma>5.0</sigma>
-                        <epsilon>10.0</epsilon>
+                    <site type="LJ126" id="4">
+                        <coords><x>-2.591241</x><y>1.775353</y><z>0</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
                     </site>
-                    <site type="LJ126" id="5" >
-                        <coords> <x>0.57735027</x> <y>-0.57735027</y> <z>-0.57735027</z> </coords>
-                        <mass>1.0</mass>
-                        <sigma>5.0</sigma>
-                        <epsilon>10.0</epsilon>
+                    <site type="LJ126" id="5">
+                        <coords><x>-1.903799</x><y>2.778719</y><z>1.464628</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
                     </site>
-                    <momentsofinertia rotates="xyz">
-                        <Ixx>0.0</Ixx>
-                        <Iyy>0.0</Iyy>
-                        <Izz>0.0</Izz>
+                    <site type="LJ126" id="6">
+                        <coords><x>0.0</x><y>2.778719</y><z>1.464627</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <site type="LJ126" id="7">
+                        <coords><x>0.687441</x><y>1.003366</y><z>1.464627</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <momentsofinertia rotaxes="xyz">
+                        <Ixx>365.21510545957</Ixx>
+                        <Iyy>292.76326523101</Iyy>
+                        <Izz>477.43966816206</Izz>
                     </momentsofinertia>
                 </moleculetype>
-                <moleculetype id="3" name="CG_Mol">
-                    <coord_base>principal_axes</coord_base>
-                    <site type="LJ126" id="1" >
-                        <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
-                        <mass>4.0</mass>
-                        <sigma>5.0</sigma>
-                        <epsilon>40.0</epsilon>
-                        <shifted>false</shifted>
+                <!--
+
+            ************************************************************************
+            *               Publishing with the MolMod Database                    *
+            *  Every user agrees to cite the MolMod Database upon usage as follows *
+            *                                                                      *
+            *  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+            *  MolMod – an Open Access Database of Force Fields for Molecular      *
+            *  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+            ************************************************************************
+
+                                           Model data
+
+             Substance     C6H12_II
+             CAS-No        110-82-7
+             Reference     J. O. Hirschfelder, C. F. Curtiss and R. B. Bird: The Mol
+                           ecular Theory of Gases and Liquids, (1964),
+
+            -->
+                <moleculetype id="3" name="CG_C6H12">
+                    <site type="LJ126" id="1">
+                        <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+                        <sigma>6.093</sigma>
+                        <epsilon>324.0</epsilon>
+                        <mass>84.159</mass>
                     </site>
-                    <momentsofinertia rotates="xyz">
-                        <Ixx>0.0</Ixx>
-                        <Iyy>0.0</Iyy>
-                        <Izz>0.0</Izz>
+                    <momentsofinertia rotaxes="xyz">
+                        <Ixx>0</Ixx>
+                        <Iyy>0</Iyy>
+                        <Izz>0</Izz>
                     </momentsofinertia>
                 </moleculetype>
             </components>
