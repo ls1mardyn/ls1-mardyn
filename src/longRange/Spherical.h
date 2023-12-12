@@ -55,6 +55,7 @@ private:
 	double TICSp(int n, double rc, double sigma2, double tau);
 	double TISSp(int n, double rc, double sigma2, double tau1, double tau2);
 
+	unsigned int nSamples;
 	unsigned int numComp;
 	unsigned long globalNumMols;
 	double rc;
@@ -63,10 +64,13 @@ private:
 	double VirialKorrLJ;
 	double TempRho;
 	bool droplet;
+	bool disableLRC;
 	std::string _outputPrefix;
 	double _T;
 
 	unsigned int NShells;
+	unsigned int calcFreq;
+	unsigned int writeFreq; //has to be a multiple of calculation Frequency
 	unsigned int NSMean;
 	double _drShells;
 	double _deltaShells;

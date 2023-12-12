@@ -32,6 +32,7 @@ Spherical::Spherical(double /*cutoffT*/, double cutoffLJ, Domain* domain, Domain
 	_particleContainer = particleContainer;
 	NShells = 70;
 	NSMean = 50;
+	nSamples = 0;
 	numComp = 1;
 	globalNumMols = 31000;
 	global_log->info() << "[Long Range Correction] golbalNumMols set to: " << globalNumMols << " during initialization" << std::endl;
@@ -40,9 +41,15 @@ Spherical::Spherical(double /*cutoffT*/, double cutoffLJ, Domain* domain, Domain
 	UpotKorrLJ = 0.0;
 	VirialKorrLJ = 0.0;
 	droplet = true;
+	disableLRC = false;
 	_outputPrefix = "mardyn";
 	_T = 0;
 
+	calcFreq = 100;
+	writeFreq = 10000;
+	//making sure that writeFreq is a multiple of calcFreq:
+    writeFreq = ( writeFreq/calcFreq) * calcFreq;
+	if(writeFreq == 0){ writeFreq = calcFreq;}
 }
 
 Spherical::~Spherical() {
@@ -219,8 +226,9 @@ void Spherical::init()
 		ofstream outfilestreamThermData(filenameThermData, ios::out);
 		outfilestreamThermData << std::setw(24) << "simstep;";  
 		// outfilestreamThermData << std::setw(24) << "gamma (iterative);";  
-		outfilestreamThermData << std::setw(24) << "gamma[-2];";  
-		outfilestreamThermData << std::setw(24) << "gamma[-1];";  
+		outfilestreamThermData << std::setw(24) << "gamma[n-2];";  
+		outfilestreamThermData << std::setw(24) << "gamma[n-1];";  
+		outfilestreamThermData << std::setw(24) << "gamma;";  
 		outfilestreamThermData << std::setw(24) << "R_gamma;";
 		outfilestreamThermData << std::setw(24) << "R_e;";
 		outfilestreamThermData << std::setw(24) << "delta;";
@@ -232,6 +240,7 @@ void Spherical::init()
 		outfilestreamThermData << std::setw(24) << "inside_to" << ";";
 		outfilestreamThermData << std::setw(24) << "outside_from" << ";";
 		outfilestreamThermData << std::setw(24) << "outside_to" << ";";
+		outfilestreamThermData << std::setw(24) << "nSamples" << ";";
 		outfilestreamThermData << std::endl;
 		outfilestreamThermData.close();
 
@@ -247,7 +256,15 @@ void Spherical::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("droplet", droplet);
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	xmlconfig.getNodeValue("temperature", _T);
-	//xmlconfig.getNodeValue("frequency", frequency);
+	xmlconfig.getNodeValue("disableLRC", disableLRC);
+	xmlconfig.getNodeValue("calculationFreq", calcFreq);
+	xmlconfig.getNodeValue("writeFreq", writeFreq);
+
+	//making sure that writeFreq is a multiple of calcFreq:
+    writeFreq = ( writeFreq/calcFreq) * calcFreq;
+	if(writeFreq == 0){ writeFreq = calcFreq;}
+
+
 	global_log->info() << "[Long Range Correction] Using " << NShells << " shells for profiles to calculate LRC." << std::endl;
 	if (droplet){
 		global_log->info() << "[Long Range Correction] System contains a droplet. COMaligner plugin is required."  << std::endl;
@@ -349,7 +366,7 @@ void Spherical::calculateLongRange(){
 	}
 
 	// mittlere Dichte
-	if ( (simstep) % 100 == 0) {  // 1000
+	if ( (simstep) % calcFreq == 0) {  // 1000
 		std::fill(rhoShells.begin(), rhoShells.end(), 0.0);
 		std::fill(rhoShells_global.begin(), rhoShells_global.end(), 0.0);
 		std::fill(rhoShellsTemp_global.begin(), rhoShellsTemp_global.end(), 0.0);
@@ -453,7 +470,7 @@ void Spherical::calculateLongRange(){
 			rhoShellsT[i] = RhoP(RShells[i], rhov, rhol, D0, R0);
 		}
         
-        if ( simstep % 100000 == 0) {  
+        if ( simstep % writeFreq == 0) {  
             if (rank == 0) {
                 ofstream outfilestreamTanhParams(filenameTanhParams, ios::app);
                 outfilestreamTanhParams << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
@@ -951,7 +968,7 @@ void Spherical::calculateLongRange(){
 		}
 		// Only Root writes to files
         if (rank == 0) {
-        	if ( simstep % 100000 == 0) { //reduced from 100 to 100000, should be enough, no?  
+        	if ( simstep % writeFreq == 0) { //reduced from 100 to 100000, should be enough, no?  
 
 				// calculating and writing thermoData:
 
@@ -1041,6 +1058,7 @@ void Spherical::calculateLongRange(){
 				ofstream outfilestreamThermData(filenameThermData, ios::app);
                 outfilestreamThermData << std::setw(24) << simstep << ";";  
                 // outfilestreamThermData << std::setw(24) << gamma_Avg_iterative[NShells-1] << ";";  
+                outfilestreamThermData << std::setw(24) << gamma_Avg[NShells-3] << ";";  
                 outfilestreamThermData << std::setw(24) << gamma_Avg[NShells-2] << ";";  
                 outfilestreamThermData << std::setw(24) << gamma_Avg[NShells-1] << ";";  
                 outfilestreamThermData << std::setw(24) << R_gamma << ";";
@@ -1054,6 +1072,7 @@ void Spherical::calculateLongRange(){
                 outfilestreamThermData << std::setw(24) << inside_to << ";";
                 outfilestreamThermData << std::setw(24) << outside_from << ";";
                 outfilestreamThermData << std::setw(24) << outside_to << ";";
+                outfilestreamThermData << std::setw(24) << nSamples << ";";
 				outfilestreamThermData << std::endl;
 
                 outfilestreamThermData.close();
@@ -1089,13 +1108,14 @@ void Spherical::calculateLongRange(){
                     outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << _T*rhoShellsAvg_global[i]+VirShells_N_global[i] << ";";
                     outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << _T*rhoShellsAvg_global[i]+VirShells_T_global[i] << ";" ;
                     outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << TShellsAvg_global[i]<< ";" ;
-                    // outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << gamma_Avg_iterative[i]<< ";" ;
+                   // outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << gamma_Avg_iterative[i]<< ";" ;
                     outfilestreamGlobalCorrs << std::endl;
 
                 }
                 outfilestreamGlobalCorrs.close();
             }
         }
+		nSamples++;
 	}
 
 	// Lesen der Korrekturen in jedem Zeitschritt
@@ -1168,9 +1188,17 @@ void Spherical::calculateLongRange(){
 		Fa[0] = FcorrX[molID];
 		Fa[1] = FcorrY[molID];
 		Fa[2] = FcorrZ[molID];
-		tempMol->Fadd(Fa);
+		if(!disableLRC){	
+			tempMol->Fadd(Fa);
+		}
 	}
-	_domain->setUpotCorr(UCorrSum_global);
+	
+	if(!disableLRC){	
+		_domain->setUpotCorr(UCorrSum_global);
+	}else{
+		_domain->setUpotCorr(0.);
+        _domain->setVirialCorr(0.);
+	}
 }
 
 
