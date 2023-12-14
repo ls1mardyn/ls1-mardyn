@@ -68,6 +68,7 @@
 
 #include "thermostats/VelocityScalingThermostat.h"
 #include "thermostats/TemperatureControl.h"
+#include "thermostats/SphericalTemperatureControl.h"
 
 #include "utils/FileUtils.h"
 #include "utils/Logger.h"
@@ -114,6 +115,7 @@ Simulation::Simulation()
 	_rand(8624),
 	_longRangeCorrection(nullptr),
 	_temperatureControl(nullptr),
+	_sphericalTemperatureControl(nullptr),
 	_FMM(nullptr),
 	_timerProfiler(),
 #ifdef TASKTIMINGPROFILE
@@ -149,6 +151,8 @@ Simulation::~Simulation() {
 	_longRangeCorrection = nullptr;
 	delete _temperatureControl;
 	_temperatureControl = nullptr;
+	delete _sphericalTemperatureControl;
+	_sphericalTemperatureControl = nullptr;
 	delete _FMM;
 	_FMM = nullptr;
 
@@ -507,6 +511,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
                     if (nullptr == _temperatureControl) {
                         _temperatureControl = new TemperatureControl();
                         _temperatureControl->readXML(xmlconfig);
+                    } else {
+                        global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..."
+                                            << endl;
+                        Simulation::exit(-1);
+                    }
+                }
+				else if(thermostattype == "SphericalTemperatureControl") {
+                    if (nullptr == _sphericalTemperatureControl) {
+                        _sphericalTemperatureControl = new SphericalTemperatureControl();
+                        _sphericalTemperatureControl->readXML(xmlconfig);
                     } else {
                         global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..."
                                             << endl;

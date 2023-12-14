@@ -5,13 +5,14 @@
  *      Author: jniemann, based on TemperatureControl.cpp by mheinen
  */
 
-#ifndef TEMPERATURECONTROL_H_
-#define TEMPERATURECONTROL_H_
+#ifndef SPHERICALTEMPERATURECONTROL_H_
+#define SPHERICALTEMPERATURECONTROL_H_
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
+#include "thermostats/TemperatureControl.h" //defines the accumulator class
 #include "ThermostatVariables.h"
 #include "integrators/Integrator.h"
 #include "molecules/Molecule.h"
@@ -25,7 +26,7 @@ class DistControl;
 class XMLfileUnits;
 class DomainDecompBase;
 class ParticleContainer;
-class Accumulator;
+// class Accumulator;
 class SphericalTemperatureControl;
 class SphericalControlRegionT : public SphericalRegionObs {
 public:
@@ -115,7 +116,7 @@ private:
 	// instances / ID
 	static unsigned short _nStaticID;
 
-	double radiusBondary;
+	// double radiusBondary;
 
 	/**
 	 * Thread buffer for the local thermostat variables.
@@ -206,28 +207,28 @@ private:
 	ControlMethod _method = VelocityScaling;
 };
 
-// Accumulate kinetic energy dependent on which translatoric directions should be thermostated
+// // Accumulate kinetic energy dependent on which translatoric directions should be thermostated
 
-class Accumulator {
-private:
-	bool _accumulateX, _accumulateY, _accumulateZ;
+// class Accumulator {
+// private:
+// 	bool _accumulateX, _accumulateY, _accumulateZ;
 
-public:
-	Accumulator(bool accX, bool accY, bool accZ) : _accumulateX(accX), _accumulateY(accY), _accumulateZ(accZ) {}
+// public:
+// 	Accumulator(bool accX, bool accY, bool accZ) : _accumulateX(accX), _accumulateY(accY), _accumulateZ(accZ) {}
 
-	double CalcKineticEnergyContribution(Molecule* mol) {
-		double vx = _accumulateX ? mol->v(0) : 0.0;
-		double vy = _accumulateY ? mol->v(1) : 0.0;
-		double vz = _accumulateZ ? mol->v(2) : 0.0;
-		double m = mol->mass();
+// 	double CalcKineticEnergyContribution(Molecule* mol) {
+// 		double vx = _accumulateX ? mol->v(0) : 0.0;
+// 		double vy = _accumulateY ? mol->v(1) : 0.0;
+// 		double vz = _accumulateZ ? mol->v(2) : 0.0;
+// 		double m = mol->mass();
 
-		return m * (vx * vx + vy * vy + vz * vz);
-	}
-	void ScaleVelocityComponents(Molecule* mol, double vcorr) {
-		if (_accumulateX) mol->setv(0, mol->v(0) * vcorr);
-		if (_accumulateY) mol->setv(1, mol->v(1) * vcorr);
-		if (_accumulateZ) mol->setv(2, mol->v(2) * vcorr);
-	}
-};
+// 		return m * (vx * vx + vy * vy + vz * vz);
+// 	}
+// 	void ScaleVelocityComponents(Molecule* mol, double vcorr) {
+// 		if (_accumulateX) mol->setv(0, mol->v(0) * vcorr);
+// 		if (_accumulateY) mol->setv(1, mol->v(1) * vcorr);
+// 		if (_accumulateZ) mol->setv(2, mol->v(2) * vcorr);
+// 	}
+// };
 
-#endif /* TEMPERATURECONTROL_H_ */
+#endif /* SPHERICALTEMPERATURECONTROL_H_ */

@@ -54,8 +54,8 @@ SphericalControlRegionT::SphericalControlRegionT(SphericalTemperatureControl* co
 SphericalControlRegionT::~SphericalControlRegionT() { delete _accumulator; }
 
 Accumulator* SphericalControlRegionT::CreateAccumulatorInstance() {
-	Accumulator* accumulator;
-	return new Accumulator(true, true, true);
+	Accumulator* accumulator = new Accumulator(true, true, true);
+	return accumulator;
 }
 
 void SphericalControlRegionT::readXML(XMLfileUnits& xmlconfig) {
