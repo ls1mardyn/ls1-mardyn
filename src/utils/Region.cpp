@@ -125,10 +125,10 @@ SphericalRegion::SphericalRegion(ControlInstance* parent)
 	: Region(parent)
 {
 	for(auto d=0; d<3; d++) {
-		_dCenter.at(d) = .5;
+		_dCenter.at(d) = 20;
 	}
-	_dRadius = .5;
-	_dRadiusSquared = .25;
+	_dRadius = 8;
+	_dRadiusSquared = 64;
 }
 
 SphericalRegion::SphericalRegion(ControlInstance* parent, double dCtr[3], double dRadius)
@@ -205,88 +205,94 @@ void SphericalRegionObs::PrepareAsObserver(const std::vector<uint32_t>& refCoord
 
 
 
+
+
+
+
 // class SphereComplementRegion
 
 
-// SphereComplementRegion::SphereComplementRegion(ControlInstance* parent)
-// 	: Region(parent)
-// {
-// 	for(auto d=0; d<3; d++) {
-// 		_dLowerCorner.at(d) = 0.;
-// 		_dUpperCorner.at(d) = 1.;
-// 		_dCenter.at(d) = .5;
-// 	}
-// 	_dRadius = .5;
-// }
+SphereComplementRegion::SphereComplementRegion(ControlInstance* parent)
+	: CuboidRegion(parent), SphericalRegion(parent)
+{
+	for(auto d=0; d<3; d++) {
+		_dLowerCorner.at(d) = 0.;
+		_dUpperCorner.at(d) = 40.;
+		_dCenter.at(d) = 20;
+	}
+	_dRadius = 8;
+	_dRadiusSquared = 64;
+}
 
-// SphereComplementRegion::SphereComplementRegion(ControlInstance* parent, double dLC[3], double dUC[3], double dCtr[3], double dRadius)
-// 	: Region(parent)
-// 	{
-// 	for(auto d=0; d<3; d++) {
-// 		_dLowerCorner.at(d) = dLC[d];
-// 		_dUpperCorner.at(d) = dUC[d];
-// 		_dCenter.at(d) = dCtr[d];
-// 	}
-// 	_dRadius = dRadius;
-// }
+SphereComplementRegion::SphereComplementRegion(ControlInstance* parent, double dLC[3], double dUC[3], double dCtr[3], double dRadius)
+	: CuboidRegion(parent), SphericalRegion(parent)
+	{
+	for(auto d=0; d<3; d++) {
+		_dLowerCorner.at(d) = dLC[d];
+		_dUpperCorner.at(d) = dUC[d];
+		_dCenter.at(d) = dCtr[d];
+	}
+	_dRadius = dRadius;
+	_dRadiusSquared = std::pow(dRadius,2);
+}
 
-// SphereComplementRegion::~SphereComplementRegion()
-// {
-// }
+SphereComplementRegion::~SphereComplementRegion()
+{
+}
 
-// ResidualRegionObs::ResidualRegionObs(ControlInstance* parent) : ResidualRegion(parent)
-// {
-// }
+SphereComplementRegionObs::SphereComplementRegionObs(ControlInstance* parent) : SphereComplementRegion(parent)
+{
+}
 
-// ResidualRegionObs::ResidualRegionObs(ControlInstance* parent, double dLC[3], double dUC[3], double dCtr[3], double dRadius ) : ResidualRegion(parent, dLC, dUC, dCtr, dRadius)
-// {
-// }
+SphereComplementRegionObs::SphereComplementRegionObs(ControlInstance* parent, double dLC[3], double dUC[3], double dCtr[3], double dRadius ) : SphereComplementRegion(parent, dLC, dUC, dCtr, dRadius)
+{
+}
 
-// ResidualRegionObs::~ResidualRegionObs()
-// {
-// }
+SphereComplementRegionObs::~SphereComplementRegionObs()
+{
+}
 
-// // ObserverBase methods
-// void ResidualRegionObs::update(SubjectBase* subject)
-// {
-// 	DistControl* distControl = dynamic_cast<DistControl*>(subject);
-// 	double dMidpointLeft = distControl->GetInterfaceMidLeft();
-// 	double dMidpointRight = distControl->GetInterfaceMidRight();
+// ObserverBase methods
+void SphereComplementRegionObs::update(SubjectBase* subject)
+{
+	DistControl* distControl = dynamic_cast<DistControl*>(subject);
+	double dMidpointLeft = distControl->GetInterfaceMidLeft();
+	double dMidpointRight = distControl->GetInterfaceMidRight();
 
-// 	// update lower corner
-// 	_dLowerCorner.at(0) = _dDistToRefCoords.at(0) + _bMaskMidpointLeft.at(0) * dMidpointLeft + _bMaskMidpointRight.at(0) * dMidpointRight;
-// 	_dLowerCorner.at(1) = _dDistToRefCoords.at(1) + _bMaskMidpointLeft.at(1) * dMidpointLeft + _bMaskMidpointRight.at(1) * dMidpointRight;
-// 	_dLowerCorner.at(2) = _dDistToRefCoords.at(2) + _bMaskMidpointLeft.at(2) * dMidpointLeft + _bMaskMidpointRight.at(2) * dMidpointRight;
+	// update lower corner
+	_dLowerCorner.at(0) = _dDistToRefCoords.at(0) + _bMaskMidpointLeft.at(0) * dMidpointLeft + _bMaskMidpointRight.at(0) * dMidpointRight;
+	_dLowerCorner.at(1) = _dDistToRefCoords.at(1) + _bMaskMidpointLeft.at(1) * dMidpointLeft + _bMaskMidpointRight.at(1) * dMidpointRight;
+	_dLowerCorner.at(2) = _dDistToRefCoords.at(2) + _bMaskMidpointLeft.at(2) * dMidpointLeft + _bMaskMidpointRight.at(2) * dMidpointRight;
 
-// 	// update upper corner
-// 	_dUpperCorner.at(0) = _dDistToRefCoords.at(3) + _bMaskMidpointLeft.at(3) * dMidpointLeft + _bMaskMidpointRight.at(3) * dMidpointRight;
-// 	_dUpperCorner.at(1) = _dDistToRefCoords.at(4) + _bMaskMidpointLeft.at(4) * dMidpointLeft + _bMaskMidpointRight.at(4) * dMidpointRight;
-// 	_dUpperCorner.at(2) = _dDistToRefCoords.at(5) + _bMaskMidpointLeft.at(5) * dMidpointLeft + _bMaskMidpointRight.at(5) * dMidpointRight;
-// }
+	// update upper corner
+	_dUpperCorner.at(0) = _dDistToRefCoords.at(3) + _bMaskMidpointLeft.at(3) * dMidpointLeft + _bMaskMidpointRight.at(3) * dMidpointRight;
+	_dUpperCorner.at(1) = _dDistToRefCoords.at(4) + _bMaskMidpointLeft.at(4) * dMidpointLeft + _bMaskMidpointRight.at(4) * dMidpointRight;
+	_dUpperCorner.at(2) = _dDistToRefCoords.at(5) + _bMaskMidpointLeft.at(5) * dMidpointLeft + _bMaskMidpointRight.at(5) * dMidpointRight;
+}
 
-// void ResidualRegionObs::PrepareAsObserver(const std::vector<uint32_t>& refCoords)
-// {
-// 	_dDistToRefCoords.at(0) = _dLowerCorner.at(0);
-// 	_dDistToRefCoords.at(1) = _dLowerCorner.at(1);
-// 	_dDistToRefCoords.at(2) = _dLowerCorner.at(2);
-// 	_dDistToRefCoords.at(3) = _dUpperCorner.at(0);
-// 	_dDistToRefCoords.at(4) = _dUpperCorner.at(1);
-// 	_dDistToRefCoords.at(5) = _dUpperCorner.at(2);
+void SphereComplementRegionObs::PrepareAsObserver(const std::vector<uint32_t>& refCoords)
+{
+	_dDistToRefCoords.at(0) = _dLowerCorner.at(0);
+	_dDistToRefCoords.at(1) = _dLowerCorner.at(1);
+	_dDistToRefCoords.at(2) = _dLowerCorner.at(2);
+	_dDistToRefCoords.at(3) = _dUpperCorner.at(0);
+	_dDistToRefCoords.at(4) = _dUpperCorner.at(1);
+	_dDistToRefCoords.at(5) = _dUpperCorner.at(2);
 
-// 	_bMaskMidpointLeft.at(0) = refCoords.at(0) == 1;
-// 	_bMaskMidpointLeft.at(1) = refCoords.at(1) == 1;
-// 	_bMaskMidpointLeft.at(2) = refCoords.at(2) == 1;
-// 	_bMaskMidpointLeft.at(3) = refCoords.at(3) == 1;
-// 	_bMaskMidpointLeft.at(4) = refCoords.at(4) == 1;
-// 	_bMaskMidpointLeft.at(5) = refCoords.at(5) == 1;
+	_bMaskMidpointLeft.at(0) = refCoords.at(0) == 1;
+	_bMaskMidpointLeft.at(1) = refCoords.at(1) == 1;
+	_bMaskMidpointLeft.at(2) = refCoords.at(2) == 1;
+	_bMaskMidpointLeft.at(3) = refCoords.at(3) == 1;
+	_bMaskMidpointLeft.at(4) = refCoords.at(4) == 1;
+	_bMaskMidpointLeft.at(5) = refCoords.at(5) == 1;
 
-// 	_bMaskMidpointRight.at(0) = refCoords.at(0) == 2;
-// 	_bMaskMidpointRight.at(1) = refCoords.at(1) == 2;
-// 	_bMaskMidpointRight.at(2) = refCoords.at(2) == 2;
-// 	_bMaskMidpointRight.at(3) = refCoords.at(3) == 2;
-// 	_bMaskMidpointRight.at(4) = refCoords.at(4) == 2;
-// 	_bMaskMidpointRight.at(5) = refCoords.at(5) == 2;
-// }
+	_bMaskMidpointRight.at(0) = refCoords.at(0) == 2;
+	_bMaskMidpointRight.at(1) = refCoords.at(1) == 2;
+	_bMaskMidpointRight.at(2) = refCoords.at(2) == 2;
+	_bMaskMidpointRight.at(3) = refCoords.at(3) == 2;
+	_bMaskMidpointRight.at(4) = refCoords.at(4) == 2;
+	_bMaskMidpointRight.at(5) = refCoords.at(5) == 2;
+}
 // class SphereComplementRegion
 
 

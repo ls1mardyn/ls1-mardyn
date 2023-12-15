@@ -226,9 +226,16 @@ public:
 		return m * (vx * vx + vy * vy + vz * vz);
 	}
 	void ScaleVelocityComponents(Molecule* mol, double vcorr) {
+		// global_log->info() << "[SphericalTemperatureControl]: Accumulator::ScaleVelocityComponents(Molecule " << mol->getID()<< ", vcorr "<<vcorr<<"); "<< endl;
+		for(int d=0; d<3; d++){
+			// global_log->info() << "[SphericalTemperatureControl]: before correction: " << mol->getID()<< "->v("<<d<<") == "<<mol->v(d)<<" "<< endl;
+		}
 		if (_accumulateX) mol->setv(0, mol->v(0) * vcorr);
 		if (_accumulateY) mol->setv(1, mol->v(1) * vcorr);
 		if (_accumulateZ) mol->setv(2, mol->v(2) * vcorr);
+		for(int d=0; d<3; d++){
+			// global_log->info() << "[SphericalTemperatureControl]: after correction: " << mol->getID()<< "->v("<<d<<") == "<<mol->v(d)<<" "<< endl;
+		}
 	}
 };
 
