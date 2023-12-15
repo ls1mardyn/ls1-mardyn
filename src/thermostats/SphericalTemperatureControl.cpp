@@ -29,6 +29,8 @@ using namespace std;
 // init static ID --> instance counting
 unsigned short SphericalControlRegionT::_nStaticID = 0;
 
+bool _bDebugOutput = false;
+
 // class SphericalControlRegionT
 SphericalControlRegionT::SphericalControlRegionT(SphericalTemperatureControl* const parent)
 	: SphericalRegionObs(parent),
@@ -54,11 +56,14 @@ SphericalControlRegionT::SphericalControlRegionT(SphericalTemperatureControl* co
 SphericalControlRegionT::~SphericalControlRegionT() { delete _accumulator; }
 
 Accumulator* SphericalControlRegionT::CreateAccumulatorInstance() {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: CreateAccumulatorInstance has been called "<< endl;
 	Accumulator* accumulator = new Accumulator(true, true, true);
 	return accumulator;
 }
 
 void SphericalControlRegionT::readXML(XMLfileUnits& xmlconfig) {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: readXML has been called "<< endl;
+
 	Domain* domain = global_simulation->getDomain();
 	double ctr[3];
 	double rad;
@@ -71,9 +76,7 @@ void SphericalControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("coords/radius", rad);
 	// read upper corner
 
-#ifndef NDEBUG
-	global_log->info() << "SphericalTemperatureControl: Center:" << ctr[0] << ", " << ctr[1] << ", " << ctr[2] << ", radius: "<< rad<< endl;
-#endif
+	if(_bDebugOutput) global_log->info() << "SphericalTemperatureControl: Center:" << ctr[0] << ", " << ctr[1] << ", " << ctr[2] << ", radius: "<< rad<< endl;
 
 	for (uint8_t d = 0; d < 3; ++d) {
 		_dCenter[d] = ctr[d];
@@ -135,6 +138,7 @@ void SphericalControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void SphericalControlRegionT::VelocityScalingInit(XMLfileUnits& xmlconfig) {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: VelocityScalingInit has been called "<< endl;
 	// settings
 	xmlconfig.getNodeValue("settings/exponent", _dTemperatureExponent);
 
@@ -177,6 +181,7 @@ void SphericalControlRegionT::VelocityScalingInit(XMLfileUnits& xmlconfig) {
 }
 
 void SphericalControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp) {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: CalcGlobalValues has been called "<< endl;
 	if (_localMethod != VelocityScaling) return;
 	domainDecomp->collCommInit(4);
 	for (unsigned s = 0; s < 1; ++s) { //_nNumSlabs==1
@@ -331,6 +336,7 @@ void SphericalControlRegionT::ControlTemperature(Molecule* mol) {
 }
 
 void SphericalControlRegionT::ResetLocalValues() {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::ResetLocalValues has been called "<< endl;
 	// reset local values
 	for (int thread = 0; thread < mardyn_get_max_threads(); ++thread) {
 		for (unsigned int s = 0; s < 1; ++s) {//_nNumSlabs==1
@@ -340,6 +346,7 @@ void SphericalControlRegionT::ResetLocalValues() {
 }
 
 void SphericalControlRegionT::InitBetaLogfile() {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::InitBetaLogfile has been called "<< endl;
 	if (_localMethod == VelocityScaling) {
 #ifdef ENABLE_MPI
 		DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition());
@@ -360,6 +367,7 @@ void SphericalControlRegionT::InitBetaLogfile() {
 }
 
 void SphericalControlRegionT::WriteBetaLogfile(unsigned long simstep) {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::WriteBetaLogfile has been called "<< endl;
 	if (_localMethod != VelocityScaling) {
 		return;
 	}
@@ -397,6 +405,7 @@ void SphericalControlRegionT::WriteBetaLogfile(unsigned long simstep) {
 }
 
 DistControl* SphericalControlRegionT::getDistControl() {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::getDistControl has been called "<< endl;
 	DistControl* distControl = nullptr;
 	std::list<PluginBase*>& plugins = *(global_simulation->getPluginList());
 	for (auto&& pit : plugins) {
@@ -408,6 +417,7 @@ DistControl* SphericalControlRegionT::getDistControl() {
 	return distControl;
 }
 void SphericalControlRegionT::registerAsObserver() {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::registerAsObserver has been called "<< endl;
 	if (true == _bIsObserver) {
 		DistControl* distControl = this->getDistControl();
 		if (distControl != nullptr)
@@ -421,10 +431,12 @@ void SphericalControlRegionT::registerAsObserver() {
 }
 
 void SphericalControlRegionT::update(SubjectBase* subject) {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::update  has been called "<< endl;
 	SphericalRegionObs::update(subject);
 }
 
 void SphericalControlRegionT::InitAddedEkin() {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::InitAddedEkin has been called "<< endl;
 	if (_localMethod == VelocityScaling) {
 #ifdef ENABLE_MPI
 		DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition());
@@ -447,6 +459,7 @@ void SphericalControlRegionT::InitAddedEkin() {
 }
 
 void SphericalControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep) {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::writeAddedEkin has been called "<< endl;
 	if (_localMethod != VelocityScaling) return;
 
 	if (simstep % _addedEkin.writeFreq != 0) return;
@@ -507,6 +520,7 @@ SphericalTemperatureControl::~SphericalTemperatureControl() {
 }
 
 void SphericalTemperatureControl::readXML(XMLfileUnits& xmlconfig) {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalTemperatureControl::readXML has been called "<< endl;
 	// control
 	xmlconfig.getNodeValue("control/start", _nStart);
 	xmlconfig.getNodeValue("control/frequency", _nControlFreq);
@@ -557,6 +571,7 @@ void SphericalTemperatureControl::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void SphericalTemperatureControl::prepare_start() {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalTemperatureControl::prepare_start has been called "<< endl;
 	for (auto&& reg : _vecControlRegions) {
 		reg->registerAsObserver();
 	}
@@ -574,6 +589,7 @@ void SphericalTemperatureControl::MeasureKineticEnergy(Molecule* mol, DomainDeco
 }
 
 void SphericalTemperatureControl::CalcGlobalValues(DomainDecompBase* domainDecomp, unsigned long simstep) {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalTemperatureControl::CalcGlobalValues has been called "<< endl;
 	if (simstep % _nControlFreq != 0) return;
 	if (simstep <= this->GetStart() || simstep > this->GetStop()) return;
 
@@ -590,6 +606,7 @@ void SphericalTemperatureControl::ControlTemperature(Molecule* mol, unsigned lon
 }
 
 void SphericalTemperatureControl::Init(unsigned long simstep) {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalTemperatureControl::Init has been called "<< endl;
 	if (simstep % _nControlFreq != 0) return;
 	if (simstep <= this->GetStart() || simstep > this->GetStop()) return;
 
@@ -597,6 +614,7 @@ void SphericalTemperatureControl::Init(unsigned long simstep) {
 }
 
 void SphericalTemperatureControl::InitBetaLogfiles() {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalTemperatureControl::InitBetaLogfiles has been called "<< endl;
 	for (auto&& reg : _vecControlRegions) reg->InitBetaLogfile();
 }
 
@@ -621,6 +639,7 @@ void SphericalTemperatureControl::writeAddedEkin(DomainDecompBase* domainDecomp,
  */
 void SphericalTemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposition,
 											  ParticleContainer* particleContainer, const unsigned long simstep) {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalTemperatureControl::DoLoopsOverMolecules has been called "<< endl;
 	if (_method == VelocityScaling || _method == Mixed) {
 		this->VelocityScalingPreparation(domainDecomposition, particleContainer, simstep);
 		global_log->debug() << "[TemperatureControl] VelocityScalingPreparation\n";
@@ -652,6 +671,7 @@ void SphericalTemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainD
  */
 void SphericalTemperatureControl::VelocityScalingPreparation(DomainDecompBase* domainDecomposition,
 													ParticleContainer* particleContainer, const unsigned long simstep) {
+	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalTemperatureControl::VelocityScalingPreparation has been called "<< endl;
 	// respect start/stop
 	if (this->GetStart() <= simstep && this->GetStop() > simstep) {
 		// init temperature control
