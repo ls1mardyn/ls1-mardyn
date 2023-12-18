@@ -73,6 +73,8 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
         _thermodynamicForce.step_width = _samplingStepSize;
         _thermodynamicForce.gradients.resize(_thermodynamicForce.n, 0.0);
         _thermodynamicForce.function_values.resize(_thermodynamicForce.n, 0.0);
+
+        writeDensities("F_TH_TargetDensity.txt", _targetDensity);
     }
 }
 
@@ -181,7 +183,17 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 
 void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                      unsigned long simstep) {
+    if(_thermodynamicForceSampleCounter != 0) return;
 
+    std::stringstream stream;
+    stream << "./F_TH_InterpolationFunction_" << simstep << ".xml";
+    writeFunctionToXML(stream.str(), _thermodynamicForce);
+    stream.clear();
+    stream = std::stringstream {};
+    stream << "./F_TH_Density_" << simstep << ".txt";
+    std::vector<double> densities;
+    loadDensities(densities, _particleContainer->getBoundingBoxMin(0), _particleContainer->getBoundingBoxMax(0), 1.0);
+    writeDensities(stream.str(), densities);
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
@@ -434,6 +446,35 @@ void AdResS::applyF_TH() {
         std::array<double, 3> force = {F, 0.0, 0.0};
         itM->Fadd(std::data(force));
     }
+
+    // TODO FIXME!!
+    double cutoff = _simulation.getcutoffRadius();
+    auto& region = _fpRegions[0];
+    low[0] = region._lowHybrid[0] - cutoff;
+    high[0] = region._low[0] + cutoff;
+    #if defined(_OPENMP)
+    #pragma omp parallel
+    #endif
+    for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
+        std::array<double, 3> f = itM->F_arr();
+        for(short d = 0; d < 3; d++) {
+            f[d] = std::copysign(std::min(std::abs(f[d]), 500.0), f[d]);
+        }
+        itM->setF(std::data(f));
+    }
+
+    low[0] = region._high[0] - cutoff;
+    high[0] = region._highHybrid[0] + cutoff;
+    #if defined(_OPENMP)
+    #pragma omp parallel
+    #endif
+    for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
+        std::array<double, 3> f = itM->F_arr();
+        for(short d = 0; d < 3; d++) {
+            f[d] = std::copysign(std::min(std::abs(f[d]), 500.0), f[d]);
+        }
+        itM->setF(std::data(f));
+    }
 }
 
 void AdResS::checkMoleculeLOD(Molecule &molecule, Resolution targetRes) {
@@ -624,6 +665,22 @@ void AdResS::writeFunctionToXML(const string &filename, InterpolatedFunction &fu
         file.close();
     } catch (std::ifstream::failure& e) {
         global_log->error() << "[AdResS] Failed to write Interpolation function.\n" << e.what() << std::endl;
+        _simulation.exit(-1);
+    }
+}
+
+void AdResS::writeDensities(const string &filename, vector<double> &densities, const string &separator) {
+#ifdef ENABLE_MPI
+    if (_simulation.domainDecomposition().getRank() != 0) return;
+#endif
+    try {
+        std::ofstream file {filename};
+        for(unsigned long i = 0; i < densities.size()-1; i++) {
+            file << densities[i] << separator;
+        }
+        file << densities[densities.size()-1] << std::endl;
+    } catch (std::ifstream::failure& e) {
+        global_log->error() << "[AdResS] Failed to write densities to file.\n" << e.what() << std::endl;
         _simulation.exit(-1);
     }
 }

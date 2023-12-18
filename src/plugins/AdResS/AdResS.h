@@ -211,6 +211,11 @@ private:
     void writeFunctionToXML(const std::string& filename, InterpolatedFunction& fun);
 
     /**
+     * Writes the provided densities as a sequence split by separator into a file.
+     * */
+    void writeDensities(const std::string& filename, std::vector<double>& densities, const std::string& separator = " ");
+
+    /**
      * Splits then simulation domain into equal slices along dim 0 and computes the density for each bin.
      * Assumes, there is only a single molecule type.
      * @param densities output buffer
