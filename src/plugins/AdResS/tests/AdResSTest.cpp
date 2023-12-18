@@ -4,6 +4,7 @@
 
 #include "AdResSTest.h"
 #include "plugins/AdResS/AdResS.h"
+#include "particleContainer/adapter/LegacyCellProcessor.h"
 
 TEST_SUITE_REGISTRATION(AdResSTest);
 
@@ -30,22 +31,25 @@ void AdResSTest::computeForcesTest() {
         plugin->_domain = _simulation.getDomain();
         plugin->weight = plugin->weightNearest;
     }
-    ParticlePairs2PotForceAdapter pairsHandler(*_simulation.getDomain());
+    ParticlePairsHandler* pairHandler = new AdResSForceAdapter(*plugin);
+    CellProcessor* cellProcessor = new LegacyCellProcessor(2, 2, pairHandler);
 
     /*
-     * Since Cutoff is set to 2 and the domain is 10x10x10 with a FPRegion from 4,4,4 to 6,6,6 with hybrid dims 2,2,2
-     * the entire domain is handled by the plugin.
+     * Cutoff is set to 2 and the domain is 10x10x10 with a FPRegion from 4,4,4 to 6,6,6 with hybrid dims 2,2,2
      * */
 
     //check every single cell -> place 2 molecules in one cell
     for(int cz = 1; cz <= 9; cz+=2) {
         for (int cy = 1; cy <= 9; cy+=2) {
             for (int cx = 1; cx <= 9; cx+=2) {
+                //add 2 molecules, set correct component through plugin and let them interact
                 Molecule m1(0, &plugin->_components->at(2), cx-0.5,cy,cz, 0,0,0, 1,0,0,0);
                 Molecule m2(1, &plugin->_components->at(2), cx+0.5,cy,cz, 0,0,0, 1,0,0,0);
                 container->addParticle(m1);
                 container->addParticle(m2);
-                plugin->beforeForces(container, nullptr, 0);
+                plugin->beforeForces(container, &_simulation.domainDecomposition(), 0);
+
+                //get ref back to mols and check the computed forces
                 Molecule* mol1;
                 Molecule* mol2;
                 for(auto it = container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it){
@@ -55,15 +59,11 @@ void AdResSTest::computeForcesTest() {
 
                 mol1->buildOwnSoA();
                 mol2->buildOwnSoA();
-                std::array<double,3> distanceVector = {};
-                double dd = m2.dist2(m1, distanceVector.data());
+                //ignore non-hybrid interactions
                 if(mol1->componentid() == 0 && 0 == mol2->componentid()) goto clear0;
                 if(mol1->componentid() == 2 && 2 == mol2->componentid()) goto clear0;
 
-                pairsHandler.init();
-                pairsHandler.processPair(*mol1, *mol2, distanceVector.data(), MOLECULE_MOLECULE, dd, true);
-                pairsHandler.finish();
-                plugin->siteWiseForces(container, nullptr, 0);
+                container->traverseCells(*cellProcessor);
                 if(mol1->componentid() == 0 && mol2->componentid() == 1) {
                     double weight = plugin->weight(mol2->r_arr(), region);
                     ASSERT_DOUBLES_EQUAL(-24. * weight, mol1->ljcenter_F(0)[0], 0);
@@ -85,87 +85,57 @@ void AdResSTest::computeForcesTest() {
         }
     }
 
-    //check neighbouring cells
-    for(int col = 1; col < 8; col++) {
-        for(int cz = 1; cz <= 9; cz+=2) {
-            for (int cy = 1; cy <= 9; cy+=2) {
-                for (int cx = 1; cx <= 9; cx+=2) {
-                    std::array<int,3> offset = threeDimensionalMapping::oneToThreeD(col, {2,2,2});
-                    if(cx + offset[0] >= 10 || cy + offset[1] >= 10 || cz + offset[2] >= 10) continue;
+    delete container;
+    delete pairHandler;
+    delete cellProcessor;
+}
 
-                    const double offset_l2 = sqrt(std::pow(offset[0]*2,2) + std::pow(offset[1]*2,2) + std::pow(offset[2]*2,2));
-                    const double offset_scale = 2 / offset_l2;
+void AdResSTest::checkGradient() {
+    std::unique_ptr<AdResS> plugin = std::make_unique<AdResS>();
+    // test function f(x) 2x² - x - 10
+    // sample points 0..10..1
+    std::vector<double> fun_val;
+    std::vector<double> symb_grad;
+    fun_val.resize(10);
+    symb_grad.resize(10);
 
-                    Molecule m1(0, &plugin->_components->at(2), cx,cy,cz, 0,0,0, 1,0,0,0);
-                    Molecule m2(1, &plugin->_components->at(2), cx+offset[0]*2*offset_scale*0.9,cy+offset[1]*2*offset_scale*0.9,cz+offset[2]*2*offset_scale*0.9, 0,0,0, 1,0,0,0);
-                    container->addParticle(m1);
-                    container->addParticle(m2);
-                    plugin->beforeForces(container, nullptr, 0);
-                    Molecule* mol1;
-                    Molecule* mol2;
-                    for(auto it = container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it){
-                        if(it->getID() == 0) mol1 = it.operator->();
-                        if(it->getID() == 1) mol2 = it.operator->();
-                    }
+    for(int i = 0; i < 10; i++) {
+        double x = i + 1;
+        double f_x = 2 * std::pow(x, 2) - x - 10;
+        fun_val[i] = f_x;
 
-                    mol1->buildOwnSoA();
-                    mol2->buildOwnSoA();
-                    std::array<double,3> distanceVector = {};
-                    std::array<double,3> baseForce = {};
-                    double dd = m2.dist2(m1, distanceVector.data());
-                    if(mol1->componentid() == 0 && 0 == mol2->componentid()) goto clear1;
-                    if(mol1->componentid() == 2 && 2 == mol2->componentid()) goto clear1;
+        double df_x = 4 * x - 1;
+        symb_grad[i] = df_x;
+    }
 
-                    pairsHandler.init();
-                    pairsHandler.processPair(*mol1, *mol2, distanceVector.data(), MOLECULE_MOLECULE, dd, true);
-                    pairsHandler.finish();
-                    for(int d = 0; d < 3; d++) baseForce[d] += mol1->ljcenter_F(0)[d] + ((mol1->componentid() == 1) ? mol1->ljcenter_F(1)[d] : 0);
+    std::vector<double> num_grad;
+    plugin->computeGradient(fun_val, num_grad);
 
-                    plugin->siteWiseForces(container, nullptr, 0);
-                    if(mol1->componentid() == 1 && mol2->componentid() == 1) {
-                        auto f1 = mol1->ljcenter_F(0);
-                        auto f2 = mol2->ljcenter_F(0);
-                        for(int d = 0; d<3; d++) {
-                            f1[d] += mol1->ljcenter_F(1)[d];
-                            f2[d] += mol2->ljcenter_F(1)[d];
-                            ASSERT_TRUE(f2[d] == -f1[d]);
-                        }
-                        ASSERT_TRUE(f1[0] != 0 || f1[1] != 0 || f1[2] != 0);
-                        ASSERT_TRUE(f1[0] != baseForce[0] || f1[1] != baseForce[1] || f1[2] != baseForce[2]);
-                    } else if(mol1->componentid() == 1 && mol2->componentid() != 1) {
-                        auto f1 = mol1->ljcenter_F(0);
-                        auto f2 = mol2->ljcenter_F(0);
-                        for(int d = 0; d<3; d++) {
-                            f1[d] += mol1->ljcenter_F(1)[d];
-                            ASSERT_TRUE(f2[d] == -f1[d]);
-                        }
-                        ASSERT_TRUE(f1[0] != 0 || f1[1] != 0 || f1[2] != 0);
-                        ASSERT_TRUE(f1[0] != baseForce[0] || f1[1] != baseForce[1] || f1[2] != baseForce[2]);
-                    } else if(mol1->componentid() != 1 && mol2->componentid() == 1) {
-                        auto f1 = mol1->ljcenter_F(0);
-                        auto f2 = mol2->ljcenter_F(0);
-                        for(int d = 0; d<3; d++) {
-                            f2[d] += mol2->ljcenter_F(1)[d];
-                            ASSERT_TRUE(f2[d] == -f1[d]);
-                        }
-                        ASSERT_TRUE(f1[0] != 0 || f1[1] != 0 || f1[2] != 0);
-                        ASSERT_TRUE(f1[0] != baseForce[0] || f1[1] != baseForce[1] || f1[2] != baseForce[2]);
-                    } else {
-                        auto f1 = mol1->ljcenter_F(0);
-                        auto f2 = mol2->ljcenter_F(0);
-                        for(int d = 0; d<3; d++) {
-                            ASSERT_TRUE(f2[d] == -f1[d]);
-                        }
-                        ASSERT_TRUE(f1[0] != 0 || f1[1] != 0 || f1[2] != 0);
-                        ASSERT_TRUE(f1[0] != baseForce[0] || f1[1] != baseForce[1] || f1[2] != baseForce[2]);
-                    }
+    // we do not care for the border values
+    for(int i = 1; i < 9; i++) {
+        double rel_error = std::abs(num_grad[i] - symb_grad[i] - 1e-8) / std::abs(symb_grad[i] + 1e-8);
+        ASSERT_TRUE(rel_error < 0.05);
+    }
+}
 
-                    clear1:
-                    mol1->releaseOwnSoA();
-                    mol2->releaseOwnSoA();
-                    container->clear();
-                }
-            }
-        }
+void AdResSTest::checkMatrixSolver() {
+    std::unique_ptr<AdResS> plugin = std::make_unique<AdResS>();
+    std::vector<double> a;
+    std::vector<double> b;
+    std::vector<double> c;
+    std::vector<double> x;
+    std::vector<double> d {-21, -12, 0, 12, 21};
+    std::vector<double> solution {-4.8, -1.8, 0.0, 1.8, 4.8};
+
+    a.resize(5, 1);
+    b.resize(5, 4);
+    c.resize(5, 1);
+
+    a[0] = 0;
+    c[4] = 0;
+
+    plugin->solveTriDiagonalMatrix(a, b, c, x, d);
+    for(int i = 0; i < 5; i++) {
+        ASSERT_DOUBLES_EQUAL(solution[i], x[i], 1e-6);
     }
 }

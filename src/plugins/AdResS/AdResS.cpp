@@ -312,7 +312,7 @@ void AdResS::solveTriDiagonalMatrix(vector<double> &a, vector<double> &b, vector
     for (int i = 1; i < n; i++) {
         double w = a[i] / b[i - 1];
         b[i] = b[i] - w * c[i - 1];
-        d[i] = d[i] - w * c[i - 1];
+        d[i] = d[i] - w * d[i - 1];
     }
     x[n-1] = d[n-1] / b[n-1];
     for (int i = n - 1 - 1; i >= 0; i--) {
@@ -602,4 +602,28 @@ double AdResS::weightNearest(std::array<double, 3> r, FPRegion &region) {
 double AdResS::weightFlat(std::array<double, 3> r, FPRegion &region) {
     if(FPRegion::isInnerPoint(r, region._low, region._high)) return 1.;
     return 0.;
+}
+
+void AdResS::writeFunctionToXML(const string &filename, InterpolatedFunction &fun) {
+#ifdef ENABLE_MPI
+    if (_simulation.domainDecomposition().getRank() != 0) return;
+#endif
+    try {
+        std::ofstream file {filename};
+        file << "<forceFunction>\n";
+        file << "    <sampleBinSize>" << fun.step_width << "</sampleBinSize>\n";
+        file << "    <startX>" << fun.begin << "</startX>\n";
+        for(unsigned long i = 0; i < fun.n; i++) {
+            file << "    <samplePoint id=\"" << i + 1 <<"\">\n";
+            file << "    " << "    <grad>" << fun.gradients[i] << "</grad>\n";
+            file << "    " << "    <func>" << fun.function_values[i] << "</func>\n";
+            file << "    </samplePoint>\n";
+        }
+        file << "</forceFunction>\n";
+        file.flush();
+        file.close();
+    } catch (std::ifstream::failure& e) {
+        global_log->error() << "[AdResS] Failed to write Interpolation function.\n" << e.what() << std::endl;
+        _simulation.exit(-1);
+    }
 }

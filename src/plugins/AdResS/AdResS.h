@@ -64,6 +64,22 @@ public:
      * \code{.xml}
      *  <plugin name="AdResS">
      *      <weightImpl>euclid</weightImpl>
+     *      <enableFTH>
+     *          <!--createFTH>
+     *              <sampleGap>100</sampleGap>
+     *              <threshold>0.02</threshold>
+     *              <convFactor>0.2</convFactor>
+     *              <sampleBinSize>0.2</sampleBinSize>
+     *          </createFTH-->
+     *          <forceFunction>
+     *              <sampleBinSize>100</sampleBinSize>
+     *              <startX>20.0</startX>
+     *              <samplePoint id="1">
+     *                  <grad>2.0</grad>
+     *                  <func>1.0</func>
+     *              </samplePoint>
+     *          </forceFunction>
+     *      </enableFTH>
      *      <fpregions>
      *          <region id="1">
      *              <lowX>0.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
@@ -186,6 +202,13 @@ private:
 
     //! @brief step size of density sampling
     double _samplingStepSize;
+
+    /**
+     * Writes the function object into the required XML format for input files.
+     * @param filename Output filename
+     * @param fun function object
+     * */
+    void writeFunctionToXML(const std::string& filename, InterpolatedFunction& fun);
 
     /**
      * Splits then simulation domain into equal slices along dim 0 and computes the density for each bin.
