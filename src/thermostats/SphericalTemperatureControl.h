@@ -60,6 +60,8 @@ public:
 
 	virtual void registerAsObserver() = 0;
 	virtual void update(SubjectBase* subject) = 0;
+	
+	virtual bool ContainsMolecule(Molecule* mol) = 0;
 
 	// measure added kin. energy
 	void InitAddedEkin();
@@ -75,8 +77,6 @@ protected:
 private:
 	// create accumulator object dependent on which translatoric directions should be thermostated (xyz)
 	Accumulator* CreateAccumulatorInstance();
-
-
 
 	// double radiusBondary;
 
@@ -135,13 +135,14 @@ public:
 	*TODO: write something here.
 	*/
 
+	bool ContainsMolecule(Molecule* mol);
 
 	void readXML(XMLfileUnits& xmlconfig);
 	unsigned int GetID()  { return _nID; };
 	// void VelocityScalingInit(XMLfileUnits& xmlconfig);
 	// void CalcGlobalValues(DomainDecompBase* domainDecomp);
-	void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp);
-	void ControlTemperature(Molecule* mol);
+	// void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp);
+	// void ControlTemperature(Molecule* mol);
 	// void ResetLocalValues();
 
 	// // beta log file
@@ -214,12 +215,13 @@ public:
 	SphereComplementControlRegionT(SphericalTemperatureControl* const parent);
 	~SphereComplementControlRegionT();
 
+	bool ContainsMolecule(Molecule* mol);
 	void readXML(XMLfileUnits& xmlconfig);
 	unsigned int GetID()  { return SphericalRegion::_nID; };
 	// void VelocityScalingInit(XMLfileUnits& xmlconfig);
 	// void CalcGlobalValues(DomainDecompBase* domainDecomp);
-	void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp);
-	void ControlTemperature(Molecule* mol);
+	// void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp);
+	// void ControlTemperature(Molecule* mol);
 	// void ResetLocalValues();
 
 	// // beta log file

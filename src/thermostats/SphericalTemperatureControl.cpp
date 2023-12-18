@@ -193,7 +193,11 @@ void AbstrControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp) {
 }
 
 void AbstrControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*domainDecomp*/) {
-	// only call for molecules that actually are in the controlRegion!!
+	if (_localMethod != VelocityScaling) return;
+	// check componentID
+	if (mol->componentid() + 1 != _nTargetComponentID &&
+		0 != _nTargetComponentID)  // program intern componentID starts with 0
+		return;
 
 	// sum up transl. kinetic energy (2x)
 	/*
@@ -205,6 +209,7 @@ void AbstrControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* 
 	//    _d2EkinTransLocal += m*(vx*vx + vy*vy);
 		_d2EkinTransLocal[nPosIndex] += m*(vx*vx + vz*vz);
 	*/
+	if(!this->ContainsMolecule(mol)) return;
 
 	auto myThreadNum = mardyn_get_thread_num();
 	double nPosIndex = 0;
@@ -226,7 +231,11 @@ void AbstrControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* 
 }
 
 void AbstrControlRegionT::ControlTemperature(Molecule* mol) {
-	// only call for molecules that actually are in the controlRegion!!
+	if (mol->componentid() + 1 != _nTargetComponentID &&
+		0 != _nTargetComponentID)  // program intern componentID starts with 0
+		return;
+
+	if(!this->ContainsMolecule(mol)) return;
 
 	// check for method
 	if (_localMethod == VelocityScaling) {
@@ -650,66 +659,32 @@ void SphericalControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 // 	_numSampledConfigs++;
 // }
 
-void SphericalControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*domainDecomp*/) {
-	if (_localMethod != VelocityScaling) return;
-	// check componentID
-	if (mol->componentid() + 1 != _nTargetComponentID &&
-		0 != _nTargetComponentID)  // program intern componentID starts with 0
-		return;
-
+bool SphericalControlRegionT::ContainsMolecule(Molecule* mol){
 	// check if molecule inside control region
 	double distanceFromCenterSquared = 0;
 	for(int d = 0; d<3; d++){
 		distanceFromCenterSquared += std::pow(mol->r(d)-_dCenter[d],2);
 	}
-	if(distanceFromCenterSquared > _dRadiusSquared) return;
-
-	// sum up transl. kinetic energy (2x)
-	/*
-		double vx = mol->v(0);
-	//    double vy = mol->v(1);
-		double vz = mol->v(2);
-		double m  = mol->mass();
-
-	//    _d2EkinTransLocal += m*(vx*vx + vy*vy);
-		_d2EkinTransLocal[nPosIndex] += m*(vx*vx + vz*vz);
-	*/
-
-	AbstrControlRegionT::MeasureKineticEnergy(mol, nullptr);
-// 	auto myThreadNum = mardyn_get_thread_num();
-// 	double nPosIndex = 0;
-// 	LocalThermostatVariables& localTV = _localThermVarsThreadBuffer[myThreadNum].at(nPosIndex);  // do not forget &  
-// 	localTV._ekinTrans += _accumulator->CalcKineticEnergyContribution(mol);
-
-// 	// sum up rot. kinetic energy (2x)
-// 	double dDummy = 0.;
-// 	double ekinRot = 0.;
-
-// 	mol->calculate_mv2_Iw2(dDummy, ekinRot);
-// 	localTV._ekinRot += ekinRot;
-
-// 	// count num molecules
-// 	localTV._numMolecules++;
-
-// 	// count rotational DOF
-// 	localTV._numRotationalDOF += mol->component()->getRotationalDegreesOfFreedom();
+	if(distanceFromCenterSquared > _dRadiusSquared) return false;
+	else return true;
 }
 
-void SphericalControlRegionT::ControlTemperature(Molecule* mol) {
-	// check componentID
-	if (mol->componentid() + 1 != _nTargetComponentID &&
-		0 != _nTargetComponentID)  // program intern componentID starts with 0
-		return;
 
-	// check if molecule is inside
-	double distanceFromCenterSquared = 0;
-	for(int d = 0; d<3; d++){
-		distanceFromCenterSquared += std::pow(mol->r(d)-_dCenter[d],2);
-	}
-	if(distanceFromCenterSquared > _dRadiusSquared) return;
+// void SphericalControlRegionT::ControlTemperature(Molecule* mol) {
+// 	// check componentID
+// 	if (mol->componentid() + 1 != _nTargetComponentID &&
+// 		0 != _nTargetComponentID)  // program intern componentID starts with 0
+// 		return;
 
-	AbstrControlRegionT::ControlTemperature(mol);
-}
+// 	// check if molecule is inside
+// 	double distanceFromCenterSquared = 0;
+// 	for(int d = 0; d<3; d++){
+// 		distanceFromCenterSquared += std::pow(mol->r(d)-_dCenter[d],2);
+// 	}
+// 	if(distanceFromCenterSquared > _dRadiusSquared) return;
+
+// 	AbstrControlRegionT::ControlTemperature(mol);
+// }
 
 // void SphericalControlRegionT::ResetLocalValues() {
 // 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::ResetLocalValues has been called "<< endl;
@@ -1055,35 +1030,19 @@ void SphereComplementControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 // 	_numSampledConfigs++;
 // }
 
-void SphereComplementControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*domainDecomp*/) {
-	if (_localMethod != VelocityScaling) return;
-	// check componentID
-	if (mol->componentid() + 1 != _nTargetComponentID &&
-		0 != _nTargetComponentID)  // program intern componentID starts with 0
-		return;
-
+bool SphereComplementControlRegionT::ContainsMolecule(Molecule* mol){
 	// check if molecule inside control region
 	double distanceFromCenterSquared = 0;
 	for (unsigned short d = 0; d < 3; ++d) {
 		double dPos = mol->r(d);
-		if (dPos <= _dLowerCorner[d] || dPos >= _dUpperCorner[d]) return;
+		if (dPos <= _dLowerCorner[d] || dPos >= _dUpperCorner[d]) return false;
 		distanceFromCenterSquared += std::pow(dPos-_dCenter[d],2);
 	}
-	if(distanceFromCenterSquared < _dRadiusSquared) return;
-
-	// sum up transl. kinetic energy (2x)
-	/*
-		double vx = mol->v(0);
-	//    double vy = mol->v(1);
-		double vz = mol->v(2);
-		double m  = mol->mass();
-
-	//    _d2EkinTransLocal += m*(vx*vx + vy*vy);
-		_d2EkinTransLocal[nPosIndex] += m*(vx*vx + vz*vz);
-	*/
-
-	AbstrControlRegionT::MeasureKineticEnergy(mol, nullptr);
+	if(distanceFromCenterSquared < _dRadiusSquared) return false;
+	else return true;
 }
+
+
 
 // void SphereComplementControlRegionT::ResetLocalValues() {
 // 	// if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::ResetLocalValues has been called "<< endl;
@@ -1096,62 +1055,6 @@ void SphereComplementControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainD
 // 	ControlRegionT::ResetLocalValues();
 // }
 
-void SphereComplementControlRegionT::ControlTemperature(Molecule* mol) {
-	// check componentID
-	if (mol->componentid() + 1 != _nTargetComponentID &&
-		0 != _nTargetComponentID)  // program intern componentID starts with 0
-		return;
-
-	// check if molecule is inside
-	double distanceFromCenterSquared = 0;
-	for (unsigned short d = 0; d < 3; ++d) {
-		double dPos = mol->r(d);
-		if (dPos <= _dLowerCorner[d] || dPos >= _dUpperCorner[d]) return;
-		distanceFromCenterSquared += std::pow(dPos-_dCenter[d],2);
-	}
-	if(distanceFromCenterSquared < _dRadiusSquared) return;
-
-
-	AbstrControlRegionT::ControlTemperature(mol);
-
-	// // check for method
-	// if (_localMethod == VelocityScaling) {
-		
-	// 	double nPosIndex = 0;
-	// 	GlobalThermostatVariables& globalTV = _globalThermVars[nPosIndex];  // do not forget &
-	// 	if (globalTV._numMolecules < 1) return;
-	// 	// scale velocity
-	// 	double vcorr = 2. - 1. / globalTV._betaTrans;
-	// 	double Dcorr = 2. - 1. / globalTV._betaRot;
-
-	// 	// measure added kin. energy
-	// 	double v2_old = mol->v2();
-
-	// 	// if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: calling  _accumulator->ScaleVelocityComponents(mol, vcorr); "<< endl;
-	// 	// if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: mol =  "<< mol->getID()<<", vcorr = "<< vcorr << " " << endl;
-	// 	_accumulator->ScaleVelocityComponents(mol, vcorr);
-
-	// 	// measure added kin. energy
-	// 	double v2_new = mol->v2();
-	// 	int mythread = mardyn_get_thread_num();
-	// 	_addedEkinLocalThreadBuffer[mythread].at(nPosIndex) += (v2_new - v2_old);
-
-	// 	mol->scale_D(Dcorr);
-	// } else if (_localMethod == Andersen) {
-	// 	double stdDevTrans, stdDevRot;
-	// 	if (_rand.rnd() < _nuDt) {
-	// 		stdDevTrans = sqrt(_dTargetTemperature / mol->mass());
-	// 		for (unsigned short d = 0; d < 3; d++) {
-	// 			stdDevRot = sqrt(_dTargetTemperature * mol->getI(d));
-	// 			mol->setv(d, _rand.gaussDeviate(stdDevTrans));
-	// 			mol->setD(d, _rand.gaussDeviate(stdDevRot));
-	// 		}
-	// 	}
-	// } else {
-	// 	global_log->error() << "[TemperatureControl] Invalid localMethod param: " << _localMethod << std::endl;
-	// 	Simulation::exit(-1);
-	// }
-}
 
 // void SphereComplementControlRegionT::InitBetaLogfile() {
 // // 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::InitBetaLogfile has been called "<< endl;
@@ -1452,6 +1355,7 @@ void SphericalTemperatureControl::ControlTemperature(Molecule* mol, unsigned lon
 	for (auto&& reg : _vecControlRegions) {
 		reg->ControlTemperature(mol);
 	}
+	
 }
 
 void SphericalTemperatureControl::Init(unsigned long simstep) {
