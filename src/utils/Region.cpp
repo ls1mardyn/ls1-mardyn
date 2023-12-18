@@ -160,7 +160,7 @@ SphericalRegionObs::~SphericalRegionObs()
 // ObserverBase methods
 void SphericalRegionObs::update(SubjectBase* subject)
 {
-	// #TODO: something may have to happen here?!
+	/* TODO: something may have to happen here?! */
 
 	// DistControl* distControl = dynamic_cast<DistControl*>(subject);
 	// double dMidpointLeft = distControl->GetInterfaceMidLeft();
