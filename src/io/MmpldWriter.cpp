@@ -13,7 +13,6 @@
 #include <endian.h>
 #endif
 
-
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -27,8 +26,9 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
-#include "utils/Logger.h"
 #include "utils/FileUtils.h"
+#include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
 
 
 // default version to use for mmpld format writing. possible values: 100 or 102
@@ -80,7 +80,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	Log::global_log->info() << "[MMPLD Writer] Split files every " << _numFramesPerFile << "th frame."<< std::endl;
 	Log::global_log->info() << "[MMPLD Writer] Write buffer size: " << _writeBufferSize << " Byte" << std::endl;
 
-	int mmpldversion = 100;
+	int mmpldversion = MMPLD_DEFAULT_VERSION;
 	xmlconfig.getNodeValue("mmpldversion", mmpldversion);
 	_mmpldversion = mmpldversion;
 	switch(_mmpldversion) {
@@ -142,6 +142,11 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 void MmpldWriter::init(ParticleContainer *particleContainer,
 						DomainDecompBase *domainDecomp, Domain *domain)
 {
+	if ( (htole32(1) != 1) || (htole64(1.0) != 1.0) ) {
+		Log::global_log->error() << "[MMPLD Writer] The MMPLD Writer currently only supports running on little endian systems." << std::endl;
+		mardyn_exit(1);
+	}
+
 	// only executed once
 	this->PrepareWriteControl();
 
@@ -315,34 +320,6 @@ void MmpldWriter::endStep(ParticleContainer *particleContainer,
 	std::string filename = getOutputFilename();
 	Log::global_log->debug() << "[MMPLD Writer] Writing MMPLD frame " << _frameCount << " for simstep " << simstep << " to file " << filename << std::endl;
 	write_frame(particleContainer, domainDecomp);
-}
-
-void MmpldWriter::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp, Domain * /*domain*/)
-{
-	std::string filename = getOutputFilename();
-
-#ifdef ENABLE_MPI
-	int rank = domainDecomp->getRank();
-	if (rank == 0){
-		MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY, MPI_INFO_NULL, &_mpifh);
-		MPI_File_seek(_mpifh, 0, MPI_SEEK_END);
-		MPI_Offset endPosition;
-		MPI_File_get_position(_mpifh, &endPosition);
-
-		uint64_t seektablePos = MMPLD_HEADER_DATA_SIZE + (_frameCount * sizeof(uint64_t));
-		uint64_t seekPosition = htole64(endPosition); /** @todo end of frame offset may not be identical to file end! */
-		MPI_Status status;
-		MPI_File_write_at(_mpifh, seektablePos, &seekPosition, sizeof(seekPosition), MPI_BYTE, &status);
-		uint32_t frameCount = htole32(_frameCount);  // set final number of frames
-		// 8: frame count position in file header
-		MPI_File_write_at(_mpifh, 8, &frameCount, sizeof(frameCount), MPI_BYTE, &status);
-		MPI_File_close(&_mpifh);
-	}else{
-		MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY, MPI_INFO_NULL, &_mpifh);
-		MPI_File_close(&_mpifh);
-	}
-	_seekTable.clear();
-#endif
 }
 
 void MmpldWriter::InitSphereData()
