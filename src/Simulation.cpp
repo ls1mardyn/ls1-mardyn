@@ -68,6 +68,7 @@
 
 #include "thermostats/VelocityScalingThermostat.h"
 #include "thermostats/TemperatureControl.h"
+#include "thermostats/SphericalTemperatureControl.h"
 
 #include "utils/FileUtils.h"
 #include "utils/Logger.h"
@@ -114,6 +115,7 @@ Simulation::Simulation()
 	_rand(8624),
 	_longRangeCorrection(nullptr),
 	_temperatureControl(nullptr),
+	_sphericalTemperatureControl(nullptr),
 	_FMM(nullptr),
 	_timerProfiler(),
 #ifdef TASKTIMINGPROFILE
@@ -149,6 +151,8 @@ Simulation::~Simulation() {
 	_longRangeCorrection = nullptr;
 	delete _temperatureControl;
 	_temperatureControl = nullptr;
+	delete _sphericalTemperatureControl;
+	_sphericalTemperatureControl = nullptr;
 	delete _FMM;
 	_FMM = nullptr;
 
@@ -509,6 +513,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
                         _temperatureControl->readXML(xmlconfig);
                     } else {
                         global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..."
+                                            << endl;
+                        Simulation::exit(-1);
+                    }
+                }
+				else if(thermostattype == "SphericalTemperatureControl") {
+                    if (nullptr == _sphericalTemperatureControl) {
+                        _sphericalTemperatureControl = new SphericalTemperatureControl();
+                        _sphericalTemperatureControl->readXML(xmlconfig);
+                    } else {
+                        global_log->error() << "Instance of SphericalTemperatureControl allready exist! Programm exit ..."
                                             << endl;
                         Simulation::exit(-1);
                     }
@@ -891,6 +905,8 @@ void Simulation::prepare_start() {
 	/** Init TemperatureControl beta_trans, beta_rot log-files, register as observer if plugin DistControl is in use. */
 	if(nullptr != _temperatureControl)
 		_temperatureControl->prepare_start();  // Has to be called before plugin initialization (see below): plugin->init(...)
+	if(nullptr != _sphericalTemperatureControl)
+		_sphericalTemperatureControl->prepare_start();  // Has to be called before plugin initialization (see below): plugin->init(...)
 
 	// initializing plugins and starting plugin timers
 	for (auto& plugin : _plugins) {
@@ -1138,7 +1154,7 @@ void Simulation::simulate() {
 
 		// scale velocity and angular momentum
         // TODO: integrate into Temperature Control
-		if ( !_domain->NVE() && _temperatureControl == nullptr) {
+		if ( !_domain->NVE() && _temperatureControl == nullptr && _sphericalTemperatureControl == nullptr) {
 			if (_thermostatType ==VELSCALE_THERMOSTAT) {
 				global_log->debug() << "Velocity scaling" << endl;
 				if (_domain->severalThermostats()) {
@@ -1167,6 +1183,9 @@ void Simulation::simulate() {
 
 
 			}
+		} else if ( _sphericalTemperatureControl != nullptr) {
+			// jniemann 2023-12-15 --> SPHERICAL_TEMPERATURE_CONTROL
+           _sphericalTemperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
 		} else if ( _temperatureControl != nullptr) {
 			// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
            _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
