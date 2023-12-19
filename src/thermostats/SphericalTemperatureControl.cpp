@@ -443,8 +443,6 @@ void AbstrControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const u
 
 
 
-
-
 // class SphericalControlRegionT
 SphericalControlRegionT::SphericalControlRegionT(SphericalTemperatureControl* const parent)
 	: AbstrControlRegionT(), SphericalRegionObs(parent),
@@ -468,12 +466,6 @@ SphericalControlRegionT::SphericalControlRegionT(SphericalTemperatureControl* co
 }
 
 SphericalControlRegionT::~SphericalControlRegionT() { delete _accumulator; }
-
-// Accumulator* SphericalControlRegionT::CreateAccumulatorInstance() {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: CreateAccumulatorInstance has been called "<< endl;
-// 	Accumulator* accumulator = new Accumulator(true, true, true);
-// 	return accumulator;
-// }
 
 void SphericalControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: readXML has been called "<< endl;
@@ -514,150 +506,8 @@ void SphericalControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 
 
 	AbstrControlRegionT::readXML(xmlconfig);
-
-	// // target values
-	// xmlconfig.getNodeValue("target/temperature", _dTargetTemperature);
-	// xmlconfig.getNodeValue("target/component", _nTargetComponentID);
-
-
-	// // ControlMethod "VelocityScaling/Andersen/Mixed"
-	// std::string methods = "";
-	// xmlconfig.getNodeValue("method", methods);
-	// if (methods != "") {
-	// 	if (methods == "VelocityScaling") {
-	// 		_localMethod = VelocityScaling;
-
-	// 		// init data structures
-	// 		this->VelocityScalingInit(xmlconfig);
-	// 	} else if (methods == "Andersen") {
-	// 		_localMethod = Andersen;
-	// 		xmlconfig.getNodeValue("settings/nu", _nuAndersen);
-	// 		_timestep = global_simulation->getIntegrator()->getTimestepLength();
-	// 		_nuDt = _nuAndersen * _timestep;
-	// 	} else {
-	// 		global_log->error() << "[TemperatureControl] REGION: Invalid 'method' param: " << methods << std::endl;
-	// 		Simulation::exit(-1);
-	// 	}
-	// 	global_log->info() << "[TemperatureControl] REGION 'method' param: " << methods << std::endl;
-	// }
-	// //
-	// else {
-	// 	_localMethod = VelocityScaling;
-	// 	global_log->info() << "[TemperatureControl] REGION: no method specified, selecting VelocityScaling"
-	// 					   << std::endl;
-
-	// 	// init data structures
-	// 	this->VelocityScalingInit(xmlconfig);
-	// }
-
-	// // measure added kin. energy
-	// _addedEkin.writeFreq = 1000;
-	// xmlconfig.getNodeValue("added_ekin/writefreq", _addedEkin.writeFreq);
 }
 
-// void SphericalControlRegionT::VelocityScalingInit(XMLfileUnits& xmlconfig) {
-	// if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: VelocityScalingInit has been called "<< endl;
-	// // settings
-	// xmlconfig.getNodeValue("settings/exponent", _dTemperatureExponent);
-
-	// // create accumulator instance
-	// _accumulator = this->CreateAccumulatorInstance();
-
-	// // write control for beta_trans and beta_rot log file
-	// _nWriteFreqBeta = 1000;
-	// _strFilenamePrefixBetaLog = "beta_log";
-	// xmlconfig.getNodeValue("writefreq", _nWriteFreqBeta);
-	// xmlconfig.getNodeValue("fileprefix", _strFilenamePrefixBetaLog);
-	// if (_nWriteFreqBeta == 0) {
-	// 	global_log->warning()
-	// 		<< "Temperature Control: write Frequency was specified to be zero. This is NOT allowed. Reset it to 1000."
-	// 		<< std::endl;
-	// 	_nWriteFreqBeta = 1000;
-	// }
-	// this->InitBetaLogfile();
-	// _localThermVarsThreadBuffer.resize(mardyn_get_max_threads());
-	// for (auto& localThermVars : _localThermVarsThreadBuffer) {
-	// 	localThermVars.resize(1); //_nNumSlabs==1
-	// }
-	// _globalThermVars.resize(1); //_nNumSlabs==1
-
-	// // init data structure for measure of added kin. energy
-	// _addedEkin.data.local.resize(1); //_nNumSlabs==1
-	// _addedEkin.data.global.resize(1); //_nNumSlabs==1
-
-	// _addedEkinLocalThreadBuffer.resize(mardyn_get_max_threads());
-	// for (auto& addedEkinLocal : _addedEkinLocalThreadBuffer) {
-	// 	addedEkinLocal.resize(1); //_nNumSlabs==1
-	// }
-
-	// std::vector<double>& v = _addedEkin.data.local;
-	// std::fill(v.begin(), v.end(), 0.);
-
-	// for (auto& addedEkinLocal : _addedEkinLocalThreadBuffer) {
-	// 	std::fill(addedEkinLocal.begin(), addedEkinLocal.end(), 0.);
-	// }
-// }
-
-// void SphericalControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp) {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: CalcGlobalValues has been called "<< endl;
-// 	if (_localMethod != VelocityScaling) return;
-// 	domainDecomp->collCommInit(4);
-// 	for (unsigned s = 0; s < 1; ++s) { //_nNumSlabs==1
-// 		unsigned long numMolecules{}, numRotationalDOF{};
-// 		double ekinTrans{}, ekinRot{};
-// 		for (const auto& threadBuffers : _localThermVarsThreadBuffer) {
-// 			const auto& localVar = threadBuffers[s];
-// 			numMolecules += localVar._numMolecules;
-// 			numRotationalDOF += localVar._numRotationalDOF;
-// 			ekinTrans += localVar._ekinTrans;
-// 			ekinRot += localVar._ekinRot;
-// 		}
-// 		domainDecomp->collCommAppendUnsLong(numMolecules);
-// 		domainDecomp->collCommAppendUnsLong(numRotationalDOF);
-// 		domainDecomp->collCommAppendDouble(ekinRot);
-// 		domainDecomp->collCommAppendDouble(ekinTrans);
-// 	}
-// 	domainDecomp->collCommAllreduceSum();
-// 	for (unsigned s = 0; s < 1; ++s) { //_nNumSlabs==1
-// 		GlobalThermostatVariables& globalTV = _globalThermVars[s];  // do not forget &
-// 		globalTV._numMolecules = domainDecomp->collCommGetUnsLong();
-// 		globalTV._numRotationalDOF = domainDecomp->collCommGetUnsLong();
-// 		globalTV._ekinRot = domainDecomp->collCommGetDouble();
-// 		globalTV._ekinTrans = domainDecomp->collCommGetDouble();
-// 	}
-// 	domainDecomp->collCommFinalize();
-
-// 	// Adjust target temperature
-// 	uint64_t simstep = _simulation.getSimulationStep();
-
-// 	// calc betaTrans, betaRot, and their sum
-// 	double dBetaTransSumSlabs = 0.;
-// 	double dBetaRotSumSlabs = 0.;
-
-// 	for (unsigned int s = 0; s < 1; ++s) { //_nNumSlabs==1
-// 		GlobalThermostatVariables& globalTV = _globalThermVars[s];  // do not forget &
-// 		if (globalTV._numMolecules < 1)
-// 			globalTV._betaTrans = 1.;
-// 		else
-// 			globalTV._betaTrans = pow(
-// 				3 * globalTV._numMolecules * _dTargetTemperature / globalTV._ekinTrans,
-// 				_dTemperatureExponent);
-
-// 		if (globalTV._numRotationalDOF < 1)
-// 			globalTV._betaRot = 1.;
-// 		else
-// 			globalTV._betaRot =
-// 				pow(globalTV._numRotationalDOF * _dTargetTemperature / globalTV._ekinRot, _dTemperatureExponent);
-
-// 		// calc sums over all slabs
-// 		dBetaTransSumSlabs += globalTV._betaTrans;
-// 		dBetaRotSumSlabs += globalTV._betaRot;
-// 	}
-// 	// calc ensemble average of beta_trans, beta_rot
-// 	_dBetaTransSumGlobal += dBetaTransSumSlabs;
-// 	_dBetaRotSumGlobal += dBetaRotSumSlabs;
-// 	_numSampledConfigs++;
-// }
 
 bool SphericalControlRegionT::ContainsMolecule(Molecule* mol){
 	// check if molecule inside control region
@@ -670,103 +520,6 @@ bool SphericalControlRegionT::ContainsMolecule(Molecule* mol){
 }
 
 
-// void SphericalControlRegionT::ControlTemperature(Molecule* mol) {
-// 	// check componentID
-// 	if (mol->componentid() + 1 != _nTargetComponentID &&
-// 		0 != _nTargetComponentID)  // program intern componentID starts with 0
-// 		return;
-
-// 	// check if molecule is inside
-// 	double distanceFromCenterSquared = 0;
-// 	for(int d = 0; d<3; d++){
-// 		distanceFromCenterSquared += std::pow(mol->r(d)-_dCenter[d],2);
-// 	}
-// 	if(distanceFromCenterSquared > _dRadiusSquared) return;
-
-// 	AbstrControlRegionT::ControlTemperature(mol);
-// }
-
-// void SphericalControlRegionT::ResetLocalValues() {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::ResetLocalValues has been called "<< endl;
-// 	// reset local values
-// 	for (int thread = 0; thread < mardyn_get_max_threads(); ++thread) {
-// 		for (unsigned int s = 0; s < 1; ++s) {//_nNumSlabs==1
-// 			_localThermVarsThreadBuffer[thread][s].clear();
-// 		}
-// 	}
-// }
-
-// void SphericalControlRegionT::InitBetaLogfile() {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::InitBetaLogfile has been called "<< endl;
-// 	if (_localMethod == VelocityScaling) {
-// #ifdef ENABLE_MPI
-// 		DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition());
-// 		int rank = domainDecomp->getRank();
-// 		// int numprocs = domainDecomp->getNumProcs();
-// 		if (rank != 0) return;
-// #endif
-// 		// touch file
-// 		const std::string fname = _strFilenamePrefixBetaLog + "_reg" + std::to_string(this->GetID()) + ".dat";
-// 		std::ofstream ofs;
-// 		ofs.open(fname, std::ios::out);
-// 		ofs << setw(12) << "simstep"
-// 			<< setw(24) << "dBetaTrans"
-// 			<< setw(24) << "dBetaRot"
-// 			<< std::endl;
-// 		ofs.close();
-// 	}
-// }
-
-// void SphericalControlRegionT::WriteBetaLogfile(unsigned long simstep) {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::WriteBetaLogfile has been called "<< endl;
-// 	if (_localMethod != VelocityScaling) {
-// 		return;
-// 	}
-// 	if (0 != (simstep % _nWriteFreqBeta)) {
-// 		return;
-// 	}
-
-// 	DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition());
-
-// #ifdef ENABLE_MPI
-// 	int rank = domainDecomp->getRank();
-// 	// int numprocs = domainDecomp->getNumProcs();
-// 	if (rank != 0) return;
-// #endif
-
-// 	// double dInvNumConfigsSlabs = 1. / (double)(_numSampledConfigs*_nNumSlabs);
-// 	double dInvNumConfigsSlabs = 1. / (double)(_numSampledConfigs); //_nNumSlabs==1
-// 	double dBetaTrans = _dBetaTransSumGlobal * dInvNumConfigsSlabs;
-// 	double dBetaRot = _dBetaRotSumGlobal * dInvNumConfigsSlabs;
-
-// 	// writing to file
-// 	const std::string fname = _strFilenamePrefixBetaLog + "_reg" + std::to_string(this->GetID()) + ".dat";
-// 	std::ofstream ofs;
-// 	ofs.open(fname, std::ios::app);
-// 	ofs << setw(12) << simstep
-// 		<< FORMAT_SCI_MAX_DIGITS << dBetaTrans
-// 		<< FORMAT_SCI_MAX_DIGITS << dBetaRot
-// 		<< std::endl;
-// 	ofs.close();
-
-// 	// reset averaged values
-// 	_numSampledConfigs = 0;
-// 	_dBetaTransSumGlobal = 0.;
-// 	_dBetaRotSumGlobal = 0.;
-// }
-
-// DistControl* SphericalControlRegionT::getDistControl() {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::getDistControl has been called "<< endl;
-// 	DistControl* distControl = nullptr;
-// 	std::list<PluginBase*>& plugins = *(global_simulation->getPluginList());
-// 	for (auto&& pit : plugins) {
-// 		std::string name = pit->getPluginName();
-// 		if (name == "DistControl") {
-// 			distControl = dynamic_cast<DistControl*>(pit);
-// 		}
-// 	}
-// 	return distControl;
-// }
 void SphericalControlRegionT::registerAsObserver() {
 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::registerAsObserver has been called "<< endl;
 	
@@ -786,81 +539,6 @@ void SphericalControlRegionT::update(SubjectBase* subject) {
 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::update  has been called "<< endl;
 	SphericalRegionObs::update(subject);
 }
-
-// void SphericalControlRegionT::InitAddedEkin() {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::InitAddedEkin has been called "<< endl;
-// 	if (_localMethod == VelocityScaling) {
-// #ifdef ENABLE_MPI
-// 		DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition());
-// 		int rank = domainDecomp->getRank();
-// 		// int numprocs = domainDecomp->getNumProcs();
-// 		if (rank != 0) return;
-// #endif
-// 		// touch file
-// 		const std::string fname = "addedEkin_reg" + std::to_string(this->GetID()) + "_cid" + std::to_string(_nTargetComponentID) + ".dat";
-// 		std::ofstream ofs;
-// 		ofs.open(fname, std::ios::out);
-// 		ofs << setw(12) << "simstep";
-// 		for (int i = 0; i < 1; ++i) { //_nNumSlabs==1
-// 			std::string s = "bin" + std::to_string(i+1);
-// 			ofs << setw(24) << s;
-// 		}
-// 		ofs << std::endl;
-// 		ofs.close();
-// 	}
-// }
-
-// void SphericalControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep) {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::writeAddedEkin has been called "<< endl;
-// 	if (_localMethod != VelocityScaling) return;
-
-// 	if (simstep % _addedEkin.writeFreq != 0) return;
-
-// 	for (int thread = 0; thread < mardyn_get_max_threads(); ++thread) {
-// 		mardyn_assert(_addedEkin.data.local.size() == 1);//_nNumSlabs==1
-// 		for (size_t slabID = 0; slabID < 1; ++slabID) { //_nNumSlabs==1
-// 			_addedEkin.data.local[slabID] += _addedEkinLocalThreadBuffer[thread][slabID];
-// 		}
-// 	}
-// 	// calc global values
-// #ifdef ENABLE_MPI
-// 	MPI_Reduce(_addedEkin.data.local.data(), _addedEkin.data.global.data(), _addedEkin.data.local.size(), MPI_DOUBLE,
-// 			   MPI_SUM, 0, MPI_COMM_WORLD);
-// #else
-// 	std::memcpy(_addedEkin.data.global.data(), _addedEkin.data.local.data(), _addedEkin.data.local.size());
-// #endif
-
-// 	// reset local values
-// 	std::vector<double>& vl = _addedEkin.data.local;
-// 	std::fill(vl.begin(), vl.end(), 0.);
-// 	for (auto& addedEkinLocal : _addedEkinLocalThreadBuffer) {
-// 		std::fill(addedEkinLocal.begin(), addedEkinLocal.end(), 0.);
-// 	}
-
-// #ifdef ENABLE_MPI
-// 	int rank = domainDecomp->getRank();
-// 	// int numprocs = domainDecomp->getNumProcs();
-// 	if (rank != 0) return;
-// #endif
-
-// 	// dekin = d2ekin * 0.5
-// 	std::vector<double>& vg = _addedEkin.data.global;
-// 	for (double& it : vg) {
-// 		it *= 0.5;
-// 	}
-
-// 	// writing .dat-files
-// 	const std::string fname = "addedEkin_reg" + std::to_string(this->GetID()) + "_cid" + std::to_string(_nTargetComponentID) + ".dat";
-// 	std::ofstream ofs;
-// 	ofs.open(fname, std::ios::app);
-	
-// 	ofs << setw(12) << simstep;
-// 	for (double& it : vg) {
-// 		ofs << FORMAT_SCI_MAX_DIGITS << it;
-// 	}
-// 	ofs << std::endl;
-// 	ofs.close();
-// }
 // class SphericalControlRegionT
 
 
@@ -891,29 +569,16 @@ SphereComplementControlRegionT::SphereComplementControlRegionT(SphericalTemperat
 
 SphereComplementControlRegionT::~SphereComplementControlRegionT() { delete _accumulator; }
 
-// Accumulator* SphereComplementControlRegionT::CreateAccumulatorInstance() {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphereComplementControlRegionT::CreateAccumulatorInstance has been called "<< endl;
-// 	Accumulator* accumulator = new Accumulator(true, true, true);
-// 	return accumulator;
-// }
 
 void SphereComplementControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphereComplementControlRegionT::readXML has been called "<< endl;
 
-
-
-	// coordinates
-
-
-
-
-
 	Domain* domain = global_simulation->getDomain();
-	double lc[3];
+	double lc[3] = [0.,0.,0.]; //default
 	double uc[3];
 	double ctr[3];
 	double rad;
-	std::string strVal[3];
+	std::string strVal[3] = ["box", "box", "box"]; //default
 
 	// coordinates
 	xmlconfig.getNodeValue("coords/lcx", lc[0]);
@@ -957,78 +622,8 @@ void SphereComplementControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 
 
 	AbstrControlRegionT::readXML(xmlconfig);
-
-
-
-
-
 }
 
-// void SphereComplementControlRegionT::VelocityScalingInit(XMLfileUnits& xmlconfig) {
-// 	SphericalControlRegionT::VelocityScalingInit(xmlconfig);
-// 	ControlRegionT::VelocityScalingInit(xmlconfig)
-// }
-
-// void SphereComplementControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp) {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphereComplementControlRegionT::CalcGlobalValues has been called "<< endl;
-// 	if (_localMethod != VelocityScaling) return;
-// 	domainDecomp->collCommInit(4);
-// 	for (unsigned s = 0; s < 1; ++s) { //_nNumSlabs==1
-// 		unsigned long numMolecules{}, numRotationalDOF{};
-// 		double ekinTrans{}, ekinRot{};
-// 		for (const auto& threadBuffers : _localThermVarsThreadBuffer) {
-// 			const auto& localVar = threadBuffers[s];
-// 			numMolecules += localVar._numMolecules;
-// 			numRotationalDOF += localVar._numRotationalDOF;
-// 			ekinTrans += localVar._ekinTrans;
-// 			ekinRot += localVar._ekinRot;
-// 		}
-// 		domainDecomp->collCommAppendUnsLong(numMolecules);
-// 		domainDecomp->collCommAppendUnsLong(numRotationalDOF);
-// 		domainDecomp->collCommAppendDouble(ekinRot);
-// 		domainDecomp->collCommAppendDouble(ekinTrans);
-// 	}
-// 	domainDecomp->collCommAllreduceSum();
-// 	for (unsigned s = 0; s < 1; ++s) { //_nNumSlabs==1
-// 		GlobalThermostatVariables& globalTV = _globalThermVars[s];  // do not forget &
-// 		globalTV._numMolecules = domainDecomp->collCommGetUnsLong();
-// 		globalTV._numRotationalDOF = domainDecomp->collCommGetUnsLong();
-// 		globalTV._ekinRot = domainDecomp->collCommGetDouble();
-// 		globalTV._ekinTrans = domainDecomp->collCommGetDouble();
-// 	}
-// 	domainDecomp->collCommFinalize();
-
-// 	// Adjust target temperature
-// 	uint64_t simstep = _simulation.getSimulationStep();
-
-// 	// calc betaTrans, betaRot, and their sum
-// 	double dBetaTransSumSlabs = 0.;
-// 	double dBetaRotSumSlabs = 0.;
-
-// 	for (unsigned int s = 0; s < 1; ++s) { //_nNumSlabs==1
-// 		GlobalThermostatVariables& globalTV = _globalThermVars[s];  // do not forget &
-// 		if (globalTV._numMolecules < 1)
-// 			globalTV._betaTrans = 1.;
-// 		else
-// 			globalTV._betaTrans = pow(
-// 				3 * globalTV._numMolecules * _dTargetTemperature / globalTV._ekinTrans,
-// 				_dTemperatureExponent);
-
-// 		if (globalTV._numRotationalDOF < 1)
-// 			globalTV._betaRot = 1.;
-// 		else
-// 			globalTV._betaRot =
-// 				pow(globalTV._numRotationalDOF * _dTargetTemperature / globalTV._ekinRot, _dTemperatureExponent);
-
-// 		// calc sums over all slabs
-// 		dBetaTransSumSlabs += globalTV._betaTrans;
-// 		dBetaRotSumSlabs += globalTV._betaRot;
-// 	}
-// 	// calc ensemble average of beta_trans, beta_rot
-// 	_dBetaTransSumGlobal += dBetaTransSumSlabs;
-// 	_dBetaRotSumGlobal += dBetaRotSumSlabs;
-// 	_numSampledConfigs++;
-// }
 
 bool SphereComplementControlRegionT::ContainsMolecule(Molecule* mol){
 	// check if molecule inside control region
@@ -1044,90 +639,6 @@ bool SphereComplementControlRegionT::ContainsMolecule(Molecule* mol){
 
 
 
-// void SphereComplementControlRegionT::ResetLocalValues() {
-// 	// if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::ResetLocalValues has been called "<< endl;
-// 	// // reset local values
-// 	// for (int thread = 0; thread < mardyn_get_max_threads(); ++thread) {
-// 	// 	for (unsigned int s = 0; s < 1; ++s) {//_nNumSlabs==1
-// 	// 		_localThermVarsThreadBuffer[thread][s].clear();
-// 	// 	}
-// 	// }
-// 	ControlRegionT::ResetLocalValues();
-// }
-
-
-// void SphereComplementControlRegionT::InitBetaLogfile() {
-// // 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::InitBetaLogfile has been called "<< endl;
-// // 	if (_localMethod == VelocityScaling) {
-// // #ifdef ENABLE_MPI
-// // 		DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition());
-// // 		int rank = domainDecomp->getRank();
-// // 		// int numprocs = domainDecomp->getNumProcs();
-// // 		if (rank != 0) return;
-// // #endif
-// // 		// touch file
-// // 		const std::string fname = _strFilenamePrefixBetaLog + "_reg" + std::to_string(this->GetID()) + ".dat";
-// // 		std::ofstream ofs;
-// // 		ofs.open(fname, std::ios::out);
-// // 		ofs << setw(12) << "simstep"
-// // 			<< setw(24) << "dBetaTrans"
-// // 			<< setw(24) << "dBetaRot"
-// // 			<< std::endl;
-// // 		ofs.close();
-// // 	}
-// }
-
-// void SphereComplementControlRegionT::WriteBetaLogfile(unsigned long simstep) {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::WriteBetaLogfile has been called "<< endl;
-	
-// 	if (_localMethod != VelocityScaling) {
-// 		return;
-// 	}
-// 	if (0 != (simstep % _nWriteFreqBeta)) {
-// 		return;
-// 	}
-
-// 	DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition());
-
-// #ifdef ENABLE_MPI
-// 	int rank = domainDecomp->getRank();
-// 	// int numprocs = domainDecomp->getNumProcs();
-// 	if (rank != 0) return;
-// #endif
-
-// 	// double dInvNumConfigsSlabs = 1. / (double)(_numSampledConfigs*_nNumSlabs);
-// 	double dInvNumConfigsSlabs = 1. / (double)(_numSampledConfigs); //_nNumSlabs==1
-// 	double dBetaTrans = _dBetaTransSumGlobal * dInvNumConfigsSlabs;
-// 	double dBetaRot = _dBetaRotSumGlobal * dInvNumConfigsSlabs;
-
-// 	// writing to file
-// 	const std::string fname = _strFilenamePrefixBetaLog + "_reg" + std::to_string(this->GetID()) + ".dat";
-// 	std::ofstream ofs;
-// 	ofs.open(fname, std::ios::app);
-// 	ofs << setw(12) << simstep
-// 		<< FORMAT_SCI_MAX_DIGITS << dBetaTrans
-// 		<< FORMAT_SCI_MAX_DIGITS << dBetaRot
-// 		<< std::endl;
-// 	ofs.close();
-
-// 	// reset averaged values
-// 	_numSampledConfigs = 0;
-// 	_dBetaTransSumGlobal = 0.;
-// 	_dBetaRotSumGlobal = 0.;
-// }
-
-// DistControl* SphereComplementControlRegionT::getDistControl() {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::getDistControl has been called "<< endl;
-	// DistControl* distControl = nullptr;
-	// std::list<PluginBase*>& plugins = *(global_simulation->getPluginList());
-	// for (auto&& pit : plugins) {
-	// 	std::string name = pit->getPluginName();
-	// 	if (name == "DistControl") {
-	// 		distControl = dynamic_cast<DistControl*>(pit);
-	// 	}
-	// }
-	// return distControl;
-// }
 void SphereComplementControlRegionT::registerAsObserver() {
 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::registerAsObserver has been called "<< endl;
 	
@@ -1148,107 +659,7 @@ void SphereComplementControlRegionT::update(SubjectBase* subject) {
 	SphereComplementRegionObs::update(subject);
 }
 
-// void SphereComplementControlRegionT::InitAddedEkin() {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::InitAddedEkin has been called "<< endl;
-// 	if (_localMethod == VelocityScaling) {
-// #ifdef ENABLE_MPI
-// 		DomainDecompBase* domainDecomp = &(global_simulation->domainDecomposition());
-// 		int rank = domainDecomp->getRank();
-// 		// int numprocs = domainDecomp->getNumProcs();
-// 		if (rank != 0) return;
-// #endif
-// 		// touch file
-// 		const std::string fname = "addedEkin_reg" + std::to_string(this->GetID()) + "_cid" + std::to_string(_nTargetComponentID) + ".dat";
-// 		std::ofstream ofs;
-// 		ofs.open(fname, std::ios::out);
-// 		ofs << setw(12) << "simstep";
-// 		for (int i = 0; i < 1; ++i) { //_nNumSlabs==1
-// 			std::string s = "bin" + std::to_string(i+1);
-// 			ofs << setw(24) << s;
-// 		}
-// 		ofs << std::endl;
-// 		ofs.close();
-// 	}
-// }
-
-// void SphereComplementControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep) {
-// 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphericalControlRegionT::writeAddedEkin has been called "<< endl;
-// 	if (_localMethod != VelocityScaling) return;
-
-// 	if (simstep % _addedEkin.writeFreq != 0) return;
-
-// 	for (int thread = 0; thread < mardyn_get_max_threads(); ++thread) {
-// 		mardyn_assert(_addedEkin.data.local.size() == 1);//_nNumSlabs==1
-// 		for (size_t slabID = 0; slabID < 1; ++slabID) { //_nNumSlabs==1
-// 			_addedEkin.data.local[slabID] += _addedEkinLocalThreadBuffer[thread][slabID];
-// 		}
-// 	}
-// 	// calc global values
-// #ifdef ENABLE_MPI
-// 	MPI_Reduce(_addedEkin.data.local.data(), _addedEkin.data.global.data(), _addedEkin.data.local.size(), MPI_DOUBLE,
-// 			   MPI_SUM, 0, MPI_COMM_WORLD);
-// #else
-// 	std::memcpy(_addedEkin.data.global.data(), _addedEkin.data.local.data(), _addedEkin.data.local.size());
-// #endif
-
-// 	// reset local values
-// 	std::vector<double>& vl = _addedEkin.data.local;
-// 	std::fill(vl.begin(), vl.end(), 0.);
-// 	for (auto& addedEkinLocal : _addedEkinLocalThreadBuffer) {
-// 		std::fill(addedEkinLocal.begin(), addedEkinLocal.end(), 0.);
-// 	}
-
-// #ifdef ENABLE_MPI
-// 	int rank = domainDecomp->getRank();
-// 	// int numprocs = domainDecomp->getNumProcs();
-// 	if (rank != 0) return;
-// #endif
-
-// 	// dekin = d2ekin * 0.5
-// 	std::vector<double>& vg = _addedEkin.data.global;
-// 	for (double& it : vg) {
-// 		it *= 0.5;
-// 	}
-
-// 	// writing .dat-files
-// 	const std::string fname = "addedEkin_reg" + std::to_string(this->GetID()) + "_cid" + std::to_string(_nTargetComponentID) + ".dat";
-// 	std::ofstream ofs;
-// 	ofs.open(fname, std::ios::app);
-	
-// 	ofs << setw(12) << simstep;
-// 	for (double& it : vg) {
-// 		ofs << FORMAT_SCI_MAX_DIGITS << it;
-// 	}
-// 	ofs << std::endl;
-// 	ofs.close();
-// } 
 // class SphereComplementControlRegionT
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
