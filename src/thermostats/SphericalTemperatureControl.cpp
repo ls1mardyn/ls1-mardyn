@@ -574,11 +574,11 @@ void SphereComplementControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 	if(_bDebugOutput) global_log->info() << "[SphericalTemperatureControl]: SphereComplementControlRegionT::readXML has been called "<< endl;
 
 	Domain* domain = global_simulation->getDomain();
-	double lc[3] = [0.,0.,0.]; //default
+	double lc[3] = {0.,0.,0.}; //default
 	double uc[3];
 	double ctr[3];
 	double rad;
-	std::string strVal[3] = ["box", "box", "box"]; //default
+	std::string strVal[3] = {"box", "box", "box"}; //default
 
 	// coordinates
 	xmlconfig.getNodeValue("coords/lcx", lc[0]);
