@@ -441,21 +441,23 @@ bool AdResS::checkF_TH_Convergence() {
 }
 
 void AdResS::applyF_TH() {
-    // TODO FIXME!!
-    double cutoff = _simulation.getcutoffRadius();
-    auto& region = _fpRegions[0];
-    std::array<double, 3> low = {region._lowHybrid[0] - cutoff, _particleContainer->getBoundingBoxMin(1), _particleContainer->getBoundingBoxMin(2)};
-    std::array<double, 3> high= {region._low[0] + cutoff, _particleContainer->getBoundingBoxMax(1), _particleContainer->getBoundingBoxMax(2)};
+    std::array<double, 3> low = {2*_samplingStepSize, _particleContainer->getBoundingBoxMin(1), _particleContainer->getBoundingBoxMin(2)};
+    std::array<double, 3> high= {_particleContainer->getBoundingBoxMax(0) - 2*_samplingStepSize, _particleContainer->getBoundingBoxMax(1), _particleContainer->getBoundingBoxMax(2)};
     #if defined(_OPENMP)
     #pragma omp parallel
     #endif
     for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
+        if(_comp_to_res[itM->componentid()] == FullParticle) continue;
+
         double x = itM->r(0);
         double F = computeHermiteAt(x, _thermodynamicForce);
         std::array<double, 3> force = {F, 0.0, 0.0};
         itM->Fadd(std::data(force));
     }
 
+    // TODO FIXME!!
+    double cutoff = _simulation.getcutoffRadius();
+    auto& region = _fpRegions[0];
     low[0] = region._lowHybrid[0] - cutoff;
     high[0] = region._low[0] + cutoff;
     #if defined(_OPENMP)
