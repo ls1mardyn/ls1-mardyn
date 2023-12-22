@@ -48,7 +48,7 @@
                                 </site>
                             </basis>
                             <latticeOccupancy>1.</latticeOccupancy>
-                            <density>0.0005</density>
+                            <density>0.005</density>
                         </filler>
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
@@ -104,10 +104,12 @@
             <weightImpl>near</weightImpl>
             <enableFTH>
                 <createFTH>
+                    <logFTH>true</logFTH>
+                    <logDensity>true</logDensity>
                     <sampleGap>200</sampleGap>
                     <threshold>0.05</threshold>
-                    <convFactor>0.3</convFactor>
-                    <sampleBinSize>0.1</sampleBinSize>
+                    <convFactor>10000</convFactor>
+                    <sampleBinSize>0.3</sampleBinSize>
                 </createFTH>
             </enableFTH>
             <fpregions>

@@ -74,7 +74,7 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
         _thermodynamicForce.gradients.resize(_thermodynamicForce.n, 0.0);
         _thermodynamicForce.function_values.resize(_thermodynamicForce.n, 0.0);
 
-        writeDensities("F_TH_TargetDensity.txt", _targetDensity);
+        if(_logDensities) writeDensities("F_TH_TargetDensity.txt", _targetDensity);
     }
 }
 
@@ -111,6 +111,8 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
             _convergenceThreshold = xmlconfig.getNodeValue_double("enableFTH/createFTH/threshold", 0.02);
             _convergenceFactor = xmlconfig.getNodeValue_double("enableFTH/createFTH/convFactor", 0.2);
             _samplingStepSize = xmlconfig.getNodeValue_double("enableFTH/createFTH/sampleBinSize", 0.2);
+            _logFTH = xmlconfig.getNodeValue_bool("enableFTH/createFTH/logFTH", false);
+            _logDensities = xmlconfig.getNodeValue_bool("enableFTH/createFTH/logDensity", false);
         }
         else { // use existing FTH function
             query = xmlconfig.query("enableFTH/forceFunction");
@@ -120,6 +122,8 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
                 Simulation::exit(668);
             }
 
+            _logFTH = false;
+            _logDensities = xmlconfig.getNodeValue_bool("enableFTH/forceFunction/logDensity", false);
             _thermodynamicForce.begin = xmlconfig.getNodeValue_double("enableFTH/forceFunction/startX");
             _thermodynamicForce.step_width = xmlconfig.getNodeValue_double("enableFTH/forceFunction/sampleBinSize");
             query = xmlconfig.query("enableFTH/forceFunction/samplePoint");
@@ -187,13 +191,13 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
 
     std::stringstream stream;
     stream << "./F_TH_InterpolationFunction_" << simstep << ".xml";
-    writeFunctionToXML(stream.str(), _thermodynamicForce);
+    if(_logFTH) writeFunctionToXML(stream.str(), _thermodynamicForce);
     stream.clear();
     stream = std::stringstream {};
     stream << "./F_TH_Density_" << simstep << ".txt";
     std::vector<double> densities;
     loadDensities(densities, _particleContainer->getBoundingBoxMin(0), _particleContainer->getBoundingBoxMax(0), 1.0);
-    writeDensities(stream.str(), densities);
+    if(_logDensities) writeDensities(stream.str(), densities);
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
@@ -435,8 +439,11 @@ bool AdResS::checkF_TH_Convergence() {
 }
 
 void AdResS::applyF_TH() {
-    std::array<double, 3> low = {2*_samplingStepSize, _particleContainer->getBoundingBoxMin(1), _particleContainer->getBoundingBoxMin(2)};
-    std::array<double, 3> high= {_particleContainer->getBoundingBoxMax(0) - 2*_samplingStepSize, _particleContainer->getBoundingBoxMax(1), _particleContainer->getBoundingBoxMax(2)};
+    // TODO FIXME!!
+    double cutoff = _simulation.getcutoffRadius();
+    auto& region = _fpRegions[0];
+    std::array<double, 3> low = {region._lowHybrid[0] - cutoff, _particleContainer->getBoundingBoxMin(1), _particleContainer->getBoundingBoxMin(2)};
+    std::array<double, 3> high= {region._low[0] + cutoff, _particleContainer->getBoundingBoxMax(1), _particleContainer->getBoundingBoxMax(2)};
     #if defined(_OPENMP)
     #pragma omp parallel
     #endif
@@ -447,9 +454,6 @@ void AdResS::applyF_TH() {
         itM->Fadd(std::data(force));
     }
 
-    // TODO FIXME!!
-    double cutoff = _simulation.getcutoffRadius();
-    auto& region = _fpRegions[0];
     low[0] = region._lowHybrid[0] - cutoff;
     high[0] = region._low[0] + cutoff;
     #if defined(_OPENMP)

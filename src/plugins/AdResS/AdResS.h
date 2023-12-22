@@ -70,10 +70,14 @@ public:
      *              <threshold>0.02</threshold>
      *              <convFactor>0.2</convFactor>
      *              <sampleBinSize>0.2</sampleBinSize>
+     *              <logFTH>true</logFTH>
+     *              <logDensity>true</logDensity>
      *          </createFTH-->
      *          <forceFunction>
      *              <sampleBinSize>100</sampleBinSize>
      *              <startX>20.0</startX>
+     *              <logFTH>true</logFTH>
+     *              <logDensity>true</logDensity>
      *              <samplePoint id="1">
      *                  <grad>2.0</grad>
      *                  <func>1.0</func>
@@ -202,6 +206,12 @@ private:
 
     //! @brief step size of density sampling
     double _samplingStepSize;
+
+    //! @brief enables logging of FTH to file
+    bool _logFTH;
+
+    //! @brief enables logging of the current simulation densities to file
+    bool _logDensities;
 
     /**
      * Writes the function object into the required XML format for input files.
