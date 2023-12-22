@@ -76,7 +76,7 @@ public:
      */
     double
     processPair(Molecule &molecule1, Molecule &molecule2, double * distanceVector, PairType pairType,
-                double dd, bool calculateLJ, std::unordered_map<unsigned long, Resolution> &compResMap, bool noHybrid,
+                double dd, bool calculateLJ, std::vector<Resolution> &compResMap, bool noHybrid,
                 FPRegion &region);
 
     /** @brief Based on potforce.h::PotForce
@@ -101,7 +101,7 @@ public:
     static void potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double * drm, double &Upot6LJ,
                          double &UpotXpoles,
                          double &MyRF, double Virial[3], bool calculateLJ, bool noHybrid,
-                         std::unordered_map<unsigned long, Resolution> &compResMap, FPRegion &region);
+                         std::vector<Resolution> &compResMap, FPRegion &region);
 
     /** @brief Based on potforce.h::FluidPot
      * Calculate potential between two molecules including all site-site interactions.
@@ -125,7 +125,7 @@ public:
     static void fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double * drm, double &Upot6LJ,
                          double &UpotXpoles,
                          double &MyRF, bool calculateLJ, bool noHybrid,
-                         std::unordered_map<unsigned long, Resolution> &compResMap, FPRegion &region);
+                         std::vector<Resolution> &compResMap, FPRegion &region);
 
 private:
     using PP2PFAThreadData = ParticlePairs2PotForceAdapter::PP2PFAThreadData;

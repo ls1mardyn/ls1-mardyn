@@ -174,7 +174,7 @@ private:
     /**
      * Maps each component id to its resolution for faster component switching.
      * */
-    std::unordered_map<unsigned long, Resolution> _comp_to_res;
+    std::vector<Resolution> _comp_to_res;
 
     //! @brief reference to the domain is needed to store the calculated macroscopic values
     Domain* _domain;

@@ -36,6 +36,7 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
     _components = _simulation.getEnsemble()->getComponents();
     _domain = domain;
     _particleContainer = particleContainer;
+    _comp_to_res.resize(_components->size());
 
     for(Component& comp : *_components) {
         unsigned int id = comp.ID();
@@ -173,6 +174,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
     _simulation.setParticlePairsHandler(_forceAdapter);
     _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), _forceAdapter));
     _domain = _simulation.getDomain();
+    _comp_to_res.resize(_simulation.getEnsemble()->getComponents()->size(), FullParticle);
     if(auto decomp = dynamic_cast<AdResSKDDecomposition*>(&_simulation.domainDecomposition())) {
         decomp->setAdResSPlugin(this);
     }

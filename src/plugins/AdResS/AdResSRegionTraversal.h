@@ -30,7 +30,7 @@ public:
      * @param compMap mapping of component IDs to their actual resolution
      * */
     AdResSRegionTraversal(std::array<double, 3> checkLow, std::array<double, 3> checkHigh,
-                          ParticleContainer* particleContainer, std::unordered_map<unsigned long, Resolution>& compMap);
+                          ParticleContainer* particleContainer, std::vector<Resolution>& compMap);
 
     void traverse(AdResSForceAdapter& forceAdapter, FPRegion& region, bool invert);
 
@@ -46,7 +46,7 @@ private:
     //! @brief dimensions of cell structure in cells
     std::array<long, 3> _dims;
     //! @brief mapping of component ids to a AdResS resolution
-    std::unordered_map<unsigned long, Resolution>& _comp_to_res;
+    std::vector<Resolution>& _comp_to_res;
     //! @brief cutoff distance
     double _cutoff;
     //! @brief cutoff squared

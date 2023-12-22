@@ -73,7 +73,7 @@ AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2, double
 double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2, double * distanceVector,
                                        PairType pairType,
                                        double dd, bool calculateLJ,
-                                       std::unordered_map<unsigned long, Resolution> &compResMap, bool noHybrid,
+                                       std::vector<Resolution> &compResMap, bool noHybrid,
                                        FPRegion &region) {
     const int tid = mardyn_get_thread_num();
     PP2PFAThreadData &my_threadData = *_threadData[tid];
@@ -111,7 +111,7 @@ void
 AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double * drm, double &Upot6LJ,
                              double &UpotXpoles,
                              double &MyRF, double Virial[3], bool calculateLJ, bool noHybrid,
-                             std::unordered_map<unsigned long, Resolution> &compResMap, FPRegion &region) {
+                             std::vector<Resolution> &compResMap, FPRegion &region) {
     if(noHybrid) {
         PotForce(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ);
         return;
@@ -143,7 +143,7 @@ AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaS
 
 void AdResSForceAdapter::fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double *drm, double &Upot6LJ,
                                   double &UpotXpoles, double &MyRF, bool calculateLJ, bool noHybrid,
-                                  unordered_map<unsigned long, Resolution> &compResMap, FPRegion &region) {
+                                  std::vector<Resolution> &compResMap, FPRegion &region) {
     if(noHybrid) {
         FluidPot(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ);
         return;

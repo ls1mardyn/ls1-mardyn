@@ -8,7 +8,7 @@
 
 AdResSRegionTraversal::AdResSRegionTraversal(std::array<double, 3> checkLow, std::array<double, 3> checkHigh,
                                              ParticleContainer* particleContainer,
-                                             std::unordered_map<unsigned long, Resolution>& compMap) :
+                                             std::vector<Resolution>& compMap) :
                                              _cellPairOffsets8Pack(), _particleContainer(particleContainer),
                                              _cells(), _end(), _dims(), _comp_to_res(compMap), _cutoff(0), _cutoff2(0),
                                              _ljcutoff2(0), _cellSize(0), _globLen({0,0,0}){
