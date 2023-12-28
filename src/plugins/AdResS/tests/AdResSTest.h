@@ -12,6 +12,7 @@ TEST_SUITE(AdResSTest);
         TEST_METHOD(computeForcesTest);
         TEST_METHOD(checkGradient);
         TEST_METHOD(checkMatrixSolver);
+        TEST_METHOD(checkHermite);
     TEST_SUITE_END;
 
 public:
@@ -32,6 +33,11 @@ public:
      * Checks if the TriDiagonalMatrix solver is correct.
      * */
     void checkMatrixSolver();
+
+    /**
+     * Creates a Hermite Interpolation Function and compares it to the reference polynomial.
+     * */
+    void checkHermite();
 };
 
 

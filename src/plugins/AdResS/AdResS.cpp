@@ -246,6 +246,7 @@ void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsi
         if(_createThermodynamicForce && _thermodynamicForceSampleCounter >= _thermodynamicForceSampleGap) {
             if(checkF_TH_Convergence()) {
                 global_log->info() << "[AdResS] F_TH has converged." << std::endl;
+                writeFunctionToXML("./F_TH_InterpolationFunction_Final.xml", _thermodynamicForce);
                 Simulation::exit(0);
             }
             else computeF_TH();
@@ -354,7 +355,7 @@ double AdResS::computeHermiteAt(double x, InterpolatedFunction &fun) {
     //get active spline and conv x to t
     int c_step = static_cast<int>((x - fun.begin) / fun.step_width);
     mardyn_assert((c_step >= 0) && (c_step < (fun.n-1)));
-    double t = (x - c_step * fun.step_width) / fun.step_width;
+    double t = (x - c_step * fun.step_width - fun.begin) / fun.step_width;
 
     //cache bernstein values
     double b0 = bernstein_3(t, 0);
@@ -420,6 +421,19 @@ void AdResS::computeF_TH() {
         _thermodynamicForce.function_values[i] -= _convergenceFactor * d_prime_fun.function_values[i];
         _thermodynamicForce.gradients[i] -= _convergenceFactor * d_prime_fun.gradients[i];
     }
+
+    // TODO FIXME!!
+    auto& region = _fpRegions[0];
+    double x_pos = _thermodynamicForce.begin;
+    double low = region._low[0];
+    double high = region._high[0];
+    for(unsigned long i = 0; i < _thermodynamicForce.n; i++) {
+        if(x_pos >= low && x_pos <= high){
+            _thermodynamicForce.function_values[i] = 0;
+            _thermodynamicForce.gradients[i] = 0;
+        }
+        x_pos += _thermodynamicForce.step_width;
+    }
 }
 
 bool AdResS::checkF_TH_Convergence() {
@@ -434,10 +448,15 @@ bool AdResS::checkF_TH_Convergence() {
         }
         current_density[i] = std::abs(current_density[i] - _targetDensity[i]) / _targetDensity[i];
     }
+    auto it0 = std::max_element(_targetDensity.begin(), _targetDensity.end());
+    auto it1 = std::min_element(_targetDensity.begin(), _targetDensity.end());
+    double max_target = std::max(std::abs(*it0), std::abs(*it1));
+
     auto it = std::max_element(current_density.begin(), current_density.end());
     double max_val = *it;
-    global_log->info() << "[AdResS] F_TH conv error: " << max_val << std::endl;
-    return max_val <= _convergenceThreshold;
+    double error = max_val/max_target;
+    global_log->info() << "[AdResS] F_TH conv error: " << error << std::endl;
+    return error <= _convergenceThreshold;
 }
 
 void AdResS::applyF_TH() {
@@ -466,7 +485,7 @@ void AdResS::applyF_TH() {
     for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
         std::array<double, 3> f = itM->F_arr();
         for(short d = 0; d < 3; d++) {
-            f[d] = std::copysign(std::min(std::abs(f[d]), 500.0), f[d]);
+            f[d] = std::copysign(std::min(std::abs(f[d]), 250.0), f[d]);
         }
         itM->setF(std::data(f));
     }
@@ -479,7 +498,7 @@ void AdResS::applyF_TH() {
     for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
         std::array<double, 3> f = itM->F_arr();
         for(short d = 0; d < 3; d++) {
-            f[d] = std::copysign(std::min(std::abs(f[d]), 500.0), f[d]);
+            f[d] = std::copysign(std::min(std::abs(f[d]), 250.0), f[d]);
         }
         itM->setF(std::data(f));
     }
