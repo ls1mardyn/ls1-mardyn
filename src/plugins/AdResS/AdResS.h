@@ -194,6 +194,9 @@ private:
     //! @brief Thermodynamic force used to correct the density difference created by plain AdResS
     InterpolatedFunction _thermodynamicForce;
 
+    //! @brief Gradient of density distribution, used for convergence checking
+    InterpolatedFunction _lastGradient;
+
     //! @brief Density function of a FP simulation, used to find convergence of F_th
     std::vector<double> _targetDensity;
 
@@ -212,6 +215,9 @@ private:
 
     //! @brief enables logging of the current simulation densities to file
     bool _logDensities;
+
+    //! @brief maximum allowed force
+    double _forceMax;
 
     /**
      * Writes the function object into the required XML format for input files.

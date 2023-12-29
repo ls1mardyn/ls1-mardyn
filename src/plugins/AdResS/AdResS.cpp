@@ -99,6 +99,11 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
     //F_TH enabled
     if(count == 1) {
         _enableThermodynamicForce = true;
+        _forceMax = xmlconfig.getNodeValue_double("enableFTH/fmax", 100.0);
+        _forceMax = std::abs(_forceMax);
+        _logFTH = xmlconfig.getNodeValue_bool("enableFTH/logFTH", false);
+        _logDensities = xmlconfig.getNodeValue_bool("enableFTH/logDensity", false);
+
         query = xmlconfig.query("enableFTH/createFTH");
         count = query.card();
         if (count > 1) {
@@ -112,8 +117,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
             _convergenceThreshold = xmlconfig.getNodeValue_double("enableFTH/createFTH/threshold", 0.02);
             _convergenceFactor = xmlconfig.getNodeValue_double("enableFTH/createFTH/convFactor", 0.2);
             _samplingStepSize = xmlconfig.getNodeValue_double("enableFTH/createFTH/sampleBinSize", 0.2);
-            _logFTH = xmlconfig.getNodeValue_bool("enableFTH/createFTH/logFTH", false);
-            _logDensities = xmlconfig.getNodeValue_bool("enableFTH/createFTH/logDensity", false);
+
         }
         else { // use existing FTH function
             query = xmlconfig.query("enableFTH/forceFunction");
@@ -122,9 +126,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
                 global_log->fatal() << "[AdResS] Must specify one forceFunction block in config file!" << std::endl;
                 Simulation::exit(668);
             }
-
             _logFTH = false;
-            _logDensities = xmlconfig.getNodeValue_bool("enableFTH/forceFunction/logDensity", false);
             _thermodynamicForce.begin = xmlconfig.getNodeValue_double("enableFTH/forceFunction/startX");
             _thermodynamicForce.step_width = xmlconfig.getNodeValue_double("enableFTH/forceFunction/sampleBinSize");
             query = xmlconfig.query("enableFTH/forceFunction/samplePoint");
@@ -434,29 +436,17 @@ void AdResS::computeF_TH() {
         }
         x_pos += _thermodynamicForce.step_width;
     }
+
+    _lastGradient = std::move(d_prime_fun);
 }
 
 bool AdResS::checkF_TH_Convergence() {
-    std::vector<double> current_density;
-    loadDensities(current_density,
-                  _particleContainer->getBoundingBoxMin(0), _particleContainer->getBoundingBoxMax(0),
-                  _samplingStepSize);
-    for(int i = 0; i < current_density.size(); i++) {
-        if(_targetDensity[i] == 0.0) {
-            current_density[i] = 0.0;
-            continue;
-        }
-        current_density[i] = std::abs(current_density[i] - _targetDensity[i]) / _targetDensity[i];
-    }
-    auto it0 = std::max_element(_targetDensity.begin(), _targetDensity.end());
-    auto it1 = std::min_element(_targetDensity.begin(), _targetDensity.end());
-    double max_target = std::max(std::abs(*it0), std::abs(*it1));
-
-    auto it = std::max_element(current_density.begin(), current_density.end());
-    double max_val = *it;
-    double error = max_val/max_target;
-    global_log->info() << "[AdResS] F_TH conv error: " << error << std::endl;
-    return error <= _convergenceThreshold;
+    if(_lastGradient.function_values.empty()) return false;
+    auto it0 = std::max_element(_lastGradient.function_values.begin(), _lastGradient.function_values.end());
+    auto it1 = std::min_element(_lastGradient.function_values.begin(), _lastGradient.function_values.end());
+    double max_grad = std::max(std::abs(*it0), std::abs(*it1)) * _convergenceFactor;
+    global_log->info() << "[AdResS] F_TH conv delta: " << max_grad << std::endl;
+    return max_grad <= _convergenceThreshold;
 }
 
 void AdResS::applyF_TH() {
@@ -485,7 +475,7 @@ void AdResS::applyF_TH() {
     for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
         std::array<double, 3> f = itM->F_arr();
         for(short d = 0; d < 3; d++) {
-            f[d] = std::copysign(std::min(std::abs(f[d]), 250.0), f[d]);
+            f[d] = std::copysign(std::min(std::abs(f[d]), _forceMax), f[d]);
         }
         itM->setF(std::data(f));
     }
@@ -498,7 +488,7 @@ void AdResS::applyF_TH() {
     for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
         std::array<double, 3> f = itM->F_arr();
         for(short d = 0; d < 3; d++) {
-            f[d] = std::copysign(std::min(std::abs(f[d]), 250.0), f[d]);
+            f[d] = std::copysign(std::min(std::abs(f[d]), _forceMax), f[d]);
         }
         itM->setF(std::data(f));
     }
