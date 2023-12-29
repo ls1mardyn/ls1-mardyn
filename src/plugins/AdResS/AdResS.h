@@ -12,6 +12,7 @@
 #include "molecules/potforce.h"
 #include "AdResSData.h"
 #include "AdResSForceAdapter.h"
+#include "DensityProfile3D.h"
 
 class ParticleContainer;
 class DomainDecompBase;
@@ -191,6 +192,9 @@ private:
     //! @brief Iterations since last sampling
     int _thermodynamicForceSampleCounter;
 
+    //! @brief Class to create 3D density profiles
+    DensityProfile3D _densityProfiler;
+
     //! @brief Thermodynamic force used to correct the density difference created by plain AdResS
     InterpolatedFunction _thermodynamicForce;
 
@@ -230,16 +234,6 @@ private:
      * Writes the provided densities as a sequence split by separator into a file.
      * */
     void writeDensities(const std::string& filename, std::vector<double>& densities, const std::string& separator = " ");
-
-    /**
-     * Splits then simulation domain into equal slices along dim 0 and computes the density for each bin.
-     * Assumes, there is only a single molecule type.
-     * @param densities output buffer
-     * @param begin start position
-     * @param end end position
-     * @param step bin width
-     * */
-    void loadDensities(std::vector<double>& densities, double begin, double end, double step);
 
     /**
      * Numerically computes the gradient of the input vector. Uses finite difference coefficients (based on Lagrange Polynomials).

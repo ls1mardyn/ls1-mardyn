@@ -67,10 +67,12 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
     }
 
     if(_enableThermodynamicForce && _createThermodynamicForce) {
-        loadDensities(_targetDensity, _particleContainer->getBoundingBoxMin(0), _particleContainer->getBoundingBoxMax(0), _samplingStepSize);
+        _densityProfiler.init(_samplingStepSize, domain);
+        _densityProfiler.sampleDensities(particleContainer, domainDecomp, domain);
+        _targetDensity = std::vector<double>(_densityProfiler.getDensity(0));
         _thermodynamicForceSampleCounter = 0;
         _thermodynamicForce.n = _targetDensity.size();
-        _thermodynamicForce.begin = _particleContainer->getBoundingBoxMin(0);
+        _thermodynamicForce.begin = 0.0;
         _thermodynamicForce.step_width = _samplingStepSize;
         _thermodynamicForce.gradients.resize(_thermodynamicForce.n, 0.0);
         _thermodynamicForce.function_values.resize(_thermodynamicForce.n, 0.0);
@@ -159,6 +161,10 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
         global_log->fatal() << "No AdResS regions specified: Falling back to dynamic region selection. ERROR: not implemented yet!" << std::endl;
         Simulation::exit(668);
     }
+    if (numRegions != 1) {
+        global_log->fatal() << "AdResS currently only supports a single FP Region. For more general support select a previous version." << std::endl;
+        Simulation::exit(-1);
+    }
     _fpRegions.resize(numRegions);
 
     XMLfile::Query::const_iterator regionIter;
@@ -199,8 +205,8 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
     stream.clear();
     stream = std::stringstream {};
     stream << "./F_TH_Density_" << simstep << ".txt";
-    std::vector<double> densities;
-    loadDensities(densities, _particleContainer->getBoundingBoxMin(0), _particleContainer->getBoundingBoxMax(0), 1.0);
+    _densityProfiler.sampleDensities(particleContainer, domainDecomp, domain);
+    std::vector<double> densities{_densityProfiler.getDensity(0)};
     if(_logDensities) writeDensities(stream.str(), densities);
 }
 
@@ -266,27 +272,6 @@ void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base
 
     if(_enableThermodynamicForce) {
         applyF_TH();
-    }
-}
-
-void AdResS::loadDensities(vector<double> &densities, double begin, double end, double step) {
-    std::array<double, 3> low {0, _particleContainer->getBoundingBoxMin(1), _particleContainer->getBoundingBoxMin(2)};
-    std::array<double, 3> high {0, _particleContainer->getBoundingBoxMax(1), _particleContainer->getBoundingBoxMax(2)};
-    double slice_volume = step * (high[1] - low[1]) * (high[2] - low[2]);
-    int max_steps = (end - begin) / step;
-    for (int i = 0; i < max_steps; i++) {
-        low[0] = begin + i * step;
-        high[0] = low[0] + step;
-
-        int count = 0;
-        #if defined(_OPENMP)
-        #pragma omp parallel reduction(+: count)
-        #endif
-        for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
-            count += 1;
-        }
-
-        densities.push_back(count/slice_volume);
     }
 }
 
@@ -412,12 +397,12 @@ void AdResS::computeHermite(double begin, vector<double> &knots, double step, in
 }
 
 void AdResS::computeF_TH() {
-    std::vector<double> d;
-    loadDensities(d, _particleContainer->getBoundingBoxMin(0), _particleContainer->getBoundingBoxMax(0), _samplingStepSize);
+    _densityProfiler.sampleDensities(_particleContainer, &_simulation.domainDecomposition(), _simulation.getDomain());
+    std::vector<double> d{_densityProfiler.getDensity(0)};
     std::vector<double> d_prime;
     computeGradient(d, d_prime);
     InterpolatedFunction d_prime_fun;
-    computeHermite(_particleContainer->getBoundingBoxMin(0), d_prime, _samplingStepSize, d_prime.size(), d_prime_fun);
+    computeHermite(0.0, d_prime, _samplingStepSize, d_prime.size(), d_prime_fun);
 
     for(int i = 0; i < d_prime_fun.n; i++) {
         _thermodynamicForce.function_values[i] -= _convergenceFactor * d_prime_fun.function_values[i];
@@ -450,8 +435,12 @@ bool AdResS::checkF_TH_Convergence() {
 }
 
 void AdResS::applyF_TH() {
-    std::array<double, 3> low = {2*_samplingStepSize, _particleContainer->getBoundingBoxMin(1), _particleContainer->getBoundingBoxMin(2)};
-    std::array<double, 3> high= {_particleContainer->getBoundingBoxMax(0) - 2*_samplingStepSize, _particleContainer->getBoundingBoxMax(1), _particleContainer->getBoundingBoxMax(2)};
+    std::array<double, 3> low = {2*_samplingStepSize,
+                                 _simulation.getDomain()->getGlobalLength(1),
+                                 _simulation.getDomain()->getGlobalLength(2)};
+    std::array<double, 3> high= {_simulation.getDomain()->getGlobalLength(0) - 2*_samplingStepSize,
+                                 _simulation.getDomain()->getGlobalLength(1),
+                                 _simulation.getDomain()->getGlobalLength(2)};
     #if defined(_OPENMP)
     #pragma omp parallel
     #endif
