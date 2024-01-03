@@ -3,6 +3,7 @@
 //
 
 #include "DensityProfile3D.h"
+#include <cstring>
 
 void DensityProfile3D::init(double binWidth, Domain *domain) {
     _binWidth = binWidth;
@@ -34,20 +35,31 @@ void DensityProfile3D::sampleDensities(ParticleContainer *particleContainer, Dom
         }
     }
 
-    //acquire global information
+#if defined(ENABLE_MPI)
+    MPI_Allreduce(_localDensities[0].data(), _globalDensities[0].data(), _localDensities[0].size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
+    MPI_Allreduce(_localDensities[1].data(), _globalDensities[1].data(), _localDensities[1].size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
+    MPI_Allreduce(_localDensities[2].data(), _globalDensities[2].data(), _localDensities[2].size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
+#else
+    std::memcpy(_localDensities[0].data(), _globalDensities[0].data(), _localDensities[0].size());
+    std::memcpy(_localDensities[1].data(), _globalDensities[1].data(), _localDensities[1].size());
+    std::memcpy(_localDensities[2].data(), _globalDensities[2].data(), _localDensities[2].size());
+#endif
+
+    /*//acquire global information
     domainDecomp->collCommInit(_localDensities[0].size() + _localDensities[1].size() + _localDensities[2].size());
     for(int d = 0; d < 3; d++) {
-        for(double i : _localDensities[d]) {
-            domainDecomp->collCommAppendDouble(i);
+        for(int i : _localDensities[d]) {
+            domainDecomp->collCommAppendInt(i);
         }
     }
+
     domainDecomp->collCommAllreduceSum();
     for(int d = 0; d < 3; d++) {
         for(int i = 0; i < _globalDensities[d].size(); i++) {
-            _globalDensities[d][i] = domainDecomp->collCommGetDouble();
+            _globalDensities[d][i] = domainDecomp->collCommGetInt();
         }
     }
-    domainDecomp->collCommFinalize();
+    domainDecomp->collCommFinalize();*/
 
     //divide global bins by volume
     for(int d = 0; d < 3; d++) {
@@ -65,9 +77,9 @@ const std::vector<double> &DensityProfile3D::getDensity(int dim) const {
 void DensityProfile3D::resetBuffers() {
     for (int d = 0; d < 3; ++d) {
         _localDensities[d].clear();
-        _localDensities[d].resize(_binDims[d], 0.0); // TODO check if this resets to 0
+        _localDensities[d].resize(_binDims[d], 0.0);
 
         _globalDensities[d].clear();
-        _globalDensities[d].resize(_binDims[d], 0.0); // TODO check if this resets to 0
+        _globalDensities[d].resize(_binDims[d], 0.0);
     }
 }
