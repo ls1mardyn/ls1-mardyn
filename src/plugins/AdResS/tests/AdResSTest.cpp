@@ -5,6 +5,7 @@
 #include "AdResSTest.h"
 #include "plugins/AdResS/AdResS.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
+#include "plugins/AdResS/Interpolation.h"
 
 TEST_SUITE_REGISTRATION(AdResSTest);
 
@@ -96,7 +97,6 @@ void AdResSTest::computeForcesTest() {
 }
 
 void AdResSTest::checkGradient() {
-    std::unique_ptr<AdResS> plugin = std::make_unique<AdResS>();
     // test function f(x) 2x² - x - 10
     // sample points 0..10..1
     std::vector<double> fun_val;
@@ -114,7 +114,7 @@ void AdResSTest::checkGradient() {
     }
 
     std::vector<double> num_grad;
-    plugin->computeGradient(fun_val, num_grad);
+    Interpolation::computeGradient(fun_val, num_grad);
 
     // we do not care for the border values
     for (int i = 1; i < 9; i++) {
@@ -124,7 +124,6 @@ void AdResSTest::checkGradient() {
 }
 
 void AdResSTest::checkMatrixSolver() {
-    std::unique_ptr<AdResS> plugin = std::make_unique<AdResS>();
     std::vector<double> a;
     std::vector<double> b;
     std::vector<double> c;
@@ -139,14 +138,13 @@ void AdResSTest::checkMatrixSolver() {
     a[0] = 0;
     c[4] = 0;
 
-    plugin->solveTriDiagonalMatrix(a, b, c, x, d);
+    Interpolation::solveTriDiagonalMatrix(a, b, c, x, d);
     for (int i = 0; i < 5; i++) {
         ASSERT_DOUBLES_EQUAL(solution[i], x[i], 1e-6);
     }
 }
 
 void AdResSTest::checkHermite() {
-    std::unique_ptr<AdResS> plugin = std::make_unique<AdResS>();
     double begin = 1.0;
     double end = 11.0; // exclusive
     double step = 0.1;
@@ -176,13 +174,14 @@ void AdResSTest::checkHermite() {
                                       9.29113924, 9.39240506, 9.49367089, 9.59493671, 9.69620253, 9.79746835,
                                       9.89873418, 10.0};
 
-    InterpolatedFunction function;
-
-    plugin->computeHermite(begin, fun_vals, step, 100, function);
+    Interpolation::Function function;
+    std::vector<double> steps;
+    steps.resize(99, step);
+    Interpolation::computeHermite(begin, fun_vals, steps, 100, function);
 
     for(int i = 0; i < 80; i++) {
         double x = x_interpolate[i];
-        double y_eval = plugin->computeHermiteAt(x, function);
+        double y_eval = Interpolation::computeHermiteAt(x, function);
         double y_test = 4 * std::pow(x, 4)
                         - 63 * std::pow(x, 3)
                         + 298 * std::pow(x, 2)

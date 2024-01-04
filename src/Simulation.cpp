@@ -31,7 +31,7 @@
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
 #include "parallel/GeneralDomainDecomposition.h"
-#include "plugins/AdResS/AdResSKDDecomposition.h"
+#include "plugins/AdResS/parallel/AdResSKDDecomposition.h"
 #endif
 
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
@@ -80,7 +80,7 @@
 
 #include "bhfmm/FastMultipoleMethod.h"
 #include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
-#include "plugins/AdResS/AdResSGeneralDomainDecomposition.h"
+#include "plugins/AdResS/parallel/AdResSGeneralDomainDecomposition.h"
 
 using Log::global_log;
 using namespace std;

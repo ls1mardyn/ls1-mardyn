@@ -8,7 +8,7 @@
 
 #include <vector>
 #include "particleContainer/adapter/CellProcessor.h"
-#include "AdResSData.h"
+#include "plugins/AdResS/AdResSData.h"
 
 /**
  * Traverses all cells and maps all cells, that interact with each other while at least

@@ -8,8 +8,8 @@
 #include <array>
 #include <unordered_map>
 #include "particleContainer/ParticleContainer.h"
-#include "AdResSData.h"
-#include "AdResSForceAdapter.h"
+#include "plugins/AdResS/AdResSData.h"
+#include "plugins/AdResS/AdResSForceAdapter.h"
 
 /**
  * Handles the traversal of a region defined by two corner points, that do not overlap with the cell structure of any

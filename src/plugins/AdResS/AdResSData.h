@@ -235,20 +235,4 @@ struct MesoValues {
     }
 };
 
-/**
- * Represents one interpolated function using Cubic Hermite Splines
- * */
-struct InterpolatedFunction {
-    //! @brief number of knots
-    unsigned long n;
-    //! @brief distance between each knot, assuming homogenous distances
-    double step_width;
-    //! @brief starting point of samples, x_0
-    double begin;
-    //! @brief samples of f(x)
-    std::vector<double> function_values;
-    //! @brief samples of f'(x)
-    std::vector<double> gradients;
-};
-
 #endif //MARDYN_ADRESSDATA_H

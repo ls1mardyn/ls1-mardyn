@@ -23,6 +23,8 @@ private:
     std::array<std::vector<double>, 3> _localDensities;
     std::array<std::vector<double>, 3> _globalDensities;
     void resetBuffers();
+
+    void sampleForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
 };
 
 

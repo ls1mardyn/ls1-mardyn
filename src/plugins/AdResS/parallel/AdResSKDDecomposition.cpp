@@ -27,8 +27,8 @@
 #include "parallel/KDDStaticValues.h"
 #include "parallel/KDNode.h"
 #include "parallel/ParticleData.h"
-#include "AdResSData.h"
-#include "AdResS.h"
+#include "plugins/AdResS/AdResSData.h"
+#include "plugins/AdResS/AdResS.h"
 
 using namespace std;
 using Log::global_log;
