@@ -146,3 +146,26 @@ static inline double bernstein_3(double t, int k) {
     fun.gradients.resize(fun.gradients.size()+2, 0.0); //make two larger
     std::rotate(fun.gradients.rbegin(), fun.gradients.rbegin() + 1, fun.gradients.rend()); //rotate right for correct position
 }
+
+[[maybe_unused]] void Interpolation::computeIntegral(Interpolation::Function &f, Interpolation::Function &F) {
+    unsigned long samples = f.n;
+    F.begin = f.begin;
+    F.n = samples;
+    F.step_width = std::vector<double>(f.step_width);
+    F.gradients = std::vector<double>(f.function_values);
+
+    //Assign function values
+    {
+        F.function_values.resize(samples);
+        F.function_values[0] = 0.0;
+
+        double running_integral = 0.0;
+        for(int i = 0; i < samples-1; i++) {
+            running_integral += 0.5 * f.function_values[i]
+                                 + 0.5 * f.function_values[i+1]
+                                 + (1.0/12.0) * f.gradients[i] * f.step_width[i]
+                                 - (1.0/12.0) * f.gradients[i+1] * f.step_width[i];
+            F.function_values[i+1] = running_integral;
+        }
+    }
+}

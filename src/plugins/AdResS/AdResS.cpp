@@ -68,7 +68,7 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
     }
 
     if(_enableThermodynamicForce && _createThermodynamicForce) {
-        _densityProfiler.init(_samplingStepSize, domain);
+        _densityProfiler.init(_samplingStepSize, domain, _rho0);
         _densityProfiler.sampleDensities(particleContainer, domainDecomp, domain);
         _targetDensity = std::vector<double>(_densityProfiler.getDensity(0));
         _thermodynamicForceSampleCounter = 0;
@@ -106,6 +106,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
         _forceMax = std::abs(_forceMax);
         _logFTH = xmlconfig.getNodeValue_bool("enableFTH/logFTH", false);
         _logDensities = xmlconfig.getNodeValue_bool("enableFTH/logDensity", false);
+        _rho0 = xmlconfig.getNodeValue_double("enableFTH/rho", 0.01);
 
         query = xmlconfig.query("enableFTH/createFTH");
         count = query.card();
@@ -211,6 +212,13 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
     _densityProfiler.sampleDensities(particleContainer, domainDecomp, domain);
     std::vector<double> densities{_densityProfiler.getDensity(0)};
     if(_logDensities) writeDensities(stream.str(), densities);
+
+    _densityProfiler.computeDensities(particleContainer, domainDecomp, domain);
+    Interpolation::Function histDensity = _densityProfiler.getHistDensity(0);
+    stream.clear();
+    stream = std::stringstream {};
+    stream << "./F_TH_HistDensity_" << simstep << ".xmla";
+    writeFunctionToXML(stream.str(), histDensity);
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {

@@ -224,6 +224,9 @@ private:
     //! @brief maximum allowed force
     double _forceMax;
 
+    //! @brief initial density
+    double _rho0;
+
     /**
      * Writes the function object into the required XML format for input files.
      * @param filename Output filename

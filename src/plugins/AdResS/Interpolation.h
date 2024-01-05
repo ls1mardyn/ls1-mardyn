@@ -64,5 +64,13 @@ namespace Interpolation {
      * @param fun output buffer
      * */
     [[maybe_unused]] void computeHermite(double begin, std::vector<double>& fVals, std::vector<double>& steps, int samples, Function& fun);
+
+    /**
+     * Integrates f by integrating each spline piece of f symbolically.
+     * Constant offset is assumed to be zero, but can be added manually later.
+     * @param f function f(x)
+     * @param F integral function F(x), with F'(x) = f(x)
+     * */
+    [[maybe_unused]] void computeIntegral(Function& f, Function& F);
 }
 #endif //MARDYN_INTERPOLATION_H
