@@ -276,6 +276,33 @@ void Spherical::readXML(XMLfileUnits& xmlconfig)
 	this->init();
 }
 
+std::array<double,5> Spherical::readTanhData()
+{
+	std::array<double,5> tanhData = {}; //FILE_EXISTS, rhov, rhol, D0, R0 in that order
+
+	std::ifstream inputFile ("0_sphericalLRC_tanhStartingData.dat");	
+	global_log->info() << "[Long Range Correction] reading dat-file for starting values of tanhData."  << std::endl;
+	global_log->info() << "[Long Range Correction] ------------------------------ FILE_EXISTS (before checking, should be zero): "<< tanhData[0]  << std::endl;
+	
+
+	if (inputFile.is_open() ) { // always check whether the file is open
+		tanhData[0] = 1.;
+		for(unsigned int i = 1; i<5; i++){
+			std::string inputString;
+			inputFile >> inputString;
+			tanhData[i] = std::stod(inputString);
+		}
+	}
+	global_log->info() << "[Long Range Correction] -----------FILE_EXISTS (after checking): "<<tanhData[0] << std::endl;
+	global_log->info() << "[Long Range Correction] -----------rhov: "<<   tanhData[1]   << std::endl;
+	global_log->info() << "[Long Range Correction] -----------rhol: "<<   tanhData[2]   << std::endl;
+	global_log->info() << "[Long Range Correction] -----------D0  : "<<   tanhData[3]   << std::endl;
+	global_log->info() << "[Long Range Correction] -----------R0  : "<<   tanhData[4]   << std::endl;
+
+	return tanhData;
+}
+
+
 void Spherical::calculateLongRange(){
 
 	// global_log->info() << "[Long Range Correction] calculateLongRange has been called"  << std::endl;
@@ -464,6 +491,17 @@ void Spherical::calculateLongRange(){
 
 		double D0 = (Dmax-Dmin);
 		double R0 = Dmin + 0.5*D0;
+
+		// for Simstep 0, try to read in starting Data, if provided
+		if( simstep == 0){   // try simstep <=1000 oder so?
+			std::array<double,5> tanhStartingData = readTanhData();
+			if(tanhStartingData[0] == 1.){
+				rhov = tanhStartingData[1];
+				rhol = tanhStartingData[2];
+				D0   = tanhStartingData[3];
+				R0   = tanhStartingData[4];
+			}
+		}
 
 		// density profile
 		for (unsigned int i=0; i<NShells; i++) {

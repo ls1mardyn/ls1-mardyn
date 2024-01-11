@@ -25,6 +25,7 @@ public:
 
 	virtual void init();
 	virtual void readXML(XMLfileUnits& xmlconfig);
+	std::array<double,5> readTanhData();
 	virtual void calculateLongRange();
 	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
 
