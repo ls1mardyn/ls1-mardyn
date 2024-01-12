@@ -72,5 +72,12 @@ namespace Interpolation {
      * @param F integral function F(x), with F'(x) = f(x)
      * */
     [[maybe_unused]] void computeIntegral(Function& f, Function& F);
+
+    /**
+     * Computes the derivative of F piece-wise.
+     * @param F function F(x)
+     * @param f derivative of F, with f(x) = F'(x)
+     * */
+    [[maybe_unused]] void computeGradient(Function& F, Function& f);
 }
 #endif //MARDYN_INTERPOLATION_H

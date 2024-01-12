@@ -198,6 +198,7 @@ private:
 
     //! @brief Thermodynamic force used to correct the density difference created by plain AdResS
     Interpolation::Function _thermodynamicForce;
+    Interpolation::Function _thermodynamicForceHist;
 
     //! @brief Gradient of density distribution, used for convergence checking
     Interpolation::Function _lastGradient;

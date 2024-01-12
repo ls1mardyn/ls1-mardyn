@@ -44,7 +44,7 @@
                             </lattice>
                             <basis>
                                 <site>
-                                    <componentid>0</componentid>
+                                    <componentid>3</componentid>
                                     <coordinate> <x>.5</x> <y>.5</y> <z>.5</z> </coordinate>
                                 </site>
                             </basis>
@@ -57,7 +57,7 @@
                         </object>
                         <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>
                     </objectgenerator>
-                    <objectgenerator>
+                    <!--objectgenerator>
                         <filler type="GridFiller">
                             <lattice system="cubic" centering="face">
                                 <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
@@ -78,7 +78,7 @@
                             <upper> <x>280</x> <y>280</y> <z>280</z> </upper>
                         </object>
                         <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>
-                    </objectgenerator>
+                    </objectgenerator-->
                 </generator>
             </phasespacepoint>
         </ensemble>
@@ -99,19 +99,19 @@
         </algorithm>
 
         <output>
-            <outputplugin name="VTKMoleculeWriter">
+            <!--outputplugin name="VTKMoleculeWriter">
                 <writefrequency>10</writefrequency>
                 <writefrequencyOffset>0</writefrequencyOffset>
                 <outputprefix>BlockInterface_4k_C6H12</outputprefix>
-            </outputplugin>
+            </outputplugin-->
             <outputplugin name="CheckpointWriter">
                 <type>binary</type>
                 <writefrequency>10000</writefrequency>
-                <outputprefix>CP_BI_4k_C6H12</outputprefix>
+                <outputprefix>CP_BI_4k_C6H12_1</outputprefix>
             </outputplugin>
         </output>
 
-        <plugin name="AdResS">
+        <!--plugin name="AdResS">
             <weightImpl>near</weightImpl>
             <fpregions>
                 <region id="1">
@@ -120,7 +120,7 @@
                     <hybridDimX>40.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
-        </plugin>
+        </plugin-->
 
     </simulation>
 </mardyn>

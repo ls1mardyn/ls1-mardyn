@@ -78,6 +78,12 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
         _thermodynamicForce.gradients.resize(_thermodynamicForce.n, 0.0);
         _thermodynamicForce.function_values.resize(_thermodynamicForce.n, 0.0);
 
+        _thermodynamicForceHist.n = _targetDensity.size();
+        _thermodynamicForceHist.begin = 0.0;
+        _thermodynamicForceHist.step_width.resize(_thermodynamicForceHist.n-1, _samplingStepSize);
+        _thermodynamicForceHist.gradients.resize(_thermodynamicForceHist.n, 0.0);
+        _thermodynamicForceHist.function_values.resize(_thermodynamicForceHist.n, 0.0);
+
         if(_logDensities) writeDensities("F_TH_TargetDensity.txt", _targetDensity);
     }
 }
@@ -206,6 +212,7 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
     std::stringstream stream;
     stream << "./F_TH_InterpolationFunction_" << simstep << ".xml";
     if(_logFTH) writeFunctionToXML(stream.str(), _thermodynamicForce);
+
     stream.clear();
     stream = std::stringstream {};
     stream << "./F_TH_Density_" << simstep << ".txt";
@@ -219,6 +226,11 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
     stream = std::stringstream {};
     stream << "./F_TH_HistDensity_" << simstep << ".xmla";
     writeFunctionToXML(stream.str(), histDensity);
+
+    stream.clear();
+    stream = std::stringstream {};
+    stream << "./F_TH_HistInterpolationFunction_" << simstep << ".xmlb";
+    writeFunctionToXML(stream.str(), _thermodynamicForceHist);
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
@@ -296,9 +308,27 @@ void AdResS::computeF_TH() {
     steps.resize(d_prime.size()-1, _samplingStepSize);
     Interpolation::computeHermite(0.0, d_prime, steps, d_prime.size(), d_prime_fun);
 
+    _densityProfiler.computeDensities(_particleContainer, &_simulation.domainDecomposition(), _simulation.getDomain());
+    Interpolation::Function d_hist = _densityProfiler.getHistDensity(0);
+    std::vector<double> fVals;
+    fVals.resize(_thermodynamicForceHist.n);
+    double pos = 0.0;
+    for(int i = 0; i < _thermodynamicForceHist.n; i++) {
+        fVals[i] = Interpolation::computeHermiteAt(pos, d_hist);
+        pos += _thermodynamicForceHist.step_width[i];
+    }
+    std::vector<double> steps_hist;
+    steps_hist.resize(_thermodynamicForceHist.n-1, _samplingStepSize);
+    Interpolation::computeHermite(0.0, fVals, steps_hist, _thermodynamicForceHist.n, d_hist);
+    Interpolation::Function d_prime_hist;
+    Interpolation::computeHermite(0.0, d_hist.gradients, d_hist.step_width, d_hist.n, d_prime_hist);
+
     for(int i = 0; i < d_prime_fun.n; i++) {
         _thermodynamicForce.function_values[i] -= _convergenceFactor * d_prime_fun.function_values[i];
         _thermodynamicForce.gradients[i] -= _convergenceFactor * d_prime_fun.gradients[i];
+
+        _thermodynamicForceHist.function_values[i] -= _convergenceFactor * d_prime_hist.function_values[i];
+        _thermodynamicForceHist.gradients[i] -= _convergenceFactor * d_prime_hist.gradients[i];
     }
 
     // TODO FIXME!!
@@ -310,6 +340,9 @@ void AdResS::computeF_TH() {
         if(x_pos >= low && x_pos <= high){
             _thermodynamicForce.function_values[i] = 0;
             _thermodynamicForce.gradients[i] = 0;
+
+            _thermodynamicForceHist.function_values[i] = 0;
+            _thermodynamicForceHist.gradients[i] = 0;
         }
         x_pos += _thermodynamicForce.step_width[i];
     }

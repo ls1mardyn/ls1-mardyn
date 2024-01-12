@@ -169,3 +169,9 @@ static inline double bernstein_3(double t, int k) {
         }
     }
 }
+
+[[maybe_unused]] void Interpolation::computeGradient(Interpolation::Function &F, Interpolation::Function &f) {
+    std::vector<double> steps = std::vector<double>(F.step_width);
+    std::vector<double> fVals = std::vector<double>(F.gradients);
+    computeHermite(F.begin, fVals, steps, F.n, f);
+}

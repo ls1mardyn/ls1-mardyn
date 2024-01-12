@@ -82,7 +82,7 @@
 
         <output>
             <outputplugin name="VTKMoleculeWriter">
-                <writefrequency>100000</writefrequency>
+                <writefrequency>10000</writefrequency>
                 <writefrequencyOffset>0</writefrequencyOffset>
                 <outputprefix>BlockInterface_4k_C6H12</outputprefix>
             </outputplugin>
@@ -90,6 +90,17 @@
 
         <plugin name="AdResS">
             <weightImpl>near</weightImpl>
+            <enableFTH>
+                <logFTH>true</logFTH>
+                <logDensity>true</logDensity>
+                <fmax>500</fmax>
+                <createFTH>
+                    <sampleGap>200</sampleGap>
+                    <threshold>0.05</threshold>
+                    <convFactor>10000</convFactor>
+                    <sampleBinSize>0.9</sampleBinSize>
+                </createFTH>
+            </enableFTH>
             <fpregions>
                 <region id="1">
                     <lowX>120.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>

@@ -48,7 +48,7 @@
                                 </site>
                             </basis>
                             <latticeOccupancy>1.</latticeOccupancy>
-                            <density>0.002</density>
+                            <density>1.0</density>
                         </filler>
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
@@ -75,11 +75,11 @@
         </algorithm>
 
         <output>
-            <outputplugin name="VTKMoleculeWriter">
+            <!--outputplugin name="VTKMoleculeWriter">
                 <writefrequency>1000</writefrequency>
                 <writefrequencyOffset>0</writefrequencyOffset>
                 <outputprefix>Validation</outputprefix>
-            </outputplugin>
+            </outputplugin-->
             <outputplugin name="CheckpointWriter">
                 <type>binary</type>
                 <writefrequency>5000</writefrequency>

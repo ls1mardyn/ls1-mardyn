@@ -12,7 +12,7 @@
         <run>
             <currenttime>0</currenttime>
             <production>
-                <steps>5000</steps>
+                <steps>50000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -103,13 +103,15 @@
         <plugin name="AdResS">
             <weightImpl>near</weightImpl>
             <enableFTH>
+                <fmax>250</fmax>
+                <logFTH>true</logFTH>
+                <logDensity>true</logDensity>
+                <rho>0.005</rho>
                 <createFTH>
-                    <logFTH>true</logFTH>
-                    <logDensity>true</logDensity>
                     <sampleGap>200</sampleGap>
                     <threshold>0.05</threshold>
                     <convFactor>10000</convFactor>
-                    <sampleBinSize>0.3</sampleBinSize>
+                    <sampleBinSize>0.5</sampleBinSize>
                 </createFTH>
             </enableFTH>
             <fpregions>

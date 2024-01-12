@@ -35,7 +35,7 @@
         <site type="LJ126" id="1" >
             <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
             <mass>0.0</mass>
-            <sigma>1.2</sigma>
+            <sigma>3.0</sigma>
             <epsilon>0.8</epsilon>
             <shifted>false</shifted>
         </site>
@@ -74,7 +74,7 @@
         <site type="LJ126" id="1" >
             <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
             <mass>4.0</mass>
-            <sigma>1.2</sigma>
+            <sigma>3.0</sigma>
             <epsilon>0.8</epsilon>
             <shifted>false</shifted>
         </site>
