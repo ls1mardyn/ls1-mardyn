@@ -12,7 +12,7 @@ class VTKGridWriterImplementation;
 
 //! @brief represents a node in the decomposition tree when using KDDecomposition
 //! @author Martin Buchholz, Wolfgang Eckhardt
-//! 
+//!
 //! The KDDecomposition decomposes the domain by recursively splitting the domain
 //! into smaller parts. This class is used to represent this decomposition.
 //! The root node of the decomposition covers the whole domain, in the first
@@ -224,9 +224,9 @@ public:
 	//! true if the domain in the given dimension is not divided into more than one process
 	bool _coversWholeDomain[KDDIM];
 
-	//! ID of this KDNode 
+	//! ID of this KDNode
 	int _nodeID;
-	//! process which owns this KDNode (only possible for leaf nodes) 
+	//! process which owns this KDNode (only possible for leaf nodes)
 	int _owningProc; // only used if the node is a leaf
 
 	//! "left" child of this KDNode (only used if the child is no leaf)

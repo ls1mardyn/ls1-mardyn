@@ -20,11 +20,10 @@
 
 //#include <cstdio>	// fseek(),fread(); should be included after mpi.h
 //#ifdef __linux__
-//#include <sys/stat.h>   // stat() 
+//#include <sys/stat.h>   // stat()
 //#endif
 
 
-using namespace std;
 using namespace rapidxml;
 
 const char *const XMLfile::includeattrtag = "include";
@@ -42,7 +41,7 @@ XMLfile::XMLfile()
 #endif
 }
 
-XMLfile::XMLfile(const string& filepath)
+XMLfile::XMLfile(const std::string& filepath)
 {
 	clear();
 #ifdef ENABLE_MPI
@@ -51,7 +50,7 @@ XMLfile::XMLfile(const string& filepath)
 	initfile(filepath);
 }
 
-bool XMLfile::initfile(const string& filepath)
+bool XMLfile::initfile(const std::string& filepath)
 {
 	clear();
 	bool status;
@@ -84,7 +83,7 @@ void XMLfile::initstring(const char* xmlstring)
 #endif
 }
 
-long XMLfile::changecurrentnode(const string& nodepath)
+long XMLfile::changecurrentnode(const std::string& nodepath)
 {
 	std::list<Node> nodes;
 	unsigned long foundnodes=query(nodes,nodepath.c_str());
@@ -110,20 +109,20 @@ bool XMLfile::changecurrentnode(const Query::const_iterator& pos)
 		return false;
 }
 
-void XMLfile::save(string filepath)
+void XMLfile::save(std::string filepath)
 {
 #ifdef ENABLE_MPI
 	// only root process will save its data for now
 	if(m_mpi_myrank!=m_mpi_rootrank) return;
 #endif
 	if (filepath.empty()) filepath=m_filedir+m_filename;
-	ofstream of(filepath.c_str());
+	std::ofstream of(filepath.c_str());
 	printXML(of);
 }
 
-XMLfile::Query XMLfile::query(const string& querystr) const
+XMLfile::Query XMLfile::query(const std::string& querystr) const
 {
-	list<Node> nodes;
+	std::list<Node> nodes;
 	//nodes.clear();
 	query(nodes,querystr);
 
@@ -132,7 +131,7 @@ XMLfile::Query XMLfile::query(const string& querystr) const
 	queryresult.m_nodes.resize(nodes.size());
 /*
 	std::vector<Node>::iterator nodespos2=queryresult.m_nodes.begin();
-	for(list<Node>::const_iterator nodespos=nodes.begin();nodespos!=nodes.end();++nodespos)
+	for(std::list<Node>::const_iterator nodespos=nodes.begin();nodespos!=nodes.end();++nodespos)
 	{
 		*nodespos2=*nodespos;
 		++nodespos2;
@@ -144,14 +143,14 @@ XMLfile::Query XMLfile::query(const string& querystr) const
 	//queryresult.m_nodes.assign(nodes.begin(), nodes.end());
 	queryresult.m_nodes.reserve(nodes.size());
 	copy(nodes.begin(), nodes.end(), back_inserter(queryresult.m_nodes));
-*/	
+*/
 	return queryresult;
 }
 
 
-XMLfile::operator string() const
+XMLfile::operator std::string() const
 {
-	stringstream ss;
+	std::stringstream ss;
 	ss << m_xmldoc;
 	return ss.str();
 }
@@ -179,44 +178,44 @@ void XMLfile::clear()
 	invalidateQueries();
 }
 
-bool XMLfile::initfile_local(const string& filepath) {
+bool XMLfile::initfile_local(const std::string& filepath) {
 	clear();
 	auto filepathTrimmed = string_utils::trim(filepath);
 	std::size_t fnpos=filepathTrimmed.find_last_of('/');
-	if (fnpos!=string::npos) {
-		m_filedir=string(filepathTrimmed).substr(0,fnpos+1);
-		m_filename=string(filepathTrimmed).substr(fnpos+1);
+	if (fnpos!=std::string::npos) {
+		m_filedir=std::string(filepathTrimmed).substr(0,fnpos+1);
+		m_filename=std::string(filepathTrimmed).substr(fnpos+1);
 	}
 	else {
-		m_filedir=string();
-		m_filename=string(filepathTrimmed);
+		m_filedir=std::string();
+		m_filename=std::string(filepathTrimmed);
 	}
-	
+
 	//version using ifstream
-	ifstream fstrm(filepathTrimmed.c_str(),ifstream::binary|ifstream::ate);
+	std::ifstream fstrm(filepathTrimmed.c_str(),std::ifstream::binary|std::ifstream::ate);
 	if(!fstrm) {
-		cerr << "ERROR opening " << filepathTrimmed << endl;
+		std::cerr << "ERROR opening " << filepathTrimmed << std::endl;
 		clear();
 		Simulation::exit(1);
 	}
-	ifstream::pos_type filesize=fstrm.tellg();
+	std::ifstream::pos_type filesize=fstrm.tellg();
 	fstrm.close(); fstrm.clear();
 	char* xmlstr = m_xmldoc.allocate_string(nullptr,static_cast<size_t>(filesize)+1);
 	xmlstr[filesize]=0;
-	//                          ios::binary
-	fstrm.open(filepathTrimmed.c_str(),ifstream::binary);
-	//checking if(!fstrm) again should not be necessary 
+	//                          std::ios::binary
+	fstrm.open(filepathTrimmed.c_str(),std::ifstream::binary);
+	//checking if(!fstrm) again should not be necessary
 	fstrm.read(xmlstr,filesize);
 	filesize-=fstrm.gcount();
 	fstrm.close();
-//	
+//
 	mardyn_assert(filesize == 0);
-	
+
 	m_xmldoc.parse<0>(xmlstr);
 	expandincludes();
 	m_currentnode=Node(&m_xmldoc,"/");
 
-	//cout << "init file " << m_filedir << ";" << m_filename << endl;
+	//cout << "init file " << m_filedir << ";" << m_filename << std::endl;
 
 	return true;
 }
@@ -233,31 +232,31 @@ void XMLfile::initstring_local(const char* xmlstring)
 
 void XMLfile::expandincludes()
 {
-	list<xml_node<>* > nodelist;
+	std::list<xml_node<>* > nodelist;
 	nodelist.push_back(m_xmldoc.first_node());
 	while(!nodelist.empty())
 	{
 		xml_node<>* node=nodelist.front();
 		nodelist.pop_front();
 		if(!node) continue;
-		if(string(node->name())==string(includeattrtag))
+		if(std::string(node->name())==std::string(includeattrtag))
 		{
-			string inclfile=node->value();
+			std::string inclfile=node->value();
 			// relative path?
 			if(inclfile.find_first_of("/~")!=0) inclfile=m_filedir+inclfile;
 			xml_attribute<>* attr = node->first_attribute(queryattrtag);
-			string queryval("/");
+			std::string queryval("/");
 			if(attr) queryval=attr->value();
-			//cout << "XMLfile::expandincludes DEBUG:\tincluding " << inclfile << "\tquery " << queryval << endl;
+			//cout << "XMLfile::expandincludes DEBUG:\tincluding " << inclfile << "\tquery " << queryval << std::endl;
 			XMLfile inclxmldoc;
 			inclxmldoc.initfile_local(inclfile);
-			list<Node> inclnodes;
-			list<Node>::iterator posinclnodes;
+			std::list<Node> inclnodes;
+			std::list<Node>::iterator posinclnodes;
 			inclxmldoc.query(inclnodes,queryval.c_str());
 			for(posinclnodes=inclnodes.begin();posinclnodes!=inclnodes.end();++posinclnodes)
 			{
 				const xml_node<>* inclnode=static_cast<const xml_node<>*>((*posinclnodes).m_xmlnode);
-				//cout << "XMLfile::expandincludes DEBUG:\tinserting " << inclnode->name() << " (" << (*posinclnodes).nodepath() << ")" << endl;
+				//cout << "XMLfile::expandincludes DEBUG:\tinserting " << inclnode->name() << " (" << (*posinclnodes).nodepath() << ")" << std::endl;
 				insertcloneelement(inclnode,node);
 			}
 			xml_node<>* node_parent=node->parent();
@@ -270,7 +269,7 @@ void XMLfile::expandincludes()
 	}
 }
 
-unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystring, Node startnode) const
+unsigned long XMLfile::query(std::list<Node>& nodeselection, const std::string& querystring, Node startnode) const
 {
 	if (querystring.empty())
 		// nothing selected
@@ -279,7 +278,7 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystrin
 	//const t_XMLnode* node(m_currentnode.m_xmlnode);
 	// only ELEMENT_Node nodes will be handled => t_XMLelement* is the better choice (and doesn't need casts afterwards)...
 	const t_XMLelement* node(static_cast<const t_XMLelement*>(m_currentnode.m_xmlnode));
-	string nodepath(m_currentnode.nodepath());
+	std::string nodepath(m_currentnode.nodepath());
 	if(startnode.m_xmlnode)
 	{ // if startnode is given use this one
 		if(startnode.type()==Node::ELEMENT_Node)
@@ -288,7 +287,7 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystrin
 			nodepath=startnode.nodepath();
 		}
 		else
-			cerr << "XMLfile::query: invalid startnode type " << startnode.type() << endl;
+			std::cerr << "XMLfile::query: invalid startnode type " << startnode.type() << std::endl;
 	}
 	size_t pos=0;
 	size_t tokenpos;
@@ -306,7 +305,7 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystrin
 		{ // there exists a parent node
 			node=node->parent();
 			tokenpos=nodepath.find_last_of("/");
-			if(tokenpos!=string::npos) nodepath=nodepath.substr(0,tokenpos+1);
+			if(tokenpos!=std::string::npos) nodepath=nodepath.substr(0,tokenpos+1);
 			pos+=2;
 			if(querystring[pos]=='/') ++pos;
 		} else return 0;
@@ -316,31 +315,31 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystrin
 	}
 	unsigned long foundnodes=0;
 	size_t pos2=querystring.find_first_of("/",pos+1);
-	if(pos2==string::npos) pos2=querystring.size();
-	string nodequery=querystring.substr(pos,pos2-pos);
+	if(pos2==std::string::npos) pos2=querystring.size();
+	std::string nodequery=querystring.substr(pos,pos2-pos);
 	// nodequery is one chunk in the path separated by "/"
 	//  assumed to be "elename" or "elename[condition]" for inner nodes and
 	//  additionally "elename@attrname", "elename[condition]@attrname" for leaf nodes
-	string elename, condition, attrname;
+	std::string elename, condition, attrname;
 	tokenpos=nodequery.find_first_of("[@");
 	unsigned long nodecondpos=0;
-	string condattrname,condattrval;
-	stringstream ss;
-	if(tokenpos!=string::npos)
+	std::string condattrname,condattrval;
+	std::stringstream ss;
+	if(tokenpos!=std::string::npos)
 	{ // elename with condition and/or attribute
 		elename=nodequery.substr(0,tokenpos);
 		// for condition&attribute check condition first
 		tokenpos=nodequery.find_first_of("[",tokenpos);
-		if(tokenpos!=string::npos)
+		if(tokenpos!=std::string::npos)
 		{ // elename[condition]
 			++tokenpos;
 			size_t tokenpos2=nodequery.find_first_of("]",tokenpos);
-			if(tokenpos2!=string::npos)
+			if(tokenpos2!=std::string::npos)
 			{
 				condition=nodequery.substr(tokenpos,tokenpos2-tokenpos);
 				tokenpos=tokenpos2+1;
 			} else {
-				cerr << "ERROR: missing ] after " << elename << " within query string " << querystring << endl;
+				std::cerr << "ERROR: missing ] after " << elename << " within query string " << querystring << std::endl;
 			}
 			if(!condition.empty())
 			{ // parse condition
@@ -350,9 +349,9 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystrin
 					condattrname=condition.substr(1,tokenpos2-1);
 					condattrval=condition.substr(tokenpos2+1);
 					tokenpos2=condattrval.find_first_of("\'\"");
-					if(tokenpos2!=string::npos) condattrval=condattrval.substr(tokenpos2+1);
+					if(tokenpos2!=std::string::npos) condattrval=condattrval.substr(tokenpos2+1);
 					tokenpos2=condattrval.find_last_of("\'\"");
-					if(tokenpos2!=string::npos) condattrval=condattrval.substr(0,tokenpos2);
+					if(tokenpos2!=std::string::npos) condattrval=condattrval.substr(0,tokenpos2);
 				} else { // node position specification is assumed as condition
 					ss << condition;
 					ss >> nodecondpos;
@@ -365,7 +364,7 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystrin
 			tokenpos=0;
 		}
 		tokenpos=nodequery.find_first_of("@",tokenpos);
-		if(tokenpos!=string::npos)
+		if(tokenpos!=std::string::npos)
 		{ // @attrname
 			attrname=nodequery.substr(tokenpos+1);
 		} else { // no attribute specification found
@@ -376,8 +375,8 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystrin
 		tokenpos=0;
 	}
 	// now nodequery should be separated into elename, condition, attrname
-	
-	string nodepath0(nodepath);
+
+	std::string nodepath0(nodepath);
 	// remove trailing /
 	if(nodepath[nodepath.size()-1]=='/') nodepath0=nodepath.substr(0,nodepath.size()-1);
 	t_XMLattribute* attr=NULL;
@@ -385,8 +384,8 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystrin
 	const t_XMLelement* ele;
 	if(elename=="*")
 	{ // wildcard *
-		map<string,unsigned long> elenames;
-		map<string,unsigned long>::iterator poselenames;
+		std::map<std::string,unsigned long> elenames;
+		std::map<std::string,unsigned long>::iterator poselenames;
 		for(ele=node->first_node(); ele; ele=ele->next_sibling())
 		{
 			poselenames=elenames.find(ele->name());
@@ -464,7 +463,7 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const string& querystrin
 
 void XMLfile::insertcloneelement(const t_XMLelement* src, t_XMLelement* dest_after)
 {
-	stringstream ss;
+	std::stringstream ss;
 	ss << *src;
 	char* src_content = m_xmldoc.allocate_string(ss.str().c_str());
 	xml_document<> xmldoc;
@@ -490,8 +489,8 @@ void XMLfile::setMPIdefaults(int mpirootrank, MPI_Comm mpicomm)
 
 bool XMLfile::distributeXMLstring()
 {
-	string xmlstring;
-	if(m_mpi_myrank==m_mpi_rootrank) xmlstring=string(*this);
+	std::string xmlstring;
+	if(m_mpi_myrank==m_mpi_rootrank) xmlstring=std::string(*this);
 
 	int ierror;
 	int len=xmlstring.size();
@@ -533,91 +532,68 @@ template<typename T> bool XMLfile::Node::getValue(T& value) const
 {
 	if(m_xmlnode)
 	{
-		//value=T(m_xmlnode->value());
-		stringstream ss(m_xmlnode->value());
-		ss>>value;
+		std::stringstream ss(m_xmlnode->value());
+		// Check if input has correct sign
+		if (std::is_unsigned_v<T>) {
+			if (ss.str().find_first_of("-") != std::string::npos) {
+				std::cerr << "ERROR parsing \"" << ss.str() << "\" to data type " << typeid(T).name() << " from tag \"<" << name() << ">\" in xml file" << std::endl;
+				std::cerr << "The tag contains a negative value but an unsigned value was expected." << std::endl;
+				Simulation::exit(1);
+			}
+		}
+		ss >> value;
+		// Check if the entire string was consumed
+		if (!ss.eof() || ss.fail()) {
+			std::cerr << "ERROR parsing all chars of \"" << ss.str() << "\" from tag \"<" << name() << ">\" in xml file" << std::endl;
+			std::cerr << "This might be the result of using a float while an integer is expected." << std::endl;
+			Simulation::exit(1);
+		}
 		return true;
 	}
 	else
 		return false;
 }
 
-
-template<> bool XMLfile::Node::getValue<string>(string& value) const
+template<> bool XMLfile::Node::getValue<std::string>(std::string& value) const
 {
 	if(m_xmlnode)
 	{
-		value=string(m_xmlnode->value());
+		value=std::string(m_xmlnode->value());
 		return true;
 	}
 	else
 		return false;
-}
-
-template<> bool XMLfile::Node::getValue<int>(int& value) const
-{
-	string v;
-	bool found=getValue(v);
-	if(found) value=atoi(v.c_str());
-	return found;
-}
-
-template<> bool XMLfile::Node::getValue<long>(long& value) const
-{
-	string v;
-	bool found=getValue(v);
-	if(found) value=atol(v.c_str());
-	return found;
-}
-
-template<> bool XMLfile::Node::getValue<float>(float& value) const
-{
-	string v;
-	bool found=getValue(v);
-	if(found) value=static_cast<float>(atof(v.c_str()));
-	return found;
-}
-
-template<> bool XMLfile::Node::getValue<double>(double& value) const
-{
-	string v;
-	bool found=getValue(v);
-	if(found) value=atof(v.c_str());
-	return found;
 }
 
 template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 {
-	string v;
+	std::string v;
 	bool found=getValue(v);
-	if(found)
-	{
-		int i=atoi(v.c_str());
-		if(i!=0)
-		{
-			/* found integer value unequal 0 */
-			value=true;
-		}
-		else
-		{
-			/* remove white spaces */
-			v.erase( std::remove_if( v.begin(), v.end(), ::isspace ), v.end() );
-			/* convert to upper case letters */
-			std::transform(v.begin(), v.end(), v.begin(), ::toupper);
-			value=(v == "TRUE" || v == "YES" || v == "ON");
+	if (found) {
+		// Remove white spaces
+		v.erase(std::remove_if(v.begin(), v.end(), ::isspace), v.end());
+		// Convert to upper case letters
+		std::transform(v.begin(), v.end(), v.begin(), ::toupper);
+
+		if (v == "TRUE" || v == "YES" || v == "ON" || v == "1") {
+			value = true;
+		} else if (v == "FALSE" || v == "NO" || v == "OFF" || v == "0") {
+			value = false;
+		} else {
+			std::cerr << "ERROR parsing \"" << v << "\" to boolean from tag \"<" << name() << ">\" in xml file" << std::endl;
+			Simulation::exit(1);
 		}
 	}
 	return found;
 }
 
-
-string XMLfile::Node::value_string(string defaultvalue) const
+std::string XMLfile::Node::value_string(std::string defaultvalue) const
 {
-	string value(defaultvalue);
+	std::string value(defaultvalue);
 	if(m_xmlnode)
 		getValue(value);
 	else
-		cerr << "XMLfile::Node::value_string: invalid node" << endl;
+		std::cerr << "XMLfile::Node::value_string: invalid node" << std::endl;
 	return value;
 }
 
@@ -627,7 +603,7 @@ int XMLfile::Node::value_int(int defaultvalue) const
 	if(m_xmlnode)
 		getValue(value);
 	else
-		cerr << "XMLfile::Node::value_int: invalid node" << endl;
+		std::cerr << "XMLfile::Node::value_int: invalid node" << std::endl;
 	return value;
 }
 
@@ -637,7 +613,7 @@ long XMLfile::Node::value_long(long defaultvalue) const
 	if(m_xmlnode)
 		getValue(value);
 	else
-		cerr << "XMLfile::Node::value_long: invalid node" << endl;
+		std::cerr << "XMLfile::Node::value_long: invalid node" << std::endl;
 	return value;
 }
 
@@ -647,7 +623,7 @@ float XMLfile::Node::value_float(float defaultvalue) const
 	if(m_xmlnode)
 		getValue(value);
 	else
-		cerr << "XMLfile::Node::value_float: invalid node" << endl;
+		std::cerr << "XMLfile::Node::value_float: invalid node" << std::endl;
 	return value;
 }
 
@@ -657,7 +633,7 @@ double XMLfile::Node::value_double(double defaultvalue) const
 	if(m_xmlnode)
 		getValue(value);
 	else
-		cerr << "XMLfile::Node::value_double: invalid node" << endl;
+		std::cerr << "XMLfile::Node::value_double: invalid node" << std::endl;
 	return value;
 }
 
@@ -667,7 +643,7 @@ bool XMLfile::Node::value_bool(bool defaultvalue) const
 	if(m_xmlnode)
 		getValue(value);
 	else
-		cerr << "XMLfile::Node::value_bool: invalid node" << endl;
+		std::cerr << "XMLfile::Node::value_bool: invalid node" << std::endl;
 	return value;
 }
 
@@ -677,12 +653,12 @@ void XMLfile::Node::printXML(std::ostream& ostrm) const
 	{
 		if(m_type==ATTRIBUTE_Node)
 		{
-			cerr << "XMLfile::Node::printstrm: no XML representation of an attribute node present" << endl;
+			std::cerr << "XMLfile::Node::printstrm: no XML representation of an attribute node present" << std::endl;
 		} else {
 			ostrm << *(static_cast<const t_XMLelement*>(m_xmlnode));
 		}
 	} else {
-		cerr << "XMLfile::Node::printstrm: invalid node" << endl;
+		std::cerr << "XMLfile::Node::printstrm: invalid node" << std::endl;
 	}
 }
 
@@ -690,9 +666,9 @@ void XMLfile::Node::print(std::ostream& ostrm) const
 {
 	if(*this)
 	{
-		ostrm << m_nodepath << ":\t" << m_xmlnode->name() << "=" << m_xmlnode->value() << endl;
+		ostrm << m_nodepath << ":\t" << m_xmlnode->name() << "=" << m_xmlnode->value() << std::endl;
 	} else {
-		ostrm << "invalid node" << endl;
+		ostrm << "invalid node" << std::endl;
 	}
 }
 
@@ -761,12 +737,12 @@ template unsigned long XMLfile::Query::getNodeValue(std::string& value) const;
 
 void XMLfile::Query::printXML(std::ostream& ostrm) const
 {
-	for(vector<Node>::const_iterator pos=m_nodes.begin();pos!=m_nodes.end();++pos)
+	for(std::vector<Node>::const_iterator pos=m_nodes.begin();pos!=m_nodes.end();++pos)
 		(*pos).printXML(ostrm);
 }
 
 void XMLfile::Query::print(std::ostream& ostrm) const
 {
-	for(vector<Node>::const_iterator pos=m_nodes.begin();pos!=m_nodes.end();++pos)
+	for(std::vector<Node>::const_iterator pos=m_nodes.begin();pos!=m_nodes.end();++pos)
 		(*pos).print(ostrm);
 }

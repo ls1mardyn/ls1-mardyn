@@ -17,11 +17,11 @@ class Comp2Param {
         /** Create a new empty parameter stream. */
         Comp2Param() : m_numcomp(0), m_ssparatbl(0,0) {}
 
-        /** Create a new interaction parameter hash table initialized with 
+        /** Create a new interaction parameter hash table initialized with
          * the given components and parameters.
          */
-        Comp2Param(const std::vector<Component>& components, 
-				   const std::vector<double>& mixcoeff, 
+        Comp2Param(const std::vector<Component>& components,
+				   const std::vector<double>& mixcoeff,
 				   double epsRF, double rc, double rcLJ) :
 			m_numcomp(components.size()), m_ssparatbl(m_numcomp,m_numcomp)
 		{

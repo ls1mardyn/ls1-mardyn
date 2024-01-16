@@ -110,7 +110,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_comm = domainDecomp.getCommunicator();
 #endif
 #if WIGNER == 1
-	//global_log->error() << "not supported yet" << endl;
+	//global_log->error() << "not supported yet" << std::endl;
 	Simulation::exit(-1);
 #endif
 #ifdef ENABLE_MPI
@@ -1040,7 +1040,7 @@ void UniformPseudoParticleContainer::generateP2PTasks(qsched *scheduler) {
 	payload.leafNodesContainer = _leafContainer;
 
 
-	global_log->info() << "Generating P2P task ids" << std::endl;
+	Log::global_log->info() << "Generating P2P task ids" << std::endl;
 	for (auto z = 0; z < cellsPerDim; ++z) {
 		for (auto y = 0; y < cellsPerDim; ++y) {
 			for (auto x = 0; x < cellsPerDim; ++x) {
@@ -1092,7 +1092,7 @@ void UniformPseudoParticleContainer::generateP2PTasks(qsched *scheduler) {
 	} /* end for-z */
 
 	// set dependencies
-	global_log->info() << "Setting P2P task dependencies" << std::endl;
+	Log::global_log->info() << "Setting P2P task dependencies" << std::endl;
 	for (auto z = 0; z < cellsPerDim - 1; z += payload.taskBlockSize[2] - 1) {
 		for (auto y = 0; y < cellsPerDim - 1; y += payload.taskBlockSize[1] - 1) {
 			for (auto x = 0; x < cellsPerDim - 1; x += payload.taskBlockSize[0] - 1) {
@@ -2635,19 +2635,19 @@ void UniformPseudoParticleContainer::M2LCompleteCell(int targetId, int level, in
 																	 cellSize);
 
 //                cout << "Level: " << level
-//                     << " | Target: " << setw(5) << targetId
-//                     << " (" << setw(2) << targetCoords[0]
-//                     << ", " << setw(2) << targetCoords[1]
-//                     << ", " << setw(2) << targetCoords[2]
-//                     << ") | Source: " << setw(5) << sourceId
-//                     << " (" << setw(2) << sourceCoords[0]
-//                     << ", " << setw(2) << sourceCoords[1]
-//                     << ", " << setw(2) << sourceCoords[2]
+//                     << " | Target: " << std::setw(5) << targetId
+//                     << " (" << std::setw(2) << targetCoords[0]
+//                     << ", " << std::setw(2) << targetCoords[1]
+//                     << ", " << std::setw(2) << targetCoords[2]
+//                     << ") | Source: " << std::setw(5) << sourceId
+//                     << " (" << std::setw(2) << sourceCoords[0]
+//                     << ", " << std::setw(2) << sourceCoords[1]
+//                     << ", " << std::setw(2) << sourceCoords[2]
 //                     << ") | tf: "
-//                     << "(" << setw(2) << sourceRootCoords[0] + x - targetCoords[0]
-//                     << ", " << setw(2) << sourceRootCoords[1] + y - targetCoords[1]
-//                     << ", " << setw(2) << sourceRootCoords[2] + z - targetCoords[2]
-//                     << ")" << endl;
+//                     << "(" << std::setw(2) << sourceRootCoords[0] + x - targetCoords[0]
+//                     << ", " << std::setw(2) << sourceRootCoords[1] + y - targetCoords[1]
+//                     << ", " << std::setw(2) << sourceRootCoords[2] + z - targetCoords[2]
+//                     << ")" << std::endl;
 
 				// calculate single M2L
 				if(FFTSettings::USE_ORDER_REDUCTION){
@@ -4406,7 +4406,7 @@ void UniformPseudoParticleContainer::printTimers() {
 #endif
 }
 
-vector<vector<MpCell>> &UniformPseudoParticleContainer::getMpCellGlobalTop() {
+std::vector<std::vector<MpCell>> &UniformPseudoParticleContainer::getMpCellGlobalTop() {
 	return _mpCellGlobalTop;
 }
 

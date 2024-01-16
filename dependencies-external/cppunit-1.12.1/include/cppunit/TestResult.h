@@ -41,9 +41,9 @@ class TestListener;
  * TestResult supplies a template method 'setSynchronizationObject()'
  * so that subclasses can provide mutual exclusion in the face of multiple
  * threads.  This can be useful when tests execute in one thread and
- * they fill a subclass of TestResult which effects change in another 
+ * they fill a subclass of TestResult which effects change in another
  * thread.  To have mutual exclusion, override setSynchronizationObject()
- * and make sure that you create an instance of ExclusiveZone at the 
+ * and make sure that you create an instance of ExclusiveZone at the
  * beginning of each method.
  *
  * \see Test, TestListener, TestResultCollector, Outputter.
@@ -63,7 +63,7 @@ public:
 
   /// Resets the stop flag.
   virtual void reset();
-  
+
   /// Stop testing
   virtual void stop();
 
@@ -73,7 +73,7 @@ public:
   /// Informs TestListener that a test will be started.
   virtual void startTest( Test *test );
 
-  /*! \brief Adds an error to the list of errors. 
+  /*! \brief Adds an error to the list of errors.
    *  The passed in exception
    *  caused the error
    */
@@ -94,7 +94,7 @@ public:
   virtual void endSuite( Test *test );
 
   /*! \brief Run the specified test.
-   * 
+   *
    * Calls startTestRun(), test->run(this), and finally endTestRun().
    */
   virtual void runTest( Test *test );
@@ -131,14 +131,14 @@ protected:
 
   virtual void startTestRun( Test *test );
   virtual void endTestRun( Test *test );
-  
+
 protected:
   typedef CppUnitDeque<TestListener *> TestListeners;
   TestListeners m_listeners;
   ProtectorChain *m_protectorChain;
   bool m_stop;
 
-private: 
+private:
   TestResult( const TestResult &other );
   TestResult &operator =( const TestResult &other );
 };

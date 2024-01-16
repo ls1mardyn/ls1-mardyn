@@ -65,7 +65,7 @@ std::ostream& operator<<( std::ostream& o, const fill_width& a );
  *
  * call e.g. like this:
  *
- * std::vector<string> fields;
+ * std::vector<std::string> fields;
  * std::string str = "split:this:string";
  * fields = split( fields, str, ":", split_type::no_empties );
  *

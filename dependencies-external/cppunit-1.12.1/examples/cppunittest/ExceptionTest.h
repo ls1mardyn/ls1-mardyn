@@ -30,7 +30,7 @@ public:
 private:
   ExceptionTest( const ExceptionTest &copy );
   void operator =( const ExceptionTest &copy );
-  void checkIsSame( CPPUNIT_NS::Exception &e, 
+  void checkIsSame( CPPUNIT_NS::Exception &e,
                     CPPUNIT_NS::Exception &other );
 
 private:

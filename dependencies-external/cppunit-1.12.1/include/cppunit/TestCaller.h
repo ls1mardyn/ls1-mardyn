@@ -36,7 +36,7 @@ struct ExpectedExceptionTraits
 #if CPPUNIT_USE_TYPEINFO_NAME
     throw Exception( Message(
                          "expected exception not thrown",
-                         "Expected exception type: " + 
+                         "Expected exception type: " +
                            TypeInfoHelper::getClassName( typeid( ExceptionType ) ) ) );
 #else
     throw Exception( "expected exception not thrown" );
@@ -45,7 +45,7 @@ struct ExpectedExceptionTraits
 };
 
 
-/*! \brief (Implementation) Traits specialization used by TestCaller to 
+/*! \brief (Implementation) Traits specialization used by TestCaller to
  * expect no exception.
  *
  * This class is an implementation detail. You should never use this class directly.
@@ -67,13 +67,13 @@ struct ExpectedExceptionTraits<NoExceptionExpected>
 /*! \brief Generate a test case from a fixture method.
  * \ingroup WritingTestFixture
  *
- * A test caller provides access to a test case method 
- * on a test fixture class.  Test callers are useful when 
- * you want to run an individual test or add it to a 
+ * A test caller provides access to a test case method
+ * on a test fixture class.  Test callers are useful when
+ * you want to run an individual test or add it to a
  * suite.
- * Test Callers invoke only one Test (i.e. test method) on one 
+ * Test Callers invoke only one Test (i.e. test method) on one
  * Fixture of a TestFixture.
- * 
+ *
  * Here is an example:
  * \code
  * class MathTest : public CppUnit::TestFixture {
@@ -96,15 +96,15 @@ struct ExpectedExceptionTraits<NoExceptionExpected>
  *
  * You can use a TestCaller to bind any test method on a TestFixture
  * class, as long as it accepts void and returns void.
- * 
+ *
  * \see TestCase
  */
 
 template <class Fixture>
 class TestCaller : public TestCase
-{ 
+{
   typedef void (Fixture::*TestMethod)();
-    
+
 public:
   /*!
    * Constructor for TestCaller. This constructor builds a new Fixture
@@ -113,7 +113,7 @@ public:
    * \param test the method this TestCaller calls in runTest()
    */
   TestCaller( std::string name, TestMethod test ) :
-	    TestCase( name ), 
+	    TestCase( name ),
 	    m_ownFixture( true ),
 	    m_fixture( new Fixture() ),
 	    m_test( test )
@@ -121,7 +121,7 @@ public:
   }
 
   /*!
-   * Constructor for TestCaller. 
+   * Constructor for TestCaller.
    * This constructor does not create a new Fixture instance but accepts
    * an existing one as parameter. The TestCaller will not own the
    * Fixture object.
@@ -130,15 +130,15 @@ public:
    * \param fixture the Fixture to invoke the test method on.
    */
   TestCaller(std::string name, TestMethod test, Fixture& fixture) :
-	    TestCase( name ), 
+	    TestCase( name ),
 	    m_ownFixture( false ),
 	    m_fixture( &fixture ),
 	    m_test( test )
   {
   }
-    
+
   /*!
-   * Constructor for TestCaller. 
+   * Constructor for TestCaller.
    * This constructor does not create a new Fixture instance but accepts
    * an existing one as parameter. The TestCaller will own the
    * Fixture object and delete it in its destructor.
@@ -147,21 +147,21 @@ public:
    * \param fixture the Fixture to invoke the test method on.
    */
   TestCaller(std::string name, TestMethod test, Fixture* fixture) :
-	    TestCase( name ), 
+	    TestCase( name ),
 	    m_ownFixture( true ),
 	    m_fixture( fixture ),
 	    m_test( test )
   {
   }
-    
-  ~TestCaller() 
+
+  ~TestCaller()
   {
     if (m_ownFixture)
       delete m_fixture;
   }
 
   void runTest()
-  { 
+  {
 //	  try {
 	    (m_fixture->*m_test)();
 //	  }
@@ -170,25 +170,25 @@ public:
 //	  }
 
 //  	ExpectedExceptionTraits<ExpectedException>::expectedException();
-  }  
+  }
 
   void setUp()
-  { 
-  	m_fixture->setUp (); 
+  {
+  	m_fixture->setUp ();
   }
 
   void tearDown()
-  { 
-	  m_fixture->tearDown (); 
+  {
+	  m_fixture->tearDown ();
   }
 
   std::string toString() const
-  { 
-  	return "TestCaller " + getName(); 
+  {
+  	return "TestCaller " + getName();
   }
 
-private: 
-  TestCaller( const TestCaller &other ); 
+private:
+  TestCaller( const TestCaller &other );
   TestCaller &operator =( const TestCaller &other );
 
 private:

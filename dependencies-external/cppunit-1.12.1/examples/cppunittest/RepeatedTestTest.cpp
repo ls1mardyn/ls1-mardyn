@@ -18,7 +18,7 @@ RepeatedTestTest::~RepeatedTestTest()
 }
 
 
-void 
+void
 RepeatedTestTest::setUp()
 {
   m_test = new RunCountTest();
@@ -26,14 +26,14 @@ RepeatedTestTest::setUp()
 }
 
 
-void 
+void
 RepeatedTestTest::tearDown()
 {
   delete m_repeatedTest;
 }
 
 
-void 
+void
 RepeatedTestTest::testRun()
 {
   CPPUNIT_NS::TestResult result;

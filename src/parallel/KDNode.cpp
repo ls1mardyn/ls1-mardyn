@@ -13,7 +13,6 @@
 
 #include <algorithm> /* for min and max ?*/
 
-using namespace Log;
 
 KDNode* KDNode::findAreaForProcess(int rank) {
 	if (_numProcs == 1) {
@@ -285,7 +284,7 @@ void KDNode::plotNode(const std::string& vtkFile, const std::vector<double>* pro
 	plotNode(writer);
 	writer.writeVTKFile(vtkFile);
 #else
-	global_log->warning() << "KDNode::plotNode() requires vtk output. Compile with -DVTK!"<< std::endl;
+	Log::global_log->warning() << "KDNode::plotNode() requires vtk output. Compile with -DVTK!"<< std::endl;
 #endif
 }
 
@@ -314,7 +313,7 @@ void KDNode::plotNode(VTKGridWriterImplementation& writer) const {
 		writer.plotCell(cell);
 	}
 #else
-	global_log->warning() << "KDNode::plotNode() requires vtk output. Compile with -DVTK!" << std::endl;
+	Log::global_log->warning() << "KDNode::plotNode() requires vtk output. Compile with -DVTK!" << std::endl;
 #endif
 }
 

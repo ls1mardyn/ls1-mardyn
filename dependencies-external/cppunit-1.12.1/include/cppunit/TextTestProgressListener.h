@@ -7,7 +7,7 @@
 CPPUNIT_NS_BEGIN
 
 
-/*! 
+/*!
  * \brief TestListener that show the status of each TestCase test result.
  * \ingroup TrackingTestExecution
  */
@@ -25,7 +25,7 @@ public:
 
   void addFailure( const TestFailure &failure );
 
-  void endTestRun( Test *test, 
+  void endTestRun( Test *test,
                    TestResult *eventManager );
 
 private:

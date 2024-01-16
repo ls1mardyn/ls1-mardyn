@@ -6,7 +6,7 @@
 #include <fstream>
 
 class ParticleContainer;
-class DomainDecompBase; 
+class DomainDecompBase;
 class Domain;
 
 /** @brief The GammaWriter plugin writes the surface tension to a file.
@@ -59,7 +59,7 @@ public:
 
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain) override {}
-	
+
 	std::string getPluginName() override { return "GammaWriter"; }
 	static PluginBase* createInstance() { return new GammaWriter(); }
 

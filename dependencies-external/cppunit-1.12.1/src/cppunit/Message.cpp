@@ -71,14 +71,14 @@ Message::shortDescription() const
 }
 
 
-int 
+int
 Message::detailCount() const
 {
   return m_details.size();
 }
 
 
-std::string 
+std::string
 Message::detailAt( int index ) const
 {
   if ( index < 0  ||  index >= detailCount() )
@@ -88,7 +88,7 @@ Message::detailAt( int index ) const
 }
 
 
-std::string 
+std::string
 Message::details() const
 {
   std::string details;
@@ -102,21 +102,21 @@ Message::details() const
 }
 
 
-void 
+void
 Message::clearDetails()
 {
   m_details.clear();
 }
 
 
-void 
+void
 Message::addDetail( const std::string &detail )
 {
   m_details.push_back( detail );
 }
 
 
-void 
+void
 Message::addDetail( const std::string &detail1,
                     const std::string &detail2 )
 {
@@ -125,7 +125,7 @@ Message::addDetail( const std::string &detail1,
 }
 
 
-void 
+void
 Message::addDetail( const std::string &detail1,
                     const std::string &detail2,
                     const std::string &detail3 )
@@ -135,23 +135,23 @@ Message::addDetail( const std::string &detail1,
 }
 
 
-void 
+void
 Message::addDetail( const Message &message )
 {
-  m_details.insert( m_details.end(), 
-                    message.m_details.begin(), 
+  m_details.insert( m_details.end(),
+                    message.m_details.begin(),
                     message.m_details.end() );
 }
 
 
-void 
+void
 Message::setShortDescription( const std::string &shortDescription )
 {
   m_shortDescription = shortDescription;
 }
 
 
-bool 
+bool
 Message::operator ==( const Message &other ) const
 {
   return m_shortDescription == other.m_shortDescription  &&
@@ -159,7 +159,7 @@ Message::operator ==( const Message &other ) const
 }
 
 
-bool 
+bool
 Message::operator !=( const Message &other ) const
 {
   return !( *this == other );

@@ -23,12 +23,12 @@ class Expression
 	public:
 		typedef long Tint;
 		typedef double Tfloat;
-		
+
 		enum Evaltype {valtypeNONE, valtypeINT, valtypeFLOAT};
 		typedef enum Evaltype Tvaltype;
 		enum Etraversetype { traversetypePREFIX, traversetypeINFIX, traversetypePOSTFIX };
 		typedef enum Etraversetype Ttraversetype;
-		
+
 	// Value -----------------------------------------------------------------------------------
 	class Value
 	{
@@ -39,7 +39,7 @@ class Expression
 				Tfloat valFloat;
 			};
 			typedef union TUvalue Tvalue;
-			
+
 			/// Constructor
 			Value() : _type(valtypeNONE) { _value.valInt=0; }
 			/// Constructor
@@ -63,10 +63,10 @@ class Expression
 			//Value(Tfloat valFloat) { _type=valtypeFLOAT; _value.valFloat=valFloat; }
 			Value(float valFloat) { _type=valtypeFLOAT; _value.valFloat=Tfloat(valFloat); }
 			Value(double valFloat) { _type=valtypeFLOAT; _value.valFloat=Tfloat(valFloat); }
-			
+
 			/// get value type
 			/**
-				parameter		Evaltype	
+				parameter		Evaltype
 				retval	Tvaltype	value type
 			**/
 			Tvaltype getType() const { return _type; }
@@ -98,7 +98,7 @@ class Expression
 					default: return 0.;
 				}
 			}
-			operator Tfloat() const { return getValueFloat(); } 
+			operator Tfloat() const { return getValueFloat(); }
 			/// get value as integer number
 			/**
 				retval		Tint	value
@@ -112,7 +112,7 @@ class Expression
 					default: return 0.;
 				}
 			}
-			operator Tint() const { return getValueInt(); } 
+			operator Tint() const { return getValueInt(); }
 			/// write value to stream
 			/**
 				parameter		std::ostrm&	stream
@@ -139,13 +139,13 @@ class Expression
 			const Value operator-(Value const& v) const;
 			const Value operator*(Value const& v) const;
 			const Value operator/(Value const& v) const;
-		
+
 		private:
 			Tvaltype _type;
 			Tvalue _value;
 	};
 	// ----------------------------------------------------------------------------------- Value
-	
+
 	class Variable;
 	// VariableGroup ---------------------------------------------------------------------------
 	/**
@@ -164,13 +164,13 @@ class Expression
 			bool removeVariable(const Variable* var)
 			{	if(_variables.count(var)) { _variables.erase(var); return true; } else return false;	}
 			unsigned int countVariables() const { return _variables.size(); }
-			operator unsigned int() const { return countVariables(); } 
+			operator unsigned int() const { return countVariables(); }
 		private:
 			std::string _name;
 			std::set<const Variable*> _variables;
 	};
 	// --------------------------------------------------------------------------- VariableGroup
-	
+
 	// Variable --------------------------------------------------------------------------------
 	class Variable
 	{
@@ -200,9 +200,9 @@ class Expression
 			Tvaltype getType() const { return _value.getType(); }
 			Value getValue() const { return _value; }
 			Tfloat getValueFloat() const { return _value.getValueFloat(); }
-			operator Tfloat() const { return getValueFloat(); } 
+			operator Tfloat() const { return getValueFloat(); }
 			Tint getValueInt() const { return _value.getValueInt(); }
-			operator Tint() const { return getValueInt(); } 
+			operator Tint() const { return getValueInt(); }
 			bool isInt() const { return _value.isInt(); }
 			bool isFloat() const { return _value.isFloat(); }
 			const VariableGroup* getVariableGroup() const { return _vargrp; }
@@ -227,20 +227,20 @@ class Expression
 				write(oss);
 				return oss.str();
 			}
-		
+
 		private:
 			std::string _name;
 			Value _value;
 			VariableGroup* _vargrp;
 	};
 	// -------------------------------------------------------------------------------- Variable
-	
+
 	// VariableSet -----------------------------------------------------------------------------
 	class VariableSet
 	{
 		public:
 			VariableSet() {};
-			
+
 			const std::set<const VariableGroup*> getVariableGroupNames() const
 			{
 				std::set<const VariableGroup*> vargroups;
@@ -259,7 +259,7 @@ class Expression
 					return (_vargroups.find(name)->second).countVariables();
 				else
 					return 0;
-				
+
 			}
 			unsigned int VariablesCount() const { return _variables.size(); }
 			bool existVariable(const std::string& name) const { return _variables.count(name)>0; }
@@ -298,15 +298,15 @@ class Expression
 			{	return setVariable(std::string(vgrpname+":"+varname),val);	}
 			//template <class T> bool setVariable(const char* vgrpname, const char* varname, T val=0) { return setVariable(std::string(vgrpname),std::string(varname),val); }
 			bool removeVariable(const std::string& name);
-			
+
 		private:
 			std::map<std::string,Variable> _variables;
 			std::map<std::string,VariableGroup> _vargroups;
 	};
 	// ----------------------------------------------------------------------------- VariableSet
-	
+
 	// Node and derivatives --------------------------------------------------------------------
-	
+
 	// Node ------------------------------------------------------------------------------------
 	class Node
 	{
@@ -344,14 +344,14 @@ class Expression
 			void write() const { write(std::cout); }
 			void traverse(std::list<const Node*>& nodelist, enum Etraversetype traversetype=traversetypePOSTFIX) const;
 			void writeSubExpr(std::ostream& ostrm=std::cout, enum Etraversetype traversetype=traversetypePOSTFIX, char sep=' ') const;
-			
+
 		protected:
 			Node* _children[2];
 			Node* _parent;
 			short _priority;
 	};
 	// ------------------------------------------------------------------------------------ Node
-	
+
 	// NodeConstant ----------------------------------------------------------------------------
 	class NodeConstant : public Node
 	{
@@ -367,7 +367,7 @@ class Expression
 			Value _value;
 	};
 	// ---------------------------------------------------------------------------- NodeConstant
-	
+
 	// NodeVariable ----------------------------------------------------------------------------
 	class NodeVariable : public Node
 	{
@@ -382,7 +382,7 @@ class Expression
 			Variable* _var;
 	};
 	// ---------------------------------------------------------------------------- NodeVariable
-	
+
 	// NodeOperation2 --------------------------------------------------------------------------
 	class NodeOperation2 : public Node
 	{
@@ -407,7 +407,7 @@ class Expression
 			char _operator;
 	};
 	// -------------------------------------------------------------------------- NodeOperation2
-	
+
 	// NodeFunction ----------------------------------------------------------------------------
 	class NodeFunction : public Node
 	{
@@ -443,9 +443,9 @@ class Expression
 			              , functypeMarkerVarSet2Arg	// marker for functions using the VariableSet with 2 arguments ---
 			              , functypeSTO	// store value to <id>
 			               };
-			
+
 			static Efunctype functype(const std::string& name);
-			
+
 			NodeFunction(Efunctype func
 			            ,Node* child1, Node* child0=NULL, Node* parent=NULL)
 				: Node(child0,child1,parent,0), _functype(func) {}
@@ -455,12 +455,12 @@ class Expression
 			Tvaltype valueType() const;
 			Value evaluate() const;
 			void write(std::ostream& ostrm) const;
-			
+
 		protected:
 			enum Efunctype _functype;
 	};
 	// ---------------------------------------------------------------------------- NodeFunction
-	
+
 	// NodeFunctionVarSet ----------------------------------------------------------------------
 	/*
 		Functions with the capability to store and load values from the given VariableSet
@@ -469,7 +469,7 @@ class Expression
 	{
 		public:
 			// use enum Efunctype defined in NodeFunction
-			
+
 			NodeFunctionVarSet(Efunctype func, VariableSet *variableset
 			                 ,Node* child1, Node* child0=NULL, Node* parent=NULL)
 				: NodeFunction(func,child1,child0,parent), _variableset(variableset) {}
@@ -477,14 +477,14 @@ class Expression
 			Tvaltype valueType() const;
 			Value evaluate() const;
 			void write(std::ostream& ostrm) const;
-			
+
 		protected:
 			VariableSet* _variableset;
 	};
 	// ---------------------------------------------------------------------- NodeFunctionVarSet
-	
+
 	// -------------------------------------------------------------------- Node and derivatives
-	
+
 		Expression(const std::string& label=std::string(), VariableSet* varset=NULL)
 		          : _rootnode(NULL), _label(label), _variableset(varset), _variablesetcreated(false)
 		{
@@ -500,13 +500,13 @@ class Expression
 			clear();
 			if(_variablesetcreated) delete _variableset;
 		}
-		
+
 		void clear() { if(_rootnode) { delete(_rootnode); _rootnode=NULL; } }
 		void setLabel(const std::string& label) { _label=label; }
 		const std::string& getLabel() const { return _label; }
-		
+
 		void initializeRPN(const std::string& exprstr, bool genlabel=true);
-		
+
 		Expression& operator=(const Expression& rhs )
 		{
 			_label=rhs._label;
@@ -518,7 +518,7 @@ class Expression
 			initializeRPN(oss.str());
 			return *this;
 		}
-		
+
 		bool isEmpty() const { return _rootnode==NULL; }
 		bool isInt() const { if(_rootnode) return _rootnode->isInt(); else return false; }
 		bool isFloat() const { if(_rootnode) return _rootnode->isFloat(); else return false; }
@@ -536,14 +536,14 @@ class Expression
 			else
 				return 0;
 		}
-		
-		VariableSet* getVariableSet() { return _variableset; } 
+
+		VariableSet* getVariableSet() { return _variableset; }
 		Variable* getVariable(const std::string& name) { return _variableset->getVariable(name); }
 		unsigned int VariablesCount() const { return _variableset->VariablesCount(); }
 		bool existVariable(const std::string& name) const { return _variableset->existVariable(name); }
 		unsigned int VariableGroupsCount() const { return _variableset->VariableGroupsCount(); }
 		bool existVariableGroup(const std::string& name) const { return _variableset->existVariableGroup(name); }
-		
+
 		void writeExpr(std::ostream& ostrm=std::cout, enum Etraversetype traversetype=traversetypePOSTFIX, char sep=' ') const
 		{
 			if(_rootnode) _rootnode->writeSubExpr(ostrm,traversetype,sep);
@@ -559,7 +559,7 @@ class Expression
 			_label=operator std::string();
 			//_label=static_cast<std::string>(*this);
 		}
-		
+
 	protected:
 		Node* _rootnode;
 		std::string _label;

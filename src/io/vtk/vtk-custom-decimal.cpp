@@ -107,13 +107,13 @@ namespace xsd
       void
       operator<< (xml_schema::list_stream& ls, const xml_schema::as_decimal& d)
       {
-        
+
         std::ostringstream os;
         os.imbue (std::locale::classic ());
         os.precision (std::numeric_limits<long double>::digits10);
 
         os << std::fixed << d.x;
-      
+
         // Remove the trailing zeros and the decimal point if necessary.
         //
         std::string s (os.str ());
@@ -126,7 +126,7 @@ namespace xsd
 
         if (n != size)
           s.resize (n);
-	
+
 	      ls.os_ << s;
       }
     }

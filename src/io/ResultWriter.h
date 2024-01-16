@@ -53,7 +53,7 @@ public:
 
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain);
-	
+
 	std::string getPluginName() {
 		return std::string("ResultWriter");
 	}

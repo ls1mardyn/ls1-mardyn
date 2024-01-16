@@ -7,14 +7,14 @@
 #include "KineticProfile.h"
 
 
-void TemperatureProfile::output(string prefix, long unsigned accumulatedDatasets) {
+void TemperatureProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
 
-    global_log->info() << "[TemperatureProfile] output" << std::endl;
+    Log::global_log->info() << "[TemperatureProfile] output" << std::endl;
 
     // Generate Outfile
     _accumulatedDatasets = accumulatedDatasets;
     _profilePrefix = prefix + ".Temppr";
-    ofstream outfile(_profilePrefix.c_str());
+    std::ofstream outfile(_profilePrefix.c_str());
     outfile.precision(6);
 
     // Write Header
@@ -31,7 +31,7 @@ void TemperatureProfile::output(string prefix, long unsigned accumulatedDatasets
     outfile.close();
 }
 
-void TemperatureProfile::writeDataEntry(unsigned long uID, ofstream &outfile) const {
+void TemperatureProfile::writeDataEntry(unsigned long uID, std::ofstream &outfile) const {
     int dofs = _dofProfile->getGlobalDOF(uID);
     if(dofs == 0){
         outfile << 0.0 << "\t";

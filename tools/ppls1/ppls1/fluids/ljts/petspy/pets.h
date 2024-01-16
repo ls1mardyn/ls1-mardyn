@@ -4,7 +4,7 @@
 > Comparison of Macro- and Microscopic Solutions of the Riemann Problem II. Two-Phase Shock Tube
 > Journal of Computational Physics (2020)
 >
-> Contact: 
+> Contact:
 > T. Hitz:  hitz@iag.uni-stuttgart.de
 > S. Joens: steven.joens@iag.uni-stuttgart.de
 > Institute of Aerodynamics and Gas Dynamics (IAG)
@@ -12,12 +12,12 @@
 > Pfaffenwaldring 21
 > 70569 Stuttgart
 > Germany
-> 
+>
 > The PeTS EOS was originally published in
-> 
-> M. Heier, S. Stephan, J. Liu, W. G. Chapman, H. Hasse, K. Langenbach, 
-> Equation of state for the Lennard-Jones truncated and shifted fluid with a cut-off radius of 2.5 sigma based on perturbation 
-> theory and its applications to interfacial thermodynamics, 
+>
+> M. Heier, S. Stephan, J. Liu, W. G. Chapman, H. Hasse, K. Langenbach,
+> Equation of state for the Lennard-Jones truncated and shifted fluid with a cut-off radius of 2.5 sigma based on perturbation
+> theory and its applications to interfacial thermodynamics,
 > Molecular Physics 116 (2018) 2083–2094.
 > https://doi.org/10.1080/00268976.2018.1447153
 ===================================================================================================================================*/
@@ -64,6 +64,7 @@
 #define PP_GWP20                                  49        /*         20-year global warming potential                          */
 #define PP_GWP500                                 50        /*         500-year global warming potential                         */
 #define PP_GMASS                                  51        /* J/kg    Mass specific Gibbs energy                                */
+#define PP_GMASS_MS2                              512       /* J/kg    Chemical potential in accordance with ms2                     */
 #define PP_HELMHOLTZMASS                          52        /* J/kg    Mass specific Helmholtz energy                            */
 #define PP_HELMHOLTZMOLAR                         53        /* J/mol   Molar specific Helmholtz energy                           */
 #define PP_HH                                     54        /*         Health hazard                                             */
@@ -102,7 +103,7 @@
 #define PP_PSAT                                   87        /*                                                                   */
 #define PP_H0                                     88        /* J/kg    Enthalpy of formation                                     */
 #define PP_S0                                     89        /* J/kg/K  Entropy of formation                                      */
-#define PP_dP_dUVOL                               90        /*         P derivated by UVOL                                       */ 
+#define PP_dP_dUVOL                               90        /*         P derivated by UVOL                                       */
 #define PP_dP_dUMASS_DMASS                        91        /*         P derivated by UMASS at constant DMASS                    */
 #define PP_dP_dDMASS_UMASS                        92        /*         P derivated by DMASS at constant UMASS                    */
 #define PP_RHO_SPNDL                              93        /* kg/m^3  density of the spinodal                                   */

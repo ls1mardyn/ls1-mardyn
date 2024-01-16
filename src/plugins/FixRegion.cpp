@@ -29,20 +29,20 @@ void FixRegion::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 	// SANITY CHECK
 	if (_xMin < 0. || _yMin < 0. || _zMin < 0. || _xMax > _boxLength[0] || _yMax > _boxLength[1] ||
 		_zMax > _boxLength[2]) {
-		global_log->error() << "[FixRegion] INVALID INPUT!!! DISABLED!" << std::endl;
-		global_log->error() << "[FixRegion] HALTING SIMULATION" << std::endl;
+		Log::global_log->error() << "[FixRegion] INVALID INPUT!!! DISABLED!" << std::endl;
+		Log::global_log->error() << "[FixRegion] HALTING SIMULATION" << std::endl;
 		// HALT SIM
 		Simulation::exit(1);
 		return;
 	}
 
-	global_log->info() << "[FixRegion] settings:" << std::endl;
-	global_log->info() << "                  xmin: " << _xMin << std::endl;
-	global_log->info() << "                  ymin: " << _yMin << std::endl;
-	global_log->info() << "                  zmin: " << _zMin << std::endl;
-	global_log->info() << "                  xmax: " << _xMax << std::endl;
-	global_log->info() << "                  ymax: " << _yMax << std::endl;
-	global_log->info() << "                  zmax: " << _zMax << std::endl;
+	Log::global_log->info() << "[FixRegion] settings:" << std::endl;
+	Log::global_log->info() << "                  xmin: " << _xMin << std::endl;
+	Log::global_log->info() << "                  ymin: " << _yMin << std::endl;
+	Log::global_log->info() << "                  zmin: " << _zMin << std::endl;
+	Log::global_log->info() << "                  xmax: " << _xMax << std::endl;
+	Log::global_log->info() << "                  ymax: " << _yMax << std::endl;
+	Log::global_log->info() << "                  zmax: " << _zMax << std::endl;
 
 	_molCount = 0;
 
@@ -69,7 +69,7 @@ void FixRegion::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 	domainDecomp->collCommAllreduceSum();
 	_molCount = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
-	global_log->info() << _molCount << " molecules are inside a fixed region" << std::endl;
+	Log::global_log->info() << _molCount << " molecules are inside a fixed region" << std::endl;
 }
 
 void FixRegion::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,

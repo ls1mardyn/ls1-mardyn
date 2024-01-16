@@ -9,8 +9,6 @@
 #include <iomanip>
 #include <algorithm>
 
-using namespace std;
-
 namespace bhfmm {
 
 // CONSTRUCTORS //
@@ -410,16 +408,16 @@ void SolidHarmonicsExpansion::rotatePhi(const double* CosSinPhi, int negate) {
 			const double val_M_c = acc_C(l, m);
 			const double val_M_s = acc_S(l, m);
 
-			mardyn_assert(!isnan(val_M_c));
-			mardyn_assert(!isnan(val_M_s));
-			mardyn_assert(!isnan(this->acc_C(l, m)));
-			mardyn_assert(!isnan(this->acc_S(l, m)));
+			mardyn_assert(!std::isnan(val_M_c));
+			mardyn_assert(!std::isnan(val_M_s));
+			mardyn_assert(!std::isnan(this->acc_C(l, m)));
+			mardyn_assert(!std::isnan(this->acc_S(l, m)));
 
 			acc_C(l, m) = (CosSinPhi[2*m]*val_M_c + negate*CosSinPhi[2*m+1]*val_M_s);
 			acc_S(l, m) = (CosSinPhi[2*m]*val_M_s - negate*CosSinPhi[2*m+1]*val_M_c);
 
-			mardyn_assert(!isnan(this->acc_C(l, m)));
-			mardyn_assert(!isnan(this->acc_S(l, m)));
+			mardyn_assert(!std::isnan(this->acc_C(l, m)));
+			mardyn_assert(!std::isnan(this->acc_S(l, m)));
 		}
 	}
 }
@@ -641,22 +639,21 @@ Vector3<double> forceLAndGradM(const SolidHarmonicsExpansion & LE, const SolidHa
 
 void SolidHarmonicsExpansion::print() const
 {
-	using namespace std;
-	int precisionSetting = cout.precision( );
-	ios::fmtflags flagSettings = cout.flags();
+	int precisionSetting = std::cout.precision( );
+	std::ios::fmtflags flagSettings = std::cout.flags();
 
-	cout.setf(ios::dec | ios::showpos | ios::showpoint);
-	cout.precision(5);
+	std::cout.setf(std::ios::dec | std::ios::showpos | std::ios::showpoint);
+	std::cout.precision(5);
 
 	for (int l = 0; l <= _order; ++l) {
 		for (int m = 0; m <= l; ++m) {
-			std::cout << "(" <<setw(10) << acc_c_C(l,m) << ", " << setw(10) << acc_c_S(l,m) << ")   ";
+			std::cout << "(" << std::setw(10) << acc_c_C(l,m) << ", " << std::setw(10) << acc_c_S(l,m) << ")   ";
 		}
 		std::cout << std::endl;
 	}
 
-	cout.precision(precisionSetting);
-	cout.flags(flagSettings);
+	std::cout.precision(precisionSetting);
+	std::cout.flags(flagSettings);
 }
 
 } /* namespace bhfmm */

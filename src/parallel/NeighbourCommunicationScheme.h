@@ -17,7 +17,7 @@ class ZonalMethod;
 class HaloRegion;
 class NeighbourCommunicationScheme {
 	friend class NeighbourCommunicationSchemeTest;
-	
+
 public:
 	/**
 	 * Specifies the amount of sequential communication steps needed for the communication scheme.
@@ -97,13 +97,13 @@ protected:
 
 	//! vector of neighbours. The first dimension should be of size getCommDims().
 	std::vector<std::vector<CommunicationPartner>> *_neighbours;
-	
+
 	// -------------------------------------------------------------------------
 	std::vector<std::vector<CommunicationPartner>> *_haloExportForceImportNeighbours;
 	std::vector<std::vector<CommunicationPartner>> *_haloImportForceExportNeighbours;
 	std::vector<std::vector<CommunicationPartner>> *_leavingExportNeighbours;
 	std::vector<std::vector<CommunicationPartner>> *_leavingImportNeighbours;
-	
+
 	void selectNeighbours(MessageType msgType, bool import);
 	// -------------------------------------------------------------------------
 

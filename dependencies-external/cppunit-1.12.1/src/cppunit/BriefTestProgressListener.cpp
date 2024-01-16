@@ -18,7 +18,7 @@ BriefTestProgressListener::~BriefTestProgressListener()
 }
 
 
-void 
+void
 BriefTestProgressListener::startTest( Test *test )
 {
   stdCOut() << test->getName();
@@ -28,7 +28,7 @@ BriefTestProgressListener::startTest( Test *test )
 }
 
 
-void 
+void
 BriefTestProgressListener::addFailure( const TestFailure &failure )
 {
   stdCOut() << " : " << (failure.isError() ? "error" : "assertion");
@@ -36,7 +36,7 @@ BriefTestProgressListener::addFailure( const TestFailure &failure )
 }
 
 
-void 
+void
 BriefTestProgressListener::endTest( Test *test )
 {
   if ( !m_lastTestFailed )

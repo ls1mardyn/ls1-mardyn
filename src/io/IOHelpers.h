@@ -10,7 +10,7 @@ namespace IOHelpers {
 
 /**
  * Removes the momentum from the simulation.
- * Will first sum up the overall momentum (m*v) and mass of the simulation and then apply a velocity shift 
+ * Will first sum up the overall momentum (m*v) and mass of the simulation and then apply a velocity shift
  * `-(momentum_sum / mass_sum)` to all particles which removes the momentum from the simulation.
  * @param particleContainer
  * @param components

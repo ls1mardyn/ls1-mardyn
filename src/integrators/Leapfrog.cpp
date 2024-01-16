@@ -11,9 +11,6 @@
 #include "utils/xmlfileUnits.h"
 
 
-using namespace std;
-using Log::global_log;
-
 Leapfrog::Leapfrog(double timestepLength) :	Integrator(timestepLength) {
 	init();
 }
@@ -28,7 +25,7 @@ Leapfrog::~Leapfrog() {}
 void Leapfrog::readXML(XMLfileUnits& xmlconfig) {
 	_timestepLength = 0;
 	xmlconfig.getNodeValueReduced("timestep", _timestepLength);
-	global_log->info() << "Timestep: " << _timestepLength << endl;
+	Log::global_log->info() << "Timestep: " << _timestepLength << std::endl;
 	mardyn_assert(_timestepLength > 0);
 }
 
@@ -47,7 +44,7 @@ void Leapfrog::eventNewTimestep(ParticleContainer* molCont, Domain* domain) {
 
 void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* /*domain*/) {
 	if (this->_state != STATE_NEW_TIMESTEP) {
-		global_log->error() << "Leapfrog::transition1to2(...): Wrong state for state transition" << endl;
+		Log::global_log->error() << "Leapfrog::transition1to2(...): Wrong state for state transition" << std::endl;
 		return;
 	}
 
@@ -65,7 +62,7 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* /*domain*/) {
 
 void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 	if (this->_state != STATE_PRE_FORCE_CALCULATION) {
-		global_log->error() << "Leapfrog::transition2to3(...): Wrong state for state transition" << endl;
+		Log::global_log->error() << "Leapfrog::transition2to3(...): Wrong state for state transition" << std::endl;
 	}
 
 	/* TODO introduce
@@ -77,20 +74,20 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 	 * (here and in class Domain) is a nightmare.
 	 */
 
-	map<int, unsigned long> N;
-	map<int, unsigned long> rotDOF;
-	map<int, double> summv2;
-	map<int, double> sumIw2;
+	std::map<int, unsigned long> N;
+	std::map<int, unsigned long> rotDOF;
+	std::map<int, double> summv2;
+	std::map<int, double> sumIw2;
 	double dt_half = 0.5 * this->_timestepLength;
 	if (domain->severalThermostats()) {
 		#if defined(_OPENMP)
 		#pragma omp parallel
 		#endif
 		{
-			map<int, unsigned long> N_l;
-			map<int, unsigned long> rotDOF_l;
-			map<int, double> summv2_l;
-			map<int, double> sumIw2_l;
+			std::map<int, unsigned long> N_l;
+			std::map<int, unsigned long> rotDOF_l;
+			std::map<int, double> summv2_l;
+			std::map<int, double> sumIw2_l;
 
 			for (auto tM = molCont->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
 				int cid = tM->componentid();
@@ -154,6 +151,6 @@ void Leapfrog::transition3to1(ParticleContainer* /*molCont*/, Domain* /*domain*/
 		this->_state = STATE_NEW_TIMESTEP;
 	}
 	else {
-		global_log->error() << "Leapfrog::transition3to1(...): Wrong state for state transition" << endl;
+		Log::global_log->error() << "Leapfrog::transition3to1(...): Wrong state for state transition" << std::endl;
 	}
 }

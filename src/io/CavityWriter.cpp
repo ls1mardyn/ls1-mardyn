@@ -12,55 +12,52 @@
 #include "Simulation.h"
 #include "ensemble/CavityEnsemble.h"
 
-using Log::global_log;
-using namespace std;
-
 void CavityWriter::readXML(XMLfileUnits &xmlconfig) {
     _writeFrequency = 1;
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-    global_log->info() << "[CavityWriter] Write frequency: " << _writeFrequency << endl;
+    Log::global_log->info() << "[CavityWriter] Write frequency: " << _writeFrequency << std::endl;
 
     _outputPrefix = "mardyn";
     xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-    global_log->info() << "[CavityWriter] Output prefix: " << _outputPrefix << endl;
+    Log::global_log->info() << "[CavityWriter] Output prefix: " << _outputPrefix << std::endl;
 
     int incremental = 1;
     xmlconfig.getNodeValue("incremental", incremental);
     _incremental = (incremental != 0);
-    global_log->info() << "[CavityWriter] Incremental numbers: " << _incremental << endl;
+    Log::global_log->info() << "[CavityWriter] Incremental numbers: " << _incremental << std::endl;
 
     int appendTimestamp = 0;
     xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
     if (appendTimestamp > 0) {
         _appendTimestamp = true;
     }
-    global_log->info() << "[CavityWriter] Append timestamp: " << _appendTimestamp << endl;
+    Log::global_log->info() << "[CavityWriter] Append timestamp: " << _appendTimestamp << std::endl;
 
 
     xmlconfig.getNodeValue("maxNeighbours", _maxNeighbors);
     if (_maxNeighbors <= 0) {
-        global_log->error() << "[CavityWriter] Invalid number of maxNeighbors: " << _maxNeighbors << endl;
+        Log::global_log->error() << "[CavityWriter] Invalid number of maxNeighbors: " << _maxNeighbors << std::endl;
         Simulation::exit(999);
     }
 
     xmlconfig.getNodeValue("radius", _radius);
     if (_radius <= 0.0f) {
-        global_log->error() << "[CavityWriter] Invalid size of radius: " << _radius << endl;
+        Log::global_log->error() << "[CavityWriter] Invalid size of radius: " << _radius << std::endl;
         Simulation::exit(999);
     }
     xmlconfig.getNodeValue("Nx", _Nx);
     if (_Nx <= 0) {
-        global_log->error() << "[CavityWriter] Invalid number of cells Nx: " << _Nx << endl;
+        Log::global_log->error() << "[CavityWriter] Invalid number of cells Nx: " << _Nx << std::endl;
         Simulation::exit(999);
     }
     xmlconfig.getNodeValue("Ny", _Ny);
     if (_Ny <= 0) {
-        global_log->error() << "[CavityWriter] Invalid number of cells Ny: " << _Ny << endl;
+        Log::global_log->error() << "[CavityWriter] Invalid number of cells Ny: " << _Ny << std::endl;
         Simulation::exit(999);
     }
     xmlconfig.getNodeValue("Nz", _Nz);
     if (_Nz <= 0) {
-        global_log->error() << "[CavityWriter] Invalid number of cells Nz: " << _Nz << endl;
+        Log::global_log->error() << "[CavityWriter] Invalid number of cells Nz: " << _Nz << std::endl;
         Simulation::exit(999);
     }
 
@@ -77,23 +74,23 @@ void CavityWriter::readXML(XMLfileUnits &xmlconfig) {
     xmlconfig.getNodeValue("ControlVolume/z1", _controlVolume[5]);
     for (int d = 0; d < 3; d++) {
         if (_controlVolume[d * 2] > _controlVolume[d * 2 + 1]) {
-            global_log->error() << "[CavityWriter] Lower Bound of Control Volume may not be larger than upper bound. "
-                                << endl;
+            Log::global_log->error() << "[CavityWriter] Lower Bound of Control Volume may not be larger than upper bound. "
+                                << std::endl;
             Simulation::exit(999);
         }
         if (_controlVolume[d * 2] < 0 ||
             _controlVolume[d * 2 + 1] > global_simulation->getDomain()->getGlobalLength(d)) {
-            global_log->error() << "[CavityWriter] Control volume bounds may not be outside of domain boundaries. "
-                                << endl;
+            Log::global_log->error() << "[CavityWriter] Control volume bounds may not be outside of domain boundaries. "
+                                << std::endl;
             Simulation::exit(999);
         }
     }
 
     // Get components to check
     // get root
-    string oldpath = xmlconfig.getcurrentnodepath();
+    std::string oldpath = xmlconfig.getcurrentnodepath();
 
-    this->_mcav = map<unsigned, CavityEnsemble *>();
+    this->_mcav = std::map<unsigned, CavityEnsemble *>();
 
     // iterate over all components
     XMLfile::Query query = xmlconfig.query("componentid");
@@ -101,7 +98,7 @@ void CavityWriter::readXML(XMLfileUnits &xmlconfig) {
         xmlconfig.changecurrentnode(pluginIter);
         int componentID = -1;
         xmlconfig.getNodeValue(xmlconfig.getcurrentnodepath(), componentID);
-        global_log->info() << "[CavityWriter] Component: " << componentID << endl;
+        Log::global_log->info() << "[CavityWriter] Component: " << componentID << std::endl;
         CavityEnsemble *cav = new CavityEnsemble();
         _mcav[componentID] = cav;
     }
@@ -123,7 +120,7 @@ void CavityWriter::init(ParticleContainer *particleContainer, DomainDecompBase *
     if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
         Tcur = Ttar;
 
-    map<unsigned, CavityEnsemble *>::iterator ceit;
+    std::map<unsigned, CavityEnsemble *>::iterator ceit;
     for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
 
         // setup
@@ -138,9 +135,9 @@ void CavityWriter::init(ParticleContainer *particleContainer, DomainDecompBase *
         ceit->second->submitTemperature(Tcur);
         int cID = ceit->first;
         Component *c = global_simulation->getEnsemble()->getComponent(cID);
-        global_log->info() << "[Cavity Writer] init: " << cID << endl;
+        Log::global_log->info() << "[Cavity Writer] init: " << cID << std::endl;
         ceit->second->init(c, _Nx, _Ny, _Nz);
-        global_log->info() << "[Cavity Writer] init done: " << cID << endl;
+        Log::global_log->info() << "[Cavity Writer] init done: " << cID << std::endl;
     }
 
 }
@@ -150,7 +147,7 @@ void CavityWriter::beforeEventNewTimestep(
         unsigned long simstep
 ) {
     if (simstep >= global_simulation->getInitStatistics() && simstep % _writeFrequency == 0) {
-        map<unsigned, CavityEnsemble *>::iterator ceit;
+        std::map<unsigned, CavityEnsemble *>::iterator ceit;
         for (ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
             ceit->second->preprocessStep();
         }
@@ -163,7 +160,7 @@ void CavityWriter::afterForces(
 ) {
 
     if (simstep >= global_simulation->getInitStatistics() && simstep % _writeFrequency == 0) {
-        map<unsigned, CavityEnsemble *>::iterator ceit;
+        std::map<unsigned, CavityEnsemble *>::iterator ceit;
         for (ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
 
             ceit->second->cavityStep(particleContainer);
@@ -177,11 +174,11 @@ void CavityWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
                            Domain * /*domain*/, unsigned long simstep) {
 
     if (simstep % _writeFrequency == 0) {
-        map<unsigned, CavityEnsemble *>::iterator ceit;
+        std::map<unsigned, CavityEnsemble *>::iterator ceit;
 
-        map<unsigned, stringstream *> cav_filenamestream;
+        std::map<unsigned, std::stringstream *> cav_filenamestream;
         for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
-            cav_filenamestream[ceit->first] = new stringstream;
+            cav_filenamestream[ceit->first] = new std::stringstream;
             *cav_filenamestream[ceit->first] << _outputPrefix << "-c" << ceit->first;
         }
 
@@ -195,15 +192,15 @@ void CavityWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
 
         for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
             *cav_filenamestream[ceit->first] << ".cav.xyz";
-            global_log->info() << "[CavityWriter] outputName: " << cav_filenamestream[ceit->first]->str() << endl;
+            Log::global_log->info() << "[CavityWriter] outputName: " << cav_filenamestream[ceit->first]->str() << std::endl;
         }
 
         int ownRank = domainDecomp->getRank();
         if (ownRank == 0) {
             for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
-                ofstream cavfilestream(cav_filenamestream[ceit->first]->str().c_str());
-                cavfilestream << ceit->second->numCavities() << endl;
-                cavfilestream << "comment line" << endl;
+                std::ofstream cavfilestream(cav_filenamestream[ceit->first]->str().c_str());
+                cavfilestream << ceit->second->numCavities() << std::endl;
+                cavfilestream << "comment line" << std::endl;
                 cavfilestream.close();
             }
         }
@@ -213,12 +210,12 @@ void CavityWriter::endStep(ParticleContainer * /*particleContainer*/, DomainDeco
             if (ownRank == process) {
                 for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
 
-                    ofstream cavfilestream(cav_filenamestream[ceit->first]->str().c_str(), ios::app);
+                    std::ofstream cavfilestream(cav_filenamestream[ceit->first]->str().c_str(), std::ios::app);
 
-                    map<unsigned long, Molecule *> tcav = ceit->second->activeParticleContainer();
-                    map<unsigned long, Molecule *>::iterator tcit;
+                    std::map<unsigned long, Molecule *> tcav = ceit->second->activeParticleContainer();
+                    std::map<unsigned long, Molecule *>::iterator tcit;
                     for (tcit = tcav.begin(); tcit != tcav.end(); tcit++) {
-                        //global_log->info() << "[CavityWriter] output6" << endl;
+                        //global_log->info() << "[CavityWriter] output6" << std::endl;
 
                         if (ceit->first == 0) { cavfilestream << "C "; }
                         else if (ceit->first == 1) { cavfilestream << "N "; }

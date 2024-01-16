@@ -184,7 +184,7 @@ inline void PotForceDiQuadrupole(const double dr[3], const double& dr2, const do
 }
 
 
-/** @brief Calculate potential and force between two point charges. 
+/** @brief Calculate potential and force between two point charges.
  * Coulomb's law.
  */
 inline void PotForce2Charge(const double dr[3], const double& dr2,
@@ -497,7 +497,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 	mi.Viadd(Virial);
 	mj.Viadd(Virial);
-	
+
 	// check whether all parameters were used
 	mardyn_assert(params.eos());
 }

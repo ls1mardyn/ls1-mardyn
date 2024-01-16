@@ -15,7 +15,7 @@ TEST_SUITE_REGISTRATION(UnorderedVectorTest);
 void UnorderedVectorTest::testFastRemovalInt() {
 	using std::vector;
 
-	vector<int> v;
+	std::vector<int> v;
 	int array[] = { 5, 4, 2, 3 };
 
 	v.insert(v.begin(), array, array+4);
@@ -44,7 +44,7 @@ void UnorderedVectorTest::testFastRemovalInt() {
 void UnorderedVectorTest::testFastRemovalMoleculePointer() {
 	using std::vector;
 
-	vector<Molecule *> v;
+	std::vector<Molecule *> v;
 	unsigned int index;
 	Component c(0);
 

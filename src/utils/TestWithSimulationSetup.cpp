@@ -17,7 +17,6 @@
 #endif
 
 
-using namespace Log;
 
 #ifdef UNIT_TESTS
 

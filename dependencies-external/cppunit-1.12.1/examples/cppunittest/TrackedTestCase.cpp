@@ -17,7 +17,7 @@ TrackedTestCase::~TrackedTestCase()
 }
 
 
-void 
+void
 TrackedTestCase::setUp()
 {
   if ( ms_tracker != NULL )
@@ -25,7 +25,7 @@ TrackedTestCase::setUp()
 }
 
 
-void 
+void
 TrackedTestCase::tearDown()
 {
   if ( ms_tracker != NULL )
@@ -33,7 +33,7 @@ TrackedTestCase::tearDown()
 }
 
 
-void 
+void
 TrackedTestCase::test()
 {
   if ( ms_tracker != NULL )
@@ -41,14 +41,14 @@ TrackedTestCase::test()
 }
 
 
-void 
+void
 TrackedTestCase::setTracker( Tracker *tracker )
 {
   ms_tracker = tracker;
 }
 
 
-void 
+void
 TrackedTestCase::removeTracker()
 {
   ms_tracker = NULL;

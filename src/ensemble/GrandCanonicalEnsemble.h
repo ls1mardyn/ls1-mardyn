@@ -40,7 +40,7 @@ public:
 
 	// TODO: Implement STUB
 	void readXML(XMLfileUnits& xmlconfig) override {
-		global_log->info() << "[GrandCanonicalEnsemble] readXML not implemented!" << std::endl;
+		Log::global_log->info() << "[GrandCanonicalEnsemble] readXML not implemented!" << std::endl;
 		Simulation::exit(-1);
 	};
 
@@ -70,7 +70,7 @@ public:
 
 	// TODO: Implement
 	void updateGlobalVariable(ParticleContainer* particleContainer, GlobalVariable variable) override {
-		global_log->info() << "[GrandCanonicalEnsemble] updateGlobalVariable not implemented!" << std::endl;
+		Log::global_log->info() << "[GrandCanonicalEnsemble] updateGlobalVariable not implemented!" << std::endl;
 		Simulation::exit(-1);
 	};
 

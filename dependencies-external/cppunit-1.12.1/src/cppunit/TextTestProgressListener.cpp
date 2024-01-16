@@ -16,22 +16,22 @@ TextTestProgressListener::~TextTestProgressListener()
 }
 
 
-void 
+void
 TextTestProgressListener::startTest( Test *test )
 {
   stdCOut() << ".";
 }
 
 
-void 
+void
 TextTestProgressListener::addFailure( const TestFailure &failure )
 {
   stdCOut() << ( failure.isError() ? "E" : "F" );
 }
 
 
-void 
-TextTestProgressListener::endTestRun( Test *test, 
+void
+TextTestProgressListener::endTestRun( Test *test,
                                       TestResult *eventManager )
 {
   stdCOut()  <<  "\n";

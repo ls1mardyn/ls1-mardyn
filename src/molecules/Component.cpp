@@ -7,8 +7,6 @@
 #include "utils/Logger.h"
 #include "Simulation.h"
 
-using namespace std;
-using Log::global_log;
 
 Component::Component(unsigned int id) {
 	_id = id;
@@ -23,21 +21,21 @@ Component::Component(unsigned int id) {
 	_E_rot=0.;
 	_isStockmayer = false;
 
-	_ljcenters = vector<LJcenter> ();
-	_charges = vector<Charge> ();
-	_quadrupoles = vector<Quadrupole> ();
-	_dipoles = vector<Dipole> ();
+	_ljcenters = std::vector<LJcenter> ();
+	_charges = std::vector<Charge> ();
+	_quadrupoles = std::vector<Quadrupole> ();
+	_dipoles = std::vector<Dipole> ();
 }
 
 void Component::readXML(XMLfileUnits& xmlconfig) {
-	global_log->info() << "Reading in component" << endl;
+	Log::global_log->info() << "Reading in component" << std::endl;
 	unsigned int cid = 0;
 	xmlconfig.getNodeValue( "@id", cid );
-	global_log->info() << "Component ID:" << cid << endl;
+	Log::global_log->info() << "Component ID:" << cid << std::endl;
 	setID(cid - 1);
-	string name;
+	std::string name;
 	xmlconfig.getNodeValue( "@name", name );
-	global_log->info() << "Component name:" << name << endl;
+	Log::global_log->info() << "Component name:" << name << std::endl;
 	setName(name);
 
 	XMLfile::Query query = xmlconfig.query( "site" );
@@ -47,7 +45,7 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 
 		std::string siteType;
 		xmlconfig.getNodeValue("@type", siteType);
-		global_log->info() << "Adding site of type " << siteType << endl;
+		Log::global_log->info() << "Adding site of type " << siteType << std::endl;
 
 		if (siteType == "LJ126") {
 			LJcenter ljSite;
@@ -69,19 +67,19 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			_Ipa[1] = 1.0;
 			_Ipa[2] = 0.0;
 
-			global_log->info() << "Rotation enabled with [Ixx Iyy Izz] = [" << _Ipa[0] << " " << _Ipa[1] << " "
+			Log::global_log->info() << "Rotation enabled with [Ixx Iyy Izz] = [" << _Ipa[0] << " " << _Ipa[1] << " "
 							   << _Ipa[2] << "]. Dipole direction vector of the Stockmayer fluid should be [0 0 1]."
-							   << endl;
+							   << std::endl;
 
 		} else if (siteType == "Quadrupole") {
 			Quadrupole quadrupoleSite;
 			quadrupoleSite.readXML(xmlconfig);
 			addQuadrupole(quadrupoleSite);
 		} else if (siteType == "Tersoff") {
-			global_log->error() << "Tersoff no longer supported:" << siteType << endl;
+			Log::global_log->error() << "Tersoff no longer supported:" << siteType << std::endl;
 			Simulation::exit(-1);
 		} else {
-			global_log->error() << "Unknown site type:" << siteType << endl;
+			Log::global_log->error() << "Unknown site type:" << siteType << std::endl;
 			Simulation::exit(-1);
 		}
 		// go back to initial level, to be consistent, even if no site information is found.
@@ -93,10 +91,10 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 		if(xmlconfig.getNodeValueReduced("Ixx", II[0]) > 0) { setI11(II[0]); }
 		if(xmlconfig.getNodeValueReduced("Iyy", II[1]) > 0) { setI22(II[1]); }
 		if(xmlconfig.getNodeValueReduced("Izz", II[2]) > 0) { setI33(II[2]); }
-		global_log->info() << "Using moments of inertia set in xml config: Ixx = " << I11() << " ; Iyy = " << I22() << " ; Izz = " << I33() << std::endl;
+		Log::global_log->info() << "Using moments of inertia set in xml config: Ixx = " << I11() << " ; Iyy = " << I22() << " ; Izz = " << I33() << std::endl;
 		xmlconfig.changecurrentnode("..");
 	} else {
-		global_log->info() << "Using calculated moments of inertia: Ixx = " << I11() << " ; Iyy = " << I22() << " ; Izz = " << I33() << std::endl;
+		Log::global_log->info() << "Using calculated moments of inertia: Ixx = " << I11() << " ; Iyy = " << I22() << " ; Izz = " << I33() << std::endl;
 	}
 }
 
@@ -152,7 +150,7 @@ void Component::updateMassInertia(Site& site) {
 	_m += site.m();
 	// assume the input is already transformed to the principal axes system
 	// (and therefore the origin is the center of mass)
-	
+
 	if ( not _isStockmayer){ //if the component is a Stockmayer fluid, the moments of inertia are fixed at [1 1 0]
 	//	_I[0] += m * (y * y + z * z);
 		_I[0] += site.m() * (site.ry() * site.ry() + site.rz() * site.rz());
@@ -168,8 +166,8 @@ void Component::updateMassInertia(Site& site) {
 		_I[5] -= site.m() * site.ry() * site.rz();
 
 		_rot_dof = 3;
-	
-	
+
+
 		for (unsigned short d = 0; d < 3; ++d) {
 			_Ipa[d] = _I[d];
 			if (_Ipa[d] == 0.) --_rot_dof;
@@ -221,30 +219,30 @@ void Component::write(std::ostream& ostrm) const {
 		  << 0 << "\n";  // the 0 indicates a zero amount of tersoff sites.
 	for (auto pos = _ljcenters.cbegin(); pos != _ljcenters.end(); ++pos) {
 		pos->write(ostrm);
-		ostrm << endl;
+		ostrm << std::endl;
 	}
 	for (auto pos = _charges.cbegin(); pos != _charges.end(); ++pos) {
 		pos->write(ostrm);
-		ostrm << endl;
+		ostrm << std::endl;
 	}
 	for (auto pos = _dipoles.cbegin(); pos != _dipoles.end(); ++pos) {
 		pos->write(ostrm);
-		ostrm << endl;
+		ostrm << std::endl;
 	}
 	for (auto pos = _quadrupoles.cbegin(); pos != _quadrupoles.end(); ++pos) {
 		pos->write(ostrm);
-		ostrm << endl;
+		ostrm << std::endl;
 	}
-	ostrm << _Ipa[0] << " " << _Ipa[1] << " " << _Ipa[2] << endl;
+	ostrm << _Ipa[0] << " " << _Ipa[1] << " " << _Ipa[2] << std::endl;
 }
 
 void Component::writeVIM(std::ostream& ostrm) {
 	for (auto pos = _ljcenters.cbegin(); pos != _ljcenters.end(); ++pos) {
-		ostrm << "~ " << this->_id + 1 << " LJ " << setw(7) << pos->rx() << ' '
-		      << setw(7) << pos->ry() << ' ' << setw(7) << pos->rz() << ' '
-		      << setw(6) << pos->sigma() << ' ' << setw(2) << (1 + (this->_id % 9)) << "\n";
+		ostrm << "~ " << this->_id + 1 << " LJ " << std::setw(7) << pos->rx() << ' '
+		      << std::setw(7) << pos->ry() << ' ' << std::setw(7) << pos->rz() << ' '
+		      << std::setw(6) << pos->sigma() << ' ' << std::setw(2) << (1 + (this->_id % 9)) << "\n";
 	}
-	ostrm << flush;
+	ostrm << std::flush;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Component& component) {

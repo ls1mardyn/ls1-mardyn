@@ -13,9 +13,9 @@
 
 void TimerWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
 	XMLfile::Query query = xmlconfig.query("timers/timer");
 	std::string oldpath = xmlconfig.getcurrentnodepath();
@@ -29,11 +29,11 @@ void TimerWriter::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("incremental", incrementalTimer);
 		_incremental.push_back(incrementalTimer);
 
-		global_log->info() << "Added timer for LB monitoring: " << timername << ", incremental: " << incrementalTimer
+		Log::global_log->info() << "Added timer for LB monitoring: " << timername << ", incremental: " << incrementalTimer
 						   << std::endl;
 	}
 	if (_timerNames.empty()) {
-		global_log->error() << "TimerWriter: no timers given. make sure you specify them correctly." << std::endl;
+		Log::global_log->error() << "TimerWriter: no timers given. make sure you specify them correctly." << std::endl;
 		Simulation::exit(242367);
 	}
 	xmlconfig.changecurrentnode(oldpath);
@@ -43,12 +43,12 @@ void TimerWriter::init(ParticleContainer* /*particleContainer*/, DomainDecompBas
 	auto rank = domainDecomp->getRank();
 	std::stringstream filename;
 
-	const auto time_tNow = std::chrono::system_clock::to_time_t(chrono::system_clock::now());
+	const auto time_tNow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
 	const auto maxRank = domainDecomp->getNumProcs();
 	const auto numDigitsMaxRank = std::to_string(maxRank).length();
 	tm unused{};
-	filename << _outputPrefix << "-rank" << setfill('0') << setw(numDigitsMaxRank) << rank << "_"
+	filename << _outputPrefix << "-rank" << std::setfill('0') << std::setw(numDigitsMaxRank) << rank << "_"
 			 << std::put_time(localtime_r(&time_tNow, &unused), "%Y-%m-%d_%H-%M-%S") << ".dat";
 
 	_fileStream.open(filename.str(), std::ofstream::out);

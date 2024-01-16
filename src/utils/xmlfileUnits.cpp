@@ -8,7 +8,6 @@
 #include "xmlfileUnits.h"
 
 #include <iostream>
-using namespace std;
 
 #include <cstring>
 #include <cmath>
@@ -44,7 +43,7 @@ const char *const XMLfileUnits::unittypequalifiers[numUnitTypes] = { "no_unit"
                                                                     ,"substance"
                                                                     ,"luminous"
                                                                    };
-	
+
 const char *const XMLfileUnits::prefixsymbols[numPrefixes] = { "y"  // "yocto"
                                                               ,"z"  // "zepto"
                                                               ,"a"  // "atto"
@@ -90,17 +89,17 @@ const short XMLfileUnits::prefixquantifiers[numPrefixes] = { -24
                                                             ,21
                                                             ,24
                                                            };
-	
-size_t XMLfileUnits::ValueUnit::string_endswith(string str, const char* suffix)
+
+size_t XMLfileUnits::ValueUnit::string_endswith(std::string str, const char* suffix)
 {
 	unsigned int suffixlength=strlen(suffix);
-	if (suffixlength>str.length()) return string::npos;
+	if (suffixlength>str.length()) return std::string::npos;
 	size_t pos = str.length()-suffixlength;
 	//return str.rfind(suffix,pos);
-	if (str.substr(pos,suffixlength)==string(suffix))
+	if (str.substr(pos,suffixlength)==std::string(suffix))
 		return pos;
 	else
-		return string::npos;
+		return std::string::npos;
 }
 
 XMLfileUnits::ValueUnit XMLfileUnits::ValueUnit::operator /(const XMLfileUnits::ValueUnit& vu) const
@@ -128,7 +127,7 @@ XMLfileUnits::UnitType XMLfileUnits::ValueUnit::unittype() const
 	return Unknown_Unit;
 }
 
-string XMLfileUnits::ValueUnit::unittypesymbol() const
+std::string XMLfileUnits::ValueUnit::unittypesymbol() const
 {
 	for(int i=0;i<numUnitTypes;++i)
 	{
@@ -141,7 +140,7 @@ string XMLfileUnits::ValueUnit::unittypesymbol() const
 		  && m_Q[7]==unittypequantifiers[i][7])
 			return unittypesymbols[i];
 	}
-	return string();
+	return std::string();
 }
 
 XMLfileUnits::ValueUnit XMLfileUnits::ValueUnit::normalized() const
@@ -161,7 +160,7 @@ XMLfileUnits::ValueUnit XMLfileUnits::ValueUnit::normalized() const
 	return new_vu;
 }
 
-void XMLfileUnits::ValueUnit::print(ostream& ostrm,bool simplify) const
+void XMLfileUnits::ValueUnit::print(std::ostream& ostrm,bool simplify) const
 {
 	XMLfileUnits::UnitType ut=unittype();
 	double v=m_value;
@@ -182,7 +181,7 @@ void XMLfileUnits::ValueUnit::print(ostream& ostrm,bool simplify) const
 			if(i>0) --i;
 			q0=m_Q[0]-prefixquantifiers[i];
 			v=m_value*pow(10., q0);
-			ostrm << v << " " << string(prefixsymbols[i]) << string(unittypesymbols[ut]);
+			ostrm << v << " " << std::string(prefixsymbols[i]) << std::string(unittypesymbols[ut]);
 			return;
 		}
 	}
@@ -235,131 +234,131 @@ void XMLfileUnits::ValueUnit::initialize(double value)
 		m_Q[0]=m_Q[1]=m_Q[2]=m_Q[3]=m_Q[4]=m_Q[5]=m_Q[6]=m_Q[7]=0;
 	}
 
-void XMLfileUnits::ValueUnit::initialize(double value,const string& symbol)
+void XMLfileUnits::ValueUnit::initialize(double value,const std::string& symbol)
 {
 	initialize(value);
 	size_t pos;
-	if ((pos=string_endswith(symbol,"mol"))!=string::npos)
+	if ((pos=string_endswith(symbol,"mol"))!=std::string::npos)
 	{// mole, SubstanceAmount_Unit
 		//m_Q[1]=m_Q[2]=m_Q[3]=m_Q[4]=m_Q[5]=m_Q[7]=0;
 		m_Q[6]=1;
 	}
-	else if ((pos=string_endswith(symbol,"cd"))!=string::npos)
+	else if ((pos=string_endswith(symbol,"cd"))!=std::string::npos)
 	{// candela, LuminousIntensity_Unit
 		//m_Q[1]=m_Q[2]=m_Q[3]=m_Q[4]=m_Q[5]=m_Q[6]=0;
 		m_Q[7]=1;
 	}
-	else if ((pos=string_endswith(symbol,"m"))!=string::npos)
+	else if ((pos=string_endswith(symbol,"m"))!=std::string::npos)
 	{// metre, Length_Unit
 		//m_Q[2]=m_Q[3]=m_Q[4]=m_Q[5]=m_Q[6]=m_Q[7]=0;
 		m_Q[1]=1;
 	}
-	else if ((pos=string_endswith(symbol,"g"))!=string::npos)
+	else if ((pos=string_endswith(symbol,"g"))!=std::string::npos)
 	{// gram (used instead of SI base unit "kg" as base unit), Mass_Unit
 		//m_Q[1]=m_Q[3]=m_Q[4]=m_Q[5]=m_Q[6]=m_Q[7]=0;
 		m_Q[2]=1;
 	}
-	else if ((pos=string_endswith(symbol,"s"))!=string::npos)
+	else if ((pos=string_endswith(symbol,"s"))!=std::string::npos)
 	{// second, Time_Unit
 		//m_Q[1]=m_Q[2]=m_Q[4]=m_Q[5]=m_Q[6]=m_Q[7]=0;
 		m_Q[3]=1;
 	}
-	else if ((pos=string_endswith(symbol,"A"))!=string::npos)
+	else if ((pos=string_endswith(symbol,"A"))!=std::string::npos)
 	{// ampere, ElectricCurrent_Unit
 		//m_Q[1]=m_Q[2]=m_Q[3]=m_Q[5]=m_Q[6]=m_Q[7]=0;
 		m_Q[4]=1;
 	}
-	else if ((pos=string_endswith(symbol,"K"))!=string::npos)
+	else if ((pos=string_endswith(symbol,"K"))!=std::string::npos)
 	{// kelvin, ThermodynamicTemperature_Unit
 		//m_Q[1]=m_Q[2]=m_Q[3]=m_Q[4]=m_Q[6]=m_Q[7]=0;
 		m_Q[5]=1;
 	}
 	// PREFIX ------------------------------------------------------
-	if(pos!=string::npos && pos>0)
+	if(pos!=std::string::npos && pos>0)
 	{ // could determinate the unit, but prefix is present
-		string prefix=symbol.substr(0,pos);
-		if(prefix==string(""))
+		std::string prefix=symbol.substr(0,pos);
+		if(prefix==std::string(""))
 		{ // no prefix (will never be executed)
 			m_Q[0]=0;
 		}
-		else if(prefix==string("da"))
+		else if(prefix==std::string("da"))
 		{ // deca-
 			m_Q[0]=1;
 		}
-		else if(prefix==string("h"))
+		else if(prefix==std::string("h"))
 		{ // hecto-
 			m_Q[0]=2;
 		}
-		else if(prefix==string("k"))
+		else if(prefix==std::string("k"))
 		{ // kilo-
 			m_Q[0]=3;
 		}
-		else if(prefix==string("M"))
+		else if(prefix==std::string("M"))
 		{ // mega-
 			m_Q[0]=6;
 		}
-		else if(prefix==string("G"))
+		else if(prefix==std::string("G"))
 		{ // giga-
 			m_Q[0]=9;
 		}
-		else if(prefix==string("T"))
+		else if(prefix==std::string("T"))
 		{ // tera-
 			m_Q[0]=12;
 		}
-		else if(prefix==string("P"))
+		else if(prefix==std::string("P"))
 		{ // peta-
 			m_Q[0]=15;
 		}
-		else if(prefix==string("E"))
+		else if(prefix==std::string("E"))
 		{ // exa-
 			m_Q[0]=18;
 		}
-		else if(prefix==string("Z"))
+		else if(prefix==std::string("Z"))
 		{ // zetta-
 			m_Q[0]=21;
 		}
-		else if(prefix==string("Y"))
+		else if(prefix==std::string("Y"))
 		{ // yotta-
 			m_Q[0]=24;
 		}
-		else if(prefix==string("d"))
+		else if(prefix==std::string("d"))
 		{ // deci-
 			m_Q[0]=-1;
 		}
-		else if(prefix==string("c"))
+		else if(prefix==std::string("c"))
 		{ // centi-
 			m_Q[0]=-2;
 		}
-		else if(prefix==string("m"))
+		else if(prefix==std::string("m"))
 		{ // milli-
 			m_Q[0]=-3;
 		}
-		else if(prefix==string("u") )
-		       // || prefix==string("µ"))
+		else if(prefix==std::string("u") )
+		       // || prefix==std::string("µ"))
 		{ // micro-
 			m_Q[0]=-6;
 		}
-		else if(prefix==string("n"))
+		else if(prefix==std::string("n"))
 		{ // nano-
 			m_Q[0]=-9;
 		}
-		else if(prefix==string("p"))
+		else if(prefix==std::string("p"))
 		{ // pico-
 			m_Q[0]=-12;
 		}
-		else if(prefix==string("f"))
+		else if(prefix==std::string("f"))
 		{ // femto-
 			m_Q[0]=-15;
 		}
-		else if(prefix==string("a"))
+		else if(prefix==std::string("a"))
 		{ // atto-
 			m_Q[0]=-18;
 		}
-		else if(prefix==string("z"))
+		else if(prefix==std::string("z"))
 		{ // zepto-
 			m_Q[0]=-21;
 		}
-		else if(prefix==string("y"))
+		else if(prefix==std::string("y"))
 		{ // yocto-
 			m_Q[0]=-24;
 		}
@@ -373,17 +372,17 @@ void XMLfileUnits::ValueUnit::initialize(double value,const string& symbol)
 
 //------------------------------------------------------------------------------
 
-XMLfileUnits::XMLfileUnits(const string& filepath)
+XMLfileUnits::XMLfileUnits(const std::string& filepath)
 	: XMLfile(filepath)
 {
-	if (changecurrentnode(string(roottag)+string(refunitstag))) {
+	if (changecurrentnode(std::string(roottag)+std::string(refunitstag))) {
 		double v;
-		string u;
+		std::string u;
 		for(unsigned int i=1;i<numUnitTypes;++i)
 		{
 			if(getNodeValue(unittypequalifiers[i],v))
 			{
-				getNodeValue(string(unittypequalifiers[i])+string("@")+string(unitattributetag),u);
+				getNodeValue(std::string(unittypequalifiers[i])+std::string("@")+std::string(unitattributetag),u);
 				m_refunits[i]=ValueUnit(v,u);
 			}
 			else
@@ -397,8 +396,8 @@ unsigned long XMLfileUnits::getNodeValueUnit(const char* nodepath, XMLfileUnits:
 {
 	double v;
 	unsigned long found=getNodeValue(nodepath,v);
-	string unitattrpath=string(nodepath)+string("@")+string(unitattributetag);
-	string u;
+	std::string unitattrpath=std::string(nodepath)+std::string("@")+std::string(unitattributetag);
+	std::string u;
 	if(getNodeValue(unitattrpath,u))
 	{
 		value=XMLfileUnits::ValueUnit(v,u);
@@ -422,12 +421,12 @@ unsigned long XMLfileUnits::getNodeValueReduced(const char* nodepath, double& va
 			if(ut!=Unknown_Unit && ut==vu.unittype())
 			{
 				XMLfileUnits::ValueUnit vu_red=vu/m_refunits[ut];
-				//cout << "reduced value " << nodepath << " from " << vu << " to " << vu_red << endl;
+				//cout << "reduced value " << nodepath << " from " << vu << " to " << vu_red << std::endl;
 				value=vu_red.value();
 			}
 			else
 			{
-				//cerr << "ERROR reading " << nodepath << ", found " << found <<" entries (" << vu << ")" << endl;
+				//cerr << "ERROR reading " << nodepath << ", found " << found <<" entries (" << vu << ")" << std::endl;
 				found=0;
 			}
 		}

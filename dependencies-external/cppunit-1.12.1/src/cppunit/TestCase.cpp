@@ -48,8 +48,8 @@ TestCase::TestCase( const std::string &name )
 }
 
 
-/// Run the test and catch any exceptions that are triggered by it 
-void 
+/// Run the test and catch any exceptions that are triggered by it
+void
 TestCase::run( TestResult *result )
 {
   result->startTest(this);
@@ -65,7 +65,7 @@ TestCase::run( TestResult *result )
       result->addFailure( this, copy );
     }
     catch ( std::exception &e ) {
-      result->addError( this, new Exception( Message( "uncaught std::exception", 
+      result->addError( this, new Exception( Message( "uncaught std::exception",
                                                       e.what() ) ) );
     }
     catch (...) {
@@ -100,8 +100,8 @@ TestCase::run( TestResult *result )
 }
 
 
-/// All the work for runTest is deferred to subclasses 
-void 
+/// All the work for runTest is deferred to subclasses
+void
 TestCase::runTest()
 {
 }
@@ -127,11 +127,11 @@ TestCase::~TestCase()
 
 
 /// Returns the name of the test case
-std::string 
+std::string
 TestCase::getName() const
-{ 
-  return m_name; 
+{
+  return m_name;
 }
-  
+
 
 CPPUNIT_NS_END

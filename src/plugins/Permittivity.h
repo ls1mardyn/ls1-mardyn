@@ -4,10 +4,10 @@
  *  Created on: November 2019
  *      Author: Joshua Marx
  */
- 
+
  // DESCRIPTION: Samples the relative permittivity of Stockmayer fluids in the NVT ensemble
  // Important: Permittivity may take a long time to converge, i.e. a few million steps with ~1000 particles. Reducing number of slabs for the thermostat can drastically improve results!
- 
+
 #ifndef SRC_PLUGINS_PERMITTIVITY_H_
 #define SRC_PLUGINS_PERMITTIVITY_H_
 
@@ -31,9 +31,9 @@ public:
 	void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
 	std::string getPluginName() override { return std::string("Permittivity"); }
 	static PluginBase* createInstance() { return new Permittivity();}
-	
-	
-	
+
+
+
 private:
 	bool _readStartingStep;             // Auxiliary bool variable to read the current time step during the first iteration of endStep
 	unsigned long _writeFrequency;      // Write frequency for all profiles -> Length of recording frame before output

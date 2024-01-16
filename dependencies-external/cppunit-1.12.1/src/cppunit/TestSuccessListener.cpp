@@ -16,7 +16,7 @@ TestSuccessListener::~TestSuccessListener()
 }
 
 
-void 
+void
 TestSuccessListener::reset()
 {
   ExclusiveZone zone( m_syncObject );
@@ -24,7 +24,7 @@ TestSuccessListener::reset()
 }
 
 
-void 
+void
 TestSuccessListener::addFailure( const TestFailure &failure )
 {
   ExclusiveZone zone( m_syncObject );
@@ -32,7 +32,7 @@ TestSuccessListener::addFailure( const TestFailure &failure )
 }
 
 
-bool 
+bool
 TestSuccessListener::wasSuccessful() const
 {
   ExclusiveZone zone( m_syncObject );

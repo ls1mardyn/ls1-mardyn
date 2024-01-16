@@ -5,7 +5,7 @@
 CPPUNIT_NS_BEGIN
 
 
-DynamicLibraryManagerException::DynamicLibraryManagerException( 
+DynamicLibraryManagerException::DynamicLibraryManagerException(
                                          const std::string &libraryName,
                                          const std::string &errorDetail,
                                          Cause cause )
@@ -13,15 +13,15 @@ DynamicLibraryManagerException::DynamicLibraryManagerException(
       m_cause( cause )
 {
   if ( cause == loadingFailed )
-    m_message = "Failed to load dynamic library: " + libraryName + "\n" + 
+    m_message = "Failed to load dynamic library: " + libraryName + "\n" +
                 errorDetail;
   else
-    m_message = "Symbol [" + errorDetail + "] not found in dynamic libary:" + 
+    m_message = "Symbol [" + errorDetail + "] not found in dynamic libary:" +
                 libraryName;
 }
 
 
-DynamicLibraryManagerException::Cause 
+DynamicLibraryManagerException::Cause
 DynamicLibraryManagerException::getCause() const
 {
   return m_cause;

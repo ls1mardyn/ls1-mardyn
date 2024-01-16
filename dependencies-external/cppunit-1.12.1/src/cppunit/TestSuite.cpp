@@ -14,13 +14,13 @@ TestSuite::TestSuite( std::string name )
 
 /// Destructor
 TestSuite::~TestSuite()
-{ 
-  deleteContents(); 
+{
+  deleteContents();
 }
 
 
 /// Deletes all tests in the suite.
-void 
+void
 TestSuite::deleteContents()
 {
   int childCount = getChildTestCount();
@@ -31,11 +31,11 @@ TestSuite::deleteContents()
 }
 
 
-/// Adds a test to the suite. 
-void 
+/// Adds a test to the suite.
+void
 TestSuite::addTest( Test *test )
-{ 
-  m_tests.push_back( test ); 
+{
+  m_tests.push_back( test );
 }
 
 
@@ -46,7 +46,7 @@ TestSuite::getTests() const
 }
 
 
-int 
+int
 TestSuite::getChildTestCount() const
 {
   return m_tests.size();

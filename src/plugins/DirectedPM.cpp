@@ -29,22 +29,22 @@ void DirectedPM::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("heightMembrane", _heightMembrane);    // height for neglecting the influence of the membrane
 	xmlconfig.getNodeValue("outputFrequency", _outputFrequency);  // Averaged time steps
 
-	global_log->info() << "[DirectedPM] settings:" << std::endl;
-	global_log->info() << "                  Component: " << _component << std::endl;
-	global_log->info() << "                  r: " << _rIncrements << std::endl;
-	global_log->info() << "                  h: " << _hIncrements << std::endl;
-	global_log->info() << "                  phi: " << _phiIncrements << std::endl;
-	global_log->info() << "                  rohCutLiq: " << _rohCutLiq << std::endl;
-	global_log->info() << "                  percent: " << _percent << std::endl;
-	global_log->info() << "                  heightWall: " << _heightWall << std::endl;
-	global_log->info() << "                  heightMembrane: " << _heightMembrane << std::endl;
-	global_log->info() << "                outputFrequency: " << _outputFrequency << std::endl;
+	Log::global_log->info() << "[DirectedPM] settings:" << std::endl;
+	Log::global_log->info() << "                  Component: " << _component << std::endl;
+	Log::global_log->info() << "                  r: " << _rIncrements << std::endl;
+	Log::global_log->info() << "                  h: " << _hIncrements << std::endl;
+	Log::global_log->info() << "                  phi: " << _phiIncrements << std::endl;
+	Log::global_log->info() << "                  rohCutLiq: " << _rohCutLiq << std::endl;
+	Log::global_log->info() << "                  percent: " << _percent << std::endl;
+	Log::global_log->info() << "                  heightWall: " << _heightWall << std::endl;
+	Log::global_log->info() << "                  heightMembrane: " << _heightMembrane << std::endl;
+	Log::global_log->info() << "                outputFrequency: " << _outputFrequency << std::endl;
 }
 
 void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 							  unsigned long simstep) {
 	if (_enabled) {
-		global_log->debug() << "[DirectedPM] before forces called" << std::endl;
+		Log::global_log->debug() << "[DirectedPM] before forces called" << std::endl;
 
 		// CALCULATE SYNSIMSTEP FOR MATRIX
 		double synsimstep;
@@ -100,18 +100,18 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 							(phiUN < _phiIncrements)) {
 							unID = (hUN * _rIncrements * _phiIncrements) + (rUN * _phiIncrements) + phiUN;
 						} else {
-							global_log->error()
+							Log::global_log->error()
 								<< "INV PROFILE UNITS " << _universalInvProfileUnit[0] << " "
 								<< _universalInvProfileUnit[1] << " " << _universalInvProfileUnit[2] << "\n";
-							global_log->error() << "PROFILE UNITS " << _rIncrements << " " << _hIncrements << " "
+							Log::global_log->error() << "PROFILE UNITS " << _rIncrements << " " << _hIncrements << " "
 												<< _phiIncrements << "\n";
-							global_log->error() << "Severe error!! Invalid profile ID (" << rUN << " / " << hUN << " / "
+							Log::global_log->error() << "Severe error!! Invalid profile ID (" << rUN << " / " << hUN << " / "
 												<< phiUN << ").\n\n";
-							global_log->error() << "Severe error!! Invalid profile unit (" << R2 << " / " << yc << " / "
+							Log::global_log->error() << "Severe error!! Invalid profile unit (" << R2 << " / " << yc << " / "
 												<< phi << ").\n\n";
-							global_log->error()
+							Log::global_log->error()
 								<< "Coordinates off center (" << xc << " / " << yc << " / " << zc << ").\n";
-							global_log->error() << "unID = " << unID << "\n";
+							Log::global_log->error() << "unID = " << unID << "\n";
 							Simulation::exit(707);
 						}
 						// ADD VELOCITCY AND VIRIAL TO RESPECTIVE BIN
@@ -375,12 +375,12 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 									 << _xyzEkinDroplet[_outputFrequency] / (3 * particleDropletTrue) << " \t\t "
 									 << TxzGAS << " \t\t " << TxzDROPLET << " \t\t "
 									 << _xzEkinGas[_outputFrequency] / (2 * particleDropletFalse) << " \t\t "
-									 << _xzEkinDroplet[_outputFrequency] / (2 * particleDropletTrue) << endl;
+									 << _xzEkinDroplet[_outputFrequency] / (2 * particleDropletTrue) << std::endl;
 				}
 				_DPMGlobalStream.close();
 
 				// 2D DENSITY OUTPUT
-				DPMStreamDensity.open("drop_MK_DirectedPM_" + to_string(simstep) + ".NDpr", std::ios::out);
+				DPMStreamDensity.open("drop_MK_DirectedPM_" + std::to_string(simstep) + ".NDpr", std::ios::out);
 				DPMStreamDensity.precision(6);
 				// Write Header
 				DPMStreamDensity << "//Segment volume: " << _volumebox
@@ -413,7 +413,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 				DPMStreamDensity.close();
 
 				// 2D Temperature OUTPUT
-				DPMStreamTemperature.open("drop_MK_DirectedPM_" + to_string(simstep) + ".Temppr", std::ios::out);
+				DPMStreamTemperature.open("drop_MK_DirectedPM_" + std::to_string(simstep) + ".Temppr", std::ios::out);
 				DPMStreamTemperature.precision(6);
 				// Write Header
 				DPMStreamTemperature << "//Segment volume: " << _volumebox
@@ -438,7 +438,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 					for (unsigned phiID = 0; phiID < _phiIncrements; phiID++) {
 						for (unsigned r = 0; r < _rIncrements; r++) {
 							auto ID = (long)(h * _rIncrements * _phiIncrements + r * _phiIncrements + phiID);
-							if (isnan(_temperatureBox[ID])) {
+							if (std::isnan(_temperatureBox[ID])) {
 								_temperatureBox[ID] = 0.;
 							}
 							DPMStreamTemperature << _temperatureBox[ID] << "\t";
@@ -449,7 +449,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 				DPMStreamTemperature.close();
 
 				// 2D TemperatureXZ OUTPUT
-				DPMStreamTemperatureXZ.open("drop_MK_DirectedPM_" + to_string(simstep) + ".TempprXZ", std::ios::out);
+				DPMStreamTemperatureXZ.open("drop_MK_DirectedPM_" + std::to_string(simstep) + ".TempprXZ", std::ios::out);
 				DPMStreamTemperatureXZ.precision(6);
 				// Write Header
 				DPMStreamTemperatureXZ << "//Segment volume: " << _volumebox
@@ -475,7 +475,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 					for (unsigned phiID = 0; phiID < _phiIncrements; phiID++) {
 						for (unsigned r = 0; r < _rIncrements; r++) {
 							auto ID = (long)(h * _rIncrements * _phiIncrements + r * _phiIncrements + phiID);
-							if (isnan(_temperatureBoxXZ[ID])) {
+							if (std::isnan(_temperatureBoxXZ[ID])) {
 								_temperatureBoxXZ[ID] = 0.;
 							}
 							DPMStreamTemperatureXZ << _temperatureBoxXZ[ID] << "\t";
@@ -486,7 +486,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 				DPMStreamTemperatureXZ.close();
 
 				// 2D Ekin OUTPUT
-				DPMStreamEkin.open("drop_MK_DirectedPM_" + to_string(simstep) + ".Ekin", std::ios::out);
+				DPMStreamEkin.open("drop_MK_DirectedPM_" + std::to_string(simstep) + ".Ekin", std::ios::out);
 				DPMStreamEkin.precision(6);
 				// Write Header
 				DPMStreamEkin << "//Segment volume: " << _volumebox << "\n//Accumulated data sets: " << _outputFrequency
@@ -516,7 +516,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 				DPMStreamEkin.close();
 
 				// 2D VIRIAL OUTPUT
-				DPMStreamVirial.open("drop_MK_DirectedPM_" + to_string(simstep) + ".Vipr", std::ios::out);
+				DPMStreamVirial.open("drop_MK_DirectedPM_" + std::to_string(simstep) + ".Vipr", std::ios::out);
 				DPMStreamVirial.precision(6);
 				// Write Header
 				DPMStreamVirial << "//Segment volume: " << _volumebox
@@ -538,7 +538,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 					for (unsigned phiID = 0; phiID < _phiIncrements; phiID++) {
 						for (unsigned r = 0; r < _rIncrements; r++) {
 							auto ID = (long)(h * _rIncrements * _phiIncrements + r * _phiIncrements + phiID);
-							if (isnan(_virialBox[ID])) {
+							if (std::isnan(_virialBox[ID])) {
 								_virialBox[ID] = 0.;
 							}
 							DPMStreamVirial << _virialBox[ID] << "\t";

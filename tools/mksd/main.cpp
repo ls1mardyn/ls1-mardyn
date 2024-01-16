@@ -16,13 +16,12 @@
 #include "PhaseSpaceWriter.h"
 #include "Component.h"
 
-using namespace std;
 
-extern const string FLUID_AR;
-extern const string FLUID_CH4;
-extern const string WALL_CU_LJ; 		// copper by Lennard-Jones
-extern const string WALL_TERSOFF;
-extern const string WALL_MAT_AKA_FIT;
+extern const std::string FLUID_AR;
+extern const std::string FLUID_CH4;
+extern const std::string WALL_CU_LJ; 		// copper by Lennard-Jones
+extern const std::string WALL_TERSOFF;
+extern const std::string WALL_MAT_AKA_FIT;
 extern const unsigned short THERMOSTAT_VELSCALE;
 extern const unsigned short THERMOSTAT_ANDERSEN;
 
@@ -67,9 +66,9 @@ int main(int argc, char** argv){
 			"-x13 \t the Berthelot combining rule interaction parameter xi between the components 1 and 3. \n"
 			"\n*********************************************************************************************************\n\n";
 	if((argc<10)||(argc>35)){
-		cout << "\n\n*********************************************************************************************************\n"
+		std::cout << "\n\n*********************************************************************************************************\n"
 		<< "There are "<< floor(0.5*(argc-1)) << " complete arguments where 5 to 19 should be given.\n\n";
-		cout << usage ;
+		std::cout << usage ;
 		return 1;
 	}
 
@@ -111,13 +110,13 @@ unsigned short thermostat = THERMOSTAT_VELSCALE;	// ==1 --> applying velocity sc
 int outTimeSteps, wallThick;
 double alpha, beta, gamm, edgeProp, densFac, eta12, sigWall, temp, xi12, xi13, nuFactor;
 char* prefix = (char*)0;		// name of the output file as a C-string, initialized by NULL pointer
-string fluid, wall, prefixStr;
+std::string fluid, wall, prefixStr;
 
 // processing the arguments put in the command line
 for(int i = 1; i < argc; i++){
 	if(*argv[i] != '-'){
-		cout <<"\nFlag expected where '"<< argv[i] << "' was given. \n\n";
-		cout << usage;
+		std::cout <<"\nFlag expected where '"<< argv[i] << "' was given. \n\n";
+		std::cout << usage;
 		return 2;
 	}
 	for(unsigned j=1; argv[i][j]; j++)
@@ -148,7 +147,7 @@ for(int i = 1; i < argc; i++){
 			i++;
 			gamm = atof(argv[i]);
 			if (gamm < 1.1){
-				cout << "Value chosen for gamma too small! Choose value bigger than 1.1!\n\n";
+				std::cout << "Value chosen for gamma too small! Choose value bigger than 1.1!\n\n";
 				return 14;
 			}
 			break;
@@ -186,7 +185,7 @@ for(int i = 1; i < argc; i++){
 			else if(!strcmp(argv[i], "C6H14")) fluid = FLUID_C6H14;*/
 			else
 			{
-				cout << "Fluid " << argv[i] << "is not available. \n\n" << usage;
+				std::cout << "Fluid " << argv[i] << "is not available. \n\n" << usage;
 				return 3;
 			}
 			break;
@@ -265,7 +264,7 @@ for(int i = 1; i < argc; i++){
 			else if(!strcmp(argv[i], "MatAkaFit")) wall = WALL_MAT_AKA_FIT;
 			else
 			{
-				cout << "Wall model" << argv[i] << "is not available. \n\n" << usage;
+				std::cout << "Wall model" << argv[i] << "is not available. \n\n" << usage;
 				return 4;
 			}
 			break;
@@ -291,27 +290,27 @@ for(int i = 1; i < argc; i++){
 // (i) completeness => mandatory arguments: file name (i.e. prefix), number of fluid particles, temperature, wall thickness, xi_fluid_wall
 if(in_prefix == false)
 {
-	cout << "No output prefix specified. \n\n" << usage;
+	std::cout << "No output prefix specified. \n\n" << usage;
 	return 5;
 }
 if(in_N == false)
 {
-	cout << "Number of fluid particles not specified. \n\n" << usage;
+	std::cout << "Number of fluid particles not specified. \n\n" << usage;
 	return 6;
 }
 if(in_temperature == false)
 {
-	cout << "No temeprature specified. \n\n" << usage;
+	std::cout << "No temeprature specified. \n\n" << usage;
 	return 7;
 }
 if(in_wallThick == false)
 {
-	cout << "Wall thickness not specified. \n\n" << usage;
+	std::cout << "Wall thickness not specified. \n\n" << usage;
 	return 8;
 }
 if(in_xi12 == false)
 {
-	cout << "Berthelot combining rule: xi_12 not specified. \n\n" << usage;
+	std::cout << "Berthelot combining rule: xi_12 not specified. \n\n" << usage;
 	return 9;
 }
 // (ii) consistency
@@ -319,24 +318,24 @@ if(in_wallModel == true)
 {
 	if(wall == WALL_TERSOFF)
 	{
-		cout << "The Tersoff potential is not implemented yet.\n\n" << usage;
+		std::cout << "The Tersoff potential is not implemented yet.\n\n" << usage;
 		return 10;
 	}
 	else if(wall == WALL_MAT_AKA_FIT)
 	{
-		cout << "The model rendering TiO2 by fitting the Matsui+Akaogi potential is not implemented yet. \n\n" << usage;
+		std::cout << "The model rendering TiO2 by fitting the Matsui+Akaogi potential is not implemented yet. \n\n" << usage;
 		return 11;
 	}
 }
 if(!stripes && in_xi13){
-	cout << "\n\n*********************************************************************************************************\n";
-	cout << "Surplus specification of the Berthelot xi_13:\nHas to be specified for the mixing rule of components 1 and 3 only \n"
+	std::cout << "\n\n*********************************************************************************************************\n";
+	std::cout << "Surplus specification of the Berthelot xi_13:\nHas to be specified for the mixing rule of components 1 and 3 only \n"
 			"if there is a stripes shaped wall! (or any other kind of three component system)\n\n" << usage;
 	return 12;
 }
 else if(stripes && ! in_xi13){
-	cout << "\n\n*********************************************************************************************************\n";
-	cout << "No xi_13 specified: \nIf a stripes shaped wall is employed the Berthelot xi_13 must be specified.\n\n" << usage ;
+	std::cout << "\n\n*********************************************************************************************************\n";
+	std::cout << "No xi_13 specified: \nIf a stripes shaped wall is employed the Berthelot xi_13 must be specified.\n\n" << usage ;
 	return 12;
 }
 
@@ -345,7 +344,7 @@ else if(stripes && ! in_xi13){
  //@todo: stripes shaped wall
 if(stripes == true)
 {
-	cout << "A wall exhibiting different values of xi in a stripes shaped manner is not implemented yet. \n\n" << usage;
+	std::cout << "A wall exhibiting different values of xi in a stripes shaped manner is not implemented yet. \n\n" << usage;
 	return 12;
 }
 */
@@ -354,7 +353,7 @@ if(stripes == true)
 /*
 if(LJunits == true)
 {
-	cout<<"Input in Lennard-Jones units not enabled yet. Atomic units to be used instead. \n\n" << usage;
+	std::cout<<"Input in Lennard-Jones units not enabled yet. Atomic units to be used instead. \n\n" << usage;
 	return 13;
 }*/
 
@@ -404,7 +403,7 @@ if(!in_numProfileUnits){
 
 // generating an instance of ConfigWriter and calling the write method
 if(thermostat == THERMOSTAT_VELSCALE){
-  cout << "Velocity scaling applied \n";
+  std::cout << "Velocity scaling applied \n";
   ConfigWriter CfgWriter(prefix, wall, wallThick, refTime, profilePhi, profileR, profileH, outTimeSteps, initCanon, movie, fluidComp);
   CfgWriter.write();
 }

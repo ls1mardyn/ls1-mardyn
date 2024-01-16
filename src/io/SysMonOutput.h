@@ -18,7 +18,7 @@ public:
 
 	void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                  unsigned long simstep);
-	
+
 	//! @todo comment
 	void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain);
 

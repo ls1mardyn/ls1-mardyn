@@ -143,17 +143,17 @@ void MidpointTraversal<CellTemplate>::computeOffsets3D() {
 	// process only half of the faces to get no pair twice
 	for(int i=0; i<3; ++i){ // faces
 		int j = (i+3)%6;
-		_offsets3D[index++] = make_pair(_faces[i], _faces[j]);
+		_offsets3D[index++] = std::make_pair(_faces[i], _faces[j]);
 	}
 	// process only half of the edges to get no pair twice
 	for(int i=0; i<6; ++i){ // edges
 		int j = (i+6)%12;
-		_offsets3D[index++] = make_pair(_edges[i], _edges[j]);
+		_offsets3D[index++] = std::make_pair(_edges[i], _edges[j]);
 	}
 	// process only half of the corners to get no pair twice
 	for(int i=0; i<4; ++i){ // corners
 		int j = (i+4)%8;
-		_offsets3D[index++] = make_pair(_corners[i], _corners[j]);
+		_offsets3D[index++] = std::make_pair(_corners[i], _corners[j]);
 	}
 
 	mardyn_assert(index == 13);
@@ -243,14 +243,14 @@ void MidpointTraversal<CellTemplate>::pairOriginWithForwardNeighbors(int& index)
 
 	for(long y=-1; y<=1; ++y){ // 3 * 4
 		for(long x=-1; x<=1; ++x){ // 3
-			_offsets3D[index++] = make_pair(origin, std::array<long,3>{x, y, 1l});
+			_offsets3D[index++] = std::make_pair(origin, std::array<long,3>{x, y, 1l});
 		}
 		// 1st
-		_offsets3D[index++] = make_pair(origin, std::array<long,3>{1l, y, 0l});
+		_offsets3D[index++] = std::make_pair(origin, std::array<long,3>{1l, y, 0l});
 	}
 
 	// 13th
-	_offsets3D[index++] = make_pair(origin, std::array<long,3>{0l, 1l, 0l});
+	_offsets3D[index++] = std::make_pair(origin, std::array<long,3>{0l, 1l, 0l});
 
 }
 
