@@ -24,7 +24,8 @@ if (ENABLE_AUTOPAS)
     set(AUTOPAS_VECTOR_INSTRUCTIONS ${VECTOR_INSTRUCTIONS} CACHE STRING "Set via VECTOR_INSTRUCTIONS_OPTIONS" FORCE)
 
     # Merge of 798 (improve SoA loading); includes 787 combined tuning
-    set(AUTOPAS_TAG d338e23 CACHE STRING "AutoPas Git tag or commit id to use")
+    # set(AUTOPAS_TAG d338e23 CACHE STRING "AutoPas Git tag or commit id to use")
+    set(AUTOPAS_TAG fixMakeProjectCompilers CACHE STRING "AutoPas Git tag or commit id to use")
 
     FetchContent_Declare(
             autopasfetch
