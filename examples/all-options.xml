@@ -243,7 +243,8 @@
         <!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
         <selectorStrategy>fastestAbsolute</selectorStrategy>
         <!-- set the tuning auto tuning pipeline -->
-        <tuningStrategies>fullSearch</tuningStrategies>
+        <!-- Leave this empty for an exhaustive full search or add any number of strategies that are applied in the stated order -->
+        <tuningStrategies>ruleBasedTuning, predictiveTuning</tuningStrategies>
         <!-- Data layouts to be used: AoS, SoA -->
         <dataLayouts>SoA</dataLayouts>
         <!-- Allowed choices for newton 3 optimization: enabled, disabled -->
