@@ -91,7 +91,7 @@ jobs:
                 -DENABLE_UNIT_TESTS=ON \
               ..
         
-          cmake --build . --parallel 2 || cat _deps/autopasfetch-build/libs/harmony/src/harmony_bundled-stamp/harmony_bundled-build-*.log && exit 42
+          cmake --build . --parallel 2 || echo "--------------------------" && pwd && echo "--------------------------" && cat _deps/autopasfetch-build/libs/harmony/src/harmony_bundled-stamp/harmony_bundled-build-*.log && echo "--------------------------" && exit 42
 
           cd ..
 
@@ -151,7 +151,7 @@ jobs:
                 -DENABLE_MPI=$mpi_enabled \
               ..
         
-          cmake --build . --parallel 2 || cat _deps/autopasfetch-build/libs/harmony/src/harmony_bundled-stamp/harmony_bundled-build-*.log && exit 1337
+          cmake --build . --parallel 2 || echo "--------------------------" && pwd && echo "--------------------------" && cat _deps/autopasfetch-build/libs/harmony/src/harmony_bundled-stamp/harmony_bundled-build-*.log && echo "--------------------------" && exit 1337
 
           #as example list of new version is used, also the example files of new version should be used
           #therefore, go back to new version
