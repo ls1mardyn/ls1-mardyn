@@ -83,7 +83,7 @@
             <outputplugin name="CheckpointWriter">
                 <type>binary</type>
                 <writefrequency>5000</writefrequency>
-                <outputprefix>Validation</outputprefix>
+                <outputprefix>ValTet</outputprefix>
             </outputplugin>
         </output>
     </simulation>

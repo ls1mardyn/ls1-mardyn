@@ -11,6 +11,9 @@
     <simulation type="MD" >
         <run>
             <currenttime>0</currenttime>
+            <equilibration>
+                <steps>0</steps>
+            </equilibration>
             <production>
                 <steps>10000</steps>
             </production>
@@ -82,7 +85,7 @@
                 <samplingfrequency>100</samplingfrequency>
                 <outputprefix>default</outputprefix>
                 <bins>1000</bins>
-                <intervallength>0.002</intervallength>
+                <intervallength>0.2</intervallength>
             </outputplugin>
         </output>
 

@@ -35,6 +35,7 @@ void DensityProfile3D::sampleDensities(ParticleContainer *particleContainer, Dom
         std::array<double, 3> R = (*itM).r_arr();
         for(int d = 0; d < 3; d++) {
             auto bin_pos = static_cast<unsigned long>(R[d] / _binWidth);
+            bin_pos = std::clamp(bin_pos, 0UL, _binDims[d]-1UL);
             raw_array[d][bin_pos] += 1;
         }
     }
