@@ -368,8 +368,8 @@ bool AdResS::checkF_TH_Convergence() {
 
 void AdResS::applyF_TH() {
     std::array<double, 3> low = {2*_samplingStepSize,
-                                 _simulation.getDomain()->getGlobalLength(1),
-                                 _simulation.getDomain()->getGlobalLength(2)};
+                                 0,
+                                 0};
     std::array<double, 3> high= {_simulation.getDomain()->getGlobalLength(0) - 2*_samplingStepSize,
                                  _simulation.getDomain()->getGlobalLength(1),
                                  _simulation.getDomain()->getGlobalLength(2)};
