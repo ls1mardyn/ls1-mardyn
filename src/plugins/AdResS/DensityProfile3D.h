@@ -17,6 +17,7 @@ public:
     void init(double binWidth, Domain* domain, double rho0);
     void sampleDensities(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
     [[nodiscard]] const std::vector<double>& getDensity(int dim) const;
+    [[nodiscard]] std::vector<double> getDensitySmoothed(int dim) const;
     void computeDensities(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
     [[nodiscard]] const Interpolation::Function& getHistDensity(int dim) const;
 private:
@@ -27,6 +28,7 @@ private:
     std::array<std::vector<double>, 3> _localDensities;
     std::array<std::vector<double>, 3> _globalDensities;
     std::array<Interpolation::Function, 3> _histDensities;
+    Interpolation::Matrix _smoothingFilter;
     void resetBuffers();
 };
 

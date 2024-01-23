@@ -25,6 +25,76 @@ namespace Interpolation {
     };
 
     /**
+     * Matrix NxM N rows, M columns
+     * Row-First Memory alignment
+     * */
+    struct Matrix {
+        Matrix() : _dim0(0), _dim1(0) {}
+        Matrix(unsigned long dim0, unsigned long dim1) : _dim0(dim0), _dim1(dim1) {
+            _data.resize(dim0 * dim1, 0.0);
+        }
+
+        /**
+         * @param vec single column
+         * @param repeat how often vec should be repeated horizontally
+         * */
+        Matrix(const std::vector<double>& vec, unsigned long repeat) : Matrix(vec.size(), repeat) {
+            #if defined(_OPENMP)
+            #pragma omp parallel for collapse(2)
+            #endif
+            for(unsigned long n = 0; n < _dim0; n++) {
+                for(unsigned long m = 0; m < _dim1; m++) {
+                    setAt(n, m, vec[n]);
+                }
+            }
+        }
+
+        /**
+         * @param vec single row
+         * @param repeat how often vec should be repeated vertically
+         * */
+        Matrix(unsigned long repeat, const std::vector<double>& vec) : Matrix(repeat, vec.size()) {
+            #if defined(_OPENMP)
+            #pragma omp parallel for collapse(2)
+            #endif
+            for(unsigned long n = 0; n < _dim0; n++) {
+                for(unsigned long m = 0; m < _dim1; m++) {
+                    setAt(n, m, vec[m]);
+                }
+            }
+        }
+
+        std::vector<double> operator*(const std::vector<double>& vec) const {
+            mardyn_assert((vec.size() == _dim1));
+            std::vector<double> result;
+            result.resize(_dim0, 0.0);
+            auto* raw_result = std::data(result);
+
+            #if defined(_OPENMP)
+            #pragma omp parallel for simd reduction(+:raw_result[:_dim0]) collapse(2)
+            #endif
+            for(unsigned long n = 0; n < _dim0; n++) {
+                for(unsigned long m = 0; m < _dim1; m++) {
+                    raw_result[n] += vec[m] * _data[n * _dim1 + m];
+                }
+            }
+            return result;
+        }
+
+        void setAt(unsigned long n, unsigned long m, double value) {
+            _data[n * _dim1 + m] = value;
+        }
+
+        double getAt(unsigned long n, unsigned long m) {
+            return _data[n * _dim1 + m];
+        }
+
+        unsigned long _dim0;
+        unsigned long _dim1;
+        std::vector<double> _data;
+    };
+
+    /**
      * Numerically computes the gradient of the input vector. Uses finite difference coefficients (based on Lagrange Polynomials).
      * Input and output have equal size. The output on the borders use forward or backward differences respectively, the rest central.
      * @param input sample points of f(x)
@@ -79,5 +149,30 @@ namespace Interpolation {
      * @param f derivative of F, with f(x) = F'(x)
      * */
     [[maybe_unused]] void computeGradient(Function& F, Function& f);
+
+    /**
+     * Gaussian Kernel for kernel smoothing. The term 2b**2 was replaced with sigma**2
+     * */
+    [[maybe_unused]] inline double gaussian_kernel(double x, double x_i, double sigma);
+
+    /**
+     * Generates as matrix to be used for smoothing sampled data, if sampled data is y=f(x)
+     * @param begin begin of x
+     * @param end end of x
+     * @param step_width sampling step width
+     * @param sigma filter strength
+     * @param output output
+     * */
+    [[maybe_unused]] void createGaussianMatrix(double begin, double end, double step_width, double sigma, Matrix& output);
+
+    /**
+     * Evaluates the provided function in the range begin:step_width:end to in- or decrease resolution.
+     * Results is stored back into same function.
+     * @param begin begin inclusive
+     * @param end end exclusive
+     * @param step_width distance between each step
+     * @param function in/out function
+     * */
+    [[maybe_unused]] void resampleFunction(double begin, double end, double step_width, Function& function);
 }
 #endif //MARDYN_INTERPOLATION_H

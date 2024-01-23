@@ -175,3 +175,77 @@ static inline double bernstein_3(double t, int k) {
     std::vector<double> fVals = std::vector<double>(F.gradients);
     computeHermite(F.begin, fVals, steps, F.n, f);
 }
+
+[[maybe_unused]] inline double Interpolation::gaussian_kernel(double x, double x_i, double sigma) {
+    return std::exp(-(x - x_i)*(x - x_i) / (sigma*sigma));
+}
+
+void Interpolation::createGaussianMatrix(double begin, double end, double step_width, double sigma,
+                                         Interpolation::Matrix &output) {
+    std::vector<double> positions;
+    auto count = static_cast<unsigned long>((end-begin)/step_width);
+    positions.resize(count);
+
+    {
+        double pos = begin;
+        for(double & position : positions) {
+            position = pos;
+            pos += step_width;
+        }
+    }
+
+    Matrix cols {positions, count};
+    Matrix rows {count, positions};
+    output._dim0 = count;
+    output._dim1 = count;
+    output._data.resize(count * count);
+
+    #if defined(_OPENMP)
+    #pragma omp parallel for simd collapse(2)
+    #endif
+    for(unsigned long n = 0; n < count; n++) {
+        for(unsigned long m = 0; m < count; m++) {
+            output.setAt(n, m, gaussian_kernel(cols.getAt(n, m), rows.getAt(n, m), sigma));
+        }
+    }
+
+    //normalize dim1 to sum up to 1
+    std::vector<double> sums;
+    sums.resize(count, 0.0);
+    auto* sum_data = std::data(sums);
+    #if defined(_OPENMP)
+    #pragma omp parallel for reduction(+:sum_data[:count]) collapse(2)
+    #endif
+    for(unsigned long n = 0; n < count; n++) {
+        for(unsigned long m = 0; m < count; m++) {
+            sum_data[n] += output.getAt(n, m);
+        }
+    }
+
+    #if defined(_OPENMP)
+    #pragma omp parallel for collapse(2)
+    #endif
+    for(unsigned long n = 0; n < count; n++) {
+        for(unsigned long m = 0; m < count; m++) {
+            output.setAt(n, m, output.getAt(n, m) / sums[n]);
+        }
+    }
+}
+
+void Interpolation::resampleFunction(double begin, double end, double step_width, Interpolation::Function &function) {
+    double pos = begin;
+    std::vector<double> fVals;
+    std::vector<double> steps;
+    auto count = static_cast<unsigned long>((end - begin) / step_width);
+    fVals.resize(count);
+    steps.resize(count-1, step_width);
+
+    for(unsigned long i = 0; i < count; i++) {
+        fVals[i] = computeHermiteAt(pos, function);
+        pos += step_width;
+    }
+
+    Function f;
+    computeHermite(begin, fVals, steps, count, f);
+    function = std::move(f);
+}

@@ -16,6 +16,8 @@ void DensityProfile3D::init(double binWidth, Domain *domain, double rho0) {
         _binDims[d] = static_cast<unsigned long>(domain->getGlobalLength(d) / binWidth);
         _binVolumes[d] = tmpMult / domain->getGlobalLength(d) * binWidth;
     }
+
+    Interpolation::createGaussianMatrix(0.0, domain->getGlobalLength(0), binWidth, 10, _smoothingFilter);
 }
 
 void DensityProfile3D::sampleDensities(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
@@ -72,11 +74,20 @@ void DensityProfile3D::sampleDensities(ParticleContainer *particleContainer, Dom
             _globalDensities[d][i] /= _binVolumes[d];
         }
     }
+
+
 }
 
 const std::vector<double> &DensityProfile3D::getDensity(int dim) const {
     mardyn_assert(((dim>=0) && (dim<=3)));
     return _globalDensities[dim];
+}
+
+
+std::vector<double> DensityProfile3D::getDensitySmoothed(int dim) const {
+    mardyn_assert(((dim>=0) && (dim<=3)));
+    mardyn_assert((dim==0)); // TODO make for all dims a filter
+    return _smoothingFilter * _globalDensities[dim];
 }
 
 void DensityProfile3D::resetBuffers() {

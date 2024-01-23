@@ -220,8 +220,15 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
     std::vector<double> densities{_densityProfiler.getDensity(0)};
     if(_logDensities) writeDensities(stream.str(), densities);
 
+    stream.clear();
+    stream = std::stringstream {};
+    stream << "./F_TH_Density_Smooth_" << simstep << ".txta";
+    densities = _densityProfiler.getDensitySmoothed(0);
+    if(_logDensities) writeDensities(stream.str(), densities);
+
     _densityProfiler.computeDensities(particleContainer, domainDecomp, domain);
     Interpolation::Function histDensity = _densityProfiler.getHistDensity(0);
+    Interpolation::resampleFunction(0, domain->getGlobalLength(0), _samplingStepSize, histDensity);
     stream.clear();
     stream = std::stringstream {};
     stream << "./F_TH_HistDensity_" << simstep << ".xmla";
@@ -300,7 +307,7 @@ void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base
 
 void AdResS::computeF_TH() {
     _densityProfiler.sampleDensities(_particleContainer, &_simulation.domainDecomposition(), _simulation.getDomain());
-    std::vector<double> d{_densityProfiler.getDensity(0)};
+    std::vector<double> d{_densityProfiler.getDensitySmoothed(0)};
     std::vector<double> d_prime;
     Interpolation::computeGradient(d, d_prime);
     Interpolation::Function d_prime_fun;
