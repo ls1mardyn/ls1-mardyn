@@ -66,12 +66,14 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
             }
         }
     }
-
-    if(_enableThermodynamicForce && _createThermodynamicForce) {
+    if(_enableThermodynamicForce) {
         _densityProfiler.init(_samplingStepSize, domain, _rho0);
+        _thermodynamicForceSampleCounter = 0;
+        _thermodynamicForceHist.n = 0;
+    }
+    if(_enableThermodynamicForce && _createThermodynamicForce) {
         _densityProfiler.sampleDensities(particleContainer, domainDecomp, domain);
         _targetDensity = std::vector<double>(_densityProfiler.getDensity(0));
-        _thermodynamicForceSampleCounter = 0;
         _thermodynamicForce.n = _targetDensity.size();
         _thermodynamicForce.begin = 0.0;
         _thermodynamicForce.step_width.resize(_thermodynamicForce.n-1, _samplingStepSize);
@@ -123,7 +125,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 
         if(count == 1) { // sample FTH function
             _createThermodynamicForce = true;
-            _thermodynamicForceSampleGap = xmlconfig.getNodeValue_int("enableFTH/createFTH/sampleGap", 100) - 1;
+            _thermodynamicForceSampleGap = xmlconfig.getNodeValue_int("enableFTH/createFTH/sampleGap", 200);
             _convergenceThreshold = xmlconfig.getNodeValue_double("enableFTH/createFTH/threshold", 0.02);
             _convergenceFactor = xmlconfig.getNodeValue_double("enableFTH/createFTH/convFactor", 0.2);
             _samplingStepSize = xmlconfig.getNodeValue_double("enableFTH/createFTH/sampleBinSize", 0.2);
@@ -161,6 +163,8 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
             }
             xmlconfig.changecurrentnode(oldpath);
             _samplingStepSize = _thermodynamicForce.step_width[0];
+            _thermodynamicForceSampleGap = 200;
+            _createThermodynamicForce = false;
         }
     }
 
@@ -280,18 +284,19 @@ void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsi
     }
 
     // handle thermodynamic force
-    if(_enableThermodynamicForce) {
-        if(_createThermodynamicForce && _thermodynamicForceSampleCounter >= _thermodynamicForceSampleGap) {
-            if(checkF_TH_Convergence()) {
-                global_log->info() << "[AdResS] F_TH has converged." << std::endl;
-                writeFunctionToXML("./F_TH_InterpolationFunction_Final.xml", _thermodynamicForce);
-                Simulation::exit(0);
-            }
-            else computeF_TH();
-            _thermodynamicForceSampleCounter = -1;
-        }
-        _thermodynamicForceSampleCounter++;
+    if(!_enableThermodynamicForce) return;
+    _thermodynamicForceSampleCounter++;
+
+    if(_thermodynamicForceSampleCounter % _thermodynamicForceSampleGap != 0) return;
+    _thermodynamicForceSampleCounter = 0;
+
+    if(!_createThermodynamicForce) return;
+    if(checkF_TH_Convergence()) {
+        global_log->info() << "[AdResS] F_TH has converged." << std::endl;
+        writeFunctionToXML("./F_TH_InterpolationFunction_Final.xml", _thermodynamicForce);
+        Simulation::exit(0);
     }
+    else computeF_TH();
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
