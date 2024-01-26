@@ -719,7 +719,7 @@ double *AutoPasContainer::getCellLength() {
 }
 
 double *AutoPasContainer::getHaloSize() {
-	static std::array<double, 3> haloLength{_verletSkin + _cutoff};
+	static std::array<double, 3> haloLength{_verletSkin + _cutoff, _verletSkin + _cutoff, _verletSkin + _cutoff};
 	return haloLength.data();
 }
 
