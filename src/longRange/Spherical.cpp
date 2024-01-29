@@ -400,33 +400,54 @@ void Spherical::calculateLongRange(){
 		}
 		_domainDecomposition->collCommFinalize();
 
-		// rhol and rhov 
-		double rhol = 0.0;
+	// 	// rhol and rhov  ----- this calculation scheme does not work! the instantaneous profile is far to jagged for the "abs(rhol-rhoShells_global[i]) < 0.1*rhol" condition. often return 0 density for rhol in bubbles with large NShells
+	// 	double rhol = 0.0;  // actually "rho_inside"
+	// 	for (unsigned int i=4; i<14; i++) { 
+	// 		rhol += 0.1*rhoShells_global[i];
+	// //		std::cout << "rhol" << i << " " << rhol << std::endl;
+	// 	}
 
-		for (unsigned int i=4; i<14; i++) {
-			rhol += 0.1*rhoShells_global[i];
-	//		std::cout << "rhol" << i << " " << rhol << std::endl;
+	// 	for (unsigned int i=14; i<NShells; i++) {
+	// 		if ( abs(rhol-rhoShells_global[i]) < 0.1*rhol ) {
+	// 			rhol = ((i-1)*rhol + rhoShells_global[i])/i;
+	// //			std::cout << "rhol" << i << " " << rhol << std::endl;
+
+	// 		}
+	// 	}
+
+	// 	double rhov = 0.0;   // actually "rho_outside"
+	// 	for (unsigned int i=NShells-11; i<(NShells-1); i++) {
+	// 		rhov += 0.1*rhoShells_global[i];
+	// 	}
+
+	// 	for (unsigned int i=1; i<(NShells-20); i++) {
+	// 		unsigned int j = NShells-11-i;
+	// 		if ( abs(rhov-rhoShells_global[j]) < 0.2*rhov ) {
+	// 			rhov = ((11+i-1)*rhov + rhoShells_global[j])/(11+i);
+	// 		}
+	// 	}
+
+
+
+		//NOTE: procedure to calculate the instantaneous inside and outside densities is risky here, because it makes a priori asumptions about where to find the phase boundary! Better Ideas are welcome.
+		int inside_from = NShells/10;    
+		int inside_to = NShells/5+5;	
+		int outside_from = NShells -2 - NShells/10 - 5;
+		int outside_to = NShells - 2;
+
+		double rhol = 0.;
+		for (unsigned int i = inside_from; i< inside_to; i++){
+			rhol += rhoShells_global[i];
 		}
+		rhol /= (inside_to - inside_from);
 
-		for (unsigned int i=14; i<NShells; i++) {
-			if ( abs(rhol-rhoShells_global[i]) < 0.1*rhol ) {
-				rhol = ((i-1)*rhol + rhoShells_global[i])/i;
-	//			std::cout << "rhol" << i << " " << rhol << std::endl;
-
-			}
+		double rhov = 0.;
+		for (unsigned int i = outside_from; i< outside_to; i++){
+			rhov += rhoShells_global[i];
 		}
+		rhov /= (outside_to - outside_from);
 
-		double rhov = 0.0;
-		for (unsigned int i=NShells-11; i<(NShells-1); i++) {
-			rhov += 0.1*rhoShells_global[i];
-		}
 
-		for (unsigned int i=1; i<(NShells-20); i++) {
-			unsigned int j = NShells-11-i;
-			if ( abs(rhov-rhoShells_global[j]) < 0.2*rhov ) {
-				rhov = ((11+i-1)*rhov + rhoShells_global[j])/(11+i);
-			}
-		}
 
 		// D0 with 1090 (Baidakov et al.)
 		double Dmin = 0.0;
@@ -494,7 +515,7 @@ void Spherical::calculateLongRange(){
 			}
 		}else{
 			for (unsigned int i=0; i<NShells; i++) {
-				if ( rhoShellsT[i] <= 0.998*rhov) {
+				if ( rhoShellsT[i] <= 0.998*rhov) {  
 					rhoShellsT[i] -= rhov;
 				} else {
 					rhoShellsT[i] = 0.0;
