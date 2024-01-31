@@ -199,6 +199,8 @@ public:
 
 	virtual double getSkin() const {return 0.;}
 
+	virtual size_t getRebuildFrequency() const {return 1;};
+
     /* TODO: Have a look on this */
 	virtual void deleteMolecule(ParticleIterator& moleculeIter, const bool& rebuildCaches) = 0;
 

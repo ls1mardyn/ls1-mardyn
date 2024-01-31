@@ -95,6 +95,8 @@ public:
 
 	double getSkin() const override;
 
+	size_t getRebuildFrequency() const override;
+
 	void deleteMolecule(ParticleIterator &moleculeIter, const bool &rebuildCaches) override;
 
 	double getEnergy(ParticlePairsHandler *particlePairsHandler, Molecule *m1, CellProcessor &cellProcessor) override;

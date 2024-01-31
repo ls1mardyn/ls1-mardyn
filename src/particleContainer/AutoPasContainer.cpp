@@ -628,6 +628,8 @@ double AutoPasContainer::getCutoff() const { return _cutoff; }
 
 double AutoPasContainer::getSkin() const { return _verletSkin; }
 
+size_t AutoPasContainer::getRebuildFrequency() const {return _verletRebuildFrequency;};
+
 void AutoPasContainer::deleteMolecule(ParticleIterator &moleculeIter, const bool & /*rebuildCaches*/) {
 	_autopasContainer.deleteParticle(moleculeIter);
 }
