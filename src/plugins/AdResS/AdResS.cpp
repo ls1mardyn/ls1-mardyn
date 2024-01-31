@@ -67,7 +67,7 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
         }
     }
     if(_enableThermodynamicForce) {
-        _densityProfiler.init(_samplingStepSize, domain, _rho0);
+        _densityProfiler.init(_samplingStepSize, domain, _rho0, _smoothingFactor);
         _thermodynamicForceSampleCounter = 0;
         _thermodynamicForceHist.n = 0;
     }
@@ -115,6 +115,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
         _logFTH = xmlconfig.getNodeValue_bool("enableFTH/logFTH", false);
         _logDensities = xmlconfig.getNodeValue_bool("enableFTH/logDensity", false);
         _rho0 = xmlconfig.getNodeValue_double("enableFTH/rho", 0.01);
+        _smoothingFactor = xmlconfig.getNodeValue_double("enableFTH/smoothingFactor", 10);
 
         query = xmlconfig.query("enableFTH/createFTH");
         count = query.card();

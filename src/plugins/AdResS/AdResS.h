@@ -228,6 +228,9 @@ private:
     //! @brief initial density
     double _rho0;
 
+    //! @brief interpolation smoothness
+    double _smoothingFactor;
+
     /**
      * Writes the function object into the required XML format for input files.
      * @param filename Output filename

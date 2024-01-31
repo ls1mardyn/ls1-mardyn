@@ -8,7 +8,7 @@
 #include <map>
 #include <unordered_map>
 
-void DensityProfile3D::init(double binWidth, Domain *domain, double rho0) {
+void DensityProfile3D::init(double binWidth, Domain *domain, double rho0, double smoothingFactor) {
     _binWidth = binWidth;
     _rho0 = rho0;
     double tmpMult = domain->getGlobalLength(0) * domain->getGlobalLength(1) * domain->getGlobalLength(2);
@@ -17,7 +17,7 @@ void DensityProfile3D::init(double binWidth, Domain *domain, double rho0) {
         _binVolumes[d] = tmpMult / domain->getGlobalLength(d) * binWidth;
     }
 
-    Interpolation::createGaussianMatrix(0.0, domain->getGlobalLength(0), binWidth, 10, _smoothingFilter);
+    Interpolation::createGaussianMatrix(0.0, domain->getGlobalLength(0), binWidth, smoothingFactor, _smoothingFilter);
 }
 
 void DensityProfile3D::sampleDensities(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
