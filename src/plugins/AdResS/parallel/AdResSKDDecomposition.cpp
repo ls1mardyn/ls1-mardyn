@@ -1429,9 +1429,8 @@ void AdResSKDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeC
                         return (region.isInnerPointDomain(_plugin->_domain, Hybrid, molPtr->r_arr()) && !region.isInnerPointDomain(_plugin->_domain, FullParticle, molPtr->r_arr()));
                     });
                     if(it == _plugin->_fpRegions.end()) it = _plugin->_fpRegions.begin();
-                    double weight = AdResS::weight(molPtr->r_arr(), *it);
-                    particles = (int) (weight * (double) _simulation.getEnsemble()->getComponents()->at(molPtr->componentid() + 1).numSites());
-                    particles += (int) ((1-weight) * (double) _simulation.getEnsemble()->getComponents()->at(molPtr->componentid() - 1).numSites());
+                    particles = (int) ((double) _simulation.getEnsemble()->getComponents()->at(molPtr->componentid() + 1).numSites());
+                    particles += (int) ((double) _simulation.getEnsemble()->getComponents()->at(molPtr->componentid() - 1).numSites());
                 }
             } else {
                 particles = molPtr->numSites();

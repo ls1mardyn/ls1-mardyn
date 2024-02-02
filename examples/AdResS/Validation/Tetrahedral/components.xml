@@ -33,31 +33,24 @@
     </moleculetype>
     <moleculetype id="2" name="H_M">
         <site type="LJ126" id="1" >
-            <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
-            <mass>0.0</mass>
-            <sigma>3.0</sigma>
-            <epsilon>0.8</epsilon>
-            <shifted>false</shifted>
-        </site>
-        <site type="LJ126" id="2" >
             <coords> <x>0.57735027</x> <y>0.57735027</y> <z>0.57735027</z> </coords>
             <mass>1.0</mass>
             <sigma>1.0</sigma>
             <epsilon>1.0</epsilon>
         </site>
-        <site type="LJ126" id="3" >
+        <site type="LJ126" id="2" >
             <coords> <x>-0.57735027</x> <y>-0.57735027</y> <z>0.57735027</z> </coords>
             <mass>1.0</mass>
             <sigma>1.0</sigma>
             <epsilon>1.0</epsilon>
         </site>
-        <site type="LJ126" id="4" >
+        <site type="LJ126" id="3" >
             <coords> <x>-0.57735027</x> <y>0.57735027</y> <z>-0.57735027</z> </coords>
             <mass>1.0</mass>
             <sigma>1.0</sigma>
             <epsilon>1.0</epsilon>
         </site>
-        <site type="LJ126" id="5" >
+        <site type="LJ126" id="4" >
             <coords> <x>0.57735027</x> <y>-0.57735027</y> <z>-0.57735027</z> </coords>
             <mass>1.0</mass>
             <sigma>1.0</sigma>

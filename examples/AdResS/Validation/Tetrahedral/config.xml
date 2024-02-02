@@ -20,11 +20,11 @@
         </run>
         <integrator type="Leapfrog">
             <!-- MD ODE integrator -->
-            <timestep unit="reduced">0.001</timestep>
+            <timestep unit="reduced">0.002</timestep>
         </integrator>
         <ensemble type="NVT">
             <!--Ensemble is the main topic of the simulation -->
-            <temperature unit="reduced" >200</temperature>	<!-- in future also units="K" -->
+            <temperature unit="reduced" >1.5</temperature>	<!-- in future also units="K" -->
             <domain type="box">
                 <lx unit="reduced">200.</lx>
                 <ly unit="reduced">200.</ly>
@@ -83,11 +83,110 @@
                 <traversalSelector>c08</traversalSelector>
             </datastructure>
             <cutoffs type="CenterOfMass" >
-                <radiusLJ unit="reduced" >5.0</radiusLJ>
+                <radiusLJ unit="reduced" >10.0</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField" >
                 <epsilon>0</epsilon>
             </electrostatic>
+            <thermostats>
+                <thermostat type="TemperatureControl">
+                    <control>
+                        <start>0</start>
+                        <frequency>1</frequency>
+                        <stop>1000000000</stop>
+                    </control>
+                    <regions>
+                        <region>
+                            <method>VelocityScaling</method>
+                            <coords>
+                                <lcx>0.0</lcx>
+                                <lcy>0.0</lcy>
+                                <lcz>0.0</lcz>
+                                <ucx>70</ucx>
+                                <ucy>200</ucy>
+                                <ucz>200</ucz>
+                            </coords>
+                            <target>
+                                <temperature>1.5</temperature>
+                                <component>3</component>
+                            </target>
+                            <settings>
+                                <numslabs>4</numslabs>
+                                <exponent>0.0</exponent>
+                                <directions>xyz</directions>
+                            </settings>
+                            <writefreq>10000000</writefreq>
+                            <fileprefix>temp0</fileprefix>
+                        </region>
+                        <region>
+                            <method>VelocityScaling</method>
+                            <coords>
+                                <lcx>70.0</lcx>
+                                <lcy>0.0</lcy>
+                                <lcz>0.0</lcz>
+                                <ucx>80</ucx>
+                                <ucy>200</ucy>
+                                <ucz>200</ucz>
+                            </coords>
+                            <target>
+                                <temperature>1.5</temperature>
+                                <component>2</component>
+                            </target>
+                            <settings>
+                                <numslabs>4</numslabs>
+                                <exponent>0.0</exponent>
+                                <directions>xyz</directions>
+                            </settings>
+                            <writefreq>10000000</writefreq>
+                            <fileprefix>temp1</fileprefix>
+                        </region>
+                        <region>
+                            <method>VelocityScaling</method>
+                            <coords>
+                                <lcx>120.0</lcx>
+                                <lcy>0.0</lcy>
+                                <lcz>0.0</lcz>
+                                <ucx>130</ucx>
+                                <ucy>200</ucy>
+                                <ucz>200</ucz>
+                            </coords>
+                            <target>
+                                <temperature>1.5</temperature>
+                                <component>2</component>
+                            </target>
+                            <settings>
+                                <numslabs>4</numslabs>
+                                <exponent>0.0</exponent>
+                                <directions>xyz</directions>
+                            </settings>
+                            <writefreq>10000000</writefreq>
+                            <fileprefix>temp2</fileprefix>
+                        </region>
+                        <region>
+                            <method>VelocityScaling</method>
+                            <coords>
+                                <lcx>130.0</lcx>
+                                <lcy>0.0</lcy>
+                                <lcz>0.0</lcz>
+                                <ucx>200</ucx>
+                                <ucy>200</ucy>
+                                <ucz>200</ucz>
+                            </coords>
+                            <target>
+                                <temperature>1.5</temperature>
+                                <component>3</component>
+                            </target>
+                            <settings>
+                                <numslabs>4</numslabs>
+                                <exponent>0.0</exponent>
+                                <directions>xyz</directions>
+                            </settings>
+                            <writefreq>10000000</writefreq>
+                            <fileprefix>temp3</fileprefix>
+                        </region>
+                    </regions>
+                </thermostat>
+            </thermostats>
         </algorithm>
 
         <output>
@@ -107,7 +206,7 @@
                 <samplingfrequency>100</samplingfrequency>
                 <outputprefix>default</outputprefix>
                 <bins>1000</bins>
-                <intervallength>0.2</intervallength>
+                <intervallength>0.001</intervallength>
             </outputplugin>
         </output>
 
@@ -118,18 +217,20 @@
                 <logFTH>true</logFTH>
                 <logDensity>true</logDensity>
                 <rho>0.005</rho>
+                <smoothingFactor>10</smoothingFactor>
                 <createFTH>
                     <sampleGap>200</sampleGap>
-                    <threshold>0.05</threshold>
-                    <convFactor>10000</convFactor>
-                    <sampleBinSize>0.5</sampleBinSize>
+                    <threshold>5e-7</threshold>
+                    <convFactor>5e-1</convFactor>
+                    <sampleBinSize>1.0</sampleBinSize>
                 </createFTH>
+                <!--include query="/forceFunction">./F_TH.xml</include-->
             </enableFTH>
             <fpregions>
                 <region id="1">
                     <lowX>80.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
                     <highX>120.0</highX><highY>200.0</highY><highZ>200.0</highZ>
-                    <hybridDimX>40.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                    <hybridDimX>10.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
         </plugin>

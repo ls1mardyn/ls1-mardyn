@@ -87,24 +87,6 @@ struct FPRegion {
     }
 
     /**
-     * @brief Computes the intersection point of the line that is created by connection
-     * the center of the region and the provided point with the either the inner or outer box of this region
-     * depending on the intersection type.
-     * @param point outside or inside of the box that is used for the computation
-     * @param inter Intersection::H_FP inner box, Intersection::CG_H outer box
-     * */
-    std::array<double, 3> computeIntersection(std::array<double,3> point, Intersection inter) {
-        double scale = std::max(
-                            std::max(std::abs(point[0] - _center[0])/(_dim[0]+2*_hybridDims[0]*inter)*2.0,
-                                     std::abs(point[1] - _center[1])/(_dim[1]+2*_hybridDims[1]*inter)*2.0),
-                            std::abs(point[2] - _center[2])/(_dim[2]+2*_hybridDims[2]*inter)*2.0
-                        );
-        std::array<double,3> result{0,0,0};
-        for(int d = 0; d < 3; d++) result[d] = _center[d] + (point[d] - _center[d]) / scale;
-        return result;
-    }
-
-    /**
      * @brief checks if the point is in the provided box defined by low and high
      * @param point is the point to be checked
      * @param low is the inclusive lower left front corner of the box
@@ -179,59 +161,6 @@ struct FPRegion {
             }
         }
         return result;
-    }
-
-    /**
-     * @brief checks if this FPRegion (the FullParticle area) is in the box defined by low and high.
-     * @param low lower corner of box
-     * @param high upper corner of box
-     * */
-    bool isRegionInBox(std::array<double, 3> low, std::array<double, 3> high) {
-        return _low[0] <= high[0] && _low[1] <= high[1] && _low[2] <= high[2] &&
-               _high[0] >= low[0] && _high[1] >= low[1] && _high[2] >= low[2];
-    }
-};
-
-/**
- * Simple container for mesoscopic values.
- * During normal force computation of ls1-mardyn mesoscopic values are computed. In Hybrid regions those are wrong.
- * AdResS needs to recompute those. This struct stores those values.
- * */
-struct MesoValues {
-    //! @brief variable used to sum the virial contribution of all pairs
-    double _virial;
-    //! @brief variable used to sum the Upot6LJ contribution of all pairs
-    double _upot6LJ;
-    //! @brief variable used to sum the UpotXpoles contribution of all pairs
-    double _upotXpoles;
-    //! @brief variable used to sum the MyRF contribution of all pairs
-    double _myRF;
-
-    /**
-     * @brief Constructs a MesoValues Container
-     * @param v virial
-     * @param lj upot6LJ
-     * @param pole upotXpoles
-     * @param rf myRF
-     * */
-    explicit MesoValues(double v = 0.f, double lj = 0.f, double pole = 0.f, double rf = 0.f) : _virial(v), _upot6LJ(lj), _upotXpoles(pole), _myRF(rf) {}
-
-    /**
-     * @brief sets all values to 0
-     * */
-    void clear() {
-       _virial = 0;
-       _upot6LJ = 0;
-       _upotXpoles = 0;
-       _myRF = 0;
-    }
-
-    /**
-     * @brief Sets the stores mesoscopic values in the passed @param domain.
-     * */
-    void setInDomain(Domain* domain) const {
-        domain->setLocalUpot(_upot6LJ / 6. + _upotXpoles + _myRF + domain->getLocalUpot());
-        domain->setLocalVirial(_virial + 3.0 * _myRF + domain->getLocalVirial());
     }
 };
 

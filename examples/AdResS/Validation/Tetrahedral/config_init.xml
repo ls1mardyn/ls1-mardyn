@@ -12,7 +12,7 @@
         <run>
             <currenttime>0</currenttime>
             <production>
-                <steps>5000</steps>
+                <steps>20000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -48,7 +48,7 @@
                                 </site>
                             </basis>
                             <latticeOccupancy>1.</latticeOccupancy>
-                            <density>1.0</density>
+                            <density>0.005</density>
                         </filler>
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
@@ -82,7 +82,7 @@
             </outputplugin-->
             <outputplugin name="CheckpointWriter">
                 <type>binary</type>
-                <writefrequency>5000</writefrequency>
+                <writefrequency>20000</writefrequency>
                 <outputprefix>ValTet</outputprefix>
             </outputplugin>
         </output>

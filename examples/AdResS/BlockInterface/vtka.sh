@@ -2,13 +2,13 @@
 VTKA=../../../cmake-build-debug/tools/VTKAnalysis
 InputDir=../../src/
 
-(cd $VTKA && ./vtk-analysis -n 400 -w 20.0 --bbox0 200.0 --bbox1 200.0 --bbox2 200.0 -o ./vtka_wEUC.txt "$InputDir/AdResS_wEUC_node0_100000.vtu" )
-(cd $VTKA && ./vtk-analysis -n 400 -w 20.0 --bbox0 200.0 --bbox1 200.0 --bbox2 200.0 -o ./vtka_wMAN.txt "$InputDir/AdResS_wMAN_node0_100000.vtu" )
-(cd $VTKA && ./vtk-analysis -n 400 -w 20.0 --bbox0 200.0 --bbox1 200.0 --bbox2 200.0 -o ./vtka_wCOM.txt "$InputDir/AdResS_wCOM_node0_100000.vtu" )
-(cd $VTKA && ./vtk-analysis -n 400 -w 20.0 --bbox0 200.0 --bbox1 200.0 --bbox2 200.0 -o ./vtka_wNEA.txt "$InputDir/AdResS_wNEA_node0_100000.vtu" )
-(cd $VTKA && ./vtk-analysis -n 400 -w 20.0 --bbox0 200.0 --bbox1 200.0 --bbox2 200.0 -o ./vtka_wOFF.txt "$InputDir/AdResS_wOFF_node0_100000.vtu" )
-(cd $VTKA && ./vtk-analysis -n 400 -w 20.0 --bbox0 200.0 --bbox1 200.0 --bbox2 200.0 -o ./vtka_wREF.txt "$InputDir/AdResS_wREF_NOAdResS_node0_100000.vtu" )
-exit 0
+#(cd $VTKA && ./vtk-analysis -n 400 -w 20.0 --bbox0 200.0 --bbox1 200.0 --bbox2 200.0 -o ./vtka_wEUC.txt "$InputDir/AdResS_wEUC_node0_100000.vtu" )
+#(cd $VTKA && ./vtk-analysis -n 400 -w 20.0 --bbox0 200.0 --bbox1 200.0 --bbox2 200.0 -o ./vtka_wMAN.txt "$InputDir/AdResS_wMAN_node0_100000.vtu" )
+#(cd $VTKA && ./vtk-analysis -n 400 -w 20.0 --bbox0 200.0 --bbox1 200.0 --bbox2 200.0 -o ./vtka_wCOM.txt "$InputDir/AdResS_wCOM_node0_100000.vtu" )
+#(cd $VTKA && ./vtk-analysis -n 400 -w 20.0 --bbox0 200.0 --bbox1 200.0 --bbox2 200.0 -o ./vtka_wNEA.txt "$InputDir/AdResS_wNEA_node0_100000.vtu" )
+#(cd $VTKA && ./vtk-analysis -n 400 -w 20.0 --bbox0 200.0 --bbox1 200.0 --bbox2 200.0 -o ./vtka_wOFF.txt "$InputDir/AdResS_wOFF_node0_100000.vtu" )
+#(cd $VTKA && ./vtk-analysis -n 400 -w 20.0 --bbox0 200.0 --bbox1 200.0 --bbox2 200.0 -o ./vtka_wREF.txt "$InputDir/AdResS_wREF_NOAdResS_node0_100000.vtu" )
+#exit 0
 
 ## 1k
 #echo "[Progress] 0/6"
@@ -26,7 +26,7 @@ exit 0
 #echo "[Progress] 2/6"
 #(cd $VTKA && ./vtk-analysis -n 740 -w 10.0 --bbox0 740.0 --bbox1 740.0 --bbox2 740.0 -o ./vtka_CH4_16k.txt "$InputDir/BlockInterface_16k_CH4_node0_10000.vtu" )
 #(cd $VTKA && ./vtk-analysis -n 740 -w 10.0 --bbox0 740.0 --bbox1 740.0 --bbox2 740.0 -o ./vtka_CH4_16k_REF.txt "$InputDir/BlockInterface_16k_CH4_REF_node0_10000.vtu" )
-#(cd $VTKA && ./vtk-analysis -n 450 -w 10.0 --bbox0 450.0 --bbox1 450.0 --bbox2 450.0 -o ./vtka_C6H12_16k.txt "$InputDir/BlockInterface_16k_C6H12_node0_10000.vtu" )
+(cd $VTKA && ./vtk-analysis -n 450 -w 10.0 --bbox0 450.0 --bbox1 450.0 --bbox2 450.0 -o ./vtka_fth_C6H12_16k.txt "$InputDir/BlockInterface_16k_C6H12_node0_100000.vtu" )
 #(cd $VTKA && ./vtk-analysis -n 450 -w 10.0 --bbox0 450.0 --bbox1 450.0 --bbox2 450.0 -o ./vtka_C6H12_16k_REF.txt "$InputDir/BlockInterface_16k_C6H12_REF_node0_10000.vtu" )
 ## 64k
 #echo "[Progress] 3/6"

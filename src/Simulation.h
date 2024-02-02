@@ -471,6 +471,13 @@ public:
     }
 
     /**
+     * Gets the current pairs handler to the provided one. Deletes the old one.
+     * */
+    ParticlePairsHandler* getParticlePairsHandler() {
+        return _particlePairsHandler;
+    }
+
+    /**
      * Sets the Cell processor to the provided one. Deletes the old one.
      * */
     void setCellProcessor(CellProcessor* cellProcessor) {

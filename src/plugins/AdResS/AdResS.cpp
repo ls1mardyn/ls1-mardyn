@@ -7,7 +7,6 @@
 #include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
 #include "Domain.h"
-#include "plugins/AdResS/util/AdResSRegionTraversal.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "plugins/AdResS/parallel/AdResSKDDecomposition.h"
 #include "utils/mardyn_assert.h"
@@ -18,9 +17,7 @@
 using namespace std;
 using Log::global_log;
 
-double (*AdResS::weight)(std::array<double, 3> r, FPRegion& region) = nullptr;
-
-AdResS::AdResS() : _mesoVals(), _forceAdapter(nullptr), _fpRegions(), _particleContainer(nullptr),
+AdResS::AdResS() : _fpRegions(), _particleContainer(nullptr),
                    _components(nullptr), _comp_to_res(), _domain(nullptr) {};
 
 AdResS::~AdResS() = default;
@@ -88,18 +85,12 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
 
         if(_logDensities) writeDensities("F_TH_TargetDensity.txt", _targetDensity);
     }
+
+    _tracerProcessor = new TracerCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), _simulation.getParticlePairsHandler(), _comp_to_res);
+    _simulation.setCellProcessor(_tracerProcessor);
 }
 
 void AdResS::readXML(XMLfileUnits &xmlconfig) {
-    static const std::array<std::string, 5> weight_impls {"euclid", "manhattan", "component", "near", "flat"};
-    static const std::array<double (*)(std::array<double, 3> r, FPRegion &region), 5> impls
-        {weightEuclid, weightManhattan, weightComponent, weightNearest, weightFlat};
-    std::string impl = weight_impls[0];
-    xmlconfig.getNodeValue("weightImpl", impl);
-    unsigned long index = std::distance(weight_impls.begin(), std::find(weight_impls.begin(), weight_impls.end(), impl));
-    AdResS::weight = impls[index >= 5 ? 0 : index];
-    global_log->info() << "[AdResS] Using weight implementation " << weight_impls[index >= 5 ? 0 : index] << std::endl;
-
     XMLfile::Query query = xmlconfig.query("enableFTH");
     _enableThermodynamicForce = false;
     unsigned long count = query.card();
@@ -191,11 +182,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
         _fpRegions[id - 1].readXML(xmlconfig);
     }
     xmlconfig.changecurrentnode(oldpath);
-    // todo add check that no region overlap even in hybrid considering periodic bounds
 
-    _forceAdapter = new AdResSForceAdapter(*this);
-    _simulation.setParticlePairsHandler(_forceAdapter);
-    _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), _forceAdapter));
     _domain = _simulation.getDomain();
     _comp_to_res.resize(_simulation.getEnsemble()->getComponents()->size(), FullParticle);
     if(auto decomp = dynamic_cast<AdResSKDDecomposition*>(&_simulation.domainDecomposition())) {
@@ -301,11 +288,6 @@ void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsi
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
-    //computeForce(true);
-    //computeForce(false);
-    _mesoVals.setInDomain(_domain);
-    _mesoVals.clear();
-
     if(_enableThermodynamicForce) {
         applyF_TH();
     }
@@ -390,35 +372,6 @@ void AdResS::applyF_TH() {
         std::array<double, 3> force = {F, 0.0, 0.0};
         itM->Fadd(std::data(force));
     }
-
-    // TODO FIXME!!
-    double cutoff = _simulation.getcutoffRadius();
-    auto& region = _fpRegions[0];
-    low[0] = region._lowHybrid[0] - cutoff;
-    high[0] = region._low[0] + cutoff;
-    #if defined(_OPENMP)
-    #pragma omp parallel
-    #endif
-    for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
-        std::array<double, 3> f = itM->F_arr();
-        for(short d = 0; d < 3; d++) {
-            f[d] = std::copysign(std::min(std::abs(f[d]), _forceMax), f[d]);
-        }
-        itM->setF(std::data(f));
-    }
-
-    low[0] = region._high[0] - cutoff;
-    high[0] = region._highHybrid[0] + cutoff;
-    #if defined(_OPENMP)
-    #pragma omp parallel
-    #endif
-    for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
-        std::array<double, 3> f = itM->F_arr();
-        for(short d = 0; d < 3; d++) {
-            f[d] = std::copysign(std::min(std::abs(f[d]), _forceMax), f[d]);
-        }
-        itM->setF(std::data(f));
-    }
 }
 
 void AdResS::checkMoleculeLOD(Molecule &molecule, Resolution targetRes) {
@@ -428,165 +381,6 @@ void AdResS::checkMoleculeLOD(Molecule &molecule, Resolution targetRes) {
 
     int offset = static_cast<int>(targetRes) - static_cast<int>(_comp_to_res[id]);
     molecule.setComponent(&_components->at(id + offset));
-}
-
-void AdResS::computeForce(bool invert) {
-    double cutoff = _simulation.getcutoffRadius();
-    double cutoff2 = cutoff * cutoff;
-    double LJCutoff2 = _simulation.getLJCutoff();
-    LJCutoff2 *= LJCutoff2;
-    std::array<double,3> globLen{0};
-    std::array<double, 3> pc_low{0};
-    std::array<double, 3> pc_high{0};
-    for(int d = 0; d < 3; d++) {
-        globLen[d] = _domain->getGlobalLength(d);
-        pc_low[d] = _particleContainer->getBoundingBoxMin(d);
-        pc_high[d] = _particleContainer->getBoundingBoxMax(d);
-    }
-
-    //check all regions
-    for(auto& region : _fpRegions) {
-        //check for local node if region is even in particle container
-        if(!region.isRegionInBox(pc_low, pc_high)) continue;
-
-        // first check if the region crosses any domain bounds
-        std::array<bool, 3> inDim {false};
-        for(int d = 0; d < 3; d++) {
-            inDim[d] = region._lowHybrid[d] >= 0 && region._highHybrid[d] <= globLen[d];
-        }
-        // find how much it crosses bounds
-        std::array<std::array<double,2>,3> deltaLowHighDim{};
-        for(int d = 0; d < 3; d++) {
-            deltaLowHighDim[d][0] = std::max(-(region._lowHybrid[d]), 0.);
-            deltaLowHighDim[d][1] = std::max((region._highHybrid[d]) - globLen[d], 0.);
-        }
-        // check all regions that wrap around due to periodic bounds
-        // we only need to check for each dim twice if it actually wraps around in that dimension
-        // in the arrays we create the indices of the boxes depending on the viewed case
-        // for x y or z: if they are 0 then we do not check a wrap around in that dimension
-        for(int x = 0; x <= !inDim[0]; x++) {
-            for(int y = 0; y <= !inDim[1]; y++) {
-                for(int z = 0; z <= !inDim[2]; z++) {
-                    std::array<double, 3> checkLow {
-                            (1 - x) * std::max(region._lowHybrid[0], 0.) + x * ((deltaLowHighDim[0][0] != 0) * (globLen[0] - deltaLowHighDim[0][0]) + (deltaLowHighDim[0][1] != 0) * 0),
-                            (1 - y) * std::max(region._lowHybrid[1], 0.) + y * ((deltaLowHighDim[1][0] != 0) * (globLen[1] - deltaLowHighDim[1][0]) + (deltaLowHighDim[1][1] != 0) * 0),
-                            (1 - z) * std::max(region._lowHybrid[2], 0.) + z * ((deltaLowHighDim[2][0] != 0) * (globLen[2] - deltaLowHighDim[2][0]) + (deltaLowHighDim[2][1] != 0) * 0) };
-
-                    std::array<double, 3> checkHigh {
-                            (1 - x) * std::min(region._highHybrid[0], globLen[0]) + x * ((deltaLowHighDim[0][0] != 0) * (globLen[0]) + (deltaLowHighDim[0][1] != 0) * deltaLowHighDim[0][1]),
-                            (1 - y) * std::min(region._highHybrid[1], globLen[1]) + y * ((deltaLowHighDim[1][0] != 0) * (globLen[1]) + (deltaLowHighDim[1][1] != 0) * deltaLowHighDim[1][1]),
-                            (1 - z) * std::min(region._highHybrid[2], globLen[2]) + z * ((deltaLowHighDim[2][0] != 0) * (globLen[2]) + (deltaLowHighDim[2][1] != 0) * deltaLowHighDim[2][1]) };
-                    // checkLow and checkHigh create a box within bounds, that was potentially wrapped around due to periodic bounds
-                    // now create bigger box surrounding this box to find molecules that have interacted with our hybrid molecules
-                    // only molecules within cutoff around the region have interacted with hybrid molecules
-                    for(int d = 0; d < 3; d++) {
-                        checkLow[d] -= cutoff;
-                        checkHigh[d] += cutoff;
-                    }
-
-                    // now have created a box in which forces need to be calculated
-                    // this we will multi-thread: for that we implement a simplified C08-Traversal
-                    _forceAdapter->init(_domain); // clear thread data
-                    AdResSRegionTraversal traversal{ checkLow, checkHigh, _particleContainer, _comp_to_res};
-                    traversal.traverse(*_forceAdapter, region, invert);
-                    _forceAdapter->finish(); // gather thread data
-                }
-            }
-        }
-    }
-}
-
-double AdResS::weightEuclid(std::array<double, 3> r, FPRegion& region) {
-    // if point is in the FP region -> weight is 1
-    if(FPRegion::isInnerPoint(r, region._low, region._high)) return 1.;
-    // point is in hybrid region -> weight is between 0 and 1
-    else if(FPRegion::isInnerPoint(r, region._lowHybrid, region._highHybrid)) {
-        std::array<double, 3> intersect_inner = region.computeIntersection(r, FPRegion::Intersection::H_FP);
-        std::array<double, 3> intersect_outer = region.computeIntersection(r, FPRegion::Intersection::CG_H);
-        double hyb_axis_length = sqrt(std::pow(intersect_outer[0]-intersect_inner[0], 2) +
-                                      std::pow(intersect_outer[1]-intersect_inner[1], 2) +
-                                      std::pow(intersect_outer[2]-intersect_inner[2], 2));
-        double dist = sqrt(std::pow(r[0]-intersect_inner[0], 2) +
-                           std::pow(r[1]-intersect_inner[1], 2) +
-                           std::pow(r[2]-intersect_inner[2], 2));
-
-        return std::pow(std::cos(M_PI/(2*hyb_axis_length) * dist), 2);
-    }
-    // point is in the CG region -> weight is 0
-    else return 0.;
-}
-
-double AdResS::weightManhattan(std::array<double, 3> r, FPRegion &region) {
-    // if point is in the FP region -> weight is 1
-    if(FPRegion::isInnerPoint(r, region._low, region._high)) return 1.;
-    // point is in hybrid region -> weight is between 0 and 1
-    else if(FPRegion::isInnerPoint(r, region._lowHybrid, region._highHybrid)) {
-        std::array<double, 3> intersect_inner = region.computeIntersection(r, FPRegion::Intersection::H_FP);
-        std::array<double, 3> intersect_outer = region.computeIntersection(r, FPRegion::Intersection::CG_H);
-        double hyb_axis_length = intersect_outer[0]-intersect_inner[0]  +
-                                 intersect_outer[1]-intersect_inner[1]  +
-                                 intersect_outer[2]-intersect_inner[2];
-        double dist = r[0]-intersect_inner[0] +
-                      r[1]-intersect_inner[1] +
-                      r[2]-intersect_inner[2];
-
-        return std::pow(std::cos(M_PI/(2*hyb_axis_length) * dist), 2);
-    }
-    // point is in the CG region -> weight is 0
-    else return 0.;
-}
-
-double AdResS::weightComponent(std::array<double, 3> r, FPRegion &region) {
-    // if point is in the FP region -> weight is 1
-    if(FPRegion::isInnerPoint(r, region._low, region._high)) return 1.;
-    // point is in hybrid region -> weight is between 0 and 1
-    else if(FPRegion::isInnerPoint(r, region._lowHybrid, region._highHybrid)) {
-        std::array<bool, 3> contribute_dir = {r[0] <= region._low[0] || r[0] >= region._high[0],
-                                              r[1] <= region._low[1] || r[1] >= region._high[1],
-                                              r[2] <= region._low[2] || r[2] >= region._high[2]};
-        std::array<double,3> dist_dir{std::max(std::max(region._low[0] - r[0], 0.), std::max(r[0] - region._high[0], 0.)),
-                                      std::max(std::max(region._low[1] - r[1], 0.), std::max(r[1] - region._high[1], 0.)),
-                                      std::max(std::max(region._low[2] - r[2], 0.), std::max(r[2] - region._high[2], 0.))};
-        double w = 1.;
-        for(int d = 0; d < 3; d++) {
-            if(region._hybridDims[d] != 0)
-                w *= contribute_dir[d] * std::cos(M_PI/(2*region._hybridDims[d]) * dist_dir[d]) + (1 - contribute_dir[d]);
-        }
-        return w;
-    }
-    // point is in the CG region -> weight is 0
-    else return 0.;
-}
-
-double AdResS::weightNearest(std::array<double, 3> r, FPRegion &region) {
-    // if point is in the FP region -> weight is 1
-    if(FPRegion::isInnerPoint(r, region._low, region._high)) return 1.;
-    // point is in hybrid region -> weight is between 0 and 1
-    else if(FPRegion::isInnerPoint(r, region._lowHybrid, region._highHybrid)) {
-        //example: dist_dir = {dx, 0, 0} if point is either left or right of region
-        //         dist_dir = {dx, dy, 0} if point is in edged that go front to rear in block
-        //         dist_dir = {dx, dy, dz} if point is in one corner
-        std::array<double,3> dist_dir{std::max(std::max(region._low[0] - r[0], 0.), std::max(r[0] - region._high[0], 0.)),
-                                      std::max(std::max(region._low[1] - r[1], 0.), std::max(r[1] - region._high[1], 0.)),
-                                      std::max(std::max(region._low[2] - r[2], 0.), std::max(r[2] - region._high[2], 0.))};
-        // => distance to the closest point of r on the surface of the inner region is the l2-norm of dist_dir
-        double dist = sqrt(std::pow(dist_dir[0],2)+std::pow(dist_dir[1],2)+std::pow(dist_dir[2],2));
-        // compute hybrid size as hybrid width is not equal on all sides
-        double hDim = 0;
-        for(int d = 0; d < 3; d++) {
-            hDim += (dist_dir[d] != 0) * std::pow(region._hybridDims[d], 2);
-        }
-        hDim = sqrt(hDim);
-        if(dist >= hDim) return 0.; // we are outside the rounded region -> treat as CG
-        return std::pow(std::cos(M_PI/(2*hDim) * dist), 2);
-    }
-    // point is in the CG region -> weight is 0
-    else return 0.;
-}
-
-double AdResS::weightFlat(std::array<double, 3> r, FPRegion &region) {
-    if(FPRegion::isInnerPoint(r, region._low, region._high)) return 1.;
-    return 0.;
 }
 
 void AdResS::writeFunctionToXML(const string &filename, Interpolation::Function &fun) {
@@ -626,5 +420,41 @@ void AdResS::writeDensities(const string &filename, vector<double> &densities, c
     } catch (std::ifstream::failure& e) {
         global_log->error() << "[AdResS] Failed to write densities to file.\n" << e.what() << std::endl;
         _simulation.exit(-1);
+    }
+}
+
+void AdResS::afterForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
+    std::array<double, 3> low = {2*_samplingStepSize,
+                                 0,
+                                 0};
+    std::array<double, 3> high= {_simulation.getDomain()->getGlobalLength(0) - 2*_samplingStepSize,
+                                 _simulation.getDomain()->getGlobalLength(1),
+                                 _simulation.getDomain()->getGlobalLength(2)};
+    double cutoff = _simulation.getcutoffRadius();
+    auto& region = _fpRegions[0];
+    low[0] = region._lowHybrid[0] - cutoff;
+    high[0] = region._low[0] + cutoff;
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+    for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
+        std::array<double, 3> f = itM->F_arr();
+        for(short d = 0; d < 3; d++) {
+            f[d] = std::copysign(std::min(std::abs(f[d]), _forceMax), f[d]);
+        }
+        itM->setF(std::data(f));
+    }
+
+    low[0] = region._high[0] - cutoff;
+    high[0] = region._highHybrid[0] + cutoff;
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+    for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
+        std::array<double, 3> f = itM->F_arr();
+        for(short d = 0; d < 3; d++) {
+            f[d] = std::copysign(std::min(std::abs(f[d]), _forceMax), f[d]);
+        }
+        itM->setF(std::data(f));
     }
 }

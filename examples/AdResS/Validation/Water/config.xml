@@ -96,12 +96,8 @@
                 <logFTH>true</logFTH>
                 <logDensity>true</logDensity>
                 <rho>0.96</rho>
-                <createFTH>
-                    <sampleGap>200</sampleGap>
-                    <threshold>0.05</threshold>
-                    <convFactor>4.2e+10</convFactor>
-                    <sampleBinSize>1.0</sampleBinSize>
-                </createFTH>
+                <smoothingFactor>20</smoothingFactor>
+                <include query="/forceFunction">./F_TH.xml</include>
             </enableFTH>
             <fpregions>
                 <region id="1">

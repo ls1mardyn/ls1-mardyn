@@ -1,0 +1,2002 @@
+<forceFunction>
+    <startX>0</startX>
+    <samplePoint id="1">
+        <grad>0</grad>
+        <func>-0.12037</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="2">
+        <grad>0.217454</grad>
+        <func>-0.0387116</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="3">
+        <grad>0.184033</grad>
+        <func>0.0552719</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="4">
+        <grad>0.212061</grad>
+        <func>0.155563</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="5">
+        <grad>0.229039</grad>
+        <func>0.265491</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="6">
+        <grad>0.248869</grad>
+        <func>0.385077</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="7">
+        <grad>0.267218</grad>
+        <func>0.514113</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="8">
+        <grad>0.284532</grad>
+        <func>0.652122</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="9">
+        <grad>0.299868</grad>
+        <func>0.798316</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="10">
+        <grad>0.31255</grad>
+        <func>0.951548</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="11">
+        <grad>0.321729</grad>
+        <func>1.11028</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="12">
+        <grad>0.326515</grad>
+        <func>1.27255</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="13">
+        <grad>0.325959</grad>
+        <func>1.43591</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="14">
+        <grad>0.319078</grad>
+        <func>1.59745</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="15">
+        <grad>0.304876</grad>
+        <func>1.75376</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="16">
+        <grad>0.282376</grad>
+        <func>1.90094</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="17">
+        <grad>0.250645</grad>
+        <func>2.0346</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="18">
+        <grad>0.208835</grad>
+        <func>2.14991</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="19">
+        <grad>0.156212</grad>
+        <func>2.24164</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="20">
+        <grad>0.092199</grad>
+        <func>2.30422</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="21">
+        <grad>0.0164052</grad>
+        <func>2.33187</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="22">
+        <grad>-0.0713373</grad>
+        <func>2.31864</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="23">
+        <grad>-0.170948</grad>
+        <func>2.25856</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="24">
+        <grad>-0.282079</grad>
+        <func>2.14577</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="25">
+        <grad>-0.404099</grad>
+        <func>1.97466</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="26">
+        <grad>-0.536095</grad>
+        <func>1.74001</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="27">
+        <grad>-0.676878</grad>
+        <func>1.4371</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="28">
+        <grad>-0.824999</grad>
+        <func>1.06191</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="29">
+        <grad>-0.978781</grad>
+        <func>0.611159</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="30">
+        <grad>-1.13636</grad>
+        <func>0.0824923</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="31">
+        <grad>-1.29571</grad>
+        <func>-0.525493</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="32">
+        <grad>-1.45472</grad>
+        <func>-1.21316</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="33">
+        <grad>-1.61124</grad>
+        <func>-1.9798</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="34">
+        <grad>-1.76313</grad>
+        <func>-2.82363</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="35">
+        <grad>-1.9083</grad>
+        <func>-3.74181</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="36">
+        <grad>-2.04479</grad>
+        <func>-4.73048</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="37">
+        <grad>-2.17078</grad>
+        <func>-5.78484</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="38">
+        <grad>-2.28465</grad>
+        <func>-6.89924</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="39">
+        <grad>-2.38497</grad>
+        <func>-8.06724</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="40">
+        <grad>-2.47056</grad>
+        <func>-9.28176</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="41">
+        <grad>-2.54044</grad>
+        <func>-10.5352</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="42">
+        <grad>-2.59386</grad>
+        <func>-11.8195</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="43">
+        <grad>-2.63028</grad>
+        <func>-13.1262</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="44">
+        <grad>-2.64933</grad>
+        <func>-14.4468</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="45">
+        <grad>-2.65081</grad>
+        <func>-15.7726</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="46">
+        <grad>-2.63461</grad>
+        <func>-17.0947</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="47">
+        <grad>-2.60076</grad>
+        <func>-18.4043</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="48">
+        <grad>-2.54932</grad>
+        <func>-19.6925</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="49">
+        <grad>-2.48038</grad>
+        <func>-20.9507</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="50">
+        <grad>-2.39405</grad>
+        <func>-22.17</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="51">
+        <grad>-2.29043</grad>
+        <func>-23.3419</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="52">
+        <grad>-2.16959</grad>
+        <func>-24.4576</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="53">
+        <grad>-2.03158</grad>
+        <func>-25.5086</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="54">
+        <grad>-1.87644</grad>
+        <func>-26.4863</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="55">
+        <grad>-1.70421</grad>
+        <func>-27.3822</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="56">
+        <grad>-1.51491</grad>
+        <func>-28.1877</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="57">
+        <grad>-1.30865</grad>
+        <func>-28.8943</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="58">
+        <grad>-1.08557</grad>
+        <func>-29.4935</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="59">
+        <grad>-0.845946</grad>
+        <func>-29.9771</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="60">
+        <grad>-0.590184</grad>
+        <func>-30.3368</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="61">
+        <grad>-0.31887</grad>
+        <func>-30.5647</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="62">
+        <grad>-0.0328024</grad>
+        <func>-30.6532</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="63">
+        <grad>0.266977</grad>
+        <func>-30.5952</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="64">
+        <grad>0.57916</grad>
+        <func>-30.3841</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="65">
+        <grad>0.902159</grad>
+        <func>-30.0142</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="66">
+        <grad>1.23409</grad>
+        <func>-29.4805</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="67">
+        <grad>1.57278</grad>
+        <func>-28.779</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="68">
+        <grad>1.91577</grad>
+        <func>-27.907</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="69">
+        <grad>2.26034</grad>
+        <func>-26.863</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="70">
+        <grad>2.60355</grad>
+        <func>-25.6469</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="71">
+        <grad>2.94225</grad>
+        <func>-24.2602</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="72">
+        <grad>3.27313</grad>
+        <func>-22.7059</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="73">
+        <grad>3.59282</grad>
+        <func>-20.9889</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="74">
+        <grad>3.89788</grad>
+        <func>-19.1155</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="75">
+        <grad>4.1849</grad>
+        <func>-17.094</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="76">
+        <grad>4.45056</grad>
+        <func>-14.9342</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="77">
+        <grad>4.69171</grad>
+        <func>-12.6476</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="78">
+        <grad>4.90537</grad>
+        <func>-10.2471</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="79">
+        <grad>5.08888</grad>
+        <func>-7.74721</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="80">
+        <grad>5.23987</grad>
+        <func>-5.16362</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="81">
+        <grad>5.35636</grad>
+        <func>-2.51308</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="82">
+        <grad>5.43678</grad>
+        <func>0.186733</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="83">
+        <grad>5.47998</grad>
+        <func>2.91749</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="84">
+        <grad>5.48528</grad>
+        <func>5.66039</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="85">
+        <grad>5.45248</grad>
+        <func>8.39642</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="86">
+        <grad>5.38183</grad>
+        <func>11.1066</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="87">
+        <grad>5.27404</grad>
+        <func>13.7721</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="88">
+        <grad>5.13026</grad>
+        <func>16.3746</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="89">
+        <grad>4.95203</grad>
+        <func>18.8966</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="90">
+        <grad>4.74126</grad>
+        <func>21.3212</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="91">
+        <grad>4.50021</grad>
+        <func>23.6328</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="92">
+        <grad>4.23139</grad>
+        <func>25.8168</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="93">
+        <grad>3.93755</grad>
+        <func>27.86</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="94">
+        <grad>3.62161</grad>
+        <func>29.7507</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="95">
+        <grad>3.28661</grad>
+        <func>31.4785</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="96">
+        <grad>2.93566</grad>
+        <func>33.0346</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="97">
+        <grad>2.57188</grad>
+        <func>34.412</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="98">
+        <grad>2.19838</grad>
+        <func>35.6049</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="99">
+        <grad>1.81819</grad>
+        <func>36.6092</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="100">
+        <grad>1.43423</grad>
+        <func>37.4224</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="101">
+        <grad>1.04929</grad>
+        <func>38.0433</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="102">
+        <grad>0.665999</grad>
+        <func>38.472</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="103">
+        <grad>0.286813</grad>
+        <func>38.71</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="104">
+        <grad>-0.0860079</grad>
+        <func>38.7599</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="105">
+        <grad>-0.450392</grad>
+        <func>38.6254</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="106">
+        <grad>-0.804462</grad>
+        <func>38.3112</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="107">
+        <grad>-1.14652</grad>
+        <func>37.8229</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="108">
+        <grad>-1.47505</grad>
+        <func>37.1669</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="109">
+        <grad>-1.78868</grad>
+        <func>36.3504</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="110">
+        <grad>-2.08618</grad>
+        <func>35.381</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="111">
+        <grad>-2.36641</grad>
+        <func>34.2671</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="112">
+        <grad>-2.62834</grad>
+        <func>33.0176</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="113">
+        <grad>-2.871</grad>
+        <func>31.6419</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="114">
+        <grad>-3.09343</grad>
+        <func>30.15</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="115">
+        <grad>-3.29471</grad>
+        <func>28.552</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="116">
+        <grad>-3.47391</grad>
+        <func>26.8589</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="117">
+        <grad>-3.63008</grad>
+        <func>25.082</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="118">
+        <grad>-3.76226</grad>
+        <func>23.2329</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="119">
+        <grad>-3.86948</grad>
+        <func>21.3239</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="120">
+        <grad>-3.95076</grad>
+        <func>19.3677</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="121">
+        <grad>-4.00516</grad>
+        <func>17.3776</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="122">
+        <grad>-4.03179</grad>
+        <func>15.3672</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="123">
+        <grad>-4.02985</grad>
+        <func>13.3506</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="124">
+        <grad>-3.99871</grad>
+        <func>11.3422</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="125">
+        <grad>-3.93795</grad>
+        <func>9.35678</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="126">
+        <grad>-3.84743</grad>
+        <func>7.4092</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="127">
+        <grad>-3.72734</grad>
+        <func>5.51428</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="128">
+        <grad>-3.57831</grad>
+        <func>3.68668</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="129">
+        <grad>-3.4014</grad>
+        <func>1.94062</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="130">
+        <grad>-3.19824</grad>
+        <func>0.289656</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="131">
+        <grad>-2.97099</grad>
+        <func>-1.2536</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="132">
+        <grad>-2.72242</grad>
+        <func>-2.67778</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="133">
+        <grad>-2.45591</grad>
+        <func>-3.97304</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="134">
+        <grad>-2.17539</grad>
+        <func>-5.13136</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="135">
+        <grad>-1.88538</grad>
+        <func>-6.14685</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="136">
+        <grad>-1.59085</grad>
+        <func>-7.01598</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="137">
+        <grad>-1.29717</grad>
+        <func>-7.73784</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="138">
+        <grad>-1.01002</grad>
+        <func>-8.31424</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="139">
+        <grad>-0.735217</grad>
+        <func>-8.74992</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="140">
+        <grad>-0.478584</grad>
+        <func>-9.05249</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="141">
+        <grad>-0.245797</grad>
+        <func>-9.23248</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="142">
+        <grad>-0.0422076</grad>
+        <func>-9.30315</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="143">
+        <grad>0.127325</grad>
+        <func>-9.28036</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="144">
+        <grad>0.258595</grad>
+        <func>-9.1822</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="145">
+        <grad>0.348207</grad>
+        <func>-9.02871</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="146">
+        <grad>0.393704</grad>
+        <func>-8.84135</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="147">
+        <grad>0.393681</grad>
+        <func>-8.64259</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="148">
+        <grad>0.347862</grad>
+        <func>-8.4553</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="149">
+        <grad>0.257147</grad>
+        <func>-8.30221</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="150">
+        <grad>0.123621</grad>
+        <func>-8.20529</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="151">
+        <grad>-0.0494737</grad>
+        <func>-8.18518</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="152">
+        <grad>-0.257803</grad>
+        <func>-8.26064</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="153">
+        <grad>-0.496043</grad>
+        <func>-8.44797</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="154">
+        <grad>-0.758012</grad>
+        <func>-8.76063</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="155">
+        <grad>-1.03684</grad>
+        <func>-9.20879</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="156">
+        <grad>-1.32513</grad>
+        <func>-9.79905</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="157">
+        <grad>-1.61518</grad>
+        <func>-10.5342</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="158">
+        <grad>-1.8992</grad>
+        <func>-11.4132</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="159">
+        <grad>-2.16947</grad>
+        <func>-12.4311</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="160">
+        <grad>-2.41861</grad>
+        <func>-13.5792</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="161">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="162">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="163">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="164">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="165">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="166">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="167">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="168">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="169">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="170">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="171">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="172">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="173">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="174">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="175">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="176">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="177">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="178">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="179">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="180">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="181">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="182">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="183">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="184">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="185">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="186">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="187">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="188">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="189">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="190">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="191">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="192">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="193">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="194">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="195">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="196">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="197">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="198">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="199">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="200">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="201">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="202">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="203">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="204">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="205">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="206">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="207">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="208">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="209">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="210">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="211">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="212">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="213">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="214">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="215">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="216">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="217">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="218">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="219">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="220">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="221">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="222">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="223">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="224">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="225">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="226">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="227">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="228">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="229">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="230">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="231">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="232">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="233">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="234">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="235">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="236">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="237">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="238">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="239">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="240">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="241">
+        <grad>0</grad>
+        <func>0</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="242">
+        <grad>-10.2669</grad>
+        <func>11.7715</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="243">
+        <grad>-10.1175</grad>
+        <func>6.67182</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="244">
+        <grad>-9.88445</grad>
+        <func>1.66795</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="245">
+        <grad>-9.57344</grad>
+        <func>-3.19964</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="246">
+        <grad>-9.19134</grad>
+        <func>-7.89364</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="247">
+        <grad>-8.74612</grad>
+        <func>-12.3805</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="248">
+        <grad>-8.24659</grad>
+        <func>-16.6307</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="249">
+        <grad>-7.70216</grad>
+        <func>-20.6196</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="250">
+        <grad>-7.12266</grad>
+        <func>-24.327</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="251">
+        <grad>-6.51803</grad>
+        <func>-27.738</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="252">
+        <grad>-5.89815</grad>
+        <func>-30.8425</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="253">
+        <grad>-5.27258</grad>
+        <func>-33.6352</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="254">
+        <grad>-4.65037</grad>
+        <func>-36.1157</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="255">
+        <grad>-4.03988</grad>
+        <func>-38.2876</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="256">
+        <grad>-3.44867</grad>
+        <func>-40.1587</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="257">
+        <grad>-2.88333</grad>
+        <func>-41.7405</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="258">
+        <grad>-2.34943</grad>
+        <func>-43.0473</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="259">
+        <grad>-1.85149</grad>
+        <func>-44.096</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="260">
+        <grad>-1.39294</grad>
+        <func>-44.9054</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="261">
+        <grad>-0.97614</grad>
+        <func>-45.4959</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="262">
+        <grad>-0.602443</grad>
+        <func>-45.8887</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="263">
+        <grad>-0.272245</grad>
+        <func>-46.1056</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="264">
+        <grad>0.0149168</grad>
+        <func>-46.1681</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="265">
+        <grad>0.260261</grad>
+        <func>-46.0976</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="266">
+        <grad>0.465649</grad>
+        <func>-45.9145</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="267">
+        <grad>0.633461</grad>
+        <func>-45.6382</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="268">
+        <grad>0.766479</grad>
+        <func>-45.2868</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="269">
+        <grad>0.867763</grad>
+        <func>-44.877</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="270">
+        <grad>0.940539</grad>
+        <func>-44.4238</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="271">
+        <grad>0.988097</grad>
+        <func>-43.9407</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="272">
+        <grad>1.01369</grad>
+        <func>-43.4394</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="273">
+        <grad>1.02048</grad>
+        <func>-42.9301</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="274">
+        <grad>1.01142</grad>
+        <func>-42.4216</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="275">
+        <grad>0.989275</grad>
+        <func>-41.9209</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="276">
+        <grad>0.95653</grad>
+        <func>-41.4341</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="277">
+        <grad>0.915399</grad>
+        <func>-40.9658</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="278">
+        <grad>0.867816</grad>
+        <func>-40.5197</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="279">
+        <grad>0.815435</grad>
+        <func>-40.0987</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="280">
+        <grad>0.759658</grad>
+        <func>-39.7049</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="281">
+        <grad>0.701658</grad>
+        <func>-39.3395</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="282">
+        <grad>0.642416</grad>
+        <func>-39.0034</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="283">
+        <grad>0.582763</grad>
+        <func>-38.6971</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="284">
+        <grad>0.523421</grad>
+        <func>-38.4206</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="285">
+        <grad>0.465052</grad>
+        <func>-38.1735</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="286">
+        <grad>0.408299</grad>
+        <func>-37.9553</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="287">
+        <grad>0.353827</grad>
+        <func>-37.7649</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="288">
+        <grad>0.302357</grad>
+        <func>-37.6009</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="289">
+        <grad>0.254697</grad>
+        <func>-37.4619</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="290">
+        <grad>0.211757</grad>
+        <func>-37.3455</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="291">
+        <grad>0.174567</grad>
+        <func>-37.2491</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="292">
+        <grad>0.144271</grad>
+        <func>-37.1697</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="293">
+        <grad>0.122122</grad>
+        <func>-37.1035</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="294">
+        <grad>0.109464</grad>
+        <func>-37.046</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="295">
+        <grad>0.107698</grad>
+        <func>-36.9922</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="296">
+        <grad>0.11825</grad>
+        <func>-36.9363</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="297">
+        <grad>0.142527</grad>
+        <func>-36.8717</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="298">
+        <grad>0.181864</grad>
+        <func>-36.7913</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="299">
+        <grad>0.237476</grad>
+        <func>-36.6871</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="300">
+        <grad>0.3104</grad>
+        <func>-36.5509</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="301">
+        <grad>0.401444</grad>
+        <func>-36.3737</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="302">
+        <grad>0.511138</grad>
+        <func>-36.1463</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="303">
+        <grad>0.639685</grad>
+        <func>-35.8594</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="304">
+        <grad>0.786934</grad>
+        <func>-35.5035</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="305">
+        <grad>0.952343</grad>
+        <func>-35.0695</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="306">
+        <grad>1.13497</grad>
+        <func>-34.5483</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="307">
+        <grad>1.33347</grad>
+        <func>-33.9318</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="308">
+        <grad>1.54609</grad>
+        <func>-33.2125</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="309">
+        <grad>1.77073</grad>
+        <func>-32.3838</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="310">
+        <grad>2.00492</grad>
+        <func>-31.4402</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="311">
+        <grad>2.24591</grad>
+        <func>-30.3777</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="312">
+        <grad>2.49074</grad>
+        <func>-29.1936</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="313">
+        <grad>2.73624</grad>
+        <func>-27.8868</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="314">
+        <grad>2.97919</grad>
+        <func>-26.4578</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="315">
+        <grad>3.21633</grad>
+        <func>-24.9086</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="316">
+        <grad>3.44446</grad>
+        <func>-23.243</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="317">
+        <grad>3.66055</grad>
+        <func>-21.4662</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="318">
+        <grad>3.86176</grad>
+        <func>-19.5849</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="319">
+        <grad>4.04554</grad>
+        <func>-17.6073</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="320">
+        <grad>4.20969</grad>
+        <func>-15.5426</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="321">
+        <grad>4.3524</grad>
+        <func>-13.4012</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="322">
+        <grad>4.47227</grad>
+        <func>-11.1941</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="323">
+        <grad>4.56835</grad>
+        <func>-8.9329</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="324">
+        <grad>4.64016</grad>
+        <func>-6.62975</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="325">
+        <grad>4.68763</grad>
+        <func>-4.29679</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="326">
+        <grad>4.71112</grad>
+        <func>-1.94612</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="327">
+        <grad>4.71136</grad>
+        <func>0.41045</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="328">
+        <grad>4.6894</grad>
+        <func>2.76154</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="329">
+        <grad>4.64657</grad>
+        <func>5.09637</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="330">
+        <grad>4.58436</grad>
+        <func>7.40488</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="331">
+        <grad>4.50441</grad>
+        <func>9.67778</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="332">
+        <grad>4.4084</grad>
+        <func>11.9066</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="333">
+        <grad>4.29796</grad>
+        <func>14.0838</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="334">
+        <grad>4.17463</grad>
+        <func>16.2024</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="335">
+        <grad>4.03979</grad>
+        <func>18.2565</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="336">
+        <grad>3.89462</grad>
+        <func>20.2405</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="337">
+        <grad>3.74003</grad>
+        <func>22.1495</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="338">
+        <grad>3.57667</grad>
+        <func>23.9791</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="339">
+        <grad>3.4049</grad>
+        <func>25.7248</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="340">
+        <grad>3.22485</grad>
+        <func>27.3826</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="341">
+        <grad>3.03636</grad>
+        <func>28.9482</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="342">
+        <grad>2.8391</grad>
+        <func>30.4175</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="343">
+        <grad>2.6326</grad>
+        <func>31.7858</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="344">
+        <grad>2.41631</grad>
+        <func>33.0484</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="345">
+        <grad>2.18967</grad>
+        <func>34.2004</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="346">
+        <grad>1.95222</grad>
+        <func>35.2363</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="347">
+        <grad>1.70365</grad>
+        <func>36.1507</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="348">
+        <grad>1.44389</grad>
+        <func>36.9381</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="349">
+        <grad>1.17318</grad>
+        <func>37.5928</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="350">
+        <grad>0.892107</grad>
+        <func>38.1095</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="351">
+        <grad>0.601688</grad>
+        <func>38.4834</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="352">
+        <grad>0.303367</grad>
+        <func>38.7099</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="353">
+        <grad>-0.000968808</grad>
+        <func>38.7857</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="354">
+        <grad>-0.308999</grad>
+        <func>38.7083</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="355">
+        <grad>-0.618006</grad>
+        <func>38.4766</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="356">
+        <grad>-0.924922</grad>
+        <func>38.0907</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="357">
+        <grad>-1.22641</grad>
+        <func>37.5525</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="358">
+        <grad>-1.51892</grad>
+        <func>36.8658</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="359">
+        <grad>-1.79885</grad>
+        <func>36.0357</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="360">
+        <grad>-2.06256</grad>
+        <func>35.0696</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="361">
+        <grad>-2.30659</grad>
+        <func>33.9764</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="362">
+        <grad>-2.52766</grad>
+        <func>32.7669</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="363">
+        <grad>-2.72288</grad>
+        <func>31.4531</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="364">
+        <grad>-2.88976</grad>
+        <func>30.0487</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="365">
+        <grad>-3.02635</grad>
+        <func>28.5684</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="366">
+        <grad>-3.13127</grad>
+        <func>27.0276</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="367">
+        <grad>-3.20378</grad>
+        <func>25.4425</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="368">
+        <grad>-3.2438</grad>
+        <func>23.8293</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="369">
+        <grad>-3.25186</grad>
+        <func>22.204</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="370">
+        <grad>-3.22917</grad>
+        <func>20.5825</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="371">
+        <grad>-3.17748</grad>
+        <func>18.9797</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="372">
+        <grad>-3.09908</grad>
+        <func>17.4095</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="373">
+        <grad>-2.99668</grad>
+        <func>15.8846</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="374">
+        <grad>-2.87334</grad>
+        <func>14.4163</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="375">
+        <grad>-2.73236</grad>
+        <func>13.0142</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="376">
+        <grad>-2.57719</grad>
+        <func>11.6863</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="377">
+        <grad>-2.4113</grad>
+        <func>10.4388</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="378">
+        <grad>-2.2381</grad>
+        <func>9.27623</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="379">
+        <grad>-2.06088</grad>
+        <func>8.20139</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="380">
+        <grad>-1.88266</grad>
+        <func>7.21552</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="381">
+        <grad>-1.70623</grad>
+        <func>6.31843</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="382">
+        <grad>-1.53403</grad>
+        <func>5.50858</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="383">
+        <grad>-1.36814</grad>
+        <func>4.78334</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="384">
+        <grad>-1.21028</grad>
+        <func>4.1391</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="385">
+        <grad>-1.0618</grad>
+        <func>3.5715</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="386">
+        <grad>-0.923688</grad>
+        <func>3.07558</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="387">
+        <grad>-0.796609</grad>
+        <func>2.64597</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="388">
+        <grad>-0.680914</grad>
+        <func>2.27707</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="389">
+        <grad>-0.576686</grad>
+        <func>1.96315</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="390">
+        <grad>-0.483774</grad>
+        <func>1.6985</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="391">
+        <grad>-0.401836</grad>
+        <func>1.47755</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="392">
+        <grad>-0.330375</grad>
+        <func>1.29492</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="393">
+        <grad>-0.268773</grad>
+        <func>1.14553</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="394">
+        <grad>-0.216339</grad>
+        <func>1.02462</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="395">
+        <grad>-0.172288</grad>
+        <func>0.927791</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="396">
+        <grad>-0.135962</grad>
+        <func>0.851041</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="397">
+        <grad>-0.106112</grad>
+        <func>0.79075</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="398">
+        <grad>-0.0836938</grad>
+        <func>0.743691</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="399">
+        <grad>-0.0808938</grad>
+        <func>0.703787</func>
+        <step>0.5</step>
+    </samplePoint>
+    <samplePoint id="400">
+        <grad>0</grad>
+        <func>0.675813</func>
+    </samplePoint>
+</forceFunction>

@@ -9,7 +9,6 @@
 
 class AdResSTest : public utils::TestWithSimulationSetup {
 TEST_SUITE(AdResSTest);
-        TEST_METHOD(computeForcesTest);
         TEST_METHOD(checkGradient);
         TEST_METHOD(checkMatrixSolver);
         TEST_METHOD(checkHermite);
@@ -18,11 +17,6 @@ TEST_SUITE(AdResSTest);
 public:
     AdResSTest();
     virtual ~AdResSTest();
-
-    /**
-     * Checks if all forces are computed correctly according to AdResS scheme.
-     * */
-    void computeForcesTest();
 
     /**
      * Checks if the gradient is computed sufficiently accurate.
