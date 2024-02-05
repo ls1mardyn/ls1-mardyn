@@ -261,30 +261,27 @@ void Domain::calculateGlobalValues(
 			Log::global_log->debug() << "Selective thermostat will be applied to set " << thermit->first
 				<< " (beta_trans = " << this->_universalBTrans[thermit->first]
 				<< ", beta_rot = " << this->_universalBRot[thermit->first] << "!)" << std::endl;
-			int rot_dof;
 			const double limit_energy =  KINLIMIT_PER_T * Ti;
 
 			#if defined(_OPENMP)
 			#pragma omp parallel
 			#endif
 			{
-
-				double Utrans, Urot, limit_rot_energy, vcorr, Dcorr;
 				for (auto tM = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
-					Utrans = tM->U_trans();
+					const auto Utrans = tM->U_trans();
 					if (Utrans > limit_energy) {
-						vcorr = sqrt(limit_energy / Utrans);
+						const auto vcorr = sqrt(limit_energy / Utrans);
 						Log::global_log->debug() << ": v(m" << tM->getID() << ") *= " << vcorr << std::endl;
 						tM->scale_v(vcorr);
 						tM->scale_F(vcorr);
 					}
 
-					rot_dof = tM->component()->getRotationalDegreesOfFreedom();
+					const auto rot_dof = tM->component()->getRotationalDegreesOfFreedom();
 					if (rot_dof > 0) {
-						limit_rot_energy = 3.0 * rot_dof * Ti;
-						Urot = tM->U_rot();
+						const auto limit_rot_energy = 3.0 * rot_dof * Ti;
+						const auto Urot = tM->U_rot();
 						if (Urot > limit_rot_energy) {
-							Dcorr = sqrt(limit_rot_energy / Urot);
+							const auto Dcorr = sqrt(limit_rot_energy / Urot);
 							Log::global_log->debug() << "D(m" << tM->getID() << ") *= " << Dcorr << std::endl;
 							tM->scale_D(Dcorr);
 							tM->scale_M(Dcorr);
