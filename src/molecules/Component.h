@@ -110,8 +110,6 @@ public:
 	/** write information to stream */
 	void write(std::ostream& ostrm) const;
 
-	void writeVIM(std::ostream& ostrm);
-
 	void setE_trans(double E) { _E_trans = E; }
 	void setE_rot(double E) { _E_rot = E; }
 	void setT(double T) { _T = T; }
