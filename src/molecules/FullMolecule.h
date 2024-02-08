@@ -134,7 +134,6 @@ public:
 	 */
 	/** get number of sites */
 	unsigned int numSites() const override { return _component->numSites(); }
-	unsigned int numOrientedSites() const override { return _component->numOrientedSites();  }
 	unsigned int numLJcenters() const override { return _component->numLJcenters(); }
 	unsigned int numCharges() const override { return _component->numCharges(); }
 	unsigned int numDipoles() const override { return _component->numDipoles(); }

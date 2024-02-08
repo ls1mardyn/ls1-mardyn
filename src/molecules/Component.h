@@ -38,8 +38,7 @@ public:
 		                            + this->numDipoles()
 		                            + this->numQuadrupoles();
 	}
-	/** get number of oriented interaction sites (dipoles and quadrupoles) */
-	unsigned int numOrientedSites() const { return numDipoles() + numQuadrupoles(); }
+
 	/** get number of Lennard Jones interaction sites */
 	unsigned int numLJcenters() const { return _ljcenters.size(); }
 	/** get number of charge interaction sites */
