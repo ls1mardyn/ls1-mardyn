@@ -575,12 +575,13 @@ template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 		// Convert to upper case letters
 		std::transform(v.begin(), v.end(), v.begin(), ::toupper);
 
-		if (v == "TRUE" || v == "YES" || v == "ON" || v == "1") {
+		if (v == "TRUE" || v == "YES" || v == "ON") {
 			value = true;
-		} else if (v == "FALSE" || v == "NO" || v == "OFF" || v == "0") {
+		} else if (v == "FALSE" || v == "NO" || v == "OFF") {
 			value = false;
 		} else {
-			std::cerr << "ERROR parsing \"" << v << "\" to boolean from tag \"<" << name() << ">\" in xml file" << std::endl;
+			std::cerr << "ERROR parsing \"" << v << "\" to boolean from tag \"<" << name() << ">\" in xml file."
+				<< "Valid values are: true, false, yes, no, on, off. " << std::endl;
 			Simulation::exit(1);
 		}
 	}
