@@ -6,6 +6,8 @@
 ./EOX/600K_15mol_l/config.xml
 ./Generators/mkTcTS/config.xml
 ./Generators/mkesfera/config.xml
+./DropletCoalescence/liq/config_1_generateLiq.xml
+./DropletCoalescence/vap/config_3_generateVap.xml
 ./surface-tension_LRC/CO2_Merker/vle/220K/run01/config.xml
 ./surface-tension_LRC/CO2_Merker/vle/250K/run01/config.xml
 ./surface-tension_LRC/CO2_Merker/vle/280K/run01/config.xml
