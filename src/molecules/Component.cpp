@@ -236,15 +236,6 @@ void Component::write(std::ostream& ostrm) const {
 	ostrm << _Ipa[0] << " " << _Ipa[1] << " " << _Ipa[2] << std::endl;
 }
 
-void Component::writeVIM(std::ostream& ostrm) {
-	for (auto pos = _ljcenters.cbegin(); pos != _ljcenters.end(); ++pos) {
-		ostrm << "~ " << this->_id + 1 << " LJ " << std::setw(7) << pos->rx() << ' '
-		      << std::setw(7) << pos->ry() << ' ' << std::setw(7) << pos->rz() << ' '
-		      << std::setw(6) << pos->sigma() << ' ' << std::setw(2) << (1 + (this->_id % 9)) << "\n";
-	}
-	ostrm << std::flush;
-}
-
 std::ostream& operator<<(std::ostream& stream, const Component& component) {
 	component.write(stream);
 	return stream;
