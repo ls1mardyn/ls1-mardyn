@@ -23,6 +23,6 @@ var searchData=
   ['doloopsovermolecules_20',['DoLoopsOverMolecules',['../classTemperatureControl.html#a954501e105d6e9ac7570c9e5e3b2d453',1,'TemperatureControl']]],
   ['domain_21',['Domain',['../classDomain.html#aeeaefe5cd5d53106b2c5565464e70c45',1,'Domain']]],
   ['domaindecompbase_22',['DomainDecompBase',['../classDomainDecompBase.html#ae71c25ffbca8dfd51a4ec7f0c679d7e3',1,'DomainDecompBase']]],
-  ['domaindecomposition_23',['DomainDecomposition',['../classDomainDecomposition.html#a6a63802fa75ed5692d3a802bbb0f1946',1,'DomainDecomposition']]],
-  ['domaindecomposition_24',['domainDecomposition',['../classSimulation.html#a171dad67f74e42c476db382f9e7cc6e3',1,'Simulation']]]
+  ['domaindecomposition_23',['domainDecomposition',['../classSimulation.html#a171dad67f74e42c476db382f9e7cc6e3',1,'Simulation']]],
+  ['domaindecomposition_24',['DomainDecomposition',['../classDomainDecomposition.html#a6a63802fa75ed5692d3a802bbb0f1946',1,'DomainDecomposition']]]
 ];

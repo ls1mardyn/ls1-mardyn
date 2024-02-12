@@ -17,8 +17,7 @@ var searchData=
   ['numdipoles_14',['numDipoles',['../classComponent.html#aa22df8fe726677467ccb9cb34c500054',1,'Component']]],
   ['numljcenters_15',['numLJcenters',['../classComponent.html#a1d37916b104282f8c65635916a196fdd',1,'Component']]],
   ['nummolecules_16',['numMolecules',['../classBasis.html#a7d56074d5109fcf1d364a1eb206db676',1,'Basis']]],
-  ['numorientedsites_17',['numOrientedSites',['../classComponent.html#a0febe0055d2b48341640c8b28ea96ef0',1,'Component']]],
-  ['numquadrupoles_18',['numQuadrupoles',['../classComponent.html#a243db625c1d97eeaaf53d995ead6e20b',1,'Component']]],
-  ['numqueries_19',['numqueries',['../classXMLfile.html#aeb022bfd54ad518573d14907bacddd89',1,'XMLfile']]],
-  ['numsites_20',['numSites',['../classComponent.html#a4c5573fd7bfc47e4dc2dc332088ff77e',1,'Component::numSites()'],['../classFullMolecule.html#a21fe34b2238459736defb49c1214284e',1,'FullMolecule::numSites()']]]
+  ['numquadrupoles_17',['numQuadrupoles',['../classComponent.html#a243db625c1d97eeaaf53d995ead6e20b',1,'Component']]],
+  ['numqueries_18',['numqueries',['../classXMLfile.html#aeb022bfd54ad518573d14907bacddd89',1,'XMLfile']]],
+  ['numsites_19',['numSites',['../classComponent.html#a4c5573fd7bfc47e4dc2dc332088ff77e',1,'Component::numSites()'],['../classFullMolecule.html#a21fe34b2238459736defb49c1214284e',1,'FullMolecule::numSites()']]]
 ];
