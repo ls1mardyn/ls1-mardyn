@@ -36,7 +36,7 @@ class VelocityExchangeTest;
             <zmin>0</zmin> <zmax>box</zmax>      <!-- range z-axis; default: 0 to box size -->
         </coldregion>
         <warmregion>                             <!-- region with higher temperature -->
-            <symmetric>1</symmetric>             <!-- if set to 1 (default), a second warm region is inserted at the opposite side (in y-direction) of the
+            <symmetric>true</symmetric>          <!-- if set to true (default), a second warm region is inserted at the opposite side (in y-direction) of the
                                                       simulation box (from yBoxsize-ymax to yBoxsize-ymin) -->
             <xmin>0</xmin> <xmax>box</xmax>      <!-- range x-axis; default: 0 to box size -->
             <ymin>20</ymin> <ymax>30</ymax>      <!-- range y-axis -->

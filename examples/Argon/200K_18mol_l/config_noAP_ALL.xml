@@ -52,7 +52,7 @@
 				<writefrequency>5</writefrequency>
 				<outputprefix>decomp</outputprefix>
 				<incremental>1</incremental>
-				<appendTimestamp>0</appendTimestamp>
+				<appendTimestamp>false</appendTimestamp>
 			</outputplugin>
 		</output>
 	</simulation>

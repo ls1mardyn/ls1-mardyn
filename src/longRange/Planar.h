@@ -1,8 +1,3 @@
-
-//Calculation of the surface tension in a system with planar interfaces needs a Long Range Correction.
-//
-//The correction terms are based on Janecek (2006) and Lustig (1988).
-
 #ifndef PLANAR_H_
 #define PLANAR_H_
 
@@ -21,33 +16,42 @@
 class Domain;
 class ParticleContainer;
 
+
+/** @brief This class calculates long range corrections
+ *
+ * Calculation of the surface tension in a system with planar interfaces needs a Long Range Correction.
+ * The correction terms computed by this class are based on Janecek (2006) and Lustig (1988).
+ */
 class Planar : public LongRangeCorrection, public ObserverBase, public ControlInstance {
 public:
 	Planar(double cutoffT,double cutoffLJ,Domain* domain,  DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation* simulation);
 	virtual ~Planar();
 
 	/** @brief Read in XML configuration for Planar and all its included objects.
+	 */
+
+	void init() override;
+
+	/** @brief Read in XML configuration for planar long range corrections.
 	 *
 	 * The following XML object structure is handled by this method:
 	 * \code{.xml}
 		<longrange type="planar">
 			<region> <!-- y coordinates of left and right boundaries within correction of force is applied to particles; pot. energy and virial correction is always applied since it is necessary for the correct calculation of the state values -->
-				<left refcoordsID="INT">FLOAT</left> <!-- Reference of coordinate can be set (see DistControl); 0: origin (default) | 1:left interface | 2:right interface -->
+				<left refcoordsID="INT">FLOAT</left>  <!-- Reference of coordinate can be set (see DistControl); 0: origin (default) | 1:left interface | 2:right interface -->
 				<right refcoordsID="INT">FLOAT</right>
 			</region>
 			<slabs>INT</slabs> <!-- Domain is divided into INT slabs -->
-			<smooth>0</smooth>
-			<frequency>10</frequency> <!-- Frequency at which LRC is recalculated -->
+			<smooth>BOOL</smooth> <!-- enable or disable smoothed corrections: false (default) | true -->
+			<frequency>INT</frequency> <!-- Frequency at which the LRC is recalculated in number of timesteps between -->
 			<writecontrol> <!-- Parameters to control output in file -->
-				<start>900000</start>
-				<frequency>100000</frequency>
-				<stop>5000000</stop>
+				<start>INT</start>
+				<frequency>INT</frequency>
+				<stop>INT</stop>
 			</writecontrol>
 		</longrange>
 	   \endcode
-	 */
-
-	void init() override;
+		*/
 	void readXML(XMLfileUnits& xmlconfig) override;
 	void calculateLongRange() override;
 	double lrcLJ(Molecule* mol);

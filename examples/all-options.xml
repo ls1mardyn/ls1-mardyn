@@ -397,7 +397,7 @@
       <outputplugin name="MPICheckpointWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
-        <appendTimestamp>1</appendTimestamp>
+        <appendTimestamp>true</appendTimestamp>
         <datarep>native</datarep>
         <measureTime>1</measureTime>
       </outputplugin>
