@@ -36,7 +36,7 @@ void FastMultipoleMethod::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "FastMultipoleMethod: LJCellSubdivisionFactor: " << _LJCellSubdivisionFactor << std::endl;
 
 	xmlconfig.getNodeValue("adaptiveContainer", _adaptive);
-	if (_adaptive == 1) {
+	if (_adaptive) {
 		Log::global_log->warning() << "FastMultipoleMethod: adaptiveContainer is not debugged yet and certainly delivers WRONG results!" << std::endl;
 		Log::global_log->warning() << "Unless you are in the process of debugging this container, please stop the simulation and restart with the uniform one" << std::endl;
 	} else {
