@@ -23,7 +23,7 @@ public:
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
 	     <incremental>INTEGER</incremental>
-	     <appendTimestamp>INTEGER</appendTimestamp>
+	     <appendTimestamp>BOOL</appendTimestamp>
 	   </outputplugin>
 	   \endcode
 	 */
