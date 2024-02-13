@@ -77,8 +77,8 @@
 			<parallelisation type="KDDecomposition">
 				<updateFrequency>10000</updateFrequency>
 				<fullSearchThreshold>3</fullSearchThreshold>
-				<heterogeneousSystems>1</heterogeneousSystems>
-				<splitBiggestDimension>0</splitBiggestDimension>
+				<heterogeneousSystems>true</heterogeneousSystems>
+				<splitBiggestDimension>false</splitBiggestDimension>
 			</parallelisation>
 -->
 			<datastructure type="LinkedCells">
