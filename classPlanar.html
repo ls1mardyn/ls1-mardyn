@@ -70,6 +70,11 @@ $(function() {
   <div class="headertitle"><div class="title">Planar Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>This class calculates long range corrections.  
+ <a href="classPlanar.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="Planar_8h_source.html">Planar.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for Planar:</div>
 <div class="dyncontent">
@@ -88,9 +93,10 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Planar</b> (double cutoffT, double cutoffLJ, <a class="el" href="classDomain.html">Domain</a> *domain, <a class="el" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomposition, <a class="el" href="classParticleContainer.html">ParticleContainer</a> *particleContainer, unsigned slabs, <a class="el" href="classSimulation.html">Simulation</a> *simulation)</td></tr>
 <tr class="separator:ac6ba189c874cbfa7a0a795e391f809e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0d886b07958951b143576bcb06f2be3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlanar.html#ac0d886b07958951b143576bcb06f2be3">init</a> () override</td></tr>
-<tr class="memdesc:ac0d886b07958951b143576bcb06f2be3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read in XML configuration for <a class="el" href="classPlanar.html">Planar</a> and all its included objects.  <a href="classPlanar.html#ac0d886b07958951b143576bcb06f2be3">More...</a><br /></td></tr>
+<tr class="memdesc:ac0d886b07958951b143576bcb06f2be3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read in XML configuration for <a class="el" href="classPlanar.html" title="This class calculates long range corrections.">Planar</a> and all its included objects.  <a href="classPlanar.html#ac0d886b07958951b143576bcb06f2be3">More...</a><br /></td></tr>
 <tr class="separator:ac0d886b07958951b143576bcb06f2be3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1a4c93e7222407cb8e7b758b2d484a75"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlanar.html#a1a4c93e7222407cb8e7b758b2d484a75">readXML</a> (<a class="el" href="classXMLfileUnits.html">XMLfileUnits</a> &amp;xmlconfig) override</td></tr>
+<tr class="memdesc:a1a4c93e7222407cb8e7b758b2d484a75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read in XML configuration for planar long range corrections.  <a href="classPlanar.html#a1a4c93e7222407cb8e7b758b2d484a75">More...</a><br /></td></tr>
 <tr class="separator:a1a4c93e7222407cb8e7b758b2d484a75"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acc56da9caf8a144b70564375588b1031"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlanar.html#acc56da9caf8a144b70564375588b1031">calculateLongRange</a> () override</td></tr>
 <tr class="separator:acc56da9caf8a144b70564375588b1031"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -113,7 +119,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetSmoothDensityProfi
 <tr class="memitem:af44290ff80b03f66eccbb9c1ce30459a"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlanar.html#af44290ff80b03f66eccbb9c1ce30459a">getShortName</a> () override</td></tr>
 <tr class="separator:af44290ff80b03f66eccbb9c1ce30459a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Member Function Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p >This class calculates long range corrections. </p>
+<p >Calculation of the surface tension in a system with planar interfaces needs a Long Range Correction. The correction terms computed by this class are based on Janecek (2006) and Lustig (1988). </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="acc56da9caf8a144b70564375588b1031" name="acc56da9caf8a144b70564375588b1031"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acc56da9caf8a144b70564375588b1031">&#9670;&nbsp;</a></span>calculateLongRange()</h2>
 
@@ -191,22 +200,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetSmoothDensityProfi
 </table>
 </div><div class="memdoc">
 
-<p>Read in XML configuration for <a class="el" href="classPlanar.html">Planar</a> and all its included objects. </p>
-<p >The following XML object structure is handled by this method: </p><div class="fragment"><div class="line">&lt;<span class="keywordtype">longrange</span> <span class="keyword">type</span>=<span class="stringliteral">&quot;planar&quot;</span>&gt;</div>
-<div class="line">   &lt;<span class="keywordtype">region</span>&gt; <span class="comment">&lt;!-- y coordinates of left and right boundaries within correction of force is applied to particles; pot. energy and virial correction is always applied since it is necessary for the correct calculation of the state values --&gt;</span></div>
-<div class="line">       &lt;<span class="keywordtype">left</span> <span class="keyword">refcoordsID</span>=<span class="stringliteral">&quot;INT&quot;</span>&gt;<span class="keyword">FLOAT</span>&lt;/<span class="keywordtype">left</span>&gt; <span class="comment">&lt;!-- Reference of coordinate can be set (see DistControl); 0: origin (default) | 1:left interface | 2:right interface --&gt;</span></div>
-<div class="line">       &lt;<span class="keywordtype">right</span> <span class="keyword">refcoordsID</span>=<span class="stringliteral">&quot;INT&quot;</span>&gt;<span class="keyword">FLOAT</span>&lt;/<span class="keywordtype">right</span>&gt;</div>
-<div class="line">   &lt;/<span class="keywordtype">region</span>&gt;</div>
-<div class="line">   &lt;<span class="keywordtype">slabs</span>&gt;<span class="keyword">INT</span>&lt;/<span class="keywordtype">slabs</span>&gt; <span class="comment">&lt;!-- Domain is divided into INT slabs --&gt;</span></div>
-<div class="line">   &lt;<span class="keywordtype">smooth</span>&gt;0&lt;/<span class="keywordtype">smooth</span>&gt;</div>
-<div class="line">   &lt;<span class="keywordtype">frequency</span>&gt;10&lt;/<span class="keywordtype">frequency</span>&gt; <span class="comment">&lt;!-- Frequency at which LRC is recalculated --&gt;</span></div>
-<div class="line">   &lt;<span class="keywordtype">writecontrol</span>&gt; <span class="comment">&lt;!-- Parameters to control output in file --&gt;</span></div>
-<div class="line">       &lt;<span class="keywordtype">start</span>&gt;900000&lt;/<span class="keywordtype">start</span>&gt;</div>
-<div class="line">       &lt;<span class="keywordtype">frequency</span>&gt;100000&lt;/<span class="keywordtype">frequency</span>&gt;</div>
-<div class="line">       &lt;<span class="keywordtype">stop</span>&gt;5000000&lt;/<span class="keywordtype">stop</span>&gt;</div>
-<div class="line">   &lt;/<span class="keywordtype">writecontrol</span>&gt;</div>
-<div class="line">&lt;/<span class="keywordtype">longrange</span>&gt;</div>
-</div><!-- fragment --> 
+<p>Read in XML configuration for <a class="el" href="classPlanar.html" title="This class calculates long range corrections.">Planar</a> and all its included objects. </p>
+
 <p>Implements <a class="el" href="classLongRangeCorrection.html">LongRangeCorrection</a>.</p>
 
 </div>
@@ -235,6 +230,22 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetSmoothDensityProfi
 </table>
 </div><div class="memdoc">
 
+<p>Read in XML configuration for planar long range corrections. </p>
+<p >The following XML object structure is handled by this method: </p><div class="fragment"><div class="line">&lt;<span class="keywordtype">longrange</span> <span class="keyword">type</span>=<span class="stringliteral">&quot;planar&quot;</span>&gt;</div>
+<div class="line">   &lt;<span class="keywordtype">region</span>&gt; <span class="comment">&lt;!-- y coordinates of left and right boundaries within correction of force is applied to particles; pot. energy and virial correction is always applied since it is necessary for the correct calculation of the state values --&gt;</span></div>
+<div class="line">       &lt;<span class="keywordtype">left</span> <span class="keyword">refcoordsID</span>=<span class="stringliteral">&quot;INT&quot;</span>&gt;<span class="keyword">FLOAT</span>&lt;/<span class="keywordtype">left</span>&gt;  <span class="comment">&lt;!-- Reference of coordinate can be set (see DistControl); 0: origin (default) | 1:left interface | 2:right interface --&gt;</span></div>
+<div class="line">       &lt;<span class="keywordtype">right</span> <span class="keyword">refcoordsID</span>=<span class="stringliteral">&quot;INT&quot;</span>&gt;<span class="keyword">FLOAT</span>&lt;/<span class="keywordtype">right</span>&gt;</div>
+<div class="line">   &lt;/<span class="keywordtype">region</span>&gt;</div>
+<div class="line">   &lt;<span class="keywordtype">slabs</span>&gt;<span class="keyword">INT</span>&lt;/<span class="keywordtype">slabs</span>&gt; <span class="comment">&lt;!-- Domain is divided into INT slabs --&gt;</span></div>
+<div class="line">   &lt;<span class="keywordtype">smooth</span>&gt;<span class="keyword">BOOL</span>&lt;/<span class="keywordtype">smooth</span>&gt; <span class="comment">&lt;!-- enable or disable smoothed corrections: false (default) | true --&gt;</span></div>
+<div class="line">   &lt;<span class="keywordtype">frequency</span>&gt;<span class="keyword">INT</span>&lt;/<span class="keywordtype">frequency</span>&gt; <span class="comment">&lt;!-- Frequency at which the LRC is recalculated in number of timesteps between --&gt;</span></div>
+<div class="line">   &lt;<span class="keywordtype">writecontrol</span>&gt; <span class="comment">&lt;!-- Parameters to control output in file --&gt;</span></div>
+<div class="line">       &lt;<span class="keywordtype">start</span>&gt;<span class="keyword">INT</span>&lt;/<span class="keywordtype">start</span>&gt;</div>
+<div class="line">       &lt;<span class="keywordtype">frequency</span>&gt;<span class="keyword">INT</span>&lt;/<span class="keywordtype">frequency</span>&gt;</div>
+<div class="line">       &lt;<span class="keywordtype">stop</span>&gt;<span class="keyword">INT</span>&lt;/<span class="keywordtype">stop</span>&gt;</div>
+<div class="line">   &lt;/<span class="keywordtype">writecontrol</span>&gt;</div>
+<div class="line">&lt;/<span class="keywordtype">longrange</span>&gt;</div>
+</div><!-- fragment --> 
 <p>Implements <a class="el" href="classLongRangeCorrection.html">LongRangeCorrection</a>.</p>
 
 </div>
@@ -318,7 +329,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetSmoothDensityProfi
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Feb 12 2024 16:13:11 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Feb 13 2024 13:25:59 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
