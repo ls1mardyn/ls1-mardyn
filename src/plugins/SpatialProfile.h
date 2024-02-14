@@ -95,6 +95,7 @@ public:
 
 	SamplingInformation samplInfo;
 
+
 	void accessAllCallbacks(const std::map<std::string, FunctionWrapper>& callbackMap) override {
 		// Accesses a callback registered by FixRegion. It returns the number of molecules in the fixregion.
 		std::string name{"FixRegion::getMoleculesInRegion"};

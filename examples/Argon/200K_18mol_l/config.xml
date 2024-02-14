@@ -77,5 +77,10 @@
 	<plugin name="TestPlugin">
 		<writefrequency>1</writefrequency>
 	</plugin>
+  <plugin name="GridGenerator">
+    <elementsX>1</elementsX>
+    <elementsY>1</elementsY>
+    <elementsZ>1</elementsZ>
+</plugin>
   </simulation>
 </mardyn>

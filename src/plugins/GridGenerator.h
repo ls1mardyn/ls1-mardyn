@@ -5,15 +5,14 @@
  * Copyright (c) 2024 Helmut-Schmidt University, Hamburg
  */
 
-#include <functional>
-#include <optional>
-#include <vector>
+#pragma once
 
-#include <plugins/profiles/ProfileBase.h>
-#include "PluginBase.h"
+
+
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
+#include "plugins/PluginBase.h"
 
 struct ElementInfo{
     int index;
@@ -23,6 +22,7 @@ struct ElementInfo{
     double z_width;
     double volume;
 
+
 };
 
 class GridGenerator: public PluginBase{
@@ -31,12 +31,14 @@ class GridGenerator: public PluginBase{
     ElementInfo element_information;
     std::vector<int> elements_per_dimension{1,1,1};
     std::vector<double> element_width_per_dimension{0,0,0};
-    std::vector<double> lower_corner;
-    std::vector<double> upper_corner;
+    std::vector<double> lower_corner{3};
+    std::vector<double> upper_corner{3};
     int total_elements;
 
 
     public:
+        GridGenerator();
+        ~GridGenerator(){};
         void readXML(XMLfileUnits& xmlconfig) override;
         void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
         void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
@@ -44,12 +46,9 @@ class GridGenerator: public PluginBase{
         void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
         void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override{}
         void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{}
-        std::string getPluginName() override;
 
-
-
-        static PluginBase* createInstance() { return new GridGenerator(); }
-
+        std::string getPluginName()  {return "GridGenerator";}
+    static PluginBase* createInstance() {return new GridGenerator(); }
     private:
 
     void MeshEntireDomain();

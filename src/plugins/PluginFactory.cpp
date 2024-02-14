@@ -77,6 +77,8 @@
 #include "plugins/MamicoCoupling.h"
 #endif
 
+#include "plugins/GridGenerator.h"
+
 /** @brief Register all default plugins with base PluginBase
  *
  * @param createInstance  pointer to a function returning an instance of the plugin object.
@@ -136,6 +138,8 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(VISWriter);
 	REGISTER_PLUGIN(WallPotential);
 	REGISTER_PLUGIN(XyzWriter);
+
+	REGISTER_PLUGIN(GridGenerator);
 #ifdef VTK
 	REGISTER_PLUGIN(VTKMoleculeWriter);
 #ifndef MARDYN_AUTOPAS

@@ -8,12 +8,12 @@
 
 #include "GridGenerator.h"
 
-std::string GridGenerator::getPluginName(){
-    return std::string{"[GridGenerator]"};
+GridGenerator::GridGenerator():total_elements{1}{
+
 }
 
 void GridGenerator::readXML(XMLfileUnits& xmlconfig){
-    Log::global_log->info()<<"[GridGenerator] enabled"<<std::endl;
+    //Log::global_log->info()<<"[GridGenerator] enabled"<<std::endl;
 
     xmlconfig.getNodeValue("elementsX",elements_per_dimension[0]);
     xmlconfig.getNodeValue("elementsY",elements_per_dimension[1]);
@@ -23,7 +23,6 @@ void GridGenerator::readXML(XMLfileUnits& xmlconfig){
 }
 
 void GridGenerator::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
-    
     
     MeshEntireDomain();
     SetTotalElements();
@@ -36,8 +35,9 @@ void GridGenerator::beforeEventNewTimestep(ParticleContainer* particleContainer,
     Log::global_log->info()<<this->getPluginName()<<" information\n";
     Log::global_log->info()<<"Total elements: "<<this->total_elements<<"\n"
                            <<"Elemens per direction: ["<<this->elements_per_dimension[0]<<","<<this->elements_per_dimension[1]<<","
-                           <<this->elements_per_dimension[2]<<"]"<<std::endl;
-                           
+                           <<this->elements_per_dimension[2]<<"]\n"
+                           <<"Volume per element: "<<element_information.volume<<std::endl;
+                          
 }
 
 void GridGenerator::MeshEntireDomain(){
@@ -59,6 +59,6 @@ void GridGenerator::SetElementInfo(){
 
 void GridGenerator::SetTotalElements(){
     for(int d=0;d<3;d++){
-        this->total_elements += elements_per_dimension[d];
+        this->total_elements *= elements_per_dimension[d];
     }
 }
