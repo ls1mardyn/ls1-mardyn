@@ -44,10 +44,10 @@ void FastMultipoleMethod::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	xmlconfig.getNodeValue("systemIsPeriodic", _periodic);
-	if (_periodic == 0) {
-		Log::global_log->warning() << "FastMultipoleMethod: periodicity is turned off!" << std::endl;
-	} else {
+	if (_periodic) {
 		Log::global_log->info() << "FastMultipoleMethod: Periodicity is on." << std::endl;
+	} else {
+		Log::global_log->warning() << "FastMultipoleMethod: periodicity is turned off!" << std::endl;
 	}
 }
 

@@ -94,7 +94,7 @@ private:
 	unsigned _LJCellSubdivisionFactor;
 	int _wellSeparated;
 	bool _adaptive;
-	int _periodic;
+	bool _periodic;
 
 	PseudoParticleContainer * _pseudoParticleContainer;
 
