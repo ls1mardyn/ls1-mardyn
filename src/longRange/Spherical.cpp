@@ -1029,16 +1029,15 @@ void Spherical::calculateLongRange(){
 				}
 				double pDiff2_Avg = pow(pInside-pOutside, 2);
 
-				double dpN_Avg[NShells] = { 0 };
-				double drho_Avg[NShells] = { 0 };
+				double dpN_Avg[NShells]; memset( dpN_Avg, 0, NShells*sizeof(double) );
+				double drho_Avg[NShells]; memset( drho_Avg, 0, NShells*sizeof(double) );
 				double R_e3 =  0. ;
 				double R_e = 0;
 
 				// double integral_term_Avg[NShells] = { 0 };
 				// double gamma_Avg_iterative[NShells] = { 0 }; 
-				double gamma_integral_Avg[NShells] = { 0 };
-				double gamma_Avg[NShells] = { 0 };
-
+				double gamma_integral_Avg[NShells]; memset( gamma_integral_Avg, 0, NShells*sizeof(double) );
+				double gamma_Avg[NShells]; memset( gamma_Avg, 0, NShells*sizeof(double) );
 
 				// std::cout << "--------------------------------------------------------- "<< std::endl;
 				// std::cout << "--------------Simstep = "<< simstep << "----------------------"<< std::endl;

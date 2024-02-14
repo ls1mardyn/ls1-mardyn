@@ -592,21 +592,28 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 	double dArea;
 	Domain* domain = global_simulation->getDomain();
 
+	std::array<double,3> dLowerCorner = this->GetLowerCorner();
+	std::array<double,3> dUpperCorner = this->GetUpperCorner();
+	
 	switch(nDimension)
 	{
 	case RS_DIMENSION_X:
-		dArea = domain->getGlobalLength(1) * domain->getGlobalLength(2);
+		// dArea = domain->getGlobalLength(1) * domain->getGlobalLength(2);
+		dArea = (dUpperCorner[1] - dLowerCorner[1] )*(dUpperCorner[2] - dLowerCorner[2] );
 		break;
 
 	case RS_DIMENSION_Y:
-		dArea = domain->getGlobalLength(0) * domain->getGlobalLength(2);
+		// dArea = domain->getGlobalLength(0) * domain->getGlobalLength(2);
+		dArea = (dUpperCorner[0] - dLowerCorner[0] )*(dUpperCorner[2] - dLowerCorner[2] );
 		break;
 
 	case RS_DIMENSION_Z:
-		dArea = domain->getGlobalLength(0) * domain->getGlobalLength(1);
+		// dArea = domain->getGlobalLength(0) * domain->getGlobalLength(1);
+		dArea = (dUpperCorner[0] - dLowerCorner[0] )*(dUpperCorner[1] - dLowerCorner[1] );
 		break;
 	default:
-		dArea = domain->getGlobalLength(0) * domain->getGlobalLength(2);
+		// dArea = domain->getGlobalLength(0) * domain->getGlobalLength(2);
+		dArea = (dUpperCorner[0] - dLowerCorner[0] )*(dUpperCorner[2] - dLowerCorner[2] );
 	}
 	_dBinVolumeProfiles = _dBinWidthProfiles * dArea;
 	_dInvertBinVolumeProfiles = 1. / _dBinVolumeProfiles;
@@ -975,15 +982,26 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension, unsigned l
 	// do not reset profile matrices here!!!
 	// BUT: reset profile before calling this function!!!
 
-	// calc position index
+	// check if moecule is in specified region box.
 	std::array<double,3> dLowerCorner = this->GetLowerCorner();
+	std::array<double,3> dUpperCorner = this->GetUpperCorner();
+	for(int i = 0; i<3; i++){
+		double pos = molecule->r(i);
+		if (pos < dLowerCorner[i]){
+			return;
+		}else if (pos  > dUpperCorner[i]){
+			return;
+		}
+	} 
+	
+	// calc position index
 	double dPosRelative = molecule->r(nDimension) - dLowerCorner[nDimension];
-
 	nPosIndex = (unsigned int) floor(dPosRelative / _dBinWidthProfiles);
 
-	// ignore outer (halo) molecules
-	if(nPosIndex > nIndexMax)  // negative values will be ignored to: cast to unsigned int --> high value
-		return;
+	// redundant, because of more general check above
+	// // ignore outer (halo) molecules
+	// if(nPosIndex > nIndexMax)  // negative values will be ignored to: cast to unsigned int --> high value
+	// 	return;
 
 	unsigned int cid = molecule->componentid() + 1;  // id starts internally with 0
 	if(_boolSingleComp){
