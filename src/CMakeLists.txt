@@ -17,7 +17,8 @@ if(NOT ENABLE_MPI)
 
     # but include DomainDecompBase* and LoadCalc*
     list(FILTER MY_SRC_BACK INCLUDE REGEX "/parallel/")
-    list(FILTER MY_SRC_BACK INCLUDE REGEX "DomainDecompBase|LoadCalc|Zonal|ForceHelper")
+
+    list(FILTER MY_SRC_BACK INCLUDE REGEX "boundaries/|DomainDecompBase|LoadCalc|Zonal|ForceHelper")
     list(APPEND MY_SRC ${MY_SRC_BACK})
 else()
     if(NOT ENABLE_ALLLBL)
