@@ -93,8 +93,8 @@ private:
 	int _order;
 	unsigned _LJCellSubdivisionFactor;
 	int _wellSeparated;
-	int _adaptive;
-	int _periodic;
+	bool _adaptive;
+	bool _periodic;
 
 	PseudoParticleContainer * _pseudoParticleContainer;
 
