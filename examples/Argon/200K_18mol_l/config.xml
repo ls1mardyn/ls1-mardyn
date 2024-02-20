@@ -11,8 +11,11 @@
     </integrator>
     <run>
       <currenttime>0</currenttime>
+      <equilibration>
+        <steps>0</steps>
+      </equilibration>
       <production>
-        <steps>100000</steps>
+        <steps>100</steps>
       </production>
     </run>
     <ensemble type="NVT">
@@ -38,7 +41,7 @@
         <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass">
-        <radiusLJ unit="reduced">33.0702</radiusLJ>
+        <radiusLJ unit="reduced">16</radiusLJ>
       </cutoffs>
       <electrostatic type="ReactionField">
         <epsilon>1.0e+10</epsilon>
@@ -69,18 +72,17 @@
         <expression label="LoadAvg1">procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
       </outputplugin>
-      <outputplugin name="VTKMoleculeWriter">
-        <outputprefix>vtkOutput</outputprefix>
-        <writefrequency>1</writefrequency>
-      </outputplugin>
+<outputplugin name="RDF">
+  <!-- functionality affected by <equilibration> <steps> X </steps> </equilibration> -->
+    <writefrequency>20</writefrequency>
+    <samplingfrequency>1</samplingfrequency>
+    <outputprefix>default</outputprefix>
+    <bins>100</bins>
+    <intervallength>0.16</intervallength>
+  </outputplugin>
     </output>
-	<plugin name="TestPlugin">
-		<writefrequency>1</writefrequency>
-	</plugin>
-  <plugin name="GridGenerator">
-    <elementsX>1</elementsX>
-    <elementsY>1</elementsY>
-    <elementsZ>1</elementsZ>
-</plugin>
+
+
+
   </simulation>
 </mardyn>
