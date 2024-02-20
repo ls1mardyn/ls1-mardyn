@@ -123,14 +123,14 @@ class PropertySampler{
     
     private: 
         std::vector<int> particles_per_cell;
-        ElementInfo& info;
+        ElementInfo* info;
     public:
 
-    PropertySampler(ElementInfo& info);
+    PropertySampler();
 
-    void ParticlePerCellCount(ElementInfo& info,  ParticleContainer* pc);
+    void ParticlePerCellCount(ParticleContainer* pc);
     std::vector<int>& GetParticlesPerCell();
-    void init();
+    void init(ElementInfo* info);
 
     private:
 
@@ -149,7 +149,7 @@ class GridGenerator: public PluginBase{
     std::vector<double> lower_corner{3};
     std::vector<double> upper_corner{3};
     int total_elements;
-    //PropertySampler sampler;
+    PropertySampler sampler;
     ParticleContainer* particle_container;
 
 

@@ -30,13 +30,7 @@ void GridGenerator::init(ParticleContainer* particleContainer, DomainDecompBase*
     SetTotalElements();
     SetElementInfo();
     element_information.index=this->total_elements-1;
-    this->element_information.MeshTraversal();
-    
-    this->Output("not-in-use",1);
-}
-
-void GridGenerator::beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep){
-    Log::global_log->info()<<this->getPluginName()<<" information\n";
+    //this->element_information.MeshTraversal();
     Log::global_log->info()<<"Total elements: "<<this->total_elements<<"\n"
                            <<"Length of domain: "<<this->element_information.length_x<<","
                            <<this->element_information.length_y<<","
@@ -45,8 +39,14 @@ void GridGenerator::beforeEventNewTimestep(ParticleContainer* particleContainer,
                            <<this->elements_per_dimension[2]<<"]\n"
                            <<"Volume per element: "<<element_information.volume
                            <<"Largest Index: "<<this->element_information.index<<std::endl;
-    
-                          
+    this->sampler.init(&element_information);
+    this->Output("not-in-use",1);
+}
+
+void GridGenerator::beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep){
+
+    sampler.ParticlePerCellCount(particleContainer);   
+    this->Output("not-in-use",1);                       
 }
 
 void GridGenerator::Output(std::string prefix, long unsigned accumulated){
@@ -63,7 +63,7 @@ void GridGenerator::Output(std::string prefix, long unsigned accumulated){
     
     //Table header
     outfile <<"idx \t lx \t ly \t lz \t ux \t uy \t uz \n";
-    centerfile <<"idx \t cx \t cy \t cz \n";
+    centerfile <<"idx \t cx \t cy \t cz \t rho \n";
     std::vector<double> lc(3),uc(3),ec(3);
     for(int i=0; i<= element_information.index;i++){
         lc = this->element_information.GetElementLowerCorner(i);
@@ -71,7 +71,8 @@ void GridGenerator::Output(std::string prefix, long unsigned accumulated){
         ec = this->element_information.GetElementCenter(i);
         outfile << i <<"\t"<<lc[0]<<"\t"<<lc[1]<<"\t"<<lc[2]<<"\t"
                 <<uc[0]<<"\t"<<uc[1]<<"\t"<<uc[2]<<"\n";
-        centerfile << i <<"\t"<<ec[0]<<"\t"<<ec[1]<<"\t"<<ec[2]<<"\n";
+        centerfile << i <<"\t"<<ec[0]<<"\t"<<ec[1]<<"\t"<<ec[2]<<"\t"
+                   <<sampler.GetParticlesPerCell()[i]<<"\n";
     }
 
     outfile.close();
@@ -115,26 +116,26 @@ void GridGenerator::SetTotalElements(){
     }
 }
 
-PropertySampler::PropertySampler(ElementInfo& info):info(info){
-    this->init();
+PropertySampler::PropertySampler(){
 }
 
-void PropertySampler::init(){
-
-    particles_per_cell.resize(this->info.index);
+void PropertySampler::init(ElementInfo* info){
+    this->info = info;
+    particles_per_cell.resize(this->info->index);
     std::fill(particles_per_cell.begin(), particles_per_cell.end(),0);
+    std::cout<<"\nContainer size is: "<<particles_per_cell.size()<<"\n";
 
 }
 
-void PropertySampler::ParticlePerCellCount(ElementInfo& info,  ParticleContainer* particle_container){
+void PropertySampler::ParticlePerCellCount(ParticleContainer* particle_container){
     //Iterate all non-halo cells
     ParticleIterator it = particle_container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-
+    std::fill(particles_per_cell.begin(), particles_per_cell.end()+1, 0);//last element not inclusive
     for(it;it.isValid();++it){
 
         std::tuple<int, int, int> indeces= GetParticleLocalCellIndices(it);
-        int particle_global_index = this->info.LocalToGlobalIndex(indeces);
-        particles_per_cell[particle_global_index] += 1;
+        int particle_global_index = this->info->LocalToGlobalIndex(indeces);
+        particles_per_cell[particle_global_index]= particles_per_cell[particle_global_index]+1;
     }
 } 
 
@@ -146,9 +147,9 @@ std::tuple<int, int, int> PropertySampler::GetParticleLocalCellIndices(ParticleI
 
     int x, y, z;
 
-    x = std::floor(position[0]/info.x_width);
-    y = std::floor(position[1]/info.y_width);
-    z = std::floor(position[0]/info.z_width);
+    x = std::floor(position[0]/info->x_width);
+    y = std::floor(position[1]/info->y_width);
+    z = std::floor(position[0]/info->z_width);
 
     local_inds= std::make_tuple(x,y,z);
 
