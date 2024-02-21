@@ -46,7 +46,6 @@ class FastMultipoleMethod {
 public:
 	FastMultipoleMethod() : _order(-1),
                             _LJCellSubdivisionFactor(0),
-                            _wellSeparated(0),
                             _adaptive(false)
     {}
 	~FastMultipoleMethod();
@@ -92,7 +91,6 @@ public:
 private:
 	int _order;
 	unsigned _LJCellSubdivisionFactor;
-	int _wellSeparated;
 	bool _adaptive;
 	bool _periodic;
 
