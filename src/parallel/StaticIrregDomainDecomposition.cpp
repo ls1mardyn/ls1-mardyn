@@ -100,6 +100,10 @@ void StaticIrregDomainDecomposition::updateSubdomainWeightsFromFile(std::string 
 		while(ss.good()) {
 			int temp;
 			ss >> temp;
+			if (temp <=0) {
+				Log::global_log->fatal() << "CSV has non-natural number! Only weights > 0 allowed, please check CSV file!";
+				Simulation::exit(5003);
+			}
 			_subdomainWeights[i].push_back(temp);
 			if (ss.peek() == ',' || ss.peek() == ' ') //skip commas and spaces
 				ss.ignore();

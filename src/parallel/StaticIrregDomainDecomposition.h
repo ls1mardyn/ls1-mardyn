@@ -32,7 +32,7 @@ public:
 	/** @brief Reads in XML configuration for StaticIrregDomainDecomposition.
 	 * 
 	 * The only configuration allowed right now is a CSV file, which contains the actual domain breakdown.
-	 * Even though this class subclasses DomainDecomposition, it bypasses he readXML() mehod of DomainDecomposition
+	 * Even though this class subclasses DomainDecomposition, it bypasses the readXML() mehod of DomainDecomposition
 	 * because MPIGridDims is supposed to be calculated from the CSV configuration.
 	 *
 	 * The following xml object structure is handled by this method:
