@@ -92,7 +92,7 @@ void StaticIrregDomainDecomposition::updateSubdomainWeightsFromFile(std::string 
 	for(int i = 0; i < 3; i++) { //only reads the first 3 lines, theoretically the rest of the file can contain whatever
 		getline(file, line);
 		if(line.empty()) {
-			Log::global_log->fatal() << "CSV has empty line! Please check CSV file!";
+			Log::global_log->fatal() << "CSV has less than 3 lines! Please check CSV file!";
 			Simulation::exit(5002);
 		}
 		_subdomainWeights[i].clear();
