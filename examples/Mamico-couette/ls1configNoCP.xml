@@ -56,13 +56,17 @@
 							<lower> <x>0</x> <y>0</y> <z>0</z> </lower>
 							<upper> <x>30</x> <y>30</y> <z>30</z> </upper>
 						</object>
-						<velocityAssigner type="EqualVelocityDistribution" enableRandomSeed="1"></velocityAssigner>
+						<velocityAssigner type="EqualVelocityDistribution" enableRandomSeed="true"></velocityAssigner>
 					</objectgenerator>
 				</generator>
 			</phasespacepoint>
 		</ensemble>
 		<algorithm>
-			<parallelisation type="DomainDecomposition"/>
+			<parallelisation type="StaticIrregDomainDecomposition">
+             <subdomainSizeCSV>
+			<filename>basic4.csv</filename>
+                </subdomainSizeCSV>
+			</parallelisation>
 			<datastructure type="LinkedCells">
 			<cellsInCutoffRadius>1</cellsInCutoffRadius>
 			</datastructure>
