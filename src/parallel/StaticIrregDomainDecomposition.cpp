@@ -77,7 +77,7 @@ void StaticIrregDomainDecomposition::updateSubdomainDimensions() {
 	}
 }
 
-void StaticIrregDomainDecomposition::updateSubdomainWeightsFromFile(std::string filename) {
+void StaticIrregDomainDecomposition::updateSubdomainWeightsFromFile(const std::string &filename) {
 	if(filename.empty()) {
 		Log::global_log->fatal() << "CSV filename to read domain decomposition from is empty! Please check config file!";
 		Simulation::exit(5000);
