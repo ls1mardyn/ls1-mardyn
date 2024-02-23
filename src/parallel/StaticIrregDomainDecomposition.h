@@ -61,7 +61,7 @@ public:
    * \code{.xml}
      <parallelisation type="StaticIrregDomainDecomposition">
        <!-- structure handled by DomainDecompMPIBase -->
-       <subdomainWeightCSV> STRING.csv</subdomainWeightCSV>
+       <subdomainWeightsCSV> STRING.csv</subdomainWeightsCSV>
      </parallelisation>
      \endcode
     *
