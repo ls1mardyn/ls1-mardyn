@@ -101,7 +101,7 @@ void StaticIrregDomainDecomposition::updateSubdomainWeightsFromFile(const std::s
 	Log::global_log->info() << "Weights for subdomains for StaticIrregDomainDecomposition have been read" << std::endl;
 	for (int i = 0; i < 3; i++) {
 		std::stringstream ss;
-		for (int w: _subdomainWeights[i]) {
+		for (auto w: _subdomainWeights[i]) {
 			ss << w << " ";
 		}
 		Log::global_log->info() << "Weights for axis " << i << ": " << ss.str() << std::endl;
