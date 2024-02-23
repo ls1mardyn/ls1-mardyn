@@ -55,10 +55,8 @@ public:
    */
   void readXML(XMLfileUnits &xmlconfig) override;
 
-  // documentation see father class (DomainDecompBase.h)
   double getBoundingBoxMin(int dimension, Domain *domain) override;
 
-  // documentation see father class (DomainDecompBase.h)
   double getBoundingBoxMax(int dimension, Domain *domain) override;
 
   /** @brief Assuming _subdomainWeights is up-to-date, calculates bounds of
