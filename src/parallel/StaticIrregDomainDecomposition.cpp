@@ -9,6 +9,7 @@
 #include "utils/Logger.h"
 #include <fstream>
 #include <sstream>
+#include <numeric>
 
 StaticIrregDomainDecomposition::StaticIrregDomainDecomposition(Domain* domain) : 
 	StaticIrregDomainDecomposition(domain, MPI_COMM_WORLD, {std::vector<unsigned int>{},{},{}}) {}
@@ -34,13 +35,12 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	DomainDecompMPIBase::readXML(xmlconfig);
 	//bypass DomainDecomposition readXML to avoid reading MPIGridDims
 
-	if(xmlconfig.changecurrentnode("subdomainSizeCSV")) {
-		std::string filename = xmlconfig.getNodeValue_string("filename");
+	std::string filename = xmlconfig.getNodeValue_string("subdomainWeightsCSV");
+	if (!filename.empty()) {
 		updateSubdomainWeightsFromFile(filename);
-		for (int i = 0; I < _subdomainWeights.size(); ++i) {
-			_gridSize[i] = static_cast<int>(_subdomainWeights[0].size()); //_gridSize still contains the number of ranks per dimension, just not the actual "size" of subdomains
+		for (int i = 0; i < _subdomainWeights.size(); ++i) {
+			_gridSize[i] = static_cast<int>(_subdomainWeights[i].size()); //_gridSize still contains the number of ranks per dimension, just not the actual "size" of subdomains
 		}
-		xmlconfig.changecurrentnode("..");
 		initMPIGridDims();							//to recalculate _coords
 		updateSubdomainDimensions();				//recalculate sizes from _coords
 	}
@@ -58,7 +58,7 @@ void StaticIrregDomainDecomposition::updateSubdomainDimensions() {
 	for(int i = 0; i < 3; i++) {
 		const auto backWeight = std::reduce(_subdomainWeights[i].begin(), _subdomainWeights[i].begin() + _coords[i], 0u);
 		const auto totalWeight = std::reduce(_subdomainWeights[i].begin() + _coords[i], _subdomainWeights[i].end(), backWeight);
-		Log::global_log->debug() << "Dim: " << i << " totalWeight: " << totalWeight << " backWeight: " << backWeight << " coords: " << _coords[0] << ", " <<_coords[1] << ", " << _coords[2]std::endl;
+		Log::global_log->debug() << "Dim: " << i << " totalWeight: " << totalWeight << " backWeight: " << backWeight << " coords: " << _coords[0] << ", " <<_coords[1] << ", " << _coords[2] << std::endl;
 
 		//calculate box bounds from cumulative weights of previous ranks, and the weight of the current rank
 		_boxMin[i] = static_cast<double>(backWeight) * _domainLength[i] / totalWeight;
@@ -67,10 +67,6 @@ void StaticIrregDomainDecomposition::updateSubdomainDimensions() {
 }
 
 void StaticIrregDomainDecomposition::updateSubdomainWeightsFromFile(const std::string &filename) {
-	if(filename.empty()) {
-		Log::global_log->fatal() << "CSV filename to read domain decomposition from is empty! Please check config file!";
-		Simulation::exit(5000);
-	}
 	std::ifstream file(filename.c_str());
 	if(!file.good()) {
 		Log::global_log->fatal() << "CSV file to read domain decomposition from does not exist! Please check config file!";
