@@ -21,12 +21,22 @@ StaticIrregDomainDecomposition::StaticIrregDomainDecomposition(
     : DomainDecomposition(comm, {(int)subdomainWeights[0].size(),
                                  (int)subdomainWeights[1].size(),
                                  (int)subdomainWeights[2].size()}),
-      _subdomainWeights(subdomainWeights),
-      _domainLength{domain->getGlobalLength(0), domain->getGlobalLength(1),
-                    domain->getGlobalLength(2)} {
+      _subdomainWeights(subdomainWeights), _domainLength{
+                                               domain->getGlobalLength(0),
+                                               domain->getGlobalLength(1),
+                                               domain->getGlobalLength(2)} {
   if (_subdomainWeights[0].size() == 0 && _subdomainWeights[1].size() == 0 &&
       _subdomainWeights[2].size() == 0) { // default behaviour, regular grid
+    /* If we have empty vectors for subdomain weights, we successfully
+    initialize a regular grid by leveraging DomainDecomposition's default
+    behaviour. However, we now need to use the updated _coords and _gridSize to
+    write these weights back to _subdomainWeights, since otherwise the box
+    dimension calculation will be broken. So for each axis, we insert a number
+    of ones equal to the number of subdomains, to denote that we have equal
+    subdomains on this axis, amounting to _gridSize.
+    */
     for (int i = 0; i < 3; i++) {
+      _subdomainWeights[i].reserve(_gridSize[i]);
       for (int j = 0; j < _gridSize[i]; j++) {
         _subdomainWeights[i].push_back(1); // equal subdomains, so weight = 1
       }
@@ -46,7 +56,7 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
       _gridSize[i] = static_cast<int>(
           _subdomainWeights[i]
               .size()); //_gridSize still contains the number of ranks per
-                        //dimension, just not the actual "size" of subdomains
+                        // dimension, just not the actual "size" of subdomains
     }
     initMPIGridDims();           // to recalculate _coords
     updateSubdomainDimensions(); // recalculate sizes from _coords

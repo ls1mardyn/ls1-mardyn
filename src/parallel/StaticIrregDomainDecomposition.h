@@ -92,19 +92,19 @@ private:
    * weights for different dimensions are independent.
    *
    */
-  std::array<std::vector<unsigned int>, 3> _subdomainWeights{{{},{},{}}};
+  std::array<std::vector<unsigned int>, 3> _subdomainWeights{{{}, {}, {}}};
 
   /** @brief Stores the start of the subdomain. Calculated by
    * updateSubdomainDimensions().
    *
    */
-  std::array<double, 3> _boxMin{0,0,0};
+  std::array<double, 3> _boxMin{0, 0, 0};
 
   /** @brief Stores the end of the subdomain. Calculated by
    * updateSubdomainDimensions().
    *
    */
-  std::array<double, 3> _boxMax{0,0,0};
+  std::array<double, 3> _boxMax{0, 0, 0};
 
   /** @brief Stores the domain lengths. Set in the constructor.
    *
