@@ -55,25 +55,14 @@ double StaticIrregDomainDecomposition::getBoundingBoxMax(int dimension, Domain* 
 }
 
 void StaticIrregDomainDecomposition::updateSubdomainDimensions() {
-	std::array<int, 3> totWeight{0}; //stores the total weight across the dimensions
 	for(int i = 0; i < 3; i++) {
-		for(unsigned int weight: _subdomainWeights[i]) {
-			totWeight[i] += weight;
-		}
-	}
-	Log::global_log->debug() << "totweight: " << totWeight[0] << " " << totWeight[1] << " " << totWeight[2]  << std::endl;
-
-	int backWeight; //stores the cumulative weights of all subdomains previous to current subdomain
-	for(int i = 0; i < 3; i++) {
-		backWeight = 0;
-		for(int j = 0; j < _coords[i]; j++) {
-			backWeight += _subdomainWeights[i][j];
-		}
-		Log::global_log->debug() << "backweight: " << i << " " << backWeight << " coords: " << _coords[0] << ", " <<_coords[1] << ", " << _coords[2] << std::endl;
+		const auto backWeight = std::reduce(_subdomainWeights[i].begin(), _subdomainWeights[i].begin() + _coords[i], 0u);
+		const auto totalWeight = std::reduce(_subdomainWeights[i].begin() + _coords[i], _subdomainWeights[i].end(), backWeight);
+		Log::global_log->debug() << "Dim: " << i << " totalWeight: " << totalWeight << " backWeight: " << backWeight << " coords: " << _coords[0] << ", " <<_coords[1] << ", " << _coords[2]std::endl;
 
 		//calculate box bounds from cumulative weights of previous ranks, and the weight of the current rank
-		_boxMin[i] = static_cast<double>(backWeight) * _domainLength[i] / totWeight[i];
-		_boxMax[i] = _boxMin[i] + (static_cast<double>(_subdomainWeights[i][_coords[i]]) * _domainLength[i] / totWeight[i]);
+		_boxMin[i] = static_cast<double>(backWeight) * _domainLength[i] / totalWeight;
+		_boxMax[i] = _boxMin[i] + (static_cast<double>(_subdomainWeights[i][_coords[i]]) * _domainLength[i] / totalWeight);
 	}
 }
 
