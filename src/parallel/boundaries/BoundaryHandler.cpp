@@ -170,7 +170,7 @@ bool BoundaryHandler::processOuterWallLeavingParticles()
 				break;
 			}
 			default:
-				global_log->error() << "Boundary type error! Received type not allowed!" << std::endl;
+				Log::global_log->error() << "Boundary type error! Received type not allowed!" << std::endl;
 				Simulation::exit(1);
 		}
 	}
@@ -212,7 +212,7 @@ void BoundaryHandler::removeNonPeriodicHalos()
 				break;
 			}
 			default:
-				global_log->error() << "Boundary type error! Received type not allowed!" << std::endl;
+				Log::global_log->error() << "Boundary type error! Received type not allowed!" << std::endl;
 				Simulation::exit(1);
 		}
 	}
