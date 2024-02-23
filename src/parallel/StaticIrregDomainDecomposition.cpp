@@ -37,9 +37,9 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("subdomainSizeCSV")) {
 		std::string filename = xmlconfig.getNodeValue_string("filename");
 		updateSubdomainWeightsFromFile(filename);
-		_gridSize[0] = (int)_subdomainWeights[0].size(); //_gridSize still contains the number of ranks per dimension, just not the actual "size" of subdomains
-		_gridSize[1] = (int)_subdomainWeights[1].size();
-		_gridSize[2] = (int)_subdomainWeights[2].size();
+		for (int i = 0; I < _subdomainWeights.size(); ++i) {
+			_gridSize[i] = static_cast<int>(_subdomainWeights[0].size()); //_gridSize still contains the number of ranks per dimension, just not the actual "size" of subdomains
+		}
 		xmlconfig.changecurrentnode("..");
 		initMPIGridDims();							//to recalculate _coords
 		updateSubdomainDimensions();				//recalculate sizes from _coords
