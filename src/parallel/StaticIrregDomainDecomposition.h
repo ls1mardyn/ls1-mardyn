@@ -64,15 +64,15 @@ public:
        <subdomainWeightsCSV> STRING.csv </subdomainWeightsCSV>
      </parallelisation>
      \endcode
-    *
-    * A file with its first line being 1,2,1 defines an x axis with subdomain
+   *
+   * A file with its first line being 1,2,1 defines an x axis with subdomain
    lengths in the 1:2:1 ratio
-    * If file not given, default behaviour is an equally spaced grid, same as
+   * If file not given, default behaviour is an equally spaced grid, same as
    DomainDecomposition
-    *
-    * @param &xmlconfig The xml node from which to read the CSV filename with
+   *
+   * @param &xmlconfig The xml node from which to read the CSV filename with
    weights
-    *
+   *
    */
   void readXML(XMLfileUnits &xmlconfig) override;
 
