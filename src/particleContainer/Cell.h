@@ -4,7 +4,7 @@
 class Cell {
 public:
 	Cell() : _cellIndex(0) {}
-	
+
 	virtual ~Cell() {}
 
 	virtual void assignCellToHaloRegion() = 0;

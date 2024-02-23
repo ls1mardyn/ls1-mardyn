@@ -81,7 +81,7 @@ private:
     }
   };
 
-  
+
   class ValueBadInvert : public Value
   {
   public:
@@ -93,7 +93,7 @@ private:
     }
   };
 
-  
+
   class ValueBadEqual : public Value
   {
   public:
@@ -110,7 +110,7 @@ private:
     }
   };
 
-  
+
   class ValueBadNotEqual : public Value
   {
   public:
@@ -133,7 +133,7 @@ private:
   public:
     ValueBadCall( int value =0 ) : Value( value ) {}
 
-    ValueBadCall( const ValueBadCall &other ) 
+    ValueBadCall( const ValueBadCall &other )
     {
       static int serialNumber = 0;
       m_value = ++serialNumber;

@@ -15,21 +15,21 @@ MessageTest::~MessageTest()
 }
 
 
-void 
+void
 MessageTest::setUp()
 {
   m_message = new CPPUNIT_NS::Message();
 }
 
 
-void 
+void
 MessageTest::tearDown()
 {
   delete m_message;
 }
 
 
-void 
+void
 MessageTest::testDefaultConstructor()
 {
   std::string empty;
@@ -38,7 +38,7 @@ MessageTest::testDefaultConstructor()
 }
 
 
-void 
+void
 MessageTest::testDetailAtThrowIfBadIndex()
 {
   m_message->detailAt( -1 );
@@ -46,14 +46,14 @@ MessageTest::testDetailAtThrowIfBadIndex()
 
 
 
-void 
+void
 MessageTest::testDetailAtThrowIfBadIndex2()
 {
   m_message->detailAt( 0 );
 }
 
 
-void 
+void
 MessageTest::testAddDetail()
 {
   std::string expected( "first" );
@@ -63,7 +63,7 @@ MessageTest::testAddDetail()
 }
 
 
-void 
+void
 MessageTest::testAddDetail2()
 {
   std::string expected1( "first" );
@@ -75,7 +75,7 @@ MessageTest::testAddDetail2()
 }
 
 
-void 
+void
 MessageTest::testAddDetail3()
 {
   std::string expected1( "first" );
@@ -89,7 +89,7 @@ MessageTest::testAddDetail3()
 }
 
 
-void 
+void
 MessageTest::testAddDetailEmptyMessage()
 {
   m_message->addDetail( CPPUNIT_NS::Message() );
@@ -97,7 +97,7 @@ MessageTest::testAddDetailEmptyMessage()
 }
 
 
-void 
+void
 MessageTest::testAddDetailMessage()
 {
   std::string expected1( "first" );
@@ -109,7 +109,7 @@ MessageTest::testAddDetailMessage()
 }
 
 
-void 
+void
 MessageTest::testSetShortDescription()
 {
   std::string expected( "shortDesc" );
@@ -118,7 +118,7 @@ MessageTest::testSetShortDescription()
 }
 
 
-void 
+void
 MessageTest::testClearDetails()
 {
   m_message->addDetail( "detail1" );
@@ -127,38 +127,38 @@ MessageTest::testClearDetails()
 }
 
 
-void 
+void
 MessageTest::testConstructor()
 {
   std::string expected( "short" );
   CPPUNIT_NS::Message message( expected );
-  
+
   CPPUNIT_ASSERT_EQUAL( expected, message.shortDescription() );
   CPPUNIT_ASSERT_EQUAL( 0, message.detailCount() );
 }
 
 
-void 
+void
 MessageTest::testConstructorDetail1()
 {
   std::string expected( "short" );
   std::string expected1( "detail-1" );
   CPPUNIT_NS::Message message( expected, expected1 );
-  
+
   CPPUNIT_ASSERT_EQUAL( expected, message.shortDescription() );
   CPPUNIT_ASSERT_EQUAL( 1, message.detailCount() );
   CPPUNIT_ASSERT_EQUAL( expected1, message.detailAt(0) );
 }
 
 
-void 
+void
 MessageTest::testConstructorDetail2()
 {
   std::string expected( "short" );
   std::string expected1( "detail-1" );
   std::string expected2( "detail-2" );
   CPPUNIT_NS::Message message( expected, expected1, expected2 );
-  
+
   CPPUNIT_ASSERT_EQUAL( expected, message.shortDescription() );
   CPPUNIT_ASSERT_EQUAL( 2, message.detailCount() );
   CPPUNIT_ASSERT_EQUAL( expected1, message.detailAt(0) );
@@ -166,7 +166,7 @@ MessageTest::testConstructorDetail2()
 }
 
 
-void 
+void
 MessageTest::testConstructorDetail3()
 {
   std::string expected( "short" );
@@ -174,7 +174,7 @@ MessageTest::testConstructorDetail3()
   std::string expected2( "detail-2" );
   std::string expected3( "detail-3" );
   CPPUNIT_NS::Message message( expected, expected1, expected2, expected3 );
-  
+
   CPPUNIT_ASSERT_EQUAL( expected, message.shortDescription() );
   CPPUNIT_ASSERT_EQUAL( 3, message.detailCount() );
   CPPUNIT_ASSERT_EQUAL( expected1, message.detailAt(0) );
@@ -183,7 +183,7 @@ MessageTest::testConstructorDetail3()
 }
 
 
-void 
+void
 MessageTest::testDetailsNone()
 {
   CPPUNIT_ASSERT_MESSAGE("012345678901234",true);
@@ -192,7 +192,7 @@ MessageTest::testDetailsNone()
 }
 
 
-void 
+void
 MessageTest::testDetailsSome()
 {
   m_message->addDetail( "Expected: 1", "Actual:   7", "Info: number" );
@@ -202,11 +202,11 @@ MessageTest::testDetailsSome()
 }
 
 
-void 
+void
 MessageTest::testEqual()
 {
   CPPUNIT_ASSERT( *m_message == CPPUNIT_NS::Message() );
-  
+
   CPPUNIT_NS::Message message1( "short", "det1", "det2", "det3" );
   CPPUNIT_NS::Message message2( message1 );
   CPPUNIT_ASSERT( message1 == message2 );
@@ -224,7 +224,7 @@ MessageTest::testEqual()
 }
 
 
-void 
+void
 MessageTest::testNotEqual()
 {
   CPPUNIT_NS::Message message1( "short", "det1", "det2", "det3" );

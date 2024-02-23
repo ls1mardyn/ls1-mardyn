@@ -6,8 +6,6 @@
 #include "utils/Logger.h"
 #include "particleContainer/ParticleContainer.h"
 
-using namespace std;
-using Log::global_log;
 
 VelocityScalingThermostat::VelocityScalingThermostat() {
 	this->_globalBetaTrans = 1.0;
@@ -54,7 +52,7 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 			betaTrans = _componentBetaTrans[thermostatId];
 			betaRot   = _componentBetaRot[thermostatId];
 
-			map<int, double*>::iterator vIter;
+			std::map<int, double*>::iterator vIter;
 			if( (vIter = _componentVelocity.find(thermostatId)) != _componentVelocity.end()) {
 				molecule->scale_v(betaTrans);
 			}
@@ -74,8 +72,8 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 		{
 			double betaTrans = _globalBetaTrans;
 			double betaRot = _globalBetaRot;
-			global_log->debug() << "Beta rot: " << betaRot << endl;
-			global_log->debug() << "Beta trans: " << betaTrans << endl;
+			Log::global_log->debug() << "Beta rot: " << betaRot << std::endl;
+			Log::global_log->debug() << "Beta trans: " << betaTrans << std::endl;
 
 			for (auto i = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); i.isValid(); ++i) {
 				if(this->_useGlobalVelocity) {

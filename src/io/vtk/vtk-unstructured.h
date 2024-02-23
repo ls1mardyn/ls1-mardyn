@@ -204,7 +204,7 @@ class DataArrayList_t: public ::xml_schema::simple_type,
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~DataArrayList_t ();
 };
 
@@ -472,7 +472,7 @@ class DataArray_t: public ::DataArrayList_t
    *
    * @param x An optional container with the new value to set.
    *
-   * If the value is present in @a x then this function makes a copy 
+   * If the value is present in @a x then this function makes a copy
    * of this value and sets it as the new value of the attribute.
    * Otherwise the attribute container is set the 'not present' state.
    */
@@ -487,7 +487,7 @@ class DataArray_t: public ::DataArrayList_t
   //@{
 
   /**
-   * @brief Create an instance from initializers for required 
+   * @brief Create an instance from initializers for required
    * elements and attributes.
    */
   DataArray_t (const type_type&,
@@ -559,7 +559,7 @@ class DataArray_t: public ::DataArrayList_t
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~DataArray_t ();
 
   // Implementation.
@@ -1004,7 +1004,7 @@ class PieceUnstructuredGrid_t: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~PieceUnstructuredGrid_t ();
 
   // Implementation.
@@ -1171,7 +1171,7 @@ class UnstructuredGrid_t: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~UnstructuredGrid_t ();
 
   // Implementation.
@@ -1406,8 +1406,8 @@ class PointData: public ::xml_schema::type
    *
    * @param s A sequence to copy elements from.
    *
-   * For each element in @a s this function makes a copy and adds it 
-   * to the sequence. Note that this operation completely changes the 
+   * For each element in @a s this function makes a copy and adds it
+   * to the sequence. Note that this operation completely changes the
    * sequence and all old elements will be lost.
    */
   void
@@ -1482,7 +1482,7 @@ class PointData: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~PointData ();
 
   // Implementation.
@@ -1564,8 +1564,8 @@ class CellData: public ::xml_schema::type
    *
    * @param s A sequence to copy elements from.
    *
-   * For each element in @a s this function makes a copy and adds it 
-   * to the sequence. Note that this operation completely changes the 
+   * For each element in @a s this function makes a copy and adds it
+   * to the sequence. Note that this operation completely changes the
    * sequence and all old elements will be lost.
    */
   void
@@ -1640,7 +1640,7 @@ class CellData: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~CellData ();
 
   // Implementation.
@@ -1722,8 +1722,8 @@ class Points: public ::xml_schema::type
    *
    * @param s A sequence to copy elements from.
    *
-   * For each element in @a s this function makes a copy and adds it 
-   * to the sequence. Note that this operation completely changes the 
+   * For each element in @a s this function makes a copy and adds it
+   * to the sequence. Note that this operation completely changes the
    * sequence and all old elements will be lost.
    */
   void
@@ -1798,7 +1798,7 @@ class Points: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~Points ();
 
   // Implementation.
@@ -1880,8 +1880,8 @@ class Cells: public ::xml_schema::type
    *
    * @param s A sequence to copy elements from.
    *
-   * For each element in @a s this function makes a copy and adds it 
-   * to the sequence. Note that this operation completely changes the 
+   * For each element in @a s this function makes a copy and adds it
+   * to the sequence. Note that this operation completely changes the
    * sequence and all old elements will be lost.
    */
   void
@@ -1956,7 +1956,7 @@ class Cells: public ::xml_schema::type
   /**
    * @brief Destructor.
    */
-  virtual 
+  virtual
   ~Cells ();
 
   // Implementation.

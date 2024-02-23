@@ -13,7 +13,6 @@
 #include "plugins/PluginBase.h"
 #include "utils/Logger.h"
 
-using Log::global_log;
 
 NonBlockingMPIHandlerBase::NonBlockingMPIHandlerBase(DomainDecompMPIBase* domainDecomposition,
 													 ParticleContainer* moleculeContainer, Domain* domain,
@@ -28,7 +27,7 @@ NonBlockingMPIHandlerBase::~NonBlockingMPIHandlerBase() {}
 void NonBlockingMPIHandlerBase::performOverlappingTasks(bool forceRebalancing, double etime) {
 	global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
 	// ensure that all Particles are in the right cells and exchange Particles
-	global_log->debug() << "Updating container and decomposition" << std::endl;
+	Log::global_log->debug() << "Updating container and decomposition" << std::endl;
 	// The particles have moved, so the neighbourhood relations have
 	// changed and have to be adjusted
 	_moleculeContainer->update();
@@ -43,7 +42,7 @@ void NonBlockingMPIHandlerBase::performOverlappingTasks(bool forceRebalancing, d
 		performComputation();
 
 	} else {
-		global_log->debug()
+		Log::global_log->debug()
 			<< "falling back to sequential version, since domainDecomposition is blocking in this time step."
 			<< std::endl;
 		NonBlockingMPIHandlerBase::initBalanceAndExchange(forceRebalancing, etime);
@@ -53,7 +52,7 @@ void NonBlockingMPIHandlerBase::performOverlappingTasks(bool forceRebalancing, d
 
 void NonBlockingMPIHandlerBase::performComputation() {
 	// Force calculation and other pair interaction related computations
-	global_log->debug() << "Traversing pairs" << std::endl;
+	Log::global_log->debug() << "Traversing pairs" << std::endl;
 
 	global_simulation->timers()->start("SIMULATION_COMPUTATION");
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");

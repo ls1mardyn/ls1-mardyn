@@ -20,9 +20,9 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
     xmlconfig.getNodeValue("width", _dWidth);
     xmlconfig.getNodeValue("delta", _delta);
     _dWidthHalf = _dWidth * 0.5;
-	global_log->info() << "[WallPotential] Using plugin with parameters: density=" << density << ", sigma=" << sigma
+	Log::global_log->info() << "[WallPotential] Using plugin with parameters: density=" << density << ", sigma=" << sigma
 					   << ", epsilon=" << epsilon << ", yoff=" << yoff << ", ycut=" << ycut << ", width=" << _dWidth
-					   << ", delta=" << _delta << endl;
+					   << ", delta=" << _delta << std::endl;
 
 	int potential;
     xmlconfig.getNodeValue("potential", potential);
@@ -33,7 +33,7 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
         _potential = LJ10_4;
     }
     else{
-        global_log -> info() << "[WallPotential] No valid potential was specified -> Default: LJ9_3" << std::endl;
+        Log::global_log -> info() << "[WallPotential] No valid potential was specified -> Default: LJ9_3" << std::endl;
         _potential = LJ9_3;
         // TODO: is this allowed or should simulation be halted
         // HALT SIM
@@ -42,7 +42,7 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
 
     XMLfile::Query query = xmlconfig.query("component");
     unsigned int numComponentsConsidered = query.card();
-    global_log->info() << "[WallPotential] Setting parameters 'xi', 'eta' for " << numComponentsConsidered << " components." << endl;
+    Log::global_log->info() << "[WallPotential] Setting parameters 'xi', 'eta' for " << numComponentsConsidered << " components." << std::endl;
 
     std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
     unsigned int numComponents = components->size();
@@ -59,7 +59,7 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
         for (auto &&bi : _bConsiderComponent)
             bi = false;
 
-        string oldpath = xmlconfig.getcurrentnodepath();
+        std::string oldpath = xmlconfig.getcurrentnodepath();
         XMLfile::Query::const_iterator componentIter;
         for (componentIter = query.begin(); componentIter; componentIter++) {
             xmlconfig.changecurrentnode(componentIter);
@@ -68,7 +68,7 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
             xmlconfig.getNodeValue("xi", xi_sf.at(cid - 1));
             xmlconfig.getNodeValue("eta", eta_sf.at(cid - 1));
             _bConsiderComponent.at(cid - 1) = true;
-            global_log->info() << "[WallPotential] " << cid << " " << xi_sf.at(cid - 1) << " " << eta_sf.at(cid - 1)
+            Log::global_log->info() << "[WallPotential] " << cid << " " << xi_sf.at(cid - 1) << " " << eta_sf.at(cid - 1)
                                << " " << std::endl;
         }
         xmlconfig.changecurrentnode(oldpath);
@@ -77,14 +77,14 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
 
     if(_potential == LJ9_3){
         this->initializeLJ93(components, density, sigma, epsilon, xi_sf, eta_sf, yoff, ycut);
-        global_log->info() << "[WallPotential] LJ9_3 initialized." << endl;
+        Log::global_log->info() << "[WallPotential] LJ9_3 initialized." << std::endl;
     }
     else if(_potential == LJ10_4){
         this->initializeLJ1043(components, density, sigma, epsilon, xi_sf, eta_sf, yoff, ycut);
-        global_log->info() << "[WallPotential] LJ10_4 initialized." << endl;
+        Log::global_log->info() << "[WallPotential] LJ10_4 initialized." << std::endl;
     }
     else{
-        global_log -> error() << "[WallPotential] UNKNOWN WALL POTENTIAL! EXITING!" << std::endl;
+        Log::global_log -> error() << "[WallPotential] UNKNOWN WALL POTENTIAL! EXITING!" << std::endl;
         global_simulation -> exit(11);
     }
 
@@ -106,7 +106,7 @@ void WallPotential::initializeLJ93(const std::vector<Component>* components,
                                    double in_rhoWall, double in_sigWall, double in_epsWall, std::vector<double> in_xi, std::vector<double> in_eta,
                                    double in_yOffWall, double in_yWallCut) {
 
-    global_log->info() << "[WallPotential] Initializing the wall function LJ-9-3.\n";
+    Log::global_log->info() << "[WallPotential] Initializing the wall function LJ-9-3.\n";
     this->_rhoW = in_rhoWall;
     this->_yc = in_yWallCut;
     this->_yOff = in_yOffWall;
@@ -149,7 +149,7 @@ void WallPotential::initializeLJ1043(const std::vector<Component> *components,
                                      std::vector<double> in_eta,
                                      double in_yOffWall, double in_yWallCut) {
 
-    global_log->info() << "[WallPotential] Initializing the wall function LJ-10-4-3 with " << _nc << " components.\n" << endl;
+    Log::global_log->info() << "[WallPotential] Initializing the wall function LJ-10-4-3 with " << _nc << " components.\n" << std::endl;
 
     this->_rhoW = in_rhoWall;
     this->_yc = in_yWallCut;
@@ -355,14 +355,14 @@ void WallPotential::siteWiseForces(ParticleContainer *particleContainer, DomainD
         return;
     }
     if(_potential == LJ9_3){
-        //global_log->debug() << "[WallPotential] LJ9_3 afterForces." << endl;
+        //global_log->debug() << "[WallPotential] LJ9_3 afterForces." << std::endl;
         this->calcTSLJ_9_3(particleContainer);
-        //global_log->debug() << "[WallPotential] LJ9_3 applied." << endl;
+        //global_log->debug() << "[WallPotential] LJ9_3 applied." << std::endl;
     }
     else if(_potential == LJ10_4){
-        //global_log->debug() << "[WallPotential] LJ10_4 afterForces. " << endl;
+        //global_log->debug() << "[WallPotential] LJ10_4 afterForces. " << std::endl;
         this->calcTSLJ_10_4(particleContainer);
-        //global_log->debug() << "[WallPotential] LJ10_4 applied." << endl;
+        //global_log->debug() << "[WallPotential] LJ10_4 applied." << std::endl;
     }
 
 }

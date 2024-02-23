@@ -35,7 +35,7 @@ public:
     void collectRetrieve(DomainDecompBase *domainDecomp, unsigned long uID) final {
         _globalProfile[uID] = domainDecomp->collCommGetDouble();
     }
-    void output(string prefix, long unsigned accumulatedDatasets) final;
+    void output(std::string prefix, long unsigned accumulatedDatasets) final;
     void reset(unsigned long uID) final  {
         _localProfile[uID] = 0.0;
         _globalProfile[uID] = 0.0;
@@ -51,7 +51,7 @@ private:
     // Global 1D Profile
     std::map<unsigned, double> _globalProfile;
 
-    void writeDataEntry(unsigned long uID, ofstream &outfile) const final;
+    void writeDataEntry(unsigned long uID, std::ofstream &outfile) const final;
 };
 
 #endif //MARDYN_TRUNK_VELOCITYABSPROFILE_H

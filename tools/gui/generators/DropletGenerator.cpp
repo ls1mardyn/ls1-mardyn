@@ -73,10 +73,10 @@ void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double /*timestep*/)
 		domain->setGlobalLength(0, simBoxLength[0]);
 		domain->setGlobalLength(1, simBoxLength[1]);
 		domain->setGlobalLength(2, simBoxLength[2]);
-		vector<Component>& dcomponents = *(global_simulation->getEnsemble()->getComponents());
+		std::vector<Component>& dcomponents = *(global_simulation->getEnsemble()->getComponents());
 
 		_logger->debug() << "DropletGenerator: set global length=[" << simBoxLength[0]
-		    << "," << simBoxLength[1] << "," <<  simBoxLength[2] << "]" << endl;
+		    << "," << simBoxLength[1] << "," <<  simBoxLength[2] << "]" << std::endl;
 
 		if (_configuration.performPrincipalAxisTransformation()) {
 			for (unsigned int i = 0; i < _components.size(); i++) {
@@ -94,11 +94,11 @@ unsigned long DropletGenerator::readPhaseSpace(
 		DomainDecompBase* domainDecomp) {
 
 	global_simulation->timers()->start("DROPLET_GENERATOR_INPUT");
-	_logger->info() << "Reading phase space file (DropletGenerator)." << endl;
+	_logger->info() << "Reading phase space file (DropletGenerator)." << std::endl;
 
 	srand(1);
-	vector<double> bBoxMin;
-	vector<double> bBoxMax;
+	std::vector<double> bBoxMin;
+	std::vector<double> bBoxMax;
 
 	bBoxMin.resize(3);
 	bBoxMax.resize(3);
@@ -110,17 +110,17 @@ unsigned long DropletGenerator::readPhaseSpace(
 	_logger->info()
 			<< "OneCLJGenerator  generating cluster distribution. " << " T "
 			<< _temperature << " #molecules " << numOfMolecules << " rho_gas "
-			<< gasDensity << " rho_fluid " << fluidDensity << endl;
+			<< gasDensity << " rho_fluid " << fluidDensity << std::endl;
 	unsigned long maxID = generateMoleculesCluster(particleContainer, bBoxMin, bBoxMax, domain, domainDecomp);
 
-	vector<unsigned long> partsPerComp;
+	std::vector<unsigned long> partsPerComp;
 	partsPerComp.resize(1);
 	particleContainer->update();
 	particleContainer->deleteOuterParticles();
 	domain->setglobalNumMolecules(
 			countMolecules(domainDecomp, particleContainer, partsPerComp));
 
-	vector<Component>& dcomponents = *(global_simulation->getEnsemble()->getComponents());
+	std::vector<Component>& dcomponents = *(global_simulation->getEnsemble()->getComponents());
 	for (unsigned int i = 0; i < partsPerComp.size(); i++) {
 		dcomponents[i].setNumMolecules(partsPerComp[i]);
 		domain->setglobalRotDOF(
@@ -135,7 +135,7 @@ unsigned long DropletGenerator::readPhaseSpace(
 
 	global_simulation->timers()->stop("DROPLET_GENERATOR_INPUT");
 	global_simulation->timers()->setOutputString("DROPLET_GENERATOR_INPUT", "Initial IO took:                 ");
-	_logger->info() << "Initial IO took:                 " << global_simulation->timers()->getTime("DROPLET_GENERATOR_INPUT") << " sec" << endl;
+	_logger->info() << "Initial IO took:                 " << global_simulation->timers()->getTime("DROPLET_GENERATOR_INPUT") << " sec" << std::endl;
 	return maxID;
 }
 
@@ -145,11 +145,11 @@ void DropletGenerator::readLocalClusters(Domain* domain,
 	localClusters.clear();
 	DropletPlacement dropletPlacement(fluidVolume, maxSphereVolume,
 			numSphereSizes, _logger);
-	vector<DropletPlacement::Droplet> droplets =
+	std::vector<DropletPlacement::Droplet> droplets =
 			dropletPlacement.generateDroplets();
 
-	vector<double> shiftedSphere;
-	vector<double> sphere;
+	std::vector<double> shiftedSphere;
+	std::vector<double> sphere;
 	double distanceToDomain;
 	sphere.resize(4); // x y z r
 	shiftedSphere.resize(4); // x y z r
@@ -220,8 +220,8 @@ bool DropletGenerator::closeToAnyCluster(double x, double y, double z,
 	return belongsToOther;
 }
 
-vector<ParameterCollection*> DropletGenerator::getParameters() {
-	vector<ParameterCollection*> parameters;
+std::vector<ParameterCollection*> DropletGenerator::getParameters() {
+	std::vector<ParameterCollection*> parameters;
 	parameters.push_back(new MardynConfigurationParameters(_configuration));
 
 	ParameterCollection* tab = new ParameterCollection("DropletGenerator", "DropletGenerator",
@@ -259,17 +259,17 @@ vector<ParameterCollection*> DropletGenerator::getParameters() {
 
 
 unsigned long DropletGenerator::generateMoleculesCluster(
-		ParticleContainer* particleContainer, vector<double> &bBoxMin,
-		vector<double> &bBoxMax, Domain* domain, DomainDecompBase* domainDecomp) {
+		ParticleContainer* particleContainer, std::vector<double> &bBoxMin,
+		std::vector<double> &bBoxMax, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	readLocalClusters(domain, domainDecomp);
 
 	_components[0].updateMassInertia();
 
-	vector<int> globalFccCells;
-	vector<int> clusterFccCellsMin;
-	vector<int> clusterFccCellsMax;
-	vector<double> fccCellLength;
+	std::vector<int> globalFccCells;
+	std::vector<int> clusterFccCellsMin;
+	std::vector<int> clusterFccCellsMax;
+	std::vector<double> fccCellLength;
 
 	globalFccCells.resize(3);
 	clusterFccCellsMin.resize(3);
@@ -282,7 +282,7 @@ unsigned long DropletGenerator::generateMoleculesCluster(
 				pow(fluidDensity / 4., 1. / 3.) * simBoxLength[dim]);
 		fccCellLength[dim] = simBoxLength[dim] / globalFccCells[dim];
 	}
-	vector<vector<double> > fccOffsets;
+	std::vector<std::vector<double> > fccOffsets;
 	fccOffsets.resize(4);
 	for (int i = 0; i < 4; i++) {
 		fccOffsets[i].resize(3);
@@ -299,7 +299,7 @@ unsigned long DropletGenerator::generateMoleculesCluster(
 
 	double securityOffset = 0.5 * fccCellLength[0];
 
-	vector<double> clusterPos;
+	std::vector<double> clusterPos;
 	clusterPos.resize(3);
 	double radius;
 
@@ -367,7 +367,7 @@ unsigned long DropletGenerator::generateMoleculesCluster(
 							}
 							getFCCOrientation(fcc, q_);
 
-							vector<double> v = getRandomVelocity(_temperature);
+							std::vector<double> v = getRandomVelocity(_temperature);
 							Molecule m(molCount, &_components[0], r_[0], r_[1], r_[2], v[0], v[1], v[2],
 									q_[0], q_[1], q_[2], q_[3], w[0], w[1], w[2]);
 							if (particleContainer->isInBoundingBox(m.r_arr().data())) {
@@ -383,8 +383,8 @@ unsigned long DropletGenerator::generateMoleculesCluster(
 	}
 
 	// gas properties
-	vector<int> fccCellsMin;
-	vector<int> fccCellsMax;
+	std::vector<int> fccCellsMin;
+	std::vector<int> fccCellsMax;
 	fccCellsMin.resize(3);
 	fccCellsMax.resize(3);
 
@@ -441,7 +441,7 @@ unsigned long DropletGenerator::generateMoleculesCluster(
 						 }
 						 getFCCOrientation(fcc, q_);
 
-						 vector<double> v = getRandomVelocity(_temperature);
+						 std::vector<double> v = getRandomVelocity(_temperature);
 						 Molecule m(molCount, &_components[0], r_[0], r_[1], r_[2], v[0], v[1], v[2],
 								 q_[0], q_[1], q_[2], q_[3], w[0], w[1], w[2]);
 						if (particleContainer->isInBoundingBox(m.r_arr().data())) {
@@ -459,39 +459,39 @@ unsigned long DropletGenerator::generateMoleculesCluster(
 
 void DropletGenerator::setParameter(Parameter* p) {
 
-	string id = p->getNameId();
+	std::string id = p->getNameId();
 	if (id == "fluidDensity") {
 		fluidDensity = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJDroplet: fluidDensity: " << fluidDensity << endl;
+		std::cout << "OneCenterLJDroplet: fluidDensity: " << fluidDensity << std::endl;
 		setClusterParameters(gasDensity, fluidDensity, fluidVolume,
 				maxSphereVolume, numSphereSizes);
 	} else if (id == "gasDensity") {
 		gasDensity = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJDroplet: gasDensity: " << gasDensity << endl;
+		std::cout << "OneCenterLJDroplet: gasDensity: " << gasDensity << std::endl;
 		setClusterParameters(gasDensity, fluidDensity, fluidVolume,
 				maxSphereVolume, numSphereSizes);
 	} else if (id == "numOfMolecules") {
 		numOfMolecules = static_cast<ParameterWithLongIntValue*> (p)->getValue();
-		cout << "OneCenterLJDroplet: numOfMolecules: " << numOfMolecules
-				<< endl;
+		std::cout << "OneCenterLJDroplet: numOfMolecules: " << numOfMolecules
+				<< std::endl;
 		setClusterParameters(gasDensity, fluidDensity, fluidVolume,
 				maxSphereVolume, numSphereSizes);
 	} else if (id == "fluidVolume") {
 		fluidVolume = static_cast<ParameterWithIntValue*> (p)->getValue();
-		cout << "OneCenterLJDroplet: fluidVolume: " << fluidVolume << endl;
+		std::cout << "OneCenterLJDroplet: fluidVolume: " << fluidVolume << std::endl;
 		setClusterParameters(gasDensity, fluidDensity, fluidVolume,
 				maxSphereVolume, numSphereSizes);
 	} else if (id == "maxSphereVolume") {
 		maxSphereVolume
 				= static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJDroplet: maxSphereVolume: " << maxSphereVolume
-				<< endl;
+		std::cout << "OneCenterLJDroplet: maxSphereVolume: " << maxSphereVolume
+				<< std::endl;
 		setClusterParameters(gasDensity, fluidDensity, fluidVolume,
 				maxSphereVolume, numSphereSizes);
 	} else if (id == "numSphereSizes") {
 		numSphereSizes = static_cast<ParameterWithIntValue*> (p)->getValue();
-		cout << "OneCenterLJDroplet: numSphereSizes: " << numSphereSizes
-				<< endl;
+		std::cout << "OneCenterLJDroplet: numSphereSizes: " << numSphereSizes
+				<< std::endl;
 		setClusterParameters(gasDensity, fluidDensity, fluidVolume,
 				maxSphereVolume, numSphereSizes);
 	} else if (id == "temperature") {
@@ -503,7 +503,7 @@ void DropletGenerator::setParameter(Parameter* p) {
 		std::string part = remainingSubString(".", id);
 		MardynConfigurationParameters::setParameterValue(_configuration, p, part);
 	} else {
-		std::cout << "UNKOWN Parameter: id = " << p->getNameId() << " value= " << p->getStringValue() << endl;
+		std::cout << "UNKOWN Parameter: id = " << p->getNameId() << " value= " << p->getStringValue() << std::endl;
 		exit(-1);
 	}
 }
@@ -513,20 +513,20 @@ bool DropletGenerator::validateParameters() {
 
 	if (_configuration.getScenarioName() == "") {
 		valid = false;
-		_logger->error() << "ScenarioName not set!" << endl;
+		_logger->error() << "ScenarioName not set!" << std::endl;
 	}
 
 	if (_configuration.getOutputFormat() == MardynConfiguration::XML) {
 		valid = false;
-		_logger->error() << "OutputFormat XML not yet supported!" << endl;
+		_logger->error() << "OutputFormat XML not yet supported!" << std::endl;
 	}
 
 	for (int i = 0; i < 3; i++) {
 		if (simBoxLength[i] < 2.0 * _configuration.getCutoffRadius()) {
 			valid = false;
-			_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << endl;
+			_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << std::endl;
 			_logger->error() << "Cutoff radius=" << _configuration.getCutoffRadius()
-					<< " domain size=" << simBoxLength[i] << endl;
+					<< " domain size=" << simBoxLength[i] << std::endl;
 		}
 	}
 
@@ -562,7 +562,7 @@ void DropletGenerator::getFCCOrientation(int q_type, double q[4]) {
 }
 
 
-unsigned long DropletGenerator::countMolecules(DomainDecompBase* domainDecomp, ParticleContainer* moleculeContainer, vector<unsigned long> &compCount) {
+unsigned long DropletGenerator::countMolecules(DomainDecompBase* domainDecomp, ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount) {
 	const int numComponents = compCount.size();
 	unsigned long* localCompCount = new unsigned long[numComponents];
 	unsigned long* globalCompCount = new unsigned long[numComponents];

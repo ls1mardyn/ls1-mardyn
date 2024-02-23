@@ -97,15 +97,15 @@ void GridFiller::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode("..");
 	}
 	xmlconfig.getNodeValue("latticeOccupancy", _latticeOccupancy);
-	global_log->info() << "Lattice occupancy: " << _latticeOccupancy << endl;
+	Log::global_log->info() << "Lattice occupancy: " << _latticeOccupancy << std::endl;
 	double rho = 0.0;
 	if(xmlconfig.getNodeValueReduced("density", rho)) {
-		global_log->info() << "Density: " << rho << endl;
+		Log::global_log->info() << "Density: " << rho << std::endl;
 		rho /= _latticeOccupancy;
-		global_log->info() << "Initializing cubic lattice with density (fully occupied): " << rho << endl;
-		global_log->warning() << "Initializing cubic lattice with density overwrites previously set lattice system and vectors." << endl;
+		Log::global_log->info() << "Initializing cubic lattice with density (fully occupied): " << rho << std::endl;
+		Log::global_log->warning() << "Initializing cubic lattice with density overwrites previously set lattice system and vectors." << std::endl;
 		long num_molecules_per_crystal_cell = _basis.numMolecules() * _lattice.numCenters();
-		global_log->debug() << "Number of molecules per crystall cell: " << num_molecules_per_crystal_cell << endl;
+		Log::global_log->debug() << "Number of molecules per crystall cell: " << num_molecules_per_crystal_cell << std::endl;
 		double crystal_cell_volume = num_molecules_per_crystal_cell / rho;
 		double l = pow(crystal_cell_volume, 1./3.);
 		double a[3], b[3], c[3];
@@ -117,7 +117,7 @@ void GridFiller::readXML(XMLfileUnits& xmlconfig) {
 
 	Coordinate3D origin(xmlconfig, "latticeOrigin");
 	origin.get(_origin.data());
-	global_log->info() << "Origin: " << _origin[0] << ", " << _origin[1] << ", " << _origin[2] << endl;
+	Log::global_log->info() << "Origin: " << _origin[0] << ", " << _origin[1] << ", " << _origin[2] << std::endl;
 }
 
 

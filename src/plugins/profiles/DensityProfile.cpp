@@ -5,13 +5,13 @@
 
 #include "DensityProfile.h"
 
-void DensityProfile::output(string prefix, long unsigned accumulatedDatasets) {
-	global_log->info() << "[DensityProfile] output" << std::endl;
+void DensityProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
+	Log::global_log->info() << "[DensityProfile] output" << std::endl;
 
 	// Setup outfile
 	_accumulatedDatasets = accumulatedDatasets;
 	_profilePrefix = prefix + ".NDpr";
-	ofstream outfile(_profilePrefix.c_str());
+	std::ofstream outfile(_profilePrefix.c_str());
 	outfile.precision(6);
 
 	// Write Header
@@ -32,6 +32,6 @@ void DensityProfile::output(string prefix, long unsigned accumulatedDatasets) {
 	outfile.close();
 }
 
-void DensityProfile::writeDataEntry (unsigned long uID, ofstream& outfile) const {
+void DensityProfile::writeDataEntry (unsigned long uID, std::ofstream& outfile) const {
 	outfile << (double) this->_globalProfile.at(uID) / (_samplInfo.segmentVolume * _accumulatedDatasets) << "\t";
 }

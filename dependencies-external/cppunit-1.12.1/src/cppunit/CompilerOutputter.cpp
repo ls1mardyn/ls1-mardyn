@@ -27,7 +27,7 @@ CompilerOutputter::~CompilerOutputter()
 }
 
 
-void 
+void
 CompilerOutputter::setLocationFormat( const std::string &locationFormat )
 {
   m_locationFormat = locationFormat;
@@ -42,7 +42,7 @@ CompilerOutputter::defaultOutputter( TestResultCollector *result,
 }
 
 
-void 
+void
 CompilerOutputter::write()
 {
   if ( m_result->wasSuccessful() )
@@ -52,14 +52,14 @@ CompilerOutputter::write()
 }
 
 
-void 
+void
 CompilerOutputter::printSuccess()
 {
   m_stream  << "OK (" << m_result->runTests()  << ")\n";
 }
 
 
-void 
+void
 CompilerOutputter::printFailureReport()
 {
   printFailuresList();
@@ -67,7 +67,7 @@ CompilerOutputter::printFailureReport()
 }
 
 
-void 
+void
 CompilerOutputter::printFailuresList()
 {
   for ( int index =0; index < m_result->testFailuresTotal(); ++index)
@@ -77,7 +77,7 @@ CompilerOutputter::printFailuresList()
 }
 
 
-void 
+void
 CompilerOutputter::printFailureDetail( TestFailure *failure )
 {
   printFailureLocation( failure->sourceLine() );
@@ -86,8 +86,8 @@ CompilerOutputter::printFailureDetail( TestFailure *failure )
   printFailureMessage( failure );
 }
 
- 
-void 
+
+void
 CompilerOutputter::printFailureLocation( SourceLine sourceLine )
 {
   if ( !sourceLine.isValid() )
@@ -115,8 +115,8 @@ CompilerOutputter::printFailureLocation( SourceLine sourceLine )
 }
 
 
-bool 
-CompilerOutputter::processLocationFormatCommand( char command, 
+bool
+CompilerOutputter::processLocationFormatCommand( char command,
                                                  const SourceLine &sourceLine )
 {
   switch ( command )
@@ -131,19 +131,19 @@ CompilerOutputter::processLocationFormatCommand( char command,
     m_stream  <<  extractBaseName( sourceLine.fileName() );
     return true;
   }
-  
+
   return false;
 }
 
 
-std::string 
+std::string
 CompilerOutputter::extractBaseName( const std::string &fileName ) const
 {
   int indexLastDirectorySeparator = fileName.find_last_of( '/' );
-  
+
   if ( indexLastDirectorySeparator < 0 )
     indexLastDirectorySeparator = fileName.find_last_of( '\\' );
-  
+
   if ( indexLastDirectorySeparator < 0 )
     return fileName;
 
@@ -151,21 +151,21 @@ CompilerOutputter::extractBaseName( const std::string &fileName ) const
 }
 
 
-void 
+void
 CompilerOutputter::printFailureType( TestFailure *failure )
 {
   m_stream  <<  (failure->isError() ? "Error" : "Assertion");
 }
 
 
-void 
+void
 CompilerOutputter::printFailedTestName( TestFailure *failure )
 {
   m_stream  <<  "\nTest name: "  <<  failure->failedTestName();
 }
 
 
-void 
+void
 CompilerOutputter::printFailureMessage( TestFailure *failure )
 {
   m_stream  <<  "\n";
@@ -180,7 +180,7 @@ CompilerOutputter::printFailureMessage( TestFailure *failure )
 }
 
 
-void 
+void
 CompilerOutputter::printStatistics()
 {
   m_stream  <<  "Failures !!!\n";
@@ -192,21 +192,21 @@ CompilerOutputter::printStatistics()
 }
 
 
-void 
+void
 CompilerOutputter::setWrapColumn( int wrapColumn )
 {
   m_wrapColumn = wrapColumn;
 }
 
 
-void 
+void
 CompilerOutputter::setNoWrap()
 {
   m_wrapColumn = 0;
 }
 
 
-int 
+int
 CompilerOutputter::wrapColumn() const
 {
   return m_wrapColumn;

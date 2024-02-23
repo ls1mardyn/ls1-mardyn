@@ -58,7 +58,7 @@ int get_compiler_info(char *info_str) {
 # else
 	sprintf(info_str, "GNU %d.%d", __GNUC__, __GNUC_MINOR__);
 # endif
-	
+
 	/* unknown */
 #else
 	sprintf(info_str, "unknown");

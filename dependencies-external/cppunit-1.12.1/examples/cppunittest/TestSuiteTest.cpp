@@ -18,21 +18,21 @@ TestSuiteTest::~TestSuiteTest()
 }
 
 
-void 
+void
 TestSuiteTest::setUp()
 {
   m_suite = new CPPUNIT_NS::TestSuite();
 }
 
 
-void 
+void
 TestSuiteTest::tearDown()
 {
   delete m_suite;
 }
 
 
-void 
+void
 TestSuiteTest::testConstructor()
 {
   std::string name( "MySuite" );
@@ -41,14 +41,14 @@ TestSuiteTest::testConstructor()
 }
 
 
-void 
+void
 TestSuiteTest::testCountTestCasesWithNoTest()
 {
   CPPUNIT_ASSERT_EQUAL( 0, m_suite->countTestCases() );
 }
 
 
-void 
+void
 TestSuiteTest::testCountTestCasesWithTwoTests()
 {
   MockTestCase *case1 = new MockTestCase( "test1" );
@@ -64,7 +64,7 @@ TestSuiteTest::testCountTestCasesWithTwoTests()
 }
 
 
-void 
+void
 TestSuiteTest::testCountTestCasesWithSubSuite()
 {
   MockTestCase *case1 = new MockTestCase( "test1" );
@@ -86,7 +86,7 @@ TestSuiteTest::testCountTestCasesWithSubSuite()
 }
 
 
-void 
+void
 TestSuiteTest::testRunWithOneTest()
 {
   MockTestCase *case1 = new MockTestCase( "test1" );
@@ -100,7 +100,7 @@ TestSuiteTest::testRunWithOneTest()
 }
 
 
-void 
+void
 TestSuiteTest::testRunWithOneTestAndSubSuite()
 {
   MockTestCase *case1 = new MockTestCase( "test1" );
@@ -124,7 +124,7 @@ TestSuiteTest::testRunWithOneTestAndSubSuite()
 }
 
 
-void 
+void
 TestSuiteTest::testGetTests()
 {
   m_suite->addTest( new CPPUNIT_NS::TestCase( "test1" ) );
@@ -133,7 +133,7 @@ TestSuiteTest::testGetTests()
 }
 
 
-void 
+void
 TestSuiteTest::testDeleteContents()
 {
   m_suite->addTest( new CPPUNIT_NS::TestCase( "test2" ) );
@@ -142,7 +142,7 @@ TestSuiteTest::testDeleteContents()
 }
 
 
-void 
+void
 TestSuiteTest::testGetChildTestCount()
 {
   m_suite->addTest( new CPPUNIT_NS::TestCase( "test1" ) );
@@ -152,7 +152,7 @@ TestSuiteTest::testGetChildTestCount()
 }
 
 
-void 
+void
 TestSuiteTest::testGetChildTestAt()
 {
   CPPUNIT_NS::TestCase *test1 = new CPPUNIT_NS::TestCase( "test1" );
@@ -165,14 +165,14 @@ TestSuiteTest::testGetChildTestAt()
 }
 
 
-void 
+void
 TestSuiteTest::testGetChildTestAtThrow1()
 {
   m_suite->getChildTestAt(-1);
 }
 
 
-void 
+void
 TestSuiteTest::testGetChildTestAtThrow2()
 {
   m_suite->getChildTestAt(0);

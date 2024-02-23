@@ -165,8 +165,6 @@ public:
 
 	unsigned int numSites() const override { return 1; };
 
-	unsigned int numOrientedSites() const override { return 0; }
-
 	unsigned int numLJcenters() const override { return 1; }
 
 	unsigned int numCharges() const override { return 0; }

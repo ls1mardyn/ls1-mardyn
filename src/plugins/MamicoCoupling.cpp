@@ -11,7 +11,7 @@ void MamicoCoupling::init(ParticleContainer* particleContainer,
 {
 #ifdef MAMICO_COUPLING
 	//code to print to log that plugin is initialised
-	global_log->info() << "MaMiCo coupling plugin initialized" << std::endl;
+	Log::global_log->info() << "MaMiCo coupling plugin initialized" << std::endl;
 #endif
 }
 

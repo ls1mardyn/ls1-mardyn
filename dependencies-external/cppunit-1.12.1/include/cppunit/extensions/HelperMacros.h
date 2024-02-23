@@ -42,14 +42,14 @@
  *   void testSetName();
  * };
  * \endcode
- * 
+ *
  * The effect of these macros is to define two methods in the
  * class MyTest.  The first method is an auxiliary function
  * named registerTests that you will not need to call directly.
  * The second function
  * \code static CppUnit::TestSuite *suite()\endcode
  * returns a pointer to the suite of tests defined by the CPPUNIT_TEST()
- * macros.  
+ * macros.
  *
  * Rather than invoking suite() directly,
  * the macro CPPUNIT_TEST_SUITE_REGISTRATION() is
@@ -62,7 +62,7 @@
  * CppUnit::Test* tp =
  *   CppUnit::TestFactoryRegistry::getRegistry().makeTest();
  * \endcode
- * 
+ *
  * The test suite macros can even be used with templated test classes.
  * For example:
  *
@@ -72,7 +72,7 @@
  *   CPPUNIT_TEST_SUITE( StringTest );
  *   CPPUNIT_TEST( testAppend );
  *   CPPUNIT_TEST_SUITE_END();
- * public:  
+ * public:
  *   ...
  * };
  * \endcode
@@ -94,7 +94,7 @@
  *
  * \param ATestFixtureType Type of the test case class. This type \b MUST
  *                         be derived from TestFixture.
- * \see CPPUNIT_TEST_SUB_SUITE, CPPUNIT_TEST, CPPUNIT_TEST_SUITE_END, 
+ * \see CPPUNIT_TEST_SUB_SUITE, CPPUNIT_TEST, CPPUNIT_TEST_SUITE_END,
  * \see CPPUNIT_TEST_SUITE_REGISTRATION, CPPUNIT_TEST_EXCEPTION, CPPUNIT_TEST_FAIL.
  */
 #define CPPUNIT_TEST_SUITE( ATestFixtureType )                              \
@@ -119,7 +119,7 @@
 
 
 /*! \brief Begin test suite (includes parent suite)
- * 
+ *
  * This macro may only be used in a class whose parent class
  * defines a test suite using CPPUNIT_TEST_SUITE() or CPPUNIT_TEST_SUB_SUITE().
  *
@@ -127,7 +127,7 @@
  * manner as CPPUNIT_TEST_SUITE().  In addition, the test suite of the
  * parent is automatically inserted in the test suite being
  * defined.
- * 
+ *
  * Here is an example:
  *
  * \code
@@ -184,7 +184,7 @@
 /*! \brief End declaration of an abstract test suite.
  *
  * Use this macro to indicate that the %TestFixture is abstract. No
- * static suite() method will be declared. 
+ * static suite() method will be declared.
  *
  * After this macro, member access is set to "private".
  *
@@ -200,7 +200,7 @@
  *   CPPUNIT_TEST_SUITE_END_ABSTRACT();
  * public:
  *   void testInsertText();
- * 
+ *
  *   void setUp()
  *   {
  *     m_document = makeDocument();
@@ -261,7 +261,7 @@
  * of test case which fails if the execution last more than a given time limit.
  * It relies on an imaginary TimeOutTestCaller class which has an interface similar
  * to TestCaller.
- * 
+ *
  * \code
  * #define CPPUNITEX_TEST_TIMELIMIT( testMethod, timeLimit )            \
  *      CPPUNIT_TEST_SUITE_ADD_TEST( (new TimeOutTestCaller<TestFixtureType>(  \
@@ -269,7 +269,7 @@
  *                  &TestFixtureType::testMethod,                   \
  *                  factory.makeFixture(),                              \
  *                  timeLimit ) ) )
- *   
+ *
  * class PerformanceTest : CppUnit::TestFixture
  * {
  * public:
@@ -320,7 +320,7 @@
  * \endcode
  *
  * \param testMethod Name of the method of the test case to add to the suite.
- * \param ExceptionType Type of the exception that must be thrown by the test 
+ * \param ExceptionType Type of the exception that must be thrown by the test
  *                      method.
  * \deprecated Use the assertion macro CPPUNIT_ASSERT_THROW instead.
  */
@@ -339,7 +339,7 @@
  *
  * \code
  * CPPUNIT_TEST_FAIL( testAssertFalseFail );
- * 
+ *
  * void testAssertFalseFail()
  * {
  *   CPPUNIT_ASSERT( false );
@@ -354,14 +354,14 @@
 /*! \brief Adds some custom test cases.
  *
  * Use this to add one or more test cases to the fixture suite. The specified
- * method is called with a context parameter that can be used to name, 
+ * method is called with a context parameter that can be used to name,
  * instantiate fixture, and add instantiated test case to the fixture suite.
  * The specified method must have the following signature:
  * \code
  * static void aMethodName( TestSuiteBuilderContextType &context );
  * \endcode
  *
- * \c TestSuiteBuilderContextType is typedef to 
+ * \c TestSuiteBuilderContextType is typedef to
  * TestSuiteBuilderContext<TestFixtureType> declared by CPPUNIT_TEST_SUITE().
  *
  * Here is an example that add two custom tests:
@@ -424,14 +424,14 @@
  * causes a test suite factory to be inserted in a global registry
  * of such factories.  The registry is available by calling
  * the static function CppUnit::TestFactoryRegistry::getRegistry().
- * 
+ *
  * \param ATestFixtureType Type of the test case class.
  * \warning This macro should be used only once per line of code (the line
  *          number is used to name a hidden static variable).
  * \see CPPUNIT_TEST_SUITE_NAMED_REGISTRATION
  * \see CPPUNIT_REGISTRY_ADD_TO_DEFAULT
  * \see CPPUNIT_REGISTRY_ADD
- * \see CPPUNIT_TEST_SUITE, CppUnit::AutoRegisterSuite, 
+ * \see CPPUNIT_TEST_SUITE, CppUnit::AutoRegisterSuite,
  *      CppUnit::TestFactoryRegistry.
  */
 #define CPPUNIT_TEST_SUITE_REGISTRATION( ATestFixtureType )      \
@@ -446,7 +446,7 @@
  * causes a test suite factory to be inserted in the global registry
  * suite of the specified name. The registry is available by calling
  * the static function CppUnit::TestFactoryRegistry::getRegistry().
- * 
+ *
  * For the suite name, use a string returned by a static function rather
  * than a hardcoded string. That way, you can know what are the name of
  * named registry and you don't risk mistyping the registry name.
@@ -454,26 +454,26 @@
  * \code
  * // MySuites.h
  * namespace MySuites {
- *   std::string math() { 
+ *   std::string math() {
  *     return "Math";
  *   }
  * }
  *
  * // ComplexNumberTest.cpp
  * #include "MySuites.h"
- * 
+ *
  * CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( ComplexNumberTest, MySuites::math() );
  * \endcode
  *
  * \param ATestFixtureType Type of the test case class.
- * \param suiteName Name of the global registry suite the test suite is 
+ * \param suiteName Name of the global registry suite the test suite is
  *                  registered into.
  * \warning This macro should be used only once per line of code (the line
  *          number is used to name a hidden static variable).
  * \see CPPUNIT_TEST_SUITE_REGISTRATION
  * \see CPPUNIT_REGISTRY_ADD_TO_DEFAULT
  * \see CPPUNIT_REGISTRY_ADD
- * \see CPPUNIT_TEST_SUITE, CppUnit::AutoRegisterSuite, 
+ * \see CPPUNIT_TEST_SUITE, CppUnit::AutoRegisterSuite,
  *      CppUnit::TestFactoryRegistry..
  */
 #define CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( ATestFixtureType, suiteName ) \
@@ -490,7 +490,7 @@
  *   - FloatMath
  *     - FastFloat
  *     - StandardFloat
- * 
+ *
  * You can do this automatically with:
  * \code
  * CPPUNIT_REGISTRY_ADD( "FastFloat", "FloatMath" );

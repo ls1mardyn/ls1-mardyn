@@ -18,24 +18,24 @@ ExceptionTest::~ExceptionTest()
 }
 
 
-void 
+void
 ExceptionTest::setUp()
 {
 }
 
 
-void 
+void
 ExceptionTest::tearDown()
 {
 }
 
 
-void 
+void
 ExceptionTest::testConstructor()
 {
   const CPPUNIT_NS::Message message( "a message" );
   const CPPUNIT_NS::SourceLine sourceLine( "dir/afile.cpp", 17 );
-  
+
   CPPUNIT_NS::Exception e( message, sourceLine );
 
   CPPUNIT_ASSERT_EQUAL( message.shortDescription(), e.message().shortDescription() );
@@ -43,7 +43,7 @@ ExceptionTest::testConstructor()
 }
 
 
-void 
+void
 ExceptionTest::testDefaultConstructor()
 {
   CPPUNIT_NS::Exception e;
@@ -53,7 +53,7 @@ ExceptionTest::testDefaultConstructor()
 }
 
 
-void 
+void
 ExceptionTest::testCopyConstructor()
 {
   CPPUNIT_NS::SourceLine sourceLine( "fileName.cpp", 123 );
@@ -63,7 +63,7 @@ ExceptionTest::testCopyConstructor()
 }
 
 
-void 
+void
 ExceptionTest::testAssignment()
 {
   CPPUNIT_NS::SourceLine sourceLine( "fileName.cpp", 123 );
@@ -74,7 +74,7 @@ ExceptionTest::testAssignment()
 }
 
 
-void 
+void
 ExceptionTest::testClone()
 {
   CPPUNIT_NS::SourceLine sourceLine( "fileName.cpp", 123 );
@@ -84,8 +84,8 @@ ExceptionTest::testClone()
 }
 
 
-void 
-ExceptionTest::checkIsSame( CPPUNIT_NS::Exception &e, 
+void
+ExceptionTest::checkIsSame( CPPUNIT_NS::Exception &e,
                             CPPUNIT_NS::Exception &other )
 {
   std::string eWhat( e.what() );

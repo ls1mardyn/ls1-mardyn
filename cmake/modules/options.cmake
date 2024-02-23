@@ -17,7 +17,14 @@ else()
     message(FATAL_ERROR "wrong precision option ")
 endif()
 
-
+# ---- PROFILING ----
+option(ENABLE_GPROF "Use the GNU profiler gprof (Only supported by GNU/Clang compiler)" OFF)
+if(ENABLE_GPROF)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+    if(NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"))
+        message(WARNING "${CMAKE_CXX_COMPILER_ID} may not support the -pg option.\n(Only use GNU/Clang with the GNU profiler!)\n")
+    endif()
+endif()
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DQUICKSCHED")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTASKTIMINGPROFILE")

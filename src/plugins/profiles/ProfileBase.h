@@ -71,7 +71,7 @@ public:
 	 * @param prefix File prefix including the global _outputPrefix for all profiles and the current timestep. Should be
 	 * appended by some specific file ending for this specific profile.
 	 */
-	virtual void output(string prefix, long unsigned accumulatedDatasets) = 0;
+	virtual void output(std::string prefix, long unsigned accumulatedDatasets) = 0;
 
 	/** @brief Used to reset all array contents for a specific uID in order to start the next recording timeframe.
 	 *
@@ -88,7 +88,7 @@ public:
 
 protected:
 	// output file prefix
-	string _profilePrefix;
+	std::string _profilePrefix;
 
 	SamplingInformation _samplInfo;
 	long _accumulatedDatasets = -1; // Number of Datasets between output writes / profile resets // -1 if not set properly
@@ -98,28 +98,28 @@ protected:
 	 * @param uID unique ID of bin
 	 * @param outfile outfile to write to
 	 */
-	virtual void writeDataEntry(unsigned long uID, ofstream& outfile) const = 0;
+	virtual void writeDataEntry(unsigned long uID, std::ofstream& outfile) const = 0;
 
 	/**@brief Matrix writing routine to avoid code duplication
 	 *
 	 * @param outfile opened filestream from Profile
 	 */
-	void writeMatrix(ofstream& outfile);
+	void writeMatrix(std::ofstream& outfile);
 
-	void writeKartMatrix(ofstream& outfile);
+	void writeKartMatrix(std::ofstream& outfile);
 
 	/**@brief STUB for simple Matrix output without headers
 	 *
 	 * @param outfile opened filestream from Profile
 	 */
 	// TODO: implement if needed
-	void writeSimpleMatrix(ofstream& outfile);
+	void writeSimpleMatrix(std::ofstream& outfile);
 
 	/**@brief cylinder Matrix output
 	 *
 	 * @param outfile opened filestream from Profile
 	 */
-	void writeCylMatrix(ofstream& outfile);
+	void writeCylMatrix(std::ofstream& outfile);
 };
 
 #endif //MARDYN_TRUNK_PROFILEBASE_H

@@ -10,7 +10,6 @@
 
 #include <string>
 
-using namespace std;
 
 TEST_SUITE_REGISTRATION(MarDynInitOptionsTest);
 

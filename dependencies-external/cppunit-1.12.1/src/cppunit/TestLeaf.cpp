@@ -4,14 +4,14 @@
 CPPUNIT_NS_BEGIN
 
 
-int 
+int
 TestLeaf::countTestCases() const
 {
   return 1;
 }
 
 
-int 
+int
 TestLeaf::getChildTestCount() const
 {
   return 0;

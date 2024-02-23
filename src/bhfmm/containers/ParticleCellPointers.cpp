@@ -12,8 +12,6 @@
 #include "utils/mardyn_assert.h"
 #include <vector>
 
-using namespace std;
-
 namespace bhfmm {
 
 ParticleCellPointers::ParticleCellPointers() :

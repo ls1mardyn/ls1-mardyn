@@ -8,7 +8,7 @@
 
 /*
  * Allocate a contiguous matrix
- * This way if a = &Mat[x][y]; 
+ * This way if a = &Mat[x][y];
  * a[z] <=> Mat[x+(y+z)/x][(y+z) mod x]
  * In particular a[x] = Mat[x+1][y] (easy column manipulation for UHFFT)
  */

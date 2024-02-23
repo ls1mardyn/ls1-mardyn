@@ -13,7 +13,7 @@
 CPPUNIT_NS_BEGIN
 
 
-std::string 
+std::string
 TypeInfoHelper::getClassName( const std::type_info &info )
 {
 #if defined(CPPUNIT_HAVE_GCC_ABI_DEMANGLE)  &&  CPPUNIT_HAVE_GCC_ABI_DEMANGLE
@@ -22,9 +22,9 @@ TypeInfoHelper::getClassName( const std::type_info &info )
   char* c_name = 0;
 
   c_name = abi::__cxa_demangle( info.name(), 0, 0, &status );
-  
+
   std::string name( c_name );
-  free( c_name );  
+  free( c_name );
 
 #else   // CPPUNIT_HAVE_GCC_ABI_DEMANGLE
 

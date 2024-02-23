@@ -27,7 +27,7 @@ private:
   class ObservedException : public CPPUNIT_NS::Exception
   {
   public:
-    ObservedException( TestFailureTest *listener ) : 
+    ObservedException( TestFailureTest *listener ) :
         CPPUNIT_NS::Exception( CPPUNIT_NS::Message("ObservedException" ) ),
         m_listener( listener )
     {
@@ -44,7 +44,7 @@ private:
 
   TestFailureTest( const TestFailureTest &copy );
   void operator =( const TestFailureTest &copy );
-  void checkTestFailure( CPPUNIT_NS::Test *test, 
+  void checkTestFailure( CPPUNIT_NS::Test *test,
                          CPPUNIT_NS::Exception *error,
                          bool isError );
 

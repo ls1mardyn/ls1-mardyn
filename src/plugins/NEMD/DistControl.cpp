@@ -26,7 +26,6 @@
 #include <cstdint>
 #include <cmath>
 
-using namespace std;
 
 
 DistControl::DistControl()
@@ -71,15 +70,15 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("filenames/control",  _strFilename);
 	xmlconfig.getNodeValue("filenames/profiles", _strFilenameProfilesPrefix);
 
-	global_log->info() << "[DistControl] Writing control data to file: " << _strFilename << endl;
-	global_log->info() << "[DistControl] Writing profile data to files with prefix: " << _strFilenameProfilesPrefix << endl;
+	Log::global_log->info() << "[DistControl] Writing control data to file: " << _strFilename << std::endl;
+	Log::global_log->info() << "[DistControl] Writing profile data to files with prefix: " << _strFilenameProfilesPrefix << std::endl;
 
 	// subdivision of system
 	uint32_t nSubdivisionType = SDOPT_UNKNOWN;
 	std::string strSubdivisionType;
 	if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
 	{
-		global_log->error() << "[DistControl] Missing attribute \"subdivision@type\"! Programm exit..." << endl;
+		Log::global_log->error() << "[DistControl] Missing attribute \"subdivision@type\"! Programm exit..." << std::endl;
 		exit(-1);
 	}
 	if("number" == strSubdivisionType)
@@ -87,7 +86,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		unsigned int nNumSlabs = 0;
 		if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
 		{
-			global_log->error() << "[DistControl] Missing element \"subdivision/number\"! Programm exit..." << endl;
+			Log::global_log->error() << "[DistControl] Missing element \"subdivision/number\"! Programm exit..." << std::endl;
 			exit(-1);
 		}
 		else
@@ -98,7 +97,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		double dSlabWidth = 0.;
 		if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
 		{
-			global_log->error() << "[DistControl] Missing element \"subdivision/width\"! Programm exit..." << endl;
+			Log::global_log->error() << "[DistControl] Missing element \"subdivision/width\"! Programm exit..." << std::endl;
 			exit(-1);
 		}
 		else
@@ -106,7 +105,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	}
 	else
 	{
-		global_log->error() << "[DistControl] Wrong attribute \"subdivision@type\". Expected: type=\"number|width\"! Programm exit..." << endl;
+		Log::global_log->error() << "[DistControl] Wrong attribute \"subdivision@type\". Expected: type=\"number|width\"! Programm exit..." << std::endl;
 		exit(-1);
 	}
 
@@ -122,7 +121,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	if("startconfig" == strInitMethodType)
 	{
 		_nMethodInit = DCIM_START_CONFIGURATION;
-		global_log->info() << "[DistControl] Init method 'startconfig', dertermining interface midpoints from start configuration." << endl;
+		Log::global_log->info() << "[DistControl] Init method 'startconfig', dertermining interface midpoints from start configuration." << std::endl;
 	}
 	else if("values" == strInitMethodType)
 	{
@@ -132,12 +131,12 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("init/values/right", _dInterfaceMidRight);
 		if(true == bInputIsValid)
 		{
-			global_log->info() << "[DistControl] Init method 'values' => interface midpoint left: " << _dInterfaceMidLeft << ", "
-					"right: " << _dInterfaceMidRight << "." << endl;
+			Log::global_log->info() << "[DistControl] Init method 'values' => interface midpoint left: " << _dInterfaceMidLeft << ", "
+					"right: " << _dInterfaceMidRight << "." << std::endl;
 		}
 		else
 		{
-			global_log->error() << "[DistControl] Missing elements \"init/values/left\" or \"init/values/right\" or both! Programm exit..." << endl;
+			Log::global_log->error() << "[DistControl] Missing elements \"init/values/left\" or \"init/values/right\" or both! Programm exit..." << std::endl;
 			exit(-1);
 		}
 	}
@@ -149,19 +148,19 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("init/simstep", _nRestartTimestep);
 		if(true == bInputIsValid)
 		{
-			global_log->info() << "[DistControl] Init method 'file', reading from file: " << _strFilenameInit << ", "
-					"goto line with simstep == " << _nRestartTimestep << "." << endl;
+			Log::global_log->info() << "[DistControl] Init method 'file', reading from file: " << _strFilenameInit << ", "
+					"goto line with simstep == " << _nRestartTimestep << "." << std::endl;
 		}
 		else
 		{
-			global_log->error() << "[DistControl] Missing elements \"init/file\" or \"init/simstep\" or both! Programm exit..." << endl;
+			Log::global_log->error() << "[DistControl] Missing elements \"init/file\" or \"init/simstep\" or both! Programm exit..." << std::endl;
 			exit(-1);
 		}
 	}
 	else
 	{
-		global_log->error() << "[DistControl] Wrong attribute \"init@type\", type = " << strInitMethodType << ", "
-				"expected: type=\"startconfig|values|file\"! Programm exit..." << endl;
+		Log::global_log->error() << "[DistControl] Wrong attribute \"init@type\", type = " << strInitMethodType << ", "
+				"expected: type=\"startconfig|values|file\"! Programm exit..." << std::endl;
 		exit(-1);
 	}
 
@@ -184,12 +183,12 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		bInputIsValid = bInputIsValid && xmlconfig.getNodeValue("method/density",     _dVaporDensity);
 		if(true == bInputIsValid)
 		{
-			global_log->info() << "[DistControl] Update method 'density', using constant value for vapor density rho_vap == " << _dVaporDensity << ", "
-					"target componentID: " << _nTargetCompID << "." << endl;
+			Log::global_log->info() << "[DistControl] Update method 'density', using constant value for vapor density rho_vap == " << _dVaporDensity << ", "
+					"target componentID: " << _nTargetCompID << "." << std::endl;
 		}
 		else
 		{
-			global_log->error() << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << endl;
+			Log::global_log->error() << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << std::endl;
 			exit(-1);
 		}
 	}
@@ -208,19 +207,19 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		_nNeighbourValsDerivate = (uint16_t)(nNeighbourValsDerivate);
 		if(true == bInputIsValid)
 		{
-			global_log->info() << "[DistControl] Update method 'denderiv', using " << _nNeighbourValsSmooth << " neigbour values for smoothing "
-					" and " << _nNeighbourValsDerivate << " neigbour values for derivation of the density profile, target componentID: " << _nTargetCompID << "." << endl;
+			Log::global_log->info() << "[DistControl] Update method 'denderiv', using " << _nNeighbourValsSmooth << " neigbour values for smoothing "
+					" and " << _nNeighbourValsDerivate << " neigbour values for derivation of the density profile, target componentID: " << _nTargetCompID << "." << std::endl;
 		}
 		else
 		{
-			global_log->error() << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << endl;
+			Log::global_log->error() << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << std::endl;
 			exit(-1);
 		}
 	}
 	else
 	{
-		global_log->error() << "[DistControl] Wrong attribute \"method@type\", type = " << strUpdateMethodType << ", "
-				"expected: type=\"density|denderiv\"! Programm exit..." << endl;
+		Log::global_log->error() << "[DistControl] Wrong attribute \"method@type\", type = " << strUpdateMethodType << ", "
+				"expected: type=\"density|denderiv\"! Programm exit..." << std::endl;
 		exit(-1);
 	}
 }
@@ -266,7 +265,7 @@ void DistControl::PrepareSubdivision()
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		global_log->error() << "[DistControl] PrepareSubdivision(): Neither _binParams.width nor _binParams.count was set correctly! Programm exit..." << endl;
+		Log::global_log->error() << "[DistControl] PrepareSubdivision(): Neither _binParams.width nor _binParams.count was set correctly! Programm exit..." << std::endl;
 		exit(-1);
 	}
 
@@ -389,12 +388,12 @@ void DistControl::CalcProfiles()
 void DistControl::EstimateInterfaceMidpointsByForce()
 {
 //	for(unsigned short cid=0; cid<_nNumComponents; ++cid)
-//		cout << "_nOffsets[cid] = " << _nOffsets[cid] << endl;
+//		std::cout << "_nOffsets[cid] = " << _nOffsets[cid] << std::endl;
 
 	unsigned int nIndexMin = 0;
 	unsigned int nIndexMax = 0;
-//	cout << "_nTargetCompID = " << _nTargetCompID << endl;
-//	cout << "_nOffsets[_nTargetCompID] = " << _nOffsets[_nTargetCompID] << endl;
+//	std::cout << "_nTargetCompID = " << _nTargetCompID << std::endl;
+//	std::cout << "_nOffsets[_nTargetCompID] = " << _nOffsets[_nTargetCompID] << std::endl;
 	double* dProfile = _dDensityProfileSmoothedDerivation.data() + _nOffsets.at(_nTargetCompID);
 	double dMin = dProfile[0];
 	double dMax = dProfile[0];
@@ -500,9 +499,9 @@ void DistControl::EstimateInterfaceMidpoint()
 		// 1. ym bestimmen
 		double ym = dMin + (dMax - dMin) / 2;
 
-//		cout << "dMin = " << dMin << endl;
-//		cout << "dMax = " << dMax << endl;
-//		cout << "ym = " << ym << endl;
+//		std::cout << "dMin = " << dMin << std::endl;
+//		std::cout << "dMax = " << dMax << std::endl;
+//		std::cout << "ym = " << ym << std::endl;
 
 		// 2. Slab mit gerade niedrigerer Anzahl finden --> von links angefangen ersten Slab größer numMax finden --> Index -1 rechnen
 		int nIndexSlabGreater = 0;
@@ -518,11 +517,11 @@ void DistControl::EstimateInterfaceMidpoint()
 
 		if(nIndexSlabGreater < 1)
 		{
-			global_log->error() << "[DistControl] EstimateInterfaceMidpoint(): could not find valid index in density profile" << endl;
+			Log::global_log->error() << "[DistControl] EstimateInterfaceMidpoint(): could not find valid index in density profile" << std::endl;
 			return;
 		}
 
-//		cout << "nIndexSlabGreater = " << nIndexSlabGreater << endl;
+//		std::cout << "nIndexSlabGreater = " << nIndexSlabGreater << std::endl;
 
 		//3. Interpolierte Distanz dInterpol berechnen, die von dem Slab mit N < Nsoll ausgehend in Richtung N > Nsoll gegangen werden muss
 		double dx12, dx1m, y1, y2, dy12, dy1m;
@@ -545,13 +544,13 @@ void DistControl::EstimateInterfaceMidpoint()
 
 		x1 = dOuterBoundarySampleZone + nIndexSlabGreater * _binParams.width - _binParams.width*0.5;
 
-//		cout << "x1 = " << x1 << endl;
-//		cout << "dx1m = " << dx1m << endl;
+//		std::cout << "x1 = " << x1 << std::endl;
+//		std::cout << "dx1m = " << dx1m << std::endl;
 
 		xm = x1 + dx1m;
 		_dInterfaceMidLeft = xm;
 
-//		cout << "_dInterfaceMidLeft = " << _dInterfaceMidLeft << endl;
+//		std::cout << "_dInterfaceMidLeft = " << _dInterfaceMidLeft << std::endl;
 	}
 
 
@@ -589,7 +588,7 @@ void DistControl::EstimateInterfaceMidpoint()
 		// 1. ym bestimmen
 		double ym = dMin + (dMax - dMin) / 2;
 
-//		cout << "ym = " << ym << endl;
+//		std::cout << "ym = " << ym << std::endl;
 
 		// 2. Slab mit gerade niedrigerer Anzahl finden --> von links angefangen ersten Slab größer numMax finden --> Index -1 rechnen
 		unsigned int nIndexSlabGreater = 0;
@@ -605,7 +604,7 @@ void DistControl::EstimateInterfaceMidpoint()
 
 		if(nIndexSlabGreater < 1)
 		{
-			global_log->error() << "[DistControl] EstimateInterfaceMidpoint(): could not find valid index in density profile" << endl;
+			Log::global_log->error() << "[DistControl] EstimateInterfaceMidpoint(): could not find valid index in density profile" << std::endl;
 			return;
 		}
 
@@ -630,17 +629,17 @@ void DistControl::EstimateInterfaceMidpoint()
 		double dOuterBoundarySampleZone = domain->getGlobalLength(1);  //this->GetUpperCorner()[1];
 		unsigned int numShellsLower = _binParams.count-1 - nIndexSlabGreater;
 
-//		cout << "numShellsLower = " << numShellsLower << endl;
+//		std::cout << "numShellsLower = " << numShellsLower << std::endl;
 
 		x1 = dOuterBoundarySampleZone - numShellsLower * _binParams.width + _binParams.width*0.5;
 
-//		cout << "x1 = " << x1 << endl;
-//		cout << "dx1m = " << dx1m << endl;
+//		std::cout << "x1 = " << x1 << std::endl;
+//		std::cout << "dx1m = " << dx1m << std::endl;
 
 		xm = x1 - dx1m;
 		_dInterfaceMidRight = xm;
 
-//		cout << "_dInterfaceMidRight = " << _dInterfaceMidRight << endl;
+//		std::cout << "_dInterfaceMidRight = " << _dInterfaceMidRight << std::endl;
 	}
 }
 
@@ -671,17 +670,17 @@ void DistControl::UpdatePositionsInit(ParticleContainer* particleContainer)
 		break;
 	case DCIM_READ_FROM_FILE:
 		{
-//		cout << "_strFilenameInit = " << _strFilenameInit << endl;
-//		cout << "_nRestartTimestep = " << _nRestartTimestep << endl;
+//		std::cout << "_strFilenameInit = " << _strFilenameInit << std::endl;
+//		std::cout << "_nRestartTimestep = " << _nRestartTimestep << std::endl;
 
-		ifstream filein(_strFilenameInit.c_str(), ios::in);
+		std::ifstream filein(_strFilenameInit.c_str(), std::ios::in);
 
-		string strLine, strToken;
-		string strTokens[20];
+		std::string strLine, strToken;
+		std::string strTokens[20];
 
 		while (getline (filein, strLine))
 		{
-			stringstream sstr;
+			std::stringstream sstr;
 			sstr << strLine;
 
 			sstr >> strToken;
@@ -702,13 +701,13 @@ void DistControl::UpdatePositionsInit(ParticleContainer* particleContainer)
 		}
 	case DCIM_UNKNOWN:
 	default:
-		global_log->error() << "[DistControl] Wrong Init Method! Programm exit..." << endl;
+		Log::global_log->error() << "[DistControl] Wrong Init Method! Programm exit..." << std::endl;
 		exit(-1);
 	}
 
 #ifndef NDEBUG
-	global_log->error() << "[DistControl] _dInterfaceMidLeft = " << _dInterfaceMidLeft << endl;
-	global_log->error() << "[DistControl] _dInterfaceMidRight = " << _dInterfaceMidRight << endl;
+	Log::global_log->error() << "[DistControl] _dInterfaceMidLeft = " << _dInterfaceMidLeft << std::endl;
+	Log::global_log->error() << "[DistControl] _dInterfaceMidRight = " << _dInterfaceMidRight << std::endl;
 #endif
 
 	// update positions
@@ -738,7 +737,7 @@ void DistControl::UpdatePositions(const uint64_t& simstep)
 		break;
 	case DCUM_UNKNOWN:
 	default:
-		global_log->error() << "[DistControl] UpdatePositions() Corrupted code!!! Programm exit..." << endl;
+		Log::global_log->error() << "[DistControl] UpdatePositions() Corrupted code!!! Programm exit..." << std::endl;
 		exit(-1);
 	}
 
@@ -764,7 +763,7 @@ void DistControl::WriteData(const uint64_t& simstep)
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 
 	// write out data
-	stringstream outputstream;
+	std::stringstream outputstream;
 
 	// write data
 	if(simstep % _controlFreqs.write.data == 0)
@@ -798,9 +797,9 @@ void DistControl::WriteData(const uint64_t& simstep)
 			}
 		}
 
-		outputstream << endl;
+		outputstream << std::endl;
 
-		ofstream fileout(_strFilename.c_str(), ios::out|ios::app);
+		std::ofstream fileout(_strFilename.c_str(), std::ios::out|std::ios::app);
 		fileout << outputstream.str();
 		fileout.close();
 #ifdef ENABLE_MPI
@@ -815,7 +814,7 @@ void DistControl::WriteHeader()
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 
 	// write header
-	stringstream outputstream;
+	std::stringstream outputstream;
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp.getRank();
@@ -843,9 +842,9 @@ void DistControl::WriteHeader()
 		if(nullptr != ctrlInst)
 			outputstream << std::setw (24) << ctrlInst->getShortName();
 	}
-	outputstream << endl;
+	outputstream << std::endl;
 
-	ofstream fileout(_strFilename.c_str(), ios::out);
+	std::ofstream fileout(_strFilename.c_str(), std::ios::out);
 	fileout << outputstream.str();
 	fileout.close();
 
@@ -863,13 +862,13 @@ void DistControl::WriteDataProfiles(const uint64_t& simstep)
 	// domain decomposition
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 
-	stringstream outputstream;
-	stringstream filenamestream;
+	std::stringstream outputstream;
+	std::stringstream filenamestream;
 
 	filenamestream << _strFilenameProfilesPrefix << "_TS";
 	filenamestream.fill('0');
 	filenamestream.width(9);
-	filenamestream << right << simstep;
+	filenamestream << std::right << simstep;
 	filenamestream << ".dat";
 
 #ifdef ENABLE_MPI
@@ -889,7 +888,7 @@ void DistControl::WriteDataProfiles(const uint64_t& simstep)
 		outputstream << "                   Fy[" << cid << "]";
 		outputstream << "            Fy_smooth[" << cid << "]";
 	}
-	outputstream << endl;
+	outputstream << std::endl;
 	// write data
 	for(auto s=0u; s<_binParams.count; ++s)
 	{
@@ -903,9 +902,9 @@ void DistControl::WriteDataProfiles(const uint64_t& simstep)
 			outputstream << FORMAT_SCI_MAX_DIGITS << _dForceProfile.at(nIndex);
 			outputstream << FORMAT_SCI_MAX_DIGITS << _dForceProfileSmoothed.at(nIndex);
 		}
-		outputstream << endl;
+		outputstream << std::endl;
 	}
-	ofstream fileout(filenamestream.str().c_str(), ios::out|ios::out);
+	std::ofstream fileout(filenamestream.str().c_str(), std::ios::out|std::ios::out);
 	fileout << outputstream.str();
 	fileout.close();
 }
@@ -992,8 +991,8 @@ void DistControl::DerivateProfile(double* dDataX, double* dDataY, double* dDeriv
 	}
 */
 
-	vector<double> x;
-	vector<double> y;
+	std::vector<double> x;
+	std::vector<double> y;
 
 	for(auto s=0u; s<nNumVals; ++s) {
 		x.clear();

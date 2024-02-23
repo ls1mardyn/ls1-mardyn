@@ -8,8 +8,8 @@
 #ifndef SRC_PARALLEL_COMMUNICATIONBUFFER_H_
 #define SRC_PARALLEL_COMMUNICATIONBUFFER_H_
 
-#include "molecules/MoleculeForwardDeclaration.h" 
-#include "utils/mardyn_assert.h" 
+#include "molecules/MoleculeForwardDeclaration.h"
+#include "utils/mardyn_assert.h"
 
 #include <vector>
 #include <stddef.h>
@@ -64,7 +64,7 @@ public:
 	void readHaloMolecule(size_t indexOfMolecule, Molecule& m) const;
 	void readForceMolecule(size_t indexOfMolecule, Molecule& m) const;
 
-	void resizeForReceivingMolecules(unsigned long& numLeaving, unsigned long& numHalo); 
+	void resizeForReceivingMolecules(unsigned long& numLeaving, unsigned long& numHalo);
 	void resizeForReceivingMolecules(unsigned long& numForces);
 
 	size_t getNumHalo() const {
@@ -74,7 +74,7 @@ public:
 	size_t getNumLeaving() const {
 		return _numLeaving;
 	}
-        
+
         size_t getNumForces() const {
             return _numForces;
         }

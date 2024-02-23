@@ -31,9 +31,9 @@ public:
 	DttNodeTest();
 	virtual ~DttNodeTest();
 
-	void testDepthAtRadius1();	
-	void testDepthAtRadius2();	
-	void testDepthAtRadius4();	
+	void testDepthAtRadius1();
+	void testDepthAtRadius2();
+	void testDepthAtRadius4();
 
 	void testDivideParticles();
 

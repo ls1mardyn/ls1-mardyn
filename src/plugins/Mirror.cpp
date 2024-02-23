@@ -12,8 +12,6 @@
 #include <cstdlib>
 #include <cstdint>
 
-using namespace std;
-using Log::global_log;
 
 void printInsertionStatus(std::pair<std::map<uint64_t,double>::iterator,bool> &status)
 {
@@ -47,26 +45,26 @@ Mirror::Mirror() :
 }
 
 void Mirror::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
-	global_log->debug() << "[Mirror] Enabled at position: " << _position.coord << std::endl;
+	Log::global_log->debug() << "[Mirror] Enabled at position: " << _position.coord << std::endl;
 }
 
 void Mirror::readXML(XMLfileUnits& xmlconfig)
 {
 	_pluginID = 100;
 	xmlconfig.getNodeValue("pluginID", _pluginID);
-	global_log->info() << "[Mirror] pluginID = " << _pluginID << std::endl;
+	Log::global_log->info() << "[Mirror] pluginID = " << _pluginID << std::endl;
 
 	// Target component
 	_targetComp = 0;
 	xmlconfig.getNodeValue("cid", _targetComp);
-	if(_targetComp > 0) { global_log->info() << "[Mirror] Target component: " << _targetComp << std::endl; }
+	if(_targetComp > 0) { Log::global_log->info() << "[Mirror] Target component: " << _targetComp << std::endl; }
 
 	// Switch component
 	_switchComp.enabled = false;
 	_switchComp.cid_ub = 1;
 	_switchComp.enabled = xmlconfig.getNodeValue("switchcomp/cid", _switchComp.cid_ub);
 	if(_switchComp.enabled)
-		global_log->info() << "[Mirror] Switch component to cid: " << _switchComp.cid_ub << " if molecule has passed the Mirror." << std::endl;
+		Log::global_log->info() << "[Mirror] Switch component to cid: " << _switchComp.cid_ub << " if molecule has passed the Mirror." << std::endl;
 
 	// Mirror position
 	_position.axis = 1;  // only y-axis supported yet
@@ -84,11 +82,11 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 		if(nullptr != subject)
 			subject->registerObserver(this);
 		else {
-			global_log->error() << "[Mirror] Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
+			Log::global_log->error() << "[Mirror] Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
 			Simulation::exit(-1);
 		}
 	}
-	global_log->info() << "[Mirror] Enabled at position: y = " << _position.coord << std::endl;
+	Log::global_log->info() << "[Mirror] Enabled at position: y = " << _position.coord << std::endl;
 
 	/** mirror type */
 	_type = MT_UNKNOWN;
@@ -108,29 +106,29 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	else if("o-|" == strDirection)
 		_direction = MD_RIGHT_MIRROR;
 	if(MD_LEFT_MIRROR == _direction)
-		global_log->info() << "[Mirror] Reflect particles to the right |-o" << std::endl;
+		Log::global_log->info() << "[Mirror] Reflect particles to the right |-o" << std::endl;
 	else if(MD_RIGHT_MIRROR == _direction)
-		global_log->info() << "[Mirror] Reflect particles to the left o-|" << std::endl;
+		Log::global_log->info() << "[Mirror] Reflect particles to the left o-|" << std::endl;
 
 	/** constant force */
 	if(MT_FORCE_CONSTANT == _type)
 	{
 		_forceConstant = 100.;
 		xmlconfig.getNodeValue("forceConstant", _forceConstant);
-		global_log->info() << "[Mirror] Applying force in vicinity of mirror: _forceConstant = " << _forceConstant << std::endl;
+		Log::global_log->info() << "[Mirror] Applying force in vicinity of mirror: _forceConstant = " << _forceConstant << std::endl;
 	}
 
 	/** zero gradient */
 	if(MT_ZERO_GRADIENT == _type)
 	{
-		global_log->error() << "[Mirror] Method 3 (MT_ZERO_GRADIENT) is deprecated. Use 5 (MT_MELAND_2004) instead. Program exit ..." << std::endl;
+		Log::global_log->error() << "[Mirror] Method 3 (MT_ZERO_GRADIENT) is deprecated. Use 5 (MT_MELAND_2004) instead. Program exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 
 	/** normal distributions */
 	if(MT_NORMDISTR_MB == _type)
 	{
-		global_log->error() << "[Mirror] Method 4 (MT_NORMDISTR_MB) is deprecated. Use 5 (MT_MELAND_2004) instead. Program exit ..." << std::endl;
+		Log::global_log->error() << "[Mirror] Method 4 (MT_NORMDISTR_MB) is deprecated. Use 5 (MT_MELAND_2004) instead. Program exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 
@@ -141,42 +139,42 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 
 		if(!xmlconfig.getNodeValue("meland/velo_target", _melandParams.velo_target))
 		{
-			global_log->error() << "[Mirror] Meland: Parameters for method 5 (MT_MELAND_2004) provided in config-file *.xml corrupted/incomplete. Program exit ..." << std::endl;
+			Log::global_log->error() << "[Mirror] Meland: Parameters for method 5 (MT_MELAND_2004) provided in config-file *.xml corrupted/incomplete. Program exit ..." << std::endl;
 			Simulation::exit(-2004);
 		}
 		else {
-			global_log->info() << "[Mirror] Meland: target velocity = " << _melandParams.velo_target << std::endl;
+			Log::global_log->info() << "[Mirror] Meland: target velocity = " << _melandParams.velo_target << std::endl;
 			if (_melandParams.fixed_probability_factor > 0) {
-				global_log->info() << "[Mirror] Meland: FixedProb = " << _melandParams.fixed_probability_factor << std::endl;
+				Log::global_log->info() << "[Mirror] Meland: FixedProb = " << _melandParams.fixed_probability_factor << std::endl;
 			}
 		}
-		
+
 		/** Diffuse mirror **/
 		_diffuse_mirror.enabled = false;
 		_diffuse_mirror.width = 0.0;
 		bool bRet = xmlconfig.getNodeValue("diffuse/width", _diffuse_mirror.width);
 		_diffuse_mirror.enabled = bRet;
-		if(_diffuse_mirror.width > 0.0) { global_log->info() << "[Mirror] Using diffuse Mirror width = " << _diffuse_mirror.width << std::endl; }
+		if(_diffuse_mirror.width > 0.0) { Log::global_log->info() << "[Mirror] Using diffuse Mirror width = " << _diffuse_mirror.width << std::endl; }
 	}
-	
+
 	if(MT_RAMPING == _type)
 	{
 		bool bRet = true;
 		bRet = bRet && xmlconfig.getNodeValue("ramping/start", _rampingParams.startStep);
 		bRet = bRet && xmlconfig.getNodeValue("ramping/stop", _rampingParams.stopStep);
 		bRet = bRet && xmlconfig.getNodeValue("ramping/treatment", _rampingParams.treatment);
-		
+
 		if (not bRet) {
-			global_log->error() << "[Mirror] Ramping: Parameters for method 5 (MT_RAMPING) provided in config-file *.xml corrupted/incomplete. Program exit ..." << std::endl;
+			Log::global_log->error() << "[Mirror] Ramping: Parameters for method 5 (MT_RAMPING) provided in config-file *.xml corrupted/incomplete. Program exit ..." << std::endl;
 			Simulation::exit(-1);
 		}
 		else {
 			if(_rampingParams.startStep > _rampingParams.stopStep) {
-				global_log->error() << "[Mirror] Ramping: Start > Stop. Program exit ..." << std::endl;
+				Log::global_log->error() << "[Mirror] Ramping: Start > Stop. Program exit ..." << std::endl;
 				Simulation::exit(-1);
 			}
 			else {
-				global_log->info() << "[Mirror] Ramping from " << _rampingParams.startStep << " to " << _rampingParams.stopStep << std::endl;
+				Log::global_log->info() << "[Mirror] Ramping from " << _rampingParams.startStep << " to " << _rampingParams.stopStep << std::endl;
 				std::string treatmentStr = "";
 				switch(_rampingParams.treatment) {
 					case 0 : treatmentStr = "Deletion";
@@ -184,10 +182,10 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 					case 1 : treatmentStr = "Transmission";
 						break;
 					default:
-						global_log->error() << "[Mirror] Ramping: No proper treatment was set. Use 0 (Deletion) or 1 (Transmission). Program exit ..." << std::endl;
+						Log::global_log->error() << "[Mirror] Ramping: No proper treatment was set. Use 0 (Deletion) or 1 (Transmission). Program exit ..." << std::endl;
 						Simulation::exit(-1);
 				}
-				global_log->info() << "[Mirror] Ramping: Treatment for non-reflected particles: " << _rampingParams.treatment << " ( " << treatmentStr << " ) " << std::endl;
+				Log::global_log->info() << "[Mirror] Ramping: Treatment for non-reflected particles: " << _rampingParams.treatment << " ( " << treatmentStr << " ) " << std::endl;
 			}
 		}
 	}
@@ -235,7 +233,7 @@ void Mirror::beforeForces(
 					it->componentid() + 1;  // unity based componentid --> 0: arbitrary component, 1: first component
 
 				if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
-				
+
 				double vy = it->v(1);
 				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) ) {
 					continue;
@@ -284,7 +282,7 @@ void Mirror::beforeForces(
 						pbf = std::abs(vy_reflected / vy);
 					}
 					frnd = _rnd->rnd();
-					global_log->debug() << "[Mirror] Meland: pbf = " << pbf << " ; frnd = " << frnd << " ; vy_reflected = " << vy_reflected << " ; vy = " << vy << std::endl;
+					Log::global_log->debug() << "[Mirror] Meland: pbf = " << pbf << " ; frnd = " << frnd << " ; vy_reflected = " << vy_reflected << " ; vy = " << vy << std::endl;
 					// reflect particles and delete all not reflected
 					if(frnd < pbf) {
 						it->setv(1, vy_reflected);
@@ -343,7 +341,7 @@ void Mirror::beforeForces(
 				// ensure that we do not iterate over things outside of the container.
 				regionHighCorner[1] = std::min(_position.coord, regionHighCorner[1]);
 			}
-			
+
 			// reset local values
 			for(auto& it:_particleManipCount.reflected.local)
 				it = 0;
@@ -359,14 +357,14 @@ void Mirror::beforeForces(
 				if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
 
 				double vy = it->v(1);
-				
+
 				if ( (_direction == MD_RIGHT_MIRROR && vy < 0.) || (_direction == MD_LEFT_MIRROR && vy > 0.) )
 					continue;
-				
+
 				float ratioRefl;
 				float frnd = _rnd->rnd();
 				uint64_t currentSimstep = global_simulation->getSimulationStep();
-				
+
 				if(currentSimstep <= _rampingParams.startStep) {
 					ratioRefl = 1;
 				}
@@ -376,12 +374,12 @@ void Mirror::beforeForces(
 				else {
 					ratioRefl = 0;
 				}
-				
+
 				if(frnd <= ratioRefl) {
 					it->setv(1, -vy);
 					_particleManipCount.reflected.local.at(0)++;
 					_particleManipCount.reflected.local.at(cid_ub)++;
-					global_log->debug() << "[Mirror] Ramping: Velo. reversed at step " << currentSimstep << " , ReflRatio: " << ratioRefl << std::endl;
+					Log::global_log->debug() << "[Mirror] Ramping: Velo. reversed at step " << currentSimstep << " , ReflRatio: " << ratioRefl << std::endl;
 				}
 				else {
 					if (_rampingParams.treatment == 0) {
@@ -481,7 +479,7 @@ void Mirror::VelocityChange( ParticleContainer* particleContainer) {
 				uint32_t cid_ub = it->componentid()+1;
 
 				if ((_targetComp != 0) and (cid_ub != _targetComp)) { continue; }
-				
+
 				if(MT_REFLECT == _type) {
 					if( (MD_RIGHT_MIRROR == _direction && vy > 0.) || (MD_LEFT_MIRROR == _direction && vy < 0.) ) {
 						it->setv(1, -vy);

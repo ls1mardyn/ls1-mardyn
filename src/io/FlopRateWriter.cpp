@@ -25,23 +25,23 @@ void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
 		_writeToStdout = true;
 		_writeToFile = true;
 	} else {
-		global_log->error() << "Unknown FlopRateOutputPlugin::mode. Choose \"stdout\", \"file\" or \"both\"." << endl;
+		Log::global_log->error() << "Unknown FlopRateOutputPlugin::mode. Choose \"stdout\", \"file\" or \"both\"." << std::endl;
 	}
 
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	// TODO:
 	if(_writeToFile) {
-		global_log->error() << "TODO: file output not yet supported." << endl;
+		Log::global_log->error() << "TODO: file output not yet supported." << std::endl;
 		Simulation::exit(1);
 	}
 
 	if(_writeToFile) {
 		_outputPrefix = "mardyn";
 		xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-		global_log->info() << "Output prefix: " << _outputPrefix << endl;
+		Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 	}
 }
 
@@ -52,19 +52,19 @@ void FlopRateWriter::init(ParticleContainer * /*particleContainer*/,
 		return;
 
 	// initialize result file
-	string resultfile(_outputPrefix+".res");
+	std::string resultfile(_outputPrefix+".res");
 	const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	tm unused{};
 	if(domainDecomp->getRank()==0){
 		_fileStream.open(resultfile.c_str());
-		_fileStream << "# ls1 MarDyn simulation started at " << std::put_time(localtime_r(&now, &unused), "%c") << endl;
+		_fileStream << "# ls1 MarDyn simulation started at " << std::put_time(localtime_r(&now, &unused), "%c") << std::endl;
 		_fileStream << "#step\tt\t\tFLOP-Count\tFLOP-Rate-force\t\tFLOP-Rate-loop\tefficiency(%)\t\n";
 	}
 }
 
 void FlopRateWriter::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 		unsigned long simstep){
-	global_log->debug()  << "[FLOPRATEWRITER] after forces FLOPs" << std::endl;
+	Log::global_log->debug()  << "[FLOPRATEWRITER] after forces FLOPs" << std::endl;
 	measureFLOPS(particleContainer, simstep);
 }
 
@@ -102,10 +102,10 @@ void FlopRateWriter::endStep(ParticleContainer *particleContainer,
 	setPrefix(flop_rate_loop, flop_rate_loop_normalized, prefix_flop_rate_loop);
 
 	if(_writeToStdout) {
-		global_log->info() << "FlopRateWriter (simulation step " << simstep << ")" << endl
-			<< "\tFLOP-Count per Iteration           : " << flops_normalized << " " << prefix_flops << "FLOPs" << endl
-			<< "\tFLOP-rate in force calculation     : " << flop_rate_force_normalized << " " << prefix_flop_rate_force << "FLOP/sec" << endl
-			<< "\tFLOP-rate for main loop            : " << flop_rate_loop_normalized << " " << prefix_flop_rate_loop << "FLOP/sec (" << percentage << " %)" << endl;
+		Log::global_log->info() << "FlopRateWriter (simulation step " << simstep << ")" << std::endl
+			<< "\tFLOP-Count per Iteration           : " << flops_normalized << " " << prefix_flops << "FLOPs" << std::endl
+			<< "\tFLOP-rate in force calculation     : " << flop_rate_force_normalized << " " << prefix_flop_rate_force << "FLOP/sec" << std::endl
+			<< "\tFLOP-rate for main loop            : " << flop_rate_loop_normalized << " " << prefix_flop_rate_loop << "FLOP/sec (" << percentage << " %)" << std::endl;
 		_flopCounter->printStats();
 	}
 
@@ -121,7 +121,7 @@ void FlopRateWriter::finish(ParticleContainer *particleContainer,
 
 	const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	tm unused{};
-	_fileStream << "# ls1 mardyn simulation finished at " << std::put_time(localtime_r(&now, &unused), "%c") << endl;
+	_fileStream << "# ls1 mardyn simulation finished at " << std::put_time(localtime_r(&now, &unused), "%c") << std::endl;
 	_fileStream << "# \n# Please address your questions and suggestions to the ls1 mardyn contact point:\n# \n# E-mail: contact@ls1-mardyn.de\n# \n# Phone: +49 631 205 3227\n# University of Kaiserslautern\n# Computational Molecular Engineering\n# Erwin-Schroedinger-Str. 44\n# D-67663 Kaiserslautern, Germany\n# \n# http://www.ls1-mardyn.de/\n";
 
 	_fileStream.close();

@@ -14,7 +14,7 @@
 
 /*
  * Abstract class with common code for basic fft and fftw implementation
- * 
+ *
  * Use FFTDataContainer_blocks as Data container (2 arrays of matrices)
  */
 class FFTAcceleration_blocks: public FFTAccelerationAPI_full {

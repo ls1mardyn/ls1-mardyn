@@ -5,7 +5,7 @@
 #include <cppunit/TestResult.h>
 
 /*
- - test have been done to check exception management in run(). other 
+ - test have been done to check exception management in run(). other
    tests need to be added to check the other aspect of TestCase.
  */
 
@@ -23,7 +23,7 @@ TestCaseTest::~TestCaseTest()
 }
 
 
-void 
+void
 TestCaseTest::setUp()
 {
   m_testListener = new MockTestListener( "mock-testlistener" );
@@ -32,7 +32,7 @@ TestCaseTest::setUp()
 }
 
 
-void 
+void
 TestCaseTest::tearDown()
 {
   delete m_result;
@@ -40,43 +40,43 @@ TestCaseTest::tearDown()
 }
 
 
-void 
+void
 TestCaseTest::testSetUpFailure()
 {
   checkFailure( true, false, false );
 }
 
 
-void 
+void
 TestCaseTest::testRunTestFailure()
 {
   checkFailure( false, true, false );
 }
 
 
-void 
+void
 TestCaseTest::testTearDownFailure()
 {
   checkFailure( false, false, true );
 }
 
 
-void 
+void
 TestCaseTest::testFailAll()
 {
   checkFailure( true, true, true );
 }
 
 
-void 
+void
 TestCaseTest::testNoFailure()
 {
   checkFailure( false, false, false );
 }
 
 
-void 
-TestCaseTest::checkFailure( bool failSetUp, 
+void
+TestCaseTest::checkFailure( bool failSetUp,
                             bool failRunTest,
                             bool failTearDown )
 {
@@ -92,7 +92,7 @@ TestCaseTest::checkFailure( bool failSetUp,
     testCase.setExpectedSetUpCall( 1 );
     testCase.setExpectedRunTestCall( failSetUp ? 0 : 1 );
     testCase.setExpectedTearDownCall( failSetUp ? 0 : 1 );
-    
+
     testCase.run( m_result );
 
     testCase.verify();
@@ -104,7 +104,7 @@ TestCaseTest::checkFailure( bool failSetUp,
 }
 
 
-void 
+void
 TestCaseTest::testCountTestCases()
 {
   CPPUNIT_NS::TestCase test;
@@ -112,7 +112,7 @@ TestCaseTest::testCountTestCases()
 }
 
 
-void 
+void
 TestCaseTest::testDefaultConstructor()
 {
   CPPUNIT_NS::TestCase test;
@@ -120,7 +120,7 @@ TestCaseTest::testDefaultConstructor()
 }
 
 
-void 
+void
 TestCaseTest::testConstructorWithName()
 {
   std::string testName( "TestName" );
@@ -129,7 +129,7 @@ TestCaseTest::testConstructorWithName()
 }
 
 
-void 
+void
 TestCaseTest::testTwoRun()
 {
   MockTestCase test1( "mocktest1" );
@@ -145,7 +145,7 @@ TestCaseTest::testTwoRun()
 }
 
 
-void 
+void
 TestCaseTest::testGetChildTestCount()
 {
   CPPUNIT_NS::TestCase test( "test" );
@@ -153,7 +153,7 @@ TestCaseTest::testGetChildTestCount()
 }
 
 
-void 
+void
 TestCaseTest::testGetChildTestAtThrow()
 {
   CPPUNIT_NS::TestCase test( "test" );

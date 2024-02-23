@@ -31,17 +31,17 @@ PlugInManager::load( const std::string &libraryFileName,
   info.m_fileName = libraryFileName;
   info.m_manager = new DynamicLibraryManager( libraryFileName );
 
-  TestPlugInSignature plug = (TestPlugInSignature)info.m_manager->findSymbol( 
+  TestPlugInSignature plug = (TestPlugInSignature)info.m_manager->findSymbol(
         CPPUNIT_STRINGIZE( CPPUNIT_PLUGIN_EXPORTED_NAME ) );
   info.m_interface = (*plug)();
 
   m_plugIns.push_back( info );
-  
+
   info.m_interface->initialize( &TestFactoryRegistry::getRegistry(), parameters );
 }
 
 
-void 
+void
 PlugInManager::unload( const std::string &libraryFileName )
 {
   for ( PlugIns::iterator it = m_plugIns.begin(); it != m_plugIns.end(); ++it )
@@ -56,7 +56,7 @@ PlugInManager::unload( const std::string &libraryFileName )
 }
 
 
-void 
+void
 PlugInManager::addListener( TestResult *eventManager )
 {
   for ( PlugIns::iterator it = m_plugIns.begin(); it != m_plugIns.end(); ++it )
@@ -64,7 +64,7 @@ PlugInManager::addListener( TestResult *eventManager )
 }
 
 
-void 
+void
 PlugInManager::removeListener( TestResult *eventManager )
 {
   for ( PlugIns::iterator it = m_plugIns.begin(); it != m_plugIns.end(); ++it )
@@ -72,7 +72,7 @@ PlugInManager::removeListener( TestResult *eventManager )
 }
 
 
-void 
+void
 PlugInManager::unload( PlugInInfo &plugIn )
 {
   try
@@ -89,7 +89,7 @@ PlugInManager::unload( PlugInInfo &plugIn )
 }
 
 
-void 
+void
 PlugInManager::addXmlOutputterHooks( XmlOutputter *outputter )
 {
   for ( PlugIns::iterator it = m_plugIns.begin(); it != m_plugIns.end(); ++it )
@@ -97,7 +97,7 @@ PlugInManager::addXmlOutputterHooks( XmlOutputter *outputter )
 }
 
 
-void 
+void
 PlugInManager::removeXmlOutputterHooks()
 {
   for ( PlugIns::iterator it = m_plugIns.begin(); it != m_plugIns.end(); ++it )

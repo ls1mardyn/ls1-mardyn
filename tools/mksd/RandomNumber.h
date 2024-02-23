@@ -9,7 +9,6 @@
 #define RANDNUM_H_
 
 #include<cstdlib>
-using namespace std;
 
 class RandomNumber{
 public:

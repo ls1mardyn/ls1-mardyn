@@ -34,28 +34,28 @@ ProtectorChain::~ProtectorChain()
 }
 
 
-void 
+void
 ProtectorChain::push( Protector *protector )
 {
   m_protectors.push_back( protector );
 }
 
 
-void 
+void
 ProtectorChain::pop()
 {
   delete m_protectors.back();
   m_protectors.pop_back();
 }
 
-int 
+int
 ProtectorChain::count() const
 {
   return m_protectors.size();
 }
 
 
-bool 
+bool
 ProtectorChain::protect( const Functor &functor,
                          const ProtectorContext &context )
 {
@@ -65,11 +65,11 @@ ProtectorChain::protect( const Functor &functor,
   Functors functors;
   for ( int index = m_protectors.size()-1; index >= 0; --index )
   {
-    const Functor &protectedFunctor = 
+    const Functor &protectedFunctor =
               functors.empty() ? functor : *functors.back();
 
     functors.push_back( new ProtectFunctor( m_protectors[index],
-                                            protectedFunctor, 
+                                            protectedFunctor,
                                             context ) );
   }
 

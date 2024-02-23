@@ -25,7 +25,7 @@ public:
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
 	     <incremental>INTEGER</incremental>
-	     <appendTimestamp>INTEGER</appendTimestamp>
+	     <appendTimestamp>BOOL</appendTimestamp>
 	   </outputplugin>
 	   \endcode
 	 */
@@ -43,7 +43,7 @@ public:
 	//! @todo comment
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain);
-	
+
 	std::string getPluginName() {
 		return std::string("DecompWriter");
 	}

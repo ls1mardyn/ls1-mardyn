@@ -27,23 +27,22 @@
 #include <steereoMPIIntraCommunicator.h>
 #endif //ENABLE_MPI
 
-using Log::global_log;
 
 SteereoSimSteering* initSteereo(int ownRank, int numProcs) {
 
 	SteereoLogger::setOutputLevel(2);
-	global_log->info() << "In initSteereo" << std::endl;
+	Log::global_log->info() << "In initSteereo" << std::endl;
 	SteereoSimSteering* _steer = new SteereoSimSteering();
 /*	SteereoXMLReader* xmlReader;
 #ifdef ENABLE_MPI
-	global_log->debug() << "I am parallel" << std::endl;
+	Log::global_log->debug() << "I am parallel" << std::endl;
 	xmlReader = new SteereoXMLReader ("./utils/steereoParallelConfig.xml");
 #else
-	global_log->debug() << "I am sequential" << std::endl;
+	Log::global_log->debug() << "I am sequential" << std::endl;
 	xmlReader = new SteereoXMLReader ("./utils/steereoSequentialConfig.xml");
 #endif
 	xmlReader->configSimulation(_steer, ownRank, numProcs);
-	global_log->info() << "configured simulation" << std::endl;*/
+	Log::global_log->info() << "configured simulation" << std::endl;*/
 #ifdef STEEREO_COUPLING
 	_steer->setNumberOfQueues(2);
 #else
@@ -62,9 +61,9 @@ SteereoSimSteering* initSteereo(int ownRank, int numProcs) {
 	if (partVal != NULL) {
 		partNum = atoi(partVal);
 	}
-	global_log->debug() << "going to divide the " << ownSize << " processes into " << partNum << " partitions" << std::endl;
+	Log::global_log->debug() << "going to divide the " << ownSize << " processes into " << partNum << " partitions" << std::endl;
 	mpiIntraComm->generateEqually(ownRank, partNum, ownSize);
-	global_log->debug() << "equally generated" << std::endl;
+	Log::global_log->debug() << "equally generated" << std::endl;
 	_steer->setIntraCommunicator(mpiIntraComm);
 	if (mpiIntraComm->amIRoot()) {
 		portNumber += (ownRank * partNum) / ownSize;
@@ -76,7 +75,7 @@ SteereoSimSteering* initSteereo(int ownRank, int numProcs) {
 #ifdef ENABLE_MPI
 }
 #endif // ENABLE_MPI
-	global_log->info() << "done init_steereo" << std::endl;
+	Log::global_log->info() << "done init_steereo" << std::endl;
 	return _steer;
 
 }
@@ -110,7 +109,7 @@ void registerSteereoCommands(SteereoSimSteering* simSteer, Simulation* sim) {
 	    &Domain::getGlobalCurrentTemperature,
 	    &Domain::setGlobalTemperature);
 	//GetVisDataCommand::addData("getVisData", sim);
-	global_log->info() << "add Data to EstimateRemainingTimeCommand" << std::endl;
+	Log::global_log->info() << "add Data to EstimateRemainingTimeCommand" << std::endl;
 	EstimateRemainingTimeCommand::addData ("estimateRemainingTime", sim);
 	// add data for the EstimateRemainingTimeCommand
 

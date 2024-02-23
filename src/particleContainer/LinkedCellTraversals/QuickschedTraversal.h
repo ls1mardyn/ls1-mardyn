@@ -17,7 +17,6 @@
 #include "quicksched.h"
 #endif
 
-using Log::global_log;
 
 struct QuickschedTraversalData : CellPairTraversalData {
     std::array<unsigned long, 3> taskBlockSize;
@@ -52,7 +51,7 @@ private:
 
     static void runner(int type, void *data);
 
-    array<unsigned long, 3> _taskBlocksize;
+    std::array<unsigned long, 3> _taskBlocksize;
     CellProcessor           *_contextCellProcessor;
 
     struct qsched *_scheduler;
@@ -69,7 +68,7 @@ QuickschedTraversal<CellTemplate>::QuickschedTraversal(std::vector<CellTemplate>
           _contextCellProcessor(nullptr),
           _scheduler(new struct qsched),
           _taskTypeSelector(PackedAdjustable) {
-    mardyn_assert((is_base_of<ParticleCellBase, CellTemplate>::value));
+    mardyn_assert((std::is_base_of<ParticleCellBase, CellTemplate>::value));
     qsched_init(_scheduler, mardyn_get_max_threads(), qsched_flag_none);
 }
 
@@ -88,7 +87,7 @@ void QuickschedTraversal<CellTemplate>::rebuild(std::vector<CellTemplate> &cells
         _taskBlocksize = qui_data->taskBlockSize;
         init();
     } else {
-        global_log->error() << "QuickschedTraversal::rebuild was called with incompatible Traversal data!" << endl;
+        Log::global_log->error() << "QuickschedTraversal::rebuild was called with incompatible Traversal data!" << std::endl;
     }
 #endif /* QUICKSCHED */
 }
@@ -100,23 +99,23 @@ void QuickschedTraversal<CellTemplate>::init() {
     qsched_task_t taskId;
     unsigned long cellIndex;
     // macro for easier access and to avoid aliasing
-//#define m_cells (*((vector<ParticleCellBase> *)(this->_cells)))
-//    vector<ParticleCellBase> m_cells = *(dynamic_cast<vector<ParticleCellBase> *>(this->_cells));
-    vector<ParticleCell> m_cells = *((vector<ParticleCell> *)(this->_cells));
+//#define m_cells (*((std::vector<ParticleCellBase> *)(this->_cells)))
+//    std::vector<ParticleCellBase> m_cells = *(dynamic_cast<std::vector<ParticleCellBase> *>(this->_cells));
+    std::vector<ParticleCell> m_cells = *((std::vector<ParticleCell> *)(this->_cells));
 
     switch (_taskTypeSelector) {
         case PackedAdjustable: {
             // check that blocksize is within domain size
             for (int i = 0; i < 3; ++i) {
                 if (_taskBlocksize[i] > this->_dims[i]) {
-                    global_log->error() << "Blocksize is bigger than number of cells in dimension "
+                    Log::global_log->error() << "Blocksize is bigger than number of cells in dimension "
                                         << (char) ('x' + i) << ". (" << _taskBlocksize[i] << " > "
                                         << this->_dims[i] << ")" << std::endl;
                     Simulation::exit(1);
                 }
             }
 
-            global_log->info() << "Generating resource and task ids" << std::endl;
+            Log::global_log->info() << "Generating resource and task ids" << std::endl;
             for (unsigned long z = 0; z < this->_dims[2]; ++z) {
                 for (unsigned long y = 0; y < this->_dims[1]; ++y) {
                     for (unsigned long x = 0; x < this->_dims[0]; ++x) {
@@ -148,7 +147,7 @@ void QuickschedTraversal<CellTemplate>::init() {
             } /* end for-z */
 
             // set dependencies
-            global_log->info() << "Setting task dependencies" << std::endl;
+            Log::global_log->info() << "Setting task dependencies" << std::endl;
             for (unsigned long z = 0; z < this->_dims[2] - 1; z += _taskBlocksize[2] - 1) {
                 for (unsigned long y = 0; y < this->_dims[1] - 1; y += _taskBlocksize[1] - 1) {
                     for (unsigned long x = 0; x < this->_dims[0] - 1; x += _taskBlocksize[0] - 1) {
@@ -176,7 +175,7 @@ void QuickschedTraversal<CellTemplate>::init() {
             break;
         } /* end case PackedAdjustable */
         default:
-            global_log->error() << "QuickschedHandler::init() received non existing task type!"
+            Log::global_log->error() << "QuickschedHandler::init() received non existing task type!"
                                 << std::endl;
     }
 #endif // QUICKSCHED
@@ -230,7 +229,7 @@ void QuickschedTraversal<CellTemplate>::runner(int type, void *data) {
             break;
         } /* end case PackedAdjustable */
         default:
-            global_log->error() << "Undefined Quicksched task type: " << type << std::endl;
+            Log::global_log->error() << "Undefined Quicksched task type: " << type << std::endl;
     }
 #ifdef PRINT_SCHEDULING_TIMINGS
     if(_simulation.getSimStep() > 10){
@@ -252,12 +251,12 @@ void QuickschedTraversal<CellTemplate>::traverseCellPairs(CellProcessor &cellPro
 template<class CellTemplate>
 void QuickschedTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor &cellProcessor, unsigned stage,
                                                                unsigned stageCount) {
-    global_log->error() << "QuickschedTraversal::traverseCellPairsInner is not implemented!" << std::endl;
+    Log::global_log->error() << "QuickschedTraversal::traverseCellPairsInner is not implemented!" << std::endl;
 }
 
 template<class CellTemplate>
 void QuickschedTraversal<CellTemplate>::traverseCellPairsOuter(CellProcessor &cellProcessor) {
-    global_log->error() << "QuickschedTraversal::traverseCellPairsOuter is not implemented!" << std::endl;
+    Log::global_log->error() << "QuickschedTraversal::traverseCellPairsOuter is not implemented!" << std::endl;
 }
 
 #endif //SRC_PARTICLECONTAINER_LINKEDCELLTRAVERSALS_QUICKSCHEDTRAVERSAL_H

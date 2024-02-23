@@ -18,12 +18,12 @@ CPPUNIT_NS_BEGIN
  *
  * Here is an example of usage:
  * \code
- * 
+ *
  *   void checkStringEquals( const std::string &expected,
  *                          const std::string &actual,
  *                           const CppUnit::SourceLine &sourceLine,
  *                           const CppUnit::AdditionalMessage &message );
- *  
+ *
  *   #define XTLUT_ASSERT_STRING_EQUAL_MESSAGE( expected, actual, message )  \
  *     ::XtlUt::Impl::checkStringEquals( ::Xtl::toString(expected),        \
  *                                       ::Xtl::toString(actual),          \

@@ -8,7 +8,7 @@
 #define SRC_PARALLEL_RESILIENCECOMM_H_
 
 #ifdef ENABLE_MPI
-#include "utils/mardyn_assert.h" 
+#include "utils/mardyn_assert.h"
 
 #include <memory>
 #include <vector>
@@ -23,7 +23,7 @@
 
 /**
  * This class implements all communication needed for setting up the redundancy resilience scheme.
- * 
+ *
  * Converts all to CHAR internally.
  *
  * TODO: test how this will work when going to Big Endian/Little Endian architectures,
@@ -53,12 +53,12 @@ public:
 	 * @param[out] backedByTags The tags associated with the communication of the ranks in backedBy (used in send)
 	 */
 	int scatterBackupInfo(
-			std::vector<int>& backupInfo, 
+			std::vector<int>& backupInfo,
 			int const numberOfBackups,
 			size_t const sizePerRank,
-	        std::vector<int>& backing, 
-	        std::vector<int>& backedBy, 
-	        std::vector<int>& backingTags, 
+	        std::vector<int>& backing,
+	        std::vector<int>& backedBy,
+	        std::vector<int>& backingTags,
 	        std::vector<int>& backedByTags
 	);
 	/**
@@ -72,14 +72,14 @@ public:
 	 * @param[in] backingTags The tags associated with the communication of the ranks in backing (used in recv)
 	 * @param[in] backedByTags The tags associated with the communication of the ranks in backedBy (used in send)
 	 * @param[in] snapshotSize Size of the local snapshot data in bytes
-	 * @param[out] backupDataSizes The individual sizes of the snapshots acquired 
+	 * @param[out] backupDataSizes The individual sizes of the snapshots acquired
 	 */
 	int exchangeSnapshotSizes(
 			std::vector<int>& backing,
 			std::vector<int>& backedBy,
 			std::vector<int>& backingTags,
 			std::vector<int>& backedByTags,
-			size_t const snapshotSize, 
+			size_t const snapshotSize,
 			std::vector<int>& backupDataSizes
 	);
 	/**
@@ -91,7 +91,7 @@ public:
 	 * @param[in] backedBy A list of ranks the current rank is backing up
 	 * @param[in] backingTags The tags associated with the communication of the ranks in backing (used in recv)
 	 * @param[in] backedByTags The tags associated with the communication of the ranks in backedBy (used in send)
-	 * @param[in] backupDataSizes The individual sizes of the snapshots acquired 
+	 * @param[in] backupDataSizes The individual sizes of the snapshots acquired
 	 * @param[in] sendData The local snapshot data as char vector
 	 * @param[out] recvData The complete snapshot datas of the ranks being backed
 	 */

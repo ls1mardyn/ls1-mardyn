@@ -19,7 +19,6 @@
 #include "utils/CommVar.h"
 #include "molecules/MoleculeForwardDeclaration.h"
 
-using namespace std;
 
 class XMLfileUnits;
 class Domain;

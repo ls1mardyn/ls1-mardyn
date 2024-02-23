@@ -12,8 +12,6 @@
 #include "utils/Logger.h"
 #include <vector>
 
-using namespace std;
-using namespace Log;
 
 void RDFCellProcessor::processCell(ParticleCell& cell) {
 	if (cell.isInnerCell() || cell.isBoundaryCell()) {
@@ -38,7 +36,7 @@ void RDFCellProcessor::processCell(ParticleCell& cell) {
 						double cosPhi = molecule1.orientationAngle(molecule2, dummy2, dd);
 						double cosPhiReverse = molecule2.orientationAngle(molecule1, dummy3, dd);
 						_rdf->observeARDFMolecule(dd, cosPhi, cosPhiReverse, molecule1.componentid(), molecule2.componentid());
-						
+
 					}
 				}
 			}
@@ -54,9 +52,9 @@ void RDFCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2,
 
 		// loop over all particles in the cell
 		for (auto it1 = begin1; it1.isValid(); ++it1) {
-			Molecule& molecule1 = *it1; 
+			Molecule& molecule1 = *it1;
 			for (auto it2 = begin2; it2.isValid(); ++it2) {
-				Molecule& molecule2 = *it2; 
+				Molecule& molecule2 = *it2;
 
 				double dummy[3];
 				double dd = molecule2.dist2(molecule1, dummy);
@@ -67,7 +65,7 @@ void RDFCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2,
 						double cosPhi = molecule1.orientationAngle(molecule2, dummy2, dd);
 						double cosPhiReverse = molecule2.orientationAngle(molecule1, dummy3, dd);
 						_rdf->observeARDFMolecule(dd, cosPhi, cosPhiReverse, molecule1.componentid(), molecule2.componentid());
-						
+
 					}
 				}
 			}
@@ -93,7 +91,7 @@ void RDFCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2,
 							double cosPhi = molecule1.orientationAngle(molecule2, dummy2, dd);
 							double cosPhiReverse = molecule2.orientationAngle(molecule1, dummy3, dd);
 							_rdf->observeARDFMolecule(dd, cosPhi, cosPhiReverse, molecule1.componentid(), molecule2.componentid());
-						
+
 						}
 					}
 				}
@@ -123,7 +121,7 @@ void RDFCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2,
 							double cosPhi = molecule1.orientationAngle(molecule2, dummy2, dd);
 							double cosPhiReverse = molecule2.orientationAngle(molecule1, dummy3, dd);
 							_rdf->observeARDFMolecule(dd, cosPhi, cosPhiReverse, molecule1.componentid(), molecule2.componentid());
-						
+
 						}
 					}
 				}

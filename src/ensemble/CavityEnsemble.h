@@ -7,7 +7,6 @@
 
 #include "utils/Random.h"
 
-using namespace std;
 
 class DomainDecompBase;
 
@@ -54,9 +53,9 @@ public:
 
     unsigned long numCavities() { return this->globalActive; }
 
-    map<unsigned long, Molecule *> *particleContainer() { return &(this->reservoir); }
+    std::map<unsigned long, Molecule *> *particleContainer() { return &(this->reservoir); }
 
-    map<unsigned long, Molecule *> activeParticleContainer();
+    std::map<unsigned long, Molecule *> activeParticleContainer();
 
     void determineBoundary();
 
@@ -88,8 +87,8 @@ private:
     double control_top[3];
 
     unsigned long idoffset;
-    set<unsigned long> active;
-    map<unsigned long, Molecule *> reservoir;
+    std::set<unsigned long> active;
+    std::map<unsigned long, Molecule *> reservoir;
     unsigned long globalActive;
 
     bool boundarySpecified;

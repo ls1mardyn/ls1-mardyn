@@ -9,8 +9,6 @@
 #include "parallel/HaloRegion.h"
 #include "ParticleData.h"
 
-using Log::global_log;
-using namespace std;
 
 DomainDecomposition::DomainDecomposition() : DomainDecomposition(MPI_COMM_WORLD, {0,0,0}) {}
 
@@ -25,11 +23,11 @@ void DomainDecomposition::initMPIGridDims() {
 	{
 		auto numProcsGridSize = _gridSize[0] * _gridSize[1] * _gridSize[2];
 		if (numProcsGridSize != _numProcs and numProcsGridSize != 0) {
-			global_log->error() << "DomainDecomposition: Wrong grid size given!" << std::endl;
-			global_log->error() << "\tnumProcs is " << _numProcs << "," << std::endl;
-			global_log->error() << "\tbut grid is " << _gridSize[0] << " x " << _gridSize[1] << " x " << _gridSize[2] << std::endl;
-			global_log->error() << "\tresulting in " << numProcsGridSize << " subdomains!" << std::endl;
-			global_log->error() << "\tplease check your input file!" << std::endl;
+			Log::global_log->error() << "DomainDecomposition: Wrong grid size given!" << std::endl;
+			Log::global_log->error() << "\tnumProcs is " << _numProcs << "," << std::endl;
+			Log::global_log->error() << "\tbut grid is " << _gridSize[0] << " x " << _gridSize[1] << " x " << _gridSize[2] << std::endl;
+			Log::global_log->error() << "\tresulting in " << numProcsGridSize << " subdomains!" << std::endl;
+			Log::global_log->error() << "\tplease check your input file!" << std::endl;
 			Simulation::exit(2134);
 		}
 	}
@@ -37,10 +35,10 @@ void DomainDecomposition::initMPIGridDims() {
 	MPI_CHECK(MPI_Dims_create( _numProcs, DIMgeom, _gridSize.data()));
 	MPI_CHECK(MPI_Cart_create(_comm, DIMgeom, _gridSize.data(), period, reorder, &_comm));
 
-	global_log->info() << "MPI grid dimensions: " << _gridSize[0] << ", " << _gridSize[1] << ", " << _gridSize[2] << endl;
+	Log::global_log->info() << "MPI grid dimensions: " << _gridSize[0] << ", " << _gridSize[1] << ", " << _gridSize[2] << std::endl;
 	MPI_CHECK(MPI_Comm_rank(_comm, &_rank));
 	MPI_CHECK(MPI_Cart_coords(_comm, _rank, DIMgeom, _coords));
-	global_log->info() << "MPI coordinate of current process: " << _coords[0] << ", " << _coords[1] << ", " << _coords[2] << endl;
+	Log::global_log->info() << "MPI coordinate of current process: " << _coords[0] << ", " << _coords[1] << ", " << _coords[2] << std::endl;
 }
 
 DomainDecomposition::~DomainDecomposition() {
@@ -61,7 +59,7 @@ void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/, Par
 														 LEAVING_AND_HALO_COPIES);
 	} else {
 		// Would first need to send leaving, then halo -> not good for overlapping!
-		global_log->error() << "nonblocking P2P using separate messages for leaving and halo is currently not "
+		Log::global_log->error() << "nonblocking P2P using separate messages for leaving and halo is currently not "
 							   "supported. Please use the indirect neighbor communication scheme!"
 							<< std::endl;
 		Simulation::exit(235861);
@@ -75,7 +73,7 @@ void DomainDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/, Part
 														LEAVING_AND_HALO_COPIES);
 	} else {
 		// Would first need to send leaving, then halo -> not good for overlapping!
-		global_log->error()
+		Log::global_log->error()
 			<< "nonblocking P2P using separate messages for leaving and halo is currently not supported." << std::endl;
 		Simulation::exit(235861);
 	}
@@ -89,15 +87,15 @@ bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalan
 void DomainDecomposition::balanceAndExchange(double /*lastTraversalTime*/, bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain) {
 	if (sendLeavingWithCopies()) {
-		global_log->debug() << "DD: Sending Leaving and Halos." << std::endl;
+		Log::global_log->debug() << "DD: Sending Leaving and Halos." << std::endl;
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
 	} else {
-		global_log->debug() << "DD: Sending Leaving." << std::endl;
+		Log::global_log->debug() << "DD: Sending Leaving." << std::endl;
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
 #ifndef MARDYN_AUTOPAS
 		moleculeContainer->deleteOuterParticles();
 #endif
-		global_log->debug() << "DD: Sending Halos." << std::endl;
+		Log::global_log->debug() << "DD: Sending Halos." << std::endl;
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 	}
 }

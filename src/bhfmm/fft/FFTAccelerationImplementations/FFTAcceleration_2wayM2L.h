@@ -14,11 +14,11 @@
 
 /**
  * Abstract class with common code for basic fft and fftw implementation
- * 
+ *
  * Use FFTDataContainer_arrays as Data container (2 arrays)
- * 
+ *
  * Don't define FFT_M2L and FFT_M2L_vec, but define FFT_M2L_2way
- * the code using the acceleration should downcast its FFTAcceleration 
+ * the code using the acceleration should downcast its FFTAcceleration
  * to the FFTAcceleration_2Way class and use FFT_M2L_2way instead of FFT_M2L
  */
 class FFTAcceleration_2wayM2L: public FFTAccelerationAPI_2Way {

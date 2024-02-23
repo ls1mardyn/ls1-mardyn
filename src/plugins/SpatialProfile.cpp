@@ -20,16 +20,16 @@
 */
 
 void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
-	global_log->debug() << "[SpatialProfile] enabled" << std::endl;
+	Log::global_log->debug() << "[SpatialProfile] enabled" << std::endl;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "[SpatialProfile] Write frequency: " << _writeFrequency << endl;
+	Log::global_log->info() << "[SpatialProfile] Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "[SpatialProfile] Output prefix: " << _outputPrefix << endl;
+	Log::global_log->info() << "[SpatialProfile] Output prefix: " << _outputPrefix << std::endl;
 	xmlconfig.getNodeValue("mode", _mode);
-	global_log->info() << "[SpatialProfile] Mode " << _mode << endl;
+	Log::global_log->info() << "[SpatialProfile] Mode " << _mode << std::endl;
 	xmlconfig.getNodeValue("profiledComponent", _profiledCompString);
-	global_log->info() << "[SpatialProfile] Profiled Component:" << _profiledCompString << endl;
-	
+	Log::global_log->info() << "[SpatialProfile] Profiled Component:" << _profiledCompString << std::endl;
+
 	if (_profiledCompString != "all") {
 		_profiledComp = std::stoi(_profiledCompString);
 	}
@@ -45,48 +45,48 @@ void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("z", samplInfo.universalProfileUnit[2]);
 		samplInfo.cylinder = false;
 	} else {
-		global_log->error() << "[SpatialProfile] Invalid mode. cylinder/cartesian" << endl;
+		Log::global_log->error() << "[SpatialProfile] Invalid mode. cylinder/cartesian" << std::endl;
 		Simulation::exit(-1);
 	}
 
-	global_log->info() << "[SpatialProfile] Binning units: " << samplInfo.universalProfileUnit[0] << " "
+	Log::global_log->info() << "[SpatialProfile] Binning units: " << samplInfo.universalProfileUnit[0] << " "
 					   << samplInfo.universalProfileUnit[1] << " " << samplInfo.universalProfileUnit[2] << "\n";
 
 	// CHECKING FOR ENABLED PROFILES
 	int numProfiles = 0;
 	xmlconfig.getNodeValue("profiles/density", _DENSITY);
 	if (_DENSITY) {
-		global_log->info() << "[SpatialProfile] DENSITY PROFILE ENABLED\n";
+		Log::global_log->info() << "[SpatialProfile] DENSITY PROFILE ENABLED\n";
 		numProfiles++;
 	}
 	xmlconfig.getNodeValue("profiles/velocity", _VELOCITY);
 	if (_VELOCITY) {
-		global_log->info() << "[SpatialProfile] VELOCITY PROFILE ENABLED\n";
+		Log::global_log->info() << "[SpatialProfile] VELOCITY PROFILE ENABLED\n";
 		numProfiles++;
 	}
 	xmlconfig.getNodeValue("profiles/velocity3d", _VELOCITY3D);
 	if (_VELOCITY) {
-		global_log->info() << "[SpatialProfile] VELOCITY3D PROFILE ENABLED\n";
+		Log::global_log->info() << "[SpatialProfile] VELOCITY3D PROFILE ENABLED\n";
 		numProfiles++;
 	}
 	xmlconfig.getNodeValue("profiles/temperature", _TEMPERATURE);
 	if (_TEMPERATURE) {
-		global_log->info() << "[SpatialProfile] TEMPERATURE PROFILE ENABLED\n";
+		Log::global_log->info() << "[SpatialProfile] TEMPERATURE PROFILE ENABLED\n";
 		numProfiles++;
 	}
 	xmlconfig.getNodeValue("profiles/virial", _VIRIAL);
 	if (_VIRIAL) {
-		global_log->info() << "[SpatialProfile] VIRIAL PROFILE ENABLED\n";
+		Log::global_log->info() << "[SpatialProfile] VIRIAL PROFILE ENABLED\n";
 		numProfiles++;
 	}
 	xmlconfig.getNodeValue("profiles/virial2D", _VIRIAL2D);
 	if (_VIRIAL2D) {
-		global_log->info() << "[SpatialProfile] 2D VIRIAL PROFILE ENABLED\n";
+		Log::global_log->info() << "[SpatialProfile] 2D VIRIAL PROFILE ENABLED\n";
 		numProfiles++;
 	}
-	global_log->info() << "[SpatialProfile] Number of profiles: " << numProfiles << "\n";
+	Log::global_log->info() << "[SpatialProfile] Number of profiles: " << numProfiles << "\n";
 	if (numProfiles < 1) {
-		global_log->warning() << "[SpatialProfile] NO PROFILES SPECIFIED -> Outputting all\n";
+		Log::global_log->warning() << "[SpatialProfile] NO PROFILES SPECIFIED -> Outputting all\n";
 		_ALL = true;
 	}
 
@@ -127,9 +127,9 @@ void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	xmlconfig.getNodeValue("timesteps/init", _initStatistics);
-	global_log->info() << "[SpatialProfile] init statistics: " << _initStatistics << endl;
+	Log::global_log->info() << "[SpatialProfile] init statistics: " << _initStatistics << std::endl;
 	xmlconfig.getNodeValue("timesteps/recording", _profileRecordingTimesteps);
-	global_log->info() << "[SpatialProfile] profile recording timesteps: " << _profileRecordingTimesteps << endl;
+	Log::global_log->info() << "[SpatialProfile] profile recording timesteps: " << _profileRecordingTimesteps << std::endl;
 
 }
 
@@ -147,7 +147,7 @@ void SpatialProfile::init(ParticleContainer* particleContainer, DomainDecompBase
 	// Get Global length
 	for (unsigned d = 0; d < 3; d++) {
 		samplInfo.globalLength[d] = domain->getGlobalLength(d);
-		global_log->info() << "[SpatialProfile] globalLength " << samplInfo.globalLength[d] << "\n";
+		Log::global_log->info() << "[SpatialProfile] globalLength " << samplInfo.globalLength[d] << "\n";
 	}
 	// Get global number of molecules
 	samplInfo.globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
@@ -157,7 +157,7 @@ void SpatialProfile::init(ParticleContainer* particleContainer, DomainDecompBase
 	} else {
 		samplInfo.numMolFixRegion = 0;
 	}
-	global_log->info() << "getDomain was called with Molecules in Fix Region: " << samplInfo.numMolFixRegion << endl;
+	Log::global_log->info() << "getDomain was called with Molecules in Fix Region: " << samplInfo.numMolFixRegion << std::endl;
 
 	// Calculate sampling units
 	if (samplInfo.cylinder) {
@@ -174,13 +174,13 @@ void SpatialProfile::init(ParticleContainer* particleContainer, DomainDecompBase
 		samplInfo.universalInvProfileUnit[1] =
 				this->samplInfo.universalProfileUnit[1] / (samplInfo.globalLength[1]);  // delta_H
 		samplInfo.universalInvProfileUnit[2] = this->samplInfo.universalProfileUnit[2] / (2 * M_PI); // delta_Phi
-		global_log->info() << "[CylinderProfile] dR: " << samplInfo.universalInvProfileUnit[0]
+		Log::global_log->info() << "[CylinderProfile] dR: " << samplInfo.universalInvProfileUnit[0]
 						   << " dH: " << samplInfo.universalInvProfileUnit[1]
 						   << " dPhi: " << samplInfo.universalInvProfileUnit[2];
 	} else {
 		for (unsigned i = 0; i < 3; i++) {
 			samplInfo.universalInvProfileUnit[i] = samplInfo.universalProfileUnit[i] / samplInfo.globalLength[i];
-			global_log->info() << "[SpatialProfile] universalInvProfileUnit " << samplInfo.universalInvProfileUnit[i]
+			Log::global_log->info() << "[SpatialProfile] universalInvProfileUnit " << samplInfo.universalInvProfileUnit[i]
 							   << "\n";
 		}
 	}
@@ -190,7 +190,7 @@ void SpatialProfile::init(ParticleContainer* particleContainer, DomainDecompBase
 							 * this->samplInfo.universalProfileUnit[2]);
 
 
-	global_log->info() << "[SpatialProfile] number uID " << _uIDs << "\n";
+	Log::global_log->info() << "[SpatialProfile] number uID " << _uIDs << "\n";
 
 	// Calculate bin Volume
 	if (samplInfo.cylinder) {
@@ -204,14 +204,14 @@ void SpatialProfile::init(ParticleContainer* particleContainer, DomainDecompBase
 				/ (this->samplInfo.universalProfileUnit[0] * this->samplInfo.universalProfileUnit[1] *
 				   this->samplInfo.universalProfileUnit[2]);
 	}
-	global_log->info() << "[SpatialProfile] segmentVolume " << samplInfo.segmentVolume << "\n";
+	Log::global_log->info() << "[SpatialProfile] segmentVolume " << samplInfo.segmentVolume << "\n";
 
 	// Calculate Centre for cylinder coords
 	samplInfo.universalCentre[0] = 0.5 * samplInfo.globalLength[0];
 	samplInfo.universalCentre[1] = 0;
 	samplInfo.universalCentre[2] = 0.5 * samplInfo.globalLength[2];
 
-	global_log->info() << "[SpatialProfile] profile init" << std::endl;
+	Log::global_log->info() << "[SpatialProfile] profile init" << std::endl;
 	// Init profiles with sampling information and reset maps
 	for (unsigned long uID = 0; uID < _uIDs; uID++) {
 		for (unsigned i = 0; i < _profiles.size(); i++) {
@@ -240,9 +240,9 @@ void SpatialProfile::endStep(ParticleContainer* particleContainer, DomainDecompB
 
 		// Loop over all particles and bin them with uIDs
 		for (auto thismol = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); thismol.isValid(); ++thismol) {
-			
+
 			if ((_profiledCompString != "all") && (thismol->componentid() == _profiledComp-1)) {
-				
+
 				// Get uID
 				if (samplInfo.cylinder) {
 					uID = getCylUID(thismol);
@@ -258,9 +258,9 @@ void SpatialProfile::endStep(ParticleContainer* particleContainer, DomainDecompB
 					_profiles[i]->record(*thismol, (unsigned) uID);
 				}
 			}
-			
+
 			if (_profiledCompString == "all"){
-							
+
 				// Get uID
 				if (samplInfo.cylinder) {
 					uID = getCylUID(thismol);
@@ -284,7 +284,7 @@ void SpatialProfile::endStep(ParticleContainer* particleContainer, DomainDecompB
 	if ((simstep >= _initStatistics) && (simstep % _writeFrequency == 0)) {
 
 		// COLLECTIVE COMMUNICATION
-		global_log->info() << "[SpatialProfile] uIDs: " << _uIDs << " acc. Data: " << _accumulatedDatasets << "\n";
+		Log::global_log->info() << "[SpatialProfile] uIDs: " << _uIDs << " acc. Data: " << _accumulatedDatasets << "\n";
 
 		// Initialize Communication with number of bins * number of total comms needed per bin by all profiles.
 		domainDecomp->collCommInit(_comms * _uIDs);
@@ -311,7 +311,7 @@ void SpatialProfile::endStep(ParticleContainer* particleContainer, DomainDecompB
 
 		// Initialize Output from rank 0 process
 		if (mpi_rank == 0) {
-			global_log->info() << "[SpatialProfile] Writing profile output" << std::endl;
+			Log::global_log->info() << "[SpatialProfile] Writing profile output" << std::endl;
 			for (unsigned i = 0; i < _profiles.size(); i++) {
 				_profiles[i]->output(_outputPrefix + "_" + std::to_string(simstep), _accumulatedDatasets);
 			}
@@ -394,23 +394,23 @@ long SpatialProfile::getCylUID(ParticleIterator& thismol) {
 		unID = (long) (hUn * samplInfo.universalProfileUnit[0] * samplInfo.universalProfileUnit[2]
 					   + rUn * samplInfo.universalProfileUnit[2] + phiUn);
 	} else {
-		global_log->error() << "INV PROFILE UNITS " << samplInfo.universalInvProfileUnit[0] << " "
+		Log::global_log->error() << "INV PROFILE UNITS " << samplInfo.universalInvProfileUnit[0] << " "
 							<< samplInfo.universalInvProfileUnit[1] << " " << samplInfo.universalInvProfileUnit[2]
 							<< "\n";
-		global_log->error() << "PROFILE UNITS " << samplInfo.universalProfileUnit[0] << " "
+		Log::global_log->error() << "PROFILE UNITS " << samplInfo.universalProfileUnit[0] << " "
 							<< samplInfo.universalProfileUnit[1] << " " << samplInfo.universalProfileUnit[2] << "\n";
-		global_log->error() << "Severe error!! Invalid profile ID (" << rUn << " / " << hUn << " / " << phiUn
+		Log::global_log->error() << "Severe error!! Invalid profile ID (" << rUn << " / " << hUn << " / " << phiUn
 							<< ").\n\n";
-		global_log->error() << "Severe error!! Invalid profile unit (" << R2 << " / " << yc << " / " << phi << ").\n\n";
-		global_log->error() << "Coordinates off center (" << xc << " / " << yc << " / " << zc << ").\n";
-		global_log->error() << "unID = " << unID << "\n";
+		Log::global_log->error() << "Severe error!! Invalid profile unit (" << R2 << " / " << yc << " / " << phi << ").\n\n";
+		Log::global_log->error() << "Coordinates off center (" << xc << " / " << yc << " / " << zc << ").\n";
+		Log::global_log->error() << "unID = " << unID << "\n";
 		Simulation::exit(707);
 	}
 	return unID;
 }
 
 void SpatialProfile::addProfile(ProfileBase* profile) {
-	global_log->info() << "[SpatialProfile] Profile added: \n";
+	Log::global_log->info() << "[SpatialProfile] Profile added: \n";
 	_profiles.push_back(profile);
 	_comms += profile->comms();
 }

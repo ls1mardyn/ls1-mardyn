@@ -28,7 +28,7 @@ public:
  * message associated to the exception. In fact, CppUnit capture message from
  * Exception and std::exception using a Protector.
  *
- * Protector are chained. When you add a Protector using 
+ * Protector are chained. When you add a Protector using
  * TestResult::pushProtector(), your protector is in fact passed as a Functor
  * to the first protector of the chain.
  *
@@ -48,7 +48,7 @@ class CPPUNIT_API Protector
 {
 public:
   virtual ~Protector();
-  
+
   virtual bool protect( const Functor &functor,
                         const ProtectorContext &context ) =0;
 

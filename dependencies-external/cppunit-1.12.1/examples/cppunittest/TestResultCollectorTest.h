@@ -77,14 +77,14 @@ private:
 
   void addFailure( std::string message );
   void addError( std::string message );
-  void addFailure( std::string message, 
-                   CPPUNIT_NS::Test *failedTest, 
+  void addFailure( std::string message,
+                   CPPUNIT_NS::Test *failedTest,
                    bool isError,
                    CPPUNIT_NS::TestResultCollector *result );
 
 private:
   CPPUNIT_NS::TestResultCollector *m_result;
-  SynchronizedTestResult *m_synchronizedResult;  
+  SynchronizedTestResult *m_synchronizedResult;
   CPPUNIT_NS::Test *m_test;
   CPPUNIT_NS::Test *m_test2;
   int m_lockCount;

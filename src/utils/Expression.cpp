@@ -7,7 +7,6 @@
 
 #include "Expression.h"
 
-using namespace std;
 
 
 bool Expression::Value::operator==(Value const& v) const
@@ -128,11 +127,11 @@ const Expression::Value Expression::Value::operator/(Value const& v) const
 }
 
 
-Expression::Variable* Expression::VariableSet::addVariable(const string& name)
+Expression::Variable* Expression::VariableSet::addVariable(const std::string& name)
 {
-	string vgrpname,varname(name);
+	std::string vgrpname,varname(name);
 	size_t colonpos=name.find(":");
-	if(colonpos!=string::npos)
+	if(colonpos!=std::string::npos)
 	{
 		vgrpname=name.substr(0,colonpos);
 		varname=name.substr(colonpos+1);
@@ -140,14 +139,14 @@ Expression::Variable* Expression::VariableSet::addVariable(const string& name)
 	if(!existVariableGroup(vgrpname))
 	{ // create variable group
 		//_vargroups[vgrpname]=VariableGroup(vgrpname);
-		_vargroups.insert(pair<string,VariableGroup>(vgrpname,VariableGroup(vgrpname)));
+		_vargroups.insert(std::pair<std::string,VariableGroup>(vgrpname,VariableGroup(vgrpname)));
 	}
 	//_variables[name]=Variable(varname,&_vargroups[vgrpname],val);
-	_variables.insert(pair<string,Variable>(name,Variable(varname,&_vargroups[vgrpname])));
+	_variables.insert(std::pair<std::string,Variable>(name,Variable(varname,&_vargroups[vgrpname])));
 	return &_variables[name];
 }
 
-bool Expression::VariableSet::removeVariable(const string& name)
+bool Expression::VariableSet::removeVariable(const std::string& name)
 {
 	Variable* var=getVariable(name);
 	if(var)
@@ -168,7 +167,7 @@ bool Expression::VariableSet::removeVariable(const string& name)
 
 
 
-void Expression::Node::traverse(list<const Node*>& nodelist, enum Etraversetype traversetype) const
+void Expression::Node::traverse(std::list<const Node*>& nodelist, enum Etraversetype traversetype) const
 {
 	switch(traversetype)
 	{
@@ -190,7 +189,7 @@ void Expression::Node::traverse(list<const Node*>& nodelist, enum Etraversetype 
 	}
 }
 
-void Expression::Node::writeSubExpr(ostream& ostrm, enum Etraversetype traversetype, char sep) const
+void Expression::Node::writeSubExpr(std::ostream& ostrm, enum Etraversetype traversetype, char sep) const
 {
 	switch(traversetype)
 	{
@@ -464,7 +463,7 @@ Expression::Value Expression::NodeFunction::evaluate() const
 	return Value();
 }
 
-void Expression::NodeFunction::write(ostream& ostrm) const {
+void Expression::NodeFunction::write(std::ostream& ostrm) const {
 	switch(_functype)
 	{	//
 		case functypeNONE:	ostrm << "undef"; break;
@@ -507,7 +506,7 @@ Expression::Tvaltype Expression::NodeFunctionVarSet::valueType() const
 		{	// functions with 1 argument
 			case functypeRCL:
 			{
-				string varname("_localstore:"+static_cast<string>(*_children[1]));
+				std::string varname("_localstore:"+static_cast<std::string>(*_children[1]));
 				Expression::Tvaltype valtype = valtypeNONE;
 				Expression::Variable* var=NULL;
 				if(_variableset) var=_variableset->getVariable(varname);
@@ -537,7 +536,7 @@ Expression::Value Expression::NodeFunctionVarSet::evaluate() const
 		{	// functions with 1 argument
 			case functypeRCL:
 			{
-				string varname("_localstore:"+static_cast<string>(*_children[1]));
+				std::string varname("_localstore:"+static_cast<std::string>(*_children[1]));
 				Expression::Value val;
 				Expression::Variable* var=NULL;
 				if(_variableset) var=_variableset->getVariable(varname);
@@ -553,7 +552,7 @@ Expression::Value Expression::NodeFunctionVarSet::evaluate() const
 				case functypeSTO:
 				{
 					Expression::Value val=_children[0]->evaluate();
-					string varname("_localstore:"+static_cast<string>(*_children[1]));
+					std::string varname("_localstore:"+static_cast<std::string>(*_children[1]));
 					if(_variableset) _variableset->setVariable(varname,val);
 					return val;
 				}
@@ -564,7 +563,7 @@ Expression::Value Expression::NodeFunctionVarSet::evaluate() const
 	return Value();
 }
 
-void Expression::NodeFunctionVarSet::write(ostream& ostrm) const {
+void Expression::NodeFunctionVarSet::write(std::ostream& ostrm) const {
 	switch(_functype)
 	{	//
 		case functypeRCL:	ostrm << "RCL"; break;
@@ -576,15 +575,15 @@ void Expression::NodeFunctionVarSet::write(ostream& ostrm) const {
 
 
 
-void Expression::initializeRPN(const string& exprstr, bool genlabel)
+void Expression::initializeRPN(const std::string& exprstr, bool genlabel)
 {
 	clear();
-	stack<Node*> nodestack;
+	std::stack<Node*> nodestack;
 	// split expr to generate Nodes
 	size_t startpos=0,endpos;
 	while(startpos<exprstr.size()) {
 		endpos=exprstr.find_first_of(" \t",startpos);
-		if(endpos==string::npos)
+		if(endpos==std::string::npos)
 		{
 			endpos=exprstr.size()-1;
 		} else if(endpos==startpos) {
@@ -593,7 +592,7 @@ void Expression::initializeRPN(const string& exprstr, bool genlabel)
 		} else {
 			--endpos;
 		}
-		string token=exprstr.substr(startpos,endpos-startpos+1);
+		std::string token=exprstr.substr(startpos,endpos-startpos+1);
 		size_t colonpos=token.find(":");
 		if(token.size()==1 && token.find_first_of("+-*/")==0)
 		{	// operator ................................................
@@ -607,10 +606,10 @@ void Expression::initializeRPN(const string& exprstr, bool genlabel)
 				node1->setParent(node0);
 				node2->setParent(node0);
 			}
-		} else if(token.find_first_not_of("0123456789.-E")==string::npos){
+		} else if(token.find_first_not_of("0123456789.-E")==std::string::npos){
 			// constant ................................................
-			istringstream iss(token);
-			if(token.find_first_not_of("0123456789-")==string::npos)
+			std::istringstream iss(token);
+			if(token.find_first_not_of("0123456789-")==std::string::npos)
 			{ // Tint
 				Tint valInt=0;
 				iss>>valInt;
@@ -622,8 +621,8 @@ void Expression::initializeRPN(const string& exprstr, bool genlabel)
 				iss>>valFloat;
 				nodestack.push(new NodeConstant(valFloat));
 			}
-			iss.str(string());
-		} else if(colonpos!=string::npos) {
+			iss.str(std::string());
+		} else if(colonpos!=std::string::npos) {
 			// variable ................................................
 			nodestack.push(new NodeVariable(_variableset->addVariable(token)));
 		} else {

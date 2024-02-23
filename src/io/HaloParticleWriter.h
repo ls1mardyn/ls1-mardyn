@@ -12,10 +12,10 @@
  */
 class HaloParticleWriter : public PluginBase {
 public:
-	
+
     HaloParticleWriter() = default;
 	~HaloParticleWriter() override = default;
-	
+
 
 	/** @brief Read in XML configuration for HaloParticleWriter.
 	 *
@@ -25,12 +25,12 @@ public:
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
 	     <incremental>INTEGER</incremental>
-	     <appendTimestamp>INTEGER</appendTimestamp>
+	     <appendTimestamp>BOOL</appendTimestamp>
 	   </outputplugin>
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
-	
+
 	void init(ParticleContainer *particleContainer,
               DomainDecompBase *domainDecomp, Domain *domain) override;
 	void afterForces(ParticleContainer *particleContainer,
@@ -43,7 +43,7 @@ public:
 
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain) override;
-	
+
 	std::string getPluginName() override {
 		return std::string("HaloParticleWriter");
 	}

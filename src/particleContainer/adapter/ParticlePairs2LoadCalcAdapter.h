@@ -46,7 +46,7 @@ public:
 		MPI_CHECK( MPI_Allreduce(_globalLoadPerCell, temp, _globalNumCells, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD) );
 		delete[] _globalLoadPerCell;
 		_globalLoadPerCell = temp;
-		//cout << "LocalLoad: " << _localLoad << endl;
+		//cout << "LocalLoad: " << _localLoad << std::endl;
 	}
 
 	//! @brief calculate force between pairs and collect macroscopic contribution
