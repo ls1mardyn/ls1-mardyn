@@ -116,6 +116,11 @@ void StaticIrregDomainDecomposition::updateSubdomainWeightsFromFile(
     }
     _subdomainWeights[i].clear();
     std::stringstream ss(line);
+    if (!ss.good()) {
+      Log::global_log->fatal() << "EOF or I/O error occured on line " << i
+                               << " of CSV. Please check CSV file!";
+      Simulation::exit(5004);
+    }
     while (ss.good()) {
       int temp;
       ss >> temp;
@@ -127,6 +132,11 @@ void StaticIrregDomainDecomposition::updateSubdomainWeightsFromFile(
       _subdomainWeights[i].push_back(temp);
       if (ss.peek() == ',' || ss.peek() == ' ') // skip commas and spaces
         ss.ignore();
+    }
+    if (_subdomainWeights[i].empty()) {
+      Log::global_log->fatal()
+          << "Weights empty, failed reading operation, please check CSV file!";
+      Simulation::exit(5005);
     }
   }
   Log::global_log->info() << "Weights for subdomains for "
