@@ -63,9 +63,7 @@
 		</ensemble>
 		<algorithm>
 			<parallelisation type="StaticIrregDomainDecomposition">
-             <subdomainSizeCSV>
-			<filename>basic4.csv</filename>
-                </subdomainSizeCSV>
+             <subdomainWeightsCSV>basic4.csv</subdomainWeightsCSV>
 			</parallelisation>
 			<datastructure type="LinkedCells">
 			<cellsInCutoffRadius>1</cellsInCutoffRadius>
