@@ -65,7 +65,7 @@ public:
 	 * Consequently, the number of integers for a dimension signify the number of ranks in that dimension, and is calculated as such.
 	 * 
 	*/
-	void updateSubdomainWeightsFromFile(std::string filename);
+	void updateSubdomainWeightsFromFile(const std::string &filename);
 	
 private:
 	/** @brief Stores the weights from the given CSV file.
