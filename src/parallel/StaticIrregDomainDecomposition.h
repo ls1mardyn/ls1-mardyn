@@ -9,12 +9,13 @@
 #include "DomainDecompMPIBase.h"
 #include "DomainDecomposition.h"
 
-/** Extends DomainDecomposition to implement static irregular grids
- *
- * */
+/**
+ * Extends DomainDecomposition to implement static irregular grids
+ */
 class StaticIrregDomainDecomposition : public DomainDecomposition {
 public:
-  /** Default constructor. Passes default values to the main constructor.
+  /**
+   * Default constructor. Passes default values to the main constructor.
    *
    * The constructor passes the default value of _subDomainWeights to the main
    * constructor, so that the size() of individual vectors is zero, to trigger
@@ -22,11 +23,11 @@ public:
    *
    * @param *domain The domain object defined in Simulation, needed to extract
    * the global simulation bounds.
-   *
    */
   StaticIrregDomainDecomposition(Domain *domain);
 
-  /** Main constructor. Passes values to DomainDecomposition, and inits
+  /**
+   * Main constructor. Passes values to DomainDecomposition, and inits
    * class members.
    *
    * In case _subdomainWeights is blank (to trigger initial coord breakdown from
@@ -42,13 +43,13 @@ public:
    * @param comm The local communicator for the simulation
    * @param _subdomainWeights An array containing 3 vectors, each containing the
    * numeric weights of each subdomain, ordered by axes.
-   *
    */
   StaticIrregDomainDecomposition(
       Domain *domain, MPI_Comm comm,
       const std::array<std::vector<unsigned int>, DIMgeom> &subdomainWeights);
 
-  /** Reads in XML configuration for StaticIrregDomainDecomposition.
+  /**
+   * Reads in XML configuration for StaticIrregDomainDecomposition.
    *
    * The only configuration allowed right now is a CSV file, which contains the
    actual domain breakdown.
@@ -72,7 +73,6 @@ public:
    *
    * @param &xmlconfig The xml node from which to read the CSV filename with
    weights
-   *
    */
   void readXML(XMLfileUnits &xmlconfig) override;
 
@@ -80,16 +80,17 @@ public:
 
   double getBoundingBoxMax(int dimension, Domain *domain) override;
 
-  /** Assuming _subdomainWeights is up-to-date, calculates bounds of
+  /**
+   * Assuming _subdomainWeights is up-to-date, calculates bounds of
    * current subdomain and updates _boxMin and _boxMax.
    *
    * For an explanation on what the weights signify, please see the
    * documentation for the member _subdomainWeights.
-   *
    */
   void updateSubdomainDimensions();
 
-  /** Reads in the CSV file given by the XML config, and updates
+  /**
+   * Reads in the CSV file given by the XML config, and updates
    * _subdomainWeights.
    *
    * The CSV file is expected to have 3 lines of comma-separated integers, with
@@ -100,12 +101,12 @@ public:
    *
    * @param &filename The CSV file from which to read weights. Obtained from the
    * XML config.
-   *
    */
   void updateSubdomainWeightsFromFile(const std::string &filename);
 
 private:
-  /** Stores the weights from the given CSV file.
+  /**
+   * Stores the weights from the given CSV file.
    *
    * The weights denote the relative width of that subdomain relative to the
    * others in the same dimension. Ex: if the weights in the x dimension are
@@ -114,24 +115,23 @@ private:
    * with coords (0,y,z) are 20 units in x direction, (1,y,z) are 60 units and
    * (2,y,z) are 20 units. Weights are only relative for the dimension, and
    * weights for different dimensions are independent.
-   *
    */
   std::array<std::vector<unsigned int>, 3> _subdomainWeights{{{}, {}, {}}};
 
-  /** Stores the start of the subdomain. Calculated by
+  /**
+   * Stores the start of the subdomain. Calculated by
    * updateSubdomainDimensions().
-   *
    */
   std::array<double, 3> _boxMin{0, 0, 0};
 
-  /** Stores the end of the subdomain. Calculated by
+  /**
+   * Stores the end of the subdomain. Calculated by
    * updateSubdomainDimensions().
-   *
    */
   std::array<double, 3> _boxMax{0, 0, 0};
 
-  /** Stores the domain lengths. Set in the constructor.
-   *
+  /**
+   * Stores the domain lengths. Set in the constructor.
    */
   std::array<double, 3> _domainLength;
 };
