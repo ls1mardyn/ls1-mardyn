@@ -31,6 +31,7 @@
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
 #include "parallel/GeneralDomainDecomposition.h"
+#include "parallel/StaticIrregDomainDecomposition.h"
 #endif
 
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
@@ -326,6 +327,17 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 #ifdef MAMICO_COUPLING	
 				coupling::interface::LS1StaticCommData::getInstance().getLocalCommunicator(),
 				coupling::interface::LS1StaticCommData::getInstance().getDomainGridDecomp()
+#endif
+				);
+			}
+			else if(parallelisationtype == "StaticIrregDomainDecomposition") {
+				delete _domainDecomposition;
+				_domainDecomposition = new StaticIrregDomainDecomposition(
+				_domain
+#ifdef MAMICO_COUPLING
+				,
+				coupling::interface::LS1StaticCommData::getInstance().getLocalCommunicator(),
+				coupling::interface::LS1StaticCommData::getInstance().getSubdomainWeights()
 #endif
 				);
 			}
