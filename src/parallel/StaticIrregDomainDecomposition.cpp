@@ -21,7 +21,7 @@ StaticIrregDomainDecomposition::StaticIrregDomainDecomposition(
     : DomainDecomposition(comm, {(int)subdomainWeights[0].size(),
                                  (int)subdomainWeights[1].size(),
                                  (int)subdomainWeights[2].size()}),
-      _subdomainWeights(subdomainWeights), _boxMin{0}, _boxMax{0},
+      _subdomainWeights(subdomainWeights),
       _domainLength{domain->getGlobalLength(0), domain->getGlobalLength(1),
                     domain->getGlobalLength(2)} {
   if (_subdomainWeights[0].size() == 0 && _subdomainWeights[1].size() == 0 &&
