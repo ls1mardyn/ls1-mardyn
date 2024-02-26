@@ -3,7 +3,7 @@
 #include "MamicoCoupling.h"
 #include "Domain.h"
 
-void MamicoCoupling::readXML(XMLfileUnits &xmlconfig) { return; }
+void MamicoCoupling::readXML(XMLfileUnits &xmlconfig) {}
 
 void MamicoCoupling::init(ParticleContainer *particleContainer,
                           DomainDecompBase *domainDecomp, Domain *domain) {

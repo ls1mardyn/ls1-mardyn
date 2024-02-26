@@ -22,12 +22,11 @@
  * compiles as a library. To make sure the program compiles and works with
  * tests, the relevant MaMiCo portions for the code are put in #ifdef regions.
  */
-
 class MamicoCoupling : public PluginBase {
 
 public:
-  MamicoCoupling() {}
-  virtual ~MamicoCoupling() {}
+  MamicoCoupling() = default;
+  ~MamicoCoupling() override = default;
 
   /**
    * Currently only prints to log that mamico coupling is initialized
@@ -82,7 +81,7 @@ public:
   void finish(ParticleContainer *particleContainer,
               DomainDecompBase *domainDecomp, Domain *domain) override;
 
-  std::string getPluginName() override { return std::string("MamicoCoupling"); }
+  std::string getPluginName() override { return "MamicoCoupling"; }
 
   static PluginBase *createInstance() { return new MamicoCoupling(); }
   
@@ -127,11 +126,11 @@ public:
    *
    * Not used currently, but may be used in future
    */
-  bool getCouplingState() { return _couplingEnabled; }
+  bool getCouplingState() const { return _couplingEnabled; }
 
 private:
   coupling::services::CouplingCellServiceImpl<ls1::LS1RegionWrapper, 3>
-      *_couplingCellService;
+      *_couplingCellService = nullptr;
 
   bool _couplingEnabled = false;
 };
