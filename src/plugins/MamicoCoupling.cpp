@@ -1,3 +1,5 @@
+#ifdef MAMICO_COUPLING
+
 #include "MamicoCoupling.h"
 #include "Domain.h"
 
@@ -5,10 +7,9 @@ void MamicoCoupling::readXML(XMLfileUnits &xmlconfig) { return; }
 
 void MamicoCoupling::init(ParticleContainer *particleContainer,
                           DomainDecompBase *domainDecomp, Domain *domain) {
-#ifdef MAMICO_COUPLING
-  // code to print to log that plugin is initialised
+
   Log::global_log->info() << "MaMiCo coupling plugin initialized" << std::endl;
-#endif
+
 }
 
 void MamicoCoupling::beforeEventNewTimestep(
@@ -18,7 +19,6 @@ void MamicoCoupling::beforeEventNewTimestep(
 void MamicoCoupling::beforeForces(ParticleContainer *particleContainer,
                                   DomainDecompBase *domainDecomp,
                                   unsigned long simstep) {
-#ifdef MAMICO_COUPLING
   if (_couplingEnabled) {
     // This object should be set by MaMiCo after the plugins are created in the
     // simulation readxml file Even though this method is called before the
@@ -30,18 +30,15 @@ void MamicoCoupling::beforeForces(ParticleContainer *particleContainer,
     particleContainer->deleteOuterParticles();
 #endif
   }
-#endif
 }
 
 void MamicoCoupling::afterForces(ParticleContainer *particleContainer,
                                  DomainDecompBase *domainDecomp,
                                  unsigned long simstep) {
-#ifdef MAMICO_COUPLING
   if (_couplingEnabled) {
     _couplingCellService->distributeMomentum(simstep);
     _couplingCellService->applyBoundaryForce(simstep);
   }
-#endif
 }
 
 void MamicoCoupling::endStep(ParticleContainer *particleContainer,
@@ -50,3 +47,5 @@ void MamicoCoupling::endStep(ParticleContainer *particleContainer,
 
 void MamicoCoupling::finish(ParticleContainer *particleContainer,
                             DomainDecompBase *domainDecomp, Domain *domain) {}
+
+#endif

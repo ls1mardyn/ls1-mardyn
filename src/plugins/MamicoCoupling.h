@@ -1,10 +1,11 @@
+#ifdef MAMICO_COUPLING
+
 #pragma once
 
 #include "PluginBase.h"
-#ifdef MAMICO_COUPLING
 #include <coupling/interface/impl/ls1/LS1RegionWrapper.h>
 #include <coupling/services/CouplingCellService.h>
-#endif
+
 
 /**
  * Allows execution of MaMiCo code to enable coupling with MaMiCo.
@@ -29,11 +30,14 @@ public:
   virtual ~MamicoCoupling() {}
 
   /**
-   * Prints to log that mamico coupling is initialized
+   * Currently only prints to log that mamico coupling is initialized
    */
   void init(ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain) override;
 
+  /*
+  * No XML tags defined for this plugin, so does nothing
+  */
   void readXML(XMLfileUnits &xmlconfig) override;
 
   void beforeEventNewTimestep(ParticleContainer *particleContainer,
@@ -81,8 +85,7 @@ public:
   std::string getPluginName() override { return std::string("MamicoCoupling"); }
 
   static PluginBase *createInstance() { return new MamicoCoupling(); }
-
-#ifdef MAMICO_COUPLING
+  
   /**
    * Sets the macroscopicCellService object that controls the inner coupling
    * logic.
@@ -90,15 +93,14 @@ public:
    * MaMiCo extracts the MamicoCoupling plugin object from the simulation object
    * after initialization and uses this function to set the
    * macroscopicCellCervice. The code for this object can be found in
-   * https://github.com/HSU-HPC/MaMiCo/blob/master/coupling/services/MacroscopicCellService.cpph
+   * https://github.com/HSU-HPC/MaMiCo/blob/master/coupling/services/CouplingCellService.cpph
    */
-  void setMamicoMacroscopicCellService(
+  void setMamicoCouplingCellService(
       coupling::services::CouplingCellService<3> *couplingCellService) {
     _couplingCellService =
         static_cast<coupling::services::CouplingCellServiceImpl<
             ls1::LS1RegionWrapper, 3> *>(couplingCellService);
   }
-#endif
 
   /**
    * Enables coupling logic, allowing coupling steps to run while simulation is
@@ -128,9 +130,10 @@ public:
   bool getCouplingState() { return _couplingEnabled; }
 
 private:
-#ifdef MAMICO_COUPLING
   coupling::services::CouplingCellServiceImpl<ls1::LS1RegionWrapper, 3>
       *_couplingCellService;
-#endif
+
   bool _couplingEnabled = false;
 };
+
+#endif
