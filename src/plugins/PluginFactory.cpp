@@ -35,7 +35,6 @@
 #include "io/ResultWriter.h"
 #include "io/SysMonOutput.h"
 #include "io/TimerWriter.h"
-#include "io/VISWriter.h"
 #include "io/XyzWriter.h"
 
 // General plugins
@@ -133,7 +132,6 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(TestPlugin);
 	REGISTER_PLUGIN(TimerWriter);
 	REGISTER_PLUGIN(VectorizationTuner);
-	REGISTER_PLUGIN(VISWriter);
 	REGISTER_PLUGIN(WallPotential);
 	REGISTER_PLUGIN(XyzWriter);
 #ifdef VTK
