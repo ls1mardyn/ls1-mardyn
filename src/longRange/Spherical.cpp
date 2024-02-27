@@ -435,17 +435,17 @@ void Spherical::calculateLongRange(){
 		int outside_from = NShells -2 - NShells/10 - 5;
 		int outside_to = NShells - 2;
 
-		double rhol = 0.;
+		double rho_in = 0.;
 		for (unsigned int i = inside_from; i< inside_to; i++){
-			rhol += rhoShells_global[i];
+			rho_in += rhoShells_global[i];
 		}
-		rhol /= (inside_to - inside_from);
+		rho_in /= (inside_to - inside_from);
 
-		double rhov = 0.;
+		double rho_out = 0.;
 		for (unsigned int i = outside_from; i< outside_to; i++){
-			rhov += rhoShells_global[i];
+			rho_out += rhoShells_global[i];
 		}
-		rhov /= (outside_to - outside_from);
+		rho_out /= (outside_to - outside_from);
 
 
 
@@ -454,9 +454,9 @@ void Spherical::calculateLongRange(){
 		double Dmax = 0.0;
 
 		if (droplet){
-			double r10 = rhov + 0.1*(rhol-rhov);
-			double r90 = rhov + 0.9*(rhol-rhov);
-			for (unsigned int i=1; i<(NShells-10); i++) {
+			double r10 = rho_out + 0.1*(rho_in-rho_out);
+			double r90 = rho_out + 0.9*(rho_in-rho_out);
+			for (unsigned int i=1; i<(NShells-10); i++) { //TODO:WHY IS THERE A HARDCODED 10 HERE?!
 				if ( rhoShells_global[i] > r90 ) {
 					Dmin = RShells[i];
 				}
@@ -468,8 +468,8 @@ void Spherical::calculateLongRange(){
 				}
 			}
 		}else{
-			double r10 = rhol + 0.1*(rhov-rhol);
-			double r90 = rhol + 0.9*(rhov-rhol);
+			double r10 = rho_in + 0.1*(rho_out-rho_in);
+			double r90 = rho_in + 0.9*(rho_out-rho_in);
 			for (unsigned int i=1; i<(NShells-10); i++) {
 				if ( rhoShells_global[i] < r10 ) {
 					Dmin = RShells[i];
@@ -488,15 +488,15 @@ void Spherical::calculateLongRange(){
 
 		// density profile
 		for (unsigned int i=0; i<NShells; i++) {
-			rhoShellsT[i] = RhoP(RShells[i], rhov, rhol, D0, R0);
+			rhoShellsT[i] = RhoP(RShells[i], rho_out, rho_in, D0, R0);
 		}
         
         if ( simstep % writeFreq == 0) {  
             if (rank == 0) {
                 ofstream outfilestreamTanhParams(filenameTanhParams, ios::app);
                 outfilestreamTanhParams << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << simstep;
-                outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rhov;
-                outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rhol;
+                outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rho_out;
+                outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rho_in;
                 outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << D0;
                 outfilestreamTanhParams << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << R0;
                 outfilestreamTanhParams << std::endl;
@@ -507,16 +507,16 @@ void Spherical::calculateLongRange(){
 		// shift for Force Correction
 		if (droplet){
 			for (unsigned int i=0; i<NShells; i++) {
-				if ( rhoShellsT[i] >= 1.02*rhov) {
-					rhoShellsT[i] -= rhov;
+				if ( rhoShellsT[i] >= 1.02*rho_out) {
+					rhoShellsT[i] -= rho_out;
 				} else {
 					rhoShellsT[i] = 0.0;
 				}
 			}
 		}else{
 			for (unsigned int i=0; i<NShells; i++) {
-				if ( rhoShellsT[i] <= 0.998*rhov) {  
-					rhoShellsT[i] -= rhov;
+				if ( rhoShellsT[i] <= 0.998*rho_out) { 
+					rhoShellsT[i] -= rho_out;
 				} else {
 					rhoShellsT[i] = 0.0;
 				}
@@ -549,30 +549,30 @@ void Spherical::calculateLongRange(){
 						//double tau2 = 0.0;
 						if ( (tau1 == 0.0) && (tau2 == 0.0) ) {
 							UpotKorrLJ = UpotKorrLJ
-								+ rhov * (eps24/6.0)
+								+ rho_out * (eps24/6.0)
 								* (  TICCu(-6,rc,sig2)
 									- TICCu(-3,rc,sig2) );
 							VirialKorrLJ = VirialKorrLJ
-							    + rhov * (eps24/6.0)
+							    + rho_out * (eps24/6.0)
 							    * (  TICCp(-6,rc,sig2)
 							       - TICCp(-3,rc,sig2) );
 						} else if ( (tau1 == 0.0) || (tau2 == 0.0) ) {
 							double tau = max(tau1,tau2);   // Filtert den Wert Null raus
 							UpotKorrLJ = UpotKorrLJ
-								+ rhov * (eps24/6.0)
+								+ rho_out * (eps24/6.0)
 								* (  TICSu(-6,rc,sig2,tau)
 									- TICSu(-3,rc,sig2,tau) );
 							VirialKorrLJ = VirialKorrLJ
-							    + rhov * (eps24/6.0)
+							    + rho_out * (eps24/6.0)
 							    * (  TICSp(-6,rc,sig2,tau)
 							       - TICSp(-3,rc,sig2,tau) );
 						} else if ( (tau1 != 0.0) && (tau2 != 0.0) ) {
 							UpotKorrLJ = UpotKorrLJ
-								+ rhov * (eps24/6.0)
+								+ rho_out * (eps24/6.0)
 								* (  TISSu(-6,rc,sig2,tau1,tau2)
 									- TISSu(-3,rc,sig2,tau1,tau2) );
 							VirialKorrLJ = VirialKorrLJ
-							    + rhov * (eps24/6.0)
+							    + rho_out * (eps24/6.0)
 							    * (  TISSp(-6,rc,sig2,tau1,tau2)
 							       - TISSp(-3,rc,sig2,tau1,tau2) );
 						}
@@ -1202,18 +1202,15 @@ void Spherical::calculateLongRange(){
 
 	UCorrSum_global += globalNumMols*UpotKorrLJ;
 
-	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
-		unsigned long molID = tempMol->getID();
-		double Fa[3]={0.0, 0.0, 0.0};
-		Fa[0] = FcorrX[molID];
-		Fa[1] = FcorrY[molID];
-		Fa[2] = FcorrZ[molID];
-		if(!disableLRC){	
-			tempMol->Fadd(Fa);
-		}
-	}
-	
 	if(!disableLRC){	
+		for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
+			unsigned long molID = tempMol->getID();
+			double Fa[3]={0.0, 0.0, 0.0};
+			Fa[0] = FcorrX[molID];
+			Fa[1] = FcorrY[molID];
+			Fa[2] = FcorrZ[molID];
+			tempMol->Fadd(Fa);
+		}	
 		_domain->setUpotCorr(UCorrSum_global);
 	}else{
 		_domain->setUpotCorr(0.);
