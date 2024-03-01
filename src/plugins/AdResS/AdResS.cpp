@@ -230,19 +230,6 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
     stream << "./F_TH_Density_Smooth_" << simstep << ".txta";
     densities = _densityProfiler.getDensitySmoothed(0);
     if(_logDensities) writeDensities(stream.str(), densities);
-
-    _densityProfiler.computeDensities(particleContainer, domainDecomp, domain);
-    Interpolation::Function histDensity = _densityProfiler.getHistDensity(0);
-    Interpolation::resampleFunction(0, domain->getGlobalLength(0), _samplingStepSize, histDensity);
-    stream.clear();
-    stream = std::stringstream {};
-    stream << "./F_TH_HistDensity_" << simstep << ".xmla";
-    writeFunctionToXML(stream.str(), histDensity);
-
-    stream.clear();
-    stream = std::stringstream {};
-    stream << "./F_TH_HistInterpolationFunction_" << simstep << ".xmlb";
-    writeFunctionToXML(stream.str(), _thermodynamicForceHist);
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
@@ -365,6 +352,8 @@ void AdResS::computeF_TH() {
 
 bool AdResS::checkF_TH_Convergence() {
     if(_lastGradient.function_values.empty()) return false;
+    if(_convergenceFactor == 0.0) return false;
+
     auto it0 = std::max_element(_lastGradient.function_values.begin(), _lastGradient.function_values.end());
     auto it1 = std::min_element(_lastGradient.function_values.begin(), _lastGradient.function_values.end());
     double max_grad = std::max(std::abs(*it0), std::abs(*it1)) * _convergenceFactor;
@@ -626,5 +615,43 @@ void AdResS::writeDensities(const string &filename, vector<double> &densities, c
     } catch (std::ifstream::failure& e) {
         global_log->error() << "[AdResS] Failed to write densities to file.\n" << e.what() << std::endl;
         _simulation.exit(-1);
+    }
+}
+
+void AdResS::afterForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
+    std::array<double, 3> low = {2*_samplingStepSize,
+                                 0,
+                                 0};
+    std::array<double, 3> high= {_simulation.getDomain()->getGlobalLength(0) - 2*_samplingStepSize,
+                                 _simulation.getDomain()->getGlobalLength(1),
+                                 _simulation.getDomain()->getGlobalLength(2)};
+
+    // TODO FIXME!!
+    double cutoff = _simulation.getcutoffRadius();
+    auto& region = _fpRegions[0];
+    low[0] = region._lowHybrid[0] - cutoff;
+    high[0] = region._low[0] + cutoff;
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+    for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
+        std::array<double, 3> f = itM->F_arr();
+        for(short d = 0; d < 3; d++) {
+            f[d] = std::copysign(std::min(std::abs(f[d]), _forceMax), f[d]);
+        }
+        itM->setF(std::data(f));
+    }
+
+    low[0] = region._high[0] - cutoff;
+    high[0] = region._highHybrid[0] + cutoff;
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+    for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
+        std::array<double, 3> f = itM->F_arr();
+        for(short d = 0; d < 3; d++) {
+            f[d] = std::copysign(std::min(std::abs(f[d]), _forceMax), f[d]);
+        }
+        itM->setF(std::data(f));
     }
 }

@@ -61,6 +61,7 @@
 #include "plugins/NEMD/RegionSampling.h"
 #include "plugins/NEMD/VelocityExchange.h"
 #include "plugins/Permittivity.h"
+#include "plugins/Pressure/PressureProfiler.h"
 #include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
@@ -122,6 +123,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(MettDeamon);
 	REGISTER_PLUGIN(MettDeamonFeedrateDirector);
 	REGISTER_PLUGIN(PosNegComp);
+    REGISTER_PLUGIN(PressureProfiler);
 	REGISTER_PLUGIN(DensityControl);
 	REGISTER_PLUGIN(DistControl);
 	REGISTER_PLUGIN(DriftCtrl);

@@ -126,6 +126,8 @@ public:
      * */
     void siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) override;
 
+    void afterForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) override;
+
     std::string getPluginName() override;
 
     /**
