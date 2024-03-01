@@ -1233,7 +1233,7 @@ void Spherical::calculateLongRange(){
 
 
 	//DEBUGGING:
-	for(i = NShells/6; i<NShells; i += NShells/3){
+	for(int i = NShells/6; i<NShells; i += NShells/3){
 		std::cout << "VirShells_Mean_global["<<i<<"] before division:"<<VirShells_Mean_global[i]<<std::endl;
 	}
 
