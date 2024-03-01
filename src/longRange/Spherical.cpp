@@ -983,7 +983,7 @@ void Spherical::calculateLongRange(){
  			if (rhoShellsTemp_global[i] != 0.0){
 				UShells_Mean_global[i] /= (rhoShellsTemp_global[i]*VShells[i]);
 				FShells_Mean_global[i] /= (rhoShellsTemp_global[i]*VShells[i]);
-				PNShells_Mean_global[i] /= (rhoShellsTemp_global[i]*VShells[i]);
+				PNShells_Mean_global[i] /= (rhoShellsTemp_global[i]*VShells[i]); // ^=    /=NShells ?? warum dann nciht so geschrieben?
 				PTShells_Mean_global[i] /= (rhoShellsTemp_global[i]*VShells[i]);
 			}
 		}
@@ -1106,6 +1106,7 @@ void Spherical::calculateLongRange(){
                 ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs, ios::out);
                 outfilestreamGlobalCorrs << std::setw(24) << "Radius;";
                 outfilestreamGlobalCorrs << std::setw(24) << "RhoShells_Avg;";
+                outfilestreamGlobalCorrs << std::setw(24) << "RhoShellsT_Avg;";
                 outfilestreamGlobalCorrs << std::setw(24) << "UShells_Mean;";
                 outfilestreamGlobalCorrs << std::setw(24) << "FShells_Mean;";
                 outfilestreamGlobalCorrs << std::setw(24) << "PNShells_Mean;";
@@ -1118,8 +1119,14 @@ void Spherical::calculateLongRange(){
 
                 outfilestreamGlobalCorrs << std::endl;
                 for (unsigned int i=0; i<NShells; i++){
+								//DEBUGGING:
+								if((i+1)%60 == 0){
+									std::cout << "_T*rhoShellsAvg_global[" << i<< "] = " << _T*rhoShellsAvg_global[i] << std::endl;
+									std::cout << "VirShells_N_global[" << i<< "] = " << VirShells_N_global[i] << std::endl;
+								}
                     outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << RShells[i] << ";";
                     outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << rhoShellsAvg_global[i] << ";";
+                    outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << rhoShellsT[i] << ";";
                     outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << UShells_Mean_global[i] << ";";
                     outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << FShells_Mean_global[i] << ";";
                     outfilestreamGlobalCorrs << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10) << PNShells_Mean_global[i] << ";";
@@ -1141,16 +1148,44 @@ void Spherical::calculateLongRange(){
 	// Lesen der Korrekturen in jedem Zeitschritt
 	double UCorrSum = 0.0;
 
+
+
+		//DEBUGGING:
+		for(int i = 0; i< NShells; i++){
+			if((i+1)%30 == 0){
+				std::cout << "-0.5*PNShells_Mean_global[]" << i<< "] = " << (-0.5*PNShells_Mean_global[i]) << std::endl;
+				std::cout << "-VirialKorrLJ = " << VirialKorrLJ << std::endl;
+			}
+
+
+		}
+
+
+
+
 	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
 		unsigned long molID = tempMol->getID();
+		
+		
+		//DEBUGGING:
+		if(molID%1000==0){
+			std::cout << "+tempMol->VirN("<<molID<<") = " << tempMol->VirN() 
+			<< " in shell " << PartShells[molID] << "."
+			<< std::endl;
+		} 
+		
+		
+		
+		
+		
+		
 		VirShells_N[PartShells[molID]] += tempMol->VirN();
 		VirShells_T[PartShells[molID]] += tempMol->VirT();
-		tempMol->setVirN(0.0);
+		tempMol->setVirN(0.0);  // why is this done?
 		tempMol->setVirT(0.0);
-
 		VirShells_N[PartShells[molID]] -= 0.5*PNShells_Mean_global[PartShells[molID]];
 		VirShells_T[PartShells[molID]] -= 0.25*PTShells_Mean_global[PartShells[molID]];
-		VirShells_N[PartShells[molID]] -= VirialKorrLJ;
+		VirShells_N[PartShells[molID]] -= VirialKorrLJ; //warum negativ?!
 		VirShells_T[PartShells[molID]] -= VirialKorrLJ;
 		UCorrSum += UShells_Mean_global[PartShells[molID]];
 		FcorrX[molID] = FShells_Mean_global[PartShells[molID]]*FcorrX[molID]/ksi[molID];
