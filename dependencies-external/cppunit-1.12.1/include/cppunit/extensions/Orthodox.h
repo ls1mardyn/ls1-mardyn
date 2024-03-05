@@ -18,13 +18,13 @@ CPPUNIT_NS_BEGIN
  *      safe passage            - copy construction
  *
  * If operations for each of these are not declared
- * the template will not instantiate.  If it does 
+ * the template will not instantiate.  If it does
  * instantiate, tests are performed to make sure
  * that the operations have correct semantics.
- *      
- * Adding an orthodox test to a suite is very 
- * easy: 
- * 
+ *
+ * Adding an orthodox test to a suite is very
+ * easy:
+ *
  * public: Test *suite ()  {
  *     TestSuite *suiteOfTests = new TestSuite;
  *     suiteOfTests->addTest (new ComplexNumberTest ("testAdd");
@@ -83,7 +83,7 @@ template <class ClassUnderTest> void Orthodox<ClassUnderTest>::runTest ()
 
 
 // Exercise a call
-template <class ClassUnderTest> 
+template <class ClassUnderTest>
 ClassUnderTest Orthodox<ClassUnderTest>::call (ClassUnderTest object)
 {
     return object;

@@ -15,23 +15,13 @@ class COMalignerTest;
 #include "parallel/DomainDecompBase.h"
 
 /** @brief
-* Plugin: can be enabled via config.xml <br>
+* Plugin that moves all particles so the center of mass aligns with the center of the simulation box.
 *
-* Calculates Center of mass and moves all particles to align with center of box<br>
-* Individual dimensions X,Y,Z can be toogled on/off for the alignment<br>
-* Alignment happens once every interval-simsteps<br>
-* The correction factor can be set from 0-1<br>
-* 1 being full alignment -> 0 no alignment at all<br>
+* Individual dimensions X,Y,Z can be toggled on/off for the alignment.<br>
+* Alignment happens once every interval-simsteps.<br>
+* A correction factor can be set from 0-1 to control the alignment with 1 being full alignment and 0 no alignment at all.<br>
 * <b>HALO must not be present</b> for the alignment. Halo would lead to incorrect alignment.<br>
-* This is guarenteed by calling the alignment in the beforeForces step of the simulation
-* \code{.xml}
-* <plugin name="COMaligner">
-*			<x>1</x>
-*			<y>0</y>
-*			<z>1</z>
-*			<interval>1</interval>
-*			<correctionFactor>.5</correctionFactor>
-* </plugin>
+* This is guaranteed by calling the alignment in the beforeForces step of the simulation.
 * \endcode
 */
 class COMaligner : public PluginBase{
@@ -71,7 +61,7 @@ public:
     ~COMaligner(){};
 
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override {
-        global_log -> debug() << "COM Realignment enabled" << std::endl;
+        Log::global_log -> debug() << "COM Realignment enabled" << std::endl;
 
         for(unsigned d = 0; d < 3; d++){
             _boxLength[d] = domain->getGlobalLength(d);
@@ -81,6 +71,19 @@ public:
 
     }
 
+	/** @brief Read in XML configuration for COMAligner
+	 *
+	 * The following XML object structure is handled by this method:
+	 * \code{.xml}
+        <plugin name="COMaligner">
+                <x>BOOL</x>  <!-- align along x-axis (default): true | do no align along x-axis: false -->
+                <y>BOOL</y>  <!-- align along y-axis (default): true | do no align along y-axis: false -->
+                <z>BOOL</z>  <!-- align along z-axis (default): true | do no align along z-axis: false -->
+                <interval>INT</interval>  <!-- frequency of algignment in number of time steps between alignments -->
+                <correctionFactor>FLOAT</correctionFactor>  <!-- correction factor [0-1] to apply with 1 meaning full alignment and 0 no alignment at all -->
+        </plugin>
+	   \endcode
+	 */
     void readXML (XMLfileUnits& xmlconfig) override;
 
     void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;

@@ -23,6 +23,7 @@ public:
 	//!        sets up the topology
 	DomainDecomposition();
 
+	DomainDecomposition(MPI_Comm comm, const std::array<int, DIMgeom> &gridSize);
 	// documentation see father class (DomainDecompBase.h)
 	~DomainDecomposition();
 
@@ -50,7 +51,7 @@ public:
 
     //returns a vector of the neighbour ranks in x y and z direction (only neighbours connected by an area to local area)
 	std::vector<int> getNeighbourRanks() override;
-	
+
     //returns a vector of all 26 neighbour ranks in x y and z direction
 	std::vector<int> getNeighbourRanksFullShell() override;
 
@@ -73,10 +74,10 @@ public:
 
 	std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
 
-private:
+protected:
 	void initMPIGridDims();
 
-	int _gridSize[DIMgeom]; //!< Number of processes in each dimension of the MPI process grid
+	std::array<int, DIMgeom> _gridSize; //!< Number of processes in each dimension of the MPI process grid
 	int _coords[DIMgeom]; //!< Coordinate of the process in the MPI process grid
 };
 

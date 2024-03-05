@@ -10,8 +10,6 @@
 #include <cstdlib>
 #include <vector>
 
-using namespace std;
-using Log::global_log;
 
 MirrorSystem::MirrorSystem()
 {
@@ -34,7 +32,7 @@ void MirrorSystem::beforeEventNewTimestep(
 	if(_bDone)
 		return;
 
-	global_log->info() << "HELLO beforeEventNewTimestep() ..." << endl;
+	Log::global_log->info() << "HELLO beforeEventNewTimestep() ..." << std::endl;
 
 	Domain* domain = global_simulation->getDomain();
 
@@ -59,15 +57,15 @@ void MirrorSystem::beforeEventNewTimestep(
 			newPos.at(1) = oldPos.at(1) + width.at(1)*0.5;
 			newPos.at(2) = oldPos.at(2) + width.at(2)*0.5;
 
-			cout << domainDecomp->getRank() << ": oldPos = " << oldPos.at(0) << "," << oldPos.at(1) << "," << oldPos.at(2);
-			cout << domainDecomp->getRank() << ": newPos = " << newPos.at(0) << "," << newPos.at(1) << "," << newPos.at(2) << endl;
+			std::cout << domainDecomp->getRank() << ": oldPos = " << oldPos.at(0) << "," << oldPos.at(1) << "," << oldPos.at(2);
+			std::cout << domainDecomp->getRank() << ": newPos = " << newPos.at(0) << "," << newPos.at(1) << "," << newPos.at(2) << std::endl;
 
 			it->setr(0, newPos.at(0) );
 			it->setr(1, newPos.at(1) );
 			it->setr(2, newPos.at(2) );
 		}
 //		particleContainer->update();
-		global_log->info() << "System shifted." << endl;
+		Log::global_log->info() << "System shifted." << std::endl;
 	}
 	else if(_type == MST_ENLARGE) {
 		// add vapor
@@ -193,13 +191,13 @@ void MirrorSystem::beforeEventNewTimestep(
 		arr.at(1) = -1;
 		arr.at(2) = -1;
 
-		global_log->info() << "Adding new particles ..." << endl;
+		Log::global_log->info() << "Adding new particles ..." << std::endl;
 		uint64_t numAdded = 0;
 		double bbMin[3];
 		double bbMax[3];
 		domainDecomp->getBoundingBoxMinMax(domain, bbMin, bbMax);
-		cout << domainDecomp->getRank() << ": bbMin = " << bbMin[0] << "," << bbMin[1] << "," << bbMin[2] << endl;
-		cout << domainDecomp->getRank() << ": bbMax = " << bbMax[0] << "," << bbMax[1] << "," << bbMax[2] << endl;
+		std::cout << domainDecomp->getRank() << ": bbMin = " << bbMin[0] << "," << bbMin[1] << "," << bbMin[2] << std::endl;
+		std::cout << domainDecomp->getRank() << ": bbMax = " << bbMax[0] << "," << bbMax[1] << "," << bbMax[2] << std::endl;
 
 		for(auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
 			std::array<double,3> oldPos;
@@ -227,15 +225,15 @@ void MirrorSystem::beforeEventNewTimestep(
 					mol.setr(1, newPos.at(1) );
 					mol.setr(2, newPos.at(2) );
 
-					cout << domainDecomp->getRank() << ": newPos = " << newPos.at(0) << "," << newPos.at(1) << "," << newPos.at(2);
-					cout << domainDecomp->getRank() << ": oldPos = " << oldPos.at(0) << "," << oldPos.at(1) << "," << oldPos.at(2) << endl;
+					std::cout << domainDecomp->getRank() << ": newPos = " << newPos.at(0) << "," << newPos.at(1) << "," << newPos.at(2);
+					std::cout << domainDecomp->getRank() << ": oldPos = " << oldPos.at(0) << "," << oldPos.at(1) << "," << oldPos.at(2) << std::endl;
 
 					particleContainer->addParticle(mol, true, false);
 					numAdded++;
 				}
 			}
 		}
-		cout << domainDecomp->getRank() << ": Added " << numAdded << " new particles." << endl;
+		std::cout << domainDecomp->getRank() << ": Added " << numAdded << " new particles." << std::endl;
 	}
 	else if(_type == MST_MIRROR) {
 
@@ -257,7 +255,7 @@ void MirrorSystem::readXML(XMLfileUnits& xmlconfig) {
 	// mirror position
 	_yPos = 0.;
 	xmlconfig.getNodeValue("yPos", _yPos);
-	global_log->info() << "MirrorSystem: y position = " << _yPos << endl;
+	Log::global_log->info() << "MirrorSystem: y position = " << _yPos << std::endl;
 
 	// old box size
 	xmlconfig.getNodeValue("box/old/x", _box_old.at(0));

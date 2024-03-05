@@ -50,15 +50,15 @@ class XMLfile
 	typedef rapidxml::xml_node<> t_XMLelement;
 	typedef rapidxml::xml_attribute<> t_XMLattribute;
 	typedef rapidxml::xml_document<> t_XMLdocument;
-	
+
 public:
 	static const char *const includeattrtag;
 	static const char *const queryattrtag;
 
 	class Query;
 	//class Query::const_iterator; forward declaration not possible...
-	
-	
+
+
 //+XMLfile::Node----------------------------------------------------------------
 	class Node
 	{
@@ -73,7 +73,7 @@ public:
 	//friend unsigned long query(std::list<Node>& nodeselection, const char* querystr, Node startnode) const;
 	//friend bool initfile_local(const std::string& filepath);
 	//friend void initstring_local(const char* xmlstring);
-	
+
 	public:
 		/// \enum NodeType
 		/// \brief Node types enumeration
@@ -93,58 +93,58 @@ public:
 		                 DOCUMENT_TYPE_Node=10,
 		                 DOCUMENT_FRAGMENT_Node=11,
 		                 NOTATION_Node=12 };
-		
+
 		/// \brief XMLfile::Node constructor
 		/// sets up an invalid node
 		Node()
 			: m_xmlnode(NULL), m_nodepath(std::string()), m_type(Unknown_Node)
 			{}
-		
+
 		/// \brief XMLfile::Node copy constructor
 		/// duplicate a node
 		/// \param	XMLfile::Node&	source node
 		Node(const Node& n)
 			: m_xmlnode(n.m_xmlnode), m_nodepath(n.m_nodepath), m_type(n.m_type)
 			{}
-		
+
 		/// \brief get nodepath
 		/// returns the full path of the node
 		/// \return	std::string	nodepath
 		const std::string& nodepath() const
 			{ return m_nodepath; }
-		
+
 		/// \brief get node name
 		/// returns the name of the node, if node is valid - otherwise an empty string
 		std::string name() const
 			{ return (m_xmlnode) ? std::string(m_xmlnode->name()) : std::string(); }
-		
+
 		/// \brief invalidate the node
 		/// set the internal state to invalid
 		void invalidate()
 			{ m_xmlnode=NULL; m_nodepath=std::string(); }
-		
+
 		/// \brief get node type
 		/// determine the node type (enumeration)
 		/// \return	XMLfile::Node::NodeType	node type
 		NodeType type() const
 			{ return m_type; }
-		
-		/// \brief check, if node is root node 
+
+		/// \brief check, if node is root node
 		/// return true, if node is a valid root node - false otherwise
 		/// \return	bool
 		bool isRootNode() const
 			{ if(m_xmlnode && ! m_xmlnode->parent()) return true; else return false; }
-		/// \brief check, if node is leaf node 
+		/// \brief check, if node is leaf node
 		/// return true, if node is a valid leaf node - false otherwise
 		/// \return	bool
 		bool isLeafNode() const;
-		
+
 		/// \brief get the node value
 		/// returns the node value converted to a given type
 		/// \param	T&	Value to return
 		/// \return	bool success?
 		template<typename T> bool getValue(T& value) const;
-		
+
 		/// \brief get the node string value
 		/// returns the node value as string value or default value, if node is invalid
 		/// \param	std::string	default value (default: empty string)
@@ -175,22 +175,22 @@ public:
 		/// \param	bool	default value (default: false)
 		/// \return	bool	return value
 		bool value_bool(bool defaultvalue=false) const;
-		
+
 		/// \brief assignment operator
 		/// copy/duplicate other node content to node
 		/// \param	XMLfile::Node	source node
 		/// \return	XMLfile::Node&	reference to this node
 		Node& operator =(const Node& n)
 			{ m_xmlnode=n.m_xmlnode; m_nodepath=n.m_nodepath; return *this; }
-		/// \brief template type cast operator 
+		/// \brief template type cast operator
 		/// return node content (getValue)
 		template<typename T> operator T() const
 			{ T value; getValue(value); return value; }
-		/// \brief bool cast operator 
+		/// \brief bool cast operator
 		/// check if Node is valid
 		operator bool() const
 			{ return m_xmlnode!=NULL && m_type!=Invalid_Node; }
-		
+
 		/// \brief print XML data to stream
 		/// print the node content using XML syntax
 		/// \param	std::ostream&	stream to write to (default: std::cout)
@@ -199,7 +199,7 @@ public:
 		/// print the node data
 		/// \param	std::ostream&	stream to write to (default: std::cout)
 		void print(std::ostream& ostrm=std::cout) const;
-	
+
 		Node& operator=(Node& node){
 			m_xmlnode = node.m_xmlnode;
 			m_nodepath = node.m_nodepath;
@@ -219,27 +219,27 @@ public:
 		    : m_xmlnode(xmldocument), m_nodepath(nodepath), m_type(DOCUMENT_Node)
 		    { if(!xmldocument) m_type=Invalid_Node; }
 		*/
-		
+
 		const t_XMLnode*	m_xmlnode;
 		std::string	m_nodepath;
 		NodeType	m_type;
 	};
 //-XMLfile::Node----------------------------------------------------------------
-	
-	
+
+
 //+XMLfile::Query---------------------------------------------------------------
 	class Query
 	{
 	friend class XMLfile;
 	//friend Query XMLfile::query(const char* querystr) const;
-	
+
 	public:
-	
+
 //+XMLfile::Query::const_iterator...............................................
 		class const_iterator
 		{
 		friend class Query;
-	
+
 		public:
 			/// \brief XMLfile::Query::const_iterator constructor
 			/// sets up an invalid iterator
@@ -275,16 +275,16 @@ public:
 			/// \return XMLfile::Node	actual Node
 			Node operator *() const
 				{ if(*this) return (*m_query)[m_nodesidx]; else return Node(); }
-	
+
 		private:
 			const Query* m_query;
 			long m_nodesidx;
-	
+
 			const_iterator(const Query* query, long idx)
 				: m_query(query), m_nodesidx(idx) {}
 		};
 //-XMLfile::Query::const_iterator...............................................
-		
+
 		/// \brief XMLfile::Query constructor
 		/// sets up an invalid query
 		Query() : m_xmlfile(NULL), m_nodes()
@@ -298,7 +298,7 @@ public:
 		/// unregister the query
 		~Query()
 			{ xmlfile_unregister(); }
-		
+
 		/// \brief get cardinality of query set
 		/// return the size of the query set
 		/// \return unsigned long	cardinality
@@ -317,7 +317,7 @@ public:
 		/// \return XMLfile::Node	first Node
 		Node front() const
 			{ return (*this)[0]; }
-		
+
 		/// \brief assignment operator
 		/// copy/duplicate other query content to query
 		/// \param const Query&	source query
@@ -337,7 +337,7 @@ public:
 		/// \return XMLfile::Node	node
 		Node operator [](unsigned long idx) const
 			{ if(idx<m_nodes.size()) return Node(m_nodes[idx]); else return Node(); }
-		
+
 		/// \brief get starting iterator
 		/// return an iterator to the first node
 		/// \return XMLfile::Query::const_iterator	iterator
@@ -362,7 +362,7 @@ public:
 		bool rend() const
 			{ return false; }
 		*/
-		
+
 		/// \brief get node value
 		/// get the node content and convert it to a given type
 		/// \param T&	variable to return value
@@ -404,7 +404,7 @@ public:
 		/// \return bool	node value
 		bool getNodeValue_bool(bool defaultvalue=false) const
 			{ bool value=defaultvalue; getNodeValue(value); return value; }
-		
+
 		/// \brief print XML data to stream
 		/// print the query content using XML syntax
 		/// \param	std::ostream&	stream to write to (default: std::cout)
@@ -413,45 +413,45 @@ public:
 		/// print the query content
 		/// \param	std::ostream&	stream to write to (default: std::cout)
 		void print(std::ostream& ostrm=std::cout) const;
-		
+
 	private:
 		const XMLfile*	m_xmlfile;
 		std::vector<Node> m_nodes;    // nodes within the actual query set
-		
+
 		Query(const XMLfile* xmlfile)
 			: m_xmlfile(xmlfile)
 			{ m_nodes.clear(); }
-		
+
 		void xmlfile_register()
 			{ if(m_xmlfile) m_xmlfile->registerQuery(this); }
 		void xmlfile_unregister()
 			{ if(m_xmlfile) m_xmlfile->unregisterQuery(this); }
 	};
 //-XMLfile::Query---------------------------------------------------------------
-	
+
 		friend void Query::xmlfile_register();
 		friend void Query::xmlfile_unregister();
-	
+
 	/// \brief XMLfile default constructor
 	XMLfile();
 	/// \brief XMLfile default destructor
 	virtual ~XMLfile() { clear(); }
-	
+
 	/// \brief constructor for XML-file
 	/// constructor calls initfile
 	/// \param std::string&	XML-file
 	XMLfile(const std::string& filepath);
-	
+
 	/// \brief initialize with XML-file
 	/// instantiating with XML file
 	/// \param std::string&	XML-file
 	bool initfile(const std::string& filepath);
-	
+
 	/// \brief initialize with XML-string
 	/// instantiating with XML-string
 	/// \param const char*	XML-string
 	void initstring(const char* xmlstring);
-	
+
 	/// \brief get XML file directory
 	/// if instantiated with a XML-file, return the directory
 	/// \return std::string	directory
@@ -460,7 +460,7 @@ public:
 	/// if instantiated with a XML-file, return the filename (without directory part of path)
 	/// \return std::string	filename
 	const std::string getFilename() const { return m_filename; }
-	
+
 	/// \brief set current node
 	/// set a node, relative queries start with
 	/// \param std::string&	node path (default: "/")
@@ -472,10 +472,10 @@ public:
 	/// \return bool	done?
 	bool changecurrentnode(const Query::const_iterator& pos);
 	/// \brief get current node path
-	/// 
+	///
 	/// \return std::string	node path
 	std::string getcurrentnodepath() const { return m_currentnode.nodepath(); }
-	
+
 	/// \brief get node value
 	/// get the node content and convert it to a given type
 	/// \param std::string&	nodepath
@@ -582,7 +582,7 @@ public:
 	/// \return bool	node value
 	bool getNodeValue_bool(const char* nodepath, bool defaultvalue=false) const
 		{ return getNodeValue_bool(std::string(nodepath),defaultvalue); }
-	
+
 	/// \brief print node content as XML
 	/// print node content to stream using XML
 	/// \param std::ostrm&	output stream
@@ -595,17 +595,17 @@ public:
 	/// save node content as XML-file
 	/// \param std::string&	output file
 	void save(std::string filepath=std::string());
-	
+
 	/// \brief perform a query
 	/// return a query to a given query expression
 	/// \param std::string&	query string
 	/// \return XMLfile::Query	query
 	Query query(const std::string& querystr) const;
-	
+
 	/// \brief std::string cast operator
 	/// XMLfile will cast to a string with XML content
 	operator std::string() const;
-	
+
 	/// \brief number of registered queries
 	/// return the number of active queries
 	/// \return number of active queries
@@ -624,14 +624,14 @@ private:
 	Node m_currentnode;
 	mutable std::set<Query*> m_queries;
 	//std::stack<Node> m_lastnodes;
-	
+
 	void clear();
 	bool initfile_local(const std::string& filepath);
 	void initstring_local(const char* xmlstring);
 	void expandincludes();
 	unsigned long query(std::list<Node>& nodeselection, const std::string& querystring, Node startnode=Node()) const;
 	void insertcloneelement(const t_XMLelement* src, t_XMLelement* dest_after);
-	
+
 	void registerQuery(Query* q) const
 		{ if(q) m_queries.insert(q); }
 	void unregisterQuery(Query* q) const
@@ -687,10 +687,6 @@ inline std::ostream& operator << (std::ostream& ostrm, const XMLfile& xmlfile)
 /*
 // explicit instantiation
 template bool XMLfile::Node::getValue<std::string>(std::string& value)const;
-template bool XMLfile::Node::getValue<int>(int& value)const;
-template bool XMLfile::Node::getValue<long>(long& value)const;
-template bool XMLfile::Node::getValue<float>(float& value)const;
-template bool XMLfile::Node::getValue<double>(double& value)const;
 template bool XMLfile::Node::getValue<bool>(bool& value)const;
 */
 

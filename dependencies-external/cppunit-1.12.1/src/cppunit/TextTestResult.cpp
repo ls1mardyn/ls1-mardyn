@@ -15,7 +15,7 @@ TextTestResult::TextTestResult()
 }
 
 
-void 
+void
 TextTestResult::addFailure( const TestFailure &failure )
 {
   TestResultCollector::addFailure( failure );
@@ -23,7 +23,7 @@ TextTestResult::addFailure( const TestFailure &failure )
 }
 
 
-void 
+void
 TextTestResult::startTest( Test *test )
 {
   TestResultCollector::startTest (test);
@@ -31,8 +31,8 @@ TextTestResult::startTest( Test *test )
 }
 
 
-void 
-TextTestResult::print( OStream &stream ) 
+void
+TextTestResult::print( OStream &stream )
 {
   TextOutputter outputter( this, stream );
   outputter.write();
@@ -40,10 +40,10 @@ TextTestResult::print( OStream &stream )
 
 
 OStream &
-operator <<( OStream &stream, 
+operator <<( OStream &stream,
              TextTestResult &result )
-{ 
-  result.print (stream); return stream; 
+{
+  result.print (stream); return stream;
 }
 
 

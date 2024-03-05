@@ -14,7 +14,7 @@ class Test;
 
 /*! \brief Holds printable test result (DEPRECATED).
  * \ingroup TrackingTestExecution
- * 
+ *
  * deprecated Use class TextTestProgressListener and TextOutputter instead.
  */
 class CPPUNIT_API TextTestResult : public TestResult,
@@ -29,7 +29,7 @@ public:
 };
 
 /** insertion operator for easy output */
-CPPUNIT_API OStream &operator <<( OStream &stream, 
+CPPUNIT_API OStream &operator <<( OStream &stream,
                                   TextTestResult &result );
 
 CPPUNIT_NS_END

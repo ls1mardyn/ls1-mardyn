@@ -34,10 +34,10 @@ public:
 				 unsigned long simstep) override;
 	void reset();
 	void collect(DomainDecompBase* domainDecomp);
-	void calculateOrientation(const array<double, 3> &simBoxSize,
+	void calculateOrientation(const std::array<double, 3> &simBoxSize,
                               const Molecule &mol1,
                               const Molecule &mol2,
-                              const array<double, 3> &orientationVector1);
+                              const std::array<double, 3> &orientationVector1);
 	void output(Domain* domain, long unsigned timestep);
 	void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
 	std::string getPluginName() override { return std::string("ODF"); }

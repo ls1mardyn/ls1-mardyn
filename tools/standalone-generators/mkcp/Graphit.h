@@ -1,5 +1,4 @@
 #include <map>
-using namespace std;
 
 #define SIG_WANG 6.2860
 #define EPS_WANG 6.909e-05
@@ -55,7 +54,7 @@ class Graphit
    unsigned comp(int ti, int tj);
 
    int numberOfAtoms;
-   map<unsigned, double> coordinatesOfAtoms[3];
-   map<unsigned, double> velocitiesOfAtoms[3];
-   map<unsigned, unsigned> componentsOfAtoms;
+   std::map<unsigned, double> coordinatesOfAtoms[3];
+   std::map<unsigned, double> velocitiesOfAtoms[3];
+   std::map<unsigned, unsigned> componentsOfAtoms;
 };

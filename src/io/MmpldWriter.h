@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <cstdint>
 
 #include "plugins/PluginBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
@@ -12,21 +13,21 @@
 #include "utils/MPI_Info_object.h"
 #endif
 
-enum InitSphereData : uint8_t
+enum InitSphereData : std::uint8_t
 {
 	ISD_USE_DEFAULT = 1,
 	ISD_READ_FROM_FILE = 2,
 	ISD_READ_FROM_XML = 3,
 };
 
-enum MMPLD_Vertex_type : uint8_t {
+enum MMPLD_Vertex_type : std::uint8_t {
 	MMPLD_VERTEX_NONE       = 0,
 	MMPLD_VERTEX_FLOAT_XYZ  = 1,
 	MMPLD_VERTEX_FLOAT_XYZR = 2,
 	MMPLD_VERTEX_SHORT_XYZ  = 3,
 };
 
-enum MMPLD_Color_type : uint8_t {
+enum MMPLD_Color_type : std::uint8_t {
 	MMPLD_COLOR_NONE       = 0,
 	MMPLD_COLOR_UINT8_RGB  = 1,
 	MMPLD_COLOR_UINT8_RGBA = 2,
@@ -52,13 +53,13 @@ protected:
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
-	MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
+	MmpldWriter(std::uint64_t startTimestep, std::uint64_t writeFrequency, std::uint64_t stopTimestep, std::uint64_t numFramesPerFile,
 			std::string outputPrefix);
 	virtual ~MmpldWriter() {}
 
 	virtual void SetNumSphereTypes() {}
-	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType) {}
-	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex) { return false; }
+	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, std::uint64_t* numSpheresPerType) {}
+	virtual bool GetSpherePos(float *spherePos, Molecule* mol, std::uint8_t& nSphereTypeIndex) { return false; }
 
 	void InitSphereData();
 
@@ -72,15 +73,14 @@ public:
             DomainDecompBase *domainDecomp, Domain *domain,
             unsigned long simstep
     );
-	void finish(ParticleContainer *particleContainer,
-				DomainDecompBase *domainDecomp, Domain *domain);
-	
+	void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {}
+
 	std::string getPluginName() {
 		return std::string("MmpldWriter");
 	}
 	static PluginBase* createInstance() { return new MmpldWriter(); }
 
-	void SetInitSphereDataParameters(const uint8_t &bInitSphereData, const std::string &strSphereDataFilename) {
+	void SetInitSphereDataParameters(const std::uint8_t &bInitSphereData, const std::string &strSphereDataFilename) {
 		_bInitSphereData = bInitSphereData; _strSphereDataFilename = strSphereDataFilename;
 	}
 
@@ -91,44 +91,44 @@ protected:
 	void PrepareWriteControl();
 	long get_data_frame_header_size();
 	long get_seekTable_size();
-	void writeSeekTableEntry(int id, uint64_t offset);
+	void writeSeekTableEntry(int id, std::uint64_t offset);
 	long get_data_list_header_size();
 	long get_particle_data_size();
-	long get_data_list_size(uint64_t particle_count);
-	void write_frame_header(uint32_t num_data_lists);
-	void write_particle_list_header(uint64_t particle_count, int sphereId);
+	long get_data_list_size(std::uint64_t particle_count);
+	void write_frame_header(std::uint32_t num_data_lists);
+	void write_particle_list_header(std::uint64_t particle_count, int sphereId);
 	void write_frame(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
 
 protected:
 	/** First time step to be recorded */
-	uint64_t _startTimestep;
+	std::uint64_t _startTimestep;
 	/** time steps between two records*/
-	uint64_t _writeFrequency;
+	std::uint64_t _writeFrequency;
 	/** Max time step up to which shall be recorded */
-	uint64_t _stopTimestep;
+	std::uint64_t _stopTimestep;
 	long _writeBufferSize;
 	std::string _outputPrefix;
 	std::string _timestampString;
-	uint32_t _frameCount;
-	uint8_t  _numComponents;
-	uint8_t  _numSitesTotal;
-	uint8_t  _numSphereTypes;
-	std::vector<uint64_t> _seekTable;
-	std::vector<uint8_t> _numSitesPerComp;
-	std::vector<uint8_t> _nCompSitesOffset;
+	std::uint32_t _frameCount;
+	std::uint8_t  _numComponents;
+	std::uint8_t  _numSitesTotal;
+	std::uint8_t  _numSphereTypes;
+	std::vector<std::uint64_t> _seekTable;
+	std::vector<std::uint8_t> _numSitesPerComp;
+	std::vector<std::uint8_t> _nCompSitesOffset;
 	std::string _strSphereDataFilename;
-	uint8_t _bInitSphereData;
+	std::uint8_t _bInitSphereData;
 	bool _bWriteControlPrepared;
 
 	long _fileCount;
-	uint32_t _numFramesPerFile;
+	std::uint32_t _numFramesPerFile;
 
-	uint16_t _mmpldversion;
-	uint32_t _numSeekEntries;
+	std::uint16_t _mmpldversion;
+	std::uint32_t _numSeekEntries;
 	MMPLD_Vertex_type _vertex_type;
 	MMPLD_Color_type _color_type;
 	std::vector<float> _global_radius;
-	std::vector< std::array<uint8_t, 4> > _global_rgba;
+	std::vector< std::array<std::uint8_t, 4> > _global_rgba;
 	std::vector< std::array<float, 2> > _global_intensity_range;
 
 
@@ -142,7 +142,7 @@ class MmpldWriterSimpleSphere : public MmpldWriter
 {
 public:
 	MmpldWriterSimpleSphere() {}
-	MmpldWriterSimpleSphere(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
+	MmpldWriterSimpleSphere(std::uint64_t startTimestep, std::uint64_t writeFrequency, std::uint64_t stopTimestep, std::uint64_t numFramesPerFile,
 			std::string outputPrefix)
 			: MmpldWriter(startTimestep, writeFrequency, stopTimestep, numFramesPerFile, outputPrefix)
 	{
@@ -151,15 +151,15 @@ public:
 	virtual ~MmpldWriterSimpleSphere() {}
 
 	virtual void SetNumSphereTypes() {_numSphereTypes = _numComponents;}
-	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType);
-	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex);
+	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, std::uint64_t* numSpheresPerType);
+	virtual bool GetSpherePos(float *spherePos, Molecule* mol, std::uint8_t& nSphereTypeIndex);
 };
 
 class MmpldWriterMultiSphere : public MmpldWriter
 {
 public:
 	MmpldWriterMultiSphere() {}
-	MmpldWriterMultiSphere(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
+	MmpldWriterMultiSphere(std::uint64_t startTimestep, std::uint64_t writeFrequency, std::uint64_t stopTimestep, std::uint64_t numFramesPerFile,
 			std::string outputPrefix)
 			: MmpldWriter(startTimestep, writeFrequency, stopTimestep, numFramesPerFile, outputPrefix)
 	{
@@ -168,8 +168,8 @@ public:
 	virtual ~MmpldWriterMultiSphere() {}
 
 	virtual void SetNumSphereTypes() {_numSphereTypes = _numSitesTotal;}
-	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, uint64_t* numSpheresPerType);
-	virtual bool GetSpherePos(float *spherePos, Molecule* mol, uint8_t& nSphereTypeIndex);
+	virtual void CalcNumSpheresPerType(ParticleContainer* particleContainer, std::uint64_t* numSpheresPerType);
+	virtual bool GetSpherePos(float *spherePos, Molecule* mol, std::uint8_t& nSphereTypeIndex);
 };
 
 #endif /* MMPLDWRITER_H_ */

@@ -98,7 +98,7 @@ public:
 
 
 
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( HelperMacrosTest, 
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( HelperMacrosTest,
                                        helperSuiteName() );
 
 
@@ -112,7 +112,7 @@ HelperMacrosTest::~HelperMacrosTest()
 }
 
 
-void 
+void
 HelperMacrosTest::setUp()
 {
   m_testListener = new MockTestListener( "mock-testlistener" );
@@ -121,7 +121,7 @@ HelperMacrosTest::setUp()
 }
 
 
-void 
+void
 HelperMacrosTest::tearDown()
 {
   delete m_result;
@@ -129,7 +129,7 @@ HelperMacrosTest::tearDown()
 }
 
 
-void 
+void
 HelperMacrosTest::testNoSubclassing()
 {
   std::auto_ptr<CPPUNIT_NS::TestSuite> suite( BaseTestCase::suite() );
@@ -142,7 +142,7 @@ HelperMacrosTest::testNoSubclassing()
 }
 
 
-void 
+void
 HelperMacrosTest::testSubclassing()
 {
   std::auto_ptr<CPPUNIT_NS::TestSuite> suite( SubclassedTestCase::suite() );
@@ -155,7 +155,7 @@ HelperMacrosTest::testSubclassing()
 }
 
 
-void 
+void
 HelperMacrosTest::testFail()
 {
   std::auto_ptr<CPPUNIT_NS::TestSuite> suite( FailTestFixture::suite() );
@@ -167,7 +167,7 @@ HelperMacrosTest::testFail()
 }
 
 
-void 
+void
 HelperMacrosTest::testFailToFail()
 {
   std::auto_ptr<CPPUNIT_NS::TestSuite> suite( FailToFailTestFixture::suite() );
@@ -179,19 +179,19 @@ HelperMacrosTest::testFailToFail()
 }
 
 
-void 
+void
 HelperMacrosTest::testException()
 {
   std::auto_ptr<CPPUNIT_NS::TestSuite> suite( ExceptionTestFixture::suite() );
   m_testListener->setExpectedStartTestCall( 1 );
   m_testListener->setExpectNoFailure();
-  
+
   suite->run( m_result );
   m_testListener->verify();
 }
 
 
-void 
+void
 HelperMacrosTest::testExceptionNotCaught()
 {
   std::auto_ptr<CPPUNIT_NS::TestSuite> suite( ExceptionNotCaughtTestFixture::suite() );
@@ -203,7 +203,7 @@ HelperMacrosTest::testExceptionNotCaught()
 }
 
 
-void 
+void
 HelperMacrosTest::testCustomTests()
 {
   std::auto_ptr<CPPUNIT_NS::TestSuite> suite( CustomsTestTestFixture::suite() );
@@ -215,7 +215,7 @@ HelperMacrosTest::testCustomTests()
 }
 
 
-void 
+void
 HelperMacrosTest::testAddTest()
 {
   std::auto_ptr<CPPUNIT_NS::TestSuite> suite( AddTestTestFixture::suite() );

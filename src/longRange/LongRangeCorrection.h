@@ -24,7 +24,7 @@ private:
 	Planar* _planar;
 	Homogeneous* _homogen;
 */
-  
+
 };
 
 #endif /* __LONGRANGECORRECTION_H__ */

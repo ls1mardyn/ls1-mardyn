@@ -47,8 +47,8 @@ void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairs(
 		CellProcessor& cellProcessor) {
 
 	using std::array;
-	const array<unsigned long, 3> strides = { 2, 2, 2 };
-	array<unsigned long, 3> end;
+	const std::array<unsigned long, 3> strides = { 2, 2, 2 };
+	std::array<unsigned long, 3> end;
 	for (int d = 0; d < 3; ++d) {
 		end[d] = this->_dims[d] - 1;
 	}
@@ -78,13 +78,13 @@ template<class CellTemplate, bool eighthShell>
 void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsOuter(
 		CellProcessor& cellProcessor) {
 	if(eighthShell){
-		global_log->error() << "eightshell + overlapping not yet supported." << std::endl;
+		Log::global_log->error() << "eightshell + overlapping not yet supported." << std::endl;
 		Simulation::exit(-2);
 	}
 	using std::array;
 
 	{
-		unsigned long minsize = min(this->_dims[0], min(this->_dims[1], this->_dims[2]));
+		unsigned long minsize = std::min(this->_dims[0], std::min(this->_dims[1], this->_dims[2]));
 
 		if (minsize <= 5) {
 			// iterating in the inner region didn't do anything. Iterate normally.
@@ -93,7 +93,7 @@ void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsOuter(
 		}
 	}
 
-	const array<unsigned long, 3> strides2 = { 2, 2, 2 };
+	const std::array<unsigned long, 3> strides2 = { 2, 2, 2 };
 
 	#if defined(_OPENMP)
 	#pragma omp parallel
@@ -101,26 +101,26 @@ void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsOuter(
 	{
 		for (unsigned long col = 0; col < 8; ++col) {
 			// halo & boundaries in z direction
-			const array< unsigned long, 3> begin = threeDimensionalMapping::oneToThreeD(col, strides2);
+			const std::array< unsigned long, 3> begin = threeDimensionalMapping::oneToThreeD(col, strides2);
 
 			// values, which are modified by 2 are actually modified by the respective stride, which is always 2
-			array<unsigned long, 3> startZ = { begin[0], begin[1], begin[2] }; 									// default
-			array<unsigned long, 3> endZ = { this->_dims[0] - 1, this->_dims[1] - 1, this->_dims[2] - 1 };		// default
-			array<unsigned long, 3> stridesZ = {strides2[0], strides2[1], this->_dims[2] - 3};					// mod z
+			std::array<unsigned long, 3> startZ = { begin[0], begin[1], begin[2] }; 									// default
+			std::array<unsigned long, 3> endZ = { this->_dims[0] - 1, this->_dims[1] - 1, this->_dims[2] - 1 };		// default
+			std::array<unsigned long, 3> stridesZ = {strides2[0], strides2[1], this->_dims[2] - 3};					// mod z
 			traverseCellPairsBackend(cellProcessor, startZ, endZ, stridesZ);
 
 			// halo & boundaries in y direction
 			// boundaries in z direction are excluded!
-			array<unsigned long, 3> startY = { begin[0], begin[1], begin[2] + 2 };								// mod z
-			array<unsigned long, 3> endY = { this->_dims[0] - 1, this->_dims[1] - 1, this->_dims[2] - 3 };		// mod z
-			array<unsigned long, 3> stridesY = {strides2[0], this->_dims[1] - 3, strides2[2]};					// mod y
+			std::array<unsigned long, 3> startY = { begin[0], begin[1], begin[2] + 2 };								// mod z
+			std::array<unsigned long, 3> endY = { this->_dims[0] - 1, this->_dims[1] - 1, this->_dims[2] - 3 };		// mod z
+			std::array<unsigned long, 3> stridesY = {strides2[0], this->_dims[1] - 3, strides2[2]};					// mod y
 			traverseCellPairsBackend(cellProcessor, startY, endY, stridesY);
 
 			// halo & boundaries in x direction
 			// boundaries in z and y direction are excluded!
-			array<unsigned long, 3> startX = { begin[0], begin[1] + 2, begin[2] + 2 };							// mod yz
-			array<unsigned long, 3> endX = { this->_dims[0] - 1, this->_dims[1] - 3, this->_dims[2] - 3 };		// mod yz
-			array<unsigned long, 3> stridesX = {this->_dims[0] - 3, strides2[1], strides2[2]};					// mod x
+			std::array<unsigned long, 3> startX = { begin[0], begin[1] + 2, begin[2] + 2 };							// mod yz
+			std::array<unsigned long, 3> endX = { this->_dims[0] - 1, this->_dims[1] - 3, this->_dims[2] - 3 };		// mod yz
+			std::array<unsigned long, 3> stridesX = {this->_dims[0] - 3, strides2[1], strides2[2]};					// mod x
 			traverseCellPairsBackend(cellProcessor, startX, endX, stridesX);
 
 			#if defined(_OPENMP)
@@ -150,7 +150,7 @@ void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsInner(
 		}
 	}
 	unsigned long splitsize = maxcellsize - 5;
-	unsigned long minsize = min(this->_dims[0], min(this->_dims[1], this->_dims[2]));
+	unsigned long minsize = std::min(this->_dims[0], std::min(this->_dims[1], this->_dims[2]));
 
 	mardyn_assert(minsize >= 4);  // there should be at least 4 cells in each dimension, otherwise we did something stupid!
 
@@ -158,8 +158,8 @@ void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsInner(
 		return;  // we can not iterate over any inner cells, that do not depend on boundary or halo cells
 	}
 
-	array<unsigned long, 3> lower;
-	array<unsigned long, 3> upper;
+	std::array<unsigned long, 3> lower;
+	std::array<unsigned long, 3> upper;
 	for (unsigned long i = 0; i < 3; i++) {
 		lower[i] = 2;
 		upper[i] = this->_dims[i] - 3;
@@ -172,10 +172,10 @@ void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsInner(
 		#pragma omp parallel
 	#endif
 	{
-		array<unsigned long, 3> strides = {2, 2, 2};
+		std::array<unsigned long, 3> strides = {2, 2, 2};
 
 		for (unsigned long col = 0; col < 8; ++col) {
-			array<unsigned long, 3> startIndices = threeDimensionalMapping::oneToThreeD(col, strides);
+			std::array<unsigned long, 3> startIndices = threeDimensionalMapping::oneToThreeD(col, strides);
 			for (int i = 0; i < 3; i++) {
 				startIndices[i] = startIndices[i] + lower[i];
 			}

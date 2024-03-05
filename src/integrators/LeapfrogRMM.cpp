@@ -13,8 +13,6 @@
 #include "PositionCellProcessorRMM.h"
 #include "VelocityCellProcessorRMM.h"
 
-using namespace std;
-using Log::global_log;
 
 LeapfrogRMM::LeapfrogRMM() {
 	_velocityCellProcessor = nullptr;
@@ -34,7 +32,7 @@ LeapfrogRMM::LeapfrogRMM(double timestepLength) :
 void LeapfrogRMM::readXML(XMLfileUnits & xmlconfig) {
 	_timestepLength = 0;
 	xmlconfig.getNodeValueReduced("timestep", _timestepLength);
-	global_log->info() << "Timestep: " << _timestepLength << endl;
+	Log::global_log->info() << "Timestep: " << _timestepLength << std::endl;
 	mardyn_assert(_timestepLength > 0);
 
 	mardyn_assert(_velocityCellProcessor == nullptr);
@@ -65,10 +63,10 @@ void LeapfrogRMM::computeVelocities(ParticleContainer* molCont, Domain* dom) {
 	// leaving old functionality for debugging purposes
 
 	// TODO: Thermostat functionality is duplicated X times and needs to be rewritten!
-	map<int, unsigned long> N;
-	map<int, unsigned long> rotDOF;
-	map<int, double> summv2;
-	map<int, double> sumIw2;
+	std::map<int, unsigned long> N;
+	std::map<int, unsigned long> rotDOF;
+	std::map<int, double> summv2;
+	std::map<int, double> sumIw2;
 	{
 		unsigned long red_N = 0;
 		unsigned long red_rotDOF = 0;
@@ -92,7 +90,7 @@ void LeapfrogRMM::computeVelocities(ParticleContainer* molCont, Domain* dom) {
 		summv2[0] += red_summv2;
 		sumIw2[0] += red_sumIw2;
 	}
-	for (map<int, double>::iterator thermit = summv2.begin(); thermit != summv2.end(); thermit++) {
+	for (std::map<int, double>::iterator thermit = summv2.begin(); thermit != summv2.end(); thermit++) {
 		dom->setLocalSummv2(thermit->second, thermit->first);
 		dom->setLocalSumIw2(sumIw2[thermit->first], thermit->first);
 		dom->setLocalNrotDOF(thermit->first, N[thermit->first], rotDOF[thermit->first]);

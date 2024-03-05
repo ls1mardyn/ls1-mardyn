@@ -119,17 +119,17 @@ private:
  	####### REMOVED PG FROM DOMAIN CONSTRUCTOR -> REMOVED UNIVERSALPG -> REMOVED FORWARD DECL IN .H AND INCLUDE IN .CPP
 
 		this->_universalPG = pg;
-		// after: checkpointfilestream << _epsilonRF << endl;
-				map<unsigned, unsigned> componentSets = this->_universalPG->getComponentSets();
-				for( map<unsigned, unsigned>::const_iterator uCSIDit = componentSets.begin();
+		// after: checkpointfilestream << _epsilonRF << std::endl;
+				std::map<unsigned, unsigned> componentSets = this->_universalPG->getComponentSets();
+				for( std::map<unsigned, unsigned>::const_iterator uCSIDit = componentSets.begin();
 						uCSIDit != componentSets.end();
 						uCSIDit++ )
 				{
 					if(uCSIDit->first > 100) continue;
 					checkpointfilestream << " S\t" << 1+uCSIDit->first << "\t" << uCSIDit->second << "\n";
 				}
-				map<unsigned, double> tau = this->_universalPG->getTau();
-				for( map<unsigned, double>::const_iterator gTit = tau.begin();
+				std::map<unsigned, double> tau = this->_universalPG->getTau();
+				for( std::map<unsigned, double>::const_iterator gTit = tau.begin();
 						gTit != tau.end();
 						gTit++ )
 				{
@@ -152,13 +152,13 @@ private:
 		PressureGradient* _pressureGradient;
  		//after: 	_longRangeCorrection->calculateLongRange(); in #######
 			if (_pressureGradient->isAcceleratingUniformly()) {
-			global_log->info() << "Initialising uniform acceleration." << endl;
+			Log::global_log->info() << "Initialising uniform acceleration." << std::endl;
 			unsigned long uCAT = _pressureGradient->getUCAT();
-			global_log->info() << "uCAT: " << uCAT << " steps." << endl;
+			Log::global_log->info() << "uCAT: " << uCAT << " steps." << std::endl;
 			_pressureGradient->determineAdditionalAcceleration(
 					_domainDecomposition, _moleculeContainer, uCAT
 							* _integrator->getTimestepLength());
-			global_log->info() << "Uniform acceleration initialised." << endl;
+			Log::global_log->info() << "Uniform acceleration initialised." << std::endl;
 			}
 
 		// first in simulate()
@@ -168,18 +168,18 @@ private:
 		// after: _domain->calculateThermostatDirectedVelocity(_moleculeContainer); in simulate()
 			if (_pressureGradient->isAcceleratingUniformly()) {
 				if (!(_simstep % uCAT)) {
-					global_log->debug() << "Determine the additional acceleration" << endl;
+					Log::global_log->debug() << "Determine the additional acceleration" << std::endl;
 					_pressureGradient->determineAdditionalAcceleration(
 							_domainDecomposition, _moleculeContainer, uCAT
 							* _integrator->getTimestepLength());
 				}
-				global_log->debug() << "Process the uniform acceleration" << endl;
+				Log::global_log->debug() << "Process the uniform acceleration" << std::endl;
 				_integrator->accelerateUniformly(_moleculeContainer, _domain);
 				_pressureGradient->adjustTau(this->_integrator->getTimestepLength());
 			}
 
 		// in initialize() before Domain()
-			global_log->info() << "Creating PressureGradient ... " << endl;
+			Log::global_log->info() << "Creating PressureGradient ... " << std::endl;
 			_pressureGradient = new PressureGradient(ownrank);
 
  	####### REMOVED FUNCTION ONLY CALLED BY PG FROM INTEGRATOR, LEAPFROG AND LEAPFROGRMM
@@ -218,10 +218,10 @@ private:
 		);
 
 		void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
-			map<unsigned, double>* additionalAcceleration = domain->getPG()->getUAA();
-			vector<Component> comp = *(_simulation.getEnsemble()->getComponents());
-			vector<Component>::iterator compit;
-			map<unsigned, double> componentwiseVelocityDelta[3];
+			std::map<unsigned, double>* additionalAcceleration = domain->getPG()->getUAA();
+			std::vector<Component> comp = *(_simulation.getEnsemble()->getComponents());
+			std::vector<Component>::iterator compit;
+			std::map<unsigned, double> componentwiseVelocityDelta[3];
 			for (compit = comp.begin(); compit != comp.end(); compit++) {
 				unsigned cosetid = domain->getPG()->getComponentSet(compit->ID());
 				if (cosetid != 0)
@@ -247,9 +247,9 @@ private:
 		}
 
 		void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* domain) {
-			vector<Component> comp = *(_simulation.getEnsemble()->getComponents());
-			vector<Component>::iterator compit;
-			map<unsigned, double> componentwiseVelocityDelta[3];
+			std::vector<Component> comp = *(_simulation.getEnsemble()->getComponents());
+			std::vector<Component>::iterator compit;
+			std::map<unsigned, double> componentwiseVelocityDelta[3];
 			for (compit = comp.begin(); compit != comp.end(); compit++) {
 				unsigned cosetid = domain->getPG()->getComponentSet(compit->ID());
 				if (cosetid != 0)

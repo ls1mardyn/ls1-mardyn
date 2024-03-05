@@ -16,7 +16,7 @@ PlugInParameters::~PlugInParameters()
 }
 
 
-std::string 
+std::string
 PlugInParameters::getCommandLine() const
 {
   return m_commandLine;

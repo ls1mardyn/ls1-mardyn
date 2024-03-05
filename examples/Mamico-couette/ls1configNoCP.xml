@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mardyn version="20100525">
+    <loglevel>INFO</loglevel>
 	<refunits type="SI">
 		<length unit="nm">0.34</length>
 		<mass unit="u">39.948</mass> 
@@ -55,14 +56,17 @@
 							<lower> <x>0</x> <y>0</y> <z>0</z> </lower>
 							<upper> <x>30</x> <y>30</y> <z>30</z> </upper>
 						</object>
-						<velocityAssigner type="EqualVelocityDistribution" enableRandomSeed="1"></velocityAssigner>
+						<velocityAssigner type="EqualVelocityDistribution" enableRandomSeed="true"></velocityAssigner>
 					</objectgenerator>
 				</generator>
 			</phasespacepoint>
 		</ensemble>
 		<algorithm>
-			<parallelisation type="DomainDecomposition"/>
-			<datastructure type="AutoPas">
+			<parallelisation type="StaticIrregDomainDecomposition">
+            <subdomainWeightsCSV>basic4.csv</subdomainWeightsCSV>
+			</parallelisation>
+			<datastructure type="LinkedCells">
+			<cellsInCutoffRadius>1</cellsInCutoffRadius>
 			</datastructure>
 			<cutoffs type="CenterOfMass">
 				<radiusLJ unit="reduced">2.2</radiusLJ>

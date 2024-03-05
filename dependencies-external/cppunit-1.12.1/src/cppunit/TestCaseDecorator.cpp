@@ -6,7 +6,7 @@ CPPUNIT_NS_BEGIN
 TestCaseDecorator::TestCaseDecorator( TestCase *test )
     : TestCase( test->getName() ),
       m_test( test )
-{ 
+{
 }
 
 
@@ -16,28 +16,28 @@ TestCaseDecorator::~TestCaseDecorator()
 }
 
 
-std::string 
+std::string
 TestCaseDecorator::getName() const
-{ 
-  return m_test->getName(); 
+{
+  return m_test->getName();
 }
 
 
-void 
+void
 TestCaseDecorator::setUp()
 {
   m_test->setUp();
 }
 
 
-void 
+void
 TestCaseDecorator::tearDown()
 {
   m_test->tearDown();
 }
 
 
-void 
+void
 TestCaseDecorator::runTest()
 {
   m_test->runTest();

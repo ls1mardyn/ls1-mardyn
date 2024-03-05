@@ -61,11 +61,11 @@ class Virial2DProfile;
       </timesteps>
       <outputprefix>comparison</outputprefix>
       <profiles>
-        <density>1</density>
-        <temperature>0</temperature>
-        <velocity>1</velocity>
-        <velocity3d>1</velocity>
-        <virial>1</virial>
+        <density>true</density>
+        <temperature>false</temperature>
+        <velocity>true</velocity>
+        <velocity3d>true</velocity>
+        <virial>true</virial>
       </profiles>
     </plugin>
 * \endcode

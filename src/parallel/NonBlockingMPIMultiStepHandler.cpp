@@ -13,8 +13,6 @@
 #include "particleContainer/adapter/CellProcessor.h"
 #include "utils/Logger.h"
 
-using Log::global_log;
-using namespace std;
 
 NonBlockingMPIMultiStepHandler::NonBlockingMPIMultiStepHandler(DomainDecompMPIBase* domainDecomposition,
 															   ParticleContainer* moleculeContainer, Domain* domain,
@@ -43,7 +41,7 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 		_domainDecomposition->prepareNonBlockingStage(false, _moleculeContainer, _domain, i);
 		global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
 		// Force calculation and other pair interaction related computations
-		global_log->debug() << "Traversing innermost cells" << std::endl;
+		Log::global_log->debug() << "Traversing innermost cells" << std::endl;
 		global_simulation->timers()->start("SIMULATION_COMPUTATION");
 		global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 		_moleculeContainer->traversePartialInnermostCells(*_cellProcessor, i, stageCount);
@@ -86,7 +84,7 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
 
 	// remaining force calculation and other pair interaction related computations
-	global_log->debug() << "Traversing non-innermost cells" << std::endl;
+	Log::global_log->debug() << "Traversing non-innermost cells" << std::endl;
 	global_simulation->timers()->start("SIMULATION_COMPUTATION");
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseNonInnermostCells(*_cellProcessor);

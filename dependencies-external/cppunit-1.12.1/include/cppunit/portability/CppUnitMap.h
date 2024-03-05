@@ -2,7 +2,7 @@
 #define CPPUNIT_PORTABILITY_CPPUNITMAP_H
 
 // The technic used is similar to the wrapper of STLPort.
- 
+
 #include <cppunit/Portability.h>
 #include <functional>
 #include <map>

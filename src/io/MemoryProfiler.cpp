@@ -50,8 +50,8 @@ void MemoryProfiler::registerObject(MemoryProfilable** object) {
 	Log::global_log->debug() << "MemoryProfiler: added object" << std::endl;
 }
 
-void MemoryProfiler::doOutput(const std::string& string) {
-	printGeneralInfo(string);
+void MemoryProfiler::doOutput(const std::string& myString) {
+	printGeneralInfo(myString);
 
 	// further info
 	Log::global_log->debug() << "MemoryProfiler: number of objects: " << _list.size() << std::endl;
@@ -135,7 +135,7 @@ int MemoryProfiler::getOwnMemory() { //Note: this value is in KB!
 	return result;
 }
 
-void MemoryProfiler::printGeneralInfo(const std::string& string) {
+void MemoryProfiler::printGeneralInfo(const std::string& myString) {
 #ifndef _SX
 	struct sysinfo memInfo;
 	sysinfo(&memInfo);
@@ -143,8 +143,8 @@ void MemoryProfiler::printGeneralInfo(const std::string& string) {
 	long long usedMem = ((memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit / 1024
 			- getCachedSize()) / 1024;
 	std::stringstream additionalinfo;
-	if (string.length() > 0) {
-		additionalinfo << " (" << string << ")";
+	if (myString.length() > 0) {
+		additionalinfo << " (" << myString << ")";
 	}
 	additionalinfo << ":" << std::endl;
 	Log::global_log->info() << "Memory consumption" << additionalinfo.str();

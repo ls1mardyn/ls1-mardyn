@@ -47,7 +47,7 @@ private:
 
 
 
-void 
+void
 checkXmlEqual( std::string expectedXml,
                std::string actualXml,
                CPPUNIT_NS::SourceLine sourceLine );

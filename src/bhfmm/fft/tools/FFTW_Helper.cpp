@@ -7,7 +7,7 @@
 
 #include "FFTW_Helper.h"
 
-#if defined(__SINGLE_PRECISION_FFT__) 
+#if defined(__SINGLE_PRECISION_FFT__)
 
 FFTW_Helper::FFTW_Helper(const int p, const int nx, const int ny) : _p(p),_nx(nx), _ny(ny) {
 	S2FFT_in = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*nx*ny);
@@ -74,7 +74,7 @@ FFTW_Helper::~FFTW_Helper() {
 
 #endif
 
-#if defined(__SINGLE_PRECISION_FFT__) 
+#if defined(__SINGLE_PRECISION_FFT__)
 fftwf_complex* FFTW_Helper::Source2FFT(FFTAccelerableExpansion & Expansion, double radius)
 #else
 fftw_complex* FFTW_Helper::Source2FFT(FFTAccelerableExpansion & Expansion,
@@ -116,7 +116,7 @@ fftw_complex* FFTW_Helper::Source2FFT(FFTAccelerableExpansion & Expansion,
 	return S2FFT_out;
 }
 
-#if defined(__SINGLE_PRECISION_FFT__) 
+#if defined(__SINGLE_PRECISION_FFT__)
 fftwf_complex* FFTW_Helper::TransferFunction2FFT(FFTAccelerableExpansion & Expansion)
 #else
 fftw_complex* FFTW_Helper::TransferFunction2FFT(

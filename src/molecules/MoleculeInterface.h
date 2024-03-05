@@ -87,7 +87,7 @@ public:
 	virtual void setD(unsigned short d, double D) = 0;
 
 	inline virtual void move(int d, double dr) = 0;
-	
+
 	//by Stefan Becker
 	virtual double getI(unsigned short d) const = 0;
 
@@ -114,7 +114,6 @@ public:
 	virtual void setStartIndexSoA_Q(unsigned i) = 0;
 
 	virtual unsigned int numSites() const = 0;
-	virtual unsigned int numOrientedSites() const = 0;
 	virtual unsigned int numLJcenters() const = 0;
 	virtual unsigned int numCharges() const = 0;
 	virtual unsigned int numDipoles() const = 0;
@@ -165,30 +164,30 @@ public:
 
 	//calculates orientation angle for ARDF
 	double orientationAngle(const MoleculeInterface& molecule2, double dr[3], double d2) const {
-		
+
 		double cosPhi = 0.;
 		double orientationVector[3];
 		double orientationVectorSquared = 0.;
 		double roundingThreshold = 0.0001;
-		
+
 		orientationVector[0] = 2. * (q().qx() * q().qz() + q().qw() * q().qy());
 		orientationVector[1] = 2. * (q().qy() * q().qz() - q().qw() * q().qx());
 		orientationVector[2] = 1. - 2. * (q().qx() * q().qx() + q().qy() * q().qy());
 
-	
-		
+
+
 		for (unsigned short d = 0; d < 3; d++) {
 			dr[d] = molecule2.r(d) - r(d);
 			orientationVectorSquared += orientationVector[d] * orientationVector[d];
 		}
-		
+
 		for (unsigned short d = 0; d < 3; d++) {
 			cosPhi += orientationVector[d] * dr[d] / sqrt(orientationVectorSquared) / sqrt(d2);
 		}
 		return cosPhi;
-		
+
 	}
-	
+
 	virtual void setF(double F[3]) = 0;
 	virtual void setM(double M[3]) = 0;
 	virtual void setVi(double Vi[3]) = 0;

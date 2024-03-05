@@ -23,7 +23,7 @@
 #include <stdexcept>
 
 /**
- * Factory static class to get an FFTAcceleration and a TransferFunctionManager 
+ * Factory static class to get an FFTAcceleration and a TransferFunctionManager
  * based on the current settings defined in the static class FFTSettings
  */
 class FFTFactory {

@@ -5,15 +5,15 @@
 
 CPPUNIT_NS_BEGIN
 
-  
+
 XmlElement::XmlElement( std::string elementName,
-                        std::string content ) 
+                        std::string content )
   : m_name( elementName )
   , m_content( content )
 {
 }
 
-    
+
 XmlElement::XmlElement( std::string elementName,
                         int numericContent )
   : m_name( elementName )
@@ -33,42 +33,42 @@ XmlElement::~XmlElement()
 }
 
 
-std::string 
+std::string
 XmlElement::name() const
 {
   return m_name;
 }
 
 
-std::string 
+std::string
 XmlElement::content() const
 {
   return m_content;
 }
 
 
-void 
+void
 XmlElement::setName( const std::string &name )
 {
   m_name = name;
 }
 
 
-void 
+void
 XmlElement::setContent( const std::string &content )
 {
   m_content = content;
 }
 
 
-void 
+void
 XmlElement::setContent( int numericContent )
 {
   m_content = StringTools::toString( numericContent );
 }
 
 
-void 
+void
 XmlElement::addAttribute( std::string attributeName,
                           std::string value  )
 {
@@ -76,7 +76,7 @@ XmlElement::addAttribute( std::string attributeName,
 }
 
 
-void 
+void
 XmlElement::addAttribute( std::string attributeName,
                           int numericValue )
 {
@@ -84,14 +84,14 @@ XmlElement::addAttribute( std::string attributeName,
 }
 
 
-void 
+void
 XmlElement::addElement( XmlElement *node )
 {
   m_elements.push_back( node );
 }
 
 
-int 
+int
 XmlElement::elementCount() const
 {
   return m_elements.size();
@@ -123,7 +123,7 @@ XmlElement::elementFor( const std::string &name ) const
 }
 
 
-std::string 
+std::string
 XmlElement::toString( const std::string &indent ) const
 {
   std::string element( indent );
@@ -169,7 +169,7 @@ XmlElement::toString( const std::string &indent ) const
 }
 
 
-std::string 
+std::string
 XmlElement::attributesAsString() const
 {
   std::string attributes;
@@ -189,7 +189,7 @@ XmlElement::attributesAsString() const
 }
 
 
-std::string 
+std::string
 XmlElement::escape( std::string value ) const
 {
   std::string escaped;
@@ -198,26 +198,26 @@ XmlElement::escape( std::string value ) const
     char c = value[index ];
     switch ( c )    // escape all predefined XML entity (safe?)
     {
-    case '<': 
+    case '<':
       escaped += "&lt;";
       break;
-    case '>': 
+    case '>':
       escaped += "&gt;";
       break;
-    case '&': 
+    case '&':
       escaped += "&amp;";
       break;
-    case '\'': 
+    case '\'':
       escaped += "&apos;";
       break;
-    case '"': 
+    case '"':
       escaped += "&quot;";
       break;
     default:
       escaped += c;
     }
   }
-  
+
   return escaped;
 }
 

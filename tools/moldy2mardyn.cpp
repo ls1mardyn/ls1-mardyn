@@ -7,20 +7,19 @@
 #include <climits>
 #include "../src/External/tinyxpath/xpath_static.h"
 
-using namespace std;
 
 int main(int argc, char *argv[], char *env[])
 {
 
   if (argc < 4)
   {
-    cout
+    std::cout
         << "Syntax: moldy2mardyn <inputfile.dat> <inputfile.inp> <outputfile.xml>"
-        << endl;
+        << std::endl;
     exit(1);
   }
   // define the output filename
-  string outfile_name = "new-";
+  std::string outfile_name = "new-";
   outfile_name.append(argv[2]);
 
   TiXmlDocument doc;
@@ -74,14 +73,14 @@ int main(int argc, char *argv[], char *env[])
   phase_space->SetAttribute("source", outfile_name.c_str() );
   phase_space->SetAttribute("format", "ASCII");
 
-  string token;
+  std::string token;
   fstream inputfstream;
 
   // Parse the .inp file
   inputfstream.open(argv[2]);
   if (!inputfstream.is_open())
   {
-    cout << "Error opening file " << argv[2] << " for reading.";
+    std::cout << "Error opening file " << argv[2] << " for reading.";
     exit(1);
   }
 
@@ -139,7 +138,7 @@ int main(int argc, char *argv[], char *env[])
       dcomponents->SetAttribute("amount", numcomponents);
       components_data->LinkEndChild(dcomponents);
 
-      string x, y, z, m, sigma, eps, xi, eta;
+      std::string x, y, z, m, sigma, eps, xi, eta;
       unsigned int i, j;
 
       for (i=0; i<numcomponents; ++i)
@@ -190,7 +189,7 @@ int main(int argc, char *argv[], char *env[])
         }
         for (j=0; j<numdipoles; ++j)
         {
-          string eMyx, eMyy, eMyz, absMy;
+          std::string eMyx, eMyy, eMyz, absMy;
           TiXmlElement * dipole = new TiXmlElement( "dipole" );
           dipole->SetAttribute("id", j+1);
           comp->LinkEndChild(dipole);
@@ -231,7 +230,7 @@ int main(int argc, char *argv[], char *env[])
         }
         for (j=0; j<numquadrupoles; ++j)
         {
-          string eQx, eQy, eQz, absQ;
+          std::string eQx, eQy, eQz, absQ;
           TiXmlElement * quadrupole = new TiXmlElement( "quadrupole" );
           quadrupole->SetAttribute("id", j+1);
           comp->LinkEndChild(quadrupole);
@@ -271,7 +270,7 @@ int main(int argc, char *argv[], char *env[])
           quadrupole->LinkEndChild(ljabsQ);
         }
 
-        string IDummy1, IDummy2, IDummy3;
+        std::string IDummy1, IDummy2, IDummy3;
         inputfstream >> IDummy1 >> IDummy2 >> IDummy3;
 
         TiXmlElement * dummy1 = new TiXmlElement( "dummy1" );
@@ -319,44 +318,44 @@ int main(int argc, char *argv[], char *env[])
       epsilon_rf->LinkEndChild(epsilon_rf_text);
       dcomponents->LinkEndChild(epsilon_rf);
 
-      cout << "Warning: falling back to linked cells data-structure" << endl;
+      std::cout << "Warning: falling back to linked cells data-structure" << std::endl;
       TiXmlElement * data_structure_type = new TiXmlElement( "linked-cells" );
       data_structure->LinkEndChild(data_structure_type);
       TiXmlText * linked_cells_text = new TiXmlText( "1" );
       data_structure_type->LinkEndChild(linked_cells_text);
 
-      ofstream outfile;
+      std::ofstream outfile;
       outfile.open(outfile_name.c_str() );
       if (outfile.is_open())
       {
         getline(inputfstream, token);
         inputfstream >> token;
         inputfstream >> token;
-        outfile << "NumberOfMolecules\t" << token << endl;
+        outfile << "NumberOfMolecules\t" << token << std::endl;
         inputfstream >> token;
         outfile << "MoleculeFormat\t\t" << token;
         while (inputfstream)
         {
           getline(inputfstream, token);
-          outfile << token << endl;
+          outfile << token << std::endl;
         }
         outfile.close();
       } else
       {
-        cout << "Unable to open file " << outfile_name << " for writing.";
+        std::cout << "Unable to open file " << outfile_name << " for writing.";
         exit(1);
       }
     } else
     {
-      cerr << "Warning: Unknown token '" << token << "' at position "
-          << inputfstream.tellg() << endl;
+      std::cerr << "Warning: Unknown token '" << token << "' at position "
+          << inputfstream.tellg() << std::endl;
     }
   }
 
   inputfstream.close();
 
-  cout << " * the phase space point file has been saved in '" << outfile_name
-      << "'" << endl;
+  std::cout << " * the phase space point file has been saved in '" << outfile_name
+      << "'" << std::endl;
 
   // Write the resulting XML tree to the file specified
   doc.LinkEndChild(decl);

@@ -62,10 +62,10 @@
 				<CommunicationScheme>direct</CommunicationScheme>
 				<updateFrequency>100000</updateFrequency>
 				<fullSearchThreshold>3</fullSearchThreshold>
-				<splitBiggestDimension>0</splitBiggestDimension>
-				<useVectorizationTuner>0</useVectorizationTuner>
-				<generateNewFiles>0</generateNewFiles>
-				<useExistingFiles>0</useExistingFiles>
+				<splitBiggestDimension>false</splitBiggestDimension>
+				<useVectorizationTuner>false</useVectorizationTuner>
+				<generateNewFiles>false</generateNewFiles>
+				<useExistingFiles>false</useExistingFiles>
 			</parallelisation>
 -->
 			<datastructure type="LinkedCells">

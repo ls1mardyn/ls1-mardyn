@@ -84,8 +84,9 @@ void ExtractPhase::beforeForces(ParticleContainer* particleContainer, DomainDeco
 	CommVar<uint64_t> numParticles;
 	numParticles.local = 0;
 
-	auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ONLY_INNER_AND_BOUNDARY);  // over all cell types
-	for(auto it = begin; it.isValid(); ++it)
+	for (auto it = particleContainer->regionIterator(regionLowCorner, regionHighCorner,
+													 ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+		 it.isValid(); ++it)
 		numParticles.local++;
 
 	domainDecomp->collCommInit(1);
@@ -118,8 +119,9 @@ void ExtractPhase::afterForces(ParticleContainer* particleContainer, DomainDecom
 		if(INTT_VAPOR_LIQUID == _interface.type)
 			regionHighCorner[1] = std::min(_interface.range.left, regionHighCorner[1]);
 
-		auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ONLY_INNER_AND_BOUNDARY);  // over all cell types
-		for(auto it = begin; it.isValid(); ++it) {
+		for (auto it = particleContainer->regionIterator(regionLowCorner, regionHighCorner,
+														 ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+			 it.isValid(); ++it) {
 			particleContainer->deleteMolecule(it, false);
 		}
 	}
@@ -141,8 +143,10 @@ void ExtractPhase::afterForces(ParticleContainer* particleContainer, DomainDecom
 	double hsv_inv = 1. / hsv;  // reciprocal half sphere volume
 	std::vector<uint32_t> delList;  // list of particles to delete
 
-	auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner, ParticleIterator::ALL_CELLS);  // over all cell types
-	for(auto it1 = begin; it1.isValid(); ++it1) {
+	// the author intends to copy this iterator
+	const auto begin = particleContainer->regionIterator(regionLowCorner, regionHighCorner,
+														 ParticleIterator::ALL_CELLS);  // over all cell types
+	for (auto it1 = begin; it1.isValid(); ++it1) {
 		uint32_t pid1 = it1->getID();
 		uint32_t numParticles_hsv = 0;
 		double r1[3];

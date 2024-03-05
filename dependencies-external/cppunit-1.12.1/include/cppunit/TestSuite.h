@@ -34,7 +34,7 @@ CPPUNIT_NS_BEGIN
  * control for any tests added to them.
  *
  * TestSuites do not register themselves in the TestRegistry.
- * \see Test 
+ * \see Test
  * \see TestCaller
  */
 class CPPUNIT_API TestSuite : public TestComposite
@@ -52,7 +52,7 @@ public:
   void addTest( Test *test );
 
   /*! Returns the list of the tests (DEPRECATED).
-   * \deprecated Use getChildTestCount() & getChildTestAt() of the 
+   * \deprecated Use getChildTestCount() & getChildTestAt() of the
    *             TestComposite interface instead.
    * \return Reference on a vector that contains the tests of the suite.
    */

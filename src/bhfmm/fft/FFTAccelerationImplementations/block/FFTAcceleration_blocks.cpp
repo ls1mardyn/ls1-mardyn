@@ -295,7 +295,7 @@ void FFTAcceleration_blocks::FFT_M2L_2way_ORed_vec(
  FFT_precision * tr_re;
  FFT_precision * tr_im;
 
- 
+
  for(currentBlock=0;currentBlock<=lastBlock;currentBlock++) {
  t_re = &(T_Re[currentBlock][0][0]);
  t_im = &(T_Im[currentBlock][0][0]);

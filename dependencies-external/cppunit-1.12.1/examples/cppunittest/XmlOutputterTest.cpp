@@ -8,7 +8,7 @@
 #include "XmlUniformiser.h"
 
 
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( XmlOutputterTest, 
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( XmlOutputterTest,
                                        outputSuiteName() );
 
 
@@ -22,7 +22,7 @@ XmlOutputterTest::~XmlOutputterTest()
 }
 
 
-void 
+void
 XmlOutputterTest::setUp()
 {
   m_dummyTests.clear();
@@ -30,7 +30,7 @@ XmlOutputterTest::setUp()
 }
 
 
-void 
+void
 XmlOutputterTest::tearDown()
 {
   delete m_result;
@@ -40,7 +40,7 @@ XmlOutputterTest::tearDown()
 }
 
 
-void 
+void
 XmlOutputterTest::testWriteXmlResultWithNoTest()
 {
   CPPUNIT_NS::OStringStream stream;
@@ -48,7 +48,7 @@ XmlOutputterTest::testWriteXmlResultWithNoTest()
   outputter.write();
 
   std::string actualXml = stream.str();
-  std::string expectedXml = 
+  std::string expectedXml =
     "<TestRun>"
       "<FailedTests></FailedTests>"
       "<SuccessfulTests></SuccessfulTests>"
@@ -63,7 +63,7 @@ XmlOutputterTest::testWriteXmlResultWithNoTest()
 }
 
 
-void 
+void
 XmlOutputterTest::testWriteXmlResultWithOneFailure()
 {
   addTestFailure( "test1", "message failure1", CPPUNIT_NS::SourceLine( "test.cpp", 3 ) );
@@ -73,7 +73,7 @@ XmlOutputterTest::testWriteXmlResultWithOneFailure()
   outputter.write();
 
   std::string actualXml = stream.str();
-  std::string expectedXml = 
+  std::string expectedXml =
     "<TestRun>"
       "<FailedTests>"
         "<FailedTest id=\"1\">"
@@ -98,7 +98,7 @@ XmlOutputterTest::testWriteXmlResultWithOneFailure()
 }
 
 
-void 
+void
 XmlOutputterTest::testWriteXmlResultWithOneError()
 {
   addTestError( "test1", "message error1" );
@@ -108,7 +108,7 @@ XmlOutputterTest::testWriteXmlResultWithOneError()
   outputter.write();
 
   std::string actualXml = stream.str();
-  std::string expectedXml = 
+  std::string expectedXml =
     "<TestRun>"
       "<FailedTests>"
         "<FailedTest id=\"1\">"
@@ -129,7 +129,7 @@ XmlOutputterTest::testWriteXmlResultWithOneError()
 }
 
 
-void 
+void
 XmlOutputterTest::testWriteXmlResultWithOneSuccess()
 {
   addTest( "test1" );
@@ -139,7 +139,7 @@ XmlOutputterTest::testWriteXmlResultWithOneSuccess()
   outputter.write();
 
   std::string actualXml = stream.str();
-  std::string expectedXml = 
+  std::string expectedXml =
     "<TestRun>"
       "<FailedTests></FailedTests>"
       "<SuccessfulTests>"
@@ -158,7 +158,7 @@ XmlOutputterTest::testWriteXmlResultWithOneSuccess()
 }
 
 
-void 
+void
 XmlOutputterTest::testWriteXmlResultWithThreeFailureTwoErrorsAndTwoSuccess()
 {
   addTestFailure( "test1", "failure1" );
@@ -174,7 +174,7 @@ XmlOutputterTest::testWriteXmlResultWithThreeFailureTwoErrorsAndTwoSuccess()
   outputter.write();
 
   std::string actualXml = stream.str();
-  std::string expectedXml = 
+  std::string expectedXml =
     "<TestRun>"
        "<FailedTests>"
         "<FailedTest id=\"1\">"
@@ -278,7 +278,7 @@ private:
 };
 
 
-void 
+void
 XmlOutputterTest::testHook()
 {
   int begin =0, end =0, statistics =0, successful =0, failed =0;
@@ -303,7 +303,7 @@ XmlOutputterTest::testHook()
 }
 
 
-void 
+void
 XmlOutputterTest::addTest( std::string testName )
 {
   CPPUNIT_NS::Test *test = makeDummyTest( testName );
@@ -312,7 +312,7 @@ XmlOutputterTest::addTest( std::string testName )
 }
 
 
-void 
+void
 XmlOutputterTest::addTestFailure( std::string testName,
                                   std::string message,
                                   CPPUNIT_NS::SourceLine sourceLine )
@@ -321,7 +321,7 @@ XmlOutputterTest::addTestFailure( std::string testName,
 }
 
 
-void 
+void
 XmlOutputterTest::addTestError( std::string testName,
                                 std::string message,
                                 CPPUNIT_NS::SourceLine sourceLine )
@@ -330,7 +330,7 @@ XmlOutputterTest::addTestError( std::string testName,
 }
 
 
-void 
+void
 XmlOutputterTest::addGenericTestFailure(  std::string testName,
                                           CPPUNIT_NS::Message message,
                                           CPPUNIT_NS::SourceLine sourceLine,
@@ -338,7 +338,7 @@ XmlOutputterTest::addGenericTestFailure(  std::string testName,
 {
   CPPUNIT_NS::Test *test = makeDummyTest( testName );
   m_result->startTest( test );
-  CPPUNIT_NS::TestFailure failure( test, 
+  CPPUNIT_NS::TestFailure failure( test,
                                 new CPPUNIT_NS::Exception( message, sourceLine ),
                                 isError );
   m_result->addFailure( failure );

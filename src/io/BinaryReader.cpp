@@ -31,10 +31,8 @@
 #include <cstdint>
 #include <string>
 
-using Log::global_log;
-using namespace std;
 
-enum MoleculeFormat : uint32_t {
+enum MoleculeFormat : std::uint32_t {
 	ICRVQD, IRV, ICRV
 };
 
@@ -46,30 +44,30 @@ BinaryReader::BinaryReader()
 BinaryReader::~BinaryReader() = default;
 
 void BinaryReader::readXML(XMLfileUnits& xmlconfig) {
-	string pspfile;
-	string pspheaderfile;
+	std::string pspfile;
+	std::string pspheaderfile;
 	xmlconfig.getNodeValue("header", pspheaderfile);
     pspheaderfile = string_utils::trim(pspheaderfile);
     if (pspheaderfile[0] != '/') {
       pspheaderfile.insert(0, xmlconfig.getDir());
     }
-	global_log->info() << "phase space header file: " << pspheaderfile << endl;
+	Log::global_log->info() << "phase space header file: " << pspheaderfile << std::endl;
 	xmlconfig.getNodeValue("data", pspfile);
 	pspfile = string_utils::trim(pspfile);
 	// only prefix xml dir if path is not absolute
 	if (pspfile[0] != '/') {
 	  pspfile.insert(0, xmlconfig.getDir());
 	}
-	global_log->info() << "phase space data file: " << pspfile << endl;
+	Log::global_log->info() << "phase space data file: " << pspfile << std::endl;
 	setPhaseSpaceHeaderFile(pspheaderfile);
 	setPhaseSpaceFile(pspfile);
 }
 
-void BinaryReader::setPhaseSpaceFile(string filename) {
+void BinaryReader::setPhaseSpaceFile(std::string filename) {
 	_phaseSpaceFile = filename;
 }
 
-void BinaryReader::setPhaseSpaceHeaderFile(string filename) {
+void BinaryReader::setPhaseSpaceHeaderFile(std::string filename) {
 	_phaseSpaceHeaderFile = filename;
 }
 
@@ -77,15 +75,15 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	XMLfileUnits inp(_phaseSpaceHeaderFile);
 
 	if(not inp.changecurrentnode("/mardyn")) {
-		global_log->error() << "Could not find root node /mardyn in XML input file." << endl;
-		global_log->fatal() << "Not a valid MarDyn XML input file." << endl;
+		Log::global_log->error() << "Could not find root node /mardyn in XML input file." << std::endl;
+		Log::global_log->fatal() << "Not a valid MarDyn XML input file." << std::endl;
 		Simulation::exit(1);
 	}
 
 	bool bInputOk = true;
 	double dCurrentTime = 0.;
 	double dBoxLength[3] = {0., 0., 0.};
-	uint64_t numMolecules = 0;
+	std::uint64_t numMolecules = 0;
 	std::string strMoleculeFormat;
 	bInputOk = bInputOk && inp.changecurrentnode("headerinfo");
 	bInputOk = bInputOk && inp.getNodeValue("time", dCurrentTime);
@@ -96,7 +94,7 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	bInputOk = bInputOk && inp.getNodeValue("format@type", strMoleculeFormat);
 
 	if(not bInputOk) {
-		global_log->error() << "Content of file: '" << _phaseSpaceHeaderFile << "' corrupted! Program exit ..." << endl;
+		Log::global_log->error() << "Content of file: '" << _phaseSpaceHeaderFile << "' corrupted! Program exit ..." << std::endl;
 		Simulation::exit(1);
 	}
 
@@ -107,13 +105,13 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	else if("ICRV" == strMoleculeFormat)
 		_nMoleculeFormat = ICRV;
 	else {
-		global_log->error() << "Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << endl;
+		Log::global_log->error() << "Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << std::endl;
 		Simulation::exit(1);
 	}
 
 	// Set parameters of Domain and Simulation class
 	_simulation.setSimulationTime(dCurrentTime);
-	for(uint8_t d = 0; d < 3; ++d) {
+	for(std::uint8_t d = 0; d < 3; ++d) {
 		domain->setGlobalLength(d, dBoxLength[d]);
 	}
 	domain->setglobalNumMolecules(numMolecules);
@@ -128,23 +126,23 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 #ifdef ENABLE_MPI
 	if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif
-	global_log->info() << "Opening phase space file " << _phaseSpaceFile
-					   << endl;
+	Log::global_log->info() << "Opening phase space file " << _phaseSpaceFile
+					   << std::endl;
 	_phaseSpaceFileStream.open(_phaseSpaceFile.c_str(),
-							   ios::binary | ios::in);
+							   std::ios::binary | std::ios::in);
 	if(!_phaseSpaceFileStream.is_open()) {
-		global_log->error() << "Could not open phaseSpaceFile "
-							<< _phaseSpaceFile << endl;
+		Log::global_log->error() << "Could not open phaseSpaceFile "
+							<< _phaseSpaceFile << std::endl;
 		Simulation::exit(1);
 	}
-	global_log->info() << "Reading phase space file " << _phaseSpaceFile
-					   << endl;
+	Log::global_log->info() << "Reading phase space file " << _phaseSpaceFile
+					   << std::endl;
 #ifdef ENABLE_MPI
 	} // Rank 0 only
 #endif
 
-	string token;
-	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
+	std::string token;
+	std::vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
 	size_t numcomponents = dcomponents.size();
 	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
 
@@ -157,28 +155,28 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 
 	int size;
 	MPI_CHECK(MPI_Type_size(mpi_Particle, &size));
-	global_log->debug() << "size of custom datatype is " << size << std::endl;
+	Log::global_log->debug() << "size of custom datatype is " << size << std::endl;
 
 #endif
 
 	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
-	uint64_t id;
-	uint32_t componentid = 0;
+	std::uint64_t id;
+	std::uint32_t componentid = 0;
 
 	x = y = z = vx = vy = vz = q1 = q2 = q3 = Dx = Dy = Dz = 0.;
 	q0 = 1.;
 
 	// Global number of particles must not be updated as this would result in numMolecules = 0
-	uint64_t numMolecules = domain->getglobalNumMolecules(false);
+	std::uint64_t numMolecules = domain->getglobalNumMolecules(false);
 
-	for(uint64_t i = 0; i < numMolecules; i++) {
+	for(std::uint64_t i = 0; i < numMolecules; i++) {
 
 #ifdef ENABLE_MPI
 		if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif
 		if(_phaseSpaceFileStream.eof()) {
-			global_log->error() << "End of file was hit before all " << numMolecules << " expected molecules were read."
-				<< endl;
+			Log::global_log->error() << "End of file was hit before all " << numMolecules << " expected molecules were read."
+				<< std::endl;
 			Simulation::exit(1);
         }
 		_phaseSpaceFileStream.read(reinterpret_cast<char*> (&id), 8);
@@ -220,26 +218,26 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 				_phaseSpaceFileStream.read(reinterpret_cast<char*> (&vz), 8);
 				break;
 			default:
-				global_log->error() << "BinaryReader: Unknown phase space format: " << _nMoleculeFormat << std::endl
+				Log::global_log->error() << "BinaryReader: Unknown phase space format: " << _nMoleculeFormat << std::endl
 									<< "Aborting simulation." << std::endl;
 				Simulation::exit(12);
 		}
 		if ((x < 0.0 || x >= domain->getGlobalLength(0)) || (y < 0.0 || y >= domain->getGlobalLength(1)) ||
 			(z < 0.0 || z >= domain->getGlobalLength(2))) {
-			global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << endl;
+			Log::global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << std::endl;
 		}
 
 		if(componentid > numcomponents) {
-			global_log->error() << "Molecule id " << id
+			Log::global_log->error() << "Molecule id " << id
 								<< " has a component ID greater than the existing number of components: "
 								<< componentid
 								<< ">"
-								<< numcomponents << endl;
+								<< numcomponents << std::endl;
 			Simulation::exit(1);
 		}
 		if(componentid == 0) {
-			global_log->error() << "Molecule id " << id
-								<< " has componentID == 0." << endl;
+			Log::global_log->error() << "Molecule id " << id
+								<< " has componentID == 0." << std::endl;
 			Simulation::exit(1);
 		}
 		// ComponentIDs are used as array IDs, hence need to start at 0.
@@ -304,19 +302,19 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 		// Print status message
 		unsigned long iph = numMolecules / 100;
 		if(iph != 0 && (i % iph) == 0)
-			global_log->info() << "Finished reading molecules: " << i / iph
-							   << "%\r" << flush;
+			Log::global_log->info() << "Finished reading molecules: " << i / iph
+							   << "%\r" << std::flush;
 	}
 
-	global_log->info() << "Finished reading molecules: 100%" << endl;
-	global_log->info() << "Reading Molecules done" << endl;
+	Log::global_log->info() << "Finished reading molecules: 100%" << std::endl;
+	Log::global_log->info() << "Reading Molecules done" << std::endl;
 
 	// TODO: Shouldn't we always calculate this?
 	if (domain->getglobalRho() < 1e-5) {
 		domain->setglobalRho(
 				domain->getglobalNumMolecules(true, particleContainer, domainDecomp) / domain->getGlobalVolume());
-		global_log->info() << "Calculated Rho_global = "
-						   << domain->getglobalRho() << endl;
+		Log::global_log->info() << "Calculated Rho_global = "
+						   << domain->getglobalRho() << std::endl;
 	}
 
 #ifdef ENABLE_MPI
@@ -328,8 +326,8 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 #endif
 
 	inputTimer.stop();
-	global_log->info() << "Initial IO took:                 "
-					   << inputTimer.get_etime() << " sec" << endl;
+	Log::global_log->info() << "Initial IO took:                 "
+					   << inputTimer.get_etime() << " sec" << std::endl;
 #ifdef ENABLE_MPI
 	MPI_CHECK(MPI_Type_free(&mpi_Particle));
 #endif

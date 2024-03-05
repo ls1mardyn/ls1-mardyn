@@ -25,7 +25,7 @@ DomainDecompBase::~DomainDecompBase() {
 void DomainDecompBase::readXML(XMLfileUnits& /* xmlconfig */) {
 }
 
-void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecules,
+void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>& invalidMolecules,
 										   ParticleContainer* moleculeContainer) {
 	for (auto& molecule : invalidMolecules) {
 		for (auto dim : {0, 1, 2}) {
@@ -46,15 +46,15 @@ void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>&& invalidMolecu
 		}
 	}
 	moleculeContainer->addParticles(invalidMolecules);
+	invalidMolecules.clear();
 }
 
 void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
 	if (moleculeContainer->isInvalidParticleReturner()) {
 		// autopas mode!
-		global_log->debug() << "DDBase: Adding + shifting invalid particles." << std::endl;
-		// in case the molecule container returns invalid particles using getInvalidParticles(), we have to handle them directly.
-		auto invalidParticles = moleculeContainer->getInvalidParticles();
-		addLeavingMolecules(std::move(invalidParticles), moleculeContainer);
+		Log::global_log->debug() << "DDBase: Adding + shifting invalid particles." << std::endl;
+		// in case the molecule container returns invalid particles using getInvalidParticlesRef(), we have to handle them directly.
+		addLeavingMolecules(moleculeContainer->getInvalidParticlesRef(), moleculeContainer);
 		// now use direct scheme to transfer the rest!
 		FullShell fs;
 		double rmin[3];  // lower corner
@@ -66,7 +66,7 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 		HaloRegion ownRegion = {rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0, 0.};
 		bool coversWholeDomain[3];
 		double cellLengthDummy[3]{};
-		global_log->debug() << "DDBase: Populating halo." << std::endl;
+		Log::global_log->debug() << "DDBase: Populating halo." << std::endl;
 		auto haloExportRegions =
 			fs.getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(),
 																	coversWholeDomain, cellLengthDummy);
@@ -119,14 +119,12 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 #pragma omp parallel shared(startRegion, endRegion)
 #endif
 		{
-			auto begin = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ALL_CELLS);
-
 			double shiftedPosition[3];
 
 			decltype(moleculeContainer->getMoleculeAtPosition(shiftedPosition)) originalPreviousIter{};
 
-			for (auto haloIter = begin; haloIter.isValid(); ++haloIter) {
-
+			for (auto haloIter = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ALL_CELLS);
+				 haloIter.isValid(); ++haloIter) {
 				// Add force of halo particle to original particle (or other duplicates)
 				// that have a distance of -'shiftMagnitude' in the current direction
 				shiftedPosition[0] = haloIter->r(0);
@@ -151,14 +149,13 @@ void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, P
 #pragma omp parallel
 #endif
 	{
-		auto begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax, ParticleIterator::ALL_CELLS);
-
 		double shiftedPosition[3];
 
 		decltype(moleculeContainer->getMoleculeAtPosition(shiftedPosition)) originalPreviousIter{};
 
-		for (auto haloIter = begin; haloIter.isValid(); ++haloIter) {
-
+		for (auto haloIter =
+				 moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax, ParticleIterator::ALL_CELLS);
+			 haloIter.isValid(); ++haloIter) {
 			// Add force of halo particle to original particle (or other duplicates)
 			// that have a distance of -'shiftMagnitude' in the current direction
 			for (int dim = 0; dim < 3; dim++) {
@@ -199,10 +196,9 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 		#pragma omp parallel shared(startRegion, endRegion)
 		#endif
 		{
-			auto begin = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ALL_CELLS);
-
-			//traverse and gather all halo particles in the cells
-			for(auto i = begin; i.isValid(); ++i){
+			// traverse and gather all halo particles in the cells
+			for (auto i = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ALL_CELLS);
+				 i.isValid(); ++i) {
 				Molecule m = *i;
 				m.setr(dim, m.r(dim) + shift);
 				// some additional shifting to ensure that rounding errors do not hinder the correct placement
@@ -236,7 +232,7 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 
 	auto shiftAndAdd = [&moleculeContainer, haloRegion, shift](Molecule& m) {
 		if (not m.inBox(haloRegion.rmin, haloRegion.rmax)) {
-			global_log->error() << "trying to remove a particle that is not in the halo region" << std::endl;
+			Log::global_log->error() << "trying to remove a particle that is not in the halo region" << std::endl;
 			Simulation::exit(456);
 		}
 		for (int dim = 0; dim < 3; dim++) {
@@ -278,11 +274,10 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 #pragma omp parallel
 #endif
 		{
-			auto begin =
-				moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax, ParticleIterator::ALL_CELLS);
-
 			// traverse and gather all halo particles in the cells
-			for (auto i = begin; i.isValid(); ++i) {
+			for (auto i =
+					 moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax, ParticleIterator::ALL_CELLS);
+				 i.isValid(); ++i) {
 				shiftAndAdd(*i);
 				moleculeContainer->deleteMolecule(i, false);  // removeFromContainer = true;
 			}
@@ -322,10 +317,9 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 		#pragma omp parallel shared(startRegion, endRegion)
 		#endif
 		{
-			auto begin = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ALL_CELLS);
-
-			//traverse and gather all boundary particles in the cells
-			for(auto i = begin; i.isValid(); ++i){
+			// traverse and gather all boundary particles in the cells
+			for (auto i = moleculeContainer->regionIterator(startRegion, endRegion, ParticleIterator::ALL_CELLS);
+				 i.isValid(); ++i) {
 				Molecule m = *i;
 				m.setr(dim, m.r(dim) + shift);
 				// checks if the molecule has been shifted to inside the domain due to rounding errors.
@@ -360,10 +354,10 @@ void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloR
 #pragma omp parallel
 #endif
 	{
-		auto begin = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-
-		//traverse and gather all boundary particles in the cells
-		for (auto i = begin; i.isValid(); ++i) {
+		// traverse and gather all boundary particles in the cells
+		for (auto i = moleculeContainer->regionIterator(haloRegion.rmin, haloRegion.rmax,
+														ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+			 i.isValid(); ++i) {
 			Molecule m = *i;
 			for (int dim = 0; dim < 3; dim++) {
 				if (shift[dim] != 0) {
@@ -437,7 +431,7 @@ void DomainDecompBase::assertDisjunctivity(ParticleContainer* /* moleculeContain
 }
 
 void DomainDecompBase::printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) {
-	global_log->warning() << "printDecomp useless in serial mode" << std::endl;
+	Log::global_log->warning() << "printDecomp useless in serial mode" << std::endl;
 }
 
 int DomainDecompBase::getRank() const {
@@ -477,7 +471,7 @@ void DomainDecompBase::writeMoleculesToMPIFileBinary(const std::string& filename
 	}
 	uint64_t buffer_size = 32768;
 	std::string __dummy(buffer_size, '\0');  // __dummy for preallocation of internal buffer with buffer_size.
-	std::ostringstream write_buffer(__dummy, ios_base::binary);
+	std::ostringstream write_buffer(__dummy, std::ios_base::binary);
 	__dummy.clear();
 	__dummy.shrink_to_fit();
 	//char* write_buffer = new char[buffer_size];

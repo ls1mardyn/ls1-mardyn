@@ -10,8 +10,8 @@
 
 void Domain::write(char* prefix, double cutoff, double T, bool do_shift, int format)
 {
-   ofstream xdr, txt, buchholz;
-   stringstream strstrm, txtstrstrm, buchholzstrstrm;
+   std::ofstream xdr, txt, buchholz;
+   std::stringstream strstrm, txtstrstrm, buchholzstrstrm;
    if(format == FORMAT_BRANCH)
    {
       strstrm << prefix << ".xdr";
@@ -20,7 +20,7 @@ void Domain::write(char* prefix, double cutoff, double T, bool do_shift, int for
    {
       strstrm << prefix << ".inp";
    }
-   xdr.open(strstrm.str().c_str(), ios::trunc);
+   xdr.open(strstrm.str().c_str(), std::ios::trunc);
    if(format == FORMAT_BRANCH)
    {
       txtstrstrm << prefix << "_1R.txt";
@@ -29,11 +29,11 @@ void Domain::write(char* prefix, double cutoff, double T, bool do_shift, int for
    {
       txtstrstrm << prefix << "_1R.cfg";
    }
-   txt.open(txtstrstrm.str().c_str(), ios::trunc);
+   txt.open(txtstrstrm.str().c_str(), std::ios::trunc);
    if(format == FORMAT_BUCHHOLZ)
    {
       buchholzstrstrm << prefix << "_1R.xml";
-      buchholz.open(buchholzstrstrm.str().c_str(), ios::trunc);
+      buchholz.open(buchholzstrstrm.str().c_str(), std::ios::trunc);
 
       /*
        * Gesamter Inhalt der Buchholz-Datei
@@ -68,10 +68,10 @@ void Domain::write(char* prefix, double cutoff, double T, bool do_shift, int for
    }
    unsigned slots = 3.0*fl_units*fl_units*fl_units;
    double boxdensity = (double)slots / (8.0*R_o*R_o*R_o);
-   cerr << "Box density: " << boxdensity << " (unit cell: " << fl_unit << ").\n";
+   std::cerr << "Box density: " << boxdensity << " (unit cell: " << fl_unit << ").\n";
    double P_in = rho_i / boxdensity;
    double P_out = rho_o / boxdensity;
-   cerr << "Insertion probability: " << P_in << " inside, " << P_out << " outside.\n";
+   std::cerr << "Insertion probability: " << P_in << " inside, " << P_out << " outside.\n";
 
    double goffset[3][3];
    goffset[0][0] = 0.0; goffset[1][0] = 0.5; goffset[2][0] = 0.5;
@@ -96,7 +96,7 @@ void Domain::write(char* prefix, double cutoff, double T, bool do_shift, int for
                fill[idx[0]][idx[1]][idx[2]][p] = tfill;
                if(tfill) N++;
             }
-   cerr << "Filling " << N << " out of " << slots << " slots (total density: " << N / (8.0*R_o*R_o*R_o) << ").\n";
+   std::cerr << "Filling " << N << " out of " << slots << " slots (total density: " << N / (8.0*R_o*R_o*R_o) << ").\n";
 
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
@@ -153,7 +153,7 @@ void Domain::write(char* prefix, double cutoff, double T, bool do_shift, int for
          for(idx[2]=0; idx[2] < fl_units; idx[2]++)
             for(unsigned p=0; p < 3; p++)
             {
-               // cerr << idx[0] << "\t" << idx[1] << "\t" << idx[2] << "\t|\t" << fill[idx[0]][idx[1]][idx[2]][p] << "\n";
+               // std::cerr << idx[0] << "\t" << idx[1] << "\t" << idx[2] << "\t|\t" << fill[idx[0]][idx[1]][idx[2]][p] << "\n";
                if(fill[idx[0]][idx[1]][idx[2]][p])
                {
                   double q[3];

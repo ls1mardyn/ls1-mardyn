@@ -49,8 +49,7 @@ class Logger;
  * Gobal logger variable for use in the entire program.
  * Must be initialized with constructor e.g. new Log::Logger().
  * Namespace visibility:
- *   using Log::global_log;
- */
+ *    */
 #ifndef LOGGER_SRC
 extern Log::Logger *global_log;
 #endif
@@ -66,7 +65,7 @@ typedef enum {
 	Warning = 4,  /* perhaps wrong */
 	Info    = 8,  /* user info */
 	Debug   = 16, /* detailed info for debugging */
-	All
+	All     = 32,
 } logLevel;
 
 /** @brief The Logger class provides a simple interface to handle log messages.
@@ -77,7 +76,7 @@ typedef enum {
  * create and write to his own file.
  * For writing log messages use fatal(), error(), warning(), info() or debug() as
  * with normal streams, e.g.
- * > log.error() << "Wrong parameter." << endl;
+ * > log.error() << "Wrong parameter." << std::endl;
  * For easy handling of output within MPI applications there are the following methods:
  * set_mpi_output_root(int root)
  * set_mpi_output_rall()
@@ -105,11 +104,13 @@ private:
 
 	/// initilaize the list of log levels with the corresponding short names
 	void init_log_levels() {
+		logLevelNames.insert(std::pair<logLevel, std::string>(None,    "NONE"));
 		logLevelNames.insert(std::pair<logLevel, std::string>(Fatal,   "FATAL ERROR"));
 		logLevelNames.insert(std::pair<logLevel, std::string>(Error,   "ERROR"      ));
 		logLevelNames.insert(std::pair<logLevel, std::string>(Warning, "WARNING"    ));
 		logLevelNames.insert(std::pair<logLevel, std::string>(Info,    "INFO"       ));
 		logLevelNames.insert(std::pair<logLevel, std::string>(Debug,   "DEBUG"      ));
+		logLevelNames.insert(std::pair<logLevel, std::string>(All,     "ALL"      ));
 	}
 
 	// don't allow copy-construction
@@ -160,23 +161,22 @@ public:
 
 	/// Add log info in front of messages
 	Logger& msg_level(logLevel level) {
-		using namespace std;
-		_msg_log_level = level;
+				_msg_log_level = level;
 		if (_msg_log_level <= _log_level && _do_output) {
 			// Include timestamp
 			const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 			tm unused{};
 			const auto* lt = localtime_r(&now, &unused);
 			//*_log_stream << ctime(&t) << " ";
-			stringstream timestampstream;
+			std::stringstream timestampstream;
 			// maybe sprintf is easier here...
-			timestampstream << setfill('0') << setw(4) << (1900 + lt->tm_year) << setw(2) << (1 + lt->tm_mon) << setw(2) << lt->tm_mday << "T" << setw(2) << lt->tm_hour << setw(2) << lt->tm_min << setw(2) << lt->tm_sec;
+			timestampstream << std::setfill('0') << std::setw(4) << (1900 + lt->tm_year) << std::setw(2) << (1 + lt->tm_mon) << std::setw(2) << lt->tm_mday << "T" << std::setw(2) << lt->tm_hour << std::setw(2) << lt->tm_min << std::setw(2) << lt->tm_sec;
 			*_log_stream << logLevelNames[level] << ":\t" << timestampstream.str() << " ";
 			//timestampstream.str(""); timestampstream.clear();
 #ifdef USE_GETTIMEOFDAY
 			timeval tod;
 			gettimeofday(&tod, 0);
-			*_log_stream << setw(8) << tod.tv_sec - _starttime.tv_sec + (tod.tv_usec - _starttime.tv_usec) / 1.E6 << " ";
+			*_log_stream << std::setw(8) << tod.tv_sec - _starttime.tv_sec + (tod.tv_usec - _starttime.tv_usec) / 1.E6 << " ";
 #else
 			*_log_stream << t-_starttime << "\t";
 #endif
@@ -212,6 +212,21 @@ public:
 		_log_level = l;
 		return _log_level;
 	}
+	/// set log level from string
+	logLevel set_log_level(std::string l) {
+		// identify the loglevel by comparing the first char of the names
+		for (const auto& [lvl, name] : logLevelNames) {
+			// case-insensitive matching
+			if (std::toupper(name[0]) == std::toupper(l[0])) {
+				_log_level = lvl;
+				return _log_level;
+			}
+		}
+		error_always_output() << "Logger::set_log_level() unknown argument '" << l
+							  << "'. Falling back to output everything!" << std::endl;
+		return Log::All;
+	}
+
 	/// return log level
 	logLevel get_log_level() {
 		return _log_level;

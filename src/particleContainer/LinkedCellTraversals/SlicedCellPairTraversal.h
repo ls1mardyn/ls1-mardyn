@@ -82,8 +82,8 @@ template<class CellTemplate>
 inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairs(
 		CellProcessor& cellProcessor) {
 	using std::array;
-	const array<unsigned long, 3> start = { 0, 0, 0 };
-	array<unsigned long, 3> end;
+	const std::array<unsigned long, 3> start = { 0, 0, 0 };
+	std::array<unsigned long, 3> end;
 	for (int d = 0; d < 3; ++d) {
 		end[d] = this->_dims[d] - 1;
 	}
@@ -108,37 +108,37 @@ inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairsOuter(
 
 	// values, which are modified by 2 are actually modified by the respective stride, which is always 2
 	// lower part
-	array<unsigned long, 3> startZlo = { 0, 0, 0 };
-	array<unsigned long, 3> endZlo = { this->_dims[0] - 1, this->_dims[1] - 1, 2 };
+	std::array<unsigned long, 3> startZlo = { 0, 0, 0 };
+	std::array<unsigned long, 3> endZlo = { this->_dims[0] - 1, this->_dims[1] - 1, 2 };
 	traverseCellPairsBackend(cellProcessor, startZlo, endZlo);
 
 	// upper part
-	array<unsigned long, 3> startZhi = { 0, 0, this->_dims[2] - 3 };
-	array<unsigned long, 3> endZhi = { this->_dims[0] - 1, this->_dims[1] - 1, this->_dims[2] - 1 };
+	std::array<unsigned long, 3> startZhi = { 0, 0, this->_dims[2] - 3 };
+	std::array<unsigned long, 3> endZhi = { this->_dims[0] - 1, this->_dims[1] - 1, this->_dims[2] - 1 };
 	traverseCellPairsBackend(cellProcessor, startZhi, endZhi);
 
 	// halo & boundaries in y direction
 	// boundaries in z direction are excluded!
 	// lower part
-	array<unsigned long, 3> startYlo = { 0, 0, 2 };
-	array<unsigned long, 3> endYlo = { this->_dims[0] - 1, 2, this->_dims[2] - 3 };
+	std::array<unsigned long, 3> startYlo = { 0, 0, 2 };
+	std::array<unsigned long, 3> endYlo = { this->_dims[0] - 1, 2, this->_dims[2] - 3 };
 	traverseCellPairsBackend(cellProcessor, startYlo, endYlo);
 
 	// upper part
-	array<unsigned long, 3> startYhi = { 0, this->_dims[1] - 3, 2 };
-	array<unsigned long, 3> endYhi = { this->_dims[0] - 1, this->_dims[1] - 1, this->_dims[2] - 3 };
+	std::array<unsigned long, 3> startYhi = { 0, this->_dims[1] - 3, 2 };
+	std::array<unsigned long, 3> endYhi = { this->_dims[0] - 1, this->_dims[1] - 1, this->_dims[2] - 3 };
 	traverseCellPairsBackend(cellProcessor, startYhi, endYhi);
 
 	// halo & boundaries in x direction
 	// boundaries in z and y direction are excluded!
 	// lower part
-	array<unsigned long, 3> startXlo = { 0, 2, 2 };
-	array<unsigned long, 3> endXlo = { 2, this->_dims[1] - 3, this->_dims[2] - 3 };
+	std::array<unsigned long, 3> startXlo = { 0, 2, 2 };
+	std::array<unsigned long, 3> endXlo = { 2, this->_dims[1] - 3, this->_dims[2] - 3 };
 	traverseCellPairsBackend(cellProcessor, startXlo, endXlo);
 
 	// upper part
-	array<unsigned long, 3> startXhi = { this->_dims[0] - 3, 2, 2 };
-	array<unsigned long, 3> endXhi = { this->_dims[0] - 1, this->_dims[1] - 3, this->_dims[2] - 3 };
+	std::array<unsigned long, 3> startXhi = { this->_dims[0] - 3, 2, 2 };
+	std::array<unsigned long, 3> endXhi = { this->_dims[0] - 1, this->_dims[1] - 3, this->_dims[2] - 3 };
 	traverseCellPairsBackend(cellProcessor, startXhi, endXhi);
 }
 
@@ -166,8 +166,8 @@ inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairsInner(
 		return;  // we can not iterate over any inner cells, that do not depend on boundary or halo cells
 	}
 
-	array<unsigned long, 3> lower;
-	array<unsigned long, 3> upper;
+	std::array<unsigned long, 3> lower;
+	std::array<unsigned long, 3> upper;
 	for (unsigned long i = 0; i < 3; i++) {
 		lower[i] = 2;
 		upper[i] = this->_dims[i] - 3;
@@ -194,7 +194,7 @@ inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairsBackend(
 		mardyn_exit(1);
 	}
 
-	array<unsigned long, 3> diff;
+	std::array<unsigned long, 3> diff;
 
 	unsigned long num_cells = 1;
 	for(int d = 0; d < 3; ++d) {
@@ -209,8 +209,8 @@ inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairsBackend(
 	#endif
 	{
 		Permutation perm = getPermutationForIncreasingSorting(diff);
-		array<unsigned long, 3> diff_permuted = permuteForward(perm, diff);
-		array<unsigned long, 3> start_permuted = permuteForward(perm, start);
+		std::array<unsigned long, 3> diff_permuted = permuteForward(perm, diff);
+		std::array<unsigned long, 3> start_permuted = permuteForward(perm, start);
 
 		initLocks();
 
@@ -238,7 +238,7 @@ inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairsBackend(
 			}
 
 			// unroll
-			array<unsigned long, 3> newInd_permuted = threeDimensionalMapping::oneToThreeD(i,diff_permuted);
+			std::array<unsigned long, 3> newInd_permuted = threeDimensionalMapping::oneToThreeD(i,diff_permuted);
 
 			// add inner-, middle- and outer-start
 			for(int d = 0; d < 3; ++d) {
@@ -246,7 +246,7 @@ inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairsBackend(
 			}
 
 			// permute newInd backwards
-			array<unsigned long, 3> newInd = permuteBackward(perm, newInd_permuted);
+			std::array<unsigned long, 3> newInd = permuteBackward(perm, newInd_permuted);
 
 			// get actual index
 			unsigned long cellIndex = threeDimensionalMapping::threeToOneD(newInd, this->_dims);
@@ -320,8 +320,8 @@ template<class CellTemplate>
 inline bool SlicedCellPairTraversal<CellTemplate>::isApplicable(
 		const std::array<unsigned long, 3>& dims) {
 	using std::array;
-	const array<unsigned long, 3> start = { 0, 0, 0 };
-	array<unsigned long, 3> end;
+	const std::array<unsigned long, 3> start = { 0, 0, 0 };
+	std::array<unsigned long, 3> end;
 	for (int d = 0; d < 3; ++d) {
 		end[d] = dims[d] - 1;
 	}
@@ -337,9 +337,9 @@ inline bool SlicedCellPairTraversal<CellTemplate>::isApplicable(
 	using namespace Permute3Elements;
 	using std::array;
 
-	array<unsigned long, 3> dims = {end[0] - start[0], end[1] - start[1], end[2] - start[2]};
+	std::array<unsigned long, 3> dims = {end[0] - start[0], end[1] - start[1], end[2] - start[2]};
 	Permutation permutation = getPermutationForIncreasingSorting(dims);
-	array<unsigned long, 3> dimsPermuted = permuteForward(permutation, dims);
+	std::array<unsigned long, 3> dimsPermuted = permuteForward(permutation, dims);
 
 	int num_threads = mardyn_get_max_threads();
 

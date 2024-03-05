@@ -11,7 +11,7 @@ import os
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(CUR_DIR + '/../'))
 
-from ppls1.ppls1.fluids.ljts.ljts import rho_vrabec2006
+from ppls1.ppls1.fluids.ljts.ljts import sat_vrabec2006
 
 # For details, see Vrabec et al., Molecular Physics 104 (2006).
 # The following variables are declared with respect to the default droplet experiment
@@ -24,7 +24,7 @@ drop_diameter = 1000        #droplet diameter, in Angstrom
 
 Re=(drop_diameter/2.)/sig       #calculate reduced radius of droplet
 t=scenario_temp/eps_times_kb    #calculate reduced temperature
-rhol,rhov=rho_vrabec2006(t, Re) #get reduced densities
+rhol,rhov,_=sat_vrabec2006(t, Re) #get reduced densities
 rhol=(rhol/(sig**3))            #convert rho into non reduced
 rhov=(rhov/(sig**3))
 

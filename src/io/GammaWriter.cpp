@@ -13,16 +13,16 @@
 
 void GammaWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "[GammaWriter] Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "[GammaWriter] Write frequency: " << _writeFrequency << std::endl;
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	global_log->info() << "[GammaWriter] Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "[GammaWriter] Output prefix: " << _outputPrefix << std::endl;
 	xmlconfig.getNodeValue("numInterfaces", _numInterfaces);
-	global_log->info() << "[GammaWriter] Number of interfaces: " << _numInterfaces << std::endl;
+	Log::global_log->info() << "[GammaWriter] Number of interfaces: " << _numInterfaces << std::endl;
 
 	_range.ymax = global_simulation->getDomain()->getGlobalLength(1);
 	xmlconfig.getNodeValue("range/ymin", _range.ymin);
 	xmlconfig.getNodeValue("range/ymax", _range.ymax);
-	global_log->info() << "[GammaWriter] Range: y: " << _range.ymin << " - " << _range.ymax << std::endl;
+	Log::global_log->info() << "[GammaWriter] Range: y: " << _range.ymin << " - " << _range.ymax << std::endl;
 }
 
 void GammaWriter::init(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
@@ -36,12 +36,12 @@ void GammaWriter::init(ParticleContainer *particleContainer, DomainDecompBase *d
 
 	// Rank 0 writes data to file
 	if (domainDecomp->getRank() == 0) {
-		string resultfilename(_outputPrefix + ".dat");
+		std::string resultfilename(_outputPrefix + ".dat");
 		_gammaStream.open(resultfilename);
 		_gammaStream.precision(6);
-		_gammaStream << setw(24) << "simstep";
+		_gammaStream << std::setw(24) << "simstep";
 		for (unsigned int componentId = 0; componentId < _numComp; ++componentId) {
-			_gammaStream << setw(22) << "gamma[" << componentId << "]";
+			_gammaStream << std::setw(22) << "gamma[" << componentId << "]";
 		}
 		_gammaStream << std::endl;
 		_gammaStream.close();
@@ -57,8 +57,8 @@ void GammaWriter::endStep(ParticleContainer *particleContainer, DomainDecompBase
 	if ((simstep % _writeFrequency == 0) && (simstep > global_simulation->getNumInitTimesteps())) {
 		// Rank 0 writes data to file
 		if (domainDecomp->getRank() == 0) {
-			string resultfilename(_outputPrefix + ".dat");
-			
+			std::string resultfilename(_outputPrefix + ".dat");
+
 			_gammaStream.open(resultfilename, std::ios::app);
 			_gammaStream << FORMAT_SCI_MAX_DIGITS << simstep;
 			for (unsigned int componentId = 0; componentId < _numComp; ++componentId) {

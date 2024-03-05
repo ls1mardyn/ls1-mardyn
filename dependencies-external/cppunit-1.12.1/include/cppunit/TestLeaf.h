@@ -16,10 +16,10 @@ class CPPUNIT_API TestLeaf: public Test
 {
 public:
   /*! Returns 1 as the default number of test cases invoked by run().
-   * 
+   *
    * You may override this method when many test cases are invoked (RepeatedTest
    * for example).
-   * 
+   *
    * \return 1.
    * \see Test::countTestCases().
    */

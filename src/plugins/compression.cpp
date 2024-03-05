@@ -28,7 +28,7 @@ void Lz4Compression::compress(ByteIterator uncompressedStart, ByteIterator uncom
             &(*uncompressedStart),                           //input data begin of type char*
             temp.data()+sizeof(_compressedSize),             //output data pointer of type char*
             uncompressedSize,                                //input data size (decltype of _uncompressedSize, usually size_t), imp. cast to int
-            temp.size());                                    //output data pointer of decltype(temp.size()), most probably size_t, imp. cast to int 
+            temp.size());                                    //output data pointer of decltype(temp.size()), most probably size_t, imp. cast to int
     //following may throw (duh)
     if (actualCompressedSize == 0) {
         std::string const errormsg(

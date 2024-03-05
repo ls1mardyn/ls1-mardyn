@@ -6,14 +6,14 @@
 #include "Velocity3dProfile.h"
 #include "DensityProfile.h"
 
-void Velocity3dProfile::output(string prefix, long unsigned accumulatedDatasets) {
-	global_log->info() << "[Velocity3dProfile] output" << std::endl;
+void Velocity3dProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
+	Log::global_log->info() << "[Velocity3dProfile] output" << std::endl;
 
 	// Setup outfile
 	_accumulatedDatasets = accumulatedDatasets;
 	_profilePrefix = prefix;
 	_profilePrefix += ".V3Dpr";
-	ofstream outfile(_profilePrefix.c_str());
+	std::ofstream outfile(_profilePrefix.c_str());
 	outfile.precision(6);
 
 	// Write header
@@ -33,7 +33,7 @@ void Velocity3dProfile::output(string prefix, long unsigned accumulatedDatasets)
 
 }
 
-void Velocity3dProfile::writeDataEntry (unsigned long uID, ofstream& outfile) const {
+void Velocity3dProfile::writeDataEntry (unsigned long uID, std::ofstream& outfile) const {
 	long double vd;
 	// X - Y - Z output
 	for (unsigned d = 0; d < 3; d++) {

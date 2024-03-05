@@ -68,7 +68,7 @@ public:
   void addXmlOutputterHooks( XmlOutputter *outputter );
 
   /*! \brief Called when the XmlOutputter is destroyed.
-   * 
+   *
    * Can be used to free some resources allocated by addXmlOutputterHooks().
    */
   void removeXmlOutputterHooks();

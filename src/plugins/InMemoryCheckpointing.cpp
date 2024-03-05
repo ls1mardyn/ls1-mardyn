@@ -14,16 +14,15 @@
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 
-using Log::global_log;
 
 void InMemoryCheckpointing::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 5;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	_restartAtIteration = 10;
 	xmlconfig.getNodeValue("restartAtIteration", _restartAtIteration);
-	global_log->info() << "Restart at iteration (for development purposes): " << _restartAtIteration << std::endl;
+	Log::global_log->info() << "Restart at iteration (for development purposes): " << _restartAtIteration << std::endl;
 }
 
 void InMemoryCheckpointing::beforeEventNewTimestep(
@@ -32,7 +31,7 @@ void InMemoryCheckpointing::beforeEventNewTimestep(
 	if (simstep != _restartAtIteration) {
 		return;
 	}
-	global_log->info() << "InMemoryCheckpointWriter: resetting time to: " << _snapshot.getCurrentTime() << std::endl;
+	Log::global_log->info() << "InMemoryCheckpointWriter: resetting time to: " << _snapshot.getCurrentTime() << std::endl;
 	Domain * domain = global_simulation->getDomain();
 
 	// erase all current molecules
@@ -67,7 +66,7 @@ void InMemoryCheckpointing::endStep(ParticleContainer* particleContainer,
 	}
 
 	// else, write snapshot
-	global_log->info() << "InMemoryCheckpointWriter: writing snapshot: " << std::endl;
+	Log::global_log->info() << "InMemoryCheckpointWriter: writing snapshot: " << std::endl;
 
 	// put the molecules in the buffer
 	_snapshot.clearMolecules();

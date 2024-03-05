@@ -16,7 +16,7 @@ TestComposite::~TestComposite()
 }
 
 
-void 
+void
 TestComposite::run( TestResult *result )
 {
   doStartSuite( result );
@@ -25,34 +25,34 @@ TestComposite::run( TestResult *result )
 }
 
 
-int 
+int
 TestComposite::countTestCases() const
 {
   int count = 0;
-  
+
   int childCount = getChildTestCount();
   for ( int index =0; index < childCount; ++index )
     count += getChildTestAt( index )->countTestCases();
-  
+
   return count;
 }
 
 
-std::string 
+std::string
 TestComposite::getName() const
 {
   return m_name;
 }
 
 
-void 
+void
 TestComposite::doStartSuite( TestResult *controller )
 {
   controller->startSuite( this );
 }
 
 
-void 
+void
 TestComposite::doRunChildTests( TestResult *controller )
 {
   int childCount = getChildTestCount();
@@ -66,7 +66,7 @@ TestComposite::doRunChildTests( TestResult *controller )
 }
 
 
-void 
+void
 TestComposite::doEndSuite( TestResult *controller )
 {
   controller->endSuite( this );

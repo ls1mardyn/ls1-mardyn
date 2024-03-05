@@ -21,8 +21,8 @@ DrawableMolecule::~DrawableMolecule() {
 }
 
 
-vector<string> DrawableMolecule::getDrawableValues() const {
-	vector<string> v;
+std::vector<std::string> DrawableMolecule::getDrawableValues() const {
+	std::vector<std::string> v;
 	v.push_back("Molecule");
 	v.push_back("Molecule ID");
 	v.push_back("Component ID");
@@ -30,7 +30,7 @@ vector<string> DrawableMolecule::getDrawableValues() const {
 	return v;
 }
 
-vtkSmartPointer<vtkActor> DrawableMolecule::draw(string valueName){
+vtkSmartPointer<vtkActor> DrawableMolecule::draw(std::string valueName){
 	if (valueName == "Molecule") {
 		return drawValue(_x,_id, 0, _numObjects, false);
 	}
@@ -44,7 +44,7 @@ vtkSmartPointer<vtkActor> DrawableMolecule::draw(string valueName){
 		return drawVector(_x,_v);
 	}
 	else {
-		cout<<"Invalid value name"<<endl;
+		std::cout<<"Invalid value name"<<std::endl;
 		return 0;
 	}
 }

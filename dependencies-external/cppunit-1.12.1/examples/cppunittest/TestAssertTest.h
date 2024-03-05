@@ -37,7 +37,7 @@ public:
   void testBasicAssertions();
 
   void testAssert();
-  
+
   void testAssertEqual();
 
   void testAssertMessageTrue();
@@ -56,8 +56,8 @@ private:
   TestAssertTest( const TestAssertTest &copy );
   void operator =( const TestAssertTest &copy );
 
-  void checkDoubleNotEquals( double expected, 
-                             double actual, 
+  void checkDoubleNotEquals( double expected,
+                             double actual,
                              double delta );
 
   void checkMessageContains( CPPUNIT_NS::Exception *e,

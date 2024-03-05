@@ -4,7 +4,7 @@
 A liquid film (=xz-plane) is placed in an elongated, otherwise empty domain. Due to the high density the liquid instantly "explodes" along the y-axis. As periodic boundaries are used this simulates an infinitely large liquid plane. Because the plane is placed in the middle of the domain the shock-front of the explosion will collide with its counterpart travelling in the opposite direction upon hitting the periodic boundary in y-direction. 
 
 ## Steps
-Only one simulation. The start is generated from equilibrated checkpoint files vie the `MultiObjectGenerator`:
+Only one simulation. The start is generated from equilibrated checkpoint files via the `MultiObjectGenerator`:
 - input.header.xml
 - input.dat
 

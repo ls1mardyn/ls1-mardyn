@@ -37,9 +37,9 @@ public:
   void endTest( CPPUNIT_NS::Test *test );
   void startSuite( CPPUNIT_NS::Test *suite );
   void endSuite( CPPUNIT_NS::Test *suite );
-  void startTestRun( CPPUNIT_NS::Test *test, 
+  void startTestRun( CPPUNIT_NS::Test *test,
                      CPPUNIT_NS::TestResult *eventManager );
-  void endTestRun( CPPUNIT_NS::Test *test, 
+  void endTestRun( CPPUNIT_NS::Test *test,
                    CPPUNIT_NS::TestResult *eventManager );
 
   void verify();

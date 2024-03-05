@@ -6,7 +6,6 @@
  */
 
 class Domain;
-using namespace std;
 
 #include "MDGenerator.h"
 #include "common/ComponentParameters.h"
@@ -31,7 +30,7 @@ private:
 	double simBoxLength[3];
 
 	//! @brief each element is a sphere (vector containing x,y,z and r)
-	vector<vector<double> > localClusters;
+	std::vector<std::vector<double> > localClusters;
 
 public:
 	DropletGenerator();
@@ -66,7 +65,7 @@ public:
 	 * @return the highest id of a molecule generated.
 	 */
 	unsigned long generateMoleculesCluster(ParticleContainer* particleContainer,
-			vector<double> &bBoxMin, vector<double> &bBoxMax, Domain* domain,
+			std::vector<double> &bBoxMin, std::vector<double> &bBoxMax, Domain* domain,
 			DomainDecompBase* domainDecomp);
 
 	//Domain* domain,DomainDecompBase* domainDecomp);
@@ -143,7 +142,7 @@ public:
 			Domain* domain,
 			DomainDecompBase* domainDecomp);
 
-	vector<ParameterCollection*> getParameters();
+	std::vector<ParameterCollection*> getParameters();
 
 	//void generatePreview();
 

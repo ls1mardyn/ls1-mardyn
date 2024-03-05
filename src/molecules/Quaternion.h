@@ -100,7 +100,6 @@ public:
 
 private:
 	double m_qw, m_qx, m_qy, m_qz; // components
-
 };
 
 #endif /*QUATERNION_H_*/

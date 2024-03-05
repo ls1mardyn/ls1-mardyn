@@ -58,7 +58,7 @@ public:
 			_summv2 = 0.0;
 		} // end pragma omp master
 
-		global_log->debug() << "VelocityCellProcessorRMM::initTraversal()." << std::endl;
+		Log::global_log->debug() << "VelocityCellProcessorRMM::initTraversal()." << std::endl;
 	}
 
 	void endTraversal() {

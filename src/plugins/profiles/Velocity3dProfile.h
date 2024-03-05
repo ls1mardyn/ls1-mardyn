@@ -36,7 +36,7 @@ public:
             _global3dProfile[uID][d] = domainDecomp->collCommGetDouble();
         }
     }
-    void output(string prefix, long unsigned accumulatedDatasets) final;
+    void output(std::string prefix, long unsigned accumulatedDatasets) final;
     void reset(unsigned long uID) final  {
         for(unsigned d = 0; d < 3; d++){
             _local3dProfile[uID][d] = 0.0;
@@ -54,7 +54,7 @@ private:
     // Global 3D Profile
     std::map<unsigned, std::array<double,3>> _global3dProfile;
 
-    void writeDataEntry(unsigned long uID, ofstream &outfile) const final;
+    void writeDataEntry(unsigned long uID, std::ofstream &outfile) const final;
 };
 
 

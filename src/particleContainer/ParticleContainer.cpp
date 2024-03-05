@@ -3,8 +3,6 @@
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
 
-using namespace std;
-using Log::global_log;
 
 ParticleContainer::ParticleContainer(double bBoxMin[3], double bBoxMax[3]) {
 	for (int i = 0; i < 3; i++) {
@@ -14,12 +12,12 @@ ParticleContainer::ParticleContainer(double bBoxMin[3], double bBoxMax[3]) {
 }
 
 bool ParticleContainer::rebuild(double bBoxMin[3], double bBoxMax[3]) {
-	global_log->info() << "REBUILD OF PARTICLE CONTAINER" << endl;
+	Log::global_log->info() << "REBUILD OF PARTICLE CONTAINER" << std::endl;
 	for (int i = 0; i < 3; i++) {
 		_boundingBoxMin[i] = bBoxMin[i];
 		_boundingBoxMax[i] = bBoxMax[i];
 	}
-	global_log->info() << "Bounding box: " << "[" << bBoxMin[0] << ", " << bBoxMax[0] << "]" << " x " << "["
+	Log::global_log->info() << "Bounding box: " << "[" << bBoxMin[0] << ", " << bBoxMax[0] << "]" << " x " << "["
 			<< bBoxMin[1] << ", " << bBoxMax[1] << "]" << " x " << "[" << bBoxMin[2] << ", " << bBoxMax[2] << "]"
 			<< std::endl;
 

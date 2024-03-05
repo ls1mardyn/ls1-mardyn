@@ -25,7 +25,6 @@
 
 extern const double PI;
 
-using namespace std;
 
 class Molecule
 {
@@ -79,9 +78,9 @@ private:
 	// @brief: the key element of the map is always the internal (within this class only) molecule-ID
 	// the value element of the map is denoted by second part of the name (e.g. position, velocity, component-ID, etc.) and corresponds to the
 	// particular molecule (of any component)
-	map<unsigned, double> _moleculePosition[3];  // for the following three maps: the key value starts at 0.
-	map<unsigned, double> _moleculeVelocity[3];
-	map<unsigned, unsigned> _moleculeCID;
+	std::map<unsigned, double> _moleculePosition[3];  // for the following three maps: the key value starts at 0.
+	std::map<unsigned, double> _moleculeVelocity[3];
+	std::map<unsigned, unsigned> _moleculeCID;
 	//map<unsigned,unsigned> _moleculeComponentID;
 
 };

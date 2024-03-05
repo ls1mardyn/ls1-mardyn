@@ -20,7 +20,7 @@ struct StringTools
 
   static std::string CPPUNIT_API toString( double value );
 
-  static Strings CPPUNIT_API split( const std::string &text, 
+  static Strings CPPUNIT_API split( const std::string &text,
                                     char separator );
 
   static std::string CPPUNIT_API wrap( const std::string &text,

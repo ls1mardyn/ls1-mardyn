@@ -30,11 +30,11 @@ void L2PCellProcessor::initTraversal() {
 //	using std::cout;
 //	using std::endl;
 //	Domain* domain = global_simulation->getDomain();
-//	cout << "L2P init: LocalUpot     " << domain->getLocalUpot() << endl;
-//	cout << "L2P init: LocalVirial   " << domain->getLocalVirial() << endl;
-//	cout << "L2P init: LocalP_xx     " << domain->getLocalP_xx() << endl;
-//	cout << "L2P init: LocalP_yy     " << domain->getLocalP_yy() << endl;
-//	cout << "L2P init: LocalP_zz     " << domain->getLocalP_zz() << endl;
+//	std::cout << "L2P init: LocalUpot     " << domain->getLocalUpot() << std::endl;
+//	std::cout << "L2P init: LocalVirial   " << domain->getLocalVirial() << std::endl;
+//	std::cout << "L2P init: LocalP_xx     " << domain->getLocalP_xx() << std::endl;
+//	std::cout << "L2P init: LocalP_yy     " << domain->getLocalP_yy() << std::endl;
+//	std::cout << "L2P init: LocalP_zz     " << domain->getLocalP_zz() << std::endl;
 	global_simulation->timers()->start("L2P_CELL_PROCESSOR_L2P");
 }
 

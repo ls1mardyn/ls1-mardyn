@@ -10,7 +10,7 @@ class Test;
 
 /*! \brief Abstract Test factory.
  */
-class CPPUNIT_API TestFactory 
+class CPPUNIT_API TestFactory
 {
 public:
   virtual ~TestFactory() {}
