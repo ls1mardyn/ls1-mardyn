@@ -23,7 +23,7 @@ void PressureProfiler::readXML(XMLfileUnits &xmlconfig) {
     unsigned long index = std::distance(mode_strings.begin(),
                                         std::find(mode_strings.begin(), mode_strings.end(), mode_str));
     if (index >= ModeCount) {
-        global_log->warning() << "[Pressure Profiler] Invalid mode specified. Falling back to: " << mode_strings[1]
+        Log::global_log->warning() << "[Pressure Profiler] Invalid mode specified. Falling back to: " << mode_strings[1]
                               << std::endl;
         index = 1;
     }
@@ -36,7 +36,7 @@ void PressureProfiler::readXML(XMLfileUnits &xmlconfig) {
         _profiler = std::make_unique<MOPProfiler>();
     }
     else {
-        global_log->error() << "[Pressure Profiler] Unknown mode." << std::endl;
+        Log::global_log->error() << "[Pressure Profiler] Unknown mode." << std::endl;
         _simulation.exit(-1);
     }
 
@@ -127,7 +127,7 @@ void ProfilerBase::writePressure(const std::string &filename, Vec3D<double> &pre
             file << d << " ";
         }
     } catch (std::ofstream::failure& e) {
-        global_log->error() << "[Pressure Profiler] Failed to write pressure measurements to file.\n" << e.what() << std::endl;
+        Log::global_log->error() << "[Pressure Profiler] Failed to write pressure measurements to file.\n" << e.what() << std::endl;
         _simulation.exit(-1);
     }
 }
@@ -165,7 +165,7 @@ void DirectProfiler::step(ParticleContainer *particleContainer, DomainDecompBase
     }
 }
 
-double DirectProfiler::measureTemp(const array<double, 3> &low, const std::array<double, 3> &high,
+double DirectProfiler::measureTemp(const std::array<double, 3> &low, const std::array<double, 3> &high,
                                      ParticleContainer *particleContainer, BinData& binData) {
     std::array<double, 3> v_mean = computeMeanVelocityStep(low, high, particleContainer, binData);
     double m = _simulation.getEnsemble()->getComponent(0)->m();
@@ -183,7 +183,7 @@ double DirectProfiler::measureTemp(const array<double, 3> &low, const std::array
     return v * m / 3;
 }
 
-std::array<double, 3> DirectProfiler::computeMeanVelocityStep(const array<double, 3> &low, const array<double, 3> &high,
+std::array<double, 3> DirectProfiler::computeMeanVelocityStep(const std::array<double, 3> &low, const std::array<double, 3> &high,
                                                ParticleContainer *particleContainer, BinData& binData) {
     //compute mean velocity per dim using SMC method, see: Karimian et al. 2011
     std::array<double, 3> v_avg{0};
@@ -252,7 +252,7 @@ std::array<double, 3> DirectProfiler::computeMeanVelocityStep(const array<double
     }
 }
 
-double DirectProfiler::computePotential(const array<double, 3> &low, const array<double, 3> &high,
+double DirectProfiler::computePotential(const std::array<double, 3> &low, const std::array<double, 3> &high,
                                           ParticleContainer *particleContainer) {
     ParticlePairsHandler* pairsHandler = _simulation.getParticlePairsHandler();
     double r_c = _simulation.getcutoffRadius();
@@ -348,7 +348,7 @@ double DirectProfiler::computePotential(const array<double, 3> &low, const array
     return u;
 }
 
-double DirectProfiler::computePressure(const array<double, 3> &low, const array<double, 3> &high,
+double DirectProfiler::computePressure(const std::array<double, 3> &low, const std::array<double, 3> &high,
                                          ParticleContainer *particleContainer, BinData& binData) {
     double p = 0;
     //kinetic term
@@ -475,7 +475,7 @@ void MOPProfiler::updatePBuffers(ParticleContainer *particleContainer) {
     }
 }
 
-double MOPProfiler::computeMomentum(const array<double, 3> &low, const array<double, 3> &high,
+double MOPProfiler::computeMomentum(const std::array<double, 3> &low, const std::array<double, 3> &high,
                                     ParticleContainer *particleContainer) {
     double p = 0;
 #if defined(_OPENMP)
@@ -493,7 +493,7 @@ double MOPProfiler::computeMomentum(const array<double, 3> &low, const array<dou
     return p;
 }
 
-double MOPProfiler::computePotential(const array<double, 3> &low, const array<double, 3> &high,
+double MOPProfiler::computePotential(const std::array<double, 3> &low, const std::array<double, 3> &high,
                                      ParticleContainer *particleContainer) {
     double r_c = _simulation.getcutoffRadius();
     double r_c2 = r_c * r_c;
@@ -557,7 +557,7 @@ double MOPProfiler::computePotential(const array<double, 3> &low, const array<do
     return u;
 }
 
-static inline bool inBox(const array<double, 3> &low, const array<double, 3> &high, const array<double, 3> &p) {
+static inline bool inBox(const std::array<double, 3> &low, const std::array<double, 3> &high, const std::array<double, 3> &p) {
     constexpr double tolerance = 1e-12;
     bool result = true;
     for(int d = 0; d < 3; d++) {
@@ -567,18 +567,18 @@ static inline bool inBox(const array<double, 3> &low, const array<double, 3> &hi
     return result;
 }
 
-static inline double dot(const array<double, 3> &p1, const array<double, 3> &p2) {
+static inline double dot(const std::array<double, 3> &p1, const std::array<double, 3> &p2) {
     double result = 0;
     for(int d = 0; d < 3; d++) result += p1[d]*p2[d];
     return result;
 }
 
-static inline void intersectLinePlane(const array<double, 3>& low, const array<double, 3>& high,
-                                      const array<double, 3>& center, const array<double, 3>& p,
-                                      const array<double, 3>& v, array<double, 6>& lambdas) {
-    using d3 = array<double,3>;
-    constexpr array<d3, 6> normals {d3{1,0,0}, d3{-1,0,0}, d3{0,1,0}, d3{0,-1,0}, d3{0,0,1}, d3{0,0,-1}};
-    array<d3, 6> bases {center, center, center, center, center, center};
+static inline void intersectLinePlane(const std::array<double, 3>& low, const std::array<double, 3>& high,
+                                      const std::array<double, 3>& center, const std::array<double, 3>& p,
+                                      const std::array<double, 3>& v, std::array<double, 6>& lambdas) {
+    using d3 = std::array<double,3>;
+    constexpr std::array<d3, 6> normals {d3{1,0,0}, d3{-1,0,0}, d3{0,1,0}, d3{0,-1,0}, d3{0,0,1}, d3{0,0,-1}};
+    std::array<d3, 6> bases {center, center, center, center, center, center};
     bases[0][0]=high[0]; bases[1][0]=low[0]; bases[2][1]=high[1];
     bases[3][1]=low[1]; bases[4][2]=high[2]; bases[5][2]=low[2];
 
@@ -588,16 +588,16 @@ static inline void intersectLinePlane(const array<double, 3>& low, const array<d
     }
 }
 
-static inline std::array<double, 3> projectPointVector(const array<double, 3>& p, const array<double, 3>& v, double lambda) {
-    using d3 = array<double,3>;
+static inline std::array<double, 3> projectPointVector(const std::array<double, 3>& p, const std::array<double, 3>& v, double lambda) {
+    using d3 = std::array<double,3>;
     d3 x = p;
     for(int d = 0; d < 3; d++) x[d] += lambda * v[d];
     return x;
 }
 
-double MOPProfiler::computeIntersection(const array<double, 3> &low, const array<double, 3> &high,
-                                        const array<double, 3> &p1, const array<double, 3> &p2) {
-    using d3 = array<double,3>;
+double MOPProfiler::computeIntersection(const std::array<double, 3> &low, const std::array<double, 3> &high,
+                                        const std::array<double, 3> &p1, const std::array<double, 3> &p2) {
+    using d3 = std::array<double,3>;
     if(inBox(low, high, p1) && inBox(low, high, p2)) return 1;
 
     d3 center = high;
@@ -610,7 +610,7 @@ double MOPProfiler::computeIntersection(const array<double, 3> &low, const array
         if(inBox(low,high,p1)) for(int d = 0; d < 3; d++) { v[d] = p2[d] - p1[d]; p[d] = p1[d]; }
         else for(int d = 0; d < 3; d++) { v[d] = p1[d] - p2[d]; p[d] = p2[d]; }
 
-        array<double, 6> lambdas {};
+        std::array<double, 6> lambdas {};
         intersectLinePlane(low, high, center, p, v, lambdas);
         double lambda = *std::min_element(lambdas.begin(), lambdas.end());
 
@@ -630,7 +630,7 @@ double MOPProfiler::computeIntersection(const array<double, 3> &low, const array
         //project p1 and p2 along line based on p1p2 or p2p1 vector respectively onto all region
         //get the smallest resulting lambda, while resulting point is in region
         d3 p {}, v{}, x1 {}, x2 {};
-        array<double, 6> lambdas {};
+        std::array<double, 6> lambdas {};
 
 
         //p1 to p2

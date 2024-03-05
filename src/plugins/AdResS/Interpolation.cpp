@@ -43,8 +43,8 @@ static inline void fold(const std::array<double, N>& mask, std::vector<double>& 
     fold(c_central, input, output, 0, input.size()-4, 2);
 }
 
-[[maybe_unused]] void Interpolation::solveTriDiagonalMatrix(vector<double> &a, vector<double> &b, vector<double> &c, vector<double> &x,
-                                           vector<double> &d) {
+[[maybe_unused]] void Interpolation::solveTriDiagonalMatrix(std::vector<double> &a, std::vector<double> &b, std::vector<double> &c, std::vector<double> &x,
+                                           std::vector<double> &d) {
     std::size_t n = b.size();
     mardyn_assert(n == a.size());
     mardyn_assert(n == c.size());
@@ -111,7 +111,7 @@ static inline double bernstein_3(double t, int k) {
     return result;
 }
 
-[[maybe_unused]] void Interpolation::computeHermite(double begin, vector<double> &fVals, vector<double> &steps, int samples,
+[[maybe_unused]] void Interpolation::computeHermite(double begin, std::vector<double> &fVals, std::vector<double> &steps, int samples,
                                    Function &fun) {
     // the base idea is to create the hermite matrix
     // this here is the simplified version, in which uniform step size is assume

@@ -5,7 +5,7 @@
 #include "InteractionLogProcessor.h"
 
 InteractionLogProcessor::InteractionLogProcessor(const double cutoffRadius, const double ljCutoffRadius,
-                                                 const vector<FPRegion> &fpRegions) : CellProcessor(
+                                                 const std::vector<FPRegion> &fpRegions) : CellProcessor(
         cutoffRadius, ljCutoffRadius), _fpRegions(fpRegions), _processed(false) { }
 InteractionLogProcessor::~InteractionLogProcessor() = default;
 void InteractionLogProcessor::initTraversal() {}

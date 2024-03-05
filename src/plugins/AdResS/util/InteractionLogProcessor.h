@@ -25,7 +25,7 @@ public:
      * @param fpRegions reference to all FP regions from the AdResS plugin instance
      * */
     explicit InteractionLogProcessor(const double cutoffRadius, const double ljCutoffRadius,
-                                     const vector<FPRegion> &fpRegions);
+                                     const std::vector<FPRegion> &fpRegions);
     //! @brief does nothing
     ~InteractionLogProcessor() override;
     //! @brief does nothing
