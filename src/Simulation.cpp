@@ -41,6 +41,7 @@
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
 #include "integrators/LeapfrogRMM.h"
+#include "integrators/Langevin.h"
 
 #include "plugins/PluginBase.h"
 #include "plugins/PluginFactory.h"
@@ -115,6 +116,7 @@ Simulation::Simulation()
 	_rand(8624),
 	_longRangeCorrection(nullptr),
 	_temperatureControl(nullptr),
+    _temperatureObserver(nullptr),
 	_FMM(nullptr),
 	_timerProfiler(),
 #ifdef TASKTIMINGPROFILE
@@ -150,6 +152,8 @@ Simulation::~Simulation() {
 	_longRangeCorrection = nullptr;
 	delete _temperatureControl;
 	_temperatureControl = nullptr;
+    delete _temperatureObserver;
+    _temperatureObserver = nullptr;
 	delete _FMM;
 	_FMM = nullptr;
 
@@ -182,7 +186,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_integrator = new Leapfrog();
 		} else if (integratorType == "LeapfrogRMM") {
 			_integrator = new LeapfrogRMM();
-		} else {
+		} else if (integratorType == "Langevin") {
+            _integrator = new Langevin();
+        } else {
 			Log::global_log-> error() << "Unknown integrator " << integratorType << std::endl;
 			Simulation::exit(1);
 		}
@@ -530,8 +536,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
                         Simulation::exit(-1);
                     }
                 }
-				else
-				{
+				else if (thermostattype == "TemperatureObserver") {
+                    if (_temperatureObserver == nullptr) {
+                        _temperatureObserver = new TemperatureObserver();
+                        _temperatureObserver->readXML(xmlconfig);
+                    } else {
+                        Log::global_log->error() << "Instance of TemperatureObserver already exists!" << std::endl;
+                        Simulation::exit(-1);
+                    }
+                }
+                else {
 					Log::global_log->warning() << "Unknown thermostat " << thermostattype << std::endl;
 					continue;
 				}
@@ -810,6 +824,10 @@ void Simulation::prepare_start() {
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	}
 
+    if(dynamic_cast<Langevin*>(_integrator) != nullptr) {
+        _integrator->init();
+    }
+
 	if (_FMM != nullptr) {
 
 		double globalLength[3];
@@ -897,6 +915,11 @@ void Simulation::prepare_start() {
 	/** Init TemperatureControl beta_trans, beta_rot log-files, register as observer if plugin DistControl is in use. */
 	if(nullptr != _temperatureControl)
 		_temperatureControl->prepare_start();  // Has to be called before plugin initialization (see below): plugin->init(...)
+
+    if(_temperatureObserver != nullptr) {
+        _temperatureObserver->init();
+        _temperatureObserver->step(_moleculeContainer);
+    }
 
 	// initializing plugins and starting plugin timers
 	for (auto& plugin : _plugins) {
@@ -1172,7 +1195,7 @@ void Simulation::simulateOneTimestep()
 
 	// scale velocity and angular momentum
 	// TODO: integrate into Temperature Control
-	if ( !_domain->NVE() && _temperatureControl == nullptr) {
+	if ( !_domain->NVE() && _temperatureControl == nullptr && _temperatureObserver == nullptr) {
 		if (_thermostatType ==VELSCALE_THERMOSTAT) {
 			Log::global_log->debug() << "Velocity scaling" << std::endl;
 			if (_domain->severalThermostats()) {
@@ -1204,10 +1227,9 @@ void Simulation::simulateOneTimestep()
 	} else if ( _temperatureControl != nullptr) {
 		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
 		_temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
-	}
-	// <-- TEMPERATURE_CONTROL
-
-
+	} else if (_temperatureObserver != nullptr) {
+        _temperatureObserver->step(_moleculeContainer);
+    }
 
 	advanceSimulationTime(_integrator->getTimestepLength());
 
