@@ -47,7 +47,7 @@ Some of the most common compilers are
 | Intel oneAPI  | `icx`   | `icpx`    |
 | Clang         | `clang` | `clang++` |
 
-Specifying the compiler is only possible at the first execution of cmake.
+Specifying the compiler this way is only possible at the first execution of cmake.
 If you want to change the compiler later on, either add another build directory, or first clear the existing build directory.
 
 To configure the options within ls1-MarDyn it is recommended to use `ccmake`:
@@ -65,7 +65,11 @@ Finally, build ls1-MarDyn using:
 ```bash
 make
 ```
-For a parallel and faster build, use `make`'s `-j` parameter with an appropriate number of tasks.
+
+For a faster build, you can make use of parallel building:
+```bash
+make -j $(nproc)
+```
 
 The executable is then found at `build/src/MarDyn`.
 
