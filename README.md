@@ -29,7 +29,17 @@ Installation (make)
 ### Installing ls1-MarDyn using cmake
 This is the recommended way of building ls1-MarDyn.
 
-#### Configuration
+#### Quick guide
+
+Run the following commands to build ls1-MarDyn with the Clang compiler. Adjust options (e.g. ENABLE_MPI) according to the individual needs.
+```bash
+mkdir build
+cd build
+CC=clang CXX=clang++ ccmake ..
+make -j $(nproc)
+```
+
+#### Detailed guide
 To build ls1-MarDyn using cmake first create an additional directory on the root ls1-MarDyn directory and change into that directory.
 ```bash
 mkdir build
@@ -43,16 +53,17 @@ Some of the most common compilers are
 | Compiler      | CC    | CXX     |
 |---------------|-------|---------|
 | GCC           | `gcc`   | `g++`     |
-| Intel Classic | `icc`   | `icpc`    |
 | Intel oneAPI  | `icx`   | `icpx`    |
 | Clang         | `clang` | `clang++` |
+
+The Intel Classic Compiler (`icc` and `icpc`) is not recommended to use, since it is deprecated and does not work with AutoPas.
 
 Specifying the compiler this way is only possible at the first execution of cmake.
 If you want to change the compiler later on, either add another build directory, or first clear the existing build directory.
 
 To configure the options within ls1-MarDyn it is recommended to use `ccmake`:
 ```bash
-ccmake .
+ccmake ..
 ```
 That way you can easily edit the available options.
 
