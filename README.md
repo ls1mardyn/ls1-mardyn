@@ -7,23 +7,23 @@ ls1-MarDyn is a massively parallel Molecular Dynamics (MD) code for large system
 Getting Started
 ===============
 
-Documentation:
+Documentation
 --------------
 The current doxygen documentation can be found [here](https://ls1mardyn.github.io/ls1-mardyn/).
 
-Prerequisites:
+Prerequisites
 --------------
-### mandatory requirements:
+### mandatory requirements
 * a C++17 compiler (GCC, Clang, Intel, PGI, Cray, NEC SX, IBM XL, ...)
 * a working MPI installation compatible with the MPI 3.0 specification or later (Open MPI, MPICH, MVAPICH, Intel MPI, Cray MPI, NEC MPI, IBM Platform MPI, ...)
 
-### optional requirements:
+### optional requirements
 * [FFTW3](http://www.fftw.org)
 * [VTK](http://www.vtk.org)
 * [QuickSched](https://arxiv.org/abs/1601.05384)
 
 
-Installation (make)
+Installation
 ------------
 
 ### Installing ls1-MarDyn using cmake
