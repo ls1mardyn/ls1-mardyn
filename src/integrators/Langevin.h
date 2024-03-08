@@ -15,6 +15,9 @@
  * New time integrator that deviates from the standard Verlet integration scheme.
  * Equations of motion are changed to follow Langevin equations.
  * This is a stochastic integration scheme, which is incorporated as random "kicks" from the connected heat bath.
+ *
+ * This is to be used with the TemperatureObserver, which disables the normal velocity scaling and defines
+ * the regions in which the Langevin Thermostat should be active.
  * */
 class Langevin : public Integrator {
 public:
@@ -41,6 +44,9 @@ private:
 
     //! @brief regions in which friction is not set to 0
     std::vector<box_t> _stochastic_regions;
+
+    //! @brief We need to check at least twice if a TemperatureObserver exists
+    bool _checkFailed;
 
     /**
      * Sample from Gaussian with technically 0 mean and sigma**2 = 2 * m * friction * k_b * T_target / delta_t.
