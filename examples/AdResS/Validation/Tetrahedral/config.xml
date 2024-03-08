@@ -15,12 +15,13 @@
                 <steps>0</steps>
             </equilibration>
             <production>
-                <steps>1000</steps>
+                <steps>20000</steps>
             </production>
         </run>
-        <integrator type="Leapfrog">
+        <integrator type="Langevin">
             <!-- MD ODE integrator -->
             <timestep unit="reduced">0.001</timestep>
+            <friction>0.4</friction>
         </integrator>
         <ensemble type="NVT">
             <!--Ensemble is the main topic of the simulation -->
@@ -40,8 +41,8 @@
                     <objectgenerator>
                         <filler type="ReplicaFiller">
                             <input type="BinaryReader">
-                                <header>ValTetTest6-1.restart.header.xml</header>
-                                <data>ValTetTest6-1.restart.dat</data>
+                                <header>ThermoTest-1.restart.header.xml</header>
+                                <data>ThermoTest-1.restart.dat</data>
                             </input>
                         </filler>
 
@@ -61,74 +62,20 @@
                 <traversalSelector>c08</traversalSelector>
             </datastructure>
             <cutoffs type="CenterOfMass" >
-                <radiusLJ unit="reduced" >3.5</radiusLJ>
+                <radiusLJ unit="reduced" >2.5</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField" >
                 <epsilon>0</epsilon>
             </electrostatic>
             <thermostats>
-                <thermostat type="TemperatureControl">
-                    <control>
-                        <start>0</start>
-                        <frequency>1</frequency>
-                        <stop>1000000000</stop>
-                    </control>
-                    <regions>
+                <thermostat type="TemperatureObserver">
+                    <samples>100</samples>
+                    <ActiveRegions>
                         <region>
-                            <method>Andersen</method>
-                            <coords>
-                                <lcx>0.0</lcx>
-                                <lcy>0.0</lcy>
-                                <lcz>0.0</lcz>
-                                <ucx>36</ucx>
-                                <ucy>20</ucy>
-                                <ucz>20</ucz>
-                            </coords>
-                            <target>
-                                <temperature>300.0</temperature>
-                                <component>1</component>
-                            </target>
-                            <settings>
-                                <nu>0.5</nu>
-                            </settings>
+                            <lowX>0</lowX><lowY>0</lowY><lowZ>0</lowZ>
+                            <highX>36</highX><highY>20</highY><highZ>20</highZ>
                         </region>
-                        <region>
-                            <method>Andersen</method>
-                            <coords>
-                                <lcx>0.0</lcx>
-                                <lcy>0.0</lcy>
-                                <lcz>0.0</lcz>
-                                <ucx>36</ucx>
-                                <ucy>20</ucy>
-                                <ucz>20</ucz>
-                            </coords>
-                            <target>
-                                <temperature>300.0</temperature>
-                                <component>2</component>
-                            </target>
-                            <settings>
-                                <nu>0.5</nu>
-                            </settings>
-                        </region>
-                        <region>
-                            <method>Andersen</method>
-                            <coords>
-                                <lcx>0.0</lcx>
-                                <lcy>0.0</lcy>
-                                <lcz>0.0</lcz>
-                                <ucx>36</ucx>
-                                <ucy>20</ucy>
-                                <ucz>20</ucz>
-                            </coords>
-                            <target>
-                                <temperature>300.0</temperature>
-                                <component>3</component>
-                            </target>
-                            <settings>
-                                <nu>0.5</nu>
-                            </settings>
-                        </region>
-                    </regions>
+                    </ActiveRegions>
                 </thermostat>
             </thermostats>
         </algorithm>
@@ -146,17 +93,17 @@
                 <bins>1000</bins>
                 <intervallength>0.01</intervallength>
             </outputplugin-->
-            <outputplugin name="PressureProfiler">
+            <!--outputplugin name="PressureProfiler">
                 <bins>
                     <x>18</x><y>10</y><z>10</z>
                 </bins>
-                <outdims>xyz</outdims> <!--can be xyz yz y etc -->
+                <outdims>xyz</outdims> <can be xyz yz y etc>
                 <mode>MOP</mode>
                 <samples>100</samples>
                 <sampleFreq>1</sampleFreq>
                 <writeFreq>100</writeFreq>
                 <filename>Pressures</filename>
-            </outputplugin>
+            </outputplugin-->
         </output>
         <!--plugin name="AdResS">
             <weightImpl>near</weightImpl>
@@ -180,31 +127,31 @@
                 </region>
             </fpregions>
         </plugin-->
-        <plugin name="AdResS">
+        <!--plugin name="AdResS">
             <weightImpl>near</weightImpl>
             <enableFTH>
-                <fmax>1e+5</fmax>
-                <logFTH>true</logFTH>
+                <fmax>1e+7</fmax>
+                <logFTH>false</logFTH>
                 <logDensity>false</logDensity>
-                <rho>0.1</rho>
-                <!--createFTH>
-                    <sampleGap>200</sampleGap>
-                    <threshold>5e-5</threshold>
-                    <convFactor>5e+5</convFactor>
+                <rho>0.005</rho>
+                <createFTH>
+                    <sampleGap>100000</sampleGap>
+                    <threshold>5e-10</threshold>
+                    <convFactor>0</convFactor>
                     <sampleBinSize>3.6e-1</sampleBinSize>
                 </createFTH-->
-                <include query="/forceFunction">./F_TH.xml</include>
-            </enableFTH>
+                <!--include query="/forceFunction">./F_TH.xml</include-->
+            <!--/enableFTH>
             <fpregions>
                 <region id="1">
                     <lowX>15</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
                     <highX>21</highX><highY>20</highY><highZ>20</highZ>
-                    <hybridDimX>12</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                    <hybridDimX>8</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
-        </plugin>
+        </plugin-->
 
-        <!--plugin name="SpatialProfile">
+        <plugin name="SpatialProfile">
             <mode>cartesian</mode>
             <x>100</x>
             <y>1</y>
@@ -217,12 +164,12 @@
             <outputprefix>cartesian</outputprefix>
             <profiledComponent>all</profiledComponent>
             <profiles>
-                <density>1</density>
-                <temperature>0</temperature>
-                <velocity>0</velocity>
-                <velocity3d>0</velocity3d>
-                <virial>0</virial>
+                <density>true</density>
+                <temperature>false</temperature>
+                <velocity>false</velocity>
+                <velocity3d>false</velocity3d>
+                <virial>false</virial>
             </profiles>
-        </plugin-->
+        </plugin>
     </simulation>
 </mardyn>

@@ -12,7 +12,7 @@
         <run>
             <currenttime>0</currenttime>
             <production>
-                <steps>10000</steps>
+                <steps>20000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -21,7 +21,7 @@
         </integrator>
         <ensemble type="NVT">
             <!--Ensemble is the main topic of the simulation -->
-            <temperature unit="reduced" >1</temperature>	<!-- in future also units="K" -->
+            <temperature unit="reduced" >300</temperature>	<!-- in future also units="K" -->
             <domain type="box">
                 <lx unit="reduced">36</lx>
                 <ly unit="reduced">20</ly>
@@ -48,7 +48,7 @@
                                 </site>
                             </basis>
                             <latticeOccupancy>1.</latticeOccupancy>
-                            <density>0.1</density>
+                            <density>0.12</density>
                         </filler>
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
@@ -91,7 +91,7 @@
                                 <ucz>20</ucz>
                             </coords>
                             <target>
-                                <temperature>1.0</temperature>
+                                <temperature>300.0</temperature>
                                 <component>1</component>
                             </target>
                             <settings>
@@ -106,12 +106,12 @@
         <output>
             <outputplugin name="CheckpointWriter">
                 <type>binary</type>
-                <writefrequency>10000</writefrequency>
-                <outputprefix>ValTetTest</outputprefix>
+                <writefrequency>20000</writefrequency>
+                <outputprefix>ThermoTest</outputprefix>
             </outputplugin>
         </output>
 
-        <plugin name="AdResS">
+        <!--plugin name="AdResS">
             <weightImpl>near</weightImpl>
             <enableFTH>
                 <fmax>1e+3</fmax>
@@ -132,6 +132,6 @@
                     <hybridDimX>18</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
-        </plugin>
+        </plugin-->
     </simulation>
 </mardyn>

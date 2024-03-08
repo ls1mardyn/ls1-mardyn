@@ -13,6 +13,7 @@
 #include <random>
 
 void Langevin::readXML(XMLfileUnits &xmlconfig) {
+    _checkFailed = false;
     _timestepLength = 0;
     xmlconfig.getNodeValueReduced("timestep", _timestepLength);
     Log::global_log->info() << "Timestep: " << _timestepLength << std::endl;
@@ -25,14 +26,23 @@ void Langevin::readXML(XMLfileUnits &xmlconfig) {
 
 void Langevin::init() {
     std::vector<std::pair<std::array<double, 3>, std::array<double, 3>>> regions;
-    if(_simulation.getTemperatureObserver() == nullptr) return; // we will check again later
+    _dt_half = _timestepLength / 2;
+
+    if(_simulation.getTemperatureObserver() == nullptr && _checkFailed) {
+        Log::global_log->warning() << "Langevin Integrator used, but no Temperature Observer defined as thermostat."
+        << " Will behave identical to leapfrog integrator." << std::endl;
+    }
+    if(_simulation.getTemperatureObserver() == nullptr && !_checkFailed) { _checkFailed = true; return; } // we will check again later
 
     _simulation.getTemperatureObserver()->getRegions(regions);
+    if(regions.empty()) {
+        Log::global_log->warning() << "Langevin Integrator used, but no regions defined in Temperature Observer."
+                << " Will behave identical to leapfrog integrator." << std::endl;
+        return;
+    }
     for(auto& [low, high] : regions) {
         _stochastic_regions.emplace_back(low, high);
     }
-
-    _dt_half = _timestepLength / 2;
 }
 
 void Langevin::eventForcesCalculated(ParticleContainer *particleContainer, Domain *domain) {
@@ -168,7 +178,10 @@ Langevin::d3 Langevin::sampleRandomForce(double m, double T) {
     std::normal_distribution normal{0.0, 1.0};
     d3 r_vec {};
 
-    double scale = std::sqrt(_timestepLength * T * _xi / m);
+    // additional factor 2 here
+    // according to book about Langevin integration not needed, but according to Langevin's equations of motion it does exist
+    // by using it we actually reach the target temperature
+    double scale = std::sqrt(2 * _timestepLength * T * _xi / m);
     for(int d = 0; d < 3; d++) {
         r_vec[d] = scale * normal(generator);
     }
