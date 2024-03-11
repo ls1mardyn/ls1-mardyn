@@ -18,7 +18,6 @@
 
 // plugins
 #include "plugins/PluginFactory.h"
-#include "thermostats/TemperatureObserver.h"
 
 #if !defined (SIMULATION_SRC) or defined (IN_IDE_PARSER)
 class Simulation;
@@ -58,10 +57,12 @@ class LongRangeCorrection;
 class Homogeneous;
 class Planar;
 class TemperatureControl;
+class TemperatureObserver;
 class MemoryProfiler;
 
 // by Stefan Becker
 const int VELSCALE_THERMOSTAT = 1;
+const int LANGEVIN_THERMOSTAT = 2;
 
 namespace bhfmm {
 class FastMultipoleMethod;
@@ -230,8 +231,8 @@ public:
 	/** Get pointer to the molecule container */
 	ParticleContainer* getMoleculeContainer() { return _moleculeContainer; }
 
-    /** Get pointer to the temperature observer */
-    TemperatureObserver* getTemperatureObserver() { return _temperatureObserver; }
+	/** Get pointer to the temperature observer */
+	TemperatureObserver* getTemperatureObserver() { return _temperatureObserver; }
 
 	/** Set the number of time steps to be performed in the simulation */
 	void setNumTimesteps( unsigned long steps ) { _numberOfTimesteps = steps; }
@@ -398,8 +399,8 @@ private:
 	/** Temperature Control (Slab Thermostat) */
 	TemperatureControl* _temperatureControl;
 
-    /** No Thermostat - only measures temp in selected regions */
-    TemperatureObserver* _temperatureObserver;
+	/** No Thermostat - only measures temp in selected regions */
+	TemperatureObserver* _temperatureObserver;
 
 	/** The Fast Multipole Method object */
 	bhfmm::FastMultipoleMethod* _FMM;

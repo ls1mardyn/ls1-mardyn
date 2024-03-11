@@ -21,40 +21,62 @@
  * */
 class Langevin : public Integrator {
 public:
-    void readXML(XMLfileUnits &xmlconfig) override;
+	/**
+	 * XML Format:
+	 * <integrator type="Langevin">
+	 *     <timestep>DOUBLE</timestep>
+	 *     <friction>DOUBLE</friction>
+	 *     <ActiveRegions>
+	 *         <region>
+	 *             <lower><x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z></lower>
+	 *             <upper><x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z></upper>
+	 *         </region>
+	 *     </ActiveRegions>
+	 * </integrator>
+	 * */
+	void readXML(XMLfileUnits &xmlconfig) override;
 
-    void init() override;
+	void init() override;
 
-    void eventNewTimestep(ParticleContainer *moleculeContainer, Domain *domain) override;
+	void eventNewTimestep(ParticleContainer *moleculeContainer, Domain *domain) override;
 
-    void eventForcesCalculated(ParticleContainer *moleculeContainer, Domain *domain) override;
+	void eventForcesCalculated(ParticleContainer *moleculeContainer, Domain *domain) override;
+
 private:
-    using d3 = std::array<double, 3>;
-    struct box_t {
-        box_t() = default;
-        box_t(const d3& l, const d3& h) : low(l), high(h) {}
-        d3 low, high;
-    };
+	using d3 = std::array<double, 3>;
 
-    //! @brief friction strength
-    double _xi;
+	struct box_t {
+		box_t() = default;
 
-    //! @brief time step length halved
-    double _dt_half;
+		box_t(const d3 &l, const d3 &h) : low(l), high(h) {}
 
-    //! @brief regions in which friction is not set to 0
-    std::vector<box_t> _stochastic_regions;
+		d3 low, high;
+	};
 
-    //! @brief We need to check at least twice if a TemperatureObserver exists
-    bool _checkFailed;
+	//! @brief friction strength
+	double _gamma;
 
-    /**
-     * Sample from Gaussian with technically 0 mean and sigma**2 = 2 * m * friction * k_b * T_target / delta_t.
-     * Is already adapted to match the integration scheme.
-     * @param m mass
-     * @param T temp target
-     * */
-    d3 sampleRandomForce(double m, double T);
+	//! @brief time step length halved
+	double _dt_half;
+
+	//! @brief regions in which friction is not set to 0
+	std::vector<box_t> _stochastic_regions;
+
+	//! @brief We need to check at least twice if a TemperatureObserver exists
+	bool _checkFailed;
+
+	/**
+	 * Sample from Gaussian with technically 0 mean and sigma**2 = 2 * m * friction * k_b * T_target / delta_t.
+	 * Is already adapted to match the integration scheme.
+	 * @param m mass
+	 * @param T temp target
+	 * */
+	d3 sampleRandomForce(double m, double T);
+
+	/**
+	 * Adds the parts of the equation, that only exist in the Langevin Equation's of motion
+	 * */
+	 void addLangevinContribution(ParticleContainer* particleContainer);
 };
 
 
