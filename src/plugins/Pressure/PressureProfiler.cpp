@@ -61,10 +61,14 @@ void PressureProfiler::readXML(XMLfileUnits &xmlconfig) {
     xmlconfig.getNodeValue("writeFreq", _profiler->_write_gap);
     _profiler->_output_prefix = "pressures";
     xmlconfig.getNodeValue("filename", _profiler->_output_prefix);
+
+	_start = 0;
+	xmlconfig.getNodeValue("start", _start);
 }
 
 void PressureProfiler::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                                unsigned long simstep) {
+	if(simstep < _start) return;
     _profiler->step(particleContainer, domainDecomp, domain, simstep);
 }
 

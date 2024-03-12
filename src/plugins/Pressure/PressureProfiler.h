@@ -95,6 +95,7 @@ public:
     }
 
 private:
+	std::size_t _start;
     PressureMode _mode;
     std::unique_ptr<ProfilerBase> _profiler;
 };
