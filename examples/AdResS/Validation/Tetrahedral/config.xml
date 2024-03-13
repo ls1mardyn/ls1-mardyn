@@ -1,10 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <mardyn version="20100525" >
     <refunits type="SI" >
-        <!-- standard units - should be  used for internal reduction one day, but default for all values in simulation remain "reduced" -->
-        <length unit="nm">0.0529177</length>	<!-- default: nm - also m,pm,fm or Angstroem may be used in the future? -->
-        <mass unit="u">1.0</mass> <!-- also atomistic mass unit Dalton "u" in the future? -->
-        <energy unit="eV">27.2126</energy> <!-- again: offer other units -->
+        <length unit="nm">1.0</length>
+        <mass unit="u">1.0</mass>
+        <energy unit="eV">1.0</energy>
     </refunits>
 
     <!-- simulation options -->
@@ -22,10 +21,16 @@
             <!-- MD ODE integrator -->
             <timestep unit="reduced">0.001</timestep>
             <friction>0.4</friction>
+            <ActiveRegions>
+                <region>
+                    <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+                    <upper> <x>36</x> <y>20</y> <z>20</z> </upper>
+                </region>
+            </ActiveRegions>
         </integrator>
         <ensemble type="NVT">
-            <!--Ensemble is the main topic of the simulation -->
-            <temperature unit="reduced" >300</temperature>	<!-- in future also units="K" -->
+            <!-- Target temperature is 300K -->
+            <temperature unit="reduced" >2.49433853</temperature>
             <domain type="box">
                 <lx unit="reduced">36</lx>
                 <ly unit="reduced">20</ly>
@@ -41,8 +46,8 @@
                     <objectgenerator>
                         <filler type="ReplicaFiller">
                             <input type="BinaryReader">
-                                <header>ThermoTest-1.restart.header.xml</header>
-                                <data>ThermoTest-1.restart.dat</data>
+                                <header>ReducedUnit-1.restart.header.xml</header>
+                                <data>ReducedUnit-1.restart.dat</data>
                             </input>
                         </filler>
 
@@ -72,8 +77,8 @@
                     <samples>100</samples>
                     <ActiveRegions>
                         <region>
-                            <lowX>0</lowX><lowY>0</lowY><lowZ>0</lowZ>
-                            <highX>36</highX><highY>20</highY><highZ>20</highZ>
+                            <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>36</x> <y>20</y> <z>20</z> </upper>
                         </region>
                     </ActiveRegions>
                 </thermostat>
@@ -81,11 +86,11 @@
         </algorithm>
 
         <output>
-            <!--outputplugin name="CheckpointWriter">
+            <outputplugin name="CheckpointWriter">
                 <type>binary</type>
                 <writefrequency>20000</writefrequency>
-                <outputprefix>ValTetTest6</outputprefix>
-            </outputplugin-->
+                <outputprefix>ReducedUnit-20k</outputprefix>
+            </outputplugin>
             <!--outputplugin name="RDF">
                 <writefrequency>20</writefrequency>
                 <samplingfrequency>1</samplingfrequency>
