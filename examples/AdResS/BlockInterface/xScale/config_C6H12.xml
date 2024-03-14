@@ -1,0 +1,126 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+    <refunits type="SI" >
+        <!-- standard units - should be  used for internal reduction one day, but default for all values in simulation remain "reduced" -->
+        <length unit="nm">0.0529177</length>	<!-- default: nm - also m,pm,fm or Angstroem may be used in the future? -->
+        <mass unit="u">1000</mass> <!-- also atomistic mass unit Dalton "u" in the future? -->
+        <energy unit="eV">27.2126</energy> <!-- again: offer other units -->
+    </refunits>
+
+    <!-- simulation options -->
+    <simulation type="MD" >
+        <run>
+            <currenttime>0</currenttime>
+            <production>
+                <steps>10000</steps>
+            </production>
+        </run>
+        <integrator type="Leapfrog">
+            <!-- MD ODE integrator -->
+            <timestep unit="reduced">0.001</timestep>
+        </integrator>
+
+        <ensemble type="NVT">
+            <!--Ensemble is the main topic of the simulation -->
+            <temperature unit="reduced" >300</temperature>	<!-- in future also units="K" -->
+            <domain type="box">
+                <lx unit="reduced">120.</lx>
+                <ly unit="reduced">400.</ly>
+                <lz unit="reduced">400.</lz>
+            </domain>
+            <!-- instead of lx/ly/lz we might accept density -->
+            <components>
+                <include query="/components/moleculetype">./../components_C6H12.xml</include>
+            </components>
+
+            <phasespacepoint>
+                <generator name="MultiObjectGenerator">
+                    <objectgenerator>
+                        <filler type="GridFiller">
+                            <lattice system="cubic" centering="face">
+                                <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
+                                <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
+                                <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
+                            </lattice>
+                            <basis>
+                                <site>
+                                    <componentid>0</componentid>
+                                    <coordinate> <x>.5</x> <y>.5</y> <z>.5</z> </coordinate>
+                                </site>
+                            </basis>
+                            <latticeOccupancy>1.</latticeOccupancy>
+                            <density>0.00016</density>
+                        </filler>
+                        <object type="Cuboid">
+                            <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>60</x> <y>400</y> <z>400</z> </upper>
+                        </object>
+                        <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>
+                    </objectgenerator>
+                    <objectgenerator>
+                        <filler type="GridFiller">
+                            <lattice system="cubic" centering="face">
+                                <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
+                                <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
+                                <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
+                            </lattice>
+                            <basis>
+                                <site>
+                                    <componentid>3</componentid>
+                                    <coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
+                                </site>
+                            </basis>
+                            <latticeOccupancy>1.</latticeOccupancy>
+                            <density>0.00016</density>
+                        </filler>
+                        <object type="Cuboid">
+                            <lower> <x>120</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>400</x> <y>400</y> <z>400</z> </upper>
+                        </object>
+                        <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>
+                    </objectgenerator>
+                </generator>
+            </phasespacepoint>
+        </ensemble>
+
+        <algorithm>
+            <parallelisation type="DomainDecomposition"/>
+            <datastructure type="LinkedCells">
+                <cellsInCutoffRadius>1</cellsInCutoffRadius>
+                <traversalSelector>c08</traversalSelector>
+            </datastructure>
+            <cutoffs type="CenterOfMass" >
+                <radiusLJ unit="reduced" >33.0702</radiusLJ>
+            </cutoffs>
+            <electrostatic type="ReactionField" >
+                <epsilon>0</epsilon>
+            </electrostatic>
+
+        </algorithm>
+
+        <output>
+            <outputplugin name="VTKMoleculeWriter">
+                <writefrequency>10000</writefrequency>
+                <writefrequencyOffset>0</writefrequencyOffset>
+                <outputprefix>BlockInterface_XS_C6H12</outputprefix>
+            </outputplugin>
+            <outputplugin name="CheckpointWriter">
+                <type>binary</type>
+                <writefrequency>10000</writefrequency>
+                <outputprefix>CP_BI_XS_C6H12</outputprefix>
+            </outputplugin>
+        </output>
+
+        <plugin name="AdResS">
+            <weightImpl>near</weightImpl>
+            <fpregions>
+                <region id="1">
+                    <lowX>40.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
+                    <highX>80.0</highX><highY>400.0</highY><highZ>400.0</highZ>
+                    <hybridDimX>40.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                </region>
+            </fpregions>
+        </plugin>
+
+    </simulation>
+</mardyn>

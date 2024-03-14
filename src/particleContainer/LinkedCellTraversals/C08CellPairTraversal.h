@@ -140,6 +140,7 @@ void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsInner(
 		unsigned stageCount) {
 	using std::array;
 
+    //split along the largest dimension
 	unsigned long splitdim = 0;
 	unsigned long maxcellsize = this->_dims[0];
 	for (unsigned long i = 1; i < 3; i++){

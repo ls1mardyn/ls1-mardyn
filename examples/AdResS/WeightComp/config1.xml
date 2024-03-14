@@ -1,0 +1,236 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+    <refunits type="SI" >
+        <!-- standard units - should be  used for internal reduction one day, but default for all values in simulation remain "reduced" -->
+        <length unit="nm">0.0529177</length>	<!-- default: nm - also m,pm,fm or Angstroem may be used in the future? -->
+        <mass unit="u">1000</mass> <!-- also atomistic mass unit Dalton "u" in the future? -->
+        <energy unit="eV">27.2126</energy> <!-- again: offer other units -->
+    </refunits>
+
+    <!-- simulation options -->
+    <simulation type="MD" >
+        <run>
+            <currenttime>0</currenttime>
+            <production>
+                <steps>100000</steps>
+            </production>
+        </run>
+        <integrator type="Leapfrog">
+            <!-- MD ODE integrator -->
+            <timestep unit="reduced">0.001</timestep>
+        </integrator>
+
+        <ensemble type="NVT">
+            <!--Ensemble is the main topic of the simulation -->
+            <temperature unit="reduced" >50.0</temperature>	<!-- in future also units="K" -->
+            <domain type="box">
+                <lx unit="reduced">200.</lx>
+                <ly unit="reduced">200.</ly>
+                <lz unit="reduced">200.</lz>
+            </domain>
+            <!-- instead of lx/ly/lz we might accept density -->
+            <components>
+                <!--
+
+************************************************************************
+*               Publishing with the MolMod Database                    *
+*  Every user agrees to cite the MolMod Database upon usage as follows *
+*                                                                      *
+*  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+*  MolMod – an Open Access Database of Force Fields for Molecular      *
+*  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+************************************************************************
+
+                               Model data
+
+ Substance     C6H12_VII
+ CAS-No        110-82-7
+ Reference     Y. M. Muñoz-Muñoz, G. Guevara-Carrion, M. Llano-Restrep
+               o and J. Vrabec: Lennard-Jones Force Field Parameters for
+                Cyclic Alkanes from Cyclopropane to Cyclohexane, Fluid P
+               hase Equilibria 404, 150-160 (2015), 10.1016/j.fluid.2015
+               .06.033
+
+-->
+                <moleculetype id="1" name="FP_C6H12">
+                    <site type="LJ126" id="1">
+                        <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <site type="LJ126" id="2">
+                        <coords><x>-1.9038</x><y>0.0</y><z>0.0</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <site type="LJ126" id="3">
+                        <coords><x>-2.591241</x><y>1.775353</y><z>0</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <site type="LJ126" id="4">
+                        <coords><x>-1.903799</x><y>2.778719</y><z>1.464628</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <site type="LJ126" id="5">
+                        <coords><x>0.0</x><y>2.778719</y><z>1.464627</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <site type="LJ126" id="6">
+                        <coords><x>0.687441</x><y>1.003366</y><z>1.464627</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <momentsofinertia rotaxes="xyz">
+                        <Ixx>365.21510545957</Ixx>
+                        <Iyy>292.76326523101</Iyy>
+                        <Izz>477.43966816206</Izz>
+                    </momentsofinertia>
+                </moleculetype>
+                <!-- Hybrid representation is combination of FP and CG version -->
+                <moleculetype id="2" name="H_C6H12">
+                    <site type="LJ126" id="1">
+                        <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+                        <sigma>6.093</sigma>
+                        <epsilon>324.0</epsilon>
+                        <mass>0.0</mass>
+                    </site>
+                    <site type="LJ126" id="2">
+                        <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <site type="LJ126" id="3">
+                        <coords><x>-1.9038</x><y>0.0</y><z>0.0</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <site type="LJ126" id="4">
+                        <coords><x>-2.591241</x><y>1.775353</y><z>0</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <site type="LJ126" id="5">
+                        <coords><x>-1.903799</x><y>2.778719</y><z>1.464628</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <site type="LJ126" id="6">
+                        <coords><x>0.0</x><y>2.778719</y><z>1.464627</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <site type="LJ126" id="7">
+                        <coords><x>0.687441</x><y>1.003366</y><z>1.464627</z>   </coords>
+                        <sigma>3.497</sigma>
+                        <epsilon>87.009</epsilon>
+                        <mass>14.027</mass>
+                    </site>
+                    <momentsofinertia rotaxes="xyz">
+                        <Ixx>365.21510545957</Ixx>
+                        <Iyy>292.76326523101</Iyy>
+                        <Izz>477.43966816206</Izz>
+                    </momentsofinertia>
+                </moleculetype>
+                <!--
+
+            ************************************************************************
+            *               Publishing with the MolMod Database                    *
+            *  Every user agrees to cite the MolMod Database upon usage as follows *
+            *                                                                      *
+            *  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+            *  MolMod – an Open Access Database of Force Fields for Molecular      *
+            *  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+            ************************************************************************
+
+                                           Model data
+
+             Substance     C6H12_II
+             CAS-No        110-82-7
+             Reference     J. O. Hirschfelder, C. F. Curtiss and R. B. Bird: The Mol
+                           ecular Theory of Gases and Liquids, (1964),
+
+            -->
+                <moleculetype id="3" name="CG_C6H12">
+                    <site type="LJ126" id="1">
+                        <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+                        <sigma>6.093</sigma>
+                        <epsilon>324.0</epsilon>
+                        <mass>84.159</mass>
+                    </site>
+                    <momentsofinertia rotaxes="xyz">
+                        <Ixx>0</Ixx>
+                        <Iyy>0</Iyy>
+                        <Izz>0</Izz>
+                    </momentsofinertia>
+                </moleculetype>
+            </components>
+
+            <phasespacepoint>
+                <generator name="MultiObjectGenerator">
+                    <objectgenerator>
+                        <filler type="ReplicaFiller">
+                            <input type="BinaryReader">
+                                <header>CP_WC-1.restart.header.xml</header>
+                                <data>CP_WC-1.restart.dat</data>
+                            </input>
+                        </filler>
+
+                        <object type="Cuboid">
+                            <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>200</x> <y>200</y> <z>200</z> </upper>
+                        </object>
+                    </objectgenerator>
+                </generator>
+                <ignoreCheckpointTime>true</ignoreCheckpointTime>
+            </phasespacepoint>
+        </ensemble>
+
+        <algorithm>
+            <parallelisation type="DomainDecomposition"/>
+            <datastructure type="LinkedCells">
+                <cellsInCutoffRadius>1</cellsInCutoffRadius>
+                <traversalSelector>c08</traversalSelector>
+            </datastructure>
+            <cutoffs type="CenterOfMass" >
+                <radiusLJ unit="reduced" >16.5351</radiusLJ>
+            </cutoffs>
+            <electrostatic type="ReactionField" >
+                <epsilon>0</epsilon>
+            </electrostatic>
+        </algorithm>
+
+        <output>
+            <outputplugin name="VTKMoleculeWriter">
+                <writefrequency>10000</writefrequency>
+                <writefrequencyOffset>0</writefrequencyOffset>
+                <outputprefix>AdResS_wMAN</outputprefix>
+            </outputplugin>
+        </output>
+
+        <plugin name="AdResS">
+            <weightImpl>manhattan</weightImpl>
+            <fpregions>
+                <region id="1">
+                    <lowX>80.0</lowX><lowY>80.0</lowY><lowZ>80.0</lowZ>
+                    <highX>120.0</highX><highY>120.0</highY><highZ>120.0</highZ>
+                    <hybridDimX>40.0</hybridDimX><hybridDimY>40.0</hybridDimY><hybridDimZ>40.0</hybridDimZ>
+                </region>
+            </fpregions>
+        </plugin>
+
+    </simulation>
+</mardyn>

@@ -35,10 +35,10 @@
 #include "io/ResultWriter.h"
 #include "io/SysMonOutput.h"
 #include "io/TimerWriter.h"
-#include "io/VISWriter.h"
 #include "io/XyzWriter.h"
 
 // General plugins
+#include "plugins/AdResS/AdResS.h"
 #include "plugins/COMaligner.h"
 #include "plugins/DirectedPM.h"
 #include "plugins/Dropaccelerator.h"
@@ -60,6 +60,7 @@
 #include "plugins/NEMD/RegionSampling.h"
 #include "plugins/NEMD/VelocityExchange.h"
 #include "plugins/Permittivity.h"
+#include "plugins/Pressure/PressureProfiler.h"
 #include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
@@ -90,6 +91,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 #ifdef ENABLE_ADIOS2
 	REGISTER_PLUGIN(Adios2Writer);
 #endif
+    REGISTER_PLUGIN(AdResS);
 	REGISTER_PLUGIN(COMaligner);
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
@@ -126,6 +128,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(MettDeamon);
 	REGISTER_PLUGIN(MettDeamonFeedrateDirector);
 	REGISTER_PLUGIN(PosNegComp);
+    REGISTER_PLUGIN(PressureProfiler);
 	REGISTER_PLUGIN(DensityControl);
 	REGISTER_PLUGIN(DistControl);
 	REGISTER_PLUGIN(DriftCtrl);
@@ -135,7 +138,6 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(TestPlugin);
 	REGISTER_PLUGIN(TimerWriter);
 	REGISTER_PLUGIN(VectorizationTuner);
-	REGISTER_PLUGIN(VISWriter);
 	REGISTER_PLUGIN(WallPotential);
 	REGISTER_PLUGIN(XyzWriter);
 

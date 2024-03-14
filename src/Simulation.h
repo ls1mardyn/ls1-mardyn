@@ -4,11 +4,14 @@
 #include <memory>
 #include <any>
 
+#include "ensemble/CavityEnsemble.h"
 #include "io/TimerProfiler.h"
 #include "thermostats/VelocityScalingThermostat.h"
 #include "utils/FixedSizeQueue.h"
 #include "utils/FunctionWrapper.h"
 #include "utils/SysMon.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
+#include "particleContainer/adapter/CellProcessor.h"
 #include "utils/Random.h"
 
 
@@ -54,10 +57,12 @@ class LongRangeCorrection;
 class Homogeneous;
 class Planar;
 class TemperatureControl;
+class TemperatureObserver;
 class MemoryProfiler;
 
 // by Stefan Becker
 const int VELSCALE_THERMOSTAT = 1;
+const int LANGEVIN_THERMOSTAT = 2;
 
 namespace bhfmm {
 class FastMultipoleMethod;
@@ -226,6 +231,9 @@ public:
 	/** Get pointer to the molecule container */
 	ParticleContainer* getMoleculeContainer() { return _moleculeContainer; }
 
+	/** Get pointer to the temperature observer */
+	TemperatureObserver* getTemperatureObserver() { return _temperatureObserver; }
+
 	/** Set the number of time steps to be performed in the simulation */
 	void setNumTimesteps( unsigned long steps ) { _numberOfTimesteps = steps; }
 	/** Get the number of time steps to be performed in the simulation */
@@ -391,6 +399,9 @@ private:
 	/** Temperature Control (Slab Thermostat) */
 	TemperatureControl* _temperatureControl;
 
+	/** No Thermostat - only measures temp in selected regions */
+	TemperatureObserver* _temperatureObserver;
+
 	/** The Fast Multipole Method object */
 	bhfmm::FastMultipoleMethod* _FMM;
 
@@ -460,6 +471,29 @@ public:
 
 	/** @brief Checks if Simsteps or MaxWallTime are reached */
 	bool keepRunning();
+
+    /**
+     * Sets the pairs handler to the provided one. Deletes the old one.
+     * */
+    void setParticlePairsHandler(ParticlePairsHandler* ptr) {
+        delete _particlePairsHandler;
+        _particlePairsHandler = ptr;
+    }
+
+    /**
+     * Gets the current pairs handler
+     * */
+    ParticlePairsHandler* getParticlePairsHandler() {
+        return _particlePairsHandler;
+    }
+
+    /**
+     * Sets the Cell processor to the provided one. Deletes the old one.
+     * */
+    void setCellProcessor(CellProcessor* cellProcessor) {
+        delete _cellProcessor;
+        _cellProcessor = cellProcessor;
+    }
 
 private:
 
@@ -539,8 +573,8 @@ private:
 
 public:
 	/*** @brief Performs one time step. Is called as many times as timesteps are needed for the full simulation.
-	 * 
-	 * In library mode, this function is used to externally control the simulation. In normal usage, this function is 
+	 *
+	 * In library mode, this function is used to externally control the simulation. In normal usage, this function is
 	 * only called in the simulate() function, within the simulation loop.
 	 * preSimLoopSteps() needs to be called before this function is called.
 	*/
@@ -550,19 +584,19 @@ public:
 	void preSimLoopSteps();
 
 	/*** @brief Performs immediate cleanup after the simulation ends.
-	 * 
-	 * The final checkpoint is written, the final plugin call is made, and all timers are stopped. 
+	 *
+	 * The final checkpoint is written, the final plugin call is made, and all timers are stopped.
 	 * Relevant timer information is printed.
 	 */
 	void postSimLoopSteps();
 
 	/*** @brief Used to flag simulation as finished and to proceed to cleanup. Only used when ls1 is compiled and used
 	 * as a library, and not in normal usage.
-	 * 
-	 * Normally, the simulation is controlled entirely by the simulate() function, which determines whether the 
+	 *
+	 * Normally, the simulation is controlled entirely by the simulate() function, which determines whether the
 	 * simulation is complete by checking the keepRunning() function.
 	 * However in library mode, it is expected that the external code will manually control the simulation by calling
-	 * simulateOneTimeStep(). As such, the keepRunning() function will never be called, and the exit conditions will 
+	 * simulateOneTimeStep(). As such, the keepRunning() function will never be called, and the exit conditions will
 	 * never be checked on ls1's side. \n
 	 * This function acts as a way for the external code to perform some cleanup steps, before ending the simulation
 	 * on the ls1 side. For now, it only sets the simulationDone boolean to true, which is used as a check within
@@ -574,10 +608,10 @@ private:
 	// stores the timing info for the previous load. This is used for the load calculation and the rebalancing.
 	double previousTimeForLoad = 0.;
 	/*** @brief Act as safeguards for the preSimLoopSteps(), simulateOneTimestep() and postSimLoopSteps() functions.
-	 * 
+	 *
 	 * These three functions are public, since they need to be reachable by external code when ls1 is compiled
 	 * as a library. However it is possible to call them out of order, causing unexpected behaviour. As such,
-	 * these bool values help keep track of the simulation and can be used to verify the state the simulation is in. 
+	 * these bool values help keep track of the simulation and can be used to verify the state the simulation is in.
 	 */
 	bool preSimLoopStepsDone = false, simulationDone = false, postSimLoopStepsDone = false;
 

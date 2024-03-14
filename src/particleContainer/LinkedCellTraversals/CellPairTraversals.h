@@ -50,6 +50,7 @@ protected:
 	//TODO:
 	//void traverseCellPairsNoDep(CellProcessor& cellProcessor);
 	std::vector<CellTemplate> * _cells;
+    //! @brief size of each dimension, i.e. cells per dimension
 	std::array<unsigned long, 3> _dims;
 };
 

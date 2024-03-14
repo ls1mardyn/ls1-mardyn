@@ -1,0 +1,116 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+    <refunits type="SI" >
+        <!-- standard units - should be  used for internal reduction one day, but default for all values in simulation remain "reduced" -->
+        <length unit="pm">0.01</length>	<!-- default: nm - also m,pm,fm or Angstroem may be used in the future? -->
+        <mass unit="u">1.0</mass> <!-- also atomistic mass unit Dalton "u" in the future? -->
+        <energy unit="eV">27.2126</energy> <!-- again: offer other units -->
+    </refunits>
+
+    <!-- simulation options -->
+    <simulation type="MD" >
+        <run>
+            <currenttime>0</currenttime>
+            <equilibration>
+                <steps>0</steps>
+            </equilibration>
+            <production>
+                <steps>10000</steps>
+            </production>
+        </run>
+        <integrator type="Leapfrog">
+            <!-- MD ODE integrator -->
+            <timestep unit="reduced">0.001</timestep>
+        </integrator>
+        <ensemble type="NVT">
+            <!--Ensemble is the main topic of the simulation -->
+            <temperature unit="reduced" >300</temperature>	<!-- in future also units="K" -->
+            <domain type="box">
+                <lx unit="reduced">200.</lx>
+                <ly unit="reduced">40.</ly>
+                <lz unit="reduced">40.</lz>
+            </domain>
+            <!-- instead of lx/ly/lz we might accept density -->
+            <components>
+                <include query="/components/moleculetype">./components.xml</include>
+            </components>
+
+            <phasespacepoint>
+                <generator name="MultiObjectGenerator">
+                    <objectgenerator>
+                        <filler type="ReplicaFiller">
+                            <input type="BinaryReader">
+                                <header>ValH2O-1.restart.header.xml</header>
+                                <data>ValH2O-1.restart.dat</data>
+                            </input>
+                        </filler>
+
+                        <object type="Cuboid">
+                            <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>200.</x> <y>40</y> <z>40</z> </upper>
+                        </object>
+                    </objectgenerator>
+                </generator>
+            </phasespacepoint>
+        </ensemble>
+
+        <algorithm>
+            <parallelisation type="DomainDecomposition"/>
+            <datastructure type="LinkedCells">
+                <cellsInCutoffRadius>1</cellsInCutoffRadius>
+                <traversalSelector>c08</traversalSelector>
+            </datastructure>
+            <cutoffs type="CenterOfMass" >
+                <radiusLJ unit="reduced" >9.0</radiusLJ>
+            </cutoffs>
+            <electrostatic type="ReactionField" >
+                <epsilon>0</epsilon>
+            </electrostatic>
+        </algorithm>
+
+        <output>
+            <!--outputplugin name="VTKMoleculeWriter">
+                <writefrequency>1000</writefrequency>
+                <writefrequencyOffset>0</writefrequencyOffset>
+                <outputprefix>ValH2ORun</outputprefix>
+            </outputplugin-->
+            <outputplugin name="CheckpointWriter">
+                <type>binary</type>
+                <writefrequency>10000</writefrequency>
+                <outputprefix>ValH2ORun</outputprefix>
+            </outputplugin>
+            <outputplugin name="RDF">
+                <!-- functionality affected by <equilibration> <steps> X </steps> </equilibration> -->
+                <writefrequency>1000</writefrequency>
+                <samplingfrequency>100</samplingfrequency>
+                <outputprefix>default</outputprefix>
+                <bins>1000</bins>
+                <intervallength>0.2</intervallength>
+            </outputplugin>
+        </output>
+
+        <plugin name="AdResS">
+            <weightImpl>near</weightImpl>
+            <enableFTH>
+                <fmax>33548</fmax>
+                <logFTH>true</logFTH>
+                <logDensity>true</logDensity>
+                <rho>0.96</rho>
+                <createFTH>
+                    <sampleGap>200</sampleGap>
+                    <threshold>0.05</threshold>
+                    <convFactor>4.2e+10</convFactor>
+                    <sampleBinSize>1.0</sampleBinSize>
+                </createFTH>
+            </enableFTH>
+            <fpregions>
+                <region id="1">
+                    <lowX>80.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
+                    <highX>120.0</highX><highY>40.0</highY><highZ>40.0</highZ>
+                    <hybridDimX>9.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                </region>
+            </fpregions>
+        </plugin>
+
+    </simulation>
+</mardyn>

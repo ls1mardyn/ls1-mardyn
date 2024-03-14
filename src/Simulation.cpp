@@ -31,6 +31,8 @@
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
 #include "parallel/GeneralDomainDecomposition.h"
+#include "plugins/AdResS/parallel/AdResSKDDecomposition.h"
+#include "parallel/StaticIrregDomainDecomposition.h"
 #endif
 
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
@@ -40,6 +42,7 @@
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
 #include "integrators/LeapfrogRMM.h"
+#include "integrators/Langevin.h"
 
 #include "plugins/PluginBase.h"
 #include "plugins/PluginFactory.h"
@@ -67,6 +70,7 @@
 #include "ensemble/CavityEnsemble.h"
 
 #include "thermostats/VelocityScalingThermostat.h"
+#include "thermostats/TemperatureObserver.h"
 #include "thermostats/TemperatureControl.h"
 
 #include "utils/FileUtils.h"
@@ -79,6 +83,7 @@
 
 #include "bhfmm/FastMultipoleMethod.h"
 #include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
+#include "plugins/AdResS/parallel/AdResSGeneralDomainDecomposition.h"
 
 #ifdef MAMICO_COUPLING
 #include <coupling/interface/impl/ls1/LS1StaticCommData.h>
@@ -114,6 +119,7 @@ Simulation::Simulation()
 	_rand(8624),
 	_longRangeCorrection(nullptr),
 	_temperatureControl(nullptr),
+	_temperatureObserver(nullptr),
 	_FMM(nullptr),
 	_timerProfiler(),
 #ifdef TASKTIMINGPROFILE
@@ -149,6 +155,8 @@ Simulation::~Simulation() {
 	_longRangeCorrection = nullptr;
 	delete _temperatureControl;
 	_temperatureControl = nullptr;
+	delete _temperatureObserver;
+	_temperatureObserver = nullptr;
 	delete _FMM;
 	_FMM = nullptr;
 
@@ -181,6 +189,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_integrator = new Leapfrog();
 		} else if (integratorType == "LeapfrogRMM") {
 			_integrator = new LeapfrogRMM();
+		} else if (integratorType == "Langevin") {
+			_integrator = new Langevin();
+			_thermostatType = LANGEVIN_THERMOSTAT;
 		} else {
 			Log::global_log-> error() << "Unknown integrator " << integratorType << std::endl;
 			Simulation::exit(1);
@@ -323,16 +334,30 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			else if(parallelisationtype == "DomainDecomposition") {
 				delete _domainDecomposition;
 				_domainDecomposition = new DomainDecomposition(
-#ifdef MAMICO_COUPLING	
+#ifdef MAMICO_COUPLING
 				coupling::interface::LS1StaticCommData::getInstance().getLocalCommunicator(),
 				coupling::interface::LS1StaticCommData::getInstance().getDomainGridDecomp()
+#endif
+				);
+			}
+			else if(parallelisationtype == "StaticIrregDomainDecomposition") {
+				delete _domainDecomposition;
+				_domainDecomposition = new StaticIrregDomainDecomposition(
+				_domain
+#ifdef MAMICO_COUPLING
+				,
+				coupling::interface::LS1StaticCommData::getInstance().getLocalCommunicator(),
+				coupling::interface::LS1StaticCommData::getInstance().getSubdomainWeights()
 #endif
 				);
 			}
 			else if(parallelisationtype == "KDDecomposition") {
 				delete _domainDecomposition;
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _ensemble->getComponents()->size());
-			} else if (parallelisationtype == "GeneralDomainDecomposition") {
+			} else if(parallelisationtype == "AdResSKDDecomposition") {
+                delete _domainDecomposition;
+                _domainDecomposition = new AdResSKDDecomposition(getcutoffRadius(), _ensemble->getComponents()->size());
+            } else if (parallelisationtype == "GeneralDomainDecomposition") {
 				double skin = 0.;
 				bool forceLatchingToLinkedCellsGrid = false;
 				// We need the skin here (to specify the smallest possible partition), so we extract it from the AutoPas
@@ -373,7 +398,40 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				}
 				delete _domainDecomposition;
 				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid);
-			} else {
+			} else if (parallelisationtype == "AdResSGeneralDomainDecomposition") {
+                double skin = 0.;
+                bool forceLatchingToLinkedCellsGrid = false;
+                // We need the skin here (to specify the smallest possible partition), so we extract it from the AutoPas
+                // container's xml, because the ParticleContainer needs to be instantiated later. :/
+                xmlconfig.changecurrentnode("..");
+                if (xmlconfig.changecurrentnode("datastructure")) {
+                    std::string datastructuretype;
+                    xmlconfig.getNodeValue("@type", datastructuretype);
+                    if (datastructuretype == "AutoPas" or datastructuretype == "AutoPasContainer") {
+                        xmlconfig.getNodeValue("skin", skin);
+                    } else {
+                        Log::global_log->warning() << "Using the AdResSGeneralDomainDecomposition without AutoPas is not "
+                                                 "thoroughly tested and considered BETA."
+                                              << std::endl;
+                        // Force grid! This is needed, as the linked cells container assumes a grid and the calculation
+                        // of global values will be faulty without one!
+                        Log::global_log->info() << "Forcing a grid for the AdResSGeneralDomainDecomposition! This is required "
+                                              "to get correct global values!"
+                                           << std::endl;
+                        forceLatchingToLinkedCellsGrid = true;
+                    }
+                    Log::global_log->info() << "Using skin = " << skin << " for the AdResSGeneralDomainDecomposition." << std::endl;
+                } else {
+                    Log::global_log->error() << "Datastructure section missing" << std::endl;
+                    Simulation::exit(1);
+                }
+                if(not xmlconfig.changecurrentnode("../parallelisation")){
+                    Log::global_log->error() << "Could not go back to parallelisation path. Aborting." << std::endl;
+                    Simulation::exit(1);
+                }
+                delete _domainDecomposition;
+                _domainDecomposition = new AdResSGeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid);
+            } else {
 				Log::global_log->error() << "Unknown parallelisation type: " << parallelisationtype << std::endl;
 				Simulation::exit(1);
 			}
@@ -392,6 +450,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
             if(auto kdd = dynamic_cast<KDDecomposition*>(_domainDecomposition)) {
                 kdd->init(_domain);
 			}
+            if(auto akdd = dynamic_cast<AdResSKDDecomposition*>(_domainDecomposition)) {
+                akdd->init(_domain);
+            }
         #endif
 
 			std::string loadTimerStr("SIMULATION_FORCE_CALCULATION");
@@ -509,17 +570,25 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					}
 				}
 				else if(thermostattype == "TemperatureControl") {
-                    if (nullptr == _temperatureControl) {
-                        _temperatureControl = new TemperatureControl();
-                        _temperatureControl->readXML(xmlconfig);
-                    } else {
-                        Log::global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..."
-                                            << std::endl;
-                        Simulation::exit(-1);
-                    }
-                }
-				else
-				{
+					if (nullptr == _temperatureControl) {
+						_temperatureControl = new TemperatureControl();
+						_temperatureControl->readXML(xmlconfig);
+					} else {
+						Log::global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..."
+							<< std::endl;
+						Simulation::exit(-1);
+					}
+				}
+				else if (thermostattype == "TemperatureObserver") {
+					if (_temperatureObserver == nullptr) {
+						_temperatureObserver = new TemperatureObserver();
+						_temperatureObserver->readXML(xmlconfig);
+					} else {
+						Log::global_log->error() << "Instance of TemperatureObserver already exists!" << std::endl;
+						Simulation::exit(-1);
+					}
+				}
+				else {
 					Log::global_log->warning() << "Unknown thermostat " << thermostattype << std::endl;
 					continue;
 				}
@@ -798,6 +867,10 @@ void Simulation::prepare_start() {
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	}
 
+	if(dynamic_cast<Langevin*>(_integrator) != nullptr) {
+		_integrator->init();
+	}
+
 	if (_FMM != nullptr) {
 
 		double globalLength[3];
@@ -820,6 +893,9 @@ void Simulation::prepare_start() {
 	if(auto *kdd = dynamic_cast<KDDecomposition*>(_domainDecomposition); kdd != nullptr){
 		kdd->fillTimeVecs(&_cellProcessor);
 	}
+    if(auto *akdd = dynamic_cast<AdResSKDDecomposition*>(_domainDecomposition); akdd != nullptr){
+        akdd->fillTimeVecs(&_cellProcessor);
+    }
 #endif
 
 	Log::global_log->info() << "Clearing halos" << std::endl;
@@ -886,6 +962,11 @@ void Simulation::prepare_start() {
 	if(nullptr != _temperatureControl)
 		_temperatureControl->prepare_start();  // Has to be called before plugin initialization (see below): plugin->init(...)
 
+	if(_temperatureObserver != nullptr) {
+		_temperatureObserver->init();
+		_temperatureObserver->step(_moleculeContainer);
+	}
+
 	// initializing plugins and starting plugin timers
 	for (auto& plugin : _plugins) {
 		Log::global_log->info() << "Initializing plugin " << plugin->getPluginName() << std::endl;
@@ -937,7 +1018,7 @@ void Simulation::prepare_start() {
 }
 
 void Simulation::simulate() {
-	
+
 	preSimLoopSteps();
 	while (keepRunning()) {
 		simulateOneTimestep();
@@ -950,7 +1031,7 @@ void Simulation::preSimLoopSteps()
 	//sanity checks
 	if(preSimLoopStepsDone || simulationDone || postSimLoopStepsDone)
 	{
-		Log::global_log->error() << "Unexpected call to preSimLoopSteps()! Status: (pre sim loop steps done:" << preSimLoopStepsDone << ", simulation done: " << simulationDone << 
+		Log::global_log->error() << "Unexpected call to preSimLoopSteps()! Status: (pre sim loop steps done:" << preSimLoopStepsDone << ", simulation done: " << simulationDone <<
 					", post sim loop steps done: " << postSimLoopStepsDone << std::endl;
 		Simulation::exit(1);
 	}
@@ -989,7 +1070,7 @@ void Simulation::preSimLoopSteps()
 	int num_papi_events = sizeof(papi_event_list) / sizeof(papi_event_list[0]);
 	global_simulation->timers()->getTimer("SIMULATION_LOOP")->add_papi_counters(num_papi_events, (char**) papi_event_list);
 #endif
-	
+
 #ifndef NDEBUG
 #ifndef ENABLE_MPI
 		unsigned particleNoTest;
@@ -1012,7 +1093,7 @@ void Simulation::simulateOneTimestep()
 	//sanity checks
 	if(!preSimLoopStepsDone || simulationDone || postSimLoopStepsDone)
 	{
-		Log::global_log->error() << "Unexpected call to simulateOneTimeStep()! Status: (pre sim loop steps done:" << preSimLoopStepsDone << ", simulation done: " << simulationDone << 
+		Log::global_log->error() << "Unexpected call to simulateOneTimeStep()! Status: (pre sim loop steps done:" << preSimLoopStepsDone << ", simulation done: " << simulationDone <<
 					", post sim loop steps done: " << postSimLoopStepsDone << std::endl;
 		Simulation::exit(1);
 	}
@@ -1022,7 +1103,7 @@ void Simulation::simulateOneTimestep()
 	_simstep++;
 	#endif
 
-	
+
 	global_simulation->timers()->start("SIMULATION_LOOP");
 	Log::global_log->debug() << "timestep: " << getSimulationStep() << std::endl;
 	Log::global_log->debug() << "simulation time: " << getSimulationTime() << std::endl;
@@ -1189,13 +1270,13 @@ void Simulation::simulateOneTimestep()
 
 
 		}
+		else if (_thermostatType == LANGEVIN_THERMOSTAT) {
+			_temperatureObserver->step(_moleculeContainer);
+		}
 	} else if ( _temperatureControl != nullptr) {
 		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
 		_temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
 	}
-	// <-- TEMPERATURE_CONTROL
-
-
 
 	advanceSimulationTime(_integrator->getTimestepLength());
 
@@ -1243,7 +1324,7 @@ void Simulation::postSimLoopSteps()
 	//sanity checks
 	if(!preSimLoopStepsDone || !simulationDone || postSimLoopStepsDone)
 	{
-		Log::global_log->error() << "Unexpected call to postSimLoopSteps()! Status: (pre sim loop steps done:" << preSimLoopStepsDone << ", simulation done: " << simulationDone << 
+		Log::global_log->error() << "Unexpected call to postSimLoopSteps()! Status: (pre sim loop steps done:" << preSimLoopStepsDone << ", simulation done: " << simulationDone <<
 					", post sim loop steps done: " << postSimLoopStepsDone << std::endl;
 		Simulation::exit(1);
 	}

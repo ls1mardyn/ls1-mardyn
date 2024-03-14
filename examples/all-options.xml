@@ -197,6 +197,27 @@
           <overlappingStartAtStep>5</overlappingStartAtStep> <!-- Start overlapping at given step (default: 5), only relevant if overlappingCollectives==True -->
           <overlappingP2P>False</overlappingP2P> <!-- Defines whether to use overlapping p2p communication or not. Default: False -->
       </parallelisation>
+      <parallelisation type="StaticIrregDomainDecomposition">
+          <!-- Provide CSV file with weights that determine the relative widths of each subdomain
+          EX: A file with its first line being 1,2,1 defines an x axis with subdomain lengths in the 1:2:1 ratio
+          The number of digits per column are the number of ranks in that column, and the number of columns need not be equal per row
+          The number of ranks per row are therefore calculated from the column length, and cannot be given explicitly
+          The program must be run with ranks equal to the ranks in the CSV (examples/Mamico-couette/basic4.csv must be run with 6 ranks, for example)
+          The actual subdomain lengths are calculated from the total length and given ratios
+          If not given, default behaviour is an equally spaced grid, same as DomainDecomposition
+            -->
+          <subdomainWeightsCSV>filename.csv</subdomainWeightsCSV>
+      </parallelisation>
+      <parallelisation type="GeneralDomainDecomposition">
+          <updateFrequency>INTEGER</updateFrequency>
+          <initialPhaseTime>INTEGER</initialPhaseTime><!--time for initial rebalancing phase-->
+          <initialPhaseFrequency>INTEGER</initialPhaseFrequency><!--frequency for initial rebalancing phase-->
+          <gridSize>STRING</gridSize><!--default: 0; if non-zero, the process boundaries are fixed to multiples of
+              gridSize. Comma separated string to define three different grid sizes for the different dimensions is
+              possible.-->
+          <loadBalancer type="STRING"><!--STRING...type of the load balancer, currently supported: ALL-->
+          </loadBalancer>
+      </parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
           <!-- select traversal algorithm
@@ -290,7 +311,6 @@
       - CheckpointWriter
       - ResultWriter
       - XyzWriter
-      - VISWriter
       - MmspdWriter
       - PovWriter
       - StatisticsWriter
@@ -360,16 +380,6 @@
       The *.xyz-format contains x, y, z coordinates of the molecules. Such a file can be read by visualization software like vmd
       (for detail information visit: http://www.ks.uiuc.edu/Research/vmd/). -->
       <outputplugin name="XyzWriter">
-        <writefrequency>10</writefrequency>
-        <outputprefix>default</outputprefix>
-      </outputplugin>
-
-      <!-- VISWriter plugin
-      Additional to the coordinates of the molecules, the *.vis-format also contains the orientation information
-      of the molecules (using quaternions). The files can be read by software like:
-      - MolCloud (visit: http://www.visus.uni-stuttgart.de/index.php?id=995)
-      - Megamol  (visit: https://svn.vis.uni-stuttgart.de/trac/megamol/) -->
-      <outputplugin name="VISWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>
