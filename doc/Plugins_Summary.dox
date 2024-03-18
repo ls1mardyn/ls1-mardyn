@@ -38,6 +38,7 @@ SP / TemperatureProfile | temperature profile output | Outputs the average tempe
 SP / VirialProfile | virial pressure profile output | Outputs the virial/partial pressures in a spatial 1D output in y-direction or 2D output (Virial2DProfile). Requires/auto enables DensityProfile.
 LoadbalanceWriter | print, mpi, load balance, timers | Writes load balance information. Averages, min, max and a load balance is written. For more detailed output use the TimerWriter.
 LoadImbalanceThroughSleepPlugin | mpi, overlapping | Artificially introduces a load imbalance at different plugin steps. Primarily used for testing.
+MamicoCoupling | coupling, compile as library | Allows the coupling code MaMiCo to couple with ls1. Requires ls1 to be compiled as library. This is automatically done when passing MAMICO_COUPLING=ON to cmake. This plugin always switches the ls1 thermostat off.
 MaxCheck | limit, maximum values, overlaps, explosion | Limit velocity and force of individual particles to maximum values to avoid overlaps and consequently exploding systems.
 MaxWriter | sampling, maximum values, force, velocity | Sampling maximum force and velocities values occuring in the system.
 MettDeamon | particle-insertion, reservoir, replenish, stationary, evaporation | Replenish a liquid film by a particle reservoir, to attain stationary conditons in an e.g. evaporation simulation.
@@ -59,7 +60,6 @@ TestPlugin | test | Test correctness of plugin calls within Simulation. Simpler 
 TimerWriter | Timers, mpi, print, load balance | Prints the average time for the specified timers as a transient. Separate output for each rank. Can be used to gather information of the load balance.
 VectorizationTuner | todo | todo
 VelocityExchange | temperature gradient | Swap the velocities and angular momentum of two particles. One particle is the warmest (fastest) in the specified cold region, the other one is the coldest (slowest) in the specified warm region.
-VISWriter | visualization, particle configurations, MegaMol | Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the deprecated *.vis MegaMol file format.
 VTKGridWriter | vtk, grid | Write MPI rank, number of molecules in each cell in a .vtu or .pvtu file. Requires compiling with VTK=1.
 VTKMoleculeWriter | vtk, visualization | Write a .vtu or .pvtu file with the molecules for visualiziation in ParaView. Requires compiling with VTK=1.
 WallPotential | potential, Wall, Lennard-Jones | Exerts the force of a Lennard-Jones (9-3 or 10-4) potential on the specified components or all particles.

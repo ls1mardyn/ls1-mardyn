@@ -16,7 +16,6 @@
 
 TEST_SUITE_REGISTRATION(CollectiveCommunicationTest);
 
-using namespace std;
 
 CollectiveCommunicationTest::CollectiveCommunicationTest() :
 		_rank(0) {

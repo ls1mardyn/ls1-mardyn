@@ -3,7 +3,6 @@
 
 #include <math.h>
 #include <iostream>
-using namespace std;
 
 int Graphit::getNumberOfAtoms()
 {
@@ -98,7 +97,7 @@ void Graphit::calculateCoordinatesOfAtoms(
 			zCoor = 0.1*C;
 			int i = 0; //Makes it possible to change the different lengths in one direction
 			int j = 7; //Necessary for changing the different startpoints of the xCoor
-			
+
 			// Code for writing the Coordinates together
                         if((xCoor < xLength && zCoor < zLength) && ((zCoor < (0.5 - 0.5*wo_wall)*zLength) || (zCoor > (0.5 + 0.5*wo_wall)*zLength)))
                         {
@@ -130,7 +129,7 @@ void Graphit::calculateCoordinatesOfAtoms(
                              			componentsOfAtoms[numberOfAtoms] = this->comp(i, j);
 						numberOfAtoms++;
 					}
-			
+
 				}
 				zCoor += C;
                                 j++;
@@ -144,7 +143,7 @@ void Graphit::calculateCoordinatesOfAtoms(
 				{
 					i = 0;
 					xCoor = B-0.4*A;
-				}	
+				}
 				if((xCoor < xLength && zCoor < zLength) && ((zCoor < (0.5 - 0.5*wo_wall)*zLength) || (zCoor > (0.5 + 0.5*wo_wall)*zLength)))
 				{
 					coordinatesOfAtoms[0][numberOfAtoms] = xCoor;
@@ -175,13 +174,13 @@ double Graphit::getZ(int number)
 }
 
 void Graphit::calculateVelocities(double T, double U)
-{	
+{
    double absoluteVelocity = sqrt(3.0*T / ATOMIC_MASS_C);
    double phi, omega;
 
    Random* r = new Random();
    r->init((int)(10000000.0*T) - (int)(3162300.0*U));
-	
+
    for(int i=0; i < this->numberOfAtoms; i++)
    {
       phi = 6.283185 * r->rnd();
@@ -222,8 +221,8 @@ unsigned Graphit::comp(int ti, int tj)
    int i = ti % 2;
    int j = tj % 14;
 
-   // cout << "\t\t(i, j) \t=\t (" << i << ", " << j << ")\n";
-   // cout.flush();
+   // std::cout << "\t\t(i, j) \t=\t (" << i << ", " << j << ")\n";
+   // std::cout.flush();
 
    if((j == 2) && (i == 1)) return CID_I;
    else if((j ==  3) && (i == 0)) return CID_I;

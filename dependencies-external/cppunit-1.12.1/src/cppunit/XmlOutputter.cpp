@@ -29,21 +29,21 @@ XmlOutputter::~XmlOutputter()
 }
 
 
-void 
+void
 XmlOutputter::addHook( XmlOutputterHook *hook )
 {
   m_hooks.push_back( hook );
 }
 
 
-void 
+void
 XmlOutputter::removeHook( XmlOutputterHook *hook )
 {
   m_hooks.erase( std::find( m_hooks.begin(), m_hooks.end(), hook ) );
 }
 
 
-void 
+void
 XmlOutputter::write()
 {
   setRootNode();
@@ -51,7 +51,7 @@ XmlOutputter::write()
 }
 
 
-void 
+void
 XmlOutputter::setStyleSheet( const std::string &styleSheet )
 {
   m_xml->setStyleSheet( styleSheet );
@@ -63,7 +63,7 @@ XmlOutputter::setStandalone( bool standalone )
 {
   m_xml->setStandalone( standalone );
 }
- 
+
 
 void
 XmlOutputter::setRootNode()
@@ -86,7 +86,7 @@ XmlOutputter::setRootNode()
 }
 
 
-void 
+void
 XmlOutputter::fillFailedTestsMap( FailedTests &failedTests )
 {
   const TestResultCollector::TestFailures &failures = m_result->failures();
@@ -139,7 +139,7 @@ XmlOutputter::addStatistics( XmlElement *rootNode )
   XmlElement *statisticsElement = new XmlElement( "Statistics" );
   rootNode->addElement( statisticsElement );
   statisticsElement->addElement( new XmlElement( "Tests", m_result->runTests() ) );
-  statisticsElement->addElement( new XmlElement( "FailuresTotal", 
+  statisticsElement->addElement( new XmlElement( "FailuresTotal",
                                                  m_result->testFailuresTotal() ) );
   statisticsElement->addElement( new XmlElement( "Errors", m_result->testErrors() ) );
   statisticsElement->addElement( new XmlElement( "Failures", m_result->testFailures() ) );
@@ -156,13 +156,13 @@ XmlOutputter::addFailedTest( Test *test,
                              XmlElement *testsNode )
 {
   Exception *thrownException = failure->thrownException();
-  
+
   XmlElement *testElement = new XmlElement( "FailedTest" );
   testsNode->addElement( testElement );
   testElement->addAttribute( "id", testNumber );
   testElement->addElement( new XmlElement( "Name", test->getName() ) );
-  testElement->addElement( new XmlElement( "FailureType", 
-                                           failure->isError() ? "Error" : 
+  testElement->addElement( new XmlElement( "FailureType",
+                                           failure->isError() ? "Error" :
                                                                 "Assertion" ) );
 
   if ( failure->sourceLine().isValid() )
@@ -188,7 +188,7 @@ XmlOutputter::addFailureLocation( TestFailure *failure,
 
 
 void
-XmlOutputter::addSuccessfulTest( Test *test, 
+XmlOutputter::addSuccessfulTest( Test *test,
                                  int testNumber,
                                  XmlElement *testsNode )
 {

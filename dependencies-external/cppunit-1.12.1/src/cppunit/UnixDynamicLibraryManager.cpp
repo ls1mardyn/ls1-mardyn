@@ -10,28 +10,28 @@
 CPPUNIT_NS_BEGIN
 
 
-DynamicLibraryManager::LibraryHandle 
+DynamicLibraryManager::LibraryHandle
 DynamicLibraryManager::doLoadLibrary( const std::string &libraryName )
 {
   return ::dlopen( libraryName.c_str(), RTLD_NOW | RTLD_GLOBAL );
 }
 
 
-void 
+void
 DynamicLibraryManager::doReleaseLibrary()
 {
   ::dlclose( m_libraryHandle);
 }
 
 
-DynamicLibraryManager::Symbol 
+DynamicLibraryManager::Symbol
 DynamicLibraryManager::doFindSymbol( const std::string &symbol )
 {
   return ::dlsym ( m_libraryHandle, symbol.c_str() );
 }
 
 
-std::string 
+std::string
 DynamicLibraryManager::getLastErrorDetail() const
 {
   return "";

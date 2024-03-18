@@ -49,9 +49,9 @@ private:
   /// Prevents the use of the copy operator.
   void operator =( const XmlOutputterTest &copy );
 
-  std::string statistics( int tests, 
-                          int total, 
-                          int error, 
+  std::string statistics( int tests,
+                          int total,
+                          int error,
                           int failure );
 
   void addTest( std::string testName );

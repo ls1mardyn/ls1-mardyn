@@ -17,7 +17,7 @@ CPPUNIT_NS_BEGIN
 /*! Constructs a new text runner.
  * \param outputter used to print text result. Owned by the runner.
  */
-TextTestRunner::TextTestRunner( Outputter *outputter ) 
+TextTestRunner::TextTestRunner( Outputter *outputter )
     : m_result( new TestResultCollector() )
     , m_eventManager( new TestResult() )
     , m_outputter( outputter )
@@ -41,7 +41,7 @@ TextTestRunner::~TextTestRunner()
  * \param testName Name of the test case to run. If an empty is given, then
  *                 all added tests are run. The name can be the name of any
  *                 test in the hierarchy.
- * \param doWait if \c true then the user must press the RETURN key 
+ * \param doWait if \c true then the user must press the RETURN key
  *               before the run() method exit.
  * \param doPrintResult if \c true (default) then the test result are printed
  *                      on the standard output.
@@ -73,11 +73,11 @@ TextTestRunner::run( std::string testName,
 }
 
 
-void 
+void
 TextTestRunner::wait( bool doWait )
 {
 #if !defined( CPPUNIT_NO_STREAM )
-  if ( doWait ) 
+  if ( doWait )
   {
     stdCOut() << "<RETURN> to continue\n";
     stdCOut().flush();
@@ -87,7 +87,7 @@ TextTestRunner::wait( bool doWait )
 }
 
 
-void 
+void
 TextTestRunner::printResult( bool doPrintResult )
 {
   stdCOut() << "\n";
@@ -121,11 +121,11 @@ TextTestRunner::eventManager() const
  *
  * Notes that the outputter will be use after the test run only if \a printResult was
  * \c true.
- * \param outputter New outputter to use. The previous outputter is destroyed. 
+ * \param outputter New outputter to use. The previous outputter is destroyed.
  *                  The TextTestRunner assumes ownership of the outputter.
  * \see CompilerOutputter, XmlOutputter, TextOutputter.
  */
-void 
+void
 TextTestRunner::setOutputter( Outputter *outputter )
 {
   delete m_outputter;
@@ -133,7 +133,7 @@ TextTestRunner::setOutputter( Outputter *outputter )
 }
 
 
-void 
+void
 TextTestRunner::run( TestResult &controller,
                      const std::string &testPath )
 {

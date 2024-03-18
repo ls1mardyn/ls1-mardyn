@@ -13,7 +13,6 @@
 #include <cstdint>
 #include <vector>
 
-using namespace std;
 typedef ConcatenatedAlignedArrayRMM<float, float, std::uint64_t>::Quantity_t Quantity_t;
 
 TEST_SUITE_REGISTRATION(ConcatenatedAlignedArrayRMMTest);
@@ -147,7 +146,7 @@ void ConcatenatedAlignedArrayRMMTest::testZero() {
 }
 
 template<typename TypeCalc, typename TypeAccum, typename TypeUID>
-void check(const vector<TypeCalc>& x, const vector<TypeCalc>& y, const vector<TypeCalc>& z, const ConcatenatedAlignedArrayRMM<TypeCalc, TypeAccum, TypeUID>& A, int i) {
+void check(const std::vector<TypeCalc>& x, const std::vector<TypeCalc>& y, const std::vector<TypeCalc>& z, const ConcatenatedAlignedArrayRMM<TypeCalc, TypeAccum, TypeUID>& A, int i) {
 
 	for (int j = 0; j < i; ++j) {
 		mardyn_assert(x[j] == A.get_calc(Quantity_t::RX,j));
@@ -174,7 +173,7 @@ void check(const vector<TypeCalc>& x, const vector<TypeCalc>& y, const vector<Ty
 }
 
 void ConcatenatedAlignedArrayRMMTest::testAppending() {
-	vector<float> x, y, z;
+	std::vector<float> x, y, z;
 	for(int i = 0; i < 17; ++i) {
 		x.push_back(static_cast<float>(i));
 		y.push_back(static_cast<float>(i+1));
@@ -216,7 +215,7 @@ void ConcatenatedAlignedArrayRMMTest::testAppending() {
 }
 
 void ConcatenatedAlignedArrayRMMTest::testIncreasingStorage() {
-	vector<float> x, y, z;
+	std::vector<float> x, y, z;
 
 	for(int i = 0; i < 111; ++i) {
 		x.push_back(static_cast<float>(i));

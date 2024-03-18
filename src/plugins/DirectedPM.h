@@ -115,7 +115,7 @@ private:
 
 public:
 	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override {
-		global_log->debug() << "DirectPM enabled" << std::endl;
+		Log::global_log->debug() << "DirectPM enabled" << std::endl;
 		_firstTime = true;
 		for (unsigned d = 0; d < 3; d++) {
 			_boxLength[d] = domain->getGlobalLength(d);
@@ -171,12 +171,12 @@ public:
 		_DPMGlobalStream.open("Global_output_DPM_MK.txt", std::ios::out);
 		_DPMGlobalStream << "Ausgabe der globalen Gr��en gerichtete Geschwindigkeit, dichteGas, dichteLiq, druckGas, "
 							"druckLiq, TGas, TLiq, EkinxyzGas, EkinxyzLiq, TGasXZ, TLiqXZ,EkinxzGas und EkinxzLiq,"
-						 << endl;
-		_DPMGlobalStream << endl;
+						 << std::endl;
+		_DPMGlobalStream << std::endl;
 		_DPMGlobalStream << "Timestept \t\t  gerichtete Geschw. \t\t  dichteGas \t\t  dichteLiq \t\t  druckGas \t\t  "
 							"druckLiq \t\t  TGas \t\t  TLiq \t\t  EkinxyzGas \t\t  EkinxyzLiq\t\t  TGasXZ\t\t "
 							"TLiqXZ\t\t  EkinxzGas \t\t  EkinxzLiq\t\t"
-						 << endl;
+						 << std::endl;
 		_DPMGlobalStream.close();
 	}
 	void readXML(XMLfileUnits& xmlconfig) override;

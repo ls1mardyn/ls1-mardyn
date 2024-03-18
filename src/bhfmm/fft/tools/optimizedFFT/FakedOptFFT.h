@@ -17,8 +17,6 @@
 #include <map>
 #include <iostream>
 
-using namespace std;
-
 //struct storing a int[2] for the map
 struct pos {
 	int x, y;
@@ -32,7 +30,7 @@ struct pos_comp {
 };
 
 /**
- * Implementation of the scheme of the optimized FFT that reconstruct the whole matrix 
+ * Implementation of the scheme of the optimized FFT that reconstruct the whole matrix
  * and use FFTW to perform the FFT/IFFT
  * Use a map<pos,FFTW_API*> to store the various FFTW_API needed to perform the optimized FFT
  */
@@ -60,7 +58,7 @@ public:
 			const int size_x, const int size_y);
 
 private:
-	map<pos, FFTW_API**, pos_comp> _fftw_api_map; //storage of the various FFTW_API required
+	std::map<pos, FFTW_API**, pos_comp> _fftw_api_map; //storage of the various FFTW_API required
 
 	FFTW_API* getFFTW_API(const int size_x, const int size_y); //memoized function using the map
 };

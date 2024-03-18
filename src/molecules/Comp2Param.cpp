@@ -4,18 +4,16 @@
 
 #include "utils/Logger.h"
 
-using Log::global_log;
-using namespace std;
 
 void Comp2Param::initialize(
-		const vector<Component>& components, const vector<double>& mixcoeff,
+		const std::vector<Component>& components, const std::vector<double>& mixcoeff,
 		double epsRF, double rc, double rcLJ)
 {
 	m_numcomp = components.size();
 	m_ssparatbl.redim(m_numcomp, m_numcomp);
 
 	// interaction between LJ centers
-	vector<double>::const_iterator mixpos = mixcoeff.begin();
+	std::vector<double>::const_iterator mixpos = mixcoeff.begin();
 	for (unsigned int compi = 0; compi < m_numcomp; ++compi) {
 		ParaStrm& pstrmii = m_ssparatbl(compi, compi);
 		unsigned int nci = components[compi].numLJcenters();
@@ -47,7 +45,7 @@ void Comp2Param::initialize(
 			double eta = *mixpos;
 			++mixpos;
 #ifndef NDEBUG
-			global_log->info() << "cid+1(compi)=" << compi+1 << " <--> cid+1(compj)=" << compj+1 << ": xi=" << xi << ", eta=" << eta << endl;
+			Log::global_log->info() << "cid+1(compi)=" << compi+1 << " <--> cid+1(compj)=" << compj+1 << ": xi=" << xi << ", eta=" << eta << std::endl;
 #endif
 			double shift6combined, sigperrc2, sigperrc6;
 			for (unsigned int centeri = 0; centeri < nci; ++centeri) {
@@ -68,7 +66,7 @@ void Comp2Param::initialize(
 					pstrmij << sigma2;
 					pstrmij << shift6combined;
 #ifndef NDEBUG
-					global_log->debug() << "Component " << compi << ": eps24=" << epsilon24 << " sig2=" << sigma2 << " shift6=" << shift6combined << endl;
+					Log::global_log->debug() << "Component " << compi << ": eps24=" << epsilon24 << " sig2=" << sigma2 << " shift6=" << shift6combined << std::endl;
 #endif
 				}
 			}

@@ -63,7 +63,7 @@
 	  <electrostatic type="FastMultipoleMethod">
 			<orderOfExpansions>10</orderOfExpansions>
 			<LJCellSubdivisionFactor>1</LJCellSubdivisionFactor>
-			<adaptiveContainer>0</adaptiveContainer>
+			<adaptiveContainer>false</adaptiveContainer>
 			<systemIsPeriodic>1</systemIsPeriodic>
 	  </electrostatic>
 

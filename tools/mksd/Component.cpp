@@ -8,8 +8,8 @@
 #include "Component.h"
 
 // fluids
-extern const string FLUID_AR = "Ar";
-extern const string FLUID_CH4 = "CH4";
+extern const std::string FLUID_AR = "Ar";
+extern const std::string FLUID_CH4 = "CH4";
 
 const double EPS_AR = 4.36704e-04;
 const double SIGMA_AR = 6.40920;
@@ -25,9 +25,9 @@ const double T_CRITICAL_1CLJ = 1.0779;
 
 
 // solids
-extern const string WALL_CU_LJ = "CU_LJ"; // copper by Lennard-Jones
-extern const string WALL_TERSOFF = "Tersoff";
-extern const string WALL_MAT_AKA_FIT = "MatAkaFit";
+extern const std::string WALL_CU_LJ = "CU_LJ"; // copper by Lennard-Jones
+extern const std::string WALL_TERSOFF = "Tersoff";
+extern const std::string WALL_MAT_AKA_FIT = "MatAkaFit";
 
 // According to Phillpot, S. R. in: "Reconstruction of grain boundaries in copper and gold by simulation"
 // Journal of Materials Ressearch, Vol 9, No.3 1994;
@@ -41,7 +41,7 @@ double LATTICE_CONST_WALL_LJTS;
 
 
 
-Component::Component(string in_substance, bool in_LJunits){
+Component::Component(std::string in_substance, bool in_LJunits){
 	_substance = in_substance;
 	double facLatConst = 1.0; //0.79852 for sigma_ss = 0.8*sigma_ff and 1.0 for sigma_ss = sigma_ff
 	if (in_LJunits){
@@ -62,7 +62,7 @@ Component::Component(string in_substance, bool in_LJunits){
 		init1CLJ(_substance);
 	}
 	else{
-		cerr << "No other interaction models implemented.";
+		std::cerr << "No other interaction models implemented.";
 	}
 }
 
@@ -70,7 +70,7 @@ Component::~Component(){
 
 }
 
-void Component::init1CLJ(string substance){
+void Component::init1CLJ(std::string substance){
 
 			// parameters all the 1C LJ fluid models have in common
 			_numberLJCenters = 1;
@@ -180,11 +180,11 @@ double Component::calculateLiquidDensity(double T){
 				/ (gSigma(0)*gSigma(0)*gSigma(0));
 	}
 	else{
-		cerr << "Error in Component class: Claculation of the liquid density. Liquid density of the 1C LJ model not calculated!";
+		std::cerr << "Error in Component class: Claculation of the liquid density. Liquid density of the 1C LJ model not calculated!";
 		exit(-201);
 	}
 	//cout << "Calculating rhoLiq in Component:\ngSigma(0) = " << (gSigma(0)) << "\n"<< "temperature = "<< T <<"\n";
-	cout << "rhoLiq = " << rhoLiq << "\n";
+	std::cout << "rhoLiq = " << rhoLiq << "\n";
 	return rhoLiq;
 }
 
@@ -198,11 +198,11 @@ double Component::calculateVaporDensity(double T, double factor){
 				 / (gSigma(0)*gSigma(0)*gSigma(0));
 	}
 	else{
-			cerr << "Error in Component class: Claculation of the liquid density. Liquid density of the 1C LJ model not calculated!";
+			std::cerr << "Error in Component class: Claculation of the liquid density. Liquid density of the 1C LJ model not calculated!";
 			exit(-202);
 		}
 	//cout << "Calculating rhoVap in Component: \ngSigma(0) = " << (gSigma(0)) << "\n"<< "temperature = "<< T <<"\n";
-	cout << "rhoVap = " << rhoVap << "\n";
+	std::cout << "rhoVap = " << rhoVap << "\n";
 	return rhoVap;
 }
 

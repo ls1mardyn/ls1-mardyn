@@ -41,8 +41,8 @@ class XMLfileUnits;
 
 //! @brief Base class for ensembles
 //! @author Christoph Niethammer <niethammer@hlrs.de>
-//! 
-//! Each ensemble should provide access to extensive (NVE) and intensive 
+//!
+//! Each ensemble should provide access to extensive (NVE) and intensive
 //! (\mu p t) variables as well as a function to update global variables.
 class Ensemble {
 public:

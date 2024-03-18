@@ -3,26 +3,26 @@
 CPPUNIT_NS_BEGIN
 
 
-TestSetUp::TestSetUp( Test *test ) : TestDecorator( test ) 
+TestSetUp::TestSetUp( Test *test ) : TestDecorator( test )
 {
 }
 
 
-void 
+void
 TestSetUp::setUp()
 {
 }
 
 
-void 
-TestSetUp::tearDown() 
+void
+TestSetUp::tearDown()
 {
 }
 
 
 void
 TestSetUp::run( TestResult *result )
-{ 
+{
   setUp();
   TestDecorator::run(result);
   tearDown();

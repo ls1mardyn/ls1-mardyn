@@ -38,8 +38,7 @@ public:
 		                            + this->numDipoles()
 		                            + this->numQuadrupoles();
 	}
-	/** get number of oriented interaction sites (dipoles and quadrupoles) */
-	unsigned int numOrientedSites() const { return numDipoles() + numQuadrupoles(); }
+
 	/** get number of Lennard Jones interaction sites */
 	unsigned int numLJcenters() const { return _ljcenters.size(); }
 	/** get number of charge interaction sites */
@@ -75,7 +74,7 @@ public:
 	const Quadrupole& quadrupole(unsigned int i) const { return _quadrupoles[i]; }
 
 	void setNumMolecules(unsigned long num) { _numMolecules = num; }  /**< set the number of molecules for this component */
-	void incNumMolecules() { ++_numMolecules; }  /**< increase the number of molecules for this component by 1 */ 
+	void incNumMolecules() { ++_numMolecules; }  /**< increase the number of molecules for this component by 1 */
 	void incNumMolecules(int N) { _numMolecules += N; }  /**< increase the number of molecules for this component by N */
 	unsigned long getNumMolecules() const { return _numMolecules; }  /**< get the number of molecules (global) of the component */
 
@@ -110,8 +109,6 @@ public:
 
 	/** write information to stream */
 	void write(std::ostream& ostrm) const;
-
-	void writeVIM(std::ostream& ostrm);
 
 	void setE_trans(double E) { _E_trans = E; }
 	void setE_rot(double E) { _E_rot = E; }
@@ -163,9 +160,9 @@ private:
 	double _E_trans; // translational energy
 	double _E_rot; // rotational energy
 	double _T; // temperature
-	
+
 	bool _isStockmayer; //Checks whether component is a Stockmayer fluid to determine moments of inertia
-	
+
 	std::string _name; /**< name of the component/molecule type */
 
 	/**

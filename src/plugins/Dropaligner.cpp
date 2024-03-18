@@ -23,27 +23,27 @@ void Dropaligner::readXML(XMLfileUnits& xmlconfig) {
 	// SANITY CHECK
 	if (_interval < 1 || _alignmentCorrection < 0 || _alignmentCorrection > 1 || _xPos <= 0. || _yPos <= 0. ||
 		_zPos <= 0. || _radius <= 0) {
-		global_log->error() << "[Dropaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
-		global_log->error() << "[Dropaligner] HALTING SIMULATION" << std::endl;
+		Log::global_log->error() << "[Dropaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
+		Log::global_log->error() << "[Dropaligner] HALTING SIMULATION" << std::endl;
 		_enabled = false;
 		// HALT SIM
 		Simulation::exit(1);
 		return;
 	}
 
-	global_log->info() << "[Dropaligner] settings:" << std::endl;
-	global_log->info() << "                  xpos: " << _xPos << std::endl;
-	global_log->info() << "                  ypos: " << _yPos << std::endl;
-	global_log->info() << "                  zpos: " << _zPos << std::endl;
-	global_log->info() << "                  radius: " << _radius << std::endl;
-	global_log->info() << "                  interval: " << _interval << std::endl;
-	global_log->info() << "                  correctionFactor: " << _alignmentCorrection << std::endl;
+	Log::global_log->info() << "[Dropaligner] settings:" << std::endl;
+	Log::global_log->info() << "                  xpos: " << _xPos << std::endl;
+	Log::global_log->info() << "                  ypos: " << _yPos << std::endl;
+	Log::global_log->info() << "                  zpos: " << _zPos << std::endl;
+	Log::global_log->info() << "                  radius: " << _radius << std::endl;
+	Log::global_log->info() << "                  interval: " << _interval << std::endl;
+	Log::global_log->info() << "                  correctionFactor: " << _alignmentCorrection << std::endl;
 }
 
 void Dropaligner::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 							   unsigned long simstep) {
 	if (_enabled) {
-		global_log->debug() << "[Dropaligner] before forces called" << std::endl;
+		Log::global_log->debug() << "[Dropaligner] before forces called" << std::endl;
 
 		if ((simstep - 1) % _interval != 0) {
 			return;

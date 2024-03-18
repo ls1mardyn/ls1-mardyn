@@ -24,7 +24,7 @@ public:
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
 	     <incremental>INTEGER</incremental>
-	     <appendTimestamp>INTEGER</appendTimestamp>
+	     <appendTimestamp>BOOL</appendTimestamp>
 	   </outputplugin>
 	   \endcode
 	 */
@@ -45,7 +45,7 @@ public:
 	std::string getPluginName() override {
 		return std::string("XyzWriter");
 	}
-	
+
 	static PluginBase* createInstance() { return new XyzWriter(); }
 private:
 	std::string _outputPrefix;

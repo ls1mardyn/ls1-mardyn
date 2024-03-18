@@ -16,7 +16,7 @@ TestPathTest::~TestPathTest()
 }
 
 
-void 
+void
 TestPathTest::setUp()
 {
   m_path = new CPPUNIT_NS::TestPath();
@@ -35,7 +35,7 @@ TestPathTest::setUp()
 }
 
 
-void 
+void
 TestPathTest::tearDown()
 {
   delete m_suite1;
@@ -47,7 +47,7 @@ TestPathTest::tearDown()
 }
 
 
-void 
+void
 TestPathTest::testDefaultConstructor()
 {
   CPPUNIT_ASSERT_EQUAL( 0, m_path->getTestCount() );
@@ -55,7 +55,7 @@ TestPathTest::testDefaultConstructor()
 }
 
 
-void 
+void
 TestPathTest::testAddTest()
 {
   m_path->add( m_test1 );
@@ -65,14 +65,14 @@ TestPathTest::testAddTest()
 }
 
 
-void 
+void
 TestPathTest::testGetTestAtThrow1()
 {
   m_path->getTestAt( 0 );
 }
 
 
-void 
+void
 TestPathTest::testGetTestAtThrow2()
 {
   m_path->add( m_test1 );
@@ -80,7 +80,7 @@ TestPathTest::testGetTestAtThrow2()
 }
 
 
-void 
+void
 TestPathTest::testGetChildTest()
 {
   m_path->add( m_test1 );
@@ -88,7 +88,7 @@ TestPathTest::testGetChildTest()
 }
 
 
-void 
+void
 TestPathTest::testGetChildTestManyTests()
 {
   m_path->add( m_test1 );
@@ -98,14 +98,14 @@ TestPathTest::testGetChildTestManyTests()
 }
 
 
-void 
+void
 TestPathTest::testGetChildTestThrowIfNotValid()
 {
   m_path->getChildTest();
 }
 
 
-void 
+void
 TestPathTest::testAddPath()
 {
   CPPUNIT_NS::TestPath path;
@@ -122,7 +122,7 @@ TestPathTest::testAddPath()
 }
 
 
-void 
+void
 TestPathTest::testAddInvalidPath()
 {
   CPPUNIT_NS::TestPath path;
@@ -132,7 +132,7 @@ TestPathTest::testAddInvalidPath()
 }
 
 
-void 
+void
 TestPathTest::testRemoveTests()
 {
   m_path->add( m_test1 );
@@ -144,7 +144,7 @@ TestPathTest::testRemoveTests()
 }
 
 
-void 
+void
 TestPathTest::testRemoveTest()
 {
   m_path->add( m_test1 );
@@ -157,14 +157,14 @@ TestPathTest::testRemoveTest()
 }
 
 
-void 
+void
 TestPathTest::testRemoveTestThrow1()
 {
   m_path->removeTest( -1 );
 }
 
 
-void 
+void
 TestPathTest::testRemoveTestThrow2()
 {
   m_path->add( m_test1 );
@@ -173,7 +173,7 @@ TestPathTest::testRemoveTestThrow2()
 }
 
 
-void 
+void
 TestPathTest::testUp()
 {
   m_path->add( m_test1 );
@@ -184,14 +184,14 @@ TestPathTest::testUp()
 }
 
 
-void 
+void
 TestPathTest::testUpThrow()
 {
   m_path->up();
 }
 
 
-void 
+void
 TestPathTest::testInsert()
 {
   m_path->add( m_test1 );
@@ -204,7 +204,7 @@ TestPathTest::testInsert()
 }
 
 
-void 
+void
 TestPathTest::testInsertAtEnd()
 {
   m_path->add( m_test1 );
@@ -217,14 +217,14 @@ TestPathTest::testInsertAtEnd()
 }
 
 
-void 
+void
 TestPathTest::testInsertThrow1()
 {
   m_path->insert( m_test1, -1 );
 }
 
 
-void 
+void
 TestPathTest::testInsertThrow2()
 {
   m_path->add( m_test1 );
@@ -233,7 +233,7 @@ TestPathTest::testInsertThrow2()
 }
 
 
-void 
+void
 TestPathTest::testInsertPath()
 {
   CPPUNIT_NS::TestPath path;
@@ -252,7 +252,7 @@ TestPathTest::testInsertPath()
 }
 
 
-void 
+void
 TestPathTest::testInsertPathThrow()
 {
   CPPUNIT_NS::TestPath path;
@@ -262,7 +262,7 @@ TestPathTest::testInsertPathThrow()
 }
 
 
-void 
+void
 TestPathTest::testInsertPathDontThrowIfInvalid()
 {
   CPPUNIT_NS::TestPath path;
@@ -270,7 +270,7 @@ TestPathTest::testInsertPathDontThrowIfInvalid()
 }
 
 
-void 
+void
 TestPathTest::testRootConstructor()
 {
   CPPUNIT_NS::TestPath path( m_test1 );
@@ -280,13 +280,13 @@ TestPathTest::testRootConstructor()
 }
 
 
-void 
+void
 TestPathTest::testPathSliceConstructorCopyUntilEnd()
 {
   m_path->add( m_test1 );
   m_path->add( m_test2 );
   m_path->add( m_test3 );
-  
+
   CPPUNIT_NS::TestPath path( *m_path, 1 );
 
   CPPUNIT_ASSERT_EQUAL( 2, path.getTestCount() );
@@ -295,13 +295,13 @@ TestPathTest::testPathSliceConstructorCopyUntilEnd()
 }
 
 
-void 
+void
 TestPathTest::testPathSliceConstructorCopySpecifiedCount()
 {
   m_path->add( m_test1 );
   m_path->add( m_test2 );
   m_path->add( m_test3 );
-  
+
   CPPUNIT_NS::TestPath path( *m_path, 0, 1 );
 
   CPPUNIT_ASSERT_EQUAL( 1, path.getTestCount() );
@@ -309,17 +309,17 @@ TestPathTest::testPathSliceConstructorCopySpecifiedCount()
 }
 
 
-void 
+void
 TestPathTest::testPathSliceConstructorCopyNone()
 {
   m_path->add( m_test1 );
-  
+
   CPPUNIT_NS::TestPath path( *m_path, 0, 0 );
   CPPUNIT_ASSERT_EQUAL( 0, path.getTestCount() );
 }
 
 
-void 
+void
 TestPathTest::testPathSliceConstructorNegativeIndex()
 {
   m_path->add( m_test1 );
@@ -332,7 +332,7 @@ TestPathTest::testPathSliceConstructorNegativeIndex()
 }
 
 
-void 
+void
 TestPathTest::testPathSliceConstructorAfterEndIndex()
 {
   m_path->add( m_test1 );
@@ -344,7 +344,7 @@ TestPathTest::testPathSliceConstructorAfterEndIndex()
 }
 
 
-void 
+void
 TestPathTest::testPathSliceConstructorNegativeIndexUntilEnd()
 {
   m_path->add( m_test1 );
@@ -358,7 +358,7 @@ TestPathTest::testPathSliceConstructorNegativeIndexUntilEnd()
 }
 
 
-void 
+void
 TestPathTest::testPathSliceConstructorNegativeIndexNone()
 {
   m_path->add( m_test1 );
@@ -370,7 +370,7 @@ TestPathTest::testPathSliceConstructorNegativeIndexNone()
 }
 
 
-void 
+void
 TestPathTest::testToStringNoTest()
 {
   std::string expected = "/";
@@ -380,7 +380,7 @@ TestPathTest::testToStringNoTest()
 }
 
 
-void 
+void
 TestPathTest::testToStringOneTest()
 {
   m_path->add( m_test1 );
@@ -392,7 +392,7 @@ TestPathTest::testToStringOneTest()
 }
 
 
-void 
+void
 TestPathTest::testToStringHierarchy()
 {
   m_path->add( m_suite1 );
@@ -406,7 +406,7 @@ TestPathTest::testToStringHierarchy()
 }
 
 
-void 
+void
 TestPathTest::testPathStringConstructorRoot()
 {
   CPPUNIT_NS::TestPath path( m_suite1, "/All Tests" );
@@ -416,7 +416,7 @@ TestPathTest::testPathStringConstructorRoot()
 }
 
 
-void 
+void
 TestPathTest::testPathStringConstructorEmptyIsRoot()
 {
   CPPUNIT_NS::TestPath path( m_suite1, "" );
@@ -426,7 +426,7 @@ TestPathTest::testPathStringConstructorEmptyIsRoot()
 }
 
 
-void 
+void
 TestPathTest::testPathStringConstructorHierarchy()
 {
   CPPUNIT_NS::TestPath path( m_suite1, "/All Tests/Custom/MyTest::testDefaultConstructor" );
@@ -438,14 +438,14 @@ TestPathTest::testPathStringConstructorHierarchy()
 }
 
 
-void 
+void
 TestPathTest::testPathStringConstructorBadRootThrow()
 {
   CPPUNIT_NS::TestPath path( m_suite1, "/Custom" );
 }
 
 
-void 
+void
 TestPathTest::testPathStringConstructorRelativeRoot()
 {
   CPPUNIT_NS::TestPath path( m_suite1, "All Tests" );
@@ -455,7 +455,7 @@ TestPathTest::testPathStringConstructorRelativeRoot()
 }
 
 
-void 
+void
 TestPathTest::testPathStringConstructorRelativeRoot2()
 {
   CPPUNIT_NS::TestPath path( m_suite1, "Custom" );
@@ -465,14 +465,14 @@ TestPathTest::testPathStringConstructorRelativeRoot2()
 }
 
 
-void 
+void
 TestPathTest::testPathStringConstructorThrow1()
 {
   CPPUNIT_NS::TestPath path( m_suite1, "/" );
 }
 
 
-void 
+void
 TestPathTest::testPathStringConstructorRelativeHierarchy()
 {
   CPPUNIT_NS::TestPath path( m_suite1, "Custom/MyTest::testConstructor" );
@@ -483,7 +483,7 @@ TestPathTest::testPathStringConstructorRelativeHierarchy()
 }
 
 
-void 
+void
 TestPathTest::testPathStringConstructorBadRelativeHierarchyThrow()
 {
   CPPUNIT_NS::TestPath path( m_suite1, "Custom/MyBadTest::testConstructor" );

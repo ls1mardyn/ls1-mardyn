@@ -3,7 +3,6 @@
 #include <fstream>
 #include <sstream>
 
-using namespace std;
 
 #define FORMAT_BUCHHOLZ 0
 #define FORMAT_BRANCH 1

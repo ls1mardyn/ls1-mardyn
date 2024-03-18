@@ -7,9 +7,7 @@
 //#include "LongRangeCorrection.h"
 
 #include "utils/Logger.h"
-using Log::global_log;
 
-using namespace std;
 
 Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* domain, Simulation* simulation) {
 	_cutoff = cutoffRadius;
@@ -20,7 +18,7 @@ Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* dom
 
 void Homogeneous::init() {
 	_comp2params = _domain->getComp2Params();
-	global_log->info() << "Long range correction for homogeneous systems is used " << endl;
+	Log::global_log->info() << "Long range correction for homogeneous systems is used " << std::endl;
 	double UpotCorrLJ = 0.;
 	double VirialCorrLJ = 0.;
 	double MySelbstTerm = 0.;
@@ -80,7 +78,7 @@ void Homogeneous::init() {
 					double zj = cj.ljcenter(sj).rz();
 					double tau2 = sqrt(xj * xj + yj * yj + zj * zj);
 					if (tau1 + tau2 >= _cutoffLJ) {
-						global_log->error() << "Error calculating cutoff corrections, rc too small" << endl;
+						Log::global_log->error() << "Error calculating cutoff corrections, rc too small" << std::endl;
 						Simulation::exit(1);
 					}
 					double eps24;
@@ -133,8 +131,8 @@ void Homogeneous::calculateLongRange() {
 	double UpotCorr = UpotCorrLJ + MySelbstTerm;
 	double VirialCorr = VirialCorrLJ + 3. * MySelbstTerm;
 
-	global_log->debug() << "Far field terms: U_pot_correction = " << UpotCorr << " virial_correction = " << VirialCorr
-					   << endl;
+	Log::global_log->debug() << "Far field terms: U_pot_correction = " << UpotCorr << " virial_correction = " << VirialCorr
+					   << std::endl;
 	_domain->setUpotCorr(UpotCorr);
 	_domain->setVirialCorr(VirialCorr);
 }

@@ -12,26 +12,26 @@ BaseTestCase::~BaseTestCase()
 }
 
 
-void 
+void
 BaseTestCase::setUp()
 {
 }
 
 
-void 
+void
 BaseTestCase::tearDown()
 {
 }
 
 
-void 
+void
 BaseTestCase::testUsingCheckIt()
 {
   checkIt();
 }
 
 
-void 
+void
 BaseTestCase::checkIt()
 {
 }

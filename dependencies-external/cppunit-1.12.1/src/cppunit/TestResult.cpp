@@ -15,7 +15,7 @@ TestResult::TestResult( SynchronizationObject *syncObject )
     : SynchronizedObject( syncObject )
     , m_protectorChain( new ProtectorChain() )
     , m_stop( false )
-{ 
+{
   m_protectorChain->push( new DefaultProtector() );
 }
 
@@ -26,119 +26,119 @@ TestResult::~TestResult()
 }
 
 
-void 
+void
 TestResult::reset()
 {
-  ExclusiveZone zone( m_syncObject ); 
+  ExclusiveZone zone( m_syncObject );
   m_stop = false;
 }
 
 
-void 
-TestResult::addError( Test *test, 
+void
+TestResult::addError( Test *test,
                       Exception *e )
-{ 
+{
   TestFailure failure( test, e, true );
   addFailure( failure );
 }
 
 
-void 
+void
 TestResult::addFailure( Test *test, Exception *e )
-{ 
+{
   TestFailure failure( test, e, false );
   addFailure( failure );
 }
 
 
-void 
+void
 TestResult::addFailure( const TestFailure &failure )
 {
-  ExclusiveZone zone( m_syncObject ); 
+  ExclusiveZone zone( m_syncObject );
   for ( TestListeners::iterator it = m_listeners.begin();
-        it != m_listeners.end(); 
+        it != m_listeners.end();
         ++it )
     (*it)->addFailure( failure );
 }
 
 
-void 
+void
 TestResult::startTest( Test *test )
-{ 
-  ExclusiveZone zone( m_syncObject ); 
+{
+  ExclusiveZone zone( m_syncObject );
   for ( TestListeners::iterator it = m_listeners.begin();
-        it != m_listeners.end(); 
+        it != m_listeners.end();
         ++it )
     (*it)->startTest( test );
 }
 
-  
-void 
+
+void
 TestResult::endTest( Test *test )
-{ 
-  ExclusiveZone zone( m_syncObject ); 
+{
+  ExclusiveZone zone( m_syncObject );
   for ( TestListeners::iterator it = m_listeners.begin();
-        it != m_listeners.end(); 
+        it != m_listeners.end();
         ++it )
     (*it)->endTest( test );
 }
 
 
-void 
+void
 TestResult::startSuite( Test *test )
 {
-  ExclusiveZone zone( m_syncObject ); 
+  ExclusiveZone zone( m_syncObject );
   for ( TestListeners::iterator it = m_listeners.begin();
-        it != m_listeners.end(); 
+        it != m_listeners.end();
         ++it )
     (*it)->startSuite( test );
 }
 
 
-void 
+void
 TestResult::endSuite( Test *test )
 {
-  ExclusiveZone zone( m_syncObject ); 
+  ExclusiveZone zone( m_syncObject );
   for ( TestListeners::iterator it = m_listeners.begin();
-        it != m_listeners.end(); 
+        it != m_listeners.end();
         ++it )
     (*it)->endSuite( test );
 }
 
 
-bool 
+bool
 TestResult::shouldStop() const
-{ 
+{
   ExclusiveZone zone( m_syncObject );
-  return m_stop; 
+  return m_stop;
 }
 
 
-void 
+void
 TestResult::stop()
-{ 
+{
   ExclusiveZone zone( m_syncObject );
-  m_stop = true; 
+  m_stop = true;
 }
 
 
-void 
+void
 TestResult::addListener( TestListener *listener )
 {
-  ExclusiveZone zone( m_syncObject ); 
+  ExclusiveZone zone( m_syncObject );
   m_listeners.push_back( listener );
 }
 
 
-void 
+void
 TestResult::removeListener ( TestListener *listener )
 {
-  ExclusiveZone zone( m_syncObject ); 
+  ExclusiveZone zone( m_syncObject );
   removeFromSequence( m_listeners, listener );
 }
 
 
-void 
+void
 TestResult::runTest( Test *test )
 {
   startTestRun( test );
@@ -147,29 +147,29 @@ TestResult::runTest( Test *test )
 }
 
 
-void 
+void
 TestResult::startTestRun( Test *test )
 {
-  ExclusiveZone zone( m_syncObject ); 
+  ExclusiveZone zone( m_syncObject );
   for ( TestListeners::iterator it = m_listeners.begin();
-        it != m_listeners.end(); 
+        it != m_listeners.end();
         ++it )
     (*it)->startTestRun( test, this );
 }
 
 
-void 
+void
 TestResult::endTestRun( Test *test )
 {
-  ExclusiveZone zone( m_syncObject ); 
+  ExclusiveZone zone( m_syncObject );
   for ( TestListeners::iterator it = m_listeners.begin();
-        it != m_listeners.end(); 
+        it != m_listeners.end();
         ++it )
     (*it)->endTestRun( test, this );
 }
 
 
-bool 
+bool
 TestResult::protect( const Functor &functor,
                      Test *test,
                      const std::string &shortDescription )
@@ -179,14 +179,14 @@ TestResult::protect( const Functor &functor,
 }
 
 
-void 
+void
 TestResult::pushProtector( Protector *protector )
 {
   m_protectorChain->push( protector );
 }
 
 
-void 
+void
 TestResult::popProtector()
 {
   m_protectorChain->pop();

@@ -28,7 +28,7 @@ void ParticleDataRMM::getMPIType(MPI_Datatype &sendPartType) {
 	} else if (sizeof(pdata_dummy.r[0]) == 4) {  // 4 bytes for single
 		types[1] = MPI_FLOAT;
 	} else {
-		global_log->error() << "invalid size of vcp_real_calc";
+		Log::global_log->error() << "invalid size of vcp_real_calc";
 		Simulation::exit(4852);
 	}
 

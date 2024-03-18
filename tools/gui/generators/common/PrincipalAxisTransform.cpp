@@ -9,7 +9,6 @@
 #include "molecules/Component.h"
 #include "eig3.h"
 
-using namespace std;
 
 /**
  * @param[in] site
@@ -40,7 +39,7 @@ void principalAxisTransform(Component& component) {
 		centerOfMass[i] = centerOfMass[i] / totalMass;
 	}
 
-	cout << "Moving center of mass [" << centerOfMass[0] << "," << centerOfMass[1] << "," << centerOfMass[2] << "]" << endl;
+	std::cout << "Moving center of mass [" << centerOfMass[0] << "," << centerOfMass[1] << "," << centerOfMass[2] << "]" << std::endl;
 
 	// adjust coordinates wrt center of mass and assemble mass matrix
 	double momentMatrix[3][3] = { {0., 0., 0.} , {0., 0., 0.} , {0., 0., 0.} };
@@ -57,13 +56,13 @@ void principalAxisTransform(Component& component) {
 		shiftCenterAndBuildMatrix(component.quadrupole(i), centerOfMass, momentMatrix);
 	}
 
-	std::cout << "momentMatrix:" << endl;
+	std::cout << "momentMatrix:" << std::endl;
 	for (int i = 0; i < 3; i++) {
-		std::cout << "[ " << endl;
+		std::cout << "[ " << std::endl;
 		for (int j = 0; j < 3; j++) {
 			std::cout << " " << momentMatrix[i][j];
 		}
-		std::cout << "]" << endl;
+		std::cout << "]" << std::endl;
 	}
 
 	double eigenVectors[3][3];
@@ -87,13 +86,13 @@ void principalAxisTransform(Component& component) {
 		}
 	}
 
-	std::cout << "Eigenvectors:" << endl;
+	std::cout << "Eigenvectors:" << std::endl;
 	for (int i = 0; i < 3; i++) {
 		std::cout << "[ ";
 		for (int j = 0; j < 3; j++) {
 			std::cout << " " << eigenVectors[i][j];
 		}
-		std::cout << "]" << endl;
+		std::cout << "]" << std::endl;
 	}
 
 	// adjust coordinates wrt. principal axis
@@ -114,7 +113,7 @@ void principalAxisTransform(Component& component) {
 	component.setI33(momentMatrix[2][2]);
 
 
-	std::cout << "Diagonal: " << momentMatrix[0][0] << "," << momentMatrix[1][1] << "," << momentMatrix[2][2] <<endl;
+	std::cout << "Diagonal: " << momentMatrix[0][0] << "," << momentMatrix[1][1] << "," << momentMatrix[2][2] <<std::endl;
 }
 
 static void sumProperties(const Site& site, double& totalMass, double centerOfMass[3]) {

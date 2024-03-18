@@ -30,7 +30,7 @@ MockTestCase::~MockTestCase()
 }
 
 
-int 
+int
 MockTestCase::countTestCases() const
 {
   MockTestCase *mutableThis = CPPUNIT_CONST_CAST(MockTestCase *, this );
@@ -45,7 +45,7 @@ MockTestCase::countTestCases() const
 }
 
 
-void 
+void
 MockTestCase::setUp()
 {
   if ( m_hasSetUpExpectation )
@@ -59,7 +59,7 @@ MockTestCase::setUp()
     throw FailureException();
 }
 
-void 
+void
 MockTestCase::tearDown()
 {
   if ( m_hasTearDownExpectation )
@@ -74,7 +74,7 @@ MockTestCase::tearDown()
 }
 
 
-void 
+void
 MockTestCase::runTest()
 {
   ++m_actualRunTestCallCount;
@@ -89,7 +89,7 @@ MockTestCase::runTest()
 }
 
 /*
-bool 
+bool
 MockTestCase::findTestPath( const CPPUNIT_NS::Test *test,
                             CPPUNIT_NS::TestPath &testPath )
 {
@@ -103,7 +103,7 @@ MockTestCase::findTestPath( const CPPUNIT_NS::Test *test,
 }
 */
 
-void 
+void
 MockTestCase::setExpectedSetUpCall( int callCount )
 {
   m_hasSetUpExpectation = true;
@@ -111,13 +111,13 @@ MockTestCase::setExpectedSetUpCall( int callCount )
 }
 
 
-void 
+void
 MockTestCase::setExpectedTearDownCall( int callCount )
 {
 }
 
 
-void 
+void
 MockTestCase::setExpectedRunTestCall( int callCount )
 {
   m_expectRunTestCall = true;
@@ -125,7 +125,7 @@ MockTestCase::setExpectedRunTestCall( int callCount )
 }
 
 
-void 
+void
 MockTestCase::setExpectedCountTestCasesCall( int callCount )
 {
   m_expectCountTestCasesCall = true;
@@ -133,28 +133,28 @@ MockTestCase::setExpectedCountTestCasesCall( int callCount )
 }
 
 
-void 
+void
 MockTestCase::makeSetUpThrow()
 {
   m_setUpThrow = true;
 }
 
 
-void 
+void
 MockTestCase::makeTearDownThrow()
 {
   m_tearDownThrow = true;
 }
 
 
-void 
+void
 MockTestCase::makeRunTestThrow()
 {
   m_runTestThrow = true;
 }
 
 
-void 
+void
 MockTestCase::verify()
 {
   if ( m_hasSetUpExpectation )

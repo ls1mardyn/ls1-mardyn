@@ -28,19 +28,19 @@ TestAssertTest::~TestAssertTest()
 }
 
 
-void 
+void
 TestAssertTest::setUp()
 {
 }
 
 
-void 
+void
 TestAssertTest::tearDown()
 {
 }
 
 
-void 
+void
 TestAssertTest::testAssertThrow()
 {
    CPPUNIT_ASSERT_THROW( throw std::string(), std::string );
@@ -59,7 +59,7 @@ TestAssertTest::testAssertThrow()
 }
 
 
-void 
+void
 TestAssertTest::testAssertNoThrow()
 {
    int x;
@@ -77,7 +77,7 @@ TestAssertTest::testAssertNoThrow()
 }
 
 
-void 
+void
 TestAssertTest::testAssertAssertionFail()
 {
    CPPUNIT_ASSERT_ASSERTION_FAIL( throw CPPUNIT_NS::Exception() );
@@ -96,7 +96,7 @@ TestAssertTest::testAssertAssertionFail()
 }
 
 
-void 
+void
 TestAssertTest::testAssertAssertionPass()
 {
    int x;
@@ -115,11 +115,11 @@ TestAssertTest::testAssertAssertionPass()
 }
 
 
-void 
+void
 TestAssertTest::testAssert()
 {
   CPPUNIT_ASSERT_ASSERTION_PASS( CPPUNIT_ASSERT( true ) );
-  
+
   CPPUNIT_ASSERT_ASSERTION_FAIL( CPPUNIT_ASSERT( false ) );
 }
 
@@ -127,7 +127,7 @@ TestAssertTest::testAssert()
 static int foo() { return 1; }
 
 
-void 
+void
 TestAssertTest::testAssertEqual()
 {
   CPPUNIT_ASSERT_ASSERTION_PASS( CPPUNIT_ASSERT_EQUAL( 1, 1 ) );
@@ -137,15 +137,15 @@ TestAssertTest::testAssertEqual()
   CPPUNIT_ASSERT_ASSERTION_FAIL( CPPUNIT_ASSERT_EQUAL( 1, 2 ) );
 }
 
-void 
+void
 TestAssertTest::testAssertMessageTrue()
 {
-  CPPUNIT_ASSERT_ASSERTION_PASS( 
+  CPPUNIT_ASSERT_ASSERTION_PASS(
      CPPUNIT_ASSERT_MESSAGE( "This test should not failed", true ) );
 }
 
 
-void 
+void
 TestAssertTest::testAssertMessageFalse()
 {
   bool exceptionCaught = false;
@@ -164,7 +164,7 @@ TestAssertTest::testAssertMessageFalse()
 }
 
 
-void 
+void
 TestAssertTest::testAssertDoubleEquals()
 {
   CPPUNIT_ASSERT_ASSERTION_PASS( CPPUNIT_ASSERT_DOUBLES_EQUAL( 1.1, 1.2, 0.101 ) );
@@ -175,10 +175,10 @@ TestAssertTest::testAssertDoubleEquals()
 }
 
 /*
- * Test that the error message from CPPUNIT_ASSERT_DOUBLES_EQUAL() 
+ * Test that the error message from CPPUNIT_ASSERT_DOUBLES_EQUAL()
  * has more than the default 6 digits of precision.
  */
-void 
+void
 TestAssertTest::testAssertDoubleEqualsPrecision()
 {
   std::string failure( "2.000000001" );
@@ -195,7 +195,7 @@ TestAssertTest::testAssertDoubleEqualsPrecision()
 }
 
 
-void 
+void
 TestAssertTest::testAssertDoubleNonFinite()
 {
   double inf = std::numeric_limits<double>::infinity();
@@ -231,7 +231,7 @@ TestAssertTest::testAssertDoubleNonFinite()
   CPPUNIT_ASSERT_ASSERTION_FAIL( CPPUNIT_ASSERT_DOUBLES_EQUAL( inf, 0.0, 1.0 ) );
   CPPUNIT_ASSERT_ASSERTION_FAIL( CPPUNIT_ASSERT_DOUBLES_EQUAL( 0.0, inf, 1.0 ) );
   CPPUNIT_ASSERT_ASSERTION_PASS( CPPUNIT_ASSERT_DOUBLES_EQUAL( inf, inf, 1.0 ) );
-  // NaN tests 
+  // NaN tests
   CPPUNIT_ASSERT_ASSERTION_FAIL( CPPUNIT_ASSERT_DOUBLES_EQUAL( nan, 0.0, 1.0 ) );
   CPPUNIT_ASSERT_ASSERTION_FAIL( CPPUNIT_ASSERT_DOUBLES_EQUAL( nan, nan, 1.0 ) );
   CPPUNIT_ASSERT_ASSERTION_FAIL( CPPUNIT_ASSERT_DOUBLES_EQUAL( nan, inf, 1.0 ) );
@@ -239,7 +239,7 @@ TestAssertTest::testAssertDoubleNonFinite()
 }
 
 
-void 
+void
 TestAssertTest::testFail()
 {
   bool exceptionCaught = false;
@@ -257,13 +257,13 @@ TestAssertTest::testFail()
 }
 
 
-void 
+void
 TestAssertTest::checkMessageContains( CPPUNIT_NS::Exception *e,
                                       std::string expected )
 {
   std::string actual = e->what();
   CPPUNIT_ASSERT_MESSAGE( "Expected message not found: " + expected +
                           ", was: " + actual,
-      std::search( actual.begin(), actual.end(), 
+      std::search( actual.begin(), actual.end(),
                    expected.begin(), expected.end() ) != actual.end() );
 }

@@ -78,12 +78,12 @@ private:
 			} binWidth;
 		} subdivision;
 	} _range;
-	
+
 	struct Target {
 		std::array<double,3> drift;
 		uint32_t cid;
 	} _target;
-	
+
 	std::vector<BinVectors> _sampling;
 
 	std::vector<short> _directions;

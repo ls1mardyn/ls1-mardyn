@@ -14,10 +14,10 @@
 
 /**
  * Basic API to perform 2d FFT and IFFT using the fftw lib
- * 
+ *
  * Can perform 1d FFT
  * Uses double or single precision depending on FFTSettings_preprocessor
- * 
+ *
  * getIn_Forward() to get the input matrices to fill with the value
  * FFTAndGetOutput_Forward() to perform the FFT and get the output
  * Backward for IFFT
@@ -81,7 +81,7 @@ public:
 #endif
 	}
 
-#if defined(__SINGLE_PRECISION_FFT__) 
+#if defined(__SINGLE_PRECISION_FFT__)
 	fftwf_complex* getIn_Forward() {return _f_in;}
 	fftwf_complex* getIn_Backward() {return _b_in;}
 
@@ -103,13 +103,13 @@ public:
 		fftw_execute(_backward);
 		return _b_out;
 	}
-#endif    
+#endif
 
 private:
 	int _nx;
 	int _ny;
 
-#if defined(__SINGLE_PRECISION_FFT__) 
+#if defined(__SINGLE_PRECISION_FFT__)
 	fftwf_plan _forward;
 	fftwf_complex* _f_in;
 	fftwf_complex* _f_out;

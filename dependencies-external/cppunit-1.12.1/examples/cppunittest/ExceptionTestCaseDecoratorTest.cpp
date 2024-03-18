@@ -21,7 +21,7 @@ ExceptionTestCaseDecoratorTest::~ExceptionTestCaseDecoratorTest()
 }
 
 
-void 
+void
 ExceptionTestCaseDecoratorTest::setUp()
 {
   m_testListener = new MockTestListener( "mock-testlistener" );
@@ -33,7 +33,7 @@ ExceptionTestCaseDecoratorTest::setUp()
 }
 
 
-void 
+void
 ExceptionTestCaseDecoratorTest::tearDown()
 {
   delete m_decorator;
@@ -42,7 +42,7 @@ ExceptionTestCaseDecoratorTest::tearDown()
 }
 
 
-void 
+void
 ExceptionTestCaseDecoratorTest::testNoExceptionThrownFailed()
 {
   m_testListener->setExpectedAddFailureCall(1);
@@ -56,7 +56,7 @@ ExceptionTestCaseDecoratorTest::testNoExceptionThrownFailed()
 }
 
 
-void 
+void
 ExceptionTestCaseDecoratorTest::testExceptionThrownPass()
 {
   m_testListener->setExpectNoFailure();

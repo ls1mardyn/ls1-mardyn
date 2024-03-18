@@ -19,8 +19,8 @@
  * Class managing the TransferFunction
  * To use in the main M2L loop to get the FFTDataContainer* transferfunction
  * required by the FFTAcceleration's M2L
- * 
- * Delegate FFT conversions and handling of the true implementation of 
+ *
+ * Delegate FFT conversions and handling of the true implementation of
  * the abstract FFTDataContainer to a FFTAcceleration
  */
 class TransferFunctionManager: public TransferFunctionManagerAPI {

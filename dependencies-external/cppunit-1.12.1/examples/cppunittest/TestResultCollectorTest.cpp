@@ -17,19 +17,19 @@ TestResultCollectorTest::~TestResultCollectorTest()
 }
 
 
-void 
+void
 TestResultCollectorTest::setUp()
 {
   m_lockCount = 0;
   m_unlockCount = 0;
   m_result = new CPPUNIT_NS::TestResultCollector();
-  m_synchronizedResult = new SynchronizedTestResult( this );  
+  m_synchronizedResult = new SynchronizedTestResult( this );
   m_test = new CPPUNIT_NS::TestCase();
   m_test2 = new CPPUNIT_NS::TestCase();
 }
 
 
-void 
+void
 TestResultCollectorTest::tearDown()
 {
   delete m_test2;
@@ -39,25 +39,25 @@ TestResultCollectorTest::tearDown()
 }
 
 
-void 
+void
 TestResultCollectorTest::testConstructor()
 {
   checkResult( 0, 0, 0 );
 }
 
 
-void 
+void
 TestResultCollectorTest::testAddTwoErrors()
 {
   CPPUNIT_NS::Message errorMessage1( "First Error" );
   CPPUNIT_NS::Message errorMessage2( "Second Error" );
   {
-    CPPUNIT_NS::TestFailure failure1( m_test, 
+    CPPUNIT_NS::TestFailure failure1( m_test,
                                    new CPPUNIT_NS::Exception( errorMessage1 ),
                                    true );
     m_result->addFailure( failure1 );
 
-    CPPUNIT_NS::TestFailure failure2( m_test2, 
+    CPPUNIT_NS::TestFailure failure2( m_test2,
                                    new CPPUNIT_NS::Exception( errorMessage2 ),
                                    true );
     m_result->addFailure( failure2 );
@@ -75,18 +75,18 @@ TestResultCollectorTest::testAddTwoErrors()
 }
 
 
-void 
+void
 TestResultCollectorTest::testAddTwoFailures()
 {
   CPPUNIT_NS::Message errorMessage1( "First Failure" );
   CPPUNIT_NS::Message errorMessage2( "Second Failure" );
   {
-    CPPUNIT_NS::TestFailure failure1( m_test, 
+    CPPUNIT_NS::TestFailure failure1( m_test,
                                    new CPPUNIT_NS::Exception( errorMessage1 ),
                                    false );
     m_result->addFailure( failure1 );
 
-    CPPUNIT_NS::TestFailure failure2( m_test2, 
+    CPPUNIT_NS::TestFailure failure2( m_test2,
                                    new CPPUNIT_NS::Exception( errorMessage2 ),
                                    false );
     m_result->addFailure( failure2 );
@@ -103,7 +103,7 @@ TestResultCollectorTest::testAddTwoFailures()
 }
 
 
-void 
+void
 TestResultCollectorTest::testStartTest()
 {
   m_result->startTest( m_test );
@@ -112,14 +112,14 @@ TestResultCollectorTest::testStartTest()
 }
 
 
-void 
+void
 TestResultCollectorTest::testWasSuccessfulWithNoTest()
 {
   checkWasSuccessful( true );
 }
 
 
-void 
+void
 TestResultCollectorTest::testWasSuccessfulWithErrors()
 {
   addError( "Error1" );
@@ -128,7 +128,7 @@ TestResultCollectorTest::testWasSuccessfulWithErrors()
 }
 
 
-void 
+void
 TestResultCollectorTest::testWasSuccessfulWithFailures()
 {
   addFailure( "Failure1" );
@@ -137,7 +137,7 @@ TestResultCollectorTest::testWasSuccessfulWithFailures()
 }
 
 
-void 
+void
 TestResultCollectorTest::testWasSuccessfulWithErrorsAndFailures()
 {
   addError( "Error1" );
@@ -146,7 +146,7 @@ TestResultCollectorTest::testWasSuccessfulWithErrorsAndFailures()
 }
 
 
-void 
+void
 TestResultCollectorTest::testWasSuccessfulWithSuccessfulTest()
 {
   m_result->startTest( m_test );
@@ -157,7 +157,7 @@ TestResultCollectorTest::testWasSuccessfulWithSuccessfulTest()
 }
 
 
-void 
+void
 TestResultCollectorTest::testSynchronizationAddFailure()
 {
   addFailure( "Failure1", m_test, false, m_synchronizedResult );
@@ -165,7 +165,7 @@ TestResultCollectorTest::testSynchronizationAddFailure()
 }
 
 
-void 
+void
 TestResultCollectorTest::testSynchronizationStartTest()
 {
   m_synchronizedResult->startTest( m_test );
@@ -173,7 +173,7 @@ TestResultCollectorTest::testSynchronizationStartTest()
 }
 
 
-void 
+void
 TestResultCollectorTest::testSynchronizationRunTests()
 {
   m_synchronizedResult->runTests();
@@ -181,7 +181,7 @@ TestResultCollectorTest::testSynchronizationRunTests()
 }
 
 
-void 
+void
 TestResultCollectorTest::testSynchronizationTestErrors()
 {
   m_synchronizedResult->testErrors();
@@ -189,7 +189,7 @@ TestResultCollectorTest::testSynchronizationTestErrors()
 }
 
 
-void 
+void
 TestResultCollectorTest::testSynchronizationTestFailures()
 {
   m_synchronizedResult->testFailures();
@@ -197,7 +197,7 @@ TestResultCollectorTest::testSynchronizationTestFailures()
 }
 
 
-void 
+void
 TestResultCollectorTest::testSynchronizationFailures()
 {
   m_synchronizedResult->failures();
@@ -205,7 +205,7 @@ TestResultCollectorTest::testSynchronizationFailures()
 }
 
 
-void 
+void
 TestResultCollectorTest::testSynchronizationWasSuccessful()
 {
   m_synchronizedResult->wasSuccessful();
@@ -213,7 +213,7 @@ TestResultCollectorTest::testSynchronizationWasSuccessful()
 }
 
 
-void 
+void
 TestResultCollectorTest::checkResult( int failures,
                              int errors,
                              int testsRun )
@@ -221,7 +221,7 @@ TestResultCollectorTest::checkResult( int failures,
   CPPUNIT_ASSERT_EQUAL( testsRun, m_result->runTests() );
   CPPUNIT_ASSERT_EQUAL( errors, m_result->testErrors() );
   CPPUNIT_ASSERT_EQUAL( failures, m_result->testFailures() );
-  CPPUNIT_ASSERT_EQUAL( errors + failures, 
+  CPPUNIT_ASSERT_EQUAL( errors + failures,
                         m_result->testFailuresTotal() );
 }
 
@@ -239,14 +239,14 @@ TestResultCollectorTest::checkFailure( CPPUNIT_NS::TestFailure *failure,
 }
 
 
-void 
+void
 TestResultCollectorTest::checkWasSuccessful( bool shouldBeSuccessful )
 {
   CPPUNIT_ASSERT_EQUAL( shouldBeSuccessful, m_result->wasSuccessful() );
 }
 
 
-void 
+void
 TestResultCollectorTest::locked()
 {
   CPPUNIT_ASSERT_EQUAL( m_lockCount, m_unlockCount );
@@ -254,7 +254,7 @@ TestResultCollectorTest::locked()
 }
 
 
-void 
+void
 TestResultCollectorTest::unlocked()
 {
   ++m_unlockCount;
@@ -262,7 +262,7 @@ TestResultCollectorTest::unlocked()
 }
 
 
-void 
+void
 TestResultCollectorTest::checkSynchronization()
 {
   CPPUNIT_ASSERT_EQUAL( m_lockCount, m_unlockCount );
@@ -270,28 +270,28 @@ TestResultCollectorTest::checkSynchronization()
 }
 
 
-void 
+void
 TestResultCollectorTest::addFailure( std::string message )
 {
   addFailure( message, m_test, false, m_result );
 }
 
 
-void 
+void
 TestResultCollectorTest::addError( std::string message )
 {
   addFailure( message, m_test, true, m_result );
 }
 
 
-void 
-TestResultCollectorTest::addFailure( std::string message, 
-                                     CPPUNIT_NS::Test *failedTest, 
+void
+TestResultCollectorTest::addFailure( std::string message,
+                                     CPPUNIT_NS::Test *failedTest,
                                      bool isError,
                                      CPPUNIT_NS::TestResultCollector *result )
 {
-  CPPUNIT_NS::TestFailure failure( failedTest, 
-                                new CPPUNIT_NS::Exception( CPPUNIT_NS::Message( message ) ), 
+  CPPUNIT_NS::TestFailure failure( failedTest,
+                                new CPPUNIT_NS::Exception( CPPUNIT_NS::Message( message ) ),
                                 isError );
   result->addFailure( failure );
 }

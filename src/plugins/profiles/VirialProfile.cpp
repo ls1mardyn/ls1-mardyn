@@ -5,14 +5,14 @@
 #include "VirialProfile.h"
 #include "DensityProfile.h"
 
-void VirialProfile::output(string prefix, long unsigned accumulatedDatasets) {
+void VirialProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
 
-	global_log->info() << "[VirialProfile] output" << std::endl;
+	Log::global_log->info() << "[VirialProfile] output" << std::endl;
 
 	// Setup outfile
 	_accumulatedDatasets = accumulatedDatasets;
 	_profilePrefix = prefix + "_1D-Y.Vipr";
-	ofstream outfile(_profilePrefix.c_str());
+	std::ofstream outfile(_profilePrefix.c_str());
 	outfile.precision(6);
 
 	// Write Header

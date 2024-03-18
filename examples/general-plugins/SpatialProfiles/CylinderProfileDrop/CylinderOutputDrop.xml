@@ -180,11 +180,11 @@
           <profiledComponent>all</profiledComponent>
 
             <profiles>
-	        <density>1</density>
-	        <temperature>0</temperature>
-	        <velocity>0</velocity>
-	        <velocity3d>0</velocity3d>
-	        <virial>0</virial>
+	        <density>true</density>
+	        <temperature>false</temperature>
+	        <velocity>false</velocity>
+	        <velocity3d>false</velocity3d>
+	        <virial>false</virial>
 	      </profiles>
 	    </plugin>
 

@@ -55,8 +55,8 @@ AqueousNaClGenerator::AqueousNaClGenerator() :
 	calculateSimulationBoxLength();
 }
 
-vector<ParameterCollection*> AqueousNaClGenerator::getParameters() {
-	vector<ParameterCollection*> parameters;
+std::vector<ParameterCollection*> AqueousNaClGenerator::getParameters() {
+	std::vector<ParameterCollection*> parameters;
 	parameters.push_back(new MardynConfigurationParameters(_configuration));
 
 	ParameterCollection* tab = new ParameterCollection("AqueousNaClParameters", "Parameters of EqvGridGenerator",
@@ -77,7 +77,7 @@ vector<ParameterCollection*> AqueousNaClGenerator::getParameters() {
 
 
 void AqueousNaClGenerator::setParameter(Parameter* p) {
-	string id = p->getNameId();
+	std::string id = p->getNameId();
 	if (id == "numMolecules") {
 		_numMolecules = static_cast<ParameterWithLongIntValue*> (p)->getValue();
 		calculateSimulationBoxLength();
@@ -101,7 +101,7 @@ void AqueousNaClGenerator::calculateSimulationBoxLength() {
 
 
 void AqueousNaClGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
-	_logger->info() << "Reading PhaseSpaceHeader from AqueousNaClGenerator..." << endl;
+	_logger->info() << "Reading PhaseSpaceHeader from AqueousNaClGenerator..." << std::endl;
 	//domain->setCurrentTime(0);
 
 	domain->disableComponentwiseThermostat();
@@ -114,7 +114,7 @@ void AqueousNaClGenerator::readPhaseSpaceHeader(Domain* domain, double timestep)
 		principalAxisTransform(_components[i]);
 	}
 	domain->setepsilonRF(1e+10);
-	_logger->info() << "Reading PhaseSpaceHeader from AqueousNaClGenerator done." << endl;
+	_logger->info() << "Reading PhaseSpaceHeader from AqueousNaClGenerator done." << std::endl;
 
     /* silence compiler warnings */
     (void) timestep;
@@ -127,11 +127,11 @@ unsigned long AqueousNaClGenerator::readPhaseSpace(ParticleContainer* particleCo
 		Domain* domain, DomainDecompBase* domainDecomp) {
 
 	global_simulation->timers()->start("AQUEOUS_NA_CL_GENERATOR_INPUT");
-	_logger->info() << "Reading phase space file (AqueousNaClGenerator)." << endl;
+	_logger->info() << "Reading phase space file (AqueousNaClGenerator)." << std::endl;
 
 	int numMoleculesPerDimension = round(pow((double) _numMolecules, 1./3.));
 	int numIons = round(0.01812415 * (double) _numMolecules);
-	_logger->info() << "Generating " << numIons << " of Na+ and Cl-" << endl;
+	_logger->info() << "Generating " << numIons << " of Na+ and Cl-" << std::endl;
 	Ion* ions = new Ion[2 * numIons];
 	for (int i = 0; i < numIons; i++) {
 		ions[i].cid = 1;
@@ -139,9 +139,9 @@ unsigned long AqueousNaClGenerator::readPhaseSpace(ParticleContainer* particleCo
 			for (int j = 0; j < 3; j++) {
 				ions[i].position[j] = (double) rand() / ((double) RAND_MAX) * (numMoleculesPerDimension-1);
 			}
-			std::cout << "Testing " << ions[i].position[0] << "," << ions[i].position[1] << "," << ions[i].position[2] << endl;
+			std::cout << "Testing " << ions[i].position[0] << "," << ions[i].position[1] << "," << ions[i].position[2] << std::endl;
 		} while (isNearIon(ions, i));
-		std::cout << "Generate Na+ at " << ions[i].position[0] << "," << ions[i].position[1] << "," << ions[i].position[2] << ";" << endl;
+		std::cout << "Generate Na+ at " << ions[i].position[0] << "," << ions[i].position[1] << "," << ions[i].position[2] << ";" << std::endl;
 	}
 	for (int i = numIons; i < 2*numIons; i++) {
 		ions[i].cid = 2;
@@ -149,14 +149,14 @@ unsigned long AqueousNaClGenerator::readPhaseSpace(ParticleContainer* particleCo
 			for (int j = 0; j < 3; j++) {
 				ions[i].position[j] = (double) rand() / ((double) RAND_MAX) * (numMoleculesPerDimension-1);
 			}
-			std::cout << "Testing " << ions[i].position[0] << "," << ions[i].position[1] << "," << ions[i].position[2] << endl;
+			std::cout << "Testing " << ions[i].position[0] << "," << ions[i].position[1] << "," << ions[i].position[2] << std::endl;
 		} while (isNearIon(ions, i));
-		std::cout << "Generate Na+ at " << ions[i].position[0] << "," << ions[i].position[1] << "," << ions[i].position[2] << ";" << endl;
+		std::cout << "Generate Na+ at " << ions[i].position[0] << "," << ions[i].position[1] << "," << ions[i].position[2] << ";" << std::endl;
 	}
 
 	unsigned long int id = 1;
 	double spacing = _simBoxLength / numMoleculesPerDimension;
-	_logger->info() << "SimBoxLength=" << _simBoxLength << " spacing=" << spacing << endl;
+	_logger->info() << "SimBoxLength=" << _simBoxLength << " spacing=" << spacing << std::endl;
 	double origin = spacing / 2.; // origin of the first DrawableMolecule
 
 	// only for console output
@@ -182,24 +182,24 @@ unsigned long AqueousNaClGenerator::readPhaseSpace(ParticleContainer* particleCo
 		}
 
 		percentageRead = i * percentage;
-		_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << flush;
+		_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << std::flush;
 	}
 
 	delete[] ions;
 
 	removeMomentum(particleContainer, _components);
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
-	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
+	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << std::endl;
 	global_simulation->timers()->stop("AQUEOUS_NA_CL_GENERATOR_INPUT");
 	global_simulation->timers()->setOutputString("AQUEOUS_NA_CL_GENERATOR_INPUT", "Initial IO took:                 ");
-	_logger->info() << "Initial IO took:                 " << global_simulation->timers()->getTime("AQUEOUS_NA_CL_GENERATOR_INPUT") << " sec" << endl;
+	_logger->info() << "Initial IO took:                 " << global_simulation->timers()->getTime("AQUEOUS_NA_CL_GENERATOR_INPUT") << " sec" << std::endl;
 	return id;
 }
 
 void AqueousNaClGenerator::addMolecule(double x, double y, double z, unsigned long id, int cid, ParticleContainer* particleContainer) {
-	std::cout << "Add molecule at " << x << ", " << y << ", " << z << " with cid=" << cid << endl;
+	std::cout << "Add molecule at " << x << ", " << y << ", " << z << " with cid=" << cid << std::endl;
 
-	vector<double> velocity = getRandomVelocity(_temperature);
+	std::vector<double> velocity = getRandomVelocity(_temperature);
 
 	//double orientation[4] = {1, 0, 0, 0}; // default: in the xy plane
 	// rotate by 30° along the vector (1/1/0), i.e. the angle bisector of x and y axis
@@ -257,19 +257,19 @@ bool AqueousNaClGenerator::validateParameters() {
 
 	if (_configuration.getScenarioName() == "") {
 		valid = false;
-		_logger->error() << "ScenarioName not set!" << endl;
+		_logger->error() << "ScenarioName not set!" << std::endl;
 	}
 
 	if (_configuration.getOutputFormat() == MardynConfiguration::XML) {
 		valid = false;
-		_logger->error() << "OutputFormat XML not yet supported!" << endl;
+		_logger->error() << "OutputFormat XML not yet supported!" << std::endl;
 	}
 
 	if (_simBoxLength < 2. * _configuration.getCutoffRadius()) {
 		valid = false;
-		_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << endl;
+		_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << std::endl;
 		_logger->error() << "Cutoff radius=" << _configuration.getCutoffRadius()
-							<< " domain size=" << _simBoxLength << endl;
+							<< " domain size=" << _simBoxLength << std::endl;
 	}
 	return valid;
 }

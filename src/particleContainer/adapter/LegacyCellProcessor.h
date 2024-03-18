@@ -36,7 +36,7 @@ public:
 	void initTraversal();
 
 	void preprocessCell(ParticleCell& /*cell*/) {}
-        
+
         void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false);
 
 	double processSingleMolecule(Molecule* m1, ParticleCell& cell2);

@@ -10,10 +10,10 @@
  */
 class CommunicationPartnerWriter : public PluginBase {
 public:
-	
+
 	CommunicationPartnerWriter() {}
 	~CommunicationPartnerWriter() {}
-	
+
 
 	/** @brief Read in XML configuration for CommunicationPartnerWriter.
 	 *
@@ -23,12 +23,12 @@ public:
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
 	     <incremental>INTEGER</incremental>
-	     <appendTimestamp>INTEGER</appendTimestamp>
+	     <appendTimestamp>BOOL</appendTimestamp>
 	   </outputplugin>
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
-	
+
 	void init(ParticleContainer *particleContainer,
               DomainDecompBase *domainDecomp, Domain *domain) override;
 	void afterForces(ParticleContainer *particleContainer,
@@ -41,7 +41,7 @@ public:
 
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain) override;
-	
+
 	std::string getPluginName() override {
 		return std::string("CommunicationPartnerWriter");
 	}

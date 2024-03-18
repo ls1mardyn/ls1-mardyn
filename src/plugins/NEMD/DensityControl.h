@@ -69,7 +69,7 @@ public:
 				<stop>INT</stop>              <!-- stop time step -->
 			</control>
 			<range>
-				<inclusive>BOOL</inclusive>  <!-- enable checking inside range (default): 1 | outside range: 0 -->
+				<inclusive>BOOL</inclusive>  <!-- enable checking inside range (default): true | outside range: false -->
 				<xmin>FLOAT</xmin> <xmax>FLOAT</xmax>  <!-- range x-axis -->
 				<ymin>FLOAT</ymin> <ymax>FLOAT</ymax>  <!-- range y-axis -->
 				<zmin>FLOAT</zmin> <zmax>FLOAT</zmax>  <!-- range z-axis -->

@@ -14,19 +14,19 @@ StringToolsTest::~StringToolsTest()
 }
 
 
-void 
+void
 StringToolsTest::setUp()
 {
 }
 
 
-void 
+void
 StringToolsTest::tearDown()
 {
 }
 
 
-void 
+void
 StringToolsTest::testToStringInt()
 {
   std::string expected = "123456789";
@@ -35,7 +35,7 @@ StringToolsTest::testToStringInt()
 }
 
 
-void 
+void
 StringToolsTest::testToStringDouble()
 {
   std::string expected = "1234.56";
@@ -44,7 +44,7 @@ StringToolsTest::testToStringDouble()
 }
 
 
-void 
+void
 StringToolsTest::testSplitEmptyString()
 {
   std::string text;
@@ -56,7 +56,7 @@ StringToolsTest::testSplitEmptyString()
 }
 
 
-void 
+void
 StringToolsTest::testSplitOneItem()
 {
   std::string text = "1";
@@ -69,7 +69,7 @@ StringToolsTest::testSplitOneItem()
 }
 
 
-void 
+void
 StringToolsTest::testSplitItemEmpty()
 {
   std::string text = "1;";
@@ -83,7 +83,7 @@ StringToolsTest::testSplitItemEmpty()
 }
 
 
-void 
+void
 StringToolsTest::testSplitTwoItem()
 {
   std::string text = "2;1";
@@ -97,7 +97,7 @@ StringToolsTest::testSplitTwoItem()
 }
 
 
-void 
+void
 StringToolsTest::testSplitEmptyTwoItem()
 {
   std::string text = ";1;2";
@@ -112,7 +112,7 @@ StringToolsTest::testSplitEmptyTwoItem()
 }
 
 
-void 
+void
 StringToolsTest::testSplitEmptyItemEmpty()
 {
   std::string text = ";1;";
@@ -127,7 +127,7 @@ StringToolsTest::testSplitEmptyItemEmpty()
 }
 
 
-void 
+void
 StringToolsTest::testSplitEmptyItemEmptyEmptyItem()
 {
   std::string text = ";1;;;2";
@@ -144,7 +144,7 @@ StringToolsTest::testSplitEmptyItemEmptyEmptyItem()
 }
 
 
-void 
+void
 StringToolsTest::testWrapEmpty()
 {
   std::string text = "";
@@ -155,7 +155,7 @@ StringToolsTest::testWrapEmpty()
 }
 
 
-void 
+void
 StringToolsTest::testWrapNotNeeded()
 {
   std::string text = "abcd";
@@ -166,7 +166,7 @@ StringToolsTest::testWrapNotNeeded()
 }
 
 
-void 
+void
 StringToolsTest::testWrapLimitNotNeeded()
 {
   std::string text = "abcdef";
@@ -177,7 +177,7 @@ StringToolsTest::testWrapLimitNotNeeded()
 }
 
 
-void 
+void
 StringToolsTest::testWrapOneNeeded()
 {
   std::string text = "abcdefghi";
@@ -188,7 +188,7 @@ StringToolsTest::testWrapOneNeeded()
 }
 
 
-void 
+void
 StringToolsTest::testWrapTwoNeeded()
 {
   std::string text = "abcdefghijklmnop";
@@ -199,7 +199,7 @@ StringToolsTest::testWrapTwoNeeded()
 }
 
 
-void 
+void
 StringToolsTest::testWrapLimitTwoNeeded()
 {
   std::string text = "abcdefghijklmnopqr";
@@ -210,7 +210,7 @@ StringToolsTest::testWrapLimitTwoNeeded()
 }
 
 
-void 
+void
 StringToolsTest::testWrapOneNeededTwoNeeded()
 {
   std::string text = "123456789\nabcdefghijklmno";
@@ -221,7 +221,7 @@ StringToolsTest::testWrapOneNeededTwoNeeded()
 }
 
 
-void 
+void
 StringToolsTest::testWrapNotNeededEmptyLinesOneNeeded()
 {
   std::string text = "12345\n\n\n\nabcdefghi";

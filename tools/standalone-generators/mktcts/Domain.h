@@ -3,7 +3,6 @@
 #include <fstream>
 #include <sstream>
 
-using namespace std;
 
 #define FORMAT_BUCHHOLZ 0
 #define FORMAT_BRANCH 1
@@ -30,7 +29,7 @@ class Domain
    double rho;
    double rho2;
    double RDF;
-   
+
    bool use_hato;
    double p1, p2;
    double mu_low, mu_high;

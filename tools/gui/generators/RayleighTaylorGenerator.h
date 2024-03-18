@@ -12,7 +12,6 @@
  */
 
 class Domain;
-using namespace std;
 
 #include "MDGenerator.h"
 #include "common/ComponentParameters.h"
@@ -60,7 +59,7 @@ public:
 	RayleighTaylorGenerator();
 	virtual ~RayleighTaylorGenerator();
 
-	vector<ParameterCollection*> getParameters();
+	std::vector<ParameterCollection*> getParameters();
 
 	void setParameter(Parameter* p);
 

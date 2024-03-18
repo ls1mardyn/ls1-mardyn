@@ -1,12 +1,12 @@
 #include "XmlUniformiser.h"
 
 
-int 
+int
 notEqualIndex( std::string expectedXml,
                std::string actualXml )
 {
   unsigned int index = 0;
-  while ( index < actualXml.length()  &&  
+  while ( index < actualXml.length()  &&
           index < expectedXml.length()  &&
           actualXml[index] == expectedXml[index] )
     ++index;
@@ -16,7 +16,7 @@ notEqualIndex( std::string expectedXml,
 
 
 /// Asserts that two XML string are equivalent.
-void 
+void
 checkXmlEqual( std::string expectedXml,
                std::string actualXml,
                CPPUNIT_NS::SourceLine sourceLine )
@@ -47,7 +47,7 @@ XmlUniformiser::XmlUniformiser( const std::string &xml ) :
 }
 
 
-std::string 
+std::string
 XmlUniformiser::stripped()
 {
   while ( isValidIndex() )
@@ -66,7 +66,7 @@ XmlUniformiser::stripped()
 }
 
 
-void 
+void
 XmlUniformiser::skipSpaces()
 {
   while ( isSpace() )
@@ -74,28 +74,28 @@ XmlUniformiser::skipSpaces()
 }
 
 
-bool 
+bool
 XmlUniformiser::isSpace( char c )
 {
   return c < 33;
 }
 
 
-bool 
+bool
 XmlUniformiser::isSpace()
 {
   return isValidIndex()  &&  isSpace( m_xml[m_index] );
 }
 
 
-bool 
+bool
 XmlUniformiser::isValidIndex()
 {
   return m_index < m_xml.length();
 }
 
 
-void 
+void
 XmlUniformiser::skipNext( int count )
 {
   while ( count-- > 0 )
@@ -103,7 +103,7 @@ XmlUniformiser::skipNext( int count )
 }
 
 
-void 
+void
 XmlUniformiser::copyNext( int count )
 {
   while ( count-- > 0  &&  isValidIndex() )
@@ -111,7 +111,7 @@ XmlUniformiser::copyNext( int count )
 }
 
 
-bool 
+bool
 XmlUniformiser::startsWith( std::string expected )
 {
   std::string actual = m_xml.substr( m_index, expected.length() );
@@ -119,7 +119,7 @@ XmlUniformiser::startsWith( std::string expected )
 }
 
 
-void 
+void
 XmlUniformiser::skipProcessed()
 {
   while ( isValidIndex()  &&  !startsWith( "?>" ) )
@@ -129,7 +129,7 @@ XmlUniformiser::skipProcessed()
 }
 
 
-void 
+void
 XmlUniformiser::skipComment()
 {
   while ( isValidIndex()  &&  !startsWith( "-->" ) )
@@ -139,7 +139,7 @@ XmlUniformiser::skipComment()
 }
 
 
-void 
+void
 XmlUniformiser::copyElement()
 {
   copyElementName();
@@ -147,7 +147,7 @@ XmlUniformiser::copyElement()
 }
 
 
-void 
+void
 XmlUniformiser::copyElementName()
 {
   while ( isValidIndex()  &&
@@ -156,7 +156,7 @@ XmlUniformiser::copyElementName()
 }
 
 
-void 
+void
 XmlUniformiser::copyElementAttributes()
 {
   do
@@ -184,7 +184,7 @@ XmlUniformiser::copyElementAttributes()
 }
 
 
-void 
+void
 XmlUniformiser::copyAttributeName()
 {
   while ( isValidIndex()  &&  !isEndOfAttributeName() )
@@ -192,14 +192,14 @@ XmlUniformiser::copyAttributeName()
 }
 
 
-bool 
+bool
 XmlUniformiser::isEndOfAttributeName()
 {
   return isSpace()  ||  startsWith( ">" )  ||  startsWith( "=" );
 }
 
 
-void 
+void
 XmlUniformiser::copyAttributeValue()
 {
   skipSpaces();
@@ -208,7 +208,7 @@ XmlUniformiser::copyAttributeValue()
 }
 
 
-void 
+void
 XmlUniformiser::copyUntilDoubleQuote()
 {
   while ( isValidIndex()  &&  !startsWith("\"") )
@@ -217,7 +217,7 @@ XmlUniformiser::copyUntilDoubleQuote()
 }
 
 
-void 
+void
 XmlUniformiser::copyElementContent()
 {
   while ( isValidIndex()  &&  !startsWith( "<" ) )
@@ -226,7 +226,7 @@ XmlUniformiser::copyElementContent()
 }
 
 
-void 
+void
 XmlUniformiser::removeTrailingSpaces()
 {
   int index = m_stripped.length();

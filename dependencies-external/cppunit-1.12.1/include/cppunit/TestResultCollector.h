@@ -23,8 +23,8 @@ CPPUNIT_NS_BEGIN
 /*! \brief Collects test result.
  * \ingroup WritingTestResult
  * \ingroup BrowsingCollectedTestResult
- * 
- * A TestResultCollector is a TestListener which collects the results of executing 
+ *
+ * A TestResultCollector is a TestListener which collects the results of executing
  * a test case. It is an instance of the Collecting Parameter pattern.
  *
  * The test framework distinguishes between failures and errors.

@@ -134,7 +134,7 @@ private:
 	// technical variables
 	MPI_Request *_sendRequest, *_recvRequest;
 	MPI_Status *_sendStatus, *_recvStatus;
-	CommunicationBuffer _sendBuf, _recvBuf; // used to be ParticleData and 
+	CommunicationBuffer _sendBuf, _recvBuf; // used to be ParticleData and
 	bool _msgSent, _countReceived, _msgReceived, _isSending, _isReceiving;
 
 	void collectLeavingMoleculesFromInvalidParticles(std::vector<Molecule>& invalidParticles, double lowCorner [3], double highCorner [3], double shift [3]);

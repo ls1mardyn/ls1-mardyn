@@ -6,7 +6,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION( TestTest,
                                        coreSuiteName() );
 
 
-TestTest::TestTest() : 
+TestTest::TestTest() :
     CPPUNIT_NS::TestFixture()
 {
 }
@@ -17,7 +17,7 @@ TestTest::~TestTest()
 }
 
 
-void 
+void
 TestTest::setUp()
 {
   m_suite = new CPPUNIT_NS::TestSuite( "suite" );
@@ -25,12 +25,12 @@ TestTest::setUp()
   m_test2 = new MockTestCase( "test2" );
   m_suite->addTest( m_test1 );
   m_suite->addTest( m_test2 );
-  
+
   m_path = new CPPUNIT_NS::TestPath();
 }
 
 
-void 
+void
 TestTest::tearDown()
 {
   delete m_suite;
@@ -38,7 +38,7 @@ TestTest::tearDown()
 }
 
 
-void 
+void
 TestTest::testFindTestPathPointerThis()
 {
   CPPUNIT_ASSERT( m_test1->findTestPath( m_test1, *m_path ) );
@@ -53,7 +53,7 @@ TestTest::testFindTestPathPointerThis()
 }
 
 
-void 
+void
 TestTest::testFindTestPathPointer()
 {
   CPPUNIT_ASSERT( m_suite->findTestPath( m_test1, *m_path ) );
@@ -63,7 +63,7 @@ TestTest::testFindTestPathPointer()
 }
 
 
-void 
+void
 TestTest::testFindTestPathPointerFail()
 {
   MockTestCase test( "test" );
@@ -72,7 +72,7 @@ TestTest::testFindTestPathPointerFail()
 }
 
 
-void 
+void
 TestTest::testFindTestPathNameThis()
 {
   CPPUNIT_ASSERT( m_test1->findTestPath( "test1", *m_path ) );
@@ -87,7 +87,7 @@ TestTest::testFindTestPathNameThis()
 }
 
 
-void 
+void
 TestTest::testFindTestPathName()
 {
   CPPUNIT_ASSERT( m_suite->findTestPath( "test2", *m_path ) );
@@ -97,7 +97,7 @@ TestTest::testFindTestPathName()
 }
 
 
-void 
+void
 TestTest::testFindTestPathNameFail()
 {
   CPPUNIT_ASSERT( !m_suite->findTestPath( "bad-test", *m_path ) );
@@ -105,21 +105,21 @@ TestTest::testFindTestPathNameFail()
 }
 
 
-void 
+void
 TestTest::testFindTest()
 {
   CPPUNIT_ASSERT( m_test1 == m_suite->findTest( "test1" ) );
 }
 
 
-void 
+void
 TestTest::testFindTestThrow()
 {
   m_suite->findTest( "no-name" );
 }
 
 
-void 
+void
 TestTest::testResolveTestPath()
 {
   CPPUNIT_NS::TestPath path1 = m_suite->resolveTestPath( "suite");

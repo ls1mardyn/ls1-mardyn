@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<spheres>
+	
+	<!-- 1CLJTS: vapor -->
+	<site id="1">
+		<radius>0.5</radius>
+		<color>
+			<r>0</r>
+			<g>0</g>
+			<b>155</b>
+			<alpha>255</alpha>
+		</color>
+	</site>
+	
+	<!-- 1CLJTS: droplet 1 -->
+	<site id="2">
+		<radius>0.5</radius>
+		<color>
+			<r>0</r>
+			<g>155</g>
+			<b>0</b>
+			<alpha>255</alpha>
+		</color>
+	</site>
+	
+	<!-- 1CLJTS: droplet 2 -->
+	<site id="3">
+		<radius>0.5</radius>
+		<color>
+			<r>155</r>
+			<g>0</g>
+			<b>0</b>
+			<alpha>255</alpha>
+		</color>
+	</site>
+
+	
+</spheres>

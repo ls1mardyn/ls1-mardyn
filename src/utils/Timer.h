@@ -13,8 +13,8 @@
 
 /* PAPI hardware performance counter support */
 /*
- * Take care when using multiple timers because calls to the constructor 
- * reset the hw counters to zero! 
+ * Take care when using multiple timers because calls to the constructor
+ * reset the hw counters to zero!
  */
 #ifdef WITH_PAPI
 #include <papi.h>
@@ -77,7 +77,7 @@ private:
 	bool _active;		// timer can be active or not; if not active, then all function calls will have no effect on the timer
 
 public:
-	Timer() : 
+	Timer() :
 		_start(0), _stop(0), _etime(0), _state(TIMER_HALTED), _synced(false), _active(true)
 #ifdef WITH_PAPI
 		, _papi_start(0), _papi_stop(0), _papi_counter(0), _papi_num_counters(0), _papi_num_avail_counters(0), _papi_EventSet(0), _collect_papi(false)
@@ -103,7 +103,7 @@ public:
 	void start();
 	void stop();
 	void reset();
-	
+
 	double get_start() {
 		return _start;
 	}

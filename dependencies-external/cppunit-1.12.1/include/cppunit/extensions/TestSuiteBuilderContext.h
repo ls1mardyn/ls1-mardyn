@@ -23,7 +23,7 @@ class TestNamer;
  * Base class for all context used when creating test suite. The
  * actual context type during test suite creation is TestSuiteBuilderContext.
  *
- * \sa CPPUNIT_TEST_SUITE, CPPUNIT_TEST_SUITE_ADD_TEST, 
+ * \sa CPPUNIT_TEST_SUITE, CPPUNIT_TEST_SUITE_ADD_TEST,
  *     CPPUNIT_TEST_SUITE_ADD_CUSTOM_TESTS.
  */
 class CPPUNIT_API TestSuiteBuilderContextBase
@@ -31,7 +31,7 @@ class CPPUNIT_API TestSuiteBuilderContextBase
 public:
   /*! \brief Constructs a new context.
    *
-   * You should not use this. The context is created in 
+   * You should not use this. The context is created in
    * CPPUNIT_TEST_SUITE().
    */
   TestSuiteBuilderContextBase( TestSuite &suite,
@@ -55,8 +55,8 @@ public:
   /*! \brief Returns the name of the test for the specified method.
    *
    * \param testMethodName Name of the method that implements a test.
-   * \return A string that is the concatenation of the test fixture name 
-   *         (returned by getFixtureName()) and\a testMethodName, 
+   * \return A string that is the concatenation of the test fixture name
+   *         (returned by getFixtureName()) and\a testMethodName,
    *         separated using '::'. This provides a fairly unique name for a given
    *         test.
    */
@@ -66,9 +66,9 @@ public:
    * \param key   PropertyKey string to add.
    * \param value PropertyValue string to add.
    */
-  void addProperty( const std::string &key, 
+  void addProperty( const std::string &key,
                     const std::string &value );
-  
+
   /*! \brief Returns property value assigned to param key.
    * \param key PropertyKey string.
    */
@@ -93,7 +93,7 @@ private:
 
 
 /*! \brief Type-sage context used when creating test suite in HelperMacros.
- * 
+ *
  * \sa TestSuiteBuilderContextBase.
  */
 template<class Fixture>
@@ -109,13 +109,13 @@ public:
 
   /*! \brief Returns a new TestFixture instance.
    * \return A new fixture instance. The fixture instance is returned by
-   *         the TestFixtureFactory passed on construction. The actual type 
-   *         is that of the fixture on which the static method suite() 
+   *         the TestFixtureFactory passed on construction. The actual type
+   *         is that of the fixture on which the static method suite()
    *         was called.
    */
   FixtureType *makeFixture() const
   {
-    return CPPUNIT_STATIC_CAST( FixtureType *, 
+    return CPPUNIT_STATIC_CAST( FixtureType *,
                                 TestSuiteBuilderContextBase::makeTestFixture() );
   }
 };

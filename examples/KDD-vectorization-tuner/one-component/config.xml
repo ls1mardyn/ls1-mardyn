@@ -79,18 +79,18 @@
         <updateFrequency>1000</updateFrequency>
         <rebalanceLimit>0.</rebalanceLimit>
         <fullSearchThreshold>4</fullSearchThreshold>
-        <heterogeneousSystems>0</heterogeneousSystems>
-        <useVectorizationTuner>1</useVectorizationTuner>
-        <generateNewFiles>1</generateNewFiles>
-        <useExistingFiles>0</useExistingFiles>
-        <vecTunerAllowMPIReduce>1</vecTunerAllowMPIReduce>
-        <clusterHetSys>0</clusterHetSys>
-        <splitBiggestDimension>1</splitBiggestDimension>
+        <heterogeneousSystems>false</heterogeneousSystems>
+        <useVectorizationTuner>true</useVectorizationTuner>
+        <generateNewFiles>true</generateNewFiles>
+        <useExistingFiles>false</useExistingFiles>
+        <vecTunerAllowMPIReduce>true</vecTunerAllowMPIReduce>
+        <clusterHetSys>false</clusterHetSys>
+        <splitBiggestDimension>true</splitBiggestDimension>
         <!--<splitThreshold>INTEGER</splitThreshold>-->
-        <forceRatio>0</forceRatio>
-        <doMeasureLoadCalc>0</doMeasureLoadCalc>
+        <forceRatio>false</forceRatio>
+        <doMeasureLoadCalc>false</doMeasureLoadCalc>
         <measureLoadInterpolationStartsAt>1</measureLoadInterpolationStartsAt>
-        <measureLoadIncreasingTimeValues>1</measureLoadIncreasingTimeValues>
+        <measureLoadIncreasingTimeValues>true</measureLoadIncreasingTimeValues>
         <deviationReductionOperation>max</deviationReductionOperation>
         <minNumCellsPerDimension>2</minNumCellsPerDimension>
         <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>

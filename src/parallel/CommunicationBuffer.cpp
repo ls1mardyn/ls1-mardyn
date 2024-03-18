@@ -68,7 +68,7 @@ void CommunicationBuffer::resizeForReceivingMolecules(unsigned long& numLeaving,
 
 void CommunicationBuffer::resizeForReceivingMolecules(unsigned long& numForces) {
 	// message has been received
-	
+
 	// read _numForces
 	size_t i_runningByte = 0;
 	//i_runningByte = readValue(i_runningByte, _numForces);
@@ -76,7 +76,7 @@ void CommunicationBuffer::resizeForReceivingMolecules(unsigned long& numForces) 
 	numForces = _numForces;
 }
 
-void CommunicationBuffer::resizeForAppendingLeavingMolecules(unsigned long numLeaving) { 
+void CommunicationBuffer::resizeForAppendingLeavingMolecules(unsigned long numLeaving) {
 	_numLeaving += numLeaving;
 	mardyn_assert(_numHalo == 0ul); // assumption: add leaving, add leaving, then add halo, halo, halo, ... but not intertwined.
 	size_t numBytes = sizeof(_numHalo) + sizeof(_numLeaving) +
@@ -89,7 +89,7 @@ void CommunicationBuffer::resizeForAppendingLeavingMolecules(unsigned long numLe
 	i_runningByte = emplaceValue(i_runningByte, _numLeaving);
 }
 
-void CommunicationBuffer::resizeForAppendingHaloMolecules(unsigned long numHalo) { 
+void CommunicationBuffer::resizeForAppendingHaloMolecules(unsigned long numHalo) {
 	// _numLeaving stays
 	_numHalo += numHalo;
 	size_t numBytes = sizeof(_numHalo) + sizeof(_numLeaving) +
@@ -111,7 +111,7 @@ void CommunicationBuffer::resizeForAppendingForceMolecules(unsigned long numForc
 	// Do NOT write the number of force molecules, here! It is assumed at other places, that they are NOT exchanged!
 }
 
-void CommunicationBuffer::addLeavingMolecule(size_t indexOfMolecule, const Molecule& m) { 
+void CommunicationBuffer::addLeavingMolecule(size_t indexOfMolecule, const Molecule& m) {
 	mardyn_assert(indexOfMolecule < _numLeaving);
 
 	size_t i_firstByte = getStartPosition(ParticleType_t::LEAVING, indexOfMolecule);
@@ -183,9 +183,9 @@ void CommunicationBuffer::addForceMolecule(size_t indexOfMolecule, const Molecul
 	// some MarDynAssert?
 	size_t i_firstByte = getStartPosition(ParticleType_t::FORCE, indexOfMolecule);  // adjust getStartPosition etc.
 	// some MarDynAssert?
-	
+
 	size_t i_runningByte = i_firstByte;
-	
+
 	// add force molecule
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 	i_runningByte = emplaceValue(i_runningByte, m.getID());
@@ -194,7 +194,7 @@ void CommunicationBuffer::addForceMolecule(size_t indexOfMolecule, const Molecul
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_calc>(m.r(2)));
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_accum>(m.F(0)));
 	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_accum>(m.F(1)));
-	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_accum>(m.F(2))); 
+	i_runningByte = emplaceValue(i_runningByte, static_cast<vcp_real_accum>(m.F(2)));
 #else
 	i_runningByte = emplaceValue(i_runningByte, m.getID());
 	i_runningByte = emplaceValue(i_runningByte, m.r(0));
@@ -323,21 +323,21 @@ void CommunicationBuffer::readForceMolecule(size_t indexOfMolecule, Molecule& m)
 	// some mardyn assert
 	size_t i_firstByte = getStartPosition(ParticleType_t::FORCE, indexOfMolecule);
 	// some mardyn assert
-	
+
 	size_t i_runningByte = i_firstByte;
-	
+
 #ifdef ENABLE_REDUCED_MEMORY_MODE
-	vcp_real_calc rbuf[3]; 
+	vcp_real_calc rbuf[3];
 	vcp_real_accum Fbuf[3];
 	unsigned long idbuf;
-	
+
 	i_runningByte = readValue(i_runningByte, idbuf);
 	i_runningByte = readValue(i_runningByte, rbuf[0]);
 	i_runningByte = readValue(i_runningByte, rbuf[1]);
 	i_runningByte = readValue(i_runningByte, rbuf[2]);
 	i_runningByte = readValue(i_runningByte, Fbuf[0]);
 	i_runningByte = readValue(i_runningByte, Fbuf[1]);
-	i_runningByte = readValue(i_runningByte, Fbuf[2]); 
+	i_runningByte = readValue(i_runningByte, Fbuf[2]);
 	m.setid(idbuf);
 	for(int d = 0; d < 3; d++) {
 		m.setr(d, rbuf[d]);
@@ -345,11 +345,11 @@ void CommunicationBuffer::readForceMolecule(size_t indexOfMolecule, Molecule& m)
 	for(int d = 0; d < 3; d++) {
 		m.setF(d, Fbuf[d]);
 	}
-	
+
 #else
 	double rbuf[3], Fbuf[3], Mbuf[3], Vibuf[3];
 	unsigned long idbuf;
-	
+
 	i_runningByte = readValue(i_runningByte, idbuf);
 	i_runningByte = readValue(i_runningByte, rbuf[0]);
 	i_runningByte = readValue(i_runningByte, rbuf[1]);

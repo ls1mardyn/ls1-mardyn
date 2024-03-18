@@ -50,7 +50,7 @@ public:
 	}
 	virtual ~PseudoParticleContainer() {
 	}
-	
+
 	virtual void build(ParticleContainer* pc) = 0;
 	virtual void upwardPass(P2MCellProcessor * cp) = 0;
 	virtual void horizontalPass(VectorizedChargeP2PCellProcessor * cp) = 0;

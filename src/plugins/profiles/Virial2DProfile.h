@@ -21,8 +21,8 @@ public:
 			}
 
 	~Virial2DProfile() final = default;
-	
-	
+
+
 	void record(Molecule& mol, unsigned long uID) final {
 		for (unsigned short d = 0; d < 3; d++) {
 			_local3dProfile[uID][d] += mol.Vi(d);
@@ -42,7 +42,7 @@ public:
 	}
 
 
-	void output(string prefix, long unsigned accumulatedDatasets) final;
+	void output(std::string prefix, long unsigned accumulatedDatasets) final;
 
 	void reset(unsigned long uID) final {
 		for (unsigned d = 0; d < 3; d++) {
@@ -64,7 +64,7 @@ private:
 	std::map<unsigned, std::array<double, 3>> _global3dProfile;
 
 	// Only needed because its abstract, all output handled by output()
-	void writeDataEntry(unsigned long uID, ofstream& outfile) const final;
+	void writeDataEntry(unsigned long uID, std::ofstream& outfile) const final;
 
 };
 

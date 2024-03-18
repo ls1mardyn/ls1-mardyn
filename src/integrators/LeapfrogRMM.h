@@ -24,7 +24,7 @@ public:
 	}
 
 private:
-	
+
 	void computePositions(ParticleContainer* molCont, Domain* dom);
 	void computeVelocities(ParticleContainer* molCont, Domain* dom);
 
