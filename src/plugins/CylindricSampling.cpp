@@ -173,25 +173,14 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         virialVect_step[2].local.at(index) += vi_z;
     }
 
-// Gather quantities needed by all processes
+// Gather quantities. Note: MPI_Reduce instead of MPI_Allreduce! Therefore, only root has correct values
 #ifdef ENABLE_MPI
-    MPI_Allreduce(numMolecules_step.local.data(), numMolecules_step.global.data(), _lenVector, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(velocityVect_step[0].local.data(), velocityVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(velocityVect_step[1].local.data(), velocityVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(velocityVect_step[2].local.data(), velocityVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#else
-    for (unsigned long i = 0; i < _lenVector; i++) {
-        numMolecules_step.global.at(i) = numMolecules_step.local.at(i);
-        velocityVect_step[0].global.at(i) = velocityVect_step[0].local.at(i);
-        velocityVect_step[1].global.at(i) = velocityVect_step[1].local.at(i);
-        velocityVect_step[2].global.at(i) = velocityVect_step[2].local.at(i);
-    }
-#endif
-
-// Gather other quantities. Note: MPI_Reduce instead of MPI_Allreduce!
-#ifdef ENABLE_MPI
+    MPI_Reduce(numMolecules_step.local.data(), numMolecules_step.global.data(), _lenVector, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(mass_step.local.data(), mass_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekin_step.local.data(), ekin_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(velocityVect_step[0].local.data(), velocityVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(velocityVect_step[1].local.data(), velocityVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(velocityVect_step[2].local.data(), velocityVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[0].local.data(), virialVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[1].local.data(), virialVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[2].local.data(), virialVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -200,8 +189,12 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
     MPI_Reduce(ekinVect_step[2].local.data(), ekinVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #else
     for (unsigned long i = 0; i < _lenVector; i++) {
+        numMolecules_step.global.at(i) = numMolecules_step.local.at(i);
         mass_step.global.at(i) = mass_step.local.at(i);
         ekin_step.global.at(i) = ekin_step.local.at(i);
+        velocityVect_step[0].global.at(i) = velocityVect_step[0].local.at(i);
+        velocityVect_step[1].global.at(i) = velocityVect_step[1].local.at(i);
+        velocityVect_step[2].global.at(i) = velocityVect_step[2].local.at(i);
         virialVect_step[0].global.at(i) = virialVect_step[0].local.at(i);
         virialVect_step[1].global.at(i) = virialVect_step[1].local.at(i);
         virialVect_step[2].global.at(i) = virialVect_step[2].local.at(i);
