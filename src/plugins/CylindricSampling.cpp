@@ -91,7 +91,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
     std::array<CommVar<std::vector<double>>, 3> ekinVect_step;
     std::array<CommVar<std::vector<double>>, 3> velocityVect_step;
     std::array<CommVar<std::vector<double>>, 3> virialVect_step;
-    std::array<CommVar<std::vector<double>>, 3> forceVect_step;
 
     std::array<std::vector<double>, 3> veloDrift_step_global;       // Drift velocity
 
@@ -107,12 +106,10 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         ekinVect_step.at(d).local.resize(_lenVector);
         velocityVect_step.at(d).local.resize(_lenVector);
         virialVect_step.at(d).local.resize(_lenVector);
-        forceVect_step.at(d).local.resize(_lenVector);
 
         ekinVect_step.at(d).global.resize(_lenVector);
         velocityVect_step.at(d).global.resize(_lenVector);
         virialVect_step.at(d).global.resize(_lenVector);
-        forceVect_step.at(d).global.resize(_lenVector);
 
         veloDrift_step_global.at(d).resize(_lenVector);
     }
@@ -129,12 +126,10 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         std::fill(ekinVect_step.at(d).local.begin(),      ekinVect_step.at(d).local.end(), 0.0f);
         std::fill(velocityVect_step.at(d).local.begin(),   velocityVect_step.at(d).local.end(), 0.0f);
         std::fill(virialVect_step.at(d).local.begin(),     virialVect_step.at(d).local.end(), 0.0f);
-        std::fill(forceVect_step.at(d).local.begin(),      forceVect_step.at(d).local.end(), 0.0f);
 
         std::fill(ekinVect_step.at(d).global.begin(),      ekinVect_step.at(d).global.end(), 0.0f);
         std::fill(velocityVect_step.at(d).global.begin(),   velocityVect_step.at(d).global.end(), 0.0f);
         std::fill(virialVect_step.at(d).global.begin(),     virialVect_step.at(d).global.end(), 0.0f);
-        std::fill(forceVect_step.at(d).global.begin(),      forceVect_step.at(d).global.end(), 0.0f);
 
         std::fill(veloDrift_step_global.at(d).begin(),      veloDrift_step_global.at(d).end(), 0.0f);
     }
@@ -200,9 +195,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         virialVect_step[0].local.at(index) += pit->Vi(0);
         virialVect_step[1].local.at(index) += pit->Vi(1);
         virialVect_step[2].local.at(index) += pit->Vi(2);
-        forceVect_step[0].local.at(index) += pit->F(0);
-        forceVect_step[1].local.at(index) += pit->F(1);
-        forceVect_step[2].local.at(index) += pit->F(2);
 
     }
 
@@ -213,9 +205,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
     MPI_Reduce(virialVect_step[0].local.data(), virialVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[1].local.data(), virialVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[2].local.data(), virialVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(forceVect_step[0].local.data(), forceVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(forceVect_step[1].local.data(), forceVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(forceVect_step[2].local.data(), forceVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekinVect_step[0].local.data(), ekinVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekinVect_step[1].local.data(), ekinVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekinVect_step[2].local.data(), ekinVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -226,9 +215,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         virialVect_step[0].global.at(i) = virialVect_step[0].local.at(i);
         virialVect_step[1].global.at(i) = virialVect_step[1].local.at(i);
         virialVect_step[2].global.at(i) = virialVect_step[2].local.at(i);
-        forceVect_step[0].global.at(i) = forceVect_step[0].local.at(i);
-        forceVect_step[1].global.at(i) = forceVect_step[1].local.at(i);
-        forceVect_step[2].global.at(i) = forceVect_step[2].local.at(i);
         ekinVect_step[0].global.at(i) = ekinVect_step[0].local.at(i);
         ekinVect_step[1].global.at(i) = ekinVect_step[1].local.at(i);
         ekinVect_step[2].global.at(i) = ekinVect_step[2].local.at(i);
@@ -266,9 +252,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
             _virialVect_accum[0].at(i)           += ViX;
             _virialVect_accum[1].at(i)           += ViY;
             _virialVect_accum[2].at(i)           += ViZ;
-            _forceVect_accum[0].at(i)            += forceVect_step[0].global.at(i);
-            _forceVect_accum[1].at(i)            += forceVect_step[1].global.at(i);
-            _forceVect_accum[2].at(i)            += forceVect_step[2].global.at(i);
 
             _countSamples.at(i)++;
         }
@@ -300,9 +283,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
                 << setw(24) << "p_x"        // Pressure in x-direction
                 << setw(24) << "p_y"        // Pressure in y-direction
                 << setw(24) << "p_z"        // Pressure in z-direction
-                << setw(24) << "F_x"        // Force in x-direction
-                << setw(24) << "F_y"        // Force in y-direction
-                << setw(24) << "F_z"        // Force in z-direction
                 << setw(24) << "numSamples";    // Number of samples (<= _writeFrequency)
             ofs << std::endl;
 
@@ -352,9 +332,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
                     p_x         = rho * ( _virialVect_accum[0].at(i)/numMols_accum + T);
                     p_y         = rho * ( _virialVect_accum[1].at(i)/numMols_accum + T);
                     p_z         = rho * ( _virialVect_accum[2].at(i)/numMols_accum + T);
-                    F_x         = _forceVect_accum[0].at(i)      / numMols_accum;
-                    F_y         = _forceVect_accum[1].at(i)      / numMols_accum;
-                    F_z         = _forceVect_accum[2].at(i)      / numMols_accum;
 
                     numSamples  = countSamples;
                 }
@@ -372,9 +349,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
                     << FORMAT_SCI_MAX_DIGITS << p_x
                     << FORMAT_SCI_MAX_DIGITS << p_y
                     << FORMAT_SCI_MAX_DIGITS << p_z
-                    << FORMAT_SCI_MAX_DIGITS << F_x
-                    << FORMAT_SCI_MAX_DIGITS << F_y
-                    << FORMAT_SCI_MAX_DIGITS << F_z
                     << FORMAT_SCI_MAX_DIGITS << numSamples
                     << std::endl;
             }
@@ -399,7 +373,6 @@ void CylindricSampling::resizeVectors() {
         _ekinVect_accum.at(d).resize(_lenVector);
         _velocityVect_accum.at(d).resize(_lenVector);
         _virialVect_accum.at(d).resize(_lenVector);
-        _forceVect_accum.at(d).resize(_lenVector);
     }
 
     _countSamples.resize(_lenVector);
@@ -417,7 +390,6 @@ void CylindricSampling::resetVectors() {
         std::fill(_ekinVect_accum.at(d).begin(), _ekinVect_accum.at(d).end(), 0.0f);
         std::fill(_velocityVect_accum.at(d).begin(), _velocityVect_accum.at(d).end(), 0.0f);
         std::fill(_virialVect_accum.at(d).begin(), _virialVect_accum.at(d).end(), 0.0f);
-        std::fill(_forceVect_accum.at(d).begin(), _forceVect_accum.at(d).end(), 0.0f);
     }
 
     std::fill(_countSamples.begin(), _countSamples.end(), 0ul);

@@ -62,7 +62,6 @@ class CylindricSampling : public PluginBase {
     std::array<std::vector<double>, 3> _ekinVect_accum;         // Kinetic energy in each direction (drift corrected)
     std::array<std::vector<double>, 3> _velocityVect_accum;     // Drift velocity in each direction
     std::array<std::vector<double>, 3> _virialVect_accum;       // Virial in each direction
-    std::array<std::vector<double>, 3> _forceVect_accum;        // Sum of forces on particles in each direction
 
     std::vector<unsigned long> _countSamples;                   // Number of samples; can vary from bin to bin as some bins could be empty
 
