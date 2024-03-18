@@ -145,11 +145,29 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         const unsigned int index = _numBinsGlobalHeight*indexR + indexH;
 
         numMolecules_step.local.at(index) ++;
-        velocityVect_step.at(0).local.at(index) += pit->v(0);
-        velocityVect_step.at(1).local.at(index) += pit->v(1);
-        velocityVect_step.at(2).local.at(index) += pit->v(2);
+
+        const double veloX = pit->v(0);
+        const double veloY = pit->v(1);
+        const double veloZ = pit->v(2);
+        const double mass = pit->mass();
+
+        mass_step.local.at(index) += mass;
+        ekin_step.local.at(index) += pit->U_kin();
+
+        velocityVect_step.at(0).local.at(index) += veloX;
+        velocityVect_step.at(1).local.at(index) += veloY;
+        velocityVect_step.at(2).local.at(index) += veloZ;
+
+        ekinVect_step[0].local.at(index) += 0.5*mass*veloX*veloX;
+        ekinVect_step[1].local.at(index) += 0.5*mass*veloY*veloY;
+        ekinVect_step[2].local.at(index) += 0.5*mass*veloZ*veloZ;
+
+        virialVect_step[0].local.at(index) += pit->Vi(0);
+        virialVect_step[1].local.at(index) += pit->Vi(1);
+        virialVect_step[2].local.at(index) += pit->Vi(2);
     }
 
+// Gather quantities needed by all processes
 #ifdef ENABLE_MPI
     MPI_Allreduce(numMolecules_step.local.data(), numMolecules_step.global.data(), _lenVector, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
     MPI_Allreduce(velocityVect_step[0].local.data(), velocityVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -164,41 +182,7 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
     }
 #endif
 
-    for (unsigned long i = 0; i < _lenVector; i++) {
-        if (numMolecules_step.global.at(i) > 0ul) {
-            veloDrift_step_global[0].at(i) = velocityVect_step[0].global.at(i) / numMolecules_step.global.at(i);
-            veloDrift_step_global[1].at(i) = velocityVect_step[1].global.at(i) / numMolecules_step.global.at(i);
-            veloDrift_step_global[2].at(i) = velocityVect_step[2].global.at(i) / numMolecules_step.global.at(i);
-        }
-    }
-
-    for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
-        const double ry = pit->r(1);
-        const double distCenter = std::sqrt(std::pow(pit->r(0)-0.5*_globalBoxLength[0],2) + std::pow(pit->r(2)-0.5*_globalBoxLength[0],2));
-        // Do not consider particles outside of most outer radius
-        if (distCenter >= _distMax) { continue; }
-        const unsigned int indexH = std::min(_numBinsGlobalHeight, static_cast<unsigned int>(ry/_binwidth));  // Index of bin of height
-        const unsigned int indexR = std::min(_numBinsGlobalRadius, static_cast<unsigned int>(distCenter/_binwidth));  // Index of bin of radius
-        const unsigned int index = _numBinsGlobalHeight*indexR + indexH;
-
-        const double veloX = pit->v(0);
-        const double veloY = pit->v(1);
-        const double veloZ = pit->v(2);
-        const double mass = pit->mass();
-
-        mass_step.local.at(index) += pit->mass();
-        ekin_step.local.at(index) += pit->U_kin();
-
-        ekinVect_step[0].local.at(index) += 0.5*mass*veloX*veloX;
-        ekinVect_step[1].local.at(index) += 0.5*mass*veloY*veloY;
-        ekinVect_step[2].local.at(index) += 0.5*mass*veloZ*veloZ;
-        virialVect_step[0].local.at(index) += pit->Vi(0);
-        virialVect_step[1].local.at(index) += pit->Vi(1);
-        virialVect_step[2].local.at(index) += pit->Vi(2);
-
-    }
-
-    // Gather quantities of all processes. Note: MPI_Reduce instead of MPI_Allreduce!
+// Gather other quantities. Note: MPI_Reduce instead of MPI_Allreduce!
 #ifdef ENABLE_MPI
     MPI_Reduce(mass_step.local.data(), mass_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekin_step.local.data(), ekin_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -220,6 +204,14 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         ekinVect_step[2].global.at(i) = ekinVect_step[2].local.at(i);
     }
 #endif
+
+    for (unsigned long i = 0; i < _lenVector; i++) {
+        if (numMolecules_step.global.at(i) > 0ul) {
+            veloDrift_step_global[0].at(i) = velocityVect_step[0].global.at(i) / numMolecules_step.global.at(i);
+            veloDrift_step_global[1].at(i) = velocityVect_step[1].global.at(i) / numMolecules_step.global.at(i);
+            veloDrift_step_global[2].at(i) = velocityVect_step[2].global.at(i) / numMolecules_step.global.at(i);
+        }
+    }
 
     // Only root knows real quantities (MPI_Reduce instead of MPI_Allreduce)
     // Accumulate data
@@ -274,15 +266,15 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
                 << setw(24) << "T"        // Temperature without drift (i.e. "real" temperature)
                 << setw(24) << "ekin"        // Kinetic energy including drift
                 << setw(24) << "p"        // Pressure
-                << setw(24) << "T_x"        // Temperature in x-direction
+                << setw(24) << "T_r"        // Temperature in radial direction
                 << setw(24) << "T_y"        // Temperature in y-direction
-                << setw(24) << "T_z"        // Temperature in z-direction
-                << setw(24) << "v_x"        // Drift velocity in x-direction
+                << setw(24) << "T_t"        // Temperature in tangantial direction
+                << setw(24) << "v_r"        // Drift velocity in radial direction
                 << setw(24) << "v_y"        // Drift velocity in y-direction
-                << setw(24) << "v_z"        // Drift velocity in z-direction
-                << setw(24) << "p_x"        // Pressure in x-direction
+                << setw(24) << "v_t"        // Drift velocity in tangantial direction
+                << setw(24) << "p_r"        // Pressure in radial direction
                 << setw(24) << "p_y"        // Pressure in y-direction
-                << setw(24) << "p_z"        // Pressure in z-direction
+                << setw(24) << "p_t"        // Pressure in tangantial direction
                 << setw(24) << "numSamples";    // Number of samples (<= _writeFrequency)
             ofs << std::endl;
 
@@ -296,18 +288,15 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
                 double T {std::nan("0")};
                 double ekin {std::nan("0")};
                 double p {std::nan("0")};
-                double T_x {std::nan("0")};
+                double T_r {std::nan("0")};
                 double T_y {std::nan("0")};
-                double T_z {std::nan("0")};
-                double v_x {std::nan("0")};
+                double T_t {std::nan("0")};
+                double v_r {std::nan("0")};
                 double v_y {std::nan("0")};
-                double v_z {std::nan("0")};
-                double p_x {std::nan("0")};
+                double v_t {std::nan("0")};
+                double p_r {std::nan("0")};
                 double p_y {std::nan("0")};
-                double p_z {std::nan("0")};
-                double F_x {std::nan("0")};
-                double F_y {std::nan("0")};
-                double F_z {std::nan("0")};
+                double p_t {std::nan("0")};
                 double numSamples {std::nan("0")};
                 if ((_countSamples.at(i) > 0ul) and (_doftotal_accum.at(i)) > 0ul) {
                     const unsigned long countSamples = _countSamples.at(i);
@@ -316,22 +305,22 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
 
                     numMolsPerStep = numMols_accum/countSamples;
                     rho         = numMolsPerStep           / slabVolume;
-                    v_x         = _velocityVect_accum[0].at(i)   / countSamples;
+                    v_r         = _velocityVect_accum[0].at(i)   / countSamples;
                     v_y         = _velocityVect_accum[1].at(i)   / countSamples;
-                    v_z         = _velocityVect_accum[2].at(i)   / countSamples;
+                    v_t         = _velocityVect_accum[2].at(i)   / countSamples;
 
-                    double v_drift_sqr = v_x*v_x + v_y*v_y + v_z*v_z;
+                    double v_drift_sqr = v_r*v_r + v_y*v_y + v_t*v_t;
 
                     T           = (2*_ekin_accum.at(i) - v_drift_sqr*_mass_accum.at(i)) / _doftotal_accum.at(i);
                     ekin        = _ekin_accum.at(i) / numMols_accum;
                     p           = rho * ( (_virial_accum.at(i))/(3.0*numMols_accum) + T);
 
-                    T_x         = (2*_ekinVect_accum[0].at(i) - (v_x*v_x)*_mass_accum.at(i)) / numMols_accum;
+                    T_r         = (2*_ekinVect_accum[0].at(i) - (v_r*v_r)*_mass_accum.at(i)) / numMols_accum;
                     T_y         = (2*_ekinVect_accum[1].at(i) - (v_y*v_y)*_mass_accum.at(i)) / numMols_accum;
-                    T_z         = (2*_ekinVect_accum[2].at(i) - (v_z*v_z)*_mass_accum.at(i)) / numMols_accum;
-                    p_x         = rho * ( _virialVect_accum[0].at(i)/numMols_accum + T);
+                    T_t         = (2*_ekinVect_accum[2].at(i) - (v_t*v_t)*_mass_accum.at(i)) / numMols_accum;
+                    p_r         = rho * ( _virialVect_accum[0].at(i)/numMols_accum + T);
                     p_y         = rho * ( _virialVect_accum[1].at(i)/numMols_accum + T);
-                    p_z         = rho * ( _virialVect_accum[2].at(i)/numMols_accum + T);
+                    p_t         = rho * ( _virialVect_accum[2].at(i)/numMols_accum + T);
 
                     numSamples  = countSamples;
                 }
@@ -340,15 +329,15 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
                     << FORMAT_SCI_MAX_DIGITS << T
                     << FORMAT_SCI_MAX_DIGITS << ekin
                     << FORMAT_SCI_MAX_DIGITS << p
-                    << FORMAT_SCI_MAX_DIGITS << T_x
+                    << FORMAT_SCI_MAX_DIGITS << T_r
                     << FORMAT_SCI_MAX_DIGITS << T_y
-                    << FORMAT_SCI_MAX_DIGITS << T_z
-                    << FORMAT_SCI_MAX_DIGITS << v_x
+                    << FORMAT_SCI_MAX_DIGITS << T_t
+                    << FORMAT_SCI_MAX_DIGITS << v_r
                     << FORMAT_SCI_MAX_DIGITS << v_y
-                    << FORMAT_SCI_MAX_DIGITS << v_z
-                    << FORMAT_SCI_MAX_DIGITS << p_x
+                    << FORMAT_SCI_MAX_DIGITS << v_t
+                    << FORMAT_SCI_MAX_DIGITS << p_r
                     << FORMAT_SCI_MAX_DIGITS << p_y
-                    << FORMAT_SCI_MAX_DIGITS << p_z
+                    << FORMAT_SCI_MAX_DIGITS << p_t
                     << FORMAT_SCI_MAX_DIGITS << numSamples
                     << std::endl;
             }
