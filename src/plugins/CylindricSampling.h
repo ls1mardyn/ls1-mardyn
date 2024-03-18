@@ -22,8 +22,8 @@ class CylindricSamplingTest;
 /** @brief
 * Plugin: can be enabled via config.xml <br>
 *
-* Samples values binwise in radial and y-direction for the LJTS fluid (pot. energy corrections not implemented!) using the Widom insertion method
-* TODO for general case: Rotation in kin. Temperatur; Upot correction for getEnergy; multi component chem pot;
+* Samples values binwise in radial and y-direction
+* There is NO differentiation between components; it is assumed that all (pseudo) components have the same mass (for correct calculation of temperature)
 * \code{.xml}
 * <plugin name="CylindricSampling">
 *           <binwidth>FLOAT</binwidth>                  <!-- Width of sampling bins; default 1.0 -->
