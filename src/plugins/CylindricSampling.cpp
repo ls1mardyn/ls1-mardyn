@@ -92,8 +92,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
     std::array<CommVar<std::vector<double>>, 3> velocityVect_step;
     std::array<CommVar<std::vector<double>>, 3> virialVect_step;
 
-    std::array<std::vector<double>, 3> veloDrift_step_global;       // Drift velocity
-
     numMolecules_step.local.resize(_lenVector);
     mass_step.local.resize(_lenVector);
     ekin_step.local.resize(_lenVector);
@@ -110,8 +108,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         ekinVect_step.at(d).global.resize(_lenVector);
         velocityVect_step.at(d).global.resize(_lenVector);
         virialVect_step.at(d).global.resize(_lenVector);
-
-        veloDrift_step_global.at(d).resize(_lenVector);
     }
 
     std::fill(numMolecules_step.local.begin(), numMolecules_step.local.end(), 0ul);
@@ -130,8 +126,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         std::fill(ekinVect_step.at(d).global.begin(),      ekinVect_step.at(d).global.end(), 0.0f);
         std::fill(velocityVect_step.at(d).global.begin(),   velocityVect_step.at(d).global.end(), 0.0f);
         std::fill(virialVect_step.at(d).global.begin(),     virialVect_step.at(d).global.end(), 0.0f);
-
-        std::fill(veloDrift_step_global.at(d).begin(),      veloDrift_step_global.at(d).end(), 0.0f);
     }
 
     // Calculate drift as it is needed first
@@ -146,25 +140,25 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
 
         numMolecules_step.local.at(index) ++;
 
-        const double veloX = pit->v(0);
-        const double veloY = pit->v(1);
-        const double veloZ = pit->v(2);
+        const double velo_r = pit->v(0); // TODO
+        const double velo_y = pit->v(1);
+        const double velo_t = pit->v(2); // TODO
         const double mass = pit->mass();
 
         mass_step.local.at(index) += mass;
         ekin_step.local.at(index) += pit->U_kin();
 
-        velocityVect_step.at(0).local.at(index) += veloX;
-        velocityVect_step.at(1).local.at(index) += veloY;
-        velocityVect_step.at(2).local.at(index) += veloZ;
+        velocityVect_step.at(0).local.at(index) += velo_r;
+        velocityVect_step.at(1).local.at(index) += velo_y;
+        velocityVect_step.at(2).local.at(index) += velo_t;
 
-        ekinVect_step[0].local.at(index) += 0.5*mass*veloX*veloX;
-        ekinVect_step[1].local.at(index) += 0.5*mass*veloY*veloY;
-        ekinVect_step[2].local.at(index) += 0.5*mass*veloZ*veloZ;
+        ekinVect_step[0].local.at(index) += 0.5*mass*velo_r*velo_r;
+        ekinVect_step[1].local.at(index) += 0.5*mass*velo_y*velo_y;
+        ekinVect_step[2].local.at(index) += 0.5*mass*velo_t*velo_t;
 
-        virialVect_step[0].local.at(index) += pit->Vi(0);
+        virialVect_step[0].local.at(index) += pit->Vi(0); // TODO
         virialVect_step[1].local.at(index) += pit->Vi(1);
-        virialVect_step[2].local.at(index) += pit->Vi(2);
+        virialVect_step[2].local.at(index) += pit->Vi(2); // TODO
     }
 
 // Gather quantities needed by all processes
@@ -205,14 +199,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
     }
 #endif
 
-    for (unsigned long i = 0; i < _lenVector; i++) {
-        if (numMolecules_step.global.at(i) > 0ul) {
-            veloDrift_step_global[0].at(i) = velocityVect_step[0].global.at(i) / numMolecules_step.global.at(i);
-            veloDrift_step_global[1].at(i) = velocityVect_step[1].global.at(i) / numMolecules_step.global.at(i);
-            veloDrift_step_global[2].at(i) = velocityVect_step[2].global.at(i) / numMolecules_step.global.at(i);
-        }
-    }
-
     // Only root knows real quantities (MPI_Reduce instead of MPI_Allreduce)
     // Accumulate data
     if (domainDecomp->getRank() == 0) {
@@ -225,25 +211,28 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
             dof_rot = _simulation.getEnsemble()->getComponent(0)->getRotationalDegreesOfFreedom();
             dof_total = (3 + dof_rot)*numMols;
 
-            const double ViX = virialVect_step[0].global.at(i);
-            const double ViY = virialVect_step[1].global.at(i);
-            const double ViZ = virialVect_step[2].global.at(i);
+            const double Vi_r = virialVect_step[0].global.at(i);
+            const double Vi_y = virialVect_step[1].global.at(i);
+            const double Vi_t = virialVect_step[2].global.at(i);
 
             _doftotal_accum.at(i)                += dof_total;
             _numMolecules_accum.at(i)            += numMols;
             _mass_accum.at(i)                    += mass_step.global.at(i);
             _ekin_accum.at(i)                    += ekin_step.global.at(i);
-            _virial_accum.at(i)                  += ViX + ViY + ViZ;
+            _virial_accum.at(i)                  += Vi_r + Vi_y + Vi_t;
 
             _ekinVect_accum[0].at(i)             += ekinVect_step[0].global.at(i);
             _ekinVect_accum[1].at(i)             += ekinVect_step[1].global.at(i);
             _ekinVect_accum[2].at(i)             += ekinVect_step[2].global.at(i);
-            _velocityVect_accum[0].at(i)         += veloDrift_step_global[0].at(i);
-            _velocityVect_accum[1].at(i)         += veloDrift_step_global[1].at(i);
-            _velocityVect_accum[2].at(i)         += veloDrift_step_global[2].at(i);
-            _virialVect_accum[0].at(i)           += ViX;
-            _virialVect_accum[1].at(i)           += ViY;
-            _virialVect_accum[2].at(i)           += ViZ;
+            _virialVect_accum[0].at(i)           += Vi_r;
+            _virialVect_accum[1].at(i)           += Vi_y;
+            _virialVect_accum[2].at(i)           += Vi_t;
+
+            if (numMols > 0ul) {
+                _velocityVect_accum[0].at(i)         += velocityVect_step[0].global.at(i) / numMols;
+                _velocityVect_accum[1].at(i)         += velocityVect_step[1].global.at(i) / numMols;
+                _velocityVect_accum[2].at(i)         += velocityVect_step[2].global.at(i) / numMols;
+            }
 
             _countSamples.at(i)++;
         }
@@ -283,8 +272,9 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
                 const unsigned int idxR = i / _numBinsGlobalHeight; // Quotient
                 ofs << FORMAT_SCI_MAX_DIGITS << (idxH+0.5)*_binwidth;  // Height bin
                 ofs << FORMAT_SCI_MAX_DIGITS << (idxR+0.5)*_binwidth;  // Radius bin
+                unsigned long numSamples {0ul};
                 double numMolsPerStep {std::nan("0")}; // Not an int as particles change bin during simulation
-                double rho {std::nan("0")};
+                double rho {0.0};
                 double T {std::nan("0")};
                 double ekin {std::nan("0")};
                 double p {std::nan("0")};
@@ -297,17 +287,16 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
                 double p_r {std::nan("0")};
                 double p_y {std::nan("0")};
                 double p_t {std::nan("0")};
-                double numSamples {std::nan("0")};
                 if ((_countSamples.at(i) > 0ul) and (_doftotal_accum.at(i)) > 0ul) {
-                    const unsigned long countSamples = _countSamples.at(i);
                     const double numMols_accum = static_cast<double>(_numMolecules_accum.at(i));
                     const double slabVolume = 3.1415926536*_binwidth*(std::pow((idxR+1)*_binwidth,2)-std::pow(idxR*_binwidth,2));
+                    numSamples = _countSamples.at(i);
 
-                    numMolsPerStep = numMols_accum/countSamples;
+                    numMolsPerStep = numMols_accum/numSamples;
                     rho         = numMolsPerStep           / slabVolume;
-                    v_r         = _velocityVect_accum[0].at(i)   / countSamples;
-                    v_y         = _velocityVect_accum[1].at(i)   / countSamples;
-                    v_t         = _velocityVect_accum[2].at(i)   / countSamples;
+                    v_r         = _velocityVect_accum[0].at(i)   / numSamples;
+                    v_y         = _velocityVect_accum[1].at(i)   / numSamples;
+                    v_t         = _velocityVect_accum[2].at(i)   / numSamples;
 
                     double v_drift_sqr = v_r*v_r + v_y*v_y + v_t*v_t;
 
@@ -321,8 +310,6 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
                     p_r         = rho * ( _virialVect_accum[0].at(i)/numMols_accum + T);
                     p_y         = rho * ( _virialVect_accum[1].at(i)/numMols_accum + T);
                     p_t         = rho * ( _virialVect_accum[2].at(i)/numMols_accum + T);
-
-                    numSamples  = countSamples;
                 }
                 ofs << FORMAT_SCI_MAX_DIGITS << numMolsPerStep
                     << FORMAT_SCI_MAX_DIGITS << rho
