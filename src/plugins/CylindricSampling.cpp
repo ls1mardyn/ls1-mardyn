@@ -34,11 +34,11 @@ void CylindricSampling::init(ParticleContainer* /* particleContainer */, DomainD
     _numBinsGlobalRadius = static_cast<unsigned int>(_distMax/_binwidth);
 
     if (_globalBoxLength[1]/_binwidth != static_cast<float>(_numBinsGlobalHeight)) {
-        global_log->error() << "[CylindricSampling] Can not divide domain without remainder! Change binwidth" << std::endl;
+        global_log->error() << "[CylindricSampling] Can not divide domain without remainder in y-direction! Change binwidth" << std::endl;
         Simulation::exit(-1);
     }
     if (_distMax/_binwidth != static_cast<float>(_numBinsGlobalRadius)) {
-        global_log->error() << "[CylindricSampling] Can not divide domain without remainder! Change binwidth" << std::endl;
+        global_log->error() << "[CylindricSampling] Can not divide domain without remainder in x or z-direction! Change binwidth" << std::endl;
         Simulation::exit(-1);
     }
 
@@ -131,7 +131,9 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
     // Calculate drift as it is needed first
     for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
         const double ry = pit->r(1);
-        const double distCenter = std::sqrt(std::pow(pit->r(0)-0.5*_globalBoxLength[0],2) + std::pow(pit->r(2)-0.5*_globalBoxLength[0],2));
+        const double distCenter_x = pit->r(0)-0.5*_globalBoxLength[0];
+        const double distCenter_z = pit->r(2)-0.5*_globalBoxLength[2];
+        const double distCenter = std::sqrt(std::pow(distCenter_x,2) + std::pow(distCenter_z,2));
         // Do not consider particles outside of most outer radius
         if (distCenter >= _distMax) { continue; }
         const unsigned int indexH = std::min(_numBinsGlobalHeight, static_cast<unsigned int>(ry/_binwidth));  // Index of bin of height
@@ -140,10 +142,18 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
 
         numMolecules_step.local.at(index) ++;
 
-        const double velo_r = pit->v(0); // TODO
-        const double velo_y = pit->v(1);
-        const double velo_t = pit->v(2); // TODO
+        const double u_x = pit->v(0);
+        const double u_y = pit->v(1);
+        const double u_z = pit->v(2);
         const double mass = pit->mass();
+        const double vi_x = pit->Vi(0);
+        const double vi_y = pit->Vi(1);
+        const double vi_z = pit->Vi(2);
+
+        // Transform to cylindric coordinates
+        const double velo_r = (distCenter_x*u_x + distCenter_z*u_z)/distCenter;  // Radial
+        const double velo_y = u_y;
+        const double velo_t = (distCenter_x*u_z - distCenter_z*u_x)/distCenter;  // Tangential
 
         mass_step.local.at(index) += mass;
         ekin_step.local.at(index) += pit->U_kin();
@@ -156,9 +166,11 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         ekinVect_step[1].local.at(index) += 0.5*mass*velo_y*velo_y;
         ekinVect_step[2].local.at(index) += 0.5*mass*velo_t*velo_t;
 
-        virialVect_step[0].local.at(index) += pit->Vi(0); // TODO
-        virialVect_step[1].local.at(index) += pit->Vi(1);
-        virialVect_step[2].local.at(index) += pit->Vi(2); // TODO
+        // See comment below why the virial is not transformed to cylindric coordinates
+        // short: must be done during force calculation for each particle pair individually
+        virialVect_step[0].local.at(index) += vi_x;
+        virialVect_step[1].local.at(index) += vi_y;
+        virialVect_step[2].local.at(index) += vi_z;
     }
 
 // Gather quantities needed by all processes
@@ -211,22 +223,22 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
             dof_rot = _simulation.getEnsemble()->getComponent(0)->getRotationalDegreesOfFreedom();
             dof_total = (3 + dof_rot)*numMols;
 
-            const double Vi_r = virialVect_step[0].global.at(i);
-            const double Vi_y = virialVect_step[1].global.at(i);
-            const double Vi_t = virialVect_step[2].global.at(i);
+            const double vi_x = virialVect_step[0].global.at(i);
+            const double vi_y = virialVect_step[1].global.at(i);
+            const double vi_z = virialVect_step[2].global.at(i);
 
             _doftotal_accum.at(i)                += dof_total;
             _numMolecules_accum.at(i)            += numMols;
             _mass_accum.at(i)                    += mass_step.global.at(i);
             _ekin_accum.at(i)                    += ekin_step.global.at(i);
-            _virial_accum.at(i)                  += Vi_r + Vi_y + Vi_t;
+            _virial_accum.at(i)                  += vi_x + vi_y + vi_z;
 
             _ekinVect_accum[0].at(i)             += ekinVect_step[0].global.at(i);
             _ekinVect_accum[1].at(i)             += ekinVect_step[1].global.at(i);
             _ekinVect_accum[2].at(i)             += ekinVect_step[2].global.at(i);
-            _virialVect_accum[0].at(i)           += Vi_r;
-            _virialVect_accum[1].at(i)           += Vi_y;
-            _virialVect_accum[2].at(i)           += Vi_t;
+            _virialVect_accum[0].at(i)           += vi_x;
+            _virialVect_accum[1].at(i)           += vi_y;
+            _virialVect_accum[2].at(i)           += vi_z;
 
             if (numMols > 0ul) {
                 _velocityVect_accum[0].at(i)         += velocityVect_step[0].global.at(i) / numMols;
@@ -248,22 +260,22 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
             const std::string fname = "CylindricSampling_TS"+ss.str()+".dat";
             std::ofstream ofs;
             ofs.open(fname, std::ios::out);
-            ofs << setw(24) << "height"             // Bin position (height)
-                << setw(24) << "radius"        // Bin position (radius)
-                << setw(24) << "numParts"        // Average number of molecules in bin per step
+            ofs << setw(24) << "height"     // Bin position (height)
+                << setw(24) << "radius"     // Bin position (radius)
+                << setw(24) << "numParts"   // Average number of molecules in bin per step
                 << setw(24) << "rho"        // Density
-                << setw(24) << "T"        // Temperature without drift (i.e. "real" temperature)
-                << setw(24) << "ekin"        // Kinetic energy including drift
-                << setw(24) << "p"        // Pressure
+                << setw(24) << "T"          // Temperature without drift (i.e. "real" temperature)
+                << setw(24) << "ekin"       // Kinetic energy including drift
+                << setw(24) << "p"          // Pressure
                 << setw(24) << "T_r"        // Temperature in radial direction
                 << setw(24) << "T_y"        // Temperature in y-direction
                 << setw(24) << "T_t"        // Temperature in tangantial direction
                 << setw(24) << "v_r"        // Drift velocity in radial direction
                 << setw(24) << "v_y"        // Drift velocity in y-direction
                 << setw(24) << "v_t"        // Drift velocity in tangantial direction
-                << setw(24) << "p_r"        // Pressure in radial direction
+                << setw(24) << "p_r"        // Pressure in radial direction; the radial pressure is not easily accessible (see comment below)
                 << setw(24) << "p_y"        // Pressure in y-direction
-                << setw(24) << "p_t"        // Pressure in tangantial direction
+                << setw(24) << "p_t"        // Pressure in tangantial direction; the tangential pressure is not easily accessible (see comment below)
                 << setw(24) << "numSamples";    // Number of samples (<= _writeFrequency)
             ofs << std::endl;
 
@@ -307,9 +319,12 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
                     T_r         = (2*_ekinVect_accum[0].at(i) - (v_r*v_r)*_mass_accum.at(i)) / numMols_accum;
                     T_y         = (2*_ekinVect_accum[1].at(i) - (v_y*v_y)*_mass_accum.at(i)) / numMols_accum;
                     T_t         = (2*_ekinVect_accum[2].at(i) - (v_t*v_t)*_mass_accum.at(i)) / numMols_accum;
-                    p_r         = rho * ( _virialVect_accum[0].at(i)/numMols_accum + T);
+                    // The radial and tangential virial/pressure are not easily accessible
+                    // It must be computed/transformed during the force calculation for each particle pair individually
+                    // see e.g. the spherical LRC
+                    // p_r         = rho * ( _virialVect_accum[0].at(i)/numMols_accum + T);
                     p_y         = rho * ( _virialVect_accum[1].at(i)/numMols_accum + T);
-                    p_t         = rho * ( _virialVect_accum[2].at(i)/numMols_accum + T);
+                    // p_t         = rho * ( _virialVect_accum[2].at(i)/numMols_accum + T);
                 }
                 ofs << FORMAT_SCI_MAX_DIGITS << numMolsPerStep
                     << FORMAT_SCI_MAX_DIGITS << rho
