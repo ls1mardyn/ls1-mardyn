@@ -1123,10 +1123,6 @@ void Simulation::simulateOneTimestep()
 
 		global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
 
-		global_simulation->timers()->start("SIMULATION_BOUNDARY_TREATMENT");
-		_domainDecomposition->removeNonPeriodicHalos();
-		global_simulation->timers()->stop("SIMULATION_BOUNDARY_TREATMENT");
-
 		// Force calculation and other pair interaction related computations
 		Log::global_log->debug() << "Traversing pairs" << std::endl;
 		global_simulation->timers()->start("SIMULATION_COMPUTATION");
@@ -1406,6 +1402,10 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 	_domainDecomposition->balanceAndExchange(averageLastTraversalTime, forceRebalancing, _moleculeContainer,
 											 _domain);
 	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
+
+	global_simulation->timers()->start("SIMULATION_BOUNDARY_TREATMENT");
+	_domainDecomposition->removeNonPeriodicHalos();
+	global_simulation->timers()->stop("SIMULATION_BOUNDARY_TREATMENT");
 
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
