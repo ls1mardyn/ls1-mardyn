@@ -343,9 +343,12 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 					drm_nj += drm[d] * ksi_j[d];
 					drs_ni += drs[d] * ksi_i[d];
 					drs_nj += drs[d] * ksi_j[d];
-
 				}
-				double fac = (f[0]+f[1]+f[2])/(drs[0]+drs[1]+drs[2]);
+				
+				double fac = f[0]/drs[0];
+				for(int d=1; std::isnan(fac) && d<3; d++){ //catches the case where f[d] == drs[d] == 0. => fac=0./0.==-nan
+					fac = f[d]/drs[d]; //drs != 0 for at least one dimension
+				}
 
 				VNi += 0.5*fac*drm_ni*drs_ni/absi2;
 				VNj += 0.5*fac*drm_nj*drs_nj/absj2;
