@@ -429,20 +429,30 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_lastTraversalTimeHistory.setCapacity(timerForLoadAveragingLength);
 
 			if(xmlconfig.changecurrentnode("boundaries")) {
-				std::string tempBoundary;
-				//xmlconfig.getNodeValue("boundaryType", tempBoundary);
-				xmlconfig.getNodeValue("x", tempBoundary);
-				Log::global_log->info() << "x boundary " << tempBoundary << std::endl;
-				_domainDecomposition->setGlobalBoundaryType(DimensionType::POSX, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				_domainDecomposition->setGlobalBoundaryType(DimensionType::NEGX, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				xmlconfig.getNodeValue("y", tempBoundary);
-				Log::global_log->info() << "y boundary " << tempBoundary << std::endl;
-				_domainDecomposition->setGlobalBoundaryType(DimensionType::POSY, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				_domainDecomposition->setGlobalBoundaryType(DimensionType::NEGY, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				xmlconfig.getNodeValue("z", tempBoundary);
-				Log::global_log->info() << "z boundary " << tempBoundary << std::endl;
-				_domainDecomposition->setGlobalBoundaryType(DimensionType::POSZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
-				_domainDecomposition->setGlobalBoundaryType(DimensionType::NEGZ, BoundaryUtils::convertStringToBoundary(tempBoundary));
+				std::string xBoundary, yBoundary, zBoundary;
+				if(_overlappingP2P)
+				{
+					Log::global_log->info() << "Non-periodic boundaries not supported with overlappingP2P enabled! Defaulting to periodic boundaries" << std::endl;
+					xBoundary = yBoundary = zBoundary = "periodic";
+				}
+				else
+				{
+					xmlconfig.getNodeValue("x", xBoundary);
+					xmlconfig.getNodeValue("y", yBoundary);
+					xmlconfig.getNodeValue("z", zBoundary);
+				}
+				
+				Log::global_log->info() << "x boundary " << xBoundary << std::endl;
+				_domainDecomposition->setGlobalBoundaryType(DimensionType::POSX, BoundaryUtils::convertStringToBoundary(xBoundary));
+				_domainDecomposition->setGlobalBoundaryType(DimensionType::NEGX, BoundaryUtils::convertStringToBoundary(xBoundary));
+				
+				Log::global_log->info() << "y boundary " << yBoundary << std::endl;
+				_domainDecomposition->setGlobalBoundaryType(DimensionType::POSY, BoundaryUtils::convertStringToBoundary(yBoundary));
+				_domainDecomposition->setGlobalBoundaryType(DimensionType::NEGY, BoundaryUtils::convertStringToBoundary(yBoundary));
+				
+				Log::global_log->info() << "z boundary " << zBoundary << std::endl;
+				_domainDecomposition->setGlobalBoundaryType(DimensionType::POSZ, BoundaryUtils::convertStringToBoundary(zBoundary));
+				_domainDecomposition->setGlobalBoundaryType(DimensionType::NEGZ, BoundaryUtils::convertStringToBoundary(zBoundary));
 
 				if (_domainDecomposition->hasInvalidBoundary()) {
 					Log::global_log->error() << "Invalid boundary type! Please check the config file" << std::endl;
