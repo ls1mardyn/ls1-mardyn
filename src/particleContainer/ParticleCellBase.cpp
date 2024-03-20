@@ -143,7 +143,7 @@ unsigned long ParticleCellBase::initCubicGrid(const std::array<unsigned long, 3>
 					++numInserted;
 					std::array<vcp_real_calc,3> v = getRandomVelocity<vcp_real_calc>(T, RNG);
 					Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
-						x1, y1, z1, v[0], -v[1], v[2]);
+						x1, y1, z1, v[0], -v[1], v[2], 1.0, 0.0, 0.0, 0.0);
 					buffer.push_back(dummy);
 				}
 
@@ -151,7 +151,7 @@ unsigned long ParticleCellBase::initCubicGrid(const std::array<unsigned long, 3>
 					++numInserted;
 					std::array<vcp_real_calc,3> v = getRandomVelocity<vcp_real_calc>(T, RNG);
 					Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
-						x2, y2, z2, v[0], -v[1], v[2]);
+						x2, y2, z2, v[0], -v[1], v[2], 1.0, 0.0, 0.0, 0.0);
 					buffer.push_back(dummy);
 				}
 			}
