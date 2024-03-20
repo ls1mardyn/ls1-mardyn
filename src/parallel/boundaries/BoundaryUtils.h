@@ -20,8 +20,8 @@ namespace BoundaryUtils
 	const std::array<std::string, 6> permissibleDimensionsString = {"+x", "+y", "+z", "-x", "-y", "-z"};
 	const std::array<int, 6> permissibleDimensionsInt = {-1, -2, -3, 1, 2, 3};
 
-	bool checkIfDimensionStringPermissible(std::string dimension);
-	bool checkIfDimensionNumericPermissible(int dim);
+	bool isDimensionStringPermissible(std::string dimension);
+	bool isDimensionNumericPermissible(int dim);
 
 	DimensionType convertStringToDimension(std::string dimension);
 	DimensionType convertNumericToDimension(int dim);
