@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autopas/molecularDynamics/MoleculeLJ.h>
+#include <molecularDynamicsLibrary/MoleculeLJ.h>
 #include <autopas/utils/SoAType.h>
 #include <autopas/utils/inBox.h>
 

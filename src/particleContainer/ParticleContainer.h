@@ -199,6 +199,8 @@ public:
 
 	virtual double getSkin() const {return 0.;}
 
+	virtual size_t getRebuildFrequency() const {return 1;};
+
     /* TODO: Have a look on this */
 	virtual void deleteMolecule(ParticleIterator& moleculeIter, const bool& rebuildCaches) = 0;
 
@@ -271,20 +273,25 @@ public:
 	 * Only used for logging / output.
 	 * @note: Formatting rules:
 	 *  - The whole configuration should be enclosed in curly brackets.
-	 *  - Different elements should be separated by a comma sourrounded by spaces: " , ".
+	 *  - Different elements should be separated by a comma surrounded by spaces: " , ".
 	 *  - Every element should be in the form "key: value"
 	 * @return
 	 */
 	virtual std::string getConfigurationAsString() = 0;
 
 protected:
-
-	//!  coordinates of the left, lower, front corner of the bounding box
+	/**
+	 * Coordinates of the left, lower, front corner of the local bounding box.
+	 */
 	double _boundingBoxMin[3];
-	//! coordinates of the right, upper, back corner of the bounding box
+	/**
+	 * Coordinates of the right, upper, back corner of the local bounding box.
+	 */
 	double _boundingBoxMax[3];
-	//! Vector of particles that are about to be removed from the container.
-	//! Currently only used by AutoPasContainer but here for interface reasons.
+	/**
+	 * Vector of particles that are about to be removed from the container.
+	 * Currently only used by AutoPasContainer but here for interface reasons.
+	 */
 	std::vector<Molecule> _invalidParticles{};
 
 };

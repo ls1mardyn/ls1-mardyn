@@ -7,11 +7,11 @@
 #ifdef __AVX__
 #include "autopas/AutoPasImpl.h"
 #include "molecules/Molecule.h"
-#include "autopas/molecularDynamics/LJFunctorAVX.h"
+#include "molecularDynamicsLibrary/LJFunctorAVX.h"
 
 //! @cond Doxygen_Suppress
 template bool autopas::AutoPas<AutoPasSimpleMolecule>::iteratePairwise(
-		autopas::LJFunctorAVX<
+		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ true,
