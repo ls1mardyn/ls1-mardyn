@@ -58,6 +58,8 @@ Some of the most common compilers are
 
 The Intel Classic Compiler (`icc` and `icpc`) is not recommended to use, since it is deprecated and does not work with AutoPas.
 
+Note: The Intel oneAPI compiler may rely on some external C++ libraries shipped with gcc (see [this issue](https://github.com/ls1mardyn/ls1-mardyn/issues/297) for details).
+
 Specifying the compiler this way is only possible at the first execution of cmake.
 If you want to change the compiler later on, either add another build directory, or first clear the existing build directory.
 
