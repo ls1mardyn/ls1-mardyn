@@ -233,7 +233,7 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
-
+	if(_createThermodynamicForce) writeFunctionToXML("./F_TH_InterpolationFunction_Final.xml", _thermodynamicForce);
 }
 
 std::string AdResS::getPluginName() {
@@ -308,7 +308,7 @@ void AdResS::computeF_TH() {
     steps.resize(d_prime.size()-1, _samplingStepSize);
     Interpolation::computeHermite(0.0, d_prime, steps, d_prime.size(), d_prime_fun);
 
-    _densityProfiler.computeDensities(_particleContainer, &_simulation.domainDecomposition(), _simulation.getDomain());
+    /*_densityProfiler.computeDensities(_particleContainer, &_simulation.domainDecomposition(), _simulation.getDomain());
     Interpolation::Function d_hist = _densityProfiler.getHistDensity(0);
     std::vector<double> fVals;
     fVals.resize(_thermodynamicForceHist.n);
@@ -321,14 +321,14 @@ void AdResS::computeF_TH() {
     steps_hist.resize(_thermodynamicForceHist.n-1, _samplingStepSize);
     Interpolation::computeHermite(0.0, fVals, steps_hist, _thermodynamicForceHist.n, d_hist);
     Interpolation::Function d_prime_hist;
-    Interpolation::computeHermite(0.0, d_hist.gradients, d_hist.step_width, d_hist.n, d_prime_hist);
+    Interpolation::computeHermite(0.0, d_hist.gradients, d_hist.step_width, d_hist.n, d_prime_hist);*/
 
     for(int i = 0; i < d_prime_fun.n; i++) {
         _thermodynamicForce.function_values[i] -= _convergenceFactor * d_prime_fun.function_values[i];
         _thermodynamicForce.gradients[i] -= _convergenceFactor * d_prime_fun.gradients[i];
 
-        _thermodynamicForceHist.function_values[i] -= _convergenceFactor * d_prime_hist.function_values[i];
-        _thermodynamicForceHist.gradients[i] -= _convergenceFactor * d_prime_hist.gradients[i];
+        //_thermodynamicForceHist.function_values[i] -= _convergenceFactor * d_prime_hist.function_values[i];
+        //_thermodynamicForceHist.gradients[i] -= _convergenceFactor * d_prime_hist.gradients[i];
     }
 
     // TODO FIXME!!
@@ -341,8 +341,8 @@ void AdResS::computeF_TH() {
             _thermodynamicForce.function_values[i] = 0;
             _thermodynamicForce.gradients[i] = 0;
 
-            _thermodynamicForceHist.function_values[i] = 0;
-            _thermodynamicForceHist.gradients[i] = 0;
+            //_thermodynamicForceHist.function_values[i] = 0;
+            //_thermodynamicForceHist.gradients[i] = 0;
         }
         x_pos += _thermodynamicForce.step_width[i];
     }
@@ -354,11 +354,14 @@ bool AdResS::checkF_TH_Convergence() {
     if(_lastGradient.function_values.empty()) return false;
     if(_convergenceFactor == 0.0) return false;
 
-    auto it0 = std::max_element(_lastGradient.function_values.begin(), _lastGradient.function_values.end());
-    auto it1 = std::min_element(_lastGradient.function_values.begin(), _lastGradient.function_values.end());
-    double max_grad = std::max(std::abs(*it0), std::abs(*it1)) * _convergenceFactor;
-    global_log->info() << "[AdResS] F_TH conv delta: " << max_grad << std::endl;
-    return max_grad <= _convergenceThreshold;
+	std::vector<double> densities{_densityProfiler.getDensitySmoothed(0)};
+//    auto it0 = std::max_element(_lastGradient.function_values.begin(), _lastGradient.function_values.end());
+//    auto it1 = std::min_element(_lastGradient.function_values.begin(), _lastGradient.function_values.end());
+//    double max_grad = std::max(std::abs(*it0), std::abs(*it1)) * _convergenceFactor;
+	auto it = std::max_element(densities.begin(), densities.end());
+	double rel_error = std::abs(*it - _rho0) / _rho0;
+    global_log->info() << "[AdResS] F_TH conv rel error: " << rel_error << std::endl;
+    return rel_error <= _convergenceThreshold;
 }
 
 void AdResS::applyF_TH() {
@@ -373,6 +376,7 @@ void AdResS::applyF_TH() {
     #endif
     for (auto itM = _particleContainer->regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
         if(_comp_to_res[itM->componentid()] == FullParticle) continue;
+        if(_comp_to_res[itM->componentid()] == CoarseGrain) continue;
 
         double x = itM->r(0);
         double F = computeHermiteAt(x, _thermodynamicForce);
@@ -629,8 +633,8 @@ void AdResS::afterForces(ParticleContainer *container, DomainDecompBase *base, u
     // TODO FIXME!!
     double cutoff = _simulation.getcutoffRadius();
     auto& region = _fpRegions[0];
-    low[0] = region._lowHybrid[0] - cutoff;
-    high[0] = region._low[0] + cutoff;
+    low[0] = region._lowHybrid[0];// - cutoff;
+    high[0] = region._low[0];// + cutoff;
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -642,8 +646,8 @@ void AdResS::afterForces(ParticleContainer *container, DomainDecompBase *base, u
         itM->setF(std::data(f));
     }
 
-    low[0] = region._high[0] - cutoff;
-    high[0] = region._highHybrid[0] + cutoff;
+    low[0] = region._high[0];// - cutoff;
+    high[0] = region._highHybrid[0];// + cutoff;
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif

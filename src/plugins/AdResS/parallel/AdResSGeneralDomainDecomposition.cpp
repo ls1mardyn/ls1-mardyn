@@ -50,7 +50,7 @@ void AdResSGeneralDomainDecomposition::initializeALL() {
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
 													  gridCoords, minimalDomainSize);
 #else
-	global_log->error() << "ALL load balancing library not enabled. Aborting." << std::endl;
+	Log::global_log->error() << "ALL load balancing library not enabled. Aborting." << std::endl;
 	Simulation::exit(24235);
 #endif
     Log::global_log->info() << "GeneralDomainDecomposition initial box: [" << _boxMin[0] << ", " << _boxMax[0] << "] x ["
