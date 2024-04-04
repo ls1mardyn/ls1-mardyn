@@ -170,21 +170,26 @@ void DirectProfiler::step(ParticleContainer *particleContainer, DomainDecompBase
 }
 
 double DirectProfiler::measureTemp(const std::array<double, 3> &low, const std::array<double, 3> &high,
-                                     ParticleContainer *particleContainer, BinData& binData) {
+                                     ParticleContainer *particleContainer, BinData& binData, double& n) {
     std::array<double, 3> v_mean = computeMeanVelocityStep(low, high, particleContainer, binData);
     double m = _simulation.getEnsemble()->getComponent(0)->m();
+	double rotDOF = 0;
     double v = 0;
+	double Iw2 = 0;
     #if defined(_OPENMP)
-    #pragma omp parallel reduction(+:v)
+    #pragma omp parallel reduction(+:v,n,Iw2)
     #endif
     for (auto it = particleContainer->regionIterator(std::data(low), std::data(high),
                                                      ParticleIterator::ALL_CELLS); it.isValid(); ++it) {
         for(int d = 0; d < 3; d++) {
             v += std::pow(it->v(d) - v_mean[d], 2);
         }
+		n += 1.0;
+		Iw2 += it->U_rot_2();
     }
-
-    return v * m / 3;
+	rotDOF = 3 * n;
+	if (n == 0.0) n = -1;
+    return (v * m + Iw2) / (3.0 * n + rotDOF);
 }
 
 std::array<double, 3> DirectProfiler::computeMeanVelocityStep(const std::array<double, 3> &low, const std::array<double, 3> &high,
@@ -207,6 +212,11 @@ std::array<double, 3> DirectProfiler::computeMeanVelocityStep(const std::array<d
     if(count == 0) count = 1;
     binData.mol_counts.insert(count);
     binData.velocities.insert(v_avg);
+
+	/*for(int dim = 0; dim < 3; dim++){
+		v_avg[dim] /= count;
+	}
+	return v_avg;*/
 
     //compute CAM average first
     {
@@ -355,8 +365,10 @@ double DirectProfiler::computePotential(const std::array<double, 3> &low, const 
 double DirectProfiler::computePressure(const std::array<double, 3> &low, const std::array<double, 3> &high,
                                          ParticleContainer *particleContainer, BinData& binData) {
     double p = 0;
+	double n = 0;
     //kinetic term
-    p += measureTemp(low, high, particleContainer, binData) / _v;
+	double T = measureTemp(low, high, particleContainer, binData, n);
+    p +=  (n * T) / _v;
     //potential term
     p += 1.0/(6.0*_v) * computePotential(low, high, particleContainer);
     return p;
@@ -388,6 +400,7 @@ void DirectProfiler::profilePressure(ParticleContainer *particleContainer, Vec3D
 void DirectProfiler::updateTempBuffers(ParticleContainer *particleContainer) {
     std::array<double, 3> low { 0 };
     std::array<double, 3> high { 0 };
+	double n;
     for(std::size_t bin_z = 0; bin_z < _bins_per_dim[2]; bin_z++) {
         low[2] = _bin_widths[2] * static_cast<double>(bin_z);
         high[2] = _bin_widths[2] * static_cast<double>(bin_z+1);
@@ -398,7 +411,7 @@ void DirectProfiler::updateTempBuffers(ParticleContainer *particleContainer) {
                 low[0] = _bin_widths[0] * static_cast<double>(bin_x);
                 high[0] = _bin_widths[0] * static_cast<double>(bin_x+1);
 
-                (void) measureTemp(low, high, particleContainer, _bin_data.at(bin_x, bin_y, bin_z));
+                (void) measureTemp(low, high, particleContainer, _bin_data.at(bin_x, bin_y, bin_z), n);
             }
         }
     }

@@ -50,7 +50,7 @@ struct DirectProfiler : public ProfilerBase {
     /**
      * returns T/(k_b * N_bin)
      * */
-    double measureTemp(const std::array<double,3>& low, const std::array<double, 3>& high, ParticleContainer *particleContainer, BinData& binData);
+    double measureTemp(const std::array<double,3>& low, const std::array<double, 3>& high, ParticleContainer *particleContainer, BinData& binData, double& n);
     std::array<double, 3> computeMeanVelocityStep(const std::array<double,3>& low, const std::array<double, 3>& high, ParticleContainer *particleContainer, BinData& binData);
     double computePotential(const std::array<double,3>& low, const std::array<double, 3>& high, ParticleContainer *particleContainer);
     double computePressure(const std::array<double,3>& low, const std::array<double, 3>& high, ParticleContainer *particleContainer, BinData& binData);

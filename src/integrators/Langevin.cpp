@@ -154,11 +154,12 @@ Langevin::d3 Langevin::sampleRandomForce(double m, double T) {
 	static thread_local std::mt19937 generator; // keeping default seed for reproducibility
 	std::normal_distribution normal{0.0, 1.0};
 	d3 r_vec{};
-
+	if(m == 0) return {0};
 	// additional factor 2 here
 	// according to book about Langevin integration not needed, but according to Langevin's equations of motion it does exist
 	// by using it we actually reach the target temperature
-	double scale = std::sqrt(2 * _timestepLength * T * _gamma / m);
+	// TODO: removed factor 2 since we also scale rot now
+	double scale = std::sqrt(_timestepLength * T * _gamma / m);
 	for (int d = 0; d < 3; d++) {
 		r_vec[d] = scale * normal(generator);
 	}
@@ -185,6 +186,20 @@ void Langevin::addLangevinContribution(ParticleContainer *particleContainer) {
 			}
 
 			it->vadd(v_delta[0], v_delta[1], v_delta[2]);
+
+			// TODO: this is a temporary fix to also scale angular velocity
+			d3 d_old = it->D_arr();
+			d3 d_rand_0, d_rand_1, d_rand_2;
+			d_rand_0 = sampleRandomForce(it->getI(0), T);
+			d_rand_1 = sampleRandomForce(it->getI(1), T);
+			d_rand_2 = sampleRandomForce(it->getI(2), T);
+			d3 d_rand { d_rand_0[0], d_rand_1[1], d_rand_2[2] };
+			d3 d_new{};
+
+			for (int d = 0; d < 3; d++) {
+				d_new[d] = d_old[d] -_dt_half * _gamma * d_old[d] + d_rand[d];
+				it->setD(d, d_new[d]);
+			}
 		}
 	}
 }
