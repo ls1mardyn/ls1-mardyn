@@ -29,11 +29,8 @@
             </ActiveRegions>
         </integrator>
         <ensemble type="NVT">
-            <!-- Target temperature is 1000K -->
-            <!-- real gas closer to ideal gas at higher temperatures but lower pressures -->
-            <temperature unit="reduced" >4.805851067</temperature>
-            <!-- low temp test: 200K -->
-            <!--temperature unit="reduced" >0.961170213</temperature-->
+            <!-- Target temperature is 300K -->
+            <temperature unit="reduced" >2.393928996</temperature>
             <domain type="box">
                 <lx unit="reduced">80</lx>
                 <ly unit="reduced">40</ly>
@@ -49,8 +46,8 @@
                     <objectgenerator>
                         <filler type="ReplicaFiller">
                             <input type="BinaryReader">
-                                <header>Water-Eq-ADR-FTH-1.restart.header.xml</header>
-                                <data>Water-Eq-ADR-FTH-1.restart.dat</data>
+                                <header>CO2-Eq-FP-1.restart.header.xml</header>
+                                <data>CO2-Eq-FP-1.restart.dat</data>
                             </input>
                         </filler>
 
@@ -92,7 +89,7 @@
             <outputplugin name="VTKMoleculeWriter">
                 <writefrequency>20000</writefrequency>
                 <writefrequencyOffset>0</writefrequencyOffset>
-                <outputprefix>WaterADRFTH</outputprefix>
+                <outputprefix>CO2FP</outputprefix>
             </outputplugin>
             <!--outputplugin name="CheckpointWriter">
                 <type>binary</type>
@@ -102,7 +99,7 @@
             <outputplugin name="RDF">
                 <writefrequency>500</writefrequency>
                 <samplingfrequency>1</samplingfrequency>
-                <outputprefix>water_adr_fth</outputprefix>
+                <outputprefix>co2_fp</outputprefix>
                 <bins>5000</bins>
                 <intervallength>0.001</intervallength>
             </outputplugin>
@@ -116,7 +113,7 @@
                 <sampleFreq>1</sampleFreq>
                 <writeFreq>500</writeFreq>
                 <start>0</start>
-                <filename>water_adr_fth_pressure_</filename>
+                <filename>co2_fp_pressure_</filename>
             </outputplugin>
         </output>
 
@@ -130,7 +127,7 @@
                 <init>1</init>
                 <recording>1</recording>
             </timesteps>
-            <outputprefix>water_adr_fth_density</outputprefix>
+            <outputprefix>co2_fp_density</outputprefix>
             <profiledComponent>all</profiledComponent>
             <profiles>
                 <density>true</density>
@@ -140,19 +137,19 @@
                 <virial>false</virial>
             </profiles>
         </plugin>
-        <plugin name="AdResS">
+        <!--plugin name="AdResS">
             <weightImpl>near</weightImpl>
             <enableFTH>
                 <fmax>1e+3</fmax>
                 <logFTH>false</logFTH>
                 <logDensity>false</logDensity>
                 <rho>0.1</rho>
-                <!--createFTH>
+                <createFTH>
                     <sampleGap>200</sampleGap>
                     <threshold>0.05</threshold>
                     <convFactor>0</convFactor>
                     <sampleBinSize>1.0</sampleBinSize>
-                </createFTH-->
+                </createFTH>
                 <include query="/forceFunction">./F_TH.xml</include>
             </enableFTH>
             <fpregions>
@@ -162,7 +159,7 @@
                     <hybridDimX>4.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
-        </plugin>
+        </plugin-->
 
     </simulation>
 </mardyn>

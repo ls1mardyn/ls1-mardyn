@@ -39,7 +39,7 @@
         <site type="LJ126" id="1" >
             <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
             <mass>0.0</mass>
-            <sigma>1.3</sigma>
+            <sigma>1.7</sigma>
             <epsilon>1.0</epsilon>
             <shifted>true</shifted>
         </site>
@@ -82,7 +82,7 @@
         <site type="LJ126" id="1" >
             <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
             <mass>4.0</mass>
-            <sigma>1.3</sigma>
+            <sigma>1.7</sigma>
             <epsilon>1.0</epsilon>
             <shifted>true</shifted>
         </site>

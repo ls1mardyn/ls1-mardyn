@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<components version="20100525">
+<!--
+
+************************************************************************
+*               Publishing with the MolMod Database                    *
+*  Every user agrees to cite the MolMod Database upon usage as follows *
+*                                                                      *
+*  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+*  MolMod – an Open Access Database of Force Fields for Molecular      *
+*  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+************************************************************************
+
+                               Model data
+
+ Substance     CO2_XI
+ CAS-No.       124-38-9
+ Reference     D. Möller and J. Fischer: Determination of an Effective
+               Intermolecular Potential for Carbon Dioxide Using Vapour-
+               Liquid Phase Equilibria from NpT + Test Particle Simulati
+               ons, Fluid Phase Equilibria 100, 15, 35-61 (1994) 10.1016
+               /0378-3812(94)80002-2
+
+-->
+    <moleculetype id="1" name="FP_CO2">
+        <site type="LJ126" id="1">
+            <coords><x>0.0</x><y>0.0</y><z>-0.3536241</z>   </coords>
+            <sigma>0.30354</sigma>
+            <epsilon>1.041943447</epsilon>
+            <mass>22.005</mass>
+            <shifted>true</shifted>
+        </site>
+        <site type="LJ126" id="2">
+            <coords><x>0.0</x><y>0.0</y><z>0.3536241</z>   </coords>
+            <sigma>0.30354</sigma>
+            <epsilon>1.041943447</epsilon>
+            <mass>22.005</mass>
+            <shifted>true</shifted>
+        </site>
+        <site type="Quadrupole" id="3">
+            <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+            <quadrupolemoment><theta>0.0</theta><phi>0.0</phi><abs>0.135521399</abs>   </quadrupolemoment>
+            <mass>0.0</mass>
+            <shifted>true</shifted>
+        </site>
+        <momentsofinertia rotaxes="xyz">
+            <Ixx>0.4953105612429</Ixx>
+            <Iyy>0.4953105612429</Iyy>
+            <Izz>0</Izz>
+        </momentsofinertia>
+    </moleculetype>
+
+<!--
+
+    ************************************************************************
+    *               Publishing with the MolMod Database                    *
+    *  Every user agrees to cite the MolMod Database upon usage as follows *
+    *                                                                      *
+    *  Simon Stephan, Martin T. Horsch, Jadran Vrabec & Hans Hasse:        *
+    *  MolMod – an Open Access Database of Force Fields for Molecular      *
+    *  Simulations of Fluids, Molecular Simulation, 45, 10, 806-814 (2019) *
+    ************************************************************************
+
+                                   Model data
+
+     Substance     CO2_III
+     CAS-No.       124-38-9
+     Reference     J. O. Hirschfelder, C. F. Curtiss and R. B. Bird: The Mol
+                   ecular Theory of Gases and Liquids, (1964)
+
+    -->
+    <moleculetype id="2" name="CG_CO2">
+        <site type="LJ126" id="1">
+            <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
+            <sigma>0.4486</sigma>
+            <epsilon>1.571433337</epsilon>
+            <mass>44.010</mass>
+        </site>
+        <momentsofinertia rotaxes="xyz">
+            <Ixx>0.4953105612429</Ixx>
+            <Iyy>0.4953105612429</Iyy>
+            <Izz>0</Izz>
+        </momentsofinertia>
+    </moleculetype>
+</components>
