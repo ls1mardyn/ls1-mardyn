@@ -236,3 +236,23 @@ void DensityProfile3D::computeDensities(ParticleContainer *particleContainer, Do
 const Interpolation::Function &DensityProfile3D::getHistDensity(int dim) const {
     return _histDensities[dim];
 }
+
+void DensityProfile3D::writeDensity(const std::string &filename, const std::string &separator, int dim, bool smoothed) {
+	std::vector<double> densities;
+	if(smoothed) densities = getDensitySmoothed(dim);
+	else densities = getDensity(dim);
+
+#ifdef ENABLE_MPI
+	if (_simulation.domainDecomposition().getRank() != 0) return;
+#endif
+	try {
+		std::ofstream file {filename};
+		for(unsigned long i = 0; i < densities.size()-1; i++) {
+			file << densities[i] << separator;
+		}
+		file << densities[densities.size()-1] << std::endl;
+	} catch (std::ifstream::failure& e) {
+		Log::global_log->error() << "[AdResS] Failed to write densities to file.\n" << e.what() << std::endl;
+		_simulation.exit(-1);
+	}
+}

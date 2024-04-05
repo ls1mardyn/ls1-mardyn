@@ -6,13 +6,15 @@
 #include "molecules/potforce.h"
 #include "AdResS.h"
 
-AdResSForceAdapter::AdResSForceAdapter(AdResS& plugin) : _plugin(plugin) {
+AdResSForceAdapter::AdResSForceAdapter(Resolution::Handler& resolutionHandler) : _resolutionHandler(resolutionHandler),
+																				 _mesoValues() {
     const int numThreads = mardyn_get_max_threads();
     Log::global_log->info() << "[AdResSForceAdapter]: allocate data for " << numThreads << " threads." << std::endl;
+
     _threadData.resize(numThreads);
-#if defined(_OPENMP)
-#pragma omp parallel
-#endif
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
     {
         auto* myown = new PP2PFAThreadData();
         const int myid = mardyn_get_thread_num();
@@ -21,9 +23,9 @@ AdResSForceAdapter::AdResSForceAdapter(AdResS& plugin) : _plugin(plugin) {
 }
 
 AdResSForceAdapter::~AdResSForceAdapter() noexcept {
-#if defined(_OPENMP)
-#pragma omp parallel
-#endif
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
     {
         const int myid = mardyn_get_thread_num();
         delete _threadData[myid];
@@ -31,50 +33,51 @@ AdResSForceAdapter::~AdResSForceAdapter() noexcept {
 }
 
 void AdResSForceAdapter::init() {
-    init(_plugin._domain);
-}
-
-void AdResSForceAdapter::init(Domain *domain) {
-#if defined(_OPENMP)
-#pragma omp parallel
-#endif
-    {
-        const int myid = mardyn_get_thread_num();
-        _threadData[myid]->initComp2Param(domain->getComp2Params());
-        _threadData[myid]->clear();
-    }
+    Domain* domain = _simulation.getDomain();
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const int myid = mardyn_get_thread_num();
+		_threadData[myid]->initComp2Param(domain->getComp2Params());
+		_threadData[myid]->clear();
+	}
 }
 
 void AdResSForceAdapter::finish() {
     for(auto tLocal : _threadData) {
-        _plugin._mesoVals._virial += tLocal->_virial;
-        _plugin._mesoVals._upot6LJ += tLocal->_upot6LJ;
-        _plugin._mesoVals._upotXpoles += tLocal->_upotXpoles;
-        _plugin._mesoVals._myRF += tLocal->_myRF;
+        _mesoValues._virial += tLocal->_virial;
+		_mesoValues._upot6LJ += tLocal->_upot6LJ;
+		_mesoValues._upotXpoles += tLocal->_upotXpoles;
+		_mesoValues._myRF += tLocal->_myRF;
     }
+
+	_mesoValues.setInDomain(_simulation.getDomain());
+	_mesoValues.clear();
 }
 
 double
-AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2, double *distanceVector, PairType pairType,
-                                double dd, bool calculateLJ) {
-    auto it = std::find_if(_plugin._fpRegions.begin(), _plugin._fpRegions.end(), [&](const FPRegion& region)->bool{
-        return (region.isInnerPointDomain(_plugin._domain, Hybrid, molecule1.r_arr()) && !region.isInnerPointDomain(_plugin._domain, FullParticle, molecule1.r_arr())) ||
-               (region.isInnerPointDomain(_plugin._domain, Hybrid, molecule2.r_arr()) && !region.isInnerPointDomain(_plugin._domain, FullParticle, molecule2.r_arr()));
+AdResSForceAdapter::processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], PairType pairType, double dd, bool calculateLJ) {
+	auto& regions = _resolutionHandler.getRegions();
+	auto* domain = _simulation.getDomain();
+    auto it = std::find_if(regions.begin(), regions.end(), [&](const Resolution::FPRegion& region)->bool{
+        return (region.isInnerPointDomain(domain, Resolution::Hybrid, particle1.r_arr()) && !region.isInnerPointDomain(domain, Resolution::FullParticle, particle1.r_arr())) ||
+               (region.isInnerPointDomain(domain, Resolution::Hybrid, particle2.r_arr()) && !region.isInnerPointDomain(domain, Resolution::FullParticle, particle2.r_arr()));
     });
     bool hasNoHybrid = false;
-    if(it == _plugin._fpRegions.end()) {
+    if(it == regions.end()) {
         hasNoHybrid = true;
-        it = _plugin._fpRegions.begin();
+        it = regions.begin();
     }
 
-    return processPair(molecule1, molecule2, distanceVector, pairType, dd, calculateLJ, _plugin._comp_to_res, hasNoHybrid, *it);
+    return processPair(particle1, particle2, distanceVector, pairType, dd, calculateLJ, _resolutionHandler.getCompResMap(), hasNoHybrid, *it);
 }
 
 double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2, double * distanceVector,
                                        PairType pairType,
                                        double dd, bool calculateLJ,
-                                       std::vector<Resolution> &compResMap, bool noHybrid,
-                                       FPRegion &region) {
+                                       const std::vector<Resolution::ResolutionType> &compResMap, bool noHybrid,
+									   const Resolution::FPRegion &region) {
     const int tid = mardyn_get_thread_num();
     PP2PFAThreadData &my_threadData = *_threadData[tid];
     ParaStrm& params = (* my_threadData._comp2Param)(molecule1.componentid(), molecule2.componentid());
@@ -111,15 +114,15 @@ void
 AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double * drm, double &Upot6LJ,
                              double &UpotXpoles,
                              double &MyRF, double Virial[3], bool calculateLJ, bool noHybrid,
-                             std::vector<Resolution> &compResMap, FPRegion &region) {
+                             const std::vector<Resolution::ResolutionType> &compResMap, const Resolution::FPRegion &region) {
     if(noHybrid) {
         PotForce(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ);
         return;
     }
 
     bool isHybridI, isHybridJ;
-    isHybridI = compResMap[mi.componentid()] == Hybrid;
-    isHybridJ = compResMap[mj.componentid()] == Hybrid;
+    isHybridI = compResMap[mi.componentid()] == Resolution::Hybrid;
+    isHybridJ = compResMap[mj.componentid()] == Resolution::Hybrid;
 
     if(isHybridI && isHybridJ) {
         potForceFullHybrid(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ, region);
@@ -143,15 +146,15 @@ AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaS
 
 void AdResSForceAdapter::fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double *drm, double &Upot6LJ,
                                   double &UpotXpoles, double &MyRF, bool calculateLJ, bool noHybrid,
-                                  std::vector<Resolution> &compResMap, FPRegion &region) {
+                                  const std::vector<Resolution::ResolutionType> &compResMap, const Resolution::FPRegion &region) {
     if(noHybrid) {
         FluidPot(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ);
         return;
     }
 
     bool isHybridI, isHybridJ;
-    isHybridI = compResMap[mi.componentid()] == Hybrid;
-    isHybridJ = compResMap[mj.componentid()] == Hybrid;
+    isHybridI = compResMap[mi.componentid()] == Resolution::Hybrid;
+    isHybridJ = compResMap[mj.componentid()] == Resolution::Hybrid;
 
     if(isHybridI && isHybridJ) {
         fluidPotFullHybrid(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ, region);
@@ -175,7 +178,7 @@ void
 AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &params, double * drm,
                                        double &Upot6LJ,
                                        double &UpotXpoles, double &MyRF, double Virial[3], bool calculateLJ,
-                                       FPRegion &region) {
+									   const Resolution::FPRegion &region) {
     auto& components = *_simulation.getEnsemble()->getComponents();
     // F_a,b = w(r_a)w(r_b)F_FP(a, b) + (1-w(r_a))(1-w(r_b))F_CG(a, b)
     // the first X sites of the component k with mass 0 are part of the CG model
@@ -505,8 +508,8 @@ void
 AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &params, double * drm,
                                          double &Upot6LJ,
                                          double &UpotXpoles, double &MyRF, double Virial[3], bool calculateLJ,
-                                         FPRegion &region,
-                                         Resolution resolutionJ) {
+										 const Resolution::FPRegion &region,
+										 Resolution::ResolutionType resolutionJ) {
     auto& components = *_simulation.getEnsemble()->getComponents();
     // F_a,b = w(r_a)w(r_b)F_FP(a, b) + (1-w(r_a))(1-w(r_b))F_CG(a, b)
     // the first X sites of the component k with mass 0 are part of the CG model
@@ -534,8 +537,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             bool isCGSiteI = si < nCG_LJ;
             for (unsigned int sj = 0; sj < nc2; ++sj) {
                 //both sites must be CG or FP but not mixed
-                if((resolutionJ == CoarseGrain && !isCGSiteI) ||
-                   (resolutionJ == FullParticle && isCGSiteI)) {
+                if((resolutionJ == Resolution::CoarseGrain && !isCGSiteI) ||
+                   (resolutionJ == Resolution::FullParticle && isCGSiteI)) {
                     double tmp; params >> tmp; params >> tmp; params >> tmp;
                     continue;
                 }
@@ -583,8 +586,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         const std::array<double,3> dii = mi.charge_d_abs(si);
         // Charge-Charge
         for (unsigned sj = 0; sj < ne2; sj++) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -606,8 +609,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
         // Charge-Quadrupole
         for (unsigned sj = 0; sj < nq2; sj++) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -631,8 +634,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
         // Charge-Dipole
         for (unsigned sj = 0; sj < nd2; sj++) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -663,8 +666,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
 
         // Quadrupole-Charge
         for (unsigned sj = 0; sj < ne2; sj++) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -687,8 +690,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
         // Quadrupole-Quadrupole -------------------
         for (unsigned int sj = 0; sj < nq2; ++sj) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -714,8 +717,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
         // Quadrupole-Dipole -----------------------
         for (unsigned int sj = 0; sj < nd2; ++sj) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -746,8 +749,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         const std::array<double,3> eii = mi.dipole_e(si);
         // Dipole-Charge
         for (unsigned sj = 0; sj < ne2; sj++) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -770,8 +773,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
         // Dipole-Quadrupole -----------------------
         for (unsigned int sj = 0; sj < nq2; ++sj) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -796,8 +799,8 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
         // Dipole-Dipole ---------------------------
         for (unsigned int sj = 0; sj < nd2; ++sj) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp; params >> tmp;
                 continue;
             }
@@ -831,7 +834,7 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
 }
 
 void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &params, double *drm, double &Upot6LJ,
-                                            double &UpotXpoles, double &MyRF, bool calculateLJ, FPRegion &region) {
+                                            double &UpotXpoles, double &MyRF, bool calculateLJ, const Resolution::FPRegion &region) {
     auto& components = *_simulation.getEnsemble()->getComponents();
     // F_a,b = w(r_a)w(r_b)F_FP(a, b) + (1-w(r_a))(1-w(r_b))F_CG(a, b)
     // the first X sites of the component k with mass 0 are part of the CG model
@@ -1073,8 +1076,8 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
 
 void
 AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &params, double *drm, double &Upot6LJ,
-                                         double &UpotXpoles, double &MyRF, bool calculateLJ, FPRegion &region,
-                                         Resolution resolutionJ) {
+                                         double &UpotXpoles, double &MyRF, bool calculateLJ, const Resolution::FPRegion &region,
+										 Resolution::ResolutionType resolutionJ) {
     auto& components = *_simulation.getEnsemble()->getComponents();
     // F_a,b = w(r_a)w(r_b)F_FP(a, b) + (1-w(r_a))(1-w(r_b))F_CG(a, b)
     // the first X sites of the component k with mass 0 are part of the CG model
@@ -1099,8 +1102,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             bool isCGSiteI = si < nCG_LJ;
             for (unsigned int sj = 0; sj < nc2; ++sj) {
                 //both sites must be CG or FP but not mixed
-                if((resolutionJ == CoarseGrain && !isCGSiteI) ||
-                   (resolutionJ == FullParticle && isCGSiteI)) {
+                if((resolutionJ == Resolution::CoarseGrain && !isCGSiteI) ||
+                   (resolutionJ == Resolution::FullParticle && isCGSiteI)) {
                     double tmp; params >> tmp; params >> tmp; params >> tmp;
                     continue;
                 }
@@ -1141,8 +1144,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         const std::array<double,3> dii = mi.charge_d_abs(si);
         // Charge-Charge
         for (unsigned sj = 0; sj < ne2; sj++) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1157,8 +1160,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
         // Charge-Quadrupole
         for (unsigned sj = 0; sj < nq2; sj++) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1174,8 +1177,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
         // Charge-Dipole
         for (unsigned sj = 0; sj < nd2; sj++) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1198,8 +1201,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
 
         // Quadrupole-Charge
         for (unsigned sj = 0; sj < ne2; sj++) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1214,8 +1217,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
         // Quadrupole-Quadrupole -------------------
         for (unsigned int sj = 0; sj < nq2; ++sj) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1232,8 +1235,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
         // Quadrupole-Dipole -----------------------
         for (unsigned int sj = 0; sj < nd2; ++sj) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1256,8 +1259,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         const std::array<double,3> eii = mi.dipole_e(si);
         // Dipole-Charge
         for (unsigned sj = 0; sj < ne2; sj++) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1272,8 +1275,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
         // Dipole-Quadrupole -----------------------
         for (unsigned int sj = 0; sj < nq2; ++sj) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1290,8 +1293,8 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
         // Dipole-Dipole ---------------------------
         for (unsigned int sj = 0; sj < nd2; ++sj) {
-            if((resolutionJ == CoarseGrain && !isCG_i) ||
-               (resolutionJ == FullParticle && isCG_i)) {
+            if((resolutionJ == Resolution::CoarseGrain && !isCG_i) ||
+               (resolutionJ == Resolution::FullParticle && isCG_i)) {
                 double tmp; params >> tmp; params >> tmp;
                 continue;
             }

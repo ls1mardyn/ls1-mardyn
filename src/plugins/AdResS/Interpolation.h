@@ -6,6 +6,7 @@
 #define MARDYN_INTERPOLATION_H
 
 #include <vector>
+#include <string>
 
 namespace Interpolation {
     /**
@@ -22,6 +23,8 @@ namespace Interpolation {
         std::vector<double> function_values;
         //! @brief samples of f'(x)
         std::vector<double> gradients;
+		//! @brief write this function to file in XML format
+		void writeXML(const std::string &filename);
     };
 
     /**

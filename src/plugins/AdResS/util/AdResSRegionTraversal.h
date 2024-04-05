@@ -8,8 +8,8 @@
 #include <array>
 #include <unordered_map>
 #include "particleContainer/ParticleContainer.h"
-#include "plugins/AdResS/AdResSData.h"
 #include "plugins/AdResS/AdResSForceAdapter.h"
+#include "Region.h"
 
 /**
  * Handles the traversal of a region defined by two corner points, that do not overlap with the cell structure of any
@@ -30,9 +30,9 @@ public:
      * @param compMap mapping of component IDs to their actual resolution
      * */
     AdResSRegionTraversal(std::array<double, 3> checkLow, std::array<double, 3> checkHigh,
-                          ParticleContainer* particleContainer, std::vector<Resolution>& compMap);
+                          ParticleContainer* particleContainer, std::vector<Resolution::ResolutionType>& compMap);
 
-    void traverse(AdResSForceAdapter& forceAdapter, FPRegion& region, bool invert);
+    void traverse(AdResSForceAdapter& forceAdapter, Resolution::FPRegion& region, bool invert);
 
 private:
     //! @brief Since we are working an cells structure on top of the existing one, this gives offsets to get neighbours
@@ -46,7 +46,7 @@ private:
     //! @brief dimensions of cell structure in cells
     std::array<long, 3> _dims;
     //! @brief mapping of component ids to a AdResS resolution
-    std::vector<Resolution>& _comp_to_res;
+    std::vector<Resolution::ResolutionType>& _comp_to_res;
     //! @brief cutoff distance
     double _cutoff;
     //! @brief cutoff squared
@@ -58,8 +58,8 @@ private:
     //! @brief size of the simulation
     std::array<double,3> _globLen;
 
-    void processCell(RegionParticleIterator& cell, AdResSForceAdapter& forceAdapter, FPRegion& region, bool invert);
-    void processCellPair(RegionParticleIterator& cell1, RegionParticleIterator& cell2, AdResSForceAdapter& forceAdapter, FPRegion& region, bool invert);
+    void processCell(RegionParticleIterator& cell, AdResSForceAdapter& forceAdapter, Resolution::FPRegion& region, bool invert);
+    void processCellPair(RegionParticleIterator& cell1, RegionParticleIterator& cell2, AdResSForceAdapter& forceAdapter, Resolution::FPRegion& region, bool invert);
 };
 
 

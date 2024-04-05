@@ -6,6 +6,10 @@
 #include "plugins/AdResS/AdResS.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "plugins/AdResS/Interpolation.h"
+#include "plugins/AdResS/util/Region.h"
+#include "plugins/AdResS/util/WeightFunction.h"
+#include "plugins/AdResS/features/Resolution.h"
+#include "plugins/AdResS/features/FTH.h"
 
 TEST_SUITE_REGISTRATION(AdResSTest);
 
@@ -16,26 +20,29 @@ AdResSTest::~AdResSTest() = default;
 void AdResSTest::computeForcesTest() {
     std::unique_ptr<AdResS> plugin;
     ParticleContainer *container = nullptr;
-    FPRegion region({4, 4, 4}, {6, 6, 6}, {2, 2, 2});
+	Resolution::FPRegion region({4, 4, 4}, {6, 6, 6}, {2, 2, 2});
+	std::vector<Component>* components = nullptr;
     //init
     {
         const char *filename = "AdResS-empty-10x10x10.inp";
         container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, 2);
 
         plugin = std::make_unique<AdResS>();
-        plugin->_particleContainer = container;
-
+		components = _simulation.getEnsemble()->getComponents();
+		Resolution::Config r_conf {
+			components, _simulation.getDomain(), {}, {}
+		};
+		FTH::Config f_conf { false, false, false, false };
         region.init();
-        plugin->_fpRegions.emplace_back(region);
-        plugin->_components = _simulation.getEnsemble()->getComponents();
-        plugin->_comp_to_res.resize(6);
-        for (int i = 0; i < 6; i++) plugin->_comp_to_res[i] = static_cast<Resolution>(i % 3);
-        plugin->_domain = _simulation.getDomain();
-        plugin->weight = plugin->weightNearest;
-        plugin->_enableThermodynamicForce = false;
-        plugin->_createThermodynamicForce = false;
+		r_conf.fpRegions.emplace_back(region);
+		r_conf.comp_to_res.resize(6);
+        for (int i = 0; i < 6; i++) r_conf.comp_to_res[i] = static_cast<Resolution::ResolutionType>(i % 3);
+        plugin->weight = Weight::nearest;
+
+		plugin->_resolutionHandler = Resolution::Handler(r_conf);
+		plugin->_fthHandler = FTH::Handler(f_conf);
     }
-    ParticlePairsHandler *pairHandler = new AdResSForceAdapter(*plugin);
+    ParticlePairsHandler *pairHandler = new AdResSForceAdapter(plugin->_resolutionHandler);
     CellProcessor *cellProcessor = new LegacyCellProcessor(2, 2, pairHandler);
 
     /*
@@ -47,8 +54,8 @@ void AdResSTest::computeForcesTest() {
         for (int cy = 1; cy <= 9; cy += 2) {
             for (int cx = 1; cx <= 9; cx += 2) {
                 //add 2 molecules, set correct component through plugin and let them interact
-                Molecule m1(0, &plugin->_components->at(2), cx - 0.5, cy, cz, 0, 0, 0, 1, 0, 0, 0);
-                Molecule m2(1, &plugin->_components->at(2), cx + 0.5, cy, cz, 0, 0, 0, 1, 0, 0, 0);
+                Molecule m1(0, &components->at(2), cx - 0.5, cy, cz, 0, 0, 0, 1, 0, 0, 0);
+                Molecule m2(1, &components->at(2), cx + 0.5, cy, cz, 0, 0, 0, 1, 0, 0, 0);
                 container->addParticle(m1);
                 container->addParticle(m2);
                 plugin->beforeForces(container, &_simulation.domainDecomposition(), 0);

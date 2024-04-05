@@ -27,7 +27,6 @@
 #include "parallel/KDDStaticValues.h"
 #include "parallel/KDNode.h"
 #include "parallel/ParticleData.h"
-#include "plugins/AdResS/AdResSData.h"
 #include "plugins/AdResS/AdResS.h"
 
 using namespace std;
@@ -40,7 +39,7 @@ AdResSKDDecomposition::AdResSKDDecomposition(double cutoffRadius, int numParticl
 	  _numParticleTypes{numParticleTypes},
 	  _partitionRank{calculatePartitionRank()},
 	  _vecTunParticleNums(_numParticleTypes, 50),
-      _plugin(nullptr) {
+      _resolutionHandler(nullptr) {
 	_loadCalc = new TradLoad();
 	_measureLoadCalc = nullptr;
 
@@ -1423,12 +1422,13 @@ void AdResSKDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeC
 			}
             unsigned int particles;
             if (molPtr->componentid() % Resolution::ResolutionCount == Resolution::Hybrid) {
-                if(!_plugin) particles = molPtr->numSites();
+                if(!_resolutionHandler) particles = molPtr->numSites();
                 else {
-                    auto it = std::find_if(_plugin->_fpRegions.begin(), _plugin->_fpRegions.end(), [&](const FPRegion& region)->bool{
-                        return (region.isInnerPointDomain(_plugin->_domain, Hybrid, molPtr->r_arr()) && !region.isInnerPointDomain(_plugin->_domain, FullParticle, molPtr->r_arr()));
+					auto& regions = _resolutionHandler->getRegions();
+                    auto it = std::find_if(regions.begin(), regions.end(), [&](const Resolution::FPRegion& region)->bool{
+                        return (region.isInnerPointDomain(_simulation.getDomain(), Resolution::Hybrid, molPtr->r_arr()) && !region.isInnerPointDomain(_simulation.getDomain(), Resolution::FullParticle, molPtr->r_arr()));
                     });
-                    if(it == _plugin->_fpRegions.end()) it = _plugin->_fpRegions.begin();
+                    if(it == regions.end()) it = regions.begin();
                     double weight = AdResS::weight(molPtr->r_arr(), *it);
                     particles = (int) (weight * (double) _simulation.getEnsemble()->getComponents()->at(molPtr->componentid() + 1).numSites());
                     particles += (int) ((1-weight) * (double) _simulation.getEnsemble()->getComponents()->at(molPtr->componentid() - 1).numSites());
@@ -1892,6 +1892,6 @@ void AdResSKDDecomposition::printTree(std::ostream& ostream) {
 	_decompTree->printTree("", ostream);
 }
 
-void AdResSKDDecomposition::setAdResSPlugin(AdResS *ptr) {
-    _plugin = ptr;
+void AdResSKDDecomposition::setResolutionHandler(Resolution::Handler &handler) {
+	_resolutionHandler = &handler;
 }

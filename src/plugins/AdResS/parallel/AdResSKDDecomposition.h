@@ -14,6 +14,7 @@
 #include "parallel/ParticleDataForwardDeclaration.h"
 #include "particleContainer/adapter/CellProcessor.h"
 #include "parallel/LoadCalc.h"
+#include "plugins/AdResS/features/Resolution.h"
 
 class KDNode;
 class AdResS;
@@ -53,7 +54,7 @@ class AdResSKDDecomposition: public DomainDecompMPIBase {
 
 	void init(Domain* domain);
 
-    void setAdResSPlugin(AdResS* ptr);
+    void setResolutionHandler(Resolution::Handler& handler);
 
 	~AdResSKDDecomposition() override;
 
@@ -422,8 +423,8 @@ private:
 
 	double _rebalanceLimit{0.}; ///< limit for the fraction max/min time used in traversal before automatic rebalacing
 
-    //! reference to AdResS plugin
-    AdResS* _plugin;
+    //! reference to AdResS Resolution submodule
+	Resolution::Handler* _resolutionHandler;
 
 	/**
 	 * MPI reduction operation to reduce the deviation within the decompose step.

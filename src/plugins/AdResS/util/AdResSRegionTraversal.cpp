@@ -8,7 +8,7 @@
 
 AdResSRegionTraversal::AdResSRegionTraversal(std::array<double, 3> checkLow, std::array<double, 3> checkHigh,
                                              ParticleContainer* particleContainer,
-                                             std::vector<Resolution>& compMap) :
+                                             std::vector<Resolution::ResolutionType>& compMap) :
                                              _cellPairOffsets8Pack(), _particleContainer(particleContainer),
                                              _cells(), _end(), _dims(), _comp_to_res(compMap), _cutoff(0), _cutoff2(0),
                                              _ljcutoff2(0), _cellSize(0), _globLen({0,0,0}){
@@ -82,7 +82,7 @@ AdResSRegionTraversal::AdResSRegionTraversal(std::array<double, 3> checkLow, std
     }
 }
 
-void AdResSRegionTraversal::traverse(AdResSForceAdapter& forceAdapter, FPRegion& region, bool invert) {
+void AdResSRegionTraversal::traverse(AdResSForceAdapter& forceAdapter, Resolution::FPRegion& region, bool invert) {
     #if defined(_OPENMP)
     #pragma omp parallel
     #endif
@@ -123,7 +123,7 @@ void AdResSRegionTraversal::traverse(AdResSForceAdapter& forceAdapter, FPRegion&
     } // end omp parallel
 }
 
-void AdResSRegionTraversal::processCell(RegionParticleIterator &cellIt, AdResSForceAdapter& forceAdapter, FPRegion& region, bool invert) {
+void AdResSRegionTraversal::processCell(RegionParticleIterator &cellIt, AdResSForceAdapter& forceAdapter, Resolution::FPRegion& region, bool invert) {
     std::array<double, 3> dist = {0,0,0};
     // let every molecule in the box created by checkLow and checkHigh interact with the hybrid molecules in this region
     for(; cellIt.isValid(); ++cellIt) {
@@ -136,14 +136,14 @@ void AdResSRegionTraversal::processCell(RegionParticleIterator &cellIt, AdResSFo
             mardyn_assert(&m1 != &m2);
 
             //check if inner is FP or CG -> skip
-            if(_comp_to_res[m2.componentid()] != Hybrid) continue;
+            if(_comp_to_res[m2.componentid()] != Resolution::Hybrid) continue;
 
             //check distance
             double dd = m1.dist2(m2, dist.data());
             if(dd < _cutoff2) {
                 PairType type = MOLECULE_MOLECULE;
-                if(!FPRegion::isInnerPoint(m1.r_arr(), {0,0,0}, _globLen) ||
-                   !FPRegion::isInnerPoint(m2.r_arr(), {0,0,0}, _globLen)) {
+                if(!Resolution::FPRegion::isInnerPoint(m1.r_arr(), {0,0,0}, _globLen) ||
+                   !Resolution::FPRegion::isInnerPoint(m2.r_arr(), {0,0,0}, _globLen)) {
                     type = MOLECULE_HALOMOLECULE;
                 }
 
@@ -155,7 +155,7 @@ void AdResSRegionTraversal::processCell(RegionParticleIterator &cellIt, AdResSFo
     }
 }
 
-void AdResSRegionTraversal::processCellPair(RegionParticleIterator &cell1, RegionParticleIterator& cell2, AdResSForceAdapter& forceAdapter, FPRegion& region, bool invert) {
+void AdResSRegionTraversal::processCellPair(RegionParticleIterator &cell1, RegionParticleIterator& cell2, AdResSForceAdapter& forceAdapter, Resolution::FPRegion& region, bool invert) {
     std::array<double, 3> dist = {0,0,0};
     // let every molecule in the box created by checkLow and checkHigh interact with the hybrid molecules in this region
     for(auto cell1It = RegionParticleIterator(cell1); cell1It.isValid(); ++cell1It) {
@@ -163,13 +163,13 @@ void AdResSRegionTraversal::processCellPair(RegionParticleIterator &cell1, Regio
 
         for(auto cell2It = RegionParticleIterator(cell2); cell2It.isValid(); ++cell2It) {
             Molecule& m2 = *cell2It; // must be hybrid
-            if(_comp_to_res[m2.componentid()] != Hybrid) continue;
+            if(_comp_to_res[m2.componentid()] != Resolution::Hybrid) continue;
             //check distance
             double dd = m1.dist2(m2, dist.data());
             if(dd < _cutoff2) {
                 PairType type = MOLECULE_MOLECULE;
-                if(!FPRegion::isInnerPoint(m1.r_arr(), {0,0,0}, _globLen) ||
-                   !FPRegion::isInnerPoint(m2.r_arr(), {0,0,0}, _globLen)) {
+                if(!Resolution::FPRegion::isInnerPoint(m1.r_arr(), {0,0,0}, _globLen) ||
+                   !Resolution::FPRegion::isInnerPoint(m2.r_arr(), {0,0,0}, _globLen)) {
                     type = MOLECULE_HALOMOLECULE;
                 }
                 //recompute force and invert it -> last bool param is true
@@ -181,17 +181,17 @@ void AdResSRegionTraversal::processCellPair(RegionParticleIterator &cell1, Regio
 
     for(auto cell1It = RegionParticleIterator(cell1); cell1It.isValid(); ++cell1It) {
         Molecule& m1 = *cell1It; // this can be of any type
-        if(_comp_to_res[m1.componentid()] != Hybrid) continue;
+        if(_comp_to_res[m1.componentid()] != Resolution::Hybrid) continue;
 
         for(auto cell2It = RegionParticleIterator(cell2); cell2It.isValid(); ++cell2It) {
             Molecule& m2 = *cell2It; // must be hybrid
-            if(_comp_to_res[m2.componentid()] == Hybrid) continue;
+            if(_comp_to_res[m2.componentid()] == Resolution::Hybrid) continue;
             //check distance
             double dd = m1.dist2(m2, dist.data());
             if(dd < _cutoff2) {
                 PairType type = MOLECULE_MOLECULE;
-                if(!FPRegion::isInnerPoint(m1.r_arr(), {0,0,0}, _globLen) ||
-                   !FPRegion::isInnerPoint(m2.r_arr(), {0,0,0}, _globLen)) {
+                if(!Resolution::FPRegion::isInnerPoint(m1.r_arr(), {0,0,0}, _globLen) ||
+                   !Resolution::FPRegion::isInnerPoint(m2.r_arr(), {0,0,0}, _globLen)) {
                     type = MOLECULE_HALOMOLECULE;
                 }
                 //recompute force and invert it -> last bool param is true

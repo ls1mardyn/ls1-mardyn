@@ -8,7 +8,7 @@
 
 #include <vector>
 #include "particleContainer/adapter/CellProcessor.h"
-#include "plugins/AdResS/AdResSData.h"
+#include "Region.h"
 
 /**
  * Traverses all cells and maps all cells, that interact with each other while at least
@@ -25,7 +25,7 @@ public:
      * @param fpRegions reference to all FP regions from the AdResS plugin instance
      * */
     explicit InteractionLogProcessor(const double cutoffRadius, const double ljCutoffRadius,
-                                     const std::vector<FPRegion> &fpRegions);
+                                     const std::vector<Resolution::FPRegion> &fpRegions);
     //! @brief does nothing
     ~InteractionLogProcessor() override;
     //! @brief does nothing
@@ -51,7 +51,7 @@ public:
 
 private:
     //! @brief reference to all FP regions from AdResS plugin instance
-    const std::vector<FPRegion>& _fpRegions;
+    const std::vector<Resolution::FPRegion>& _fpRegions;
 
     //! @brief map of index of FP region to all related Particle Cells
     std::unordered_map<unsigned long, std::set<ParticleCell*>> _fprID_to_cells;

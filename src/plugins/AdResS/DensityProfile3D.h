@@ -7,6 +7,7 @@
 
 #include <array>
 #include <vector>
+#include <string>
 #include "Domain.h"
 #include "Interpolation.h"
 #include "parallel/DomainDecompBase.h"
@@ -20,6 +21,8 @@ public:
     [[nodiscard]] std::vector<double> getDensitySmoothed(int dim) const;
     void computeDensities(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
     [[nodiscard]] const Interpolation::Function& getHistDensity(int dim) const;
+	//! @brief writes densities currently in global buffer
+	void writeDensity(const std::string &filename, const std::string &separator, int dim, bool smoothed);
 private:
     double _binWidth;
     double _rho0;

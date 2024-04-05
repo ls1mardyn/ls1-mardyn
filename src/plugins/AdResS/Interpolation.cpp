@@ -5,11 +5,36 @@
 #include "utils/mardyn_assert.h"
 #include "Interpolation.h"
 #include "Simulation.h"
+#include "parallel/DomainDecompBase.h"
 
 #include <array>
 #include <vector>
 
 using Log::global_log;
+
+void Interpolation::Function::writeXML(const std::string &filename) {
+#ifdef ENABLE_MPI
+	if (_simulation.domainDecomposition().getRank() != 0) return;
+#endif
+	try {
+		std::ofstream file {filename};
+		file << "<forceFunction>\n";
+		file << "    <startX>" << begin << "</startX>\n";
+		for(unsigned long i = 0; i < n; i++) {
+			file << "    <samplePoint id=\"" << i + 1 <<"\">\n";
+			file << "    " << "    <grad>" << gradients[i] << "</grad>\n";
+			file << "    " << "    <func>" << function_values[i] << "</func>\n";
+			if(i < n - 1) file << "    " << "    <step>" << step_width[i] << "</step>\n";
+			file << "    </samplePoint>\n";
+		}
+		file << "</forceFunction>\n";
+		file.flush();
+		file.close();
+	} catch (std::ifstream::failure& e) {
+		global_log->error() << "[AdResS] Failed to write Interpolation function.\n" << e.what() << std::endl;
+		_simulation.exit(-1);
+	}
+}
 
 /**
  * @param begin starting index of folding
