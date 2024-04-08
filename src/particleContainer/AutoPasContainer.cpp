@@ -130,6 +130,7 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	_containerChoices = _autopasContainer.getAllowedContainers();
 	_selectorStrategy = _autopasContainer.getSelectorStrategy();
 	_tuningStrategyOptions = _autopasContainer.getTuningStrategyOptions();
+	_tuningMetricOptions = _autopasContainer.getTuningMetricOptions();
 	_tuningAcquisitionFunction = _autopasContainer.getAcquisitionFunction();
 	_dataLayoutChoices = _autopasContainer.getAllowedDataLayouts();
 	_newton3Choices = _autopasContainer.getAllowedNewton3Options();
@@ -203,6 +204,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 			 .begin();
 	_tuningStrategyOptions =
 		parseAutoPasOption<autopas::TuningStrategyOption, std::vector<autopas::TuningStrategyOption>>(xmlconfig, "tuningStrategies", {_tuningStrategyOptions});
+	_tuningMetricOptions = parseAutoPasOption<autopas::TuningMetricOption>(xmlconfig, "tuningMetric", {_tuningMetricOptions});
 	_extrapolationMethod = *parseAutoPasOption<autopas::ExtrapolationMethodOption>(xmlconfig, "extrapolationMethod",
 																				   {_extrapolationMethod})
 								.begin();
@@ -320,6 +322,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setAllowedDataLayouts(_dataLayoutChoices);
 	_autopasContainer.setAllowedNewton3Options(_newton3Choices);
 	_autopasContainer.setTuningStrategyOption(_tuningStrategyOptions);
+	_autopasContainer.setTuningMetricOptions(_tuningMetricOptions);
 	_autopasContainer.setRuleFileName(_ruleFileName);
 	_autopasContainer.setAcquisitionFunction(_tuningAcquisitionFunction);
 	_autopasContainer.setMaxEvidence(_maxEvidence);
@@ -348,6 +351,9 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 					   << "\n"
 					   << std::setw(valueOffset) << std::left << "Newton3"
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options())
+					   << "\n"
+					   << std::setw(valueOffset) << std::left << "Tuning Metric Options"
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getTuningMetricOptions())
 					   << "\n"
 					   << std::setw(valueOffset) << std::left << "Tuning strategies "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getTuningStrategyOptions())
