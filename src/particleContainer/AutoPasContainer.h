@@ -166,6 +166,7 @@ private:
 	std::set<autopas::ContainerOption> _containerChoices;
 	autopas::SelectorStrategyOption _selectorStrategy;
 	std::vector<autopas::TuningStrategyOption> _tuningStrategyOptions;
+	autopas::TuningMetricOption _tuningMetricOption;
 	autopas::ExtrapolationMethodOption _extrapolationMethod;
 	autopas::AcquisitionFunctionOption _tuningAcquisitionFunction;
 	std::set<autopas::DataLayoutOption> _dataLayoutChoices;
