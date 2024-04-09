@@ -245,8 +245,8 @@
         <!-- set the tuning auto tuning pipeline -->
         <!-- Leave this empty for an exhaustive full search or add any number of strategies that are applied in the stated order -->
         <tuningStrategies>ruleBasedTuning, predictiveTuning</tuningStrategies>
-        <!-- autopas optimizes the simulation based on tuning metric, default option is time -->
-        <tuningMetric>time, energy</tuningMetric>
+        <!-- autopas optimizes the simulation based on tuning metric: time, energy, default option is time -->
+        <tuningMetric>energy</tuningMetric>
         <!-- Data layouts to be used: AoS, SoA -->
         <dataLayouts>SoA</dataLayouts>
         <!-- Allowed choices for newton 3 optimization: enabled, disabled -->
