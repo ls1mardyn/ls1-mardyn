@@ -352,7 +352,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 					   << std::setw(valueOffset) << std::left << "Newton3"
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options())
 					   << "\n"
-					   << std::setw(valueOffset) << std::left << "Tuning Metric Options"
+					   << std::setw(valueOffset) << std::left << "Tuning Metric"
 					   << ": " << _autopasContainer.getTuningMetricOption() << "\n"
 					   << std::setw(valueOffset) << std::left << "Tuning strategies "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getTuningStrategyOptions())
