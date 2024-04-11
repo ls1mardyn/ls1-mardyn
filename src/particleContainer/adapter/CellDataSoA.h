@@ -58,20 +58,23 @@ public:
 	ConcatenatedSites<vcp_real_accum> _centers_V;
 
 	// entries per lj center
-	AlignedArray<vcp_ljc_id_t> _ljc_id;
+	AlignedArray<vcp_center_id_t> _ljc_id;
 
 	// entries per charge
 	AlignedArray<vcp_real_calc> _charges_q;
+	AlignedArray<vcp_center_id_t> _chargesc_id;
 
 	// entries per dipole
 	AlignedArray<vcp_real_calc> _dipoles_p; // dipole moment
 	AlignedArrayTriplet<vcp_real_calc> _dipoles_e; // orientation vector of dipole moment
 	AlignedArrayTriplet<vcp_real_accum> _dipoles_M; // torque vector
+	AlignedArray<vcp_center_id_t> _dipolesc_id;
 
 	// entries per quadrupole
 	AlignedArray<vcp_real_calc> _quadrupoles_m; // quadrupole moment
 	AlignedArrayTriplet<vcp_real_calc> _quadrupoles_e; // orientation vector of quadrupole moment
 	AlignedArrayTriplet<vcp_real_accum> _quadrupoles_M; // torque vector
+	AlignedArray<vcp_center_id_t> _quadrupolesc_id;
 
 
 	/**
@@ -135,7 +138,7 @@ public:
 	/**
 	 * \brief	Add a set of LJC-data at position index
 	 */
-	void pushBackLJC(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos, vcp_ljc_id_t lookUpIndex) {
+	void pushBackLJC(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos, vcp_center_id_t lookUpIndex) {
 		setTripletCalc(moleculePos, QuantityType::MOL_POSITION, SiteType::LJC, index);
 		setTripletCalc(centerPos, QuantityType::CENTER_POSITION, SiteType::LJC, index);
 		_ljc_id[index] = lookUpIndex;
@@ -144,36 +147,39 @@ public:
 	/**
 	 * \brief	Add a set of charge-data at position index
 	 */
-	void pushBackCharge(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos, vcp_real_calc charge) {
+	void pushBackCharge(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos, vcp_real_calc charge, vcp_center_id_t lookUpIndex) {
 		setTripletCalc(moleculePos, QuantityType::MOL_POSITION, SiteType::CHARGE, index);
 		setTripletCalc(centerPos, QuantityType::CENTER_POSITION, SiteType::CHARGE, index);
 		_charges_q[index] = charge;
+		_chargesc_id[index] = lookUpIndex;
 	}
 
 	/**
 	 * \brief	Add a set of dipole-data at position index
 	 */
 	void pushBackDipole(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos,
-			vcp_real_calc dipoleMoment, std::array<vcp_real_calc,3> orientation) {
+			vcp_real_calc dipoleMoment, std::array<vcp_real_calc,3> orientation, vcp_center_id_t lookUpIndex) {
 		setTripletCalc(moleculePos, QuantityType::MOL_POSITION, SiteType::DIPOLE, index);
 		setTripletCalc(centerPos, QuantityType::CENTER_POSITION, SiteType::DIPOLE, index);
 		_dipoles_p[index] = dipoleMoment;
 		_dipoles_e.x(index) = orientation[0];
 		_dipoles_e.y(index) = orientation[1];
 		_dipoles_e.z(index) = orientation[2];
+		_dipolesc_id[index] = lookUpIndex;
 	}
 
 	/**
 	 * \brief	Add a set of quadrupole-data at position index
 	 */
 	void pushBackQuadrupole(const size_t index, std::array<vcp_real_calc,3> moleculePos, std::array<vcp_real_calc,3> centerPos,
-			vcp_real_calc quadrupoleMoment, std::array<vcp_real_calc,3> orientation) {
+			vcp_real_calc quadrupoleMoment, std::array<vcp_real_calc,3> orientation, vcp_center_id_t lookUpIndex) {
 		setTripletCalc(moleculePos, QuantityType::MOL_POSITION, SiteType::QUADRUPOLE, index);
 		setTripletCalc(centerPos, QuantityType::CENTER_POSITION, SiteType::QUADRUPOLE, index);
 		_quadrupoles_m[index] = quadrupoleMoment;
 		_quadrupoles_e.x(index) = orientation[0];
 		_quadrupoles_e.y(index) = orientation[1];
 		_quadrupoles_e.z(index) = orientation[2];
+		_quadrupolesc_id[index] = lookUpIndex;
 	}
 
 	void vcp_inline initDistLookupPointers(
@@ -233,17 +239,19 @@ public:
 
 		// entries per charge
 		_charges_q.resize_zero_shrink(_charges_num);
+		_chargesc_id.resize_zero_shrink(_charges_num, true);
 
 		// entries per dipole
 		_dipoles_p.resize_zero_shrink(_dipoles_num);
 		_dipoles_e.resize_zero_shrink(_dipoles_num);
 		_dipoles_M.resize_zero_shrink(_dipoles_num);
+		_dipolesc_id.resize_zero_shrink(_dipoles_num, true);
 
 		// entries per quadrupole
 		_quadrupoles_m.resize_zero_shrink(_quadrupoles_num);
 		_quadrupoles_e.resize_zero_shrink(_quadrupoles_num);
 		_quadrupoles_M.resize_zero_shrink(_quadrupoles_num);
-
+		_quadrupolesc_id.resize_zero_shrink(_quadrupoles_num, true);
 	}
 
 	size_t getDynamicSize() const {

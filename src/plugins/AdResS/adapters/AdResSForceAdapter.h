@@ -10,8 +10,8 @@
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 
-#include "util/Region.h"
-#include "features/Resolution.h"
+#include "plugins/AdResS/util/Region.h"
+#include "plugins/AdResS/features/Resolution.h"
 
 /**
  * Handles all force calculation done in AdResS method.

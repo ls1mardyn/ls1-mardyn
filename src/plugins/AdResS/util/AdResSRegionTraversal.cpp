@@ -4,7 +4,7 @@
 
 #include "AdResSRegionTraversal.h"
 #include "utils/threeDimensionalMapping.h"
-#include "plugins/AdResS/AdResSForceAdapter.h"
+#include "plugins/AdResS/adapters/AdResSForceAdapter.h"
 
 AdResSRegionTraversal::AdResSRegionTraversal(std::array<double, 3> checkLow, std::array<double, 3> checkHigh,
                                              ParticleContainer* particleContainer,

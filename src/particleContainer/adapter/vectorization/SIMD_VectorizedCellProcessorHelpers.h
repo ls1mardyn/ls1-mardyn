@@ -25,10 +25,10 @@
 template <class MaskGatherChooser>
 static vcp_inline
 void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<vcp_real_calc>& eps_sigI,
-		const vcp_ljc_id_t* const id_j, const vcp_ljc_id_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused))) {
+					 const vcp_center_id_t* const id_j, const vcp_center_id_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused))) {
 
 #if VCP_VEC_TYPE != VCP_VEC_KNL_GATHER and VCP_VEC_TYPE != VCP_VEC_AVX512F_GATHER
-	const vcp_ljc_id_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
+	const vcp_center_id_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
 
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
@@ -159,9 +159,9 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 template <class MaskGatherChooser>
 static vcp_inline
 void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6I,
-		const vcp_ljc_id_t* id_j, const vcp_ljc_id_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask) {
+				  const vcp_center_id_t* id_j, const vcp_center_id_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask) {
 #if VCP_VEC_TYPE != VCP_VEC_KNL_GATHER
-	const vcp_ljc_id_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
+	const vcp_center_id_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
 
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.

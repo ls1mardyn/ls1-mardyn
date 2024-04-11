@@ -738,7 +738,7 @@ void FullMolecule::setupSoACache(CellDataSoABase* const s, unsigned iLJ, unsigne
 
 		const unsigned ind = _soa_index_c + j;
 
-		_soa->pushBackCharge(ind, convert_double_to_vcp_real_calc(r_arr()), convert_double_to_vcp_real_calc(centerPos), component()->charge(j).q());
+		_soa->pushBackCharge(ind, convert_double_to_vcp_real_calc(r_arr()), convert_double_to_vcp_real_calc(centerPos), component()->charge(j).q(), getComponentLookUpID() + j);
 	}
 	ns = numDipoles();
 	for (unsigned j = 0; j < ns; ++j) {
@@ -750,7 +750,7 @@ void FullMolecule::setupSoACache(CellDataSoABase* const s, unsigned iLJ, unsigne
 		std::array<double,3> orientation = computeDipole_e(j);
 		const unsigned ind = _soa_index_d + j;
 
-		_soa->pushBackDipole(ind, convert_double_to_vcp_real_calc(r_arr()), convert_double_to_vcp_real_calc(centerPos), component()->dipole(j).absMy(), convert_double_to_vcp_real_calc(orientation));
+		_soa->pushBackDipole(ind, convert_double_to_vcp_real_calc(r_arr()), convert_double_to_vcp_real_calc(centerPos), component()->dipole(j).absMy(), convert_double_to_vcp_real_calc(orientation), getComponentLookUpID() + j);
 	}
 	ns = numQuadrupoles();
 	for (unsigned j = 0; j < ns; ++j) {
@@ -762,6 +762,6 @@ void FullMolecule::setupSoACache(CellDataSoABase* const s, unsigned iLJ, unsigne
 		std::array<double,3> orientation = computeQuadrupole_e(j);
 		const unsigned ind = _soa_index_q + j;
 
-		_soa->pushBackQuadrupole(ind, convert_double_to_vcp_real_calc(r_arr()), convert_double_to_vcp_real_calc(centerPos), component()->quadrupole(j).absQ(), convert_double_to_vcp_real_calc(orientation));
+		_soa->pushBackQuadrupole(ind, convert_double_to_vcp_real_calc(r_arr()), convert_double_to_vcp_real_calc(centerPos), component()->quadrupole(j).absQ(), convert_double_to_vcp_real_calc(orientation), getComponentLookUpID() + j);
 	}
 }

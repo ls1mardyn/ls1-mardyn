@@ -7,7 +7,7 @@
 
 #include "plugins/PluginBase.h"
 
-#include "AdResSForceAdapter.h"
+#include "plugins/AdResS/adapters/AdResSForceAdapter.h"
 #include "features/Resolution.h"
 #include "features/FTH.h"
 #include "util/WeightFunction.h"

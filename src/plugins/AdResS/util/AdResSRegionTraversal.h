@@ -8,7 +8,7 @@
 #include <array>
 #include <unordered_map>
 #include "particleContainer/ParticleContainer.h"
-#include "plugins/AdResS/AdResSForceAdapter.h"
+#include "plugins/AdResS/adapters/AdResSForceAdapter.h"
 #include "Region.h"
 
 /**

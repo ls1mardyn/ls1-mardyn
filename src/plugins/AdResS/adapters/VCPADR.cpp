@@ -1,10 +1,10 @@
 /**
  * \file
- * \brief VectorizedCellProcessor.cpp
+ * \brief VCPADR.cpp
  */
 
-#include "VectorizedCellProcessor.h"
-#include "CellDataSoA.h"
+#include "VCPADR.h"
+#include "particleContainer/adapter/CellDataSoA.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleCell.h"
 #include "particleContainer/FullParticleCell.h"
@@ -13,48 +13,58 @@
 #include "ensemble/EnsembleBase.h"
 #include "Simulation.h"
 #include <algorithm>
-#include "vectorization/MaskGatherChooser.h"
+#include "particleContainer/adapter/vectorization/MaskGatherChooser.h"
 
 
-VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
+VCPADR::VCPADR(Domain & domain, double cutoffRadius, double LJcutoffRadius, const Resolution::Handler& resolutionHandler) :
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
 		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))),
-		_eps_sig(), _shift6(), _upot6lj(0.0), _upotXpoles(0.0), _virial(0.0), _myRF(0.0){
+		_eps_sig(), _shift6(), _compMask(), _upot6lj(0.0), _upotXpoles(0.0), _virial(0.0), _myRF(0.0), _resolutionHandler(resolutionHandler) {
 
 #if VCP_VEC_TYPE==VCP_NOVEC
-	Log::global_log->info() << "VectorizedCellProcessor: using no intrinsics." << std::endl;
+	Log::global_log->info() << "VCPADR: using no intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	Log::global_log->info() << "VectorizedCellProcessor: using SSE3 intrinsics." << std::endl;
+	Log::global_log->info() << "VCPADR: using SSE3 intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
-	Log::global_log->info() << "VectorizedCellProcessor: using AVX intrinsics." << std::endl;
+	Log::global_log->info() << "VCPADR: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
-	Log::global_log->info() << "VectorizedCellProcessor: using AVX2 intrinsics." << std::endl;
+	Log::global_log->info() << "VCPADR: using AVX2 intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_KNL) || (VCP_VEC_TYPE==VCP_VEC_KNL_GATHER)
-	Log::global_log->info() << "VectorizedCellProcessor: using KNL intrinsics." << std::endl;
+	Log::global_log->info() << "VCPADR: using KNL intrinsics." << std::endl;
 #elif (VCP_VEC_TYPE==VCP_VEC_AVX512F) || (VCP_VEC_TYPE==VCP_VEC_AVX512F_GATHER)
-	Log::global_log->info() << "VectorizedCellProcessor: using SKX intrinsics." << std::endl;
+	Log::global_log->info() << "VCPADR: using SKX intrinsics." << std::endl;
 #endif
 
 	ComponentList components = *(_simulation.getEnsemble()->getComponents());
 	// Get the maximum Component ID.
 	size_t maxID = 0;
-	const ComponentList::const_iterator end = components.end();
-	for (ComponentList::const_iterator c = components.begin(); c != end; ++c)
+	const auto end = components.end();
+	for (auto c = components.begin(); c != end; ++c)
 		maxID = std::max(maxID, static_cast<size_t>(c->ID()));
 
 	// Assign a center list start index for each component.
-	std::vector<size_t> compIDs;
-	compIDs.resize(maxID + 1, 0);
-	size_t centers = 0;
-	for (ComponentList::const_iterator c = components.begin(); c != end; ++c) {
-		compIDs[c->ID()] = centers;
-		centers += c->numLJcenters();
+	std::array<std::vector<size_t>, NUM_TYPES> compIDs;
+	for (int i = 0; i < NUM_TYPES; i++) compIDs[i].resize(maxID + 1, 0);
+
+	std::array<size_t, NUM_TYPES> type_centers =  { 0 };
+	for (auto c = components.begin(); c != end; ++c) {
+		compIDs[LJ][c->ID()] = type_centers[LJ];
+		type_centers[LJ] += c->numLJcenters();
+
+		compIDs[CHARGE][c->ID()] = type_centers[CHARGE];
+		type_centers[CHARGE] += c->numCharges();
+
+		compIDs[DIPOLE][c->ID()] = type_centers[DIPOLE];
+		type_centers[DIPOLE] += c->numDipoles();
+
+		compIDs[QUADRUPOLE][c->ID()] = type_centers[QUADRUPOLE];
+		type_centers[QUADRUPOLE] += c->numQuadrupoles();
 	}
 
 	// One row for each LJ Center, one pair (epsilon*24, sigma^2) for each LJ Center in each row.
-	_eps_sig.resize(centers, AlignedArray<vcp_real_calc>(centers * 2));
-	_shift6.resize(centers, AlignedArray<vcp_real_calc>(centers));
+	_eps_sig.resize(type_centers[LJ], AlignedArray<vcp_real_calc>(type_centers[LJ] * 2));
+	_shift6.resize(type_centers[LJ], AlignedArray<vcp_real_calc>(type_centers[LJ]));
 
 	// Construct the parameter tables.
 	for (size_t comp_i = 0; comp_i < components.size(); ++comp_i) {
@@ -72,17 +82,54 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 					p >> eps;
 					p >> sig;
 					p >> shift;
-					_eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j)] = static_cast <vcp_real_calc>(eps);
-					_eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j) + 1] = static_cast<vcp_real_calc>(sig);
-					_shift6[compIDs[comp_i] + center_i][compIDs[comp_j] + center_j] = static_cast<vcp_real_calc>(shift);
+					_eps_sig[compIDs[LJ][comp_i] + center_i][2 * (compIDs[LJ][comp_j] + center_j)] = static_cast <vcp_real_calc>(eps);
+					_eps_sig[compIDs[LJ][comp_i] + center_i][2 * (compIDs[LJ][comp_j] + center_j) + 1] = static_cast<vcp_real_calc>(sig);
+					_shift6[compIDs[LJ][comp_i] + center_i][compIDs[LJ][comp_j] + center_j] = static_cast<vcp_real_calc>(shift);
 				}
 			}
 		}
 	}
 
+	// Construct Component Site to Resolution Mapping
+	for (size_t comp = 0; comp < components.size(); ++comp) {
+		const auto& map = resolutionHandler.getCompResMap();
+		vcp_mask_single resolution;
+		if( map[comp] == Resolution::FullParticle ) resolution = 0;
+		else if ( map[comp] == Resolution::CoarseGrain ) resolution = 1;
+
+		for (size_t c_lj_i = 0; c_lj_i < components[comp].numLJcenters(); ++c_lj_i) {
+			if( map[comp] == Resolution::Hybrid ) {
+				if (c_lj_i < components[comp+1].numLJcenters()) resolution = 1;
+				else resolution = 0;
+			}
+			_compMask[LJ][compIDs[LJ][comp] + c_lj_i] = resolution;
+		}
+		for (size_t c_c_i = 0; c_c_i < components[comp].numCharges(); ++c_c_i) {
+			if( map[comp] == Resolution::Hybrid ) {
+				if (c_c_i < components[comp+1].numCharges()) resolution = 1;
+				else resolution = 0;
+			}
+			_compMask[CHARGE][compIDs[CHARGE][comp] + c_c_i] = resolution;
+		}
+		for (size_t c_d_i = 0; c_d_i < components[comp].numDipoles(); ++c_d_i) {
+			if( map[comp] == Resolution::Hybrid ) {
+				if (c_d_i < components[comp+1].numDipoles()) resolution = 1;
+				else resolution = 0;
+			}
+			_compMask[DIPOLE][compIDs[DIPOLE][comp] + c_d_i] = resolution;
+		}
+		for (size_t c_q_i = 0; c_q_i < components[comp].numQuadrupoles(); ++c_q_i) {
+			if( map[comp] == Resolution::Hybrid ) {
+				if (c_q_i < components[comp+1].numQuadrupoles()) resolution = 1;
+				else resolution = 0;
+			}
+			_compMask[QUADRUPOLE][compIDs[QUADRUPOLE][comp] + c_q_i] = resolution;
+		}
+	}
+
 	// initialize thread data
 	_numThreads = mardyn_get_max_threads();
-	Log::global_log->info() << "VectorizedCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
+	Log::global_log->info() << "VCPADR: allocate data for " << _numThreads << " threads." << std::endl;
 	_threadData.resize(_numThreads);
 
 	#if defined(_OPENMP)
@@ -95,7 +142,7 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 	} // end pragma omp parallel
 }
 
-VectorizedCellProcessor :: ~VectorizedCellProcessor () {
+VCPADR :: ~VCPADR () {
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
@@ -106,7 +153,7 @@ VectorizedCellProcessor :: ~VectorizedCellProcessor () {
 }
 
 
-void VectorizedCellProcessor::initTraversal() {
+void VCPADR::initTraversal() {
 	#if defined(_OPENMP)
 	#pragma omp master
 	#endif
@@ -119,7 +166,7 @@ void VectorizedCellProcessor::initTraversal() {
 }
 
 
-void VectorizedCellProcessor::endTraversal() {
+void VCPADR::endTraversal() {
 	vcp_real_accum glob_upot6lj = 0.0;
 	vcp_real_accum glob_upotXpoles = 0.0;
 	vcp_real_accum glob_virial = 0.0;
@@ -169,7 +216,7 @@ void VectorizedCellProcessor::endTraversal() {
 	const RealCalcVec _15 = RealCalcVec::set1(15.0);
 
 	template<bool calculateMacroscopic>
-	vcp_inline void VectorizedCellProcessor :: _loopBodyLJ(
+	vcp_inline void VCPADR :: _loopBodyLJ(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& m2_r_x, const RealCalcVec& m2_r_y, const RealCalcVec& m2_r_z,
@@ -225,7 +272,7 @@ void VectorizedCellProcessor::endTraversal() {
 
 
 	template<bool calculateMacroscopic>
-	vcp_inline void VectorizedCellProcessor :: _loopBodyCharge(
+	vcp_inline void VCPADR :: _loopBodyCharge(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& qii,
@@ -277,7 +324,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 	template<bool calculateMacroscopic>
-	vcp_inline void VectorizedCellProcessor :: _loopBodyChargeDipole(
+	vcp_inline void VCPADR :: _loopBodyChargeDipole(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& q,
@@ -347,7 +394,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 	template<bool calculateMacroscopic>
-	vcp_inline void VectorizedCellProcessor :: _loopBodyDipole(
+	vcp_inline void VCPADR :: _loopBodyDipole(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& eii_x, const RealCalcVec& eii_y, const RealCalcVec& eii_z,
@@ -442,7 +489,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 	template<bool calculateMacroscopic>
-	vcp_inline void VectorizedCellProcessor :: _loopBodyChargeQuadrupole(
+	vcp_inline void VCPADR :: _loopBodyChargeQuadrupole(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& q,
@@ -524,7 +571,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 	template<bool calculateMacroscopic>
-	vcp_inline void VectorizedCellProcessor :: _loopBodyDipoleQuadrupole(
+	vcp_inline void VCPADR :: _loopBodyDipoleQuadrupole(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& eii_x, const RealCalcVec& eii_y, const RealCalcVec& eii_z,
@@ -648,7 +695,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 	template<bool calculateMacroscopic>
-	vcp_inline void VectorizedCellProcessor :: _loopBodyQuadrupole(
+	vcp_inline void VCPADR :: _loopBodyQuadrupole(
 			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
 			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
 			const RealCalcVec& eii_x, const RealCalcVec& eii_y, const RealCalcVec& eii_z,
@@ -792,7 +839,7 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
+void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 	const int tid = mardyn_get_thread_num();
 	VLJCPThreadData &my_threadData = *_threadData[tid];
 
@@ -854,6 +901,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 		 vcp_real_accum * const soa1_charges_V_z = soa1.getBeginAccum(QuantityType::VIRIAL, SiteType::CHARGE, Coordinate::Z);
 	const vcp_real_calc * const soa1_charges_q = soa1._charges_q;
 	const int * const soa1_mol_charges_num = soa1._mol_charges_num;
+	const vcp_center_id_t * const soa1_chargesc_id = soa1._chargesc_id;
 
 	const vcp_real_calc * const soa2_charges_m_r_x = soa2.getBeginCalc(QuantityType::MOL_POSITION, SiteType::CHARGE, Coordinate::X);
 	const vcp_real_calc * const soa2_charges_m_r_y = soa2.getBeginCalc(QuantityType::MOL_POSITION, SiteType::CHARGE, Coordinate::Y);
@@ -868,6 +916,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 		 vcp_real_accum * const soa2_charges_V_y = soa2.getBeginAccum(QuantityType::VIRIAL, SiteType::CHARGE, Coordinate::Y);
 		 vcp_real_accum * const soa2_charges_V_z = soa2.getBeginAccum(QuantityType::VIRIAL, SiteType::CHARGE, Coordinate::Z);
 	const vcp_real_calc * const soa2_charges_q = soa2._charges_q;
+	const vcp_center_id_t * const soa2_chargesc_id = soa2._chargesc_id;
 
 	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = my_threadData._charges_dist_lookup;
 
@@ -889,6 +938,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 	vcp_real_accum * const soa1_dipoles_M_y = soa1._dipoles_M.yBegin();
 	vcp_real_accum * const soa1_dipoles_M_z = soa1._dipoles_M.zBegin();
 	const int * const soa1_mol_dipoles_num = soa1._mol_dipoles_num;
+	const vcp_center_id_t * const soa1_dipolesc_id = soa1._dipolesc_id;
 
 	const vcp_real_calc * const soa2_dipoles_m_r_x = soa2.getBeginCalc(QuantityType::MOL_POSITION, SiteType::DIPOLE, Coordinate::X);
 	const vcp_real_calc * const soa2_dipoles_m_r_y = soa2.getBeginCalc(QuantityType::MOL_POSITION, SiteType::DIPOLE, Coordinate::Y);
@@ -909,6 +959,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 	vcp_real_accum * const soa2_dipoles_M_x = soa2._dipoles_M.xBegin();
 	vcp_real_accum * const soa2_dipoles_M_y = soa2._dipoles_M.yBegin();
 	vcp_real_accum * const soa2_dipoles_M_z = soa2._dipoles_M.zBegin();
+	const vcp_center_id_t * const soa2_dipolesc_id = soa2._dipolesc_id;
 
 	vcp_lookupOrMask_single* const soa2_dipoles_dist_lookup = my_threadData._dipoles_dist_lookup;
 
@@ -930,6 +981,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 	     vcp_real_accum * const soa1_quadrupoles_M_y = soa1._quadrupoles_M.yBegin();
 	     vcp_real_accum * const soa1_quadrupoles_M_z = soa1._quadrupoles_M.zBegin();
 	const int * const soa1_mol_quadrupoles_num = soa1._mol_quadrupoles_num;
+	const vcp_center_id_t * const soa1_quadrupolesc_id = soa1._quadrupolesc_id;
 
 
 	const vcp_real_calc * const soa2_quadrupoles_m_r_x = soa2.getBeginCalc(QuantityType::MOL_POSITION, SiteType::QUADRUPOLE, Coordinate::X);
@@ -951,6 +1003,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 	     vcp_real_accum * const soa2_quadrupoles_M_x = soa2._quadrupoles_M.xBegin();
 	     vcp_real_accum * const soa2_quadrupoles_M_y = soa2._quadrupoles_M.yBegin();
 	     vcp_real_accum * const soa2_quadrupoles_M_z = soa2._quadrupoles_M.zBegin();
+	const vcp_center_id_t * const soa2_quadrupolesc_id = soa2._quadrupolesc_id;
 
 	vcp_lookupOrMask_single* const soa2_quadrupoles_dist_lookup = my_threadData._quadrupoles_dist_lookup;
 
@@ -2729,7 +2782,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 } // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
 
-void VectorizedCellProcessor::processCell(ParticleCell & c) {
+void VCPADR::processCell(ParticleCell & c) {
 	FullParticleCell & full_c = downcastCellReferenceFull(c);
 
 	CellDataSoA& soa = full_c.getCellDataSoA();
@@ -2741,7 +2794,7 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 	_calculatePairs<SingleCellPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa, soa);
 }
 
-void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2, bool sumAll) {
+void VCPADR::processCellPair(ParticleCell & c1, ParticleCell & c2, bool sumAll) {
 	mardyn_assert(&c1 != &c2);
 	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
 	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);
@@ -2816,5 +2869,153 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 			}
 		}
 	}
+}
+
+void VCPADR::unpackComp(MaskCalcVec &mask_i, MaskCalcVec &mask_j, const AlignedArray<vcp_mask_single> &compMap,
+						const vcp_center_id_t *const id_i, const vcp_center_id_t &offset_i,
+						const vcp_center_id_t *const id_j, const vcp_center_id_t &offset_j,
+						const vcp_lookupOrMask_vec &lookupORforceMask) {
+#if VCP_VEC_TYPE != VCP_VEC_KNL_GATHER and VCP_VEC_TYPE != VCP_VEC_AVX512F_GATHER
+	const vcp_center_id_t* id_i_shifted = id_i + offset_i;//this is the pointer, to where the stuff is stored.
+	const vcp_center_id_t* id_j_shifted = id_j + offset_j;//this is the pointer, to where the stuff is stored.
+#endif
+
+#if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
+	mask_i = compMap[id_i_shifted[0]];
+	mask_j = compMap[id_j_shifted[0]];
+
+#elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
+
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		const MaskCalcVec ci = _mm_loadl_epi64((const __m128i *) (compMap + id_i_shifted[0]));
+		const MaskCalcVec cicicici = _mm_shuffle_epi32(ci, 0b00000000);
+
+		const MaskCalcVec cj0 = _mm_loadl_epi64((const __m128i *) (compMap + id_j_shifted[0]));
+		const MaskCalcVec cj1 = _mm_loadl_epi64((const __m128i *) (compMap + id_j_shifted[1]));
+		const MaskCalcVec cj2 = _mm_loadl_epi64((const __m128i *) (compMap + id_j_shifted[2]));
+		const MaskCalcVec cj3 = _mm_loadl_epi64((const __m128i *) (compMap + id_j_shifted[3]));
+
+		const MaskCalcVec xxcj1cj0 = _mm_unpacklo_epi32(cj0, cj1);
+		const MaskCalcVec xxcj3cj2 = _mm_unpacklo_epi32(cj2, cj3);
+		const MaskCalcVec cj3cj2cj1cj0 = _mm_unpacklo_epi64(xxcj1cj0, xxcj3cj2);
+
+		mask_i = cicicici;
+		mask_j = cj3cj2cj1cj0;
+
+	#else /* VCP_DPDP */
+		const MaskCalcVec ci = _mm_loadl_epi64((const __m128i *) (compMap + id_i_shifted[0]));
+		const MaskCalcVec cici = _mm_unpacklo_epi64(ci, ci);
+
+		const MaskCalcVec cj0 = _mm_loadl_epi64((const __m128i *) (compMap + id_j_shifted[0]));
+		const MaskCalcVec cj1 = _mm_loadl_epi64((const __m128i *) (compMap + id_j_shifted[1]));
+		const MaskCalcVec cj1cj0 = _mm_unpacklo_epi64(cj0, cj1);
+
+		mask_i = cici;
+		mask_j = cj1cj0;
+	#endif
+
+#elif VCP_VEC_TYPE==VCP_VEC_AVX
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		const MaskCalcVec ci_x8 = _mm256_castps_si256(_mm256_broadcast_ss((const float*) (compMap + id_i_shifted[0])));
+
+		const MaskCalcVec cj0 = MaskCalcVec::aligned_load(compMap + id_j_shifted[0]);
+		const MaskCalcVec cj1 = MaskCalcVec::aligned_load(compMap + id_j_shifted[1]);
+		const MaskCalcVec cj2 = MaskCalcVec::aligned_load(compMap + id_j_shifted[2]);
+		const MaskCalcVec cj3 = MaskCalcVec::aligned_load(compMap + id_j_shifted[3]);
+		const MaskCalcVec cj4 = MaskCalcVec::aligned_load(compMap + id_j_shifted[4]);
+		const MaskCalcVec cj5 = MaskCalcVec::aligned_load(compMap + id_j_shifted[5]);
+		const MaskCalcVec cj6 = MaskCalcVec::aligned_load(compMap + id_j_shifted[6]);
+		const MaskCalcVec cj7 = MaskCalcVec::aligned_load(compMap + id_j_shifted[7]);
+
+		const MaskCalcVec cj1cj0 = _mm256_castps_si256(_mm256_unpacklo_ps(_mm256_castsi256_ps(cj0), _mm256_castsi256_ps(cj1)));
+		const MaskCalcVec cj3cj2 = _mm256_castps_si256(_mm256_unpacklo_ps(_mm256_castsi256_ps(cj2), _mm256_castsi256_ps(cj3)));
+		const MaskCalcVec cj5cj4 = _mm256_castps_si256(_mm256_unpacklo_ps(_mm256_castsi256_ps(cj4), _mm256_castsi256_ps(cj5)));
+		const MaskCalcVec cj7cj6 = _mm256_castps_si256(_mm256_unpacklo_ps(_mm256_castsi256_ps(cj6), _mm256_castsi256_ps(cj7));
+
+		const MaskCalcVec cj3cj2cj1cj0 = _mm256_castpd_si256(_mm256_unpacklo_pd(_mm256_castsi256_pd(cj1cj0), _mm256_castsi256_pd(cj3cj2)));
+		const MaskCalcVec cj7cj6cj5cj4 = _mm256_castpd_si256(_mm256_unpacklo_pd(_mm256_castsi256_pd(cj5cj4), _mm256_castsi256_pd(cj7cj6)));
+		const MaskCalcVec cj_7to0 = _mm256_permute2f128_si256(cj3cj2cj1cj0, cj7cj6cj5cj4, 0b00100000);
+
+		mask_i = ci_x8;
+		mask_j = cj_7to0;
+
+	#else /* VCP_DPDP */
+		const MaskCalcVec ci_x4 = _mm256_castpd_si256(_mm256_broadcast_sd((const double*) (compMap + id_i_shifted[0])));
+
+		const MaskCalcVec cj0 = MaskCalcVec::aligned_load(compMap + id_j_shifted[0]);
+		const MaskCalcVec cj1 = MaskCalcVec::aligned_load(compMap + id_j_shifted[1]);
+		const MaskCalcVec cj2 = MaskCalcVec::aligned_load(compMap + id_j_shifted[2]);
+		const MaskCalcVec cj3 = MaskCalcVec::aligned_load(compMap + id_j_shifted[3]);
+
+		const MaskCalcVec cj1cj0 = _mm256_castpd_si256(_mm256_unpacklo_pd(_mm256_castsi256_pd(cj0), _mm256_castsi256_pd(cj1)));
+		const MaskCalcVec cj3cj2 = _mm256_castpd_si256(_mm256_unpacklo_pd(_mm256_castsi256_pd(cj2), _mm256_castsi256_pd(cj3)));
+		const MaskCalcVec cj_3to0 = _mm256_permute2f128_si256(cj1cj0, cj3cj2, 0b00100000);
+
+		mask_i = ci_x4;
+		mask_j = cj_3to0;
+	#endif
+
+#elif VCP_VEC_TYPE==VCP_VEC_AVX2//avx
+#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+	const MaskCalcVec ci = MaskCalcVec::aligned_load(compMap + id_i_shifted[0]);
+	const MaskCalcVec ci_x8 = _mm256_broadcastd_epi32(_mm256_castsi256_si128(ci));
+
+	const MaskCalcVec indices = _mm256_maskload_epi32((const int*)(id_j_shifted), MaskCalcVec::ones());
+	const MaskCalcVec cj_7to0 = _mm256_i32gather_epi32(compMap, indices, 4);
+
+	mask_i = ci_x8;
+	mask_j = cj7to0;
+
+#else /* VCP_DPDP */
+	const MaskCalcVec ci = MaskCalcVec::aligned_load(compMap + id_i_shifted[0]);
+	const MaskCalcVec ci_x4 = _mm256_broadcastq_epi64(_mm256_castsi256_si128(ci));
+
+	const MaskCalcVec indices = _mm256_maskload_epi64((const long long*)(id_j_shifted), MaskCalcVec::ones());
+	const MaskCalcVec cj_3to0 = _mm256_i64gather_epi64(compMap+0, indices, 8);
+
+	mask_i = ci_x4;
+	mask_j = cj_3to0;
+
+#endif /* VCP_PREC */
+
+#elif VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_AVX512F
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		__m128i ci = _mm_loadl_epi64((const __m128i *) (compMap + id_i_shifted[0]));
+		__m512i ci_x16 = _mm512_broadcastd_epi32(ci);
+
+		__m512i indices = _mm512_load_epi32(id_j_shifted);
+		__m512i cj_15to0 = _mm512_i32gather_epi32(indices, compMap+0, 4);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
+
+		mask_i = ci_x16;
+		mask_j = cj_15to0;
+	#else /*VCP_DPDP */
+		__m128i ci = _mm_loadl_epi64((const __m128i *) (compMap + id_i_shifted[0]));
+		__m512i ci_x8 = _mm512_broadcastd_epi64(ci);
+
+		__m512i indices = _mm512_load_epi64(id_j_shifted);
+		__m512i cj_7to0 = _mm512_i64gather_pd(indices, compMap+0, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
+
+		mask_i = ci_x8;
+		mask_j = cj_7to0;
+	#endif
+
+
+#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
+// TODO continue here
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		__m512i indices = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
+		indices = _mm512_add_epi32(indices, indices);//only every second...
+		eps_24 = _mm512_i32gather_ps(indices, eps_sigI, 4);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
+		sig2 = _mm512_i32gather_ps(indices, eps_sigI+1, 4);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
+	#else /*VCP_DPDP*/
+
+		__m256i lookupORforceMask_256i = _mm512_castsi512_si256 (lookupORforceMask);
+		__m512i indices = _mm512_i32gather_epi64(lookupORforceMask_256i, (const long long *) id_j, 8);//gather id_j using the indices
+
+		indices = _mm512_add_epi64(indices, indices);//only every second...
+		eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
+		sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
+	#endif /*VCP_PREC*/
+#endif
 }
 

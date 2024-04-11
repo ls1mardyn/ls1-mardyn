@@ -107,7 +107,7 @@
 
 typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, float, double>::type vcp_real_calc;
 typedef std::conditional<VCP_PREC == VCP_SPSP                        , float, double>::type vcp_real_accum;
-typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, uint32_t, uint64_t>::type vcp_ljc_id_t;
+typedef std::conditional<VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP, uint32_t, uint64_t>::type vcp_center_id_t;
 
 typedef int countertype32;//int is 4Byte almost everywhere... replace with __int32 if problems occur
 

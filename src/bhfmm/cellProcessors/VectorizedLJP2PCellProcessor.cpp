@@ -258,7 +258,7 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataS
 	     vcp_real_accum * const soa1_ljc_V_y = soa1.getBeginAccum(QuantityType::VIRIAL, LJC, Coordinate::Y);
 	     vcp_real_accum * const soa1_ljc_V_z = soa1.getBeginAccum(QuantityType::VIRIAL, LJC, Coordinate::Z);
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
-	const vcp_ljc_id_t * const soa1_ljc_id = soa1._ljc_id;
+	const vcp_center_id_t * const soa1_ljc_id = soa1._ljc_id;
 
 	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.getBeginCalc(QuantityType::MOL_POSITION, LJC, Coordinate::X);
 	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.getBeginCalc(QuantityType::MOL_POSITION, LJC, Coordinate::Y);
@@ -272,7 +272,7 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataS
 	     vcp_real_accum * const soa2_ljc_V_x = soa2.getBeginAccum(QuantityType::VIRIAL, LJC, Coordinate::X);
 	     vcp_real_accum * const soa2_ljc_V_y = soa2.getBeginAccum(QuantityType::VIRIAL, LJC, Coordinate::Y);
 	     vcp_real_accum * const soa2_ljc_V_z = soa2.getBeginAccum(QuantityType::VIRIAL, LJC, Coordinate::Z);
-	const vcp_ljc_id_t * const soa2_ljc_id = soa2._ljc_id;
+	const vcp_center_id_t * const soa2_ljc_id = soa2._ljc_id;
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
 

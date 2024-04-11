@@ -4,7 +4,7 @@
 
 #include "AdResSForceAdapter.h"
 #include "molecules/potforce.h"
-#include "AdResS.h"
+#include "plugins/AdResS/AdResS.h"
 
 AdResSForceAdapter::AdResSForceAdapter(Resolution::Handler& resolutionHandler) : _resolutionHandler(resolutionHandler),
 																				 _mesoValues() {
