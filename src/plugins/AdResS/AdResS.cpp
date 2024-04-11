@@ -88,6 +88,18 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
 
         if(_logDensities) writeDensities("F_TH_TargetDensity.txt", _targetDensity);
     }
+
+    thermodynamic_force.target_density = (double)_simulation.getMoleculeContainer()->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)*_simulation.getEnsemble()->getComponent(0)->m()/_simulation.getEnsemble()->domain()->V();
+    global_log->info()<<"[AdResS] Number of molecules "<<(double)_simulation.getMoleculeContainer()->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)<<"\n";
+    global_log->info()<<"[AdResS] The mass of each component "<<_simulation.getEnsemble()->getComponent(0)->m()<<std::endl;
+    global_log->info()<<"[AdResS] The volume of the domain is "<<_simulation.getEnsemble()->domain()->V()<<std::endl;
+    global_log->info()<<"[AdResS] The bulk material density is: "<<thermodynamic_force.target_density<<std::endl;
+
+
+    //Configure the grid generator
+    //this->grid.SetGridGenerator(1,1,10);
+    this->grid.init(particleContainer, domainDecomp, domain);
+    thermodynamic_force.init(grid);
 }
 
 void AdResS::readXML(XMLfileUnits &xmlconfig) {
@@ -167,6 +179,15 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
             _thermodynamicForceSampleGap = 200;
             _createThermodynamicForce = false;
         }
+
+        //grid configuration
+        query = xmlconfig.query("gridSize");
+        int x,y,z;
+        x=xmlconfig.getNodeValue_int("gridSize/xElements",1);
+        y=xmlconfig.getNodeValue_int("gridSize/yElements",1);
+        z=xmlconfig.getNodeValue_int("gridSize/zElements",1);
+    
+        this->grid.SetGridGenerator(x,y,z);
     }
 
     long numRegions = 0;
@@ -230,6 +251,12 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
     stream << "./F_TH_Density_Smooth_" << simstep << ".txta";
     densities = _densityProfiler.getDensitySmoothed(0);
     if(_logDensities) writeDensities(stream.str(), densities);
+
+    //Compute densities and output
+    grid.GetPropertySampler().ParticlePerCellCount(particleContainer);//updates the number densities of the grid
+    grid.GetPropertySampler().ComputeMaterialDensityPerCell(particleContainer);//update mass density
+    grid.OutputPropertyPerCell(simstep);
+    grid.OutputMaterialDensityPerCell(simstep);
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
@@ -285,6 +312,8 @@ void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsi
         Simulation::exit(0);
     }
     else computeF_TH();
+
+    computeF_TH2();
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
@@ -296,6 +325,13 @@ void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base
     if(_enableThermodynamicForce) {
         applyF_TH();
     }
+}
+
+void AdResS::computeF_TH2(){
+    //Assume we have previously computed densities
+    //Compute gradients for every cell
+    //Output is a vector of gradients with size of the number of cells
+    thermodynamic_force.computeGradients(grid);
 }
 
 void AdResS::computeF_TH() {

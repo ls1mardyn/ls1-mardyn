@@ -14,6 +14,7 @@
 #include "AdResSForceAdapter.h"
 #include "DensityProfile3D.h"
 #include "Interpolation.h"
+#include "GridGenerator.h"
 
 class ParticleContainer;
 class DomainDecompBase;
@@ -38,6 +39,81 @@ class AdResSKDDecomposition;
  * The hybrid component must first contain all CG parts with mass = 0 and then the FP part.
  * Regions cannot overlap, otherwise forces are computed multiple times.
  * */
+
+
+using Vec3=std::array<double, 3>;
+
+struct ForceComputation{
+
+    //One per cell
+    std::vector<Vec3> gradient_per_cell;
+    //Store old property for convergence check
+    std::vector<double> old_property;
+    //the current property is stored inside the sampler
+
+    double target_density;
+    //need boundary values for systems A--HY--B a and b
+
+
+    //Resize vectors, other initializations?
+    void init(GridGenerator& grid){
+        gradient_per_cell.resize(grid.GetTotalElements());
+        old_property.resize(grid.GetTotalElements());
+    }
+    
+    void computeGradients(GridGenerator& grid){
+        //Central difference for first derivative
+        //use local indeces of grid to find neighbors, one data point per cell
+        //start with global index, request local, simple summation for neighbors
+        //borders need to be handled
+        //gridgenerator uses tuples
+
+        //get density vector
+        std::vector<double>& density = grid.GetPropertySampler().GetMaterialDensityPerCell();
+        ElementInfo& elements=grid.GetElementInfo();
+        for(int i=0;i<gradient_per_cell.size();i++){
+
+
+            for(int d=0;d<3;d++){//spatial dimensions for loop
+            //Get the two neighbors on the current spatial dimensions
+                int backward_neighbor, forward_neighbor;
+                backward_neighbor = elements.GetNeighbor(i,-1,d);
+                forward_neighbor = elements.GetNeighbor(i,1,d);
+                double central_difference = density[forward_neighbor]-density[backward_neighbor];
+                std::cout<<"Central difference "<<d<<" at "<<i<<" is "<<central_difference<<"\n";
+                std::cout<<"The forwards and backward values are: "<<density[forward_neighbor]<<" and "<<density[backward_neighbor]<<"\n";
+                gradient_per_cell[i].at(d)=central_difference/elements.element_width_per_dimension[d];
+            }
+            std::cout<<"The gradient at cell "<<i<<" is :["<<gradient_per_cell[i][0]<<","<<gradient_per_cell[i][1]<<","<<gradient_per_cell[i][2]<<"]\n";
+        }
+    }
+
+
+    bool convergence_check(GridGenerator& grid){
+        std::vector<double>& density = grid.GetPropertySampler().GetMaterialDensityPerCell();
+        std::vector<double> density_diff(density.size());
+        //make lambda instead
+        for(int i=0;i<density.size();i++){
+            density_diff[i]=std::abs(density[i]-target_density)/target_density;
+        }
+
+        auto max_diff = std::max_element(density_diff.begin(),density_diff.end());
+
+        if(*max_diff>0.02){
+            return false;
+        }
+        else{        
+            return true;
+        }
+    }
+
+    void SampleMassDensities(GridGenerator& grid, ParticleContainer* pc){
+        grid.GetPropertySampler().ComputeMaterialDensityPerCell(pc);
+    }
+
+
+};
+
 class AdResS : public PluginBase {
     friend class AdResSForceAdapter;
     friend class AdResSKDDecomposition;
@@ -102,9 +178,6 @@ public:
      * */
     void readXML(XMLfileUnits &xmlconfig) override;
 
-    /**
-     * Does nothing
-     * */
     void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                  unsigned long simstep) override;
 
@@ -233,6 +306,10 @@ private:
     //! @brief interpolation smoothness
     double _smoothingFactor;
 
+
+    GridGenerator grid;
+    ForceComputation thermodynamic_force;
+
     /**
      * Writes the function object into the required XML format for input files.
      * @param filename Output filename
@@ -250,6 +327,7 @@ private:
      * According to: F_k+1(x) = F_k(x) - c * d'(x)
      * */
     void computeF_TH();
+    void computeF_TH2();
 
     /**
      * Checks if the current simulation density is at most _convergenceThreshold apart from _targetDensity.
