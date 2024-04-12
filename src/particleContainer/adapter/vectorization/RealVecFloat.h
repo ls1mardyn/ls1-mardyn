@@ -68,6 +68,19 @@ public:
 	}
 
 	vcp_inline
+	static RealVec cvt_MaskVec_to_RealCalcVec(const MaskVec<float>& m) {
+	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+		return static_cast<real_vec>(m);
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+		return _mm_cvtepi32_ps(m);
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+		return _mm256_cvtepi32_ps(m);
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+		return _mm512_cvtepi32_ps(m);
+	#endif
+	}
+
+	vcp_inline
 	static RealVec cast_MaskVec_to_RealCalcVec(const MaskVec<float>& m) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return static_cast<real_vec>(m);

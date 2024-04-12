@@ -1132,6 +1132,11 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 							eps_24, sig2,
 							shift6);
 
+						MaskCalcVec mask_i, mask_j;
+						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_ljc_id, (vcp_center_id_t) i_ljc_idx, soa2_ljc_id, (vcp_center_id_t)j, lookupORforceMask);
+						const MaskCalcVec mask_pass = mask_i ^ mask_j;
+						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+
 						RealAccumVec a_fx = RealAccumVec::convertCalcToAccum(fx);
 						RealAccumVec a_fy = RealAccumVec::convertCalcToAccum(fy);
 						RealAccumVec a_fz = RealAccumVec::convertCalcToAccum(fz);
@@ -2984,7 +2989,7 @@ void VCPADR::unpackComp(MaskCalcVec &mask_i, MaskCalcVec &mask_j, const AlignedA
 		__m512i ci_x16 = _mm512_broadcastd_epi32(ci);
 
 		__m512i indices = _mm512_load_epi32(id_j_shifted);
-		__m512i cj_15to0 = _mm512_i32gather_epi32(indices, compMap+0, 4);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
+		__m512i cj_15to0 = _mm512_i32gather_epi32(indices, compMap+0, 4);
 
 		mask_i = ci_x16;
 		mask_j = cj_15to0;
@@ -2993,7 +2998,7 @@ void VCPADR::unpackComp(MaskCalcVec &mask_i, MaskCalcVec &mask_j, const AlignedA
 		__m512i ci_x8 = _mm512_broadcastd_epi64(ci);
 
 		__m512i indices = _mm512_load_epi64(id_j_shifted);
-		__m512i cj_7to0 = _mm512_i64gather_pd(indices, compMap+0, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
+		__m512i cj_7to0 = _mm512_i64gather_pd(indices, compMap+0, 8);
 
 		mask_i = ci_x8;
 		mask_j = cj_7to0;
@@ -3001,20 +3006,20 @@ void VCPADR::unpackComp(MaskCalcVec &mask_i, MaskCalcVec &mask_j, const AlignedA
 
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
-// TODO continue here
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-		__m512i indices = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
-		indices = _mm512_add_epi32(indices, indices);//only every second...
-		eps_24 = _mm512_i32gather_ps(indices, eps_sigI, 4);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
-		sig2 = _mm512_i32gather_ps(indices, eps_sigI+1, 4);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
+		__m512i lookup_i = _mm512_set1_epi32(offset_i);
+		__m512i ind_i = _mm512_i32gather_epi32(lookup_i, (const int *) id_i, 4);
+		__m512i ind_j = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
+
+		mask_i = _mm512_i32gather_epi32(ind_i, compMap+0, 4);
+		mask_j = _mm512_i32gather_epi32(ind_j, compMap+0, 4);
 	#else /*VCP_DPDP*/
+		__m512i lookup_i = _mm512_set1_epi64(offset_i);
+		__m512i ind_i = _mm512_i64gather_epi64(lookup_i, (const long long *) id_i, 8);
+		__m512i ind_j = _mm512_i64gather_epi64(lookupORforceMask, (const long long *) id_j, 8);
 
-		__m256i lookupORforceMask_256i = _mm512_castsi512_si256 (lookupORforceMask);
-		__m512i indices = _mm512_i32gather_epi64(lookupORforceMask_256i, (const long long *) id_j, 8);//gather id_j using the indices
-
-		indices = _mm512_add_epi64(indices, indices);//only every second...
-		eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
-		sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
+		mask_i = _mm512_i64gather_epi64(ind_i, compMap+0, 8);
+		mask_j = _mm512_i64gather_epi64(ind_j, compMap+0, 8);
 	#endif /*VCP_PREC*/
 #endif
 }
