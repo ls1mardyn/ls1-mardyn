@@ -23,9 +23,8 @@ if (ENABLE_AUTOPAS)
     set(AUTOPAS_USE_VECTORIZATION ${USE_VECTORIZATION} CACHE BOOL "Set via USE_VECTORIZATION" FORCE)
     set(AUTOPAS_VECTOR_INSTRUCTIONS ${VECTOR_INSTRUCTIONS} CACHE STRING "Set via VECTOR_INSTRUCTIONS_OPTIONS" FORCE)
 
-    # Merge of 845 (getTuningMetricOption()); includes 787 combined tuning
-    # set(AUTOPAS_TAG d338e23 CACHE STRING "AutoPas Git tag or commit id to use")
-    set(AUTOPAS_TAG 8eb3804 CACHE STRING "AutoPas Git tag or commit id to use")
+    # Merge of #830 (fixRegionIterators); includes #787 (combined tuning)
+    set(AUTOPAS_TAG faef573 CACHE STRING "AutoPas Git tag or commit id to use")
 
     FetchContent_Declare(
             autopasfetch
