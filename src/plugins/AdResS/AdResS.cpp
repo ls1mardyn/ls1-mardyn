@@ -253,10 +253,12 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
     if(_logDensities) writeDensities(stream.str(), densities);
 
     //Compute densities and output
+    grid.GetPropertySampler().SampleAtNodes(particleContainer);
     grid.GetPropertySampler().ParticlePerCellCount(particleContainer);//updates the number densities of the grid
     grid.GetPropertySampler().ComputeMaterialDensityPerCell(particleContainer);//update mass density
     grid.OutputPropertyPerCell(simstep);
     grid.OutputMaterialDensityPerCell(simstep);
+    grid.OutputNodalDensityValues(simstep);
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {

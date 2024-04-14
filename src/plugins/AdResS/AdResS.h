@@ -80,11 +80,11 @@ struct ForceComputation{
                 backward_neighbor = elements.GetNeighbor(i,-1,d);
                 forward_neighbor = elements.GetNeighbor(i,1,d);
                 double central_difference = density[forward_neighbor]-density[backward_neighbor];
-                std::cout<<"Central difference "<<d<<" at "<<i<<" is "<<central_difference<<"\n";
-                std::cout<<"The forwards and backward values are: "<<density[forward_neighbor]<<" and "<<density[backward_neighbor]<<"\n";
+                //std::cout<<"Central difference "<<d<<" at "<<i<<" is "<<central_difference<<"\n";
+                //std::cout<<"The forwards and backward values are: "<<density[forward_neighbor]<<" and "<<density[backward_neighbor]<<"\n";
                 gradient_per_cell[i].at(d)=central_difference/elements.element_width_per_dimension[d];
             }
-            std::cout<<"The gradient at cell "<<i<<" is :["<<gradient_per_cell[i][0]<<","<<gradient_per_cell[i][1]<<","<<gradient_per_cell[i][2]<<"]\n";
+            //std::cout<<"The gradient at cell "<<i<<" is :["<<gradient_per_cell[i][0]<<","<<gradient_per_cell[i][1]<<","<<gradient_per_cell[i][2]<<"]\n";
         }
     }
 
