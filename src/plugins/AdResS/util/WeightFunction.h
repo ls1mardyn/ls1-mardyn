@@ -60,6 +60,13 @@ namespace Weight {
 
 	//! @brief Array containing function pointers to all weight function implementations
 	constexpr std::array<function_t, 5> functions {euclid, manhattan, component, nearest, flat};
+
+	vcp_inline RealCalcVec nearest_vec(const RealCalcVec& r0, const RealCalcVec& r1, const RealCalcVec& r2,
+									   const RealCalcVec& region_low_0, const RealCalcVec& region_low_1, const RealCalcVec& region_low_2,
+									   const RealCalcVec& region_high_0, const RealCalcVec& region_high_1, const RealCalcVec& region_high_2,
+									   const RealCalcVec& hybrid_dim_0, const RealCalcVec& hybrid_dim_1, const RealCalcVec& hybrid_dim_2,
+									   const RealCalcVec &hybrid_low_0, const RealCalcVec &hybrid_low_1, const RealCalcVec &hybrid_low_2,
+									   const RealCalcVec &hybrid_high_0, const RealCalcVec &hybrid_high_1, const RealCalcVec &hybrid_high_2);
 }
 
 #endif //MARDYN_WEIGHTFUNCTION_H

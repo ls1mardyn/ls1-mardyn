@@ -342,7 +342,7 @@ private:
  	 * @param offset_j offset of the id_j array
  	 */
 	static vcp_inline
-	void unpackComp(MaskCalcVec& mask_i, MaskCalcVec& mask_j, const AlignedArray<vcp_mask_single>& compMap,
+	void unpackComp(MaskCalcVec& mask_i, MaskCalcVec& mask_j, const AlignedArray<vcp_mask_single>& compMap_i, const AlignedArray<vcp_mask_single>& compMap_j,
 					const vcp_center_id_t* const id_i, const vcp_center_id_t& offset_i,
 					const vcp_center_id_t* const id_j, const vcp_center_id_t& offset_j,
 					const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused)));
