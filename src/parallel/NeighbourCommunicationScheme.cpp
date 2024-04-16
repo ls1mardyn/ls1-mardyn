@@ -299,6 +299,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		removeRecvDuplicates |= (domainDecomp->getRank() == (*_neighbours)[0][i].getRank());
 	}
 
+	// local helper function to apply f to all real neighbours
 	auto forAllRealNeighbors = [&](auto&& f) {
 		for (auto& neighbor : (*_neighbours)[0]) {
 			if (not _useSequentialFallback or domainDecomp->getRank() != neighbor.getRank()) {

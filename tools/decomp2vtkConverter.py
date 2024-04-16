@@ -88,7 +88,8 @@ for inputFileName in sys.argv[1:]:
         line = f_in.readline()
         celllist = []
         while line != "":
-            match = re.search(r'([0-9]+) ([0-9. ]+)(.*)', line)
+            # Matches "[int] [float] [whatever]"
+            match = re.search(r'([-0-9]+) ([-0-9. ]+)(.*)', line)
             rank = int(match.group(1).rstrip())
             minMaxString = match.group(2).rstrip()
             configString = match.group(3)

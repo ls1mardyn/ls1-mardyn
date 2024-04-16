@@ -87,7 +87,6 @@
         <allowedTraversals>c01, c04, c08, c18, sli</allowedTraversals>
         <allowedContainers>linkedCells</allowedContainers>
         <selectorStrategy>fastestMedian</selectorStrategy>
-        <tuningStrategy>FullSearch</tuningStrategy><!--FullSearch, BayesianSearch, ...-->
         <dataLayouts>SoA</dataLayouts>
         <newton3>enabled</newton3>
         <tuningInterval>1000</tuningInterval>

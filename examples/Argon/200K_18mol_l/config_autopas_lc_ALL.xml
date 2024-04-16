@@ -38,7 +38,9 @@
                 </loadBalancer>
             </parallelisation>
             <datastructure type="AutoPas">
+                <!-- <logLevel>info</logLevel> -->
                 <allowedContainers>linkedCells</allowedContainers>
+                <tuningStrategies>predictive,ruleBased</tuningStrategies>
                 <tuningInterval>10000</tuningInterval>
                 <tuningSamples>10</tuningSamples>
                 <rebuildFrequency>10</rebuildFrequency>

@@ -35,6 +35,7 @@
         <allowedTraversals>lc_c01, lc_c08, lc_c18, lc_sli, ds_sequential</allowedTraversals>
         <allowedContainers>linkedCells, verletLists, directsum</allowedContainers>
         <selectorStrategy>fastestMedian</selectorStrategy>
+        <tuningMetric>energy</tuningMetric>
         <dataLayouts>AoS</dataLayouts>
         <newton3>enabled, disabled</newton3>
         <tuningInterval>1000</tuningInterval>
