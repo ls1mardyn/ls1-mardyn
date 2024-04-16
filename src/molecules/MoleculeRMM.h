@@ -18,11 +18,11 @@ public:
 	};
 
 public:
-	MoleculeRMM(unsigned long id = 0, Component *component = nullptr,
-        double rx = 0., double ry = 0., double rz = 0.,
-        double vx = 0., double vy = 0., double vz = 0.,
-        double qw = 0., double qx = 0., double qy = 0., double qz = 0.,
-        double Dx = 0., double Dy = 0., double Dz = 0.
+	MoleculeRMM(unsigned long id, Component *component,
+        double rx, double ry, double rz,
+        double vx, double vy, double vz,
+        double qw, double qx, double qy, double qz,
+        double Dx, double Dy, double Dz
 	) {
 		_state = STORAGE_AOS;
 		_r[0] = rx;

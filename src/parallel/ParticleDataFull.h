@@ -25,7 +25,7 @@ public:
 	static void MoleculeToParticleData(ParticleDataFull &particleStruct, Molecule &molecule);
 
 	//! @brief copy data from object of class ParticleDataFull to object of class Molecule
-	static void ParticleDataToMolecule(const ParticleDataFull &particleStruct, Molecule &molecule);
+	static Molecule ParticleDataToMolecule(const ParticleDataFull &particleStruct);
 
 	double r[3];  //! position
 	double v[3];  //! velocity

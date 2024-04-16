@@ -22,11 +22,11 @@ public:
 	// but if it is left away, all pointer data is not initialized (which is not
 	// neccessarily bad), but then assertions fail (e.g. in the destructor) and we can't
 	// use it's instances.
-	FullMolecule(unsigned long id = 0, Component *component = nullptr,
-	         double rx = 0., double ry = 0., double rz = 0.,
-	         double vx = 0., double vy = 0., double vz = 0.,
-	         double qw = 0., double qx = 0., double qy = 0., double qz = 0.,
-	         double Dx = 0., double Dy = 0., double Dz = 0.
+	FullMolecule(unsigned long id, Component *component,
+	         double rx, double ry, double rz,
+	         double vx, double vy, double vz,
+	         double qw, double qx, double qy, double qz,
+	         double Dx, double Dy, double Dz
 	);
 	FullMolecule(const FullMolecule& m);
 
