@@ -131,6 +131,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:acd6cc9d288ddcf7a5ae445e4e243ede6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa90998e8dd4523e7ab77853a3889e10a"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAutoPasContainer.html#aa90998e8dd4523e7ab77853a3889e10a">getSkin</a> () const override</td></tr>
 <tr class="separator:aa90998e8dd4523e7ab77853a3889e10a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add936f1837f2001669580f63b213cbc3"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAutoPasContainer.html#add936f1837f2001669580f63b213cbc3">getRebuildFrequency</a> () const override</td></tr>
+<tr class="separator:add936f1837f2001669580f63b213cbc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa2476538c11eb8a3f61d2a6be0f3b0c0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAutoPasContainer.html#aa2476538c11eb8a3f61d2a6be0f3b0c0">deleteMolecule</a> (<a class="el" href="classParticleIterator.html">ParticleIterator</a> &amp;moleculeIter, const bool &amp;rebuildCaches) override</td></tr>
 <tr class="separator:aa2476538c11eb8a3f61d2a6be0f3b0c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a84ca3fba5fa0a5be114ab1aa5c7812ff"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAutoPasContainer.html#a84ca3fba5fa0a5be114ab1aa5c7812ff">getEnergy</a> (<a class="el" href="classParticlePairsHandler.html">ParticlePairsHandler</a> *particlePairsHandler, <a class="el" href="classFullMolecule.html">Molecule</a> *m1, <a class="el" href="classCellProcessor.html">CellProcessor</a> &amp;cellProcessor) override</td></tr>
@@ -201,13 +203,9 @@ std::vector&lt; <a class="el" href="classFullMolecule.html">Molecule</a> &gt; &a
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_attribs_classParticleContainer"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classParticleContainer')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classParticleContainer.html">ParticleContainer</a></td></tr>
-<tr class="memitem:a7f70588a1038510ea1d7dc78b17caaef inherit pro_attribs_classParticleContainer"><td class="memItemLeft" align="right" valign="top"><a id="a7f70588a1038510ea1d7dc78b17caaef" name="a7f70588a1038510ea1d7dc78b17caaef"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>_boundingBoxMin</b> [3]</td></tr>
-<tr class="memdesc:a7f70588a1038510ea1d7dc78b17caaef inherit pro_attribs_classParticleContainer"><td class="mdescLeft">&#160;</td><td class="mdescRight">coordinates of the left, lower, front corner of the bounding box <br /></td></tr>
+<tr class="memitem:a7f70588a1038510ea1d7dc78b17caaef inherit pro_attribs_classParticleContainer"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classParticleContainer.html#a7f70588a1038510ea1d7dc78b17caaef">_boundingBoxMin</a> [3]</td></tr>
 <tr class="separator:a7f70588a1038510ea1d7dc78b17caaef inherit pro_attribs_classParticleContainer"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af895921cd0683e8bc291a45fdadfea3f inherit pro_attribs_classParticleContainer"><td class="memItemLeft" align="right" valign="top"><a id="af895921cd0683e8bc291a45fdadfea3f" name="af895921cd0683e8bc291a45fdadfea3f"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>_boundingBoxMax</b> [3]</td></tr>
-<tr class="memdesc:af895921cd0683e8bc291a45fdadfea3f inherit pro_attribs_classParticleContainer"><td class="mdescLeft">&#160;</td><td class="mdescRight">coordinates of the right, upper, back corner of the bounding box <br /></td></tr>
+<tr class="memitem:af895921cd0683e8bc291a45fdadfea3f inherit pro_attribs_classParticleContainer"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classParticleContainer.html#af895921cd0683e8bc291a45fdadfea3f">_boundingBoxMax</a> [3]</td></tr>
 <tr class="separator:af895921cd0683e8bc291a45fdadfea3f inherit pro_attribs_classParticleContainer"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5df549358c249b232a0530b58c5e3d7c inherit pro_attribs_classParticleContainer"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classFullMolecule.html">Molecule</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classParticleContainer.html#a5df549358c249b232a0530b58c5e3d7c">_invalidParticles</a> {}</td></tr>
 <tr class="separator:a5df549358c249b232a0530b58c5e3d7c inherit pro_attribs_classParticleContainer"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -565,7 +563,7 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>_boundingBoxMax</b>
 </div><div class="memdoc">
 <p >Return a string representation of the algorithmic configuration of the container. Only used for logging / output. </p><dl class="section note"><dt>Note</dt><dd>: Formatting rules:<ul>
 <li>The whole configuration should be enclosed in curly brackets.</li>
-<li>Different elements should be separated by a comma sourrounded by spaces: " , ".</li>
+<li>Different elements should be separated by a comma surrounded by spaces: " , ".</li>
 <li>Every element should be in the form "key: value" </li>
 </ul>
 </dd></dl>
@@ -772,6 +770,33 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>_boundingBoxMax</b>
 <dl class="section return"><dt>Returns</dt><dd>the number of particles stored in this container; for ALL_CELLS, this number may include particles which are outside of the bounding box </dd></dl>
 
 <p>Implements <a class="el" href="classParticleContainer.html#a1ca7e83dad38314875e0aa2ede395473">ParticleContainer</a>.</p>
+
+</div>
+</div>
+<a id="add936f1837f2001669580f63b213cbc3" name="add936f1837f2001669580f63b213cbc3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#add936f1837f2001669580f63b213cbc3">&#9670;&nbsp;</a></span>getRebuildFrequency()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t AutoPasContainer::getRebuildFrequency </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="classParticleContainer.html">ParticleContainer</a>.</p>
 
 </div>
 </div>
@@ -992,7 +1017,8 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>_boundingBoxMax</b>
 <div class="line"> &lt;<span class="keywordtype">allowedTraversals</span>&gt;<span class="keyword">STRINGLIST</span>&lt;/<span class="keywordtype">allowedTraversals</span>&gt;</div>
 <div class="line"> &lt;<span class="keywordtype">allowedContainers</span>&gt;<span class="keyword">STRINGLIST</span>&lt;/<span class="keywordtype">allowedContainers</span>&gt;</div>
 <div class="line"> &lt;<span class="keywordtype">selectorStrategy</span>&gt;<span class="keyword">STRING</span>&lt;/<span class="keywordtype">selectorStrategy</span>&gt;</div>
-<div class="line"> &lt;<span class="keywordtype">tuningStrategy</span>&gt;<span class="keyword">STRING</span>&lt;/<span class="keywordtype">tuningStrategy</span>&gt;</div>
+<div class="line"> &lt;<span class="keywordtype">tuningStrategies</span>&gt;<span class="keyword">STRING</span>&lt;/<span class="keywordtype">tuningStrategies</span>&gt;</div>
+<div class="line"> &lt;<span class="keywordtype">ruleFile</span>&gt;<span class="keyword">STRING</span>&lt;/<span class="keywordtype">ruleFile</span>&gt;</div>
 <div class="line"> &lt;<span class="keywordtype">extrapolationMethod</span>&gt;<span class="keyword">STRING</span>&lt;/<span class="keywordtype">extrapolationMethod</span>&gt;</div>
 <div class="line"> &lt;<span class="keywordtype">dataLayouts</span>&gt;<span class="keyword">STRINGLIST</span>&lt;/<span class="keywordtype">dataLayouts</span>&gt;</div>
 <div class="line"> &lt;<span class="keywordtype">newton3</span>&gt;<span class="keyword">STRINGLIST</span>&lt;/<span class="keywordtype">newton3</span>&gt;</div>
@@ -1008,7 +1034,7 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>_boundingBoxMax</b>
 <div class="line"> &lt;<span class="keywordtype">blacklistRange</span>&gt;<span class="keyword">DOUBLE</span>&lt;/<span class="keywordtype">blacklistRange</span>&gt;</div>
 <div class="line"> &lt;<span class="keywordtype">functor</span>&gt;<span class="keyword">STRING</span>&lt;/<span class="keywordtype">functor</span>&gt;</div>
 <div class="line"> &lt;<span class="keywordtype">verletClusterSize</span>&gt;<span class="keyword">INTEGER</span>&lt;/<span class="keywordtype">verletClusterSize</span>&gt;</div>
-<div class="line">&lt;/<span class="keywordtype">datastructure</span>&gt;</div>
+<div class="line"> &lt;/<span class="keywordtype">datastructure</span>&gt;</div>
 </div><!-- fragment --><p> If you are using MPI-parallel simulations, tuningSamples should be a multiple of rebuildFrequency! A list of the different Options can be found here: <a href="https://www5.in.tum.de/AutoPas/doxygen_doc/master/namespaceautopas_1_1options.html">https://www5.in.tum.de/AutoPas/doxygen_doc/master/namespaceautopas_1_1options.html</a> For multiple options, a comma separated list of strings is possible. Auto-Tuning is then performed on all possible combinations of those. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">xmlconfig</td><td></td></tr>
@@ -1373,7 +1399,7 @@ This method has to be implemented in derived classes Precondition: All Particles
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Mar 21 2024 07:30:40 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Apr 16 2024 07:06:48 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

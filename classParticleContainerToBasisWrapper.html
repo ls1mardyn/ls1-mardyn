@@ -186,6 +186,9 @@ virtual int&#160;</td><td class="memItemRight" valign="bottom"><b>getHaloWidthNu
 <tr class="memitem:a6b8815cf2728d49cabf19c4632ab58b5 inherit pub_methods_classParticleContainer"><td class="memItemLeft" align="right" valign="top"><a id="a6b8815cf2728d49cabf19c4632ab58b5" name="a6b8815cf2728d49cabf19c4632ab58b5"></a>
 virtual double&#160;</td><td class="memItemRight" valign="bottom"><b>getSkin</b> () const</td></tr>
 <tr class="separator:a6b8815cf2728d49cabf19c4632ab58b5 inherit pub_methods_classParticleContainer"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c92dcd2b10d1a670722d90b96106e07 inherit pub_methods_classParticleContainer"><td class="memItemLeft" align="right" valign="top"><a id="a4c92dcd2b10d1a670722d90b96106e07" name="a4c92dcd2b10d1a670722d90b96106e07"></a>
+virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><b>getRebuildFrequency</b> () const</td></tr>
+<tr class="separator:a4c92dcd2b10d1a670722d90b96106e07 inherit pub_methods_classParticleContainer"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a0242ca837b53a8b32328fc7c794efc inherit pub_methods_classParticleContainer"><td class="memItemLeft" align="right" valign="top"><a id="a5a0242ca837b53a8b32328fc7c794efc" name="a5a0242ca837b53a8b32328fc7c794efc"></a>
 virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>requiresForceExchange</b> () const</td></tr>
 <tr class="separator:a5a0242ca837b53a8b32328fc7c794efc inherit pub_methods_classParticleContainer"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -205,13 +208,9 @@ virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>isInvalidPart
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_attribs_classParticleContainer"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classParticleContainer')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classParticleContainer.html">ParticleContainer</a></td></tr>
-<tr class="memitem:a7f70588a1038510ea1d7dc78b17caaef inherit pro_attribs_classParticleContainer"><td class="memItemLeft" align="right" valign="top"><a id="a7f70588a1038510ea1d7dc78b17caaef" name="a7f70588a1038510ea1d7dc78b17caaef"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>_boundingBoxMin</b> [3]</td></tr>
-<tr class="memdesc:a7f70588a1038510ea1d7dc78b17caaef inherit pro_attribs_classParticleContainer"><td class="mdescLeft">&#160;</td><td class="mdescRight">coordinates of the left, lower, front corner of the bounding box <br /></td></tr>
+<tr class="memitem:a7f70588a1038510ea1d7dc78b17caaef inherit pro_attribs_classParticleContainer"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classParticleContainer.html#a7f70588a1038510ea1d7dc78b17caaef">_boundingBoxMin</a> [3]</td></tr>
 <tr class="separator:a7f70588a1038510ea1d7dc78b17caaef inherit pro_attribs_classParticleContainer"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af895921cd0683e8bc291a45fdadfea3f inherit pro_attribs_classParticleContainer"><td class="memItemLeft" align="right" valign="top"><a id="af895921cd0683e8bc291a45fdadfea3f" name="af895921cd0683e8bc291a45fdadfea3f"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>_boundingBoxMax</b> [3]</td></tr>
-<tr class="memdesc:af895921cd0683e8bc291a45fdadfea3f inherit pro_attribs_classParticleContainer"><td class="mdescLeft">&#160;</td><td class="mdescRight">coordinates of the right, upper, back corner of the bounding box <br /></td></tr>
+<tr class="memitem:af895921cd0683e8bc291a45fdadfea3f inherit pro_attribs_classParticleContainer"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classParticleContainer.html#af895921cd0683e8bc291a45fdadfea3f">_boundingBoxMax</a> [3]</td></tr>
 <tr class="separator:af895921cd0683e8bc291a45fdadfea3f inherit pro_attribs_classParticleContainer"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5df549358c249b232a0530b58c5e3d7c inherit pro_attribs_classParticleContainer"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classFullMolecule.html">Molecule</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classParticleContainer.html#a5df549358c249b232a0530b58c5e3d7c">_invalidParticles</a> {}</td></tr>
 <tr class="separator:a5df549358c249b232a0530b58c5e3d7c inherit pro_attribs_classParticleContainer"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -579,7 +578,7 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>_boundingBoxMax</b>
 </div><div class="memdoc">
 <p >Return a string representation of the algorithmic configuration of the container. Only used for logging / output. </p><dl class="section note"><dt>Note</dt><dd>: Formatting rules:<ul>
 <li>The whole configuration should be enclosed in curly brackets.</li>
-<li>Different elements should be separated by a comma sourrounded by spaces: " , ".</li>
+<li>Different elements should be separated by a comma surrounded by spaces: " , ".</li>
 <li>Every element should be in the form "key: value" </li>
 </ul>
 </dd></dl>
@@ -1238,7 +1237,7 @@ This method has to be implemented in derived classes Precondition: All Particles
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Mar 21 2024 07:30:42 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Apr 16 2024 07:06:50 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
