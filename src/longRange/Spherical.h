@@ -7,6 +7,7 @@
 #define SPHERICAL_H_
 
 #include "LongRangeCorrection.h"
+#include "Simulation.h"
 
 #include <vector>
 #include <cmath>

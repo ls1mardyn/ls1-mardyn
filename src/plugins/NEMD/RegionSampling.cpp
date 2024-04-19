@@ -692,6 +692,8 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 	resizeExactly(_dForceGlobal, _nNumValsVector);
 	resizeExactly(_dVirialLocal, _nNumValsVector);
 	resizeExactly(_dVirialGlobal, _nNumValsVector);
+	resizeExactly(_dVirialNTLocal, _nNumValsVector);
+	resizeExactly(_dVirialNTGlobal, _nNumValsVector);
 
 	// output profiles
 	resizeExactly(_dForce, _nNumValsVector);
@@ -700,6 +702,7 @@ void SampleRegion::initSamplingProfiles(int nDimension)
 	resizeExactly(_d2EkinDriftComp, _nNumValsVector);
 	resizeExactly(_dTemperatureComp, _nNumValsVector);
 	resizeExactly(_dVirial, _nNumValsVector);
+	resizeExactly(_dVirialNT, _nNumValsVector);
 
 	// init sampling data structures
 	this->resetLocalValuesProfiles();
@@ -1029,6 +1032,12 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension, unsigned l
 	virial[1] = molecule->Vi(1);
 	virial[2] = molecule->Vi(2);
 
+	double virialNT[3];
+	virialNT[0] = molecule->VirN();
+	virialNT[1] = molecule->VirT();
+	virialNT[2] = 0.0;
+	// if (molecule->getID() == 30) { std::cout << "Read moldata: " << virialNT[0] << " " << virialNT[1] << std::endl; }
+
 	// Loop over directions: all (+/-) | only (+) | only (-)
 	for(unsigned int dir = 0; dir < 3; ++dir)
 	{
@@ -1114,6 +1123,14 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension, unsigned l
 			#pragma omp atomic
 			#endif
 			_dVirialLocal         [ vIndexCID ] += virial[dim];
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
+			_dVirialNTLocal         [ vIndexAll ] += virialNT[dim];
+			#if defined(_OPENMP)
+			#pragma omp atomic
+			#endif
+			_dVirialNTLocal         [ vIndexCID ] += virialNT[dim];
 		}
 	}
 }
@@ -1327,6 +1344,7 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	MPI_Reduce( _dSquaredVelocityLocal.data(), _dSquaredVelocityGlobal.data(), _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	MPI_Reduce( _dForceLocal.data(),           _dForceGlobal.data(),           _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	MPI_Reduce( _dVirialLocal.data(),          _dVirialGlobal.data(),               _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _dVirialNTLocal.data(),          _dVirialNTGlobal.data(),               _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
 #else
 	// Scalar quantities
@@ -1344,6 +1362,7 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 		_dSquaredVelocityGlobal[i] = _dSquaredVelocityLocal[i];
 		_dForceGlobal[i]           = _dForceLocal[i];
 		_dVirialGlobal[i]          = _dVirialLocal[i];
+		_dVirialNTGlobal[i]          = _dVirialNTLocal[i];
 	}
 #endif
 
@@ -1460,6 +1479,7 @@ void SampleRegion::calcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 			double d2EkinDrift = _d2EkinDriftComp[nDimOffset+i];
 			_dTemperatureComp[nDimOffset+i] = (d2EkinTrans - d2EkinDrift) * dInvertNumMolecules;
 			_dVirial       [nDimOffset+i] = _dVirialGlobal[nDimOffset+i];
+			_dVirialNT       [nDimOffset+i] = _dVirialNTGlobal[nDimOffset+i];
 		}
 	}
 }
@@ -1617,6 +1637,7 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 			outputstream_scal << "              T_trans[" << cid << "]";
 			outputstream_scal << "                T_rot[" << cid << "]";
 			outputstream_scal << "                    p[" << cid << "]";
+			outputstream_scal << "                  pNT[" << cid << "]";
 
 			// vector
 			outputstream_vect << "                   Fx[" << cid << "]";
@@ -1675,7 +1696,9 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 				unsigned long offset_x = _nOffsetVector[0][dir][cid]+s;
 				unsigned long offset_y = _nOffsetVector[1][dir][cid]+s;
 				unsigned long offset_z = _nOffsetVector[2][dir][cid]+s;
-				double Pressure = rho * ( (_dVirial[offset_x]+_dVirial[offset_y]+_dVirial[offset_z])/(3*_nNumMoleculesGlobal[offset]) + T );
+				double Pressure = rho * ( (_dVirial[offset_x]+_dVirial[offset_y]+_dVirial[offset_z])/(3.*_nNumMoleculesGlobal[offset]) + T );
+
+				double PressureNT = rho * ( (_dVirialNT[offset_x]+_dVirialNT[offset_y])/(2.*_nNumMoleculesGlobal[offset]) + T );
 
 				double PressureX = rho * ( _dVirial[offset_x]/_nNumMoleculesGlobal[offset] + _dTemperatureComp[offset_x] );
 				double PressureY = rho * ( _dVirial[offset_y]/_nNumMoleculesGlobal[offset] + _dTemperatureComp[offset_y] );
@@ -1696,6 +1719,7 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << T_trans;
 				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << T_rot;
 				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << Pressure;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PressureNT;
 
 				// vector
 				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[offset_x];
@@ -2112,8 +2136,8 @@ void RegionSampling::init(ParticleContainer * /*particleContainer */,
 	}
 }
 
-void RegionSampling::endStep(ParticleContainer *particleContainer,
-		DomainDecompBase *domainDecomp, Domain * /*domain */,
+void RegionSampling::siteWiseForces(ParticleContainer *particleContainer,
+		DomainDecompBase *domainDecomp,
 		unsigned long simstep) {
 
 	#if defined(_OPENMP)

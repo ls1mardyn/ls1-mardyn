@@ -12,7 +12,11 @@
 #include "utils/Region.h"
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "plugins/PluginBase.h"
+#include "particleContainer/ParticleContainer.h"
+#include "parallel/DomainDecompBase.h"
+#include "molecules/Molecule.h"
 
+#include <iostream>
 #include <vector>
 #include <array>
 #include <cstdint>
@@ -203,6 +207,8 @@ private:
 	std::vector<double> _dForceGlobal;
 	std::vector<double> _dVirialLocal;
 	std::vector<double> _dVirialGlobal;
+	std::vector<double> _dVirialNTLocal;
+	std::vector<double> _dVirialNTGlobal;
 
 	// output profiles
 	std::vector<double> _dForce;
@@ -211,6 +217,7 @@ private:
 	std::vector<double> _d2EkinDriftComp;
 	std::vector<double> _dTemperatureComp;
 	std::vector<double> _dVirial;
+	std::vector<double> _dVirialNT;
 
 	// --- VDF ---
 
@@ -402,10 +409,13 @@ public:
 			unsigned long simstep
 	) override {}
 
+	void siteWiseForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+                   unsigned long simstep) override;
+
 	void endStep(
 			ParticleContainer *particleContainer,
 			DomainDecompBase *domainDecomp, Domain *domain,
-			unsigned long simstep) override;
+			unsigned long simstep) override {};
 
 	void finish(ParticleContainer *particleContainer,
 				DomainDecompBase *domainDecomp, Domain *domain) override {}

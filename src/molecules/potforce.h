@@ -555,6 +555,8 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	mi.VirTadd(VTi);
 	mj.VirTadd(VTj);
 
+	// if (mi.getID() == 30) { std::cout << "Set moldata" << std::endl; }
+
 	// check whether all parameters were used
 	mardyn_assert(params.eos());
 }
