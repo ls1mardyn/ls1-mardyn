@@ -87,6 +87,10 @@ public:
 	/** get the constant correction of one virial element */
 	double ViConstCorr() const override { return _ViConstCorr; }
 
+	/** get the constant correction of NT virial element */
+	double VirNConstCorr() const { return _VirNConstCorr; }
+	double VirTConstCorr() const { return _VirTConstCorr; }
+
 	/** set coordinate of the angular momentum */
 	void setD(unsigned short d, double D) override { this->_L[d] = D; }
 
@@ -308,6 +312,9 @@ public:
 	void setUConstCorr(const double a) override { _upotConstCorr = a; }
 	void setViConstCorr(const double a) override { _ViConstCorr = a/3; } // Correction term assigned to the 3 diagonal elements
 
+	void setVirNConstCorr(const double vir) { _VirNConstCorr = vir; }
+	void setVirTConstCorr(const double vir) { _VirTConstCorr = vir; }
+
 	void Uadd(const double upot) override { _upot += upot; }
 	void setU(const double upot) override { _upot = upot; }
 
@@ -382,6 +389,9 @@ protected:
 
 	double _ViConstCorr; /** Correction of one virial element, not changing during simulation (homogeneous system) **/
 	double _upotConstCorr; /** Correction of potential energy, not changing during simulation (homogeneous system) **/
+
+	double _VirNConstCorr; /** Correction of normal virial element **/
+	double _VirTConstCorr; /** Correction of normal virial element **/
 
 	double _m; /**< total mass */
 	double _I[3]{0.,0.,0.},_invI[3]{0.,0.,0.};  // moment of inertia for principal axes and it's inverse

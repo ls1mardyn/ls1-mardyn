@@ -1033,8 +1033,8 @@ void SampleRegion::sampleProfiles(Molecule* molecule, int nDimension, unsigned l
 	virial[2] = molecule->Vi(2);
 
 	double virialNT[3];
-	virialNT[0] = molecule->VirN();
-	virialNT[1] = molecule->VirT();
+	virialNT[0] = molecule->VirN() + molecule->VirNConstCorr();
+	virialNT[1] = molecule->VirT() + molecule->VirTConstCorr();
 	virialNT[2] = 0.0;
 	// if (molecule->getID() == 30) { std::cout << "Read moldata: " << virialNT[0] << " " << virialNT[1] << std::endl; }
 
@@ -1658,6 +1658,8 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 			outputstream_vect << "                   px[" << cid << "]";
 			outputstream_vect << "                   py[" << cid << "]";
 			outputstream_vect << "                   pz[" << cid << "]";
+			outputstream_vect << "                   pN[" << cid << "]";
+			outputstream_vect << "                   pT[" << cid << "]";
 		}
 		outputstream_scal << endl;
 		outputstream_vect << endl;
@@ -1700,6 +1702,9 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 
 				double PressureNT = rho * ( (_dVirialNT[offset_x]+_dVirialNT[offset_y])/(2.*_nNumMoleculesGlobal[offset]) + T );
 
+				double PressureN = rho * ( (_dVirialNT[offset_x]/_nNumMoleculesGlobal[offset]) + T );
+				double PressureT = rho * ( (_dVirialNT[offset_y]/_nNumMoleculesGlobal[offset]) + T );
+
 				double PressureX = rho * ( _dVirial[offset_x]/_nNumMoleculesGlobal[offset] + _dTemperatureComp[offset_x] );
 				double PressureY = rho * ( _dVirial[offset_y]/_nNumMoleculesGlobal[offset] + _dTemperatureComp[offset_y] );
 				double PressureZ = rho * ( _dVirial[offset_z]/_nNumMoleculesGlobal[offset] + _dTemperatureComp[offset_z] );
@@ -1740,6 +1745,8 @@ void SampleRegion::writeDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PressureX;
 				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PressureY;
 				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PressureZ;
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PressureN;
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << PressureT;
 			} // loop: cid
 			outputstream_scal << endl;
 			outputstream_vect << endl;

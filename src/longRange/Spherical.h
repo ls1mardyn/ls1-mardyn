@@ -99,10 +99,10 @@ private:
 	std::vector<double> PNShells_Mean_global;
 	std::vector<double> PTShells_Mean;
 	std::vector<double> PTShells_Mean_global;
-	std::vector<double> VirShells_Mean;
-	std::vector<double> VirShells_Mean_global;
-	std::vector<double> VirShells_Corr;
-	std::vector<double> VirShells_Corr_global;
+	std::vector<double> PNShellsCorr_Avg;
+	std::vector<double> PNShellsCorr_Avg_global;
+	std::vector<double> PTShellsCorr_Avg;
+	std::vector<double> PTShellsCorr_Avg_global;
 	std::vector<double> VirShells_N;
 	std::vector<double> VirShells_N_global;
 	std::vector<double> VirShells_T;
