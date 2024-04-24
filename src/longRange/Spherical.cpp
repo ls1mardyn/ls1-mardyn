@@ -342,25 +342,20 @@ void Spherical::calculateLongRange() {
 		rhoShellsTemp[i] = rhoShellsTemp[i] / VShells[i];
 		rhoShellsAvg[i] += rhoShellsTemp[i];
 	}
-	// global_log->info() << "[Long Range Correction] Checkpoint 3.1"  << std::endl;
 	// Distribution of the Density Profile and local Temperature to every node
 	_domainDecomposition->collCommInit(2 * NShells);
 	for (unsigned i = 0; i < NShells; i++) {
 		_domainDecomposition->collCommAppendDouble(rhoShellsAvg[i]);
 		_domainDecomposition->collCommAppendDouble(TShellsAvg[i]);
 	}
-	// global_log->info() << "[Long Range Correction] Checkpoint 3.2"  << std::endl;
 	_domainDecomposition->collCommAllreduceSum();
-	// global_log->info() << "[Long Range Correction] Checkpoint 3.3"  << std::endl;
 	for (unsigned i = 0; i < NShells; i++) {
 		rhoShellsAvg_global[i] = _domainDecomposition->collCommGetDouble();
 		TShellsAvg_global[i] =
 			_domainDecomposition->collCommGetDouble() / (3 * rhoShellsAvg_global[i] / (simstep + 1) * VShells[i]);
 	}
-	// global_log->info() << "[Long Range Correction] Checkpoint 3.4"  << std::endl;
 	_domainDecomposition->collCommFinalize();
 
-	// global_log->info() << "[Long Range Correction] Checkpoint 4"  << std::endl;
 
 	unsigned long MeanIndex = (static_cast<int>(std::floor((simstep) / 100.0))) % NSMean;  // 1000
 	if (((simstep - 1) % 100) == 0) {                                                      // 1000
@@ -389,7 +384,6 @@ void Spherical::calculateLongRange() {
 				rhoShells[j] += 0.01 / NSMean * rhoShellsMean[i * NShells + j];  // 1000 --- 0.001
 			}
 		}
-		// global_log->info() << "[Long Range Correction] Checkpoint 5"  << std::endl;
 
 		// Distribution of the Density Profile to every node
 		_domainDecomposition->collCommInit(NShells);
