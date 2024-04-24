@@ -332,7 +332,6 @@ void Spherical::calculateLongRange() {
 			PartShells[molID] = k - 1;
 		}
 	}
-	// global_log->info() << "[Long Range Correction] Checkpoint 3"  << std::endl;
 
 	for (unsigned int i = 0; i < NShells; i++) {
 		// TShellsTemp[i] /= 3.*rhoShellsTemp[i] -3; //up to this point, rhoShellsTemp[i] is just # of Particles in Cell
@@ -353,6 +352,8 @@ void Spherical::calculateLongRange() {
 		rhoShellsAvg_global[i] = _domainDecomposition->collCommGetDouble();
 		TShellsAvg_global[i] =
 			_domainDecomposition->collCommGetDouble() / (3 * rhoShellsAvg_global[i] / (simstep + 1) * VShells[i]);
+		
+		rhoShellsAvg_global[i] /= (simstep + 1);
 	}
 	_domainDecomposition->collCommFinalize();
 
@@ -796,7 +797,6 @@ void Spherical::calculateLongRange() {
 		_domainDecomposition->collCommFinalize();
 
 		for (unsigned int i = 0; i < NShells; i++) {
-			rhoShellsAvg_global[i] /= (simstep + 1);
 			if (rhoShellsTemp_global[i] != 0.0) {
 				UShells_Mean_global[i] /= (rhoShellsTemp_global[i] * VShells[i]);
 				FShells_Mean_global[i] /= (rhoShellsTemp_global[i] * VShells[i]);
