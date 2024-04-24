@@ -399,6 +399,7 @@ void Spherical::calculateLongRange() {
 		_domainDecomposition->collCommAllreduceSum();
 		for (unsigned i = 0; i < NShells; i++) {
 			rhoShells_global[i] = _domainDecomposition->collCommGetDouble();
+			// if (i==290) { std::cout << "rhoShells_global[290] = " << rhoShells_global[i] << std::endl; }
 		}
 		_domainDecomposition->collCommFinalize();
 
@@ -1021,12 +1022,12 @@ void Spherical::calculateLongRange() {
 		FcorrY[molID] = FShells_Mean_global[PartShells[molID]] * FcorrY[molID] / ksi[molID];
 		FcorrZ[molID] = FShells_Mean_global[PartShells[molID]] * FcorrZ[molID] / ksi[molID];
 
-		// Reset virial (maybe also done in molecule class ?)
+		// Reset virial (maybe also done in molecule class or by missing communication?)
 		tempMol->setVirN(0.0);
 		tempMol->setVirT(0.0);
 
 		PNShellsCorr_Avg[PartShells[molID]] -= 0.5 * PNShells_Mean_global[PartShells[molID]];
-		PTShellsCorr_Avg[PartShells[molID]] -= 0.5 * PTShells_Mean_global[PartShells[molID]];
+		PTShellsCorr_Avg[PartShells[molID]] -= 0.25 * PTShells_Mean_global[PartShells[molID]];
 
 		// Accumulate global corrections
 		UCorrSum += UShells_Mean_global[PartShells[molID]];
@@ -1077,7 +1078,7 @@ void Spherical::calculateLongRange() {
 	}
 
 	// Add homogeneous part to upot correction
-	// For virial this was done above (TODO move here)
+	// For virial for domain correction this was done above (TODO move here)
 	UCorrSum_global += globalNumMols * UpotKorrLJ;
 
 	if (!disableLRC) {
