@@ -79,17 +79,17 @@ private:
 	std::vector<double> RShells2;
 	std::vector<double> RShells3;
 	std::vector<double> VShells;
-	std::vector<double> rhoShellsTemp;
-	std::vector<double> rhoShellsTemp_global;
-	std::vector<double> rhoShellsMean;
-	std::vector<double> rhoShellsAvg;
-	std::vector<double> rhoShellsAvg_global;
+	std::vector<double> rhoShellsTemp;  // Density in current simstep
+	std::vector<double> rhoShellsTemp_global;  // Density in current simstep; after allreduce
+	std::vector<double> rhoShellsMean;  // Density of running average with windows size of NSMean*calcFreq; contains all data
+	std::vector<double> rhoShellsAvg;  // Density averaged over whole simulation
+	std::vector<double> rhoShellsAvg_global;  // Density averaged over whole simulation; after allreduce
 	std::vector<double> TShellsTemp;
 	std::vector<double> TShellsAvg;
 	std::vector<double> TShellsAvg_global;
-	std::vector<double> rhoShells;
-	std::vector<double> rhoShellsT;
-	std::vector<double> rhoShells_global;
+	std::vector<double> rhoShells;  // Running average density over last NSMean*calcFreq steps
+	std::vector<double> rhoShellsT;  // tanh Fit of density
+	std::vector<double> rhoShells_global;  // Running average density over last NSMean*calcFreq steps; after allreduce
 	std::vector<double> PartShells;
 	std::vector<double> UShells_Mean;
 	std::vector<double> UShells_Mean_global;

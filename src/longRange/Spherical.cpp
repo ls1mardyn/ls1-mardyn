@@ -358,14 +358,16 @@ void Spherical::calculateLongRange() {
 	_domainDecomposition->collCommFinalize();
 
 
-	unsigned long MeanIndex = (static_cast<int>(std::floor((simstep) / 100.0))) % NSMean;  // 1000
-	if (((simstep - 1) % 100) == 0) {                                                      // 1000
+	unsigned long MeanIndex = (static_cast<int>(std::floor((simstep - 1) / calcFreq))) % NSMean;  // 1000
+	if (((simstep - 1) % calcFreq) == 0) {                                                      // 1000
 		std::fill(rhoShellsMean.begin() + NShells * MeanIndex, rhoShellsMean.begin() + NShells * (MeanIndex + 1), 0.0);
 	}
+	// To get some results before NSMean*calcFreq, initialize rhoShellsMean with density at simstep = 0
 	if (simstep == 0) {
 		for (unsigned int j = 0; j < NSMean; j++) {
 			for (unsigned int i = 0; i < NShells; i++) {
-				rhoShellsMean[j * NShells + i] += 100 * rhoShellsTemp[i];  // 1000
+				rhoShellsMean[j * NShells + i] += calcFreq * rhoShellsTemp[i];  // 1000
+				if (i==293) { std::cout << "Init MeanIndex " << MeanIndex << " " << rhoShellsTemp[i] << std::endl; }
 			}
 		}
 	} else {
