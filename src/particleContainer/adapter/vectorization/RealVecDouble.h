@@ -74,7 +74,15 @@ public:
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_cvtepi64_pd(m);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
-		return _mm256_cvtepi64_pd(m);
+		const __m256i clear_mask = _mm256_set_epi32(0, -1, 0, -1, 0, -1, 0, -1);
+		const __m256i m_clean = _mm256_and_si256(m_clean, clear_mask);
+
+		const __m256i perm_mask = _mm256_set_epi32(7, 7, 7, 7, 6, 4, 2, 0);
+		const __m256i m_perm = _mm256_permutevar8x32_epi32(m_clean, perm_mask);
+		const __m128 m_ps = _mm256_castps256_ps128(_mm256_cvtepi32_ps(m_perm));
+		const __m256d m_pd = _mm256_cvtps_pd(m_ps);
+
+		return m_pd;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
 		return _mm512_cvtepi64_pd(m);
 	#endif
@@ -223,19 +231,6 @@ public:
 		return _mm256_max_pd(a, b);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
 		return _mm512_max_pd(a, b);
-	#endif
-	}
-
-	vcp_inline
-	static RealVec cos (const RealVec& a) {
-	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return std::cos(a);
-	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return _mm_cos_pd(a);
-	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
-		return _mm256_cosd_pd(a);
-	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_cosd_pd(a);
 	#endif
 	}
 

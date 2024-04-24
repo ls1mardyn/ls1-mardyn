@@ -227,19 +227,6 @@ public:
 	}
 
 	vcp_inline
-	static RealVec cos (const RealVec& a) {
-	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return std::cos(a);
-	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return _mm_cos_ps(a);
-	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
-		return _mm256_cos_ps(a);
-	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_cos_ps(a);
-	#endif
-	}
-
-	vcp_inline
 	static RealVec sqrt (const RealVec& rhs) {
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return std::sqrt(rhs);

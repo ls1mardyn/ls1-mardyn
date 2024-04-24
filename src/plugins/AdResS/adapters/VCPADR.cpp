@@ -1154,7 +1154,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 							shift6);
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_ljc_id, (vcp_center_id_t) i_ljc_idx, soa2_ljc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[LJ], _compMask[LJ], soa1_ljc_id, (vcp_center_id_t) i_ljc_idx, soa2_ljc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -1234,7 +1234,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 							shift6);
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_ljc_id, (vcp_center_id_t) i_ljc_idx, soa2_ljc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[LJ], _compMask[LJ], soa1_ljc_id, (vcp_center_id_t) i_ljc_idx, soa2_ljc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -1343,7 +1343,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_chargesc_id, (vcp_center_id_t) i_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[CHARGE], _compMask[CHARGE], soa1_chargesc_id, (vcp_center_id_t) (i_charge_idx + local_i), soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -1414,7 +1414,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								remainderM);
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_chargesc_id, (vcp_center_id_t) i_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[CHARGE], _compMask[CHARGE], soa1_chargesc_id, (vcp_center_id_t) (i_charge_idx + local_i), soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -1520,7 +1520,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[DIPOLE], _compMask[CHARGE], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -1600,7 +1600,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								remainderM);
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[DIPOLE], _compMask[CHARGE], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -1720,7 +1720,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[QUADRUPOLE], _compMask[CHARGE], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -1803,7 +1803,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								remainderM);
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[QUADRUPOLE], _compMask[CHARGE], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -1944,7 +1944,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 							epsRFInvrc3);
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[DIPOLE], _compMask[DIPOLE], soa1_dipolesc_id, (vcp_center_id_t) (i_dipole_idx + local_i), soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -2035,7 +2035,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 							epsRFInvrc3);
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[DIPOLE], _compMask[DIPOLE], soa1_dipolesc_id, (vcp_center_id_t) (i_dipole_idx + local_i), soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -2158,7 +2158,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_chargesc_id, (vcp_center_id_t) i_charge_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[CHARGE], _compMask[DIPOLE], soa1_chargesc_id, (vcp_center_id_t) i_charge_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -2244,7 +2244,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								remainderM);
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_chargesc_id, (vcp_center_id_t) i_charge_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[CHARGE], _compMask[DIPOLE], soa1_chargesc_id, (vcp_center_id_t) i_charge_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -2362,7 +2362,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[QUADRUPOLE], _compMask[DIPOLE], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -2451,7 +2451,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								remainderM);
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[QUADRUPOLE], _compMask[DIPOLE], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -2595,7 +2595,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[QUADRUPOLE], _compMask[QUADRUPOLE], soa1_quadrupolesc_id, (vcp_center_id_t) (i_quadrupole_idx + local_i), soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -2683,7 +2683,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								remainderM);
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[QUADRUPOLE], _compMask[QUADRUPOLE], soa1_quadrupolesc_id, (vcp_center_id_t) (i_quadrupole_idx + local_i), soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -2803,7 +2803,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_chargesc_id, (vcp_center_id_t) i_charge_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[CHARGE], _compMask[QUADRUPOLE], soa1_chargesc_id, (vcp_center_id_t) i_charge_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -2889,7 +2889,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								remainderM);
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_chargesc_id, (vcp_center_id_t) i_charge_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[CHARGE], _compMask[QUADRUPOLE], soa1_chargesc_id, (vcp_center_id_t) i_charge_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -3009,7 +3009,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[DIPOLE], _compMask[QUADRUPOLE], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
@@ -3098,7 +3098,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 								remainderM);
 
 						MaskCalcVec mask_i, mask_j;
-						unpackComp(mask_i, mask_j, _compMask[LJ], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
+						unpackComp(mask_i, mask_j, _compMask[DIPOLE], _compMask[QUADRUPOLE], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
 						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
