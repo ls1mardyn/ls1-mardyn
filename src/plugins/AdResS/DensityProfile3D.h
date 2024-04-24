@@ -15,22 +15,25 @@
 
 class DensityProfile3D {
 public:
-    void init(double binWidth, Domain* domain, double rho0, double smoothingFactor);
+	enum Type {
+		SAMPLE, SMOOTH, GMM
+	};
+    void init(double binWidth, Domain* domain, double smoothingFactor);
     void sampleDensities(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
     [[nodiscard]] const std::vector<double>& getDensity(int dim) const;
     [[nodiscard]] std::vector<double> getDensitySmoothed(int dim) const;
-    void computeDensities(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
-    [[nodiscard]] const Interpolation::Function& getHistDensity(int dim) const;
+    void computeGMMDensities(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
+    [[nodiscard]] const Interpolation::Function& getGMMDensity(int dim) const;
 	//! @brief writes densities currently in global buffer
-	void writeDensity(const std::string &filename, const std::string &separator, int dim, bool smoothed);
+	void writeDensity(const std::string &filename, const std::string &separator, int dim, Type type);
 private:
+	double _smoothingFactor;
     double _binWidth;
-    double _rho0;
     std::array<unsigned long, 3> _binDims;
     std::array<double, 3> _binVolumes;
     std::array<std::vector<double>, 3> _localDensities;
     std::array<std::vector<double>, 3> _globalDensities;
-    std::array<Interpolation::Function, 3> _histDensities;
+    std::array<Interpolation::Function, 3> _gmmDensities;
     Interpolation::Matrix _smoothingFilter;
     void resetBuffers();
 };

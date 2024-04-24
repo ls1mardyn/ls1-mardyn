@@ -9,10 +9,11 @@
 
 #include <array>
 #include <vector>
+#include <math.h>
 
 using Log::global_log;
 
-void Interpolation::Function::writeXML(const std::string &filename) {
+void Interpolation::Function::writeXML(const std::string &filename) const {
 #ifdef ENABLE_MPI
 	if (_simulation.domainDecomposition().getRank() != 0) return;
 #endif
@@ -139,7 +140,7 @@ static inline double bernstein_3(double t, int k) {
 [[maybe_unused]] void Interpolation::computeHermite(double begin, std::vector<double> &fVals, std::vector<double> &steps, int samples,
                                    Function &fun) {
     // the base idea is to create the hermite matrix
-    // this here is the simplified version, in which uniform step size is assume
+    // this here is the simplified version, in which uniform step size is assumed
     // in the approach beneath the 141 matrix is replaced by the appropriate step sizes
     // 4 1   | y1'            y2 - y0 - h/3 * y0'
     // 1 4 1 | y2'  =  3/h *  y_i+2 - y_i
@@ -273,4 +274,36 @@ void Interpolation::resampleFunction(double begin, double end, double step_width
     Function f;
     computeHermite(begin, fVals, steps, count, f);
     function = std::move(f);
+}
+
+[[maybe_unused]] static inline double gmm_kernel(double x, double x_i, double xi) {
+	// see https://arxiv.org/pdf/1504.07351.pdf and https://pubs.acs.org/doi/10.1021/jp909219k
+	double scale = std::pow(2*M_PI*xi*xi, -3.0/2.0);
+	double exp = std::exp(-0.5 * std::pow((x-x_i)/xi, 2));
+	return scale*exp;
+}
+
+void
+Interpolation::createGMM(double begin, double end, int samples, double xi, const std::vector<double>& centers, Interpolation::Function &function) {
+	std::vector<double> hermite_f_val;
+	std::vector<double> hermite_steps;
+
+	auto step_width = static_cast<double>((end-begin)/samples);
+	hermite_f_val.resize(samples, 0.0);
+	hermite_steps.resize(samples-1, step_width);
+
+	// every center corresponds to one exp function and must be evaluated at all roots
+	#if defined(_OPENMP)
+	# pragma omp parallel for
+	#endif
+	for(int step = 0; step < samples; step++)
+	{
+		double pos = step * step_width;
+
+		for(auto& center : centers) {
+			hermite_f_val[step] += gmm_kernel(pos, center, xi);
+		}
+	}
+
+	computeHermite(begin, hermite_f_val, hermite_steps, samples, function);
 }

@@ -10,7 +10,7 @@ FTH::Handler::Handler(const FTH::Config &config) {
 	_config = config;
 
 	auto* domain = _simulation.getDomain();
-	_densityProfiler.init(_config._samplingStepSize, domain, _config._rho0, _config._smoothingFactor);
+	_densityProfiler.init(_config._samplingStepSize, domain, _config._smoothingFactor);
 	_config._thermodynamicForceSampleCounter = 0;
 
 	if (!_config._createThermodynamicForce) return;
@@ -117,10 +117,16 @@ void FTH::Handler::writeLogs(ParticleContainer &particleContainer, DomainDecompB
 	stream = std::stringstream {};
 	stream << "./F_TH_Density_" << simstep << ".txt";
 	_densityProfiler.sampleDensities(&particleContainer, &domainDecomp, &domain);
-	if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, false);
+	if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, DensityProfile3D::SAMPLE);
 
 	stream.clear();
 	stream = std::stringstream {};
 	stream << "./F_TH_Density_Smooth_" << simstep << ".txta";
-	if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, true);
+	if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, DensityProfile3D::SMOOTH);
+
+	stream.clear();
+	stream = std::stringstream {};
+	stream << "./F_TH_Density_GMM_" << simstep << ".xmla";
+	_densityProfiler.computeGMMDensities(&particleContainer, &domainDecomp, &domain);
+	if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, DensityProfile3D::GMM);
 }

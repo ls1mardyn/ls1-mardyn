@@ -24,7 +24,7 @@ namespace Interpolation {
         //! @brief samples of f'(x)
         std::vector<double> gradients;
 		//! @brief write this function to file in XML format
-		void writeXML(const std::string &filename);
+		void writeXML(const std::string &filename) const;
     };
 
     /**
@@ -177,5 +177,19 @@ namespace Interpolation {
      * @param function in/out function
      * */
     [[maybe_unused]] void resampleFunction(double begin, double end, double step_width, Function& function);
+
+	/**
+	 * Generates a Gaussian Mixture Model directly by using the provided vector of points a roots.
+	 * Since every point is part of a gaussian function evaluated at each position i * step_width,
+	 * the result is approximated using a cubic hermite spline to avoid a complexity of O(N*M) for each GMM evaluation.
+	 * See: https://arxiv.org/pdf/1504.07351.pdf page 3 (right)
+	 * @param begin begin of x
+     * @param end end of x
+     * @param samples number of samples for hermite spline
+     * @param xi filter strength
+     * @param centers gaussian centers
+     * @param function output function
+	 * */
+	 [[maybe_unused]] void createGMM(double begin, double end, int samples, double xi, const std::vector<double>& centers, Function& function);
 }
 #endif //MARDYN_INTERPOLATION_H

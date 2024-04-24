@@ -5,12 +5,11 @@
 #include "DensityProfile3D.h"
 #include <cstring>
 #include <array>
-#include <map>
-#include <unordered_map>
+#include <vector>
 
-void DensityProfile3D::init(double binWidth, Domain *domain, double rho0, double smoothingFactor) {
+void DensityProfile3D::init(double binWidth, Domain *domain, double smoothingFactor) {
     _binWidth = binWidth;
-    _rho0 = rho0;
+	_smoothingFactor = smoothingFactor;
     double tmpMult = domain->getGlobalLength(0) * domain->getGlobalLength(1) * domain->getGlobalLength(2);
     for (int d = 0; d < 3; ++d) {
         _binDims[d] = static_cast<unsigned long>(domain->getGlobalLength(d) / binWidth);
@@ -100,151 +99,81 @@ void DensityProfile3D::resetBuffers() {
     }
 }
 
-static void map_add(std::map<double, double> &in, std::map<double, double> &out) {
-    for(auto [pos, val] : in ) {
-        out[pos] += val;
-    }
-}
+void DensityProfile3D::computeGMMDensities(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+    std::array<std::vector<double>,3> local_mol_pos;
+    std::array<std::vector<double>,3> global_mol_pos;
+	local_mol_pos[0].resize(particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY), 0.0);
+	local_mol_pos[1].resize(particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY), 0.0);
+	local_mol_pos[2].resize(particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY), 0.0);
+	global_mol_pos[0].resize(domain->getglobalNumMolecules(true, particleContainer, domainDecomp), 0.0);
+	global_mol_pos[1].resize(domain->getglobalNumMolecules(true, particleContainer, domainDecomp), 0.0);
+	global_mol_pos[2].resize(domain->getglobalNumMolecules(true, particleContainer, domainDecomp), 0.0);
 
-static void umap_add(std::unordered_map<double, double> &in, std::unordered_map<double, double> &out) {
-    for(auto [pos, val] : in ) {
-        out[pos] += val;
-    }
-}
-
-static std::unordered_map<double,double> create_map() {
-    return {};
-}
-
-void DensityProfile3D::computeDensities(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-                                        Domain *domain) {
-    std::array<std::unordered_map<double,double>,3> buffer;
-    std::array<std::map<double,double>,3> global_forces;
-
-    //Load all forces
+    //Load all local positions
+	auto begin = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
     #if defined(_OPENMP)
-    #pragma omp declare reduction(map_plus : std::unordered_map<double, double> : umap_add(omp_in, omp_out)) \
-        initializer (omp_priv=create_map())
-    auto* raw_array = buffer.data();
-    #pragma omp parallel reduction(map_plus: raw_array[:3])
-    #endif
-    for(auto itM = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
-        std::array<double, 3> R = (*itM).r_arr();
-        for(int d = 0; d < 3; d++) {
-            raw_array[d][R[d]] += (*itM).F(d);
-        }
+    #pragma omp parallel
+	#endif
+    for(auto itM = begin; itM.isValid(); ++itM) {
+        const std::array<double, 3> R = (*itM).r_arr();
+		local_mol_pos[0][itM->getID()] = R[0];
+		local_mol_pos[1][itM->getID()] = R[1];
+		local_mol_pos[2][itM->getID()] = R[2];
     }
 
     //share maps across all ranks
 #if defined(ENABLE_MPI)
     int num_ranks = 0;
-    int rank = domainDecomp->getRank();
-    MPI_Comm_size(domainDecomp->getCommunicator(), &num_ranks);
+	int rank = domainDecomp->getRank();
+	MPI_Comm_size(domainDecomp->getCommunicator(), &num_ranks);
 
-    std::vector<std::size_t> local_entry_counts;
-    local_entry_counts.resize(num_ranks * 3, 0UL);
-    for(int d = 0; d < 3; d++) local_entry_counts[3 * rank + d] = buffer[d].size();
+	std::vector<std::size_t> rank_mol_counts;
+	rank_mol_counts.resize(num_ranks, 0UL);
+	rank_mol_counts[rank] = local_mol_pos[0].size();
 
-    std::vector<std::size_t> global_entry_counts;
-    global_entry_counts.resize(num_ranks * 3, 0UL);
-    MPI_Allreduce(local_entry_counts.data(), global_entry_counts.data(), num_ranks * 3, MPI_UNSIGNED_LONG, MPI_SUM, domainDecomp->getCommunicator());
+    MPI_Allreduce(MPI_IN_PLACE, rank_mol_counts.data(), num_ranks, MPI_UNSIGNED_LONG, MPI_SUM, domainDecomp->getCommunicator());
 
-    std::array<std::size_t, 3> entries_per_dim {0,0,0};
-    std::array<std::size_t, 3> prior_entries_per_dim {0,0,0};
-    for(int r = 0; r < num_ranks; r++) {
-        for(int d = 0; d < 3; d++) {
-            entries_per_dim[d] += global_entry_counts[3 * r + d];
-            if(r < rank) prior_entries_per_dim[d] += global_entry_counts[3 * r + d];
-        }
+    std::size_t prior_mol_count = 0;
+    for(int r = 0; r < rank; r++) {
+        prior_mol_count += rank_mol_counts[r];
     }
 
-    // prepare data send buffers, we need twice as much space, since we are also sending the keys
-    std::array<std::vector<double>, 3> local_entries;
-    for(int d = 0; d < 3; d++) local_entries[d].resize(2 * entries_per_dim[d], 0.0);
-    for(int d = 0; d < 3; d++) {
-        unsigned long offset = 2 * prior_entries_per_dim[d];
-        for(auto [pos, val] : buffer[d]) {
-            local_entries[d][offset + 0] = pos;
-            local_entries[d][offset + 1] = val;
-            offset += 2;
-        }
-    }
+    // write data to correct positions
+    std::size_t offset = prior_mol_count;
+	std::memcpy(global_mol_pos[0].data() + offset, local_mol_pos[0].data(), rank_mol_counts[rank]*sizeof(double));
+	std::memcpy(global_mol_pos[1].data() + offset, local_mol_pos[1].data(), rank_mol_counts[rank]*sizeof(double));
+	std::memcpy(global_mol_pos[2].data() + offset, local_mol_pos[2].data(), rank_mol_counts[rank]*sizeof(double));
 
-    std::array<std::vector<double>, 3> global_entries;
-    for(int d = 0; d < 3; d++) global_entries[d].resize(2 * entries_per_dim[d], 0.0);
-    for(int d = 0; d < 3; d++) {
-        MPI_Allreduce(local_entries[d].data(), global_entries[d].data(), 2 * entries_per_dim[d], MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
-    }
-
-    for(int d = 0; d < 3; d++) {
-        for(unsigned long i = 0; i < 2 * entries_per_dim[d]; i+=2) {
-            global_forces[d][global_entries[d][i+0]] += global_entries[d][i+1];
-        }
-    }
+	// share across ranks
+	MPI_Allreduce(MPI_IN_PLACE, global_mol_pos[0].data(), global_mol_pos[0].size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
+	MPI_Allreduce(MPI_IN_PLACE, global_mol_pos[1].data(), global_mol_pos[1].size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
+	MPI_Allreduce(MPI_IN_PLACE, global_mol_pos[2].data(), global_mol_pos[2].size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
 #else
-    for(int d = 0; d < 3; d++) {
-        global_forces[d].insert(buffer[d].begin(), buffer[d].end());
-    }
+    global_mol_pos[0] = std::move(local_mol_pos[0]);
+    global_mol_pos[1] = std::move(local_mol_pos[1]);
+    global_mol_pos[2] = std::move(local_mol_pos[2]);
 #endif
-
-    //normalize data
-    {
-        unsigned long num_mols = _simulation.getTotalNumberOfMolecules();
-        for(int d = 0; d < 3; d++) {
-            for(auto it = global_forces[d].begin(); it != global_forces[d].end(); ++it) {
-                global_forces[d][it->first] /= num_mols;
-            }
-        }
-    }
-
-    std::array<std::vector<double>,3> forces;
-    std::array<std::vector<double>,3> steps;
-    for(int d = 0; d < 3; d++) {
-        forces[d].reserve(global_forces[d].size());
-        steps[d].reserve(global_forces[d].size()-1);
-        double last_pos = 0.0;
-        for(auto [pos, val] : global_forces[d]) {
-            steps[d].emplace_back(pos - last_pos);
-            forces[d].emplace_back(val);
-
-            last_pos = pos;
-        }
-    }
-
-    std::array<Interpolation::Function, 3> force_functions;
-    for(int d = 0; d < 3; d++) Interpolation::computeHermite(0.0, forces[d], steps[d], forces[d].size(), force_functions[d]);
-    std::array<Interpolation::Function, 3> force_function_ints;
-    for(int d = 0; d < 3; d++) Interpolation::computeIntegral(force_functions[d], force_function_ints[d]);
-
-    double T = domain->getGlobalCurrentTemperature();
-    const double kB = 1.380649e-23;
-
-    double scaling = 1 / (T * kB);
-
-    for(int d = 0; d < 3; d++) {
-        for(unsigned long i = 0; i < force_function_ints[d].n; i++) {
-            force_function_ints[d].function_values[i] *= scaling;
-            force_function_ints[d].gradients[i] *= scaling;
-
-            force_function_ints[d].function_values[i] += _rho0;
-        }
-    }
-
-    _histDensities = std::move(force_function_ints);
+	for(int d = 0; d < 3; d++) {
+		Interpolation::createGMM(0.0, domain->getGlobalLength(d), _binDims[d], _smoothingFactor, global_mol_pos[d], _gmmDensities[d]);
+	}
 }
 
-const Interpolation::Function &DensityProfile3D::getHistDensity(int dim) const {
-    return _histDensities[dim];
+const Interpolation::Function &DensityProfile3D::getGMMDensity(int dim) const {
+    return _gmmDensities[dim];
 }
 
-void DensityProfile3D::writeDensity(const std::string &filename, const std::string &separator, int dim, bool smoothed) {
-	std::vector<double> densities;
-	if(smoothed) densities = getDensitySmoothed(dim);
-	else densities = getDensity(dim);
-
+void DensityProfile3D::writeDensity(const std::string &filename, const std::string &separator, int dim, Type type) {
 #ifdef ENABLE_MPI
 	if (_simulation.domainDecomposition().getRank() != 0) return;
 #endif
+	if(type == GMM) {
+		getGMMDensity(dim).writeXML(filename);
+		return;
+	}
+
+	std::vector<double> densities;
+	if(type == SMOOTH) densities = getDensitySmoothed(dim);
+	else if(type == SAMPLE) densities = getDensity(dim);
 	try {
 		std::ofstream file {filename};
 		for(unsigned long i = 0; i < densities.size()-1; i++) {
