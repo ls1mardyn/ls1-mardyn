@@ -193,6 +193,10 @@ void Spherical::init() {
 		systemcenter[d] = 0.5 * boxlength[d];
 	}
 
+	if ((boxlength[0] != boxlength[1]) or (boxlength[0] != boxlength[2])) {
+		global_log->warning() << "[Long Range Correction] Domain size should be the same in all directions!" << std::endl;
+	}
+
 	_drShells = 0.5 * std::min({boxlength[0], boxlength[1], boxlength[2]}) / (NShells + 1);
 
 	_deltaShells = rc / _drShells;
@@ -211,6 +215,26 @@ void Spherical::init() {
 	RShells3[NShells - 1] = RShells2[NShells - 1] * RShells[NShells - 1];
 	VShells[NShells - 1] =
 		(boxlength[0] * boxlength[1] * boxlength[2]) - (4. / 3.) * M_PI * pow((RShells[NShells - 1] - drShells05), 3);
+
+
+	// NOTE: procedure to calculate the instantaneous inside and outside densities is risky here, because it makes a
+	// priori asumptions about where to find the phase boundary! Better Ideas are welcome.
+	bulkBoundaries.inside_from = NShells / 10; //10; 
+	bulkBoundaries.inside_to = NShells / 5 + 5; // 35;
+	bulkBoundaries.outside_from = NShells - 2 - NShells / 10 - 5;  // 72;
+	bulkBoundaries.outside_to = NShells - 1;
+
+	// systemcenter is at half of domain size (densities etc are averaged spherically around systemcenter)
+	double inside_from_coord = (bulkBoundaries.inside_from*systemcenter[0])/NShells;
+	double inside_to_coord = (bulkBoundaries.inside_to*systemcenter[0])/NShells;
+	double outside_from_coord = (bulkBoundaries.outside_from*systemcenter[0])/NShells;
+	double outside_to_coord = (bulkBoundaries.outside_to*systemcenter[0])/NShells;
+
+	global_log->warning() << "[Long Range Correction] Calculating rho_inside from " << inside_from_coord << " (Shell " << bulkBoundaries.inside_from << ")"
+																	   << " to " << inside_to_coord << " (Shell " << bulkBoundaries.inside_to << ")"
+														 << " and rho_out from " << outside_from_coord << " (Shell " << bulkBoundaries.outside_from << ")"
+																	   << " to " << outside_to_coord << " (Shell " << bulkBoundaries.outside_to << ")" << std::endl;
+
 
 	// Set names for output files and write header
 	// if (_domainDecomposition->getRank() == 0) {
@@ -286,23 +310,19 @@ void Spherical::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void Spherical::calculateLongRange() {
-	// global_log->info() << "[Long Range Correction] calculateLongRange has been called"  << std::endl;
+	// global_log->info() << "[Long Range Correction] calculateLongRange has been called" << std::endl;
 
 	int rank = _domainDecomposition->getRank();
 	uint64_t simstep = _simulation.getSimulationStep();
-	// global_log->info() << "[Long Range Correction] simstep = "<< simstep  << std::endl;
+	// global_log->info() << "[Long Range Correction] simstep = " << simstep << std::endl;
 
 	std::fill(rhoShellsTemp.begin(), rhoShellsTemp.end(), 0.0);
 	std::fill(TShellsTemp.begin(), TShellsTemp.end(), 0.0);
-
-	// global_log->info() << "[Long Range Correction] Checkpoint 1"  << std::endl;
 
 	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid();
 		 ++tempMol) {
 		double v2i = tempMol->v(0) * tempMol->v(0) + tempMol->v(1) * tempMol->v(1) +
 					 tempMol->v(2) * tempMol->v(2);  // velocity^2 of tempMol
-
-		// global_log->info() << "[Long Range Correction] Checkpoint 2.i"  u<< std::endl;
 
 		unsigned long molID = tempMol->getID();
 		for (unsigned short d = 0; d < 3; ++d) {
@@ -367,12 +387,14 @@ void Spherical::calculateLongRange() {
 		for (unsigned int j = 0; j < NSMean; j++) {
 			for (unsigned int i = 0; i < NShells; i++) {
 				rhoShellsMean[j * NShells + i] += calcFreq * rhoShellsTemp[i];  // 1000
-				if (i==293) { std::cout << "Init MeanIndex " << MeanIndex << " " << rhoShellsTemp[i] << std::endl; }
+				if (i==2932) { std::cout << "Init MeanIndex " << MeanIndex << " " << rhoShellsTemp[i] << std::endl; }
 			}
 		}
 	} else {
 		for (unsigned int i = 0; i < NShells; i++) {
+			if (i==2932) { std::cout << "MeanIndex " << simstep << " " << MeanIndex << " " << rhoShellsMean[NShells * MeanIndex + i] << std::endl; }
 			rhoShellsMean[NShells * MeanIndex + i] += rhoShellsTemp[i];
+			if (i==2932) { std::cout << "MeanIndex " << simstep << " " << MeanIndex << " " << rhoShellsMean[NShells * MeanIndex + i] << " added " << rhoShellsTemp[i] << std::endl; }
 		}
 	}
 
@@ -384,8 +406,10 @@ void Spherical::calculateLongRange() {
 
 		for (unsigned int j = 0; j < NShells; j++) {
 			for (unsigned int i = 0; i < NSMean; i++) {
-				rhoShells[j] += 0.01 / NSMean * rhoShellsMean[i * NShells + j];  // 1000 --- 0.001
+				rhoShells[j] += (1./calcFreq) / NSMean * rhoShellsMean[i * NShells + j];  // 1000 --- 0.001
+				if (j==2932) { std::cout << "rhoShellsMean " << rank << " " << simstep << " " << i << " " << (1./calcFreq) / NSMean * rhoShellsMean[i * NShells + j] << std::endl; }
 			}
+			if (j==2932) { std::cout << "rhoShells " << rank << " " << simstep << " " << j << " " << rhoShells[j] << std::endl; }
 		}
 
 		// Distribution of the Density Profile to every node
@@ -396,7 +420,7 @@ void Spherical::calculateLongRange() {
 		_domainDecomposition->collCommAllreduceSum();
 		for (unsigned i = 0; i < NShells; i++) {
 			rhoShells_global[i] = _domainDecomposition->collCommGetDouble();
-			// if (i==290) { std::cout << "rhoShells_global[290] = " << rhoShells_global[i] << std::endl; }
+			if (i==2932) { std::cout << "rhoShells_global[2932] " << rank << " " << simstep << " " << i << " " << rhoShells_global[i] << " " << rhoShellsAvg_global[i] << std::endl; }
 		}
 		_domainDecomposition->collCommFinalize();
 
@@ -440,25 +464,19 @@ void Spherical::calculateLongRange() {
 
 		// NOTE: procedure to calculate the instantaneous inside and outside densities is risky here, because it makes a
 		// priori asumptions about where to find the phase boundary! Better Ideas are welcome.
-		int inside_from = NShells / 10;
-		int inside_to = NShells / 5 + 5;
-		int outside_from = NShells - 2 - NShells / 10 - 5;
-		int outside_to = NShells - 2;
-
 		double rho_in = 0.;
-		for (unsigned int i = inside_from; i < inside_to; i++) {
+		for (unsigned int i = bulkBoundaries.inside_from; i < bulkBoundaries.inside_to; i++) {
 			rho_in += rhoShells_global[i];
 		}
-		rho_in /= (inside_to - inside_from);
+		rho_in /= (bulkBoundaries.inside_to - bulkBoundaries.inside_from);
 
 		double rho_out = 0.;
-		for (unsigned int i = outside_from; i < outside_to; i++) {
+		for (unsigned int i = bulkBoundaries.outside_from; i < bulkBoundaries.outside_to; i++) {
 			rho_out += rhoShells_global[i];
 		}
-		rho_out /= (outside_to - outside_from);
+		rho_out /= (bulkBoundaries.outside_to - bulkBoundaries.outside_from);
 
-		std::cout << "Averaged rho. Inside (" << inside_from << "-" << inside_to << " ) rho_in = " << rho_in
-							   << " Outside (" << outside_from << "-" << outside_to << " ) rho_out = " << rho_out << std::endl;
+		global_log->info() << "[Long Range Correction] Averaged rho: rho_in = " << rho_in << " rho_out = " << rho_out << std::endl;
 
 		// D0 with 1090 (Baidakov et al.)
 		double Dmin = 0.0;
@@ -472,7 +490,8 @@ void Spherical::calculateLongRange() {
 					Dmin = RShells[i];
 				}
 			}
-			for (unsigned int i = 1; i < (NShells - 10); i++) {
+			for (unsigned int i = 1; i < (NShells - 10); i++) {  // some value/limitation of the search space could be needed for the largest shells in case of droplet (low density)
+				// This could be written much better with a "backwards" loop and/or a break condition
 				unsigned int j = NShells - i;
 				if (rhoShells_global[j] < r10) {
 					Dmax = RShells[j];
@@ -481,7 +500,7 @@ void Spherical::calculateLongRange() {
 		} else {
 			double r10 = rho_in + 0.1 * (rho_out - rho_in);
 			double r90 = rho_in + 0.9 * (rho_out - rho_in);
-			for (unsigned int i = 1; i < (NShells - 10); i++) {
+			for (unsigned int i = 1; i < (NShells - 10); i++) {  // some value/limitation of the search space could be needed for the smallest shells in case of bubble (low density)
 				if (rhoShells_global[i] < r10) {
 					Dmin = RShells[i];
 				}
@@ -520,7 +539,7 @@ void Spherical::calculateLongRange() {
 		// 	}
 		// }
 
-		// shift for Force Correction
+		// shift for correction, since outer bulk only needs homogeneous correction
 		if (droplet) {
 			for (unsigned int i = 0; i < NShells; i++) {
 				if (rhoShellsT[i] >= 1.02 * rho_out) {
@@ -531,11 +550,12 @@ void Spherical::calculateLongRange() {
 			}
 		} else {
 			for (unsigned int i = 0; i < NShells; i++) {
-				if (rhoShellsT[i] <= 0.998 * rho_out) {
-					rhoShellsT[i] -= rho_out;
-				} else {
-					rhoShellsT[i] = 0.0;
-				}
+				rhoShellsT[i] -= rho_out;
+				// if (rhoShellsT[i] <= 0.998 * rho_out) {
+				// 	rhoShellsT[i] -= rho_out;
+				// } else {
+				// 	rhoShellsT[i] = 0.0;
+				// }
 			}
 		}
 
@@ -588,7 +608,7 @@ void Spherical::calculateLongRange() {
 				VirialKorrLJ *= 2.0 * M_PI / 3.0;
 			}
 		}
-		std::cout << "Homogeneous term: rho_out = " << rho_out << " UpotKorrLJ = " << UpotKorrLJ << " ; VirialKorrLJ = " << VirialKorrLJ << std::endl;
+		global_log->info() << "[Long Range Correction] Homogeneous term: rho_out = " << rho_out << " UpotKorrLJ = " << UpotKorrLJ << " ; VirialKorrLJ = " << VirialKorrLJ << std::endl;
 
 		// Korrektur je Schale
 		std::fill(UShells_Mean.begin(), UShells_Mean.end(), 0.0);
@@ -1010,10 +1030,12 @@ void Spherical::calculateLongRange() {
 		VirShells_N[PartShells[molID]] += tempMol->VirN();
 		VirShells_T[PartShells[molID]] += tempMol->VirT();
 		// Apply LRC for each shell, first spherical specific part, then homogeneous part
-		VirShells_N[PartShells[molID]] -= 0.5 * PNShells_Mean_global[PartShells[molID]];
-		VirShells_T[PartShells[molID]] -= 0.25 * PTShells_Mean_global[PartShells[molID]];
-		VirShells_N[PartShells[molID]] -= VirialKorrLJ;
-		VirShells_T[PartShells[molID]] -= VirialKorrLJ;
+		if (!disableLRC) {
+			VirShells_N[PartShells[molID]] -= 0.5 * PNShells_Mean_global[PartShells[molID]];
+			VirShells_T[PartShells[molID]] -= 0.25 * PTShells_Mean_global[PartShells[molID]];
+			VirShells_N[PartShells[molID]] -= VirialKorrLJ;
+			VirShells_T[PartShells[molID]] -= VirialKorrLJ;
+		}
 		FcorrX[molID] = FShells_Mean_global[PartShells[molID]] * FcorrX[molID] / ksi[molID];
 		FcorrY[molID] = FShells_Mean_global[PartShells[molID]] * FcorrY[molID] / ksi[molID];
 		FcorrZ[molID] = FShells_Mean_global[PartShells[molID]] * FcorrZ[molID] / ksi[molID];

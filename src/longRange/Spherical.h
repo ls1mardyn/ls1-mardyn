@@ -124,6 +124,14 @@ private:
 	double boxlength[3];
 	double systemcenter[3];
 
+	struct BulkBoundaries
+	{
+		int inside_from;
+		int inside_to;
+		int outside_from;
+		int outside_to;
+	} bulkBoundaries;
+
 	std::string filenameTanhParams;
 	std::string filenameGlobalCorrs;
 	std::string filenameThermData;
