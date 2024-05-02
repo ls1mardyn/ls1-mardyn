@@ -101,6 +101,12 @@ namespace FTH {
 		 * */
 		void writeLogs(ParticleContainer &particleContainer, DomainDecompBase &domainDecomp, Domain &domain, unsigned long simstep);
 
+		/**
+		 * Write the current version of the FTH regardless of the logging state.
+		 * It is assumed that this is called on the finish event of the AdResS plugin.
+		 * */
+		void writeFinalFTH();
+
 	private:
 		//! @brief all FTH properties
 		Config _config;

@@ -14,9 +14,20 @@ void DensityProfile3D::init(double binWidth, Domain *domain, double smoothingFac
     for (int d = 0; d < 3; ++d) {
         _binDims[d] = static_cast<unsigned long>(domain->getGlobalLength(d) / binWidth);
         _binVolumes[d] = tmpMult / domain->getGlobalLength(d) * binWidth;
+		_gmmDensities[d].n = 0;
     }
 
     Interpolation::createGaussianMatrix(0.0, domain->getGlobalLength(0), binWidth, smoothingFactor, _smoothingFilter);
+}
+
+void DensityProfile3D::resetBuffers() {
+	for (int d = 0; d < 3; ++d) {
+		_localDensities[d].clear();
+		_localDensities[d].resize(_binDims[d], 0.0);
+
+		_globalDensities[d].clear();
+		_globalDensities[d].resize(_binDims[d], 0.0);
+	}
 }
 
 void DensityProfile3D::sampleDensities(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
@@ -73,93 +84,49 @@ void DensityProfile3D::sampleDensities(ParticleContainer *particleContainer, Dom
             _globalDensities[d][i] /= _binVolumes[d];
         }
     }
-
-
-}
-
-const std::vector<double> &DensityProfile3D::getDensity(int dim) const {
-    mardyn_assert(((dim>=0) && (dim<=3)));
-    return _globalDensities[dim];
-}
-
-
-std::vector<double> DensityProfile3D::getDensitySmoothed(int dim) const {
-    mardyn_assert(((dim>=0) && (dim<=3)));
-    mardyn_assert((dim==0)); // TODO make for all dims a filter
-    return _smoothingFilter * _globalDensities[dim];
-}
-
-void DensityProfile3D::resetBuffers() {
-    for (int d = 0; d < 3; ++d) {
-        _localDensities[d].clear();
-        _localDensities[d].resize(_binDims[d], 0.0);
-
-        _globalDensities[d].clear();
-        _globalDensities[d].resize(_binDims[d], 0.0);
-    }
 }
 
 void DensityProfile3D::computeGMMDensities(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
-    std::array<std::vector<double>,3> local_mol_pos;
-    std::array<std::vector<double>,3> global_mol_pos;
-	local_mol_pos[0].resize(particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY), 0.0);
-	local_mol_pos[1].resize(particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY), 0.0);
-	local_mol_pos[2].resize(particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY), 0.0);
-	global_mol_pos[0].resize(domain->getglobalNumMolecules(true, particleContainer, domainDecomp), 0.0);
-	global_mol_pos[1].resize(domain->getglobalNumMolecules(true, particleContainer, domainDecomp), 0.0);
-	global_mol_pos[2].resize(domain->getglobalNumMolecules(true, particleContainer, domainDecomp), 0.0);
-
-    //Load all local positions
-	auto begin = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-    #if defined(_OPENMP)
-    #pragma omp parallel
-	#endif
-    for(auto itM = begin; itM.isValid(); ++itM) {
-        const std::array<double, 3> R = (*itM).r_arr();
-		local_mol_pos[0][itM->getID()] = R[0];
-		local_mol_pos[1][itM->getID()] = R[1];
-		local_mol_pos[2][itM->getID()] = R[2];
-    }
-
-    //share maps across all ranks
-#if defined(ENABLE_MPI)
-    int num_ranks = 0;
-	int rank = domainDecomp->getRank();
-	MPI_Comm_size(domainDecomp->getCommunicator(), &num_ranks);
-
-	std::vector<std::size_t> rank_mol_counts;
-	rank_mol_counts.resize(num_ranks, 0UL);
-	rank_mol_counts[rank] = local_mol_pos[0].size();
-
-    MPI_Allreduce(MPI_IN_PLACE, rank_mol_counts.data(), num_ranks, MPI_UNSIGNED_LONG, MPI_SUM, domainDecomp->getCommunicator());
-
-    std::size_t prior_mol_count = 0;
-    for(int r = 0; r < rank; r++) {
-        prior_mol_count += rank_mol_counts[r];
-    }
-
-    // write data to correct positions
-    std::size_t offset = prior_mol_count;
-	std::memcpy(global_mol_pos[0].data() + offset, local_mol_pos[0].data(), rank_mol_counts[rank]*sizeof(double));
-	std::memcpy(global_mol_pos[1].data() + offset, local_mol_pos[1].data(), rank_mol_counts[rank]*sizeof(double));
-	std::memcpy(global_mol_pos[2].data() + offset, local_mol_pos[2].data(), rank_mol_counts[rank]*sizeof(double));
-
-	// share across ranks
-	MPI_Allreduce(MPI_IN_PLACE, global_mol_pos[0].data(), global_mol_pos[0].size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
-	MPI_Allreduce(MPI_IN_PLACE, global_mol_pos[1].data(), global_mol_pos[1].size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
-	MPI_Allreduce(MPI_IN_PLACE, global_mol_pos[2].data(), global_mol_pos[2].size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
-#else
-    global_mol_pos[0] = std::move(local_mol_pos[0]);
-    global_mol_pos[1] = std::move(local_mol_pos[1]);
-    global_mol_pos[2] = std::move(local_mol_pos[2]);
-#endif
+    std::array<std::vector<double>,3> global_mol_pos = getGlobalMolPos(particleContainer, domainDecomp, domain);
 	for(int d = 0; d < 3; d++) {
 		Interpolation::createGMM(0.0, domain->getGlobalLength(d), _binDims[d], _smoothingFactor, global_mol_pos[d], _gmmDensities[d]);
 	}
 }
 
+void DensityProfile3D::computeFTDensities(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+										  Domain *domain) {
+	std::array<std::vector<double>,3> global_mol_pos = getGlobalMolPos(particleContainer, domainDecomp, domain);
+
+	for(int d = 0; d < 3; d++) {
+		const auto dom_size = domain->getGlobalLength(d);
+		std::vector<std::complex<double>> F;
+		Interpolation::realFT(global_mol_pos[d], 1000, dom_size, F);
+		//Interpolation::filterFT(F);
+		Interpolation::ift(F, 20, dom_size, 0, dom_size, _binDims[d], _ftDensities[d]);
+
+		for(unsigned long i = 0; i < _ftDensities[d].n; i++) {
+			_ftDensities[d].function_values[i] /= _binVolumes[d];
+		}
+	}
+}
+
+const std::vector<double> &DensityProfile3D::getDensity(int dim) const {
+	mardyn_assert(((dim>=0) && (dim<=3)));
+	return _globalDensities[dim];
+}
+
+std::vector<double> DensityProfile3D::getDensitySmoothed(int dim) const {
+	mardyn_assert(((dim>=0) && (dim<=3)));
+	mardyn_assert((dim==0)); // TODO make for all dims a filter
+	return _smoothingFilter * _globalDensities[dim];
+}
+
 const Interpolation::Function &DensityProfile3D::getGMMDensity(int dim) const {
     return _gmmDensities[dim];
+}
+
+const Interpolation::Function &DensityProfile3D::getFTDensity(int dim) const {
+	return _ftDensities[dim];
 }
 
 void DensityProfile3D::writeDensity(const std::string &filename, const std::string &separator, int dim, Type type) {
@@ -168,6 +135,10 @@ void DensityProfile3D::writeDensity(const std::string &filename, const std::stri
 #endif
 	if(type == GMM) {
 		getGMMDensity(dim).writeXML(filename);
+		return;
+	}
+	if(type == FT) {
+		getFTDensity(dim).writeXML(filename);
 		return;
 	}
 
@@ -184,4 +155,62 @@ void DensityProfile3D::writeDensity(const std::string &filename, const std::stri
 		Log::global_log->error() << "[AdResS] Failed to write densities to file.\n" << e.what() << std::endl;
 		_simulation.exit(-1);
 	}
+}
+
+std::array<std::vector<double>,3> DensityProfile3D::getGlobalMolPos(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+	std::array<std::vector<double>,3> local_mol_pos;
+	std::array<std::vector<double>,3> global_mol_pos;
+	local_mol_pos[0].resize(particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY), 0.0);
+	local_mol_pos[1].resize(particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY), 0.0);
+	local_mol_pos[2].resize(particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY), 0.0);
+	global_mol_pos[0].resize(domain->getglobalNumMolecules(true, particleContainer, domainDecomp), 0.0);
+	global_mol_pos[1].resize(domain->getglobalNumMolecules(true, particleContainer, domainDecomp), 0.0);
+	global_mol_pos[2].resize(domain->getglobalNumMolecules(true, particleContainer, domainDecomp), 0.0);
+
+	//Load all local positions
+	auto begin = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+	for(auto itM = begin; itM.isValid(); ++itM) {
+		const std::array<double, 3> R = (*itM).r_arr();
+		local_mol_pos[0][itM->getID()] = R[0];
+		local_mol_pos[1][itM->getID()] = R[1];
+		local_mol_pos[2][itM->getID()] = R[2];
+	}
+
+	//share maps across all ranks
+#if defined(ENABLE_MPI)
+	int num_ranks = 0;
+	int rank = domainDecomp->getRank();
+	MPI_Comm_size(domainDecomp->getCommunicator(), &num_ranks);
+
+	std::vector<std::size_t> rank_mol_counts;
+	rank_mol_counts.resize(num_ranks, 0UL);
+	rank_mol_counts[rank] = local_mol_pos[0].size();
+
+	MPI_Allreduce(MPI_IN_PLACE, rank_mol_counts.data(), num_ranks, MPI_UNSIGNED_LONG, MPI_SUM, domainDecomp->getCommunicator());
+
+	std::size_t prior_mol_count = 0;
+	for(int r = 0; r < rank; r++) {
+		prior_mol_count += rank_mol_counts[r];
+	}
+
+	// write data to correct positions
+	std::size_t offset = prior_mol_count;
+	std::memcpy(global_mol_pos[0].data() + offset, local_mol_pos[0].data(), rank_mol_counts[rank]*sizeof(double));
+	std::memcpy(global_mol_pos[1].data() + offset, local_mol_pos[1].data(), rank_mol_counts[rank]*sizeof(double));
+	std::memcpy(global_mol_pos[2].data() + offset, local_mol_pos[2].data(), rank_mol_counts[rank]*sizeof(double));
+
+	// share across ranks
+	MPI_Allreduce(MPI_IN_PLACE, global_mol_pos[0].data(), global_mol_pos[0].size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
+	MPI_Allreduce(MPI_IN_PLACE, global_mol_pos[1].data(), global_mol_pos[1].size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
+	MPI_Allreduce(MPI_IN_PLACE, global_mol_pos[2].data(), global_mol_pos[2].size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
+#else
+	global_mol_pos[0] = std::move(local_mol_pos[0]);
+    global_mol_pos[1] = std::move(local_mol_pos[1]);
+    global_mol_pos[2] = std::move(local_mol_pos[2]);
+#endif
+
+	return global_mol_pos;
 }

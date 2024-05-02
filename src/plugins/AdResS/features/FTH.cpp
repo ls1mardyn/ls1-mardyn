@@ -24,14 +24,19 @@ FTH::Handler::Handler(const FTH::Config &config) {
 
 void FTH::Handler::computeIteration(ParticleContainer& container, const Resolution::FPRegions_t &regions) {
 	if(!_config._enableThermodynamicForce) return;
-	_densityProfiler.sampleDensities(&container, &_simulation.domainDecomposition(), _simulation.getDomain());
-	std::vector<double> d{_densityProfiler.getDensitySmoothed(0)};
-	std::vector<double> d_prime;
-	Interpolation::computeGradient(d, d_prime);
+	//_densityProfiler.sampleDensities(&container, &_simulation.domainDecomposition(), _simulation.getDomain());
+	_densityProfiler.computeGMMDensities(&container, &_simulation.domainDecomposition(), _simulation.getDomain());
+	//std::vector<double> d{_densityProfiler.getDensitySmoothed(0)};
+	Interpolation::Function d_fun = _densityProfiler.getGMMDensity(0);
 	Interpolation::Function d_prime_fun;
-	std::vector<double> steps;
-	steps.resize(d_prime.size()-1, _config._samplingStepSize);
-	Interpolation::computeHermite(0.0, d_prime, steps, d_prime.size(), d_prime_fun);
+	Interpolation::computeGradient(d_fun, d_prime_fun);
+
+	//std::vector<double> d_prime;
+	//Interpolation::computeGradient(d, d_prime);
+	//Interpolation::Function d_prime_fun;
+	//std::vector<double> steps;
+	//steps.resize(d_prime.size()-1, _config._samplingStepSize);
+	//Interpolation::computeHermite(0.0, d_prime, steps, d_prime.size(), d_prime_fun);
 
 	for(int i = 0; i < d_prime_fun.n; i++) {
 		_config._thermodynamicForce.function_values[i] -= _config._convergenceFactor * d_prime_fun.function_values[i];
@@ -129,4 +134,14 @@ void FTH::Handler::writeLogs(ParticleContainer &particleContainer, DomainDecompB
 	stream << "./F_TH_Density_GMM_" << simstep << ".xmla";
 	_densityProfiler.computeGMMDensities(&particleContainer, &domainDecomp, &domain);
 	if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, DensityProfile3D::GMM);
+
+	stream.clear();
+	stream = std::stringstream {};
+	stream << "./F_TH_Density_FT_" << simstep << ".xmlb";
+	_densityProfiler.computeFTDensities(&particleContainer, &domainDecomp, &domain);
+	if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, DensityProfile3D::FT);
+}
+
+void FTH::Handler::writeFinalFTH() {
+	_config._thermodynamicForce.writeXML("./F_TH_Final.xml");
 }

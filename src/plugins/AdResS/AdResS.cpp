@@ -151,7 +151,7 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
-	_fthHandler.writeLogs(*particleContainer, *domainDecomp, *domain, _simulation.getNumTimesteps());
+	_fthHandler.writeFinalFTH();
 }
 
 std::string AdResS::getPluginName() {

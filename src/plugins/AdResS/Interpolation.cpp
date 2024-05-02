@@ -307,3 +307,58 @@ Interpolation::createGMM(double begin, double end, int samples, double xi, const
 
 	computeHermite(begin, hermite_f_val, hermite_steps, samples, function);
 }
+
+void Interpolation::realFT(const std::vector<double>& R, unsigned int k_max, double T, std::vector<std::complex<double>>& output) {
+	static const std::complex<double> j{0.0, 1.0};
+	output.resize(k_max+1);
+
+	const auto fac = -j * 2.0 * M_PI / T;
+
+	#if defined(_OPENMP)
+	#pragma omp parallel for
+	#endif
+	for(unsigned long i_w = 0; i_w < k_max+1; i_w++) {
+
+		std::complex<double> tmp{0.0, 0.0};
+		for(unsigned long i_r = 0; i_r < R.size(); i_r++) {
+			tmp += std::exp(fac * static_cast<double>(i_w) * R[i_r]);
+		}
+		output[i_w] = tmp;
+	}
+}
+
+void Interpolation::ift(const std::vector<std::complex<double>>& F, unsigned int k_max, double T, double begin, double end, int samples, Function& function) {
+	std::vector<double> hermite_f_val;
+	std::vector<double> hermite_steps;
+
+	auto step_width = static_cast<double>((end-begin)/samples);
+	hermite_f_val.resize(samples, 0.0);
+	hermite_steps.resize(samples-1, step_width);
+
+	const auto fac = 2.0 * M_PI / T;
+
+	#if defined(_OPENMP)
+	#pragma omp parallel for
+	#endif
+	for(unsigned long i_n = 0; i_n < samples; i_n++) {
+
+		double tmp = F[0].real();
+		double n = i_n * step_width;
+
+		for(unsigned long k = 1; k <= k_max; k++) {
+			const auto arg = fac * k * n;
+			tmp += 2 * F[k].real() * std::cos(arg);
+			tmp -= 2 * F[k].imag() * std::sin(arg);
+		}
+
+		hermite_f_val[i_n] = tmp;
+	}
+
+	computeHermite(begin, hermite_f_val, hermite_steps, samples, function);
+}
+
+void Interpolation::filterFT(std::vector<std::complex<double>> &F) {
+	for(unsigned long i = F.size()/16; i < F.size(); i++) {
+		F[i] = 0;
+	}
+}

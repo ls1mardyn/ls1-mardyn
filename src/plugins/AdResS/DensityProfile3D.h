@@ -16,14 +16,16 @@
 class DensityProfile3D {
 public:
 	enum Type {
-		SAMPLE, SMOOTH, GMM
+		SAMPLE, SMOOTH, GMM, FT
 	};
     void init(double binWidth, Domain* domain, double smoothingFactor);
     void sampleDensities(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
     [[nodiscard]] const std::vector<double>& getDensity(int dim) const;
     [[nodiscard]] std::vector<double> getDensitySmoothed(int dim) const;
     void computeGMMDensities(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
+	void computeFTDensities(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
     [[nodiscard]] const Interpolation::Function& getGMMDensity(int dim) const;
+    [[nodiscard]] const Interpolation::Function& getFTDensity(int dim) const;
 	//! @brief writes densities currently in global buffer
 	void writeDensity(const std::string &filename, const std::string &separator, int dim, Type type);
 private:
@@ -33,9 +35,11 @@ private:
     std::array<double, 3> _binVolumes;
     std::array<std::vector<double>, 3> _localDensities;
     std::array<std::vector<double>, 3> _globalDensities;
+	std::array<Interpolation::Function, 3> _ftDensities;
     std::array<Interpolation::Function, 3> _gmmDensities;
     Interpolation::Matrix _smoothingFilter;
     void resetBuffers();
+	std::array<std::vector<double>, 3> getGlobalMolPos(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
 };
 
 
