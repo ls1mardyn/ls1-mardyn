@@ -89,17 +89,27 @@ void AdResS::init(ParticleContainer *particleContainer, DomainDecompBase *domain
         if(_logDensities) writeDensities("F_TH_TargetDensity.txt", _targetDensity);
     }
 
-    thermodynamic_force.target_density = (double)_simulation.getMoleculeContainer()->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)*_simulation.getEnsemble()->getComponent(0)->m()/_simulation.getEnsemble()->domain()->V();
     global_log->info()<<"[AdResS] Number of molecules "<<(double)_simulation.getMoleculeContainer()->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)<<"\n";
     global_log->info()<<"[AdResS] The mass of each component "<<_simulation.getEnsemble()->getComponent(0)->m()<<std::endl;
     global_log->info()<<"[AdResS] The volume of the domain is "<<_simulation.getEnsemble()->domain()->V()<<std::endl;
-    global_log->info()<<"[AdResS] The bulk material density is: "<<thermodynamic_force.target_density<<std::endl;
+    //global_log->info()<<"[AdResS] The bulk material density is: "<<thermodynamic_force.target_density<<std::endl;
 
 
     //Configure the grid generator
     //this->grid.SetGridGenerator(1,1,10);
-    this->grid.init(particleContainer, domainDecomp, domain);
-    thermodynamic_force.init(grid);
+    //this->grid.init(particleContainer, domainDecomp, domain);
+    //thermodynamic_force.init(grid);
+    //naive_th.init((double)_simulation.getMoleculeContainer()->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)*_simulation.getEnsemble()->getComponent(0)->m()/_simulation.getEnsemble()->domain()->V());
+    if(_enableThermodynamicForce==true){
+
+        sampler.GetGridHandler().SetGridBoundarySubsets(&grid);
+        sampler.init(&grid);  
+        averager.SetDataSize(sampler.GetSamples().material_density);    
+
+        ofstream mesh("mesh.txt");
+        mesh << grid;
+        mesh.close();  
+    }
 }
 
 void AdResS::readXML(XMLfileUnits &xmlconfig) {
@@ -180,14 +190,18 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
             _createThermodynamicForce = false;
         }
 
-        //grid configuration
-        query = xmlconfig.query("gridSize");
+        //grid configuration and sampler info
         int x,y,z;
+        double factor;
+        factor = xmlconfig.getNodeValue_double("measureFactor",1.0);
+        query = xmlconfig.query("gridSize");
+       
         x=xmlconfig.getNodeValue_int("gridSize/xElements",1);
         y=xmlconfig.getNodeValue_int("gridSize/yElements",1);
         z=xmlconfig.getNodeValue_int("gridSize/zElements",1);
-    
-        this->grid.SetGridGenerator(x,y,z);
+        sampler.SetMeasureRadius(factor);
+        this->grid.MeshAllDomain();
+        this->grid.StartGrid(x,y,z);
     }
 
     long numRegions = 0;
@@ -233,6 +247,10 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 
 void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                      unsigned long simstep) {
+    
+    sampler.SampleAtNodes(particleContainer);
+    sampler.SetSubsetMaterialDensityValues();
+    averager.AverageData(sampler.GetSamples().material_density);
     if(_thermodynamicForceSampleCounter != 0) return;
 
     std::stringstream stream;
@@ -252,17 +270,26 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
     densities = _densityProfiler.getDensitySmoothed(0);
     if(_logDensities) writeDensities(stream.str(), densities);
 
-    //Compute densities and output
-    grid.GetPropertySampler().SampleAtNodes(particleContainer);
-    grid.GetPropertySampler().ParticlePerCellCount(particleContainer);//updates the number densities of the grid
-    grid.GetPropertySampler().ComputeMaterialDensityPerCell(particleContainer);//update mass density
-    grid.OutputPropertyPerCell(simstep);
-    grid.OutputMaterialDensityPerCell(simstep);
-    grid.OutputNodalDensityValues(simstep);
+    if(_enableThermodynamicForce==true){
+        std::string name3 = "plane_z_step"+std::to_string(simstep)+".txt";
+        
+        ofstream ppc2(name3);
+        sampler.WritePlaneSamples<std::vector<double>>(ppc2, averager.GetAveragedDataCopy());
+        ppc2.close();
+        
+    }
+
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
-
+    if(_enableThermodynamicForce == true){
+        std::string name ="data_average.txt";
+        ofstream out{name};
+        averager.WriteAverage(out,averager.GetAveragedData());
+        out.close();
+    }
+    //ofstream out();
+    //averager.WriteAverage(out,averager.GetAveragedData());
 }
 
 std::string AdResS::getPluginName() {
@@ -315,7 +342,7 @@ void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsi
     }
     else computeF_TH();
 
-    computeF_TH2();
+
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
@@ -329,12 +356,6 @@ void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base
     }
 }
 
-void AdResS::computeF_TH2(){
-    //Assume we have previously computed densities
-    //Compute gradients for every cell
-    //Output is a vector of gradients with size of the number of cells
-    thermodynamic_force.computeGradients(grid);
-}
 
 void AdResS::computeF_TH() {
     _densityProfiler.sampleDensities(_particleContainer, &_simulation.domainDecomposition(), _simulation.getDomain());

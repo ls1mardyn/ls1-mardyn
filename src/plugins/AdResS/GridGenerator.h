@@ -235,6 +235,7 @@ class PropertySampler{
     //Or iterate all particles?
     //Use Euclidean norm?
     void SampleAtNodes(ParticleContainer* pc);
+    double ComputeMaterialDensityAtPosition(ParticleContainer* pc, std::array<double, 3>& pos);
     bool ParticleInsideMeasuringSpace(std::vector<double> nodal_pos, std::array<double, 3> par_pos);
 
     private:

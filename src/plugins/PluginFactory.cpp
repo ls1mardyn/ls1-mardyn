@@ -65,6 +65,7 @@
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
 #include "plugins/WallPotential.h"
+#include "plugins/MyProfiler.h"
 #ifdef ENABLE_ADIOS2
 #include "io/Adios2Writer.h"
 #endif
@@ -77,8 +78,6 @@
 #ifdef MAMICO_COUPLING
 #include "plugins/MamicoCoupling.h"
 #endif
-
-#include "plugins/GridGenerator.h"
 
 /** @brief Register all default plugins with base PluginBase
  *
@@ -119,6 +118,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(MmpldWriter);
 	REGISTER_PLUGIN(MmspdBinWriter);
 	REGISTER_PLUGIN(MmspdWriter);
+	REGISTER_PLUGIN(MyProfiler);
 	REGISTER_PLUGIN(ODF);
 	REGISTER_PLUGIN(Permittivity);
 	REGISTER_PLUGIN(PovWriter);

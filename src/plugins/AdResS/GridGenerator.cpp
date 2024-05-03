@@ -313,6 +313,30 @@ void PropertySampler::ComputeMaterialDensityPerCell(ParticleContainer* particle_
     }
 }
 
+double PropertySampler::ComputeMaterialDensityAtPosition(ParticleContainer* pc, std::array<double, 3>& pos){
+    ParticleIterator it = pc->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+    int particles_inside_sphere =0;
+
+    std::vector<double> pos_as_vector(3); 
+    pos_as_vector[0]=pos[0];
+    pos_as_vector[1]=pos[1];
+    pos_as_vector[2]=pos[2];
+
+    for(it;it.isValid();++it){
+        std::array<double, 3> particle_position = it->r_arr();
+        //std::cout<<"Particle "<<it->getID()<<" has mass of "<<it->mass()<<"\n";
+        //Assume current position is node (virtual, since it does not exist)
+        if(ParticleInsideMeasuringSpace(pos_as_vector,particle_position)){
+            particles_inside_sphere +=it->mass();
+        }
+    }//end for
+    double volume = (4.0/3.0)*M_PI*measure_radius*measure_radius*measure_radius;
+    double density = (double)particles_inside_sphere/volume;
+
+    return density;
+
+}
+
 void PropertySampler::SampleAtNodes(ParticleContainer* pc){
     ParticleIterator it = pc->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
     std::fill(particles_per_node.begin(), particles_per_node.end(), 0);
@@ -330,7 +354,8 @@ void PropertySampler::SampleAtNodes(ParticleContainer* pc){
         }
     }
 }
- bool PropertySampler::ParticleInsideMeasuringSpace(std::vector<double> nodal_pos, std::array<double, 3> par_pos){
+
+bool PropertySampler::ParticleInsideMeasuringSpace(std::vector<double> nodal_pos, std::array<double, 3> par_pos){
     bool is_inside=false;
 
     std::array<double, 3> distance;
