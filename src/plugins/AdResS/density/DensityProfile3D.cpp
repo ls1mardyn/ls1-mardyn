@@ -7,7 +7,7 @@
 #include <array>
 #include <vector>
 
-void DensityProfile3D::init(double binWidth, Domain *domain, double smoothingFactor) {
+void DensityProfile3D::init(double binWidth, Domain *domain, double smoothingFactor, double gridRadius) {
     _binWidth = binWidth;
 	_smoothingFactor = smoothingFactor;
     double tmpMult = domain->getGlobalLength(0) * domain->getGlobalLength(1) * domain->getGlobalLength(2);
@@ -18,6 +18,18 @@ void DensityProfile3D::init(double binWidth, Domain *domain, double smoothingFac
     }
 
     Interpolation::createGaussianMatrix(0.0, domain->getGlobalLength(0), binWidth, smoothingFactor, _smoothingFilter);
+
+	_gridSampler.SetMeasureRadius(gridRadius);
+	_grid.MeshAllDomain();
+	_grid.StartGrid(_binDims[0], _binDims[1], _binDims[2]);
+
+	_gridSampler.GetGridHandler().SetGridBoundarySubsets(&_grid);
+	_gridSampler.init(&_grid);
+	_averager.SetDataSize(_gridSampler.GetSamples().material_density);
+
+	//ofstream mesh("mesh.txt");
+	//mesh << grid;
+	//mesh.close();
 }
 
 void DensityProfile3D::resetBuffers() {
@@ -141,6 +153,11 @@ void DensityProfile3D::writeDensity(const std::string &filename, const std::stri
 		getFTDensity(dim).writeXML(filename);
 		return;
 	}
+	if(type == GRID){
+		std::ofstream ppc2(filename);
+		_gridSampler.WritePlaneSamples<std::vector<double>>(ppc2, _averager.GetAveragedDataCopy());
+		ppc2.close();
+	}
 
 	std::vector<double> densities;
 	if(type == SMOOTH) densities = getDensitySmoothed(dim);
@@ -155,6 +172,12 @@ void DensityProfile3D::writeDensity(const std::string &filename, const std::stri
 		Log::global_log->error() << "[AdResS] Failed to write densities to file.\n" << e.what() << std::endl;
 		_simulation.exit(-1);
 	}
+}
+
+void DensityProfile3D::step(ParticleContainer *particleContainer) {
+	_gridSampler.SampleAtNodes(particleContainer);
+	_gridSampler.SetSubsetMaterialDensityValues();
+	_averager.AverageData(_gridSampler.GetSamples().material_density);
 }
 
 std::array<std::vector<double>,3> DensityProfile3D::getGlobalMolPos(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {

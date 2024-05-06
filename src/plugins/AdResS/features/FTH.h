@@ -7,7 +7,7 @@
 
 #include "Resolution.h"
 #include "../Interpolation.h"
-#include "../DensityProfile3D.h"
+#include "plugins/AdResS/density/DensityProfile3D.h"
 
 #include <vector>
 
@@ -55,6 +55,9 @@ namespace FTH {
 
 		//! @brief Gradient of density distribution, used for convergence checking
 		Interpolation::Function _lastGradient;
+
+		//! @brief Measurement Radius for Grid Sampling
+		double _samplingRadius;
 	};
 
 	/**

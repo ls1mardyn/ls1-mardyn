@@ -10,7 +10,7 @@ FTH::Handler::Handler(const FTH::Config &config) {
 	_config = config;
 
 	auto* domain = _simulation.getDomain();
-	_densityProfiler.init(_config._samplingStepSize, domain, _config._smoothingFactor);
+	_densityProfiler.init(_config._samplingStepSize, domain, _config._smoothingFactor, _config._samplingRadius);
 	_config._thermodynamicForceSampleCounter = 0;
 
 	if (!_config._createThermodynamicForce) return;
@@ -74,6 +74,7 @@ bool FTH::Handler::checkConvergence() {
 void FTH::Handler::step(ParticleContainer &container, const Resolution::FPRegions_t &regions) {
 	if(!_config._enableThermodynamicForce) return;
 	_config._thermodynamicForceSampleCounter++;
+	_densityProfiler.step(&container);
 
 	if(_config._thermodynamicForceSampleCounter % _config._thermodynamicForceSampleGap != 0) return;
 	_config._thermodynamicForceSampleCounter = 0;
@@ -140,6 +141,11 @@ void FTH::Handler::writeLogs(ParticleContainer &particleContainer, DomainDecompB
 	stream << "./F_TH_Density_FT_" << simstep << ".xmlb";
 	_densityProfiler.computeFTDensities(&particleContainer, &domainDecomp, &domain);
 	if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, DensityProfile3D::FT);
+
+	stream.clear();
+	stream = std::stringstream {};
+	stream << "./F_TH_Density_GRID_" << simstep << ".txt";
+	if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, DensityProfile3D::GRID);
 }
 
 void FTH::Handler::writeFinalFTH() {

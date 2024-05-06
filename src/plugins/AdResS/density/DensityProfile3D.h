@@ -9,16 +9,17 @@
 #include <vector>
 #include <string>
 #include "Domain.h"
-#include "Interpolation.h"
+#include "plugins/AdResS/Interpolation.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
+#include "GridSampler.h"
 
 class DensityProfile3D {
 public:
 	enum Type {
-		SAMPLE, SMOOTH, GMM, FT
+		SAMPLE, SMOOTH, GMM, FT, GRID
 	};
-    void init(double binWidth, Domain* domain, double smoothingFactor);
+    void init(double binWidth, Domain* domain, double smoothingFactor, double gridRadius);
     void sampleDensities(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
     [[nodiscard]] const std::vector<double>& getDensity(int dim) const;
     [[nodiscard]] std::vector<double> getDensitySmoothed(int dim) const;
@@ -28,6 +29,7 @@ public:
     [[nodiscard]] const Interpolation::Function& getFTDensity(int dim) const;
 	//! @brief writes densities currently in global buffer
 	void writeDensity(const std::string &filename, const std::string &separator, int dim, Type type);
+	void step(ParticleContainer* particleContainer);
 private:
 	double _smoothingFactor;
     double _binWidth;
@@ -40,6 +42,9 @@ private:
     Interpolation::Matrix _smoothingFilter;
     void resetBuffers();
 	std::array<std::vector<double>, 3> getGlobalMolPos(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
+	GridSampler _gridSampler;
+	Grid _grid;
+	TimeAveraging<std::vector<double>> _averager;
 };
 
 

@@ -67,7 +67,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
             fthConf._convergenceThreshold = xmlconfig.getNodeValue_double("enableFTH/createFTH/threshold", 0.02);
             fthConf._convergenceFactor = xmlconfig.getNodeValue_double("enableFTH/createFTH/convFactor", 0.2);
             fthConf._samplingStepSize = xmlconfig.getNodeValue_double("enableFTH/createFTH/sampleBinSize", 0.2);
-
+			fthConf._samplingRadius = xmlconfig.getNodeValue_double("enableFTH/createFTH/measureFactor", 1.0);
         }
         else { // use existing FTH function
             query = xmlconfig.query("enableFTH/forceFunction");
@@ -103,6 +103,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 			fthConf._samplingStepSize = fthConf._thermodynamicForce.step_width[0];
 			fthConf._thermodynamicForceSampleGap = 200;
 			fthConf._createThermodynamicForce = false;
+			fthConf._samplingRadius = fthConf._samplingStepSize * 0.6; // to cover most of the area, but not have that much overlap
         }
     }
 	_fthHandler = FTH::Handler(fthConf);
