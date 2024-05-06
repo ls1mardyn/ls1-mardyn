@@ -101,8 +101,8 @@ void DensityProfile3D::computeFTDensities(ParticleContainer *particleContainer, 
 		const auto dom_size = domain->getGlobalLength(d);
 		std::vector<std::complex<double>> F;
 		Interpolation::realFT(global_mol_pos[d], 1000, dom_size, F);
-		//Interpolation::filterFT(F);
-		Interpolation::ift(F, 20, dom_size, 0, dom_size, _binDims[d], _ftDensities[d]);
+		Interpolation::filterFT(F);
+		Interpolation::ift(F, 1000, dom_size, 0, dom_size, _binDims[d], _ftDensities[d]);
 
 		for(unsigned long i = 0; i < _ftDensities[d].n; i++) {
 			_ftDensities[d].function_values[i] /= _binVolumes[d];

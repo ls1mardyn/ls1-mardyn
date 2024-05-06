@@ -358,7 +358,10 @@ void Interpolation::ift(const std::vector<std::complex<double>>& F, unsigned int
 }
 
 void Interpolation::filterFT(std::vector<std::complex<double>> &F) {
-	for(unsigned long i = F.size()/16; i < F.size(); i++) {
+	/*for(unsigned long i = F.size()/16; i < F.size(); i++) {
 		F[i] = 0;
+	}*/
+	for(unsigned long k = 0; k < F.size(); k++) {
+		F[k] *= std::exp(-0.5 * std::pow(k/15.0, 2.0));
 	}
 }
