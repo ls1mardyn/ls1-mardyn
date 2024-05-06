@@ -174,8 +174,9 @@ void DensityProfile3D::writeDensity(const std::string &filename, const std::stri
 	}
 }
 
-void DensityProfile3D::step(ParticleContainer *particleContainer) {
-	_gridSampler.SampleAtNodes(particleContainer);
+void DensityProfile3D::step(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+	std::array<std::vector<double>,3> global_mol_pos = getGlobalMolPos(particleContainer, domainDecomp, domain);
+	_gridSampler.SampleAtNodes(global_mol_pos);
 	_gridSampler.SetSubsetMaterialDensityValues();
 	_averager.AverageData(_gridSampler.GetSamples().material_density);
 }

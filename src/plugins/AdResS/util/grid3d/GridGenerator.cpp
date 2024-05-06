@@ -4,21 +4,15 @@
  * Email to: jose.escobar@hsu-hh.de
  * Copyright (c) 2024 Helmut-Schmidt University, Hamburg
  */
-
-
 #include "GridGenerator.h"
 
-GridGenerator::GridGenerator(){
-
-}
-
- void GridGenerator::SetGridGenerator(int x, int y, int z){
+void Grid3D::GridGenerator::SetGridGenerator(int x, int y, int z){
     elements_per_dimension[0]=x;
     elements_per_dimension[1]=y;
     elements_per_dimension[2]=z;
  }
 
-void GridGenerator::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
+void Grid3D::GridGenerator::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
     
     MeshEntireDomain();
     Log::global_log->info()<<"Meshed region is: ("<<lower_corner[0]<<","<<lower_corner[1]<<","<<lower_corner[2]<<")x("<<upper_corner[0]<<","<<upper_corner[1]<<","<<upper_corner[2]<<")\n";
@@ -45,9 +39,7 @@ void GridGenerator::init(ParticleContainer* particleContainer, DomainDecompBase*
     OutputElementConnectivity();
 }
 
-
-
-void GridGenerator::Output(){
+void Grid3D::GridGenerator::Output(){
     Log::global_log->info()<<"[AdResS] output"<<std::endl;
 
     std::ofstream outfile("mesh-information.txt");
@@ -79,7 +71,7 @@ void GridGenerator::Output(){
 
 }
 
-void GridGenerator::OutputMeshInformation(){
+void Grid3D::GridGenerator::OutputMeshInformation(){
     std::ofstream mesh_outfile("mesh-information.txt");
     mesh_outfile.precision(6);
 
@@ -99,14 +91,14 @@ void GridGenerator::OutputMeshInformation(){
     mesh_outfile.close();    
 }
 
-void GridGenerator::OutputNodalInformation(){
+void Grid3D::GridGenerator::OutputNodalInformation(){
     std::ofstream nodes_file("node-positions.txt");
     nodes_file.precision(8);
 
     nodes_file<<"//Node Information\n"
               <<"//Total number of nodes: "<<this->node_information.GetNodes().size()<<"\n";
     nodes_file<<"idx\t x \t y \t z \n";
-    std::vector<double> position(3);
+    DataArray position { };
     for(int idx=0;idx<node_information.GetNodes().size();idx++){
         position = node_information.GetNodes()[idx].GetPosition();
         nodes_file<<idx <<"\t"<<position[0]<<"\t"<<position[1]<<"\t"<<position[2]<<"\n";
@@ -114,7 +106,7 @@ void GridGenerator::OutputNodalInformation(){
     nodes_file.close();
 }
 
-void GridGenerator::OutputElementConnectivity(){
+void Grid3D::GridGenerator::OutputElementConnectivity(){
     std::ofstream connectivity_file("connectivity.txt");
     connectivity_file.precision(2);
     
@@ -125,7 +117,7 @@ void GridGenerator::OutputElementConnectivity(){
     }
 }
 
-void GridGenerator::OutputPropertyPerCell(unsigned long step){
+void Grid3D::GridGenerator::OutputPropertyPerCell(unsigned long step){
     //output measured property at center
     std::string file_name = "property_"+ std::to_string(step)+".txt";
     std::ofstream property_output(file_name);
@@ -145,7 +137,7 @@ void GridGenerator::OutputPropertyPerCell(unsigned long step){
     property_output.close();
 }
 
-void GridGenerator::OutputMaterialDensityPerCell(unsigned long step){
+void Grid3D::GridGenerator::OutputMaterialDensityPerCell(unsigned long step){
     std::string file_name="density_"+std::to_string(step)+".txt";
     std::ofstream density_output(file_name);
 
@@ -166,7 +158,7 @@ void GridGenerator::OutputMaterialDensityPerCell(unsigned long step){
 
 }
 
-void GridGenerator::OutputNodalDensityValues(unsigned long step){
+void Grid3D::GridGenerator::OutputNodalDensityValues(unsigned long step){
     std::string file_name="nodal_density_"+std::to_string(step)+".txt";
     std::ofstream density_output(file_name);
     int total_particles_sampled = std::reduce(sampler.GetParticlesPerNode().begin(),sampler.GetParticlesPerNode().end());
@@ -176,7 +168,7 @@ void GridGenerator::OutputNodalDensityValues(unsigned long step){
                   <<"//The total number of particles sampled was: "<<total_particles_sampled<<"\n";
     density_output<<"//idx \t cx \t cy \t cz \t rho \n";
 
-    std::vector<double> ec(3);
+    DataArray ec { };
     for(int i=0; i< node_information.GetNodes().size();i++){
         ec = this->node_information.GetNodes()[i].GetPosition();
         density_output << i <<"\t"<<ec[0]<<"\t"<<ec[1]<<"\t"<<ec[2]<<"\t"//<<"\n";
@@ -186,14 +178,14 @@ void GridGenerator::OutputNodalDensityValues(unsigned long step){
     density_output.close();
 }
 
-void GridGenerator::MeshEntireDomain(){
+void Grid3D::GridGenerator::MeshEntireDomain(){
     for(int d=0;d<3;d++){
         this->lower_corner[d]=0;
         this->upper_corner[d]=_simulation.getDomain()->getGlobalLength(d);
     }
 }
 
-void GridGenerator::SetElementInfo(){
+void Grid3D::GridGenerator::SetElementInfo(){
     //Compute widths
     for(int d=0;d<3;d++){
         element_width_per_dimension[d]= (upper_corner[d]-lower_corner[d])/elements_per_dimension[d];
@@ -218,21 +210,21 @@ void GridGenerator::SetElementInfo(){
 
 }
 
-void GridGenerator::SetNodeInfo(){
+void Grid3D::GridGenerator::SetNodeInfo(){
     node_information.total_nodes=(elements_per_dimension[0]+1)*(elements_per_dimension[1]+1)*(elements_per_dimension[2]+1);
     node_information.nodes_per_dimension[0]=elements_per_dimension[0]+1;
     node_information.nodes_per_dimension[1]=elements_per_dimension[1]+1;
     node_information.nodes_per_dimension[2]=elements_per_dimension[2]+1;
 }
 
-void GridGenerator::SetTotalElements(){
+void Grid3D::GridGenerator::SetTotalElements(){
     this->total_elements=1;
     for(int d=0;d<3;d++){
         this->total_elements *= elements_per_dimension[d];
     }
 }
 
-void GridGenerator::InitNodePositions(){
+void Grid3D::GridGenerator::InitNodePositions(){
     for(int idx=0;idx<node_information.GetNodes().size();idx++){
         
         std::tuple<int,int,int> local_indeces = this->node_information.MapGlobalToLocal(idx);
@@ -243,11 +235,11 @@ void GridGenerator::InitNodePositions(){
     }
 }
 
-PropertySampler& GridGenerator::GetPropertySampler(){
+Grid3D::PropertySampler& Grid3D::GridGenerator::GetPropertySampler(){
     return this->sampler;
 }
 
-std::array<int, 8> GridGenerator::GetElementGlobalNodeIndeces(int el){
+std::array<int, 8> Grid3D::GridGenerator::GetElementGlobalNodeIndeces(int el){
     std::array<int, 8> element_nodes_idx_global;
     //Get local index of element
     std::tuple<int,int,int> element_local_idx = element_information.GlobalToLocalIndex(el);
@@ -267,10 +259,7 @@ std::array<int, 8> GridGenerator::GetElementGlobalNodeIndeces(int el){
     return element_nodes_idx_global;
 }
 
-PropertySampler::PropertySampler(){
-}
-
-void PropertySampler::init(ElementInfo* info, NodeInformation* node_info){
+void Grid3D::PropertySampler::init(ElementInfo* info, NodeInformation* node_info){
     measure_radius = _simulation.getcutoffRadius()*4.0;
     this->info = info;
     this->node_info=node_info;
@@ -280,13 +269,13 @@ void PropertySampler::init(ElementInfo* info, NodeInformation* node_info){
     particles_per_node.resize(node_info->total_nodes);
     std::fill(particles_per_cell.begin(), particles_per_cell.end(),0);
     std::fill(material_density.begin(), material_density.end(),0);
-    std::cout<<"Cell container size is: "<<particles_per_cell.size()<<"\n";
-    std::cout<<"Node container size is: "<<particles_per_node.size()<<"\n";
-    std::cout<<"The measure radius is: "<<measure_radius<<"\n";
+	Log::global_log->info() <<"Cell container size is: " << particles_per_cell.size() << "\n";
+	Log::global_log->info() <<"Node container size is: " << particles_per_node.size() << "\n";
+	Log::global_log->info() <<"The measure radius is: " << measure_radius << "\n";
 
 }
 
-void PropertySampler::ParticlePerCellCount(ParticleContainer* particle_container){
+void Grid3D::PropertySampler::ParticlePerCellCount(ParticleContainer* particle_container){
     //Iterate all non-halo cells
     ParticleIterator it = particle_container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
     std::fill(particles_per_cell.begin(), particles_per_cell.end(), 0);//last element not inclusive
@@ -298,7 +287,7 @@ void PropertySampler::ParticlePerCellCount(ParticleContainer* particle_container
     }
 }
 
-void PropertySampler::ComputeMaterialDensityPerCell(ParticleContainer* particle_container){
+void Grid3D::PropertySampler::ComputeMaterialDensityPerCell(ParticleContainer* particle_container){
     //Iterate all non-halo cells
     ParticleIterator it = particle_container->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
     std::fill(material_density.begin(), material_density.end(), 0);//last element not inclusive
@@ -313,11 +302,11 @@ void PropertySampler::ComputeMaterialDensityPerCell(ParticleContainer* particle_
     }
 }
 
-double PropertySampler::ComputeMaterialDensityAtPosition(ParticleContainer* pc, std::array<double, 3>& pos){
+double Grid3D::PropertySampler::ComputeMaterialDensityAtPosition(ParticleContainer* pc, std::array<double, 3>& pos){
     ParticleIterator it = pc->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
     int particles_inside_sphere =0;
 
-    std::vector<double> pos_as_vector(3); 
+    DataArray pos_as_vector { };
     pos_as_vector[0]=pos[0];
     pos_as_vector[1]=pos[1];
     pos_as_vector[2]=pos[2];
@@ -334,10 +323,9 @@ double PropertySampler::ComputeMaterialDensityAtPosition(ParticleContainer* pc, 
     double density = (double)particles_inside_sphere/volume;
 
     return density;
-
 }
 
-void PropertySampler::SampleAtNodes(ParticleContainer* pc){
+void Grid3D::PropertySampler::SampleAtNodes(ParticleContainer* pc){
     ParticleIterator it = pc->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
     std::fill(particles_per_node.begin(), particles_per_node.end(), 0);
     std::vector<Node>& all_nodes = node_info->GetNodes();
@@ -355,11 +343,10 @@ void PropertySampler::SampleAtNodes(ParticleContainer* pc){
     }
 }
 
-bool PropertySampler::ParticleInsideMeasuringSpace(std::vector<double> nodal_pos, std::array<double, 3> par_pos){
+bool Grid3D::PropertySampler::ParticleInsideMeasuringSpace(std::array<double, 3> nodal_pos, std::array<double, 3> par_pos){
     bool is_inside=false;
 
-    std::array<double, 3> distance;
-
+    DataArray distance { };
     distance[0] = par_pos[0]-nodal_pos[0];
     distance[1] = par_pos[1]-nodal_pos[1];
     distance[2] = par_pos[2]-nodal_pos[2];
@@ -370,12 +357,10 @@ bool PropertySampler::ParticleInsideMeasuringSpace(std::vector<double> nodal_pos
         is_inside=true;
     }
     return is_inside;
-
  }
 
-std::tuple<int, int, int> PropertySampler::GetParticleLocalCellIndices(ParticleIterator it)
+std::tuple<int, int, int> Grid3D::PropertySampler::GetParticleLocalCellIndices(ParticleIterator it)
 {
-    
     std::array<double, 3> position = it->r_arr();
     std::tuple<int, int, int> local_inds;
 
@@ -386,18 +371,16 @@ std::tuple<int, int, int> PropertySampler::GetParticleLocalCellIndices(ParticleI
     local_inds= std::make_tuple(x,y,z);
 
     return local_inds;
-
-
 }
 
-std::vector<int>& PropertySampler::GetParticlesPerCell(){
+std::vector<int>& Grid3D::PropertySampler::GetParticlesPerCell(){
     return this->particles_per_cell;
 }
 
-std::vector<double>& PropertySampler::GetMaterialDensityPerCell(){
+std::vector<double>& Grid3D::PropertySampler::GetMaterialDensityPerCell(){
     return this->material_density;
 }
 
-std::vector<int>& PropertySampler::GetParticlesPerNode(){
+std::vector<int>& Grid3D::PropertySampler::GetParticlesPerNode(){
     return this->particles_per_node;
 }

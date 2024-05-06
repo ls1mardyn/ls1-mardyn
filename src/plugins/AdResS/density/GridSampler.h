@@ -14,53 +14,44 @@
 #include "plugins/AdResS/util/grid3d/Grid.h"
 #include "plugins/AdResS/util/grid3d/GridHandler.h"
 
+namespace Grid3D {
+	class GridSampler{
+	private:
+		//TODO:split into node and element sample types
+		struct Samples{
+			std::vector<int> particles_per_cell;
+			std::vector<double> material_density;
+			std::vector<int> particles_per_node;
+			double target_number_density;
+		} samples;
 
+		Grid* grid;
+		double measure_radius;
+		GridHandler handler;
 
-class GridSampler{
-    
-    private:
-    //TODO:split into node and element sample types
-    struct Samples{
-        std::vector<int> particles_per_cell;
-        std::vector<double> material_density;
-        std::vector<int> particles_per_node;
-        double target_number_density;
-    };
-
-    Samples samples;
-    Grid* grid;
-    double measure_radius;
-    GridHandler handler;
-
-    public:
-
-    GridSampler();
-    void init(Grid* grid);
-    GridHandler& GetGridHandler();
-    void SetMeasureRadius(double r);
-    void SampleAtNodes(ParticleContainer* pc);
-
-    //
-    void SetSubsetMaterialDensityValues();
-    void SetTargetValue();
-    Samples& GetSamples(){
-        return samples;
-    }
-    template<class T>
-    std::ostream& WritePlaneSamples(std::ostream& out, T data);
-    //TODO: really has to be templatized or so, code repetition
-    std::ostream& WriteSample(std::ostream& out, std::vector<double>& smpl);
-    std::ostream& WriteSample(std::ostream& out, std::vector<int>& smpl);
-    std::ostream& WriteInfo(std::ostream& out);
-    private:
-    IdxArray GetParticleLocalCellIndices(ParticleIterator it);
-    bool ParticleInsideMeasuringSpace(std::array<double, 3>, std::array<double, 3> par_pos);
-    
+	public:
+		GridSampler() = default;
+		void init(Grid* grid);
+		GridHandler& GetGridHandler();
+		void SetMeasureRadius(double r);
+		void SampleAtNodes(const std::array<std::vector<double>,3>& positions);
+		void SetSubsetMaterialDensityValues();
+		void SetTargetValue();
+		Samples& GetSamples(){ return samples; }
+		template<class T>
+		std::ostream& WritePlaneSamples(std::ostream& out, T data);
+		//TODO: really has to be templatized or so, code repetition
+		std::ostream& WriteSample(std::ostream& out, std::vector<double>& smpl);
+		std::ostream& WriteSample(std::ostream& out, std::vector<int>& smpl);
+		std::ostream& WriteInfo(std::ostream& out);
+	private:
+		IdxArray GetParticleLocalCellIndices(ParticleIterator it);
+		bool ParticleInsideMeasuringSpace(std::array<double, 3>, std::array<double, 3> par_pos);
+	};
 };
 
-
 template<class T>
-std::ostream& GridSampler::WritePlaneSamples(std::ostream& out, T data){
+std::ostream& Grid3D::GridSampler::WritePlaneSamples(std::ostream& out, T data){
     std::string prefix = "//[Sampler]: ";
     std::vector<int> plane_nodes = handler.GetNodesOnPlane(grid,10);
     out<<prefix+" target value: "<<this->samples.target_number_density<<"\n";
@@ -72,60 +63,3 @@ std::ostream& GridSampler::WritePlaneSamples(std::ostream& out, T data){
     }
     return out;
 }
-
-template<typename T>
-class TimeAveraging{
-    public:
-    TimeAveraging():step_count(0){
-        
-    }
-    void SetDataSize(T data){
-        averaged_data.resize(data.size());
-        std::fill(averaged_data.begin(),averaged_data.end(),0.0);
-    }
-    void AverageData(T data){
-        step_count++;
-        if(data.size() != averaged_data.size()){
-            std::cout<<"[TimeAveraging] data structure mismatch" << std::endl;
-            averaged_data.resize(data.size());
-            std::fill(averaged_data.begin(),averaged_data.end(),0.0);
-        }
-        for(int i=0;i<data.size();i++){
-            averaged_data[i] = averaged_data[i]+data[i];
-        }
-
-    }
-
-    T& GetAveragedData(){
-        return this->averaged_data;
-    }
-
-    T GetAveragedDataCopy(){
-        T copy=averaged_data;
-        for(int i=0;i<copy.size();i++){
-            copy[i] = copy[i]/(double)step_count;
-        }
-        return copy;
-    }
-
-    int GetStepCount(){
-        return this->step_count;
-    }
-
-    std::ostream& WriteAverage(std::ostream& out, T data){
-        std::string prefix ="//[TimeAverage]: ";
-
-        out<<prefix+"data average after: "<<step_count<<" steps"<<"\n";
-        out<<prefix+"data structure with size: "<<data.size()<<"\n";
-        for(int i=0;i<data.size();i++){
-            out<<i<<"\t"<<data[i]<<"\t"<<data[i]/(double)step_count<<"\n";
-        }
-        return out;
-    }
-
-
-
-    private:
-    T averaged_data;
-    int step_count;
-};

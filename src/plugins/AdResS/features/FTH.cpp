@@ -74,7 +74,7 @@ bool FTH::Handler::checkConvergence() {
 void FTH::Handler::step(ParticleContainer &container, const Resolution::FPRegions_t &regions) {
 	if(!_config._enableThermodynamicForce) return;
 	_config._thermodynamicForceSampleCounter++;
-	_densityProfiler.step(&container);
+	_densityProfiler.step(&container, &_simulation.domainDecomposition(), _simulation.getDomain());
 
 	if(_config._thermodynamicForceSampleCounter % _config._thermodynamicForceSampleGap != 0) return;
 	_config._thermodynamicForceSampleCounter = 0;

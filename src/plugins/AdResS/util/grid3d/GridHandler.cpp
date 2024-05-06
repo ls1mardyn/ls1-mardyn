@@ -1,6 +1,6 @@
 #include "GridHandler.h"
 
-std::vector<int> GridHandler::GetNodesOnPlane(Grid* grid, double p){
+std::vector<int> Grid3D::GridHandler::GetNodesOnPlane(Grid* grid, double p){
     std::vector<int> list_nodes;//global indeces
     //Assume n=(0,0,1)
     //Look for all points that r_z = pz
@@ -16,7 +16,7 @@ std::vector<int> GridHandler::GetNodesOnPlane(Grid* grid, double p){
 
 }
 
-std::vector<int> GridHandler::GetNodesOnPlanebyComponent(Grid* grid, double p, int cmp){
+std::vector<int> Grid3D::GridHandler::GetNodesOnPlanebyComponent(Grid* grid, double p, int cmp){
     std::vector<int> list_nodes;//global indeces
     //Assume n=(0,0,1)
     //Look for all points that r_z = pz
@@ -31,7 +31,7 @@ std::vector<int> GridHandler::GetNodesOnPlanebyComponent(Grid* grid, double p, i
     return list_nodes;
 }
 
-void GridHandler::SetGridBoundarySubsets(Grid* grid){
+void Grid3D::GridHandler::SetGridBoundarySubsets(Grid* grid){
     double ux, uy, uz, lx, ly, lz;
         ux = grid->GetUpperCorner()[0];
         uy = grid->GetUpperCorner()[1];

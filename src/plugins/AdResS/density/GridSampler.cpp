@@ -1,14 +1,10 @@
 #include"GridSampler.h"
 
-GridSampler::GridSampler(){
-
-}
-
-void GridSampler::SetMeasureRadius(double r){
+void Grid3D::GridSampler::SetMeasureRadius(double r){
     this->measure_radius=r;
 }
 
-void GridSampler::init(Grid* grid){
+void Grid3D::GridSampler::init(Grid* grid){
     //measure_radius = _simulation.getcutoffRadius()*this->measire;
     this->grid=grid;
     int total_els = grid->GetElementInfo().total_elements;
@@ -18,15 +14,13 @@ void GridSampler::init(Grid* grid){
     samples.particles_per_node.resize(total_nodes);
     std::fill(samples.particles_per_cell.begin(), samples.particles_per_cell.end(),0);
     std::fill(samples.material_density.begin(), samples.material_density.end(),0);
-    std::cout<<"Cell container size is: "<<samples.particles_per_cell.size()<<"\n";
-    std::cout<<"Node container size is: "<<samples.particles_per_node.size()<<"\n";
-    std::cout<<"The measure radius is: "<<measure_radius<<"\n";
-
+    Log::global_log->info() << "Cell container size is: " << samples.particles_per_cell.size() << "\n";
+	Log::global_log->info() << "Node container size is: " << samples.particles_per_node.size() << "\n";
+	Log::global_log->info() << "The measure radius is: " << measure_radius << "\n";
     this->SetTargetValue();
-
 }
 
-IdxArray GridSampler::GetParticleLocalCellIndices(ParticleIterator it){
+Grid3D::IdxArray Grid3D::GridSampler::GetParticleLocalCellIndices(ParticleIterator it){
     std::array<double, 3> position = it->r_arr();
     IdxArray local_inds;
 
@@ -38,13 +32,12 @@ IdxArray GridSampler::GetParticleLocalCellIndices(ParticleIterator it){
     return local_inds;
 }
 
-void GridSampler::SampleAtNodes(ParticleContainer* pc){
-
-    ParticleIterator it = pc->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+void Grid3D::GridSampler::SampleAtNodes(const std::array<std::vector<double>,3>& positions){
     std::fill(samples.particles_per_node.begin(), samples.particles_per_node.end(), 0);
     std::vector<Node>& all_nodes = grid->GetNodes();
-    for(it;it.isValid();++it){
-        std::array<double, 3> part_pos = it->r_arr();
+
+    for(std::size_t idx = 0; idx < positions[0].size(); ++idx){
+        std::array<double, 3> part_pos {positions[0][idx], positions[1][idx], positions[2][idx]};
         //Check for every node, if a particle is inside of its "bubble"
         for(int nidx=0;nidx<samples.particles_per_node.size();nidx++){
             
@@ -61,10 +54,9 @@ void GridSampler::SampleAtNodes(ParticleContainer* pc){
         
         samples.material_density[nidx] = (double)samples.particles_per_node[nidx]/sphere_volume;
     }
-
 }
 
-bool GridSampler::ParticleInsideMeasuringSpace(std::array<double, 3> nodal_pos, std::array<double, 3> par_pos){
+bool Grid3D::GridSampler::ParticleInsideMeasuringSpace(std::array<double, 3> nodal_pos, std::array<double, 3> par_pos){
     bool is_inside=false;
 
     std::array<double, 3> distance;
@@ -82,7 +74,7 @@ bool GridSampler::ParticleInsideMeasuringSpace(std::array<double, 3> nodal_pos, 
 
  }
 
-std::ostream& GridSampler::WriteSample(std::ostream& out, std::vector<double>& smpl){
+std::ostream& Grid3D::GridSampler::WriteSample(std::ostream& out, std::vector<double>& smpl){
     std::string prefix = "//[Sampler]: ";
     out<<prefix+" target value: "<<this->samples.target_number_density<<"\n";
     out<<prefix+"total sampled nodes: "<<smpl.size()<<"\n";
@@ -92,7 +84,7 @@ std::ostream& GridSampler::WriteSample(std::ostream& out, std::vector<double>& s
     return out;
 }
 
-std::ostream& GridSampler::WriteSample(std::ostream& out, std::vector<int>& smpl){
+std::ostream& Grid3D::GridSampler::WriteSample(std::ostream& out, std::vector<int>& smpl){
     std::string prefix = "//[Sampler]: ";
     out<<prefix+" target value: "<<this->samples.target_number_density<<"\n";
     out<<prefix+"total sampled nodes: "<<smpl.size()<<"\n";
@@ -102,16 +94,16 @@ std::ostream& GridSampler::WriteSample(std::ostream& out, std::vector<int>& smpl
     return out;
 }
 
-std::ostream& GridSampler::WriteInfo(std::ostream& out){
+std::ostream& Grid3D::GridSampler::WriteInfo(std::ostream& out){
     std::string prefix ="//[Sampler]: ";
-    
+    return out;
 }
 
-GridHandler& GridSampler::GetGridHandler(){
+Grid3D::GridHandler& Grid3D::GridSampler::GetGridHandler(){
     return handler;
 }
 
-void GridSampler::SetSubsetMaterialDensityValues(){
+void Grid3D::GridSampler::SetSubsetMaterialDensityValues(){
     //assign target number density to all subsets
     int nu_ss = grid->GetSubsets().size();
     for(int i=0;i<nu_ss;i++){
@@ -125,8 +117,7 @@ void GridSampler::SetSubsetMaterialDensityValues(){
 
 }
 
-void GridSampler::SetTargetValue(){
+void Grid3D::GridSampler::SetTargetValue(){
     //this->samples.target_number_density=(double)_simulation.getMoleculeContainer()->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)*_simulation.getEnsemble()->getComponent(0)->m()/_simulation.getEnsemble()->domain()->V();
     this->samples.target_number_density=(double)_simulation.getMoleculeContainer()->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)/_simulation.getEnsemble()->domain()->V();
 }
-

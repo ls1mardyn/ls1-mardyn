@@ -13,6 +13,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "GridSampler.h"
+#include "plugins/AdResS/util/Averager.h"
 
 class DensityProfile3D {
 public:
@@ -29,7 +30,7 @@ public:
     [[nodiscard]] const Interpolation::Function& getFTDensity(int dim) const;
 	//! @brief writes densities currently in global buffer
 	void writeDensity(const std::string &filename, const std::string &separator, int dim, Type type);
-	void step(ParticleContainer* particleContainer);
+	void step(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
 private:
 	double _smoothingFactor;
     double _binWidth;
@@ -42,9 +43,9 @@ private:
     Interpolation::Matrix _smoothingFilter;
     void resetBuffers();
 	std::array<std::vector<double>, 3> getGlobalMolPos(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
-	GridSampler _gridSampler;
-	Grid _grid;
-	TimeAveraging<std::vector<double>> _averager;
+	Grid3D::GridSampler _gridSampler;
+	Grid3D::Grid _grid;
+	Averager<std::vector<double>> _averager;
 };
 
 
