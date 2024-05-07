@@ -68,9 +68,9 @@ namespace FTH {
 		Handler() = default;
 
 		/**
-		 * Constructs an FTH Handler based on the provided config object.
+		 * Initializes this FTH Handler based on the provided config object.
 		 * */
-		explicit Handler(const Config& config);
+		void init(const Config& config);
 
 		/**
 		 * Recomputes F_th in _thermodynamicForce by using the current density profile and interpolating the gradient.

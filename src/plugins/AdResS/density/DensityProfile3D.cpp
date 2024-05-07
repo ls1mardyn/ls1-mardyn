@@ -157,6 +157,7 @@ void DensityProfile3D::writeDensity(const std::string &filename, const std::stri
 		std::ofstream ppc2(filename);
 		_gridSampler.WritePlaneSamples<std::vector<double>>(ppc2, _averager.GetAveragedDataCopy());
 		ppc2.close();
+		return;
 	}
 
 	std::vector<double> densities;

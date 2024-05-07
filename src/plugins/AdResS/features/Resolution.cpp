@@ -4,7 +4,8 @@
 
 #include "Resolution.h"
 
-Resolution::Handler::Handler(Resolution::Config& config) : _config(std::move(config)) {
+void Resolution::Handler::init(Resolution::Config& config) {
+	_config = std::move(config);
 	for(const auto& region : _config.fpRegions) {
 		Log::global_log->debug()
 		    << "[AdResS] FPRegion Box from ["

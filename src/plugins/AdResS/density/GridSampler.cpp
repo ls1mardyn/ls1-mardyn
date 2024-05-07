@@ -118,6 +118,6 @@ void Grid3D::GridSampler::SetSubsetMaterialDensityValues(){
 }
 
 void Grid3D::GridSampler::SetTargetValue(){
-    //this->samples.target_number_density=(double)_simulation.getMoleculeContainer()->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)*_simulation.getEnsemble()->getComponent(0)->m()/_simulation.getEnsemble()->domain()->V();
-    this->samples.target_number_density=(double)_simulation.getMoleculeContainer()->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)/_simulation.getEnsemble()->domain()->V();
+    this->samples.target_number_density=(double)_simulation.getDomain()->getglobalNumMolecules()
+			/ _simulation.getEnsemble()->domain()->V();
 }

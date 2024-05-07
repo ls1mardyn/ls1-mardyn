@@ -106,7 +106,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 			fthConf._samplingRadius = fthConf._samplingStepSize * 0.6; // to cover most of the area, but not have that much overlap
         }
     }
-	_fthHandler = FTH::Handler(fthConf);
+	_fthHandler.init(fthConf);
 
 	Resolution::Config resConf { };
 	resConf.components = _simulation.getEnsemble()->getComponents();
@@ -135,7 +135,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
         resConf.fpRegions[id - 1].readXML(xmlconfig);
     }
     xmlconfig.changecurrentnode(oldpath);
-	_resolutionHandler = Resolution::Handler(resConf);
+	_resolutionHandler.init(resConf);
     // todo add check that no region overlap even in hybrid considering periodic bounds
 
     _forceAdapter = new AdResSForceAdapter(_resolutionHandler);

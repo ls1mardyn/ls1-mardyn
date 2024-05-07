@@ -4,7 +4,7 @@
 
 #include "FTH.h"
 
-FTH::Handler::Handler(const FTH::Config &config) {
+void FTH::Handler::init(const FTH::Config &config) {
 	_config._enableThermodynamicForce = config._enableThermodynamicForce;
 	if (!config._enableThermodynamicForce) return;
 	_config = config;
@@ -145,6 +145,7 @@ void FTH::Handler::writeLogs(ParticleContainer &particleContainer, DomainDecompB
 	stream.clear();
 	stream = std::stringstream {};
 	stream << "./F_TH_Density_GRID_" << simstep << ".txt";
+	_densityProfiler.step(&particleContainer, &domainDecomp, &domain);
 	if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, DensityProfile3D::GRID);
 }
 

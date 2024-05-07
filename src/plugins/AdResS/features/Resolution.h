@@ -53,9 +53,9 @@ namespace Resolution {
 		Handler() = default;
 
 		/**
-		 * Constructs a Resolution Handler based on the provided config object.
+		 * Initializes this Resolution Handler based on the provided config object.
 		 * */
-		explicit Handler(Config& config);
+		void init(Config& config);
 
 		/**
 		 * Loops over all molecules in the provided particle container and checks their respective resolution.
