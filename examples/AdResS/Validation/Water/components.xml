@@ -25,24 +25,22 @@
 -->
     <moleculetype id="1" name="FP_H2O">
         <site type="LJ126" id="1">
-            <coords><x>0</x><y>-0.0231535295883717</y><z>0</z>   </coords>
-            <!--sigma>3.11831716</sigma-->
-            <sigma>0.311831716</sigma>
-            <!--epsilon>208.07969</epsilon-->
-            <epsilon>1.730070696</epsilon>
+            <coords><x>0</x><y>-0.0786254</y><z>0</z>   </coords>
+            <sigma>3.11831716</sigma>
+            <epsilon>208.07969</epsilon>
             <mass>15.999</mass>
         </site>
         <site type="Charge" id="2">
-            <coords><x>0</x><y>0.0371761384095426</y><z>0</z>   </coords>
-            <charge>-0.524572193</charge>
+            <coords><x>0</x><y>0.1262437652</y><z>0</z>   </coords>
+            <charge>-343.00525445061</charge>
         </site>
         <site type="Charge" id="3">
-            <coords><x>0.268933213493806</x><y>0.185028314321274</y><z>0</z>   </coords>
-            <charge>0.262286097</charge>
+            <coords><x>0.91325088918</x><y>0.628324298</y><z>0</z>   </coords>
+            <charge>171.50262722531</charge>
         </site>
         <site type="Charge" id="4">
-            <coords><x>-0.268933213493806</x><y>0.185028314321274</y><z>0</z>   </coords>
-            <charge>0.262286097</charge>
+            <coords><x>-0.91325088918</x><y>0.628324298</y><z>0</z>   </coords>
+            <charge>171.50262722531</charge>
         </site>
         <momentsofinertia rotaxes="xyz">
             <Ixx>0.89401500129182</Ixx>
@@ -54,32 +52,32 @@
     <moleculetype id="2" name="H_H2O">
         <site type="LJ126" id="1">
             <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
-            <sigma>0.37553</sigma>
-            <epsilon>1.8</epsilon>
+            <sigma>3.7553</sigma>
+            <epsilon>173.0070696</epsilon>
             <mass>0.0</mass>
         </site>
         <site type="LJ126" id="2">
-            <coords><x>0</x><y>-0.0231535295883717</y><z>0</z>   </coords>
-            <sigma>0.311831716</sigma>
-            <epsilon>1.730070696</epsilon>
+            <coords><x>0</x><y>-0.0786254</y><z>0</z>   </coords>
+            <sigma>3.11831716</sigma>
+            <epsilon>208.07969</epsilon>
             <mass>15.999</mass>
         </site>
         <site type="Charge" id="3">
-            <coords><x>0</x><y>0.0371761384095426</y><z>0</z>   </coords>
-            <charge>-0.524572193</charge>
+            <coords><x>0</x><y>0.1262437652</y><z>0</z>   </coords>
+            <charge>-343.00525445061</charge>
         </site>
         <site type="Charge" id="4">
-            <coords><x>0.268933213493806</x><y>0.185028314321274</y><z>0</z>   </coords>
-            <charge>0.262286097</charge>
+            <coords><x>0.91325088918</x><y>0.628324298</y><z>0</z>   </coords>
+            <charge>171.50262722531</charge>
         </site>
         <site type="Charge" id="5">
-            <coords><x>-0.268933213493806</x><y>0.185028314321274</y><z>0</z>   </coords>
-            <charge>0.262286097</charge>
+            <coords><x>-0.91325088918</x><y>0.628324298</y><z>0</z>   </coords>
+            <charge>171.50262722531</charge>
         </site>
         <momentsofinertia rotaxes="xyz">
-            <Ixx>0.0089401500129182</Ixx>
-            <Iyy>0.016797307537884</Iyy>
-            <Izz>0.025737457550802</Izz>
+            <Ixx>0.89401500129182</Ixx>
+            <Iyy>1.6797307537884</Iyy>
+            <Izz>2.5737457550802</Izz>
         </momentsofinertia>
     </moleculetype>
     <!--
@@ -101,24 +99,42 @@
                ities of Gases at High Temperatures, 132, (1963)
 
 -->
-    <moleculetype id="3" name="CG_H2O">
+    <!--moleculetype id="3" name="CG_H2O">
         <site type="LJ126" id="1">
             <coords><x>0.0</x><y>0.0</y><z>0.0</z>   </coords>
-            <!--sigma>2.641</sigma-->
-            <!--sigma>0.2641</sigma-->
-            <sigma>0.37553</sigma> <!-- from https://water.lsbu.ac.uk/water/water_models.html uAMOEBA-->
-            <!--epsilon>809.1</epsilon-->
-            <!--epsilon>6.727231285</epsilon-->
-            <!--epsilon>0.5945</epsilon--> <!-- from https://water.lsbu.ac.uk/water/water_models.html uAMOEBA-->
-            <!--epsilon>0.8</epsilon--> <!-- Run 1 -->
-            <!--epsilon>1.5</epsilon--> <!-- Run 2 -->
-            <epsilon>1.8</epsilon> <!-- Run 3 -->
+            <sigma>3.7553</sigma>
+            <epsilon>173.0070696</epsilon>
             <mass>18.015</mass>
         </site>
         <momentsofinertia rotaxes="xyz">
-            <Ixx>0.0089401500129182</Ixx>
-            <Iyy>0.016797307537884</Iyy>
-            <Izz>0.025737457550802</Izz>
+            <Ixx>0.89401500129182</Ixx>
+            <Iyy>1.6797307537884</Iyy>
+            <Izz>2.5737457550802</Izz>
+        </momentsofinertia>
+    </moleculetype-->
+    <moleculetype id="3" name="CG_H2O">
+        <site type="LJ126" id="1">
+            <coords><x>0</x><y>-0.0786254</y><z>0</z>   </coords>
+            <sigma>3.11831716</sigma>
+            <epsilon>208.07969</epsilon>
+            <mass>15.999</mass>
+        </site>
+        <site type="Charge" id="2">
+            <coords><x>0</x><y>0.1262437652</y><z>0</z>   </coords>
+            <charge>-343.00525445061</charge>
+        </site>
+        <site type="Charge" id="3">
+            <coords><x>0.91325088918</x><y>0.628324298</y><z>0</z>   </coords>
+            <charge>171.50262722531</charge>
+        </site>
+        <site type="Charge" id="4">
+            <coords><x>-0.91325088918</x><y>0.628324298</y><z>0</z>   </coords>
+            <charge>171.50262722531</charge>
+        </site>
+        <momentsofinertia rotaxes="xyz">
+            <Ixx>0.89401500129182</Ixx>
+            <Iyy>1.6797307537884</Iyy>
+            <Izz>2.5737457550802</Izz>
         </momentsofinertia>
     </moleculetype>
 </components>

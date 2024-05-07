@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <mardyn version="20100525" >
     <refunits type="SI" >
-        <length unit="nm">1.0</length>
+        <length unit="nm">0.1</length>
         <mass unit="u">1.0</mass>
         <energy unit="eV">1.0</energy>
     </refunits>
@@ -16,7 +16,7 @@
         </run>
         <integrator type="Langevin">
             <!-- MD ODE integrator -->
-            <timestep unit="reduced">0.001</timestep>
+            <timestep unit="reduced">0.0009118371969</timestep>
             <friction>0.5</friction>
             <ActiveRegions>
                 <region>
@@ -28,7 +28,7 @@
         <ensemble type="NVT">
             <!-- Target temperature is 1000K -->
             <!-- real gas closer to ideal gas at higher temperatures but lower pressures -->
-            <temperature unit="reduced" >4.805851067</temperature>
+            <temperature unit="reduced" >1000</temperature>
             <!-- low temp test: 200K -->
             <!--temperature unit="reduced" >0.961170213</temperature-->
             <domain type="box">
@@ -56,7 +56,7 @@
                                 </site>
                             </basis>
                             <latticeOccupancy>1.</latticeOccupancy>
-                            <density>0.1</density>
+                            <density>0.01</density>
                         </filler>
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
@@ -75,7 +75,7 @@
                 <traversalSelector>c08</traversalSelector>
             </datastructure>
             <cutoffs type="CenterOfMass" >
-                <radiusLJ unit="reduced" >2.0</radiusLJ>
+                <radiusLJ unit="reduced" >10.0</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField" >
                 <epsilon>1</epsilon> <!-- TODO: dielectric constant water, for now use vacuum since P is very low -->
@@ -97,16 +97,16 @@
             <outputplugin name="CheckpointWriter">
                 <type>binary</type>
                 <writefrequency>25000</writefrequency>
-                <outputprefix>Water-Eq-ADR-FTH</outputprefix>
+                <outputprefix>Water-Eq-FP</outputprefix>
             </outputplugin>
         </output>
 
-        <plugin name="AdResS">
+        <!--plugin name="AdResS">
             <weightImpl>near</weightImpl>
             <enableFTH>
-                <fmax>1e+3</fmax>
+                <smoothingFactor>1.0</smoothingFactor>
                 <logFTH>false</logFTH>
-                <logDensity>false</logDensity>
+                <logDensity>true</logDensity>
                 <rho>0.1</rho>
                 <createFTH>
                     <sampleGap>1</sampleGap>
@@ -122,6 +122,25 @@
                     <hybridDimX>4.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
-        </plugin>
+        </plugin-->
+
+        <!--plugin name="MaxCheck">
+            <control>
+                <start>0</start>
+                <frequency>1</frequency>
+                <stop>100000000</stop>
+            </control>
+            <range>
+                <inclusive>true</inclusive>
+                <xmin>31</xmin><xmax>49</xmax>
+                <ymin>0</ymin><ymax>40</ymax>
+                <zmin>0</zmin><zmax>40</zmax>
+            </range>
+            <targets>
+                <target cid="2" method="1">
+                    <Fmax>1e+3</Fmax>
+                </target>
+            </targets>
+        </plugin-->
     </simulation>
 </mardyn>
