@@ -84,7 +84,8 @@ public:
 
 		return m_pd;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_cvtepi64_pd(m);
+		return set1(0.0f / 0.0f); // do not use
+		//return _mm512_cvtepi64_pd(m);
 	#endif
 	}
 
