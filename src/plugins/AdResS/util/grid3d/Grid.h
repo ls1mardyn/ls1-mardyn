@@ -14,8 +14,14 @@
 #include "plugins/AdResS/util/Subset.h"
 
 namespace Grid3D {
-	//Should handle both other classes entirely
-	// Is blind wrt the Sampler or its actual use
+	/**
+	 * 
+	 * 
+	 * The grid class creates a highly structured grid of box elements with nodes on the corners. It is composed
+	 * of nodes and elements (no edges nor faces). It must be defined using the number of elements per dimension
+	 * as well as the lower and upper coordinates of the region to be meshed.
+	 * Currently, it is used within the Adaptive Resolution Scheme plugin to measure the density. 
+	*/
 	class Grid{
 	private:
 		struct NodeInfo{

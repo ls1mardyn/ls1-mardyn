@@ -11,12 +11,22 @@
 #include "Grid.h"
 
 namespace Grid3D {
+	/**
+	 * \brief Helpful methods to manipulate a grid
+	*/
 	class GridHandler{
 	public:
-		//TODO:This method must go
+		//TODO: Remove this method and all its usage
 		std::vector<int> GetNodesOnPlane(Grid* grid, double pz);
+
+		/**
+		 * \brief Get a list of global node indeces based on a normal direction 
+		 * 
+		 * \param component must be between 0 and 2 depending on which normal direction is desired
+		 * \param p is the point coordinate defining the plane
+		*/
 		std::vector<int> GetNodesOnPlanebyComponent(Grid* grid, double p, int component);
-		//TODO:Have to make nodes exclusive to one subset
+		//TODO: nodes must be exclusive to one subset (do they?)
 		void SetGridBoundarySubsets(Grid* grid);
 	};
 };

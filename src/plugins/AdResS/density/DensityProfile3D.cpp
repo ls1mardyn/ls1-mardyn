@@ -89,7 +89,7 @@ void DensityProfile3D::sampleDensities(ParticleContainer *particleContainer, Dom
         }
     }
     domainDecomp->collCommFinalize();*/
-
+	//TODO: why is densities multidimensional? One per bin aint it?
     //divide global bins by volume
     for(int d = 0; d < 3; d++) {
         for(int i = 0; i < _globalDensities[d].size(); i++) {

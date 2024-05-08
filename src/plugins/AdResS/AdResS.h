@@ -12,6 +12,9 @@
 #include "features/FTH.h"
 #include "util/WeightFunction.h"
 
+//Keep the sampler available to be called within the plugin callbacks
+#include "Sampler.h"
+
 /**
  * With the introduction of AdResS to ls1-MarDyn the simulation class owns two particle containers,
  * each of which handle their own respective domain.
