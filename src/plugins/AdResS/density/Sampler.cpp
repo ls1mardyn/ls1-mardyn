@@ -8,15 +8,15 @@
 
 #include "Sampler.h"
 
-GridSampler::GridSampler(Grid* g, double rad):grid(g),measure_radius(rad){
+GridSampler2::GridSampler2(Grid* g, double rad):grid(g),measure_radius(rad){
 
 }
 
-void GridSampler::SampleData(ParticleContainer* pc){
+void GridSampler2::SampleData(ParticleContainer* pc){
     this->SampleAtNodes(pc);
 }
 
-void GridSampler::init(){
+void GridSampler2::init(){
     int total_nodes = this->grid->GetNodeInfo().total_nodes;
     auto vec = this->GetSampledData();
     vec.resize(total_nodes);
@@ -24,11 +24,11 @@ void GridSampler::init(){
 
 }
 
-void GridSampler::writeDensity(const std::string& filename){
+void GridSampler2::writeDensity(const std::string& filename){
     //TODO:implement this
 }
 
-void GridSampler::SampleAtNodes(ParticleContainer* pc){
+void GridSampler2::SampleAtNodes(ParticleContainer* pc){
 
     ParticleIterator it = pc->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
     std::fill(GetSampledData().begin(), GetSampledData().end(), 0);
@@ -57,7 +57,7 @@ void GridSampler::SampleAtNodes(ParticleContainer* pc){
 }
 
 
-bool GridSampler::ParticleInsideMeasuringSpace(std::array<double, 3> nodal_pos, std::array<double, 3> par_pos){
+bool GridSampler2::ParticleInsideMeasuringSpace(std::array<double, 3> nodal_pos, std::array<double, 3> par_pos){
     bool is_inside=false;
 
     std::array<double, 3> distance;

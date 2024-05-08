@@ -15,6 +15,8 @@
 #include "plugins/AdResS/util/grid3d/Grid.h"
 #include "plugins/AdResS/util/grid3d/GridHandler.h"
 using namespace Grid3D;
+
+//TODO: this has to be the base class for all the samplers we work with, not an enum based profiler (since we are not profiling)
 class Sampler{
 
     private:
@@ -37,7 +39,7 @@ class Sampler{
     virtual void SampleData(ParticleContainer* pc)=0;
 };
 
-class GridSampler:public Sampler{
+class GridSampler2:public Sampler{
 
     private:
 
@@ -46,7 +48,7 @@ class GridSampler:public Sampler{
     double measure_radius;
     public:
 
-    GridSampler(Grid* grid, double rad);
+    GridSampler2(Grid* grid, double rad);
 
     /**
      * 

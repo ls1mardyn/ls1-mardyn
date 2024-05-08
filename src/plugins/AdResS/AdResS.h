@@ -151,6 +151,10 @@ private:
      * Handles force computation
      * */
     AdResSForceAdapter* _forceAdapter;
+
+    Sampler* sampler;
+    Grid grid;
+
 };
 
 #endif //MARDYN_ADRESS_H

@@ -66,6 +66,7 @@ void Grid3D::Grid::StartGrid(int x, int y, int z){
 }
 
 void Grid3D::Grid::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
+    //TODO: where to define all mesh as grid region?
     DataArray lower = {0.0,0.0,0.0};
     DataArray upper = {domain->getGlobalLength(0),domain->getGlobalLength(1),domain->getGlobalLength(2)};
     SetMeshLimits(lower, upper);

@@ -26,7 +26,9 @@ AdResS::AdResS() : _resolutionHandler(), _forceAdapter(nullptr) {};
 
 AdResS::~AdResS() = default;
 
-void AdResS::init(ParticleContainer*, DomainDecompBase*, Domain*) {
+void AdResS::init(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom) {
+    grid.init(pc,dd, dom );
+    this->sampler = new GridSampler2(&this->grid, 1.0);
     global_log->debug() << "[AdResS] Enabled " << std::endl;
 }
 
@@ -38,6 +40,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
     AdResS::weight = Weight::functions[index >= 5 ? 0 : index];
     global_log->info() << "[AdResS] Using weight implementation " << weight_impls[index >= 5 ? 0 : index] << std::endl;
 
+    //TODO:this mixes the config of 2 separate things, misleading
 	FTH::Config fthConf { };
     XMLfile::Query query = xmlconfig.query("enableFTH");
     fthConf._enableThermodynamicForce = false;

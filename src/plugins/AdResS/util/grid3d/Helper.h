@@ -18,6 +18,7 @@ namespace Grid3D {
 
 	//TODO: all these need iterators and that kind of stuff
 	//Use vector only where necessary, stop using tuple its stupid
+	//TODO: do these belong here? If you are the user of grid class, where would you expect to see this?
 	class Element{
 	private:
 		struct Properties{
