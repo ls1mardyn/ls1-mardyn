@@ -3272,7 +3272,7 @@ void VCPADR::processCellPair(ParticleCell & c1, ParticleCell & c2, bool sumAll) 
 	}
 }
 
-void VCPADR::unpackComp(MaskCalcVec &mask_i, MaskCalcVec &mask_j, const AlignedArray<vcp_mask_single> &compMap_i, const AlignedArray<vcp_mask_single>& compMap_j,
+void VCPADR::unpackComp(MaskCalcVec &mask_i, MaskCalcVec &mask_j, AlignedArray<vcp_mask_single> &compMap_i, AlignedArray<vcp_mask_single>& compMap_j,
 						const vcp_center_id_t *const id_i, const vcp_center_id_t &offset_i,
 						const vcp_center_id_t *const id_j, const vcp_center_id_t &offset_j,
 						const vcp_lookupOrMask_vec &lookupORforceMask) {
@@ -3372,7 +3372,7 @@ void VCPADR::unpackComp(MaskCalcVec &mask_i, MaskCalcVec &mask_j, const AlignedA
 	const MaskCalcVec ci_x4 = _mm256_broadcastq_epi64(_mm256_castsi256_si128(ci));
 
 	const MaskCalcVec indices = _mm256_maskload_epi64((const long long*)(id_j_shifted), MaskCalcVec::ones());
-	const MaskCalcVec cj_3to0 = _mm256_i64gather_epi64(compMap_j+0, indices, 8);
+	const MaskCalcVec cj_3to0 = _mm256_i64gather_epi64((const long long*)&compMap_j, indices, 8);
 
 	mask_i = ci_x4;
 	mask_j = cj_3to0;
