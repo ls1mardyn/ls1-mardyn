@@ -3380,43 +3380,43 @@ void VCPADR::unpackComp(MaskCalcVec &mask_i, MaskCalcVec &mask_j, AlignedArray<v
 #endif /* VCP_PREC */
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_AVX512F
-	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-		__m128i ci = _mm_loadl_epi64((const __m128i *) (compMap_i + id_i_shifted[0]));
-		__m512i ci_x16 = _mm512_broadcastd_epi32(ci);
-
-		__m512i indices = _mm512_load_epi32(id_j_shifted);
-		__m512i cj_15to0 = _mm512_i32gather_epi32(indices, compMap_j+0, 4);
-
-		mask_i = ci_x16;
-		mask_j = cj_15to0;
-	#else /*VCP_DPDP */
-		__m128i ci = _mm_loadl_epi64((const __m128i *) (compMap_i + id_i_shifted[0]));
-		__m512i ci_x8 = _mm512_broadcastd_epi64(ci);
-
-		__m512i indices = _mm512_load_epi64(id_j_shifted);
-		__m512i cj_7to0 = _mm512_i64gather_pd(indices, compMap_j+0, 8);
-
-		mask_i = ci_x8;
-		mask_j = cj_7to0;
-	#endif
-
-
-#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
-	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-		__m512i lookup_i = _mm512_set1_epi32(offset_i);
-		__m512i ind_i = _mm512_i32gather_epi32(lookup_i, (const int *) id_i, 4);
-		__m512i ind_j = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
-
-		mask_i = _mm512_i32gather_epi32(ind_i, compMap_i+0, 4);
-		mask_j = _mm512_i32gather_epi32(ind_j, compMap_j+0, 4);
-	#else /*VCP_DPDP*/
-		__m512i lookup_i = _mm512_set1_epi64(offset_i);
-		__m512i ind_i = _mm512_i64gather_epi64(lookup_i, (const long long *) id_i, 8);
-		__m512i ind_j = _mm512_i64gather_epi64(lookupORforceMask, (const long long *) id_j, 8);
-
-		mask_i = _mm512_i64gather_epi64(ind_i, compMap_i+0, 8);
-		mask_j = _mm512_i64gather_epi64(ind_j, compMap_j+0, 8);
-	#endif /*VCP_PREC*/
+//	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+//		__m128i ci = _mm_loadl_epi64((const __m128i *) (compMap_i + id_i_shifted[0]));
+//		__m512i ci_x16 = _mm512_broadcastd_epi32(ci);
+//
+//		__m512i indices = _mm512_load_epi32(id_j_shifted);
+//		__m512i cj_15to0 = _mm512_i32gather_epi32(indices, compMap_j+0, 4);
+//
+//		mask_i = ci_x16;
+//		mask_j = cj_15to0;
+//	#else /*VCP_DPDP */
+//		__m128i ci = _mm_loadl_epi64((const __m128i *) (compMap_i + id_i_shifted[0]));
+//		__m512i ci_x8 = _mm512_broadcastq_epi64(ci);
+//
+//		__m512i indices = _mm512_load_epi64(id_j_shifted);
+//		__m512i cj_7to0 = _mm512_castpd_si512(_mm512_i64gather_pd(indices, compMap_j+0, 8));
+//
+//		mask_i = ci_x8;
+//		mask_j = cj_7to0;
+//	#endif
+//
+//
+//#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
+//	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+//		__m512i lookup_i = _mm512_set1_epi32(offset_i);
+//		__m512i ind_i = _mm512_i32gather_epi32(lookup_i, (const int *) id_i, 4);
+//		__m512i ind_j = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
+//
+//		mask_i = _mm512_i32gather_epi32(ind_i, compMap_i+0, 4);
+//		mask_j = _mm512_i32gather_epi32(ind_j, compMap_j+0, 4);
+//	#else /*VCP_DPDP*/
+//		__m512i lookup_i = _mm512_set1_epi64(offset_i);
+//		__m512i ind_i = _mm512_i64gather_epi64(lookup_i, (const long long *) id_i, 8);
+//		__m512i ind_j = _mm512_i64gather_epi64(lookupORforceMask, (const long long *) id_j, 8);
+//
+//		mask_i = _mm512_i64gather_epi64(ind_i, compMap_i+0, 8);
+//		mask_j = _mm512_i64gather_epi64(ind_j, compMap_j+0, 8);
+//	#endif /*VCP_PREC*/
 #endif
 }
 
