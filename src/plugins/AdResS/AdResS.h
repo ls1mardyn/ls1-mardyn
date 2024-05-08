@@ -13,7 +13,7 @@
 #include "util/WeightFunction.h"
 
 //Keep the sampler available to be called within the plugin callbacks
-#include "Sampler.h"
+#include "plugins/AdResS/density/Sampler.h"
 
 /**
  * With the introduction of AdResS to ls1-MarDyn the simulation class owns two particle containers,
