@@ -29,7 +29,6 @@ AdResS::~AdResS() = default;
 void AdResS::init(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom) {
     
     sampler->init();
-    std::cout<<"\n"<<sampler->GetSampledData().size()<<"\n";
     //output mesh once at the beginning to a different file
     ofstream mesh("mesh.txt");
     mesh << grid;
@@ -179,7 +178,7 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
                      unsigned long simstep) {
     
     //Sampler output 
-    std::string sampler_file{"density"+std::to_string(simstep)};
+    std::string sampler_file{"density"+std::to_string(simstep)+".txt"};
     sampler->writeSample(sampler_file);
 	//_fthHandler.writeLogs(*particleContainer, *domainDecomp, *domain, simstep);
 }
