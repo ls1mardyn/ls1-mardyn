@@ -14,6 +14,7 @@
 #include "plugins/AdResS/util/grid3d/Grid.h"
 #include "plugins/AdResS/util/grid3d/GridHandler.h"
 
+//TODO: deprecated class
 namespace Grid3D {
 	class GridSampler{
 	private:
@@ -53,7 +54,7 @@ namespace Grid3D {
 template<class T>
 std::ostream& Grid3D::GridSampler::WritePlaneSamples(std::ostream& out, T data){
     std::string prefix = "//[Sampler]: ";
-    std::vector<int> plane_nodes = handler.GetNodesOnPlane(grid,10);
+    std::vector<int> plane_nodes = handler.GetNodesOnPlanebyComponent(grid,10,2);
     out<<prefix+" target value: "<<this->samples.target_number_density<<"\n";
     for(int i=0;i<plane_nodes.size();i++){
         double rx = grid->GetNodes()[plane_nodes[i]].GetPosition()[0];

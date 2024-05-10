@@ -16,8 +16,6 @@ namespace Grid3D {
 	*/
 	class GridHandler{
 	public:
-		//TODO: Remove this method and all its usage
-		std::vector<int> GetNodesOnPlane(Grid* grid, double pz);
 
 		/**
 		 * \brief Get a list of global node indeces based on a normal direction 

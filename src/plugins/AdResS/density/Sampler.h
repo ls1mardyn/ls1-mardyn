@@ -14,6 +14,7 @@
 
 #include "plugins/AdResS/util/grid3d/Grid.h"
 #include "plugins/AdResS/util/grid3d/GridHandler.h"
+#include "plugins/AdResS/util/Averager.h"
 using namespace Grid3D;
 
 //TODO: this has to be the base class for all the samplers we work with, not an enum based profiler (since we are not profiling)
@@ -21,18 +22,16 @@ class Sampler{
 
     private:
     std::vector<double> sampled_data;
+    int write_frequency;
 
     public:
-    /**
-     * 
-     * Move data member inits to constructor, call other methods within
-    */
+
     virtual void init()=0;
 
     /**
      * lets settle for a tab separator, alright?
     */
-    virtual void writeDensity(const std::string& filename)=0;
+    virtual void writeSample(const std::string& filename)=0;
     std::vector<double>& GetSampledData(){
         return sampled_data;
     }
@@ -44,7 +43,6 @@ class GridSampler2:public Sampler{
     private:
 
     Grid* grid;
-    GridHandler* handler;
     double measure_radius;
     public:
 
@@ -56,8 +54,12 @@ class GridSampler2:public Sampler{
     */
     virtual void init() override;
     virtual void SampleData(ParticleContainer* pc) override;
-    virtual void writeDensity(const std::string& filename) override;
 
+    /**
+     * A grid sampler would print all data on every node
+    */
+    virtual void writeSample(const std::string& filename) override;
+    
     private:
     //TODO: I insist on this implementation. The grid at some point is distributed, so to get the correct nodal values, it should be based on grid parallelization. Not on globalizing the particle positions on every step. 
     void SampleAtNodes(ParticleContainer* pc);
@@ -66,6 +68,25 @@ class GridSampler2:public Sampler{
      * \brief Check if particle within distance using Euclidean norm
     */
     bool ParticleInsideMeasuringSpace(std::array<double,3> n_pos, std::array<double,3> l_pos);
+};
+
+class AveragedGridSampler:public Sampler{
+    private:
+    Averager<std::vector<double>> averager;
+    GridSampler2 sampler;//TODO: asssign in constructor?
+
+    int write_frequency;
+
+    public:
+    AveragedGridSampler(Grid*, double rad, int freq);
+
+    Averager<std::vector<double>>& GetAverager();
+
+
+    virtual void init() override;
+    virtual void SampleData(ParticleContainer* pc) override;
+    virtual void writeSample(const std::string& filename) override;
+
 };
 
 

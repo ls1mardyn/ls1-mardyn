@@ -12,7 +12,7 @@
 #include "Helper.h"
 #include <iostream>
 #include "plugins/AdResS/util/Subset.h"
-
+//TODO: need to include non zero lower corner to node positions
 namespace Grid3D {
 	/**
 	 * 

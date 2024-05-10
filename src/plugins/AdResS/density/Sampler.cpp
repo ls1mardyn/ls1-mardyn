@@ -18,14 +18,21 @@ void GridSampler2::SampleData(ParticleContainer* pc){
 
 void GridSampler2::init(){
     int total_nodes = this->grid->GetNodeInfo().total_nodes;
-    auto vec = this->GetSampledData();
+    std::vector<double>& vec = this->GetSampledData();
     vec.resize(total_nodes);
     std::fill(vec.begin(),vec.end(),0.0);
-
 }
 
-void GridSampler2::writeDensity(const std::string& filename){
-    //TODO:implement this
+void GridSampler2::writeSample(const std::string& filename){
+    std::ofstream file(filename);
+    file <<"#Total nodes sampled: "<<GetSampledData().size()<<"\n";
+    std::vector<Grid3D::Node>& nodes = grid->GetNodes();
+
+    for(int i=0;i<GetSampledData().size();i++){
+        std::array<double, 3>& pos = nodes[i].GetPosition();
+        file<<i<<"\t"<<pos[0]<<"\t"<<pos[1]<<"\t"<<pos[2]<<"\t"<<GetSampledData()[i]<<"\n";
+    }
+
 }
 
 void GridSampler2::SampleAtNodes(ParticleContainer* pc){
@@ -51,9 +58,6 @@ void GridSampler2::SampleAtNodes(ParticleContainer* pc){
         
         GetSampledData()[nidx] = (double)GetSampledData()[nidx]/sphere_volume;
     }
-
-
-
 }
 
 
@@ -74,3 +78,33 @@ bool GridSampler2::ParticleInsideMeasuringSpace(std::array<double, 3> nodal_pos,
     return is_inside;
 
  }
+
+ /************
+  * 
+ */
+
+AveragedGridSampler::AveragedGridSampler(Grid* grid, double rad,int freq):sampler{grid,rad},write_frequency(freq){
+
+}
+
+void AveragedGridSampler::init(){
+    sampler.init();
+    averager.SetDataSize(sampler.GetSampledData());
+}
+
+void AveragedGridSampler::SampleData(ParticleContainer* pc){
+    sampler.SampleData(pc);
+    averager.AverageData(sampler.GetSampledData());
+}
+
+void AveragedGridSampler::writeSample(const std::string& filename){
+    sampler.writeSample(filename);
+    
+    //If averager step_count matches desired frequency
+    if(averager.GetStepCount()%this->write_frequency==0){
+        std::string name{"averaged"+filename};
+        std::ofstream averagedfile(name);
+        averager.WriteAverage(averagedfile,averager.GetSumData());
+        averagedfile.close();
+    }
+}

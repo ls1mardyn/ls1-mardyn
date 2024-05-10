@@ -1,20 +1,5 @@
 #include "GridHandler.h"
 
-std::vector<int> Grid3D::GridHandler::GetNodesOnPlane(Grid* grid, double p){
-    std::vector<int> list_nodes;//global indeces
-    //Assume n=(0,0,1)
-    //Look for all points that r_z = pz
-    std::vector<Node>& nodes = grid->GetNodes();
-    for(int i=0;i<nodes.size();i++){
-        double rz=nodes[i].GetPosition()[2];
-        if(rz == p){
-            list_nodes.push_back(i);
-        }
-    }
-
-    return list_nodes;
-
-}
 
 std::vector<int> Grid3D::GridHandler::GetNodesOnPlanebyComponent(Grid* grid, double p, int cmp){
     std::vector<int> list_nodes;//global indeces
@@ -42,12 +27,12 @@ void Grid3D::GridHandler::SetGridBoundarySubsets(Grid* grid){
         lz = grid->GetLowerCorner()[2];
     //start at upper boundary
     //plane is (0,0,max_z)
-    std::vector<int> nodes = this->GetNodesOnPlane(grid, uz);
+    std::vector<int> nodes = this->GetNodesOnPlanebyComponent(grid, uz,2);
     grid->AddSubset(nodes,"upper");
 
     //lower boundary 
     nodes.clear();
-    nodes = this->GetNodesOnPlane(grid, lz);
+    nodes = this->GetNodesOnPlanebyComponent(grid, lz,2);
     grid->AddSubset(nodes,"lower");
     
     //inlet

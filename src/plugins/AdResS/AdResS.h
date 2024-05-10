@@ -153,7 +153,9 @@ private:
     AdResSForceAdapter* _forceAdapter;
 
     Sampler* sampler;
+    GridHandler grid_handler;//TODO: pointer?
     Grid grid;
+    
 
 };
 

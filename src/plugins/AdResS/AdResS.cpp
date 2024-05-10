@@ -27,8 +27,13 @@ AdResS::AdResS() : _resolutionHandler(), _forceAdapter(nullptr) {};
 AdResS::~AdResS() = default;
 
 void AdResS::init(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom) {
-    grid.init(pc,dd, dom );
-    this->sampler = new GridSampler2(&this->grid, 1.0);
+    
+    sampler->init();
+    std::cout<<"\n"<<sampler->GetSampledData().size()<<"\n";
+    //output mesh once at the beginning to a different file
+    ofstream mesh("mesh.txt");
+    mesh << grid;
+    mesh.close();
     global_log->debug() << "[AdResS] Enabled " << std::endl;
 }
 
@@ -39,6 +44,27 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
     unsigned long index = std::distance(weight_impls.begin(), std::find(weight_impls.begin(), weight_impls.end(), impl));
     AdResS::weight = Weight::functions[index >= 5 ? 0 : index];
     global_log->info() << "[AdResS] Using weight implementation " << weight_impls[index >= 5 ? 0 : index] << std::endl;
+
+    //Check which type of sampler is selected
+    std::string sample_type;
+    xmlconfig.changecurrentnode("sampler");
+    xmlconfig.getNodeValue("@type",sample_type);
+    if(sample_type == "Grid"){
+        global_log->info() << "[AdResS] Using sampler implementation " << sample_type<< std::endl;
+        int x=xmlconfig.getNodeValue_int("gridSize/xElements",1);
+        int y=xmlconfig.getNodeValue_int("gridSize/yElements",1);
+        int z=xmlconfig.getNodeValue_int("gridSize/zElements",1);
+        global_log->info() << "[AdResS] Grid size is" << x<< std::endl;
+        this->grid.MeshAllDomain();
+        this->grid.StartGrid(x,y,z);
+        grid_handler.SetGridBoundarySubsets(&grid);
+        double rad = xmlconfig.getNodeValue_double("sampleRadius", 1.0);
+
+        //this->sampler = new GridSampler2(&grid,rad);
+        sampler = new AveragedGridSampler{&grid,rad,10};
+
+        xmlconfig.changecurrentnode("..");
+    }
 
     //TODO:this mixes the config of 2 separate things, misleading
 	FTH::Config fthConf { };
@@ -151,11 +177,15 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 
 void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                      unsigned long simstep) {
-	_fthHandler.writeLogs(*particleContainer, *domainDecomp, *domain, simstep);
+    
+    //Sampler output 
+    std::string sampler_file{"density"+std::to_string(simstep)};
+    sampler->writeSample(sampler_file);
+	//_fthHandler.writeLogs(*particleContainer, *domainDecomp, *domain, simstep);
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
-	_fthHandler.writeFinalFTH();
+	//_fthHandler.writeFinalFTH();
 }
 
 std::string AdResS::getPluginName() {
@@ -163,10 +193,11 @@ std::string AdResS::getPluginName() {
 }
 
 void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsigned long) {
-    _resolutionHandler.checkResolution(*container);
-	_fthHandler.step(*container, _resolutionHandler.getRegions());
+    sampler->SampleData(container);
+    //_resolutionHandler.checkResolution(*container);
+	//_fthHandler.step(*container, _resolutionHandler.getRegions());
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
-    _fthHandler.apply(*container, _resolutionHandler.getRegions(), _resolutionHandler.getCompResMap());
+    //_fthHandler.apply(*container, _resolutionHandler.getRegions(), _resolutionHandler.getCompResMap());
 }
