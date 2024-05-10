@@ -70,11 +70,9 @@ class GridSampler2:public Sampler{
     bool ParticleInsideMeasuringSpace(std::array<double,3> n_pos, std::array<double,3> l_pos);
 };
 
-class AveragedGridSampler:public Sampler{
+class AveragedGridSampler:public GridSampler2{
     private:
     Averager<std::vector<double>> averager;
-    GridSampler2 sampler;//TODO: asssign in constructor?
-
     int write_frequency;
 
     public:

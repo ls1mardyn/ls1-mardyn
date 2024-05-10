@@ -83,22 +83,23 @@ bool GridSampler2::ParticleInsideMeasuringSpace(std::array<double, 3> nodal_pos,
   * 
  */
 
-AveragedGridSampler::AveragedGridSampler(Grid* grid, double rad,int freq):sampler{grid,rad},write_frequency(freq){
+AveragedGridSampler::AveragedGridSampler(Grid* grid, double rad,int freq):GridSampler2{grid,rad},write_frequency(freq){
 
 }
 
 void AveragedGridSampler::init(){
-    sampler.init();
-    averager.SetDataSize(sampler.GetSampledData());
+    GridSampler2::init();
+    averager.SetDataSize(GridSampler2::GetSampledData());
 }
 
 void AveragedGridSampler::SampleData(ParticleContainer* pc){
-    sampler.SampleData(pc);
-    averager.AverageData(sampler.GetSampledData());
+    GridSampler2::SampleData(pc);
+    GridSampler2::SampleData(pc);
+    averager.AverageData(GridSampler2::GetSampledData());
 }
 
 void AveragedGridSampler::writeSample(const std::string& filename){
-    sampler.writeSample(filename);
+    GridSampler2::writeSample(filename);
     
     //If averager step_count matches desired frequency
     if(averager.GetStepCount()%this->write_frequency==0){
