@@ -63,6 +63,7 @@
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
 #include "plugins/WallPotential.h"
+#include "plugins/EnergyRAPL.h"
 #ifdef ENABLE_ADIOS2
 #include "io/Adios2Writer.h"
 #endif
@@ -134,6 +135,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(VectorizationTuner);
 	REGISTER_PLUGIN(WallPotential);
 	REGISTER_PLUGIN(XyzWriter);
+	REGISTER_PLUGIN(EnergyRAPL);
 #ifdef VTK
 	REGISTER_PLUGIN(VTKMoleculeWriter);
 #ifndef MARDYN_AUTOPAS
