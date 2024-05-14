@@ -15,12 +15,13 @@
  * @author Ruben Horn
  *
  * The output of this plugin is either written to the info logger or to a tab separated file (.tsv) with the columns
- * milliseconds, simstep and joules.
+ * milliseconds, simstep and joules every \c writefrequency simulation steps or once at the end.
  *
  * \b NOTE:
  *  - You must ensure that the files under /sys/class/powercap/intel-rapl/ are readable.
  *  - The total energy is measured over the package and DRAM domains, if present.
- *    (See section 15.10.2 of the [Intel Architectures Software Developer’s Manuals](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html) Volume 3.)
+ *    (See section 15.10.2 of the [Intel Architectures Software Developer’s Manuals](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html) Volume 3.
+ *    The actual domains that are used are printed to the info log.)
  *    Energy measurements using RAPL are \b not representative of the total energy consumption of the system and comparing different systems is not trivially possible.
  *    Instead, they should only be used to compare the energy consumption of different applications/settings on the same system.
  *    For more practical information on RAPL, see [Khan et al. 2018](https://doi.org/10.1145/3177754). RAPL is an Intel technology and has limited support on AMD (cf. [Schöne et al. 2021](https://arxiv.org/abs/2108.00808)).
@@ -57,7 +58,7 @@ private:
 		 * @param domainBasePath The sysfs base path of the corresponding RAPL domain (must contain the files: name,
 		 * max_energy_range_uj, energy_uj)
 		 */
-		RAPLCounter(const std::string domainBasePath);
+		RAPLCounter(const std::string &domainBasePath);
 
 		/**
 		 * @brief Reset the counter for this domain to 0
@@ -100,17 +101,13 @@ private:
 	/**
 	 * @brief Start time of the simulation (used to compute timestamp in milliseconds)
 	 */
-	std::chrono::_V2::steady_clock::time_point _simstart;
+	std::chrono::time_point<std::chrono::steady_clock> _simstart;
 
 #ifdef ENABLE_MPI
 	/**
 	 * @brief Unique name of the node associated with the MPI rank
 	 */
 	char _processorName[MPI_MAX_PROCESSOR_NAME];
-	/**
-	 * @brief Length of the string \ref _processorName
-	 */
-	int _processorNameLength;
 	/**
 	 * @brief The MPI rank
 	 */
