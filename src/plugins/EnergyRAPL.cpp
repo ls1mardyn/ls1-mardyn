@@ -17,7 +17,7 @@ EnergyRAPL::RAPLCounter::RAPLCounter(const std::string domainBasePath) {
 	std::ostringstream microJoulesPath;
 	microJoulesPath << domainBasePath << "/energy_uj";
 	_microJoulesPath = microJoulesPath.str();
-	// Value range for current micro joules
+	// Range, i.e., maximum value of RAPL energy counter, in micro-joules
 	std::ostringstream rangeMicroJoulesPath;
 	rangeMicroJoulesPath << domainBasePath << "/max_energy_range_uj";
 	std::ifstream rangeMicroJoulesFile(rangeMicroJoulesPath.str());
