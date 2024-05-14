@@ -18,8 +18,12 @@
  * milliseconds, simstep and joules.
  *
  * \b NOTE:
- *  - You must ensure that the files under /sys/class/powercap/intel-rapl/ are readable
+ *  - You must ensure that the files under /sys/class/powercap/intel-rapl/ are readable.
  *  - The total energy is measured over the package and DRAM domains, if present.
+ *    (See section 15.10.2 of the [Intel Architectures Software Developer’s Manuals](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html) Volume 3.)
+ *    Energy measurements using RAPL are \b not representative of the total energy consumption of the system and comparing different systems is not trivially possible.
+ *    Instead, they should only be used to compare the energy consumption of different applications/settings on the same system.
+ *    For more practical information on RAPL, see [Khan et al. 2018](https://doi.org/10.1145/3177754). RAPL is an Intel technology and has limited support on AMD (cf. [Schöne et al. 2021](https://arxiv.org/abs/2108.00808)).
  */
 class EnergyRAPL : public PluginBase {
 private:

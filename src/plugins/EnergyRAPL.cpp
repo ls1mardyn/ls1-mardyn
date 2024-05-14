@@ -69,7 +69,6 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 	std::ofstream outputFile(outputFilename.str().c_str());
 	outputFile << "milliseconds\tsimstep\tjoules" << std::endl;
 	// For each package...
-	int maxPackageIdx = 0;
 	int numberOfPackages = getNumberOfPackages();
 	for (int packageIdx = 0; packageIdx < numberOfPackages; packageIdx++) {
 		std::ostringstream packageBasePath;
