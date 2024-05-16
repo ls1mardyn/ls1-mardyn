@@ -64,5 +64,5 @@ VTKGridWriter | vtk, grid | Write MPI rank, number of molecules in each cell in 
 VTKMoleculeWriter | vtk, visualization | Write a .vtu or .pvtu file with the molecules for visualiziation in ParaView. Requires compiling with VTK=1.
 WallPotential | potential, Wall, Lennard-Jones | Exerts the force of a Lennard-Jones (9-3 or 10-4) potential on the specified components or all particles.
 XyzWriter | visualization?, todo | todo
-
+EnergyRAPL | stats, print, file | Compute the total energy consumption (package, DRAM) of the simulation across all nodes using RAPL. (See class documentation of \ref EnergyRAPL for usage and limitations.)
 */
