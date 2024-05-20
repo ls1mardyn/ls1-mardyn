@@ -13,6 +13,7 @@
 
 #include "plugins/AdResS/util/AdResSRegionTraversal.h"
 #include "plugins/AdResS/parallel/AdResSKDDecomposition.h"
+#include "plugins/AdResS/adapters/VCPADR.h"
 #include "Interpolation.h"
 
 #include <cmath>
@@ -28,11 +29,11 @@ AdResS::~AdResS() = default;
 
 void AdResS::init(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom) {
     
-    sampler->init();
+    //sampler->init();
     //output mesh once at the beginning to a different file
-    ofstream mesh("mesh.txt");
-    mesh << grid;
-    mesh.close();
+    //ofstream mesh("mesh.txt");
+    //mesh << grid;
+    //mesh.close();
     global_log->debug() << "[AdResS] Enabled " << std::endl;
 }
 
@@ -166,9 +167,16 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 	_resolutionHandler.init(resConf);
     // todo add check that no region overlap even in hybrid considering periodic bounds
 
-    _forceAdapter = new AdResSForceAdapter(_resolutionHandler);
-    _simulation.setParticlePairsHandler(_forceAdapter);
-    _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), _forceAdapter));
+	// we set the pair handler regardless, in case some other plugin requires pair wise interactions using AdResS
+	_forceAdapter = new AdResSForceAdapter(_resolutionHandler);
+	_simulation.setParticlePairsHandler(_forceAdapter);
+	if(_simulation.usingLegacyCellProcessor()) {
+		_simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), _forceAdapter));
+	}
+	else {
+		_simulation.setCellProcessor(new VCPADR(*_simulation.getDomain(), _simulation.getcutoffRadius(), _simulation.getLJCutoff(), _resolutionHandler));
+	}
+
     if(auto decomp = dynamic_cast<AdResSKDDecomposition*>(&_simulation.domainDecomposition())) {
         decomp->setResolutionHandler(_resolutionHandler);
     }
@@ -178,13 +186,13 @@ void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *dom
                      unsigned long simstep) {
     
     //Sampler output 
-    std::string sampler_file{"density"+std::to_string(simstep)+".txt"};
-    sampler->writeSample(sampler_file);
-	//_fthHandler.writeLogs(*particleContainer, *domainDecomp, *domain, simstep);
+    //std::string sampler_file{"density"+std::to_string(simstep)+".txt"};
+    //sampler->writeSample(sampler_file);
+	_fthHandler.writeLogs(*particleContainer, *domainDecomp, *domain, simstep);
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
-	//_fthHandler.writeFinalFTH();
+	_fthHandler.writeFinalFTH();
 }
 
 std::string AdResS::getPluginName() {
@@ -192,11 +200,11 @@ std::string AdResS::getPluginName() {
 }
 
 void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsigned long) {
-    sampler->SampleData(container);
-    //_resolutionHandler.checkResolution(*container);
-	//_fthHandler.step(*container, _resolutionHandler.getRegions());
+    //sampler->SampleData(container);
+    _resolutionHandler.checkResolution(*container);
+	_fthHandler.step(*container, _resolutionHandler.getRegions());
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
-    //_fthHandler.apply(*container, _resolutionHandler.getRegions(), _resolutionHandler.getCompResMap());
+    _fthHandler.apply(*container, _resolutionHandler.getRegions(), _resolutionHandler.getCompResMap());
 }

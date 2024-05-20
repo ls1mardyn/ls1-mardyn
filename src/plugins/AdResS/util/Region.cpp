@@ -3,6 +3,7 @@
 //
 #include "plugins/AdResS/util/Region.h"
 #include "Simulation.h"
+#include "Domain.h"
 
 void Resolution::FPRegion::readXML(XMLfileUnits &xmlconfig) {
 	xmlconfig.getNodeValue("lowX", _low[0]);

@@ -6,6 +6,8 @@
 #define MARDYN_WEIGHTFUNCTION_H
 
 #include "Region.h"
+#include "particleContainer/adapter/vectorization/SIMD_DEFINITIONS.h"
+
 #include <array>
 
 namespace Weight {
@@ -77,6 +79,7 @@ namespace Weight {
 									   const RealCalcVec& hybrid_dim_0, const RealCalcVec& hybrid_dim_1, const RealCalcVec& hybrid_dim_2,
 									   const RealCalcVec &hybrid_low_0, const RealCalcVec &hybrid_low_1, const RealCalcVec &hybrid_low_2,
 									   const RealCalcVec &hybrid_high_0, const RealCalcVec &hybrid_high_1, const RealCalcVec &hybrid_high_2) {
+		const auto zero = RealCalcVec::zero();
 		const MaskCalcVec in_FP = is_inner_vec(r0, r1, r2, region_low_0, region_low_1, region_low_2, region_high_0, region_high_1, region_high_2);
 		const MaskCalcVec in_H = is_inner_vec(r0, r1, r2, hybrid_low_0, hybrid_low_1, hybrid_low_2, hybrid_high_0, hybrid_high_1, hybrid_high_2);
 
@@ -84,10 +87,13 @@ namespace Weight {
 		const RealCalcVec dd1 = RealCalcVec::max(RealCalcVec::max(region_low_1 - r1, RealCalcVec::zero()), RealCalcVec::max(r1 - region_high_1, RealCalcVec::zero()));
 		const RealCalcVec dd2 = RealCalcVec::max(RealCalcVec::max(region_low_2 - r2, RealCalcVec::zero()), RealCalcVec::max(r2 - region_high_2, RealCalcVec::zero()));
 		const RealCalcVec dist = RealCalcVec::sqrt(dd0*dd0 + dd1*dd1 + dd2*dd2);
+		auto b0 = RealCalcVec::cvt_MaskVec_to_RealCalcVec(dd0 != zero);
+		auto b1 = RealCalcVec::cvt_MaskVec_to_RealCalcVec(dd1 != zero);
+		auto b2 = RealCalcVec::cvt_MaskVec_to_RealCalcVec(dd2 != zero);
 		const RealCalcVec hDim = RealCalcVec::sqrt(
-				RealCalcVec::cvt_MaskVec_to_RealCalcVec(dd0 != RealCalcVec::zero()) * (hybrid_dim_0 * hybrid_dim_0) +
-				RealCalcVec::cvt_MaskVec_to_RealCalcVec(dd1 != RealCalcVec::zero()) * (hybrid_dim_1 * hybrid_dim_1) +
-				RealCalcVec::cvt_MaskVec_to_RealCalcVec(dd2 != RealCalcVec::zero()) * (hybrid_dim_2 * hybrid_dim_2)
+				b0 * b0 * (hybrid_dim_0 * hybrid_dim_0) +
+				b1 * b1 * (hybrid_dim_1 * hybrid_dim_1) +
+				b2 * b2 * (hybrid_dim_2 * hybrid_dim_2)
 		);
 
 		const MaskCalcVec outside_rounded = hDim < dist;
@@ -95,20 +101,26 @@ namespace Weight {
 		// instead of cos we use a poly of deg 3 here as it is a quite good approx for cos in range 0 to pi/2
 		// it does not matter too much what we pick, it just needs to be differentiable and have zero grad at the borders
 		// f(x) = 2x³-3x²+1
-		const RealCalcVec one = RealCalcVec::ones();
+		const RealCalcVec n_one = RealCalcVec::set1(-1);
+		const RealCalcVec one = RealCalcVec::set1(1);
 		const RealCalcVec two = RealCalcVec::set1(2);
 		const RealCalcVec three = RealCalcVec::set1(3);
 
-		const RealCalcVec x = dist / hDim;
+		const RealCalcVec x = n_one * RealCalcVec::max(n_one * dist / hDim, n_one);
 		const RealCalcVec x2 = x * x;
 		const RealCalcVec weight = two * x * x2 - three * x2 + one;
 
 		// remove ones in H but outside rounded
-		const RealCalcVec weight_rounded = weight * (RealCalcVec::ones() - RealCalcVec::cvt_MaskVec_to_RealCalcVec(outside_rounded));
+		const auto real_out_round = RealCalcVec::cvt_MaskVec_to_RealCalcVec(outside_rounded);
+		const RealCalcVec weight_rounded = weight * (one - real_out_round * real_out_round);
 		// remove all outside of H
-		const RealCalcVec weight_H = weight_rounded * RealCalcVec::cvt_MaskVec_to_RealCalcVec(in_H);
+		const auto real_in_h = RealCalcVec::cvt_MaskVec_to_RealCalcVec(in_H);
+		const RealCalcVec weight_H = weight_rounded * real_in_h * real_in_h;
 		// set FP to 1
-		const RealCalcVec weight_FP = weight_H * (RealCalcVec::cvt_MaskVec_to_RealCalcVec(in_FP) / weight + (RealCalcVec::ones() - RealCalcVec::cvt_MaskVec_to_RealCalcVec(in_FP)));
+		const auto real_in_fp = RealCalcVec::cvt_MaskVec_to_RealCalcVec(in_FP);
+		const auto real_in_fp_pos = real_in_fp * real_in_fp;
+		const RealCalcVec weight_FP = weight_H * (one - real_in_fp_pos) + one * real_in_fp_pos;
+				//weight_H * (real_in_fp_pos / weight + (one - real_in_fp_pos));
 		return weight_FP;
 	}
 }

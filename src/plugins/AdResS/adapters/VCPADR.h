@@ -4,26 +4,24 @@
  * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann, Steffen Seckler, Alex Hocks
  */
 
-#ifndef VECTORIZEDCELLPROCESSOR_H_
-#define VECTORIZEDCELLPROCESSOR_H_
+#ifndef VCPADR_H_
+#define VCPADR_H_
 
-#include "particleContainer/adapter/CellProcessor.h"
-#include "utils/AlignedArray.h"
 #include <iostream>
 #include <vector>
 #include <array>
 #include <cmath>
-#include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
-#include "particleContainer/adapter/vectorization/SIMD_VectorizedCellProcessorHelpers.h"
-#include "WrapOpenMP.h"
 
-#include "molecules/MoleculeForwardDeclaration.h"
-#include "plugins/AdResS/features/Resolution.h"
+#include "particleContainer/adapter/CellProcessor.h"
+#include "particleContainer/adapter/vectorization/SIMD_VectorizedCellProcessorHelpers.h"
 
 class Component;
 class Domain;
 class Comp2Param;
 class CellDataSoA;
+namespace Resolution {
+	class Handler;
+}
 
 /**
  * \brief Vectorized calculation of the force.
@@ -46,6 +44,12 @@ public:
 	VCPADR(Domain & domain, double cutoffRadius, double LJcutoffRadius, const Resolution::Handler& resolutionHandler);
 
 	~VCPADR();
+
+	/**
+	 * Initializes parameter tables. Must be called after Comp2Param was initialized, but before first force computation
+	 * during simulation initialization.
+	 * */
+	void init();
 
 	/**
 	 * \brief Reset macroscopic values to 0.0.

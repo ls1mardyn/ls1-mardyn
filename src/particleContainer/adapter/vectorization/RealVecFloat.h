@@ -76,8 +76,8 @@ public:
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_cvtepi32_ps(m);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return set1(0.0f / 0.0f); // do not use
-		//return _mm512_cvtepi32_ps(m);
+		const __m512i zeros = _mm512_set1_epi32(0);
+		return _mm512_mask_set1_epi32(zeros, m, 1);
 	#endif
 	}
 

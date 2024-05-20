@@ -25,9 +25,9 @@ void FTH::Handler::init(const FTH::Config &config) {
 void FTH::Handler::computeIteration(ParticleContainer& container, const Resolution::FPRegions_t &regions) {
 	if(!_config._enableThermodynamicForce) return;
 	//_densityProfiler.sampleDensities(&container, &_simulation.domainDecomposition(), _simulation.getDomain());
-	_densityProfiler.computeGMMDensities(&container, &_simulation.domainDecomposition(), _simulation.getDomain());
+	_densityProfiler.computeFTDensities(&container, &_simulation.domainDecomposition(), _simulation.getDomain());
 	//std::vector<double> d{_densityProfiler.getDensitySmoothed(0)};
-	Interpolation::Function d_fun = _densityProfiler.getGMMDensity(0);
+	Interpolation::Function d_fun = _densityProfiler.getFTDensity(0);
 	Interpolation::Function d_prime_fun;
 	Interpolation::computeGradient(d_fun, d_prime_fun);
 
@@ -128,13 +128,13 @@ void FTH::Handler::writeLogs(ParticleContainer &particleContainer, DomainDecompB
 	stream.clear();
 	stream = std::stringstream {};
 	stream << "./F_TH_Density_Smooth_" << simstep << ".txta";
-	if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, DensityProfile3D::SMOOTH);
+	//if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, DensityProfile3D::SMOOTH);
 
 	stream.clear();
 	stream = std::stringstream {};
 	stream << "./F_TH_Density_GMM_" << simstep << ".xmla";
-	_densityProfiler.computeGMMDensities(&particleContainer, &domainDecomp, &domain);
-	if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, DensityProfile3D::GMM);
+	//_densityProfiler.computeGMMDensities(&particleContainer, &domainDecomp, &domain);
+	//if(_config._logDensities) _densityProfiler.writeDensity(stream.str(), " ", 0, DensityProfile3D::GMM);
 
 	stream.clear();
 	stream = std::stringstream {};
@@ -150,5 +150,6 @@ void FTH::Handler::writeLogs(ParticleContainer &particleContainer, DomainDecompB
 }
 
 void FTH::Handler::writeFinalFTH() {
+	if(!_config._enableThermodynamicForce) return;
 	_config._thermodynamicForce.writeXML("./F_TH_Final.xml");
 }

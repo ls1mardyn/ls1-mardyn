@@ -7,6 +7,7 @@
 
 
 #include <vector>
+#include <unordered_map>
 #include "particleContainer/adapter/CellProcessor.h"
 #include "Region.h"
 

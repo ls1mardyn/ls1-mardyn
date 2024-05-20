@@ -6,11 +6,13 @@
 #define MARDYN_RESOLUTION_H
 
 #include "../util/Region.h"
-#include "molecules/Component.h"
-#include "Domain.h"
-#include "particleContainer/ParticleContainer.h"
+#include "molecules/MoleculeForwardDeclaration.h"
 
 #include <vector>
+
+class Domain;
+class Component;
+class ParticleContainer;
 
 namespace Resolution {
 	using CompResMap_t = std::vector<ResolutionType>;

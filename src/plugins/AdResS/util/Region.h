@@ -5,9 +5,11 @@
 #ifndef MARDYN_REGION_H
 #define MARDYN_REGION_H
 
-#include <array>
-#include "Domain.h"
 #include "utils/xmlfileUnits.h"
+
+#include <array>
+
+class Domain;
 
 namespace Resolution{
 	/**

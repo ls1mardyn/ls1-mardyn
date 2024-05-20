@@ -38,6 +38,7 @@
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
+#include "plugins/AdResS/adapters/VCPADR.h"
 #include "particleContainer/adapter/VCP1CLJRMM.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
@@ -854,17 +855,34 @@ void Simulation::prepare_start() {
 	Log::global_log->info() << "Initializing simulation" << std::endl;
 
 	Log::global_log->info() << "Initialising cell processor" << std::endl;
+	bool AdResS_enabled = false;
+	for (auto& plugin : _plugins) {
+		if (plugin->getPluginName() == "AdResS") {
+			AdResS_enabled = true;
+			break;
+		}
+	}
+
 	if (!_legacyCellProcessor) {
 #ifndef ENABLE_REDUCED_MEMORY_MODE
 		Log::global_log->info() << "Using vectorized cell processor." << std::endl;
-		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
+		if (!AdResS_enabled) _cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
+		else {
+			Log::global_log->info() << "Cell processor was set up by AdResS plugin." << std::endl;
+			dynamic_cast<VCPADR*>(_cellProcessor)->init();
+		}
 #else
 		Log::global_log->info() << "Using reduced memory mode (RMM) cell processor." << std::endl;
-		_cellProcessor = new VCP1CLJRMM( *_domain, _cutoffRadius, _LJCutoffRadius);
+		if (!AdResS_enabled) _cellProcessor = new VCP1CLJRMM( *_domain, _cutoffRadius, _LJCutoffRadius);
+		else {
+			Log::global_log->error() << "RMM not implemented for AdResS" << std::endl;
+			mardyn_exit(-1);
+		}
 #endif
 	} else {
 		Log::global_log->info() << "Using legacy cell processor." << std::endl;
-		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
+		if (!AdResS_enabled) _cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
+		else Log::global_log->info() << "Cell processor was set up by AdResS plugin." << std::endl;
 	}
 
 	if(dynamic_cast<Langevin*>(_integrator) != nullptr) {

@@ -440,6 +440,8 @@ public:
 
 	void useLegacyCellProcessor() { _legacyCellProcessor = true; }
 
+	bool usingLegacyCellProcessor() { return _legacyCellProcessor; }
+
 	void enableMemoryProfiler() {
 		_memoryProfiler = std::make_shared<MemoryProfiler>();
 		_memoryProfiler->registerObject(reinterpret_cast<MemoryProfilable**>(&_moleculeContainer));

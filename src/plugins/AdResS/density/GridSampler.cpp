@@ -36,21 +36,57 @@ void Grid3D::GridSampler::SampleAtNodes(const std::array<std::vector<double>,3>&
     std::fill(samples.particles_per_node.begin(), samples.particles_per_node.end(), 0);
     std::vector<Node>& all_nodes = grid->GetNodes();
 
-    for(std::size_t idx = 0; idx < positions[0].size(); ++idx){
-        std::array<double, 3> part_pos {positions[0][idx], positions[1][idx], positions[2][idx]};
-        //Check for every node, if a particle is inside of its "bubble"
-        for(int nidx=0;nidx<samples.particles_per_node.size();nidx++){
-            
-            auto nodal_pos=all_nodes[nidx].GetPosition();
-            //check euclidean distance between particle as center of sphere/bubble
-            if(ParticleInsideMeasuringSpace(nodal_pos, part_pos)){
-                samples.particles_per_node[nidx] +=1;
-            }
-        }
+	// put mol pos into grid of spacing 2x measure_radius
+	const auto box_dim = 2 * measure_radius;
+	const std::array<int, 3> bins_per_dim = { static_cast<int>(std::ceil(_simulation.getDomain()->getGlobalLength(0) / box_dim)),
+											  static_cast<int>(std::ceil(_simulation.getDomain()->getGlobalLength(1) / box_dim)),
+											  static_cast<int>(std::ceil(_simulation.getDomain()->getGlobalLength(2) / box_dim))};
+	const auto bins = bins_per_dim[0]*bins_per_dim[1]*bins_per_dim[2];
+	std::vector<std::vector<std::array<double, 3>>> mol_pos_binned;
+	mol_pos_binned.resize(bins);
+	for(std::size_t idx = 0; idx < positions[0].size(); ++idx) {
+		std::array<double, 3> part_pos {positions[0][idx], positions[1][idx], positions[2][idx]};
+		int bin_x = std::min(static_cast<int>(part_pos[0] / box_dim), bins_per_dim[0]-1);
+		int bin_y = std::min(static_cast<int>(part_pos[1] / box_dim), bins_per_dim[1]-1);
+		int bin_z = std::min(static_cast<int>(part_pos[2] / box_dim), bins_per_dim[2]-1);
+
+		mol_pos_binned[bins_per_dim[0]*bins_per_dim[1]*bin_z + bins_per_dim[0]*bin_y + bin_x].push_back(part_pos);
+	}
+
+	#if defined(_OPENMP)
+	#pragma omp parallel for
+	#endif
+	for(int nidx = 0; nidx < samples.particles_per_node.size(); nidx++) {
+		auto nodal_pos=all_nodes[nidx].GetPosition();
+		int bin_x = static_cast<int>(nodal_pos[0] / box_dim);
+		int bin_y = static_cast<int>(nodal_pos[1] / box_dim);
+		int bin_z = static_cast<int>(nodal_pos[2] / box_dim);
+
+		for(int offset_z = -1; offset_z <= 1; offset_z++) {
+			int bz = offset_z + bin_z;
+			if(bz < 0 || bz >= bins_per_dim[2]) continue;
+			for(int offset_y = -1; offset_y <= 1; offset_y++) {
+				int by = offset_y + bin_y;
+				if(by < 0 || by >= bins_per_dim[1]) continue;
+				for(int offset_x = -1; offset_x <= 1; offset_x++) {
+					int bx = offset_x + bin_x;
+					if(bx < 0 || bx >= bins_per_dim[0]) continue;
+
+					for(auto& mol_pos : mol_pos_binned[bins_per_dim[0]*bins_per_dim[1]*bz + bins_per_dim[0]*by + bx]) {
+						if(ParticleInsideMeasuringSpace(nodal_pos, mol_pos)){
+							samples.particles_per_node[nidx] +=1;
+						}
+					}
+				}
+			}
+		}
     }
     //Convert to material density values
     double sphere_volume = 4.0/3.0 * M_PI * measure_radius*measure_radius*measure_radius;
-    for(int nidx=0;nidx<samples.particles_per_node.size();nidx++){
+	#if defined(_OPENMP)
+	#pragma omp parallel for
+	#endif
+    for(int nidx = 0; nidx < samples.particles_per_node.size(); nidx++){
         
         samples.material_density[nidx] = (double)samples.particles_per_node[nidx]/sphere_volume;
     }

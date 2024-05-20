@@ -5,6 +5,8 @@
 #ifndef MARDYN_INTERPOLATION_H
 #define MARDYN_INTERPOLATION_H
 
+#include "utils/mardyn_assert.h"
+
 #include <vector>
 #include <string>
 #include <complex>

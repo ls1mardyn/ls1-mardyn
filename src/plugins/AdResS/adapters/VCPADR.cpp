@@ -4,17 +4,13 @@
  */
 
 #include "VCPADR.h"
-#include "particleContainer/adapter/CellDataSoA.h"
-#include "molecules/Molecule.h"
-#include "particleContainer/ParticleCell.h"
-#include "particleContainer/FullParticleCell.h"
 #include "Domain.h"
 #include "utils/Logger.h"
-#include "ensemble/EnsembleBase.h"
-#include "Simulation.h"
-#include <algorithm>
 #include "particleContainer/adapter/vectorization/MaskGatherChooser.h"
 #include "plugins/AdResS/util/WeightFunction.h"
+#include "plugins/AdResS/features/Resolution.h"
+
+#include <algorithm>
 
 
 VCPADR::VCPADR(Domain & domain, double cutoffRadius, double LJcutoffRadius, const Resolution::Handler& resolutionHandler) :
@@ -36,7 +32,19 @@ VCPADR::VCPADR(Domain & domain, double cutoffRadius, double LJcutoffRadius, cons
 #elif (VCP_VEC_TYPE==VCP_VEC_AVX512F) || (VCP_VEC_TYPE==VCP_VEC_AVX512F_GATHER)
 	Log::global_log->info() << "VCPADR: using SKX intrinsics." << std::endl;
 #endif
+}
 
+VCPADR :: ~VCPADR () {
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const int myid = mardyn_get_thread_num();
+		delete _threadData[myid];
+	}
+}
+
+void VCPADR::init() {
 	ComponentList components = *(_simulation.getEnsemble()->getComponents());
 	// Get the maximum Component ID.
 	size_t maxID = 0;
@@ -63,6 +71,11 @@ VCPADR::VCPADR(Domain & domain, double cutoffRadius, double LJcutoffRadius, cons
 		type_centers[QUADRUPOLE] += c->numQuadrupoles();
 	}
 
+	_compMask[LJ].resize(type_centers[LJ]);
+	_compMask[CHARGE].resize(type_centers[CHARGE]);
+	_compMask[DIPOLE].resize(type_centers[DIPOLE]);
+	_compMask[QUADRUPOLE].resize(type_centers[QUADRUPOLE]);
+
 	// One row for each LJ Center, one pair (epsilon*24, sigma^2) for each LJ Center in each row.
 	_eps_sig.resize(type_centers[LJ], AlignedArray<vcp_real_calc>(type_centers[LJ] * 2));
 	_shift6.resize(type_centers[LJ], AlignedArray<vcp_real_calc>(type_centers[LJ]));
@@ -70,14 +83,13 @@ VCPADR::VCPADR(Domain & domain, double cutoffRadius, double LJcutoffRadius, cons
 	// Construct the parameter tables.
 	for (size_t comp_i = 0; comp_i < components.size(); ++comp_i) {
 		for (size_t comp_j = 0; comp_j < components.size(); ++comp_j) {
-			ParaStrm & p = _domain.getComp2Params()(components[comp_i].ID(),
-					components[comp_j].ID());
+			ParaStrm & p = _domain.getComp2Params()(components[comp_i].ID(), components[comp_j].ID());
 			p.reset_read();
 			for (size_t center_i = 0;
-					center_i < components[comp_i].numLJcenters(); ++center_i) {
+				 center_i < components[comp_i].numLJcenters(); ++center_i) {
 				for (size_t center_j = 0;
-						center_j < components[comp_j].numLJcenters();
-						++center_j) {
+					 center_j < components[comp_j].numLJcenters();
+					 ++center_j) {
 					// Extract epsilon*24.0, sigma^2 and shift*6.0 from paramStreams.
 					double eps, sig, shift;
 					p >> eps;
@@ -93,7 +105,7 @@ VCPADR::VCPADR(Domain & domain, double cutoffRadius, double LJcutoffRadius, cons
 
 	// Construct Component Site to Resolution Mapping
 	for (size_t comp = 0; comp < components.size(); ++comp) {
-		const auto& map = resolutionHandler.getCompResMap();
+		const auto& map = _resolutionHandler.getCompResMap();
 		vcp_mask_single resolution;
 		if( map[comp] == Resolution::FullParticle ) resolution = 0;
 		else if ( map[comp] == Resolution::CoarseGrain ) resolution = 1;
@@ -133,24 +145,14 @@ VCPADR::VCPADR(Domain & domain, double cutoffRadius, double LJcutoffRadius, cons
 	Log::global_log->info() << "VCPADR: allocate data for " << _numThreads << " threads." << std::endl;
 	_threadData.resize(_numThreads);
 
-	#if defined(_OPENMP)
-	#pragma omp parallel
-	#endif
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
 	{
 		VLJCPThreadData * myown = new VLJCPThreadData();
 		const int myid = mardyn_get_thread_num();
 		_threadData[myid] = myown;
 	} // end pragma omp parallel
-}
-
-VCPADR :: ~VCPADR () {
-	#if defined(_OPENMP)
-	#pragma omp parallel
-	#endif
-	{
-		const int myid = mardyn_get_thread_num();
-		delete _threadData[myid];
-	}
 }
 
 
@@ -1156,7 +1158,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[LJ], _compMask[LJ], soa1_ljc_id, (vcp_center_id_t) i_ljc_idx, soa2_ljc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -1167,7 +1169,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						fx = fx * mask_weight;
 						fy = fy * mask_weight;
 						fz = fz * mask_weight;
@@ -1236,7 +1241,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[LJ], _compMask[LJ], soa1_ljc_id, (vcp_center_id_t) i_ljc_idx, soa2_ljc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -1247,7 +1252,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						fx = fx * mask_weight;
 						fy = fy * mask_weight;
 						fz = fz * mask_weight;
@@ -1345,7 +1353,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[CHARGE], _compMask[CHARGE], soa1_chargesc_id, (vcp_center_id_t) (i_charge_idx + local_i), soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -1356,7 +1364,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -1416,7 +1427,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[CHARGE], _compMask[CHARGE], soa1_chargesc_id, (vcp_center_id_t) (i_charge_idx + local_i), soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -1427,7 +1438,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -1522,7 +1536,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[DIPOLE], _compMask[CHARGE], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -1533,7 +1547,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -1602,7 +1619,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[DIPOLE], _compMask[CHARGE], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -1613,7 +1630,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -1722,7 +1742,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[QUADRUPOLE], _compMask[CHARGE], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -1733,7 +1753,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -1805,7 +1828,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[QUADRUPOLE], _compMask[CHARGE], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_charge_idx, soa2_chargesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -1816,7 +1839,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -1946,7 +1972,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[DIPOLE], _compMask[DIPOLE], soa1_dipolesc_id, (vcp_center_id_t) (i_dipole_idx + local_i), soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -1957,7 +1983,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -2037,7 +2066,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[DIPOLE], _compMask[DIPOLE], soa1_dipolesc_id, (vcp_center_id_t) (i_dipole_idx + local_i), soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -2048,7 +2077,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -2160,7 +2192,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[CHARGE], _compMask[DIPOLE], soa1_chargesc_id, (vcp_center_id_t) i_charge_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -2171,7 +2203,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -2246,7 +2281,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[CHARGE], _compMask[DIPOLE], soa1_chargesc_id, (vcp_center_id_t) i_charge_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -2257,7 +2292,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -2364,7 +2402,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[QUADRUPOLE], _compMask[DIPOLE], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -2375,7 +2413,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -2453,7 +2494,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[QUADRUPOLE], _compMask[DIPOLE], soa1_quadrupolesc_id, (vcp_center_id_t) i_quadrupole_dipole_idx, soa2_dipolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -2464,7 +2505,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -2597,7 +2641,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[QUADRUPOLE], _compMask[QUADRUPOLE], soa1_quadrupolesc_id, (vcp_center_id_t) (i_quadrupole_idx + local_i), soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -2608,7 +2652,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -2685,7 +2732,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[QUADRUPOLE], _compMask[QUADRUPOLE], soa1_quadrupolesc_id, (vcp_center_id_t) (i_quadrupole_idx + local_i), soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -2696,7 +2743,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -2805,7 +2855,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[CHARGE], _compMask[QUADRUPOLE], soa1_chargesc_id, (vcp_center_id_t) i_charge_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -2816,7 +2866,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -2891,7 +2944,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[CHARGE], _compMask[QUADRUPOLE], soa1_chargesc_id, (vcp_center_id_t) i_charge_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -2902,7 +2955,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -3011,7 +3067,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[DIPOLE], _compMask[QUADRUPOLE], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -3022,7 +3078,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -3100,7 +3159,7 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 						MaskCalcVec mask_i, mask_j;
 						unpackComp(mask_i, mask_j, _compMask[DIPOLE], _compMask[QUADRUPOLE], soa1_dipolesc_id, (vcp_center_id_t) i_dipole_quadrupole_idx, soa2_quadrupolesc_id, (vcp_center_id_t)j, lookupORforceMask);
 						const MaskCalcVec mask_pass = mask_i ^ mask_j;
-						const RealCalcVec real_mask_pass = RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
+						const RealCalcVec real_mask_pass = one - RealCalcVec::cvt_MaskVec_to_RealCalcVec(mask_pass);
 						const RealCalcVec m1_weight = Weight::nearest_vec(m1_r_x, m1_r_y, m1_r_z, adr_region_low_0, adr_region_low_1, adr_region_low_2,
 																		  adr_region_high_0, adr_region_high_1, adr_region_high_2,
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
@@ -3111,7 +3170,10 @@ void VCPADR::_calculatePairs(CellDataSoA & soa1, CellDataSoA & soa2) {
 																		  adr_region_dim_0, adr_region_dim_1, adr_region_dim_2,
 																		  adr_region_H_low_0, adr_region_H_low_1, adr_region_H_low_2,
 																		  adr_region_H_high_0, adr_region_H_high_1, adr_region_H_high_2);
-						const RealCalcVec mask_weight = real_mask_pass * m1_weight * m2_weight;
+						const RealCalcVec is_CG = RealCalcVec::cvt_MaskVec_to_RealCalcVec(MaskCalcVec::ones() and mask_i and mask_j);
+						const RealCalcVec w_m1m2 = m1_weight * m2_weight;
+						const RealCalcVec weight = is_CG * (one - w_m1m2) + (one - is_CG) * w_m1m2;
+						const RealCalcVec mask_weight = real_mask_pass * weight;
 						f_x = f_x * mask_weight;
 						f_y = f_y * mask_weight;
 						f_z = f_z * mask_weight;
@@ -3368,11 +3430,13 @@ void VCPADR::unpackComp(MaskCalcVec &mask_i, MaskCalcVec &mask_j, AlignedArray<v
 	mask_j = cj7to0;
 
 #else /* VCP_DPDP */
-	const MaskCalcVec ci = MaskCalcVec::aligned_load(compMap_i + id_i_shifted[0]);
-	const MaskCalcVec ci_x4 = _mm256_broadcastq_epi64(_mm256_castsi256_si128(ci));
+	//const MaskCalcVec ci = MaskCalcVec::aligned_load(compMap_i + id_i_shifted[0]);
+	//const MaskCalcVec ci_x4 = _mm256_broadcastq_epi64(_mm256_castsi256_si128(ci));
+	const MaskCalcVec ind_i = _mm256_set1_epi64x(id_i_shifted[0]);
+	const MaskCalcVec ci_x4 = _mm256_i64gather_epi64((const long long*)compMap_i. operator unsigned long *(), ind_i, 8);
 
 	const MaskCalcVec indices = _mm256_maskload_epi64((const long long*)(id_j_shifted), MaskCalcVec::ones());
-	const MaskCalcVec cj_3to0 = _mm256_i64gather_epi64((const long long*)&compMap_j, indices, 8);
+	const MaskCalcVec cj_3to0 = _mm256_i64gather_epi64((const long long*)compMap_j. operator unsigned long *(), indices, 8);
 
 	mask_i = ci_x4;
 	mask_j = cj_3to0;
@@ -3380,43 +3444,54 @@ void VCPADR::unpackComp(MaskCalcVec &mask_i, MaskCalcVec &mask_j, AlignedArray<v
 #endif /* VCP_PREC */
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_AVX512F
-//	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-//		__m128i ci = _mm_loadl_epi64((const __m128i *) (compMap_i + id_i_shifted[0]));
-//		__m512i ci_x16 = _mm512_broadcastd_epi32(ci);
-//
-//		__m512i indices = _mm512_load_epi32(id_j_shifted);
-//		__m512i cj_15to0 = _mm512_i32gather_epi32(indices, compMap_j+0, 4);
-//
-//		mask_i = ci_x16;
-//		mask_j = cj_15to0;
-//	#else /*VCP_DPDP */
-//		__m128i ci = _mm_loadl_epi64((const __m128i *) (compMap_i + id_i_shifted[0]));
-//		__m512i ci_x8 = _mm512_broadcastq_epi64(ci);
-//
-//		__m512i indices = _mm512_load_epi64(id_j_shifted);
-//		__m512i cj_7to0 = _mm512_castpd_si512(_mm512_i64gather_pd(indices, compMap_j+0, 8));
-//
-//		mask_i = ci_x8;
-//		mask_j = cj_7to0;
-//	#endif
-//
-//
-//#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
-//	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-//		__m512i lookup_i = _mm512_set1_epi32(offset_i);
-//		__m512i ind_i = _mm512_i32gather_epi32(lookup_i, (const int *) id_i, 4);
-//		__m512i ind_j = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
-//
-//		mask_i = _mm512_i32gather_epi32(ind_i, compMap_i+0, 4);
-//		mask_j = _mm512_i32gather_epi32(ind_j, compMap_j+0, 4);
-//	#else /*VCP_DPDP*/
-//		__m512i lookup_i = _mm512_set1_epi64(offset_i);
-//		__m512i ind_i = _mm512_i64gather_epi64(lookup_i, (const long long *) id_i, 8);
-//		__m512i ind_j = _mm512_i64gather_epi64(lookupORforceMask, (const long long *) id_j, 8);
-//
-//		mask_i = _mm512_i64gather_epi64(ind_i, compMap_i+0, 8);
-//		mask_j = _mm512_i64gather_epi64(ind_j, compMap_j+0, 8);
-//	#endif /*VCP_PREC*/
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		__m512i ones = _mm512_set1_epi32(1);
+		__m128i ci = _mm_loadl_epi64((const __m128i *) (compMap_i + id_i_shifted[0]));
+		__m512i ci_x16 = _mm512_broadcastd_epi32(ci);
+
+		__m512i indices = _mm512_load_epi32(id_j_shifted);
+		__m512i cj_15to0 = _mm512_i32gather_epi32(indices, compMap_j+0, 4);
+
+		mask_i = _mm512_cmp_epi32_mask(ci_x16, ones, _MM_CMPINT_EQ);
+		mask_j = _mm512_cmp_epi32_mask(cj_15to0, ones, _MM_CMPINT_EQ);
+	#else /*VCP_DPDP */
+		__m512i ones = _mm512_set1_epi64(1);
+
+		__m128i ci = _mm_loadl_epi64((const __m128i *) (compMap_i + id_i_shifted[0]));
+		__m512i ci_x8 = _mm512_broadcastq_epi64(ci);
+
+		__m512i indices = _mm512_load_epi64(id_j_shifted);
+		__m512i cj_7to0 = _mm512_castpd_si512(_mm512_i64gather_pd(indices, compMap_j+0, 8));
+
+		mask_i = _mm512_cmp_epi64_mask(ci_x8, ones, _MM_CMPINT_EQ);
+		mask_j = _mm512_cmp_epi64_mask(cj_7to0, ones, _MM_CMPINT_EQ);
+	#endif
+
+
+#elif VCP_VEC_TYPE==VCP_VEC_KNL_GATHER or VCP_VEC_TYPE == VCP_VEC_AVX512F_GATHER
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		__m512i ones = _mm512_set1_epi32(1);
+		__m512i lookup_i = _mm512_set1_epi32(offset_i);
+		__m512i ind_i = _mm512_i32gather_epi32(lookup_i, (const int *) id_i, 4);
+		__m512i ind_j = _mm512_i32gather_epi32(lookupORforceMask, (const int *) id_j, 4);
+
+		__m512i ci_x16 = _mm512_i32gather_epi32(ind_i, compMap_i+0, 4);
+		__m512i cj_15to0 = _mm512_i32gather_epi32(ind_j, compMap_j+0, 4);
+
+		mask_i = _mm512_cmp_epi32_mask(ci_x16, ones, _MM_CMPINT_EQ);
+		mask_j = _mm512_cmp_epi32_mask(cj_15to0, ones, _MM_CMPINT_EQ);
+	#else /*VCP_DPDP*/
+		__m512i ones = _mm512_set1_epi64(1);
+		__m512i lookup_i = _mm512_set1_epi64(offset_i);
+		__m512i ind_i = _mm512_i64gather_epi64(lookup_i, (const long long *) id_i, 8);
+		__m512i ind_j = _mm512_i64gather_epi64(lookupORforceMask, (const long long *) id_j, 8);
+
+		__m512i ci_x8 = _mm512_i64gather_epi64(ind_i, compMap_i+0, 8);
+		__m512i cj_7to0 = _mm512_i64gather_epi64(ind_j, compMap_j+0, 8);
+
+		mask_i = _mm512_cmp_epi64_mask(ci_x8, ones, _MM_CMPINT_EQ);
+		mask_j = _mm512_cmp_epi64_mask(cj_7to0, ones, _MM_CMPINT_EQ);
+	#endif /*VCP_PREC*/
 #endif
 }
 

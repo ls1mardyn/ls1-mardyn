@@ -4,6 +4,9 @@
 
 #include "Resolution.h"
 
+#include "Domain.h"
+#include "particleContainer/ParticleContainer.h"
+
 void Resolution::Handler::init(Resolution::Config& config) {
 	_config = std::move(config);
 	for(const auto& region : _config.fpRegions) {

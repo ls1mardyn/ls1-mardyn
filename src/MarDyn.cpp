@@ -196,6 +196,12 @@ int main(int argc, char** argv) {
 		op.print_usage();
 		Simulation::exit(-1);
 	}
+
+	if ( (int) options.get("legacy-cell-processor") > 0 ) {
+		simulation.useLegacyCellProcessor();
+		Log::global_log->info() << "--legacy-cell-processor specified, using legacyCellProcessor" << std::endl;
+	}
+
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
 	std::string configFileName(args[0]);
 	if( fileExists(configFileName.c_str()) ) {
@@ -207,11 +213,6 @@ int main(int argc, char** argv) {
 	}
 
 	/* processing command line arguments */
-	if ( (int) options.get("legacy-cell-processor") > 0 ) {
-		simulation.useLegacyCellProcessor();
-		Log::global_log->info() << "--legacy-cell-processor specified, using legacyCellProcessor" << std::endl;
-	}
-
 	if ( (int) options.get("final-checkpoint") > 0 ) {
 		simulation.enableFinalCheckpoint();
 		Log::global_log->info() << "Final checkpoint enabled" << std::endl;

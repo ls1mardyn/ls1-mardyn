@@ -3,6 +3,8 @@
 //
 
 #include "InteractionLogProcessor.h"
+#include "particleContainer/ParticleCellForwardDeclaration.h"
+#include "particleContainer/FullParticleCell.h"
 
 InteractionLogProcessor::InteractionLogProcessor(const double cutoffRadius, const double ljCutoffRadius,
                                                  const std::vector<Resolution::FPRegion> &fpRegions) : CellProcessor(
