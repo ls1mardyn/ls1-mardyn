@@ -79,13 +79,13 @@ namespace Weight {
 									   const RealCalcVec& hybrid_dim_0, const RealCalcVec& hybrid_dim_1, const RealCalcVec& hybrid_dim_2,
 									   const RealCalcVec &hybrid_low_0, const RealCalcVec &hybrid_low_1, const RealCalcVec &hybrid_low_2,
 									   const RealCalcVec &hybrid_high_0, const RealCalcVec &hybrid_high_1, const RealCalcVec &hybrid_high_2) {
-		const auto zero = RealCalcVec::zero();
+		static const auto zero = RealCalcVec::zero();
 		const MaskCalcVec in_FP = is_inner_vec(r0, r1, r2, region_low_0, region_low_1, region_low_2, region_high_0, region_high_1, region_high_2);
 		const MaskCalcVec in_H = is_inner_vec(r0, r1, r2, hybrid_low_0, hybrid_low_1, hybrid_low_2, hybrid_high_0, hybrid_high_1, hybrid_high_2);
 
-		const RealCalcVec dd0 = RealCalcVec::max(RealCalcVec::max(region_low_0 - r0, RealCalcVec::zero()), RealCalcVec::max(r0 - region_high_0, RealCalcVec::zero()));
-		const RealCalcVec dd1 = RealCalcVec::max(RealCalcVec::max(region_low_1 - r1, RealCalcVec::zero()), RealCalcVec::max(r1 - region_high_1, RealCalcVec::zero()));
-		const RealCalcVec dd2 = RealCalcVec::max(RealCalcVec::max(region_low_2 - r2, RealCalcVec::zero()), RealCalcVec::max(r2 - region_high_2, RealCalcVec::zero()));
+		const RealCalcVec dd0 = RealCalcVec::max(RealCalcVec::max(region_low_0 - r0, r0 - region_high_0), RealCalcVec::zero());
+		const RealCalcVec dd1 = RealCalcVec::max(RealCalcVec::max(region_low_1 - r1, r1 - region_high_1), RealCalcVec::zero());
+		const RealCalcVec dd2 = RealCalcVec::max(RealCalcVec::max(region_low_2 - r2, r2 - region_high_2), RealCalcVec::zero());
 		const RealCalcVec dist = RealCalcVec::sqrt(dd0*dd0 + dd1*dd1 + dd2*dd2);
 		auto b0 = RealCalcVec::cvt_MaskVec_to_RealCalcVec(dd0 != zero);
 		auto b1 = RealCalcVec::cvt_MaskVec_to_RealCalcVec(dd1 != zero);
@@ -101,10 +101,10 @@ namespace Weight {
 		// instead of cos we use a poly of deg 3 here as it is a quite good approx for cos in range 0 to pi/2
 		// it does not matter too much what we pick, it just needs to be differentiable and have zero grad at the borders
 		// f(x) = 2x³-3x²+1
-		const RealCalcVec n_one = RealCalcVec::set1(-1);
-		const RealCalcVec one = RealCalcVec::set1(1);
-		const RealCalcVec two = RealCalcVec::set1(2);
-		const RealCalcVec three = RealCalcVec::set1(3);
+		static const RealCalcVec n_one = RealCalcVec::set1(-1);
+		static const RealCalcVec one = RealCalcVec::set1(1);
+		static const RealCalcVec two = RealCalcVec::set1(2);
+		static const RealCalcVec three = RealCalcVec::set1(3);
 
 		const RealCalcVec x = n_one * RealCalcVec::max(n_one * dist / hDim, n_one);
 		const RealCalcVec x2 = x * x;

@@ -88,7 +88,7 @@ public:
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 			return _mm_and_si128(_m, rhs);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
-			return _mm256_castpd_si256(_mm256_and_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
+			return _mm256_and_si256(_m, rhs);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
 			return _m & rhs;
 	#endif

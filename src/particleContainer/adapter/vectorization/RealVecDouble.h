@@ -74,11 +74,13 @@ public:
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_cvtepi64_pd(m);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
-		const __m256i clear_mask = _mm256_set_epi32(0, -1, 0, -1, 0, -1, 0, -1);
-		const __m256i m_clean = _mm256_and_si256(m, clear_mask);
+		// uncomment this if mask items are > epi32
+		//const __m256i clear_mask = _mm256_set_epi32(0, -1, 0, -1, 0, -1, 0, -1);
+		//const __m256i m_clean = _mm256_and_si256(m, clear_mask);
 
 		const __m256i perm_mask = _mm256_set_epi32(7, 7, 7, 7, 6, 4, 2, 0);
-		const __m256i m_perm = _mm256_permutevar8x32_epi32(m_clean, perm_mask);
+		const __m256i m_perm = _mm256_permutevar8x32_epi32(m, perm_mask);
+		//const __m256i m_perm = _mm256_permutevar8x32_epi32(m_clean, perm_mask);
 		const __m128 m_ps = _mm256_castps256_ps128(_mm256_cvtepi32_ps(m_perm));
 		const __m256d m_pd = _mm256_cvtps_pd(m_ps);
 
