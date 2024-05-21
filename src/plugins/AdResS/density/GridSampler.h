@@ -46,7 +46,7 @@ namespace Grid3D {
 		std::ostream& WriteSample(std::ostream& out, std::vector<int>& smpl);
 		std::ostream& WriteInfo(std::ostream& out);
 	private:
-		IdxArray GetParticleLocalCellIndices(ParticleIterator it);
+		i3 GetParticleLocalCellIndices(ParticleIterator it);
 		bool ParticleInsideMeasuringSpace(std::array<double, 3>, std::array<double, 3> par_pos);
 	};
 };

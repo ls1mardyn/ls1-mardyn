@@ -20,9 +20,9 @@ void Grid3D::GridSampler::init(Grid* grid){
     this->SetTargetValue();
 }
 
-Grid3D::IdxArray Grid3D::GridSampler::GetParticleLocalCellIndices(ParticleIterator it){
+Grid3D::i3 Grid3D::GridSampler::GetParticleLocalCellIndices(ParticleIterator it){
     std::array<double, 3> position = it->r_arr();
-    IdxArray local_inds;
+    i3 local_inds;
 
     int x, y, z;
     x = std::floor(position[0]/grid->GetElementInfo().element_width_per_dimension[0]);

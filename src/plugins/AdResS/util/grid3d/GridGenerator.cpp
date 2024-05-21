@@ -98,7 +98,7 @@ void Grid3D::GridGenerator::OutputNodalInformation(){
     nodes_file<<"//Node Information\n"
               <<"//Total number of nodes: "<<this->node_information.GetNodes().size()<<"\n";
     nodes_file<<"idx\t x \t y \t z \n";
-    DataArray position { };
+    d3 position { };
     for(int idx=0;idx<node_information.GetNodes().size();idx++){
         position = node_information.GetNodes()[idx].GetPosition();
         nodes_file<<idx <<"\t"<<position[0]<<"\t"<<position[1]<<"\t"<<position[2]<<"\n";
@@ -168,7 +168,7 @@ void Grid3D::GridGenerator::OutputNodalDensityValues(unsigned long step){
                   <<"//The total number of particles sampled was: "<<total_particles_sampled<<"\n";
     density_output<<"//idx \t cx \t cy \t cz \t rho \n";
 
-    DataArray ec { };
+    d3 ec { };
     for(int i=0; i< node_information.GetNodes().size();i++){
         ec = this->node_information.GetNodes()[i].GetPosition();
         density_output << i <<"\t"<<ec[0]<<"\t"<<ec[1]<<"\t"<<ec[2]<<"\t"//<<"\n";
@@ -306,7 +306,7 @@ double Grid3D::PropertySampler::ComputeMaterialDensityAtPosition(ParticleContain
     ParticleIterator it = pc->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
     int particles_inside_sphere =0;
 
-    DataArray pos_as_vector { };
+    d3 pos_as_vector { };
     pos_as_vector[0]=pos[0];
     pos_as_vector[1]=pos[1];
     pos_as_vector[2]=pos[2];
@@ -346,7 +346,7 @@ void Grid3D::PropertySampler::SampleAtNodes(ParticleContainer* pc){
 bool Grid3D::PropertySampler::ParticleInsideMeasuringSpace(std::array<double, 3> nodal_pos, std::array<double, 3> par_pos){
     bool is_inside=false;
 
-    DataArray distance { };
+    d3 distance { };
     distance[0] = par_pos[0]-nodal_pos[0];
     distance[1] = par_pos[1]-nodal_pos[1];
     distance[2] = par_pos[2]-nodal_pos[2];

@@ -25,12 +25,12 @@ namespace Grid3D {
 	class Grid{
 	private:
 		struct NodeInfo{
-			IdxArray nodes_per_dimension{1,1,1};
+			i3 nodes_per_dimension{1, 1, 1};
 			int total_nodes = 1;
 		} nodal_info;
 		struct ElementInfo{
-			IdxArray elements_per_dimension{1,1,1};
-			DataArray element_width_per_dimension{0,0,0};
+			i3 elements_per_dimension{1, 1, 1};
+			d3 element_width_per_dimension{0, 0, 0};
 			int total_elements;
 			int largest_index;
 			double volume;
@@ -38,17 +38,17 @@ namespace Grid3D {
 
 		std::vector<Node> nodes;
 		std::vector<Element> elements;
-		DataArray lower_corner;
-		DataArray upper_corner;
+		d3 lower_corner;
+		d3 upper_corner;
 		ParticleContainer* particle_container;
 		std::vector<Subset> subsets;
 
 	public:
 
 		Grid() = default;
-		Grid(DataArray lower, DataArray upper, int x, int y, int z);
+		Grid(d3 lower, d3 upper, int x, int y, int z);
 		~Grid() = default;
-		void SetMeshLimits(DataArray lower, DataArray upper);
+		void SetMeshLimits(d3 lower, d3 upper);
 		void MeshAllDomain();
 		void StartGrid(int els_x, int els_y, int els_z);
 		void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);

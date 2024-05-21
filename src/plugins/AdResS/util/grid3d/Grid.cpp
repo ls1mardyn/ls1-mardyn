@@ -8,21 +8,21 @@
 #include "Grid.h"
 #include "Helper.h"
 
-Grid3D::Grid::Grid(DataArray low, DataArray up, int x, int y, int z):lower_corner(low),upper_corner(up){
+Grid3D::Grid::Grid(d3 low, d3 up, int x, int y, int z): lower_corner(low), upper_corner(up){
     StartGrid(x,y,z);
 }
 
 void Grid3D::Grid::MeshAllDomain(){
-    DataArray upper;
+    d3 upper;
     upper[0] = _simulation.getDomain()->getGlobalLength(0);
     upper[1] = _simulation.getDomain()->getGlobalLength(1);
     upper[2] = _simulation.getDomain()->getGlobalLength(2);
 
-    DataArray lower={0.0,0.0,0.0};
+    d3 lower={0.0, 0.0, 0.0};
     this->SetMeshLimits(lower, upper);
 }
 
-void Grid3D::Grid::SetMeshLimits(DataArray lower, DataArray upper){
+void Grid3D::Grid::SetMeshLimits(d3 lower, d3 upper){
 
     this->lower_corner=lower;
     this->upper_corner=upper;
@@ -50,7 +50,7 @@ void Grid3D::Grid::StartGrid(int x, int y, int z){
     element_info.largest_index=element_info.total_elements-1;
     for(int idx=0;idx<elements.size();idx++){
         elements[idx].GetProperties().index=idx;
-        elements[idx].GetProperties().local_indeces = MapGlobalToLocal<IdxArray>(idx,element_info.elements_per_dimension);
+        elements[idx].GetProperties().local_indeces = MapGlobalToLocal<i3>(idx, element_info.elements_per_dimension);
     }
 
     //Set node info
@@ -67,15 +67,15 @@ void Grid3D::Grid::StartGrid(int x, int y, int z){
 
 void Grid3D::Grid::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
     //TODO: where to define all mesh as grid region?
-    DataArray lower = {0.0,0.0,0.0};
-    DataArray upper = {domain->getGlobalLength(0),domain->getGlobalLength(1),domain->getGlobalLength(2)};
+    d3 lower = {0.0, 0.0, 0.0};
+    d3 upper = {domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2)};
     SetMeshLimits(lower, upper);
     this->InitNodePositions();
 }
 
 void Grid3D::Grid::InitNodePositions(){
     for(int idx=0;idx<nodes.size();idx++){
-        IdxArray local_indeces =  MapGlobalToLocal<IdxArray>(idx,nodal_info.nodes_per_dimension);
+        i3 local_indeces =  MapGlobalToLocal<i3>(idx, nodal_info.nodes_per_dimension);
         //IdxArray local_indeces = this->node_information.MapGlobalToLocal(idx);
         double x = (double)local_indeces[0]*element_info.element_width_per_dimension[0];
         double y = (double)local_indeces[1]*element_info.element_width_per_dimension[1];
@@ -87,12 +87,12 @@ void Grid3D::Grid::InitNodePositions(){
 
 std::array<int, 8> Grid3D::Grid::GetElementGlobalNodeIndices(int elIdx){
     std::array<int, 8> element_nodes_idx_global { };
-    IdxArray el_local_indcs = MapGlobalToLocal<IdxArray>(elIdx, element_info.elements_per_dimension);
+    i3 el_local_indcs = MapGlobalToLocal<i3>(elIdx, element_info.elements_per_dimension);
     int counter =0;
     for(int z=0;z<=1;z++){
         for(int y=0;y<=1;y++){
             for(int x=0;x<=1;x++){
-                element_nodes_idx_global[counter] = MapLocalToGlobal<IdxArray>(el_local_indcs[0]+x,el_local_indcs[1]+y,el_local_indcs[2]+z,nodal_info.nodes_per_dimension);
+                element_nodes_idx_global[counter] = MapLocalToGlobal<i3>(el_local_indcs[0] + x, el_local_indcs[1] + y, el_local_indcs[2] + z, nodal_info.nodes_per_dimension);
                 counter++;
             }
         }

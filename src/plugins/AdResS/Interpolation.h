@@ -223,5 +223,277 @@ namespace Interpolation {
 	  * @param T cycle length
 	  * */
 	 [[maybe_unused]] void ift(const std::vector<std::complex<double>>& F, unsigned int k_max, double T, double begin, double end, int samples, Function& function);
+
+	 /**
+	  * Finite Elements
+	  * */
+	 namespace FE {
+		 using i3 =std::array<int, 3>;
+		 using d3 = std::array<double, 3>;
+		 using idx_t = unsigned long;
+
+		 /**
+		  * Singular node of FE, stores its location in domain space and property to be measured.
+		  * */
+		 template<typename T>
+		 class Node {
+		 public:
+			 Node() = default;
+
+			 /**
+			  * Get immutable reference to node position
+			  * */
+			 [[nodiscard]] const d3& getPos() const { return _pos; }
+
+			 /**
+			  * Sets position to @param p
+			  * */
+			 void setPos(const d3& p) { _pos = p; }
+
+			 /**
+			  * Sets position to @params x, y, z
+			  * */
+			 void setPos(double x, double y, double z) { _pos = {x, y, z}; }
+
+			 /**
+			  * Gets a mutable reference to the stored property
+			  * */
+			 T& data() { return _data; }
+
+		 private:
+			 /// position in domain space
+			 d3 _pos = {0, 0, 0};
+			 /// measured property
+			 T _data;
+		 };
+
+		 /**
+		  * Singular element of FE, stores its lower and upper bounds inside, as well as its respective nodes as 1D coordinates
+		  * */
+		 class Element {
+		 public:
+			 Element() = default;
+			 Element(const std::array<idx_t, 8>& indices, const d3& lower, const d3& upper) : _node_indices(indices), _lower_bound(lower), _upper_bound(upper) { }
+
+			 /**
+			  * Get immutable reference to node indices
+			  * */
+			 [[nodiscard]] const std::array<idx_t, 8>& getNodes() const { return _node_indices; }
+
+			 /**
+			  * Sets the index of node @param pos to index @param idx
+			  * pos must be a value in range of 0 (inclusive) to 8 (exclusive)
+			  * */
+			 void setNodeIdx(idx_t idx, int pos) { _node_indices[pos] = idx; }
+
+			 /**
+			  * Sets all indices
+			  * */
+			 void setNodeIndices(idx_t i0, idx_t i1, idx_t i2, idx_t i3, idx_t i4, idx_t i5, idx_t i6, idx_t i7) { _node_indices = {i0, i1, i2, i3, i4, i5, i6, i7}; }
+
+			 /**
+			  * Get immutable reference to lower bound
+			  * */
+			 [[nodiscard]] const d3& getLow() const { return _lower_bound; }
+
+			 /**
+			  * Get immutable reference to upper bound
+			  * */
+			 [[nodiscard]] const d3& getUpper() const { return _upper_bound; }
+
+			 /**
+			  * Sets lower bound
+			  * */
+			 void setLow(const d3& low) { _lower_bound = low; }
+			 /**
+			  * Sets lower bound
+			  * */
+			 void setLow(double x, double y, double z) { _lower_bound = {x, y, z}; }
+			 /**
+			  * Sets upper bound
+			  * */
+			 void setUpper(const d3& upper) { _upper_bound = upper; }
+			 /**
+			  * Sets upper bound
+			  * */
+			 void setUpper(double x, double y, double z) { _upper_bound = {x, y, z}; }
+		 private:
+			 /// nodes indices, idx into Node Vector
+			 std::array<idx_t, 8> _node_indices;
+			 /// lower bound in domain space
+			 d3 _lower_bound;
+			 /// upper bound in domain space
+			 d3 _upper_bound;
+		 };
+
+		 /**
+		  * Domain of FE is discretized into N elements. Each element consists of M nodes and can be an arbitrary 3D object.
+		  * Neighbouring elements, share the same nodes on touching faces.
+		  * For now we assume, that elements are cubes.
+		  * This container, stores all nodes of the FE domain.
+		  * T is the type of the measured property.
+		  * */
+		 template<typename T>
+		 class Nodes {
+		 public:
+			 Nodes() = default;
+			 Node<T>* data() { return _data.data(); }
+			 void resize(idx_t size, const Node<T>& data = Node<T>()) { _data.resize(size, data); _node_count = size; }
+			 Node<T>& operator[](idx_t idx) { return _data[idx]; }
+			 Node<T>& at(idx_t idx) { return _data.at(idx); }
+			 Node<T>& at(idx_t idx_x, idx_t idx_y, idx_t idx_z) { return _data[get1DIndex(idx_x, idx_y, idx_z)]; }
+			 [[nodiscard]] idx_t get1DIndex(idx_t idx_x, idx_t idx_y, idx_t idx_z) const { return idx_x + _nodes_per_dim[0] * idx_y + _nodes_per_dim[0] * _nodes_per_dim[1] * idx_z; }
+			 idx_t size() { return _node_count; }
+			 [[nodiscard]] const i3& shape() const { return _nodes_per_dim; }
+			 void setShape(const i3& shape) { _nodes_per_dim = shape; }
+			 typename std::vector<Node<T>>::iterator begin() { return _data.begin(); }
+			 typename std::vector<Node<T>>::const_iterator cbegin() { return _data.cbegin(); }
+			 typename std::vector<Node<T>>::iterator end() { return _data.end(); }
+			 typename std::vector<Node<T>>::const_iterator cend() { return _data.cend(); }
+		 private:
+			 /// storage of all nodes
+			 std::vector<Node<T>> _data;
+			 /// count of nodes for each dimension
+			 i3 _nodes_per_dim = {0, 0, 0};
+			 /// same as _data.size()
+			 idx_t _node_count = 0;
+		 };
+
+		 /**
+		  * Domain of FE is discretized into N elements. Each element consists of M nodes and can be an arbitrary 3D object.
+		  * Neighbouring elements, share the same nodes on touching faces.
+		  * For now we assume, that elements are cubes.
+		  * This container, stores all elements of the FE domain.
+		  * */
+		 class Elements {
+		 public:
+			 Elements() = default;
+			 Element* data() { return _data.data(); }
+			 void resize(idx_t size, const Element& data = Element()) { _data.resize(size, data); _elem_count = size; }
+			 Element& operator[](idx_t idx) { return _data[idx]; }
+			 Element& at(idx_t idx) { return _data.at(idx); }
+			 Element& at(idx_t idx_x, idx_t idx_y, idx_t idx_z) { return _data[get1DIndex(idx_x, idx_y, idx_z)]; }
+			 [[nodiscard]] idx_t get1DIndex(idx_t idx_x, idx_t idx_y, idx_t idx_z) const { return idx_x + _elems_per_dim[0] * idx_y + _elems_per_dim[0] * _elems_per_dim[1] * idx_z; }
+			 [[nodiscard]] idx_t size() const { return _elem_count; }
+			 [[nodiscard]] const i3& shape() const { return _elems_per_dim; }
+			 void setShape(const i3& shape) { _elems_per_dim = shape; }
+			 [[nodiscard]] const d3& getElementSize() const { return _elem_size; }
+			 void setElementSize(const d3& size) { _elem_size = size; _elem_volume = _elem_size[0]*_elem_size[1]*_elem_size[2]; }
+			 [[maybe_unused]] [[nodiscard]] double getElementVolume() const { return _elem_volume; }
+			 std::vector<Element>::iterator begin() { return _data.begin(); }
+			 std::vector<Element>::const_iterator cbegin() { return _data.cbegin(); }
+			 std::vector<Element>::iterator end() { return _data.end(); }
+			 std::vector<Element>::const_iterator cend() { return _data.cend(); }
+		 private:
+			 /// storage of all elements
+			 std::vector<Element> _data;
+			 /// count of elements for each dimension
+			 i3 _elems_per_dim = {0, 0, 0};
+			 /// width of each element in each dimension
+			 d3 _elem_size = {0, 0, 0};
+			 /// same as _data.size()
+			 idx_t _elem_count = 0;
+			 /// same as _elem_size[0]*_elem_size[1]*_elem_size[2]
+			 double _elem_volume = 0;
+		 };
+
+		 /**
+		  * Spans a cuboid subregion within a grid by defining the 3D coordinates of the lower and upper nodes
+		  * */
+		 class SubGrid {
+		 public:
+			 SubGrid(const i3& lower, const i3& upper) : _lower(lower), _upper(upper) { }
+		 private:
+			 /// lower bound of cuboid
+			 i3 _lower;
+		 	 /// upper bound of cuboid
+		 	 i3 _upper;
+		 };
+
+		 /**
+	 	  * The grid class creates a highly structured grid of box elements with nodes on the corners. It is composed
+	 	  * of nodes and elements (no edges nor faces). It must be defined using the number of elements per dimension
+	 	  * as well as the lower and upper coordinates of the region to be meshed.
+	 	  * T is the type of the measured property.
+		  * */
+		 template<typename T, T data_init>
+		 class Grid {
+		 public:
+			 Grid() = default;
+			 void init(const d3& lower, const d3& upper, int num_elem_x, int num_elem_y, int num_elem_z);
+			 Nodes<T>& getNodes() { return _nodes; }
+			 Elements& getElements() { return _elements; }
+			 [[nodiscard]] const d3& getLower() const { return _lower_bound; }
+			 [[nodiscard]] const d3& getUpper() const { return _upper_bound; }
+
+		 private:
+			 /// container for all nodes
+			 Nodes<T> _nodes;
+			 /// container for all elements
+			 Elements _elements;
+			 /// lower bound of the entire grid
+			 d3 _lower_bound = {0, 0, 0};
+			 /// upper bound of the entire grid
+			 d3 _upper_bound = {0, 0, 0};
+			 std::vector<SubGrid> _sub_grids;
+		 };
+
+		 template<typename T, T data_init>
+		 void Grid<T, data_init>::init(const d3 &lower, const d3 &upper, int num_elem_x, int num_elem_y, int num_elem_z) {
+			_lower_bound = lower;
+			_upper_bound = upper;
+
+			// Element construction
+			_elements.setShape({num_elem_x, num_elem_y, num_elem_z});
+			_elements.resize(num_elem_x * num_elem_y * num_elem_z);
+			d3 element_size = {
+					(upper[0]-lower[0])/static_cast<double>(num_elem_x),
+					(upper[1]-lower[1])/static_cast<double>(num_elem_y),
+					(upper[2]-lower[2])/static_cast<double>(num_elem_z),
+			};
+			_elements.setElementSize(element_size);
+			for (int z = 0; z < num_elem_z; z++) {
+				for (int y = 0; y < num_elem_y; y++) {
+					for (int x = 0; x < num_elem_x; x++) {
+						auto& e = _elements.at(x, y, z);
+						e.setLow(x * element_size[0], y * element_size[1], z * element_size[2]);
+						e.setUpper((x+1) * element_size[0], (y+1) * element_size[1], (z+1) * element_size[2]);
+					}
+				}
+			}
+
+			// Node construction
+			_nodes.setShape({num_elem_x + 1, num_elem_y + 1, num_elem_z + 1});
+			_nodes.resize((num_elem_x + 1) * (num_elem_y + 1) * (num_elem_z + 1));
+			 for (int z = 0; z < num_elem_z + 1; z++) {
+				 for (int y = 0; y < num_elem_y + 1; y++) {
+					 for (int x = 0; x < num_elem_x + 1; x++) {
+						 auto& n = _nodes.at(x, y, z);
+						 n.data() = data_init;
+						 n.setPos(x * element_size[0], y * element_size[1], z * element_size[2]);
+					 }
+				 }
+			 }
+
+			// Create links from nodes to elements
+			 for (int z = 0; z < num_elem_z; z++) {
+				 for (int y = 0; y < num_elem_y; y++) {
+					 for (int x = 0; x < num_elem_x; x++) {
+						 auto& e = _elements.at(x, y, z);
+
+						 int counter = 0;
+						 for (int dz = 0; dz < 2; dz++) {
+							 for (int dy = 0; dy < 2; dy++) {
+								 for (int dx = 0; dx < 2; dx++) {
+									e.setNodeIdx(_nodes.get1DIndex(x+dx, y+dy, z+dz), counter);
+									counter++;
+								 }
+							 }
+						 }
+					 }
+				 }
+			 }
+		 }
+	 };
 }
 #endif //MARDYN_INTERPOLATION_H
