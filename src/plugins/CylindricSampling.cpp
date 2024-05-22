@@ -34,11 +34,11 @@ void CylindricSampling::init(ParticleContainer* /* particleContainer */, DomainD
     _numBinsGlobalRadius = static_cast<unsigned int>(_distMax/_binwidth);
 
     if (_globalBoxLength[1]/_binwidth != static_cast<float>(_numBinsGlobalHeight)) {
-        Log::global_log->error() << "[CylindricSampling] Can not divide domain without remainder in y-direction! Change binwidth" << std::endl;
+        Log::global_log->error() << "["<< getPluginName()<<"] Can not divide domain without remainder in y-direction! Change binwidth" << std::endl;
         Simulation::exit(-1);
     }
     if (_distMax/_binwidth != static_cast<float>(_numBinsGlobalRadius)) {
-        Log::global_log->error() << "[CylindricSampling] Can not divide domain without remainder in x or z-direction! Change binwidth" << std::endl;
+        Log::global_log->error() << "["<< getPluginName()<<"] Can not divide domain without remainder in x or z-direction! Change binwidth" << std::endl;
         Simulation::exit(-1);
     }
 
@@ -57,9 +57,9 @@ void CylindricSampling::readXML(XMLfileUnits& xmlconfig) {
     xmlconfig.getNodeValue("stop", _stopSampling);
 
 
-    Log::global_log->info() << "[CylindricSampling] Start:WriteFreq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
-    Log::global_log->info() << "[CylindricSampling] Binwidth: " << _binwidth << std::endl;
-    Log::global_log->info() << "[CylindricSampling] All components treated as single one" << std::endl;
+    Log::global_log->info() << "["<< getPluginName()<<"] Start:WriteFreq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
+    Log::global_log->info() << "["<< getPluginName()<<"] Binwidth: " << _binwidth << std::endl;
+    Log::global_log->info() << "["<< getPluginName()<<"] All components treated as single one" << std::endl;
 }
 
 void CylindricSampling::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {
@@ -70,9 +70,9 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
     }
 
     // Do not write or sample data directly after (re)start in the first step
-    if ( simstep == _simulation.getNumInitTimesteps() ) {
-        return;
-    }
+    // if ( simstep == _simulation.getNumInitTimesteps() ) {
+    //     return;
+    // }
 
     // Variables per step
     std::array<double, 3> regionLowCorner {};

@@ -42,7 +42,7 @@ class CylindricSampling : public PluginBase {
     float _binwidth {1.0f};
     unsigned long _startSampling {0ul};
     unsigned long _writeFrequency {10000ul};
-    unsigned long _stopSampling {1000000000ul};
+    unsigned long _stopSampling {std::numeric_limits<unsigned long>::max()};
 
     // Auxiliary variables
     unsigned int _numBinsGlobalHeight;
