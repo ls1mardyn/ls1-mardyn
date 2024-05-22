@@ -102,7 +102,7 @@ private:
 
 	int _rank;
 
-	/// initialize the list of log levels with the corresponding short names
+	/// initilaize the list of log levels with the corresponding short names
 	void init_log_levels() {
 		logLevelNames.insert(std::pair<logLevel, std::string>(None,    "NONE"));
 		logLevelNames.insert(std::pair<logLevel, std::string>(Fatal,   "FATAL ERROR"));

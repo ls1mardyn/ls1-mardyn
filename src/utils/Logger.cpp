@@ -6,27 +6,20 @@ namespace Log {
 
 Logger *global_log;
 
-Logger::Logger(logLevel level, std::ostream *os) :
-	_log_level(level), _msg_log_level(Log::Error),
-	_do_output(true), _filename(""),_log_stream(os),
-	logLevelNames(), _starttime(), _rank(0)
-{
+Logger::Logger(logLevel level, std::ostream *os)
+: _log_level(level), _msg_log_level(Log::Error), _do_output(true), _filename(""),
+  _log_stream(os), logLevelNames(), _starttime(), _rank(0) {
 	init_starting_time();
 	this->init_log_levels();
 #ifdef ENABLE_MPI
 	MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
 #endif
-	*_log_stream << std::boolalpha;  // Print boolean as true/false
 }
 
 
-Logger::Logger(logLevel level, std::string prefix) :
-	_log_level(level), _msg_log_level(Log::Error),
-	_do_output(true), _filename(""), _log_stream(0),
-	logLevelNames(), _starttime(), _rank(0)
-{
+Logger::Logger(logLevel level, std::string prefix) :  _log_level(level), _msg_log_level(Log::Error),
+		_do_output(true), _filename(""), _log_stream(0), logLevelNames(), _starttime(), _rank(0) {
 	init_starting_time();
-	this->init_log_levels();
 	std::stringstream filenamestream;
 	filenamestream << prefix;
 #ifdef ENABLE_MPI
@@ -36,7 +29,6 @@ Logger::Logger(logLevel level, std::string prefix) :
 	filenamestream << ".log";
 	_filename = filenamestream.str();
 	_log_stream = new std::ofstream(_filename.c_str());
-	*_log_stream << std::boolalpha;  // Print boolean as true/false
 }
 
 Logger::~Logger() {
