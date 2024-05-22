@@ -31,11 +31,11 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "Reading in component" << std::endl;
 	unsigned int cid = 0;
 	xmlconfig.getNodeValue( "@id", cid );
-	Log::global_log->info() << "Component ID:" << cid << std::endl;
+	Log::global_log->info() << "Component ID: " << cid << std::endl;
 	setID(cid - 1);
 	std::string name;
 	xmlconfig.getNodeValue( "@name", name );
-	Log::global_log->info() << "Component name:" << name << std::endl;
+	Log::global_log->info() << "Component name: " << name << std::endl;
 	setName(name);
 
 	XMLfile::Query query = xmlconfig.query( "site" );
