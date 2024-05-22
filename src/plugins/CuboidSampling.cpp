@@ -24,16 +24,16 @@ CylindricSampling::CylindricSampling() {}
 
 void CylindricSampling::init(ParticleContainer* /* particleContainer */, DomainDecompBase* domainDecomp, Domain* domain) {
 
-    _globalBox[0] = domain->getGlobalLength(0);
-    _globalBox[1] = domain->getGlobalLength(1);
-    _globalBox[2] = domain->getGlobalLength(2);
+    _globalBoxLength[0] = domain->getGlobalLength(0);
+    _globalBoxLength[1] = domain->getGlobalLength(1);
+    _globalBoxLength[2] = domain->getGlobalLength(2);
 
-    _distMax = 0.5*std::min(_globalBox[0],_globalBox[2]);  // Only sample particles within maximum radius fitting into box
+    _distMax = 0.5*std::min(_globalBoxLength[0],_globalBoxLength[2]);  // Only sample particles within maximum radius fitting into box
 
-    _numBinsGlobalHeight = static_cast<unsigned int>(_globalBox[1]/_binwidth);
+    _numBinsGlobalHeight = static_cast<unsigned int>(_globalBoxLength[1]/_binwidth);
     _numBinsGlobalRadius = static_cast<unsigned int>(_distMax/_binwidth);
 
-    if (_globalBox[1]/_binwidth != static_cast<float>(_numBinsGlobalHeight)) {
+    if (_globalBoxLength[1]/_binwidth != static_cast<float>(_numBinsGlobalHeight)) {
         Log::global_log->error() << "["<< getPluginName()<<"] Can not divide domain without remainder in y-direction! Change binwidth" << std::endl;
         Simulation::exit(-1);
     }
@@ -130,8 +130,8 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
 
     for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
         const double ry = pit->r(1);
-        const double distCenter_x = pit->r(0)-0.5*_globalBox[0];
-        const double distCenter_z = pit->r(2)-0.5*_globalBox[2];
+        const double distCenter_x = pit->r(0)-0.5*_globalBoxLength[0];
+        const double distCenter_z = pit->r(2)-0.5*_globalBoxLength[2];
         const double distCenter = std::sqrt(std::pow(distCenter_x,2) + std::pow(distCenter_z,2));
         // Do not consider particles outside of most outer radius
         if (distCenter >= _distMax) { continue; }
