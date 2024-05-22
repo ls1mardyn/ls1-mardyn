@@ -51,14 +51,18 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			LJcenter ljSite;
 			ljSite.readXML(xmlconfig);
 			addLJcenter(ljSite);
+			Log::global_log->info() << "sigma = " << ljSite.sigma() << " ; epsilon = " << ljSite.eps()
+						<< " ; mass = " << ljSite.m() << " ; shifted = " << ljSite.shiftRequested() << std::endl;
 		} else if (siteType == "Charge") {
 			Charge chargeSite;
 			chargeSite.readXML(xmlconfig);
 			addCharge(chargeSite);
+			Log::global_log->info() << "charge = " << chargeSite.q() << std::endl;
 		} else if (siteType == "Dipole") {
 			Dipole dipoleSite;
 			dipoleSite.readXML(xmlconfig);
 			addDipole(dipoleSite);
+			Log::global_log->info() << "dipoleMoment = " << dipoleSite.absMy() << std::endl;
 		} else if (siteType == "Stockmayer") {
 			_isStockmayer = true;
 			_rot_dof = 2;
@@ -75,6 +79,7 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			Quadrupole quadrupoleSite;
 			quadrupoleSite.readXML(xmlconfig);
 			addQuadrupole(quadrupoleSite);
+			Log::global_log->info() << "quadrupoleMoment = " << quadrupoleSite.absQ() << std::endl;
 		} else if (siteType == "Tersoff") {
 			Log::global_log->error() << "Tersoff no longer supported:" << siteType << std::endl;
 			Simulation::exit(-1);
