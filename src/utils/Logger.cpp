@@ -16,6 +16,7 @@ Logger::Logger(logLevel level, std::ostream *os) :
 #ifdef ENABLE_MPI
 	MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
 #endif
+	*_log_stream << std::boolalpha;  // Print boolean as true/false
 }
 
 
@@ -35,6 +36,7 @@ Logger::Logger(logLevel level, std::string prefix) :
 	filenamestream << ".log";
 	_filename = filenamestream.str();
 	_log_stream = new std::ofstream(_filename.c_str());
+	*_log_stream << std::boolalpha;  // Print boolean as true/false
 }
 
 Logger::~Logger() {
