@@ -52,7 +52,7 @@ public:
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig) {
 		if (!xmlconfig.getNodeValue("@name", _name)) {
-			Log::global_log->error() << "Cannot find site name. Defaulting to type." << std::endl;
+			Log::global_log->warning() << "Cannot find site name. Defaulting to type." << std::endl;
 			xmlconfig.getNodeValue("@type", _name);
 		}
 		Log::global_log->info() << "Site name: " << _name << std::endl;
