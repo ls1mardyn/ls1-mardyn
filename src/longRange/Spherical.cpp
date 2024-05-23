@@ -43,7 +43,7 @@ Spherical::Spherical(double /*cutoffT*/, double cutoffLJ, Domain* domain, Domain
 	droplet = true;
 	disableLRC = false;
 	_outputPrefix = "mardyn";
-	_T = 0;
+	_T = 0.0;
 
 	calcFreq = 100;
 	writeFreq = 10000;
@@ -58,6 +58,8 @@ Spherical::~Spherical() {}
 
 void Spherical::init() {
 	global_log->info() << "[Long Range Correction] Initializing. Is this function called twice?!" << std::endl;
+
+	std::cout << "[Long Range Correction] floatFix rho" << std::endl;
 
 	globalNumMols = _domain->getglobalNumMolecules(true, _particleContainer, _domainDecomposition);
 	global_log->info() << "[Long Range Correction] global number of molecules: " << globalNumMols << std::endl;
@@ -608,7 +610,13 @@ void Spherical::calculateLongRange() {
 				VirialKorrLJ *= 2.0 * M_PI / 3.0;
 			}
 		}
+
+		// Alternative way for one component
+		double UCORR =  rho_out*(8./3.)*M_PI*(1./(3.*std::pow(rc,9))-1./std::pow(rc,3));
+    	double PCORR = rho_out*(16./3.)*M_PI*(2./(3.*std::pow(rc,9))-1./std::pow(rc,3));
+
 		global_log->info() << "[Long Range Correction] Homogeneous term: rho_out = " << rho_out << " UpotKorrLJ = " << UpotKorrLJ << " ; VirialKorrLJ = " << VirialKorrLJ << std::endl;
+		global_log->info() << "[Long Range Correction] Alt. homog. term: rho_out = " << rho_out << " UpotKorrLJ = " << UCORR      << " ; VirialKorrLJ = " << PCORR << std::endl;
 
 		// Korrektur je Schale
 		std::fill(UShells_Mean.begin(), UShells_Mean.end(), 0.0);
@@ -657,7 +665,7 @@ void Spherical::calculateLongRange() {
 							// double tau1 = 0.5;
 							// double tau2 = 0;
 							double sigma6 = sig2 * sig2 * sig2;
-							double factorU = -M_PI * _drShells * eps24 * sigma6 / (6 * ksi[molID]);
+							double factorU = -M_PI * _drShells * eps24 * sigma6 / (6. * ksi[molID]);
 							double factorF = -factorU / ksi[molID];
 							double factorP = 0.5 * factorF / ksi[molID];
 							if ((tau1 == 0.0) && (tau2 == 0.0)) {  // Center-Center
@@ -665,27 +673,27 @@ void Spherical::calculateLongRange() {
 									 j++) {  // Loop over Shells with smaller Radius
 									if (rhoShellsT[j - 1] != 0.0) {
 										rlow = ksi[molID] - RShells[j - 1];
-										rlowInv = 1 / rlow;
+										rlowInv = 1. / rlow;
 										rlowInv2 = rlowInv * rlowInv;
-										rdashInv = 1 / (RShells[j - 1] + ksi[molID]);
+										rdashInv = 1. / (RShells[j - 1] + ksi[molID]);
 										UCorrTemp = sigma6 * 0.2 * (pow(rdashInv, 10) - pow(rlowInv, 10)) -
 													0.5 * (pow(rdashInv, 4) - pow(rlowInv, 4));
 										if (rlow < rcmax) {
 											rdash = min(rcmax, (RShells[j - 1] + ksi[molID]));
-											rdashInv = 1 / rdash;
+											rdashInv = 1. / rdash;
 											rdashInv2 = rdashInv * rdashInv;
 											FCorrTemp =
-												sigma6 * ((6 / 5 * rdash * rdash + ksi2 - RShells2[j - 1]) *
+												sigma6 * ((6. / 5. * rdash * rdash + ksi2 - RShells2[j - 1]) *
 															  pow(rdashInv2, 6) -
-														  (6 / 5 * rlow * rlow + ksi2 - RShells2[j - 1]) *
+														  (6. / 5. * rlow * rlow + ksi2 - RShells2[j - 1]) *
 															  pow(rlowInv2, 6)) -
 												(1.5 * rdash * rdash + ksi2 - RShells2[j - 1]) * pow(rdashInv2, 3) +
 												(1.5 * rlow * rlow + ksi2 - RShells2[j - 1]) * pow(rlowInv2, 3);
 											FCorrShells =
 												FCorrShells + FCorrTemp * factorF * rhoShellsT[j - 1] * RShells[j - 1];
 											PNCorrTemp =  // 1.5*sigma6 * (pow(rdashInv2,4) - pow(rlowInv2,4))
-												-3 * (rdashInv2 - rlowInv2) +
-												2 * (ksi2 - RShells2[j - 1]) *
+												-3. * (rdashInv2 - rlowInv2) +
+												2. * (ksi2 - RShells2[j - 1]) *
 													(  // 6/5*sigma6 * (pow(rdashInv2,5) - pow(rlowInv2,5))
 														-1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2))) +
 												pow((ksi2 - RShells2[j - 1]), 2) *
@@ -693,9 +701,9 @@ void Spherical::calculateLongRange() {
 														-(pow(rdashInv2, 3) - pow(rlowInv2, 3)));
 											PNCorrShells = PNCorrShells +
 														   PNCorrTemp * factorP * rhoShellsT[j - 1] * RShells[j - 1];
-											PTCorrTemp = 6 / 5 * sigma6 * (pow(rdashInv2, 5) - pow(rlowInv2, 5)) -
+											PTCorrTemp = 6. / 5. * sigma6 * (pow(rdashInv2, 5) - pow(rlowInv2, 5)) -
 														 1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2));
-											PTCorrShells = PTCorrShells + 4 * ksi2 * PTCorrTemp * factorP *
+											PTCorrShells = PTCorrShells + 4. * ksi2 * PTCorrTemp * factorP *
 																			  rhoShellsT[j - 1] * RShells[j - 1];
 										}
 										UCorrShells =
@@ -715,17 +723,17 @@ void Spherical::calculateLongRange() {
 											rdashInv = 1 / rdash;
 											rdashInv2 = rdashInv * rdashInv;
 											FCorrTemp =
-												sigma6 * ((6 / 5 * rdash * rdash + ksi2 - RShells2[j - 1]) *
+												sigma6 * ((6. / 5. * rdash * rdash + ksi2 - RShells2[j - 1]) *
 															  pow(rdashInv2, 6) -
-														  (6 / 5 * rlow * rlow + ksi2 - RShells2[j - 1]) *
+														  (6. / 5. * rlow * rlow + ksi2 - RShells2[j - 1]) *
 															  pow(rlowInv2, 6)) -
 												(1.5 * rdash * rdash + ksi2 - RShells2[j - 1]) * pow(rdashInv2, 3) +
 												(1.5 * rlow * rlow + ksi2 - RShells2[j - 1]) * pow(rlowInv2, 3);
 											FCorrShells =
 												FCorrShells + FCorrTemp * factorF * rhoShellsT[j - 1] * RShells[j - 1];
 											PNCorrTemp =  // 1.5*sigma6 * (pow(rdashInv2,4) - pow(rlowInv2,4))
-												-3 * (rdashInv2 - rlowInv2) +
-												2 * (ksi2 - RShells2[j - 1]) *
+												-3. * (rdashInv2 - rlowInv2) +
+												2. * (ksi2 - RShells2[j - 1]) *
 													(  // 6/5*sigma6 * (pow(rdashInv2,5) - pow(rlowInv2,5))
 														-1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2))) +
 												pow((ksi2 - RShells2[j - 1]), 2) *
@@ -733,9 +741,9 @@ void Spherical::calculateLongRange() {
 														-(pow(rdashInv2, 3) - pow(rlowInv2, 3)));
 											PNCorrShells = PNCorrShells +
 														   PNCorrTemp * factorP * rhoShellsT[j - 1] * RShells[j - 1];
-											PTCorrTemp = 6 / 5 * sigma6 * (pow(rdashInv2, 5) - pow(rlowInv2, 5)) -
+											PTCorrTemp = 6. / 5. * sigma6 * (pow(rdashInv2, 5) - pow(rlowInv2, 5)) -
 														 1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2));
-											PTCorrShells = PTCorrShells + 4 * ksi2 * PTCorrTemp * factorP *
+											PTCorrShells = PTCorrShells + 4. * ksi2 * PTCorrTemp * factorP *
 																			  rhoShellsT[j - 1] * RShells[j - 1];
 										}
 										UCorrShells =
@@ -756,17 +764,17 @@ void Spherical::calculateLongRange() {
 											rdashInv = 1 / rdash;
 											rdashInv2 = rdashInv * rdashInv;
 											FCorrTemp =
-												sigma6 * ((6 / 5 * rdash * rdash + ksi2 - RShells2[j - 1]) *
+												sigma6 * ((6. / 5. * rdash * rdash + ksi2 - RShells2[j - 1]) *
 															  pow(rdashInv2, 6) -
-														  (6 / 5 * rlow * rlow + ksi2 - RShells2[j - 1]) *
+														  (6. / 5. * rlow * rlow + ksi2 - RShells2[j - 1]) *
 															  pow(rlowInv2, 6)) -
 												(1.5 * rdash * rdash + ksi2 - RShells2[j - 1]) * pow(rdashInv2, 3) +
 												(1.5 * rlow * rlow + ksi2 - RShells2[j - 1]) * pow(rlowInv2, 3);
 											FCorrShells =
 												FCorrShells + FCorrTemp * factorF * rhoShellsT[j - 1] * RShells[j - 1];
 											PNCorrTemp =  // 1.5*sigma6 * (pow(rdashInv2,4) - pow(rlowInv2,4))
-												-3 * (rdashInv2 - rlowInv2) +
-												2 * (ksi2 - RShells2[j - 1]) *
+												-3. * (rdashInv2 - rlowInv2) +
+												2. * (ksi2 - RShells2[j - 1]) *
 													(  // 6/5*sigma6 * (pow(rdashInv2,5) - pow(rlowInv2,5))
 														-1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2))) +
 												pow((ksi2 - RShells2[j - 1]), 2) *
@@ -774,9 +782,9 @@ void Spherical::calculateLongRange() {
 														-(pow(rdashInv2, 3) - pow(rlowInv2, 3)));
 											PNCorrShells = PNCorrShells +
 														   PNCorrTemp * factorP * rhoShellsT[j - 1] * RShells[j - 1];
-											PTCorrTemp = 6 / 5 * sigma6 * (pow(rdashInv2, 5) - pow(rlowInv2, 5)) -
+											PTCorrTemp = 6. / 5. * sigma6 * (pow(rdashInv2, 5) - pow(rlowInv2, 5)) -
 														 1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2));
-											PTCorrShells = PTCorrShells + 4 * ksi2 * PTCorrTemp * factorP *
+											PTCorrShells = PTCorrShells + 4. * ksi2 * PTCorrTemp * factorP *
 																			  rhoShellsT[j - 1] * RShells[j - 1];
 										}
 										UCorrShells =
@@ -1170,11 +1178,11 @@ double Spherical::RhoP(double r, double rhov, double rhol, double D0, double R0)
 // }
 
 double Spherical::SICSu(int n, double r, double tau) {
-	return (pow((r + tau), (2 * n + 3)) - pow((r - tau), (2 * n + 3))) / (4 * tau * (n + 1) * (2 * n + 3));
+	return (pow((r + tau), (2 * n + 3)) - pow((r - tau), (2 * n + 3))) / (4. * tau * (n + 1) * (2 * n + 3));
 }
 
 double Spherical::CS(int n, double r, double tau) {
-	return (pow((r + tau), (2 * n + 2)) - pow((r - tau), (2 * n + 2))) / (4 * r * tau * (n + 1));
+	return (pow((r + tau), (2 * n + 2)) - pow((r - tau), (2 * n + 2))) / (4. * r * tau * (n + 1));
 }
 
 double Spherical::SISSu(int n, double r, double tau1, double tau2) {
@@ -1183,7 +1191,7 @@ double Spherical::SISSu(int n, double r, double tau1, double tau2) {
 
 	return (pow((r + tauPlus), (2 * n + 4)) - pow((r + tauMinus), (2 * n + 4)) - pow((r - tauMinus), (2 * n + 4)) +
 			pow((r - tauPlus), (2 * n + 4))) /
-		   (8 * tau1 * tau2 * (n + 1) * (2 * n + 3) * (2 * n + 4));
+		   (8. * tau1 * tau2 * (n + 1) * (2 * n + 3) * (2 * n + 4));
 }
 
 double Spherical::SS(int n, double r, double tau1, double tau2) {
@@ -1192,7 +1200,7 @@ double Spherical::SS(int n, double r, double tau1, double tau2) {
 
 	return (pow((r + tauPlus), (2 * n + 3)) - pow((r + tauMinus), (2 * n + 3)) - pow((r - tauMinus), (2 * n + 3)) +
 			pow((r - tauPlus), (2 * n + 3))) /
-		   (8 * tau1 * tau2 * r * (n + 1) * (2 * n + 3));
+		   (8. * tau1 * tau2 * r * (n + 1) * (2 * n + 3));
 }
 
 double Spherical::SSLN(double r, double tau1, double tau2) {
@@ -1203,7 +1211,7 @@ double Spherical::SSLN(double r, double tau1, double tau2) {
 			 pow((r - tauPlus), (-1))) *
 				r -
 			log((r * r - tauPlus * tauPlus) / (r * r - tauMinus * tauMinus))) /
-		   (48 * tau1 * tau2);
+		   (48. * tau1 * tau2);
 }
 
 // Functions for homogeneous corrections
@@ -1214,9 +1222,9 @@ double Spherical::TICCu(int n, double rcutoff, double sigma2) {
 
 double Spherical::TICSu(int n, double rcutoff, double sigma2, double tau) {
 	return -(pow((rcutoff + tau), (2 * n + 3)) - pow((rcutoff - tau), (2 * n + 3))) * rcutoff /
-			   (pow(4 * sigma2, n) * tau * (n + 1) * (2 * n + 3)) +
+			   (pow(4. * sigma2, n) * tau * (n + 1) * (2 * n + 3)) +
 		   (pow((rcutoff + tau), (2 * n + 4)) - pow((rcutoff - tau), (2 * n + 4))) /
-			   (4 * pow(sigma2, n) * tau * (n + 1) * (2 * n + 3) * (2 * n + 4));
+			   (4. * pow(sigma2, n) * tau * (n + 1) * (2 * n + 3) * (2 * n + 4));
 }
 
 double Spherical::TISSu(int n, double rcutoff, double sigma2, double tau1, double tau2) {
@@ -1224,18 +1232,18 @@ double Spherical::TISSu(int n, double rcutoff, double sigma2, double tau1, doubl
 	double tauMinus = tau1 - tau2;
 	return -(pow((rcutoff + tauPlus), (2 * n + 4)) - pow((rcutoff + tauMinus), (2 * n + 4)) -
 			 pow((rcutoff - tauMinus), (2 * n + 4)) + pow((rcutoff - tauPlus), (2 * n + 4))) *
-			   rcutoff / (8 * pow(sigma2, n) * tau1 * tau2 * (n + 1) * (2 * n + 3) * (2 * n + 4)) +
+			   rcutoff / (8. * pow(sigma2, n) * tau1 * tau2 * (n + 1) * (2 * n + 3) * (2 * n + 4)) +
 		   (pow((rcutoff + tauPlus), (2 * n + 5)) - pow((rcutoff + tauMinus), (2 * n + 5)) -
 			pow((rcutoff - tauMinus), (2 * n + 5)) + pow((rcutoff - tauPlus), (2 * n + 5))) /
-			   (8 * pow(sigma2, n) * tau1 * tau2 * (n + 1) * (2 * n + 3) * (2 * n + 4) * (2 * n + 5));
+			   (8. * pow(sigma2, n) * tau1 * tau2 * (n + 1) * (2 * n + 3) * (2 * n + 4) * (2 * n + 5));
 }
 
 double Spherical::TICCp(int n, double rcutoff, double sigma2) { return 2 * n * TICCu(n, rcutoff, sigma2); }
 
 double Spherical::TICSp(int n, double rcutoff, double sigma2, double tau) {
 	return -(pow((rcutoff + tau), (2 * n + 2)) - pow((rcutoff - tau), (2 * n + 2))) * pow(rcutoff, (2)) /
-			   (4 * pow(sigma2, n) * tau * (n + 1)) -
-		   3 * TICSu(n, rcutoff, sigma2, tau);
+			   (4. * pow(sigma2, n) * tau * (n + 1)) -
+		   3. * TICSu(n, rcutoff, sigma2, tau);
 }
 
 double Spherical::TISSp(int n, double rcutoff, double sigma2, double tau1, double tau2) {
@@ -1243,6 +1251,6 @@ double Spherical::TISSp(int n, double rcutoff, double sigma2, double tau1, doubl
 	double tauMinus = tau1 - tau2;
 	return -(pow((rcutoff + tauPlus), (2 * n + 3)) - pow((rcutoff + tauMinus), (2 * n + 3)) -
 			 pow((rcutoff - tauMinus), (2 * n + 3)) + pow((rcutoff - tauPlus), (2 * n + 3))) *
-			   pow(rcutoff, 2) / (8 * pow(sigma2, n) * tau1 * tau2 * (n + 1) * (2 * n + 3)) -
-		   3 * TISSu(n, rcutoff, sigma2, tau1, tau2);
+			   pow(rcutoff, 2) / (8. * pow(sigma2, n) * tau1 * tau2 * (n + 1) * (2 * n + 3)) -
+		   3. * TISSu(n, rcutoff, sigma2, tau1, tau2);
 }
