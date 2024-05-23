@@ -22,15 +22,15 @@
 * Samples density binwise in x,y directions seperately for 2 bins in y direction
 * There is NO differentiation between components; it is assumed that all (pseudo) components have the same mass (for correct calculation of temperature)
 * \code{.xml}
-* <plugin name="CapiSampling">
-*           <numBinsX>FLOAT</numBinsX>                  <!-- # of sampling bins in x direction; default 64 -->
-*           <numBinsZ>FLOAT</numBinsZ>                  <!-- # of sampling bins in z direction; default 64 -->
+  <plugin name="CapiSampling">
+            <numBinsX>FLOAT</numBinsX>                  <!-- # of sampling bins in x direction; default 64 -->
+            <numBinsZ>FLOAT</numBinsZ>                  <!-- # of sampling bins in z direction; default 64 -->
             <writefrequency>INT</writefrequency>        <!-- Simstep to write out result file; default 10000 -->
             <start>INT</start>                          <!-- Simstep to start sampling; default 0 -->
             <stop>INT</stop>                            <!-- Simstep to stop sampling; default 1000000000 -->
             <minimumFilmWidth>FLOAT</minimumFilmWidth>  <!-- minimum guaranteed width of bulk liquid (needed for rho_liq calculation) -->
             <minimumGasPhase>FLOAT</minimumGasPhase>    <!-- minimum guaranteed width of gas phase to left and right of film (needed for rho_vap) -->
-* </plugin>
+  </plugin>
 * \endcode
 */
 class CapiSampling : public PluginBase {

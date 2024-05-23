@@ -34,7 +34,7 @@ void CapiSampling::init(ParticleContainer* /* particleContainer */, DomainDecomp
     _yGasRight = _globalBoxLength[1] - _minimumGasPhase;
 
     //check for consistency of bulk phase coordinates:
-    if ((_yGasLeft >= 0) or (_yGasLeft >=_yLiqLower) or (_yLiqLower>= _yLiqUpper) or (_yLiqUpper >= _yGasRight))
+    if ((0 > _yGasLeft) or (_yGasLeft >=_yLiqLower) or (_yLiqLower>= _yLiqUpper) or (_yLiqUpper > _yGasRight))
     {
         Log::global_log->error() << "["<< getPluginName()<<"] Bulk Phase Coordinates are invalid! " << std::endl;
         Log::global_log->error() << "["<< getPluginName()<<"] Coords are: _yGasLeft:_yLiqLower:_yLiqUpper:_yGasRight==" 
@@ -149,16 +149,17 @@ void CapiSampling::afterForces(ParticleContainer* particleContainer, DomainDecom
                 double rz = (.5 + iz) * _binwidthZ;
                 ofs << std::setw(24) << rz;        // Bin position (z) is written in row
             }
+            ofs << std::endl;
 
             //content
-            for(int ix = 0; ix<_numBinsX; ix++){
+            for(int iy = 0; iy<_numBinsY; iy++){
+                for(int ix = 0; ix<_numBinsX; ix++){
                 double rx = (.5 + ix) * _binwidthX;
-                for(int iy = 0; iy<_numBinsY; iy++){
                     ofs << std::setw(24) << iy;        // Bin Index (y)
                     ofs << std::setw(24) << rx;        // Bin position (x)
                     for (int iz = 0; iz < _numBinsZ; iz++)
                     {
-                        int index = _numBinsY*_numBinsX*iy  + _numBinsX*ix + iz;
+                        int index = iy*_numBinsY*_numBinsX  + ix*_numBinsX + iz;
 
                         unsigned long numSamples {0ul};
                         double numMolsPerStep {std::nan("0")}; // Not an int as particles change bin during simulation
