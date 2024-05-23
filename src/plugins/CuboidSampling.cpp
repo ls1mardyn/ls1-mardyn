@@ -1,8 +1,8 @@
 /*
  * CuboidSampling.cpp
  *
- *  Created on: Feb 2022
- *      Author: homes
+ *  Created on: May 2024
+ *      Author: jniemann
  */
 
 #include "CuboidSampling.h"
@@ -33,8 +33,9 @@ void CuboidSampling::init(ParticleContainer* /* particleContainer */, DomainDeco
         Simulation::exit(-1);
     }
     _binwidthX = (_globalBoxLength[0]/_numBinsX);
+    _binwidthY = _yUpper - _yLower;
     _binwidthZ = (_globalBoxLength[2]/_numBinsZ);
-    _cellVolume = _binwidthX * _binwidthZ;
+    _cellVolume = _binwidthX * _binwidthZ * _binwidthY;
     Log::global_log->info() << "["<< getPluginName()<<"] _binwidthX:_binwidthZ : " <<  _binwidthX<<":"<<_binwidthZ << std::endl;
 
     // Entry per bin; all components sampled as one
@@ -133,7 +134,7 @@ void CuboidSampling::afterForces(ParticleContainer* particleContainer, DomainDec
         if ((ry < _yLower) or (ry > _yUpper)) { continue; }
         const unsigned int indexX = std::min(_numBinsX, static_cast<unsigned int>(rx/_binwidthX));  // Index of bin of height
         const unsigned int indexZ = std::min(_numBinsZ, static_cast<unsigned int>(rz/_binwidthZ));  // Index of bin of radius
-        const unsigned int index = _numBinsX*indexX + indexZ;
+        const unsigned int index = _numBinsZ*indexX + indexZ;
 
         numMolecules_step.local[index] ++;
 

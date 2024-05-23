@@ -48,6 +48,7 @@ class CuboidSampling : public PluginBase {
 
     // Auxiliary variables
     double _binwidthX;
+    double _binwidthY;
     double _binwidthZ;
     unsigned long _lenVector;
     std::array<double, 3> _globalBoxLength;

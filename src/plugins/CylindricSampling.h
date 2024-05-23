@@ -1,8 +1,8 @@
 /*
  * CylindricSampling.h
  *
- *  Created on: Feb 2022
- *      Author: homes
+ *  Created on: May 2024
+ *      Author: jniemann
  */
 
 #ifndef MARDYN_TRUNK_CYLINDRICSAMPLING_H
