@@ -1,11 +1,11 @@
 /*
- * CylindricSampling.cpp
+ * CuboidSampling.cpp
  *
  *  Created on: Feb 2022
  *      Author: homes
  */
 
-#include "CylindricSampling.h"
+#include "CuboidSampling.h"
 
 #include <math.h>
 #include <limits>
@@ -20,52 +20,49 @@
 #include "longRange/LongRangeCorrection.h"
 
 
-CylindricSampling::CylindricSampling() {}
+CuboidSampling::CuboidSampling() {}
 
-void CylindricSampling::init(ParticleContainer* /* particleContainer */, DomainDecompBase* domainDecomp, Domain* domain) {
+void CuboidSampling::init(ParticleContainer* /* particleContainer */, DomainDecompBase* domainDecomp, Domain* domain) {
 
     _globalBoxLength[0] = domain->getGlobalLength(0);
     _globalBoxLength[1] = domain->getGlobalLength(1);
     _globalBoxLength[2] = domain->getGlobalLength(2);
 
-    _distMax = 0.5*std::min(_globalBoxLength[0],_globalBoxLength[2]);  // Only sample particles within maximum radius fitting into box
-
-    _numBinsGlobalHeight = static_cast<unsigned int>(_globalBoxLength[1]/_binwidth);
-    _numBinsGlobalRadius = static_cast<unsigned int>(_distMax/_binwidth);
-
-    if (_globalBoxLength[1]/_binwidth != static_cast<float>(_numBinsGlobalHeight)) {
-        Log::global_log->error() << "["<< getPluginName()<<"] Can not divide domain without remainder in y-direction! Change binwidth" << std::endl;
+    if (_numBinsX < 1 or _numBinsZ <1) {
+        Log::global_log->error() << "["<< getPluginName()<<"] Please select valid vlaues for number of Bins in X and Z direction" << std::endl;
         Simulation::exit(-1);
     }
-    if (_distMax/_binwidth != static_cast<float>(_numBinsGlobalRadius)) {
-        Log::global_log->error() << "["<< getPluginName()<<"] Can not divide domain without remainder in x or z-direction! Change binwidth" << std::endl;
-        Simulation::exit(-1);
-    }
+    _binwidthX = (_globalBoxLength[0]/_numBinsX);
+    _binwidthZ = (_globalBoxLength[2]/_numBinsZ);
+    _cellVolume = _binwidthX * _binwidthZ;
+    Log::global_log->info() << "["<< getPluginName()<<"] _binwidthX:_binwidthZ : " <<  _binwidthX<<":"<<_binwidthZ << std::endl;
 
     // Entry per bin; all components sampled as one
-    _lenVector = _numBinsGlobalRadius * _numBinsGlobalHeight;
+    _lenVector = _numBinsX * _numBinsZ;
 
     resizeVectors();
     resetVectors();
 }
 
-void CylindricSampling::readXML(XMLfileUnits& xmlconfig) {
+void CuboidSampling::readXML(XMLfileUnits& xmlconfig) {
 
-    xmlconfig.getNodeValue("binwidth", _binwidth);
+    xmlconfig.getNodeValue("numBinsX", _numBinsX);
+    xmlconfig.getNodeValue("numBinsZ", _numBinsZ);
     xmlconfig.getNodeValue("start", _startSampling);
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);
     xmlconfig.getNodeValue("stop", _stopSampling);
+    xmlconfig.getNodeValue("yLower", _yLower);
+    xmlconfig.getNodeValue("yUpper", _yUpper);
 
 
     Log::global_log->info() << "["<< getPluginName()<<"] Start:WriteFreq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
-    Log::global_log->info() << "["<< getPluginName()<<"] Binwidth: " << _binwidth << std::endl;
     Log::global_log->info() << "["<< getPluginName()<<"] All components treated as single one" << std::endl;
 }
 
-void CylindricSampling::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {
+void CuboidSampling::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {
 
     // Sampling starts after _startSampling and is conducted up to _stopSampling
-    if ((simstep <= _startSampling) or (simstep > _stopSampling)) {
+    if ((simstep < _startSampling) or (simstep > _stopSampling)) {
         return;
     }
 
@@ -75,14 +72,14 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
     // }
 
     // Variables per step
-    std::array<double, 3> regionLowCorner {};
-    std::array<double, 3> regionHighCorner {};
-    std::array<double, 3> regionSize {};
-    for (unsigned short d = 0; d < 3; d++) {
-        regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
-        regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
-        regionSize[d] = regionHighCorner[d] - regionLowCorner[d];
-    }
+    // std::array<double, 3> regionLowCorner {};
+    // std::array<double, 3> regionHighCorner {};
+    // std::array<double, 3> regionSize {};
+    // for (unsigned short d = 0; d < 3; d++) {
+    //     regionLowCorner[d] = particleContainer->getBoundingBoxMin(d);
+    //     regionHighCorner[d] = particleContainer->getBoundingBoxMax(d);
+    //     regionSize[d] = regionHighCorner[d] - regionLowCorner[d];
+    // }
 
 
     CommVar<std::vector<unsigned long>> numMolecules_step;
@@ -129,15 +126,14 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
     }
 
     for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
+        const double rx = pit->r(0);
         const double ry = pit->r(1);
-        const double distCenter_x = pit->r(0)-0.5*_globalBoxLength[0];
-        const double distCenter_z = pit->r(2)-0.5*_globalBoxLength[2];
-        const double distCenter = std::sqrt(std::pow(distCenter_x,2) + std::pow(distCenter_z,2));
+        const double rz = pit->r(2);
         // Do not consider particles outside of most outer radius
-        if (distCenter >= _distMax) { continue; }
-        const unsigned int indexH = std::min(_numBinsGlobalHeight, static_cast<unsigned int>(ry/_binwidth));  // Index of bin of height
-        const unsigned int indexR = std::min(_numBinsGlobalRadius, static_cast<unsigned int>(distCenter/_binwidth));  // Index of bin of radius
-        const unsigned int index = _numBinsGlobalHeight*indexR + indexH;
+        if ((ry < _yLower) or (ry > _yUpper)) { continue; }
+        const unsigned int indexX = std::min(_numBinsX, static_cast<unsigned int>(rx/_binwidthX));  // Index of bin of height
+        const unsigned int indexZ = std::min(_numBinsZ, static_cast<unsigned int>(rz/_binwidthZ));  // Index of bin of radius
+        const unsigned int index = _numBinsX*indexX + indexZ;
 
         numMolecules_step.local[index] ++;
 
@@ -149,24 +145,17 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
         const double vi_y = pit->Vi(1);
         const double vi_z = pit->Vi(2);
 
-        // Transform to cylindric coordinates
-        const double velo_r = (distCenter_x*u_x + distCenter_z*u_z)/distCenter;  // Radial
-        const double velo_y = u_y;
-        const double velo_t = (distCenter_x*u_z - distCenter_z*u_x)/distCenter;  // Tangential
-
         mass_step.local[index] += mass;
         ekin_step.local[index] += pit->U_kin();
 
-        velocityVect_step[0].local[index] += velo_r;
-        velocityVect_step[1].local[index] += velo_y;
-        velocityVect_step[2].local[index] += velo_t;
+        velocityVect_step[0].local[index] += u_x;
+        velocityVect_step[1].local[index] += u_y;
+        velocityVect_step[2].local[index] += u_z;
 
-        ekinVect_step[0].local[index] += 0.5*mass*velo_r*velo_r;
-        ekinVect_step[1].local[index] += 0.5*mass*velo_y*velo_y;
-        ekinVect_step[2].local[index] += 0.5*mass*velo_t*velo_t;
+        ekinVect_step[0].local[index] += 0.5*mass*u_x*u_x;
+        ekinVect_step[1].local[index] += 0.5*mass*u_y*u_y;
+        ekinVect_step[2].local[index] += 0.5*mass*u_z*u_z;
 
-        // See comment below why the virial is not transformed to cylindric coordinates
-        // short: must be done during force calculation for each particle pair individually
         virialVect_step[0].local[index] += vi_x;
         virialVect_step[1].local[index] += vi_y;
         virialVect_step[2].local[index] += vi_z;
@@ -249,11 +238,11 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
             // Write output file
             std::stringstream ss;
             ss << std::setw(9) << std::setfill('0') << simstep;
-            const std::string fname = "CylindricSampling_TS"+ss.str()+".dat";
+            const std::string fname = "CuboidSampling_TS"+ss.str()+".dat";
             std::ofstream ofs;
             ofs.open(fname, std::ios::out);
-            ofs << std::setw(24) << "height"     // Bin position (height)
-                << std::setw(24) << "radius"     // Bin position (radius)
+            ofs << std::setw(24) << "rx"     // Bin position (x)
+                << std::setw(24) << "rz"     // Bin position (z)
                 << std::setw(24) << "numParts"   // Average number of molecules in bin per step
                 << std::setw(24) << "rho"        // Density
                 << std::setw(24) << "T"          // Temperature without drift (i.e. "real" temperature)
@@ -272,10 +261,10 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
             ofs << std::endl;
 
             for (unsigned long i = 0; i < _lenVector; i++) {
-                const unsigned int idxH = i % _numBinsGlobalHeight;  // Remainder
-                const unsigned int idxR = i / _numBinsGlobalHeight; // Quotient
-                ofs << FORMAT_SCI_MAX_DIGITS << (idxH+0.5)*_binwidth;  // Height bin
-                ofs << FORMAT_SCI_MAX_DIGITS << (idxR+0.5)*_binwidth;  // Radius bin
+                const unsigned int idxX = i % _numBinsX;  // Remainder
+                const unsigned int idxZ = i / _numBinsX; // Quotient
+                ofs << FORMAT_SCI_MAX_DIGITS << (idxX+0.5)*_binwidthX;  // x bin
+                ofs << FORMAT_SCI_MAX_DIGITS << (idxZ+0.5)*_binwidthZ;  // z bin
                 unsigned long numSamples {0ul};
                 double numMolsPerStep {std::nan("0")}; // Not an int as particles change bin during simulation
                 double rho {0.0};
@@ -293,11 +282,10 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
                 double p_t {std::nan("0")};
                 if ((_countSamples[i] > 0ul) and (_doftotal_accum[i]) > 0ul) {
                     const double numMols_accum = static_cast<double>(_numMolecules_accum[i]);
-                    const double slabVolume = 3.1415926536*_binwidth*(std::pow((idxR+1)*_binwidth,2)-std::pow(idxR*_binwidth,2));
                     numSamples = _countSamples[i];
 
                     numMolsPerStep = numMols_accum/numSamples;
-                    rho         = numMolsPerStep           / slabVolume;
+                    rho         = numMolsPerStep           / _cellVolume;
                     v_r         = _velocityVect_accum[0][i]   / numSamples;
                     v_y         = _velocityVect_accum[1][i]   / numSamples;
                     v_t         = _velocityVect_accum[2][i]   / numSamples;
@@ -344,7 +332,7 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
 }
 
 // Resize vectors
-void CylindricSampling::resizeVectors() {
+void CuboidSampling::resizeVectors() {
 
     _numMolecules_accum.resize(_lenVector);
     _doftotal_accum.resize(_lenVector);
@@ -362,7 +350,7 @@ void CylindricSampling::resizeVectors() {
 }
 
 // Fill vectors with zeros
-void CylindricSampling::resetVectors() {
+void CuboidSampling::resetVectors() {
     std::fill(_numMolecules_accum.begin(), _numMolecules_accum.end(), 0ul);
     std::fill(_doftotal_accum.begin(), _doftotal_accum.end(), 0ul);
     std::fill(_mass_accum.begin(), _mass_accum.end(), 0.0f);

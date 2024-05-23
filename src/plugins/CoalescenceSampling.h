@@ -49,7 +49,7 @@ class CoalescenceSampling : public PluginBase{
     unsigned long _writeFrequency {100ul};
     unsigned long _stopSampling {std::numeric_limits<unsigned long>::max()};
     float _yLower {0.f};
-    float _yUpper {std::numeric_limits<double>::max()};
+    float _yUpper {std::numeric_limits<float>::max()};
     float _radius {4.f};
     std::string _outputPrefix = "coalSampling_";
     std::string _rhoOutputFilename = _outputPrefix +  "_coalSampling_r"+std::to_string(_radius)+".csv";

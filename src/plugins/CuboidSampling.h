@@ -1,5 +1,5 @@
 /*
- * CylindricSampling.h
+ * CuboidSampling.h
  *
  *  Created on: May 2024
  *      Author: jniemann
@@ -36,17 +36,18 @@ class CuboidSampling : public PluginBase {
     // Control: general
     unsigned int _numBinsX= 100;
     unsigned int _numBinsZ= 100;
-    double _binwidth {1.};
     unsigned long _startSampling {0ul};
-    unsigned long _writeFrequency {1000ul};
+    unsigned long _writeFrequency {100ul};
     unsigned long _stopSampling {std::numeric_limits<unsigned long>::max()};
+    double _yLower = 0.;
+    double _yUpper = {std::numeric_limits<double>::max()};
 
     // Auxiliary variables
     double _binwidthX;
     double _binwidthZ;
     unsigned long _lenVector;
     std::array<double, 3> _globalBoxLength;
-    double _distMax;
+    double _cellVolume;
 
     // Accumulated quantities over _writeFrequency per bin
     // NOTE: Only the root process knows correct values (except number of molecules and temperature)
@@ -66,8 +67,8 @@ class CuboidSampling : public PluginBase {
     void resetVectors();   // Set accumulation vectors to zero
 
  public:
-    CylindricSampling();
-    ~CylindricSampling() override = default;
+    CuboidSampling();
+    ~CuboidSampling() override = default;
 
     void init(ParticleContainer* /* particleContainer */, DomainDecompBase* domainDecomp, Domain* domain) override;
 
@@ -82,8 +83,8 @@ class CuboidSampling : public PluginBase {
     
     void finish(ParticleContainer* /* particleContainer */, DomainDecompBase* /* domainDecomp */, Domain* /* domain */) override {}
 
-    std::string getPluginName() override { return "CylindricSampling"; }
+    std::string getPluginName() override { return "CuboidSampling"; }
 
-    static PluginBase* createInstance() { return new CylindricSampling(); }
+    static PluginBase* createInstance() { return new CuboidSampling(); }
 };
 
