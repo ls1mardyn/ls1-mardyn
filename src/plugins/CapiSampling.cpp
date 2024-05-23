@@ -51,7 +51,7 @@ void CapiSampling::init(ParticleContainer* /* particleContainer */, DomainDecomp
     _binwidthX = (_globalBoxLength[0]/_numBinsX);
     _binwidthY = (_globalBoxLength[1]/_numBinsY);
     _binwidthZ = (_globalBoxLength[2]/_numBinsZ);
-    _cellVolume = _binwidthX * _binwidthZ;
+    _cellVolume = _binwidthX *_binwidthY * _binwidthZ;
 
     Log::global_log->info() << "["<< getPluginName()<<"] _binwidthX:_binwidthZ : " <<  _binwidthX<<":"<<_binwidthZ << std::endl;
 
@@ -95,10 +95,10 @@ void CapiSampling::afterForces(ParticleContainer* particleContainer, DomainDecom
         const double rx = pit->r(0);
         const double ry = pit->r(1);
         const double rz = pit->r(2);
-        const unsigned int indexX = std::min(_numBinsX, static_cast<unsigned int>(rx/_binwidthX));  // Index of bin of height
-        const unsigned int indexY = std::min(_numBinsY, static_cast<unsigned int>(ry/_binwidthY));  // Index of bin of height
-        const unsigned int indexZ = std::min(_numBinsZ, static_cast<unsigned int>(rz/_binwidthZ));  // Index of bin of radius
-        const unsigned int index =  _numBinsY*_numBinsX*indexY  + _numBinsX*indexX + indexZ;
+        const unsigned int indexX = static_cast<unsigned int>(rx/_binwidthX);  // Index of bin x
+        const unsigned int indexY =  static_cast<unsigned int>(ry/_binwidthY);  // Index of bin y
+        const unsigned int indexZ = static_cast<unsigned int>(rz/_binwidthZ);  // Index of bin z
+        const unsigned int index =  _numBinsX*_numBinsZ*indexY  + _numBinsZ*indexX + indexZ;
 
         numMolecules_step.local[index] ++;
 
@@ -152,14 +152,14 @@ void CapiSampling::afterForces(ParticleContainer* particleContainer, DomainDecom
             ofs << std::endl;
 
             //content
-            for(int iy = 0; iy<_numBinsY; iy++){
-                for(int ix = 0; ix<_numBinsX; ix++){
+            for(unsigned int iy = 0; iy<_numBinsY; iy++){
+                for(unsigned int ix = 0; ix<_numBinsX; ix++){
                 double rx = (.5 + ix) * _binwidthX;
                     ofs << std::setw(24) << iy;        // Bin Index (y)
                     ofs << std::setw(24) << rx;        // Bin position (x)
-                    for (int iz = 0; iz < _numBinsZ; iz++)
+                    for (unsigned int iz = 0; iz < _numBinsZ; iz++)
                     {
-                        int index = iy*_numBinsY*_numBinsX  + ix*_numBinsX + iz;
+                        unsigned int index = iy*_numBinsX*_numBinsZ  + ix*_numBinsZ + iz;
 
                         unsigned long numSamples {0ul};
                         double numMolsPerStep {std::nan("0")}; // Not an int as particles change bin during simulation
