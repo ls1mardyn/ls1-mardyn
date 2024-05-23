@@ -40,6 +40,7 @@
 // General plugins
 #include "plugins/CylindricSampling.h"
 #include "plugins/CoalescenceSampling.h"
+#include "plugins/CuboidSampling.h"
 #include "plugins/COMaligner.h"
 #include "plugins/DirectedPM.h"
 #include "plugins/Dropaccelerator.h"
@@ -92,6 +93,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(COMaligner);
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CylindricSampling);
+	REGISTER_PLUGIN(CuboidSampling);
 	REGISTER_PLUGIN(CoalescenceSampling);
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(CommunicationPartnerWriter);
