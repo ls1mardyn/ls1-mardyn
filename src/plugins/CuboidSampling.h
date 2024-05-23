@@ -23,13 +23,17 @@
 * There is NO differentiation between components; it is assumed that all (pseudo) components have the same mass (for correct calculation of temperature)
 * \code{.xml}
 * <plugin name="CuboidSampling">
-*           <binwidth>FLOAT</binwidth>                  <!-- Width of sampling bins; default 1.0 -->
+*           <numBinsX>FLOAT</numBinsX>                  <!-- Width of sampling bins; default 1.0 -->
+*           <numBinsZ>FLOAT</numBinsZ>                  <!-- Width of sampling bins; default 1.0 -->
             <start>INT</start>                          <!-- Simstep to start sampling; default 0 -->
             <writefrequency>INT</writefrequency>        <!-- Simstep to write out result file; default 10000 -->
-            <stop>INT</stop>                            <!-- Simstep to stop sampling; default 1000000000 -->
+            <stop>INT</stop>                            <!-- Simstep to stop sampling; default float.max -->
+            <yLower>FLOAT</yLower>                      <!-- start y-Direction -->
+            <yUpper>FLOAT</yUpper>                      <!-- stop y-direction -->
 * </plugin>
 * \endcode
 */
+
 class CuboidSampling : public PluginBase {
 
  private:
