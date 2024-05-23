@@ -51,16 +51,17 @@ public:
 	   \endcode
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig) {
-		xmlconfig.getNodeValueReduced("coords/x", _r[0]);
-		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
-		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
-		xmlconfig.getNodeValueReduced("mass", _m);
-
 		if (!xmlconfig.getNodeValue("@name", _name)) {
 			Log::global_log->error() << "Cannot find site name. Defaulting to type." << std::endl;
 			xmlconfig.getNodeValue("@type", _name);
 		}
-
+		Log::global_log->info() << "Site name: " << _name << std::endl;
+		xmlconfig.getNodeValueReduced("coords/x", _r[0]);
+		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
+		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
+		Log::global_log->info() << "Site coordinates: (x, y, z) = (" << _r[0] << ", " << _r[1] << ", " << _r[2] << ")" << std::endl;
+		xmlconfig.getNodeValueReduced("mass", _m);
+		Log::global_log->info() << "Site mass: " << _m << std::endl;
 	}
 
 	virtual ~Site() {}
@@ -124,9 +125,11 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) {
 		Site::readXML(xmlconfig);
+		Log::global_log->info() << "Site type: Lennard-Jones 12-6" << std::endl;
 		xmlconfig.getNodeValueReduced("epsilon", _epsilon);
 		xmlconfig.getNodeValueReduced("sigma", _sigma);
 		xmlconfig.getNodeValue("shifted", _shiftRequested);
+		Log::global_log->info() << "Site parameters: epsilon = " << _epsilon << ", sigma: " << _sigma << ", shifted: " << _shiftRequested << std::endl;
 	}
 
 	/// write to stream
@@ -191,7 +194,9 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) {
 		Site::readXML(xmlconfig);
+		Log::global_log->info() << "Site type: Charge" << std::endl;
 		xmlconfig.getNodeValueReduced("charge", _q);
+		Log::global_log->info() << "Site parameters: charge = " << _q << std::endl;
 	}
 
 	/// write to stream
@@ -312,6 +317,7 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) {
 		Site::readXML(xmlconfig);
+		Log::global_log->info() << "Site type: Dipole" << std::endl;
 		bool bAngleInput = true;
 		double theta, phi;
 		bAngleInput = bAngleInput && xmlconfig.getNodeValueReduced("dipolemoment/theta", theta);
@@ -324,7 +330,9 @@ public:
 			xmlconfig.getNodeValueReduced("dipolemoment/z", _e[2]);
 			normalize_e();
 		}
+		Log::global_log->info() << "Site parameters: dipole moment (ex, ey, ez) = (" << _e[0] << ", " << _e[1] << ", " << _e[2] << ")" << std::endl;
 		xmlconfig.getNodeValueReduced("dipolemoment/abs", _abs);
+		Log::global_log->info() << "Site parameters: dipole moment abs = " << _abs << std::endl;
 	}
 
 	double absMy() const { return abs(); }  /**< get the absolute value of the dipole moment. */
@@ -374,6 +382,7 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) {
 		Site::readXML(xmlconfig);
+		Log::global_log->info() << "Site type: Quadrupole" << std::endl;
 		bool bAngleInput = true;
 		double theta, phi;
 		bAngleInput = bAngleInput && xmlconfig.getNodeValueReduced("quadrupolemoment/theta", theta);
@@ -386,7 +395,9 @@ public:
 			xmlconfig.getNodeValueReduced("quadrupolemoment/z", _e[2]);
 			normalize_e();
 		}
+		Log::global_log->info() << "Site parameters: quadrupole moment (ex, ey, ez) = (" << _e[0] << ", " << _e[1] << ", " << _e[2] << ")" << std::endl;
 		xmlconfig.getNodeValueReduced("quadrupolemoment/abs", _abs);
+		Log::global_log->info() << "Site parameters: quadrupole moment (abs) = " << _abs << std::endl;
 	}
 
 	double absQ() const { return abs(); }  /**< get the absolute value of the quadrupole moment. */
