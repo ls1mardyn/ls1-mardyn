@@ -402,6 +402,9 @@ unsigned long XMLfileUnits::getNodeValueUnit(const char* nodepath, XMLfileUnits:
 	{
 		value=XMLfileUnits::ValueUnit(v,u);
 	}
+	else {
+		value = v;
+	}
 	return found;
 }
 
