@@ -446,13 +446,16 @@ unsigned long XMLfile::query(std::list<Node>& nodeselection, const std::string& 
 				if (! attrname.empty())
 				{ // search for attribute node
 					attr=ele->first_attribute(attrname.c_str());
-					nodepath.append("@");
-					nodepath.append(attrname);
-					nodeselection.push_back(Node(attr,nodepath));
+					if(0 != attr) {
+						nodepath.append("@");
+						nodepath.append(attrname);
+						nodeselection.push_back(Node(attr,nodepath));
+						++foundnodes;
+					}
 				} else { // found element node
 					nodeselection.push_back(Node(ele,nodepath));
+					++foundnodes;
 				}
-				++foundnodes;
 			}
 		}
 	}
