@@ -152,11 +152,15 @@ private:
      * */
     AdResSForceAdapter* _forceAdapter;
 
-    Sampler* sampler;
-    GridHandler grid_handler;//TODO: pointer?
-    Grid grid;
-    
+	/**
+	 * Performs density sampling
+	 * */
+    SamplerBase* _density_sampler;
 
+	/**
+	 * Grid used for certain density sampling techniques
+	 * */
+    FTH::grid_t* _grid;
 };
 
 #endif //MARDYN_ADRESS_H

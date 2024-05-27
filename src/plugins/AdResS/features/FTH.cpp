@@ -7,14 +7,13 @@
 void FTH::Handler::init(const FTH::Config &config) {
 	_config._enableThermodynamicForce = config._enableThermodynamicForce;
 	if (!config._enableThermodynamicForce) return;
-	_config = config;
 
-	auto* domain = _simulation.getDomain();
-	_densityProfiler.init(_config._samplingStepSize, domain, _config._smoothingFactor, _config._samplingRadius);
+	_config = config;
 	_config._thermodynamicForceSampleCounter = 0;
 
 	if (!_config._createThermodynamicForce) return;
 
+	auto* domain = _simulation.getDomain();
 	_config._thermodynamicForce.n = static_cast<unsigned long>(domain->getGlobalLength(0) / _config._samplingStepSize);
 	_config._thermodynamicForce.begin = 0.0;
 	_config._thermodynamicForce.step_width.resize(_config._thermodynamicForce.n-1, _config._samplingStepSize);

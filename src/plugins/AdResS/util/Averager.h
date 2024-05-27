@@ -20,18 +20,17 @@ public:
 	/**
 	 * Sets the capture size to the size of the container data.
 	 * */
-	void SetDataSize(const T& data){
-		_sum_data.resize(data.size());
-		std::fill(_sum_data.begin(), _sum_data.end(), 0.0);
+	void setDataSize(const T& data){
+		_sum_data.resize(data.size(), 0.0);
 	}
 
 	/**
 	 * Captures data and increases capture count by one.
 	 * */
-	void AverageData(const T& data) {
+	void averageData(const T& data) {
 		if(data.size() != _sum_data.size()){
 			Log::global_log->warning() << "[TimeAveraging] data structure mismatch" << std::endl;
-			SetDataSize(data);
+			setDataSize(data);
 			_step_count = 0;
 		}
 
@@ -45,14 +44,14 @@ public:
 	/**
 	 * Gets an immutable reference to the sum of all captured instances.
 	 * */
-	const T& GetSumData() const {
-		return this->_sum_data;
+	const T& getSumData() const {
+		return _sum_data;
 	}
 
 	/**
 	 * Gets the current averaged quantity over all captured instances.
 	 * */
-	T GetAveragedDataCopy() const {
+	T getAveragedDataCopy() const {
 		T copy = _sum_data;
 		for(int i = 0; i < copy.size(); i++) {
 			copy[i] = copy[i] / static_cast<double>(_step_count);
@@ -61,19 +60,28 @@ public:
 	}
 
 	/**
+	 * Writes the current averaged quantity into the provided buffer
+	 * */
+	 void getAveragedData(T& dst) {
+		for(int i = 0; i < _sum_data.size(); i++) {
+			dst[i] = _sum_data[i] / static_cast<double>(_step_count);
+		}
+	 }
+
+	/**
 	 * Gets the total amount of captured frames
 	 * */
-	int GetStepCount(){
-		return this->_step_count;
+	int getStepCount(){
+		return _step_count;
 	}
 
-	std::ostream& WriteAverage(std::ostream& out, const T& data){
+	std::ostream& writeAverage(std::ostream& out, const T& data){
 		std::string prefix ="//[TimeAverage]: ";
 
-		out <<prefix+"data average after: " << _step_count << " steps" << "\n";
-		out<<prefix+"data structure with size: "<<data.size()<<"\n";
-		for(int i=0;i<data.size();i++){
-			out << i << "\t" << data[i] << "\t" <<data[i]/(double)_step_count << "\n";
+		out << prefix << "data average after: " << _step_count << " steps" << "\n";
+		out << prefix << "data structure with size: " << data.size() << "\n";
+		for (int i = 0; i < data.size(); i++) {
+			out << i << "\t" << data[i] << "\t" << data[i] / (double)_step_count << "\n";
 		}
 		return out;
 	}

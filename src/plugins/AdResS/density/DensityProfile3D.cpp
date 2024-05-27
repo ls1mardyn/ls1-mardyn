@@ -24,8 +24,8 @@ void DensityProfile3D::init(double binWidth, Domain *domain, double smoothingFac
 	_grid.StartGrid(_binDims[0], _binDims[1], _binDims[2]);
 
 	_gridSampler.GetGridHandler().SetGridBoundarySubsets(&_grid);
-	_gridSampler.init(&_grid);
-	_averager.SetDataSize(_gridSampler.GetSamples().material_density);
+	_gridSampler.init(nullptr);
+	_averager.setDataSize(_gridSampler.GetSamples().material_density);
 
 	//ofstream mesh("mesh.txt");
 	//mesh << grid;
@@ -155,7 +155,7 @@ void DensityProfile3D::writeDensity(const std::string &filename, const std::stri
 	}
 	if(type == GRID){
 		std::ofstream ppc2(filename);
-		_gridSampler.WritePlaneSamples<std::vector<double>>(ppc2, _averager.GetAveragedDataCopy());
+		_gridSampler.WritePlaneSamples<std::vector<double>>(ppc2, _averager.getAveragedDataCopy());
 		ppc2.close();
 		return;
 	}
@@ -179,7 +179,7 @@ void DensityProfile3D::step(ParticleContainer* particleContainer, DomainDecompBa
 	std::array<std::vector<double>,3> global_mol_pos = getGlobalMolPos(particleContainer, domainDecomp, domain);
 	_gridSampler.SampleAtNodes(global_mol_pos);
 	_gridSampler.SetSubsetMaterialDensityValues();
-	_averager.AverageData(_gridSampler.GetSamples().material_density);
+	_averager.averageData(_gridSampler.GetSamples().material_density);
 }
 
 std::array<std::vector<double>,3> DensityProfile3D::getGlobalMolPos(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {

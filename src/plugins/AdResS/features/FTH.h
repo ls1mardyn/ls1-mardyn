@@ -7,6 +7,8 @@
 
 #include "Resolution.h"
 #include "../Interpolation.h"
+#include "FTH_Grid.h"
+#include "../density/Sampler.h"
 #include "plugins/AdResS/density/DensityProfile3D.h"
 
 #include <vector>
@@ -41,14 +43,8 @@ namespace FTH {
 		//! @brief Controls speed of convergence for F_th
 		double _convergenceFactor;
 
-		//! @brief step size of density sampling
-		double _samplingStepSize;
-
 		//! @brief initial and target density
 		double _rho0;
-
-		//! @brief interpolation smoothness
-		double _smoothingFactor;
 
 		//! @brief Thermodynamic force used to correct the density difference created by plain AdResS
 		Interpolation::Function _thermodynamicForce;
@@ -56,8 +52,11 @@ namespace FTH {
 		//! @brief Gradient of density distribution, used for convergence checking
 		Interpolation::Function _lastGradient;
 
-		//! @brief Measurement Radius for Grid Sampling
-		double _samplingRadius;
+		//! @brief Pointer to grid, if one is used (can be null)
+		grid_t *_grid;
+
+		//! @brief Pointer to the active density sampler (never null)
+		SamplerBase *_density_sampler;
 	};
 
 	/**
