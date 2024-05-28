@@ -691,7 +691,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 
 	// _simulationTime might be updated by readers -> also update _initSimulation
 	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
-	Log::global_log->info() << "Set initial time step to start from to " << _initSimulation << std::endl;
+	Log::global_log->info() << "Set initial time step to " << _initSimulation << std::endl;
 }
 
 
