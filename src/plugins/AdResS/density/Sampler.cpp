@@ -24,6 +24,7 @@ void GridSampler::init(Domain *domain) {
 
 void GridSampler::sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) {
 	sampleAtNodes(pc);
+	_was_sampled = true;
 }
 
 void GridSampler::sampleAtNodes(ParticleContainer* pc){
@@ -84,7 +85,7 @@ void GridSampler::sampleAtNodes(ParticleContainer* pc){
 		_grid->getNodes()[nidx].data().particles = static_cast<int>(_sampled_data[nidx]);
 		const auto mat_density = (double)_sampled_data[nidx]/sphere_volume;
 		_sampled_data[nidx] = mat_density;
-		_grid->getNodes()[nidx].data().material_density = mat_density;
+		_grid->getNodes()[nidx].data().density = mat_density;
 	}
 }
 
@@ -237,6 +238,8 @@ void DirectProjectedSampler::sampleData(ParticleContainer *pc, DomainDecompBase 
 	for(int i = 0; i < _sampled_data.size(); i++) {
 		_sampled_data[i] /= _binVolume;
 	}
+
+	_was_sampled = true;
 }
 
 void DirectProjectedSampler::writeSample(const std::string &filename, int simstep) {
@@ -287,6 +290,8 @@ void FTProjectedSampler::sampleData(ParticleContainer *pc, DomainDecompBase *dom
 	for(unsigned long i = 0; i < _fun.n; i++) {
 		_fun.function_values[i] /= _binVolume;
 	}
+
+	_was_sampled = true;
 }
 
 void FTProjectedSampler::writeSample(const std::string &filename, int simstep) {
@@ -307,6 +312,8 @@ GMMProjectedSampler::GMMProjectedSampler(int dim, int samples, double smoothing_
 void GMMProjectedSampler::sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) {
 	ProjectedSampler::loadGlobalMolPos(pc, domainDecomp, domain);
 	Interpolation::createGMM(0.0, domain->getGlobalLength(_dim), _samples, _filterStrength, _global_mol_pos, _fun);
+
+	_was_sampled = true;
 }
 
 void GMMProjectedSampler::writeSample(const std::string &filename, int simstep) {

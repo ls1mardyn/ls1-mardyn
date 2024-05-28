@@ -240,9 +240,9 @@ std::string AdResS::getPluginName() {
 void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsigned long) {
     //sampler->SampleData(container);
     _resolutionHandler.checkResolution(*container);
-	_fthHandler.step(*container, _resolutionHandler.getRegions());
+	_fthHandler.computeSingleIteration(*container, _resolutionHandler.getRegions());
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
-    _fthHandler.apply(*container, _resolutionHandler.getRegions(), _resolutionHandler.getCompResMap());
+	_fthHandler.applyForce(*container, _resolutionHandler.getRegions(), _resolutionHandler.getCompResMap());
 }

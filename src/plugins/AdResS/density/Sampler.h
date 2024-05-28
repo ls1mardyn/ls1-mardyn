@@ -69,9 +69,21 @@ public:
 	 * */
 	virtual void getSampleFunction(Interpolation::Function3D& fun) { };
 
+	/**
+	 * Returns number of bins if implementation is projected
+	 * */
+	virtual int getNumSamplePoints() { return 0; };
+
+	/**
+	 * Returns true if sampleData was called at least once before
+	 * */
+	[[nodiscard]] bool wasSampled() const { return _was_sampled; }
+
 protected:
 	/// sample buffer
 	std::vector<double> _sampled_data;
+	/// flag whether sampleData was already called at least once
+	bool _was_sampled = false;
 };
 
 class GridSampler : public SamplerBase {
@@ -207,6 +219,8 @@ public:
 	 * */
 	void writeSample(const std::string &filename, int simstep) override;
 
+	int getNumSamplePoints() override { return static_cast<int>(_bins); }
+
 protected:
 	/// number of bins
 	unsigned long _bins;
@@ -278,6 +292,8 @@ public:
 	 * */
 	void getSampleFunction(Interpolation::Function& fun) override;
 
+	int getNumSamplePoints() override { return _samples; }
+
 private:
 	/// number of discrete frequencies
 	int _frequencies;
@@ -321,6 +337,8 @@ public:
 	 * Writes into fun the current sampled function
 	 * */
 	void getSampleFunction(Interpolation::Function& fun) override;
+
+	int getNumSamplePoints() override { return _samples; }
 
 private:
 	/// number of samples for resampling

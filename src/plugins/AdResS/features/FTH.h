@@ -9,7 +9,6 @@
 #include "../Interpolation.h"
 #include "FTH_Grid.h"
 #include "../density/Sampler.h"
-#include "plugins/AdResS/density/DensityProfile3D.h"
 
 #include <vector>
 
@@ -46,12 +45,6 @@ namespace FTH {
 		//! @brief initial and target density
 		double _rho0;
 
-		//! @brief Thermodynamic force used to correct the density difference created by plain AdResS
-		Interpolation::Function _thermodynamicForce;
-
-		//! @brief Gradient of density distribution, used for convergence checking
-		Interpolation::Function _lastGradient;
-
 		//! @brief Pointer to grid, if one is used (can be null)
 		grid_t *_grid;
 
@@ -66,55 +59,138 @@ namespace FTH {
 	public:
 		Handler() = default;
 
+		virtual ~Handler() = default;
+
 		/**
 		 * Initializes this FTH Handler based on the provided config object.
 		 * */
-		void init(const Config& config);
+		virtual void init(const Config& config) = 0;
 
 		/**
 		 * Recomputes F_th in _thermodynamicForce by using the current density profile and interpolating the gradient.
      	 * According to: F_k+1(x) = F_k(x) - c * d'(x)
 		 * */
-		void computeIteration(ParticleContainer& container, const Resolution::FPRegions_t &regions);
+		virtual void updateForce(ParticleContainer& container, const Resolution::FPRegions_t &regions) = 0;
 
 		/**
      	* Checks if the current simulation density is at most _convergenceThreshold apart from _targetDensity.
      	* @returns true iff converged
      	* */
-		bool checkConvergence();
+		virtual bool checkConvergence() = 0;
 
 		/**
 		 * Should be called once every simulation step (before forces are computed). Will update internal counters. Based on configured intervals,
 		 * will check for convergence or compute fth iteration.
-		 * Afterwards there is no need to manually call checkConvergence or computeIteration!
+		 * Afterwards there is no need to manually call checkConvergence or updateForce!
 		 * */
-		void step(ParticleContainer& container, const Resolution::FPRegions_t &regions);
+		void computeSingleIteration(ParticleContainer& container, const Resolution::FPRegions_t &regions);
 
 		/**
      	* Applies the thermodynamic force to all molecules in hybrid regions.
      	* @param container container of considered molecules
      	* @param regions iterable of all FPRegions
      	* */
-		void apply(ParticleContainer& container, const Resolution::FPRegions_t& regions, const Resolution::CompResMap_t& compResMap);
+		virtual void applyForce(ParticleContainer& container, const Resolution::FPRegions_t& regions, const Resolution::CompResMap_t& compResMap) = 0;
 
 		/**
 		 * Initiate writing of density and fth logs depending on the configuration.
 		 * If both flags are off then nothing is written
 		 * */
-		void writeLogs(ParticleContainer &particleContainer, DomainDecompBase &domainDecomp, Domain &domain, unsigned long simstep);
+		virtual void writeLogs(ParticleContainer &particleContainer, DomainDecompBase &domainDecomp, Domain &domain, unsigned long simstep) = 0;
 
 		/**
 		 * Write the current version of the FTH regardless of the logging state.
 		 * It is assumed that this is called on the finish event of the AdResS plugin.
 		 * */
-		void writeFinalFTH();
+		virtual void writeFinalFTH() = 0;
 
-	private:
+	protected:
 		//! @brief all FTH properties
 		Config _config;
+	};
 
-		//! @brief Class to create 3D density profiles
-		DensityProfile3D _densityProfiler;
+	/**
+	 * Computes FTH for a density sampler, that uses a 3D grid
+	 * */
+	class Grid3DHandler : public Handler {
+	public:
+		void init(const Config &config) override;
+
+		void updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) override;
+
+		bool checkConvergence() override;
+
+		void applyForce(ParticleContainer &container, const Resolution::FPRegions_t &regions, const Resolution::CompResMap_t &compResMap) override;
+
+		void writeLogs(ParticleContainer &particleContainer, DomainDecompBase &domainDecomp, Domain &domain, unsigned long simstep) override;
+
+		void writeFinalFTH() override;
+	};
+
+	/**
+	 * Computes FTH for a density sampler, that uses a 1D grid
+	 * */
+	class Grid1DHandler : public Handler {
+	public:
+		void init(const Config &config) override;
+
+		void updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) override;
+
+		bool checkConvergence() override;
+
+		void applyForce(ParticleContainer &container, const Resolution::FPRegions_t &regions, const Resolution::CompResMap_t &compResMap) override;
+
+		void writeLogs(ParticleContainer &particleContainer, DomainDecompBase &domainDecomp, Domain &domain, unsigned long simstep) override;
+
+		void writeFinalFTH() override;
+
+	private:
+		//! @brief Thermodynamic force used to correct the density difference created by plain AdResS
+		Interpolation::Function _thermodynamicForce;
+	};
+
+	/**
+	 * Computes FTH for a density sampler, that uses a 3D function
+	 * */
+	class Function3DHandler : public Handler {
+	public:
+		void init(const Config &config) override;
+
+		void updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) override;
+
+		bool checkConvergence() override;
+
+		void applyForce(ParticleContainer &container, const Resolution::FPRegions_t &regions, const Resolution::CompResMap_t &compResMap) override;
+
+		void writeLogs(ParticleContainer &particleContainer, DomainDecompBase &domainDecomp, Domain &domain, unsigned long simstep) override;
+
+		void writeFinalFTH() override;
+
+	private:
+		//! @brief Thermodynamic force used to correct the density difference created by plain AdResS
+		Interpolation::Function3D _thermodynamicForce;
+	};
+
+	/**
+	 * Computes FTH for a density sampler, that uses a 1D function
+	 * */
+	class Function1DHandler : public Handler {
+	public:
+		void init(const Config &config) override;
+
+		void updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) override;
+
+		bool checkConvergence() override;
+
+		void applyForce(ParticleContainer &container, const Resolution::FPRegions_t &regions, const Resolution::CompResMap_t &compResMap) override;
+
+		void writeLogs(ParticleContainer &particleContainer, DomainDecompBase &domainDecomp, Domain &domain, unsigned long simstep) override;
+
+		void writeFinalFTH() override;
+
+	private:
+		//! @brief Thermodynamic force used to correct the density difference created by plain AdResS
+		Interpolation::Function _thermodynamicForce;
 	};
 };
 #endif //MARDYN_FTH_H

@@ -617,6 +617,78 @@ namespace Interpolation {
 				}
 			}
 		}
+
+		/**
+		 * Will compute gradient over provided grid.
+		 * EX_SRC loads the property of each cell over which the gradient should be computed.
+		 * Its signature must be equivalent to: D (*)(const n_data_t&)
+		 * EX_DST stores the three gradient values back into the grid.
+		 * Its signature must be equivalent to: void (*)(n_data_t&, int dim, D grad)
+		 * dim will have values 0, 1, 2
+		 *
+		 * Gradients on the border will use forward/backward differences, inner ones central differences.
+		 * */
+		template<typename n_data_t, typename EX_SRC, typename EX_DST, typename D=double>
+		void computeGradient(Grid<n_data_t>& grid, EX_SRC src_extractor, EX_DST dst_extractor) {
+			auto& nodes = grid.getNodes();
+			const auto& shape = nodes.shape();
+			using i2 = std::array<int, 2>;
+			const std::array<i2, 3> dim_map = {
+					i2{2, 1}, // dim 0
+					i2{2, 0}, // dim 1
+					i2{1, 0}  // dim 2
+			};
+			auto& mesh_width = grid.getElements().getElementSize();
+
+			// do forward and backward FD for border
+			for (int dim = 0; dim < 3; dim++) {
+				for (idx_t j = 0; j < shape[dim_map[dim][0]]; j++) {
+					for (idx_t i = 0; i < shape[dim_map[dim][1]]; i++) {
+						// forward FD
+						std::array<idx_t, 3> coords0 { 0 };
+						coords0[dim_map[dim][0]] = j;
+						coords0[dim_map[dim][1]] = i;
+						std::array<idx_t, 3> coords1 = coords0;
+						coords1[dim] += 1;
+
+						auto& node0_fw = nodes.at(coords0[0], coords0[1], coords0[2]);
+						auto& node1_fw = nodes.at(coords1[0], coords1[1], coords1[2]);
+						D fd_fw = (src_extractor(node1_fw) - src_extractor(node0_fw)) / mesh_width[dim];
+						dst_extractor(node0_fw, dim, fd_fw);
+
+						// backward FD
+						coords0[dim] = shape[dim] - 1;
+						coords1[dim] = coords0[dim] - 1;
+
+						auto& node0_bw = nodes.at(coords0[0], coords0[1], coords0[2]);
+						auto& node1_bw = nodes.at(coords1[0], coords1[1], coords1[2]);
+						D fd_bw = (src_extractor(node0_bw) - src_extractor(node1_bw)) / mesh_width[dim];
+						dst_extractor(node0_bw, dim, fd_bw);
+					}
+				}
+			}
+
+			// do central FD for inner nodes
+			for (idx_t z = 1; z < shape[2] - 1; z++) {
+				for (idx_t y = 1; y < shape[1] - 1; y++) {
+					for (idx_t x = 1; x < shape[0] - 1; x++) {
+						for (int dim = 0; dim < 3; dim++) {
+							std::array<idx_t, 3> coords { x, y, z };
+							std::array<idx_t, 3> coords0 = coords;
+							std::array<idx_t, 3> coords1 = coords;
+							coords0[dim] -= 1;
+							coords1[dim] += 1;
+
+							auto& node_c = nodes.at(coords[0], coords[1], coords[2]);
+							auto& node0 = nodes.at(coords0[0], coords0[1], coords0[2]);
+							auto& node1 = nodes.at(coords1[0], coords1[1], coords1[2]);
+							D fd_c = (src_extractor(node1) - src_extractor(node0)) / (2 * mesh_width[dim]);
+							dst_extractor(node_c, dim, fd_c);
+						}
+					}
+				}
+			}
+		}
 	};
 }
 #endif //MARDYN_INTERPOLATION_H
