@@ -251,8 +251,8 @@ if __name__ == '__main__':
     print('Eta Galliero: '+str(eta_galliero(T,rho)))
 
     fluid = 'Argon'
-    T = 200
-    rho = 10
+    T = 200.0
+    rho = 10.0
     print(f'Running test with {fluid} ...')
     print('Eta Lemmon:     '+str(eta_lemmon(T,rho,fluid)))
-    print('Eta Lemmon Lit: 25.5662')
+    print('Eta Lemmon Lit: 25.5662')  # Value from Table V in Lemmon2004

@@ -35,23 +35,6 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         #eta0=(0.168729283*np.sqrt(T)) / (sig**2*Omega(Tstar,fluid))  # Monika
         return eta0 #8.18940 #22.7241 #8.18940 #eta0
 
-    def etar(tau,delta,fluid):
-        summe=0
-        for ri in range(0,len(tab3[fluid])):
-            i,Ni,ti,di,li=tab3[fluid]['i'][ri],tab3[fluid]['Ni'][ri],tab3[fluid]['ti'][ri],tab3[fluid]['di'][ri],tab3[fluid]['li'][ri]
-            if li==0:
-                gamma=0
-            else:
-                gamma=1
-            summe+=Ni*tau**ti*delta**di*np.exp(-gamma*delta**li)
-        return summe
-
-    def eta(T,rho,fluid):
-        Tc,rhoc=tab1[fluid][0],tab1[fluid][1]
-        tau,delta=Tc/T,rho/rhoc
-        eta=eta0(T,fluid)+etar(tau,delta,fluid)
-        return eta
-
     def lam0(T,fluid):
         Tc=tab1[fluid][0]
         tau=Tc/T
@@ -272,28 +255,6 @@ def lambda_fernandez(T,rho,L,QQ):
             lambda_f = lambda_f + coeff[i,j]*(T**(i))*(rho**(j))
     return lambda_f
 
-#%% Get thermal conductivity of LJTS fluid with data/fit by Guevara/Homes
-def lambda_guevara_homes(T,rho):
-    '''
-    Get thermal conductivity of LJTS fluid (Guevara/Homes)
-
-    :param float T: Temperature
-    :param float rho: Density
-    :return: float lambda_l: Thermal conductivity
-    '''
-    
-    p00=-364.1
-    p10=-1003
-    p01=2292
-    p20=-21.11
-    p11=2238
-    p02=-3751
-    p30=601.2
-    p21=-1482
-    p12=13.63
-    p03=1494
-    lambda_gh = p00 + p10*T + p01*rho + p20*T**2 + p11*T*rho + p02*rho**2 + p30*T**3 + p21*T**2*rho + p12*T*rho**2 + p03*rho**3
-    return lambda_gh
 
 #%% Tests
 if __name__ == '__main__':
@@ -303,4 +264,10 @@ if __name__ == '__main__':
     print(f'Running test with {fluid} ...')
     print('Lambda Lemmon:         '+str(lambda_lemmon(T,rho,fluid)))
     print('Lambda Lautenschlager: '+str(lambda_lauten(T,rho)))
-    print('Lambda Guevara/Homes:  '+str(lambda_guevara_homes(T,rho)))
+
+    fluid = 'Argon'
+    T = 100.0
+    rho = 33.0
+    print(f'Running test with {fluid} ...')
+    print('Eta Lemmon:     '+str(lambda_lemmon(T,rho,fluid)))
+    print('Eta Lemmon Lit: 111.266')  # Value from Table V in Lemmon2004
