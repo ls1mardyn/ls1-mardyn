@@ -32,7 +32,7 @@ void Interpolation::Function::writeXML(const std::string &filename) const {
 		file.flush();
 		file.close();
 	} catch (std::ifstream::failure& e) {
-		global_log->error() << "[AdResS] Failed to write Interpolation function.\n" << e.what() << std::endl;
+		global_log->error() << "[Interpolation] Failed to write Interpolation function.\n" << e.what() << std::endl;
 		_simulation.exit(-1);
 	}
 }

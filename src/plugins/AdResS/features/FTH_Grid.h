@@ -25,6 +25,19 @@ namespace FTH {
 	/// grid data type for density and fth
 	using grid_t = Interpolation::FE::Grid<NodeData>;
 	using node_t = Interpolation::FE::Node<NodeData>;
+	using d3 = Interpolation::FE::d3;
+	using i3 = Interpolation::FE::i3;
+	using idx_t = Interpolation::FE::idx_t;
+
+	/**
+	 * Interpolates the fth based on the provided grid.
+	 * */
+	d3 interpolateGridFTH(grid_t& grid, const d3& point);
+
+	/**
+	 * Writes all fth values of the grid into a file.
+	 * */
+	[[maybe_unused]] void writeGridFTH(grid_t& grid, const std::string& filename, int simstep=-1);
 }
 
 #endif //MARDYN_FTH_GRID_H

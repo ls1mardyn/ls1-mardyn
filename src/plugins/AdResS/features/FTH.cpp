@@ -103,11 +103,8 @@ void FTH::Grid3DHandler::applyForce(ParticleContainer &container, const Resoluti
 		if(compResMap[itM->componentid()] == Resolution::FullParticle) continue;
 		if(compResMap[itM->componentid()] == Resolution::CoarseGrain) continue;
 
-		double x = itM->r(0);
-		// TODO compute force
-		double F = 0;
-		//double F = computeHermiteAt(x, _config._thermodynamicForce);
-		std::array<double, 3> force = {F, 0.0, 0.0};
+		std::array<double, 3> r = itM->r_arr();
+		std::array<double, 3> force = interpolateGridFTH(*_config._grid, r);
 		itM->Fadd(std::data(force));
 	}
 }
@@ -117,10 +114,7 @@ void FTH::Grid3DHandler::writeLogs(ParticleContainer &particleContainer, DomainD
 	if(!_config._enableThermodynamicForce) return;
 	if(_config._thermodynamicForceSampleCounter != 0) return;
 
-	std::stringstream stream;
-	stream << "./F_TH_InterpolationFunction_" << simstep << ".xml";
-	//if(_config._logFTH) _config._thermodynamicForce.writeXML(stream.str());
-	// TODO write fth
+	if (_config._logFTH) writeGridFTH(*_config._grid, "./F_TH_InterpolationFunction", simstep);
 
 	if (!_config._density_sampler->wasSampled()) _config._density_sampler->sampleData(&particleContainer, &domainDecomp, &domain);
 	if(_config._logDensities) _config._density_sampler->writeSample("./Density_Grid", simstep);
@@ -128,7 +122,7 @@ void FTH::Grid3DHandler::writeLogs(ParticleContainer &particleContainer, DomainD
 
 void FTH::Grid3DHandler::writeFinalFTH() {
 	if(!_config._enableThermodynamicForce) return;
-	// TODO write fth
+	writeGridFTH(*_config._grid, "./F_TH_Final");
 }
 
 /*****************************************************

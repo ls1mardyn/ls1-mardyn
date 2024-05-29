@@ -10,6 +10,7 @@
 #include <vector>
 #include <string>
 #include <complex>
+#include <algorithm>
 
 namespace Interpolation {
 	/**
@@ -306,6 +307,20 @@ namespace Interpolation {
 			void setNodeIdx(idx_t idx, int pos) { _node_indices[pos] = idx; }
 
 			/**
+			 * @brief Transforms the provided position into a percentage scale from 0 to 1 for each dimension, based on where it
+			 * it inside of this element.
+			 * If the point is outside the element, behaviour is undefined.
+			 * @param position query position
+			 * */
+			d3 getRelativeLocalPosition(const d3& position) {
+				d3 local_point;
+				local_point[0] = 2.0 * (position[0]-_lower_bound[0]) / (_upper_bound[0] - _lower_bound[0]) - 1.0;
+				local_point[1] = 2.0 * (position[1]-_lower_bound[1]) / (_upper_bound[1] - _lower_bound[1]) - 1.0;
+				local_point[2] = 2.0 * (position[2]-_lower_bound[2]) / (_upper_bound[2] - _lower_bound[2]) - 1.0;
+				return local_point;
+			}
+
+			/**
 			 * Sets all indices
 			 * */
 			void setNodeIndices(idx_t i0, idx_t i1, idx_t i2, idx_t i3, idx_t i4, idx_t i5, idx_t i6,
@@ -496,11 +511,20 @@ namespace Interpolation {
 
 			Elements &getElements() { return _elements; }
 
+			/// lower bound of entire grid
 			[[nodiscard]] const d3 &getLower() const { return _lower_bound; }
 
+			/// upper bound of entire grid
 			[[nodiscard]] const d3 &getUpper() const { return _upper_bound; }
 
-			friend std::ostream &operator<<(std::ostream &out, Grid<T> &grid);
+			/**
+		 	 * Will find the element in which the point resides in. If the point is outside of the range spanned by the grid,
+		 	 * behaviour is undefined.
+		 	 * */
+			Element& getElementOf(const d3& point);
+
+			template<typename R>
+			friend std::ostream &operator<<(std::ostream &out, Grid<R> &grid);
 
 		private:
 			/// container for all nodes
@@ -688,6 +712,22 @@ namespace Interpolation {
 					}
 				}
 			}
+		}
+
+		/**
+		 * Will find the element in which the point resides in. If the point is outside of the range spanned by the grid,
+		 * behaviour is undefined.
+		 * */
+		template<typename T>
+		Element &Grid<T>::getElementOf(const d3 &point) {
+			const auto& elem_size = _elements.getElementSize();
+			std::array<idx_t, 3> coord { 0 };
+			for (int dim = 0; dim < 3; dim++) coord[dim] = point[dim] / elem_size[dim];
+
+			const auto& elem_shape = _elements.shape();
+			for (int dim = 0; dim < 3; dim++) std::clamp<idx_t>(coord[dim], 0, elem_shape[dim] - 1);
+
+			return _elements.at(coord[0], coord[1], coord[2]);
 		}
 	};
 }

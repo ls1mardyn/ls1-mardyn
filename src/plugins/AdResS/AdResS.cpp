@@ -23,9 +23,10 @@ using Log::global_log;
 
 Weight::function_t AdResS::weight = nullptr;
 
-AdResS::AdResS() : _resolutionHandler(), _forceAdapter(nullptr), _density_sampler(nullptr), _grid(nullptr) {};
+AdResS::AdResS() : _resolutionHandler(), _fthHandler(nullptr), _forceAdapter(nullptr), _density_sampler(nullptr), _grid(nullptr) {};
 
 AdResS::~AdResS() {
+	delete _fthHandler;
 	delete _density_sampler;
 	delete _grid;
 }
@@ -70,12 +71,14 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 
         double rad = xmlconfig.getNodeValue_double("sampleRadius", 1.0);
         _density_sampler = new AveragedGridSampler{_grid, rad};
+		_fthHandler = new FTH::Grid3DHandler();
     } else if (sample_type == "Direct") {
 		global_log->info() << "[AdResS] Using sampler implementation " << sample_type << std::endl;
 		int dim = xmlconfig.getNodeValue_int("dim", 0);
 		double bin_width = xmlconfig.getNodeValue_double("binWidth", 1);
 
 		_density_sampler = new DirectProjectedSampler(dim, bin_width);
+		_fthHandler = new FTH::Grid1DHandler();
 	} else if (sample_type == "Smooth") {
 		global_log->info() << "[AdResS] Using sampler implementation " << sample_type << std::endl;
 		int dim = xmlconfig.getNodeValue_int("dim", 0);
@@ -83,6 +86,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 		double smoothingStrength = xmlconfig.getNodeValue_double("smoothingStrength", 1);
 
 		_density_sampler = new SmoothedProjectedSampler(dim, bin_width, smoothingStrength);
+		_fthHandler = new FTH::Grid1DHandler();
 	} else if (sample_type == "FT") {
 		global_log->info() << "[AdResS] Using sampler implementation " << sample_type << std::endl;
 		int dim = xmlconfig.getNodeValue_int("dim", 0);
@@ -90,6 +94,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 		int samples = xmlconfig.getNodeValue_int("samples", 100);
 
 		_density_sampler = new FTProjectedSampler(dim, frequencies, samples);
+		_fthHandler = new FTH::Function1DHandler();
 	} else if (sample_type == "GMM") {
 		global_log->info() << "[AdResS] Using sampler implementation " << sample_type << std::endl;
 		int dim = xmlconfig.getNodeValue_int("dim", 0);
@@ -97,12 +102,14 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 		double smoothingStrength = xmlconfig.getNodeValue_double("smoothingStrength", 1);
 
 		_density_sampler = new GMMProjectedSampler(dim, samples, smoothingStrength);
+		_fthHandler = new FTH::Function1DHandler();
 	} else {
 		global_log->info() << "[AdResS] Falling back to Direct sampler implementation " << std::endl;
 		int dim = 0;
 		double bin_width = 1;
 
 		_density_sampler = new DirectProjectedSampler(dim, bin_width);
+		_fthHandler = new FTH::Grid1DHandler();
 	}
 	_density_sampler->init(_simulation.getDomain());
 	xmlconfig.changecurrentnode("..");
@@ -139,41 +146,23 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
         else { // use existing FTH function
             query = xmlconfig.query("enableFTH/forceFunction");
             count = query.card();
+			// TODO impl me
+			global_log->fatal() << "Not implemented" << std::endl;
+			Simulation::exit(-1);
+
             if (count != 1) {
                 global_log->fatal() << "[AdResS] Must specify one forceFunction block in config file!" << std::endl;
                 Simulation::exit(668);
             }
 			fthConf._logFTH = false;
-			fthConf._thermodynamicForce.begin = xmlconfig.getNodeValue_double("enableFTH/forceFunction/startX");
-            query = xmlconfig.query("enableFTH/forceFunction/samplePoint");
-            count = query.card();
-            if(count < 5) {
-                global_log->fatal() << "[AdResS] Force function must have at least 5 sample points!" << std::endl;
-                Simulation::exit(668);
-            }
 
-            fthConf._thermodynamicForce.n = count;
-            fthConf._thermodynamicForce.gradients.resize(count, 0.0);
-            fthConf._thermodynamicForce.function_values.resize(count, 0.0);
-            fthConf._thermodynamicForce.step_width.resize(count-1, 0.0);
-            XMLfile::Query::const_iterator sampleIter;
-            std::string oldpath = xmlconfig.getcurrentnodepath();
-            for(sampleIter = query.begin(); sampleIter; sampleIter++) {
-                xmlconfig.changecurrentnode(sampleIter);
-                unsigned long id = 0;
-                xmlconfig.getNodeValue("@id", id);
-                xmlconfig.getNodeValue("grad", fthConf._thermodynamicForce.gradients[id - 1]);
-                xmlconfig.getNodeValue("func", fthConf._thermodynamicForce.function_values[id - 1]);
-                if(id < count) xmlconfig.getNodeValue("step", fthConf._thermodynamicForce.step_width[id - 1]);
-            }
-            xmlconfig.changecurrentnode(oldpath);
-			fthConf._thermodynamicForceSampleGap = 200;
+            fthConf._thermodynamicForceSampleGap = 200;
 			fthConf._createThermodynamicForce = false;
         }
     }
 	fthConf._grid = _grid;
 	fthConf._density_sampler = _density_sampler;
-	_fthHandler.init(fthConf);
+	_fthHandler->init(fthConf);
 
 	Resolution::Config resConf { };
 	resConf.components = _simulation.getEnsemble()->getComponents();
@@ -222,15 +211,11 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 
 void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                      unsigned long simstep) {
-    
-    //Sampler output 
-    //std::string sampler_file{"density"+std::to_string(simstep)+".txt"};
-    //sampler->writeSample(sampler_file);
-	_fthHandler.writeLogs(*particleContainer, *domainDecomp, *domain, simstep);
+	_fthHandler->writeLogs(*particleContainer, *domainDecomp, *domain, simstep);
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
-	_fthHandler.writeFinalFTH();
+	_fthHandler->writeFinalFTH();
 }
 
 std::string AdResS::getPluginName() {
@@ -238,11 +223,10 @@ std::string AdResS::getPluginName() {
 }
 
 void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsigned long) {
-    //sampler->SampleData(container);
     _resolutionHandler.checkResolution(*container);
-	_fthHandler.computeSingleIteration(*container, _resolutionHandler.getRegions());
+	_fthHandler->computeSingleIteration(*container, _resolutionHandler.getRegions());
 }
 
 void AdResS::siteWiseForces(ParticleContainer *container, DomainDecompBase *base, unsigned long i) {
-	_fthHandler.applyForce(*container, _resolutionHandler.getRegions(), _resolutionHandler.getCompResMap());
+	_fthHandler->applyForce(*container, _resolutionHandler.getRegions(), _resolutionHandler.getCompResMap());
 }

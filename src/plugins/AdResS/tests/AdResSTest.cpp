@@ -40,7 +40,6 @@ void AdResSTest::computeForcesTest() {
         plugin->weight = Weight::nearest;
 
 		plugin->_resolutionHandler.init(r_conf);
-		plugin->_fthHandler.init(f_conf);
     }
     ParticlePairsHandler *pairHandler = new AdResSForceAdapter(plugin->_resolutionHandler);
     CellProcessor *cellProcessor = new LegacyCellProcessor(2, 2, pairHandler);
