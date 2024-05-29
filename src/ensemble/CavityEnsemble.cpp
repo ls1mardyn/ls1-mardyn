@@ -217,11 +217,18 @@ void CavityEnsemble::init(Component *component, unsigned Nx, unsigned Ny, unsign
 }
 
 unsigned long CavityEnsemble::communicateNumCavities(DomainDecompBase *comm) {
+
+#ifdef ENABLE_PERSISTENT
+	auto collComm = make_CollCommObj_AllreduceAdd(comm->getCommunicator(), this->active.size());
+	collComm.persistent();
+	collComm.get(this->globalActive);
+#else
     comm->collCommInit(1);
     comm->collCommAppendUnsLong(this->active.size());
     comm->collCommAllreduceSum();
     this->globalActive = comm->collCommGetUnsLong();
     comm->collCommFinalize();
+#endif
 
     return this->globalActive;
 }

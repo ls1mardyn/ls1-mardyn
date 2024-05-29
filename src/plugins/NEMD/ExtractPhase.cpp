@@ -89,11 +89,17 @@ void ExtractPhase::beforeForces(ParticleContainer* particleContainer, DomainDeco
 		 it.isValid(); ++it)
 		numParticles.local++;
 
+#ifdef ENABLE_PERSISTENT
+	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), numParticles.local);
+	collComm.persistent();
+	collComm.get(numParticles.global);
+#else
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(numParticles.local);
 	domainDecomp->collCommAllreduceSum();
 	numParticles.global = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
+#endif
 	_densityTarget.value = numParticles.global / V;
 
 	// Perform action only once
