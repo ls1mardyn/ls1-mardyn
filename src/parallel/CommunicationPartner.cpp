@@ -265,7 +265,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 	return _countReceived;
 }
 bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool force) {
-		if (_countReceived and not _msgReceived) {
+	if (_countReceived and not _msgReceived) {
 		int flag = 1;
 		if (_countTested > 10) {
 			// some MPI (Intel, IBM) implementations can produce deadlocks using MPI_Test without any MPI_Wait

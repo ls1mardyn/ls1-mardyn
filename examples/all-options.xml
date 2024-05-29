@@ -265,8 +265,11 @@
         <!-- specify what metric the selector should use to determine the optimal traversal -->
         <!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
         <selectorStrategy>fastestAbsolute</selectorStrategy>
-        <!-- set the auto tuning algorithm -->
-        <tuningStrategy>fullSearch</tuningStrategy>
+        <!-- set the tuning auto tuning pipeline -->
+        <!-- Leave this empty for an exhaustive full search or add any number of strategies that are applied in the stated order -->
+        <tuningStrategies>ruleBasedTuning, predictiveTuning</tuningStrategies>
+        <!-- autopas optimizes the simulation based on tuning metric: time, energy, default option is time -->
+        <tuningMetric>energy</tuningMetric>
         <!-- Data layouts to be used: AoS, SoA -->
         <dataLayouts>SoA</dataLayouts>
         <!-- Allowed choices for newton 3 optimization: enabled, disabled -->
@@ -313,7 +316,6 @@
       - CheckpointWriter
       - ResultWriter
       - XyzWriter
-      - VISWriter
       - MmspdWriter
       - PovWriter
       - StatisticsWriter
@@ -383,16 +385,6 @@
       The *.xyz-format contains x, y, z coordinates of the molecules. Such a file can be read by visualization software like vmd
       (for detail information visit: http://www.ks.uiuc.edu/Research/vmd/). -->
       <outputplugin name="XyzWriter">
-        <writefrequency>10</writefrequency>
-        <outputprefix>default</outputprefix>
-      </outputplugin>
-
-      <!-- VISWriter plugin
-      Additional to the coordinates of the molecules, the *.vis-format also contains the orientation information
-      of the molecules (using quaternions). The files can be read by software like:
-      - MolCloud (visit: http://www.visus.uni-stuttgart.de/index.php?id=995)
-      - Megamol  (visit: https://svn.vis.uni-stuttgart.de/trac/megamol/) -->
-      <outputplugin name="VISWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>

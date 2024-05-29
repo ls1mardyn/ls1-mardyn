@@ -60,10 +60,9 @@ TestPlugin | test | Test correctness of plugin calls within Simulation. Simpler 
 TimerWriter | Timers, mpi, print, load balance | Prints the average time for the specified timers as a transient. Separate output for each rank. Can be used to gather information of the load balance.
 VectorizationTuner | todo | todo
 VelocityExchange | temperature gradient | Swap the velocities and angular momentum of two particles. One particle is the warmest (fastest) in the specified cold region, the other one is the coldest (slowest) in the specified warm region.
-VISWriter | visualization, particle configurations, MegaMol | Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the deprecated *.vis MegaMol file format.
 VTKGridWriter | vtk, grid | Write MPI rank, number of molecules in each cell in a .vtu or .pvtu file. Requires compiling with VTK=1.
 VTKMoleculeWriter | vtk, visualization | Write a .vtu or .pvtu file with the molecules for visualiziation in ParaView. Requires compiling with VTK=1.
 WallPotential | potential, Wall, Lennard-Jones | Exerts the force of a Lennard-Jones (9-3 or 10-4) potential on the specified components or all particles.
 XyzWriter | visualization?, todo | todo
-
+EnergyRAPL | stats, print, file | Compute the total energy consumption (package, DRAM) of the simulation across all nodes using RAPL. (See class documentation of \ref EnergyRAPL for usage and limitations.)
 */

@@ -247,7 +247,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 			}
 		}
 		if (not isOk) {
-			Log::global_log->error() << "Aborting because of duplicated partices." << std::endl;
+			Log::global_log->error() << "Aborting because of duplicated particles." << std::endl;
 			MPI_Abort(_comm, 1);
 		}
 
