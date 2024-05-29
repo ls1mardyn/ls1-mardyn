@@ -136,6 +136,7 @@ def eta_lemmon(T,rho,fluid,units='reduced'):
     
     na=6.02214076e23
     kb=1.380649e-23
+    u_mass=1.660539e-27
     
     if fluid == 'LJTS':
         fluid = 'Argon'
@@ -164,8 +165,8 @@ def eta_lemmon(T,rho,fluid,units='reduced'):
         T = T/tc*150.687
         rho = rho/sig**3*1e30/na*1e-3
         # refTime, refLambda: tref, lref
-        tref=sig*1e-10*np.sqrt(mass*1.660538e-27/(kb*eps))
-        eta_ref=1e3*kb/(sig*1e-10*tref) # [kg/m-s]  TODO
+        tref=sig*1e-10*np.sqrt(mass*u_mass/(kb*eps))
+        eta_ref=1e6*mass*u_mass/(sig*1e-10*tref) # Lemmon gives [uPa s] (see Table V in Paper)
     elif units == 'SI':
         pass
     else:
@@ -199,12 +200,59 @@ def eta_lauten(T,rho):
             eta_l = eta_l + coeff[i,0]*(T**(coeff[i,1]))*(rho**(coeff[i,2]))
     return eta_l
 
-if __name__ == '__main__':
-    print('Running test with LJTS ...')
-    fluid = 'LJTS'
-    T = 0.8
-    rho = 0.55
 
+#%% Get dynamic viscosity of LJfull fluid with correlation by Galliero, Ind. Eng. Chem. Res., vol. 44, 2005
+def eta_galliero(T,rho):
+    '''
+    Get dynamic viscosity of LJfull fluid (Galliero)
+
+    :param float T: Temperature
+    :param float rho: Density
+    :return: float eta_l: dynamic viscosity
+    '''
+    
+    def omega_22(T):
+        a_22=1.16145
+        b_22=0.14874
+        c_22=0.52487
+        d_22=0.7732
+        e_22=2.16178
+        f_22=2.43787
+        omega_22 = a_22/T**b_22+c_22*np.exp(-d_22*T)+e_22*np.exp(-f_22*T)
+        return omega_22
+    
+    b1=0.062692
+    b2=4.095577
+    b3=-8.743269e-6
+    b4=11.12492
+    b5=2.542477e-6
+    b6=14.863984
+
+    tmp1 = 0.17630924*np.sqrt(T)/omega_22(T)
+    tmp2 = b1*(np.exp(b2*rho)-1)+b3*(np.exp(b4*rho)-1)+b5*(np.exp(b6*rho)-1)/T**2
+
+    return tmp1+tmp2
+
+
+#%% Tests
+if __name__ == '__main__':
+    fluid = 'LJTS'
+    T = 0.95
+    rho = 0.7
+    print(f'Running test with {fluid} ...')
     print('Eta Lemmon:         '+str(eta_lemmon(T,rho,fluid)))
     print('Eta Lautenschlager: '+str(eta_lauten(T,rho)))
 
+    fluid = 'LJfull'
+    T = 1.1
+    rho = 0.7
+    print(f'Running test with {fluid} ...')
+    print('Eta Lemmon:   '+str(eta_lemmon(T,rho,fluid)))
+    print('Eta Galliero: '+str(eta_galliero(T,rho)))
+
+    fluid = 'Argon'
+    T = 200
+    rho = 10
+    print(f'Running test with {fluid} ...')
+    print('Eta Lemmon:     '+str(eta_lemmon(T,rho,fluid)))
+    print('Eta Lemmon Lit: 25.5662')
