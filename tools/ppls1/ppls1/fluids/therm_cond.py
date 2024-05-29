@@ -35,6 +35,23 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         #eta0=(0.168729283*np.sqrt(T)) / (sig**2*Omega(Tstar,fluid))  # Monika
         return eta0 #8.18940 #22.7241 #8.18940 #eta0
 
+    def etar(tau,delta,fluid):
+        summe=0
+        for ri in range(0,len(tab3[fluid])):
+            i,Ni,ti,di,li=tab3[fluid]['i'][ri],tab3[fluid]['Ni'][ri],tab3[fluid]['ti'][ri],tab3[fluid]['di'][ri],tab3[fluid]['li'][ri]
+            if li==0:
+                gamma=0
+            else:
+                gamma=1
+            summe+=Ni*tau**ti*delta**di*np.exp(-gamma*delta**li)
+        return summe
+
+    def eta(T,rho,fluid):
+        Tc,rhoc=tab1[fluid][0],tab1[fluid][1]
+        tau,delta=Tc/T,rho/rhoc
+        eta=eta0(T,fluid)+etar(tau,delta,fluid)
+        return eta
+
     def lam0(T,fluid):
         Tc=tab1[fluid][0]
         tau=Tc/T
@@ -139,6 +156,7 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
     
     na=6.02214076e23
     kb=1.380649e-23
+    u_mass=1.660539e-27
     
     if fluid == 'LJTS':
         fluid = 'Argon'
@@ -167,8 +185,8 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         T = T/tc*150.687
         rho = rho/sig**3*1e30/na*1e-3
         # refTime, refLambda: tref, lref
-        tref=sig*1e-10*np.sqrt(mass*1.660538e-27/(kb*eps))
-        lref=1e3*kb/(sig*1e-10*tref) # [mW/m-K]
+        tref=sig*1e-10*np.sqrt(mass*u_mass/(kb*eps))
+        lref=1e3*kb/(sig*1e-10*tref) # Lemmon gives [mW/m-K] (see Table V in Paper)
     elif units == 'SI':
         pass
     else:
@@ -277,13 +295,12 @@ def lambda_guevara_homes(T,rho):
     lambda_gh = p00 + p10*T + p01*rho + p20*T**2 + p11*T*rho + p02*rho**2 + p30*T**3 + p21*T**2*rho + p12*T*rho**2 + p03*rho**3
     return lambda_gh
 
+#%% Tests
 if __name__ == '__main__':
-    print('Running test with LJTS ...')
     fluid = 'LJTS'
-    T = 0.8
-    rho = 0.55
-
+    T = 0.9
+    rho = 0.75
+    print(f'Running test with {fluid} ...')
     print('Lambda Lemmon:         '+str(lambda_lemmon(T,rho,fluid)))
     print('Lambda Lautenschlager: '+str(lambda_lauten(T,rho)))
     print('Lambda Guevara/Homes:  '+str(lambda_guevara_homes(T,rho)))
-
