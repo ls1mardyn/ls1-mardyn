@@ -28,17 +28,17 @@ void CylindricSampling::init(ParticleContainer* /* particleContainer */, DomainD
     _globalBoxLength[1] = domain->getGlobalLength(1);
     _globalBoxLength[2] = domain->getGlobalLength(2);
 
-    _distMax = 0.5*min(_globalBoxLength[0],_globalBoxLength[2]);  // Only sample particles within maximum radius fitting into box
+    _distMax = 0.5*std::min(_globalBoxLength[0],_globalBoxLength[2]);  // Only sample particles within maximum radius fitting into box
 
     _numBinsGlobalHeight = static_cast<unsigned int>(_globalBoxLength[1]/_binwidth);
     _numBinsGlobalRadius = static_cast<unsigned int>(_distMax/_binwidth);
 
     if (_globalBoxLength[1]/_binwidth != static_cast<float>(_numBinsGlobalHeight)) {
-        global_log->error() << "[CylindricSampling] Can not divide domain without remainder in y-direction! Change binwidth" << std::endl;
+        Log::global_log->error() << "[CylindricSampling] Can not divide domain without remainder in y-direction! Change binwidth" << std::endl;
         Simulation::exit(-1);
     }
     if (_distMax/_binwidth != static_cast<float>(_numBinsGlobalRadius)) {
-        global_log->error() << "[CylindricSampling] Can not divide domain without remainder in x or z-direction! Change binwidth" << std::endl;
+        Log::global_log->error() << "[CylindricSampling] Can not divide domain without remainder in x or z-direction! Change binwidth" << std::endl;
         Simulation::exit(-1);
     }
 
@@ -57,9 +57,9 @@ void CylindricSampling::readXML(XMLfileUnits& xmlconfig) {
     xmlconfig.getNodeValue("stop", _stopSampling);
 
 
-    global_log->info() << "[CylindricSampling] Start:WriteFreq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
-    global_log->info() << "[CylindricSampling] Binwidth: " << _binwidth << std::endl;
-    global_log->info() << "[CylindricSampling] All components treated as single one" << std::endl;
+    Log::global_log->info() << "[CylindricSampling] Start:WriteFreq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
+    Log::global_log->info() << "[CylindricSampling] Binwidth: " << _binwidth << std::endl;
+    Log::global_log->info() << "[CylindricSampling] All components treated as single one" << std::endl;
 }
 
 void CylindricSampling::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {
@@ -252,23 +252,23 @@ void CylindricSampling::afterForces(ParticleContainer* particleContainer, Domain
             const std::string fname = "CylindricSampling_TS"+ss.str()+".dat";
             std::ofstream ofs;
             ofs.open(fname, std::ios::out);
-            ofs << setw(24) << "height"     // Bin position (height)
-                << setw(24) << "radius"     // Bin position (radius)
-                << setw(24) << "numParts"   // Average number of molecules in bin per step
-                << setw(24) << "rho"        // Density
-                << setw(24) << "T"          // Temperature without drift (i.e. "real" temperature)
-                << setw(24) << "ekin"       // Kinetic energy including drift
-                << setw(24) << "p"          // Pressure
-                << setw(24) << "T_r"        // Temperature in radial direction
-                << setw(24) << "T_y"        // Temperature in y-direction
-                << setw(24) << "T_t"        // Temperature in tangantial direction
-                << setw(24) << "v_r"        // Drift velocity in radial direction
-                << setw(24) << "v_y"        // Drift velocity in y-direction
-                << setw(24) << "v_t"        // Drift velocity in tangantial direction
-                << setw(24) << "p_r"        // Pressure in radial direction; the radial pressure is not easily accessible (see comment below)
-                << setw(24) << "p_y"        // Pressure in y-direction
-                << setw(24) << "p_t"        // Pressure in tangantial direction; the tangential pressure is not easily accessible (see comment below)
-                << setw(24) << "numSamples";    // Number of samples (<= _writeFrequency)
+            ofs << std::setw(24) << "height"     // Bin position (height)
+                << std::setw(24) << "radius"     // Bin position (radius)
+                << std::setw(24) << "numParts"   // Average number of molecules in bin per step
+                << std::setw(24) << "rho"        // Density
+                << std::setw(24) << "T"          // Temperature without drift (i.e. "real" temperature)
+                << std::setw(24) << "ekin"       // Kinetic energy including drift
+                << std::setw(24) << "p"          // Pressure
+                << std::setw(24) << "T_r"        // Temperature in radial direction
+                << std::setw(24) << "T_y"        // Temperature in y-direction
+                << std::setw(24) << "T_t"        // Temperature in tangantial direction
+                << std::setw(24) << "v_r"        // Drift velocity in radial direction
+                << std::setw(24) << "v_y"        // Drift velocity in y-direction
+                << std::setw(24) << "v_t"        // Drift velocity in tangantial direction
+                << std::setw(24) << "p_r"        // Pressure in radial direction; the radial pressure is not easily accessible (see comment below)
+                << std::setw(24) << "p_y"        // Pressure in y-direction
+                << std::setw(24) << "p_t"        // Pressure in tangantial direction; the tangential pressure is not easily accessible (see comment below)
+                << std::setw(24) << "numSamples";    // Number of samples (<= _writeFrequency)
             ofs << std::endl;
 
             for (unsigned long i = 0; i < _lenVector; i++) {
