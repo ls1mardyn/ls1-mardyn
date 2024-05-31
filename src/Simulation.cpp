@@ -690,7 +690,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.changecurrentnode(oldpath);
 
 	// _simulationTime might be updated by readers -> also update _initSimulation
-	_simstep = _initSimulation = (unsigned long) round(_simulationTime / _integrator->getTimestepLength() );
+	// In theory, the division of the physical time (_simulationTime) and the time step width,
+	// should give a whole number. However, due to numerical errors, the result of the
+	// division must be rounded
+	_simstep = _initSimulation = static_cast<unsigned long>(std::round(_simulationTime / _integrator->getTimestepLength()));
 	Log::global_log->info() << "Set initial time step to " << _initSimulation << std::endl;
 }
 
