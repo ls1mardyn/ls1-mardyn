@@ -47,8 +47,6 @@ include(OpenMP)
 include(options)
 # include mpi module
 include(mpi)
-# include persistent communication module
-include(persistent)
 # include module for clang sanitizers
 include(clang-sanitizers)
 # ccache
