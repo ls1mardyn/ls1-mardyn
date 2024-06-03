@@ -15,29 +15,51 @@
 //! @brief This file contains auxiliary classes and functions for the Coll_Comm_Obj in mpi_perscomm_obj.h
 //! @author Mike Söhner
 
-// class to manage MPI_Init and MPI_Finalize
-class MPI_Environment
+// Can be used to initialize the MPI environment like this:
+// MPI_Env_Wrapper::init_environment(&argc, &argv);
+class MPI_Env_Wrapper
 {
 public:
-    MPI_Environment(int* argc, char*** argv)
+    static auto init_environment(int* argc, char*** argv)
     {
-        MPI_Init(argc, argv);
+        static MPI_Environment mpi_env(argc, argv);
+        _mpi_env = &mpi_env;
     }
-    MPI_Environment(int* argc, char*** argv, int required)
+    static auto init_thread_environment(int* argc, char*** argv, int required)
     {
-        int provided;
-        MPI_Init_thread(argc, argv, required, &provided);
-        if (provided < required)
-        {
-            std::cerr << "Cannot provide requested level of MPI thread support." << std::endl;
-            MPI_Abort(MPI_COMM_WORLD, 1);
-        }
+        static MPI_Environment mpi_env(argc, argv, required);
+        _mpi_env = &mpi_env;
     }
+private:
+    // class to manage MPI_Init and MPI_Finalize
+    class MPI_Environment
+    {
+    public:
+        MPI_Environment() = default;
 
-    ~MPI_Environment()
-    {
-        MPI_Finalize();
-    }
+        MPI_Environment(int* argc, char*** argv)
+        {
+            MPI_Init(argc, argv);
+        }
+        MPI_Environment(int* argc, char*** argv, int required)
+        {
+            int provided;
+            MPI_Init_thread(argc, argv, required, &provided);
+            if (provided < required)
+            {
+                std::cerr << "Cannot provide requested level of MPI thread support." << std::endl;
+                MPI_Abort(MPI_COMM_WORLD, 1);
+            }
+        }
+
+        ~MPI_Environment()
+        {
+            MPI_Finalize();
+        }
+    };
+
+    // storing the class until the end of the program
+    static inline MPI_Environment* _mpi_env;
 };
 
 
