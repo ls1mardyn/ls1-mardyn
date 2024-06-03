@@ -10,17 +10,17 @@
 //! @author Mike Söhner
 //! 
 //! The Coll_Comm_Obj class is a more optimized version of the default implementation (found in CollectiveCommunication.h) and allows for persistent collective communication.
-//! This is achieved by constructing all necessary information for creating a MPI_Type at compile time. The same applies to MPI_Op.
+//! This is achieved by constructing all necessary information for creating a MPI_Type and MPI_Op at compile time.
 //! If all information that is required to create a persistent is given during the object construction, a persistent request will be generated.
 //! It is, however, not necessary to give the constructor all information required for a persistent request. It is possible to omit the communicator,
 //! the operation or the root rank. It should however be noted that the values that will be send always have to be given. It is therefore not possible to use this class
-//! if the number of values communicated is decided at runtime.
+//! if the number of values communicated is decided at runtime. @par
 //! In case not all information is given the usual MPI collective functions can still be used.
 //! The second improvement that was implemented is a static storage of the generated MPI_Types, MPI_Ops and MPI_Requests. In the previous implementation
 //! the MPI constructs were created and destroyed each time they were used, which creates overhead. By putting the values we want to communicate, the communicator
 //! and the operation as template parameters we create a unique class each time we want to comunicate a new configuration. This unique class stores the data
 //! necessary for the communication in static members. These members will remain, even if the current instance of the class goes out of scope. Therefore once
-//! the same configuration is called again the data can be reused and there is no need to reconstruct it.
+//! the same configuration is called again the data can be reused and there is no need to reconstruct it. @par
 //! A problem occurs when it is time the destruct these MPI constructs. Static variables are destructed at the end of the program and since
 //! we use the RAII programming idiom the destruction of the MPI construct would also happen then. The problem is that this happens after MPI_Finalize
 //! is called and beyond that point MPI_x_free functions are no longer allowed. This is a general problem of letting modern idioms like RAII clash with older 
@@ -28,15 +28,17 @@
 //! There are 2 ways to solve this problem and both try to destruct the constructs before
 //! MPI_Finalize is called. The first would be to also wrap the MPI_Init and MPI_Finalize into static members of a class and make sure that class is initialized before
 //! the other static members. Therefore this class would be destructed last and MPI_Finalize would be called after the other free functions. This requires an almost trivial, but
-//! nontheless invasive change of the original source code. This is why the default is the second option. Nevertheless is such a wrapper provided in the helper_functions.h file.
+//! nontheless invasive change of the original source code. This is why the default is the second option. Nevertheless is such a wrapper provided in the 
+//! CollectiveCommunicationPersistent_helper.h file.
 //! It can be used in the following way:
 //! @code
 //!   // Replace MPI_Init(&argc, &argv); with the following code
-//!   static MPI_Environment mpi_env(&argc, &argv);
+//!   MPI_Env_Wrapper::init_environment(&argc, &argv);
 //!   // Also remove calls to MPI_Finalize();
 //! @endcode
 //!
-//! If this first option is not chosen the second option is to manually free the static members before MPI_Finalize. For this the class Coll_Comm_Deallocator in helper_functions.h
+//! If this first option is not chosen the second option is to manually free the static members before MPI_Finalize. 
+//! For this the class Coll_Comm_Deallocator in CollectiveCommunicationPersistent_helper.h
 //! is provided. Coll_Comm_Obj does automatically track all create MPI constructs and registers them in the deallocator class.
 //! It is used in the following way:
 //! @code
@@ -56,7 +58,7 @@
 //! - scan using add as operation
 //!
 //! Currently supported datatypes are:
-//! - most basic integral and floating-point MPI datatypes (see conv function in helper_functions.h)
+//! - most basic integral and floating-point MPI datatypes (see transform functions in CollectiveCommunicationPersistent_helper.h)
 //! 
 //! Further mpi operations could be added very easily.
 //! A typical usage of this class could look like this:
