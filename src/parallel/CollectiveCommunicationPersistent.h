@@ -274,6 +274,8 @@ private:
         else if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Scan))
         {
             MPI_Scan_init( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(), _mpi_comm, MPI_INFO_NULL, &_mpi_members->get_request() );
+            // Register allocated MPI Request
+            Coll_Comm_Deallocator::emplace_back(&_mpi_members->get_request());
         }
     }
 
