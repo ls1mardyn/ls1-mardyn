@@ -80,7 +80,7 @@
       
       <longrange type="planar">
         <slabs>500</slabs>
-        <smooth>0</smooth>
+        <smooth>false</smooth>
         <frequency>10</frequency>
         <writecontrol>
           <start>0</start>

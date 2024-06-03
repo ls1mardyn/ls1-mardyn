@@ -141,9 +141,9 @@ It detects the less dense space around the dense drop as a cavity.
 
 		<!-- CENTER OF MASS ALIGNMENT  --> 
 		<plugin name="COMaligner" enabled="1">
-			<x>1</x>
-			<y>0</y>
-			<z>1</z>
+			<x>true</x>
+			<y>false</y>
+			<z>true</z>
 			<interval>10</interval>
 			<correctionFactor>.5</correctionFactor>
 		</plugin>
