@@ -319,32 +319,6 @@ struct min_struct
 };
 
 
-// class to hide MPI types as private members
-class MPI_Members
-{
-public:
-    MPI_Members() = default;
-
-    MPI_Datatype& get_type() { return _type; }
-    MPI_Op& get_op() { return _op; }
-    MPI_Request& get_request() { return _request; }
-
-    ~MPI_Members()
-    {
-        if (_type != MPI_DATATYPE_NULL)
-            MPI_Type_free(&_type);
-        if (_op != MPI_OP_NULL)
-            MPI_Op_free(&_op);
-        if (_request != MPI_REQUEST_NULL)
-            MPI_Request_free(&_request);
-    }
-
-private:
-    MPI_Datatype _type = MPI_DATATYPE_NULL;
-    MPI_Op _op = MPI_OP_NULL;
-    MPI_Request _request = MPI_REQUEST_NULL;
-};
-
 // class to handle deallocation of MPI allocations
 class Coll_Comm_Deallocator
 {
