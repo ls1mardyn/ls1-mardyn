@@ -37,6 +37,58 @@ void Interpolation::Function::writeXML(const std::string &filename) const {
 	}
 }
 
+void Interpolation::Function::writeTXT(const std::string &filename) const {
+#ifdef ENABLE_MPI
+	if (_simulation.domainDecomposition().getRank() != 0) return;
+#endif
+	try {
+		std::ofstream file {filename};
+		file << "IF1\n";
+		file << "start\t" << begin << "\n";
+		file << "num_points\t" << n << "\n";
+		file << "#p point_idx\tgrad\tf_val\tstep_width\n";
+		for(unsigned long i = 0; i < n; i++) {
+			file << "p\t" << i+1 << "\t" << gradients[i] << "\t" << function_values[i];
+			if (i < n - 1) file << "\t" << step_width[i] << "\n";
+			else file << "\n";
+		}
+		file.flush();
+		file.close();
+	} catch (std::ifstream::failure& e) {
+		global_log->error() << "[Interpolation] Failed to write Interpolation function.\n" << e.what() << std::endl;
+		_simulation.exit(-1);
+	}
+}
+
+void Interpolation::Function::loadTXT(const std::string &filename) {
+	try {
+		std::ifstream file {filename};
+		std::string s_buf;
+		int i_buf;
+
+		if (file >> s_buf; s_buf != "IF1") throw std::runtime_error("wrong format!");
+		if (file >> s_buf; s_buf != "start") throw std::runtime_error("wrong format!");
+		file >> begin;
+		if (file >> s_buf; s_buf != "num_points") throw std::runtime_error("wrong format!");
+		file >> n;
+
+		while (!file.eof() && file.good()) {
+			file >> s_buf;
+			if (s_buf[0] == '#' || s_buf[0] != 'p') { file.ignore(2048, '\n'); continue; }
+
+			file >> i_buf;
+			i_buf--;
+			if (i_buf < 0 || i_buf >= n) throw std::runtime_error("bad idx!");
+			file >> gradients[i_buf] >> function_values[i_buf];
+			if (i_buf < n - 1) file >> step_width[i_buf];
+		}
+		file.close();
+	} catch (std::ifstream::failure& e) {
+		global_log->error() << "[Interpolation] Failed to load Interpolation function.\n" << e.what() << std::endl;
+		_simulation.exit(-1);
+	}
+}
+
 /**
  * @param begin starting index of folding
  * @param end end index of folding (exclusive)

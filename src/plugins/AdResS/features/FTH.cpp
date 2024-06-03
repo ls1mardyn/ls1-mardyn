@@ -34,16 +34,20 @@ void FTH::Handler::computeSingleIteration(ParticleContainer &container, const Re
 
 void FTH::Grid3DHandler::init(const FTH::Config &config) {
 	Handler::init(config);
-	// set all FTH values in grid to 0
-	for (auto& node : _config._grid->getNodes()) {
-		node.data().fth = {0, 0, 0};
+	if (!config._enableThermodynamicForce) return;
+
+	if (_config._createThermodynamicForce) {
+		// set all FTH values in grid to 0
+		for (auto& node : _config._grid->getNodes()) {
+			node.data().fth = {0, 0, 0};
+		}
 	}
+	// load existing fth
+	else loadGridFTH(*_config._grid, _config._fth_file_path);
 }
 
 void FTH::Grid3DHandler::updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) {
 	if(!_config._enableThermodynamicForce) return;
-	auto* density_sampler = _config._density_sampler;
-	density_sampler->sampleData(&container, &_simulation.domainDecomposition(), _simulation.getDomain());
 
 	// compute gradient of sampled density
 	Interpolation::FE::computeGradient<>(*_config._grid,
@@ -117,7 +121,10 @@ void FTH::Grid3DHandler::writeLogs(ParticleContainer &particleContainer, DomainD
 	if (_config._logFTH) writeGridFTH(*_config._grid, "./F_TH_InterpolationFunction", simstep);
 
 	if (!_config._density_sampler->wasSampled()) _config._density_sampler->sampleData(&particleContainer, &domainDecomp, &domain);
-	if(_config._logDensities) _config._density_sampler->writeSample("./Density_Grid", simstep);
+	if(_config._logDensities) _config._density_sampler->writeSample("Density_Grid", simstep);
+
+	auto* density_sampler = _config._density_sampler;
+	dynamic_cast<AveragedGridSampler*>(density_sampler)->getAverager().reset();
 }
 
 void FTH::Grid3DHandler::writeFinalFTH() {
@@ -131,15 +138,20 @@ void FTH::Grid3DHandler::writeFinalFTH() {
 
 void FTH::Grid1DHandler::init(const FTH::Config &config) {
 	Handler::init(config);
-	if (!_config._createThermodynamicForce) return;
+	if (!config._enableThermodynamicForce) return;
 
-	mardyn_assert((!_config._density_sampler->is3D() && _config._density_sampler->usesGrid()));
-	auto* domain = _simulation.getDomain();
-	_thermodynamicForce.n = _config._density_sampler->getNumSamplePoints();
-	_thermodynamicForce.begin = 0.0;
-	_thermodynamicForce.step_width.resize(_thermodynamicForce.n-1, domain->getGlobalLength(0) / static_cast<double>(_thermodynamicForce.n));
-	_thermodynamicForce.gradients.resize(_thermodynamicForce.n, 0.0);
-	_thermodynamicForce.function_values.resize(_thermodynamicForce.n, 0.0);
+	if (_config._createThermodynamicForce) {
+		mardyn_assert((!_config._density_sampler->is3D() && _config._density_sampler->usesGrid()));
+		auto* domain = _simulation.getDomain();
+		_thermodynamicForce.n = _config._density_sampler->getNumSamplePoints();
+		_thermodynamicForce.begin = 0.0;
+		_thermodynamicForce.step_width.resize(_thermodynamicForce.n-1, domain->getGlobalLength(0) / static_cast<double>(_thermodynamicForce.n));
+		_thermodynamicForce.gradients.resize(_thermodynamicForce.n, 0.0);
+		_thermodynamicForce.function_values.resize(_thermodynamicForce.n, 0.0);
+	}
+	else {
+		_thermodynamicForce.loadTXT(_config._fth_file_path);
+	}
 }
 
 void FTH::Grid1DHandler::updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) {
@@ -216,8 +228,8 @@ void FTH::Grid1DHandler::writeLogs(ParticleContainer &particleContainer, DomainD
 	if(_config._thermodynamicForceSampleCounter != 0) return;
 
 	std::stringstream stream;
-	stream << "./F_TH_InterpolationFunction_" << simstep << ".xml";
-	if(_config._logFTH) _thermodynamicForce.writeXML(stream.str());
+	stream << "./F_TH_InterpolationFunction_" << simstep << ".txt";
+	if(_config._logFTH) _thermodynamicForce.writeTXT(stream.str());
 
 	if(!_config._density_sampler->wasSampled()) _config._density_sampler->sampleData(&particleContainer, &domainDecomp, &domain);
 	if(_config._logDensities) _config._density_sampler->writeSample("Density_Grid1D", simstep);
@@ -225,7 +237,7 @@ void FTH::Grid1DHandler::writeLogs(ParticleContainer &particleContainer, DomainD
 
 void FTH::Grid1DHandler::writeFinalFTH() {
 	if(!_config._enableThermodynamicForce) return;
-	_thermodynamicForce.writeXML("./F_TH_Final.xml");
+	_thermodynamicForce.writeTXT("./F_TH_Final.txt");
 }
 
 /*****************************************************
@@ -234,6 +246,7 @@ void FTH::Grid1DHandler::writeFinalFTH() {
 
 void FTH::Function3DHandler::init(const FTH::Config &config) {
 	Handler::init(config);
+	if (!config._enableThermodynamicForce) return;
 	if (!_config._createThermodynamicForce) return;
 
 	mardyn_assert((_config._density_sampler->is3D() && !_config._density_sampler->usesGrid()));
@@ -316,15 +329,20 @@ void FTH::Function3DHandler::writeFinalFTH() {
 
 void FTH::Function1DHandler::init(const FTH::Config &config) {
 	Handler::init(config);
-	if (!_config._createThermodynamicForce) return;
+	if (!config._enableThermodynamicForce) return;
 
-	mardyn_assert((!_config._density_sampler->is3D() && !_config._density_sampler->usesGrid()));
-	auto* domain = _simulation.getDomain();
-	_thermodynamicForce.n = _config._density_sampler->getNumSamplePoints();
-	_thermodynamicForce.begin = 0.0;
-	_thermodynamicForce.step_width.resize(_thermodynamicForce.n-1, domain->getGlobalLength(0) / static_cast<double>(_thermodynamicForce.n));
-	_thermodynamicForce.gradients.resize(_thermodynamicForce.n, 0.0);
-	_thermodynamicForce.function_values.resize(_thermodynamicForce.n, 0.0);
+	if (_config._createThermodynamicForce) {
+		mardyn_assert((!_config._density_sampler->is3D() && !_config._density_sampler->usesGrid()));
+		auto* domain = _simulation.getDomain();
+		_thermodynamicForce.n = _config._density_sampler->getNumSamplePoints();
+		_thermodynamicForce.begin = 0.0;
+		_thermodynamicForce.step_width.resize(_thermodynamicForce.n-1, domain->getGlobalLength(0) / static_cast<double>(_thermodynamicForce.n));
+		_thermodynamicForce.gradients.resize(_thermodynamicForce.n, 0.0);
+		_thermodynamicForce.function_values.resize(_thermodynamicForce.n, 0.0);
+	}
+	else {
+		_thermodynamicForce.loadTXT(_config._fth_file_path);
+	}
 }
 
 void FTH::Function1DHandler::updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) {
@@ -401,8 +419,8 @@ FTH::Function1DHandler::writeLogs(ParticleContainer &particleContainer, DomainDe
 	if(_config._thermodynamicForceSampleCounter != 0) return;
 
 	std::stringstream stream;
-	stream << "./F_TH_InterpolationFunction_" << simstep << ".xml";
-	if(_config._logFTH) _thermodynamicForce.writeXML(stream.str());
+	stream << "./F_TH_InterpolationFunction_" << simstep << ".txt";
+	if(_config._logFTH) _thermodynamicForce.writeTXT(stream.str());
 
 	if (!_config._density_sampler->wasSampled()) _config._density_sampler->sampleData(&particleContainer, &domainDecomp, &domain);
 	if(_config._logDensities) _config._density_sampler->writeSample("./Density_Fun1D", simstep);
@@ -410,5 +428,5 @@ FTH::Function1DHandler::writeLogs(ParticleContainer &particleContainer, DomainDe
 
 void FTH::Function1DHandler::writeFinalFTH() {
 	if(!_config._enableThermodynamicForce) return;
-	_thermodynamicForce.writeXML("./F_TH_Final.xml");
+	_thermodynamicForce.writeTXT("./F_TH_Final.txt");
 }

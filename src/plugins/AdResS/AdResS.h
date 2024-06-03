@@ -108,7 +108,7 @@ public:
 	/**
 	 * @brief Performs the shifting from one LOD to another. Currently exchanges the components of the molecules.
 	 * @param container particle container
-	 * @param base todo Alex ... idk?
+	 * @param base Domain Decomposition
 	 * @param simstep current simulation step
 	 * */
 	void beforeForces(ParticleContainer *container, DomainDecompBase *base, unsigned long simstep) override;
@@ -158,6 +158,12 @@ private:
 	 * Performs density sampling
 	 * */
 	SamplerBase *_density_sampler;
+
+	/// number of simsteps between each sampling process
+	int _samplingGap;
+
+	/// passed simsteps since last sampling
+	int _samlingCounter;
 
 	/**
 	 * Grid used for certain density sampling techniques

@@ -42,13 +42,15 @@ FTH::d3 FTH::interpolateGridFTH(FTH::grid_t &grid, const FTH::d3 &point) {
 }
 
 void FTH::writeGridFTH(FTH::grid_t &grid, const std::string &filename, int simstep) {
+	int rank = 0;
 #ifdef ENABLE_MPI
-	if (_simulation.domainDecomposition().getRank() != 0) return;
+	rank = _simulation.domainDecomposition().getRank();
 #endif
+
 	try {
 		std::stringstream ss;
-		if (simstep < 0) ss << filename << ".txt";
-		else ss << filename << "_" << simstep << ".txt";
+		if (simstep < 0) ss << filename << "." << rank << ".txt";
+		else ss << filename << "_" << simstep << "." << rank << ".txt";
 
 		std::ofstream file {ss.str()};
 		const d3& elem_dims = grid.getElements().getElementSize();
@@ -72,4 +74,36 @@ void FTH::writeGridFTH(FTH::grid_t &grid, const std::string &filename, int simst
 		Log::global_log->error() << "[FTH] Failed to write Interpolation function.\n" << e.what() << std::endl;
 		_simulation.exit(-1);
 	}
+}
+
+void FTH::loadGridFTH(FTH::grid_t &grid, const std::string &filename) {
+	int rank = 0;
+#ifdef ENABLE_MPI
+	rank = _simulation.domainDecomposition().getRank();
+
+	try {
+		std::stringstream ss;
+		auto ext_pos = filename.find_last_of('.');
+		if (ext_pos == std::string::npos) throw std::runtime_error("bad file name - should be filename.txt without rank id");
+		ss << filename.substr(0, ext_pos) << "." << rank << ".txt";
+
+		std::ifstream file {ss.str()};
+		// skip first 2 lines
+		file.ignore(2048, '\n');
+		file.ignore(2048, '\n');
+
+		// read data
+		std::array<idx_t, 3> coord {};
+		while (!file.eof() && file.good()) {
+			file >> coord[0] >> coord[1] >> coord[2];
+			auto& fth = grid.getNodes().at(coord[0], coord[1], coord[2]).data().fth;
+			file >> fth[0] >> fth[1] >> fth[2];
+		}
+
+		file.close();
+	} catch (std::ifstream::failure& e) {
+		Log::global_log->error() << "[FTH] Failed to load Interpolation function.\n" << e.what() << std::endl;
+		_simulation.exit(-1);
+	}
+#endif
 }

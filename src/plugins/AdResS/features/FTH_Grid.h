@@ -38,6 +38,11 @@ namespace FTH {
 	 * Writes all fth values of the grid into a file.
 	 * */
 	[[maybe_unused]] void writeGridFTH(grid_t& grid, const std::string& filename, int simstep=-1);
+
+	/**
+	 * Loads all fth values into grid.
+	 * */
+	[[maybe_unused]] void loadGridFTH(grid_t& grid, const std::string& filename);
 }
 
 #endif //MARDYN_FTH_GRID_H

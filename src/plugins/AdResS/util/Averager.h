@@ -24,6 +24,11 @@ public:
 		_sum_data.resize(data.size(), 0.0);
 	}
 
+	void reset() {
+		std::fill(_sum_data.begin(), _sum_data.end(), 0);
+		_step_count = 0;
+	}
+
 	/**
 	 * Captures data and increases capture count by one.
 	 * */

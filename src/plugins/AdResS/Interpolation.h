@@ -30,6 +30,12 @@ namespace Interpolation {
 
 		//! @brief write this function to file in XML format
 		void writeXML(const std::string &filename) const;
+
+		//! @brief write this function to file in text format
+		void writeTXT(const std::string &filename) const;
+
+		//! @brief load function from file
+		void loadTXT(const std::string &filename);
 	};
 
 	// TODO
@@ -221,7 +227,7 @@ namespace Interpolation {
 
 	/**
 	 * Filters out high frequencies from F
-	 * TODO: dummy function at the moment, just windows till the middle
+	 * TODO: dummy function at the moment, applies gaussian to low frequencies
 	 * */
 	[[maybe_unused]] void filterFT(std::vector<std::complex<double>> &F);
 
@@ -693,11 +699,13 @@ namespace Interpolation {
 			}
 
 			// do central FD for inner nodes
-			for (idx_t z = 1; z < shape[2] - 1; z++) {
-				for (idx_t y = 1; y < shape[1] - 1; y++) {
-					for (idx_t x = 1; x < shape[0] - 1; x++) {
+			for (idx_t z = 0; z < shape[2]; z++) {
+				for (idx_t y = 0; y < shape[1]; y++) {
+					for (idx_t x = 0; x < shape[0]; x++) {
 						for (int dim = 0; dim < 3; dim++) {
 							std::array<idx_t, 3> coords { x, y, z };
+							if (coords[dim] == 0 || coords[dim] == shape[dim] - 1) continue;
+
 							std::array<idx_t, 3> coords0 = coords;
 							std::array<idx_t, 3> coords1 = coords;
 							coords0[dim] -= 1;

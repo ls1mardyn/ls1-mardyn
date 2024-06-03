@@ -108,7 +108,7 @@ bool GridSampler::ParticleInsideMeasuringSpace(const std::array<double,3>& nodal
 
 void GridSampler::writeSample(const std::string &filename, int simstep) {
 	std::stringstream ss;
-	ss << filename << "_" << simstep;
+	ss << filename << "_" << simstep << ".txt";
     std::ofstream file(ss.str());
     file << "#Total nodes sampled: " << _sampled_data.size() << "\n";
     auto& nodes = _grid->getNodes();
@@ -133,13 +133,21 @@ void AveragedGridSampler::sampleData(ParticleContainer *pc, DomainDecompBase *do
 	GridSampler::sampleData(pc, domainDecomp, domain);
 	_averager.averageData(_sampled_data);
 	_averager.getAveragedData(_sampled_data);
+
+	//write averages into grid
+	#if defined(_OPENMP)
+	#pragma omp parallel for
+	#endif
+	for(int nidx = 0; nidx < _sampled_data.size(); nidx++){
+		_grid->getNodes()[nidx].data().density = _sampled_data[nidx];
+	}
 }
 
 void AveragedGridSampler::writeSample(const std::string &filename, int simstep) {
 	GridSampler::writeSample(filename, simstep);
 
 	std::stringstream ss;
-	ss << "avg_" << filename << "_" << simstep;
+	ss << "AVG_" << filename << "_" << simstep << ".txt";
 	std::ofstream avg_file(ss.str());
 	_averager.writeAverage(avg_file, _averager.getSumData());
 	avg_file.close();

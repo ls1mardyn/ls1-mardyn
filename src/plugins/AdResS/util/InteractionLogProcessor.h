@@ -21,8 +21,8 @@ class InteractionLogProcessor : public CellProcessor {
 public:
     /**
      * @brief Constructor
-     * @param cutoffRadius no clue todo Alex check this
-     * @param ljCutoffRadius noclue todo Alex check this
+     * @param cutoffRadius LC cutoff
+     * @param ljCutoffRadius LJ cutoff
      * @param fpRegions reference to all FP regions from the AdResS plugin instance
      * */
     explicit InteractionLogProcessor(const double cutoffRadius, const double ljCutoffRadius,

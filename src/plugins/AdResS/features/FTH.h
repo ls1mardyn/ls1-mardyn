@@ -50,6 +50,9 @@ namespace FTH {
 
 		//! @brief Pointer to the active density sampler (never null)
 		SamplerBase *_density_sampler;
+
+		//! @brief path to an existing fth file
+		std::string _fth_file_path;
 	};
 
 	/**

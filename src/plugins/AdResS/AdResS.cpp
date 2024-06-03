@@ -23,7 +23,7 @@ using Log::global_log;
 
 Weight::function_t AdResS::weight = nullptr;
 
-AdResS::AdResS() : _resolutionHandler(), _fthHandler(nullptr), _forceAdapter(nullptr), _density_sampler(nullptr), _grid(nullptr) {};
+AdResS::AdResS() : _resolutionHandler(), _fthHandler(nullptr), _forceAdapter(nullptr), _density_sampler(nullptr), _grid(nullptr), _samplingGap(100), _samlingCounter(0) {};
 
 AdResS::~AdResS() {
 	delete _fthHandler;
@@ -53,12 +53,14 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
     std::string sample_type;
     xmlconfig.changecurrentnode("sampler");
     xmlconfig.getNodeValue("@type",sample_type);
+	_samplingGap = xmlconfig.getNodeValue_int("sampleGap", 100);
+
     if (sample_type == "Grid") {
         global_log->info() << "[AdResS] Using sampler implementation " << sample_type << std::endl;
-        int x = xmlconfig.getNodeValue_int("gridSize/xElements",1);
-        int y = xmlconfig.getNodeValue_int("gridSize/yElements",1);
-        int z = xmlconfig.getNodeValue_int("gridSize/zElements",1);
-        global_log->info() << "[AdResS] Grid size is" << x<< std::endl;
+        int x = xmlconfig.getNodeValue_int("gridSize/nx",1);
+        int y = xmlconfig.getNodeValue_int("gridSize/ny",1);
+        int z = xmlconfig.getNodeValue_int("gridSize/nz",1);
+        global_log->info() << "[AdResS] Grid size is" << x << " " << y << " " << z << std::endl;
 
 		_grid = new FTH::grid_t();
 		_grid->init({_simulation.domainDecomposition().getBoundingBoxMin(0, _simulation.getDomain()),
@@ -142,20 +144,11 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
             fthConf._thermodynamicForceSampleGap = xmlconfig.getNodeValue_int("enableFTH/createFTH/sampleGap", 200);
             fthConf._convergenceThreshold = xmlconfig.getNodeValue_double("enableFTH/createFTH/threshold", 0.02);
             fthConf._convergenceFactor = xmlconfig.getNodeValue_double("enableFTH/createFTH/convFactor", 0.2);
+			fthConf._fth_file_path = "";
         }
         else { // use existing FTH function
-            query = xmlconfig.query("enableFTH/forceFunction");
-            count = query.card();
-			// TODO impl me
-			global_log->fatal() << "Not implemented" << std::endl;
-			Simulation::exit(-1);
-
-            if (count != 1) {
-                global_log->fatal() << "[AdResS] Must specify one forceFunction block in config file!" << std::endl;
-                Simulation::exit(668);
-            }
+			fthConf._fth_file_path = xmlconfig.getNodeValue_string("enableFTH/pathFTH", "");
 			fthConf._logFTH = false;
-
             fthConf._thermodynamicForceSampleGap = 200;
 			fthConf._createThermodynamicForce = false;
         }
@@ -222,7 +215,12 @@ std::string AdResS::getPluginName() {
     return {"AdResS"};
 }
 
-void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *, unsigned long) {
+void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *dd, unsigned long) {
+	_samlingCounter++;
+	if ((_samlingCounter % _samplingGap) == 0) {
+		_density_sampler->sampleData(container, dd, _simulation.getDomain());
+		_samlingCounter = 0;
+	}
     _resolutionHandler.checkResolution(*container);
 	_fthHandler->computeSingleIteration(*container, _resolutionHandler.getRegions());
 }
