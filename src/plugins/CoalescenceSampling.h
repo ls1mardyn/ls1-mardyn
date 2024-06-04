@@ -27,16 +27,16 @@
 * Samples values in cylinder binwise in y-direction
 * There is NO differentiation between components; it is assumed that all (pseudo) components have the same mass (for correct calculation of temperature)
 * \code{.xml}
-* <plugin name="CoalescenceSampling">
-*           <binwidth>FLOAT</binwidth>                  <!-- Width of sampling bins; default 1.0 -->
+  <plugin name="CoalescenceSampling">
+            <binwidth>FLOAT</binwidth>                  <!-- Width of sampling bins; default 1.0 -->
+            <radius>FLOAT</radius>                      <!-- radius of Cylinder -->
             <start>INT</start>                          <!-- Simstep to start sampling; default 0 -->
-            <stop>INT</stop>                            <!-- Simstep to stop sampling; default MAX -->
-            <writefrequency>INT</writefrequency>        <!-- Simstep to write out result file; default 10000 -->
+            <stop>INT</stop>                            <!-- Simstep to stop sampling; default std::numeric_limits<unsigned long>::max() -->
+            <writefrequency>INT</writefrequency>        <!-- Simstep to write out result file; default 100 -->
             <yLower>FLOAT</yLower>                      <!-- start of Cylinder -->
             <yUpper>FLOAT</yUpper>                      <!-- end of Cylinder -->
-            <radius>FLOAT</radius>                      <!-- radius of Cylinder -->
             <outputPrefix>STRING</outputPrefix>                      <!-- outputPrefix -->
-* </plugin>
+  </plugin>
 * \endcode
 */
 
@@ -46,8 +46,8 @@ class CoalescenceSampling : public PluginBase{
     // Control: general
     float _binwidth {.5f};
     unsigned long _startSampling {0ul};
-    unsigned long _writeFrequency {100ul};
     unsigned long _stopSampling {std::numeric_limits<unsigned long>::max()};
+    unsigned long _writeFrequency {100ul};
     float _yLower {0.f};
     float _yUpper {std::numeric_limits<float>::max()};
     float _radius {4.f};

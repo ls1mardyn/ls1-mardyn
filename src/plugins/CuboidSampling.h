@@ -22,15 +22,15 @@
 * Samples values binwise in all directions within given Box
 * There is NO differentiation between components; it is assumed that all (pseudo) components have the same mass (for correct calculation of temperature)
 * \code{.xml}
-* <plugin name="CuboidSampling">
-*           <numBinsX>FLOAT</numBinsX>                  <!-- Width of sampling bins; default 1.0 -->
-*           <numBinsZ>FLOAT</numBinsZ>                  <!-- Width of sampling bins; default 1.0 -->
-            <start>INT</start>                          <!-- Simstep to start sampling; default 0 -->
-            <writefrequency>INT</writefrequency>        <!-- Simstep to write out result file; default 10000 -->
-            <stop>INT</stop>                            <!-- Simstep to stop sampling; default float.max -->
-            <yLower>FLOAT</yLower>                      <!-- start y-Direction -->
-            <yUpper>FLOAT</yUpper>                      <!-- stop y-direction -->
-* </plugin>
+   <plugin name="CuboidSampling">
+      <numBinsX>FLOAT</numBinsX>                  <!-- # of sampling bins; default 100 -->
+      <numBinsZ>FLOAT</numBinsZ>                  <!-- # of sampling bins; default 100 -->
+      <start>INT</start>                          <!-- Simstep to start sampling; default 0 -->
+      <stop>INT</stop>                            <!-- Simstep to stop sampling; default <unsigned long>::max -->
+      <writefrequency>INT</writefrequency>        <!-- Simstep to write out result file; default 100  -->
+      <yLower>FLOAT</yLower>                      <!-- start y-Direction -->
+      <yUpper>FLOAT</yUpper>                      <!-- stop y-direction -->
+   </plugin>
 * \endcode
 */
 

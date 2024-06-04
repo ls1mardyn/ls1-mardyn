@@ -2,7 +2,7 @@
  * CoalescenceSampling.cpp
  *
  *  Created on: May 2024
- *      Author: homes
+ *      Author: niemann
  */
 
 #include "CoalescenceSampling.h"
@@ -131,7 +131,7 @@ void CoalescenceSampling::afterForces(ParticleContainer* particleContainer, Doma
 
 // Gather quantities. Note: MPI_Reduce instead of MPI_Allreduce! Therefore, only root has correct values
 #ifdef ENABLE_MPI
-    MPI_Reduce(numMolecules_step.local.data(), numMolecules_step.global.data(), _numBinsGlobaly, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(numMolecules_step.local.data(), numMolecules_step.global.data(), _numBinsGlobal, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 #else
     for (unsigned long i = 0; i < _numBinsGlobal; i++) {
         numMolecules_step.global[i] = numMolecules_step.local[i];
@@ -150,7 +150,7 @@ void CoalescenceSampling::afterForces(ParticleContainer* particleContainer, Doma
 
     // Write out data every _writeFrequency step
     if ( (simstep - _startSampling) % _writeFrequency == 0 ) {
-        Log::global_log->info() << "------------------------------------------A_-------------------";
+        // Log::global_log->info() << "------------------------------------------A_-------------------";
         // write rho Output 
         if (domainDecomp->getRank() == 0) {
             std::ofstream ofs(_rhoOutputFilename, std::ios::app);
