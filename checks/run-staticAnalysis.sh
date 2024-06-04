@@ -54,7 +54,6 @@ for file in $codeFiles; do
     echo "The following file contains CRLF line endings: $file"
     echo "  Fix with:"
     echo "    sed -i 's/\r$//' \"$file\""
-              sed -i 's/\r$//' "$file"
     warnings+="- At least one file contains CRLF line endings\n"
     exit_code="1"
   fi
