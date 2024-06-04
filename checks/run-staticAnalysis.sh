@@ -87,7 +87,7 @@ if [ "$exit_code" = "1" ]; then
 
     printf -- "\n$warnings\n"  # Print to job output
     printf -- "\n$warnings\n" >> $GITHUB_STEP_SUMMARY  # Print to job summary
-    printf -- "\nSee job step for details\n" >> $GITHUB_STEP_SUMMARY
+    printf -- "\nSee job step for details or run ./checks/run-staticAnalysis.sh\n" >> $GITHUB_STEP_SUMMARY
 else
     printf -- "\nNo warnings\n"  # Print to job output
     printf -- "\nNo warnings :rocket:\n" >> $GITHUB_STEP_SUMMARY  # Print to job summary
