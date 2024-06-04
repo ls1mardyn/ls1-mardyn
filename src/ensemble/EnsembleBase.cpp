@@ -26,16 +26,29 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		Log::global_log->fatal() << "No components found. Please verify that you have input them correctly." << std::endl;
 		Simulation::exit(96123);
 	}
-	_components.resize(numComponents);
+	// Initialize _components vector using components with ID=0
+	_components.resize(numComponents, Component(0));
 	XMLfile::Query::const_iterator componentIter;
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	for(componentIter = query.begin(); componentIter; componentIter++) {
 		xmlconfig.changecurrentnode(componentIter);
 		unsigned int cid = 0;
 		xmlconfig.getNodeValue("@id", cid);
-		_components[cid - 1].readXML(xmlconfig);
-		_componentnamesToIds[_components[cid - 1].getName()] = cid - 1;
-		Log::global_log->debug() << _components[cid - 1].getName() << " --> " << cid - 1 << std::endl;
+		// Check if cid in valid range
+		if ((cid < 1) || (cid > numComponents)) {
+			Log::global_log->error() << "Specified componentid is invalid. Valid range: 1 <= componentid <= " << numComponents << std::endl;
+			Simulation::exit(1);
+		}
+		// Check if cid was not set before
+		if (_components[cid - 1].ID() == 0) {
+			// Add component
+			_components[cid - 1].readXML(xmlconfig);
+			_componentnamesToIds[_components[cid - 1].getName()] = cid - 1;
+			Log::global_log->debug() << _components[cid - 1].getName() << " --> " << cid - 1 << std::endl;
+		} else {
+			Log::global_log->error() << "Component " << cid << " was already added! ID might be set twice in <components>" << std::endl;
+			Simulation::exit(1);
+		}
 	}
 	xmlconfig.changecurrentnode(oldpath);
 
