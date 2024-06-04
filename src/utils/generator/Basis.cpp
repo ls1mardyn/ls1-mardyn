@@ -24,8 +24,17 @@ void Basis::readXML(XMLfileUnits& xmlconfig) {
 		Molecule molecule;
 		xmlconfig.changecurrentnode(siteIter);
 		int componentid;
-		xmlconfig.getNodeValue("componentid", componentid);
-		molecule.setComponent(ensemble->getComponent(componentid));
+		if (xmlconfig.getNodeValue("componentid", componentid)) {
+			const size_t numComps = ensemble->getComponents()->size();
+			if ((componentid < 1) || (componentid > numComps)) {
+				Log::global_log->error() << "[Basis] Specified componentid is invalid. Valid range: 1 <= componentid <= " << numComps << std::endl;
+				Simulation::exit(1);
+			}
+		} else {
+			Log::global_log->error() << "[Basis] No componentid specified. Set <componentid>!" << std::endl;
+			Simulation::exit(1);
+		}
+		molecule.setComponent(ensemble->getComponent(componentid - 1));  // Internally stored in vector starting at index 0
 		double r[3];
 		Coordinate3D sitePosition(xmlconfig, "coordinate");
 		sitePosition.get(r);
