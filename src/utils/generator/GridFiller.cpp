@@ -88,10 +88,12 @@ void GridFiller::init() {
 
 void GridFiller::readXML(XMLfileUnits& xmlconfig) {
 	using std::endl;
+	Log::global_log->info() << "Start reading lattice" << std::endl;
 	if(xmlconfig.changecurrentnode("lattice")) {
 		_lattice.readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
+	Log::global_log->info() << "END reading lattice" << std::endl;
 	if(xmlconfig.changecurrentnode("basis")) {
 		_basis.readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");

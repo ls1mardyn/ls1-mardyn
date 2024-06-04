@@ -17,15 +17,18 @@
 
 
 void Basis::readXML(XMLfileUnits& xmlconfig) {
+	Log::global_log->info() << "Start reading BASIS" << std::endl;
 	XMLfile::Query query = xmlconfig.query("site");
 	Ensemble* ensemble = _simulation.getEnsemble();
 	std::string oldpath = xmlconfig.getcurrentnodepath();
+	Log::global_log->info() << "Start BASIS getComps" << std::endl;
 	const size_t numComps = ensemble->getComponents()->size();
 	for(auto siteIter = query.begin(); siteIter; siteIter++) {
-		std::cout << "BASIS Start reading" << std::endl;
+		std::cout << "BASIS Start reading loop" << std::endl;
 		Molecule molecule;
 		xmlconfig.changecurrentnode(siteIter);
 		int componentid;
+		Log::global_log->info() << "Start BASIS read componentid" << std::endl;
 		if (xmlconfig.getNodeValue("componentid", componentid)) {
 			if ((componentid < 1) || (componentid > numComps)) {
 				Log::global_log->error() << "[Basis] Specified componentid is invalid. Valid range: 1 <= componentid <= " << numComps << std::endl;
