@@ -15,8 +15,9 @@ fi
 echo "Running in $rootFolder"
 
 warnings=""
+exit_code="0"
 
-codeFiles=$( find $rootFolder/src -name "*.h" -or -name "*.cpp" -printf "%p " )
+codeFiles=$( find $rootFolder/src -name "*.h" -or -name "*.cpp" )
 
 # Similar to check_format of MegaMol repo
 for file in $codeFiles; do
@@ -24,13 +25,15 @@ for file in $codeFiles; do
   # Check if using namespace std is used
   if grep -q "using namespace std;" "$file"; then
     echo "\"using namespace std;\" was used in $file"
-    warnings+="Do not use \"using namespace std;\"\n"
+    warnings+="- Do not use \"using namespace std;\"\n"
+    exit_code="1"
   fi
 
   # Check if using Log::global_log is used
   if grep -q "using Log::global_log;" "$file"; then
     echo "\"using Log::global_log;\" was used in $file"
-    warnings+="Do not use \"using Log::global_log;\"\n"
+    warnings+="- Do not use \"using Log::global_log;\"\n"
+    exit_code="1"
   fi
 
   # Check if file is UTF-8 (or ASCII)
@@ -41,7 +44,8 @@ for file in $codeFiles; do
     echo "    tmp_file=\$(mktemp)"
     echo "    iconv -f \"\$(file -b --mime-encoding \"$file\")\" -t utf-8 -o \"\$tmp_file\" \"\$file\""
     echo "    mv -f \"\$tmp_file\" \"\$file\""
-    warnings+="At least one file is not ASCII/UTF-8 encoded\n"
+    warnings+="- At least one file is not ASCII/UTF-8 encoded\n"
+    exit_code="1"
   fi
 
   # Check if file contains CRLF line endings
@@ -51,7 +55,8 @@ for file in $codeFiles; do
     echo "  Fix with:"
     echo "    sed -i 's/\r$//' \"$file\""
               sed -i 's/\r$//' "$file"
-    warnings+="At least one file contains CRLF line endings\n"
+    warnings+="- At least one file contains CRLF line endings\n"
+    exit_code="1"
   fi
 
   # Check if file starts with BOM
@@ -59,7 +64,8 @@ for file in $codeFiles; do
     echo "The following file starts with BOM: $file"
     echo "  Fix with:"
     echo "    sed -i '1s/^\xEF\xBB\xBF//' \"$file\""
-    warnings+="At least one file starts with BOM\n"
+    warnings+="- At least one file starts with BOM\n"
+    exit_code="1"
   fi
 
   # Check if file ends with newline
@@ -67,16 +73,25 @@ for file in $codeFiles; do
     echo "The following file does not end with newline: $file"
     echo "  Fix with:"
     echo "    sed -i -e '\$a\' \"$file\""
-    warnings+="At least one file does not end with newline\n"
+    warnings+="- At least one file does not end with newline\n"
+    exit_code="1"
   fi
 
 done
 
-printf "\n\n\n"  # Some space to make output clearer
+if [ "$exit_code" = "1" ]; then
+    printf -- "\n\n"  # Some space to make output clearer
+    
+    # Only print warnings once to job summary
+    warnings=$(printf -- "$warnings" | sort | uniq)
+    warnings="# Warnings\n"$warnings"\n\n"
 
-# Only print warnings once to job summary
-warnings=$(printf "$warnings" | sort | uniq)
-warnings="# Warnings\n"$warnings"\n\n"
+    printf -- "\n$warnings\n"  # Print to job output
+    printf -- "\n$warnings\n" >> $GITHUB_STEP_SUMMARY  # Print to job summary
+    printf -- "\nSee job step for details\n" >> $GITHUB_STEP_SUMMARY
+else
+    printf -- "\nNo warnings\n"  # Print to job output
+    printf -- "\nNo warnings :rocket:\n" >> $GITHUB_STEP_SUMMARY  # Print to job summary
+fi
 
-printf "\n$warnings\n"  # Print to job output
-printf "\n$warnings\n" >> $GITHUB_STEP_SUMMARY  # Print to job summary
+exit $exit_code
