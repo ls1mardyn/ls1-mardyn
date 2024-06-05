@@ -402,7 +402,7 @@ unsigned long XMLfileUnits::getNodeValueUnit(const char* nodepath, XMLfileUnits:
 	{
 		value=XMLfileUnits::ValueUnit(v,u);
 	}
-	else {
+	else { /* The XML tag did not include a unit attribute, so use the unscaled value. */
 		value = v;
 	}
 	return found;
