@@ -583,8 +583,8 @@ template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 		} else if (v == "FALSE" || v == "NO" || v == "OFF") {
 			value = false;
 		} else {
-			std::cerr << "ERROR parsing \"" << v << "\" to boolean from tag \"<" << name() << ">\" in xml file."
-				<< "Valid values are: true, false, yes, no, on, off. " << std::endl;
+			std::cerr << "ERROR parsing \"" << v << "\" to boolean from tag \"" << name() << "\" in xml file."
+				<< " Valid values are: true, false, yes, no, on, off. " << std::endl;
 			Simulation::exit(1);
 		}
 	}

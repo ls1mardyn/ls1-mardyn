@@ -336,7 +336,7 @@ public:
 				<ucx>FLOAT</ucx> <ucy refcoordsID="0">FLOAT</ucy> <ucz>FLOAT</ucz>
 			</coords>
 
-			<sampling type="profiles">   <!-- Sampling profiles of various scalar and vector quantities, e.g. temperature, density, force, hydrodynamic velocity -->
+			<sampling type="profiles" single_component="true">   <!-- Sampling profiles of various scalar and vector quantities, e.g. temperature, density, force, hydrodynamic velocity -->
 				<control>
 					<start>INT</start>           <!-- start time step -->
 					<frequency>INT</frequency>   <!-- frequency of writing profiles -->
@@ -348,7 +348,7 @@ public:
 				</subdivision>
 			</sampling>
 
-			<sampling type="VDF" single_component="1">                <!-- Sampling of velocity distribution functions (VDF); Do not differ between components, if single_component is 1-->
+			<sampling type="VDF" single_component="true">                <!-- Sampling of velocity distribution functions (VDF); Do not differ between components, if single_component is 1-->
 				<control>
 					<start>INT</start>           <!-- start time step -->
 					<frequency>INT</frequency>   <!-- frequency of writing profiles -->
