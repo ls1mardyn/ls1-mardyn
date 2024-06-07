@@ -65,6 +65,9 @@
 #include "plugins/TestPlugin.h"
 #include "plugins/VectorizationTuner.h"
 #include "plugins/WallPotential.h"
+
+#include "plugins/RDFAtCOM.h"
+
 #ifdef ENABLE_ADIOS2
 #include "io/Adios2Writer.h"
 #endif
@@ -77,6 +80,8 @@
 #ifdef MAMICO_COUPLING
 #include "plugins/MamicoCoupling.h"
 #endif
+
+
 
 /** @brief Register all default plugins with base PluginBase
  *
@@ -138,6 +143,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(VectorizationTuner);
 	REGISTER_PLUGIN(WallPotential);
 	REGISTER_PLUGIN(XyzWriter);
+	REGISTER_PLUGIN(RadialDFCOM);
 #ifdef VTK
 	REGISTER_PLUGIN(VTKMoleculeWriter);
 #ifndef MARDYN_AUTOPAS
