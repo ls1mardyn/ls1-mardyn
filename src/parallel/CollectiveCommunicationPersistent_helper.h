@@ -234,8 +234,8 @@ void print(std::vector<std::byte>& buffer, size_t& offset, T head, Ts... tail)
 template<typename T>
 void free_add( std::byte *invec, std::byte *inoutvec, size_t size, size_t offset, T head )
 {
-    T *pinvec = (T *) (invec + offset);
-    T *pinoutvec = (T *) (inoutvec + offset);
+    T *pinvec = reinterpret_cast<T*> (invec + offset);
+    T *pinoutvec = reinterpret_cast<T*> (inoutvec + offset);
 
     *pinoutvec += *pinvec;
 }
@@ -243,8 +243,8 @@ void free_add( std::byte *invec, std::byte *inoutvec, size_t size, size_t offset
 template<typename T, typename... Ts>
 void free_add( std::byte *invec, std::byte *inoutvec, size_t size, size_t offset, T head, Ts... tail )
 {
-    T *pinvec = (T *) (invec + offset);
-    T *pinoutvec = (T *) (inoutvec + offset);
+    T *pinvec = reinterpret_cast<T*> (invec + offset);
+    T *pinoutvec = reinterpret_cast<T*> (inoutvec + offset);
 
     *pinoutvec += *pinvec;
     
@@ -270,8 +270,8 @@ struct add_struct
 template<typename T>
 void free_max( std::byte *invec, std::byte *inoutvec, size_t size, size_t offset, T head )
 {
-    T *pinvec = (T *) (invec + offset);
-    T *pinoutvec = (T *) (inoutvec + offset);
+    T *pinvec = reinterpret_cast<T*> (invec + offset);
+    T *pinoutvec = reinterpret_cast<T*> (inoutvec + offset);
 
     *pinoutvec = std::max(*pinoutvec, *pinvec);
     
@@ -281,8 +281,8 @@ void free_max( std::byte *invec, std::byte *inoutvec, size_t size, size_t offset
 template<typename T, typename... Ts>
 void free_max( std::byte *invec, std::byte *inoutvec, size_t size, size_t offset, T head, Ts... tail )
 {
-    T *pinvec = (T *) (invec + offset);
-    T *pinoutvec = (T *) (inoutvec + offset);
+    T *pinvec = reinterpret_cast<T*> (invec + offset);
+    T *pinoutvec = reinterpret_cast<T*> (inoutvec + offset);
 
     *pinoutvec = std::max(*pinoutvec, *pinvec);
     
@@ -308,8 +308,8 @@ struct max_struct
 template<typename T>
 void free_min( std::byte *invec, std::byte *inoutvec, size_t size, size_t offset, T head )
 {
-    T *pinvec = (T *) (invec + offset);
-    T *pinoutvec = (T *) (inoutvec + offset);
+    T *pinvec = reinterpret_cast<T*> (invec + offset);
+    T *pinoutvec = reinterpret_cast<T*> (inoutvec + offset);
 
     *pinoutvec = std::min(*pinoutvec, *pinvec);
     
@@ -319,8 +319,8 @@ void free_min( std::byte *invec, std::byte *inoutvec, size_t size, size_t offset
 template<typename T, typename... Ts>
 void free_min( std::byte *invec, std::byte *inoutvec, size_t size, size_t offset, T head, Ts... tail )
 {
-    T *pinvec = (T *) (invec + offset);
-    T *pinoutvec = (T *) (inoutvec + offset);
+    T *pinvec = reinterpret_cast<T*> (invec + offset);
+    T *pinoutvec = reinterpret_cast<T*> (inoutvec + offset);
 
     *pinoutvec = std::min(*pinoutvec, *pinvec);
     
