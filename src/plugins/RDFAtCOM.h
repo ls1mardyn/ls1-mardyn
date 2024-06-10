@@ -22,9 +22,13 @@ class RadialDFCOM:public PluginBase{
     private:
 
     CellProcessor* cell_processor;
-
+    int number_bins;
+    double bin_width;
+    std::vector<int> bin_counts;//total number of COMs in bin[i]
+    int sample_frequency;
+    int measured_steps;
     public:
-    RadialDFCOM(){}
+    RadialDFCOM();
     ~RadialDFCOM(){}
     void readXML(XMLfileUnits& xmlconfig) override;
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
@@ -32,13 +36,22 @@ class RadialDFCOM:public PluginBase{
     void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
     void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
     void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
-    void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{}
+    void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{
+        std::cout<<bin_counts[0]<<"\n";
+        WriteRDFToFile();
+    }
     std::string getPluginName()  {return "RadialDFCOM";}
     static PluginBase* createInstance() {return new RadialDFCOM(); }
 
     public:
 
     std::array<double,3> GetCOM(Molecule* m);
+    void ProcessDistance(double distance);
+
+    private:
+    void SetBinContainer(ParticleContainer* pc);
+    void WriteRDFToFile();
+    
 
 };
 
@@ -54,7 +67,7 @@ class COMDistanceCellProcessor: public CellProcessor{
 
     public:
 
-    COMDistanceCellProcessor();
+    COMDistanceCellProcessor(RadialDFCOM* r);
     ~COMDistanceCellProcessor(){};
 
     void initTraversal() override {}
