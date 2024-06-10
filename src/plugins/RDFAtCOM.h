@@ -38,7 +38,7 @@ class RadialDFCOM:public PluginBase{
     void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{
         std::cout<<bin_counts[0]<<"\n";
-        WriteRDFToFile(Domain* domain);
+        WriteRDFToFile(particleContainer, domain);
     }
     std::string getPluginName()  {return "RadialDFCOM";}
     static PluginBase* createInstance() {return new RadialDFCOM(); }
@@ -50,7 +50,7 @@ class RadialDFCOM:public PluginBase{
 
     private:
     void SetBinContainer(ParticleContainer* pc);
-    void WriteRDFToFile(Domain* domain);
+    void WriteRDFToFile(ParticleContainer* particleContainer, Domain* domain);
     
 
 };

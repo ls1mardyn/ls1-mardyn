@@ -16,8 +16,8 @@ void RadialDFCOM::init(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom)
 }
 
 void RadialDFCOM::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom, unsigned long simstep){
-    if(simstep%sample_frequency ==0){
-        sample_frequency++;
+    if(simstep%sample_frequency ==0 && simstep > global_simulation->getInitStatistics()){
+        measured_steps++;
         pc->traverseCells(*cell_processor);    
     }
 }
@@ -69,22 +69,25 @@ void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* d
     std::ofstream outfile("rdf.txt");
     double rho_bulk=0.0;
     rho_bulk = (double)particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)/(double)domain->getGlobalVolume();
-    outfile<<"#Total time steps: "<<sample_frequency<<"\n";
+    outfile<<"#Total time steps averaged: "<<measured_steps<<"\n";
     outfile<<"#Bulk density: "<<rho_bulk<<"\n";
-    outfile<<"#Total molecules: "<<domain->getglobalNumMolecules()<<"\n";
+    outfile<<"#Total molecules: "<<domain->getglobalNumMolecules()<<"\n";//Same as from particle iterator above
     outfile<<"#Total volume: "<<domain->getGlobalVolume()<<"\n";
     double data=0.0;
     for(int i=0;i<number_bins;i++){
-        double rmin, rmax, rmid, binvol, rmin3,rmax3;
+        double rmin, rmax, rmid, binvol, rmin3,rmax3, den;
         rmid = (i+0.5)*bin_width;
         rmin = i*bin_width;
         rmax =(i+1)*bin_width;
         rmin3 = rmin*rmin*rmin;
         rmax3 = rmax*rmax*rmax;
         binvol = (4.0/3.0)*M_PI*(rmax3-rmin3);
-        data = (double)bin_counts[i]/(binvol*sample_frequency);
-        outfile<<i<<"\t"<<bin_counts[i]<<"\t"<<rmid<<"\t"<<data<<"\t"<<binvol<<"\n";
-
+        den = 0.5*domain->getglobalNumMolecules()*(domain->getglobalNumMolecules()-1.0)*binvol/domain->getGlobalVolume();
+        data = (double)bin_counts[i]/(double)measured_steps;
+        //den = binvol*domain->getglobalNumMolecules()*domain->getglobalNumMolecules()/domain->getGlobalVolume();
+        //data = (double)bin_counts[i]/(double)(den*(measured_steps-1));
+        //outfile<<rmid<<"\t"<<data<<"\t"<<binvol<<"\t"<<den*(measured_steps-1)<<"\t"<<"\n";
+        outfile<<rmid<<"\t"<<data/den<<"\t"<<data<<"\t"<<den<<"\t"<<"\n";
     }
 
     outfile.close();
