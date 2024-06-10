@@ -53,6 +53,8 @@ namespace FTH {
 
 		//! @brief path to an existing fth file
 		std::string _fth_file_path;
+
+		int _forgetCounter;
 	};
 
 	/**

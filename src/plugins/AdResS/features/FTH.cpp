@@ -10,12 +10,13 @@ void FTH::Handler::init(const FTH::Config &config) {
 	_config = config;
 	if (!config._enableThermodynamicForce) return;
 	_config._thermodynamicForceSampleCounter = 0;
+	_config._forgetCounter = 0;
 }
 
 void FTH::Handler::computeSingleIteration(ParticleContainer &container, const Resolution::FPRegions_t &regions) {
 	if(!_config._enableThermodynamicForce) return;
 	_config._thermodynamicForceSampleCounter++;
-
+	_config._forgetCounter++;
 	if(_config._thermodynamicForceSampleCounter % _config._thermodynamicForceSampleGap != 0) return;
 	_config._thermodynamicForceSampleCounter = 0;
 
@@ -123,8 +124,11 @@ void FTH::Grid3DHandler::writeLogs(ParticleContainer &particleContainer, DomainD
 	if (!_config._density_sampler->wasSampled()) _config._density_sampler->sampleData(&particleContainer, &domainDecomp, &domain);
 	if(_config._logDensities) _config._density_sampler->writeSample("Density_Grid", simstep);
 
-	auto* density_sampler = _config._density_sampler;
-	dynamic_cast<AveragedGridSampler*>(density_sampler)->getAverager().reset();
+	if(_config._forgetCounter % 100000 == 0) {
+		auto* density_sampler = _config._density_sampler;
+		dynamic_cast<AveragedGridSampler*>(density_sampler)->getAverager().reset();
+		_config._forgetCounter = 0;
+	}
 }
 
 void FTH::Grid3DHandler::writeFinalFTH() {
