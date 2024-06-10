@@ -252,7 +252,7 @@ void DirectProjectedSampler::sampleData(ParticleContainer *pc, DomainDecompBase 
 
 void DirectProjectedSampler::writeSample(const std::string &filename, int simstep) {
 	std::stringstream ss;
-	ss << filename << "_" << simstep;
+	ss << filename << "_" << simstep << ".txt";
 	std::ofstream file(ss.str());
 	file << "#Total bins sampled: " << _sampled_data.size() << "\n";
 
@@ -304,8 +304,8 @@ void FTProjectedSampler::sampleData(ParticleContainer *pc, DomainDecompBase *dom
 
 void FTProjectedSampler::writeSample(const std::string &filename, int simstep) {
 	std::stringstream ss;
-	ss << filename << "_" << simstep;
-	_fun.writeXML(ss.str());
+	ss << filename << "_" << simstep << ".txt";
+	_fun.writeTXT(ss.str());
 }
 
 void FTProjectedSampler::getSampleFunction(Interpolation::Function &fun) {
@@ -326,8 +326,8 @@ void GMMProjectedSampler::sampleData(ParticleContainer *pc, DomainDecompBase *do
 
 void GMMProjectedSampler::writeSample(const std::string &filename, int simstep) {
 	std::stringstream ss;
-	ss << filename << "_" << simstep;
-	_fun.writeXML(ss.str());
+	ss << filename << "_" << simstep << ".txt";
+	_fun.writeTXT(ss.str());
 }
 
 void GMMProjectedSampler::getSampleFunction(Interpolation::Function &fun) {
