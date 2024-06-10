@@ -24,8 +24,12 @@
 CoalescenceSampling::CoalescenceSampling() {}
 
 void CoalescenceSampling::init(ParticleContainer* /* particleContainer */, DomainDecompBase* domainDecomp, Domain* domain) {
-    Log::global_log->info() << "["<< getPluginName()<<"] ----------------INIT CALLED: "  << std::endl;
-    _rhoOutputFilename = _outputPrefix +  "rho_r"+ std::to_string(_radius)+".csv";
+    // Log::global_log->info() << "["<< getPluginName()<<"] ----------------INIT CALLED: "  << std::endl;
+    
+    std::string radiusString = std::to_string(_radius); // delivers string with trailing zeroes
+    radiusString.erase ( radiusString.find_last_not_of('0') + 1, std::string::npos ); // remove trailing zeroes
+    radiusString.erase ( radiusString.find_last_not_of('.') + 1, std::string::npos ); // remove trailing "."
+    _rhoOutputFilename = _outputPrefix +  "rho_r"+ radiusString +".csv";
 
     _globalBoxLength[0] = domain->getGlobalLength(0);
     _globalBoxLength[1] = domain->getGlobalLength(1);
