@@ -65,9 +65,14 @@ void RadialDFCOM::ProcessDistance(double r){
 
 }   
 
-void RadialDFCOM::WriteRDFToFile(){
+void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* domain){
     std::ofstream outfile("rdf.txt");
-    outfile<<"#Total time steps: "<<_simulation.getNumTimesteps()<<"\n";
+    double rho_bulk=0.0;
+    rho_bulk = (double)particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)/(double)domain->getGlobalVolume();
+    outfile<<"#Total time steps: "<<sample_frequency<<"\n";
+    outfile<<"#Bulk density: "<<rho_bulk<<"\n";
+    outfile<<"#Total molecules: "<<domain->getglobalNumMolecules()<<"\n";
+    outfile<<"#Total volume: "<<domain->getGlobalVolume()<<"\n";
     double data=0.0;
     for(int i=0;i<number_bins;i++){
         double rmin, rmax, rmid, binvol, rmin3,rmax3;
@@ -77,7 +82,7 @@ void RadialDFCOM::WriteRDFToFile(){
         rmin3 = rmin*rmin*rmin;
         rmax3 = rmax*rmax*rmax;
         binvol = (4.0/3.0)*M_PI*(rmax3-rmin3);
-        data = (double)bin_counts[i]/(binvol*(double)_simulation.getNumTimesteps());
+        data = (double)bin_counts[i]/(binvol*sample_frequency);
         outfile<<i<<"\t"<<bin_counts[i]<<"\t"<<rmid<<"\t"<<data<<"\t"<<binvol<<"\n";
 
     }
