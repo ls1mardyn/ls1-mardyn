@@ -67,6 +67,7 @@
 #include "plugins/WallPotential.h"
 
 #include "plugins/RDFAtCOM.h"
+#include "plugins/PotentialOfMeanForce/PMF.h"
 
 #ifdef ENABLE_ADIOS2
 #include "io/Adios2Writer.h"
@@ -144,6 +145,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(WallPotential);
 	REGISTER_PLUGIN(XyzWriter);
 	REGISTER_PLUGIN(RadialDFCOM);
+	REGISTER_PLUGIN(PMF);
 #ifdef VTK
 	REGISTER_PLUGIN(VTKMoleculeWriter);
 #ifndef MARDYN_AUTOPAS
