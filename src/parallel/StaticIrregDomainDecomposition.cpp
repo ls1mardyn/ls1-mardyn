@@ -53,7 +53,7 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
     /* If the node does not exist, then behaviour is identical to
      * DomainDecomposition unless the weights are set through the constructor
      */
-    for (short i = 0; i < 3; i++) {
+    for (int i = 0; i < _subdomainWeights.size(); i++) {
       _subdomainWeights[i].clear();
     }
 
@@ -123,7 +123,7 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
     Log::global_log->info() << "Weights for subdomains for "
                                "StaticIrregDomainDecomposition have been read"
                             << std::endl;
-    for (short i = 0; i < _subdomainWeights.size(); i++) {
+    for (int i = 0; i < _subdomainWeights.size(); i++) {
       std::stringstream ss;
       for (auto w : _subdomainWeights[i]) {
         ss << w << " ";
