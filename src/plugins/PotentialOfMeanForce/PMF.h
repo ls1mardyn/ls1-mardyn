@@ -13,20 +13,22 @@
 #include "Region.h"
 #include "InteractionCellProcessor.h"
 
+//TODO: who owns the InteractionCellProcessor, AdResS or Simulation?
+
 class PMF:public PluginBase{
 
     private:
 
     std::vector<double> nodes;
     std::vector<FPRegion> regions;//should create AT region with
-    CellProcessor* cell_processor;
+    InteractionCellProcessor* adres_cell_processor;
 
     public:
     PMF();
     ~PMF(){}
     void readXML(XMLfileUnits& xmlconfig) override;
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
-    void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
+    void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
     void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
     void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
     void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override{}
@@ -34,5 +36,9 @@ class PMF:public PluginBase{
 
     std::string getPluginName(){ return "PMF";}
     static PluginBase* createInstance() {return new PMF(); }
+
+    public:
+
+    std::vector<FPRegion>& GetRegions();
 
 };
