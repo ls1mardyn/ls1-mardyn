@@ -39,6 +39,7 @@ void PMF::readXML(XMLfileUnits& xmlfile){
 
 void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep)
 {
+    resolution_handler.CheckResolution(pc,sites,regions);
 }
 /********************
  * ****************** FUNCTIONS NOT FROM THE INTERFACE

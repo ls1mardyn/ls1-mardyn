@@ -5,6 +5,7 @@ void ResolutionHandler::CheckResolution(ParticleContainer* pc, std::map<unsigned
     //check all molecules
     for(auto it = pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
         unsigned long molecule_id = it->getID();
+        std::cout<<"Molecule "<<molecule_id<<" has resolution "<<resolution_map[molecule_id].second<<" \n";
         bool stop=false;
 
         for(auto& reg:regions){
@@ -16,7 +17,6 @@ void ResolutionHandler::CheckResolution(ParticleContainer* pc, std::map<unsigned
             }
         }
 
-        if(stop) continue;
 
         for(auto& reg:regions){
             if(reg.isInnerPointDomain(_simulation.getDomain(),Hybrid,it->r_arr())){
@@ -27,15 +27,19 @@ void ResolutionHandler::CheckResolution(ParticleContainer* pc, std::map<unsigned
             }
         }
 
+        if(stop) continue;
+
+        CheckAndModifyMoleculeResolution(resolution_map[molecule_id], CoarseGrain);
+
 
     }
 }
 
-void ResolutionHandler::CheckAndModifyMoleculeResolution(std::pair<InteractionSite,ResolutionType>& val, ResolutionType res_type){
+void ResolutionHandler::CheckAndModifyMoleculeResolution(std::pair<InteractionSite,ResolutionType>& tracker, ResolutionType res_type){
 
-    if(val.second == res_type){
+    if(tracker.second == res_type){
         return;
     }
 
-    val.second=res_type;
+    tracker.second=res_type;
 }
