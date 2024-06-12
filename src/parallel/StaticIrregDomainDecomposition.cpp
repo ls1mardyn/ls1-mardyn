@@ -53,73 +53,34 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
     /* If the node does not exist, then behaviour is identical to
      * DomainDecomposition unless the weights are set through the constructor
      */
-    for (int i = 0; i < _subdomainWeights.size(); i++) {
+    Log::global_log->info()
+        << "Reading weights for StaticIrregDomainDecomposition" << std::endl;
+    std::array<std::string, 3> axes = {"x", "y", "z"};
+    for (int i = 0; i < axes.size(); i++) {
       _subdomainWeights[i].clear();
-    }
 
-    std::string weightsx = xmlconfig.getNodeValue_string("x");
-    if (!weightsx.empty()) {
-      std::stringstream ss(weightsx);
-      while (ss.good()) {
-        int temp;
-        ss >> temp;
-        if (temp <= 0) {
-          Log::global_log->fatal()
-              << "Weights in x axis have a non-natural number! Only weights > "
-                 "0 allowed, please check XML file!";
-          Simulation::exit(5003);
+      std::string weights = xmlconfig.getNodeValue_string(axes.at(i));
+      if (!weights.empty()) {
+        std::stringstream ss(weights);
+        while (ss.good()) {
+          int temp;
+          if (!(ss >> temp) || temp <= 0) {
+            Log::global_log->fatal()
+                << "Weights in " << axes.at(i)
+                << " axis have a non-natural number! Only integer weights > "
+                   "0 allowed, please check XML file!"
+                << std::endl;
+            Simulation::exit(5003);
+          }
+          _subdomainWeights[i].push_back(temp);
+          if (ss.peek() == ',' || ss.peek() == ' ') // skip commas and spaces
+            ss.ignore();
         }
-        _subdomainWeights[0].push_back(temp);
-        if (ss.peek() == ',' || ss.peek() == ' ') // skip commas and spaces
-          ss.ignore();
+      } else {
+        _subdomainWeights[i].push_back(
+            1); // no decomposition, whole length spanned
       }
-    } else {
-      _subdomainWeights[0].push_back(
-          1); // no decomposition, whole length spanned
     }
-
-    std::string weightsy = xmlconfig.getNodeValue_string("y");
-    if (!weightsy.empty()) {
-      std::stringstream ss(weightsy);
-      while (ss.good()) {
-        int temp;
-        ss >> temp;
-        if (temp <= 0) {
-          Log::global_log->fatal()
-              << "Weights in y axis have a non-natural number! Only weights > "
-                 "0 allowed, please check XML file!";
-          Simulation::exit(5003);
-        }
-        _subdomainWeights[1].push_back(temp);
-        if (ss.peek() == ',' || ss.peek() == ' ') // skip commas and spaces
-          ss.ignore();
-      }
-    } else {
-      _subdomainWeights[1].push_back(
-          1); // no decomposition, whole length spanned
-    }
-
-    std::string weightsz = xmlconfig.getNodeValue_string("z");
-    if (!weightsz.empty()) {
-      std::stringstream ss(weightsz);
-      while (ss.good()) {
-        int temp;
-        ss >> temp;
-        if (temp <= 0) {
-          Log::global_log->fatal()
-              << "Weights in z axis have a non-natural number! Only weights > "
-                 "0 allowed, please check XML file!";
-          Simulation::exit(5003);
-        }
-        _subdomainWeights[2].push_back(temp);
-        if (ss.peek() == ',' || ss.peek() == ' ') // skip commas and spaces
-          ss.ignore();
-      }
-    } else {
-      _subdomainWeights[2].push_back(
-          1); // no decomposition, whole length spanned
-    }
-
     Log::global_log->info() << "Weights for subdomains for "
                                "StaticIrregDomainDecomposition have been read"
                             << std::endl;
