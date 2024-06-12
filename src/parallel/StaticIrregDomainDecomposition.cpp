@@ -50,9 +50,9 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
   // bypass DomainDecomposition readXML to avoid reading MPIGridDims
 
   if (xmlconfig.changecurrentnode("subdomainWeights")) {
-    _gridSize[0] = _gridSize[1] = _gridSize[2] =
-        1; // ensure that, if the xml for a direction is empty, that axis is not
-           // decomposed
+    /* If the node does not exist, then behaviour is identical to
+     * DomainDecomposition unless the weights are set through the constructor
+     */
     for (short i = 0; i < 3; i++) {
       _subdomainWeights[i].clear();
     }
