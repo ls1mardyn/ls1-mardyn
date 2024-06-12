@@ -55,7 +55,7 @@ public:
    comma-separated values.
    * Even though this class subclasses DomainDecomposition, it bypasses the
    readXML() mehod of DomainDecomposition
-   * because MPIGridDims is supposed to be calculated from the CSV
+   * because MPIGridDims is supposed to be calculated from the weight
    configuration.
    *
    * The following xml object structure is handled by this method:
@@ -95,7 +95,7 @@ public:
 
 private:
   /**
-   * Stores the weights from the given CSV file.
+   * Stores the weights from the XML config file.
    *
    * The weights denote the relative width of that subdomain relative to the
    * others in the same dimension. Ex: if the weights in the x dimension are
