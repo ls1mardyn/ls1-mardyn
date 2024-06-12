@@ -51,8 +51,8 @@ public:
   /**
    * Reads in XML configuration for StaticIrregDomainDecomposition.
    *
-   * The only configuration allowed right now is a CSV file, which contains the
-   actual domain breakdown.
+   * Here, the user can specify the weights of the breakdown of each axis with
+   comma-separated values.
    * Even though this class subclasses DomainDecomposition, it bypasses the
    readXML() mehod of DomainDecomposition
    * because MPIGridDims is supposed to be calculated from the CSV
@@ -62,16 +62,20 @@ public:
    * \code{.xml}
      <parallelisation type="StaticIrregDomainDecomposition">
        <!-- structure handled by DomainDecompMPIBase -->
-       <subdomainWeightsCSV> STRING.csv </subdomainWeightsCSV>
+       <subdomainWeights>
+          <x>INT,INT,INT,...</x>
+          <y>INT,INT,INT,...</y>
+          <z>INT,INT,INT,...</z>
+       </subdomainWeights>
      </parallelisation>
      \endcode
    *
-   * A file with its first line being 1,2,1 defines an x axis with subdomain
+   * If the values in <x> are 1,2,1, then we define an x axis with subdomain
    lengths in the 1:2:1 ratio
-   * If file not given, default behaviour is an equally spaced grid, same as
+   * If xml tag is absent, default behaviour is an equally spaced grid, same as
    DomainDecomposition
    *
-   * @param &xmlconfig The xml node from which to read the CSV filename with
+   * @param &xmlconfig The xml node from which to read the comma-separated
    weights
    */
   void readXML(XMLfileUnits &xmlconfig) override;
@@ -88,21 +92,6 @@ public:
    * documentation for the member _subdomainWeights.
    */
   void updateSubdomainDimensions();
-
-  /**
-   * Reads in the CSV file given by the XML config, and updates
-   * _subdomainWeights.
-   *
-   * The CSV file is expected to have 3 lines of comma-separated integers, with
-   * the integer signifying the "weight" (relative width) of the subdomain. The
-   * lines, in order, are expected to be the weights for the x, y and z
-   * dimension. Consequently, the number of integers for a dimension signify the
-   * number of ranks in that dimension, and is calculated as such.
-   *
-   * @param &filename The CSV file from which to read weights. Obtained from the
-   * XML config.
-   */
-  void updateSubdomainWeightsFromFile(const std::string &filename);
 
 private:
   /**

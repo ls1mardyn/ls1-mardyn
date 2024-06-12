@@ -49,10 +49,87 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
   DomainDecompMPIBase::readXML(xmlconfig);
   // bypass DomainDecomposition readXML to avoid reading MPIGridDims
 
-  std::string filename = xmlconfig.getNodeValue_string("subdomainWeightsCSV");
-  if (!filename.empty()) {
-    updateSubdomainWeightsFromFile(filename);
-    for (int i = 0; i < _subdomainWeights.size(); ++i) {
+  if (xmlconfig.changecurrentnode("subdomainWeights")) {
+    _gridSize[0] = _gridSize[1] = _gridSize[2] =
+        1; // ensure that, if the xml for a direction is empty, that axis is not
+           // decomposed
+    for (short i = 0; i < 3; i++) {
+      _subdomainWeights[i].clear();
+    }
+
+    std::string weightsx = xmlconfig.getNodeValue_string("x");
+    if (!weightsx.empty()) {
+      std::stringstream ss(weightsx);
+      while (ss.good()) {
+        int temp;
+        ss >> temp;
+        if (temp <= 0) {
+          Log::global_log->fatal()
+              << "Weights in x axis have a non-natural number! Only weights > "
+                 "0 allowed, please check XML file!";
+          Simulation::exit(5003);
+        }
+        _subdomainWeights[0].push_back(temp);
+        if (ss.peek() == ',' || ss.peek() == ' ') // skip commas and spaces
+          ss.ignore();
+      }
+    } else {
+      _subdomainWeights[0].push_back(
+          1); // no decomposition, whole length spanned
+    }
+
+    std::string weightsy = xmlconfig.getNodeValue_string("y");
+    if (!weightsy.empty()) {
+      std::stringstream ss(weightsy);
+      while (ss.good()) {
+        int temp;
+        ss >> temp;
+        if (temp <= 0) {
+          Log::global_log->fatal()
+              << "Weights in y axis have a non-natural number! Only weights > "
+                 "0 allowed, please check XML file!";
+          Simulation::exit(5003);
+        }
+        _subdomainWeights[1].push_back(temp);
+        if (ss.peek() == ',' || ss.peek() == ' ') // skip commas and spaces
+          ss.ignore();
+      }
+    } else {
+      _subdomainWeights[1].push_back(
+          1); // no decomposition, whole length spanned
+    }
+
+    std::string weightsz = xmlconfig.getNodeValue_string("z");
+    if (!weightsz.empty()) {
+      std::stringstream ss(weightsz);
+      while (ss.good()) {
+        int temp;
+        ss >> temp;
+        if (temp <= 0) {
+          Log::global_log->fatal()
+              << "Weights in z axis have a non-natural number! Only weights > "
+                 "0 allowed, please check XML file!";
+          Simulation::exit(5003);
+        }
+        _subdomainWeights[2].push_back(temp);
+        if (ss.peek() == ',' || ss.peek() == ' ') // skip commas and spaces
+          ss.ignore();
+      }
+    } else {
+      _subdomainWeights[2].push_back(
+          1); // no decomposition, whole length spanned
+    }
+
+    Log::global_log->info() << "Weights for subdomains for "
+                               "StaticIrregDomainDecomposition have been read"
+                            << std::endl;
+    for (short i = 0; i < _subdomainWeights.size(); i++) {
+      std::stringstream ss;
+      for (auto w : _subdomainWeights[i]) {
+        ss << w << " ";
+      }
+      Log::global_log->info()
+          << "Weights for axis " << i << ": " << ss.str() << std::endl;
       _gridSize[i] = static_cast<int>(
           _subdomainWeights[i]
               .size()); //_gridSize still contains the number of ranks per
@@ -60,6 +137,7 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
     }
     initMPIGridDims();           // to recalculate _coords
     updateSubdomainDimensions(); // recalculate sizes from _coords
+    xmlconfig.changecurrentnode("..");
   }
 }
 
@@ -93,61 +171,5 @@ void StaticIrregDomainDecomposition::updateSubdomainDimensions() {
     _boxMax[i] =
         _boxMin[i] + (static_cast<double>(_subdomainWeights[i][_coords[i]]) *
                       _domainLength[i] / totalWeight);
-  }
-}
-
-void StaticIrregDomainDecomposition::updateSubdomainWeightsFromFile(
-    const std::string &filename) {
-  std::ifstream file(filename.c_str());
-  if (!file.good()) {
-    Log::global_log->fatal() << "CSV file to read domain decomposition from "
-                                "does not exist! Please check config file!";
-    Simulation::exit(5001);
-  }
-
-  std::string line;
-  for (int i = 0; i < 3; i++) { // only reads the first 3 lines, theoretically
-                                // the rest of the file can contain whatever
-    getline(file, line);
-    if (line.empty()) {
-      Log::global_log->fatal()
-          << "CSV has less than 3 lines! Please check CSV file!";
-      Simulation::exit(5002);
-    }
-    _subdomainWeights[i].clear();
-    std::stringstream ss(line);
-    if (!ss.good()) {
-      Log::global_log->fatal() << "EOF or I/O error occured on line " << i
-                               << " of CSV. Please check CSV file!";
-      Simulation::exit(5004);
-    }
-    while (ss.good()) {
-      int temp;
-      ss >> temp;
-      if (temp <= 0) {
-        Log::global_log->fatal() << "CSV has non-natural number! Only weights "
-                                    "> 0 allowed, please check CSV file!";
-        Simulation::exit(5003);
-      }
-      _subdomainWeights[i].push_back(temp);
-      if (ss.peek() == ',' || ss.peek() == ' ') // skip commas and spaces
-        ss.ignore();
-    }
-    if (_subdomainWeights[i].empty()) {
-      Log::global_log->fatal()
-          << "Weights empty, failed reading operation, please check CSV file!";
-      Simulation::exit(5005);
-    }
-  }
-  Log::global_log->info() << "Weights for subdomains for "
-                             "StaticIrregDomainDecomposition have been read"
-                          << std::endl;
-  for (int i = 0; i < 3; i++) {
-    std::stringstream ss;
-    for (auto w : _subdomainWeights[i]) {
-      ss << w << " ";
-    }
-    Log::global_log->info()
-        << "Weights for axis " << i << ": " << ss.str() << std::endl;
   }
 }
