@@ -57,6 +57,8 @@ public:
    readXML() mehod of DomainDecomposition
    * because MPIGridDims is supposed to be calculated from the weight
    configuration.
+   * The number of INTs in a dimension signify the number of ranks in that
+   dimension.
    *
    * The following xml object structure is handled by this method:
    * \code{.xml}
