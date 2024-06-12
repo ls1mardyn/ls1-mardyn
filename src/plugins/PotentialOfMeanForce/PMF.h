@@ -15,13 +15,15 @@
 
 //TODO: who owns the InteractionCellProcessor, AdResS or Simulation?
 
-class PMF:public PluginBase{
 
+class PMF:public PluginBase{
+    using value = std::pair<InteractionSite,ResolutionType>;
     private:
 
     std::vector<double> nodes;
     std::vector<FPRegion> regions;//should create AT region with
     InteractionCellProcessor* adres_cell_processor;
+    std::map<unsigned long, value> sites;
 
     public:
     PMF();
@@ -40,5 +42,11 @@ class PMF:public PluginBase{
     public:
 
     std::vector<FPRegion>& GetRegions();
+
+};
+
+class InteractionSite:public Site{
+
+    public:
 
 };
