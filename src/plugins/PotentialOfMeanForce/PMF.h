@@ -44,6 +44,7 @@ class PMF:public PluginBase{
     public:
 
     std::vector<FPRegion>& GetRegions();
+    ResolutionType GetMoleculeResolution(unsigned long idx);
 
 };
 

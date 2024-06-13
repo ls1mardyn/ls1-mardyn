@@ -17,17 +17,37 @@
 #include "Region.h"
 #include "Resolution.h"
 
+class PMF;
+
 class InteractionForceAdapter:public ParticlePairsHandler{
+    enum class InteractionType {onlyfp=0, mixed=1, onlycg=2, unspecified=3};
     public: 
 
-    InteractionForceAdapter(ResolutionHandler& res);
-    ~InteractionForceAdapter();
+    InteractionForceAdapter(ResolutionHandler& res, PMF* pmf);
+    virtual ~InteractionForceAdapter() override {}
+    //Interface methods
     void init() override;
     void finish() override;
     double processPair(Molecule& m1, Molecule& m2, double distance[3], PairType pair, double dd, bool CalculateLJ) override;
 
 
+
+    private:
+
+    //Has the case statement
+    double processPairBackend(Molecule& m1, Molecule& m2, double distance[3], PairType pair, double dd, bool calcLJ, InteractionType interaction);
+    
+    //Checks interaction type and calls subroutines
+    inline void PotForceType(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, InteractionType interaction);
+
+    inline void PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ);
+
+    inline void HybridFluidPot(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, bool hybrid);
+
+
     private:
 
     ResolutionHandler& resolution_handler;
+    PMF* adres;
+    std::vector<ParticlePairs2PotForceAdapter::PP2PFAThreadData*> thread_data;
 };

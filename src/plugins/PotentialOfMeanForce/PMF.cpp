@@ -49,3 +49,6 @@ std::vector<FPRegion>& PMF::GetRegions(){
     return this->regions;
 }
 
+ResolutionType PMF::GetMoleculeResolution(unsigned long idx){
+    return sites[idx].second;
+}
