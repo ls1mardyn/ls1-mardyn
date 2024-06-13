@@ -13,6 +13,8 @@
 #include "Region.h"
 #include "InteractionCellProcessor.h"
 #include "Resolution.h"
+#include "WeightFunction.h"
+
 
 //TODO: who owns the InteractionCellProcessor, AdResS or Simulation?
 
@@ -26,6 +28,7 @@ class PMF:public PluginBase{
     InteractionCellProcessor* adres_cell_processor;
     std::map<unsigned long, tracker> sites;
     ResolutionHandler resolution_handler;
+    WeightFunction weight_function;
 
     public:
     PMF();
@@ -45,6 +48,7 @@ class PMF:public PluginBase{
 
     std::vector<FPRegion>& GetRegions();
     ResolutionType GetMoleculeResolution(unsigned long idx);
+    double WeightValue(std::array<double,3>& pos, FPRegion& region);
 
 };
 

@@ -45,6 +45,10 @@ void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domain
  * ****************** FUNCTIONS NOT FROM THE INTERFACE
  *******************/
 
+double PMF::WeightValue(std::array<double,3>& pos, FPRegion& region){
+    return weight_function.WeightValue(pos,region);
+}
+
 std::vector<FPRegion>& PMF::GetRegions(){
     return this->regions;
 }
