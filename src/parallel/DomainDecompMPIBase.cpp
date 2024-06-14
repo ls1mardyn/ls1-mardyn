@@ -2,10 +2,13 @@
  * DomainDecompBaseMPI.cpp
  *
  *  Created on: Nov 15, 2015
- *      Author: tchipevn
+ *	  Author: tchipevn
  */
 #include <memory>
 #include <algorithm>
+#include <unordered_set>
+#include <unordered_map>
+#include <vector>
 
 #include "DomainDecompMPIBase.h"
 #include "molecules/Molecule.h"
@@ -78,9 +81,9 @@ void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.changecurrentnode("../datastructure");
 	xmlconfig.getNodeValue("traversalSelector", traversal);
 	transform(traversal.begin(),
-	          traversal.end(),
-	          traversal.begin(),
-	          ::tolower);
+			  traversal.end(),
+			  traversal.begin(),
+			  ::tolower);
 	// currently only checks, if traversal is valid - should check, if zonal method/traversal is valid
 	if(traversal.find("hs") != std::string::npos || traversal.find("mp") != std::string::npos  || traversal.find("nt") != std::string::npos ) {
 		zonalMethod = traversal;
@@ -204,55 +207,120 @@ void DomainDecompMPIBase::assertIntIdentity(int IX) {
 }
 
 void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContainer) const {
-	using std::map;
-	using std::endl;
 
-	if (_rank) {
-		unsigned long num_molecules = moleculeContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
-		std::vector<unsigned long> tids;
-		tids.reserve(num_molecules);
+	// Put local IDs in vector
+	unsigned long num_molecules = moleculeContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+	std::vector<unsigned long> localParticleIds;
+	localParticleIds.reserve(num_molecules);
 
-		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
-			tids.push_back(m->getID());
+	for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
+		localParticleIds.push_back(m->getID());
+	}
+
+	// Check local duplicates
+	std::unordered_set<long long> localDuplicates;
+	std::unordered_set<long long> seenIds;
+
+	for (const auto& pid : localParticleIds) {
+		if (seenIds.find(pid) != seenIds.end()) {
+			localDuplicates.insert(pid);
+		} else {
+			seenIds.insert(pid);
 		}
-		MPI_CHECK(MPI_Send(tids.data(), num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm));
-		Log::global_log->info() << "Data consistency checked: for results see rank 0." << std::endl;
-	} else {
-		/** @todo FIXME: This implementation does not scale. */
-		std::map<unsigned long, int> check;
+	}
 
-		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
-			if(check.find(m->getID()) != check.end()){
-				Log::global_log->error() << "Rank 0 contains a duplicated particle with id " << m->getID() << std::endl;
-				MPI_Abort(_comm, 1);
+	// Distribute particle IDs to corresponding ranks
+	std::vector<std::vector<long long>> sendBuffers(_numProcs);
+	for (const auto& id : localParticleIds) {
+		
+		// Function to hash a particle ID to an MPI process rank
+		int targetRank = id % _numProcs;
+
+		sendBuffers[targetRank].push_back(id);
+	}
+
+	// Determine send counts and displacements
+	std::vector<int> sendCounts(_numProcs, 0);
+	std::vector<int> sendDispls(_numProcs, 0);
+	for (int i = 0; i < _numProcs; ++i) {
+		sendCounts[i] = sendBuffers[i].size();
+	}
+
+	// All-to-all communication: share the counts first
+	std::vector<int> recvCounts(_numProcs);
+	MPI_Alltoall(sendCounts.data(), 1, MPI_INT, recvCounts.data(), 1, MPI_INT, MPI_COMM_WORLD);
+
+	// Compute displacements for send and receive buffers
+	int totalSend = 0, totalRecv = 0;
+	std::vector<int> recvDispls(_numProcs, 0);
+	for (int i = 0; i < _numProcs; ++i) {
+		sendDispls[i] = totalSend;
+		recvDispls[i] = totalRecv;
+		totalSend += sendCounts[i];
+		totalRecv += recvCounts[i];
+	}
+
+	// Prepare send and receive buffers
+	std::vector<long long> sendBuffer(totalSend);
+	std::vector<long long> recvBuffer(totalRecv);
+	for (int i = 0; i < _numProcs; ++i) {
+		std::copy(sendBuffers[i].begin(), sendBuffers[i].end(), sendBuffer.begin() + sendDispls[i]);
+	}
+
+	// All-to-all communication: exchange the particle IDs
+	MPI_Alltoallv(sendBuffer.data(), sendCounts.data(), sendDispls.data(), MPI_LONG_LONG,
+				  recvBuffer.data(), recvCounts.data(), recvDispls.data(), MPI_LONG_LONG, MPI_COMM_WORLD);
+
+	// Check for duplicates in the received IDs
+	std::unordered_set<long long> globalSeenIds;
+	std::unordered_set<long long> globalDuplicates = localDuplicates; // Start with local duplicates
+
+	for (const auto& pid : recvBuffer) {
+		if (globalSeenIds.find(pid) != globalSeenIds.end()) {
+			globalDuplicates.insert(pid);
+		} else {
+			globalSeenIds.insert(pid);
+		}
+	}
+
+	// Collect and print global duplicates
+	int globalDuplicateCount = globalDuplicates.size();
+	std::vector<long long> globalDuplicateList(globalDuplicateCount);
+	std::copy(globalDuplicates.begin(), globalDuplicates.end(), globalDuplicateList.begin());
+
+	// Gather sizes of duplicate lists at root process
+	std::vector<int> allDuplicateCounts(_numProcs);
+	MPI_Gather(&globalDuplicateCount, 1, MPI_INT, allDuplicateCounts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+	// Compute displacements for gathering duplicates at root
+	std::vector<int> duplicateDispls(_numProcs, 0);
+	int totalDuplicates = allDuplicateCounts[0];
+	if (_rank == 0) {
+		for (int i = 1; i < _numProcs; ++i) {
+			duplicateDispls[i] = duplicateDispls[i - 1] + allDuplicateCounts[i - 1];
+			totalDuplicates += allDuplicateCounts[i];
+		}
+	}
+
+	// Gather all duplicates at root process
+	std::vector<long long> allDuplicates(totalDuplicates);
+	MPI_Gatherv(globalDuplicateList.data(), globalDuplicateCount, MPI_LONG_LONG,
+				allDuplicates.data(), allDuplicateCounts.data(), duplicateDispls.data(),
+				MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+
+	// Print global duplicates at root process
+	if (_rank == 0) {
+		if (totalDuplicates == 0) {
+			Log::global_log->info() << "Data consistency checked: No duplicate IDs detected." << std::endl;
+		} else {
+			std::stringstream ss;
+			for (const auto& pid : allDuplicates) {
+				ss << pid << " ";
 			}
-			check[m->getID()] = 0;
-		}
-		MPI_Status status;
-		bool isOk = true;
-		for (int i = 1; i < _numProcs; i++) {
-			int num_recv = 0;
-			MPI_CHECK(MPI_Probe(i, 2674 + i, _comm, &status));
-			MPI_CHECK(MPI_Get_count(&status, MPI_UNSIGNED_LONG, &num_recv));
-			std::vector<unsigned long> recv(num_recv);
-
-			MPI_CHECK(MPI_Recv(recv.data(), num_recv, MPI_UNSIGNED_LONG, i, 2674 + i, _comm, &status));
-			for (int j = 0; j < num_recv; j++) {
-				if (check.find(recv[j]) != check.end()) {
-					Log::global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID "
-							<< recv[j] << std::endl;
-					isOk = false;
-				} else
-					check[recv[j]] = i;
-			}
-		}
-		if (not isOk) {
+			Log::global_log->error() << "Duplicate particle IDs found: " << ss.str() << std::endl;
 			Log::global_log->error() << "Aborting because of duplicated particles." << std::endl;
 			MPI_Abort(_comm, 1);
 		}
-
-		Log::global_log->info() << "Data consistency checked: No duplicate IDs detected among " << check.size()
-				<< " entries." << std::endl;
 	}
 }
 
