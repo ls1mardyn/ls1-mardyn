@@ -144,7 +144,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
             fthConf._thermodynamicForceSampleGap = xmlconfig.getNodeValue_int("enableFTH/createFTH/sampleGap", 200);
             fthConf._convergenceThreshold = xmlconfig.getNodeValue_double("enableFTH/createFTH/threshold", 0.02);
             fthConf._convergenceFactor = xmlconfig.getNodeValue_double("enableFTH/createFTH/convFactor", 0.2);
-			fthConf._fth_file_path = "";
+        	fthConf._fth_file_path = xmlconfig.getNodeValue_string("enableFTH/pathFTH", ""); // reload from file and keep refining
         }
         else { // use existing FTH function
 			fthConf._fth_file_path = xmlconfig.getNodeValue_string("enableFTH/pathFTH", "");

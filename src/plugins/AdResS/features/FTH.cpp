@@ -37,7 +37,7 @@ void FTH::Grid3DHandler::init(const FTH::Config &config) {
 	Handler::init(config);
 	if (!config._enableThermodynamicForce) return;
 
-	if (_config._createThermodynamicForce) {
+	if (_config._fth_file_path.empty()) { // == ""
 		// set all FTH values in grid to 0
 		for (auto& node : _config._grid->getNodes()) {
 			node.data().fth = {0, 0, 0};
@@ -124,7 +124,7 @@ void FTH::Grid3DHandler::writeLogs(ParticleContainer &particleContainer, DomainD
 	if (!_config._density_sampler->wasSampled()) _config._density_sampler->sampleData(&particleContainer, &domainDecomp, &domain);
 	if(_config._logDensities) _config._density_sampler->writeSample("Density_Grid", simstep);
 
-	if(_config._forgetCounter % 100000 == 0) {
+	if(_config._forgetCounter % 1000000 == 0) {
 		auto* density_sampler = _config._density_sampler;
 		dynamic_cast<AveragedGridSampler*>(density_sampler)->getAverager().reset();
 		_config._forgetCounter = 0;
@@ -144,7 +144,7 @@ void FTH::Grid1DHandler::init(const FTH::Config &config) {
 	Handler::init(config);
 	if (!config._enableThermodynamicForce) return;
 
-	if (_config._createThermodynamicForce) {
+	if (_config._fth_file_path.empty()) {
 		mardyn_assert((!_config._density_sampler->is3D() && _config._density_sampler->usesGrid()));
 		auto* domain = _simulation.getDomain();
 		_thermodynamicForce.n = _config._density_sampler->getNumSamplePoints();
@@ -335,7 +335,7 @@ void FTH::Function1DHandler::init(const FTH::Config &config) {
 	Handler::init(config);
 	if (!config._enableThermodynamicForce) return;
 
-	if (_config._createThermodynamicForce) {
+	if (_config._fth_file_path.empty()) {
 		mardyn_assert((!_config._density_sampler->is3D() && !_config._density_sampler->usesGrid()));
 		auto* domain = _simulation.getDomain();
 		_thermodynamicForce.n = _config._density_sampler->getNumSamplePoints();
