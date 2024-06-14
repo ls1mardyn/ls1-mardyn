@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <mardyn version="20100525" >
     <refunits type="SI" >
-        <length unit="nm">1.0</length>
+        <length unit="nm">0.1</length>
         <mass unit="u">1.0</mass>
         <energy unit="eV">1.0</energy>
     </refunits>
@@ -9,29 +9,32 @@
     <simulation type="MD" >
         <run>
             <currenttime>0</currenttime>
+            <equilibration>
+                <steps>0</steps>
+            </equilibration>
             <production>
-                <steps>20000</steps>
+                <steps>50000</steps>
             </production>
         </run>
-        <integrator type="Langevin">
-            <!-- MD ODE integrator -->
+        <integrator type="Leapfrog">
+            <timestep unit="reduced">0.0009118371969</timestep>
+        </integrator>
+        <!--integrator type="Langevin">
             <timestep unit="reduced">0.001</timestep>
             <friction>0.5</friction>
             <ActiveRegions>
                 <region>
                     <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                    <upper> <x>36</x> <y>20</y> <z>20</z> </upper>
+                    <upper> <x>80</x> <y>40</y> <z>40</z> </upper>
                 </region>
             </ActiveRegions>
-        </integrator>
+        </integrator-->
         <ensemble type="NVT">
-            <!-- Target temperature is 1000K -->
-            <!-- real gas closer to ideal gas at higher temperatures but lower pressures -->
-            <temperature unit="reduced" >8.3144621</temperature>
+            <temperature unit="reduced" >100</temperature>
             <domain type="box">
-                <lx unit="reduced">36</lx>
-                <ly unit="reduced">20</ly>
-                <lz unit="reduced">20</lz>
+                <lx unit="reduced">80</lx>
+                <ly unit="reduced">40</ly>
+                <lz unit="reduced">40</lz>
             </domain>
             <components>
                 <include query="/components/moleculetype">./components.xml</include>
@@ -39,7 +42,7 @@
 
             <phasespacepoint>
                 <generator name="MultiObjectGenerator">
-                    <objectgenerator>
+                    <!--objectgenerator>
                         <filler type="GridFiller">
                             <lattice system="cubic" centering="face">
                                 <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
@@ -53,13 +56,26 @@
                                 </site>
                             </basis>
                             <latticeOccupancy>1.</latticeOccupancy>
-                            <density>0.1</density>
+                            <density>0.01</density>
                         </filler>
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>36</x> <y>20</y> <z>20</z> </upper>
+                            <upper> <x>80</x> <y>40</y> <z>40</z> </upper>
                         </object>
                         <velocityAssigner type="MaxwellVelocityDistribution"/>
+                    </objectgenerator-->
+                    <objectgenerator>
+                        <filler type="ReplicaFiller">
+                            <input type="BinaryReader">
+                                <header>Tet-ADR-Eq-500k-Wide-1.restart.header.xml</header>
+                                <data>Tet-ADR-Eq-500k-Wide-1.restart.dat</data>
+                            </input>
+                        </filler>
+
+                        <object type="Cuboid">
+                            <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>80</x> <y>40</y> <z>40</z> </upper>
+                        </object>
                     </objectgenerator>
                 </generator>
             </phasespacepoint>
@@ -72,30 +88,91 @@
                 <traversalSelector>c08</traversalSelector>
             </datastructure>
             <cutoffs type="CenterOfMass" >
-                <radiusLJ unit="reduced" >2.5</radiusLJ>
+                <radiusLJ unit="reduced" >5</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField" >
                 <epsilon>0</epsilon>
             </electrostatic>
             <thermostats>
-                <thermostat type="TemperatureObserver">
-                    <samples>100</samples>
-                    <ActiveRegions>
-                        <region>
-                            <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>36</x> <y>20</y> <z>20</z> </upper>
-                        </region>
-                    </ActiveRegions>
+                <thermostat type="VelocityScaling" componentId="global">
+                    <temperature>100</temperature>
                 </thermostat>
             </thermostats>
         </algorithm>
 
         <output>
-            <outputplugin name="CheckpointWriter">
+            <!--outputplugin name="CheckpointWriter">
                 <type>binary</type>
-                <writefrequency>20000</writefrequency>
-                <outputprefix>Tetrahedral</outputprefix>
-            </outputplugin>
+                <writefrequency>500000</writefrequency>
+                <outputprefix>Tet-ADR-Eq-500k-Wide</outputprefix>
+            </outputplugin-->
+            <!--outputplugin name="RDF">
+                <writefrequency>20</writefrequency>
+                <samplingfrequency>1</samplingfrequency>
+                <outputprefix>Tet-FP</outputprefix>
+                <bins>100</bins>
+                <intervallength>0.1</intervallength>
+            </outputplugin-->
+            <!--outputplugin name="VTKMoleculeWriter">
+                <writefrequency>1</writefrequency>
+                <writefrequencyOffset>0</writefrequencyOffset>
+                <outputprefix>Test</outputprefix>
+            </outputplugin-->
         </output>
+
+        <plugin name="AdResS">
+            <weightImpl>near</weightImpl>
+            <sampler type="Grid">
+                <sampleGap>1</sampleGap>
+                <gridSize>
+                    <nx>80</nx><ny>40</ny><nz>40</nz>
+                </gridSize>
+                <sampleRadius>0.8</sampleRadius>
+            </sampler>
+            <!--sampler type="FT">
+                <sampleGap>1</sampleGap>
+                <dim>0</dim>
+                <frequencies>1000</frequencies>
+                <samples>80</samples>
+            </sampler-->
+            <enableFTH>
+                <logFTH>false</logFTH>
+                <logDensity>true</logDensity>
+                <rho>0.01</rho>
+                <createFTH>
+                    <sampleGap>50000</sampleGap>
+                    <threshold>0.05</threshold>
+                    <convFactor>0</convFactor>
+                </createFTH>
+                <!--pathFTH>../../examples/AdResS/Validation/Tetrahedral/F_TH_Final.txt</pathFTH-->
+            </enableFTH>
+            <fpregions>
+                <region id="1">
+                    <lowX>35</lowX><lowY>-5.0</lowY><lowZ>-5.0</lowZ>
+                    <highX>45</highX><highY>45</highY><highZ>45</highZ>
+                    <hybridDimX>30.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                </region>
+            </fpregions>
+        </plugin>
+
+        <plugin name="MaxCheck">
+            <control>
+                <start>0</start>
+                <frequency>1</frequency>
+                <stop>1000000000</stop>
+            </control>
+            <range>
+                <inclusive>true</inclusive>
+                <xmin>4</xmin><ymin>-5</ymin><zmin>-5</zmin>
+                <xmax>76</xmax><ymax>45</ymax><zmax>45</zmax>
+            </range>
+            <targets>
+                <target cid="1" method="0"/>
+                <target cid="2" method="2">
+                    <Fmax>1e+6</Fmax>
+                </target>
+                <target cid="3" method="0"/>
+            </targets>
+        </plugin>
     </simulation>
 </mardyn>
