@@ -69,12 +69,9 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 	uint32_t numTargets = 0;
 	XMLfile::Query query = xmlconfig.query("targets/target");
 	numTargets = query.card();
-	Log::global_log->info() << "[MaxCheck] Number of component targets: "
-			<< numTargets << std::endl;
+	Log::global_log->info() << "[MaxCheck] Number of component targets: " << numTargets << std::endl;
 	if (numTargets < 1) {
-		Log::global_log->warning()
-				<< "[MaxCheck] No target parameters specified. Program exit ..."
-				<< std::endl;
+		Log::global_log->warning() << "[MaxCheck] No target parameters specified. Program exit ..." << std::endl;
 		Simulation::exit(-1);
 	}
 	std::string oldpath = xmlconfig.getcurrentnodepath();
@@ -86,34 +83,46 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 		MaxVals mv;
 		xmlconfig.getNodeValue("@cid", cid_ub);
 
-		mv.F = mv.F2 = 0.;
-		mv.v = mv.v2 = 0.;
-		mv.M = mv.M2 = 0.;
-		mv.L = mv.L2 = 0.;
+		// These values are later checked if >=0 --> do nothing if quantity not specified
+		mv.F = mv.F2 = -1.;
+		mv.v = mv.v2 = -1.;
+		mv.M = mv.M2 = -1.;
+		mv.L = mv.L2 = -1.;
 		mv.method = MCM_UNKNOWN;
 
 		xmlconfig.getNodeValue("@method", mv.method);
-		Log::global_log->info() << "[MaxCheck] Method(cid=" << cid_ub << "): "
-				<< mv.method << std::endl;
+		Log::global_log->info() << "[MaxCheck] Method(cid=" << cid_ub << "): " << mv.method << std::endl;
 
 		xmlconfig.getNodeValue("Fmax", mv.F);
-		Log::global_log->info() << "[MaxCheck] Fmax(cid=" << cid_ub << "): " << mv.F
-				<< std::endl;
+		if (mv.F < 0.) {
+			Log::global_log->error() << "[MaxCheck] Fmax(cid=" << cid_ub << ") mustn't be negative but is " << mv.F << std::endl;
+			Simulation::exit(1234);
+		}
+		Log::global_log->info() << "[MaxCheck] Fmax(cid=" << cid_ub << "): " << mv.F << std::endl;
 		mv.F2 = mv.F * mv.F;
 
 		xmlconfig.getNodeValue("vmax", mv.v);
-		Log::global_log->info() << "[MaxCheck] vmax(cid=" << cid_ub << "): " << mv.v
-				<< std::endl;
+		if (mv.v < 0.) {
+			Log::global_log->error() << "[MaxCheck] vmax(cid=" << cid_ub << ") mustn't be negative but is " << mv.v << std::endl;
+			Simulation::exit(1234);
+		}
+		Log::global_log->info() << "[MaxCheck] vmax(cid=" << cid_ub << "): " << mv.v << std::endl;
 		mv.v2 = mv.v * mv.v;
 
 		xmlconfig.getNodeValue("Mmax", mv.M);
-		Log::global_log->info() << "[MaxCheck] Mmax(cid=" << cid_ub << "): " << mv.M
-				<< std::endl;
+		if (mv.M < 0.) {
+			Log::global_log->error() << "[MaxCheck] Mmax(cid=" << cid_ub << ") mustn't be negative but is " << mv.M << std::endl;
+			Simulation::exit(1234);
+		}
+		Log::global_log->info() << "[MaxCheck] Mmax(cid=" << cid_ub << "): " << mv.M << std::endl;
 		mv.M2 = mv.M * mv.M;
 
 		xmlconfig.getNodeValue("Lmax", mv.L);
-		Log::global_log->info() << "[MaxCheck] Lmax(cid=" << cid_ub << "): " << mv.L
-				<< std::endl;
+		if (mv.L < 0.) {
+			Log::global_log->error() << "[MaxCheck] Lmax(cid=" << cid_ub << ") mustn't be negative but is " << mv.L << std::endl;
+			Simulation::exit(1234);
+		}
+		Log::global_log->info() << "[MaxCheck] Lmax(cid=" << cid_ub << "): " << mv.L << std::endl;
 		mv.L2 = mv.L * mv.L;
 
 		_maxVals[cid_ub] = mv;
@@ -126,9 +135,9 @@ void MaxCheck::beforeEventNewTimestep(
 		unsigned long simstep
 	)
 {
-	if (simstep < _control.start || simstep > _control.stop
-			|| simstep % _control.freq != 0)
+	if (simstep < _control.start || simstep > _control.stop || simstep % _control.freq != 0) {
 		return;
+	}
 	this->checkMaxVals(particleContainer, domainDecomp, simstep);
 }
 
@@ -137,9 +146,9 @@ void MaxCheck::afterForces(
 		unsigned long simstep
 )
 {
-	if (simstep < _control.start || simstep > _control.stop
-			|| simstep % _control.freq != 0)
+	if (simstep < _control.start || simstep > _control.stop || simstep % _control.freq != 0) {
 		return;
+	}
 	this->checkMaxVals(particleContainer, domainDecomp, simstep);
 }
 
@@ -188,65 +197,61 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 			MaxVals &mv = _maxVals[cid_ub];
 
 			if (MCM_LIMIT_TO_MAX_VALUE == mv.method) {
-				if (mv.F > 0. && absVals.F2 > mv.F2) {
+				if (mv.F >= 0. && absVals.F2 > mv.F2) {
 					double Fabs = sqrt(absVals.F2);
 					double scale = mv.F / Fabs;
 					it->scale_F(scale);
 				}
 
-				if (mv.v > 0. && absVals.v2 > mv.v2) {
+				if (mv.v >= 0. && absVals.v2 > mv.v2) {
 					double vabs = sqrt(absVals.v2);
 					double scale = mv.v / vabs;
 					it->scale_v(scale);
 				}
 
-				if (mv.M > 0. && absVals.M2 > mv.M2) {
+				if (mv.M >= 0. && absVals.M2 > mv.M2) {
 					double Mabs = sqrt(absVals.M2);
 					double scale = mv.M / Mabs;
 					it->scale_M(scale);
 				}
 
-				if (mv.L > 0. && absVals.L2 > mv.L2) {
+				if (mv.L >= 0. && absVals.L2 > mv.L2) {
 					double Labs = sqrt(absVals.L2);
 					double scale = mv.L / Labs;
 					it->scale_D(scale);
 				}
 			} else if (MCM_LIMIT_TO_MAX_VALUE_OVERLAPS == mv.method) {
-				if (mv.F > 0. && absVals.F2 > mv.F2) {
+				if (mv.F >= 0. && absVals.F2 > mv.F2) {
 					double Fabs = sqrt(absVals.F2);
 					double scale = mv.F / Fabs;
 					it->scale_F(scale);
 
-					if (mv.v > 0. && absVals.v2 > mv.v2) {
+					if (mv.v >= 0. && absVals.v2 > mv.v2) {
 						double vabs = sqrt(absVals.v2);
 						scale = mv.v / vabs;
 						it->scale_v(scale);
 					}
 				}
-				if (mv.M > 0. && absVals.M2 > mv.M2) {
+				if (mv.M >= 0. && absVals.M2 > mv.M2) {
 					double Mabs = sqrt(absVals.M2);
 					double scale = mv.M / Mabs;
 					it->scale_M(scale);
 
-					if (mv.L > 0. && absVals.L2 > mv.L2) {
+					if (mv.L >= 0. && absVals.L2 > mv.L2) {
 						double Labs = sqrt(absVals.L2);
 						scale = mv.L / Labs;
 						it->scale_D(scale);
 					}
 				}
 			} else if (MCM_DELETE_PARTICLES == mv.method) {
-				if ( (mv.F > 0. && absVals.F2 > mv.F2) || (mv.v > 0. && absVals.v2 > mv.v2) || (mv.M > 0. && absVals.M2 > mv.M2) || (mv.L > 0. && absVals.L2 > mv.L2) )
+				if ( (mv.F >= 0. && absVals.F2 > mv.F2) ||
+					 (mv.v >= 0. && absVals.v2 > mv.v2) ||
+					 (mv.M >= 0. && absVals.M2 > mv.M2) ||
+					 (mv.L >= 0. && absVals.L2 > mv.L2) ) {
 				    particleContainer->deleteMolecule(it, false);
-				//				_deletions.push_back(&(*it));
+				}
 			}
 		}
-
-		//		// perform deletions
-		//		for(auto it:_deletions) {
-		//			particleContainer->deleteMolecule(*it, true);
-		//			_deletions.pop_back();
-		//		}
-
 	} // end pragma omp parallel
 }
 

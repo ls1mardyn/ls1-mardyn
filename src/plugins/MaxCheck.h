@@ -132,7 +132,6 @@ private:
 private:
 	TimestepControl _control;
 	maxvals_map _maxVals;
-	std::vector<Molecule*> _deletions;
 	struct Range {double xmin, xmax, ymin, ymax, zmin, zmax; bool inclusive;} _range;
 };
 
