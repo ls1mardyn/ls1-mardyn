@@ -565,7 +565,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			{
 				delete _longRangeCorrection;
 				Log::global_log->info() << "Initializing homogeneous LRC." << std::endl;
-				_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
+				_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, _moleculeContainer, global_simulation);
 			}
 			else if("none" == type)
 			{
@@ -581,7 +581,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		} else {
 			delete _longRangeCorrection;
 			Log::global_log->info() << "Initializing default homogeneous LRC, as no LRC was defined." << std::endl;
-			_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
+			_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius, _domain, _moleculeContainer, global_simulation);
 		}
 
 		xmlconfig.changecurrentnode(".."); /* algorithm section */
