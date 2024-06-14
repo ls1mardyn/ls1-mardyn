@@ -414,6 +414,6 @@ void Interpolation::filterFT(std::vector<std::complex<double>> &F) {
 		F[i] = 0;
 	}*/
 	for(unsigned long k = 0; k < F.size(); k++) {
-		F[k] *= std::exp(-0.5 * std::pow(k/3.0, 2.0));
+		F[k] *= std::exp(-0.5 * std::pow(k/8.0, 2.0));
 	}
 }

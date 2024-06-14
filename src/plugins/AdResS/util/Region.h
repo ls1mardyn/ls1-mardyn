@@ -89,16 +89,6 @@ namespace Resolution{
 		static bool isInnerPoint(std::array<double,3> point, std::array<double, 3> low, std::array<double, 3> high);
 
 		/**
-		 * @brief checks if the given point is inside the specified region, which is either the FP or H box defined by this.
-		 * When this region goes beyond the domain bounds, it should wrap around as the simulation uses periodic bounds.
-		 * This method also checks for that by using the passed domain.
-		 * @param domain to check periodic bounds
-		 * @param region either FullParticle or Hybrid
-		 * @param point to check
-		 * */
-		bool isInnerPointDomain(Domain* domain, ResolutionType region, std::array<double, 3> point) const;
-
-		/**
 		 * @brief checks if this FPRegion (the FullParticle area) is in the box defined by low and high.
 		 * @param low lower corner of box
 		 * @param high upper corner of box

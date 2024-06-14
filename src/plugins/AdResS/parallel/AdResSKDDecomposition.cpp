@@ -1424,12 +1424,8 @@ void AdResSKDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeC
             if (molPtr->componentid() % Resolution::ResolutionCount == Resolution::Hybrid) {
                 if(!_resolutionHandler) particles = molPtr->numSites();
                 else {
-					auto& regions = _resolutionHandler->getRegions();
-                    auto it = std::find_if(regions.begin(), regions.end(), [&](const Resolution::FPRegion& region)->bool{
-                        return (region.isInnerPointDomain(_simulation.getDomain(), Resolution::Hybrid, molPtr->r_arr()) && !region.isInnerPointDomain(_simulation.getDomain(), Resolution::FullParticle, molPtr->r_arr()));
-                    });
-                    if(it == regions.end()) it = regions.begin();
-                    double weight = AdResS::weight(molPtr->r_arr(), *it);
+					auto& region = _resolutionHandler->getRegions()[0];
+                    double weight = AdResS::weight(molPtr->r_arr(), region);
                     particles = (int) (weight * (double) _simulation.getEnsemble()->getComponents()->at(molPtr->componentid() + 1).numSites());
                     particles += (int) ((1-weight) * (double) _simulation.getEnsemble()->getComponents()->at(molPtr->componentid() - 1).numSites());
                 }

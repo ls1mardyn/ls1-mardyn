@@ -58,19 +58,10 @@ void AdResSForceAdapter::finish() {
 
 double
 AdResSForceAdapter::processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], PairType pairType, double dd, bool calculateLJ) {
-	auto& regions = _resolutionHandler.getRegions();
-	auto* domain = _simulation.getDomain();
-    auto it = std::find_if(regions.begin(), regions.end(), [&](const Resolution::FPRegion& region)->bool{
-        return (region.isInnerPointDomain(domain, Resolution::Hybrid, particle1.r_arr()) && !region.isInnerPointDomain(domain, Resolution::FullParticle, particle1.r_arr())) ||
-               (region.isInnerPointDomain(domain, Resolution::Hybrid, particle2.r_arr()) && !region.isInnerPointDomain(domain, Resolution::FullParticle, particle2.r_arr()));
-    });
-    bool hasNoHybrid = false;
-    if(it == regions.end()) {
-        hasNoHybrid = true;
-        it = regions.begin();
-    }
-
-    return processPair(particle1, particle2, distanceVector, pairType, dd, calculateLJ, _resolutionHandler.getCompResMap(), hasNoHybrid, *it);
+	auto& region = _resolutionHandler.getRegions()[0];
+	auto& compMap = _resolutionHandler.getCompResMap();
+    bool hasNoHybrid = compMap[particle1.componentid()] != Resolution::Hybrid && compMap[particle2.componentid()] != Resolution::Hybrid;
+    return processPair(particle1, particle2, distanceVector, pairType, dd, calculateLJ, _resolutionHandler.getCompResMap(), hasNoHybrid, region);
 }
 
 double AdResSForceAdapter::processPair(Molecule &molecule1, Molecule &molecule2, double * distanceVector,

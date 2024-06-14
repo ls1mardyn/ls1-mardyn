@@ -55,7 +55,7 @@ void Resolution::Handler::checkResolution(ParticleContainer &particleContainer) 
 		bool stop = false;
 		//check if is in any full particle region
 		for(auto& reg : _config.fpRegions) {
-			if(reg.isInnerPointDomain(_config.domain, FullParticle, itM->r_arr())) {
+			if(FPRegion::isInnerPoint(itM->r_arr(), reg._low, reg._high)) {
 				checkMoleculeLOD(*itM, FullParticle);
 				stop = true;
 				break;
@@ -65,7 +65,7 @@ void Resolution::Handler::checkResolution(ParticleContainer &particleContainer) 
 
 		//check if is in any hybrid region
 		for(auto& reg : _config.fpRegions) {
-			if(reg.isInnerPointDomain(_config.domain, Hybrid, itM->r_arr())) {
+			if(FPRegion::isInnerPoint(itM->r_arr(), reg._lowHybrid, reg._highHybrid)) {
 				checkMoleculeLOD(*itM, Hybrid);
 				stop = true;
 				break;
