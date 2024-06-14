@@ -95,35 +95,35 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 
 		xmlconfig.getNodeValue("Fmax", mv.F);
 		if (mv.F < 0.) {
-			Log::global_log->error() << "[MaxCheck] Fmax(cid=" << cid_ub << ") mustn't be negative but is " << mv.F << std::endl;
-			Simulation::exit(1234);
+			Log::global_log->info() << "[MaxCheck] Fmax(cid=" << cid_ub << ") not set" << std::endl;
+		} else {
+			Log::global_log->info() << "[MaxCheck] Fmax(cid=" << cid_ub << "): " << mv.F << std::endl;
+			mv.F2 = mv.F * mv.F;
 		}
-		Log::global_log->info() << "[MaxCheck] Fmax(cid=" << cid_ub << "): " << mv.F << std::endl;
-		mv.F2 = mv.F * mv.F;
 
 		xmlconfig.getNodeValue("vmax", mv.v);
 		if (mv.v < 0.) {
-			Log::global_log->error() << "[MaxCheck] vmax(cid=" << cid_ub << ") mustn't be negative but is " << mv.v << std::endl;
-			Simulation::exit(1234);
+			Log::global_log->info() << "[MaxCheck] vmax(cid=" << cid_ub << ") not set" << std::endl;
+		} else {
+			Log::global_log->info() << "[MaxCheck] vmax(cid=" << cid_ub << "): " << mv.v << std::endl;
+			mv.v2 = mv.v * mv.v;
 		}
-		Log::global_log->info() << "[MaxCheck] vmax(cid=" << cid_ub << "): " << mv.v << std::endl;
-		mv.v2 = mv.v * mv.v;
 
 		xmlconfig.getNodeValue("Mmax", mv.M);
 		if (mv.M < 0.) {
-			Log::global_log->error() << "[MaxCheck] Mmax(cid=" << cid_ub << ") mustn't be negative but is " << mv.M << std::endl;
-			Simulation::exit(1234);
+			Log::global_log->info() << "[MaxCheck] Mmax(cid=" << cid_ub << ") not set" << std::endl;
+		} else {
+			Log::global_log->info() << "[MaxCheck] Mmax(cid=" << cid_ub << "): " << mv.M << std::endl;
+			mv.M2 = mv.M * mv.M;
 		}
-		Log::global_log->info() << "[MaxCheck] Mmax(cid=" << cid_ub << "): " << mv.M << std::endl;
-		mv.M2 = mv.M * mv.M;
 
 		xmlconfig.getNodeValue("Lmax", mv.L);
 		if (mv.L < 0.) {
-			Log::global_log->error() << "[MaxCheck] Lmax(cid=" << cid_ub << ") mustn't be negative but is " << mv.L << std::endl;
-			Simulation::exit(1234);
+			Log::global_log->info() << "[MaxCheck] Lmax(cid=" << cid_ub << ") not set" << std::endl;
+		} else {
+			Log::global_log->info() << "[MaxCheck] Lmax(cid=" << cid_ub << "): " << mv.L << std::endl;
+			mv.L2 = mv.L * mv.L;
 		}
-		Log::global_log->info() << "[MaxCheck] Lmax(cid=" << cid_ub << "): " << mv.L << std::endl;
-		mv.L2 = mv.L * mv.L;
 
 		_maxVals[cid_ub] = mv;
 	}  // loop over 'targets/target' nodes
