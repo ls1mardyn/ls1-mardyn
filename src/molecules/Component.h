@@ -19,10 +19,10 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <component id=INT name="STRING">
-	     <site type="LJ126|Charge|Dipole|Quadrupole"> <!-- see Site class documentation --> </site>
+	   <moleculetype id=UINT name="STRING">
+	     <site type="LJ126|Charge|Dipole|Quadrupole" id="UINT" name="STRING"> <!-- see Site class documentation --> </site>
 	     <momentsofinertia> <Ixx>DOUBLE</Ixx> <Iyy>DOUBLE</Iyy> <Izz>DOUBLE</Izz> </momentsofinertia>
-	   </component>
+	   </moleculetype>
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig);

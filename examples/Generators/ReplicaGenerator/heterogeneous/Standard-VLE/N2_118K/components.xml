@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <components version="20100525" >
     <moleculetype id="1" name="n2" >
-    <site type="LJ126" id="1" >
+    <site type="LJ126" id="1" name="N">
       <coords> <x>0.0</x> <y>0.0</y> <z>-0.5232</z> </coords>
       <mass>14.0</mass>
       <sigma>3.3211</sigma>
       <epsilon>34.897</epsilon>
     </site>
-    <site type="LJ126" id="2" >
+    <site type="LJ126" id="2" name="N">
       <coords> <x>0.0</x> <y>0.0</y> <z>0.5232</z> </coords>
       <mass>14.0</mass>
       <sigma>3.3211</sigma>

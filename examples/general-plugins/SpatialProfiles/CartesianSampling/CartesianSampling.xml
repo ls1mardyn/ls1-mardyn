@@ -23,8 +23,8 @@
         <lz>50.0</lz>
       </domain>
       <components>
-        <moleculetype id="1" name="Test">
-          <site type="LJ126" id="1" >
+        <moleculetype id="1" name="LJTS">
+          <site type="LJ126" id="1" name="LJTS">
             <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
             <mass>1.0</mass>
             <sigma>1.0</sigma>
