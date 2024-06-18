@@ -457,8 +457,10 @@ static <a class="el" href="classPluginBase.html">PluginBase</a> *&#160;</td><td 
 <div class="line">   &lt;<span class="keywordtype">targets</span>&gt;</div>
 <div class="line">       &lt;<span class="keywordtype">target</span> <span class="keyword">cid</span>=<span class="stringliteral">&quot;INT&quot;</span> <span class="keyword">method</span>=<span class="stringliteral">&quot;INT&quot;</span>&gt;   &lt;!-- <span class="keyword">cid:</span> <span class="keyword">component</span> <span class="keyword">id</span> <span class="keyword">of</span> <span class="keyword">target</span> <span class="keyword">particles</span></div>
 <div class="line">                                         <span class="comment">&lt;!-- method: handling particles failing the check, 1:limit to max value | 2:limit to max value if force is too high (overlaps) | 3:delete particle --&gt;</span></div>
-<div class="line">           &lt;<span class="keywordtype">Fmax</span>&gt;<span class="keyword">FLOAT</span>&lt;/<span class="keywordtype">Fmax</span>&gt;            &lt;! <span class="keyword">force</span> <span class="keyword">limit</span> --&gt;</div>
-<div class="line">           &lt;<span class="keywordtype">vmax</span>&gt;<span class="keyword">FLOAT</span>&lt;/<span class="keywordtype">vmax</span>&gt;            &lt;! <span class="keyword">velocity</span> <span class="keyword">limit</span> --&gt;</div>
+<div class="line">           &lt;<span class="keywordtype">Fmax</span>&gt;<span class="keyword">FLOAT</span>&lt;/<span class="keywordtype">Fmax</span>&gt;            <span class="comment">&lt;!-- force limit --&gt;</span></div>
+<div class="line">           &lt;<span class="keywordtype">vmax</span>&gt;<span class="keyword">FLOAT</span>&lt;/<span class="keywordtype">vmax</span>&gt;            <span class="comment">&lt;!-- velocity limit --&gt;</span></div>
+<div class="line">           &lt;<span class="keywordtype">Mmax</span>&gt;<span class="keyword">FLOAT</span>&lt;/<span class="keywordtype">Mmax</span>&gt;            <span class="comment">&lt;!-- torsional moment limit --&gt;</span></div>
+<div class="line">           &lt;<span class="keywordtype">Lmax</span>&gt;<span class="keyword">FLOAT</span>&lt;/<span class="keywordtype">Lmax</span>&gt;            <span class="comment">&lt;!-- angular momentum --&gt;</span></div>
 <div class="line">       &lt;/<span class="keywordtype">target</span>&gt;</div>
 <div class="line">   &lt;/<span class="keywordtype">targets</span>&gt;</div>
 <div class="line">&lt;/<span class="keywordtype">plugin</span></div>
@@ -520,7 +522,7 @@ static <a class="el" href="classPluginBase.html">PluginBase</a> *&#160;</td><td 
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jun 12 2024 13:02:15 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Jun 18 2024 08:03:08 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
