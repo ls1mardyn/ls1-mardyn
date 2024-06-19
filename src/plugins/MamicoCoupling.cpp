@@ -1,64 +1,51 @@
+#ifdef MAMICO_COUPLING
+
 #include "MamicoCoupling.h"
 #include "Domain.h"
 
-void MamicoCoupling::readXML(XMLfileUnits& xmlconfig)
-{
-	return;
-}
+void MamicoCoupling::readXML(XMLfileUnits &xmlconfig) {}
 
-void MamicoCoupling::init(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain)
-{
-#ifdef MAMICO_COUPLING
-	//code to print to log that plugin is initialised
-	Log::global_log->info() << "MaMiCo coupling plugin initialized" << std::endl;
-#endif
-}
+void MamicoCoupling::init(ParticleContainer *particleContainer,
+                          DomainDecompBase *domainDecomp, Domain *domain) {
 
-void MamicoCoupling::beforeEventNewTimestep(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, unsigned long simstep)
-{
+  Log::global_log->info() << "MaMiCo coupling plugin initialized" << std::endl;
 
 }
 
-void MamicoCoupling::beforeForces(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, unsigned long simstep)
-{
-#ifdef MAMICO_COUPLING
-	if(_couplingEnabled)
-	{
-		// This object should be set by MaMiCo after the plugins are created in the simulation readxml file
-		// Even though this method is called before the object is set, at this point the coupling switch is always off
-		_macroscopicCellService->processInnerMacroscopicCellAfterMDTimestep();
-		_macroscopicCellService->distributeMass(simstep);
-		_macroscopicCellService->applyTemperatureToMolecules(simstep);
+void MamicoCoupling::beforeEventNewTimestep(
+    ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+    unsigned long simstep) {}
+
+void MamicoCoupling::beforeForces(ParticleContainer *particleContainer,
+                                  DomainDecompBase *domainDecomp,
+                                  unsigned long simstep) {
+  if (_couplingEnabled) {
+    // This object should be set by MaMiCo after the plugins are created in the
+    // simulation readxml file Even though this method is called before the
+    // object is set, at this point the coupling switch is always off
+    _couplingCellService->processInnerCouplingCellAfterMDTimestep();
+    _couplingCellService->distributeMass(simstep);
+    _couplingCellService->applyTemperatureToMolecules(simstep);
 #ifndef MARDYN_AUTOPAS
-		particleContainer->deleteOuterParticles();
+    particleContainer->deleteOuterParticles();
 #endif
-	}
+  }
+}
+
+void MamicoCoupling::afterForces(ParticleContainer *particleContainer,
+                                 DomainDecompBase *domainDecomp,
+                                 unsigned long simstep) {
+  if (_couplingEnabled) {
+    _couplingCellService->distributeMomentum(simstep);
+    _couplingCellService->applyBoundaryForce(simstep);
+  }
+}
+
+void MamicoCoupling::endStep(ParticleContainer *particleContainer,
+                             DomainDecompBase *domainDecomp, Domain *domain,
+                             unsigned long simstep) {}
+
+void MamicoCoupling::finish(ParticleContainer *particleContainer,
+                            DomainDecompBase *domainDecomp, Domain *domain) {}
+
 #endif
-}
-
-void MamicoCoupling::afterForces(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, unsigned long simstep)
-{
-#ifdef MAMICO_COUPLING
-	if(_couplingEnabled)
-	{
-		_macroscopicCellService->distributeMomentum(simstep);
-		_macroscopicCellService->applyBoundaryForce(simstep);
-	}
-#endif
-}
-
-void MamicoCoupling::endStep(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep)
-{
-
-}
-
-void MamicoCoupling::finish(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain)
-{
-
-}
