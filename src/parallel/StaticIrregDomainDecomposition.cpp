@@ -50,16 +50,15 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
   // bypass DomainDecomposition readXML to avoid reading MPIGridDims
 
   if (xmlconfig.changecurrentnode("subdomainWeights")) {
-    /* If the node does not exist, then behaviour is identical to
-     * DomainDecomposition unless the weights are set through the constructor
-     */
+    // If the node does not exist, then the behavior is identical to
+    // DomainDecomposition unless the weights are set through the constructor.
     Log::global_log->info()
         << "Reading weights for StaticIrregDomainDecomposition" << std::endl;
-    std::array<std::string, 3> axes = {"x", "y", "z"};
+    const std::array<std::string, 3> axes = {"x", "y", "z"};
     for (int i = 0; i < axes.size(); i++) {
       _subdomainWeights[i].clear();
 
-      std::string weights = xmlconfig.getNodeValue_string(axes.at(i));
+      const std::string weights = xmlconfig.getNodeValue_string(axes.at(i));
       if (!weights.empty()) {
         std::stringstream ss(weights);
         while (ss.good()) {
@@ -77,8 +76,8 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
             ss.ignore();
         }
       } else {
-        _subdomainWeights[i].push_back(
-            1); // no decomposition, whole length spanned
+        // No decomposition requested -> subdomain spans whole domain length
+        _subdomainWeights[i].push_back(1); 
       }
     }
     Log::global_log->info() << "Weights for subdomains for "
