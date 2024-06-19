@@ -52,7 +52,7 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
   if (xmlconfig.changecurrentnode("subdomainWeights")) {
     // If the node does not exist, then the behavior is identical to
     // DomainDecomposition unless the weights are set through the constructor.
-    Log::global_log->info()
+    Log::global_log->debug()
         << "Reading weights for StaticIrregDomainDecomposition" << std::endl;
     const std::array<std::string, 3> axes = {"x", "y", "z"};
     for (int i = 0; i < axes.size(); i++) {
@@ -61,8 +61,13 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
       const std::string weights = xmlconfig.getNodeValue_string(axes.at(i));
       if (!weights.empty()) {
         std::stringstream ss(weights);
+        // Parse the weights, until the stringstream has chars and extraction
+        // doesn't fail, and no EOF or linebreaks etc
         while (ss.good()) {
           int temp;
+          // Extraction from stream into int type fails if token is not an int
+          // We check for this failure, and additionally check for positive
+          // integer
           if (!(ss >> temp) || temp <= 0) {
             Log::global_log->fatal()
                 << "Weights in " << axes.at(i)
@@ -77,7 +82,7 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
         }
       } else {
         // No decomposition requested -> subdomain spans whole domain length
-        _subdomainWeights[i].push_back(1); 
+        _subdomainWeights[i].push_back(1);
       }
     }
     Log::global_log->info() << "Weights for subdomains for "
