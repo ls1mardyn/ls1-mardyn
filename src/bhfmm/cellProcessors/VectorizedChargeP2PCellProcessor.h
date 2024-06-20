@@ -132,7 +132,9 @@ private:
 		const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
 		const RealCalcVec& qjj,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+		RealAccumVec& V_xx, RealAccumVec& V_yy, RealAccumVec& V_zz,
+		RealAccumVec& V_xy, RealAccumVec& V_xz, RealAccumVec& V_yz,
+		RealAccumVec& V_yx, RealAccumVec& V_zx, RealAccumVec& V_zy,
 		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,
 		const MaskCalcVec& forceMask);
 
