@@ -5,6 +5,7 @@
 #include "LongRangeCorrection.h"
 #include "molecules/Component.h"
 #include "molecules/Comp2Param.h"
+#include "particleContainer/ParticleContainer.h"
 #include <cmath>
 
 class Simulation;
@@ -16,7 +17,7 @@ class Homogeneous: public LongRangeCorrection{
 
 public:
 //	Homogeneous();
-	Homogeneous(double cutoffRadius, double cutoffRadiusLJ,  Domain* domain, Simulation* simulation);
+	Homogeneous(double cutoffRadius, double cutoffRadiusLJ,  Domain* domain, ParticleContainer* particleContainer, Simulation* simulation);
 	virtual ~Homogeneous() {}
 
 	virtual void init();
@@ -40,6 +41,7 @@ private:
 	Comp2Param _comp2params;
 
 	Domain* _domain{nullptr};
+	ParticleContainer* _particleContainer{nullptr};
 
 	double _cutoff{std::numeric_limits<double>::quiet_NaN()};
 	double _cutoffLJ{std::numeric_limits<double>::quiet_NaN()};
