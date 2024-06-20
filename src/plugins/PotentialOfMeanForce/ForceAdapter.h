@@ -16,6 +16,7 @@
 
 #include "Region.h"
 #include "Resolution.h"
+#include "WeightFunction.h"
 
 class PMF;
 
@@ -43,6 +44,12 @@ class InteractionForceAdapter:public ParticlePairsHandler{
     inline void PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ);
 
     inline void HybridFluidPot(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, bool hybrid);
+
+    /**
+     * Uses formula: U_pmf = -k_b*T*log(g(r))
+     * with k_b=1, T the ensemble temperature, g(r) the at-reference pair dist. function (rdf)
+     */
+    double PotentialOfMeanForce(double r);
 
 
     private:

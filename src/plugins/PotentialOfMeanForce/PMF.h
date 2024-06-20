@@ -23,7 +23,8 @@ class PMF:public PluginBase{
     using tracker = std::pair<InteractionSite,ResolutionType>;
     private:
 
-    std::vector<double> nodes;
+    std::vector<double> r_nodes;//stores distance values
+    std::vector<double> v_nodes;//stores g(r) values
     std::vector<FPRegion> regions;//should create AT region with
     InteractionCellProcessor* adres_cell_processor;
     std::map<unsigned long, tracker> sites;
@@ -48,10 +49,24 @@ class PMF:public PluginBase{
 
     std::vector<FPRegion>& GetRegions();
     ResolutionType GetMoleculeResolution(unsigned long idx);
+    InteractionSite GetMoleculeCOMSite(unsigned long idx);
     double WeightValue(std::array<double,3>& pos, FPRegion& region);
+    void ReadRDF();
 
 };
 
+/**
+ * Stores velocity, position, force, potential
+ */
 class InteractionSite:public Site{
+    private:
+    double u_com;
+    std::array<double,3> f_com;
+
+    public: 
+
+    void AddForce(std::array<double,3> f);
+    void AddPotential(double pot);
+
 
 };

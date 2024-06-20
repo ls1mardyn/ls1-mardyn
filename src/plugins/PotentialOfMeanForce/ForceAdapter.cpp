@@ -67,6 +67,22 @@ void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm&
 
 void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ){
 
+    //Get both molecules COMs
+    //Assume they are updated
+    std::array<double, 3> com1 = adres->GetMoleculeCOMSite(m1.getID()).r();
+    std::array<double, 3> com2 = adres->GetMoleculeCOMSite(m2.getID()).r();
+
+    double temperature = _simulation.getEnsemble()->T();
+    double r_com =0.0;
+    //Interact only on com sites
+    {
+        double Upot =0.0;
+        std::array<double,3> f;
+        //Compute force
+        //Compute potential
+        //Set quantities
+    }
+
 }
 
 
@@ -75,4 +91,13 @@ void InteractionForceAdapter::HybridFluidPot(Molecule& m1, Molecule& m2, ParaStr
     if(!hybrid){
         FluidPot(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,calcLJ);
     }
+}
+
+
+/****************
+ * ************** Potential and Force Calculations
+ ***************/
+
+double InteractionForceAdapter::PotentialOfMeanForce(double r){
+    return -1.0*_simulation.getEnsemble()->T()*std::log(r);
 }

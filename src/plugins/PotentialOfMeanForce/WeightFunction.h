@@ -12,5 +12,7 @@
 class WeightFunction{
     public:
     
+    /*
+    Position receibed must be COM of particle*/
     double WeightValue(std::array<double,3>& pos, FPRegion& region);
 };
