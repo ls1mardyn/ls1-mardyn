@@ -29,6 +29,9 @@ class InteractionForceAdapter:public ParticlePairsHandler{
     //Interface methods
     void init() override;
     void finish() override;
+    /**
+     * The distance vector wont be used for the vector in the hybrid case...or think about it
+     */
     double processPair(Molecule& m1, Molecule& m2, double distance[3], PairType pair, double dd, bool CalculateLJ) override;
 
 
@@ -50,6 +53,7 @@ class InteractionForceAdapter:public ParticlePairsHandler{
      * with k_b=1, T the ensemble temperature, g(r) the at-reference pair dist. function (rdf)
      */
     double PotentialOfMeanForce(double r);
+    double DistanceBetweenCOMs(std::array<double,3> c1,std::array<double,3> c2);
 
 
     private:

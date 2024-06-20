@@ -61,18 +61,12 @@ InteractionSite PMF::GetMoleculeCOMSite(unsigned long idx){
     return sites[idx].first;
 }
 
+Interpolate& PMF::GetRDFInterpolation(){
+    return this->rdf_interpolation;
+}
+
 void PMF::ReadRDF(){
-    std::string filename;
 
-    filename = "rdf.txt";
-    std::ifstream file{filename};
-    if(!file){
-        Log::global_log->error()<<"[PMF] I could not read the rdf data file"<<std::endl;
-    }
-    double n1, n2;
+    rdf_interpolation.ReadInRDF();
 
-    while(file >> n1 >> n2){
-        r_nodes.push_back(n1);
-        v_nodes.push_back(n2);
-    }
 }

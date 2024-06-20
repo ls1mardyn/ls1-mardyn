@@ -78,6 +78,9 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
     {
         double Upot =0.0;
         std::array<double,3> f;
+
+        Upot = temperature/ adres->GetRDFInterpolation().GetRDFAt(r_com) * adres->GetRDFInterpolation().CentralFiniteDifference(r_com);
+        
         //Compute force
         //Compute potential
         //Set quantities

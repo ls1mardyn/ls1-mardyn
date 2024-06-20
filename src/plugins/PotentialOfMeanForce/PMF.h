@@ -14,6 +14,7 @@
 #include "InteractionCellProcessor.h"
 #include "Resolution.h"
 #include "WeightFunction.h"
+#include "Interpolate.h"
 
 
 //TODO: who owns the InteractionCellProcessor, AdResS or Simulation?
@@ -23,8 +24,9 @@ class PMF:public PluginBase{
     using tracker = std::pair<InteractionSite,ResolutionType>;
     private:
 
-    std::vector<double> r_nodes;//stores distance values
-    std::vector<double> v_nodes;//stores g(r) values
+    //std::vector<double> r_nodes;//stores distance values
+    //std::vector<double> v_nodes;//stores g(r) values
+    Interpolate rdf_interpolation;
     std::vector<FPRegion> regions;//should create AT region with
     InteractionCellProcessor* adres_cell_processor;
     std::map<unsigned long, tracker> sites;
@@ -52,6 +54,7 @@ class PMF:public PluginBase{
     InteractionSite GetMoleculeCOMSite(unsigned long idx);
     double WeightValue(std::array<double,3>& pos, FPRegion& region);
     void ReadRDF();
+    Interpolate& GetRDFInterpolation();
 
 };
 
