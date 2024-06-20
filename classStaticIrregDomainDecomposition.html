@@ -100,8 +100,6 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a1e047e53c26c09bc4f3d017c70643715"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a62caf0cb4a505deab8523ec41a340630"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStaticIrregDomainDecomposition.html#a62caf0cb4a505deab8523ec41a340630">updateSubdomainDimensions</a> ()</td></tr>
 <tr class="separator:a62caf0cb4a505deab8523ec41a340630"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ace51cb025a6fd4e2da3d3fe0ad620354"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStaticIrregDomainDecomposition.html#ace51cb025a6fd4e2da3d3fe0ad620354">updateSubdomainWeightsFromFile</a> (const std::string &amp;filename)</td></tr>
-<tr class="separator:ace51cb025a6fd4e2da3d3fe0ad620354"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classDomainDecomposition"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classDomainDecomposition')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classDomainDecomposition.html">DomainDecomposition</a></td></tr>
 <tr class="memitem:a6a63802fa75ed5692d3a802bbb0f1946 inherit pub_methods_classDomainDecomposition"><td class="memItemLeft" align="right" valign="top"><a id="a6a63802fa75ed5692d3a802bbb0f1946" name="a6a63802fa75ed5692d3a802bbb0f1946"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>DomainDecomposition</b> ()</td></tr>
@@ -529,15 +527,19 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
 </table>
 </div><div class="memdoc">
 <p >Reads in XML configuration for <a class="el" href="classStaticIrregDomainDecomposition.html">StaticIrregDomainDecomposition</a>.</p>
-<p >The only configuration allowed right now is a CSV file, which contains the actual domain breakdown. Even though this class subclasses <a class="el" href="classDomainDecomposition.html" title="Basic domain decomposition based parallelisation, dividing the domain into #procs equal sized cuboids...">DomainDecomposition</a>, it bypasses the <a class="el" href="classStaticIrregDomainDecomposition.html#a4675ccbd5fd2717ec35e14914ec02d0a">readXML()</a> mehod of <a class="el" href="classDomainDecomposition.html" title="Basic domain decomposition based parallelisation, dividing the domain into #procs equal sized cuboids...">DomainDecomposition</a> because MPIGridDims is supposed to be calculated from the CSV configuration.</p>
+<p >Here, the user can specify the weights of the breakdown of each axis with comma-separated values. Even though this class subclasses <a class="el" href="classDomainDecomposition.html" title="Basic domain decomposition based parallelisation, dividing the domain into #procs equal sized cuboids...">DomainDecomposition</a>, it bypasses the <a class="el" href="classStaticIrregDomainDecomposition.html#a4675ccbd5fd2717ec35e14914ec02d0a">readXML()</a> mehod of <a class="el" href="classDomainDecomposition.html" title="Basic domain decomposition based parallelisation, dividing the domain into #procs equal sized cuboids...">DomainDecomposition</a> because MPIGridDims is supposed to be calculated from the weight configuration. The number of INTs in a dimension signify the number of ranks in that dimension.</p>
 <p >The following xml object structure is handled by this method: </p><div class="fragment"><div class="line">&lt;<span class="keywordtype">parallelisation</span> <span class="keyword">type</span>=<span class="stringliteral">&quot;StaticIrregDomainDecomposition&quot;</span>&gt;</div>
 <div class="line">  <span class="comment">&lt;!-- structure handled by DomainDecompMPIBase --&gt;</span></div>
-<div class="line">  &lt;<span class="keywordtype">subdomainWeightsCSV</span>&gt; <span class="keyword">STRING.csv</span> &lt;/<span class="keywordtype">subdomainWeightsCSV</span>&gt;</div>
+<div class="line">  &lt;<span class="keywordtype">subdomainWeights</span>&gt;</div>
+<div class="line">     &lt;<span class="keywordtype">x</span>&gt;<span class="keyword">INT</span>,<span class="keyword">INT</span>,<span class="keyword">INT</span>,...&lt;/<span class="keywordtype">x</span>&gt;</div>
+<div class="line">     &lt;<span class="keywordtype">y</span>&gt;<span class="keyword">INT</span>,<span class="keyword">INT</span>,<span class="keyword">INT</span>,...&lt;/<span class="keywordtype">y</span>&gt;</div>
+<div class="line">     &lt;<span class="keywordtype">z</span>&gt;<span class="keyword">INT</span>,<span class="keyword">INT</span>,<span class="keyword">INT</span>,...&lt;/<span class="keywordtype">z</span>&gt;</div>
+<div class="line">  &lt;/<span class="keywordtype">subdomainWeights</span>&gt;</div>
 <div class="line">&lt;/<span class="keywordtype">parallelisation</span>&gt;</div>
-</div><!-- fragment --><p >A file with its first line being 1,2,1 defines an x axis with subdomain lengths in the 1:2:1 ratio If file not given, default behaviour is an equally spaced grid, same as <a class="el" href="classDomainDecomposition.html" title="Basic domain decomposition based parallelisation, dividing the domain into #procs equal sized cuboids...">DomainDecomposition</a></p>
+</div><!-- fragment --><p >If the values in &lt;x&gt; are 1,2,1, then we define an x axis with subdomain lengths in the 1:2:1 ratio If xml tag is absent, default behaviour is an equally spaced grid, same as <a class="el" href="classDomainDecomposition.html" title="Basic domain decomposition based parallelisation, dividing the domain into #procs equal sized cuboids...">DomainDecomposition</a></p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">&amp;xmlconfig</td><td>The xml node from which to read the CSV filename with weights </td></tr>
+    <tr><td class="paramname">&amp;xmlconfig</td><td>The xml node from which to read the comma-separated weights </td></tr>
   </table>
   </dd>
 </dl>
@@ -565,32 +567,6 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
 
 </div>
 </div>
-<a id="ace51cb025a6fd4e2da3d3fe0ad620354" name="ace51cb025a6fd4e2da3d3fe0ad620354"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ace51cb025a6fd4e2da3d3fe0ad620354">&#9670;&nbsp;</a></span>updateSubdomainWeightsFromFile()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void StaticIrregDomainDecomposition::updateSubdomainWeightsFromFile </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>filename</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p >Reads in the CSV file given by the XML config, and updates _subdomainWeights.</p>
-<p >The CSV file is expected to have 3 lines of comma-separated integers, with the integer signifying the "weight" (relative width) of the subdomain. The lines, in order, are expected to be the weights for the x, y and z dimension. Consequently, the number of integers for a dimension signify the number of ranks in that dimension, and is calculated as such.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">&amp;filename</td><td>The CSV file from which to read weights. Obtained from the XML config. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>src/parallel/<a class="el" href="StaticIrregDomainDecomposition_8h_source.html">StaticIrregDomainDecomposition.h</a></li>
 <li>src/parallel/StaticIrregDomainDecomposition.cpp</li>
@@ -598,7 +574,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jun 18 2024 08:03:09 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Thu Jun 20 2024 08:56:42 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
