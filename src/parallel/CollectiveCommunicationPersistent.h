@@ -9,6 +9,7 @@
 //! @brief The Coll_Comm_Obj class can be used as a replacement to the default implementation of the collective communication in ls1
 //! @author Mike Söhner
 //! 
+//! To enable this feature the ENABLE_PERSISTENT variable was to be set to true (for example via the ccmake). @par
 //! The Coll_Comm_Obj class is a more optimized version of the default implementation (found in CollectiveCommunication.h) and allows for persistent collective communication.
 //! This is achieved by constructing all necessary information for creating a MPI_Type and MPI_Op at compile time.
 //! If all information that is required to create a persistent is given during the object construction, a persistent request will be generated.
