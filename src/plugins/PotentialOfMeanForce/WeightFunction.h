@@ -14,5 +14,5 @@ class WeightFunction{
     
     /*
     Position receibed must be COM of particle*/
-    double WeightValue(std::array<double,3>& pos, FPRegion& region);
+    double WeightValue(const std::array<double,3>& pos, FPRegion& region);
 };

@@ -43,6 +43,7 @@ class PMF:public PluginBase{
     void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
     void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override{}
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
+    void siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) override;
 
     std::string getPluginName(){ return "PMF";}
     static PluginBase* createInstance() {return new PMF(); }
@@ -52,9 +53,22 @@ class PMF:public PluginBase{
     std::vector<FPRegion>& GetRegions();
     ResolutionType GetMoleculeResolution(unsigned long idx);
     InteractionSite GetMoleculeCOMSite(unsigned long idx);
-    double WeightValue(std::array<double,3>& pos, FPRegion& region);
+    double WeightValue(const std::array<double,3>& pos, FPRegion& region);
     void ReadRDF();
     Interpolate& GetRDFInterpolation();
+
+    private: 
+    /**
+     * Maps the com forces to FP, formula:
+     * F_{i\alpha\beta} = \num{m_{i\alpha}}\den{\sum_{i\alpha}{m_{i\alpha}}}F^{cm}_{\alpha\beta}
+     * 
+     * Receives f already weighted
+     * Same callbacks as in potforce
+     * Assume both m1 and m2 have the same component class...
+     * Comply with newton 3rd law
+     */
+    void MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2);
+    void MapToCOM();
 
 };
 
@@ -65,11 +79,14 @@ class InteractionSite:public Site{
     private:
     double u_com;
     std::array<double,3> f_com;
+    std::array<double,3> v_com;
 
     public: 
 
     void AddForce(std::array<double,3> f);
     void AddPotential(double pot);
+    void SetPosition(std::array<double,3> pos);
+    void SetVelocity();
 
 
 };

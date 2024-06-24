@@ -44,7 +44,9 @@ class InteractionForceAdapter:public ParticlePairsHandler{
     //Checks interaction type and calls subroutines
     inline void PotForceType(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, InteractionType interaction);
 
+    //At some point there needs to be a mapping
     inline void PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ);
+    inline void PotForceHybrid(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ, FPRegion& region);
 
     inline void HybridFluidPot(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, bool hybrid);
 
@@ -53,8 +55,8 @@ class InteractionForceAdapter:public ParticlePairsHandler{
      * with k_b=1, T the ensemble temperature, g(r) the at-reference pair dist. function (rdf)
      */
     double PotentialOfMeanForce(double r);
-    double DistanceBetweenCOMs(std::array<double,3> c1,std::array<double,3> c2);
-
+    double SqrdDistanceBetweenCOMs(std::array<double,3> c1,std::array<double,3> c2);
+    void ForceOfPotentialOfMeanForce(std::array<double,3>& f_com, double r);
 
     private:
 

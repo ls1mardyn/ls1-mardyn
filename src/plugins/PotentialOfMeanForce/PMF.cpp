@@ -41,11 +41,15 @@ void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domain
 {
     resolution_handler.CheckResolution(pc,sites,regions);
 }
+
+void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
+
+}
 /********************
  * ****************** FUNCTIONS NOT FROM THE INTERFACE
  *******************/
 
-double PMF::WeightValue(std::array<double,3>& pos, FPRegion& region){
+double PMF::WeightValue(const std::array<double,3>& pos, FPRegion& region){
     return weight_function.WeightValue(pos,region);
 }
 
@@ -69,4 +73,51 @@ void PMF::ReadRDF(){
 
     rdf_interpolation.ReadInRDF();
 
+}
+
+void PMF::MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2){
+    //does something
+    double mass = m1.mass();
+    
+    //a loop for every type of charge
+    for(int i=0;i<m1.numLJcenters();i++){
+        double site_ratio = m1.component()->ljcenter(i).m()/mass;
+        for(int j=0;j<f.size();j++){
+            f[j] *= site_ratio;
+        }
+        m1.Fljcenteradd(i,f.data());
+        m2.Fljcentersub(i,f.data());
+    }
+
+    for(int i=0;i<m1.numCharges();i++){
+        double site_ratio = m1.component()->charge(i).m()/mass;
+        for(int j=0;j<f.size();j++){
+            f[j] *= site_ratio;
+        }
+        m1.Fchargeadd(i,f.data());
+        m2.Fchargesub(i,f.data());
+    }
+
+    for(int i=0;i<m1.numQuadrupoles();i++){
+        double site_ratio = m1.component()->quadrupole(i).m()/mass;
+        for(int j=0;j<f.size();j++){
+            f[j] *= site_ratio;
+        }
+        m1.Fquadrupoleadd(i,f.data());
+        m2.Fquadrupolesub(i,f.data());
+    }
+
+    for(int i=0;i<m1.numDipoles();i++){
+        double site_ratio = m1.component()->dipole(i).m()/mass;
+        for(int j=0;j<f.size();j++){
+            f[j] *= site_ratio;
+        }
+        m1.Fdipoleadd(i,f.data());
+        m2.Fdipolesub(i,f.data());
+    }
+
+}
+
+void PMF::MapToCOM(){
+    
 }
