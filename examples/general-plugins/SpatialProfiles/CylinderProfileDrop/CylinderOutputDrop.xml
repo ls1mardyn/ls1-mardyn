@@ -131,9 +131,9 @@
 
 		<!-- CENTER OF MASS ALIGNMENT  --> 
 		<plugin name="COMaligner">
-			<x>1</x>
-			<y>0</y>
-			<z>1</z>
+			<x>true</x>
+			<y>false</y>
+			<z>true</z>
 			<interval>100</interval>
 			<correctionFactor>.5</correctionFactor>
 		</plugin>

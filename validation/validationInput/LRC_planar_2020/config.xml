@@ -67,7 +67,7 @@
 			
 			<longrange type="planar">
 				<slabs>400</slabs>
-				<smooth>0</smooth>
+				<smooth>false</smooth>
 				<frequency>10</frequency>
 				<writecontrol>
 					<start>10000</start>
@@ -163,7 +163,7 @@
 					<ucx>box</ucx> <ucy refcoordsID="0">box</ucy> <ucz>box</ucz>
 				</coords>
 
-				<sampling type="profiles" single_component="1">
+				<sampling type="profiles" single_component="true">
 					<control>
 						<start>0</start>
 						<frequency>50000</frequency>
@@ -198,9 +198,9 @@
 		</plugin>
 		
 		<plugin name="COMaligner">
-			<x>0</x>
-			<y>1</y>
-			<z>0</z>
+			<x>false</x>
+			<y>true</y>
+			<z>false</z>
 			<interval>1000</interval>
 			<correctionFactor>1.0</correctionFactor>
 		</plugin>

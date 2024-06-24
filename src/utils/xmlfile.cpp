@@ -446,13 +446,16 @@ unsigned long XMLfile::query(std::list<Node>& nodeselection, const std::string& 
 				if (! attrname.empty())
 				{ // search for attribute node
 					attr=ele->first_attribute(attrname.c_str());
-					nodepath.append("@");
-					nodepath.append(attrname);
-					nodeselection.push_back(Node(attr,nodepath));
+					if(NULL != attr) {
+						nodepath.append("@");
+						nodepath.append(attrname);
+						nodeselection.push_back(Node(attr,nodepath));
+						++foundnodes;
+					}
 				} else { // found element node
 					nodeselection.push_back(Node(ele,nodepath));
+					++foundnodes;
 				}
-				++foundnodes;
 			}
 		}
 	}
@@ -580,8 +583,8 @@ template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 		} else if (v == "FALSE" || v == "NO" || v == "OFF") {
 			value = false;
 		} else {
-			std::cerr << "ERROR parsing \"" << v << "\" to boolean from tag \"<" << name() << ">\" in xml file."
-				<< "Valid values are: true, false, yes, no, on, off. " << std::endl;
+			std::cerr << "ERROR parsing \"" << v << "\" to boolean from tag \"" << name() << "\" in xml file."
+				<< " Valid values are: true, false, yes, no, on, off. " << std::endl;
 			Simulation::exit(1);
 		}
 	}
