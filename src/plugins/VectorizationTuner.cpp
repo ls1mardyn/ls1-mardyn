@@ -818,6 +818,14 @@ void VectorizationTuner::VTWriterStatistics::writeStatistics(double input, const
 	int numRanks = global_simulation->domainDecomposition().getNumProcs();
 
 	double square = input * input;
+#ifdef ENABLE_PERSISTENT
+	auto collComm = make_CollCommObj_AllreduceAdd(dd.getCommunicator(), input, square);
+	collComm.persistent();
+	double d0, d1;
+	collComm.get(d0, d1);
+	double average = d0 / numRanks;
+	double average2 = d1 / numRanks;
+#else
 	dd.collCommInit(2);
 	dd.collCommAppendDouble(input);
 	dd.collCommAppendDouble(square);
@@ -825,18 +833,33 @@ void VectorizationTuner::VTWriterStatistics::writeStatistics(double input, const
 	double average = dd.collCommGetDouble() / numRanks;
 	double average2 = dd.collCommGetDouble() / numRanks;
 	dd.collCommFinalize();
+#endif
 
+#ifdef ENABLE_PERSISTENT
+	auto collCommMin = make_CollCommObj_AllreduceMin(dd.getCommunicator(), input);
+	collCommMin.persistent();
+	double min;
+	collCommMin.get(min);
+#else
 	dd.collCommInit(1);
 	dd.collCommAppendDouble(input);
 	dd.collCommAllreduceCustom(ReduceType::MIN);
 	double min = dd.collCommGetDouble();
 	dd.collCommFinalize();
+#endif
 
+#ifdef ENABLE_PERSISTENT
+	auto collCommMax = make_CollCommObj_AllreduceMax(dd.getCommunicator(), input);
+	collCommMax.persistent();
+	double max;
+	collCommMax.get(max);
+#else
 	dd.collCommInit(1);
 	dd.collCommAppendDouble(input);
 	dd.collCommAllreduceCustom(ReduceType::MAX);
 	double max = dd.collCommGetDouble();
 	dd.collCommFinalize();
+#endif
 
 	double stddev = std::sqrt(average2  - average * average);
 

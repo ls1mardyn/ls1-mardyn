@@ -493,12 +493,19 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 		}
 	}
 
-
+#ifdef ENABLE_PERSISTENT
+	auto collCommScan = make_CollCommObj_ScanAdd<2>(domainDecomp->getCommunicator(), numAddedParticlesLocal);
+	collCommScan.persistent();
+	unsigned long idOffset;
+	collCommScan.get(idOffset);
+	idOffset -= numAddedParticlesLocal;
+#else
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(numAddedParticlesLocal);//number of local molecules
 	domainDecomp->collCommScanSum();
 	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - numAddedParticlesLocal;
 	domainDecomp->collCommFinalize();
+#endif
 	// fix ID's to be unique:
 	for (auto mol = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mol.isValid(); ++mol) {
 		mol->setid(mol->getID() + idOffset);
@@ -510,6 +517,11 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 	uint64_t numParticlesGlobal = 0;
 	uint64_t numAddedParticlesFreespaceGlobal = 0;
 	mardyn_assert(numParticlesLocal == numAddedParticlesLocal);
+#ifdef ENABLE_PERSISTENT
+	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), numParticlesLocal, numAddedParticlesFreespaceLocal);
+	collComm.persistent();
+	collComm.get(numParticlesLocal, numAddedParticlesFreespaceLocal);
+#else
 	domainDecomp->collCommInit(2);
 	domainDecomp->collCommAppendUnsLong(numParticlesLocal);
 	domainDecomp->collCommAppendUnsLong(numAddedParticlesFreespaceLocal);
@@ -517,6 +529,7 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 	numParticlesGlobal = domainDecomp->collCommGetUnsLong();
 	numAddedParticlesFreespaceGlobal = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
+#endif
 	mardyn_assert(numParticlesGlobal == _numParticlesTotal - numAddedParticlesFreespaceGlobal);
 
 	Log::global_log->info() << "Number of particles calculated by number of blocks  : " << std::setw(24) << _numParticlesTotal

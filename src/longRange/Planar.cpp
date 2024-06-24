@@ -458,6 +458,11 @@ void Planar::calculateLongRange() {
 	}
 
 	// Summation of the correction terms
+#ifdef ENABLE_PERSISTENT
+	auto collComm = make_CollCommObj_AllreduceAdd(_domainDecomposition->getCommunicator(), Upot_c, Virial_c);
+	collComm.persistent();
+	collComm.get(Upot_c, Virial_c);
+#else
 	_domainDecomposition->collCommInit(2);
 	_domainDecomposition->collCommAppendDouble(Upot_c);
 	_domainDecomposition->collCommAppendDouble(Virial_c);
@@ -465,6 +470,7 @@ void Planar::calculateLongRange() {
 	Upot_c = _domainDecomposition->collCommGetDouble();
 	Virial_c = _domainDecomposition->collCommGetDouble();
 	_domainDecomposition->collCommFinalize();
+#endif
 
 	// Setting the Energy and Virial correction
 	_domain->setUpotCorr(Upot_c);
