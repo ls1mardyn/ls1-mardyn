@@ -77,7 +77,7 @@ public:
 		return _mm256_cvtepi32_ps(m);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
 		const __m512i zeros = _mm512_set1_epi32(0);
-		return _mm512_mask_set1_epi32(zeros, m, 1);
+		return _mm512_cvtepi32_ps(_mm512_mask_set1_epi32(zeros, m, 1));
 	#endif
 	}
 

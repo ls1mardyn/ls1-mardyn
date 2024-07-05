@@ -87,7 +87,7 @@ public:
 		return m_pd;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
 		const __m512i zeros = _mm512_set1_epi64(0);
-		return _mm512_mask_set1_epi64(zeros, m, 1);
+		return _mm512_cvtepi64_pd(_mm512_mask_set1_epi64(zeros, m, 1));
 	#endif
 	}
 
