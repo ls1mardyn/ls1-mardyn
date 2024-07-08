@@ -31,7 +31,7 @@ double InteractionForceAdapter::processPair(Molecule& m1, Molecule& m2, double d
 
     //check if any of the 2 molecules is coarsegrain
     //Check if both are 
-    if(adres->GetMoleculeResolution(m1.getID())==CoarseGrain && adres->GetMoleculeResolution(m2.getID())==CoarseGrain){
+    if(adres->GetMoleculeResolution(m1.getID())==FullParticle && adres->GetMoleculeResolution(m2.getID())==FullParticle){
         interaction = InteractionType::onlyfp;
     }
     return processPairBackend(m1, m2, distance, pair, dd, CalculateLJ, interaction);
@@ -41,16 +41,19 @@ double InteractionForceAdapter::processPair(Molecule& m1, Molecule& m2, double d
 double InteractionForceAdapter::processPairBackend(Molecule& m1, Molecule& m2, double distance[3], PairType pair, double dd, bool calcLJ, InteractionType interaction){
     const int tid = mardyn_get_thread_num();
     ParticlePairs2PotForceAdapter::PP2PFAThreadData& data = *thread_data[tid];
-    ParaStrm params;
-    ParaStrm paramsInv;
+    ParaStrm params = (*data._comp2Param)(m1.componentid(),m2.componentid());
+    ParaStrm paramsInv = (*data._comp2Param)(m2.componentid(),m1.componentid());
 
     switch(pair){
         double Virial[3];
         case MOLECULE_MOLECULE:
             this->PotForceType(m1,m2,params,paramsInv,distance,data._upot6LJ,data._upotXpoles,data._myRF,Virial,calcLJ,interaction);
+			return data._upot6LJ+data._upotXpoles;
 
         case MOLECULE_HALOMOLECULE:
 
+		default:
+		break;
     }
 }
 
@@ -69,12 +72,22 @@ void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm&
          * m1 hy vs m2 cg
          * m1 hy vs m2 at
          * viceversa
+		 * m1 hy vs m2 hy
          */
-        PotForceHybrid(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ, region);
+        PotForceHybrid(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
     }
 }
 
-void InteractionForceAdapter::PotForceHybrid(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ, FPRegion& region){
+void InteractionForceAdapter::PotForceHybrid(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ){
+	//determine which one is hybrid and which fpregion is being used
+
+	//Assume only one fpregion
+	FPRegion& region = adres->GetRegions()[0];
+	PotForceHybridBackend(m1,m2,params,distance,Upot6LJ,UpotXPoles,MyRF,virial,calcLJ,region);
+
+}
+
+void InteractionForceAdapter::PotForceHybridBackend(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ, FPRegion& region){
 
     std::array<double, 3> com1 = adres->GetMoleculeCOMSite(m1.getID()).r();
     std::array<double, 3> com2 = adres->GetMoleculeCOMSite(m2.getID()).r();
@@ -115,7 +128,7 @@ void InteractionForceAdapter::PotForceHybrid(Molecule& m1, Molecule& m2, ParaStr
 
                 //Introduce weight function values
                 for(int i=0;i<3;i++){
-                    f[i] *= w1*w2;
+                    f[i] *= w1*w2;//F^{at}
                 }
 
 				m1.Fljcenteradd(si, f);
@@ -127,229 +140,12 @@ void InteractionForceAdapter::PotForceHybrid(Molecule& m1, Molecule& m2, ParaStr
 		}
 	}
 
-    double am1[3], am2[3]; // angular momenta
 
-	const unsigned ne1 = m1.numCharges();
-	const unsigned ne2 = m2.numCharges();
-	const unsigned int nq1 = m1.numQuadrupoles();
-	const unsigned int nq2 = m2.numQuadrupoles();
-	const unsigned int nd1 = m1.numDipoles();
-	const unsigned int nd2 = m2.numDipoles();
-	for (unsigned si = 0; si < ne1; si++) {
-		const std::array<double,3> dii = m1.charge_d_abs(si);
-		// Charge-Charge
-		for (unsigned sj = 0; sj < ne2; sj++) {
-			const std::array<double,3> djj = m2.charge_d_abs(sj);
-			double q1q2per4pie0; // 4pie0 = 1 in reduced units
-			params >> q1q2per4pie0;
-			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
-			PotForce2Charge(drs, dr2, q1q2per4pie0, f, u);
-
-            //Introduce weight function values
-            for(int i=0;i<3;i++){
-                f[i] *= w1*w2;
-            }
-
-			m1.Fchargeadd(si, f);
-			m2.Fchargesub(sj, f);
-
-			UpotXPoles += u;
-			for (unsigned short d = 0; d < 3; d++)
-				virial[d] += 0.5*distance[d] * f[d];
-		}
-		// Charge-Quadrupole
-		for (unsigned sj = 0; sj < nq2; sj++) {
-			const std::array<double,3> djj = m2.quadrupole_d_abs(sj);
-			double qQ05per4pie0; // 4pie0 = 1 in reduced units
-			params >> qQ05per4pie0;
-			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
-			const std::array<double,3> ejj = m2.quadrupole_e(sj);
-			PotForceChargeQuadrupole(drs, dr2, ejj.data(), qQ05per4pie0, f, am2, u);
-
-            //Introduce weight function values
-            for(int i=0;i<3;i++){
-                f[i] *= w1*w2;
-            }
-
-			m1.Fchargeadd(si, f);
-			m2.Fquadrupolesub(sj, f);
-			m2.Madd(am2);
-
-			UpotXPoles += u;
-			for (unsigned short d = 0; d < 3; d++)
-				virial[d] += 0.5*distance[d] * f[d];
-		}
-		// Charge-Dipole
-		for (unsigned sj = 0; sj < nd2; sj++) {
-			const std::array<double,3> djj = m2.dipole_d_abs(sj);
-			double minusqmyper4pie0;
-			params >> minusqmyper4pie0;
-			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
-			const std::array<double,3> ejj = m2.dipole_e(sj);
-			PotForceChargeDipole(drs, dr2, ejj.data(), minusqmyper4pie0, f, am2, u);
-
-            //Introduce weight function values
-            for(int i=0;i<3;i++){
-                f[i] *= w1*w2;
-            }
-
-			m1.Fchargeadd(si, f);
-			m2.Fdipolesub(sj, f);
-			m2.Madd(am2);
-
-			UpotXPoles += u;
-			for (unsigned short d = 0; d < 3; d++)
-				virial[d] += 0.5*distance[d] * f[d];
-		}
-	}
-    //quadrupoles
-    for (unsigned int si = 0; si < nq1; ++si) {
-		const std::array<double,3> dii = m1.quadrupole_d_abs(si);
-		const std::array<double,3> eii = m1.quadrupole_e(si);
-
-		// Quadrupole-Charge
-		for (unsigned sj = 0; sj < ne2; sj++) {
-			const std::array<double,3> djj = m2.charge_d_abs(sj);
-			double qQ05per4pie0; // 4pie0 = 1 in reduced units
-			params >> qQ05per4pie0;
-			minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
-			PotForceChargeQuadrupole(drs, dr2, eii.data(), qQ05per4pie0, f, am1, u);
-
-            for(int i=0;i<3;i++){
-                f[i] *= w1*w2;
-            }
-
-			m1.Fquadrupolesub(si, f);
-			m2.Fchargeadd(sj, f);
-			m1.Madd(am1);
-
-			UpotXPoles += u;
-			for (unsigned short d = 0; d < 3; d++)
-				virial[d] -= 0.5*distance[d] * f[d];
-		}
-		// Quadrupole-Quadrupole -------------------
-		for (unsigned int sj = 0; sj < nq2; ++sj) {
-			//double drs[3];
-			const std::array<double,3> djj = m2.quadrupole_d_abs(sj);
-			double q2075;
-			params >> q2075;
-			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
-			const std::array<double,3> ejj = m2.quadrupole_e(sj);
-			PotForce2Quadrupole(drs, dr2, eii.data(), ejj.data(), q2075, f, am1, am2, u);
-
-            for(int i=0;i<3;i++){
-                f[i] *= w1*w2;
-            }
-
-			m1.Fquadrupoleadd(si, f);
-			m2.Fquadrupolesub(sj, f);
-			m1.Madd(am1);
-			m2.Madd(am2);
-
-			UpotXPoles += u;
-			for (unsigned short d = 0; d < 3; ++d)
-				virial[d] += 0.5*distance[d] * f[d];
-		}
-		// Quadrupole-Dipole -----------------------
-		for (unsigned int sj = 0; sj < nd2; ++sj) {
-			//double drs[3];
-			const std::array<double,3> djj = m2.dipole_d_abs(sj);
-			double qmy15;
-			params >> qmy15;
-			minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
-			const std::array<double,3> ejj = m2.dipole_e(sj);
-			PotForceDiQuadrupole(drs, dr2, ejj.data(), eii.data(), qmy15, f, am2, am1, u);
-
-            for(int i=0;i<3;i++){
-                f[i] *= w1*w2;
-            }
-
-			m1.Fquadrupolesub(si, f);
-			m2.Fdipoleadd(sj, f);
-			m1.Madd(am1);
-			m2.Madd(am2);
-			UpotXPoles += u;
-			for (unsigned short d = 0; d < 3; d++)
-				virial[d] -= 0.5*distance[d] * f[d];
-		}
-	}
-    //dipoles
-    for (unsigned int si = 0; si < nd1; ++si) {
-		const std::array<double,3> dii = m1.dipole_d_abs(si);
-		const std::array<double,3> eii = m1.dipole_e(si);
-		// Dipole-Charge
-		for (unsigned sj = 0; sj < ne2; sj++) {
-			const std::array<double,3> djj = m2.charge_d_abs(sj);
-			double minusqmyper4pie0;
-			params >> minusqmyper4pie0;
-			minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
-			PotForceChargeDipole(drs, dr2, eii.data(), minusqmyper4pie0, f, am1, u);
-
-            for(int i=0;i<3;i++){
-                f[i] *= w1*w2;
-            }
-
-			m1.Fdipolesub(si, f);
-			m2.Fchargeadd(sj, f);
-			m1.Madd(am1);
-
-			UpotXPoles += u;
-			for (unsigned short d = 0; d < 3; d++)
-				virial[d] -= 0.5*distance[d] * f[d];
-		}
-		// Dipole-Quadrupole -----------------------
-		for (unsigned int sj = 0; sj < nq2; ++sj) {
-			//double drs[3];
-			const std::array<double,3> djj = m2.quadrupole_d_abs(sj);
-			double myq15;
-			params >> myq15;
-			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
-			const std::array<double,3> ejj = m2.quadrupole_e(sj);
-			PotForceDiQuadrupole(drs, dr2, eii.data(), ejj.data(), myq15, f, am1, am2, u);
-
-            for(int i=0;i<3;i++){
-                f[i] *= w1*w2;
-            }
-
-			m1.Fdipoleadd(si, f);
-			m2.Fquadrupolesub(sj, f);
-			m1.Madd(am1);
-			m2.Madd(am2);
-			UpotXPoles += u;
-			for (unsigned short d = 0; d < 3; ++d)
-				virial[d] += 0.5*distance[d] * f[d];
-		}
-		// Dipole-Dipole ---------------------------
-		for (unsigned int sj = 0; sj < nd2; ++sj) {
-			const std::array<double,3> djj = m2.dipole_d_abs(sj);
-			double my2;
-			params >> my2;
-			double rffac;
-			params >> rffac;
-			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
-			const std::array<double,3> ejj = m2.dipole_e(sj);
-			PotForce2Dipole(drs, dr2, eii.data(), ejj.data(), my2, rffac, f, am1, am2, u, MyRF);
-
-            for(int i=0;i<3;i++){
-                f[i] *= w1*w2;
-            }
-
-			m1.Fdipoleadd(si, f);
-			m2.Fdipolesub(sj, f);
-			m1.Madd(am1);
-			m2.Madd(am2);
-			UpotXPoles += u;
-			for (unsigned short d = 0; d < 3; ++d)
-				virial[d] += 0.5*distance[d] * f[d];
-		}
-	}
 
     m1.Viadd(virial);
 	m2.Viadd(virial);
 
     //Here we have F_{cg}
-    std::array<double, 3> com1 = adres->GetMoleculeCOMSite(m1.getID()).r();
-    std::array<double, 3> com2 = adres->GetMoleculeCOMSite(m2.getID()).r();
     double r_com = std::sqrt(SqrdDistanceBetweenCOMs(com1,com2));
     std::array<double,3> f_com;
     {
@@ -364,15 +160,14 @@ void InteractionForceAdapter::PotForceHybrid(Molecule& m1, Molecule& m2, ParaStr
         //Set quantities
         adres->GetMoleculeCOMSite(m1.getID()).AddPotential(Upot);
         adres->GetMoleculeCOMSite(m1.getID()).AddForce(f_com);
-
+		adres->GetMoleculeCOMSite(m2.getID()).SubForce(f_com);
     }
 
     for(int i=0;i<f_com.size();i++){
         f_com[i] *= (1.0-w1*w2);
     }
-    
-
     //need to map f_{com} to F_{at}
+	adres->MapToAtomistic(f_com,m1,m2);
     
 
 
@@ -380,6 +175,10 @@ void InteractionForceAdapter::PotForceHybrid(Molecule& m1, Molecule& m2, ParaStr
 }
 
 void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ){
+
+	virial[0] = 0.0;
+	virial[1] = 0.0;
+	virial[2] = 0.0;
 
     //Get both molecules COMs
     //TODO: Check this assumption: Assume they are updated
@@ -401,6 +200,13 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
         //Set quantities
         adres->GetMoleculeCOMSite(m1.getID()).AddPotential(Upot);
         adres->GetMoleculeCOMSite(m1.getID()).AddForce(f);
+		adres->GetMoleculeCOMSite(m2.getID()).SubForce(f);
+
+		Upot6LJ += Upot;
+
+		for(unsigned short d=0;d<3; ++d){
+			virial[d] += 0.5*distance[d]*f[d];
+		}
 
     }
 

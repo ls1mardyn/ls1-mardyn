@@ -57,7 +57,7 @@ class PMF:public PluginBase{
     void ReadRDF();
     Interpolate& GetRDFInterpolation();
 
-    private: 
+    public: 
     /**
      * Maps the com forces to FP, formula:
      * F_{i\alpha\beta} = \num{m_{i\alpha}}\den{\sum_{i\alpha}{m_{i\alpha}}}F^{cm}_{\alpha\beta}
@@ -82,7 +82,7 @@ class InteractionSite:public Site{
     std::array<double,3> v_com;
 
     public: 
-
+    void SubForce(std::array<double, 3> f);
     void AddForce(std::array<double,3> f);
     void AddPotential(double pot);
     void SetPosition(std::array<double,3> pos);
