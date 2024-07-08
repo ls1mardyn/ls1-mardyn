@@ -69,6 +69,7 @@
 
 #include "thermostats/VelocityScalingThermostat.h"
 #include "thermostats/TemperatureControl.h"
+#include "thermostats/NVEControl.h"
 
 #include "utils/FileUtils.h"
 #include "utils/Logger.h"
@@ -527,6 +528,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
                         _temperatureControl->readXML(xmlconfig);
                     } else {
                         Log::global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..."
+                                            << std::endl;
+                        Simulation::exit(-1);
+                    }
+                }	
+				else if(thermostattype == "NVEControl") {
+                    if (nullptr == _NVEControl) {
+                        _NVEControl = new NVEControl();
+                        _NVEControl->readXML(xmlconfig);
+                    } else {
+                        Log::global_log->error() << "Instance of NVEControl allready exist! Programm exit ..."
                                             << std::endl;
                         Simulation::exit(-1);
                     }

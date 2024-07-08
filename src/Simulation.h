@@ -6,6 +6,7 @@
 
 #include "io/TimerProfiler.h"
 #include "thermostats/VelocityScalingThermostat.h"
+#include "thermostats/NVEControl.h"
 #include "utils/FixedSizeQueue.h"
 #include "utils/FunctionWrapper.h"
 #include "utils/SysMon.h"
@@ -54,6 +55,7 @@ class LongRangeCorrection;
 class Homogeneous;
 class Planar;
 class TemperatureControl;
+class NVEControl;
 class MemoryProfiler;
 
 // by Stefan Becker
@@ -391,6 +393,9 @@ private:
 	/** Temperature Control (Slab Thermostat) */
 	TemperatureControl* _temperatureControl;
 
+	/** NVEControl (NVE Thermostat) */
+	NVEControl* _NVEControl;
+	
 	/** The Fast Multipole Method object */
 	bhfmm::FastMultipoleMethod* _FMM;
 
