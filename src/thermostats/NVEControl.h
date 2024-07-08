@@ -39,10 +39,14 @@ class NVEControl {
 public:
 	NVEControl();
 	~NVEControl();
+	void init();
 	void setBetaTrans(double beta);
 	double getBetaTrans() { return _globalBetaTrans; }
 	void apply(ParticleContainer *moleculeContainer);
 	void readXML(XMLfileUnits& xmlconfig);
+	// std::string test(XMLfileUnits& xmlconfig){
+		// readXML(xmlconfig);
+		// return "----++++++teststring----------" ; }
 
 private:
 	double _globalBetaTrans;

@@ -6,7 +6,6 @@
 
 #include "io/TimerProfiler.h"
 #include "thermostats/VelocityScalingThermostat.h"
-#include "thermostats/NVEControl.h"
 #include "utils/FixedSizeQueue.h"
 #include "utils/FunctionWrapper.h"
 #include "utils/SysMon.h"

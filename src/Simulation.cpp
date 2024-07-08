@@ -116,6 +116,7 @@ Simulation::Simulation()
 	_rand(8624),
 	_longRangeCorrection(nullptr),
 	_temperatureControl(nullptr),
+	_NVEControl(nullptr),
 	_FMM(nullptr),
 	_timerProfiler(),
 #ifdef TASKTIMINGPROFILE
@@ -151,6 +152,8 @@ Simulation::~Simulation() {
 	_longRangeCorrection = nullptr;
 	delete _temperatureControl;
 	_temperatureControl = nullptr;
+	delete _NVEControl;
+	_NVEControl = nullptr;
 	delete _FMM;
 	_FMM = nullptr;
 
@@ -536,9 +539,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
                     if (nullptr == _NVEControl) {
                         _NVEControl = new NVEControl();
                         _NVEControl->readXML(xmlconfig);
+                        Log::global_log->info() << "Instance of NVEControl initiated."<< _NVEControl << std::endl;
                     } else {
-                        Log::global_log->error() << "Instance of NVEControl allready exist! Programm exit ..."
-                                            << std::endl;
+						Log::global_log->error() << "Instance of NVEControl allready exist! Programm exit ..." << std::endl;
                         Simulation::exit(-1);
                     }
                 }
@@ -1028,6 +1031,9 @@ void Simulation::preSimLoopSteps()
 		getMemoryProfiler()->doOutput();
 	}
 
+	/** Init NVEControl beta_trans, log-files (todo). */
+	if(nullptr != _NVEControl)
+		_NVEControl->init();  
 	pluginEndStepCall(_initSimulation);
 
 
@@ -1189,7 +1195,14 @@ void Simulation::simulateOneTimestep()
 
 	// scale velocity and angular momentum
 	// TODO: integrate into Temperature Control
-	if ( !_domain->NVE() && _temperatureControl == nullptr) {
+	if (_NVEControl != nullptr){
+		_NVEControl->apply(_moleculeContainer);
+	} else if ( _temperatureControl != nullptr) {
+		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
+		_temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
+	}
+	// <-- TEMPERATURE_CONTROL
+	else if ( !_domain->NVE()) {
 		if (_thermostatType ==VELSCALE_THERMOSTAT) {
 			Log::global_log->debug() << "Velocity scaling" << std::endl;
 			if (_domain->severalThermostats()) {
@@ -1215,14 +1228,8 @@ void Simulation::simulateOneTimestep()
 				// Undirected global thermostat not implemented!
 			}
 			_velocityScalingThermostat.apply(_moleculeContainer);
-
-
 		}
-	} else if ( _temperatureControl != nullptr) {
-		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
-		_temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
 	}
-	// <-- TEMPERATURE_CONTROL
 
 
 
