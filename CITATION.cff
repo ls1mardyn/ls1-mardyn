@@ -11,11 +11,11 @@ abstract: "The molecular dynamics code ls1 mardyn (large systems 1: molecular dy
 contact:
  - given-names: Philipp
    family-names: Neumann
-author:
+authors:
  - name: Boltzmann-Zuse Society for Computational Molecular Engineering
    country: DE
-references:
- - type: article
+preferred-citation:
+   type: article
    title: "ls1 mardyn: The massively parallel molecular dynamics code for large systems"
    year: 2014
    authors:
