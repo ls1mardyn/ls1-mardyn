@@ -15,7 +15,7 @@
 #include "Resolution.h"
 #include "WeightFunction.h"
 #include "Interpolate.h"
-
+#include "plugins/RDFAtCOM.h"
 
 //TODO: who owns the InteractionCellProcessor, AdResS or Simulation?
 
@@ -32,12 +32,17 @@ class PMF:public PluginBase{
     std::map<unsigned long, tracker> sites;
     ResolutionHandler resolution_handler;
     WeightFunction weight_function;
+    RadialDFCOM rdf;
 
     public:
     PMF();
     ~PMF(){}
     void readXML(XMLfileUnits& xmlconfig) override;
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
+
+    /**
+     * Updates resolution and tracker of each molecule
+     */
     void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
     void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
     void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
@@ -68,7 +73,6 @@ class PMF:public PluginBase{
      * Comply with newton 3rd law
      */
     void MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2);
-    void MapToCOM();
 
 };
 
@@ -79,14 +83,17 @@ class InteractionSite:public Site{
     private:
     double u_com;
     std::array<double,3> f_com;
-    std::array<double,3> v_com;
+    std::array<double,3> v_com;//not used
 
     public: 
     void SubForce(std::array<double, 3> f);
     void AddForce(std::array<double,3> f);
     void AddPotential(double pot);
     void SetPosition(std::array<double,3> pos);
-    void SetVelocity();
+    void SetVelocity(std::array<double,3> pos);
+
+    std::array<double,3>& GetPosition();
+    std::array<double,3>& GetVelocity();
 
 
 };

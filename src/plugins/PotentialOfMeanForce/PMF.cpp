@@ -44,6 +44,12 @@ void PMF::readXML(XMLfileUnits& xmlfile){
 void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep)
 {
     resolution_handler.CheckResolution(pc,sites,regions);
+
+    for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
+        unsigned long m_id = it->getID();
+        std::array<double,3> com = rdf.GetCOM(&(*it));
+        sites[m_id].first.SetPosition(com);
+    }
 }
 
 void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
@@ -122,6 +128,3 @@ void PMF::MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2){
 
 }
 
-void PMF::MapToCOM(){
-    
-}

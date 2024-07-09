@@ -46,14 +46,17 @@ double InteractionForceAdapter::processPairBackend(Molecule& m1, Molecule& m2, d
 
     switch(pair){
         double Virial[3];
+        double dummy1,dummy2,dummy3,dummy4[3];
         case MOLECULE_MOLECULE:
             this->PotForceType(m1,m2,params,paramsInv,distance,data._upot6LJ,data._upotXpoles,data._myRF,Virial,calcLJ,interaction);
 			return data._upot6LJ+data._upotXpoles;
 
         case MOLECULE_HALOMOLECULE:
 
+        case MOLECULE_MOLECULE_FLUID:
+
 		default:
-		break;
+		Simulation::exit(670);
     }
 }
 
@@ -169,9 +172,6 @@ void InteractionForceAdapter::PotForceHybridBackend(Molecule& m1, Molecule& m2, 
     //need to map f_{com} to F_{at}
 	adres->MapToAtomistic(f_com,m1,m2);
     
-
-
-
 }
 
 void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ){
@@ -207,6 +207,8 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
 		for(unsigned short d=0;d<3; ++d){
 			virial[d] += 0.5*distance[d]*f[d];
 		}
+
+        adres->MapToAtomistic(f,m1,m2);
 
     }
 

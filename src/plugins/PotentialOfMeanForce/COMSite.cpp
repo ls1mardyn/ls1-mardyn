@@ -15,3 +15,19 @@ void InteractionSite::AddForce(std::array<double,3> f){
 void InteractionSite::AddPotential(double u){
     this->u_com += u;
 }
+
+void InteractionSite::SetPosition(std::array<double, 3> pos){
+    this->_r=pos;
+}
+
+void InteractionSite::SetVelocity(std::array<double, 3> vel){
+    this->v_com = vel;
+}
+
+std::array<double,3>& InteractionSite::GetPosition(){
+    return this->_r;
+}
+
+std::array<double,3>& InteractionSite::GetVelocity(){
+    return this->v_com;
+}
