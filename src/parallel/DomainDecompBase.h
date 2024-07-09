@@ -2,7 +2,9 @@
 #define DOMAINDECOMPBASE_H_
 
 #include "parallel/CollectiveCommBase.h"
+#ifdef ENABLE_PERSISTENT
 #include "parallel/CollectiveCommunicationPersistent.h"
+#endif
 #include <string>
 
 #ifdef ENABLE_MPI
