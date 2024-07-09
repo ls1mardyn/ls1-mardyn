@@ -87,7 +87,8 @@ void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* d
         //den = binvol*domain->getglobalNumMolecules()*domain->getglobalNumMolecules()/domain->getGlobalVolume();
         //data = (double)bin_counts[i]/(double)(den*(measured_steps-1));
         //outfile<<rmid<<"\t"<<data<<"\t"<<binvol<<"\t"<<den*(measured_steps-1)<<"\t"<<"\n";
-        outfile<<rmid<<"\t"<<data/den<<"\t"<<data<<"\t"<<den<<"\t"<<"\n";
+        //outfile<<rmid<<"\t"<<data/den<<"\t"<<data<<"\t"<<den<<"\t"<<"\n";
+        outfile<<rmid<<"\t"<<data/den<<"\t"<<"\n";
     }
 
     outfile.close();

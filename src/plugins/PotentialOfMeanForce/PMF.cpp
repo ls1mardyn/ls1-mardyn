@@ -14,6 +14,10 @@ void PMF::init(ParticleContainer* particleContainer, DomainDecompBase* domainDec
     _simulation.setCellProcessor(adres_cell_processor);
     Log::global_log->info()<<"[PMF] Initialized AdResS CellProcessor"<<std::endl;
 
+    this->ReadRDF();
+    for(int i=0;i<rdf_interpolation.GetGValues().size();i++){
+        std::cout<<rdf_interpolation.GetRValues()[i]<<"       "<<rdf_interpolation.GetGValues()[i]<<"\n";
+    }
 }
 
 void PMF::readXML(XMLfileUnits& xmlfile){

@@ -16,6 +16,15 @@ void Interpolate::ReadInRDF(){
     }
 }
 
+std::vector<double>& Interpolate::GetGValues(){
+    return this->g_nodes;
+}
+
+std::vector<double>& Interpolate::GetRValues(){
+    return this->r_nodes;
+}
+
+
 double Interpolate::GetRDFAt(double r){
     double gr =0.0;
 

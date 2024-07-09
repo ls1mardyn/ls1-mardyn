@@ -5,7 +5,7 @@ void ResolutionHandler::CheckResolution(ParticleContainer* pc, std::map<unsigned
     //check all molecules
     for(auto it = pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
         unsigned long molecule_id = it->getID();
-        std::cout<<"Molecule "<<molecule_id<<" has resolution "<<resolution_map[molecule_id].second<<" \n";
+        //std::cout<<"Molecule "<<molecule_id<<" has resolution "<<resolution_map[molecule_id].second<<" \n";
         bool stop=false;
 
         for(auto& reg:regions){

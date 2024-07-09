@@ -20,6 +20,8 @@ class Interpolate{
 
     public:
 
+    std::vector<double>& GetRValues();
+    std::vector<double>& GetGValues();
     double GetRDFAt(double r);
     double LinearInterpolation(int a, int b, double x);
     void ReadInRDF();
