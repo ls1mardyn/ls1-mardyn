@@ -173,7 +173,7 @@ void ProjectedSampler::loadGlobalMolPos(ParticleContainer *particleContainer, Do
 	#endif
 	for(struct {int idx; ParticleIterator it; } s = {0, begin}; s.it.isValid(); ++s.it, ++s.idx) {
 		const std::array<double, 3> R = (*s.it).r_arr();
-		_local_mol_pos[s.it->getID()] = R[_dim];
+		_local_mol_pos[s.idx] = R[_dim];
 	}
 
 	//share maps across all ranks

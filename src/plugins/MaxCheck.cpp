@@ -158,7 +158,7 @@ void MaxCheck::checkMaxVals(ParticleContainer* particleContainer,
 		std::array<double,3> L;
 		MaxVals absVals;
 
-		for (auto it = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
+		for (auto it = particleContainer->iterator(ParticleIterator::ALL_CELLS); it.isValid(); ++it) {
 			cid_ub = it->componentid() + 1;
 			for (uint8_t d = 0; d < 3; ++d) {
 				r[d] = it->r(d);

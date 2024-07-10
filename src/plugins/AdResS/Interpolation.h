@@ -734,7 +734,7 @@ namespace Interpolation {
 			for (int dim = 0; dim < 3; dim++) coord[dim] = point[dim] / elem_size[dim];
 
 			const auto& elem_shape = _elements.shape();
-			for (int dim = 0; dim < 3; dim++) std::clamp<idx_t>(coord[dim], 0, elem_shape[dim] - 1);
+			for (int dim = 0; dim < 3; dim++) coord[dim] = std::clamp<idx_t>(coord[dim], 0, elem_shape[dim] - 1);
 
 			return _elements.at(coord[0], coord[1], coord[2]);
 		}
