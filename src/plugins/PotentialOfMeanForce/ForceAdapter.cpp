@@ -4,18 +4,40 @@
 
 InteractionForceAdapter::InteractionForceAdapter(ResolutionHandler& handle, PMF* pmf):resolution_handler{handle},adres{pmf}{
 
+    const int number_threads = mardyn_get_max_threads();
+    Log::global_log->info()<<"[InteractionForceAdapter]: allocate data for "<<number_threads<<" threads."<<std::endl;
+
+    thread_data.resize(number_threads);
+    #if defined(_OPENMP)
+    #pragma omp parallel
+    #endif
+    {
+        auto* own_data = new ParticlePairs2PotForceAdapter::PP2PFAThreadData();
+        const int own_id = mardyn_get_thread_num();
+        thread_data[own_id] = own_data;
+    }
+
 }
 
 void InteractionForceAdapter::init(){
 
+    Domain* domain = _simulation.getDomain();
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const int own_id = mardyn_get_thread_num();
+		thread_data[own_id]->initComp2Param(domain->getComp2Params());
+		thread_data[own_id]->clear();
+	}
+
 }
 
 void InteractionForceAdapter::finish(){
-
+ //What to put here?
 }
 
 double InteractionForceAdapter::processPair(Molecule& m1, Molecule& m2, double distance[3], PairType pair, double dd, bool CalculateLJ){
-    std::cout<<"ProcessPair\n";
     std::vector<FPRegion>& regions = adres->GetRegions();
     //check if any of the 2 molecules is hybrid
     bool has_hybrid = false;
@@ -49,22 +71,18 @@ double InteractionForceAdapter::processPairBackend(Molecule& m1, Molecule& m2, d
         double Virial[3];
         double dummy1,dummy2,dummy3,dummy4[3];
         case MOLECULE_MOLECULE:
-        std::cout<<"MOLECULE_MOLECULE\n";
             this->PotForceType(m1,m2,params,paramsInv,distance,data._upot6LJ,data._upotXpoles,data._myRF,Virial,calcLJ,interaction);
 			return data._upot6LJ+data._upotXpoles;
 
         case MOLECULE_HALOMOLECULE:
-        std::cout<<"MOLECULE_HALOMOLECULE\n";
             this->PotForceType(m1,m2,params,paramsInv,distance,dummy1,dummy2,dummy3,dummy4,calcLJ,interaction);
 
             return 0.0;
 
         case MOLECULE_MOLECULE_FLUID:
-        std::cout<<"What is this case\n";
 		default:
 		Simulation::exit(670);
     }
-    std::cout<<"Should not be here\n";
     return 0.0;
 }
 

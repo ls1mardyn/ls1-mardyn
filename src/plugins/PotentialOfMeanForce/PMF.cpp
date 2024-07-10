@@ -1,5 +1,4 @@
 #include"PMF.h"
-#include "particleContainer/adapter/VectorizedCellProcessor.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 
 
@@ -15,6 +14,14 @@ void PMF::init(ParticleContainer* particleContainer, DomainDecompBase* domainDec
     for(int i=0;i<rdf_interpolation.GetGValues().size();i++){
         std::cout<<rdf_interpolation.GetRValues()[i]<<"       "<<rdf_interpolation.GetGValues()[i]<<"\n";
     }
+
+    pairs_handler = new InteractionForceAdapter(resolution_handler,this);
+    _simulation.setParticlePairsHandler(pairs_handler);
+    _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), pairs_handler));
+
+    Log::global_log->info()<<"[PMF]LegacyCellProcessor set\n";
+    Log::global_log->info()<<"[PMF] AdResS ParticlePairsHandler being used\n";
+    
 }
 
 void PMF::readXML(XMLfileUnits& xmlfile){
@@ -36,13 +43,6 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     }
     xmlfile.changecurrentnode(oldpath);
 
-    pairs_handler = new InteractionForceAdapter(resolution_handler,this);
-    _simulation.setParticlePairsHandler(pairs_handler);
-    _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), pairs_handler));
-
-    Log::global_log->info()<<"[PMF]LegacyCellProcessor set\n";
-    Log::global_log->info()<<"[PMF] AdResS ParticlePairsHandler being used\n";
-
 }
 
 void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep)
@@ -53,6 +53,8 @@ void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domain
         unsigned long m_id = it->getID();
         std::array<double,3> com = rdf.GetCOM(&(*it));
         sites[m_id].first.SetPosition(com);
+
+        std::cout<<m_id<<"   "<<sites[m_id].second<<"\n";
     }
 }
 
