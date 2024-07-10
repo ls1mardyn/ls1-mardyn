@@ -1,5 +1,7 @@
 #include"PMF.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
+#include "particleContainer/adapter/LegacyCellProcessor.h"
+
 
 PMF::PMF(){
     adres_cell_processor = new InteractionCellProcessor(0,0);
@@ -9,11 +11,6 @@ PMF::PMF(){
 void PMF::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
     
     Log::global_log->info()<<"[PMF] Enabled "<<std::endl;
-
-    this->adres_cell_processor->SetCellProcessor(new VectorizedCellProcessor(*domain,_simulation.getcutoffRadius(),_simulation.getLJCutoff()));
-    _simulation.setCellProcessor(adres_cell_processor);
-    Log::global_log->info()<<"[PMF] Initialized AdResS CellProcessor"<<std::endl;
-
     this->ReadRDF();
     for(int i=0;i<rdf_interpolation.GetGValues().size();i++){
         std::cout<<rdf_interpolation.GetRValues()[i]<<"       "<<rdf_interpolation.GetGValues()[i]<<"\n";
@@ -38,6 +35,13 @@ void PMF::readXML(XMLfileUnits& xmlfile){
         regions[id-1].readXML(xmlfile);
     }
     xmlfile.changecurrentnode(oldpath);
+
+    pairs_handler = new InteractionForceAdapter(resolution_handler,this);
+    _simulation.setParticlePairsHandler(pairs_handler);
+    _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), pairs_handler));
+
+    Log::global_log->info()<<"[PMF]LegacyCellProcessor set\n";
+    Log::global_log->info()<<"[PMF] AdResS ParticlePairsHandler being used\n";
 
 }
 

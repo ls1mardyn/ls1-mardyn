@@ -16,6 +16,7 @@
 #include "WeightFunction.h"
 #include "Interpolate.h"
 #include "plugins/RDFAtCOM.h"
+#include "ForceAdapter.h"
 
 //TODO: who owns the InteractionCellProcessor, AdResS or Simulation?
 
@@ -33,6 +34,7 @@ class PMF:public PluginBase{
     ResolutionHandler resolution_handler;
     WeightFunction weight_function;
     RadialDFCOM rdf;
+    InteractionForceAdapter* pairs_handler;
 
     public:
     PMF();
