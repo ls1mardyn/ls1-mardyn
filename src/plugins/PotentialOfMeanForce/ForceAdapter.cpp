@@ -106,8 +106,8 @@ void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm&
          * viceversa
 		 * m1 hy vs m2 hy
          */
-        //PotForceHybrid(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
-        PotForce(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
+        PotForceHybrid(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
+        //PotForce(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
     }
 }
 
@@ -196,7 +196,7 @@ void InteractionForceAdapter::PotForceHybridBackend(Molecule& m1, Molecule& m2, 
 
     // check whether all parameters were used
 	mardyn_assert(params.eos());
-    
+
     //Here we have F_{cg}
     double r_com = std::sqrt(SqrdDistanceBetweenCOMs(com1,com2));
     std::array<double,3> f_com;

@@ -9,7 +9,7 @@ void ResolutionHandler::CheckResolution(ParticleContainer* pc, std::map<unsigned
         bool stop=false;
 
         for(auto& reg:regions){
-            if(reg.isInnerPointDomain(_simulation.getDomain(),FullParticle,it->r_arr())){
+            if(reg.IsInsideResolutionRegion(resolution_map[molecule_id].first.r(),FullParticle)){
                 //Modify if needed
                 CheckAndModifyMoleculeResolution(resolution_map[molecule_id],FullParticle);
                 stop=true;
@@ -17,9 +17,10 @@ void ResolutionHandler::CheckResolution(ParticleContainer* pc, std::map<unsigned
             }
         }
 
+        if(stop) continue;
 
         for(auto& reg:regions){
-            if(reg.isInnerPointDomain(_simulation.getDomain(),Hybrid,it->r_arr())){
+            if(reg.IsInsideResolutionRegion(resolution_map[molecule_id].first.r(),Hybrid)){
                 //Modify if needed
                 CheckAndModifyMoleculeResolution(resolution_map[molecule_id],Hybrid);
                 stop=true;

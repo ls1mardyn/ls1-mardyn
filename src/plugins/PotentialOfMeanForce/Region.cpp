@@ -129,7 +129,7 @@ bool FPRegion::IsInsideResolutionRegion(std::array<double,3> point, ResolutionTy
 			shifted_high[0] += _simulation.getcutoffRadius();
 		}
 
-		return isInnerPoint(point, shifted_low, shifted_low);
+		return isInnerPoint(point, shifted_low, shifted_high);
 	}
 
 	if(resolution == ResolutionType::Hybrid){
@@ -169,9 +169,12 @@ bool FPRegion::IsInsideResolutionRegion(std::array<double,3> point, ResolutionTy
 			shifted_high[0] += _simulation.getcutoffRadius();
 		}
 
-		return isInnerPoint(point, shifted_low, shifted_low);
+		return isInnerPoint(point, shifted_low, shifted_high);
 	}
+	
 	Log::global_log->info()<<"We should not reach this point"<<std::endl;
 	Simulation::exit(670);
+
+	return false;
 	
 }

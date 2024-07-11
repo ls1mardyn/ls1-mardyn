@@ -7,13 +7,10 @@ PMF::PMF(){
 }
 
 
-void PMF::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
+void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* domain){
     
     Log::global_log->info()<<"[PMF] Enabled "<<std::endl;
     this->ReadRDF();
-    for(int i=0;i<rdf_interpolation.GetGValues().size();i++){
-        std::cout<<rdf_interpolation.GetRValues()[i]<<"       "<<rdf_interpolation.GetGValues()[i]<<"\n";
-    }
 
     pairs_handler = new InteractionForceAdapter(resolution_handler,this);
     _simulation.setParticlePairsHandler(pairs_handler);
@@ -21,6 +18,15 @@ void PMF::init(ParticleContainer* particleContainer, DomainDecompBase* domainDec
 
     Log::global_log->info()<<"[PMF]LegacyCellProcessor set\n";
     Log::global_log->info()<<"[PMF] AdResS ParticlePairsHandler being used\n";
+
+    Log::global_log->info()<<"[PMF] Start the tracker sites\n";
+    for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
+        unsigned long m_id = it->getID();
+        std::array<double,3> com = rdf.GetCOM(&(*it));
+        sites[m_id].first.SetPosition(com);
+    }
+
+    resolution_handler.CheckResolution(pc,sites,regions);
     
 }
 
@@ -46,7 +52,7 @@ void PMF::readXML(XMLfileUnits& xmlfile){
 }
 
 void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep){
-    
+
     for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
         unsigned long m_id = it->getID();
         std::array<double,3> com = rdf.GetCOM(&(*it));
