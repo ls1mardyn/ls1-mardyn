@@ -66,9 +66,8 @@ public:
 		std::array<double, 3> m_ret{M(0), M(1), M(2)};
 		return m_ret;
 	}
-	virtual std::array<double, 3> Vi_arr() {
-		std::array<double, 3> vi_ret{Vi(0), Vi(1), Vi(2)};
-		return vi_ret;
+	virtual std::array<double, 9> Vi_arr() {
+		return {Vi(0), Vi(1), Vi(2), Vi(3), Vi(4), Vi(5), Vi(6), Vi(7), Vi(8)};
 	}
 
 	virtual const Quaternion& q() const = 0;
@@ -102,6 +101,7 @@ public:
 	virtual double U_rot() = 0;
 	virtual double U_rot_2() = 0;
 	virtual double U_kin() { return U_trans() + U_rot(); }
+	virtual double U_pot() = 0;
 
 	virtual void updateMassInertia() = 0;
 
@@ -190,7 +190,9 @@ public:
 
 	virtual void setF(double F[3]) = 0;
 	virtual void setM(double M[3]) = 0;
-	virtual void setVi(double Vi[3]) = 0;
+	virtual void setVi(double Vi[9]) = 0;
+	virtual void setU(const double upot) = 0;
+
 	void scale_v(double s) {
 		for(int d = 0; d < 3; ++d) {
 			setv(d, v(d) * s);
@@ -219,6 +221,9 @@ public:
 	virtual void Viadd(const double a[]) = 0;
 	virtual void vadd(const double ax, const double ay, const double az) = 0;
 	virtual void vsub(const double ax, const double ay, const double az) = 0;
+
+	virtual void Uadd(const double upot) = 0;
+
 	virtual void Fljcenteradd(unsigned int i, double a[]) = 0;
 	virtual void Fljcentersub(unsigned int i, double a[]) = 0;
 	virtual void Fchargeadd(unsigned int i, double a[]) = 0;

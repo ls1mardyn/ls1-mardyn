@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import pandas as pd
 
 
 #%% Get surface tension of LJTS fluid with correlation by Vrabec et al., Molecular Physics 104 (2006), DOI: 10.1080/00268970600556774
@@ -21,31 +22,22 @@ def gamma_vrabec2006(T):
 
 
 #%% Get saturated densities and pressure by Vrabec et al., Molecular Physics 104 (2006), DOI: 10.1080/00268970600556774.
-def sat_vrabec2006(T, radius=None):
+def sat_vrabec2006(T):
     '''
-    Get saturated densities by Vrabec et al., Molecular Physics 104 (2006). Equation numbers refer this paper.
+    Get saturated densities by Vrabec et al., Molecular Physics 104 (2006)
 
     :param float T: Temperature
-    :param float radius: reduced radius of spherical interface
     :return: float rhol, float rhov, float pv: Saturated liquid and vapor density and pressure
     '''
     
     tc,rc=1.0779,0.3190
     dt=tc-T
     a,b,c=0.5649,0.1314,0.0413
-    rhol=rc+a*dt**(1/3.)+b*dt+c*dt**(3/2.)                      # equation 4
+    rhol=rc+a*dt**(1/3.)+b*dt+c*dt**(3/2.)
     a,b,c=0.5649,0.2128,0.0702
-    rhov=rc-a*dt**(1/3.)+b*dt+c*dt**(3/2.)                      # equation 5
+    rhov=rc-a*dt**(1/3.)+b*dt+c*dt**(3/2.)
     a,b,c=3.1664,5.9809,0.01498
     pv = np.exp(a - b/T + c/(T**(3)))
-    
-    if radius != None:
-        a,b,c,d,e=0.1485,0.0471,1.272,0.4944,5.0090
-        rhol=rhol+(a-b*dt**2)/(radius+c-d*dt**-1+e*dt)  # equation 18
-        
-        a,b,c,d,e=0.0541,0.1682,1.0810,0.2490,10.87
-        rhov=rhov+(-a+b*T**2)/(radius-c-d*dt**-1+e*dt)      # equation 19
-        
     return rhol,rhov,pv
 
 
@@ -95,7 +87,7 @@ def g_PeTS2ms2(g_pets, T, rho):
     Tcrit   = 1.086
     delta0 = (0.001/0.8)/rhocrit
     tau0   = Tcrit/0.8
-    ig1 = -2.5/tau0
+    ig1 = 0.0  # Originally in PeTS: -2.5/tau0
     ig2 = 1.5 - np.log(delta0) - 1.5*np.log(tau0)
     tau   = Tcrit/T
     delta = rho/rhocrit
@@ -120,7 +112,7 @@ def g_ms22PeTS(g_ms2, T, rho):
     Tcrit   = 1.086
     delta0 = (0.001/0.8)/rhocrit
     tau0   = Tcrit/0.8
-    ig1 = -2.5/tau0
+    ig1 = 0.0  # Originally in PeTS: -2.5/tau0
     ig2 = 1.5 - np.log(delta0) - 1.5*np.log(tau0)
     tau   = Tcrit/T
     delta = rho/rhocrit
