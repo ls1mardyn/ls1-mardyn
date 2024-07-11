@@ -110,6 +110,8 @@ bool FPRegion::isRegionInBox(std::array<double, 3> low, std::array<double, 3> hi
 bool FPRegion::IsInsideResolutionRegion(std::array<double,3> point, ResolutionType resolution){
 
 	if(resolution == ResolutionType::FullParticle){
+
+		if(_low[0]==_high[0] && _low[1]==_high[1] && _low[2]==_high[2]) return false;
 		std::array<double,3> shifted_low = this->_low;
 		std::array<double,3> shifted_high = this->_high;
 
@@ -120,12 +122,12 @@ bool FPRegion::IsInsideResolutionRegion(std::array<double,3> point, ResolutionTy
 		shifted_high[1]+= _simulation.getcutoffRadius();
 		shifted_high[2]+= _simulation.getcutoffRadius();
 
-		if(_low[0]==0.0){
+		if(_low[0]==0.0 && (_low[1] != 0.0)){
 			shifted_low[0] -= _simulation.getcutoffRadius();
 		}
 
 
-		if(_high[0]==_simulation.getDomain()->getGlobalLength(0)){
+		if(_high[0]==_simulation.getDomain()->getGlobalLength(0) && (_high[1] != 0.0)){
 			shifted_high[0] += _simulation.getcutoffRadius();
 		}
 
@@ -133,6 +135,8 @@ bool FPRegion::IsInsideResolutionRegion(std::array<double,3> point, ResolutionTy
 	}
 
 	if(resolution == ResolutionType::Hybrid){
+
+		if(_hybridDims[0]==0 && _hybridDims[1]==0 && _hybridDims[2]==0) return false;
 
 		std::array<double,3> shifted_low = this->_lowHybrid;
 		std::array<double,3> shifted_high = this->_highHybrid;
@@ -149,7 +153,7 @@ bool FPRegion::IsInsideResolutionRegion(std::array<double,3> point, ResolutionTy
 		
 	}
 
-	if(resolution == ResolutionType::Hybrid){
+	if(resolution == ResolutionType::CoarseGrain){
 		std::array<double,3> shifted_low {0.0,0.0,0.0};
 		std::array<double,3> shifted_high {_simulation.getDomain()->getGlobalLength(0),_simulation.getDomain()->getGlobalLength(1),_simulation.getDomain()->getGlobalLength(2)};
 
