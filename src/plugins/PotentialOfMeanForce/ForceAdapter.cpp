@@ -57,6 +57,7 @@ double InteractionForceAdapter::processPair(Molecule& m1, Molecule& m2, double d
     if(adres->GetMoleculeResolution(m1.getID())==FullParticle && adres->GetMoleculeResolution(m2.getID())==FullParticle){
         interaction = InteractionType::onlyfp;
     }
+    
     return processPairBackend(m1, m2, distance, pair, dd, CalculateLJ, interaction);
 
 }
@@ -80,6 +81,8 @@ double InteractionForceAdapter::processPairBackend(Molecule& m1, Molecule& m2, d
             return 0.0;
 
         case MOLECULE_MOLECULE_FLUID:
+            this->FluidPotType(m1,m2,params,paramsInv,distance,data._upot6LJ,data._upotXpoles,data._myRF,Virial,calcLJ,interaction);
+            return dummy1 / 6.0 + dummy2 + dummy3;
 		default:
 		Simulation::exit(670);
     }
@@ -103,9 +106,26 @@ void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm&
          * viceversa
 		 * m1 hy vs m2 hy
          */
-        PotForceHybrid(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
+        //PotForceHybrid(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
+        PotForce(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
     }
 }
+
+void InteractionForceAdapter::FluidPotType(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, InteractionType interaction){
+    //Pure interaction case
+    if(interaction == InteractionType::onlyfp){
+        FluidPot(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF,calcLJ);
+    }
+
+    if(interaction == InteractionType::onlycg){
+        Log::global_log->info()<<"Not implemented for cg"<<std::endl;
+    }
+
+    if(interaction == InteractionType::mixed){
+        Log::global_log->info()<<"Not implemented for mixed"<<std::endl;
+    }
+}
+
 
 void InteractionForceAdapter::PotForceHybrid(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ){
 	//determine which one is hybrid and which fpregion is being used
@@ -174,6 +194,9 @@ void InteractionForceAdapter::PotForceHybridBackend(Molecule& m1, Molecule& m2, 
     m1.Viadd(virial);
 	m2.Viadd(virial);
 
+    // check whether all parameters were used
+	mardyn_assert(params.eos());
+    
     //Here we have F_{cg}
     double r_com = std::sqrt(SqrdDistanceBetweenCOMs(com1,com2));
     std::array<double,3> f_com;
@@ -241,7 +264,7 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
 }
 
 
-void InteractionForceAdapter::HybridFluidPot(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, bool hybrid){
+void InteractionForceAdapter::FluidPotType(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, bool hybrid){
     //Pure interaction case
     if(!hybrid){
         FluidPot(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,calcLJ);
