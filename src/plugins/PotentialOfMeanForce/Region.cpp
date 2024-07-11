@@ -106,3 +106,72 @@ bool FPRegion::isRegionInBox(std::array<double, 3> low, std::array<double, 3> hi
 	return _low[0] <= high[0] && _low[1] <= high[1] && _low[2] <= high[2] &&
 		   _high[0] >= low[0] && _high[1] >= low[1] && _high[2] >= low[2];
 }
+
+bool FPRegion::IsInsideResolutionRegion(std::array<double,3> point, ResolutionType resolution){
+
+	if(resolution == ResolutionType::FullParticle){
+		std::array<double,3> shifted_low = this->_low;
+		std::array<double,3> shifted_high = this->_high;
+
+		shifted_low[1]-= _simulation.getcutoffRadius();
+		shifted_low[2]-= _simulation.getcutoffRadius();
+
+
+		shifted_high[1]+= _simulation.getcutoffRadius();
+		shifted_high[2]+= _simulation.getcutoffRadius();
+
+		if(_low[0]==0.0){
+			shifted_low[0] -= _simulation.getcutoffRadius();
+		}
+
+
+		if(_high[0]==_simulation.getDomain()->getGlobalLength(0)){
+			shifted_high[0] += _simulation.getcutoffRadius();
+		}
+
+		return isInnerPoint(point, shifted_low, shifted_low);
+	}
+
+	if(resolution == ResolutionType::Hybrid){
+
+		std::array<double,3> shifted_low = this->_lowHybrid;
+		std::array<double,3> shifted_high = this->_highHybrid;
+
+		shifted_low[1]-= _simulation.getcutoffRadius();
+		shifted_low[2]-= _simulation.getcutoffRadius();
+
+
+		shifted_high[1]+= _simulation.getcutoffRadius();
+		shifted_high[2]+= _simulation.getcutoffRadius();
+
+			//TODO:properly shift these coordinates on the x axis
+			return isInnerPoint(point, shifted_low, shifted_high);
+		
+	}
+
+	if(resolution == ResolutionType::Hybrid){
+		std::array<double,3> shifted_low {0.0,0.0,0.0};
+		std::array<double,3> shifted_high {_simulation.getDomain()->getGlobalLength(0),_simulation.getDomain()->getGlobalLength(1),_simulation.getDomain()->getGlobalLength(2)};
+
+		shifted_low[1]-= _simulation.getcutoffRadius();
+		shifted_low[2]-= _simulation.getcutoffRadius();
+
+
+		shifted_high[1]+= _simulation.getcutoffRadius();
+		shifted_high[2]+= _simulation.getcutoffRadius();
+
+		if(!_low[0]==0.0){
+			shifted_low[0] -= _simulation.getcutoffRadius();
+		}
+
+
+		if(!_high[0]==_simulation.getDomain()->getGlobalLength(0)){
+			shifted_high[0] += _simulation.getcutoffRadius();
+		}
+
+		return isInnerPoint(point, shifted_low, shifted_low);
+	}
+	Log::global_log->info()<<"We should not reach this point"<<std::endl;
+	Simulation::exit(670);
+	
+}

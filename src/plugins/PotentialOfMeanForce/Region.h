@@ -100,6 +100,7 @@
 		 * @param high upper corner of box
 		 * */
 		[[maybe_unused]] bool isRegionInBox(std::array<double, 3> low, std::array<double, 3> high);
+		bool IsInsideResolutionRegion(std::array<double,3> point, ResolutionType resolution);
 	};
 
 
