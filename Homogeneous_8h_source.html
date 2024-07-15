@@ -77,60 +77,63 @@ $(function() {
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;LongRangeCorrection.h&quot;</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &quot;molecules/Component.h&quot;</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &quot;molecules/Comp2Param.h&quot;</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;cmath&gt;</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">class </span><a class="code hl_class" href="classSimulation.html">Simulation</a>;</div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">class </span><a class="code hl_class" href="classDomain.html">Domain</a>;</div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">class </span><a class="code hl_class" href="classLongRangeCorrection.html">LongRangeCorrection</a>;</div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment">//class Homogeneous:public LongRangeCorrection{</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno"><a class="line" href="classHomogeneous.html">   15</a></span><span class="keyword">class </span><a class="code hl_class" href="classHomogeneous.html">Homogeneous</a>: <span class="keyword">public</span> <a class="code hl_class" href="classLongRangeCorrection.html">LongRangeCorrection</a>{</div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment">//  Homogeneous();</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    <a class="code hl_class" href="classHomogeneous.html">Homogeneous</a>(<span class="keywordtype">double</span> cutoffRadius, <span class="keywordtype">double</span> cutoffRadiusLJ,  <a class="code hl_class" href="classDomain.html">Domain</a>* domain, <a class="code hl_class" href="classSimulation.html">Simulation</a>* simulation);</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <span class="keyword">virtual</span> <a class="code hl_class" href="classHomogeneous.html">~Homogeneous</a>() {}</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> init();</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> readXML(<a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>&amp; xmlconfig) {}</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> calculateLongRange();</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> writeProfiles(<a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a>* domain, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep) {}</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="comment">/* TODO: Comments on all the functions */</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="comment">// Long range correction for the Lennard-Jones interactions based on Lustig (1988)</span></div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="keywordtype">double</span> _TICCu(<span class="keywordtype">int</span> n,<span class="keywordtype">double</span> rc,<span class="keywordtype">double</span> sigma2);</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <span class="keywordtype">double</span> _TICSu(<span class="keywordtype">int</span> n,<span class="keywordtype">double</span> rc,<span class="keywordtype">double</span> sigma2,<span class="keywordtype">double</span> tau);</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keywordtype">double</span> _TISSu(<span class="keywordtype">int</span> n,<span class="keywordtype">double</span> rc,<span class="keywordtype">double</span> sigma2,<span class="keywordtype">double</span> tau1,<span class="keywordtype">double</span> tau2);</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="keywordtype">double</span> _TICCv(<span class="keywordtype">int</span> n,<span class="keywordtype">double</span> rc,<span class="keywordtype">double</span> sigma2);</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    <span class="keywordtype">double</span> _TICSv(<span class="keywordtype">int</span> n,<span class="keywordtype">double</span> rc,<span class="keywordtype">double</span> sigma2,<span class="keywordtype">double</span> tau);</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    <span class="keywordtype">double</span> _TISSv(<span class="keywordtype">int</span> n,<span class="keywordtype">double</span> rc,<span class="keywordtype">double</span> sigma2,<span class="keywordtype">double</span> tau1,<span class="keywordtype">double</span> tau2);</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    std::vector&lt;Component&gt;* _components{<span class="keyword">nullptr</span>};</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <a class="code hl_class" href="classComp2Param.html">Comp2Param</a> _comp2params;</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <a class="code hl_class" href="classDomain.html">Domain</a>* _domain{<span class="keyword">nullptr</span>};</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keywordtype">double</span> _cutoff{std::numeric_limits&lt;double&gt;::quiet_NaN()};</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="keywordtype">double</span> _cutoffLJ{std::numeric_limits&lt;double&gt;::quiet_NaN()};</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="keywordtype">double</span> _upotCorrLJ_no_num_molecules{std::numeric_limits&lt;double&gt;::quiet_NaN()};</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordtype">double</span> _virialCorrLJ_no_num_molecules{std::numeric_limits&lt;double&gt;::quiet_NaN()};</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordtype">double</span> _mySelbstTerm_no_num_molecules{std::numeric_limits&lt;double&gt;::quiet_NaN()};</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>};</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="preprocessor">#endif </span><span class="comment">/* __HOMOGENEOUS_H__ */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;particleContainer/ParticleContainer.h&quot;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;cmath&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">class </span><a class="code hl_class" href="classSimulation.html">Simulation</a>;</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">class </span><a class="code hl_class" href="classDomain.html">Domain</a>;</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="keyword">class </span><a class="code hl_class" href="classLongRangeCorrection.html">LongRangeCorrection</a>;</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment">//class Homogeneous:public LongRangeCorrection{</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="classHomogeneous.html">   16</a></span><span class="keyword">class </span><a class="code hl_class" href="classHomogeneous.html">Homogeneous</a>: <span class="keyword">public</span> <a class="code hl_class" href="classLongRangeCorrection.html">LongRangeCorrection</a>{</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment">//  Homogeneous();</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <a class="code hl_class" href="classHomogeneous.html">Homogeneous</a>(<span class="keywordtype">double</span> cutoffRadius, <span class="keywordtype">double</span> cutoffRadiusLJ,  <a class="code hl_class" href="classDomain.html">Domain</a>* domain, <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* particleContainer, <a class="code hl_class" href="classSimulation.html">Simulation</a>* simulation);</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="keyword">virtual</span> <a class="code hl_class" href="classHomogeneous.html">~Homogeneous</a>() {}</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> init();</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> readXML(<a class="code hl_class" href="classXMLfileUnits.html">XMLfileUnits</a>&amp; xmlconfig) {}</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> calculateLongRange();</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> writeProfiles(<a class="code hl_class" href="classDomainDecompBase.html">DomainDecompBase</a>* domainDecomp, <a class="code hl_class" href="classDomain.html">Domain</a>* domain, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> simstep) {}</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="comment">/* TODO: Comments on all the functions */</span></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="comment">// Long range correction for the Lennard-Jones interactions based on Lustig (1988)</span></div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <span class="keywordtype">double</span> _TICCu(<span class="keywordtype">int</span> n,<span class="keywordtype">double</span> rc,<span class="keywordtype">double</span> sigma2);</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keywordtype">double</span> _TICSu(<span class="keywordtype">int</span> n,<span class="keywordtype">double</span> rc,<span class="keywordtype">double</span> sigma2,<span class="keywordtype">double</span> tau);</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="keywordtype">double</span> _TISSu(<span class="keywordtype">int</span> n,<span class="keywordtype">double</span> rc,<span class="keywordtype">double</span> sigma2,<span class="keywordtype">double</span> tau1,<span class="keywordtype">double</span> tau2);</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    <span class="keywordtype">double</span> _TICCv(<span class="keywordtype">int</span> n,<span class="keywordtype">double</span> rc,<span class="keywordtype">double</span> sigma2);</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    <span class="keywordtype">double</span> _TICSv(<span class="keywordtype">int</span> n,<span class="keywordtype">double</span> rc,<span class="keywordtype">double</span> sigma2,<span class="keywordtype">double</span> tau);</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keywordtype">double</span> _TISSv(<span class="keywordtype">int</span> n,<span class="keywordtype">double</span> rc,<span class="keywordtype">double</span> sigma2,<span class="keywordtype">double</span> tau1,<span class="keywordtype">double</span> tau2);</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    std::vector&lt;Component&gt;* _components{<span class="keyword">nullptr</span>};</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <a class="code hl_class" href="classComp2Param.html">Comp2Param</a> _comp2params;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <a class="code hl_class" href="classDomain.html">Domain</a>* _domain{<span class="keyword">nullptr</span>};</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>* _particleContainer{<span class="keyword">nullptr</span>};</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keywordtype">double</span> _cutoff{std::numeric_limits&lt;double&gt;::quiet_NaN()};</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="keywordtype">double</span> _cutoffLJ{std::numeric_limits&lt;double&gt;::quiet_NaN()};</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordtype">double</span> _upotCorrLJ_no_num_molecules{std::numeric_limits&lt;double&gt;::quiet_NaN()};</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keywordtype">double</span> _virialCorrLJ_no_num_molecules{std::numeric_limits&lt;double&gt;::quiet_NaN()};</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    <span class="keywordtype">double</span> _mySelbstTerm_no_num_molecules{std::numeric_limits&lt;double&gt;::quiet_NaN()};</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>};</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="preprocessor">#endif </span><span class="comment">/* __HOMOGENEOUS_H__ */</span><span class="preprocessor"></span></div>
 <div class="ttc" id="aclassComp2Param_html"><div class="ttname"><a href="classComp2Param.html">Comp2Param</a></div><div class="ttdef"><b>Definition:</b> Comp2Param.h:15</div></div>
 <div class="ttc" id="aclassDomainDecompBase_html"><div class="ttname"><a href="classDomainDecompBase.html">DomainDecompBase</a></div><div class="ttdoc">handle boundary region and multiple processes</div><div class="ttdef"><b>Definition:</b> DomainDecompBase.h:53</div></div>
 <div class="ttc" id="aclassDomain_html"><div class="ttname"><a href="classDomain.html">Domain</a></div><div class="ttdoc">This class is used to read in the phasespace and to handle macroscopic values.</div><div class="ttdef"><b>Definition:</b> Domain.h:47</div></div>
-<div class="ttc" id="aclassHomogeneous_html"><div class="ttname"><a href="classHomogeneous.html">Homogeneous</a></div><div class="ttdef"><b>Definition:</b> Homogeneous.h:15</div></div>
+<div class="ttc" id="aclassHomogeneous_html"><div class="ttname"><a href="classHomogeneous.html">Homogeneous</a></div><div class="ttdef"><b>Definition:</b> Homogeneous.h:16</div></div>
 <div class="ttc" id="aclassLongRangeCorrection_html"><div class="ttname"><a href="classLongRangeCorrection.html">LongRangeCorrection</a></div><div class="ttdef"><b>Definition:</b> LongRangeCorrection.h:12</div></div>
+<div class="ttc" id="aclassParticleContainer_html"><div class="ttname"><a href="classParticleContainer.html">ParticleContainer</a></div><div class="ttdoc">This Interface is used to get access to particles and pairs of particles.</div><div class="ttdef"><b>Definition:</b> ParticleContainer.h:69</div></div>
 <div class="ttc" id="aclassSimulation_html"><div class="ttname"><a href="classSimulation.html">Simulation</a></div><div class="ttdoc">Controls the simulation process.</div><div class="ttdef"><b>Definition:</b> Simulation.h:72</div></div>
 <div class="ttc" id="aclassXMLfileUnits_html"><div class="ttname"><a href="classXMLfileUnits.html">XMLfileUnits</a></div><div class="ttdoc">XML file with unit attributes abstraction.</div><div class="ttdef"><b>Definition:</b> xmlfileUnits.h:25</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jul 9 2024 16:10:25 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Jul 15 2024 17:21:43 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
