@@ -154,6 +154,9 @@ bool FPRegion::IsInsideResolutionRegion(std::array<double,3> point, ResolutionTy
 	}
 
 	if(resolution == ResolutionType::CoarseGrain){
+
+		
+
 		std::array<double,3> shifted_low {0.0,0.0,0.0};
 		std::array<double,3> shifted_high {_simulation.getDomain()->getGlobalLength(0),_simulation.getDomain()->getGlobalLength(1),_simulation.getDomain()->getGlobalLength(2)};
 

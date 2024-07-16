@@ -26,6 +26,12 @@ std::vector<double>& Interpolate::GetRValues(){
 
 
 double Interpolate::GetRDFAt(double r){
+    
+    //need to artificially return a one
+    if(r > r_nodes[r_nodes.size()-1]){
+        return 1.0;
+    }
+
     double gr =0.0;
 
     //find between which 2 values
@@ -42,6 +48,11 @@ double Interpolate::GetRDFAt(double r){
 }
 
 double Interpolate::CentralFiniteDifference(double r){
+    //need to artificially return a zero since profile is flat
+    if(r > r_nodes[r_nodes.size()-1]){
+        return 0.0;
+    }
+
     int low, up;
     up = GetUpperLimit(r);
     if(up == 0){
@@ -72,11 +83,10 @@ double Interpolate::LinearInterpolation(int fa, int fb, double fx){
 int Interpolate::GetUpperLimit(double r){
     
     int i=0;
-    while(i<r_nodes.size()){
-        if(r>r_nodes[i]){
-            break;
-        }
+    int i_max = r_nodes.size()-1;
+    while(r>r_nodes[i]){
         i++;
+        if(i==i_max) break;
     }
     return i;
 }
