@@ -611,8 +611,8 @@ namespace Interpolation {
 				for (int y = 0; y < num_elem_y; y++) {
 					for (int x = 0; x < num_elem_x; x++) {
 						auto &e = _elements.at(x, y, z);
-						e.setLow(x * element_size[0], y * element_size[1], z * element_size[2]);
-						e.setUpper((x + 1) * element_size[0], (y + 1) * element_size[1], (z + 1) * element_size[2]);
+						e.setLow(x * element_size[0] + _lower_bound[0], y * element_size[1] + _lower_bound[1], z * element_size[2] + _lower_bound[2]);
+						e.setUpper((x + 1) * element_size[0] + _lower_bound[0], (y + 1) * element_size[1] + _lower_bound[1], (z + 1) * element_size[2] + _lower_bound[2]);
 					}
 				}
 			}
@@ -624,7 +624,7 @@ namespace Interpolation {
 				for (int y = 0; y < num_elem_y + 1; y++) {
 					for (int x = 0; x < num_elem_x + 1; x++) {
 						auto &n = _nodes.at(x, y, z);
-						n.setPos(x * element_size[0], y * element_size[1], z * element_size[2]);
+						n.setPos(x * element_size[0] + _lower_bound[0], y * element_size[1] + _lower_bound[1], z * element_size[2] + _lower_bound[2]);
 					}
 				}
 			}

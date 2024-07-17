@@ -63,12 +63,14 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
         global_log->info() << "[AdResS] Grid size is" << x << " " << y << " " << z << std::endl;
 
 		_grid = new FTH::grid_t();
-		_grid->init({_simulation.domainDecomposition().getBoundingBoxMin(0, _simulation.getDomain()),
-					 _simulation.domainDecomposition().getBoundingBoxMin(1, _simulation.getDomain()),
-					 _simulation.domainDecomposition().getBoundingBoxMin(2, _simulation.getDomain())},
-					{_simulation.domainDecomposition().getBoundingBoxMax(0, _simulation.getDomain()),
-					 _simulation.domainDecomposition().getBoundingBoxMax(1, _simulation.getDomain()),
-					 _simulation.domainDecomposition().getBoundingBoxMax(2, _simulation.getDomain())},
+        // we want the grid to also extend to the bounds, so we do not have to manage grid information exchange
+        const double r_cutoff = _simulation.getcutoffRadius();
+		_grid->init({_simulation.domainDecomposition().getBoundingBoxMin(0, _simulation.getDomain()) - r_cutoff,
+					 _simulation.domainDecomposition().getBoundingBoxMin(1, _simulation.getDomain()) - r_cutoff,
+					 _simulation.domainDecomposition().getBoundingBoxMin(2, _simulation.getDomain()) - r_cutoff},
+					{_simulation.domainDecomposition().getBoundingBoxMax(0, _simulation.getDomain()) + r_cutoff,
+					 _simulation.domainDecomposition().getBoundingBoxMax(1, _simulation.getDomain()) + r_cutoff,
+					 _simulation.domainDecomposition().getBoundingBoxMax(2, _simulation.getDomain()) + r_cutoff},
 					 x, y, z);
 
         double rad = xmlconfig.getNodeValue_double("sampleRadius", 1.0);

@@ -30,20 +30,28 @@ void GridSampler::sampleData(ParticleContainer *pc, DomainDecompBase *domainDeco
 void GridSampler::sampleAtNodes(ParticleContainer* pc){
 	std::fill(_sampled_data.begin(), _sampled_data.end(), 0);
 	auto& nodes = _grid->getNodes();
+    auto* domain = _simulation.getDomain();
+    auto& decomp = _simulation.domainDecomposition();
+    const double r_cutoff = _simulation.getcutoffRadius();
+    const std::array<double, 3> lower {
+        decomp.getBoundingBoxMin(0, domain) - r_cutoff,
+        decomp.getBoundingBoxMin(1, domain) - r_cutoff,
+        decomp.getBoundingBoxMin(2, domain) - r_cutoff
+    };
 
 	// put mol pos into grid of spacing 2x measure_radius
 	const auto box_dim = 2 * _measure_radius;
-	const std::array<int, 3> bins_per_dim = { static_cast<int>(std::ceil(_simulation.getDomain()->getGlobalLength(0) / box_dim)),
-											  static_cast<int>(std::ceil(_simulation.getDomain()->getGlobalLength(1) / box_dim)),
-											  static_cast<int>(std::ceil(_simulation.getDomain()->getGlobalLength(2) / box_dim))};
+	const std::array<int, 3> bins_per_dim = { static_cast<int>(std::ceil((decomp.getBoundingBoxMax(0, domain) + r_cutoff - lower[0]) / box_dim)),
+											  static_cast<int>(std::ceil((decomp.getBoundingBoxMax(1, domain) + r_cutoff - lower[1]) / box_dim)),
+											  static_cast<int>(std::ceil((decomp.getBoundingBoxMax(2, domain) + r_cutoff - lower[2]) / box_dim))};
 	const auto bins = bins_per_dim[0]*bins_per_dim[1]*bins_per_dim[2];
 	std::vector<std::vector<std::array<double, 3>>> mol_pos_binned;
 	mol_pos_binned.resize(bins);
-	for(auto it = pc->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); it.isValid(); ++it) {
+	for(auto it = pc->iterator(ParticleIterator::ALL_CELLS); it.isValid(); ++it) {
 		std::array<double, 3> part_pos {it->r_arr()};
-		int bin_x = std::min(static_cast<int>(part_pos[0] / box_dim), bins_per_dim[0]-1);
-		int bin_y = std::min(static_cast<int>(part_pos[1] / box_dim), bins_per_dim[1]-1);
-		int bin_z = std::min(static_cast<int>(part_pos[2] / box_dim), bins_per_dim[2]-1);
+		int bin_x = std::min(static_cast<int>((part_pos[0] - lower[0]) / box_dim), bins_per_dim[0]-1);
+		int bin_y = std::min(static_cast<int>((part_pos[1] - lower[1]) / box_dim), bins_per_dim[1]-1);
+		int bin_z = std::min(static_cast<int>((part_pos[2] - lower[2]) / box_dim), bins_per_dim[2]-1);
 
 		mol_pos_binned[bins_per_dim[0]*bins_per_dim[1]*bin_z + bins_per_dim[0]*bin_y + bin_x].push_back(part_pos);
 	}
