@@ -13,7 +13,7 @@
 
 #include "plugins/AdResS/util/AdResSRegionTraversal.h"
 #include "plugins/AdResS/parallel/AdResSKDDecomposition.h"
-#include "plugins/AdResS/adapters/VCPADR.h"
+#include "plugins/AdResS/adapters/VCPADR_Wrapper.h"
 #include "Interpolation.h"
 
 #include <cmath>
@@ -196,7 +196,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 		_simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), _forceAdapter));
 	}
 	else {
-		_simulation.setCellProcessor(new VCPADR(*_simulation.getDomain(), _simulation.getcutoffRadius(), _simulation.getLJCutoff(), _resolutionHandler));
+		_simulation.setCellProcessor(new VCPADR_Wrapper(*_simulation.getDomain(), _simulation.getcutoffRadius(), _simulation.getLJCutoff(), _resolutionHandler));
 	}
 
     if(auto decomp = dynamic_cast<AdResSKDDecomposition*>(&_simulation.domainDecomposition())) {

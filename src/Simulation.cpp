@@ -85,6 +85,7 @@
 #include "bhfmm/FastMultipoleMethod.h"
 #include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
 #include "plugins/AdResS/parallel/AdResSGeneralDomainDecomposition.h"
+#include "plugins/AdResS/adapters/VCPADR_Wrapper.h"
 
 #ifdef MAMICO_COUPLING
 #include <coupling/interface/impl/ls1/LS1StaticCommData.h>
@@ -869,7 +870,7 @@ void Simulation::prepare_start() {
 		if (!AdResS_enabled) _cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 		else {
 			Log::global_log->info() << "Cell processor was set up by AdResS plugin." << std::endl;
-			dynamic_cast<VCPADR*>(_cellProcessor)->init();
+			dynamic_cast<VCPADR_Wrapper*>(_cellProcessor)->init();
 		}
 #else
 		Log::global_log->info() << "Using reduced memory mode (RMM) cell processor." << std::endl;

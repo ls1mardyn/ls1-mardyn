@@ -52,3 +52,23 @@ bool Resolution::FPRegion::isRegionInBox(std::array<double, 3> low, std::array<d
 	return _low[0] <= high[0] && _low[1] <= high[1] && _low[2] <= high[2] &&
 		   _high[0] >= low[0] && _high[1] >= low[1] && _high[2] >= low[2];
 }
+
+bool Resolution::FPRegion::isBoxInHybrid(std::array<double, 3> low, std::array<double, 3> high) const {
+    // TODO: for strange cases in which the hybrid region size is smaller than cell sizes, then this might produce wrong results
+
+    const std::array<double, 3> delta {high[0] - low[0], high[1] - low[1], high[2] - low[2]};
+
+    for (int dz = 0; dz <= 1; dz++) {
+        for (int dy = 0; dy <= 1; dy++) {
+            for (int dx = 0; dx <= 1; dx++) {
+                const std::array<double, 3> point {low[0] + dx * delta[0], low[1] + dy * delta[1], low[2] + dz * delta[2]};
+                const bool is_FP = FPRegion::isInnerPoint(point, _low, _high);
+                const bool is_H = FPRegion::isInnerPoint(point, _lowHybrid, _highHybrid);
+                const bool is_real_H = !is_FP && is_H;
+                if (is_real_H) return true;
+            }
+        }
+    }
+
+    return false;
+}

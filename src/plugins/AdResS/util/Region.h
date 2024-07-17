@@ -94,6 +94,14 @@ namespace Resolution{
 		 * @param high upper corner of box
 		 * */
 		[[maybe_unused]] bool isRegionInBox(std::array<double, 3> low, std::array<double, 3> high);
+
+        /**
+		 * @brief checks if the provided box is fully within the hybrid resolution of this FPRegion
+		 * @param low lower corner of box
+		 * @param high upper corner of box
+         * @returns true if box is fully or even partially in hybrid region
+		 * */
+        [[maybe_unused]] bool isBoxInHybrid(std::array<double, 3> low, std::array<double, 3> high) const;
 	};
 };
 

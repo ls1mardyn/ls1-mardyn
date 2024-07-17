@@ -55,6 +55,7 @@ public:
 	 * \brief Reset macroscopic values to 0.0.
 	 */
 	void initTraversal();
+
 	/**
 	 * \brief Load the CellDataSoA for cell.
 	 */
