@@ -149,7 +149,15 @@ bool FPRegion::IsInsideResolutionRegion(std::array<double,3> point, ResolutionTy
 		shifted_high[2]+= _simulation.getcutoffRadius();
 
 			//TODO:properly shift these coordinates on the x axis
-			return isInnerPoint(point, shifted_low, shifted_high);
+		if(_lowHybrid[0]== 0.0){
+			shifted_low[0] -= _simulation.getcutoffRadius();
+		}
+
+		if(_highHybrid[0] == _simulation.getDomain()->getGlobalLength(0)){
+			shifted_high[0] += _simulation.getcutoffRadius();
+		}
+
+		return isInnerPoint(point, shifted_low, shifted_high);
 		
 	}
 
