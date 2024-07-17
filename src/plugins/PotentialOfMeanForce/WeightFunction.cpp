@@ -1,6 +1,24 @@
 #include "WeightFunction.h"
 
 double WeightFunction::WeightValue(const std::array<double,3>& pos, FPRegion& region){
+
+    if(region.IsInsideResolutionRegion(pos,ResolutionType::FullParticle)){
+        return 1.0;
+    }
+    if(region.IsInsideResolutionRegion(pos,ResolutionType::Hybrid)){
+        double weight=0.0;
+        double at_width = region._high[0]- region._low[0];
+        double hy_width = region._hybridDims[0];
+        double x = std::abs(pos[0]-region._center[0]);
+        x = M_PI/(2.0*hy_width) * (x - at_width);
+        weight = std::cos(x) * std::cos(x);
+
+        return weight;
+    }
+    return 0.0;
+
+
+/*
     //Is in FP region
     if(region.isInnerPoint(pos, region._low, region._high)){
         return 1.0;
@@ -18,5 +36,6 @@ double WeightFunction::WeightValue(const std::array<double,3>& pos, FPRegion& re
     }
     //It is in cg and w=0
     return 0.0;
+*/
 }
 
