@@ -61,9 +61,9 @@ void GridSampler::sampleAtNodes(ParticleContainer* pc){
 	#endif
 	for(int nidx = 0; nidx < _sampled_data.size(); nidx++) {
 		auto nodal_pos=nodes[nidx].getPos();
-		int bin_x = static_cast<int>(nodal_pos[0] / box_dim);
-		int bin_y = static_cast<int>(nodal_pos[1] / box_dim);
-		int bin_z = static_cast<int>(nodal_pos[2] / box_dim);
+		int bin_x = static_cast<int>((nodal_pos[0] - lower[0]) / box_dim);
+		int bin_y = static_cast<int>((nodal_pos[1] - lower[1]) / box_dim);
+		int bin_z = static_cast<int>((nodal_pos[2] - lower[2]) / box_dim);
 
 		for(int offset_z = -1; offset_z <= 1; offset_z++) {
 			int bz = offset_z + bin_z;
