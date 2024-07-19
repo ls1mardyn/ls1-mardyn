@@ -877,6 +877,9 @@ void Simulation::prepare_start() {
 
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 
+
+	Log::global_log->info() << "checkpoint 0" << std::endl;
+
 	if (_longRangeCorrection != nullptr) {
 		Log::global_log->info() << "Initializing LongRangeCorrection" << std::endl;
 		_longRangeCorrection->init();

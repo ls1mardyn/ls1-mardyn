@@ -8,7 +8,7 @@
 
 
 void ParticleForceData::getMPIType(MPI_Datatype &sendPartType) {
-	int blocklengths[] = { 1, 12 }; // 1 unsLong value (id), 12 double values (3r, 3F, 3M, 3Vi)
+	int blocklengths[] = { 1, 15 }; // 1 unsLong value (id), 15 double values (3r, 3F, 3M, 3Vi, 3ViSph)
 	MPI_Datatype types[] = { MPI_UNSIGNED_LONG, MPI_DOUBLE };
 
 	MPI_Aint displacements[2];

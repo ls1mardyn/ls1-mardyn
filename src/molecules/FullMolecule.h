@@ -76,10 +76,21 @@ public:
 	double M(unsigned short d) const override { return _M[d]; }
 
 	/** get the virial **/
-	double Vi(unsigned short d) const override { return _Vi[d];}
+	double Vi(unsigned short d) const override { 
+		Log::global_log->info() << "Vi[" << d<<"] of MolID: " << getID() << " : " << _Vi[d] << std::endl;
+		return _Vi[d];}
 	double ViSph(unsigned short d) const override { return _ViSph[d];}
-	double ViN() const override { return _ViSph[0];}
-	double ViT() const override { return _ViSph[1];}
+	double ViN() const override { 
+		for(int d = 0; d<3; d++){
+		Log::global_log->info() << "Vi[" << d<<"] of MolID: " << getID() << " : " << _Vi[d] << std::endl;
+		}
+		Log::global_log->info() << "ViN of MolID: " << getID() << " : " << _ViSph[0] << std::endl;
+		return _ViSph[0];
+		}
+	double ViT() const override { 
+		Log::global_log->info() << "ViT of MolID: " << getID() << " : " << _ViSph[1] << std::endl;
+		return _ViSph[1];
+		}
 
 
 	/** get the constant correction of potential energy */
@@ -382,7 +393,7 @@ protected:
 	double _M[3];  /**< torsional moment */
 	double _L[3];  /**< angular momentum */
 	double _Vi[3]; /** Virial tensor **/
-	double _ViSph[2]; /** Spherical Virial (only has N and T component) **/
+	double _ViSph[3]; /** Spherical Virial (only has N and T component) **/
     unsigned long _id;  /**< IDentification number of that molecule */
 
 	double _upot; /**< potential energy */

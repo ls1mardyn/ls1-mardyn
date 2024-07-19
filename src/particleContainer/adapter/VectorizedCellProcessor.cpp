@@ -38,15 +38,15 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 
 	ComponentList components = *(_simulation.getEnsemble()->getComponents());
 	// Get the maximum Component ID.
-	size_t maxID = 0;
+	std::size_t maxID = 0;
 	const ComponentList::const_iterator end = components.end();
 	for (ComponentList::const_iterator c = components.begin(); c != end; ++c)
-		maxID = std::max(maxID, static_cast<size_t>(c->ID()));
+		maxID = std::max(maxID, static_cast<std::size_t>(c->ID()));
 
 	// Assign a center list start index for each component.
-	std::vector<size_t> compIDs;
+	std::vector<std::size_t> compIDs;
 	compIDs.resize(maxID + 1, 0);
-	size_t centers = 0;
+	std::size_t centers = 0;
 	for (ComponentList::const_iterator c = components.begin(); c != end; ++c) {
 		compIDs[c->ID()] = centers;
 		centers += c->numLJcenters();
@@ -57,14 +57,14 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 	_shift6.resize(centers, AlignedArray<vcp_real_calc>(centers));
 
 	// Construct the parameter tables.
-	for (size_t comp_i = 0; comp_i < components.size(); ++comp_i) {
-		for (size_t comp_j = 0; comp_j < components.size(); ++comp_j) {
+	for (std::size_t comp_i = 0; comp_i < components.size(); ++comp_i) {
+		for (std::size_t comp_j = 0; comp_j < components.size(); ++comp_j) {
 			ParaStrm & p = _domain.getComp2Params()(components[comp_i].ID(),
 					components[comp_j].ID());
 			p.reset_read();
-			for (size_t center_i = 0;
+			for (std::size_t center_i = 0;
 					center_i < components[comp_i].numLJcenters(); ++center_i) {
-				for (size_t center_j = 0;
+				for (std::size_t center_j = 0;
 						center_j < components[comp_j].numLJcenters();
 						++center_j) {
 					// Extract epsilon*24.0, sigma^2 and shift*6.0 from paramStreams.
@@ -236,14 +236,15 @@ void VectorizedCellProcessor::endTraversal() {
 		Lösung (vermutlich schlecht): ich erstelle einen RealCalcVec, bei dem alle elemente gelich der konstante sind und addiere die vektoren
 		Problem: mit welcher dieser funktoinen erstelle ich den hilfsvektor?:
 				static RealVec set1(const float& v)
-				static RealVec aligned_load(const float * const a) 
+				static RealVec aligned_load(const float * const a)  <- führt zu segmentation fault (direkt an dieser stelle)
 				static RealVec broadcast(const float * const a)
 		Alle drei scheinen zu funktionieren. keine ahung, ob sie verschiedene dinge tun.
 		*/
 		
 		const RealCalcVec center_xCalcVec = RealCalcVec::set1(center_x);
-		const RealCalcVec center_yCalcVec = RealCalcVec::aligned_load(&center_y);
-		const RealCalcVec center_zCalcVec = RealCalcVec::broadcast(&center_z);
+		const RealCalcVec center_yCalcVec = RealCalcVec::set1(center_y);
+		const RealCalcVec center_zCalcVec = RealCalcVec::set1(center_z);
+		// const RealCalcVec center_zCalcVec = RealCalcVec::broadcast(&center_z);
 		
 		const RealCalcVec m1_ksi_x  = center_xCalcVec - m1_r_x;
 		const RealCalcVec m1_ksi_y  = center_yCalcVec - m1_r_y;
@@ -2894,6 +2895,7 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 }
 
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2, bool sumAll) {
+	// std::cout << "using processcellpair of vectorizedcellprocessor!" << std::endl;
 	mardyn_assert(&c1 != &c2);
 	FullParticleCell & full_c1 = downcastCellReferenceFull(c1);
 	FullParticleCell & full_c2 = downcastCellReferenceFull(c2);

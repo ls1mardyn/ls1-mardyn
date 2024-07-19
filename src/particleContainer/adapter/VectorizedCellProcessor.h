@@ -146,7 +146,7 @@ private:
 			_myRFV.resize(_numVectorElements);
 			_virialSph.resize(_numVectorElements); // Normal and Tangential Elements of Virial. should actually have only 2 dims, not 3!
 
-			for (size_t j = 0; j < _numVectorElements; ++j) {
+			for (std::size_t j = 0; j < _numVectorElements; ++j) {
 				_upot6ljV[j] = 0.0;
 				_upotXpolesV[j] = 0.0;
 				_virialV[j] = 0.0;
@@ -187,8 +187,8 @@ private:
 
 	std::vector<VLJCPThreadData *> _threadData;
 
-	static const size_t _numVectorElements = VCP_VEC_SIZE;
-	size_t _numThreads;
+	static const std::size_t _numVectorElements = VCP_VEC_SIZE;
+	std::size_t _numThreads;
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyLJ(
@@ -312,7 +312,7 @@ private:
 	 * <br>
 	 * The ForcePolicy class must provide the following methods:<br>
 	 * <br>
-	 * static size_t InitJ(size_t i);<br>
+	 * static std::size_t InitJ(std::size_t i);<br>
 	 * Returns the value which j is to be initialized as in the inner loop<br>
 	 * depending on the vectorization method.<br>
 	 * <br>

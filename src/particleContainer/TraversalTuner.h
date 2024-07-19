@@ -320,6 +320,7 @@ void TraversalTuner<CellTemplate>::traverseCellPairs(CellProcessor &cellProcesso
 	if (not _optimalTraversal) {
 		findOptimalTraversal();
 	}
+
 	_optimalTraversal->traverseCellPairs(cellProcessor);
 }
 
