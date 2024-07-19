@@ -29,7 +29,7 @@ class RadialDFCOM:public PluginBase{
     int measured_steps;
     public:
     RadialDFCOM();
-    ~RadialDFCOM(){}
+    ~RadialDFCOM(){delete cell_processor;}
     void readXML(XMLfileUnits& xmlconfig) override;
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
     void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
@@ -37,7 +37,6 @@ class RadialDFCOM:public PluginBase{
     void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
     void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{
-        std::cout<<bin_counts[0]<<"\n";
         WriteRDFToFile(particleContainer, domain);
     }
     std::string getPluginName()  {return "RadialDFCOM";}
@@ -63,11 +62,11 @@ class COMDistanceCellProcessor: public CellProcessor{
 
     private: 
 
-    RadialDFCOM* rdf;
+    RadialDFCOM* const rdf;
 
     public:
-
-    COMDistanceCellProcessor(RadialDFCOM* r);
+    COMDistanceCellProcessor& operator=(const COMDistanceCellProcessor&)=delete;
+    COMDistanceCellProcessor(const double cutoff, RadialDFCOM* r);
     ~COMDistanceCellProcessor(){};
 
     void initTraversal() override {}

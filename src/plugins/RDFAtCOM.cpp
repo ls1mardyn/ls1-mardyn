@@ -1,6 +1,6 @@
 #include"RDFAtCOM.h"
 
-RadialDFCOM::RadialDFCOM():cell_processor(new COMDistanceCellProcessor(this)),measured_steps{0}{
+RadialDFCOM::RadialDFCOM():cell_processor{nullptr},measured_steps{0}{
 
 }
 
@@ -13,6 +13,7 @@ void RadialDFCOM::readXML(XMLfileUnits& file){
 
 void RadialDFCOM::init(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom){
     SetBinContainer(pc);
+    cell_processor=new COMDistanceCellProcessor(global_simulation->getcutoffRadius(), this);
 }
 
 void RadialDFCOM::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom, unsigned long simstep){
@@ -71,6 +72,7 @@ void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* d
     rho_bulk = (double)particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)/(double)domain->getGlobalVolume();
     outfile<<"#Total time steps averaged: "<<measured_steps<<"\n";
     outfile<<"#Bulk density: "<<rho_bulk<<"\n";
+    int kk = domain->getglobalNumMolecules();
     outfile<<"#Total molecules: "<<domain->getglobalNumMolecules()<<"\n";//Same as from particle iterator above
     outfile<<"#Total volume: "<<domain->getGlobalVolume()<<"\n";
     double data=0.0;
@@ -87,8 +89,8 @@ void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* d
         //den = binvol*domain->getglobalNumMolecules()*domain->getglobalNumMolecules()/domain->getGlobalVolume();
         //data = (double)bin_counts[i]/(double)(den*(measured_steps-1));
         //outfile<<rmid<<"\t"<<data<<"\t"<<binvol<<"\t"<<den*(measured_steps-1)<<"\t"<<"\n";
-        //outfile<<rmid<<"\t"<<data/den<<"\t"<<data<<"\t"<<den<<"\t"<<"\n";
-        outfile<<rmid<<"\t"<<data/den<<"\t"<<"\n";
+        outfile<<rmid<<"\t"<<data/den<<"\t"<<data<<"\t"<<den<<"\t"<<binvol<<"\n";
+        //outfile<<rmid<<"\t"<<data/den<<"\t"<<"\n";
     }
 
     outfile.close();
@@ -101,7 +103,7 @@ void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* d
  * **********************
  ***********************/
 
-COMDistanceCellProcessor::COMDistanceCellProcessor(RadialDFCOM* r):CellProcessor(0,0),rdf{r}{
+COMDistanceCellProcessor::COMDistanceCellProcessor(const double cr, RadialDFCOM* r):CellProcessor{cr,cr},rdf{r}{
 
 }
 
@@ -136,7 +138,7 @@ void COMDistanceCellProcessor::processCell(ParticleCell& cell){
 
             //Now we compute the distance between the COMs
             distance = DistanceBetweenCOMs(com1,com2);
-            if(distance <= _simulation.getcutoffRadius()){
+            if(distance < global_simulation->getcutoffRadius()){
                 rdf->ProcessDistance(distance);
             }
 
@@ -153,7 +155,18 @@ void COMDistanceCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c
     std::array<double,3> com1={0.0,0.0,0.0};
     std::array<double,3> com2={0.0,0.0,0.0};
     if(sumAll){
-
+        // for(auto it1=begin1;it1.isValid();++it1){
+            // Molecule& m1 = *it1;
+            // com1 = rdf->GetCOM(&m1);
+            // for(auto it2 =begin2;it2.isValid();++it2){
+                // Molecule& m2 = *it2;
+                // com2 = rdf->GetCOM(&m2);
+                // distance = DistanceBetweenCOMs(com1,com2);
+                // if(distance < _cutoffRadiusSquare){
+                    // rdf->ProcessDistance(distance);
+                // }
+            // }
+        // }
     }
     else{
         if(c1.isInnerCell()){//no hallo cells at all
@@ -166,7 +179,7 @@ void COMDistanceCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c
                     com2 = rdf->GetCOM(&m2);
 
                     distance = DistanceBetweenCOMs(com1,com2);
-                    if(distance <= _simulation.getcutoffRadius()){
+                    if(distance < global_simulation->getcutoffRadius()){
                         rdf->ProcessDistance(distance);
                     }
 
@@ -187,7 +200,7 @@ void COMDistanceCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c
                     Molecule& m2 = *it2;
                     com2 = rdf->GetCOM(&m2);
                     distance = DistanceBetweenCOMs(com1,com2);
-                    if(distance <= _simulation.getcutoffRadius()){
+                    if(distance < global_simulation->getcutoffRadius()){
                         rdf->ProcessDistance(distance);
                     }
                 }
