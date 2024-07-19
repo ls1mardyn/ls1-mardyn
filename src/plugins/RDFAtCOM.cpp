@@ -17,10 +17,6 @@ void RadialDFCOM::init(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom)
 }
 
 void RadialDFCOM::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom, unsigned long simstep){
-    if(simstep%sample_frequency ==0 && simstep > global_simulation->getInitStatistics()){
-        measured_steps++;
-        pc->traverseCells(*cell_processor);    
-    }
 }
 
 std::array<double,3> RadialDFCOM::GetCOM(Molecule* m){
@@ -56,12 +52,14 @@ void RadialDFCOM::SetBinContainer(ParticleContainer* pc){
     this->bin_counts.resize(number_bins);
     std::fill(bin_counts.begin(),bin_counts.end(),0.0);
     Log::global_log->info()<<"[RDF COM] Bin  width "<<bin_width<<"\n";
-
+    measured_distance_squared = bin_width*bin_width*number_bins*number_bins;
+    Log::global_log->info()<<"[RDF COM] Limit distance "<<measured_distance_squared<<"\n";
 }
 
 void RadialDFCOM::ProcessDistance(double r){  
+    if(r > measured_distance_squared){ return;}
 
-    int index = std::floor(r/bin_width);
+    int index = std::floor(std::sqrt(r)/bin_width);
     this->bin_counts[index]++;
 
 }   
@@ -115,35 +113,36 @@ double COMDistanceCellProcessor::DistanceBetweenCOMs(std::array<double,3>& c1, s
         diff[i]=c1[i]-c2[i];
     }
 
-    r = std::sqrt(diff[0]*diff[0]+diff[1]*diff[1]+diff[2]*diff[2]);
-
+    //r = std::sqrt(diff[0]*diff[0]+diff[1]*diff[1]+diff[2]*diff[2]);
+    r = diff[0]*diff[0]+diff[1]*diff[1]+diff[2]*diff[2];
     return r;
 
 }
 
 void COMDistanceCellProcessor::processCell(ParticleCell& cell){
-    auto begin = cell.iterator();
-    double distance=0.0;
-    for(auto it1 = begin;it1.isValid();++it1){
-        std::array<double,3> com1={0.0,0.0,0.0};
-        Molecule& m1 = *it1;
-        com1 = rdf->GetCOM(&m1);
-        auto it2 = it1;
-        ++it2;
-        for(;it2.isValid();++it2){
-            Molecule& m2 = *it2;
-            std::array<double,3> com2={0.0,0.0,0.0};
-            com2 = rdf->GetCOM(&m2);
-            mardyn_assert(&m1 != &m2);
-
-            //Now we compute the distance between the COMs
-            distance = DistanceBetweenCOMs(com1,com2);
-            if(distance < global_simulation->getcutoffRadius()){
-                rdf->ProcessDistance(distance);
+    if(cell.isInnerCell() || cell.isBoundaryCell()){
+        auto begin = cell.iterator();
+        double distance=0.0;
+        for(auto it1 = begin;it1.isValid();++it1){
+            std::array<double,3> com1={0.0,0.0,0.0};
+            Molecule& m1 = *it1;
+            com1 = rdf->GetCOM(&m1);
+            auto it2 = it1;
+            ++it2;
+            for(;it2.isValid();++it2){
+                Molecule& m2 = *it2;
+                std::array<double,3> com2={0.0,0.0,0.0};
+                com2 = rdf->GetCOM(&m2);
+                mardyn_assert(&m1 != &m2);
+                //Now we compute the distance between the COMs
+                distance = DistanceBetweenCOMs(com1,com2);
+                if(distance < _cutoffRadiusSquare){
+                    rdf->ProcessDistance(distance);
+                }
+    
             }
-
+    
         }
-
     }
 }
 
@@ -177,9 +176,8 @@ void COMDistanceCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c
                 for(auto it2=begin2;it2.isValid();++it2){
                     Molecule& m2 = *it2;
                     com2 = rdf->GetCOM(&m2);
-
                     distance = DistanceBetweenCOMs(com1,com2);
-                    if(distance < global_simulation->getcutoffRadius()){
+                    if(distance < _cutoffRadiusSquare){
                         rdf->ProcessDistance(distance);
                     }
 
@@ -200,7 +198,8 @@ void COMDistanceCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c
                     Molecule& m2 = *it2;
                     com2 = rdf->GetCOM(&m2);
                     distance = DistanceBetweenCOMs(com1,com2);
-                    if(distance < global_simulation->getcutoffRadius()){
+                    
+                    if(distance < _cutoffRadiusSquare){
                         rdf->ProcessDistance(distance);
                     }
                 }

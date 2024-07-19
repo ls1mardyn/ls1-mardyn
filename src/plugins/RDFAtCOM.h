@@ -27,6 +27,7 @@ class RadialDFCOM:public PluginBase{
     std::vector<int> bin_counts;//total number of COMs in bin[i]
     int sample_frequency;
     int measured_steps;
+    double measured_distance_squared;
     public:
     RadialDFCOM();
     ~RadialDFCOM(){delete cell_processor;}
@@ -34,7 +35,11 @@ class RadialDFCOM:public PluginBase{
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
     void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
     void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
-    void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
+    void afterForces(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep) override{   
+        if(simstep%sample_frequency ==0 && simstep > global_simulation->getInitStatistics()){
+        measured_steps++;
+        pc->traverseCells(*cell_processor);    
+    }}
     void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{
         WriteRDFToFile(particleContainer, domain);
