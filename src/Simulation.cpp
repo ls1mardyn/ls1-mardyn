@@ -76,6 +76,7 @@
 #include "longRange/LongRangeCorrection.h"
 #include "longRange/Homogeneous.h"
 #include "longRange/Planar.h"
+#include "longRange/Spherical.h"
 #include "longRange/NoLRC.h"
 
 #include "bhfmm/FastMultipoleMethod.h"
@@ -561,6 +562,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, nSlabs, global_simulation);
 				_longRangeCorrection->readXML(xmlconfig);
 			}
+			else if("spherical" == type)
+			{
+				delete _longRangeCorrection;
+				_longRangeCorrection = new Spherical(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, global_simulation);
+				_longRangeCorrection->readXML(xmlconfig);
+			}
 			else if("homogeneous" == type)
 			{
 				delete _longRangeCorrection;
@@ -574,7 +581,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else
 			{
-				Log::global_log->error() << "LongRangeCorrection: Wrong type. Expected type == homogeneous|planar|none. Program exit ..." << std::endl;
+				Log::global_log->error() << "LongRangeCorrection: Wrong type. Expected type == homogeneous|planar|spherical|none. Program exit ..." << std::endl;
                 Simulation::exit(-1);
 			}
 			xmlconfig.changecurrentnode("..");

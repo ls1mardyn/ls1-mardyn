@@ -77,6 +77,20 @@ public:
 
 	/** get the virial **/
 	double Vi(unsigned short d) const override { return _Vi[d];}
+	double ViSph(unsigned short d) const override { return _ViSph[d];}
+	double ViN() const override { return _ViSph[0];}
+	double ViT() const override { return _ViSph[1];}
+
+
+	/** get the constant correction of potential energy */
+	double UpotConstCorr() const { return _upotConstCorr; }
+	/** get the constant correction of one virial element */
+	double ViConstCorr() const { return _ViConstCorr; }
+	/** get the constant correction of NT virial element */
+	double ViNConstCorr() const { return _VirNConstCorr; }
+	double ViTConstCorr() const { return _VirTConstCorr; }
+
+
 
 	void setD(unsigned short d, double D) override { this->_L[d] = D; }
 
@@ -271,10 +285,34 @@ public:
 	 */
 	void setM(double M[3]) override { for(int d = 0; d < 3; d++ ) { _M[d] = M[d]; } }
 	void setVi(double Vi[3]) override { for(int d = 0; d < 3; d++) { _Vi[d] = Vi[d]; } }
+	void setViSph(double ViSph[3]) override { for(int d = 0; d < 3; d++) { _ViSph[d] = ViSph[d]; } }
+	void setViN(double ViN) override { for(int d = 0; d < 3; d++) { _ViSph[0] = ViN; } }
+	void setViT(double ViT) override { for(int d = 0; d < 3; d++) { _ViSph[1] = ViT; } }
+
+
+	void setUConstCorr(const double a) override { _upotConstCorr = a; }
+	void setViConstCorr(const double a) override { _ViConstCorr = a/3; } // Correction term assigned to the 3 diagonal elements
+
+	void setViNConstCorr(const double vir) { _VirNConstCorr = vir; }
+	void setViTConstCorr(const double vir) { _VirTConstCorr = vir; }
+
+	void Uadd(const double upot) override { _upot += upot; }
+	void setU(const double upot) override { _upot = upot; }
+
+	/** get the constant correction of potential energy */
+	void UpotConstCorradd(double a)  { _upotConstCorr += a; }
+	/** get the constant correction of one virial element */
+	void ViConstCorradd(double a)  { _ViConstCorr += a; }
+	/** get the constant correction of NT virial element */
+	void ViNConstCorradd(double a)  { _VirNConstCorr += a; }
+	void ViTConstCorradd(double a)  { _VirTConstCorr += a; }
 
 	void Fadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
 	void Madd(const double a[]) override { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
 	void Viadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _Vi[d]+=a[d]; }
+	void ViSphadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _ViSph[d]+=a[d]; }
+	void ViNadd(const double a) override { _ViSph[0]+=a; }
+	void ViTadd(const double a) override { _ViSph[1]+=a; }
 	void vadd(const double ax, const double ay, const double az) override {
 		_v[0] += ax; _v[1] += ay; _v[2] += az;
 	}
@@ -344,7 +382,17 @@ protected:
 	double _M[3];  /**< torsional moment */
 	double _L[3];  /**< angular momentum */
 	double _Vi[3]; /** Virial tensor **/
+	double _ViSph[2]; /** Spherical Virial (only has N and T component) **/
     unsigned long _id;  /**< IDentification number of that molecule */
+
+	double _upot; /**< potential energy */
+	double _upotConstCorr; /** Correction of potential energy, not changing during simulation (homogeneous system) **/
+	double _ViConstCorr; /** Correction of one virial element, not changing during simulation (homogeneous system) **/
+	double _VirNConstCorr; /** Correction of normal virial element **/
+	double _VirTConstCorr; /** Correction of normal virial element **/
+
+
+
 
 	double _m; /**< total mass */
 	double _I[3]{0.,0.,0.},_invI[3]{0.,0.,0.};  // moment of inertia for principal axes and it's inverse

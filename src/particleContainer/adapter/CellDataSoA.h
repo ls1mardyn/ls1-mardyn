@@ -35,7 +35,7 @@ public:
 	 * \brief
 	 */
 	enum class QuantityType {
-		MOL_POSITION, CENTER_POSITION, FORCE, VIRIAL
+		MOL_POSITION, CENTER_POSITION, FORCE, VIRIAL, VIRIAL_SPHERICAL
 	};
 
 	size_t _ljc_num;

@@ -29,6 +29,9 @@ FullMolecule::FullMolecule(unsigned long id, Component *component,
 	_Vi[0]= 0.;
 	_Vi[1]= 0.;
 	_Vi[2]= 0.;
+	_ViSph[0]= 0.;
+	_ViSph[1]= 0.;
+	// _ViSph[2]= 0.;
 
 	_soa = nullptr;
 	_soa_index_lj = 0;
