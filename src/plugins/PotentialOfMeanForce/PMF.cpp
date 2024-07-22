@@ -9,9 +9,8 @@ PMF::PMF(){
 
 void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* domain){
     
-    Log::global_log->info()<<"[PMF] Enabled "<<std::endl;
     this->ReadRDF();
-
+    Log::global_log->info()<<"[PMF] RDF has been read successfully\n.";
     pairs_handler = new InteractionForceAdapter(resolution_handler,this);
     _simulation.setParticlePairsHandler(pairs_handler);
     _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), pairs_handler));
@@ -26,8 +25,16 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
         sites[m_id].first.SetPosition(com);
     }
 
+    for(auto it= begin(regions);it!=end(regions);++it){
+        Log::global_log->info()<<"[PMF] The hybrid region spans from: ("<<it->_lowHybrid[0]<<","<<it->_lowHybrid[1]<<","<<it->_lowHybrid[2]<<") to ("<<it->_highHybrid[0]<<","<<it->_highHybrid[1]<<","<<it->_highHybrid[2]<<")"<<std::endl;
+
+        Log::global_log->info()<<"[PMF] The atomistic region spans from: ("<<it->_low[0]<<","<<it->_low[1]<<","<<it->_low[2]<<") to ("<<it->_high[0]<<","<<it->_high[1]<<","<<it->_high[2]<<")"<<std::endl;
+
+        Log::global_log->info()<<"[PMF] The regio  center is located at: ("<<it->_center[0]<<","<<it->_center[1]<<","<<it->_center[2]<<")"<<std::endl;
+    }
+    Log::global_log->info()<<"[PMF] Initializing the COM sites\n";
     resolution_handler.CheckResolution(pc,sites,regions);
-    
+    Log::global_log->info()<<"[PMF] Enabled "<<std::endl;
 }
 
 void PMF::readXML(XMLfileUnits& xmlfile){

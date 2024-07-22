@@ -69,12 +69,12 @@ void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* d
 
     double rho_bulk=0.0;
     rho_bulk = (double)particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)/(double)domain->getGlobalVolume();
-    outfile<<"#Total time steps averaged: "<<measured_steps<<"\n";
-    outfile<<"#Bulk density: "<<rho_bulk<<"\n";
-    int kk = domain->getglobalNumMolecules();
-    outfile<<"#Total molecules: "<<domain->getglobalNumMolecules()<<"\n";//Same as from particle iterator above
-    outfile<<"#Total volume: "<<domain->getGlobalVolume()<<"\n";
-    outfile<<std::setw(8)<<"bin \t\t"<<std::setw(10)<<"g_r \t"<<std::setw(8)<<"N_avg \t"<<""<<"\n";
+    // outfile<<"#Total time steps averaged: "<<measured_steps<<"\n";
+    // outfile<<"#Bulk density: "<<rho_bulk<<"\n";
+    // int kk = domain->getglobalNumMolecules();
+    // outfile<<"#Total molecules: "<<domain->getglobalNumMolecules()<<"\n";//Same as from particle iterator above
+    // outfile<<"#Total volume: "<<domain->getGlobalVolume()<<"\n";
+    // outfile<<std::setw(8)<<"bin \t\t"<<std::setw(10)<<"g_r \t"<<std::setw(8)<<"N_avg \t"<<""<<"\n";
     double data=0.0;
     for(int i=0;i<number_bins;i++){
         double rmin, rmax, rmid, binvol, rmin3,rmax3, den;
@@ -89,8 +89,9 @@ void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* d
         //den = binvol*domain->getglobalNumMolecules()*domain->getglobalNumMolecules()/domain->getGlobalVolume();
         //data = (double)bin_counts[i]/(double)(den*(measured_steps-1));
         //outfile<<rmid<<"\t"<<data<<"\t"<<binvol<<"\t"<<den*(measured_steps-1)<<"\t"<<"\n";
-        outfile<<std::setw(8)<<std::left<<rmid<<"\t"<<std::setw(8)<<std::left<<data/den<<"\t"<<std::setw(8)<<std::left<<data<<"\t"<<den<<"\n";
+        //outfile<<std::setw(8)<<std::left<<rmid<<"\t"<<std::setw(8)<<std::left<<data/den<<"\t"<<std::setw(8)<<std::left<<data<<"\t"<<den<<"\n";
         //outfile<<rmid<<"\t"<<data/den<<"\t"<<"\n";
+        outfile<<std::setw(8)<<std::left<<rmid<<"\t"<<std::setw(8)<<std::left<<data/den<<std::endl;
     }
 
     outfile.close();
