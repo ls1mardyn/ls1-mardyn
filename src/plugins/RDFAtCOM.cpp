@@ -66,6 +66,7 @@ void RadialDFCOM::ProcessDistance(double r){
 
 void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* domain){
     std::ofstream outfile("rdf.txt");
+
     double rho_bulk=0.0;
     rho_bulk = (double)particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)/(double)domain->getGlobalVolume();
     outfile<<"#Total time steps averaged: "<<measured_steps<<"\n";
@@ -73,6 +74,7 @@ void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* d
     int kk = domain->getglobalNumMolecules();
     outfile<<"#Total molecules: "<<domain->getglobalNumMolecules()<<"\n";//Same as from particle iterator above
     outfile<<"#Total volume: "<<domain->getGlobalVolume()<<"\n";
+    outfile<<std::setw(8)<<"bin \t\t"<<std::setw(10)<<"g_r \t"<<std::setw(8)<<"N_avg \t"<<""<<"\n";
     double data=0.0;
     for(int i=0;i<number_bins;i++){
         double rmin, rmax, rmid, binvol, rmin3,rmax3, den;
@@ -87,7 +89,7 @@ void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* d
         //den = binvol*domain->getglobalNumMolecules()*domain->getglobalNumMolecules()/domain->getGlobalVolume();
         //data = (double)bin_counts[i]/(double)(den*(measured_steps-1));
         //outfile<<rmid<<"\t"<<data<<"\t"<<binvol<<"\t"<<den*(measured_steps-1)<<"\t"<<"\n";
-        outfile<<rmid<<"\t"<<data/den<<"\t"<<data<<"\t"<<den<<"\t"<<binvol<<"\n";
+        outfile<<std::setw(8)<<std::left<<rmid<<"\t"<<std::setw(8)<<std::left<<data/den<<"\t"<<std::setw(8)<<std::left<<data<<"\t"<<den<<"\n";
         //outfile<<rmid<<"\t"<<data/den<<"\t"<<"\n";
     }
 
@@ -113,7 +115,6 @@ double COMDistanceCellProcessor::DistanceBetweenCOMs(std::array<double,3>& c1, s
         diff[i]=c1[i]-c2[i];
     }
 
-    //r = std::sqrt(diff[0]*diff[0]+diff[1]*diff[1]+diff[2]*diff[2]);
     r = diff[0]*diff[0]+diff[1]*diff[1]+diff[2]*diff[2];
     return r;
 
@@ -154,18 +155,18 @@ void COMDistanceCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c
     std::array<double,3> com1={0.0,0.0,0.0};
     std::array<double,3> com2={0.0,0.0,0.0};
     if(sumAll){
-        // for(auto it1=begin1;it1.isValid();++it1){
-            // Molecule& m1 = *it1;
-            // com1 = rdf->GetCOM(&m1);
-            // for(auto it2 =begin2;it2.isValid();++it2){
-                // Molecule& m2 = *it2;
-                // com2 = rdf->GetCOM(&m2);
-                // distance = DistanceBetweenCOMs(com1,com2);
-                // if(distance < _cutoffRadiusSquare){
-                    // rdf->ProcessDistance(distance);
-                // }
-            // }
-        // }
+        for(auto it1=begin1;it1.isValid();++it1){
+            Molecule& m1 = *it1;
+            com1 = rdf->GetCOM(&m1);
+            for(auto it2 =begin2;it2.isValid();++it2){
+                Molecule& m2 = *it2;
+                com2 = rdf->GetCOM(&m2);
+                distance = DistanceBetweenCOMs(com1,com2);
+                if(distance < _cutoffRadiusSquare){
+                    rdf->ProcessDistance(distance);
+                }
+            }
+        }
     }
     else{
         if(c1.isInnerCell()){//no hallo cells at all
