@@ -1,0 +1,142 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+    <refunits type="SI" >
+        <length unit="nm">0.1</length>
+        <mass unit="u">1.0</mass>
+        <energy unit="eV">1.0</energy>
+    </refunits>
+
+    <simulation type="MD" >
+        <run>
+            <currenttime>0</currenttime>
+            <equilibration>
+                <steps>0</steps>
+            </equilibration>
+            <production>
+                <steps>1000000</steps>
+            </production>
+        </run>
+        <integrator type="Leapfrog">
+            <timestep unit="reduced">0.00009118371969</timestep>
+            <!-- dt from paper is: 0.000455919 -->
+            <!--timestep unit="reduced">0.000455919</timestep-->
+        </integrator>
+        <ensemble type="NVT">
+            <temperature unit="reduced" >1</temperature>
+            <domain type="box">
+                <lx unit="reduced">36.845</lx>
+                <ly unit="reduced">36.845</ly>
+                <lz unit="reduced">36.845</lz>
+            </domain>
+            <components>
+                <include query="/components/moleculetype">./components.xml</include>
+            </components>
+
+            <phasespacepoint>
+                <generator name="MultiObjectGenerator">
+                    <objectgenerator>
+                        <filler type="GridFiller">
+                            <lattice system="cubic" centering="face">
+                                <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
+                                <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
+                                <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
+                            </lattice>
+                            <basis>
+                                <site>
+                                    <componentid>0</componentid>
+                                    <coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
+                                </site>
+                            </basis>
+                            <latticeOccupancy>1.</latticeOccupancy>
+                            <density>0.1</density>
+                        </filler>
+                        <object type="Cuboid">
+                            <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>36.845</x> <y>36.845</y> <z>36.845</z> </upper>
+                        </object>
+                        <velocityAssigner type="MaxwellVelocityDistribution"/>
+                    </objectgenerator>
+                </generator>
+            </phasespacepoint>
+        </ensemble>
+
+        <algorithm>
+            <parallelisation type="DomainDecomposition"/>
+            <datastructure type="LinkedCells">
+                <cellsInCutoffRadius>1</cellsInCutoffRadius>
+                <traversalSelector>c08</traversalSelector>
+            </datastructure>
+            <cutoffs type="CenterOfMass" >
+                <radiusLJ unit="reduced" >5</radiusLJ>
+            </cutoffs>
+            <electrostatic type="ReactionField" >
+                <epsilon>0</epsilon>
+            </electrostatic>
+            <thermostats>
+                <thermostat type="VelocityScaling" componentId="global">
+                    <temperature>1</temperature>
+                </thermostat>
+            </thermostats>
+        </algorithm>
+
+        <output>
+            <outputplugin name="CheckpointWriter">
+                <type>binary</type>
+                <writefrequency>1000000</writefrequency>
+                <outputprefix>OTF-Praprotnik</outputprefix>
+            </outputplugin>
+        </output>
+
+        <plugin name="AdResS">
+            <weightImpl>near</weightImpl>
+            <sampler type="Grid">
+                <sampleGap>10000000</sampleGap>
+                <gridSize>
+                    <nx>20</nx><ny>20</ny><nz>20</nz>
+                </gridSize>
+                <sampleRadius>0.8</sampleRadius>
+            </sampler>
+            <enableFTH>
+                <logFTH>false</logFTH>
+                <logDensity>false</logDensity>
+                <rho>0.1</rho>
+                <createFTH>
+                    <sampleGap>10000000</sampleGap>
+                    <threshold>0.05</threshold>
+                    <convFactor>0</convFactor>
+                </createFTH>
+            </enableFTH>
+            <fpregions>
+                <region id="1">
+                    <lowX>13.4225</lowX><lowY>-5.0</lowY><lowZ>-5.0</lowZ>
+                    <highX>23.4225</highX><highY>41.845</highY><highZ>41.845</highZ>
+                    <hybridDimX>10.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                </region>
+            </fpregions>
+        </plugin>
+
+        <plugin name="MaxCheck">
+            <control>
+                <start>0</start>
+                <frequency>1</frequency>
+                <stop>1000000000</stop>
+            </control>
+            <range>
+                <inclusive>true</inclusive>
+                <xmin>-5</xmin><ymin>-5</ymin><zmin>-5</zmin>
+                <xmax>41.845</xmax><ymax>41.845</ymax><zmax>41.845</zmax>
+            </range>
+            <targets>
+                <target cid="1" method="2">
+                    <Fmax>1e+3</Fmax>
+                </target>
+                <target cid="2" method="2">
+                    <Fmax>1e+3</Fmax>
+                </target>
+                <target cid="3" method="2">
+                    <Fmax>1e+3</Fmax>
+                </target>
+            </targets>
+        </plugin>
+    </simulation>
+</mardyn>
