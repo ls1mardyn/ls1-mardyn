@@ -77,19 +77,21 @@ public:
 
 	/** get the virial **/
 	double Vi(unsigned short d) const override { 
-		Log::global_log->info() << "Vi[" << d<<"] of MolID: " << getID() << " : " << _Vi[d] << std::endl;
 		return _Vi[d];}
-	double ViSph(unsigned short d) const override { return _ViSph[d];}
+	double ViSph(unsigned short d) const override { 
+		// Log::global_log->info() << "ViSph[" << d<<"] of MolID: " << getID() << " : " << _ViSph[d] << std::endl;
+		return _ViSph[d];}
 	double ViN() const override { 
-		for(int d = 0; d<3; d++){
-		Log::global_log->info() << "Vi[" << d<<"] of MolID: " << getID() << " : " << _Vi[d] << std::endl;
-		}
-		Log::global_log->info() << "ViN of MolID: " << getID() << " : " << _ViSph[0] << std::endl;
-		return _ViSph[0];
+		// for(int d = 0; d<3; d++){
+		// Log::global_log->info() << "Vi[" << d<<"] of MolID: " << getID() << " : " << _Vi[d] << std::endl;
+		// }
+		
+		// Log::global_log->info() << "ViN*0.5  of MolID " << getID() << ": " << _ViSph[0] * 0.5 << std::endl;
+		// Log::global_log->info() << "ViT*0.25 of MolID " << getID() << ": " << _ViSph[1] * 0.25 << std::endl;
+		return _ViSph[0] * 0.5;
 		}
 	double ViT() const override { 
-		Log::global_log->info() << "ViT of MolID: " << getID() << " : " << _ViSph[1] << std::endl;
-		return _ViSph[1];
+		return _ViSph[1]*0.25;
 		}
 
 
@@ -295,10 +297,22 @@ public:
 	 * @param M force vector (x,y,z)
 	 */
 	void setM(double M[3]) override { for(int d = 0; d < 3; d++ ) { _M[d] = M[d]; } }
-	void setVi(double Vi[3]) override { for(int d = 0; d < 3; d++) { _Vi[d] = Vi[d]; } }
-	void setViSph(double ViSph[3]) override { for(int d = 0; d < 3; d++) { _ViSph[d] = ViSph[d]; } }
-	void setViN(double ViN) override { for(int d = 0; d < 3; d++) { _ViSph[0] = ViN; } }
-	void setViT(double ViT) override { for(int d = 0; d < 3; d++) { _ViSph[1] = ViT; } }
+	void setVi(double Vi[3]) override 
+	{ 
+		for(int d = 0; d < 3; d++) 
+		{ 
+			_Vi[d] = Vi[d]; 
+		} 
+	}
+	void setViSph(double ViSph[3]) override { 
+		// Log::global_log->info() << ">>>ViSph[] of MolID: " << getID() << " is set to [" << ViSph[0] << ", " << ViSph[1] << ", " << ViSph[2] << "]." << std::endl;
+		for(int d = 0; d < 3; d++) { _ViSph[d] = ViSph[d]; } }
+	void setViN(double ViN) override { 
+		// Log::global_log->info() << ">>>ViN of MolID: " << getID() << " is set to "<< ViN << std::endl;
+		for(int d = 0; d < 3; d++) { _ViSph[0] = ViN; } }
+	void setViT(double ViT) override { 
+		// Log::global_log->info() << ">>>ViT of MolID: " << getID() << " is set to "<< ViT <<  std::endl;
+		for(int d = 0; d < 3; d++) { _ViSph[1] = ViT; } }
 
 
 	void setUConstCorr(const double a) override { _upotConstCorr = a; }
@@ -321,9 +335,17 @@ public:
 	void Fadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
 	void Madd(const double a[]) override { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
 	void Viadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _Vi[d]+=a[d]; }
-	void ViSphadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _ViSph[d]+=a[d]; }
-	void ViNadd(const double a) override { _ViSph[0]+=a; }
-	void ViTadd(const double a) override { _ViSph[1]+=a; }
+	void ViSphadd(const double a[]) override { 
+		// std::cout<<">>>>>>>ViSphadd("<< a[0]<< ", "<< a[1]<< ", "<< a[2]<< ") called "<< std::endl;
+		for(unsigned short d=0;d<3;++d){	
+		_ViSph[d]+=a[d]; }
+		} 
+	void ViNadd(const double a) override { 
+		// std::cout<<">>>>>>>ViNadd("<< a<< ") called on mol "<< _id<< std::endl;
+		_ViSph[0]+=a; }
+	void ViTadd(const double a) override { 
+		// std::cout<<">>>>>>>ViTadd("<< a<< ") called on mol "<< _id<< std::endl;
+		_ViSph[1]+=a; }
 	void vadd(const double ax, const double ay, const double az) override {
 		_v[0] += ax; _v[1] += ay; _v[2] += az;
 	}

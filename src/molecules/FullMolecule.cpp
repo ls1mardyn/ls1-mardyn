@@ -485,12 +485,18 @@ void FullMolecule::writeBinary(std::ostream& ostrm) const {
 // these are only used when compiling molecule.cpp and therefore might be inlined without any problems
 
 void FullMolecule::clearFM() {
+	// Log::global_log->info() << "-- void FullMolecule::clearFM() has been called on mol " << _id << ". _Vi set to 0. " << std::endl;
 	mardyn_assert(_soa != nullptr);
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;
+	// std::cout << ">>>Vi[] of MolID: " << getID() << ": [" << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << "]." << std::endl;
+
 	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
-	_ViSph[0] =  _ViSph[1]= 0.;
-	_ViSph[2]= 0.;
+	//_ViSph[0] =  _ViSph[1]= 0., _ViSph[2]= 0.;
+	/* 	ViSph is needed later (by Spherical.cpp).
+		right now, _Visph is set to zero by Spherical.cpp 
+		---> very bad. this needs to be handled diffeerently. don't know how yet.
+	*/
 	_upot = 0.;
 
 	std::array<vcp_real_accum, 3> clearance = {0.0, 0.0, 0.0};
@@ -660,6 +666,8 @@ void FullMolecule::calcFM() {
 	mardyn_assert(!std::isnan(temp_Vi[1]));
 	mardyn_assert(!std::isnan(temp_Vi[2]));
 	Viadd(temp_Vi);
+	ViNadd(temp_ViSph[0]);
+	ViTadd(temp_ViSph[1]);
 	Madd(temp_M);
 }
 

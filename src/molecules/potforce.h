@@ -5,6 +5,8 @@
 
 #include "molecules/Comp2Param.h"
 #include "molecules/Molecule.h"
+// #include "Simulation.h"
+// #include "Domain.h"
 
 /**
  * The formulas for dipole-dipole, dipole-quadrupole and quadrupole-quadrupole are from
@@ -289,6 +291,11 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	Virial[0]=0.;
 	Virial[1]=0.;
 	Virial[2]=0.;
+	// double VNi = 0.;
+	// double VTi = 0.;
+	// double VNj = 0.;
+	// double VTj = 0.;
+
 	// LJ centers
 	// no LJ interaction between solid atoms of the same component
 
@@ -314,10 +321,58 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 				Upot6LJ += u;
 				for (unsigned short d = 0; d < 3; ++d)
 					Virial[d] += 0.5*drm[d] * f[d];
+
+		// 		// pN, pT
+        // // double center = 4; //FOR TESTING ONLY!!
+        // double center = _simulation.getDomain()->getGlobalLength(0)*.5; //wtf? why doesnt this work anymore?
+
+		// 		double ksi_i[3];
+		// 		double ksi_j[3];
+		// 		for (unsigned short d = 0; d < 3; ++d) {
+		// 			ksi_i[d] = center - mi.r(d);
+		// 			ksi_j[d] = center - mj.r(d);
+		// 		}
+
+		// 		double absi2 = pow(ksi_i[0],2)+pow(ksi_i[1],2)+pow(ksi_i[2],2);
+		// 		double absj2 = pow(ksi_j[0],2)+pow(ksi_j[1],2)+pow(ksi_j[2],2);
+
+		// 		double drm_ni = 0.;
+		// 		double drm_nj = 0.;
+		// 		double drs_ni = 0.;
+		// 		double drs_nj = 0.;
+		// 		for (unsigned short d = 0; d < 3; ++d) {
+		// 			drm_ni += drm[d] * ksi_i[d];
+		// 			drm_nj += drm[d] * ksi_j[d];
+		// 			drs_ni += drs[d] * ksi_i[d];
+		// 			drs_nj += drs[d] * ksi_j[d];
+		// 		}
+				
+		// 		double fac = f[0]/drs[0];
+		// 		for(int d=1; std::isnan(fac) && d<3; d++){ //catches the case where f[d] == drs[d] == 0. => fac=0./0.==-nan
+		// 			fac = f[d]/drs[d]; //drs != 0 for at least one dimension
+		// 		}
+
+		// 		VNi += 0.5*fac*drm_ni*drs_ni/absi2;
+		// 		VNj += 0.5*fac*drm_nj*drs_nj/absj2;
+
+		// 		double drm_ti[3];
+		// 		double drs_ti[3];
+		// 		double drm_tj[3];
+		// 		double drs_tj[3];
+		// 		for (unsigned short d = 0; d < 3; ++d) {
+		// 			drm_ti[d] = drm[d] - drm_ni*ksi_i[d]/absi2;
+		// 			drs_ti[d] = drs[d] - drs_ni*ksi_i[d]/absi2;
+		// 			drm_tj[d] = drm[d] - drm_nj*ksi_j[d]/absj2;
+		// 			drs_tj[d] = drs[d] - drs_nj*ksi_j[d]/absj2;
+		// 		}
+		// 		for (unsigned short d = 0; d < 3; ++d) {
+		// 			VTi += 0.25*fac*drm_ti[d]*drs_ti[d];
+		// 			VTj += 0.25*fac*drm_tj[d]*drs_tj[d];
+		// 		}
+				
 			}
 		}
 	}
-
 
 	double m1[3], m2[3]; // angular momenta
 
@@ -497,6 +552,12 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 	mi.Viadd(Virial);
 	mj.Viadd(Virial);
+	// mi.ViNadd(VNi);
+	// mj.ViNadd(VNj);
+	// mi.ViTadd(VTi);
+	// mj.ViTadd(VTj);
+
+	// if (mi.getID() == 30) { std::cout << "Set moldata" << std::endl; }
 
 	// check whether all parameters were used
 	mardyn_assert(params.eos());

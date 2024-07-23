@@ -21,7 +21,7 @@ class ParticleContainer;
 
 class Spherical:public LongRangeCorrection {
 public:
-	Spherical(double cutoffT,double cutoffLJ,Domain* domain,  DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, Simulation* simulation);
+	Spherical(double cutoffT, double cutoffLJ, Domain* domain,  DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, Simulation* simulation);
 	virtual ~Spherical();
 
 	virtual void init();

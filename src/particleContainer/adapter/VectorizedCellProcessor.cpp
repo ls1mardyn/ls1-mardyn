@@ -228,9 +228,9 @@ void VectorizedCellProcessor::endTraversal() {
  		*/
 
 
-		auto center_x = 0.5*global_simulation->getDomain()->getGlobalLength(0); //implicit casting?
-		auto center_y = 0.5*global_simulation->getDomain()->getGlobalLength(1); //implicit casting?
-		auto center_z = 0.5*global_simulation->getDomain()->getGlobalLength(2); //implicit casting?
+		double cx = 0.5*_simulation.getDomain()->getGlobalLength(0);
+		double cy = 0.5*_simulation.getDomain()->getGlobalLength(1);
+		double cz = 0.5*_simulation.getDomain()->getGlobalLength(2);
 		/* 
 		Problem: ich will eine konstante auf jedes element eines RealCalcVectors addieren.
 		Lösung (vermutlich schlecht): ich erstelle einen RealCalcVec, bei dem alle elemente gelich der konstante sind und addiere die vektoren
@@ -238,34 +238,37 @@ void VectorizedCellProcessor::endTraversal() {
 				static RealVec set1(const float& v)
 				static RealVec aligned_load(const float * const a)  <- führt zu segmentation fault (direkt an dieser stelle)
 				static RealVec broadcast(const float * const a)
-		Alle drei scheinen zu funktionieren. keine ahung, ob sie verschiedene dinge tun.
+		set1 und broadcast scheinen zu funktionieren. keine ahung, ob sie verschiedene dinge tun.
+		--> oben (defintion der vektoren "one", "two", ... wird set1 verwednet -> machen wir so.)
 		*/
 		
-		const RealCalcVec center_xCalcVec = RealCalcVec::set1(center_x);
-		const RealCalcVec center_yCalcVec = RealCalcVec::set1(center_y);
-		const RealCalcVec center_zCalcVec = RealCalcVec::set1(center_z);
-		// const RealCalcVec center_zCalcVec = RealCalcVec::broadcast(&center_z);
+		const RealCalcVec center_x = RealCalcVec::set1(cx);
+		const RealCalcVec center_y = RealCalcVec::set1(cy);
+		const RealCalcVec center_z = RealCalcVec::set1(cz);
 		
-		const RealCalcVec m1_ksi_x  = center_xCalcVec - m1_r_x;
-		const RealCalcVec m1_ksi_y  = center_yCalcVec - m1_r_y;
-		const RealCalcVec m1_ksi_z  = center_zCalcVec - m1_r_z;
-		const RealCalcVec m2_ksi_x  = center_xCalcVec - m2_r_x;
-		const RealCalcVec m2_ksi_y  = center_yCalcVec - m2_r_y;
-		const RealCalcVec m2_ksi_z  = center_zCalcVec - m2_r_z;
+		const RealCalcVec m1_ksi_x = m1_r_x - center_x;
+		const RealCalcVec m1_ksi_y = m1_r_y - center_y;
+		const RealCalcVec m1_ksi_z = m1_r_z - center_z;
+		const RealCalcVec m2_ksi_x = m2_r_x - center_x;
+		const RealCalcVec m2_ksi_y = m2_r_y - center_y;
+		const RealCalcVec m2_ksi_z = m2_r_z - center_z;
 		const RealCalcVec m1_ksi2 = RealCalcVec::scal_prod(m1_ksi_x, m1_ksi_y, m1_ksi_z, m1_ksi_x, m1_ksi_y, m1_ksi_z);
 		const RealCalcVec m2_ksi2 = RealCalcVec::scal_prod(m2_ksi_x, m2_ksi_y, m2_ksi_z, m2_ksi_x, m2_ksi_y, m2_ksi_z);
 
-		const RealCalcVec m_d_abs2 = RealCalcVec::scal_prod(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
+		// const RealCalcVec m_d_abs2 = RealCalcVec::scal_prod(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
+		const RealCalcVec c_d_abs2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 		const RealCalcVec f_abs2 = RealCalcVec::scal_prod(f_x, f_y, f_z, f_x, f_y, f_z);
 		// prefactor = sqrt(f_abs2/r1_x) == scale. I have not thought it through for mulit-site mols 
 
-		const RealCalcVec rNij2 = RealCalcVec::scal_prod(m1_ksi_x, m1_ksi_y, m1_ksi_z, m_dx, m_dy, m_dz) / m1_ksi2;
-		const RealCalcVec rNji2 = RealCalcVec::scal_prod(m2_ksi_x, m2_ksi_y, m2_ksi_z, m_dx, m_dy, m_dz) / m2_ksi2;
+		const RealCalcVec xi_scalar_r = RealCalcVec::scal_prod(m1_ksi_x, m1_ksi_y, m1_ksi_z, m_dx, m_dy, m_dz); 
+		const RealCalcVec xj_scalar_r = RealCalcVec::scal_prod(m2_ksi_x, m2_ksi_y, m2_ksi_z, m_dx, m_dy, m_dz);
+		const RealCalcVec rNij2 = xi_scalar_r * xi_scalar_r / m1_ksi2; 
+		const RealCalcVec rNji2 = xj_scalar_r * xj_scalar_r / m2_ksi2; 
 
-		V1_n = RealAccumVec::convertCalcToAccum(rNij2 * scale);
+		V1_n = RealAccumVec::convertCalcToAccum(rNij2 * scale); 
 		V2_n = RealAccumVec::convertCalcToAccum(rNji2 * scale);
-		V1_t = RealAccumVec::convertCalcToAccum((m_d_abs2-rNij2) * scale);
-		V2_t = RealAccumVec::convertCalcToAccum((m_d_abs2-rNji2) * scale);
+		V1_t = RealAccumVec::convertCalcToAccum((c_d_abs2-rNij2) * scale);
+		V2_t = RealAccumVec::convertCalcToAccum((c_d_abs2-rNji2) * scale);
 
 
 

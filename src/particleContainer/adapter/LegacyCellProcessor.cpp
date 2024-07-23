@@ -1,7 +1,7 @@
 /*
  * LegacyCellProcessor.cpp
  *
- * @Date: 18.03.2012
+ * @Date: 18.03.2012 
  * @Author: eckhardw
  */
 
