@@ -8,10 +8,9 @@
 
 #include "DomainBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
+#include "molecules/mixingrules/MixingRuleBase.h"
 
 class ParticleContainer;
-
-class MixingRuleBase;
 
 class ChemicalPotential;
 
@@ -122,6 +121,9 @@ public:
 	virtual void storeSample(Molecule* m, uint32_t componentid) {};
 
 	auto & getMixingrules() { return _mixingrules; }
+
+	// Set one mixing rule
+	void setMixingrule(MixingRuleBase* mixingrule);
 
 protected:
 
