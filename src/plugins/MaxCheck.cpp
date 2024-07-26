@@ -6,11 +6,15 @@
  */
 
 #include "MaxCheck.h"
+
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
+
 #include <array>
 
 
@@ -72,7 +76,7 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "[MaxCheck] Number of component targets: " << numTargets << std::endl;
 	if (numTargets < 1) {
 		Log::global_log->warning() << "[MaxCheck] No target parameters specified. Program exit ..." << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator nodeIter;

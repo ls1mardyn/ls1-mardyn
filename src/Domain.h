@@ -10,7 +10,6 @@
 #include "molecules/Comp2Param.h"
 #include "molecules/Component.h"
 #include "ensemble/EnsembleBase.h"
-#include "Simulation.h"
 #include "utils/CommVar.h"
 /*
  * TODO add comments for variables
@@ -349,11 +348,8 @@ public:
 	//! @brief associates a component with a thermostat
 	//! @param cid internal ID of the component
 	//! @param th internal ID of the thermostat
-	void setComponentThermostat(int cid, int thermostat) {
-		if((0 > cid) || (0 >= thermostat)) Simulation::exit(787);
-		this->_componentToThermostatIdMap[cid] = thermostat;
-		this->_universalThermostatN[thermostat] = 0;
-	}
+	void setComponentThermostat(int cid, int thermostat);
+
 	//! @brief enables the "undirected" flag for the specified thermostat
 	//! @param tst internal ID of the respective thermostat
 	void enableUndirectedThermostat(int thermostat);

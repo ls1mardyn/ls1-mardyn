@@ -12,6 +12,7 @@
 #include "ForceHelper.h"
 #include "ParticleData.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "WrapOpenMP.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
@@ -195,7 +196,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		}
 		default:
 			Log::global_log->error() << "[CommunicationPartner] MessageType unknown!" << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 	}
 
 	#ifndef NDEBUG
@@ -599,7 +600,7 @@ void CommunicationPartner::collectLeavingMoleculesFromInvalidParticles(std::vect
 	auto shiftAndAdd = [domain, lowCorner, highCorner, shift, this, &numMolsAlreadyIn](Molecule& m) {
 		if (not m.inBox(lowCorner, highCorner)) {
 			Log::global_log->error() << "trying to remove a particle that is not in the halo region" << std::endl;
-			Simulation::exit(456);
+			mardyn_exit(456);
 		}
 		for (int dim = 0; dim < 3; dim++) {
 			if (shift[dim] != 0) {

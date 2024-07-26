@@ -3,10 +3,12 @@
 //
 
 #include "Virial2DProfile.h"
+
 #include "DensityProfile.h"
 #include "DOFProfile.h"
 #include "KineticProfile.h"
 #include "../FixRegion.h"
+#include "Simulation.h"
 
 void Virial2DProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
 

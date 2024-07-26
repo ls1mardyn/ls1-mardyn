@@ -9,9 +9,8 @@
 #include "particleContainer/FullParticleCell.h"
 #include "molecules/Molecule.h"
 #include "utils/UnorderedVector.h"
-#include "Simulation.h"
-
 #include "utils/mardyn_assert.h"
+
 #include <vector>
 
 

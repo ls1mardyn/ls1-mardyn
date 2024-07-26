@@ -3,7 +3,9 @@
 //
 
 #include "VirialProfile.h"
+
 #include "DensityProfile.h"
+#include "Simulation.h"
 
 void VirialProfile::output(std::string prefix, long unsigned accumulatedDatasets) {
 

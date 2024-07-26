@@ -11,7 +11,7 @@
 #include <map>
 #include <utils/Logger.h>
 #include "CollectiveCommunicationInterface.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 
 #if MPI_VERSION >= 3
 
@@ -41,7 +41,7 @@ public:
 		if (_currentKey != -1) {
 			Log::global_log->error() << "CollectiveCommunicationNonBlocking: previous communication with key " << _currentKey
 					<< " not yet finalized" << std::endl;
-			Simulation::exit(234);
+			mardyn_exit(234);
 		}
 
 		_currentKey = key;
@@ -59,7 +59,7 @@ public:
 			if (not inserted) {
 				Log::global_log->error() << "CollectiveCommunicationNonBlocking: key " << _currentKey
 									<< " could not be inserted. Aborting!" << std::endl;
-				Simulation::exit(498789);
+				mardyn_exit(498789);
 			}
 		}
 		_comms.at(_currentKey).init(communicator, numValues, _currentKey);

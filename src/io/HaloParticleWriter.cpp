@@ -5,8 +5,10 @@
 
 #include "Common.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "utils/Logger.h"
 #include "parallel/DomainDecompBase.h"
+#include "utils/mardyn_assert.h"
 
 
 void HaloParticleWriter::readXML(XMLfileUnits& xmlconfig) {
@@ -16,7 +18,7 @@ void HaloParticleWriter::readXML(XMLfileUnits& xmlconfig) {
 
 	if(_writeFrequency == 0) {
 		Log::global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 
 	std::string HaloParticleType = "unknown";

@@ -1,10 +1,12 @@
 #include "MettDeamonFeedrateDirector.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
 #include "utils/FileUtils.h"
+#include "utils/mardyn_assert.h"
 #include "plugins/Mirror.h"
 #include "plugins/NEMD/MettDeamon.h"
 
@@ -133,11 +135,11 @@ void MettDeamonFeedrateDirector::beforeForces(
 	// Check if other plugins were found
 	if(nullptr == mirror) {
 		Log::global_log->error() << "[MettDeamonFeedrateDirector] No Mirror plugin found in plugin list. Program exit ..." << std::endl;
-		Simulation::exit(-2004);
+		mardyn_exit(-2004);
 	}
 	if(nullptr == mettDeamon) {
 		Log::global_log->error() << "[MettDeamonFeedrateDirector] No MettDeamon plugin found in plugin list. Program exit ..." << std::endl;
-		Simulation::exit(-2004);
+		mardyn_exit(-2004);
 	}
 
 	// Get number of deleted/reflected particles from Mirror plugin

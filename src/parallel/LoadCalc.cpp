@@ -8,6 +8,8 @@
 #include <armadillo>
 #endif
 
+#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "utils/nnls.h"
 #include "LoadCalc.h"
 #include "DomainDecompBase.h"
@@ -44,7 +46,7 @@ std::vector<double> TunerLoad::readVec(std::istream& in, int& count1, int& count
 				Log::global_log->error_always_output()
 						<< "This means the files is corrupted. Please remove it (or disallow the tuner to read from inputfiles) before restarting!"
 						<< std::endl;
-				Simulation::exit(1);
+				mardyn_exit(1);
 			}
 		}
 	}
@@ -146,7 +148,7 @@ TunerLoad TunerLoad::read(std::istream& stream) {
 	if (inStr != "Vectorization Tuner File") {
 		Log::global_log->error() << "The tunerfile is corrupted! Missing header \"Vectorization Tuner File\"";
 		Log::global_log->error() << "Please remove it or fix it before restarting!";
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	int count1;
@@ -156,7 +158,7 @@ TunerLoad TunerLoad::read(std::istream& stream) {
 	if (inStr != "own") {
 		Log::global_log->error() << "The tunerfile is corrupted! Missing Section \"own\"";
 		Log::global_log->error() << "Please remove it or fix it before restarting!";
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	auto ownTime = readVec(stream, count1, count2);
 	std::getline(stream, inStr);
@@ -164,7 +166,7 @@ TunerLoad TunerLoad::read(std::istream& stream) {
 	if (inStr != "face") {
 		Log::global_log->error() << "The tunerfile is corrupted! Missing Section \"face\"";
 		Log::global_log->error() << "Please remove it or fix it before restarting!";
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	auto faceTime = readVec(stream, count1, count2);
 	std::getline(stream, inStr);
@@ -172,7 +174,7 @@ TunerLoad TunerLoad::read(std::istream& stream) {
 	if (inStr != "edge") {
 		Log::global_log->error() << "The tunerfile is corrupted! Missing Section \"edge\"";
 		Log::global_log->error() << "Please remove it or fix it before restarting!";
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	auto edgeTime = readVec(stream, count1, count2);
 	std::getline(stream, inStr);
@@ -180,7 +182,7 @@ TunerLoad TunerLoad::read(std::istream& stream) {
 	if (inStr != "corner") {
 		Log::global_log->error() << "The tunerfile is corrupted! Missing Section \"corner\"";
 		Log::global_log->error() << "Please remove it or fix it before restarting!";
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	auto cornerTime = readVec(stream, count1, count2);
 	return TunerLoad { count1, count2, std::move(ownTime), std::move(faceTime), std::move(edgeTime), std::move(

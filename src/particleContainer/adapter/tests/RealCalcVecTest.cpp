@@ -6,7 +6,6 @@
 #include "RealCalcVecTest.h"
 #include "particleContainer/adapter/vectorization/SIMD_DEFINITIONS.h"
 #include "utils/AlignedArray.h"
-#include "utils/mardyn_assert.h"
 
 #if VCP_VEC_TYPE == VCP_VEC_AVX2 or \
 	VCP_VEC_TYPE == VCP_VEC_KNL or \

@@ -6,7 +6,8 @@
  */
 
 #include "OptionParser.h"
-#include "Simulation.h"
+
+#include "utils/mardyn_assert.h"
 
 #include <cstdlib>
 #include <algorithm>
@@ -344,11 +345,11 @@ void OptionParser::process_opt(const Option& o, const std::string& opt, const st
 	}
 	else if (o.action() == "help") {
 		print_help();
-		Simulation::exit(0);
+		mardyn_exit(0);
 	}
 	else if (o.action() == "version") {
 		print_version();
-		Simulation::exit(0);
+		mardyn_exit(0);
 	}
 	else if (o.action() == "callback" && o.callback()) {
 		(*o.callback())(o, opt, value, *this);
@@ -436,12 +437,12 @@ void OptionParser::print_version() const {
 }
 
 void OptionParser::exit() const {
-	Simulation::exit(2);
+	mardyn_exit(2);
 }
 void OptionParser::error(const std::string& msg) const {
 	print_usage(std::cerr);
 	std::cerr << prog() << ": " << _("error") << ": " << msg << std::endl;
-	Simulation::exit(-4);
+	mardyn_exit(-4);
 }
 ////////// } class OptionParser //////////
 

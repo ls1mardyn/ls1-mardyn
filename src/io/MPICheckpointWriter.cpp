@@ -15,6 +15,7 @@
 
 #include "Common.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "utils/Logger.h"
 #include "parallel/DomainDecompBase.h"
 

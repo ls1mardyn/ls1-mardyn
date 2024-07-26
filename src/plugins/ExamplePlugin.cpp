@@ -6,7 +6,7 @@
  */
 
 #include "ExamplePlugin.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
@@ -58,7 +58,7 @@ void ExamplePlugin::readXML(XMLfileUnits& xmlconfig) {
 		Log::global_log->error()
 				<< "Valid options are: all, beforeEventNewTimestep, beforeForces, afterForces, endStep, init, finish."
 				<< std::endl;
-		Simulation::exit(11);
+		mardyn_exit(11);
 	}
 }
 

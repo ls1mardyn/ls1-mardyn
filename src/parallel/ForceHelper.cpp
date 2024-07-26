@@ -1,6 +1,12 @@
-#include <particleContainer/ParticleContainer.h>
-#include <particleContainer/ParticleIterator.h>
+
+#include "ForceHelper.h"
+
 #include <variant>
+
+#include "particleContainer/ParticleContainer.h"
+#include "particleContainer/ParticleIterator.h"
+
+#include "utils/mardyn_assert.h"
 
 std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> addValuesAndGetIterator(
 	ParticleContainer* moleculeContainer, const double* position,

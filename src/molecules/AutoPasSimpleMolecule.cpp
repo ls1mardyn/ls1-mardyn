@@ -5,7 +5,7 @@
  */
 
 #include "AutoPasSimpleMolecule.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 
 Component* AutoPasSimpleMolecule::_component = nullptr;
 
@@ -20,7 +20,7 @@ AutoPasSimpleMolecule::AutoPasSimpleMolecule(unsigned long id, Component* compon
 	} else if (_component != component and component != nullptr) {
 		Log::global_log->debug() << "AutoPasSimpleMolecule can only handle one component" << std::endl;
 		_component = component;
-		// Simulation::exit(32);
+		// mardyn_exit(32);
 	}
 }
 

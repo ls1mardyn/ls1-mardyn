@@ -7,6 +7,9 @@
 
 #include "Dropaccelerator.h"
 
+#include "Simulation.h"
+#include "utils/mardyn_assert.h"
+
 #ifdef ENABLE_MPI
 #include "mpi.h"
 #endif
@@ -32,7 +35,7 @@ void Dropaccelerator::readXML(XMLfileUnits& xmlconfig) {
 		Log::global_log->error() << "[Dropaccelerator] HALTING SIMULATION" << std::endl;
 		_enabled = false;
 		// HALT SIM
-		Simulation::exit(1);
+		mardyn_exit(1);
 		return;
 	}
 

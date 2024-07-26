@@ -5,6 +5,9 @@
 
 #include "WallPotential.h"
 
+#include "Simulation.h"
+#include "utils/mardyn_assert.h"
+
 /**
  * @brief reads in configuration from config.xml. see class doc for example .xml
  *
@@ -37,7 +40,7 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
         _potential = LJ9_3;
         // TODO: is this allowed or should simulation be halted
         // HALT SIM
-        //global_simulation -> exit(1);
+        //mardyn_exit(1);
     }
 
     XMLfile::Query query = xmlconfig.query("component");
@@ -85,7 +88,7 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
     }
     else{
         Log::global_log -> error() << "[WallPotential] UNKNOWN WALL POTENTIAL! EXITING!" << std::endl;
-        global_simulation -> exit(11);
+        mardyn_exit(11);
     }
 
 }
