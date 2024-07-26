@@ -24,6 +24,8 @@ public:
 	//! @brief For this class, header and data are in the same file, so there is no separate header file
 	void setPhaseSpaceHeaderFile(std::string filename);
 
+	//! DEPRECATED!
+	//! The information stored in the header must be provided via the xml config file
 	//! @brief reads in header of the input file (including component description)
 	//!
 	//! The Header in the input file consists of several elements. An element starts
@@ -56,7 +58,7 @@ public:
 	//!     - For each pair of different components: xi, eta (both double)
 	//!     - epsilonRF (double)
 	//! \li NumberOfMolecules: One token follows with the number of molecules
-	void readPhaseSpaceHeader(Domain* domain, double timestep);
+	void readPhaseSpaceHeader(Domain* domain, double timestep) {};
 
 	//! @brief reads in the data of all molecules
 	//!
