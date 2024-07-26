@@ -1,6 +1,7 @@
 #include "molecules/Comp2Param.h"
 
 #include <cmath>
+#include <functional>
 
 #include "utils/Logger.h"
 #include "Simulation.h"
@@ -41,14 +42,18 @@ void Comp2Param::initialize(
 			ParaStrm& pstrmij = m_ssparatbl(compi, compj);
 			unsigned int ncj = components[compj].numLJcenters();
 			const auto mixingrule = mixcoeff[compi][compj];
-			double eta, xi;  // This is not elegant, but I didn't make it work with a lambda function
+			// Generic mixing functions
+			std::function<double(double, double)> mixingSigma;
+			std::function<double(double, double)> mixingEpsilon;
 			// Get parameters
 			if (mixingrule->getType() == "LB") {
-				eta = mixingrule->getParameters().at(0);
-				xi  = mixingrule->getParameters().at(1);
-// #ifndef NDEBUG
-				Log::global_log->info() << "Mixing : cid+1(compi)=" << compi+1 << " <--> cid+1(compj)=" << compj+1 << ": xi=" << xi << ", eta=" << eta << std::endl;
-// #endif
+				const double eta = mixingrule->getParameters().at(0);
+				const double xi  = mixingrule->getParameters().at(1);
+				mixingSigma = [=](double epsi, double epsj) { return xi * sqrt(epsi * epsj); };
+				mixingEpsilon = [=](double epsi, double epsj) { return eta * (sigi + sigj); };
+#ifndef NDEBUG
+				Log::global_log->debug() << "Mixing : cid+1(compi)=" << compi+1 << " <--> cid+1(compj)=" << compj+1 << ": xi=" << xi << ", eta=" << eta << std::endl;
+#endif
 			} else {
 				Log::global_log->error() << "Mixing: Only LB rule supported" << std::endl;
 				Simulation::exit(1);
@@ -62,8 +67,8 @@ void Comp2Param::initialize(
 					const LJcenter& ljcenterj = static_cast<const LJcenter&>(components[compj].ljcenter(centerj));
 					epsj = ljcenterj.eps();
 					sigj = ljcenterj.sigma();
-					epsilon24 = 24. * xi * sqrt(epsi * epsj);  // This is also LB -> better generic (lambda) function
-					sigma2 = eta * .5 * (sigi + sigj);  // This is also LB -> better generic (lambda) function
+					epsilon24 = 24. * mixingEpsilon(epsi, epsj);
+					sigma2 = 0.5 * mixingSigma(sigi, sigj);
 					sigma2 *= sigma2;
 					sigperrc2 = sigma2 / (rcLJ * rcLJ);
 					sigperrc6 = sigperrc2 * sigperrc2 * sigperrc2;
@@ -85,8 +90,8 @@ void Comp2Param::initialize(
 					const LJcenter& ljcenteri = static_cast<const LJcenter&>(components[compi].ljcenter(centeri));
 					epsi = ljcenteri.eps();
 					sigi = ljcenteri.sigma();
-					epsilon24 = 24. * xi * sqrt(epsi * epsj);
-					sigma2 = eta * .5 * (sigi + sigj);
+					epsilon24 = 24. * mixingEpsilon(epsi, epsj);
+					sigma2 = 0.5 * mixingSigma(sigi, sigj);
 					sigma2 *= sigma2;
 					sigperrc2 = sigma2 / (rcLJ * rcLJ);
 					sigperrc6 = sigperrc2 * sigperrc2 * sigperrc2;
