@@ -8,6 +8,7 @@
 #include <particleContainer/adapter/VectorizedCellProcessor.h>
 #include <exception>
 #include "Domain.h"
+#include "Simulation.h"
 #include "utils/mardyn_assert.h"
 #include "autopas/utils/StringUtils.h"
 #include "autopas/utils/logging/Logger.h"
