@@ -18,9 +18,9 @@
     <ensemble type="NVT">
       <temperature unit="reduced">0.000633363365</temperature>
       <domain type="box">
-        <lx>108.43455</lx>
-        <ly>108.43455</ly>
-        <lz>108.43455</lz>
+        <lx>10</lx>
+        <ly>10</ly>
+        <lz>10</lz>
       </domain>
       <components>
         <include query="/components/moleculetype">../components.xml</include>
@@ -38,7 +38,7 @@
         <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass">
-        <radiusLJ unit="reduced">33.0702</radiusLJ>
+        <radiusLJ unit="reduced">2.5</radiusLJ>
       </cutoffs>
       <electrostatic type="ReactionField">
         <epsilon>1.0e+10</epsilon>

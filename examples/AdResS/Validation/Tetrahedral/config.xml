@@ -24,7 +24,7 @@
             <ActiveRegions>
                 <region>
                     <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                    <upper> <x>36</x> <y>20</y> <z>20</z> </upper>
+                    <upper> <x>10</x> <y>10</y> <z>10</z> </upper>
                 </region>
             </ActiveRegions>
         </integrator>
@@ -33,9 +33,9 @@
             <!-- real gas closer to ideal gas at higher temperatures but lower pressures -->
             <temperature unit="reduced" >8.3144621</temperature>
             <domain type="box">
-                <lx unit="reduced">36</lx>
-                <ly unit="reduced">20</ly>
-                <lz unit="reduced">20</lz>
+                <lx unit="reduced">10</lx>
+                <ly unit="reduced">10</ly>
+                <lz unit="reduced">10</lz>
             </domain>
             <!-- instead of lx/ly/lz we might accept density -->
             <components>
@@ -54,7 +54,7 @@
 
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>36</x> <y>20</y> <z>20</z> </upper>
+                            <upper> <x>10</x> <y>10</y> <z>10</z> </upper>
                         </object>
                     </objectgenerator>
                 </generator>
@@ -68,7 +68,7 @@
                 <traversalSelector>c08</traversalSelector>
             </datastructure>
             <cutoffs type="CenterOfMass" >
-                <radiusLJ unit="reduced" >20</radiusLJ>
+                <radiusLJ unit="reduced" >2.5</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField" >
                 <epsilon>0</epsilon>
@@ -79,7 +79,7 @@
                     <ActiveRegions>
                         <region>
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>36</x> <y>20</y> <z>20</z> </upper>
+                            <upper> <x>10</x> <y>10</y> <z>10</z> </upper>
                         </region>
                     </ActiveRegions>
                 </thermostat>
@@ -112,30 +112,6 @@
                 <filename>Tetrahedral-Pressure-ADR-FTH_</filename>
             </outputplugin-->
         </output>
-        <plugin name="AdResS">
-            <weightImpl>near</weightImpl>
-            <enableFTH>
-                <fmax>1e+3</fmax>
-                <logFTH>false</logFTH>
-                <logDensity>false</logDensity>
-                <rho>0.1</rho>
-                <!--createFTH>
-                    <sampleGap>1</sampleGap>
-                    <threshold>0.06</threshold>
-                    <convFactor>5e-3</convFactor>
-                    <sampleBinSize>3.6e-1</sampleBinSize>
-                </createFTH-->
-                <include query="/forceFunction">./F_TH_S2_0.xml</include>
-            </enableFTH>
-            <fpregions>
-                <region id="1">
-                    <lowX>15</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
-                    <highX>21</highX><highY>20</highY><highZ>20</highZ>
-                    <hybridDimX>8</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
-                </region>
-            </fpregions>
-        </plugin>
-
         <!--plugin name="SpatialProfile">
             <mode>cartesian</mode>
             <x>100</x>
