@@ -1,30 +1,31 @@
 #include "RegionTest.h"
-#include "plugins/AdResS/util/Region.h"
-using namespace Resolution;
+
 
 TEST_SUITE_REGISTRATION(RegionTest);
 
-void RegionTest::testIsInnerPoint(){
+RegionTest::RegionTest(){
+    region._low = {0,0,0};
+    region._high = {10,10,10};
+    region._hybridDims = {0,0,0};
+    region.init();
+}
 
-    std::array<double, 3> low = {0,0,0};    
-    std::array<double, 3> high = {10,10,10};
-    std::array<double, 3> dims = {0,0,0};
+void RegionTest::testComputeIntersection(){
+    //TODO: think if tests are needed.
+}
+
+void RegionTest::testIsInnerPoint(){
+    
     std::array<double, 3> p1 = {5,5,5};
     std::array<double, 3> p2 = {11,11,11};
 
-    FPRegion region{low,high,dims};
-    region.init();
 
-    ASSERT_TRUE(region.isInnerPoint(p1,low,high));
-    ASSERT_TRUE(!region.isInnerPoint(p2,low,high));
-
+    ASSERT_TRUE(region.isInnerPoint(p1,region._low,region._high));
+    ASSERT_TRUE(!region.isInnerPoint(p2,region._low,region._high));
 }
 
 void RegionTest::testIsBoxInHybrid(){
-    std::array<double, 3> low = {0,0,0};    
-    std::array<double, 3> high = {10,10,10};
-    std::array<double, 3> dims = {5,5,5};
-    FPRegion region{low,high,dims};
+    region._hybridDims = {5,5,5};
     region.init();
 
 
