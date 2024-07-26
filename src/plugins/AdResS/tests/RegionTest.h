@@ -10,7 +10,7 @@
 #include "utils/Testing.h"
 #include "utils/TestWithSimulationSetup.h"
 
-class RegionTest:public utils::TestWithSimulationSetup{
+class RegionTest:public utils::Test{
     TEST_SUITE(RegionTest);
     TEST_METHOD(testIsInnerPoint);
     TEST_METHOD(testIsBoxInHybrid);
@@ -22,7 +22,7 @@ class RegionTest:public utils::TestWithSimulationSetup{
 
     void testIsInnerPoint();
 
-    
+
     void testIsBoxInHybrid();
 
 
