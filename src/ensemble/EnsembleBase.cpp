@@ -9,6 +9,7 @@
 #include "Domain.h"
 
 #include <vector>
+#include <algorithm>
 
 
 Ensemble::~Ensemble() {
@@ -108,5 +109,30 @@ void Ensemble::setComponentLookUpIDs() {
 	for(auto c = _components.begin(); c != _components.end(); ++c) {
 		c->setLookUpId(centers);
 		centers += c->numLJcenters();
+	}
+}
+
+void Ensemble::setMixingrule(MixingRuleBase* mixingrule) {
+	int cid1 = mixingrule->getCid1();
+	int cid2 = mixingrule->getCid2();
+	// Check if cids are valid
+	if (std::min(cid1, cid2) < 0) {
+		Log::global_log->error() << "Mixing setMixingrule: cids must not be negative" << std::endl;
+		Simulation::exit(1);
+	}
+	if (std::max(cid1, cid2) >= _components.size()) {
+		Log::global_log->error() << "Mixing setMixingrule: cids must not exceed number of components ("
+								 << _components.size() << ")" << std::endl;
+		Simulation::exit(1);
+	}
+	if (cid1 == cid2) {
+		Log::global_log->error() << "Mixing setMixingrule: cids must not be the same" << std::endl;
+		Simulation::exit(1);
+	}
+	// Ensure that cid1 < cid2 in _mixingrules
+	if (cid1 < cid2) {
+		_mixingrules[cid1][cid2] = mixingrule;
+	} else {
+		_mixingrules[cid2][cid1] = mixingrule;
 	}
 }
