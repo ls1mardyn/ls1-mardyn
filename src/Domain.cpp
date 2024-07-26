@@ -535,24 +535,28 @@ void Domain::writeCheckpointHeader(std::string filename,
 			for(auto pos=components->begin();pos!=components->end();++pos){
 				pos->write(checkpointfilestream);
 			}
-			unsigned int numperline=_simulation.getEnsemble()->getComponents()->size();
-			unsigned int iout=0;
-			for(auto pos=_mixcoeff.begin();pos!=_mixcoeff.end();++pos){
-				checkpointfilestream << *pos;
-				iout++;
-				// 2 parameters (xi and eta)
-				if(iout/2>=numperline) {
-					checkpointfilestream << std::endl;
-					iout=0;
-					--numperline;
-				}
-				else if(!(iout%2)) {
-					checkpointfilestream << "\t";
-				}
-				else {
-					checkpointfilestream << " ";
+			// Write mixing coefficients
+			auto mixingrules = _simulation.getEnsemble()->getMixingrules();
+			size_t numComponents=_simulation.getEnsemble()->getComponents()->size();
+			std::stringstream mixingss;
+			for (int cidi = 0; cidi < numComponents; ++cidi) {
+				for (int cidj = cidi+1; cidj < numComponents; ++cidj) {  // cidj is always larger than cidi
+					auto mixrule = mixingrules[cidi][cidj];
+					if (mixrule->getType() == "LB") {
+						const double eta = mixingrules[cidi][cidj]->getParameters().at(0);
+						const double xi = mixingrules[cidi][cidj]->getParameters().at(1);
+						mixingss << xi << " " << eta;
+						// Only add tab if not last character in line
+						if (!((cidi == numComponents-1) and (cidj == numComponents))) {
+							mixingss << "\t";
+						}
+					} else {
+						Log::global_log->error() << "Only LB mixing rule supported" << std::endl;
+						Simulation::exit(123);
+					}
 				}
 			}
+			checkpointfilestream << mixingss.str() << std::endl;
 			checkpointfilestream << _epsilonRF << std::endl;
 			for( auto uutit = this->_universalUndirectedThermostat.begin();
 					uutit != this->_universalUndirectedThermostat.end();
@@ -618,7 +622,7 @@ void Domain::writeCheckpoint(std::string filename,
 
 
 void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
-	_comp2params.initialize(*(_simulation.getEnsemble()->getComponents()), _mixcoeff, _epsilonRF, cutoffRadius, cutoffRadiusLJ);
+	_comp2params.initialize(*(_simulation.getEnsemble()->getComponents()), _simulation.getEnsemble()->getMixingrules(), _epsilonRF, cutoffRadius, cutoffRadiusLJ);
 }
 
 void Domain::Nadd(unsigned cid, int N, int localN)
@@ -709,8 +713,6 @@ void Domain::enableUndirectedThermostat(int tst)
 	this->_localThermostatDirectedVelocity[tst].fill(0.0);
 	this->_universalThermostatDirectedVelocity[tst].fill(0.0);
 }
-
-std::vector<double> & Domain::getmixcoeff() { return _mixcoeff; }
 
 double Domain::getepsilonRF() const { return _epsilonRF; }
 

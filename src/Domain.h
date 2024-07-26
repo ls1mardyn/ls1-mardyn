@@ -177,9 +177,6 @@ public:
 	void setGlobalTemperature(double T) { setTargetTemperature(0, T); }
 	void setTargetTemperature(int thermostatID, double T);
 
-	//! @brief get the mixcoeff
-	std::vector<double> & getmixcoeff();
-
 	//! @brief get the epsilonRF
 	double getepsilonRF() const;
 
@@ -492,9 +489,6 @@ private:
 
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;
-	//! modified Lorentz-Berthelot mixing rule parameters
-	//! @todo more explanation
-	std::vector<double> _mixcoeff;
 
     // explosion heuristics, NOTE: turn off when using slab thermostat
     bool _bDoExplosionHeuristics;

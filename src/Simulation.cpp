@@ -243,21 +243,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		Simulation::exit(1);
 	}
 
-	//The mixing coefficents have to be read in the ensemble part
-	//if this didn't happen fill the mixing coeffs with default values
-	auto& dmixcoeff = _domain->getmixcoeff();
-	const std::size_t compNum = _ensemble->getComponents()->size();
-	//1 Comps: 0 coeffs; 2 Comps: 2 coeffs; 3 Comps: 6 coeffs; 4 Comps 12 coeffs
-	const std::size_t neededCoeffs = compNum*(compNum-1);
-	if(dmixcoeff.size() < neededCoeffs){
-		Log::global_log->warning() << "Not enough mixing coefficients were given! (Filling the missing ones with 1)" << '\n';
-		Log::global_log->warning() << "This can happen because the xml-input doesn't support these yet!" << std::endl;
-		unsigned int numcomponents = _simulation.getEnsemble()->getComponents()->size();
-		for (unsigned int i = dmixcoeff.size(); i < neededCoeffs; i++) {
-			dmixcoeff.push_back(1);
-		}
-	}
-
 	/* algorithm */
 	if(xmlconfig.changecurrentnode("algorithm")) {
 		/* cutoffs */

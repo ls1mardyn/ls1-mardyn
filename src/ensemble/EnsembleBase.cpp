@@ -13,8 +13,11 @@
 Ensemble::~Ensemble() {
 	delete _domain;
 	_domain = nullptr;
-	for(auto& m : _mixingrules)
-		delete (m);
+	for(auto const &cid1 : _mixingrules) {
+		for(auto const &cid2 : cid1.second) {
+			delete(cid2.second);
+	}
+}
 }
 
 void Ensemble::readXML(XMLfileUnits& xmlconfig) {
@@ -45,11 +48,6 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	uint32_t numMixingrules = 0;
 	numMixingrules = query.card();
 	Log::global_log->info() << "Found " << numMixingrules << " mixing rules." << std::endl;
-	_mixingrules.resize(numMixingrules);
-
-	// data structure for mixing coefficients of domain class (still in use!!!)
-	std::vector<double>& dmixcoeff = global_simulation->getDomain()->getmixcoeff();
-	dmixcoeff.clear();
 
 	for(mixingruletIter = query.begin(); mixingruletIter; mixingruletIter++) {
 		xmlconfig.changecurrentnode(mixingruletIter);
@@ -58,7 +56,7 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 
 		xmlconfig.getNodeValue("@type", mixingruletype);
 		Log::global_log->info() << "Mixing rule type: " << mixingruletype << std::endl;
-		if("LB" == mixingruletype) {
+		if ("LB" == mixingruletype) {
 			mixingrule = new LorentzBerthelotMixingRule();
 
 		} else {
@@ -66,21 +64,32 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 			Simulation::exit(1);
 		}
 		mixingrule->readXML(xmlconfig);
-		_mixingrules.push_back(mixingrule);
 
-		/*
-		 * Mixing coefficients
-		 *
-		 * TODO: information of mixing rules (eta, xi) is stored in Domain class and its actually in use
-		 * --> we need to decide where this information should be stored in future, in ensemble class,
-		 * in the way it is done above?
-		 *
-		 */
-		double xi, eta;
-		xmlconfig.getNodeValue("xi", xi);
-		xmlconfig.getNodeValue("eta", eta);
-		dmixcoeff.push_back(xi);
-		dmixcoeff.push_back(eta);
+		const int cid1 = mixingrule->getCid1();
+		const int cid2 = mixingrule->getCid2();
+		// Check if cid is larger than number of components
+		// cid starts with 0 and cid2 is always larger than cid1
+		if (cid2 >= numComponents) {
+			Log::global_log->error() << "Mixing: cid=" << cid2+1 << " is larger than number of components ("
+									 << numComponents << ")" << std::endl;
+			Simulation::exit(1);
+		}
+		_mixingrules[cid1][cid2] = mixingrule;
+	}
+	// Use xi=eta=1.0 as default if no rule was specified
+	for (int cidi = 0; cidi < numComponents; ++cidi) {
+		for (int cidj = cidi+1; cidj < numComponents; ++cidj) {  // cidj is always larger than cidi
+			if (_mixingrules[cidi].count(cidj) == 0) {
+				// Only LorentzBerthelot is supported until now
+				LorentzBerthelotMixingRule* mixingrule = new LorentzBerthelotMixingRule();
+				mixingrule->setCid1(cidi);
+				mixingrule->setCid2(cidj);
+				_mixingrules[cidi][cidj] = mixingrule;
+				Log::global_log->warning() << "Mixing coefficients for components "
+										   << mixingrule->getCid1()+1 << " + " << mixingrule->getCid2()+1  // +1 due to internal cid
+										   << " set to default (LB with xi=eta=1.0)" << std::endl;
+			}
+		}
 	}
 	xmlconfig.changecurrentnode(oldpath);
 	setComponentLookUpIDs();
