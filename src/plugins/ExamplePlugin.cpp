@@ -6,8 +6,8 @@
  */
 
 #include "ExamplePlugin.h"
-#include "utils/mardyn_assert.h"
 
+#include "utils/mardyn_assert.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 
