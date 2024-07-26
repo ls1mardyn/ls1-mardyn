@@ -40,8 +40,8 @@ public:
 	int getCid1() { return _cid1; }
 	int getCid2() { return _cid2; }
 
-	void setCid1(int cid1) { _cid1 = cid1; }
-	void setCid2(int cid2) { _cid2 = cid2; }
+	void setCid1(int cid1) { _cid1 = cid1; }  // Internal cid starting with 0
+	void setCid2(int cid2) { _cid2 = cid2; }  // Internal cid starting with 0
 
 	virtual std::string getType() = 0;
 
