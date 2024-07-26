@@ -11,7 +11,7 @@
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 
-#include <string>
+#include <cstring>
 
 
 void ExamplePlugin::readXML(XMLfileUnits& xmlconfig) {
