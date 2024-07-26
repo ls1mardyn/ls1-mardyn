@@ -6,6 +6,7 @@
 #include "molecules/Component.h"
 #include "molecules/Array2D.h"
 #include "molecules/ParaStrm.h"
+#include "molecules/mixingrules/MixingRuleBase.h"
 
 
 /** Comp2Param provides a flexible hash table interface to interaction parameter streams.
@@ -21,7 +22,7 @@ class Comp2Param {
          * the given components and parameters.
          */
         Comp2Param(const std::vector<Component>& components,
-				   const std::vector<double>& mixcoeff,
+				   std::map<int,std::map<int,MixingRuleBase*>> mixcoeff,
 				   double epsRF, double rc, double rcLJ) :
 			m_numcomp(components.size()), m_ssparatbl(m_numcomp,m_numcomp)
 		{
@@ -38,7 +39,7 @@ class Comp2Param {
          *   The order of the entries must correspond to the
          *   PotForce() function found in potforce.h reading the stream
          */
-        void initialize(const std::vector<Component>& components, const std::vector<double>& mixcoeff, double epsRF, double rc, double rcLJ);
+        void initialize(const std::vector<Component>& components, std::map<int,std::map<int,MixingRuleBase*>> mixcoeff, double epsRF, double rc, double rcLJ);
 
     private:
         unsigned int m_numcomp;  /**< number of components */
