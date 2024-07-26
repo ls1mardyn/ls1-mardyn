@@ -6,8 +6,6 @@
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
 
-// class XMLfileUnits;
-
 class LorentzBerthelotMixingRule : public MixingRuleBase {
 public:
 	LorentzBerthelotMixingRule() {

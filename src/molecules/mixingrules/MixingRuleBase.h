@@ -3,11 +3,9 @@
 
 #include <string>
 
-#include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
-// #include "Simulation.h"
-
-// class XMLfileUnits;
+#include "utils/mardyn_assert.h"
+#include "utils/xmlfileUnits.h"
 
 class MixingRuleBase {
 public:
@@ -22,10 +20,10 @@ public:
 
 		if (cid1 == cid2) {
 			Log::global_log->error() << "Mixing rules: cid1 and cid2 must not be the same but are both " << cid1 << std::endl;
-			// Simulation::exit(1);
+			mardyn_exit(1);
 		} else if ((cid1 <= 0) or (cid2 <= 0)) {
 			Log::global_log->error() << "Mixing rules: cid1 and cid2 must be greater than zero" << std::endl;
-			// Simulation::exit(1);
+			mardyn_exit(1);
 		// Symmetry for mixing rules is assumed
 		// cid1 must be less than cid2
 		} else if (cid1 > cid2) {
