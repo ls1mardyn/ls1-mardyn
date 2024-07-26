@@ -208,17 +208,8 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			}
 #endif
 
-			// Mixing coefficients
-			std::vector<double>& dmixcoeff = domain->getmixcoeff();
-			dmixcoeff.clear();
-			for(unsigned int i = 1; i < numcomponents; i++) {
-				for(unsigned int j = i + 1; j <= numcomponents; j++) {
-					double xi, eta;
-					_phaseSpaceHeaderFileStream >> xi >> eta;
-					dmixcoeff.push_back(xi);
-					dmixcoeff.push_back(eta);
-				}
-			}
+			// Mixing coefficients have to be set via the config xml
+
 			// read in global factor \epsilon_{RF}
 			// FIXME: Maybe this should go better to a seperate token?!
 			_phaseSpaceHeaderFileStream >> token;
