@@ -12,6 +12,8 @@
 #include "ensemble/EnsembleBase.h"
 #include "Simulation.h"
 #include "molecules/Molecule.h"
+#include "molecules/mixingrules/MixingRuleBase.h"
+#include "molecules/mixingrules/LorentzBerthelot.h"
 
 #ifdef ENABLE_MPI
 #include "parallel/ParticleData.h"
@@ -207,7 +209,24 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			}
 #endif
 
-			// Mixing coefficients have to be set via the config xml
+			// Mixing coefficients
+			for(unsigned int cidi = 0; cidi < numcomponents-1; cidi++) {
+				for(unsigned int cidj = cidi + 1; cidj <= numcomponents-1; cidj++) {
+					double xi, eta;
+					_phaseSpaceHeaderFileStream >> xi >> eta;
+#ifndef NDEBUG
+					Log::global_log->debug() << "Mixing: " << cidi+1 << " + " << cidj+1
+											 << " : xi=" << xi << " eta=" << eta << std::endl;
+#endif
+					// Only LB mixing rule is supported for now
+					LorentzBerthelotMixingRule* mixingrule = new LorentzBerthelotMixingRule();
+					mixingrule->setCid1(cidi);
+					mixingrule->setCid2(cidj);
+					mixingrule->setEta(eta);
+					mixingrule->setXi(xi);
+					_simulation.getEnsemble()->setMixingrule(mixingrule);
+				}
+			}
 
 			// read in global factor \epsilon_{RF}
 			// FIXME: Maybe this should go better to a seperate token?!
