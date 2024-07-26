@@ -58,7 +58,7 @@ public:
 	//!     - For each pair of different components: xi, eta (both double)
 	//!     - epsilonRF (double)
 	//! \li NumberOfMolecules: One token follows with the number of molecules
-	void readPhaseSpaceHeader(Domain* domain, double timestep) {};
+	void readPhaseSpaceHeader(Domain* domain, double timestep);
 
 	//! @brief reads in the data of all molecules
 	//!

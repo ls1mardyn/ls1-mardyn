@@ -45,6 +45,12 @@ void ASCIIReader::readXML(XMLfileUnits& xmlconfig) {
 	setPhaseSpaceFile(pspfile);
 }
 
+void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
+	Log::global_log->error() << "[ASCII Reader] Using the header of the ASCII checkpoints is deprecated" << std::endl;
+	Log::global_log->error() << "[ASCII Reader] Use the config xml file instead to set according values" << std::endl;
+	Simulation::exit(1);
+}
+
 unsigned long
 ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) {
 
