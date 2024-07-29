@@ -24,9 +24,9 @@ public:
 		} else if ((cid1 <= 0) or (cid2 <= 0)) {
 			Log::global_log->error() << "Mixing rules: cid1 and cid2 must be greater than zero" << std::endl;
 			mardyn_exit(1);
+		} else if (cid1 > cid2) {
 		// Symmetry for mixing rules is assumed
 		// cid1 must be less than cid2
-		} else if (cid1 > cid2) {
 			_cid1 = cid2 - 1;  // component id - 1 to convert to internal format starting with 0
 			_cid2 = cid1 - 1;
 		} else {
