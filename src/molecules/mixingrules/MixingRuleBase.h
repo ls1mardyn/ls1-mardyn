@@ -9,8 +9,6 @@
 
 class MixingRuleBase {
 public:
-	MixingRuleBase(){}
-	virtual ~MixingRuleBase(){}
 
 	virtual void readXML(XMLfileUnits& xmlconfig) {
 		int cid1;
@@ -48,12 +46,12 @@ public:
 
 	// Parameters of mixing rule
 	// e.g. for LB it contains (eta, xi)
-	std::vector<double> _parameters;
+	std::vector<double> _parameters {1.0, 1.0};  // default for eta, xi;
 
 private:
 	// Internal cids starting with 0
-	int _cid1{};
-	int _cid2{};
+	int _cid1 {};
+	int _cid2 {};
 };
 
 #endif /* MIXINGRULE_BASE_H_ */
