@@ -14,6 +14,9 @@
  * @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
  */
 class Comp2Param {
+
+    using MixRulesType = std::map<int,std::map<int,MixingRuleBase*>>;
+
     public:
         /** Create a new empty parameter stream. */
         Comp2Param() : m_numcomp(0), m_ssparatbl(0,0) {}
@@ -22,7 +25,7 @@ class Comp2Param {
          * the given components and parameters.
          */
         Comp2Param(const std::vector<Component>& components,
-				   std::map<int,std::map<int,MixingRuleBase*>> mixcoeff,
+				   const MixRulesType & mixcoeff,
 				   double epsRF, double rc, double rcLJ) :
 			m_numcomp(components.size()), m_ssparatbl(m_numcomp,m_numcomp)
 		{
@@ -39,7 +42,7 @@ class Comp2Param {
          *   The order of the entries must correspond to the
          *   PotForce() function found in potforce.h reading the stream
          */
-        void initialize(const std::vector<Component>& components, std::map<int,std::map<int,MixingRuleBase*>> mixcoeff, double epsRF, double rc, double rcLJ);
+        void initialize(const std::vector<Component>& components, const MixRulesType & mixcoeff, double epsRF, double rc, double rcLJ);
 
     private:
         unsigned int m_numcomp;  /**< number of components */

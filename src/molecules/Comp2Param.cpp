@@ -8,7 +8,7 @@
 
 
 void Comp2Param::initialize(
-		const std::vector<Component>& components, std::map<int,std::map<int,MixingRuleBase*>> mixcoeff,
+		const std::vector<Component>& components, const MixRulesType & mixcoeff,
 		double epsRF, double rc, double rcLJ)
 {
 	m_numcomp = components.size();
@@ -41,7 +41,7 @@ void Comp2Param::initialize(
 		for (unsigned int compj = compi + 1; compj < m_numcomp; ++compj) {
 			ParaStrm& pstrmij = m_ssparatbl(compi, compj);
 			unsigned int ncj = components[compj].numLJcenters();
-			const auto mixingrule = mixcoeff[compi][compj];
+			const auto mixingrule = mixcoeff.at(compi).at(compj);
 			// Generic mixing functions
 			std::function<double(double, double)> mixingSigma;
 			std::function<double(double, double)> mixingEpsilon;
