@@ -43,21 +43,25 @@ void Comp2Param::initialize(
 			unsigned int ncj = components[compj].numLJcenters();
 			const auto mixingrule = mixcoeff.at(compi).at(compj);
 			// Generic mixing functions
-			std::function<double(double, double)> mixingSigma;
-			std::function<double(double, double)> mixingEpsilon;
-			// Get parameters
-			if (mixingrule->getType() == "LB") {
-				const double eta = mixingrule->getParameters().at(0);
-				const double xi  = mixingrule->getParameters().at(1);
-				mixingEpsilon = [=](double epsi, double epsj) { return xi * sqrt(epsi * epsj); };
-				mixingSigma = [=](double sigi, double sigj) { return eta * (sigi + sigj); };
+			const auto [mixingSigma, mixingEpsilon] =
+				[&]() -> std::pair<std::function<double(double, double)>, std::function<double(double, double)>> {
+				// Get parameters
+				if (mixingrule->getType() == "LB") {
+					const double eta = mixingrule->getParameters().at(0);
+					const double xi = mixingrule->getParameters().at(1);
 #ifndef NDEBUG
-				Log::global_log->info() << "Mixing : cid+1(compi)=" << compi+1 << " <--> cid+1(compj)=" << compj+1 << ": xi=" << xi << ", eta=" << eta << std::endl;
+					Log::global_log->info()
+						<< "Mixing : cid+1(compi)=" << compi + 1 << " <--> cid+1(compj)=" << compj + 1 << ": xi=" << xi
+						<< ", eta=" << eta << std::endl;
 #endif
-			} else {
-				Log::global_log->error() << "Mixing: Only LB rule supported" << std::endl;
-				Simulation::exit(1);
-			}
+					return {[=](double sigi, double sigj) { return eta * (sigi + sigj); },      // mixingSigma
+							[=](double epsi, double epsj) { return xi * sqrt(epsi * epsj); }};  // mixingEpsilon
+				} else {
+					Log::global_log->error() << "Mixing: Only LB rule supported" << std::endl;
+					Simulation::exit(1);
+					return {};
+				}
+			}();
 			double shift6combined, sigperrc2, sigperrc6;
 			for (unsigned int centeri = 0; centeri < nci; ++centeri) {
 				const LJcenter& ljcenteri = static_cast<const LJcenter&>(components[compi].ljcenter(centeri));
@@ -76,9 +80,9 @@ void Comp2Param::initialize(
 					pstrmij << epsilon24;
 					pstrmij << sigma2;
 					pstrmij << shift6combined;
-#ifndef NDEBUG
+// #ifndef NDEBUG
 					Log::global_log->info() << "Component " << compi << ": eps24=" << epsilon24 << " sig2=" << sigma2 << " shift6=" << shift6combined << std::endl;
-#endif
+// #endif
 				}
 			}
 			ParaStrm& pstrmji = m_ssparatbl(compj, compi);
