@@ -49,10 +49,10 @@ void Comp2Param::initialize(
 			if (mixingrule->getType() == "LB") {
 				const double eta = mixingrule->getParameters().at(0);
 				const double xi  = mixingrule->getParameters().at(1);
-				mixingSigma = [=](double epsi, double epsj) { return xi * sqrt(epsi * epsj); };
-				mixingEpsilon = [=](double epsi, double epsj) { return eta * (sigi + sigj); };
+				mixingEpsilon = [=](double epsi, double epsj) { return xi * sqrt(epsi * epsj); };
+				mixingSigma = [=](double sigi, double sigj) { return eta * (sigi + sigj); };
 #ifndef NDEBUG
-				Log::global_log->debug() << "Mixing : cid+1(compi)=" << compi+1 << " <--> cid+1(compj)=" << compj+1 << ": xi=" << xi << ", eta=" << eta << std::endl;
+				Log::global_log->info() << "Mixing : cid+1(compi)=" << compi+1 << " <--> cid+1(compj)=" << compj+1 << ": xi=" << xi << ", eta=" << eta << std::endl;
 #endif
 			} else {
 				Log::global_log->error() << "Mixing: Only LB rule supported" << std::endl;
@@ -77,7 +77,7 @@ void Comp2Param::initialize(
 					pstrmij << sigma2;
 					pstrmij << shift6combined;
 #ifndef NDEBUG
-					Log::global_log->debug() << "Component " << compi << ": eps24=" << epsilon24 << " sig2=" << sigma2 << " shift6=" << shift6combined << std::endl;
+					Log::global_log->info() << "Component " << compi << ": eps24=" << epsilon24 << " sig2=" << sigma2 << " shift6=" << shift6combined << std::endl;
 #endif
 				}
 			}
