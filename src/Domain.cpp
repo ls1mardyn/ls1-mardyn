@@ -538,14 +538,14 @@ void Domain::writeCheckpointHeader(std::string filename,
 			}
 			// Write mixing coefficients
 			auto mixingrules = _simulation.getEnsemble()->getMixingrules();
-			size_t numComponents=_simulation.getEnsemble()->getComponents()->size();
+			const auto numComponents=_simulation.getEnsemble()->getComponents()->size();
 			std::stringstream mixingss;
 			for (int cidi = 0; cidi < numComponents; ++cidi) {
 				for (int cidj = cidi+1; cidj < numComponents; ++cidj) {  // cidj is always larger than cidi
-					auto mixrule = mixingrules[cidi][cidj];
+					const auto mixrule = mixingrules[cidi][cidj];
 					if (mixrule->getType() == "LB") {
-						const double eta = mixingrules[cidi][cidj]->getParameters().at(0);
-						const double xi = mixingrules[cidi][cidj]->getParameters().at(1);
+						const double eta = mixrule->getParameters().at(0);
+						const double xi = mixrule->getParameters().at(1);
 						mixingss << xi << " " << eta;
 						// Only add tab if not last character in line
 						if (!((cidi == numComponents-1) and (cidj == numComponents))) {

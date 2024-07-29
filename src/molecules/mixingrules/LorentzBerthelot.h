@@ -13,7 +13,7 @@ public:
 	}
 	~LorentzBerthelotMixingRule(){}
 
-	void readXML(XMLfileUnits& xmlconfig) {
+	void readXML(XMLfileUnits& xmlconfig) override {
 		MixingRuleBase::readXML(xmlconfig);
 		double eta, xi;
 		xmlconfig.getNodeValue("eta", eta);
@@ -26,13 +26,13 @@ public:
 	}
 
 	// _parameters of MixingRuleBase.cpp contains (eta, xi) in case of this mixing rule
-	double getEta() { return _parameters.at(0); }
-	double getXi() { return _parameters.at(1); }
+	double getEta() const { return _parameters.at(0); }
+	double getXi() const { return _parameters.at(1); }
 
 	void setEta(double eta) { _parameters.at(0) = eta; }
 	void setXi(double xi) { _parameters.at(1) = xi; }
 
-	std::string getType() override { return "LB"; };
+	std::string getType() const override { return "LB"; };
 
 };
 

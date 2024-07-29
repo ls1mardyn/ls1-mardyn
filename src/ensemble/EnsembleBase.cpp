@@ -113,8 +113,8 @@ void Ensemble::setComponentLookUpIDs() {
 }
 
 void Ensemble::setMixingrule(MixingRuleBase* mixingrule) {
-	int cid1 = mixingrule->getCid1();
-	int cid2 = mixingrule->getCid2();
+	const int cid1 = mixingrule->getCid1();
+	const int cid2 = mixingrule->getCid2();
 	// Check if cids are valid
 	if (std::min(cid1, cid2) < 0) {
 		Log::global_log->error() << "Mixing setMixingrule: cids must not be negative" << std::endl;
