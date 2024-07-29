@@ -58,6 +58,7 @@
 #include "plugins/NEMD/PosNegComp.h"
 #include "plugins/NEMD/RegionSampling.h"
 #include "plugins/NEMD/VelocityExchange.h"
+#include "plugins/SphericalSampling.h"
 #include "plugins/Permittivity.h"
 #include "plugins/SpatialProfile.h"
 #include "plugins/TestPlugin.h"
@@ -121,6 +122,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(RDF);
 	REGISTER_PLUGIN(RegionSampling);
 	REGISTER_PLUGIN(VelocityExchange);
+	REGISTER_PLUGIN(SphericalSampling);
 	REGISTER_PLUGIN(MettDeamon);
 	REGISTER_PLUGIN(MettDeamonFeedrateDirector);
 	REGISTER_PLUGIN(PosNegComp);
