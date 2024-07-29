@@ -8,10 +8,6 @@
 
 class LorentzBerthelotMixingRule : public MixingRuleBase {
 public:
-	LorentzBerthelotMixingRule() {
-		_parameters = {1.0, 1.0};  // default for eta, xi
-	}
-	~LorentzBerthelotMixingRule(){}
 
 	void readXML(XMLfileUnits& xmlconfig) override {
 		MixingRuleBase::readXML(xmlconfig);
