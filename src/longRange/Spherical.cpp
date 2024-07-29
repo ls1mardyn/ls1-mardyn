@@ -1035,8 +1035,8 @@ void Spherical::calculateLongRange() {
 
 		// Get virial from particle data which was calculated in potforce.h
 		// The "normal" cartisian virial is not relevant here
-		VirShells_N[PartShells[molID]] += tempMol->ViN()*.5; 
-		VirShells_T[PartShells[molID]] += tempMol->ViT()*.25;
+		VirShells_N[PartShells[molID]] += tempMol->ViN(); // * 0.5; // *.5 to keep consistency with legacy (potforce.h didnt calculate exact virn)
+		VirShells_T[PartShells[molID]] += tempMol->ViT();//*.25;// *.25 to keep consistency with legacy (potforce.h didnt calculate exact virt)
 		// Apply LRC for each shell, first spherical specific part, then homogeneous part
 		if (!disableLRC) {
 			VirShells_N[PartShells[molID]] -= 0.5 * PNShells_Mean_global[PartShells[molID]];
@@ -1051,6 +1051,8 @@ void Spherical::calculateLongRange() {
 		// Reset virial (maybe also done in molecule class or by missing communication?)
 		tempMol->setViN(0.0);
 		tempMol->setViT(0.0);
+		double zero3[] = {.0,.0,.0};
+		tempMol->setVi(zero3);
 
 		PNShellsCorr_Avg[PartShells[molID]] -= 0.5 * PNShells_Mean_global[PartShells[molID]];
 		PTShellsCorr_Avg[PartShells[molID]] -= 0.25 * PTShells_Mean_global[PartShells[molID]];

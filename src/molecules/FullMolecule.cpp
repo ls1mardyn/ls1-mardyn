@@ -8,6 +8,47 @@
 #include "utils/Logger.h"
 
 
+#include "Simulation.h"
+
+double FullMolecule::ViN() const{ 
+	// for(int d = 0; d<3; d++){
+	// Log::global_log->info() << "Vi[" << d<<"] of MolID: " << getID() << " : " << _Vi[d] << std::endl;
+	// }
+
+	/* 
+	double centerX =  25.;
+	double centerY =  25.;
+	double centerZ =  25.;
+	// double centerX = _simulation->getDomain()->getGlobalLength(0);
+	// double centerY = _simulation->getDomain()->getGlobalLength(1);
+	// double centerZ = _simulation->getDomain()->getGlobalLength(2);
+	double ksi[] = {_r[0]-centerX, _r[1]-centerY,_r[2]-centerZ};
+	double ksiAbs = std::sqrt(ksi[0]*ksi[0]+ksi[1]*ksi[1]+ksi[2]*ksi[2]); 
+	double VirN_byRotation = (_Vi[0]*ksi[0] + _Vi[1]*ksi[1] + _Vi[2]*ksi[2])/ksiAbs ;
+	return VirN_byRotation;
+
+ */
+
+	// Log::global_log->info() << "ViN       (MolID " << getID() << "): " << _ViSph[0]<< std::endl;
+	// Log::global_log->info() << "ViN_byRotation (MolID " << getID() << "): " << VirN_byRotation << std::endl;
+
+	// return 0;
+	return _ViSph[0];
+}
+
+double FullMolecule::ViT() const 
+{ 
+	// Log::global_log->info() << "ViT            (MolID " << getID() << "): " << _ViSph[1] << std::endl;
+	// return 0;
+	return _ViSph[1];
+}
+
+
+
+
+
+
+
 FullMolecule::FullMolecule(unsigned long id, Component *component,
 	                 double rx,  double ry,  double rz,
 	                 double vx,  double vy,  double vz,
@@ -491,9 +532,12 @@ void FullMolecule::clearFM() {
 	_M[0] = _M[1] = _M[2] = 0.;
 	// std::cout << ">>>Vi[] of MolID: " << getID() << ": [" << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << "]." << std::endl;
 
-	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
-	//_ViSph[0] =  _ViSph[1]= 0., _ViSph[2]= 0.;
-	/* 	ViSph is needed later (by Spherical.cpp).
+
+
+
+					_Vi[0]= _Vi[1]= _Vi[2]= 0.;
+					_ViSph[0] =  _ViSph[1]= 0., _ViSph[2]= 0.;
+	/* 	Virials are needed later (by Spherical.cpp).
 		right now, _Visph is set to zero by Spherical.cpp 
 		---> very bad. this needs to be handled diffeerently. don't know how yet.
 	*/
@@ -608,14 +652,13 @@ void FullMolecule::calcFM() {
 
 		const unsigned index_in_soa = i + _soa_index_c;
 		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::CHARGE, index_in_soa);
-		interimSph = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL_SPHERICAL, ConcSites::SiteType::LJC, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
 		temp_Vi[2] += interim[2];
-		temp_ViSph[0] += interimSph[0];
-		temp_ViSph[1] += interimSph[1];
-		temp_ViSph[2] += interimSph[2];
+		// temp_ViSph[0] += interimSph[0];
+		// temp_ViSph[1] += interimSph[1];
+		// temp_ViSph[2] += interimSph[2];
 	}
 	ns = numDipoles();
 	for (unsigned i = 0; i < ns; ++i) {
@@ -625,14 +668,13 @@ void FullMolecule::calcFM() {
 
 		const unsigned index_in_soa = i + _soa_index_d;
 		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::DIPOLE, index_in_soa);
-		interimSph = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL_SPHERICAL, ConcSites::SiteType::LJC, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
 		temp_Vi[2] += interim[2];
-		temp_ViSph[0] += interimSph[0];
-		temp_ViSph[1] += interimSph[1];
-		temp_ViSph[2] += interimSph[2];
+		// temp_ViSph[0] += interimSph[0];
+		// temp_ViSph[1] += interimSph[1];
+		// temp_ViSph[2] += interimSph[2];
 
 		temp_M[0] += _soa->_dipoles_M.x(index_in_soa);
 		temp_M[1] += _soa->_dipoles_M.y(index_in_soa);
@@ -646,28 +688,27 @@ void FullMolecule::calcFM() {
 
 		const unsigned index_in_soa = i + _soa_index_q;
 		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
-		interimSph = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL_SPHERICAL, ConcSites::SiteType::LJC, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
 		temp_Vi[2] += interim[2];
-		temp_ViSph[0] += interimSph[0];
-		temp_ViSph[1] += interimSph[1];
-		temp_ViSph[2] += interimSph[2];
+		// temp_ViSph[0] += interimSph[0];
+		// temp_ViSph[1] += interimSph[1];
+		// temp_ViSph[2] += interimSph[2];
 
 		temp_M[0] += _soa->_quadrupoles_M.x(index_in_soa);
 		temp_M[1] += _soa->_quadrupoles_M.y(index_in_soa);
 		temp_M[2] += _soa->_quadrupoles_M.z(index_in_soa);
 	}
-	temp_Vi[0] *= 0.5;
+	temp_Vi[0] *= 0.5; //why is this done?
 	temp_Vi[1] *= 0.5;
 	temp_Vi[2] *= 0.5;
 	mardyn_assert(!std::isnan(temp_Vi[0]));
 	mardyn_assert(!std::isnan(temp_Vi[1]));
 	mardyn_assert(!std::isnan(temp_Vi[2]));
 	Viadd(temp_Vi);
-	ViNadd(temp_ViSph[0]);
-	ViTadd(temp_ViSph[1]);
+	ViNadd(temp_ViSph[0]); // *.5 correct here?
+	ViTadd(temp_ViSph[1]*0.5);  // *.5 correct here?
 	Madd(temp_M);
 }
 

@@ -245,30 +245,44 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec center_x = RealCalcVec::set1(cx);
 		const RealCalcVec center_y = RealCalcVec::set1(cy);
 		const RealCalcVec center_z = RealCalcVec::set1(cz);
+		// const RealCalcVec center_x = RealCalcVec::broadcast(&cx);
+		// const RealCalcVec center_y = RealCalcVec::broadcast(&cy);
+		// const RealCalcVec center_z = RealCalcVec::broadcast(&cz);
 		
-		const RealCalcVec m1_ksi_x = m1_r_x - center_x;
-		const RealCalcVec m1_ksi_y = m1_r_y - center_y;
-		const RealCalcVec m1_ksi_z = m1_r_z - center_z;
-		const RealCalcVec m2_ksi_x = m2_r_x - center_x;
-		const RealCalcVec m2_ksi_y = m2_r_y - center_y;
-		const RealCalcVec m2_ksi_z = m2_r_z - center_z;
-		const RealCalcVec m1_ksi2 = RealCalcVec::scal_prod(m1_ksi_x, m1_ksi_y, m1_ksi_z, m1_ksi_x, m1_ksi_y, m1_ksi_z);
-		const RealCalcVec m2_ksi2 = RealCalcVec::scal_prod(m2_ksi_x, m2_ksi_y, m2_ksi_z, m2_ksi_x, m2_ksi_y, m2_ksi_z);
+		const RealCalcVec ksi1_x = r1_x - center_x;
+		const RealCalcVec ksi1_y = r1_y - center_y;
+		const RealCalcVec ksi1_z = r1_z - center_z;
+		// const RealCalcVec m1_ksi_x = m1_r_x - center_x;
+		// const RealCalcVec m1_ksi_y = m1_r_y - center_y;
+		// const RealCalcVec m1_ksi_z = m1_r_z - center_z;
+		const RealCalcVec ksi2_x = r2_x - center_x;
+		const RealCalcVec ksi2_y = r2_y - center_y;
+		const RealCalcVec ksi2_z = r2_z - center_z;
+		// const RealCalcVec m2_ksi_x = m2_r_x - center_x;
+		// const RealCalcVec m2_ksi_y = m2_r_y - center_y;
+		// const RealCalcVec m2_ksi_z = m2_r_z - center_z;
+		const RealCalcVec r1_ksi2 = RealCalcVec::scal_prod(ksi1_x, ksi1_y, ksi1_z, ksi1_x, ksi1_y, ksi1_z);
+		const RealCalcVec r2_ksi2 = RealCalcVec::scal_prod(ksi2_x, ksi2_y, ksi2_z, ksi2_x, ksi2_y, ksi2_z);
+		// const RealCalcVec m1_ksi2 = RealCalcVec::scal_prod(m1_ksi_x, m1_ksi_y, m1_ksi_z, m1_ksi_x, m1_ksi_y, m1_ksi_z);
+		// const RealCalcVec m2_ksi2 = RealCalcVec::scal_prod(m2_ksi_x, m2_ksi_y, m2_ksi_z, m2_ksi_x, m2_ksi_y, m2_ksi_z);
 
 		// const RealCalcVec m_d_abs2 = RealCalcVec::scal_prod(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 		const RealCalcVec c_d_abs2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 		const RealCalcVec f_abs2 = RealCalcVec::scal_prod(f_x, f_y, f_z, f_x, f_y, f_z);
 		// prefactor = sqrt(f_abs2/r1_x) == scale. I have not thought it through for mulit-site mols 
 
-		const RealCalcVec xi_scalar_r = RealCalcVec::scal_prod(m1_ksi_x, m1_ksi_y, m1_ksi_z, m_dx, m_dy, m_dz); 
-		const RealCalcVec xj_scalar_r = RealCalcVec::scal_prod(m2_ksi_x, m2_ksi_y, m2_ksi_z, m_dx, m_dy, m_dz);
-		const RealCalcVec rNij2 = xi_scalar_r * xi_scalar_r / m1_ksi2; 
-		const RealCalcVec rNji2 = xj_scalar_r * xj_scalar_r / m2_ksi2; 
+		const RealCalcVec xi_scalar_r = RealCalcVec::scal_prod(ksi1_x, ksi1_y, ksi1_z, m_dx, m_dy, m_dz); 
+		const RealCalcVec xj_scalar_r = RealCalcVec::scal_prod(ksi2_x, ksi2_y, ksi2_z, m_dx, m_dy, m_dz);//wrong by factor -1, but factor is lost when squared below 
+		const RealCalcVec rNij2 = (xi_scalar_r * xi_scalar_r) / r1_ksi2; 
+		const RealCalcVec rNji2 = (xj_scalar_r * xj_scalar_r) / r2_ksi2;
+
+		// Log::global_log->info() << "VectorizedCellProcessor: scale = "<< scale << std::endl;
+
 
 		V1_n = RealAccumVec::convertCalcToAccum(rNij2 * scale); 
-		V2_n = RealAccumVec::convertCalcToAccum(rNji2 * scale);
+		V2_n = RealAccumVec::convertCalcToAccum(rNji2 * scale); 
 		V1_t = RealAccumVec::convertCalcToAccum((c_d_abs2-rNij2) * scale);
-		V2_t = RealAccumVec::convertCalcToAccum((c_d_abs2-rNji2) * scale);
+		V2_t = RealAccumVec::convertCalcToAccum((c_d_abs2-rNji2) * scale);  
 
 
 
@@ -939,7 +953,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 		 vcp_real_accum * const soa1_ljc_V_y = soa1.getBeginAccum(QuantityType::VIRIAL, SiteType::LJC, Coordinate::Y);
 		 vcp_real_accum * const soa1_ljc_V_z = soa1.getBeginAccum(QuantityType::VIRIAL, SiteType::LJC, Coordinate::Z);
 		 vcp_real_accum * const soa1_ljc_V_n = soa1.getBeginAccum(QuantityType::VIRIAL_SPHERICAL, SiteType::LJC, Coordinate::X); // X used for N
-		 vcp_real_accum * const soa1_ljc_V_t = soa1.getBeginAccum(QuantityType::VIRIAL_SPHERICAL, SiteType::LJC, Coordinate::Y); // Y used for T, Z unused
+		 vcp_real_accum * const soa1_ljc_V_t = soa1.getBeginAccum(QuantityType::VIRIAL_SPHERICAL, SiteType::LJC, Coordinate::Y); // Y used for T
+		//  vcp_real_accum * const soa1_ljc_V__ = soa1.getBeginAccum(QuantityType::VIRIAL_SPHERICAL, SiteType::LJC, Coordinate::Z); // Z unused
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
 	const vcp_ljc_id_t * const soa1_ljc_id = soa1._ljc_id;
 
@@ -1203,7 +1218,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 							m_r_x2, m_r_y2, m_r_z2, c_r_x2, c_r_y2, c_r_z2,
 							fx, fy, fz,
 							Vx, Vy, Vz,
-							V1_t, V1_n, V2_t, V2_n,
+							V1_n, V1_t, V2_n, V2_t,
 							sum_upot6lj, sum_virial,
 							MaskGatherChooser::getForceMask(lookupORforceMask),
 							eps_24, sig2,

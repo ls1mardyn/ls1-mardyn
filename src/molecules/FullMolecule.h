@@ -81,18 +81,8 @@ public:
 	double ViSph(unsigned short d) const override { 
 		// Log::global_log->info() << "ViSph[" << d<<"] of MolID: " << getID() << " : " << _ViSph[d] << std::endl;
 		return _ViSph[d];}
-	double ViN() const override { 
-		// for(int d = 0; d<3; d++){
-		// Log::global_log->info() << "Vi[" << d<<"] of MolID: " << getID() << " : " << _Vi[d] << std::endl;
-		// }
-		
-		// Log::global_log->info() << "ViN*0.5  of MolID " << getID() << ": " << _ViSph[0] * 0.5 << std::endl;
-		// Log::global_log->info() << "ViT*0.25 of MolID " << getID() << ": " << _ViSph[1] * 0.25 << std::endl;
-		return _ViSph[0] * 0.5;
-		}
-	double ViT() const override { 
-		return _ViSph[1]*0.25;
-		}
+	double ViN() const override; // { return this->_ViSph[0]; }
+	double ViT() const override; // { return this->_ViSph[1]; }
 
 
 	/** get the constant correction of potential energy */
@@ -304,16 +294,21 @@ public:
 			_Vi[d] = Vi[d]; 
 		} 
 	}
-	void setViSph(double ViSph[3]) override { 
+void setViSph(double ViSph[3]) override
+	{ 
 		// Log::global_log->info() << ">>>ViSph[] of MolID: " << getID() << " is set to [" << ViSph[0] << ", " << ViSph[1] << ", " << ViSph[2] << "]." << std::endl;
-		for(int d = 0; d < 3; d++) { _ViSph[d] = ViSph[d]; } }
-	void setViN(double ViN) override { 
+		for(int d = 0; d < 3; d++) { _ViSph[d] = ViSph[d]; } 
+	}
+	void setViN(double ViN) override
+	{ 
 		// Log::global_log->info() << ">>>ViN of MolID: " << getID() << " is set to "<< ViN << std::endl;
-		for(int d = 0; d < 3; d++) { _ViSph[0] = ViN; } }
-	void setViT(double ViT) override { 
+		for(int d = 0; d < 3; d++) { _ViSph[0] = ViN; } 
+	}
+	void setViT(double ViT) override
+	 { 
 		// Log::global_log->info() << ">>>ViT of MolID: " << getID() << " is set to "<< ViT <<  std::endl;
-		for(int d = 0; d < 3; d++) { _ViSph[1] = ViT; } }
-
+		for(int d = 0; d < 3; d++) { _ViSph[1] = ViT; } 
+	}
 
 	void setUConstCorr(const double a) override { _upotConstCorr = a; }
 	void setViConstCorr(const double a) override { _ViConstCorr = a/3; } // Correction term assigned to the 3 diagonal elements
