@@ -387,11 +387,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 		#else /* serial */
 			if(parallelisationtype != "DummyDecomposition") {
-				Log::global_log->warning()
+				Log::global_log->error()
 						<< "Executable was compiled without support for parallel execution: "
 						<< parallelisationtype
 						<< " not available. Using serial mode." << std::endl;
-				//mardyn_exit(1);
+				mardyn_exit(1);
 			}
 			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
 		#endif
