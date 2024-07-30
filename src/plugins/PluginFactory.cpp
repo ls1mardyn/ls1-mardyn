@@ -39,6 +39,7 @@
 
 // General plugins
 #include "plugins/COMaligner.h"
+#include "plugins/COMalignerBubble.h"
 #include "plugins/DirectedPM.h"
 #include "plugins/Dropaccelerator.h"
 #include "plugins/Dropaligner.h"
@@ -90,6 +91,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(Adios2Writer);
 #endif
 	REGISTER_PLUGIN(COMaligner);
+	REGISTER_PLUGIN(COMalignerBubble);
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(CommunicationPartnerWriter);
