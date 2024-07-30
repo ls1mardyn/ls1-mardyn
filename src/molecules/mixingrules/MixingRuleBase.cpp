@@ -1,5 +1,6 @@
 #include "MixingRuleBase.h"
 
+#include <algorithm>
 #include <ostream>
 
 #include "utils/Logger.h"
@@ -16,7 +17,7 @@ void MixingRuleBase::readXML(const XMLfileUnits& xmlconfig) {
 	if (cid1 == cid2) {
 		Log::global_log->error() << "Mixing rules: cid1 and cid2 must not be the same but are both " << cid1 << std::endl;
 		mardyn_exit(1);
-	} else if ((cid1 <= 0) or (cid2 <= 0)) {
+	} else if (std::min(cid1, cid2) < 0) {
 		Log::global_log->error() << "Mixing rules: cid1 and cid2 must be greater than zero" << std::endl;
 		mardyn_exit(1);
 	} 
