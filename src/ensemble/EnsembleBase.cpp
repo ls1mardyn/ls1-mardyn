@@ -4,6 +4,7 @@
 #include "molecules/mixingrules/LorentzBerthelot.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
 #include "Simulation.h"
 #include "Domain.h"
 
@@ -24,7 +25,7 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "Number of components: " << numComponents << std::endl;
 	if (numComponents == 0) {
 		Log::global_log->fatal() << "No components found. Please verify that you have input them correctly." << std::endl;
-		Simulation::exit(96123);
+		mardyn_exit(96123);
 	}
 	_components.resize(numComponents);
 	XMLfile::Query::const_iterator componentIter;
@@ -63,7 +64,7 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 
 		} else {
 			Log::global_log->error() << "Unknown mixing rule " << mixingruletype << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		mixingrule->readXML(xmlconfig);
 		_mixingrules.push_back(mixingrule);

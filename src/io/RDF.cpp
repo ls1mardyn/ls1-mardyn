@@ -3,6 +3,7 @@
 #include "Domain.h"
 #include "molecules/Component.h"
 #include "parallel/DomainDecompBase.h"
+#include "utils/mardyn_assert.h"
 #include "Simulation.h"
 #include "utils/Logger.h"
 
@@ -33,7 +34,7 @@ RDF::RDF() :
 void RDF::init() {
 	if(!_readConfig){
 		Log::global_log->error() << "RDF initialized without reading the configuration, exiting" << std::endl;
-		Simulation::exit(25);
+		mardyn_exit(25);
 	}
 
 	_cellProcessor = new RDFCellProcessor(global_simulation->getcutoffRadius(), this);

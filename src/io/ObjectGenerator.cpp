@@ -3,7 +3,7 @@
 #include <limits>
 #include <chrono>
 
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"
 #include "molecules/MoleculeIdPool.h"
@@ -25,14 +25,14 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		_filler = std::shared_ptr<ObjectFillerBase>(objectFillerFactory.create(fillerType));
 		if(!_filler) {
 			Log::global_log->error() << "Object filler could not be created" << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		Log::global_log->debug() << "Using object filler of type: " << _filler->getPluginName() << std::endl;
 		_filler->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	} else {
 		Log::global_log->error() << "No filler specified." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	if(xmlconfig.changecurrentnode("object")) {
@@ -49,7 +49,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode("..");
 	} else {
 		Log::global_log->error() << "No object specified." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	if(xmlconfig.changecurrentnode("velocityAssigner")) {
@@ -79,7 +79,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 			_velocityAssigner = std::make_shared<MaxwellVelocityAssigner>(0, seed);
 		} else {
 			Log::global_log->error() << "Unknown velocity assigner specified." << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		Ensemble* ensemble = _simulation.getEnsemble();
 		Log::global_log->info() << "Setting temperature for velocity assigner to " << ensemble->T() << std::endl;

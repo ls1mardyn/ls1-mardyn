@@ -157,11 +157,6 @@ Simulation::~Simulation() {
 	_plugins.remove_if([](PluginBase *pluginPtr) {delete pluginPtr; return true;} );
 }
 
-void Simulation::exit(int exitcode) {
-	// .. to avoid code duplication ..
-	mardyn_exit(exitcode);
-}
-
 void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	/* timers */
 	if(xmlconfig.changecurrentnode("programtimers")) {
@@ -177,14 +172,14 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		if(integratorType == "Leapfrog") {
 #ifdef ENABLE_REDUCED_MEMORY_MODE
 			Log::global_log->error() << "The reduced memory mode (RMM) requires the LeapfrogRMM integrator." << std::endl;
-			Simulation::exit(-1);
+			mardyn_exit(-1);
 #endif
 			_integrator = new Leapfrog();
 		} else if (integratorType == "LeapfrogRMM") {
 			_integrator = new LeapfrogRMM();
 		} else {
 			Log::global_log-> error() << "Unknown integrator " << integratorType << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		_integrator->readXML(xmlconfig);
 		_integrator->init();
@@ -227,7 +222,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_ensemble = new GrandCanonicalEnsemble();
 		} else {
 			Log::global_log->error() << "Unknown ensemble type: " << ensembletype << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		_ensemble->readXML(xmlconfig);
 		/** @todo Here we store data in the _domain member as long as we do not use the ensemble everywhere */
@@ -240,7 +235,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 	else {
 		Log::global_log->error() << "Ensemble section missing." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	//The mixing coefficents have to be read in the ensemble part
@@ -276,13 +271,13 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_cutoffRadius = std::max(_cutoffRadius, _LJCutoffRadius);
 			if(_cutoffRadius <= 0) {
 				Log::global_log->error() << "cutoff radius <= 0." << std::endl;
-				Simulation::exit(1);
+				mardyn_exit(1);
 			}
 			Log::global_log->info() << "dimensionless cutoff radius:\t" << _cutoffRadius << std::endl;
 			xmlconfig.changecurrentnode("..");
 		} else {
 			Log::global_log->error() << "Cutoff section missing." << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 
 		/* electrostatics */
@@ -295,7 +290,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.changecurrentnode("..");
 		} else {
 			Log::global_log->error() << "Electrostatics section for reaction field setup missing." << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 
 		if (xmlconfig.changecurrentnode("electrostatic[@type='FastMultipoleMethod']")) {
@@ -303,7 +298,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			Log::global_log->fatal()
 				<< "The fast multipole method is not compatible with AutoPas. Please disable the AutoPas mode (ENABLE_AUTOPAS)!"
 				<< std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 #endif
 			_FMM = new bhfmm::FastMultipoleMethod();
 			_FMM->readXML(xmlconfig);
@@ -362,7 +357,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 												   "vs the GeneralDomainDecomposition which can lead ALL to shrink the "
 												   "domain too small."
 												  << std::endl;
-							this->exit(512435340);
+							mardyn_exit(512435340);
 						}
 					} else {
 						Log::global_log->warning() << "Using the GeneralDomainDecomposition without AutoPas is not "
@@ -378,17 +373,17 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					Log::global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
 				} else {
 					Log::global_log->error() << "Datastructure section missing" << std::endl;
-					Simulation::exit(1);
+					mardyn_exit(1);
 				}
 				if(not xmlconfig.changecurrentnode("../parallelisation")){
 					Log::global_log->error() << "Could not go back to parallelisation path. Aborting." << std::endl;
-					Simulation::exit(1);
+					mardyn_exit(1);
 				}
 				delete _domainDecomposition;
 				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid);
 			} else {
 				Log::global_log->error() << "Unknown parallelisation type: " << parallelisationtype << std::endl;
-				Simulation::exit(1);
+				mardyn_exit(1);
 			}
 		#else /* serial */
 			if(parallelisationtype != "DummyDecomposition") {
@@ -396,7 +391,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 						<< "Executable was compiled without support for parallel execution: "
 						<< parallelisationtype
 						<< " not available. Using serial mode." << std::endl;
-				//Simulation::exit(1);
+				//mardyn_exit(1);
 			}
 			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
 		#endif
@@ -423,7 +418,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 							   << "time steps for the load calculation." << std::endl;
 			if(timerForLoadAveragingLength < 1ul) {
 				Log::global_log->fatal() << "timerForLoadAveragingLength has to be at least 1" << std::endl;
-				Simulation::exit(15843);
+				mardyn_exit(15843);
 			}
 			_lastTraversalTimeHistory.setCapacity(timerForLoadAveragingLength);
 
@@ -432,7 +427,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else {
 		#ifdef ENABLE_MPI
 			Log::global_log->error() << "Parallelisation section missing." << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		#else /* serial */
 			// set _timerForLoad, s.t. it always exists.
 			_timerForLoad = timers()->getTimer("SIMULATION_COMPUTATION");
@@ -450,7 +445,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				Log::global_log->fatal()
 					<< "LinkedCells not compiled (use AutoPas instead, or compile with disabled autopas mode)!"
 					<< std::endl;
-				Simulation::exit(33);
+				mardyn_exit(33);
 #else
 				_moleculeContainer = new LinkedCells();
 				/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
@@ -459,7 +454,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 #endif
 			} else if(datastructuretype == "AdaptiveSubCells") {
 				Log::global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
-				Simulation::exit(-1);
+				mardyn_exit(-1);
 			} else if(datastructuretype == "AutoPas" || datastructuretype == "AutoPasContainer") {
 #ifdef MARDYN_AUTOPAS
 				Log::global_log->info() << "Using AutoPas container." << std::endl;
@@ -467,12 +462,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				Log::global_log->info() << "Setting cell cutoff radius for AutoPas container to " << _cutoffRadius << std::endl;
 #else
 				Log::global_log->fatal() << "AutoPas not compiled (use LinkedCells instead, or compile with enabled autopas mode)!" << std::endl;
-				Simulation::exit(33);
+				mardyn_exit(33);
 #endif
 			}
 			else {
 				Log::global_log->error() << "Unknown data structure type: " << datastructuretype << std::endl;
-				Simulation::exit(1);
+				mardyn_exit(1);
 			}
 			_moleculeContainer->readXML(xmlconfig);
 
@@ -484,7 +479,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.changecurrentnode("..");
 		} else {
 			Log::global_log->error() << "Datastructure section missing" << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 
 		// TODO: move parts to readXML in TemperatureControl?
@@ -528,7 +523,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
                     } else {
                         Log::global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..."
                                             << std::endl;
-                        Simulation::exit(-1);
+                        mardyn_exit(-1);
                     }
                 }
 				else
@@ -551,7 +546,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			if( !xmlconfig.getNodeValue("@type", type) )
 			{
 				Log::global_log->error() << "LongRangeCorrection: Missing type specification. Program exit ..." << std::endl;
-				Simulation::exit(-1);
+				mardyn_exit(-1);
 			}
 			if("planar" == type)
 			{
@@ -575,7 +570,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			else
 			{
 				Log::global_log->error() << "LongRangeCorrection: Wrong type. Expected type == homogeneous|planar|none. Program exit ..." << std::endl;
-                Simulation::exit(-1);
+                mardyn_exit(-1);
 			}
 			xmlconfig.changecurrentnode("..");
 		} else {
@@ -641,7 +636,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 #endif
 		else {
 			Log::global_log->error() << "Unknown phase space file type" << std::endl;
-			Simulation::exit(-1);
+			mardyn_exit(-1);
 		}
 	}
 	xmlconfig.changecurrentnode(oldpath);
@@ -671,7 +666,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else {
 			Log::global_log->error() << "Unknown generator: " << generatorName << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		_inputReader->readXML(xmlconfig);
 	}
@@ -706,7 +701,7 @@ void Simulation::readConfigFile(std::string filename) {
 	}
 	else {
 		Log::global_log->error() << "Unknown config file extension '" << extension << "'." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 }
 
@@ -721,7 +716,7 @@ void Simulation::initConfigXML(const std::string& inputfilename) {
 		if(inp.changecurrentnode("/mardyn") < 0) {
 			Log::global_log->error() << "Cound not find root node /mardyn in XML input file." << std::endl;
 			Log::global_log->fatal() << "Not a valid MarDyn XML input file." << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 
 		std::string version("unknown");
@@ -736,7 +731,7 @@ void Simulation::initConfigXML(const std::string& inputfilename) {
 		} // simulation-section
 		else {
 			Log::global_log->error() << "Simulation section missing" << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 
 		parseMiscOptions(inp);
@@ -749,7 +744,7 @@ void Simulation::initConfigXML(const std::string& inputfilename) {
 	} catch (const std::exception& e) {
 		Log::global_log->error() << "Error in XML config. Please check your input file!" << std::endl;
 		Log::global_log->error() << "Exception: " << e.what() << std::endl;
-		Simulation::exit(7);
+		mardyn_exit(7);
 	}
 
 #ifdef ENABLE_MPI
@@ -875,7 +870,7 @@ void Simulation::prepare_start() {
 		_longRangeCorrection->init();
 	} else {
 		Log::global_log->fatal() << "No _longRangeCorrection set!" << std::endl;
-		Simulation::exit(93742);
+		mardyn_exit(93742);
 	}
 	// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
 	_longRangeCorrection->calculateLongRange();
@@ -970,7 +965,7 @@ void Simulation::preSimLoopSteps()
 	{
 		Log::global_log->error() << "Unexpected call to preSimLoopSteps()! Status: (pre sim loop steps done:" << preSimLoopStepsDone << ", simulation done: " << simulationDone << 
 					", post sim loop steps done: " << postSimLoopStepsDone << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 
@@ -1032,7 +1027,7 @@ void Simulation::simulateOneTimestep()
 	{
 		Log::global_log->error() << "Unexpected call to simulateOneTimeStep()! Status: (pre sim loop steps done:" << preSimLoopStepsDone << ", simulation done: " << simulationDone << 
 					", post sim loop steps done: " << postSimLoopStepsDone << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	#ifdef MAMICO_COUPLING
@@ -1263,7 +1258,7 @@ void Simulation::postSimLoopSteps()
 	{
 		Log::global_log->error() << "Unexpected call to postSimLoopSteps()! Status: (pre sim loop steps done:" << preSimLoopStepsDone << ", simulation done: " << simulationDone << 
 					", post sim loop steps done: " << postSimLoopStepsDone << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 
@@ -1328,7 +1323,7 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 					   << _domain->getGlobalPressure() << std::endl;
 	if (std::isnan(_domain->getGlobalCurrentTemperature()) || std::isnan(_domain->getGlobalUpot()) || std::isnan(_domain->getGlobalPressure())) {
 		Log::global_log->error() << "NaN detected, exiting." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 }
 
@@ -1398,7 +1393,7 @@ void Simulation::performOverlappingDecompositionAndCellTraversalStep(double etim
 	auto* dd = dynamic_cast<DomainDecompMPIBase*>(_domainDecomposition);
 	if (not dd) {
 		Log::global_log->fatal() << "DomainDecompMPIBase* required for overlapping comm, but dynamic_cast failed." << std::endl;
-		Simulation::exit(873456);
+		mardyn_exit(873456);
 	}
 	NonBlockingMPIMultiStepHandler nonBlockingMPIHandler {dd, _moleculeContainer, _domain, _cellProcessor};
 
@@ -1407,7 +1402,7 @@ void Simulation::performOverlappingDecompositionAndCellTraversalStep(double etim
 	nonBlockingMPIHandler.performOverlappingTasks(forceRebalancing, etime);
 #else
 	Log::global_log->fatal() << "performOverlappingDecompositionAndCellTraversalStep() called with disabled MPI." << std::endl;
-	Simulation::exit(873457);
+	mardyn_exit(873457);
 #endif
 }
 

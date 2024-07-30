@@ -7,6 +7,7 @@
 
 #include "UniformPseudoParticleContainer.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "Domain.h"
 #include "utils/Logger.h"
 #include "particleContainer/ParticleContainer.h"
@@ -111,7 +112,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 #endif
 #if WIGNER == 1
 	//global_log->error() << "not supported yet" << std::endl;
-	Simulation::exit(-1);
+	mardyn_exit(-1);
 #endif
 #ifdef ENABLE_MPI
 	/*
@@ -175,7 +176,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_globalLevel = ceil(log2(numProcessors)/3.0);
 	if(_globalLevel > _maxLevel){
 		std::cout << "too many MPI ranks \n";
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 	//numProcessers has to be a power of 2
 	mardyn_assert(pow(2,log2(numProcessors)) == numProcessors);
@@ -378,7 +379,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		MPI_Comm_size(_neighbourhoodComms[i], &size2);
 		if(size2 > 8){ //neighbourhood comms need to have size 8
 			std::cout << "Error wrong communicator \n";
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 	}
 #endif

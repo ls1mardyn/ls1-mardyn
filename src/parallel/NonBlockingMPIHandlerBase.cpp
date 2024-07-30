@@ -7,6 +7,7 @@
 
 #include "NonBlockingMPIHandlerBase.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "parallel/DomainDecompMPIBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/adapter/CellProcessor.h"

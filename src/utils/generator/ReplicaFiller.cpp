@@ -6,12 +6,13 @@
 #include <limits>
 #include <vector>
 
+#include "Simulation.h"
 #include "molecules/Molecule.h"
 #include "io/InputBase.h"
 #include "io/BinaryReader.h"
 #include "utils/Logger.h"
 #include "utils/Coordinate3D.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/ParticleCellBase.h"
 
@@ -146,18 +147,18 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("@type", inputPluginName);
 		if (inputPluginName != "BinaryReader") {
 			Log::global_log->error() << "[ReplicaFiller] ReplicaFiller only works with inputPlugins: BinaryReader at the moment" << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		setInputReader(std::make_shared<BinaryReader>());
 		_inputReader->readXML(xmlconfig);
 		if (_inputReader == nullptr) {
 			Log::global_log->error() << "[ReplicaFiller] Could not create input reader " << inputPluginName << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		xmlconfig.changecurrentnode("..");
 	} else {
 		Log::global_log->error() << "[ReplicaFiller] Input reader for original not specified." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	if (xmlconfig.changecurrentnode("origin")) {
 		Coordinate3D origin;
@@ -176,7 +177,7 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 		const size_t numComps = global_simulation->getEnsemble()->getComponents()->size();
 		if ((componentid < 1) || (componentid > numComps)) {
 			Log::global_log->error() << "[ReplicaFiller] Specified componentid is invalid. Valid range: 1 <= componentid <= " << numComps << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		_componentid = componentid - 1;  // Internally stored in array starting at index 0
 		_keepComponent = false;
@@ -205,7 +206,7 @@ void ReplicaFiller::init() {
 
 	if (numberOfParticles == 0) {
 		Log::global_log->error_always_output() << "[ReplicaFiller] No molecules in replica, aborting! " << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	Log::global_log->info() << "[ReplicaFiller] Setting simulation time to 0.0" << std::endl;

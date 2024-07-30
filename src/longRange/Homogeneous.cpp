@@ -8,6 +8,7 @@
 #include "particleContainer/ParticleContainer.h"
 
 #include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
 
 
 Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* domain, ParticleContainer* particleContainer, Simulation* simulation) {
@@ -81,7 +82,7 @@ void Homogeneous::init() {
 					double tau2 = sqrt(xj * xj + yj * yj + zj * zj);
 					if (tau1 + tau2 >= _cutoffLJ) {
 						Log::global_log->error() << "Error calculating cutoff corrections, rc too small" << std::endl;
-						Simulation::exit(1);
+						mardyn_exit(1);
 					}
 					double eps24;
 					params >> eps24;

@@ -13,7 +13,9 @@
 
 #include "Common.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
 
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleCell.h"
@@ -434,6 +436,6 @@ void MPI_IOCheckpointWriter::handle_error(int i) {
 
 	Log::global_log->error() << "Writing of file was not successfull " << " , " << i
 			<< " , " << error_string << std::endl;
-	Simulation::exit(1);
+	mardyn_exit(1);
 #endif
 }

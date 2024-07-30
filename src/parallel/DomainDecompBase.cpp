@@ -2,7 +2,6 @@
 #include <fstream>
 
 #include "parallel/DomainDecompBase.h"
-#include "Simulation.h"
 #include "Domain.h"
 #include "ensemble/EnsembleBase.h"
 #include "particleContainer/ParticleContainer.h"
@@ -233,7 +232,7 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 	auto shiftAndAdd = [&moleculeContainer, haloRegion, shift](Molecule& m) {
 		if (not m.inBox(haloRegion.rmin, haloRegion.rmax)) {
 			Log::global_log->error() << "trying to remove a particle that is not in the halo region" << std::endl;
-			Simulation::exit(456);
+			mardyn_exit(456);
 		}
 		for (int dim = 0; dim < 3; dim++) {
 			if (shift[dim] != 0) {

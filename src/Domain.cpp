@@ -11,6 +11,7 @@
 #include "molecules/Molecule.h"
 //#include "CutoffCorrections.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "ensemble/EnsembleBase.h"
 
 #ifdef ENABLE_MPI
@@ -701,6 +702,15 @@ void Domain::enableComponentwiseThermostat()
 			this->_componentToThermostatIdMap[ tc->ID() ] = -1;
 		}
 	}
+}
+
+void Domain::setComponentThermostat(int cid, int thermostat) {
+	if ((0 > cid) || (0 >= thermostat)) {
+		Log::global_log->error() << "Domain::setComponentThermostat: cid or thermostat id too low" << std::endl;
+		mardyn_exit(787);
+	}
+	this->_componentToThermostatIdMap[cid] = thermostat;
+	this->_universalThermostatN[thermostat] = 0;
 }
 
 void Domain::enableUndirectedThermostat(int tst)

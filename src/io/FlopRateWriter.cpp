@@ -10,6 +10,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/adapter/FlopCounter.h"
 #include "parallel/DomainDecompBase.h"
+#include "utils/mardyn_assert.h"
 #include "Simulation.h"
 
 void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
@@ -35,7 +36,7 @@ void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
 	// TODO:
 	if(_writeToFile) {
 		Log::global_log->error() << "TODO: file output not yet supported." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	if(_writeToFile) {

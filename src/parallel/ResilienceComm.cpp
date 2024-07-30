@@ -11,7 +11,9 @@
 #include <climits> /* UINT64_MAX */
 
 #include <sstream>
+
 #include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
 
 //pretty much default
 ResilienceComm::ResilienceComm(int numProcs, int rank)

@@ -6,6 +6,7 @@
 #include "Domain.h"
 #include "IOHelpers.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
@@ -42,7 +43,7 @@ void PerCellGenerator::readXML(XMLfileUnits &xmlconfig) {
 		Log::global_log->info() << "numMoleculesPerCell: " << _numMoleculesPerCell << std::endl;
 	} else {
 		Log::global_log->error() << "Missing required field numMoleculesPerCell. Aborting!" << std::endl;
-		Simulation::exit(1949);
+		mardyn_exit(1949);
 	}
 
 	xmlconfig.getNodeValue("initTemperature", _initTemperature);
@@ -50,7 +51,7 @@ void PerCellGenerator::readXML(XMLfileUnits &xmlconfig) {
 		Log::global_log->info() << "initTemperature: " << _initTemperature << std::endl;
 	} else {
 		Log::global_log->error() << "Missing required field initTemperature. Aborting!" << std::endl;
-		Simulation::exit(1949);
+		mardyn_exit(1949);
 	}
 
 	xmlconfig.getNodeValue("generateAtLeastTwoParticles", _generateAtLeastTwoParticles);

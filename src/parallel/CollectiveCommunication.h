@@ -3,7 +3,6 @@
 
 #include <mpi.h>
 
-#include "Simulation.h"
 #include "utils/Logger.h"
 #include "CollectiveCommBase.h"
 #include "CollectiveCommunicationInterface.h"
@@ -172,7 +171,7 @@ public:
 			break;
 		default:
 			Log::global_log->error()<<"invalid reducetype, aborting." << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 
 		MPI_CHECK(
@@ -194,7 +193,7 @@ public:
 				break;
 			default:
 				Log::global_log->error()<<"invalid reducetype, aborting." << std::endl;
-				Simulation::exit(1);
+				mardyn_exit(1);
 			}
 			MPI_CHECK(MPI_Allreduce( MPI_IN_PLACE, &_values[i], 1, _types[i], op, _communicator ));
 		}
