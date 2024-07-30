@@ -553,7 +553,7 @@ void Domain::writeCheckpointHeader(std::string filename,
 						}
 					} else {
 						Log::global_log->error() << "Only LB mixing rule supported" << std::endl;
-						Simulation::exit(123);
+						mardyn_exit(123);
 					}
 				}
 			}
