@@ -133,7 +133,7 @@ protected:
 	std::map<std::string, int> _componentnamesToIds;
 	// The mixing rules (xi,eta) can be accessed by _mixingrules[cid1][cid2]
 	// Note that cid1 < cid2 and that cid is in internal format, i.e. starts with 0
-	std::map<int, std::map<int, std::shared_ptr<MixingRuleBase>>> _mixingrules;
+	MixingRuleBase::MixRulesType _mixingrules;
 	DomainBase* _domain;
 	Type _type = undefined;
 

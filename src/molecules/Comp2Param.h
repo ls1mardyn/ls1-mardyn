@@ -2,7 +2,6 @@
 #define COMP2PARAM_H_
 
 #include <vector>
-#include <memory>
 
 #include "molecules/Component.h"
 #include "molecules/Array2D.h"
@@ -15,9 +14,6 @@
  * @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
  */
 class Comp2Param {
-
-    using MixRulesType = std::map<int,std::map<int,std::shared_ptr<MixingRuleBase>>>;
-
     public:
         /** Create a new empty parameter stream. */
         Comp2Param() : m_numcomp(0), m_ssparatbl(0,0) {}
@@ -26,7 +22,7 @@ class Comp2Param {
          * the given components and parameters.
          */
         Comp2Param(const std::vector<Component>& components,
-				   const MixRulesType & mixcoeff,
+				   const MixingRuleBase::MixRulesType & mixcoeff,
 				   double epsRF, double rc, double rcLJ) :
 			m_numcomp(components.size()), m_ssparatbl(m_numcomp,m_numcomp)
 		{
@@ -43,7 +39,7 @@ class Comp2Param {
          *   The order of the entries must correspond to the
          *   PotForce() function found in potforce.h reading the stream
          */
-        void initialize(const std::vector<Component>& components, const MixRulesType & mixcoeff, double epsRF, double rc, double rcLJ);
+        void initialize(const std::vector<Component>& components, const MixingRuleBase::MixRulesType & mixcoeff, double epsRF, double rc, double rcLJ);
 
     private:
         unsigned int m_numcomp;  /**< number of components */
