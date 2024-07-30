@@ -4,7 +4,7 @@
 #include <functional>
 
 #include "utils/Logger.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "molecules/mixingrules/MixingRuleBase.h"
 
 
@@ -59,7 +59,7 @@ void Comp2Param::initialize(
 							[=](double epsi, double epsj) { return xi * sqrt(epsi * epsj); }};  // mixingEpsilon
 				} else {
 					Log::global_log->error() << "Mixing: Only LB rule supported" << std::endl;
-					Simulation::exit(1);
+					mardyn_exit(1);
 					return {};
 				}
 			}();

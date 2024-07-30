@@ -5,7 +5,6 @@
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 #include "utils/mardyn_assert.h"
-#include "Simulation.h"
 #include "Domain.h"
 
 #include <vector>
@@ -70,7 +69,7 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		if (cid2 >= numComponents) {
 			Log::global_log->error() << "Mixing: cid=" << cid2+1 << " is larger than number of components ("
 									 << numComponents << ")" << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		_mixingrules[cid1][cid2] = mixingrule;
 	}
@@ -117,16 +116,16 @@ void Ensemble::setMixingrule(std::shared_ptr<MixingRuleBase> mixingrule) {
 	// Check if cids are valid
 	if (cid1 == cid2) {
 		Log::global_log->error() << "Mixing setMixingrule: cids must not be the same" << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	if (std::min(cid1, cid2) < 0) {
 		Log::global_log->error() << "Mixing setMixingrule: cids must not be negative" << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	if (std::max(cid1, cid2) >= _components.size()) {
 		Log::global_log->error() << "Mixing setMixingrule: cids must not exceed number of components ("
 								 << _components.size() << ")" << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	
 	_mixingrules[cid1][cid2] = mixingrule;
