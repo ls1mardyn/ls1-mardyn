@@ -79,7 +79,7 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		for (int cidj = cidi+1; cidj < numComponents; ++cidj) {  // cidj is always larger than cidi
 			if (_mixingrules[cidi].count(cidj) == 0) {
 				// Only LorentzBerthelot is supported until now
-				std::shared_ptr<LorentzBerthelotMixingRule> mixingrule = std::make_shared<LorentzBerthelotMixingRule>();
+				auto mixingrule = std::make_shared<LorentzBerthelotMixingRule>();
 				mixingrule->setCid1(cidi);
 				mixingrule->setCid2(cidj);
 				_mixingrules[cidi][cidj] = mixingrule;
