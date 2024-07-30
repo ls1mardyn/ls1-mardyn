@@ -5,10 +5,11 @@
 
 #include "utils/Logger.h"
 #include "Simulation.h"
+#include "molecules/mixingrules/MixingRuleBase.h"
 
 
 void Comp2Param::initialize(
-		const std::vector<Component>& components, const MixRulesType & mixcoeff,
+		const std::vector<Component>& components, const MixingRuleBase::MixRulesType & mixcoeff,
 		double epsRF, double rc, double rcLJ)
 {
 	m_numcomp = components.size();

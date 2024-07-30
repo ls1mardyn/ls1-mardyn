@@ -1,13 +1,17 @@
 #ifndef MIXINGRULE_BASE_H_
 #define MIXINGRULE_BASE_H_
 
+#include <map>
 #include <string>
 #include <vector>
+#include <memory>
 
 class XMLfileUnits;
 
 class MixingRuleBase {
  public:
+	using MixRulesType = typename std::map<int,std::map<int,std::shared_ptr<MixingRuleBase>>>;
+
 	virtual ~MixingRuleBase() = default;
 
 	virtual void readXML(const XMLfileUnits& xmlconfig);
