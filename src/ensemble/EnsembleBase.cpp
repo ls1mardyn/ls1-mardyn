@@ -48,7 +48,6 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 
 	for(mixingruletIter = query.begin(); mixingruletIter; mixingruletIter++) {
 		xmlconfig.changecurrentnode(mixingruletIter);
-		// MixingRuleBase* mixingrule = nullptr;
 		std::shared_ptr<MixingRuleBase> mixingrule;
 		std::string mixingruletype;
 
