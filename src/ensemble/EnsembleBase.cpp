@@ -16,11 +16,6 @@
 Ensemble::~Ensemble() {
 	delete _domain;
 	_domain = nullptr;
-	for(auto const &cid1 : _mixingrules) {
-		for(auto const &cid2 : cid1.second) {
-			delete(cid2.second);
-	}
-}
 }
 
 void Ensemble::readXML(XMLfileUnits& xmlconfig) {
@@ -55,13 +50,13 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	for(mixingruletIter = query.begin(); mixingruletIter; mixingruletIter++) {
 		xmlconfig.changecurrentnode(mixingruletIter);
 		// MixingRuleBase* mixingrule = nullptr;
-		std::unique_ptr<MixingRuleBase> mixingrule;
+		std::shared_ptr<MixingRuleBase> mixingrule;
 		std::string mixingruletype;
 
 		xmlconfig.getNodeValue("@type", mixingruletype);
 		Log::global_log->info() << "Mixing rule type: " << mixingruletype << std::endl;
 		if ("LB" == mixingruletype) {
-			mixingrule = std::make_unique<LorentzBerthelotMixingRule>();
+			mixingrule = std::make_shared<LorentzBerthelotMixingRule>();
 
 		} else {
 			Log::global_log->error() << "Unknown mixing rule " << mixingruletype << std::endl;
@@ -78,17 +73,17 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 									 << numComponents << ")" << std::endl;
 			Simulation::exit(1);
 		}
-		_mixingrules[cid1][cid2] = mixingrule.get();
+		_mixingrules[cid1][cid2] = mixingrule;
 	}
 	// Use xi=eta=1.0 as default if no rule was specified
 	for (int cidi = 0; cidi < numComponents; ++cidi) {
 		for (int cidj = cidi+1; cidj < numComponents; ++cidj) {  // cidj is always larger than cidi
 			if (_mixingrules[cidi].count(cidj) == 0) {
 				// Only LorentzBerthelot is supported until now
-				std::unique_ptr<LorentzBerthelotMixingRule> mixingrule = std::make_unique<LorentzBerthelotMixingRule>();
+				std::shared_ptr<LorentzBerthelotMixingRule> mixingrule = std::make_shared<LorentzBerthelotMixingRule>();
 				mixingrule->setCid1(cidi);
 				mixingrule->setCid2(cidj);
-				_mixingrules[cidi][cidj] = mixingrule.get();
+				_mixingrules[cidi][cidj] = mixingrule;
 				Log::global_log->warning() << "Mixing coefficients for components "
 										   << mixingrule->getCid1()+1 << " + " << mixingrule->getCid2()+1  // +1 due to internal cid
 										   << " set to default (LB with xi=eta=1.0)" << std::endl;
@@ -114,7 +109,7 @@ void Ensemble::setComponentLookUpIDs() {
 	}
 }
 
-void Ensemble::setMixingrule(MixingRuleBase* mixingrule) {
+void Ensemble::setMixingrule(std::shared_ptr<MixingRuleBase> mixingrule) {
 	const int cid1 = mixingrule->getCid1();
 	const int cid2 = mixingrule->getCid2();
 	// Check if cids are valid

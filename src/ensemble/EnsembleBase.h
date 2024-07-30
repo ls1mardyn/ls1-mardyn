@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 
 #include "DomainBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
@@ -123,7 +124,7 @@ public:
 	auto & getMixingrules() { return _mixingrules; }
 
 	// Set one mixing rule
-	void setMixingrule(MixingRuleBase* mixingrule);
+	void setMixingrule(std::shared_ptr<MixingRuleBase> mixingrule);
 
 protected:
 
@@ -132,7 +133,7 @@ protected:
 	std::map<std::string, int> _componentnamesToIds;
 	// The mixing rules (xi,eta) can be accessed by _mixingrules[cid1][cid2]
 	// Note that cid1 < cid2 and that cid is in internal format, i.e. starts with 0
-	std::map<int, std::map<int, MixingRuleBase*>> _mixingrules;
+	std::map<int, std::map<int, std::shared_ptr<MixingRuleBase>>> _mixingrules;
 	DomainBase* _domain;
 	Type _type = undefined;
 
