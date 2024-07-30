@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 
 Ensemble::~Ensemble() {
@@ -52,13 +53,14 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 
 	for(mixingruletIter = query.begin(); mixingruletIter; mixingruletIter++) {
 		xmlconfig.changecurrentnode(mixingruletIter);
-		MixingRuleBase* mixingrule = nullptr;
+		// MixingRuleBase* mixingrule = nullptr;
+		std::unique_ptr<MixingRuleBase> mixingrule;
 		std::string mixingruletype;
 
 		xmlconfig.getNodeValue("@type", mixingruletype);
 		Log::global_log->info() << "Mixing rule type: " << mixingruletype << std::endl;
 		if ("LB" == mixingruletype) {
-			mixingrule = new LorentzBerthelotMixingRule();
+			mixingrule = std::make_unique<LorentzBerthelotMixingRule>();
 
 		} else {
 			Log::global_log->error() << "Unknown mixing rule " << mixingruletype << std::endl;
@@ -75,17 +77,17 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 									 << numComponents << ")" << std::endl;
 			Simulation::exit(1);
 		}
-		_mixingrules[cid1][cid2] = mixingrule;
+		_mixingrules[cid1][cid2] = mixingrule.get();
 	}
 	// Use xi=eta=1.0 as default if no rule was specified
 	for (int cidi = 0; cidi < numComponents; ++cidi) {
 		for (int cidj = cidi+1; cidj < numComponents; ++cidj) {  // cidj is always larger than cidi
 			if (_mixingrules[cidi].count(cidj) == 0) {
 				// Only LorentzBerthelot is supported until now
-				LorentzBerthelotMixingRule* mixingrule = new LorentzBerthelotMixingRule();
+				std::unique_ptr<LorentzBerthelotMixingRule> mixingrule = std::make_unique<LorentzBerthelotMixingRule>();
 				mixingrule->setCid1(cidi);
 				mixingrule->setCid2(cidj);
-				_mixingrules[cidi][cidj] = mixingrule;
+				_mixingrules[cidi][cidj] = mixingrule.get();
 				Log::global_log->warning() << "Mixing coefficients for components "
 										   << mixingrule->getCid1()+1 << " + " << mixingrule->getCid2()+1  // +1 due to internal cid
 										   << " set to default (LB with xi=eta=1.0)" << std::endl;
