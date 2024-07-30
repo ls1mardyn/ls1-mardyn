@@ -1,8 +1,8 @@
 /*
  * SphericalSampling.cpp
  *
- *  Created on: Feb 2022
- *      Author: homes
+ *  Created on: July 2024
+ *      Author: JakNiem
  */
 
 #include "SphericalSampling.h"
@@ -81,48 +81,50 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
     CommVar<std::vector<double>> ekin_step;                        // Including drift energy
     CommVar<std::vector<double>> virN_step;
     CommVar<std::vector<double>> virT_step;
+    CommVar<std::vector<double>> velocityN_step;
     std::array<CommVar<std::vector<double>>, 3> ekinVect_step;
-    std::array<CommVar<std::vector<double>>, 3> velocityVect_step;
     std::array<CommVar<std::vector<double>>, 3> virialVect_step;
 
     numMolecules_step.local.resize(_lenVector);
     mass_step.local.resize(_lenVector);
     ekin_step.local.resize(_lenVector);
+    virN_step.local.resize(_lenVector);
+    virT_step.local.resize(_lenVector);
+    velocityN_step.local.resize(_lenVector);
 
     numMolecules_step.global.resize(_lenVector);
     mass_step.global.resize(_lenVector);
     ekin_step.global.resize(_lenVector);
-    virN_step.local.resize(_lenVector);
     virN_step.global.resize(_lenVector);
-    virT_step.local.resize(_lenVector);
     virT_step.global.resize(_lenVector);
+    velocityN_step.global.resize(_lenVector);
 
     for (unsigned short d = 0; d < 3; d++) {
         ekinVect_step[d].local.resize(_lenVector);
-        velocityVect_step[d].local.resize(_lenVector);
         virialVect_step[d].local.resize(_lenVector);
         ekinVect_step[d].global.resize(_lenVector);
-        velocityVect_step[d].global.resize(_lenVector);
         virialVect_step[d].global.resize(_lenVector);
     }
 
     std::fill(numMolecules_step.local.begin(), numMolecules_step.local.end(), 0ul);
-    std::fill(mass_step.local.begin(),        mass_step.local.end(), 0.0f);
-    std::fill(ekin_step.local.begin(),        ekin_step.local.end(), 0.0f);
+    std::fill(mass_step.local.begin(),         mass_step.local.end(), 0.0f);
+    std::fill(ekin_step.local.begin(),         ekin_step.local.end(), 0.0f);
+    std::fill(virN_step.local.begin(),         virN_step.local.end(), 0.0f);
+    std::fill(virT_step.local.begin(),         virT_step.local.end(), 0.0f);
+    std::fill(velocityN_step.local.begin(),    velocityN_step.local.end(), 0.0f);
 
     std::fill(numMolecules_step.global.begin(), numMolecules_step.global.end(), 0ul);
     std::fill(mass_step.global.begin(),   mass_step.global.end(), 0.0f);
     std::fill(ekin_step.global.begin(),   ekin_step.global.end(), 0.0f);
     std::fill(virN_step.global.begin(),   virN_step.global.end(), 0.0f);
     std::fill(virT_step.global.begin(),   virT_step.global.end(), 0.0f);
+    std::fill(velocityN_step.global.begin(),   velocityN_step.global.end(), 0.0f);
 
     for (unsigned short d = 0; d < 3; d++) {
         std::fill(ekinVect_step[d].local.begin(),      ekinVect_step[d].local.end(), 0.0f);
-        std::fill(velocityVect_step[d].local.begin(),   velocityVect_step[d].local.end(), 0.0f);
         std::fill(virialVect_step[d].local.begin(),   virialVect_step[d].local.end(), 0.0f);
 
         std::fill(ekinVect_step[d].global.begin(),      ekinVect_step[d].global.end(), 0.0f);
-        std::fill(velocityVect_step[d].global.begin(),   velocityVect_step[d].global.end(), 0.0f);
         std::fill(virialVect_step[d].global.begin(),   virialVect_step[d].global.end(), 0.0f);
     }
 
@@ -151,18 +153,18 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
         const double vi_n = pit->ViN();
         const double vi_t = pit->ViT();
 
-        // Transform to cylindric coordinates
-        const double velo_r = (distCenter_x*u_x + distCenter_y*u_y + distCenter_z*u_z)/distCenter;  // Radial
-        // const double velo_y = u_y;
-        // const double velo_t = (distCenter_x*u_z - distCenter_z*u_x)/distCenter;  // Tangential
-
         mass_step.local[index] += mass;
         ekin_step.local[index] += pit->U_kin();
+        
+        velocityN_step.local[index] = (distCenter_x*u_x + distCenter_y*u_y + distCenter_z*u_z)/distCenter;  // Radial 
 
-        velocityVect_step[0].local[index] += velo_r;
-        // velocityVect_step[1].local[index] += velo_y;
-        // velocityVect_step[2].local[index] += velo_t;
-
+        /* 
+        // was used for adjusting temperature for macroscopic velocity --> drop here; we're assuming that macroscopic velo is 0
+        velocityVect_step[0].local[index] += u_x;
+        velocityVect_step[1].local[index] += u_y;
+        velocityVect_step[2].local[index] += u_z;
+        */
+        
         virialVect_step[0].local[index] += vi_x;
         virialVect_step[1].local[index] += vi_y;
         virialVect_step[2].local[index] += vi_z;
@@ -181,15 +183,16 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
     MPI_Reduce(numMolecules_step.local.data(), numMolecules_step.global.data(), _lenVector, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(mass_step.local.data(), mass_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekin_step.local.data(), ekin_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(velocityVect_step[0].local.data(), velocityVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(velocityVect_step[1].local.data(), velocityVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(velocityVect_step[2].local.data(), velocityVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(velocityN_step.local.data(), velocityN_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[0].local.data(), virialVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[1].local.data(), virialVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[2].local.data(), virialVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekinVect_step[0].local.data(), ekinVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekinVect_step[1].local.data(), ekinVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekinVect_step[2].local.data(), ekinVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(virialVect_step[0].local.data(), virialVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(virialVect_step[1].local.data(), virialVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(virialVect_step[2].local.data(), virialVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #else
     for (unsigned long i = 0; i < _lenVector; i++) {
         numMolecules_step.global[i] = numMolecules_step.local[i];
@@ -197,9 +200,7 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
         ekin_step.global[i] = ekin_step.local[i];
         virN_step.global[i] = virN_step.local[i];
         virT_step.global[i] = virT_step.local[i];
-        velocityVect_step[0].global[i] = velocityVect_step[0].local[i];
-        velocityVect_step[1].global[i] = velocityVect_step[1].local[i];
-        velocityVect_step[2].global[i] = velocityVect_step[2].local[i];
+        velocityN_step.global[i] = velocityN_step.local[i];
         virialVect_step[0].global[i] = virialVect_step[0].local[i];
         virialVect_step[1].global[i] = virialVect_step[1].local[i];
         virialVect_step[2].global[i] = virialVect_step[2].local[i];
@@ -245,9 +246,7 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
             _ekinVect_accum[2][i]             += ekinVect_step[2].global[i];
 
             if (numMols > 0ul) {
-                _velocityVect_accum[0][i]         += velocityVect_step[0].global[i] / numMols;
-                _velocityVect_accum[1][i]         += velocityVect_step[1].global[i] / numMols;
-                _velocityVect_accum[2][i]         += velocityVect_step[2].global[i] / numMols;
+                _velocityN_accum[i]           += velocityN_step.global[i] / numMols;
             }
 
             _countSamples[i]++;
@@ -305,7 +304,7 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
             }
             shell_centralRadius[_lenVector-1] = (shell_lowerBound[_lenVector-1] + (_distMax/_nShells)); // not very precise
             // shell_width[_lenVector-1] = 0; // one reasonable value here could be the shellwidth that would make for an equivalent volume
-            shell_volume[_lenVector-1] = _globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2] - 4./3.*M_PI*shell_lowerBound[_lenVector-1];
+            shell_volume[_lenVector-1] = _globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2] - 4./3.*M_PI*shell_lowerBound[_lenVector-2];
             // \end bad implementation
 
             for (unsigned long i = 0; i < _lenVector; i++) {
@@ -332,11 +331,11 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
                     const double numMols_accum = static_cast<double>(_numMolecules_accum[i]);
                     numSamples = _countSamples[i];
 
-                    numMolsPerStep = numMols_accum/numSamples;
-                    rho         = numMolsPerStep              / shell_volume[i];
-                    v_r         = _velocityVect_accum[0][i]   / numSamples;
-                    v_y         = _velocityVect_accum[1][i]   / numSamples;
-                    v_t         = _velocityVect_accum[2][i]   / numSamples;
+                    numMolsPerStep = numMols_accum    /numSamples;
+                    rho         = numMolsPerStep      / shell_volume[i];
+                    v_r         = _velocityN_accum[i] / numSamples;
+                    // v_y         = _velocityVect_accum[1][i]   / numSamples;
+                    // v_t         = _velocityVect_accum[2][i]   / numSamples;
 
                     double v_drift_sqr = v_r*v_r + v_y*v_y + v_t*v_t;
 
@@ -398,10 +397,10 @@ void SphericalSampling ::resizeVectors() {
     _ekin_accum.resize(_lenVector);
     _virN_accum.resize(_lenVector);              
     _virT_accum.resize(_lenVector);              
+    _velocityN_accum.resize(_lenVector);
 
     for (unsigned short d = 0; d < 3; d++) {
         _ekinVect_accum[d].resize(_lenVector);
-        _velocityVect_accum[d].resize(_lenVector);
         _virialVect_accum[d].resize(_lenVector);
     }
 
@@ -416,11 +415,11 @@ void SphericalSampling ::resetVectors() {
     std::fill(_ekin_accum.begin(), _ekin_accum.end(), 0.0f);
     std::fill(_virN_accum.begin(), _virN_accum.end(), 0.0f);
     std::fill(_virT_accum.begin(), _virT_accum.end(), 0.0f);
+    std::fill(_velocityN_accum.begin(), _velocityN_accum.end(), 0.0f);
     // std::fill(_virial_accum.begin(), _virial_accum.end(), 0.0f);
 
     for (unsigned short d = 0; d < 3; d++) {
         std::fill(_ekinVect_accum[d].begin(), _ekinVect_accum[d].end(), 0.0f);
-        std::fill(_velocityVect_accum[d].begin(), _velocityVect_accum[d].end(), 0.0f);
         std::fill(_virialVect_accum[d].begin(), _virialVect_accum[d].end(), 0.0f);
     }
     

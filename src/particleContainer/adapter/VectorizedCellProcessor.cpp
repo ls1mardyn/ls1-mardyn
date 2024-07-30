@@ -1247,7 +1247,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 						sum_Vz1 = sum_Vz1 + Vz;
 						sum_V1_n = sum_V1_n + V1_n;
 						sum_V1_t = sum_V1_t + V1_t;
-						// sum_V2_n = sum_V2_n + V2_n; // is this ever really used? // macht das hier sinn? ich denke, dass vielleicht für mol1 hier summiert wird, und für mol2 mit dieser funktion (vcp_simd_load_add_store<MaskGatherChooser>(soa2_ljc_V_t, j, V2_t, lookupORforceMask) gespeichert wird ...
+						// sum_V2_n = sum_V2_n + V2_n; // is this ever really used?  macht das hier sinn? ich denke, dass vielleicht für mol1 hier summiert wird, und für mol2 mit dieser funktion (vcp_simd_load_add_store<MaskGatherChooser>(soa2_ljc_V_t, j, V2_t, lookupORforceMask) gespeichert wird ...
 						// sum_V2_t = sum_V2_t + V2_t; // is this ever really used?
 					}
 				}
@@ -1314,7 +1314,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 						sum_Vx1 = sum_Vx1 + Vx;
 						sum_Vy1 = sum_Vy1 + Vy;
 						sum_Vz1 = sum_Vz1 + Vz;
-						// hier auch eine variable sum_Vz2 erhöhen?
+						sum_V1_n = sum_V1_n + V1_n;
+						sum_V1_t = sum_V1_t + V1_t;
 					}
 				}
 #endif
@@ -1529,7 +1530,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M_x, M_y, M_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyChargeDipole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
@@ -1590,7 +1592,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M_x, M_y, M_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyChargeDipole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
@@ -1691,7 +1694,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M_x, M_y, M_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyChargeQuadrupole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
@@ -1755,7 +1759,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M_x, M_y, M_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyChargeQuadrupole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
@@ -1875,7 +1880,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyDipole<CalculateMacroscopic>(
 							m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, e1_x, e1_y, e1_z, p1,
@@ -1947,7 +1953,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyDipole<CalculateMacroscopic>(
 							m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, e1_x, e1_y, e1_z, p1,
@@ -2053,7 +2060,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M_x, M_y, M_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyChargeDipole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, q,
@@ -2120,7 +2128,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M_x, M_y, M_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyChargeDipole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, q,
@@ -2219,7 +2228,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyDipoleQuadrupole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z,	r2_x, r2_y, r2_z, e2_x, e2_y, e2_z, p,
@@ -2289,7 +2299,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyDipoleQuadrupole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z,	r2_x, r2_y, r2_z, e2_x, e2_y, e2_z, p,
@@ -2414,7 +2425,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, mii,
@@ -2483,7 +2495,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, mii,
@@ -2584,7 +2597,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M_x, M_y, M_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz; 
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyChargeQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q,
@@ -2651,7 +2665,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M_x, M_y, M_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyChargeQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q,
@@ -2752,7 +2767,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyDipoleQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, p,
@@ -2822,7 +2838,8 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 
 						RealCalcVec f_x, f_y, f_z;
 						RealAccumVec M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
-						RealAccumVec Vx, Vy, Vz, V1_n, V1_t, V2_n, V2_t;
+						RealAccumVec Vx, Vy, Vz;
+						// RealAccumVec V1_n, V1_t, V2_n, V2_t;
 
 						_loopBodyDipoleQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, p,

@@ -1,8 +1,8 @@
 /*
  * SphericalSampling.h
  *
- *  Created on: Jul 24
- *      Author: niemannj
+ *  Created on: July 24
+ *      Author: JakNiem
  */
 #pragma once 
 
@@ -59,9 +59,9 @@ class SphericalSampling : public PluginBase {
     std::vector<double> _virSph_accum;                          // Virial (sum over Spherical Coord)
     std::vector<double> _virN_accum;                            // Virial in normal diection
     std::vector<double> _virT_accum;                            // Virial in tangential diection
+    std::vector<double> _velocityN_accum;                            // Virial in tangential diection
     std::array<std::vector<double>, 3> _virialVect_accum;       // Virial in x,y,z direction
     std::array<std::vector<double>, 3> _ekinVect_accum;         // Kinetic energy in each direction (drift corrected); radial, height (y), tangantial
-    std::array<std::vector<double>, 3> _velocityVect_accum;     // Drift velocity in each direction; radial, height (y), tangantial
 
     std::vector<unsigned long> _countSamples;                   // Number of samples; can vary from bin to bin as some bins could be empty
 
