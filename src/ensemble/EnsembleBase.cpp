@@ -109,9 +109,16 @@ void Ensemble::setComponentLookUpIDs() {
 }
 
 void Ensemble::setMixingrule(std::shared_ptr<MixingRuleBase> mixingrule) {
-	const int cid1 = mixingrule->getCid1();
-	const int cid2 = mixingrule->getCid2();
+	
+	// Symmetry for mixing rules is assumed
+	// cid1 must be less than cid2
+	const auto [cid1, cid2] = std::minmax(mixingrule->getCid1(), mixingrule->getCid2());
+
 	// Check if cids are valid
+	if (cid1 == cid2) {
+		Log::global_log->error() << "Mixing setMixingrule: cids must not be the same" << std::endl;
+		Simulation::exit(1);
+	}
 	if (std::min(cid1, cid2) < 0) {
 		Log::global_log->error() << "Mixing setMixingrule: cids must not be negative" << std::endl;
 		Simulation::exit(1);
@@ -121,14 +128,6 @@ void Ensemble::setMixingrule(std::shared_ptr<MixingRuleBase> mixingrule) {
 								 << _components.size() << ")" << std::endl;
 		Simulation::exit(1);
 	}
-	if (cid1 == cid2) {
-		Log::global_log->error() << "Mixing setMixingrule: cids must not be the same" << std::endl;
-		Simulation::exit(1);
-	}
-	// Ensure that cid1 < cid2 in _mixingrules
-	if (cid1 < cid2) {
-		_mixingrules[cid1][cid2] = mixingrule;
-	} else {
-		_mixingrules[cid2][cid1] = mixingrule;
-	}
+	
+	_mixingrules[cid1][cid2] = mixingrule;
 }
