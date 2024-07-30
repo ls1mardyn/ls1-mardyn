@@ -2,6 +2,7 @@
 #define COMP2PARAM_H_
 
 #include <vector>
+#include <memory>
 
 #include "molecules/Component.h"
 #include "molecules/Array2D.h"
@@ -15,7 +16,7 @@
  */
 class Comp2Param {
 
-    using MixRulesType = std::map<int,std::map<int,MixingRuleBase*>>;
+    using MixRulesType = std::map<int,std::map<int,std::shared_ptr<MixingRuleBase>>>;
 
     public:
         /** Create a new empty parameter stream. */

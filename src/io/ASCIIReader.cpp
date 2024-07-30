@@ -6,6 +6,7 @@
 
 #include <climits>
 #include <string>
+#include <memory>
 
 #include "Domain.h"
 #include "ensemble/BoxDomain.h"
@@ -219,7 +220,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 											 << " : xi=" << xi << " eta=" << eta << std::endl;
 #endif
 					// Only LB mixing rule is supported for now
-					LorentzBerthelotMixingRule* mixingrule = new LorentzBerthelotMixingRule();
+					std::shared_ptr<LorentzBerthelotMixingRule> mixingrule = std::make_shared<LorentzBerthelotMixingRule>();
 					mixingrule->setCid1(cidi);
 					mixingrule->setCid2(cidj);
 					mixingrule->setEta(eta);
