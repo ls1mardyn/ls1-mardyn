@@ -80,9 +80,9 @@ void Comp2Param::initialize(
 					pstrmij << epsilon24;
 					pstrmij << sigma2;
 					pstrmij << shift6combined;
-// #ifndef NDEBUG
+#ifndef NDEBUG
 					Log::global_log->info() << "Component " << compi << ": eps24=" << epsilon24 << " sig2=" << sigma2 << " shift6=" << shift6combined << std::endl;
-// #endif
+#endif
 				}
 			}
 			ParaStrm& pstrmji = m_ssparatbl(compj, compi);
