@@ -111,7 +111,7 @@ void Ensemble::setMixingrule(std::shared_ptr<MixingRuleBase> mixingrule) {
 	
 	// Symmetry for mixing rules is assumed
 	// cid1 must be less than cid2
-	const auto [cid1, cid2] = std::minmax(mixingrule->getCid1(), mixingrule->getCid2());
+	const auto [cid1, cid2] = std::minmax({mixingrule->getCid1(), mixingrule->getCid2()});
 
 	// Check if cids are valid
 	if (cid1 == cid2) {
