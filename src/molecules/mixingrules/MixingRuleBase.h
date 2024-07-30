@@ -8,6 +8,8 @@ class XMLfileUnits;
 
 class MixingRuleBase {
  public:
+	virtual ~MixingRuleBase() = default;
+
 	virtual void readXML(const XMLfileUnits& xmlconfig);
 
 	int getCid1() const { return _cid1; }
