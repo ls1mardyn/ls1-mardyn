@@ -220,7 +220,7 @@ $(function() {
 <div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        Log::global_log-&gt;info() &lt;&lt; <span class="stringliteral">&quot;Using QuickschedTraversal.&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span><span class="preprocessor">#ifndef QUICKSCHED</span></div>
 <div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>        Log::global_log-&gt;error() &lt;&lt; <span class="stringliteral">&quot;MarDyn was compiled without Quicksched Support. Aborting!&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>        <a class="code hl_function" href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a>(1);</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>        mardyn_exit(1);</div>
 <div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (<span class="keyword">dynamic_cast&lt;</span><a class="code hl_class" href="classSlicedCellPairTraversal.html">SlicedCellPairTraversal&lt;CellTemplate&gt;</a> *<span class="keyword">&gt;</span>(_optimalTraversal))</div>
 <div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>        Log::global_log-&gt;info() &lt;&lt; <span class="stringliteral">&quot;Using SlicedCellPairTraversal.&quot;</span> &lt;&lt; std::endl;</div>
@@ -230,7 +230,7 @@ $(function() {
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    <span class="keywordflow">if</span> (_cellsInCutoff &gt; _optimalTraversal-&gt;maxCellsInCutoff()) {</div>
 <div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        Log::global_log-&gt;error() &lt;&lt; <span class="stringliteral">&quot;Traversal supports up to &quot;</span> &lt;&lt; _optimalTraversal-&gt;maxCellsInCutoff()</div>
 <div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>                            &lt;&lt; <span class="stringliteral">&quot; cells in cutoff, but value is chosen as &quot;</span> &lt;&lt; _cellsInCutoff &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        <a class="code hl_function" href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a>(45);</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        mardyn_exit(45);</div>
 <div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>    }</div>
 <div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>}</div>
 <div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span> </div>
@@ -310,7 +310,7 @@ $(function() {
 <div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>                                                &lt;&lt; <span class="stringliteral">&quot; direction is &lt;2 and thereby invalid! (&quot;</span></div>
 <div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>                                                &lt;&lt; quiData-&gt;taskBlockSize[j] &lt;&lt; <span class="stringliteral">&quot;)&quot;</span></div>
 <div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>                                                &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>                            <a class="code hl_function" href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a>(1);</div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>                            mardyn_exit(1);</div>
 <div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>                        }</div>
 <div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>                    }</div>
 <div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>                    <span class="keywordflow">break</span>;</div>
@@ -372,7 +372,7 @@ $(function() {
 <div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>                } <span class="keywordflow">break</span>;</div>
 <div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>                <span class="keywordflow">default</span>:</div>
 <div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>                    Log::global_log-&gt;error() &lt;&lt; <span class="stringliteral">&quot;Unknown traversal data found in TraversalTuner._traversals!&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>                    <a class="code hl_function" href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a>(1);</div>
+<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>                    mardyn_exit(1);</div>
 <div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>            }</div>
 <div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>        }</div>
 <div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>        traversalPointerReference-&gt;rebuild(cells, dims, cellLength, cutoff, traversalData);</div>
@@ -464,7 +464,6 @@ $(function() {
 <div class="ttc" id="aclassNeutralTerritoryTraversal_html"><div class="ttname"><a href="classNeutralTerritoryTraversal.html">NeutralTerritoryTraversal</a></div><div class="ttdef"><b>Definition:</b> NeutralTerritoryTraversal.h:25</div></div>
 <div class="ttc" id="aclassOriginalCellPairTraversal_html"><div class="ttname"><a href="classOriginalCellPairTraversal.html">OriginalCellPairTraversal</a></div><div class="ttdef"><b>Definition:</b> OriginalCellPairTraversal.h:21</div></div>
 <div class="ttc" id="aclassQuickschedTraversal_html"><div class="ttname"><a href="classQuickschedTraversal.html">QuickschedTraversal</a></div><div class="ttdef"><b>Definition:</b> QuickschedTraversal.h:26</div></div>
-<div class="ttc" id="aclassSimulation_html_a68f442306f18038e0f5fc04522e44359"><div class="ttname"><a href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a></div><div class="ttdeci">static void exit(int exitcode)</div><div class="ttdoc">Terminate simulation with given exit code.</div><div class="ttdef"><b>Definition:</b> Simulation.cpp:160</div></div>
 <div class="ttc" id="aclassSlicedCellPairTraversal_html"><div class="ttname"><a href="classSlicedCellPairTraversal.html">SlicedCellPairTraversal</a></div><div class="ttdef"><b>Definition:</b> SlicedCellPairTraversal.h:19</div></div>
 <div class="ttc" id="aclassTraversalTuner_html"><div class="ttname"><a href="classTraversalTuner.html">TraversalTuner</a></div><div class="ttdef"><b>Definition:</b> TraversalTuner.h:22</div></div>
 <div class="ttc" id="aclassTraversalTuner_html_a77f4d7932a7d68fa30b0a3875be0aa8e"><div class="ttname"><a href="classTraversalTuner.html#a77f4d7932a7d68fa30b0a3875be0aa8e">TraversalTuner::rebuild</a></div><div class="ttdeci">void rebuild(std::vector&lt; CellTemplate &gt; &amp;cells, const std::array&lt; unsigned long, 3 &gt; &amp;dims, double cellLength[3], double cutoff)</div><div class="ttdef"><b>Definition:</b> TraversalTuner.h:268</div></div>
@@ -472,8 +471,8 @@ $(function() {
 <div class="ttc" id="aclassXMLfile_1_1Query_1_1const__iterator_html"><div class="ttname"><a href="classXMLfile_1_1Query_1_1const__iterator.html">XMLfile::Query::const_iterator</a></div><div class="ttdef"><b>Definition:</b> xmlfile.h:240</div></div>
 <div class="ttc" id="aclassXMLfile_1_1Query_html"><div class="ttname"><a href="classXMLfile_1_1Query.html">XMLfile::Query</a></div><div class="ttdef"><b>Definition:</b> xmlfile.h:232</div></div>
 <div class="ttc" id="aclassXMLfile_1_1Query_html_a5b9a645b8ceb7e0cfa3323d7fbf8e579"><div class="ttname"><a href="classXMLfile_1_1Query.html#a5b9a645b8ceb7e0cfa3323d7fbf8e579">XMLfile::Query::begin</a></div><div class="ttdeci">const_iterator begin() const</div><div class="ttdoc">get starting iterator return an iterator to the first node</div><div class="ttdef"><b>Definition:</b> xmlfile.h:344</div></div>
-<div class="ttc" id="aclassXMLfile_html_a02b051bb2ee11d5b5cc2c5355c723c35"><div class="ttname"><a href="classXMLfile.html#a02b051bb2ee11d5b5cc2c5355c723c35">XMLfile::query</a></div><div class="ttdeci">Query query(const std::string &amp;querystr) const</div><div class="ttdoc">perform a query return a query to a given query expression</div><div class="ttdef"><b>Definition:</b> xmlfile.cpp:123</div></div>
-<div class="ttc" id="aclassXMLfile_html_a66182b4e00c150fc7f4f68fb0055c1be"><div class="ttname"><a href="classXMLfile.html#a66182b4e00c150fc7f4f68fb0055c1be">XMLfile::changecurrentnode</a></div><div class="ttdeci">long changecurrentnode(const std::string &amp;nodepath=std::string(&quot;/&quot;))</div><div class="ttdoc">set current node set a node, relative queries start with</div><div class="ttdef"><b>Definition:</b> xmlfile.cpp:86</div></div>
+<div class="ttc" id="aclassXMLfile_html_a02b051bb2ee11d5b5cc2c5355c723c35"><div class="ttname"><a href="classXMLfile.html#a02b051bb2ee11d5b5cc2c5355c723c35">XMLfile::query</a></div><div class="ttdeci">Query query(const std::string &amp;querystr) const</div><div class="ttdoc">perform a query return a query to a given query expression</div><div class="ttdef"><b>Definition:</b> xmlfile.cpp:122</div></div>
+<div class="ttc" id="aclassXMLfile_html_a66182b4e00c150fc7f4f68fb0055c1be"><div class="ttname"><a href="classXMLfile.html#a66182b4e00c150fc7f4f68fb0055c1be">XMLfile::changecurrentnode</a></div><div class="ttdeci">long changecurrentnode(const std::string &amp;nodepath=std::string(&quot;/&quot;))</div><div class="ttdoc">set current node set a node, relative queries start with</div><div class="ttdef"><b>Definition:</b> xmlfile.cpp:85</div></div>
 <div class="ttc" id="aclassXMLfile_html_a7aacfe1a1da67ed2a57ea03125de3b31"><div class="ttname"><a href="classXMLfile.html#a7aacfe1a1da67ed2a57ea03125de3b31">XMLfile::getNodeValue_int</a></div><div class="ttdeci">int getNodeValue_int(const std::string &amp;nodepath, int defaultvalue=0) const</div><div class="ttdoc">get node value as int get the node content and convert it to an integer</div><div class="ttdef"><b>Definition:</b> xmlfile.h:514</div></div>
 <div class="ttc" id="aclassXMLfile_html_a847d404be2c87508e682c5add9022270"><div class="ttname"><a href="classXMLfile.html#a847d404be2c87508e682c5add9022270">XMLfile::getNodeValue_string</a></div><div class="ttdeci">std::string getNodeValue_string(const std::string &amp;nodepath, const std::string defaultvalue=std::string()) const</div><div class="ttdoc">get node value as string get the node content</div><div class="ttdef"><b>Definition:</b> xmlfile.h:499</div></div>
 <div class="ttc" id="aclassXMLfile_html_ac46e2da0709ed1eaf3ae1ee626612373"><div class="ttname"><a href="classXMLfile.html#ac46e2da0709ed1eaf3ae1ee626612373">XMLfile::getNodeValue</a></div><div class="ttdeci">unsigned long getNodeValue(const std::string &amp;nodepath, T &amp;value) const</div><div class="ttdoc">get node value get the node content and convert it to a given type</div><div class="ttdef"><b>Definition:</b> xmlfile.h:484</div></div>
@@ -492,7 +491,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 22 2024 10:58:43 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Jul 30 2024 10:12:53 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

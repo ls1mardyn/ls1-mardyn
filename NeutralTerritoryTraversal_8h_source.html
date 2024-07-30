@@ -185,14 +185,14 @@ $(function() {
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> CellTemplate&gt;</div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span><span class="keywordtype">void</span> <a class="code hl_class" href="classNeutralTerritoryTraversal.html">NeutralTerritoryTraversal&lt;CellTemplate&gt;::traverseCellPairsOuter</a>(<a class="code hl_class" href="classCellProcessor.html">CellProcessor</a>&amp; cellProcessor) {</div>
 <div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    Log::global_log-&gt;error() &lt;&lt; <span class="stringliteral">&quot;NT: overlapping Comm not implemented.&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    <a class="code hl_function" href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a>(46);</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    mardyn_exit(46);</div>
 <div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>}</div>
 <div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
 <div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> CellTemplate&gt;</div>
 <div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span><span class="keywordtype">void</span> <a class="code hl_class" href="classNeutralTerritoryTraversal.html">NeutralTerritoryTraversal&lt;CellTemplate&gt;::traverseCellPairsInner</a>(<a class="code hl_class" href="classCellProcessor.html">CellProcessor</a>&amp; cellProcessor, <span class="keywordtype">unsigned</span> stage,</div>
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>                                                                     <span class="keywordtype">unsigned</span> stageCount) {</div>
 <div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    Log::global_log-&gt;error() &lt;&lt; <span class="stringliteral">&quot;NT: overlapping Comm not implemented.&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    <a class="code hl_function" href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a>(47);</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    mardyn_exit(47);</div>
 <div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>}</div>
 <div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
 <div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> CellTemplate&gt;</div>
@@ -224,13 +224,12 @@ $(function() {
 <div class="ttc" id="aclassCellProcessor_html_aebc42e73176ba2036f433720776289da"><div class="ttname"><a href="classCellProcessor.html#aebc42e73176ba2036f433720776289da">CellProcessor::processCellPair</a></div><div class="ttdeci">virtual void processCellPair(ParticleCell &amp;cell1, ParticleCell &amp;cell2, bool sumAll=false)=0</div></div>
 <div class="ttc" id="aclassNeutralTerritoryTraversal_html"><div class="ttname"><a href="classNeutralTerritoryTraversal.html">NeutralTerritoryTraversal</a></div><div class="ttdef"><b>Definition:</b> NeutralTerritoryTraversal.h:25</div></div>
 <div class="ttc" id="aclassNeutralTerritoryTraversal_html_a6321efb5f42de167cba9e8f8629efa32"><div class="ttname"><a href="classNeutralTerritoryTraversal.html#a6321efb5f42de167cba9e8f8629efa32">NeutralTerritoryTraversal::rebuild</a></div><div class="ttdeci">void rebuild(std::vector&lt; CellTemplate &gt; &amp;cells, const std::array&lt; unsigned long, 3 &gt; &amp;dims, double cellLength[3], double cutoff, CellPairTraversalData *data) override</div><div class="ttdef"><b>Definition:</b> NeutralTerritoryTraversal.h:38</div></div>
-<div class="ttc" id="aclassSimulation_html_a68f442306f18038e0f5fc04522e44359"><div class="ttname"><a href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a></div><div class="ttdeci">static void exit(int exitcode)</div><div class="ttdoc">Terminate simulation with given exit code.</div><div class="ttdef"><b>Definition:</b> Simulation.cpp:160</div></div>
 <div class="ttc" id="astructCellPairTraversalData_html"><div class="ttname"><a href="structCellPairTraversalData.html">CellPairTraversalData</a></div><div class="ttdef"><b>Definition:</b> CellPairTraversals.h:16</div></div>
 <div class="ttc" id="astructNeutralTerritoryTraversalData_html"><div class="ttname"><a href="structNeutralTerritoryTraversalData.html">NeutralTerritoryTraversalData</a></div><div class="ttdef"><b>Definition:</b> NeutralTerritoryTraversal.h:13</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 22 2024 10:58:43 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Jul 30 2024 10:12:52 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

@@ -82,7 +82,7 @@ $(function() {
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &quot;C08BasedTraversals.h&quot;</span></div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;utils/Logger.h&quot;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;Simulation.h&quot;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;utils/mardyn_assert.h&quot;</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;particleContainer/LinkedCells.h&quot;</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#ifdef QUICKSCHED</span></div>
@@ -183,7 +183,7 @@ $(function() {
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                    Log::global_log-&gt;error() &lt;&lt; <span class="stringliteral">&quot;Blocksize is bigger than number of cells in dimension &quot;</span></div>
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                                        &lt;&lt; (char) (<span class="charliteral">&#39;x&#39;</span> + i) &lt;&lt; <span class="stringliteral">&quot;. (&quot;</span> &lt;&lt; _taskBlocksize[i] &lt;&lt; <span class="stringliteral">&quot; &gt; &quot;</span></div>
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>                                        &lt;&lt; this-&gt;_dims[i] &lt;&lt; <span class="stringliteral">&quot;)&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>                    <a class="code hl_function" href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a>(1);</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>                    mardyn_exit(1);</div>
 <div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>                }</div>
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>            }</div>
 <div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
@@ -337,7 +337,6 @@ $(function() {
 <div class="ttc" id="aclassCellProcessor_html"><div class="ttname"><a href="classCellProcessor.html">CellProcessor</a></div><div class="ttdef"><b>Definition:</b> CellProcessor.h:29</div></div>
 <div class="ttc" id="aclassQuickschedTraversal_html"><div class="ttname"><a href="classQuickschedTraversal.html">QuickschedTraversal</a></div><div class="ttdef"><b>Definition:</b> QuickschedTraversal.h:26</div></div>
 <div class="ttc" id="aclassQuickschedTraversal_html_a60d342ae270ec7418f8e3b607d3e50a5"><div class="ttname"><a href="classQuickschedTraversal.html#a60d342ae270ec7418f8e3b607d3e50a5">QuickschedTraversal::rebuild</a></div><div class="ttdeci">virtual void rebuild(std::vector&lt; CellTemplate &gt; &amp;cells, const std::array&lt; unsigned long, 3 &gt; &amp;dims, double cellLength[3], double cutoff, CellPairTraversalData *data)</div><div class="ttdef"><b>Definition:</b> QuickschedTraversal.h:80</div></div>
-<div class="ttc" id="aclassSimulation_html_a68f442306f18038e0f5fc04522e44359"><div class="ttname"><a href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a></div><div class="ttdeci">static void exit(int exitcode)</div><div class="ttdoc">Terminate simulation with given exit code.</div><div class="ttdef"><b>Definition:</b> Simulation.cpp:160</div></div>
 <div class="ttc" id="aclassVectorizedCellProcessor_html"><div class="ttname"><a href="classVectorizedCellProcessor.html">VectorizedCellProcessor</a></div><div class="ttdoc">Vectorized calculation of the force.</div><div class="ttdef"><b>Definition:</b> VectorizedCellProcessor.h:29</div></div>
 <div class="ttc" id="aclasstype_html"><div class="ttname"><a href="classtype.html">type</a></div><div class="ttdoc">Enumeration class corresponding to the type schema type.</div><div class="ttdef"><b>Definition:</b> vtk-unstructured.h:1198</div></div>
 <div class="ttc" id="astructCellPairTraversalData_html"><div class="ttname"><a href="structCellPairTraversalData.html">CellPairTraversalData</a></div><div class="ttdef"><b>Definition:</b> CellPairTraversals.h:16</div></div>
@@ -345,7 +344,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 22 2024 10:58:43 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Jul 30 2024 10:12:52 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

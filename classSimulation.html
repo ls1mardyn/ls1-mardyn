@@ -65,7 +65,6 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classSimulation-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">Simulation Class Reference</div></div>
 </div><!--header-->
@@ -253,12 +252,6 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>postSimLoopSteps</b> 
 <tr class="memitem:aa62c9aa4cbfdeec74a00123007c57502"><td class="memItemLeft" align="right" valign="top"><a id="aa62c9aa4cbfdeec74a00123007c57502" name="aa62c9aa4cbfdeec74a00123007c57502"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>markSimAsDone</b> ()</td></tr>
 <tr class="separator:aa62c9aa4cbfdeec74a00123007c57502"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a68f442306f18038e0f5fc04522e44359"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">exit</a> (int exitcode)</td></tr>
-<tr class="memdesc:a68f442306f18038e0f5fc04522e44359"><td class="mdescLeft">&#160;</td><td class="mdescRight">Terminate simulation with given exit code.  <a href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">More...</a><br /></td></tr>
-<tr class="separator:a68f442306f18038e0f5fc04522e44359"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Controls the simulation process. </p>
@@ -325,35 +318,6 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <p >Return a reference to the domain decomposition used in the simulation </p>
-
-</div>
-</div>
-<a id="a68f442306f18038e0f5fc04522e44359" name="a68f442306f18038e0f5fc04522e44359"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a68f442306f18038e0f5fc04522e44359">&#9670;&nbsp;</a></span>exit()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void Simulation::exit </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>exitcode</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Terminate simulation with given exit code. </p>
-<p >The exit method takes care over the right way to terminate the application in a correct way for the different parallelization schemes. e.g. terminating other processes in MPI parallel execution mode. </p>
 
 </div>
 </div>
@@ -946,7 +910,7 @@ For the integration, a seperate integration object is used. This method is writt
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 22 2024 10:58:46 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Jul 30 2024 10:12:56 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

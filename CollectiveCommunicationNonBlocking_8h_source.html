@@ -83,7 +83,7 @@ $(function() {
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;map&gt;</span></div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;utils/Logger.h&gt;</span></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;CollectiveCommunicationInterface.h&quot;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;Simulation.h&quot;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;utils/mardyn_assert.h&quot;</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#if MPI_VERSION &gt;= 3</span></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
@@ -99,7 +99,7 @@ $(function() {
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keywordflow">if</span> (_currentKey != -1) {</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>            Log::global_log-&gt;error() &lt;&lt; <span class="stringliteral">&quot;CollectiveCommunicationNonBlocking: previous communication with key &quot;</span> &lt;&lt; _currentKey</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>                    &lt;&lt; <span class="stringliteral">&quot; not yet finalized&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>            <a class="code hl_function" href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a>(234);</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>            mardyn_exit(234);</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>        }</div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        _currentKey = key;</div>
@@ -117,7 +117,7 @@ $(function() {
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>            <span class="keywordflow">if</span> (not inserted) {</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>                Log::global_log-&gt;error() &lt;&lt; <span class="stringliteral">&quot;CollectiveCommunicationNonBlocking: key &quot;</span> &lt;&lt; _currentKey</div>
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                                    &lt;&lt; <span class="stringliteral">&quot; could not be inserted. Aborting!&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                <a class="code hl_function" href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a>(498789);</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                mardyn_exit(498789);</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>            }</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>        }</div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        _comms.at(_currentKey).init(communicator, numValues, _currentKey);</div>
@@ -241,12 +241,11 @@ $(function() {
 <div class="ttc" id="aclassCollectiveCommunicationNonBlocking_html_adf5f153c0d44b163804ba77cbcd889d6"><div class="ttname"><a href="classCollectiveCommunicationNonBlocking.html#adf5f153c0d44b163804ba77cbcd889d6">CollectiveCommunicationNonBlocking::getLongDouble</a></div><div class="ttdeci">long double getLongDouble() override</div><div class="ttdef"><b>Definition:</b> CollectiveCommunicationNonBlocking.h:157</div></div>
 <div class="ttc" id="aclassCollectiveCommunicationNonBlocking_html_afc47f41450736da7ccb4a7702a21a5cf"><div class="ttname"><a href="classCollectiveCommunicationNonBlocking.html#afc47f41450736da7ccb4a7702a21a5cf">CollectiveCommunicationNonBlocking::broadcast</a></div><div class="ttdeci">void broadcast(int root=0) override</div><div class="ttdef"><b>Definition:</b> CollectiveCommunicationNonBlocking.h:163</div></div>
 <div class="ttc" id="aclassCollectiveCommunicationNonBlocking_html_afed25546aa9e358f323e879d2272f756"><div class="ttname"><a href="classCollectiveCommunicationNonBlocking.html#afed25546aa9e358f323e879d2272f756">CollectiveCommunicationNonBlocking::appendInt</a></div><div class="ttdeci">void appendInt(int intValue) override</div><div class="ttdef"><b>Definition:</b> CollectiveCommunicationNonBlocking.h:82</div></div>
-<div class="ttc" id="aclassSimulation_html_a68f442306f18038e0f5fc04522e44359"><div class="ttname"><a href="classSimulation.html#a68f442306f18038e0f5fc04522e44359">Simulation::exit</a></div><div class="ttdeci">static void exit(int exitcode)</div><div class="ttdoc">Terminate simulation with given exit code.</div><div class="ttdef"><b>Definition:</b> Simulation.cpp:160</div></div>
 <div class="ttc" id="aclasstype_html"><div class="ttname"><a href="classtype.html">type</a></div><div class="ttdoc">Enumeration class corresponding to the type schema type.</div><div class="ttdef"><b>Definition:</b> vtk-unstructured.h:1198</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 22 2024 10:58:42 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Jul 30 2024 10:12:52 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
