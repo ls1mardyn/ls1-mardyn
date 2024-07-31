@@ -537,7 +537,7 @@ void Domain::writeCheckpointHeader(std::string filename,
 				pos->write(checkpointfilestream);
 			}
 			// Write mixing coefficients
-			auto mixingrules = _simulation.getEnsemble()->getMixingrules();
+			auto &mixingrules = _simulation.getEnsemble()->getMixingrules();
 			const auto numComponents=_simulation.getEnsemble()->getComponents()->size();
 			std::stringstream mixingss;
 			for (int cidi = 0; cidi < numComponents; ++cidi) {

@@ -25,7 +25,7 @@ class MixingRuleBase {
 	virtual std::string getType() const = 0;
 
 	const std::vector<double> &getParameters() const { return _parameters; }
-	void setParameters(std::vector<double> params) { _parameters = params; }
+	void setParameters(const std::vector<double>& params) { _parameters = params; }
 
 	// Parameters of mixing rule
 	// e.g. for LB it contains (eta, xi)
