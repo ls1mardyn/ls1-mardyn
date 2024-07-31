@@ -48,11 +48,11 @@ class Logger;
 
 /**
  * Gobal logger variable for use in the entire program.
- * Must be initialized with constructor e.g. new Log::Logger().
+ * Must be initialized with constructor
  * Namespace visibility:
  *    */
 #ifndef LOGGER_SRC
-extern Log::Logger *global_log;
+extern std::shared_ptr<Log::Logger> global_log;
 #endif
 
 /**
@@ -93,7 +93,7 @@ private:
 	logLevel _msg_log_level;
 	bool _do_output;
 	std::string _filename;
-	std::unique_ptr<std::ostream> _log_stream;
+	std::shared_ptr<std::ostream> _log_stream;
 	std::map<logLevel, std::string> logLevelNames;
 #ifdef USE_GETTIMEOFDAY
 	timeval _starttime;
@@ -129,8 +129,7 @@ public:
 
 	Logger(logLevel level, std::string prefix);  // Write to file
 
-	/// Destructor flushes stream and/or closes file
-	~Logger();
+	~Logger() = default;
 
 	/// General output template for variables, strings, etc.
 	template<typename T>

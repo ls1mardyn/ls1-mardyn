@@ -7,6 +7,8 @@
 
 #include "MDGenerator.h"
 
+#include <memory>
+
 #include "parallel/DomainDecompBase.h"
 #include "io/CheckpointWriter.h"
 #include "particleContainer/LinkedCells.h"
@@ -42,30 +44,19 @@ const double MDGenerator::abogadro_constant = 6.02214078e23;
 const double MDGenerator::boltzmann_constant_kB = 1.38065e-23;
 
 MDGenerator::MDGenerator(std::string name) :
-Generator(name), _deleteLogger(true) {
+Generator(name) {
 	// initialize monolithic Mardyn's global_log and silence it...
 #ifndef MARDYN
 	// if mardyn is not the main program, silence it's logger;
-	Log::global_log = new Log::Logger(Log::Warning, &(std::cout));
-	_logger = new Log::Logger(Log::Debug, &ScenarioGeneratorApplication::getInstance()->getTextMessageStream());
+	Log::global_log = std::make_shared<Log::Logger>(Log::Warning, &(std::cout));
+	_logger = std::make_shared<Log::Logger>(Log::Debug, &ScenarioGeneratorApplication::getInstance()->getTextMessageStream());
 #else
-	_logger = new Log::Logger(Log::Debug, &(std::cout));
+	_logger = std::make_shared<Log::Logger>(Log::Debug, &(std::cout));
 #endif
 }
 
-MDGenerator::~MDGenerator() {
-	if (_deleteLogger) {
-		delete _logger;
-	}
-}
-
-void MDGenerator::setLogger(Log::Logger* logger) {
-	if (_logger != NULL && _deleteLogger) {
-		delete _logger;
-	}
-
+void MDGenerator::setLogger(std::shared_ptr<Log::Logger> logger) {
 	_logger = logger;
-	_deleteLogger = false;
 }
 
 void MDGenerator::createSampleObject() const {

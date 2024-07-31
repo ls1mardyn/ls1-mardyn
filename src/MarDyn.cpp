@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "WrapOpenMP.h"
 
@@ -58,7 +59,7 @@ void initOptions(optparse::OptionParser *op) {
 /**
  * @brief Helper function outputting program build information to given logger
  */
-void program_build_info(Log::Logger *log) {
+void program_build_info(std::shared_ptr<Log::Logger> log) {
 	log->info() << "Compilation info:" << std::endl;
 
 	char info_str[MAX_INFO_STRING_LENGTH];
@@ -81,7 +82,7 @@ void program_build_info(Log::Logger *log) {
 /**
  * @brief Helper function outputting program invocation information to given logger
  */
-void program_execution_info(int argc, char **argv, Log::Logger *log) {
+void program_execution_info(int argc, char **argv, std::shared_ptr<Log::Logger> log) {
 	log->info() << "Execution info:" << std::endl;
 
 	char info_str[MAX_INFO_STRING_LENGTH];
@@ -136,7 +137,7 @@ int main(int argc, char** argv) {
 #endif
 
 	/* Initialize the global log file */
-	Log::global_log = new Log::Logger(Log::Info);
+	Log::global_log = std::make_shared<Log::Logger>(Log::Info);
 #ifdef ENABLE_MPI
 	Log::global_log->set_mpi_output_root(0);
 	//global_log->set_mpi_output_all();
@@ -160,8 +161,7 @@ int main(int argc, char** argv) {
 	if( options.is_set_by_user("logfile") ) {
 		std::string logfileNamePrefix(options.get("logfile"));
 		Log::global_log->info() << "Using logfile with prefix " << logfileNamePrefix << std::endl;
-		delete Log::global_log;
-		Log::global_log = new Log::Logger(Log::Info, logfileNamePrefix);
+		Log::global_log = std::make_shared<Log::Logger>(Log::Info, logfileNamePrefix);
 	}
 	if( options.is_set_by_user("verbose") ) {
 		Log::global_log->info() << "Enabling verbose log output." << std::endl;
@@ -280,8 +280,6 @@ int main(int argc, char** argv) {
 	Log::global_log->info() << "Used resources: " << std::fixed << std::setprecision(3) << resources << " core-hours" << std::endl << std::fixed << std::setprecision(5);
 
 	simulation.finalize();
-
-	delete Log::global_log;
 
 #ifdef ENABLE_MPI
 	MPI_Finalize();

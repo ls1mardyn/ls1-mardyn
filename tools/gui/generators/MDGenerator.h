@@ -18,6 +18,7 @@
 #include <iostream>
 #include <list>
 #include <vector>
+#include <memory>
 
 class Domain;
 class DomainDecompBase;
@@ -72,12 +73,11 @@ public:
 	static const double kelvin_2_mardyn;
 
 protected:
-	Log::Logger* _logger;
-	bool _deleteLogger;
+	std::shared_ptr<Log::Logger> _logger;
 
 	MDGenerator(std::string name);
 
-	virtual ~MDGenerator();
+	virtual ~MDGenerator() {};
 
 	/**
 	 * determine the velocity according to the temperature.
@@ -91,7 +91,7 @@ protected:
 
 public:
 
-	virtual void setLogger(Log::Logger* logger);
+	virtual void setLogger(std::shared_ptr<Log::Logger> logger);
 
 	//! NOP
 	void setPhaseSpaceFile(std::string /*filename*/) {}
