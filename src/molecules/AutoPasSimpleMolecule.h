@@ -137,6 +137,9 @@ public:
 	double M(unsigned short d) const override { return 0.; }
 
 	double Vi(unsigned short d) const override { return 0.; }
+	double ViSph(unsigned short d) const override { return 0.; }
+	double ViN() const override { return 0.; }
+	double ViT() const override { return 0.; }
 
 	void setD(unsigned short d, double D) override {}
 
@@ -232,6 +235,9 @@ public:
 	void setM(double M[3]) override {}
 
 	void setVi(double Vi[3]) override {}
+	void setViSph(double ViSph[3]) override {}
+	void setViN(double ViN) override {}
+	void setViT(double ViT) override {}
 
 	void Fadd(const double F[]) override {
 		for (unsigned short i = 0; i < 3; i++) _f[i] += F[i];

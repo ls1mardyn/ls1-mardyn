@@ -143,15 +143,15 @@ private:
 			_upot6ljV.resize(_numVectorElements);
 			_upotXpolesV.resize(_numVectorElements);
 			_virialV.resize(_numVectorElements);
+			_virialSph.resize(_numVectorElements); 
 			_myRFV.resize(_numVectorElements);
-			_virialSph.resize(_numVectorElements); // Normal and Tangential Elements of Virial. should actually have only 2 dims, not 3!
 
 			for (std::size_t j = 0; j < _numVectorElements; ++j) {
 				_upot6ljV[j] = 0.0;
 				_upotXpolesV[j] = 0.0;
 				_virialV[j] = 0.0;
-				_myRFV[j] = 0.0;
 				_virialSph[j] = 0.0;
+				_myRFV[j] = 0.0;
 			}
 		}
 
@@ -215,7 +215,8 @@ private:
 		const RealCalcVec& qjj,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
-		// RealAccumVec& V_n, RealAccumVec& V_t,
+		// RealAccumVec& V1_n, RealAccumVec& V1_t,
+		// RealAccumVec& V2_n, RealAccumVec& V2_t,
 		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,
 		const MaskCalcVec& forceMask);
 
@@ -230,6 +231,8 @@ private:
 		const RealCalcVec& p,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
+		// RealAccumVec& V1_n, RealAccumVec& V1_t,
+		// RealAccumVec& V2_n, RealAccumVec& V2_t,
 		RealAccumVec& M_x, RealAccumVec& M_y, RealAccumVec& M_z,
 		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,
 		const MaskCalcVec& forceMask);
@@ -246,7 +249,8 @@ private:
 		const RealCalcVec& pjj,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
-		// RealAccumVec& V_n, RealAccumVec& V_t, 
+		// RealAccumVec& V1_n, RealAccumVec& V1_t,
+		// RealAccumVec& V2_n, RealAccumVec& V2_t,
 		RealAccumVec& M1_x, RealAccumVec& M1_y, RealAccumVec& M1_z,
 		RealAccumVec& M2_x, RealAccumVec& M2_y, RealAccumVec& M2_z,
 		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial, RealAccumVec& sum_myRF,
@@ -264,7 +268,8 @@ private:
 		const RealCalcVec& m,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
-		// RealAccumVec& V_n, RealAccumVec& V_t, 
+		// RealAccumVec& V1_n, RealAccumVec& V1_t,
+		// RealAccumVec& V2_n, RealAccumVec& V2_t,
 		RealAccumVec& M_x, RealAccumVec& M_y, RealAccumVec& M_z,
 		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,
 		const MaskCalcVec& forceMask);
@@ -281,7 +286,8 @@ private:
 		const RealCalcVec& m,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
-		// RealAccumVec& V_n, RealAccumVec& V_t, 
+		// RealAccumVec& V1_n, RealAccumVec& V1_t,
+		// RealAccumVec& V2_n, RealAccumVec& V2_t,
 		RealAccumVec& M1_x, RealAccumVec& M1_y, RealAccumVec& M1_z,
 		RealAccumVec& M2_x, RealAccumVec& M2_y, RealAccumVec& M2_z,
 		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,
@@ -299,7 +305,8 @@ private:
 		const RealCalcVec& mjj,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
 		RealAccumVec& V_x, RealAccumVec& V_y, RealAccumVec& V_z,
-		// RealAccumVec& V_n, RealAccumVec& V_t, 
+		// RealAccumVec& V1_n, RealAccumVec& V1_t,
+		// RealAccumVec& V2_n, RealAccumVec& V2_t,
 		RealAccumVec& Mii_x, RealAccumVec& Mii_y, RealAccumVec& Mii_z,
 		RealAccumVec& Mjj_x, RealAccumVec& Mjj_y, RealAccumVec& Mjj_z,
 		RealAccumVec& sum_upotXpoles, RealAccumVec& sum_virial,

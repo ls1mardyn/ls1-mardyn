@@ -285,43 +285,6 @@ void VectorizedCellProcessor::endTraversal() {
 		V2_t = RealAccumVec::convertCalcToAccum((c_d_abs2-rNji2) * scale);  
 
 
-
-/* 
-		double drm_ni = 0.;
-		double drm_nj = 0.;
-		double drs_ni = 0.;
-		double drs_nj = 0.;
-		for (unsigned short d = 0; d < 3; ++d) {
-			drm_ni += drm[d] * ksi_i[d];
-			drm_nj += drm[d] * ksi_j[d];
-			drs_ni += drs[d] * ksi_i[d];
-			drs_nj += drs[d] * ksi_j[d];
-		}
-		
-		double fac = f[0]/drs[0];
-		for(int d=1; std::isnan(fac) && d<3; d++){ //catches the case where f[d] == drs[d] == 0. => fac=0./0.==-nan
-			fac = f[d]/drs[d]; //drs != 0 for at least one dimension
-		}
-
-		VNi += 0.5*fac*drm_ni*drs_ni/absi2;
-		VNj += 0.5*fac*drm_nj*drs_nj/absj2;
-
-		double drm_ti[3];
-		double drs_ti[3];
-		double drm_tj[3];
-		double drs_tj[3];
-		for (unsigned short d = 0; d < 3; ++d) {
-			drm_ti[d] = drm[d] - drm_ni*ksi_i[d]/absi2;
-			drs_ti[d] = drs[d] - drs_ni*ksi_i[d]/absi2;
-			drm_tj[d] = drm[d] - drm_nj*ksi_j[d]/absj2;
-			drs_tj[d] = drs[d] - drs_nj*ksi_j[d]/absj2;
-		}
-		for (unsigned short d = 0; d < 3; ++d) {
-			VTi += 0.25*fac*drm_ti[d]*drs_ti[d];
-			VTj += 0.25*fac*drm_tj[d]*drs_tj[d];
-		}
- */
-
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
 			const RealCalcVec upot_sh = RealCalcVec::fmadd(eps_24, lj12m6, shift6); //2 FP upot				//shift6 is not masked -> we have to mask upot_shifted
@@ -329,9 +292,7 @@ void VectorizedCellProcessor::endTraversal() {
 			const RealAccumVec upot_accum = RealAccumVec::convertCalcToAccum(upot_masked);
 
 			sum_upot6lj = sum_upot6lj + upot_accum;//1FP (sum macro)
-
 			sum_virial = sum_virial + V_x + V_y + V_z;//1 FP (sum macro) + 2 FP (virial)
-			//sum_spherical_virial = sum_spherical_virial + V1_n + V1_t+ V1_t;// for testing?
 		}
 	}
 

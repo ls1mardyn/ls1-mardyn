@@ -31,6 +31,7 @@ size_t CommunicationBuffer::_numBytesHalo = 7 * sizeof(double) + sizeof(int)
 			+ sizeof(unsigned long)
 	#endif
 		;
+// id (1), position (3), force (3), momentum (3), virial (3), sphericalVirial (3)
 size_t CommunicationBuffer::_numBytesForces = sizeof(unsigned long) + 15 * sizeof(double);
 #endif
 
@@ -209,6 +210,9 @@ void CommunicationBuffer::addForceMolecule(size_t indexOfMolecule, const Molecul
 	i_runningByte = emplaceValue(i_runningByte, m.Vi(0));
 	i_runningByte = emplaceValue(i_runningByte, m.Vi(1));
 	i_runningByte = emplaceValue(i_runningByte, m.Vi(2));
+	i_runningByte = emplaceValue(i_runningByte, m.ViSph(0));
+	i_runningByte = emplaceValue(i_runningByte, m.ViSph(1));
+	i_runningByte = emplaceValue(i_runningByte, m.ViSph(2));
 #endif
 }
 
@@ -347,7 +351,7 @@ void CommunicationBuffer::readForceMolecule(size_t indexOfMolecule, Molecule& m)
 	}
 
 #else
-	double rbuf[3], Fbuf[3], Mbuf[3], Vibuf[3];
+	double rbuf[3], Fbuf[3], Mbuf[3], Vibuf[3], ViSphbuf[3];
 	unsigned long idbuf;
 
 	i_runningByte = readValue(i_runningByte, idbuf);
@@ -363,6 +367,9 @@ void CommunicationBuffer::readForceMolecule(size_t indexOfMolecule, Molecule& m)
 	i_runningByte = readValue(i_runningByte, Vibuf[0]);
 	i_runningByte = readValue(i_runningByte, Vibuf[1]);
 	i_runningByte = readValue(i_runningByte, Vibuf[2]);
+	i_runningByte = readValue(i_runningByte, ViSphbuf[0]);
+	i_runningByte = readValue(i_runningByte, ViSphbuf[1]);
+	i_runningByte = readValue(i_runningByte, ViSphbuf[2]);
 	m.setid(idbuf);
 	for(int d = 0; d < 3; d++) {
 		m.setr(d, rbuf[d]);
@@ -370,6 +377,7 @@ void CommunicationBuffer::readForceMolecule(size_t indexOfMolecule, Molecule& m)
 	m.setF(Fbuf);
 	m.setM(Mbuf);
 	m.setVi(Vibuf);
+	m.setViSph(ViSphbuf);
 #endif
 	// some mardyn assert
 }

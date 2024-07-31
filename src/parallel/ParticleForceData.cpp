@@ -18,6 +18,7 @@ void ParticleForceData::getMPIType(MPI_Datatype &sendPartType) {
 	mardyn_assert(&(pdata_dummy.r[0]) + 3 == &(pdata_dummy.F[0]));
 	mardyn_assert(&(pdata_dummy.r[0]) + 6 == &(pdata_dummy.M[0]));
 	mardyn_assert(&(pdata_dummy.r[0]) + 9 == &(pdata_dummy.Vi[0]));
+	mardyn_assert(&(pdata_dummy.r[0]) + 12 == &(pdata_dummy.ViSph[0]));
 
 	MPI_CHECK( MPI_Get_address(&pdata_dummy.id, displacements) );
 	MPI_CHECK( MPI_Get_address(&pdata_dummy.r[0], displacements + 1) );
@@ -47,6 +48,9 @@ void ParticleForceData::MoleculeToParticleData(ParticleForceData &particleStruct
 	particleStruct.Vi[0] = molecule.Vi(0);
 	particleStruct.Vi[1] = molecule.Vi(1);
 	particleStruct.Vi[2] = molecule.Vi(2);
+	particleStruct.ViSph[0] = molecule.ViSph(0);
+	particleStruct.ViSph[1] = molecule.ViSph(1);
+	particleStruct.ViSph[2] = molecule.ViSph(2);
 }
 
 void ParticleForceData::AddParticleForceDataToMolecule(ParticleForceData &particleStruct, Molecule &molecule) {

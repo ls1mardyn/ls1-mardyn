@@ -7,47 +7,7 @@
 
 #include "utils/Logger.h"
 
-
 #include "Simulation.h"
-
-double FullMolecule::ViN() const{ 
-	// for(int d = 0; d<3; d++){
-	// Log::global_log->info() << "Vi[" << d<<"] of MolID: " << getID() << " : " << _Vi[d] << std::endl;
-	// }
-
-	/* 
-	double centerX =  25.;
-	double centerY =  25.;
-	double centerZ =  25.;
-	// double centerX = _simulation->getDomain()->getGlobalLength(0);
-	// double centerY = _simulation->getDomain()->getGlobalLength(1);
-	// double centerZ = _simulation->getDomain()->getGlobalLength(2);
-	double ksi[] = {_r[0]-centerX, _r[1]-centerY,_r[2]-centerZ};
-	double ksiAbs = std::sqrt(ksi[0]*ksi[0]+ksi[1]*ksi[1]+ksi[2]*ksi[2]); 
-	double VirN_byRotation = (_Vi[0]*ksi[0] + _Vi[1]*ksi[1] + _Vi[2]*ksi[2])/ksiAbs ;
-	return VirN_byRotation;
-
- */
-
-	// Log::global_log->info() << "ViN       (MolID " << getID() << "): " << _ViSph[0]<< std::endl;
-	// Log::global_log->info() << "ViN_byRotation (MolID " << getID() << "): " << VirN_byRotation << std::endl;
-
-	// return 0;
-	return _ViSph[0];
-}
-
-double FullMolecule::ViT() const 
-{ 
-	// Log::global_log->info() << "ViT            (MolID " << getID() << "): " << _ViSph[1] << std::endl;
-	// return 0;
-	return _ViSph[1];
-}
-
-
-
-
-
-
 
 FullMolecule::FullMolecule(unsigned long id, Component *component,
 	                 double rx,  double ry,  double rz,
@@ -535,8 +495,8 @@ void FullMolecule::clearFM() {
 
 
 
-					_Vi[0]= _Vi[1]= _Vi[2]= 0.;
-					_ViSph[0] =  _ViSph[1]= 0., _ViSph[2]= 0.;
+					// _Vi[0]= _Vi[1]= _Vi[2]= 0.;
+					// _ViSph[0] =  _ViSph[1]= 0., _ViSph[2]= 0.;
 	/* 	Virials are needed later (by Spherical.cpp).
 		right now, _Visph is set to zero by Spherical.cpp 
 		---> very bad. this needs to be handled diffeerently. don't know how yet.
@@ -700,14 +660,14 @@ void FullMolecule::calcFM() {
 		temp_M[1] += _soa->_quadrupoles_M.y(index_in_soa);
 		temp_M[2] += _soa->_quadrupoles_M.z(index_in_soa);
 	}
-	temp_Vi[0] *= 0.5; //why is this done?
+	temp_Vi[0] *= 0.5; //why is this multiplied by 0.5?
 	temp_Vi[1] *= 0.5;
 	temp_Vi[2] *= 0.5;
 	mardyn_assert(!std::isnan(temp_Vi[0]));
 	mardyn_assert(!std::isnan(temp_Vi[1]));
 	mardyn_assert(!std::isnan(temp_Vi[2]));
 	Viadd(temp_Vi);
-	ViNadd(temp_ViSph[0]); // *.5 correct here?
+	ViNadd(temp_ViSph[0]); // correct?
 	ViTadd(temp_ViSph[1]*0.5);  // *.5 correct here?
 	Madd(temp_M);
 }

@@ -112,6 +112,15 @@ public:
 	double Vi(unsigned short /*d*/) const override {
 		return 0.0;
 	}
+	double ViSph(unsigned short /*d*/) const override {
+		return 0.0;
+	}
+	double ViN() const override {
+		return ViSph(0);
+	}
+	double ViT() const override {
+		return ViSph(1);
+	}
 
 	void setD(unsigned short /*d*/, double /*D*/) override {}
 
@@ -216,6 +225,9 @@ public:
 	void setF(double /*F*/ [3]) override {}
 	void setM(double /*M*/[3]) override {}
 	void setVi(double /*Vi*/[3]) override {}
+	void setViSph(double /*ViSph*/[3]) override {}
+	void setViN(double /*ViN*/) override {}
+	void setViT(double /*ViT*/) override {}
 	void Fadd(const double /*a*/[]) override {}
 	void Madd(const double /*a*/[]) override {}
 	void Viadd(const double /*a*/[]) override {}

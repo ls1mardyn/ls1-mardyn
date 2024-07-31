@@ -274,7 +274,8 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
                 << std::setw(24) << "VirZ"          // virial -- for testing
                 << std::setw(24) << "VirN"          // virial -- for testing
                 << std::setw(24) << "VirT"          // virial -- for testing
-                << std::setw(24) << "T"          // Temperature without drift (i.e. "real" temperature)
+                << std::setw(24) << "T"             // Temperature, assuming that there is no drift
+                << std::setw(24) << "T_driftcorr"   // Temperature without drift (i.e. "real" temperature)
                 // << std::setw(24) << "T_n"        // Temperature in radial direction
                 // << std::setw(24) << "T_t"        // Temperature in tangantial direction
                 << std::setw(24) << "shellVolume"   // Average number of molecules in bin per step
@@ -313,15 +314,11 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
                 double numMolsPerStep {std::nan("0")}; // Not an int as particles change bin during simulation
                 double rho {0.0};
                 double T {std::nan("0")};
+                double T_driftcorr {std::nan("0")};
                 double ekin {std::nan("0")};
                 double p_xyz {std::nan("0")};
                 double p_sph {std::nan("0")};
-                double T_n {std::nan("0")};
-                double T_y {std::nan("0")};
-                double T_t {std::nan("0")};
                 double v_r {std::nan("0")};
-                double v_y {std::nan("0")};
-                double v_t {std::nan("0")};
                 double p_n {std::nan("0")};
                 double p_t {std::nan("0")};
                 double vir_n {std::nan("0")};
@@ -337,19 +334,17 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
                     // v_y         = _velocityVect_accum[1][i]   / numSamples;
                     // v_t         = _velocityVect_accum[2][i]   / numSamples;
 
-                    double v_drift_sqr = v_r*v_r + v_y*v_y + v_t*v_t;
+                    double v_drift_squared = v_r*v_r;  // is this reasonable at all?
 
                     vir_n = 0.5*_virN_accum[i]/numMols_accum;
                     vir_t = 0.5*_virT_accum[i]/numMols_accum;
 
-                    T           = (2*_ekin_accum[i] - v_drift_sqr*_mass_accum[i]) / _doftotal_accum[i];
+                    T           = (2*_ekin_accum[i]) / _doftotal_accum[i];
+                    T_driftcorr = (2*_ekin_accum[i] - v_drift_squared*_mass_accum[i]) / _doftotal_accum[i];
                     ekin        = _ekin_accum[i] / numMols_accum;
                     p_xyz       = rho * ( (_virialVect_accum[0][i]+_virialVect_accum[1][i]+_virialVect_accum[2][i])/(3.0*numMols_accum) + T);
                     p_sph       = rho * ( (vir_n + 2.*vir_t)/(3.0) + T);
 
-                    // T_n         = (2*_ekinVect_accum[0][i] - (v_r*v_r)*_mass_accum[i]) / numMols_accum;
-                    // T_t         = (2*_ekinVect_accum[2][i] - (v_t*v_t)*_mass_accum[i]) / numMols_accum;
-                   
                     p_n         = rho * ( vir_n + T);
                     p_t         = rho * ( vir_t + T);
                 }
@@ -371,8 +366,7 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
                     << FORMAT_SCI_MAX_DIGITS << vir_n
                     << FORMAT_SCI_MAX_DIGITS << vir_t
                     << FORMAT_SCI_MAX_DIGITS << T
-                    // << FORMAT_SCI_MAX_DIGITS << T_n
-                    // << FORMAT_SCI_MAX_DIGITS << T_t
+                    << FORMAT_SCI_MAX_DIGITS << T_driftcorr
                     << FORMAT_SCI_MAX_DIGITS << shell_volume[i]
                     << FORMAT_SCI_MAX_DIGITS << numMolsPerStep
                     << FORMAT_SCI_MAX_DIGITS << ekin

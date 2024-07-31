@@ -70,6 +70,10 @@ public:
 		std::array<double, 3> vi_ret{Vi(0), Vi(1), Vi(2)};
 		return vi_ret;
 	}
+	virtual std::array<double, 3> ViSph_arr() {
+		std::array<double, 3> viSph_ret{ViSph(0), ViSph(1), ViSph(2)};
+		return viSph_ret;
+	}
 
 	virtual const Quaternion& q() const = 0;
 
