@@ -36,7 +36,7 @@ void setTestDataDirectory(std::string& testDataDirectory);
  * Gobal logger variable for use in the test cases.
  * Is initialized in runTests().
  */
-extern Log::Logger* test_log;
+extern std::shared_ptr<Log::Logger> test_log;
 
 #ifdef UNIT_TESTS
 

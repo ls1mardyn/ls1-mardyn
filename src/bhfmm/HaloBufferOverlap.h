@@ -10,6 +10,7 @@
 #include "bhfmm/utils/Vector3.h"
 #include <math.h>
 #include <vector>
+#include <memory>
 #ifdef ENABLE_MPI
 
 #include "mpi.h"
@@ -92,15 +93,13 @@ _areaBuffers(areaNumber), _edgeBuffers(edgeNumber), _cornerBuffers(cornerNumber)
 	}
 
 	if(areaNumber != 0){
-
-		_areaRequests = new MPI_Request[_areaBuffers.size()];
-//		std::cout << "areaBufferSize: "<<_areaBuffers.size() << "\n";
+		std::vector<MPI_Request> _areaRequests(_areaBuffers.size());
 	}
 	if(edgeNumber != 0){
-		_edgeRequests = new MPI_Request[_edgeBuffers.size()];
+		std::vector<MPI_Request> _edgeRequests(_edgeBuffers.size());
 	}
 	if(cornerNumber != 0){
-		_cornerRequests = new MPI_Request[_cornerBuffers.size()];
+		std::vector<MPI_Request> _cornerRequests(_cornerBuffers.size());
 	}
 
 	fillArraySizes(areaHaloSize,edgeHaloSize);
