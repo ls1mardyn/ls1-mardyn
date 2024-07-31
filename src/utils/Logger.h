@@ -12,6 +12,7 @@
 #include <string>
 #include <sstream>
 #include <chrono>
+#include <memory>
 
 #ifdef USE_GETTIMEOFDAY
 #include <sys/time.h>
@@ -92,7 +93,7 @@ private:
 	logLevel _msg_log_level;
 	bool _do_output;
 	std::string _filename;
-	std::ostream *_log_stream;
+	std::unique_ptr<std::ostream> _log_stream;
 	std::map<logLevel, std::string> logLevelNames;
 #ifdef USE_GETTIMEOFDAY
 	timeval _starttime;
@@ -115,7 +116,7 @@ private:
 
 	// don't allow copy-construction
 	Logger(const Logger&) : _log_level(Log::Error), _msg_log_level(Log::Error), _do_output(true),
-			_filename(""), _log_stream(0), logLevelNames(), _starttime(), _rank(0)
+			_filename(""), _log_stream(nullptr), logLevelNames(), _starttime(), _rank(0)
 	{ }
 
 	// don't allow assignment
@@ -124,11 +125,11 @@ private:
 public:
 	/** Initializes the log level, log stream and the list of log level names.
 	 * If ENABLE_MPI is enabled by default all process perform logging output. */
-	Logger(logLevel level = Log::Error, std::ostream *os = &(std::cout));
+	Logger(logLevel level = Log::Error, std::ostream *os = &(std::cout));  // Write to stream
 
-	Logger(logLevel level, std::string prefix);
+	Logger(logLevel level, std::string prefix);  // Write to file
 
-	/// Destructor flushes stream
+	/// Destructor flushes stream and/or closes file
 	~Logger();
 
 	/// General output template for variables, strings, etc.

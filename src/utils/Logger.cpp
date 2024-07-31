@@ -2,13 +2,16 @@
 
 #include "Logger.h"
 
+#include <memory>
+
 namespace Log {
 
 Logger *global_log;
 
+// Write to stream
 Logger::Logger(logLevel level, std::ostream *os) :
 	_log_level(level), _msg_log_level(Log::Error),
-	_do_output(true), _filename(""),_log_stream(os),
+	_do_output(true), _filename(""), _log_stream(os),
 	logLevelNames(), _starttime(), _rank(0)
 {
 	init_starting_time();
@@ -19,10 +22,10 @@ Logger::Logger(logLevel level, std::ostream *os) :
 	*_log_stream << std::boolalpha;  // Print boolean as true/false
 }
 
-
+// Write to file
 Logger::Logger(logLevel level, std::string prefix) :
 	_log_level(level), _msg_log_level(Log::Error),
-	_do_output(true), _filename(""), _log_stream(0),
+	_do_output(true), _filename(""), _log_stream(nullptr),
 	logLevelNames(), _starttime(), _rank(0)
 {
 	init_starting_time();
@@ -35,14 +38,20 @@ Logger::Logger(logLevel level, std::string prefix) :
 #endif
 	filenamestream << ".log";
 	_filename = filenamestream.str();
-	_log_stream = new std::ofstream(_filename.c_str());
+	
+	_log_stream = std::make_unique<std::ofstream>(_filename.c_str());
 	*_log_stream << std::boolalpha;  // Print boolean as true/false
 }
 
 Logger::~Logger() {
 	*_log_stream << std::flush;
-	if (_filename != "")
-		(static_cast<std::ofstream*> (_log_stream))->close();
+	if (_filename != "") {
+		// Convert from ostream to ofstream for closing if _log_stream is file
+		std::ofstream* file = dynamic_cast<std::ofstream*>(_log_stream.get());
+		if (file && file->is_open()) {
+			file->close();
+		}
+	}
 }
 
 
