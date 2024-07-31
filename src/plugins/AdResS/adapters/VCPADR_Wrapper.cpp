@@ -16,7 +16,7 @@ VCPADR_Wrapper::VCPADR_Wrapper(Domain &domain, double cutoffRadius, double LJcut
 void VCPADR_Wrapper::init() {
     _reference_processor = std::make_unique<VectorizedCellProcessor>(*_simulation.getDomain(), getCutoffRadius(), getLJCutoffRadius());
     _adr_processor = std::make_unique<VCPADR>(*_simulation.getDomain(), getCutoffRadius(), getLJCutoffRadius(), _resolution_handler);
-    _adr_processor->init();
+    dynamic_cast<VCPADR*>(_adr_processor.get())->init();
 
     int numThreads = mardyn_get_max_threads();;
     _cell_maps.resize(numThreads);

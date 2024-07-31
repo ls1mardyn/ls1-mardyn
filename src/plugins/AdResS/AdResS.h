@@ -32,7 +32,7 @@
  * */
 class AdResS : public PluginBase {
 	friend class AdResSForceAdapterTest;
-
+    friend class VCPADR_WrapperTest;
 	friend class AdResSTest;
 
 public:

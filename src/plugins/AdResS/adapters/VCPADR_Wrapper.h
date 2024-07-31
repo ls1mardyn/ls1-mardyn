@@ -14,7 +14,10 @@
 #include <unordered_map>
 #include <memory>
 
+class VCPADR_WrapperTest;
+
 class VCPADR_Wrapper : public CellProcessor {
+    friend class VCPADR_WrapperTest;
 public:
     VCPADR_Wrapper(Domain & domain, double cutoffRadius, double LJcutoffRadius, const Resolution::Handler& resolutionHandler);
 
@@ -66,9 +69,9 @@ private:
     bool checkCell(ParticleCell& cell);
 
     /// ls1 implementation of the vectorized cell processor
-    std::unique_ptr<VectorizedCellProcessor> _reference_processor;
+    std::unique_ptr<CellProcessor> _reference_processor;
     /// AdResS extended implementation of the vectorized cell processor
-    std::unique_ptr<VCPADR> _adr_processor;
+    std::unique_ptr<CellProcessor> _adr_processor;
     /// mapping from cells to whether AdResS should be used (per thread)
     std::vector<std::unordered_map<ParticleCell*, bool>> _cell_maps;
     /// reference to active AdResS resolution handler
