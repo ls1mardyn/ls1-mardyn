@@ -65,7 +65,8 @@ public:
 	}
 
 	/**
-	 * Writes the current averaged quantity into the provided buffer
+	 * Writes the current averaged quantity into the provided buffer.\n
+	 * Must have correct size
 	 * */
 	 void getAveragedData(T& dst) {
 		for(int i = 0; i < _sum_data.size(); i++) {

@@ -33,12 +33,12 @@ double Weight::manhattan(std::array<double, 3> r, const Resolution::FPRegion &re
 	else if(Resolution::FPRegion::isInnerPoint(r, region._lowHybrid, region._highHybrid)) {
 		std::array<double, 3> intersect_inner = region.computeIntersection(r, Resolution::FPRegion::Intersection::H_FP);
 		std::array<double, 3> intersect_outer = region.computeIntersection(r, Resolution::FPRegion::Intersection::CG_H);
-		double hyb_axis_length = intersect_outer[0]-intersect_inner[0]  +
-								 intersect_outer[1]-intersect_inner[1]  +
-								 intersect_outer[2]-intersect_inner[2];
-		double dist = r[0]-intersect_inner[0] +
-					  r[1]-intersect_inner[1] +
-					  r[2]-intersect_inner[2];
+		double hyb_axis_length = std::abs(intersect_outer[0]-intersect_inner[0])  +
+								 std::abs(intersect_outer[1]-intersect_inner[1])  +
+								 std::abs(intersect_outer[2]-intersect_inner[2]);
+		double dist = std::abs(r[0]-intersect_inner[0]) +
+					  std::abs(r[1]-intersect_inner[1]) +
+					  std::abs(r[2]-intersect_inner[2]);
 
 		return std::pow(std::cos(M_PI/(2*hyb_axis_length) * dist), 2);
 	}

@@ -9,11 +9,11 @@
 
 class AdResSTest : public utils::TestWithSimulationSetup {
 TEST_SUITE(AdResSTest);
-        TEST_METHOD(computeForcesTest);
-        TEST_METHOD(checkGradient);
-        TEST_METHOD(checkMatrixSolver);
-        TEST_METHOD(checkHermite);
-    TEST_SUITE_END;
+    TEST_METHOD(computeForcesTest);
+    TEST_METHOD(checkGradient);
+    TEST_METHOD(checkMatrixSolver);
+    TEST_METHOD(checkHermite);
+TEST_SUITE_END;
 
 public:
     AdResSTest();
