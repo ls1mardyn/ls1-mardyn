@@ -223,6 +223,13 @@ public:
 	//! by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction)
 	double getAverageGlobalUpotCSpec();
 
+	//! @brief get the global kinetic energy
+	//!
+	//! Before this method is called, it has to be sure that the
+	//! global energies has been calculated (method calculateGlobalValues)
+	double getGlobalUkinTrans() { return 0.5*_globalsummv2; }
+	double getGlobalUkinRot() { return 0.5*_globalsumIw2; }
+
 	//! by Stefan Becker: determine and return the totel number of fluid molecules
 	//! this method assumes all molecules with a component-ID less than _numFluidComponent to be fluid molecules
 	unsigned long getNumFluidMolecules();
@@ -411,6 +418,10 @@ private:
 	double _globalUpot;
 	//! global component specific potential (fluid-fluid and fluid-solid but NOT solid-solid)
 	double _globalUpotCspecif;
+	//! global translational kinetic energy times two
+	double _globalsummv2;
+	//! global rotational kinetic energy times two
+	double _globalsumIw2;
 	//! global virial
 	double _globalVirial;
 	//! global density
