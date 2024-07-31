@@ -67,7 +67,7 @@ void ParticleDataRMM::MoleculeToParticleData(ParticleDataRMM &particleStruct, Mo
 	particleStruct.v[2] = molecule.v(2);
 }
 
-void ParticleDataRMM::ParticleDataToMolecule(const ParticleDataRMM &particleStruct, Molecule &molecule) {
+Molecule ParticleDataRMM::ParticleDataToMolecule(const ParticleDataRMM &particleStruct) {
 	Component* component = _simulation.getEnsemble()->getComponent(0);
 	molecule = Molecule(particleStruct.id, component,
 						particleStruct.r[0], particleStruct.r[1], particleStruct.r[2],

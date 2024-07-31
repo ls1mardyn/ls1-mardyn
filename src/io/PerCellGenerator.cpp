@@ -121,7 +121,7 @@ void PerCellGenerator::fillContainer(ParticleContainer *particleContainer, Compo
 						std::array pos = {uniform_dists[0](randomEngine), uniform_dists[1](randomEngine),
 										  uniform_dists[2](randomEngine)};
 
-						Molecule m(id, component, pos[0], pos[1], pos[2], 0., 0., 0.);
+						Molecule m(id, component, pos[0], pos[1], pos[2], 0., 0., 0., 1., 0., 0., 0., 0., 0., 0.);
 						if (isHalo) {
 							particleContainer->addHaloParticle(m, true);
 						} else {
@@ -161,7 +161,7 @@ void PerCellGenerator::generateTwoParticles(ParticleContainer *particleContainer
 	for (auto id = 0; id < 2; ++id) {
 		std::array pos = {uniform_dists[0](randomEngine), uniform_dists[1](randomEngine),
 						  uniform_dists[2](randomEngine)};
-		Molecule m(id, component, pos[0], pos[1], pos[2], 0., 0., 0.);
+		Molecule m(id, component, pos[0], pos[1], pos[2], 0., 0., 0., 1., 0., 0., 0., 0., 0., 0.);
 		particleContainer->addParticle(m, true);
 	}
 }

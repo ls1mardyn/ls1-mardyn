@@ -411,8 +411,7 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 		Log::global_log->debug() << "broadcasting(sending/receiving) particles with buffer_position " << particle_buff_pos << std::endl;
 		MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD
 		for (int j = 0; j < particle_buff_pos; j++) {
-			Molecule m;
-			ParticleData::ParticleDataToMolecule(particle_buff[j], m);
+			Molecule m = ParticleData::ParticleDataToMolecule(particle_buff[j]);
 			// only add particle if it is inside of the own domain!
 			if(particleContainer->isInBoundingBox(m.r_arr().data())) {
 				particleContainer->addParticle(m, true, false);

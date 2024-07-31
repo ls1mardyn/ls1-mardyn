@@ -505,10 +505,9 @@ MPI_IOReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 
 		if (globalNumParticlesPerCell[index] > 0) {
 
-			Molecule m;
 			for (int l = 0; l < globalNumParticlesPerCell[index]; l++) {
 
-				ParticleData::ParticleDataToMolecule(data[l], m);
+				Molecule m = ParticleData::ParticleDataToMolecule(data[l]);
 
 				// only add particle if it is inside of the own domain!
 				if(particleContainer->isInBoundingBox(m.r_arr().data())) {
