@@ -218,7 +218,7 @@ public:
 	//! Before this method is called, it has to be sure that the
 	//! global potential has been calculated (method calculateGlobalValues)
 	double getAverageGlobalUpot();
-        double getGlobalUpot() const;
+	double getGlobalUpot() const;
 
 	//! by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction)
 	double getAverageGlobalUpotCSpec();
@@ -368,8 +368,8 @@ public:
 	void evaluateRho(unsigned long localN, DomainDecompBase* comm);
 	void submitDU(unsigned cid, double DU, double* r);
 	void setLambda(double lambda) { this->_universalLambda = lambda; }
-        void setDensityCoefficient(float coeff) { _globalDecisiveDensity = coeff; }
-        void setProfiledComponentMass(double m) { _universalProfiledComponentMass = m; }
+	void setDensityCoefficient(float coeff) { _globalDecisiveDensity = coeff; }
+	void setProfiledComponentMass(double m) { _universalProfiledComponentMass = m; }
 
 	void init_cv(unsigned N, double U, double UU) {
 		this->_globalUSteps = N;
@@ -379,7 +379,7 @@ public:
 	void record_cv();
 	double cv();
 
-    // by Stefan Becker <stefan.becker@mv.uni-kl.de>
+	// by Stefan Becker <stefan.becker@mv.uni-kl.de>
 	/* method returning the sigma parameter of a component
 	=> needed in the output of the MmspdWriter (specifying the particles' radii in a movie) */
 	double getSigma(unsigned cid, unsigned nthSigma);
@@ -389,8 +389,8 @@ public:
 	void setUpotCorr(double upotcorr){ _UpotCorr = upotcorr; }
 	void setVirialCorr(double virialcorr){ _VirialCorr = virialcorr; }
 
-    // explosion heuristics, NOTE: turn off when using slab thermostat
-    void setExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
+	// explosion heuristics, NOTE: turn off when using slab thermostat
+	void setExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
 
 private:
 
@@ -458,9 +458,9 @@ private:
 	double _globalSigmaUU;
 	//! which components should be considered?
 	std::map<unsigned, bool> _universalProfiledComponents;
-        double _universalProfiledComponentMass;  // set from outside
-        double _universalLambda;  // set from outside
-        float _globalDecisiveDensity;  // set from outside
+	double _universalProfiledComponentMass;  // set from outside
+	double _universalLambda;  // set from outside
+	float _globalDecisiveDensity;  // set from outside
 
 	int _universalSelectiveThermostatCounter;
 	int _universalSelectiveThermostatWarning;
@@ -492,8 +492,8 @@ private:
 	//! @todo more explanation
 	std::vector<double> _mixcoeff;
 
-    // explosion heuristics, NOTE: turn off when using slab thermostat
-    bool _bDoExplosionHeuristics;
+	// explosion heuristics, NOTE: turn off when using slab thermostat
+	bool _bDoExplosionHeuristics;
 };
 
 

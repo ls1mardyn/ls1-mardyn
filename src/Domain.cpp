@@ -74,7 +74,7 @@ Domain::Domain(int rank) {
 	this->_universalSelectiveThermostatWarning = 0;
 	this->_universalSelectiveThermostatError = 0;
 
-    // explosion heuristics, NOTE: turn off when using slab thermostat
+	// explosion heuristics, NOTE: turn off when using slab thermostat
     _bDoExplosionHeuristics = true;
 }
 
@@ -519,7 +519,7 @@ void Domain::writeCheckpointHeader(std::string filename,
 	#ifndef NDEBUG
 			checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
 			//checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
-	        checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <contact@ls1-mardyn.de>.\n# \n";
+			checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <contact@ls1-mardyn.de>.\n# \n";
 	#endif
 			/* by Stefan Becker: the output line "I ..." causes an error: the restart run does not start!!!
 			if(this->_globalUSteps > 1)
@@ -870,10 +870,10 @@ void Domain::setNumFluidComponents(unsigned nc){_numFluidComponent = nc;}
 unsigned Domain::getNumFluidComponents(){return _numFluidComponent;}
 
 unsigned long Domain::getNumFluidMolecules(){
-  unsigned long numFluidMolecules = 0;
-  for(unsigned i = 0; i < _numFluidComponent; i++){
-    Component& ci=*(global_simulation->getEnsemble()->getComponent(i));
-    numFluidMolecules+=ci.getNumMolecules();
-  }
+	unsigned long numFluidMolecules = 0;
+	for(unsigned i = 0; i < _numFluidComponent; i++){
+		Component& ci=*(global_simulation->getEnsemble()->getComponent(i));
+		numFluidMolecules+=ci.getNumMolecules();
+	}
   return numFluidMolecules;
 }
