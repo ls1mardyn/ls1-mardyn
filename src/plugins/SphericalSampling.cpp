@@ -168,14 +168,13 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
         virialVect_step[0].local[index] += vi_x;
         virialVect_step[1].local[index] += vi_y;
         virialVect_step[2].local[index] += vi_z;
-        
+        virN_step.local[index] += vi_n;
+        virT_step.local[index] += vi_t;
         
         ekinVect_step[0].local[index] += 0.5*mass*u_x*u_x;
         ekinVect_step[1].local[index] += 0.5*mass*u_y*u_y;
         ekinVect_step[2].local[index] += 0.5*mass*u_z*u_z;
 
-        virN_step.local[index] += vi_n;
-        virT_step.local[index] += vi_t;
     }
 
 // Gather quantities. Note: MPI_Reduce instead of MPI_Allreduce! Therefore, only root has correct values
@@ -184,26 +183,25 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
     MPI_Reduce(mass_step.local.data(), mass_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekin_step.local.data(), ekin_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(velocityN_step.local.data(), velocityN_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(virialVect_step[0].local.data(), virialVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(virialVect_step[1].local.data(), virialVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(virialVect_step[2].local.data(), virialVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekinVect_step[0].local.data(), ekinVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekinVect_step[1].local.data(), ekinVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(ekinVect_step[2].local.data(), ekinVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[0].local.data(), virialVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[1].local.data(), virialVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(virialVect_step[2].local.data(), virialVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(virN_step.local.data(), virN_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(virT_step.local.data(), virT_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #else
     for (unsigned long i = 0; i < _lenVector; i++) {
         numMolecules_step.global[i] = numMolecules_step.local[i];
         mass_step.global[i] = mass_step.local[i];
         ekin_step.global[i] = ekin_step.local[i];
-        virN_step.global[i] = virN_step.local[i];
-        virT_step.global[i] = virT_step.local[i];
         velocityN_step.global[i] = velocityN_step.local[i];
         virialVect_step[0].global[i] = virialVect_step[0].local[i];
         virialVect_step[1].global[i] = virialVect_step[1].local[i];
         virialVect_step[2].global[i] = virialVect_step[2].local[i];
+        virN_step.global[i] = virN_step.local[i];
+        virT_step.global[i] = virT_step.local[i];
         ekinVect_step[0].global[i] = ekinVect_step[0].local[i];
         ekinVect_step[1].global[i] = ekinVect_step[1].local[i];
         ekinVect_step[2].global[i] = ekinVect_step[2].local[i];
