@@ -2,6 +2,9 @@
 #define DOMAINDECOMPBASE_H_
 
 #include "parallel/CollectiveCommBase.h"
+#ifdef ENABLE_PERSISTENT
+#include "parallel/CollectiveCommunicationPersistent.h"
+#endif
 #include <string>
 
 #ifdef ENABLE_MPI
@@ -197,11 +200,17 @@ public:
 
 	void updateSendLeavingWithCopies(bool sendTogether){
 				// Count all processes that need to send separately
+#ifdef ENABLE_PERSISTENT
+		auto collComm = make_CollCommObj_AllreduceAdd(getCommunicator(), static_cast<int>(!sendTogether));
+		collComm.persistent();
+		collComm.get(_sendLeavingAndCopiesSeparately);
+#else
 		collCommInit(1);
 		collCommAppendInt(!sendTogether);
 		collCommAllreduceSum();
 		_sendLeavingAndCopiesSeparately = collCommGetInt();
 		collCommFinalize();
+#endif
 
 
 		Log::global_log->info() << "Sending leaving particles and halo copies "

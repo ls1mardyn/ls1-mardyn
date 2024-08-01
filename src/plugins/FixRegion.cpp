@@ -64,11 +64,17 @@ void FixRegion::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 		temporaryMolecule->clearFM();
 		_molCount++;
 	}
+#ifdef ENABLE_PERSISTENT
+	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), _molCount);
+	collComm.persistent();
+	collComm.get(_molCount);
+#else
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(_molCount);
 	domainDecomp->collCommAllreduceSum();
 	_molCount = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
+#endif
 	Log::global_log->info() << _molCount << " molecules are inside a fixed region" << std::endl;
 }
 

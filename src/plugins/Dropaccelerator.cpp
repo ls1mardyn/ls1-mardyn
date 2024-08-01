@@ -89,11 +89,17 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 						  domainDecomp->getCommunicator());
 #endif
 
+#ifdef ENABLE_PERSISTENT
+			auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), particlesInDrop);
+			collComm.persistent();
+			collComm.get(particlesInDrop);
+#else
 			domainDecomp->collCommInit(1);
 			domainDecomp->collCommAppendInt(particlesInDrop);
 			domainDecomp->collCommAllreduceSum();
 			particlesInDrop = domainDecomp->collCommGetInt();
 			domainDecomp->collCommFinalize();
+#endif
 		}
 
 		// ITERATE OVER PARTICLES AND ACCELERATE ONLY DROPMOLECULES
@@ -107,11 +113,17 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 				}
 			}
 
+#ifdef ENABLE_PERSISTENT
+			auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), particlesInDrop);
+			collComm.persistent();
+			collComm.get(particlesInDrop);
+#else
 			domainDecomp->collCommInit(1);
 			domainDecomp->collCommAppendInt(particlesInDrop);
 			domainDecomp->collCommAllreduceSum();
 			particlesInDrop = domainDecomp->collCommGetInt();
 			domainDecomp->collCommFinalize();
+#endif
 		}
 
 		// CHECK IF VELOCITY HAS REACHED AND IF NOT ACCELERATE AGAIN
@@ -134,7 +146,11 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 			}
 
 			// COMMUNICATION
-
+#ifdef ENABLE_PERSISTENT
+			auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), _velocNow, particlesInDrop);
+			collComm.persistent();
+			collComm.get(_velocNow, particlesInDrop);
+#else
 			domainDecomp->collCommInit(1);
 			domainDecomp->collCommAppendDouble(_velocNow);
 			domainDecomp->collCommAllreduceSum();
@@ -146,7 +162,7 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 			domainDecomp->collCommAllreduceSum();
 			particlesInDrop = domainDecomp->collCommGetInt();
 			domainDecomp->collCommFinalize();
-
+#endif
 			// CALCULATE AVERAGE SPEED
 			_velocNow = _velocNow / particlesInDrop;
 			deltavelocity = _veloc - _velocNow;
