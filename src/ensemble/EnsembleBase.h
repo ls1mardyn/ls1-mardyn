@@ -5,13 +5,13 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 
 #include "DomainBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
+#include "molecules/mixingrules/MixingRuleBase.h"
 
 class ParticleContainer;
-
-class MixingRuleBase;
 
 class ChemicalPotential;
 
@@ -121,12 +121,19 @@ public:
 	/*! Store Sample molecule from old input readers in lmu */
 	virtual void storeSample(Molecule* m, uint32_t componentid) {};
 
+	auto & getMixingrules() { return _mixingrules; }
+
+	// Set one mixing rule
+	void setMixingrule(std::shared_ptr<MixingRuleBase> mixingrule);
+
 protected:
 
 
 	std::vector<Component> _components;
 	std::map<std::string, int> _componentnamesToIds;
-	std::vector<MixingRuleBase*> _mixingrules;
+	// The mixing rules (xi,eta) can be accessed by _mixingrules[cid1][cid2]
+	// Note that cid1 < cid2 and that cid is in internal format, i.e. starts with 0
+	MixingRuleBase::MixRulesType _mixingrules;
 	DomainBase* _domain;
 	Type _type = undefined;
 

@@ -6,12 +6,15 @@
 
 #include <climits>
 #include <string>
+#include <memory>
 
 #include "Domain.h"
 #include "ensemble/BoxDomain.h"
 #include "ensemble/EnsembleBase.h"
 #include "Simulation.h"
 #include "molecules/Molecule.h"
+#include "molecules/mixingrules/MixingRuleBase.h"
+#include "molecules/mixingrules/LorentzBerthelot.h"
 
 #ifdef ENABLE_MPI
 #include "parallel/ParticleData.h"
@@ -209,16 +212,24 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 #endif
 
 			// Mixing coefficients
-			std::vector<double>& dmixcoeff = domain->getmixcoeff();
-			dmixcoeff.clear();
-			for(unsigned int i = 1; i < numcomponents; i++) {
-				for(unsigned int j = i + 1; j <= numcomponents; j++) {
+			for(unsigned int cidi = 0; cidi < numcomponents-1; cidi++) {
+				for(unsigned int cidj = cidi + 1; cidj <= numcomponents-1; cidj++) {
 					double xi, eta;
 					_phaseSpaceHeaderFileStream >> xi >> eta;
-					dmixcoeff.push_back(xi);
-					dmixcoeff.push_back(eta);
+#ifndef NDEBUG
+					Log::global_log->debug() << "Mixing: " << cidi+1 << " + " << cidj+1
+											 << " : xi=" << xi << " eta=" << eta << std::endl;
+#endif
+					// Only LB mixing rule is supported for now
+					auto mixingrule = std::make_shared<LorentzBerthelotMixingRule>();
+					mixingrule->setCid1(cidi);
+					mixingrule->setCid2(cidj);
+					mixingrule->setEta(eta);
+					mixingrule->setXi(xi);
+					_simulation.getEnsemble()->setMixingrule(mixingrule);
 				}
 			}
+
 			// read in global factor \epsilon_{RF}
 			// FIXME: Maybe this should go better to a seperate token?!
 			_phaseSpaceHeaderFileStream >> token;
