@@ -79,7 +79,7 @@ var searchData=
   ['communicationpartner_76',['CommunicationPartner',['../classCommunicationPartner.html',1,'']]],
   ['communicationpartnerwriter_77',['CommunicationPartnerWriter',['../classCommunicationPartnerWriter.html',1,'']]],
   ['commvar_78',['CommVar',['../classCommVar.html',1,'']]],
-  ['comp2param_79',['Comp2Param',['../classComp2Param.html',1,'Comp2Param'],['../classComp2Param.html#afd59b275447bfc4c81bd739240ed9031',1,'Comp2Param::Comp2Param()'],['../classComp2Param.html#af91cd0729b73def2f1e538eb91c92959',1,'Comp2Param::Comp2Param(const std::vector&lt; Component &gt; &amp;components, const std::vector&lt; double &gt; &amp;mixcoeff, double epsRF, double rc, double rcLJ)']]],
+  ['comp2param_79',['Comp2Param',['../classComp2Param.html',1,'Comp2Param'],['../classComp2Param.html#afd59b275447bfc4c81bd739240ed9031',1,'Comp2Param::Comp2Param()'],['../classComp2Param.html#a847f8daabbe573c5cd44ba69c82f6c90',1,'Comp2Param::Comp2Param(const std::vector&lt; Component &gt; &amp;components, const MixingRuleBase::MixRulesType &amp;mixcoeff, double epsRF, double rc, double rcLJ)']]],
   ['compare_80',['compare',['../classbhfmm_1_1Vector3_1_1compare.html',1,'bhfmm::Vector3']]],
   ['component_81',['Component',['../classComponent.html',1,'']]],
   ['component_82',['component',['../classFullMolecule.html#ad8b01f14564a9bf7d8a63589ae072159',1,'FullMolecule']]],

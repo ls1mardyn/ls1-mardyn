@@ -77,13 +77,13 @@ $(function() {
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;string&gt;</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;map&gt;</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &quot;DomainBase.h&quot;</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &quot;molecules/MoleculeForwardDeclaration.h&quot;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">class </span><a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>;</div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &quot;DomainBase.h&quot;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &quot;molecules/MoleculeForwardDeclaration.h&quot;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;molecules/mixingrules/MixingRuleBase.h&quot;</span></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">class </span><a class="code hl_class" href="classMixingRuleBase.html">MixingRuleBase</a>;</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">class </span><a class="code hl_class" href="classParticleContainer.html">ParticleContainer</a>;</div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="keyword">class </span><a class="code hl_class" href="classChemicalPotential.html">ChemicalPotential</a>;</div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
@@ -170,21 +170,28 @@ $(function() {
 <div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span> </div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno"><a class="line" href="classEnsemble.html#a8ffbb8cc3db4292fcd33029ece0f8fac">  122</a></span>    <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code hl_function" href="classEnsemble.html#a8ffbb8cc3db4292fcd33029ece0f8fac">storeSample</a>(<a class="code hl_class" href="classFullMolecule.html">Molecule</a>* m, uint32_t componentid) {};</div>
 <div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="keyword">protected</span>:</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <span class="keyword">auto</span> &amp; getMixingrules() { <span class="keywordflow">return</span> _mixingrules; }</div>
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    std::vector&lt;Component&gt; _components;</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    std::map&lt;std::string, int&gt; _componentnamesToIds;</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    std::vector&lt;MixingRuleBase*&gt; _mixingrules;</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <a class="code hl_class" href="classDomainBase.html">DomainBase</a>* _domain;</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    Type _type = undefined;</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span> </div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    <span class="comment">/* EnsembleBase has a DomainBase pointer _domain, however this is not compatible</span></div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span><span class="comment">     * with the needed Domain* for the ChemicalPotential/radial function</span></div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span><span class="comment">     * and for whatever reason, Domain does not inherit from DomainBase.</span></div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span><span class="comment">    */</span></div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    <a class="code hl_class" href="classDomain.html">Domain</a>* _simulationDomain;</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>};</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="comment">// Set one mixing rule</span></div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <span class="keywordtype">void</span> setMixingrule(std::shared_ptr&lt;MixingRuleBase&gt; mixingrule);</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span> </div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span><span class="keyword">protected</span>:</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    std::vector&lt;Component&gt; _components;</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    std::map&lt;std::string, int&gt; _componentnamesToIds;</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    <span class="comment">// The mixing rules (xi,eta) can be accessed by _mixingrules[cid1][cid2]</span></div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    <span class="comment">// Note that cid1 &lt; cid2 and that cid is in internal format, i.e. starts with 0</span></div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    MixingRuleBase::MixRulesType _mixingrules;</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    <a class="code hl_class" href="classDomainBase.html">DomainBase</a>* _domain;</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    Type _type = undefined;</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>    <span class="comment">/* EnsembleBase has a DomainBase pointer _domain, however this is not compatible</span></div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span><span class="comment">     * with the needed Domain* for the ChemicalPotential/radial function</span></div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span><span class="comment">     * and for whatever reason, Domain does not inherit from DomainBase.</span></div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span><span class="comment">    */</span></div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    <a class="code hl_class" href="classDomain.html">Domain</a>* _simulationDomain;</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>};</div>
 <div class="ttc" id="aclassCellProcessor_html"><div class="ttname"><a href="classCellProcessor.html">CellProcessor</a></div><div class="ttdef"><b>Definition:</b> CellProcessor.h:29</div></div>
 <div class="ttc" id="aclassChemicalPotential_html"><div class="ttname"><a href="classChemicalPotential.html">ChemicalPotential</a></div><div class="ttdef"><b>Definition:</b> ChemicalPotential.h:16</div></div>
 <div class="ttc" id="aclassComponent_html"><div class="ttname"><a href="classComponent.html">Component</a></div><div class="ttdoc">Class implementing molecules as rigid rotators consisting out of different interaction sites (LJcente...</div><div class="ttdef"><b>Definition:</b> Component.h:14</div></div>
@@ -202,14 +209,13 @@ $(function() {
 <div class="ttc" id="aclassEnsemble_html_a7c68f5b986506d626019d01aa724c8cf"><div class="ttname"><a href="classEnsemble.html#a7c68f5b986506d626019d01aa724c8cf">Ensemble::getLmu</a></div><div class="ttdeci">virtual std::list&lt; ChemicalPotential &gt; * getLmu()</div><div class="ttdef"><b>Definition:</b> EnsembleBase.h:99</div></div>
 <div class="ttc" id="aclassEnsemble_html_a7dc18923b5b01b2bfa0074c8cff3bbc8"><div class="ttname"><a href="classEnsemble.html#a7dc18923b5b01b2bfa0074c8cff3bbc8">Ensemble::N</a></div><div class="ttdeci">virtual unsigned long N()=0</div><div class="ttdoc">Returns the global number of Molecules of the ensemble.</div></div>
 <div class="ttc" id="aclassEnsemble_html_a8b9dc088df76934e372a121becbd53fe"><div class="ttname"><a href="classEnsemble.html#a8b9dc088df76934e372a121becbd53fe">Ensemble::afterForces</a></div><div class="ttdeci">virtual void afterForces(ParticleContainer *, DomainDecompBase *, CellProcessor *, unsigned long)</div><div class="ttdef"><b>Definition:</b> EnsembleBase.h:114</div></div>
-<div class="ttc" id="aclassEnsemble_html_a8fe0437a742280a127d4b10e89e0b3e1"><div class="ttname"><a href="classEnsemble.html#a8fe0437a742280a127d4b10e89e0b3e1">Ensemble::setComponentLookUpIDs</a></div><div class="ttdeci">void setComponentLookUpIDs()</div><div class="ttdoc">prepare the _compIDs used by the Vectorized*CellProcessors</div><div class="ttdef"><b>Definition:</b> EnsembleBase.cpp:90</div></div>
+<div class="ttc" id="aclassEnsemble_html_a8fe0437a742280a127d4b10e89e0b3e1"><div class="ttname"><a href="classEnsemble.html#a8fe0437a742280a127d4b10e89e0b3e1">Ensemble::setComponentLookUpIDs</a></div><div class="ttdeci">void setComponentLookUpIDs()</div><div class="ttdoc">prepare the _compIDs used by the Vectorized*CellProcessors</div><div class="ttdef"><b>Definition:</b> EnsembleBase.cpp:95</div></div>
 <div class="ttc" id="aclassEnsemble_html_a8ffbb8cc3db4292fcd33029ece0f8fac"><div class="ttname"><a href="classEnsemble.html#a8ffbb8cc3db4292fcd33029ece0f8fac">Ensemble::storeSample</a></div><div class="ttdeci">virtual void storeSample(Molecule *m, uint32_t componentid)</div><div class="ttdef"><b>Definition:</b> EnsembleBase.h:122</div></div>
 <div class="ttc" id="aclassEnsemble_html_a9d5c9143fafa38c728065c35c2a33dd2"><div class="ttname"><a href="classEnsemble.html#a9d5c9143fafa38c728065c35c2a33dd2">Ensemble::T</a></div><div class="ttdeci">virtual double T()=0</div><div class="ttdoc">Returns the global Temperature of the ensemble.</div></div>
 <div class="ttc" id="aclassEnsemble_html_ad9f1f42de8132d8fa45374242af4aa55"><div class="ttname"><a href="classEnsemble.html#ad9f1f42de8132d8fa45374242af4aa55">Ensemble::getType</a></div><div class="ttdeci">int getType()</div><div class="ttdef"><b>Definition:</b> EnsembleBase.h:96</div></div>
 <div class="ttc" id="aclassEnsemble_html_ae60cac8747bdf388e075fd5c79eccd64"><div class="ttname"><a href="classEnsemble.html#ae60cac8747bdf388e075fd5c79eccd64">Ensemble::mu</a></div><div class="ttdeci">virtual double mu()=0</div><div class="ttdoc">Returns the global chemical potential of the ensemble.</div></div>
 <div class="ttc" id="aclassEnsemble_html_af263cdac2ae93aec25afac6412790c5c"><div class="ttname"><a href="classEnsemble.html#af263cdac2ae93aec25afac6412790c5c">Ensemble::E</a></div><div class="ttdeci">virtual double E()=0</div><div class="ttdoc">Returns the global energy of the ensemble.</div></div>
 <div class="ttc" id="aclassFullMolecule_html"><div class="ttname"><a href="classFullMolecule.html">FullMolecule</a></div><div class="ttdoc">FullMolecule modeled as LJ sphere with point polarities.</div><div class="ttdef"><b>Definition:</b> FullMolecule.h:18</div></div>
-<div class="ttc" id="aclassMixingRuleBase_html"><div class="ttname"><a href="classMixingRuleBase.html">MixingRuleBase</a></div><div class="ttdef"><b>Definition:</b> MixingRuleBase.h:8</div></div>
 <div class="ttc" id="aclassParticleContainer_html"><div class="ttname"><a href="classParticleContainer.html">ParticleContainer</a></div><div class="ttdoc">This Interface is used to get access to particles and pairs of particles.</div><div class="ttdef"><b>Definition:</b> ParticleContainer.h:69</div></div>
 <div class="ttc" id="aclassXMLfileUnits_html"><div class="ttname"><a href="classXMLfileUnits.html">XMLfileUnits</a></div><div class="ttdoc">XML file with unit attributes abstraction.</div><div class="ttdef"><b>Definition:</b> xmlfileUnits.h:25</div></div>
 <div class="ttc" id="anamespacexml__schema_html_abefc242069a8a8b837230355cbc238a1"><div class="ttname"><a href="namespacexml__schema.html#abefc242069a8a8b837230355cbc238a1">xml_schema::name</a></div><div class="ttdeci">::xsd::cxx::tree::name&lt; char, token &gt; name</div><div class="ttdoc">C++ type corresponding to the Name XML Schema built-in type.</div><div class="ttdef"><b>Definition:</b> xml-schema.h:286</div></div>
@@ -217,7 +223,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jul 30 2024 10:12:52 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Thu Aug 1 2024 11:46:56 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

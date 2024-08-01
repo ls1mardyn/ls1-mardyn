@@ -64,9 +64,11 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="classMixingRuleBase-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">MixingRuleBase Class Reference</div></div>
+  <div class="headertitle"><div class="title">MixingRuleBase Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div></div>
 </div><!--header-->
 <div class="contents">
 <div class="dynheader">
@@ -79,11 +81,44 @@ Inheritance diagram for MixingRuleBase:</div>
   </map>
 </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:abd46d908459171264b463011e3b93bcb"><td class="memItemLeft" align="right" valign="top"><a id="abd46d908459171264b463011e3b93bcb" name="abd46d908459171264b463011e3b93bcb"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>MixRulesType</b> = typename std::map&lt; int, std::map&lt; int, std::shared_ptr&lt; <a class="el" href="classMixingRuleBase.html">MixingRuleBase</a> &gt; &gt; &gt;</td></tr>
+<tr class="separator:abd46d908459171264b463011e3b93bcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a68ce19618bfbcaac63fdc61264e50f9f"><td class="memItemLeft" align="right" valign="top"><a id="a68ce19618bfbcaac63fdc61264e50f9f" name="a68ce19618bfbcaac63fdc61264e50f9f"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>readXML</b> (<a class="el" href="classXMLfileUnits.html">XMLfileUnits</a> &amp;xmlconfig)</td></tr>
-<tr class="separator:a68ce19618bfbcaac63fdc61264e50f9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abeb4c57b164637519220b9651225fe88"><td class="memItemLeft" align="right" valign="top"><a id="abeb4c57b164637519220b9651225fe88" name="abeb4c57b164637519220b9651225fe88"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>readXML</b> (const <a class="el" href="classXMLfileUnits.html">XMLfileUnits</a> &amp;xmlconfig)</td></tr>
+<tr class="separator:abeb4c57b164637519220b9651225fe88"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a67333f193cb60713309f4aee8ee8e2bc"><td class="memItemLeft" align="right" valign="top"><a id="a67333f193cb60713309f4aee8ee8e2bc" name="a67333f193cb60713309f4aee8ee8e2bc"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>getCid1</b> () const</td></tr>
+<tr class="separator:a67333f193cb60713309f4aee8ee8e2bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af249b893f078a3ccdb34f54a8ca8b008"><td class="memItemLeft" align="right" valign="top"><a id="af249b893f078a3ccdb34f54a8ca8b008" name="af249b893f078a3ccdb34f54a8ca8b008"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>getCid2</b> () const</td></tr>
+<tr class="separator:af249b893f078a3ccdb34f54a8ca8b008"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab985dc272bf45b72f0baf0571a8c54d6"><td class="memItemLeft" align="right" valign="top"><a id="ab985dc272bf45b72f0baf0571a8c54d6" name="ab985dc272bf45b72f0baf0571a8c54d6"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setCid1</b> (int cid1)</td></tr>
+<tr class="separator:ab985dc272bf45b72f0baf0571a8c54d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed56c6e022b0ba54265a2d954f33361b"><td class="memItemLeft" align="right" valign="top"><a id="aed56c6e022b0ba54265a2d954f33361b" name="aed56c6e022b0ba54265a2d954f33361b"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setCid2</b> (int cid2)</td></tr>
+<tr class="separator:aed56c6e022b0ba54265a2d954f33361b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51e154ea465733e25e11b0a1eed782c5"><td class="memItemLeft" align="right" valign="top"><a id="a51e154ea465733e25e11b0a1eed782c5" name="a51e154ea465733e25e11b0a1eed782c5"></a>
+virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><b>getType</b> () const =0</td></tr>
+<tr class="separator:a51e154ea465733e25e11b0a1eed782c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01d2f76d9181383d0a1f292a0e3a0467"><td class="memItemLeft" align="right" valign="top"><a id="a01d2f76d9181383d0a1f292a0e3a0467" name="a01d2f76d9181383d0a1f292a0e3a0467"></a>
+const std::vector&lt; double &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getParameters</b> () const</td></tr>
+<tr class="separator:a01d2f76d9181383d0a1f292a0e3a0467"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc8705ef33bbdc9713b5077b4daadd85"><td class="memItemLeft" align="right" valign="top"><a id="afc8705ef33bbdc9713b5077b4daadd85" name="afc8705ef33bbdc9713b5077b4daadd85"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setParameters</b> (const std::vector&lt; double &gt; &amp;params)</td></tr>
+<tr class="separator:afc8705ef33bbdc9713b5077b4daadd85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
+Public Attributes</h2></td></tr>
+<tr class="memitem:a8bb555c180cc0b53e9ddc4fbf53c441f"><td class="memItemLeft" align="right" valign="top"><a id="a8bb555c180cc0b53e9ddc4fbf53c441f" name="a8bb555c180cc0b53e9ddc4fbf53c441f"></a>
+std::vector&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>_parameters</b> {1.0, 1.0}</td></tr>
+<tr class="separator:a8bb555c180cc0b53e9ddc4fbf53c441f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>src/molecules/mixingrules/<a class="el" href="MixingRuleBase_8h_source.html">MixingRuleBase.h</a></li>
@@ -92,7 +127,7 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>readXML</b> (
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jul 30 2024 10:12:55 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Thu Aug 1 2024 11:46:59 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

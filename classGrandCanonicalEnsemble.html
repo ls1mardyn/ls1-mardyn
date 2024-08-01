@@ -151,6 +151,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setComponentLookUpIDs
 <tr class="separator:ad9f1f42de8132d8fa45374242af4aa55 inherit pub_methods_classEnsemble"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a11e17afc272fa7decf46cc89167cec33 inherit pub_methods_classEnsemble"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEnsemble.html#a11e17afc272fa7decf46cc89167cec33">beforeThermostat</a> (unsigned long simstep, unsigned long initStatistics)</td></tr>
 <tr class="separator:a11e17afc272fa7decf46cc89167cec33 inherit pub_methods_classEnsemble"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa01eefa5d675fb2efa6c87dd99bc34b inherit pub_methods_classEnsemble"><td class="memItemLeft" align="right" valign="top"><a id="aaa01eefa5d675fb2efa6c87dd99bc34b" name="aaa01eefa5d675fb2efa6c87dd99bc34b"></a>
+auto &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getMixingrules</b> ()</td></tr>
+<tr class="separator:aaa01eefa5d675fb2efa6c87dd99bc34b inherit pub_methods_classEnsemble"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad178861c3293f70b5213f44029d9d154 inherit pub_methods_classEnsemble"><td class="memItemLeft" align="right" valign="top"><a id="ad178861c3293f70b5213f44029d9d154" name="ad178861c3293f70b5213f44029d9d154"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setMixingrule</b> (std::shared_ptr&lt; <a class="el" href="classMixingRuleBase.html">MixingRuleBase</a> &gt; mixingrule)</td></tr>
+<tr class="separator:ad178861c3293f70b5213f44029d9d154 inherit pub_methods_classEnsemble"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -161,9 +167,9 @@ std::vector&lt; <a class="el" href="classComponent.html">Component</a> &gt;&#160
 <tr class="memitem:aaa21e47620300eec532e141c440ad05a inherit pro_attribs_classEnsemble"><td class="memItemLeft" align="right" valign="top"><a id="aaa21e47620300eec532e141c440ad05a" name="aaa21e47620300eec532e141c440ad05a"></a>
 std::map&lt; std::string, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>_componentnamesToIds</b></td></tr>
 <tr class="separator:aaa21e47620300eec532e141c440ad05a inherit pro_attribs_classEnsemble"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae338686b165b6dcf4654170876f776cc inherit pro_attribs_classEnsemble"><td class="memItemLeft" align="right" valign="top"><a id="ae338686b165b6dcf4654170876f776cc" name="ae338686b165b6dcf4654170876f776cc"></a>
-std::vector&lt; <a class="el" href="classMixingRuleBase.html">MixingRuleBase</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>_mixingrules</b></td></tr>
-<tr class="separator:ae338686b165b6dcf4654170876f776cc inherit pro_attribs_classEnsemble"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad68e6a3d82a83f660f72d3f2e50c2a76 inherit pro_attribs_classEnsemble"><td class="memItemLeft" align="right" valign="top"><a id="ad68e6a3d82a83f660f72d3f2e50c2a76" name="ad68e6a3d82a83f660f72d3f2e50c2a76"></a>
+MixingRuleBase::MixRulesType&#160;</td><td class="memItemRight" valign="bottom"><b>_mixingrules</b></td></tr>
+<tr class="separator:ad68e6a3d82a83f660f72d3f2e50c2a76 inherit pro_attribs_classEnsemble"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a541f29dbf949cbd86af25e2152b32820 inherit pro_attribs_classEnsemble"><td class="memItemLeft" align="right" valign="top"><a id="a541f29dbf949cbd86af25e2152b32820" name="a541f29dbf949cbd86af25e2152b32820"></a>
 <a class="el" href="classDomainBase.html">DomainBase</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>_domain</b></td></tr>
 <tr class="separator:a541f29dbf949cbd86af25e2152b32820 inherit pro_attribs_classEnsemble"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -290,7 +296,7 @@ Type&#160;</td><td class="memItemRight" valign="bottom"><b>_type</b> = undefined
 </table>
 </div><div class="memdoc">
 <p >Runs steps formerly in simulate in simulation.cpp </p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000013">Todo:</a></b></dt><dd>What is this good for? Where come the numbers from? Needs documentation </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000012">Todo:</a></b></dt><dd>What is this good for? Where come the numbers from? Needs documentation </dd></dl>
 
 <p>Reimplemented from <a class="el" href="classEnsemble.html#a42a1f74c15cbd9119ba52941af4ba90a">Ensemble</a>.</p>
 
@@ -675,7 +681,7 @@ Type&#160;</td><td class="memItemRight" valign="bottom"><b>_type</b> = undefined
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jul 30 2024 10:12:55 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Thu Aug 1 2024 11:46:59 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

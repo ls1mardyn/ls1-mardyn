@@ -14,7 +14,7 @@ var searchData=
   ['initdatatype_11',['initDatatype',['../classMPIKDNodePacked.html#aed7af876e46d9133f43a82926bc0c550',1,'MPIKDNodePacked']]],
   ['initfile_12',['initfile',['../classXMLfile.html#aa7895048c50485708f95177ba12db556',1,'XMLfile']]],
   ['initglobalenergylog_13',['initGlobalEnergyLog',['../classSimulation.html#ad6ef6215995a11303194fc3d15dffca2',1,'Simulation']]],
-  ['initialize_14',['initialize',['../classComp2Param.html#a2b735b7bcf7c1d43ed8834231a9cf952',1,'Comp2Param::initialize()'],['../classSimulation.html#a6e7d1624005c861948f1a07e6986770e',1,'Simulation::initialize()']]],
+  ['initialize_14',['initialize',['../classComp2Param.html#a2c59ce6e1c1461a32749796b20d53711',1,'Comp2Param::initialize()'],['../classSimulation.html#a6e7d1624005c861948f1a07e6986770e',1,'Simulation::initialize()']]],
   ['initializelj1043_15',['initializeLJ1043',['../classWallPotential.html#a890c9f7574350de7232d5f366038f6db',1,'WallPotential']]],
   ['initializelj93_16',['initializeLJ93',['../classWallPotential.html#a62dc992b81f3b8df77468abc66e26ee6',1,'WallPotential']]],
   ['initializeparallelvtkfile_17',['initializeParallelVTKFile',['../classVTKGridWriterImplementation.html#ab69dbb9d8412d249744f310cc72d918f',1,'VTKGridWriterImplementation::initializeParallelVTKFile()'],['../classVTKMoleculeWriterImplementation.html#a1099801341276485ed33119602328b97',1,'VTKMoleculeWriterImplementation::initializeParallelVTKFile()']]],
