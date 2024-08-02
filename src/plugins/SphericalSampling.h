@@ -40,8 +40,8 @@ class SphericalSampling : public PluginBase {
     unsigned long _stopSampling {std::numeric_limits<unsigned long>::max()};
 
     // Auxiliary variables
-    float _shellWidth {1.0f};
-    float _shellMappingWidth {1.0f}; // for using the squared dist from center instead of dist from center to assign shells
+    double _shellWidth {1.0f};
+    double _shellMappingDistMax {1.0f}; // for using the squared dist from center instead of dist from center to assign shells
     unsigned long _lenVector {_nShells + 1}; // outer-most element for residual volume (cuboid minus sphere)
     std::array<double, 3> _globalBoxLength;
     std::array<double, 3> _globalCenter;

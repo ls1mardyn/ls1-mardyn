@@ -31,7 +31,7 @@ void SphericalSampling::init(ParticleContainer* /* particleContainer */, DomainD
 
     _distMax = *(std::min_element(_globalBoxLength.begin(), _globalBoxLength.end())) * 0.5;
     _shellWidth = _distMax/_nShells;
-    _shellMappingWidth = (_distMax*_distMax); // for position-to-shell mapping by squared distance from center
+    _shellMappingDistMax = _distMax*_distMax; // for position-to-shell mapping by squared distance from center
 
     // Entry per bin; all components sampled as one
     _lenVector = _nShells + 1;
@@ -139,7 +139,7 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
         const double distMaxSquared = _distMax * _distMax;
 
 
-        const unsigned int index = std::min(_nShells, static_cast<unsigned int>((distCenterSquared/_shellMappingWidth)*_nShells));  // Index of bin of radius
+        const unsigned int index = std::min(_nShells, static_cast<unsigned int>((distCenterSquared/_shellMappingDistMax)*_nShells));  // Index of bin of radius
 
         numMolecules_step.local[index] ++;
 
@@ -294,20 +294,18 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
             shell_volume.resize(_lenVector);
 
             shell_lowerBound[0] = 0;
-            double nShellsInv = 1./_nShells;
+            const double nShellsInv = 1./_nShells;
             for(int i = 1; i < _lenVector; i++){
-                shell_lowerBound[i] = std::sqrt(static_cast<double>(i)*nShellsInv*_shellMappingWidth);
+                shell_lowerBound[i] = std::sqrt( static_cast<double>(i)*nShellsInv*_shellMappingDistMax );
                 shell_centralRadius[i-1] = (shell_lowerBound[i-1] + shell_lowerBound[i])/2.;
                 // shell_width[i-1] = shell_lowerBound[i] - shell_lowerBound[i-1];
-                shell_volume[i-1] = 4./3. * M_PI * (std::pow(shell_lowerBound[i],3) - std::pow(shell_lowerBound[i-1],3));
+                shell_volume[i-1] = 4./3. * M_PI * ( std::pow(shell_lowerBound[i],3) - std::pow(shell_lowerBound[i-1],3) );
             }
             shell_centralRadius[_lenVector-1] = (shell_lowerBound[_lenVector-1] + (_distMax/_nShells)); // not very precise
-            // shell_width[_lenVector-1] = 0; // one reasonable value here could be the shellwidth that would make for an equivalent volume
-            shell_volume[_lenVector-1] = _globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2] - 4./3.*M_PI*shell_lowerBound[_lenVector-2];
+            shell_volume[_lenVector-1] = _globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2] - 4./3.*M_PI*std::pow(shell_lowerBound[_lenVector-1],3);
             // \end bad implementation
 
             for (unsigned long i = 0; i < _lenVector; i++) {
-                ofs << FORMAT_SCI_MAX_DIGITS << shell_centralRadius[i];  // Radius bin
                 unsigned long numSamples {0ul};
                 double numMolsPerStep {std::nan("0")}; // Not an int as particles change bin during simulation
                 double rho {0.0};
@@ -352,7 +350,7 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
                 const double numMols_accum = static_cast<double>(_numMolecules_accum[i]);
                 // \END for testing only
 
-                ofs 
+                ofs << FORMAT_SCI_MAX_DIGITS << shell_centralRadius[i]  // Radius bin
                     << FORMAT_SCI_MAX_DIGITS << rho
                     << FORMAT_SCI_MAX_DIGITS << p_xyz
                     << FORMAT_SCI_MAX_DIGITS << p_sph

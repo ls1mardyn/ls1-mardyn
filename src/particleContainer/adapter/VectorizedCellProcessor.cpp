@@ -248,7 +248,7 @@ void VectorizedCellProcessor::endTraversal() {
 		// const RealCalcVec center_x = RealCalcVec::broadcast(&cx);
 		// const RealCalcVec center_y = RealCalcVec::broadcast(&cy);
 		// const RealCalcVec center_z = RealCalcVec::broadcast(&cz);
-		
+
 		const RealCalcVec ksi1_x = r1_x - center_x;
 		const RealCalcVec ksi1_y = r1_y - center_y;
 		const RealCalcVec ksi1_z = r1_z - center_z;
@@ -283,7 +283,6 @@ void VectorizedCellProcessor::endTraversal() {
 		V2_n = RealAccumVec::convertCalcToAccum(rNji2 * scale); 
 		V1_t = RealAccumVec::convertCalcToAccum((c_d_abs2-rNij2) * scale);
 		V2_t = RealAccumVec::convertCalcToAccum((c_d_abs2-rNji2) * scale);  
-
 
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
