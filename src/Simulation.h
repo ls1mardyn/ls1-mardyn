@@ -54,6 +54,7 @@ class LongRangeCorrection;
 class Homogeneous;
 class Planar;
 class TemperatureControl;
+class SphericalTemperatureControl;
 class MemoryProfiler;
 
 // by Stefan Becker
@@ -391,6 +392,9 @@ private:
 	/** Temperature Control (Slab Thermostat) */
 	TemperatureControl* _temperatureControl;
 
+	/** SphericalTemperatureControl (Spherical Thermostat) */
+	SphericalTemperatureControl* _sphericalTemperatureControl;
+	
 	/** The Fast Multipole Method object */
 	bhfmm::FastMultipoleMethod* _FMM;
 

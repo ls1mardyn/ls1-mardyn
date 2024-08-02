@@ -544,7 +544,7 @@ void ControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const uint64
 
 	for (int thread = 0; thread < mardyn_get_max_threads(); ++thread) {
 		mardyn_assert(_addedEkin.data.local.size() == _nNumSlabs);
-		for (size_t slabID = 0; slabID < _nNumSlabs; ++slabID) {
+		for (int slabID = 0; slabID < _nNumSlabs; ++slabID) {
 			_addedEkin.data.local[slabID] += _addedEkinLocalThreadBuffer[thread][slabID];
 		}
 	}
