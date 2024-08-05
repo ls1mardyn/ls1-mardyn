@@ -1,7 +1,7 @@
 #ifndef SRC_IO_RESULTWRITER_H_
 #define SRC_IO_RESULTWRITER_H_
 
-#include <fstream>
+#include <memory>
 #include <string>
 
 #include "plugins/PluginBase.h"
@@ -22,12 +22,6 @@
  */
 class ResultWriter : public PluginBase {
 public:
-	ResultWriter() : _U_pot_acc(nullptr), _p_acc(nullptr) {}
-	~ResultWriter() {
-		delete _U_pot_acc;
-		delete _p_acc;
-	}
-
 	/** @brief Read in XML configuration for ResultWriter and all its included objects.
 	 *
 	 * The following xml object structure is handled by this method:
@@ -60,12 +54,13 @@ public:
 	static PluginBase* createInstance() { return new ResultWriter(); }
 
 private:
-	std::ofstream _resultStream;
-	long _writeFrequency;
-	int _writePrecision;
-	std::string _outputPrefix;
-	Accumulator<double> *_U_pot_acc;
-	Accumulator<double> *_p_acc;
+	long _writeFrequency{1000UL};
+	unsigned int _writePrecision{5};
+	unsigned int _writeWidth{20};
+	std::string _outputPrefix{"results"};
+	std::unique_ptr<Accumulator<double>> _U_pot_acc;
+	std::unique_ptr<Accumulator<double>> _U_kin_acc;
+	std::unique_ptr<Accumulator<double>> _p_acc;
 };
 
 #endif  // SRC_IO_RESULTWRITER_H_

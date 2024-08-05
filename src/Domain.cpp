@@ -74,7 +74,7 @@ Domain::Domain(int rank) {
 	this->_universalSelectiveThermostatWarning = 0;
 	this->_universalSelectiveThermostatError = 0;
 
-    // explosion heuristics, NOTE: turn off when using slab thermostat
+	// explosion heuristics, NOTE: turn off when using slab thermostat
     _bDoExplosionHeuristics = true;
 }
 
@@ -220,33 +220,33 @@ void Domain::calculateGlobalValues(
 		domainDecomp->collCommAppendUnsLong(numMolecules);
 		domainDecomp->collCommAppendUnsLong(rotDOF);
 		domainDecomp->collCommAllreduceSumAllowPrevious();
-		summv2 = domainDecomp->collCommGetDouble();
-		sumIw2 = domainDecomp->collCommGetDouble();
+		_globalsummv2 = domainDecomp->collCommGetDouble();
+		_globalsumIw2 = domainDecomp->collCommGetDouble();
 		numMolecules = domainDecomp->collCommGetUnsLong();
 		rotDOF = domainDecomp->collCommGetUnsLong();
 		domainDecomp->collCommFinalize();
 		Log::global_log->debug() << "[ thermostat ID " << thermit->first << "]\tN = " << numMolecules << "\trotDOF = " << rotDOF
-			<< "\tmv2 = " <<  summv2 << "\tIw2 = " << sumIw2 << std::endl;
+			<< "\tmv2 = " <<  _globalsummv2 << "\tIw2 = " << _globalsumIw2 << std::endl;
 
 		this->_universalThermostatN[thermit->first] = numMolecules;
 		this->_universalRotationalDOF[thermit->first] = rotDOF;
-		mardyn_assert((summv2 > 0.0) || (numMolecules == 0));
+		mardyn_assert((_globalsummv2 > 0.0) || (numMolecules == 0));
 
 		/* calculate the temperature of the entire system */
 		if(numMolecules > 0)
 			_globalTemperatureMap[thermit->first] =
-				(summv2 + sumIw2) / (double)(3*numMolecules + rotDOF);
+				(_globalsummv2 + _globalsumIw2) / (double)(3*numMolecules + rotDOF);
 		else
 			_globalTemperatureMap[thermit->first] = _universalTargetTemperature[thermit->first];
 
 		double Ti = Tfactor * _universalTargetTemperature[thermit->first];
 		if((Ti > 0.0) && (numMolecules > 0) && !_universalNVE)
 		{
-			_universalBTrans[thermit->first] = pow(3.0*numMolecules*Ti / summv2, 0.4);
-			if( sumIw2 == 0.0 )
+			_universalBTrans[thermit->first] = pow(3.0*numMolecules*Ti / _globalsummv2, 0.4);
+			if( _globalsumIw2 == 0.0 )
 				_universalBRot[thermit->first] = 1.0;
 			else
-				_universalBRot[thermit->first] = pow(rotDOF*Ti / sumIw2, 0.4);
+				_universalBRot[thermit->first] = pow(rotDOF*Ti / _globalsumIw2, 0.4);
 		}
 		else
 		{
@@ -519,7 +519,7 @@ void Domain::writeCheckpointHeader(std::string filename,
 	#ifndef NDEBUG
 			checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
 			//checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
-	        checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <contact@ls1-mardyn.de>.\n# \n";
+			checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <contact@ls1-mardyn.de>.\n# \n";
 	#endif
 			/* by Stefan Becker: the output line "I ..." causes an error: the restart run does not start!!!
 			if(this->_globalUSteps > 1)
@@ -872,10 +872,10 @@ void Domain::setNumFluidComponents(unsigned nc){_numFluidComponent = nc;}
 unsigned Domain::getNumFluidComponents(){return _numFluidComponent;}
 
 unsigned long Domain::getNumFluidMolecules(){
-  unsigned long numFluidMolecules = 0;
-  for(unsigned i = 0; i < _numFluidComponent; i++){
-    Component& ci=*(global_simulation->getEnsemble()->getComponent(i));
-    numFluidMolecules+=ci.getNumMolecules();
-  }
+	unsigned long numFluidMolecules = 0;
+	for(unsigned i = 0; i < _numFluidComponent; i++){
+		Component& ci=*(global_simulation->getEnsemble()->getComponent(i));
+		numFluidMolecules+=ci.getNumMolecules();
+	}
   return numFluidMolecules;
 }
