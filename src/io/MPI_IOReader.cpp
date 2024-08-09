@@ -16,9 +16,10 @@
 #include <climits>
 
 #include "Domain.h"
+#include "Simulation.h"
 #include "ensemble/BoxDomain.h"
 #include "ensemble/EnsembleBase.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "molecules/Molecule.h"
 
 #ifdef ENABLE_MPI
@@ -58,7 +59,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_phaseSpaceHeaderFileStream >> token;
 	if(token != "mardyn") {
 		Log::global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	std::string inputversion;
@@ -66,12 +67,12 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	// FIXME: remove tag trunk from file specification?
 	if(token != "trunk") {
 		Log::global_log->error() << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	if(strtoul(inputversion.c_str(), NULL, 0) < 20080701) {
 		Log::global_log->error() << "Input version tool old (" << inputversion << ")" << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	Log::global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << std::endl;
@@ -116,7 +117,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 				 || ntypestring == "IRV")) {
 				Log::global_log->error() << "Unknown molecule format: '"
 									<< ntypestring << "'" << std::endl;
-				Simulation::exit(1);
+				mardyn_exit(1);
 			}
 			_moleculeFormat = ntypestring;
 			Log::global_log->info() << " molecule format: " << ntypestring << std::endl;
@@ -182,7 +183,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 											>> numquadrupoles >> numtersoff;
 				if(numtersoff != 0) {
 					Log::global_log->error() << "tersoff no longer supported." << std::endl;
-					Simulation::exit(-1);
+					mardyn_exit(-1);
 				}
 				double x, y, z, m;
 				for(unsigned int j = 0; j < numljcenters; j++) {
@@ -231,17 +232,8 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			}
 #endif
 
-			// Mixing coefficients
-			std::vector<double>& dmixcoeff = domain->getmixcoeff();
-			dmixcoeff.clear();
-			for(unsigned int i = 1; i < numcomponents; i++) {
-				for(unsigned int j = i + 1; j <= numcomponents; j++) {
-					double xi, eta;
-					_phaseSpaceHeaderFileStream >> xi >> eta;
-					dmixcoeff.push_back(xi);
-					dmixcoeff.push_back(eta);
-				}
-			}
+			// Mixing coefficients have to be set via the config xml
+			
 			// read in global factor \epsilon_{RF}
 			// FIXME: Maybe this should go better to a seperate token?!
 			_phaseSpaceHeaderFileStream >> token;
@@ -664,6 +656,6 @@ void MPI_IOReader::handle_error(int i) {
 
 	Log::global_log->error() << "Writing of file was not successfull " << " , " << i
 			<< " , " << error_string << std::endl;
-	Simulation::exit(1);
+	mardyn_exit(1);
 #endif
 }

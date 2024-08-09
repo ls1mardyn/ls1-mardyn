@@ -5,6 +5,7 @@
 
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"
+#include "utils/mardyn_assert.h"
 #include "Simulation.h"
 #include "utils/Logger.h"
 
@@ -29,7 +30,7 @@ void ParticleDataRMM::getMPIType(MPI_Datatype &sendPartType) {
 		types[1] = MPI_FLOAT;
 	} else {
 		Log::global_log->error() << "invalid size of vcp_real_calc";
-		Simulation::exit(4852);
+		mardyn_exit(4852);
 	}
 
 	//if the following statement is not true, then the 6 double values do not follow one after the other.

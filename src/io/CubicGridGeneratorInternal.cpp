@@ -11,12 +11,14 @@
 #include "CubicGridGeneratorInternal.h"
 
 #include "Domain.h"
+#include "Simulation.h"
 #include "IOHelpers.h"
 #include "WrapOpenMP.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
 #include "utils/Random.h"
+#include "utils/mardyn_assert.h"
 
 #include <cmath>
 #include <algorithm>
@@ -39,7 +41,7 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 	// setting both or none is not allowed!
 	if((_numMolecules == 0 && density == -1.) || (_numMolecules != 0 && density != -1.) ){
 		Log::global_log->error() << "Error in CubicGridGeneratorInternal: You have to set either density or numMolecules!" << std::endl;
-		Simulation::exit(2341);
+		mardyn_exit(2341);
 	}
 
 	if(density != -1.){
@@ -48,7 +50,7 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 			Log::global_log->error()
 					<< "Error in CubicGridGeneratorInternal: Density has to be positive and non-zero!"
 					<< std::endl;
-			Simulation::exit(2342);
+			mardyn_exit(2342);
 		}
 		double vol = 1.0;
 		for (int d = 0; d < 3; ++d)
@@ -65,7 +67,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 	if(_numMolecules == 0){
 		Log::global_log->error() << "Error in CubicGridGeneratorInternal: numMolecules is not set!"
 				<< std::endl << "Please make sure to run readXML()!" << std::endl;
-		Simulation::exit(2341);
+		mardyn_exit(2341);
 	}
 
 	// create a body centered cubic layout, by creating by placing the molecules on the

@@ -15,6 +15,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
 
@@ -195,7 +196,7 @@ void CanonicalEnsemble::readXML(XMLfileUnits& xmlconfig) {
 		_domain = new BoxDomain();
 	} else {
 		Log::global_log->error() << "Volume type not supported." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	xmlconfig.changecurrentnode("domain");
 	_domain->readXML(xmlconfig);

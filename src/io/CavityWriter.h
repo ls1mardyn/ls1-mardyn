@@ -28,7 +28,7 @@ public:
      *	for non-overlapping coverage: radius*N_xyz = domainSize_xyz<br>
      *	<br>
      * \code{.xml}
-     * <plugin name="CavityWriter" enabled="1">
+     * <plugin name="CavityWriter" enabled="yes">
                 <writefrequency>10</writefrequency>
                 <componentid>0</componentid>
                 <componentid>1</componentid>

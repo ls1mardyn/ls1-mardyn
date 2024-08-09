@@ -1,19 +1,21 @@
 #include "molecules/Comp2Param.h"
 
 #include <cmath>
+#include <functional>
 
 #include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
+#include "molecules/mixingrules/MixingRuleBase.h"
 
 
 void Comp2Param::initialize(
-		const std::vector<Component>& components, const std::vector<double>& mixcoeff,
+		const std::vector<Component>& components, const MixingRuleBase::MixRulesType & mixcoeff,
 		double epsRF, double rc, double rcLJ)
 {
 	m_numcomp = components.size();
 	m_ssparatbl.redim(m_numcomp, m_numcomp);
 
 	// interaction between LJ centers
-	std::vector<double>::const_iterator mixpos = mixcoeff.begin();
 	for (unsigned int compi = 0; compi < m_numcomp; ++compi) {
 		ParaStrm& pstrmii = m_ssparatbl(compi, compi);
 		unsigned int nci = components[compi].numLJcenters();
@@ -40,13 +42,27 @@ void Comp2Param::initialize(
 		for (unsigned int compj = compi + 1; compj < m_numcomp; ++compj) {
 			ParaStrm& pstrmij = m_ssparatbl(compi, compj);
 			unsigned int ncj = components[compj].numLJcenters();
-			double xi = *mixpos;
-			++mixpos;
-			double eta = *mixpos;
-			++mixpos;
+			const auto mixingrule = mixcoeff.at(compi).at(compj);
+			// Generic mixing functions
+			const auto [mixingSigma, mixingEpsilon] =
+				[&]() -> std::pair<std::function<double(double, double)>, std::function<double(double, double)>> {
+				// Get parameters
+				if (mixingrule->getType() == "LB") {
+					const double eta = mixingrule->getParameters().at(0);
+					const double xi = mixingrule->getParameters().at(1);
 #ifndef NDEBUG
-			Log::global_log->info() << "cid+1(compi)=" << compi+1 << " <--> cid+1(compj)=" << compj+1 << ": xi=" << xi << ", eta=" << eta << std::endl;
+					Log::global_log->info()
+						<< "Mixing : cid+1(compi)=" << compi + 1 << " <--> cid+1(compj)=" << compj + 1 << ": xi=" << xi
+						<< ", eta=" << eta << std::endl;
 #endif
+					return {[=](double sigi, double sigj) { return eta * (sigi + sigj); },      // mixingSigma
+							[=](double epsi, double epsj) { return xi * sqrt(epsi * epsj); }};  // mixingEpsilon
+				} else {
+					Log::global_log->error() << "Mixing: Only LB rule supported" << std::endl;
+					mardyn_exit(1);
+					return {};
+				}
+			}();
 			double shift6combined, sigperrc2, sigperrc6;
 			for (unsigned int centeri = 0; centeri < nci; ++centeri) {
 				const LJcenter& ljcenteri = static_cast<const LJcenter&>(components[compi].ljcenter(centeri));
@@ -56,8 +72,8 @@ void Comp2Param::initialize(
 					const LJcenter& ljcenterj = static_cast<const LJcenter&>(components[compj].ljcenter(centerj));
 					epsj = ljcenterj.eps();
 					sigj = ljcenterj.sigma();
-					epsilon24 = 24. * xi * sqrt(epsi * epsj);
-					sigma2 = eta * .5 * (sigi + sigj);
+					epsilon24 = 24. * mixingEpsilon(epsi, epsj);
+					sigma2 = 0.5 * mixingSigma(sigi, sigj);
 					sigma2 *= sigma2;
 					sigperrc2 = sigma2 / (rcLJ * rcLJ);
 					sigperrc6 = sigperrc2 * sigperrc2 * sigperrc2;
@@ -66,7 +82,7 @@ void Comp2Param::initialize(
 					pstrmij << sigma2;
 					pstrmij << shift6combined;
 #ifndef NDEBUG
-					Log::global_log->debug() << "Component " << compi << ": eps24=" << epsilon24 << " sig2=" << sigma2 << " shift6=" << shift6combined << std::endl;
+					Log::global_log->info() << "Component " << compi << ": eps24=" << epsilon24 << " sig2=" << sigma2 << " shift6=" << shift6combined << std::endl;
 #endif
 				}
 			}
@@ -79,8 +95,8 @@ void Comp2Param::initialize(
 					const LJcenter& ljcenteri = static_cast<const LJcenter&>(components[compi].ljcenter(centeri));
 					epsi = ljcenteri.eps();
 					sigi = ljcenteri.sigma();
-					epsilon24 = 24. * xi * sqrt(epsi * epsj);
-					sigma2 = eta * .5 * (sigi + sigj);
+					epsilon24 = 24. * mixingEpsilon(epsi, epsj);
+					sigma2 = 0.5 * mixingSigma(sigi, sigj);
 					sigma2 *= sigma2;
 					sigperrc2 = sigma2 / (rcLJ * rcLJ);
 					sigperrc6 = sigperrc2 * sigperrc2 * sigperrc2;

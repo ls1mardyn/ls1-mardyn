@@ -60,7 +60,7 @@
       </electrostatic>
       <longrange type="planar">
         <slabs>1200</slabs>
-        <smooth>0</smooth>
+        <smooth>false</smooth>
         <frequency>10</frequency>
         <writecontrol>
           <start>10000</start>

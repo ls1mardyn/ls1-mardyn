@@ -16,7 +16,6 @@
 #include "utils/mardyn_assert.h"
 #include "rapidxml/rapidxml_print.hpp"
 #include "String_utils.h"
-#include "Simulation.h"
 
 //#include <cstdio>	// fseek(),fread(); should be included after mpi.h
 //#ifdef __linux__
@@ -196,7 +195,7 @@ bool XMLfile::initfile_local(const std::string& filepath) {
 	if(!fstrm) {
 		std::cerr << "ERROR opening " << filepathTrimmed << std::endl;
 		clear();
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	std::ifstream::pos_type filesize=fstrm.tellg();
 	fstrm.close(); fstrm.clear();
@@ -446,13 +445,16 @@ unsigned long XMLfile::query(std::list<Node>& nodeselection, const std::string& 
 				if (! attrname.empty())
 				{ // search for attribute node
 					attr=ele->first_attribute(attrname.c_str());
-					nodepath.append("@");
-					nodepath.append(attrname);
-					nodeselection.push_back(Node(attr,nodepath));
+					if(NULL != attr) {
+						nodepath.append("@");
+						nodepath.append(attrname);
+						nodeselection.push_back(Node(attr,nodepath));
+						++foundnodes;
+					}
 				} else { // found element node
 					nodeselection.push_back(Node(ele,nodepath));
+					++foundnodes;
 				}
-				++foundnodes;
 			}
 		}
 	}
@@ -538,7 +540,7 @@ template<typename T> bool XMLfile::Node::getValue(T& value) const
 			if (ss.str().find_first_of("-") != std::string::npos) {
 				std::cerr << "ERROR parsing \"" << ss.str() << "\" to data type " << typeid(T).name() << " from tag \"<" << name() << ">\" in xml file" << std::endl;
 				std::cerr << "The tag contains a negative value but an unsigned value was expected." << std::endl;
-				Simulation::exit(1);
+				mardyn_exit(1);
 			}
 		}
 		ss >> value;
@@ -546,7 +548,7 @@ template<typename T> bool XMLfile::Node::getValue(T& value) const
 		if (!ss.eof() || ss.fail()) {
 			std::cerr << "ERROR parsing all chars of \"" << ss.str() << "\" from tag \"<" << name() << ">\" in xml file" << std::endl;
 			std::cerr << "This might be the result of using a float while an integer is expected." << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		return true;
 	}
@@ -580,9 +582,9 @@ template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 		} else if (v == "FALSE" || v == "NO" || v == "OFF") {
 			value = false;
 		} else {
-			std::cerr << "ERROR parsing \"" << v << "\" to boolean from tag \"<" << name() << ">\" in xml file."
-				<< "Valid values are: true, false, yes, no, on, off. " << std::endl;
-			Simulation::exit(1);
+			std::cerr << "ERROR parsing \"" << v << "\" to boolean from tag \"" << name() << "\" in xml file."
+				<< " Valid values are: true, false, yes, no, on, off. " << std::endl;
+			mardyn_exit(1);
 		}
 	}
 	return found;

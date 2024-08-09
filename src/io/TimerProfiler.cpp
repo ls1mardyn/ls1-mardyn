@@ -11,7 +11,6 @@
 #include "TimerProfiler.h"
 #include "utils/Logger.h"
 #include "utils/String_utils.h"
-#include "utils/mardyn_assert.h"
 #include "utils/xmlfileUnits.h"
 
 

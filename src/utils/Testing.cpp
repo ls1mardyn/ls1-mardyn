@@ -8,7 +8,7 @@
 #include "utils/Testing.h"
 #include "utils/Logger.h"
 #include "utils/FileUtils.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 
 Log::Logger* test_log;
 
@@ -94,7 +94,7 @@ utils::Test::~Test() { }
 void utils::Test::setTestDataDirectory(std::string& testDataDir) {
 	if (!fileExists(testDataDir.c_str())) {
 		test_log->error() << "Directory '" << testDataDirectory << "' for test input data does not exist!" << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 	testDataDirectory = testDataDir;
 }
@@ -105,7 +105,7 @@ std::string utils::Test::getTestDataFilename(const std::string& file, bool check
 
 	if (!fileExists(fullPath.c_str()) and checkExistence) {
 		test_log->error() << "File " << fullPath << " for test input data does not exist!" << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 	return fullPath;
 }

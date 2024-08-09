@@ -46,7 +46,7 @@
       <components>
           <moleculetype id="1" >
             <coord_base>principal_axes</coord_base>
-            <site type="LJ126" id="1" >
+            <site type="LJ126" id="1" name="C">
               <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
               <mass>12.00</mass>
               <sigma>2.900109</sigma>
@@ -198,15 +198,19 @@
           <overlappingP2P>False</overlappingP2P> <!-- Defines whether to use overlapping p2p communication or not. Default: False -->
       </parallelisation>
       <parallelisation type="StaticIrregDomainDecomposition">
-          <!-- Provide CSV file with weights that determine the relative widths of each subdomain
-          EX: A file with its first line being 1,2,1 defines an x axis with subdomain lengths in the 1:2:1 ratio
+          <!-- Provide weights that determine the relative widths of each subdomain
+          EX: The weights in <x> being 1,2,1 defines an x axis with subdomain lengths in the 1:2:1 ratio
           The number of digits per column are the number of ranks in that column, and the number of columns need not be equal per row
           The number of ranks per row are therefore calculated from the column length, and cannot be given explicitly
-          The program must be run with ranks equal to the ranks in the CSV (examples/Mamico-couette/basic4.csv must be run with 6 ranks, for example)
+          The program must be run with ranks equal to the ranks in the weights (examples/Mamico-couette/ls1configNoCP.xml must be run with 6 ranks, for example)
           The actual subdomain lengths are calculated from the total length and given ratios
           If not given, default behaviour is an equally spaced grid, same as DomainDecomposition
             -->
-          <subdomainWeightsCSV>filename.csv</subdomainWeightsCSV>
+          <subdomainWeights>
+            <x>INT,INT,INT,...</x>
+            <y>INT,INT,INT,...</y>
+            <z>INT,INT,INT,...</z> 
+          </subdomainWeights>
       </parallelisation>
       <parallelisation type="GeneralDomainDecomposition">
           <updateFrequency>INTEGER</updateFrequency>
@@ -263,8 +267,11 @@
         <!-- specify what metric the selector should use to determine the optimal traversal -->
         <!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
         <selectorStrategy>fastestAbsolute</selectorStrategy>
-        <!-- set the auto tuning algorithm -->
-        <tuningStrategy>fullSearch</tuningStrategy>
+        <!-- set the tuning auto tuning pipeline -->
+        <!-- Leave this empty for an exhaustive full search or add any number of strategies that are applied in the stated order -->
+        <tuningStrategies>ruleBasedTuning, predictiveTuning</tuningStrategies>
+        <!-- autopas optimizes the simulation based on tuning metric: time, energy, default option is time -->
+        <tuningMetric>energy</tuningMetric>
         <!-- Data layouts to be used: AoS, SoA -->
         <dataLayouts>SoA</dataLayouts>
         <!-- Allowed choices for newton 3 optimization: enabled, disabled -->
@@ -311,7 +318,6 @@
       - CheckpointWriter
       - ResultWriter
       - XyzWriter
-      - VISWriter
       - MmspdWriter
       - PovWriter
       - StatisticsWriter
@@ -381,16 +387,6 @@
       The *.xyz-format contains x, y, z coordinates of the molecules. Such a file can be read by visualization software like vmd
       (for detail information visit: http://www.ks.uiuc.edu/Research/vmd/). -->
       <outputplugin name="XyzWriter">
-        <writefrequency>10</writefrequency>
-        <outputprefix>default</outputprefix>
-      </outputplugin>
-
-      <!-- VISWriter plugin
-      Additional to the coordinates of the molecules, the *.vis-format also contains the orientation information
-      of the molecules (using quaternions). The files can be read by software like:
-      - MolCloud (visit: http://www.visus.uni-stuttgart.de/index.php?id=995)
-      - Megamol  (visit: https://svn.vis.uni-stuttgart.de/trac/megamol/) -->
-      <outputplugin name="VISWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>

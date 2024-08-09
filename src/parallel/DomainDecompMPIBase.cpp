@@ -10,6 +10,7 @@
 #include "DomainDecompMPIBase.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
+#include "utils/mardyn_assert.h"
 #include "Simulation.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "ParticleData.h"
@@ -150,7 +151,7 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 	} else {
 		Log::global_log->error() << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'es', 'hs', 'mp' and 'nt'"
 				<< std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	Log::global_log->info() << "Using zonal method: " << zonalMethod << std::endl;
 
@@ -166,7 +167,7 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 	} else {
 		Log::global_log->error() << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'"
 				<< std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 }
 
@@ -247,7 +248,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 			}
 		}
 		if (not isOk) {
-			Log::global_log->error() << "Aborting because of duplicated partices." << std::endl;
+			Log::global_log->error() << "Aborting because of duplicated particles." << std::endl;
 			MPI_Abort(_comm, 1);
 		}
 

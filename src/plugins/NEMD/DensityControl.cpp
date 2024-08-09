@@ -22,11 +22,13 @@
 
 #include "DensityControl.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/CommVar.h"
 #include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
 
 DensityControl::DensityControl() = default;
 DensityControl::~DensityControl() = default;
@@ -85,7 +87,7 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 		Log::global_log->error() << "[DensityControl] Number of component IDs specified in element <priority>...</priority>"
 							<< " does not match the number of components in the simulation. Programm exit ..."
 							<< std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 
 	// targets
@@ -110,7 +112,7 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "[DensityControl] Number of component targets: " << numTargets << std::endl;
 	if (numTargets < 1) {
 		Log::global_log->error() << "[DensityControl] No target parameters specified. Program exit ..." << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 	const std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator nodeIter;

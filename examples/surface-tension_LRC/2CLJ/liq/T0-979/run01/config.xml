@@ -8,7 +8,7 @@
 	</refunits>
 
 	<simulation type="MD" >
-		<options> <option name="refreshIDs">1</option> </options>
+		<options> <option name="refreshIDs">true</option> </options>
 		
 		<integrator type="Leapfrog" >
 			<timestep unit="reduced" >0.000182367</timestep>

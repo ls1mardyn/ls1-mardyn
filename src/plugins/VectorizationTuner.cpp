@@ -12,6 +12,7 @@
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Component.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "particleContainer/ParticleCell.h"
 #include "particleContainer/adapter/CellDataSoA.h"
 #include "Domain.h"
@@ -34,7 +35,7 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 		vtWriter.reset(new VTWriter());
 	} else {
 		Log::global_log->error() << R"(Unknown FlopRateOutputPlugin::mode. Choose "stdout" or "file".)" << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	_outputPrefix = "mardyn";
@@ -63,7 +64,7 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 		Log::global_log->error()
 			<< R"(Unknown FlopRateOutputPlugin::moleculecntincreasetype. Choose "linear" or "exponential" or "both".)"
 			<< std::endl;
-		Simulation::exit(798123);
+		mardyn_exit(798123);
 	}
 	Log::global_log->info() << "Molecule count increase type: " << incTypeStr << std::endl;
 
@@ -282,7 +283,7 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 
 		if(componentList.size() > 2){
 			Log::global_log->error_always_output() << "The tuner currently supports only two different particle types!" << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 
 		int maxMols = particleNums.at(0);

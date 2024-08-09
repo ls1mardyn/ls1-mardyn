@@ -40,8 +40,8 @@ It detects the less dense space around the dense drop as a cavity.
 			</domain>
 			
 			<components>
-		        <moleculetype id="1" name="Test">
-		    	    <site type="LJ126" id="1" >
+		        <moleculetype id="1" name="1CLJ">
+		    	    <site type="LJ126" id="1" name="LJTS">
 		  	        	<coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
 		  	        	<mass>1.0</mass>
 		  	        	<sigma>1.0</sigma>
@@ -133,23 +133,23 @@ It detects the less dense space around the dense drop as a cavity.
 		
 		<!-- VTK OUTPUT -->
 		<output>
-	      <outputplugin name="VTKMoleculeWriter" enabled="0">
+	      <outputplugin name="VTKMoleculeWriter" enabled="no">
 	        <outputprefix>vtkOutput</outputprefix>
 	        <writefrequency>100</writefrequency>
 	      </outputplugin>
    		</output>
 
 		<!-- CENTER OF MASS ALIGNMENT  --> 
-		<plugin name="COMaligner" enabled="1">
-			<x>1</x>
-			<y>0</y>
-			<z>1</z>
+		<plugin name="COMaligner" enabled="yes">
+			<x>true</x>
+			<y>false</y>
+			<z>true</z>
 			<interval>10</interval>
 			<correctionFactor>.5</correctionFactor>
 		</plugin>
 
 	    <!-- KARTESIAN/CYLINDER PROFILE -->
-	    <plugin name="SpatialProfile" enabled="0">
+	    <plugin name="SpatialProfile" enabled="no">
 	      <mode>cylinder</mode>
 	      <x>1</x>
 	      <y>20</y>
@@ -172,7 +172,7 @@ It detects the less dense space around the dense drop as a cavity.
 	      </profiles>
 	    </plugin>
 
-	    <plugin name="CavityWriter" enabled="1">
+	    <plugin name="CavityWriter" enabled="yes">
 	    	<outputprefix>drop_cavity.</outputprefix>
 	    	<writefrequency>10</writefrequency>
 	    	<componentid>0</componentid>

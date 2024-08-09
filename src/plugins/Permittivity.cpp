@@ -9,6 +9,9 @@
  // Important: Always plot the running average data to make sure convergence has been achieved. Permittivity may take a long time to converge, i.e. a few million steps with ~1000 particles. Reducing number of slabs for the thermostat can drastically improve results/convergence!
  // If a simulation is resumed from a restart file, then the existing running average file is ammended but the computation of the running averages starts anew at the time step of the restart file
 #include "Permittivity.h"
+
+#include "Simulation.h"
+
 void Permittivity::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "Calculation of relative permittivity enabled." << std::endl;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);

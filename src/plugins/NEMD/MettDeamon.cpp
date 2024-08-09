@@ -7,6 +7,7 @@
 
 #include "MettDeamon.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
 #ifdef ENABLE_MPI
@@ -17,6 +18,7 @@
 #include "utils/xmlfileUnits.h"
 #include "utils/Random.h"
 #include "utils/FileUtils.h"
+#include "utils/mardyn_assert.h"
 #include "io/ReplicaGenerator.h"  // class MoleculeDataReader
 
 #include <map>
@@ -415,7 +417,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		Log::global_log->info() << "[MettDeamon] Number of fixed molecules components: " << numChanges << std::endl;
 		if(numChanges < 1) {
 			Log::global_log->error() << "[MettDeamon] No component change defined in XML-config file. Program exit ..." << std::endl;
-			Simulation::exit(-1);
+			mardyn_exit(-1);
 		}
 		std::string oldpath = xmlconfig.getcurrentnodepath();
 		XMLfile::Query::const_iterator changeIter;
@@ -433,7 +435,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	}
 	else {
 		Log::global_log->error() << "[MettDeamon] No component changes defined in XML-config file. Program exit ..." << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 }
 
@@ -1187,7 +1189,7 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	_feedrate.feed.sum -= _reservoir->getBinWidth();  // reset feed sum
 	if(not _reservoir->nextBin(_nMaxMoleculeID.global) ) {
 		Log::global_log->error() << "[MettDeamon] Failed to activate new bin of particle Reservoir's BinQueue => Program exit." << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 	Log::global_log->debug() << "[" << nRank << "]: ADDED " << numAdded.local << "/" << numParticlesCurrentSlab.local << " particles (" << numAdded.local/static_cast<float>(numParticlesCurrentSlab.local)*100 << ")%." << std::endl;
 	// calc global values
@@ -1207,7 +1209,7 @@ void MettDeamon::initRestart()
 	if(not bRet)
 	{
 		Log::global_log->info() << "[MettDeamon] Failed to activate reservoir bin after restart! Program exit ... " << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 	_feedrate.feed.sum = _restartInfo.dYsum;
 }
@@ -1224,7 +1226,7 @@ void MettDeamon::readNormDistr()
 	//check to see that the file was opened correctly:
 	if (!ifs.vxz.is_open() || !ifs.vy.is_open() ) {
 		std::cerr << "[MettDeamon] There was a problem opening the input file!\n";
-		Simulation::exit(-1);//exit or do additional error checking
+		mardyn_exit(-1);//exit or do additional error checking
 	}
 
 	double dVal = 0.0;
@@ -1238,7 +1240,7 @@ void MettDeamon::readNormDistr()
 		else if (MD_RIGHT_TO_LEFT == _nMovingDirection)
 			_norm.vy.push_back( abs(dVal) * (-1.) );
 		else
-			Simulation::exit(-1);
+			mardyn_exit(-1);
 	}
 	// close files
 	ifs.vxz.close();
@@ -1307,7 +1309,7 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 	}
 	else {
 		Log::global_log->error() << "[MettDeamon] Reservoir file type not specified or unknown. Programm exit ..." << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 
 	// Possibly change component IDs
@@ -1317,7 +1319,7 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 		numChanges = query.card();
 		if(numChanges < 1) {
 			Log::global_log->error() << "[MettDeamon] No component change defined in XML-config file. Program exit ..." << std::endl;
-			Simulation::exit(-1);
+			mardyn_exit(-1);
 		}
 		std::string oldpath = xmlconfig.getcurrentnodepath();
 		XMLfile::Query::const_iterator changeIter;
@@ -1346,7 +1348,7 @@ void Reservoir::readParticleData(DomainDecompBase* domainDecomp, ParticleContain
 			break;
 		default:
 			Log::global_log->error() << "[MettDeamon] Unknown (or ambiguous) method to read reservoir for feature MettDeamon. Program exit ..." << std::endl;
-			Simulation::exit(-1);
+			mardyn_exit(-1);
 	}
 
 	// sort particles into bins
@@ -1517,7 +1519,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 	ifs.open( _filepath.data.c_str() );
 	if (!ifs.is_open()) {
 		Log::global_log->error() << "[MettDeamon] Could not open Mettdeamon Reservoirfile " << _filepath.data << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	Log::global_log->info() << "[MettDeamon] Reading Mettdeamon Reservoirfile " << _filepath.data << std::endl;
 
@@ -1546,7 +1548,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 
 	if((token != "NumberOfMolecules") && (token != "N")) {
 		Log::global_log->error() << "[MettDeamon] Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	ifs >> _numMoleculesRead;
 
@@ -1566,7 +1568,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 		else if (ntypestring == "IRV")  ntype = IRV;
 		else {
 			Log::global_log->error() << "[MettDeamon] Unknown molecule format '" << ntypestring << "'" << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 	} else {
 		ifs.seekg(spos);
@@ -1616,7 +1618,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 								<< componentid
 								<< ">"
 								<< numcomponents << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		// ComponentIDs are used as array IDs, hence need to start at 0.
 		// In the input files they always start with 1 so we need to adapt that all the time.
@@ -1645,7 +1647,7 @@ void Reservoir::readFromFileBinaryHeader()
 	if(not inp.changecurrentnode("/mardyn")) {
 		Log::global_log->error() << "[MettDeamon] Could not find root node /mardyn in XML header file or file itself." << std::endl;
 		Log::global_log->fatal() << "[MettDeamon] Not a valid MarDyn XML header file." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	bool bInputOk = true;
@@ -1673,7 +1675,7 @@ void Reservoir::readFromFileBinaryHeader()
 	if(not bInputOk)
 	{
 		Log::global_log->error() << "[MettDeamon] Content of file: '" << _filepath.header << "' corrupted! Program exit ..." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	if("ICRVQD" == strMoleculeFormat)
@@ -1685,7 +1687,7 @@ void Reservoir::readFromFileBinaryHeader()
 	else
 	{
 		Log::global_log->error() << "[MettDeamon] Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 }
 
@@ -1704,7 +1706,7 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp, ParticleConta
 	ifs.open(_filepath.data.c_str(), std::ios::binary | std::ios::in);
 	if (!ifs.is_open()) {
 		Log::global_log->error() << "[MettDeamon] Could not open reservoir phaseSpaceFile " << _filepath.data << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 
 	Log::global_log->info() << "[MettDeamon] Reading phase space file " << _filepath.data << std::endl;

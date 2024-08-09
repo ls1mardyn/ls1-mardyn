@@ -1,6 +1,7 @@
 #include "io/LoadBalanceWriter.h"
 
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "TimerProfiler.h"
 #include "parallel/DomainDecompBase.h"
 

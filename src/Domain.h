@@ -10,7 +10,6 @@
 #include "molecules/Comp2Param.h"
 #include "molecules/Component.h"
 #include "ensemble/EnsembleBase.h"
-#include "Simulation.h"
 #include "utils/CommVar.h"
 /*
  * TODO add comments for variables
@@ -176,9 +175,6 @@ public:
 	//! @brief set the global temperature
 	void setGlobalTemperature(double T) { setTargetTemperature(0, T); }
 	void setTargetTemperature(int thermostatID, double T);
-
-	//! @brief get the mixcoeff
-	std::vector<double> & getmixcoeff();
 
 	//! @brief get the epsilonRF
 	double getepsilonRF() const;
@@ -349,11 +345,8 @@ public:
 	//! @brief associates a component with a thermostat
 	//! @param cid internal ID of the component
 	//! @param th internal ID of the thermostat
-	void setComponentThermostat(int cid, int thermostat) {
-		if((0 > cid) || (0 >= thermostat)) Simulation::exit(787);
-		this->_componentToThermostatIdMap[cid] = thermostat;
-		this->_universalThermostatN[thermostat] = 0;
-	}
+	void setComponentThermostat(int cid, int thermostat);
+
 	//! @brief enables the "undirected" flag for the specified thermostat
 	//! @param tst internal ID of the respective thermostat
 	void enableUndirectedThermostat(int thermostat);
@@ -492,9 +485,6 @@ private:
 
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;
-	//! modified Lorentz-Berthelot mixing rule parameters
-	//! @todo more explanation
-	std::vector<double> _mixcoeff;
 
     // explosion heuristics, NOTE: turn off when using slab thermostat
     bool _bDoExplosionHeuristics;

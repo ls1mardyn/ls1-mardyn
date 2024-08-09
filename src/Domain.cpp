@@ -11,6 +11,7 @@
 #include "molecules/Molecule.h"
 //#include "CutoffCorrections.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "ensemble/EnsembleBase.h"
 
 #ifdef ENABLE_MPI
@@ -261,30 +262,27 @@ void Domain::calculateGlobalValues(
 			Log::global_log->debug() << "Selective thermostat will be applied to set " << thermit->first
 				<< " (beta_trans = " << this->_universalBTrans[thermit->first]
 				<< ", beta_rot = " << this->_universalBRot[thermit->first] << "!)" << std::endl;
-			int rot_dof;
 			const double limit_energy =  KINLIMIT_PER_T * Ti;
 
 			#if defined(_OPENMP)
 			#pragma omp parallel
 			#endif
 			{
-
-				double Utrans, Urot, limit_rot_energy, vcorr, Dcorr;
 				for (auto tM = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tM.isValid(); ++tM) {
-					Utrans = tM->U_trans();
+					const auto Utrans = tM->U_trans();
 					if (Utrans > limit_energy) {
-						vcorr = sqrt(limit_energy / Utrans);
+						const auto vcorr = sqrt(limit_energy / Utrans);
 						Log::global_log->debug() << ": v(m" << tM->getID() << ") *= " << vcorr << std::endl;
 						tM->scale_v(vcorr);
 						tM->scale_F(vcorr);
 					}
 
-					rot_dof = tM->component()->getRotationalDegreesOfFreedom();
+					const auto rot_dof = tM->component()->getRotationalDegreesOfFreedom();
 					if (rot_dof > 0) {
-						limit_rot_energy = 3.0 * rot_dof * Ti;
-						Urot = tM->U_rot();
+						const auto limit_rot_energy = 3.0 * rot_dof * Ti;
+						const auto Urot = tM->U_rot();
 						if (Urot > limit_rot_energy) {
-							Dcorr = sqrt(limit_rot_energy / Urot);
+							const auto Dcorr = sqrt(limit_rot_energy / Urot);
 							Log::global_log->debug() << "D(m" << tM->getID() << ") *= " << Dcorr << std::endl;
 							tM->scale_D(Dcorr);
 							tM->scale_M(Dcorr);
@@ -538,24 +536,28 @@ void Domain::writeCheckpointHeader(std::string filename,
 			for(auto pos=components->begin();pos!=components->end();++pos){
 				pos->write(checkpointfilestream);
 			}
-			unsigned int numperline=_simulation.getEnsemble()->getComponents()->size();
-			unsigned int iout=0;
-			for(auto pos=_mixcoeff.begin();pos!=_mixcoeff.end();++pos){
-				checkpointfilestream << *pos;
-				iout++;
-				// 2 parameters (xi and eta)
-				if(iout/2>=numperline) {
-					checkpointfilestream << std::endl;
-					iout=0;
-					--numperline;
-				}
-				else if(!(iout%2)) {
-					checkpointfilestream << "\t";
-				}
-				else {
-					checkpointfilestream << " ";
+			// Write mixing coefficients
+			auto &mixingrules = _simulation.getEnsemble()->getMixingrules();
+			const auto numComponents=_simulation.getEnsemble()->getComponents()->size();
+			std::stringstream mixingss;
+			for (int cidi = 0; cidi < numComponents; ++cidi) {
+				for (int cidj = cidi+1; cidj < numComponents; ++cidj) {  // cidj is always larger than cidi
+					const auto mixrule = mixingrules[cidi][cidj];
+					if (mixrule->getType() == "LB") {
+						const double eta = mixrule->getParameters().at(0);
+						const double xi = mixrule->getParameters().at(1);
+						mixingss << xi << " " << eta;
+						// Only add tab if not last character in line
+						if (!((cidi == numComponents-1) and (cidj == numComponents))) {
+							mixingss << "\t";
+						}
+					} else {
+						Log::global_log->error() << "Only LB mixing rule supported" << std::endl;
+						mardyn_exit(123);
+					}
 				}
 			}
+			checkpointfilestream << mixingss.str() << std::endl;
 			checkpointfilestream << _epsilonRF << std::endl;
 			for( auto uutit = this->_universalUndirectedThermostat.begin();
 					uutit != this->_universalUndirectedThermostat.end();
@@ -621,7 +623,7 @@ void Domain::writeCheckpoint(std::string filename,
 
 
 void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
-	_comp2params.initialize(*(_simulation.getEnsemble()->getComponents()), _mixcoeff, _epsilonRF, cutoffRadius, cutoffRadiusLJ);
+	_comp2params.initialize(*(_simulation.getEnsemble()->getComponents()), _simulation.getEnsemble()->getMixingrules(), _epsilonRF, cutoffRadius, cutoffRadiusLJ);
 }
 
 void Domain::Nadd(unsigned cid, int N, int localN)
@@ -706,14 +708,21 @@ void Domain::enableComponentwiseThermostat()
 	}
 }
 
+void Domain::setComponentThermostat(int cid, int thermostat) {
+	if ((0 > cid) || (0 >= thermostat)) {
+		Log::global_log->error() << "Domain::setComponentThermostat: cid or thermostat id too low" << std::endl;
+		mardyn_exit(787);
+	}
+	this->_componentToThermostatIdMap[cid] = thermostat;
+	this->_universalThermostatN[thermostat] = 0;
+}
+
 void Domain::enableUndirectedThermostat(int tst)
 {
 	this->_universalUndirectedThermostat[tst] = true;
 	this->_localThermostatDirectedVelocity[tst].fill(0.0);
 	this->_universalThermostatDirectedVelocity[tst].fill(0.0);
 }
-
-std::vector<double> & Domain::getmixcoeff() { return _mixcoeff; }
 
 double Domain::getepsilonRF() const { return _epsilonRF; }
 
