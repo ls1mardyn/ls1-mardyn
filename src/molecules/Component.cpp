@@ -5,7 +5,7 @@
 #include "Site.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 
 
 Component::Component(unsigned int id) {
@@ -77,10 +77,10 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			addQuadrupole(quadrupoleSite);
 		} else if (siteType == "Tersoff") {
 			Log::global_log->error() << "Tersoff no longer supported:" << siteType << std::endl;
-			Simulation::exit(-1);
+			mardyn_exit(-1);
 		} else {
 			Log::global_log->error() << "Unknown site type:" << siteType << std::endl;
-			Simulation::exit(-1);
+			mardyn_exit(-1);
 		}
 		// go back to initial level, to be consistent, even if no site information is found.
 		xmlconfig.changecurrentnode("..");

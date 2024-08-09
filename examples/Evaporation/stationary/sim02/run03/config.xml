@@ -8,7 +8,7 @@
 	</refunits>
 
 	<simulation type="MD" >
-		<options> <option name="refreshIDs">1</option> </options>
+		<options> <option name="refreshIDs">true</option> </options>
 		
 		<integrator type="Leapfrog" >
 			<timestep unit="reduced" >0.00182367</timestep>
@@ -273,7 +273,7 @@
 					<ucx>box</ucx> <ucy refcoordsID="0">box</ucy> <ucz>box</ucz>
 				</coords>
 
-				<sampling type="profiles" single_component="1">
+				<sampling type="profiles" single_component="true">
 					<control>
 						<start>0</start>
 						<frequency>10000</frequency>
@@ -292,7 +292,7 @@
 					<ucx>box</ucx> <ucy refcoordsID="0">box</ucy> <ucz>box</ucz>
 				</coords>
 
-				<sampling type="VDF" single_component="1">
+				<sampling type="VDF" single_component="true">
 					<control>
 						<start>0</start>
 						<frequency>10000</frequency>

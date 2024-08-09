@@ -75,7 +75,7 @@ void OriginalCellPairTraversal<CellTemplate>::rebuild(std::vector<CellTemplate> 
 		}
 	} else {
 		Log::global_log->error() << "OriginalCellPairTraversalDat::rebuild was called with incompatible Traversal data!" << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 }
 

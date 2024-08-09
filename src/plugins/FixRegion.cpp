@@ -32,7 +32,7 @@ void FixRegion::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 		Log::global_log->error() << "[FixRegion] INVALID INPUT!!! DISABLED!" << std::endl;
 		Log::global_log->error() << "[FixRegion] HALTING SIMULATION" << std::endl;
 		// HALT SIM
-		Simulation::exit(1);
+		mardyn_exit(1);
 		return;
 	}
 

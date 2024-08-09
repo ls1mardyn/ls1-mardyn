@@ -9,6 +9,7 @@
 #include <exception>
 #include "Domain.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "autopas/utils/StringUtils.h"
 #include "autopas/utils/logging/Logger.h"
 #include "parallel/DomainDecompBase.h"
@@ -186,7 +187,7 @@ auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString,
 		Log::global_log->error() << e.what() << std::endl;
 		Log::global_log->error() << "Possible options: "
 							<< autopas::utils::ArrayUtils::to_string(OptionType::getAllOptions()) << std::endl;
-		Simulation::exit(4432);
+		mardyn_exit(4432);
 		// dummy return
 		return decltype(OptionType::template parseOptions<OutputContainer>(""))();
 	}
@@ -398,7 +399,7 @@ void AutoPasContainer::update() {
 							   "Remaining invalid particles:\n"
 							<< autopas::utils::ArrayUtils::to_string(_invalidParticles, "\n", {"", ""})
 							<< std::endl;
-		Simulation::exit(434);
+		mardyn_exit(434);
 	}
 
 	_invalidParticles = _autopasContainer.updateContainer();

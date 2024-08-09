@@ -11,9 +11,10 @@ class IndirectNeighbourCommunicationScheme;
 #include <mpi.h>
 #include "NeighbourCommunicationScheme.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "DomainDecompMPIBase.h"
 #include "NeighborAcquirer.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "ZonalMethods/ZonalMethod.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
@@ -265,7 +266,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 			neighbour.print(ss);
 			Log::global_log->error_always_output() << ss.str() << std::endl;
 		}
-		Simulation::exit(544);
+		mardyn_exit(544);
 	}
 }
 
@@ -395,7 +396,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 				});
 			}
 
-			Simulation::exit(457);
+			mardyn_exit(457);
 		}
 
 	}  // while not allDone
@@ -424,7 +425,7 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 			Log::global_log->error() << "WRONG type in selectNeighbours - this should not be used for push-pull-partners "
 								   "selectNeighbours method"
 								<< std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 			break;
 	}
 }
@@ -593,7 +594,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 			for (int i = 0; i < numNeighbours; ++i) {
 				(*_neighbours)[d][i].deadlockDiagnosticSendRecv();
 			}
-			Simulation::exit(457);
+			mardyn_exit(457);
 		}
 
 	} // while not allDone

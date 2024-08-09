@@ -7,6 +7,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/FileUtils.h"
 

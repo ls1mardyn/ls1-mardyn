@@ -46,7 +46,7 @@
       <components>
           <moleculetype id="1" >
             <coord_base>principal_axes</coord_base>
-            <site type="LJ126" id="1" >
+            <site type="LJ126" id="1" name="C">
               <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
               <mass>12.00</mass>
               <sigma>2.900109</sigma>
@@ -200,15 +200,19 @@
           <boundaries> <x>reflective</x><y>outflow</y><z>reflective</z> </boundaries> <!-- Select boundary type for each dimensions. Available options are reflecting/reflective, outflow and periodic (default)-->
       </parallelisation>
       <parallelisation type="StaticIrregDomainDecomposition">
-          <!-- Provide CSV file with weights that determine the relative widths of each subdomain
-          EX: A file with its first line being 1,2,1 defines an x axis with subdomain lengths in the 1:2:1 ratio
+          <!-- Provide weights that determine the relative widths of each subdomain
+          EX: The weights in <x> being 1,2,1 defines an x axis with subdomain lengths in the 1:2:1 ratio
           The number of digits per column are the number of ranks in that column, and the number of columns need not be equal per row
           The number of ranks per row are therefore calculated from the column length, and cannot be given explicitly
-          The program must be run with ranks equal to the ranks in the CSV (examples/Mamico-couette/basic4.csv must be run with 6 ranks, for example)
+          The program must be run with ranks equal to the ranks in the weights (examples/Mamico-couette/ls1configNoCP.xml must be run with 6 ranks, for example)
           The actual subdomain lengths are calculated from the total length and given ratios
           If not given, default behaviour is an equally spaced grid, same as DomainDecomposition
             -->
-          <subdomainWeightsCSV>filename.csv</subdomainWeightsCSV>
+          <subdomainWeights>
+            <x>INT,INT,INT,...</x>
+            <y>INT,INT,INT,...</y>
+            <z>INT,INT,INT,...</z> 
+          </subdomainWeights>
       </parallelisation>
       <parallelisation type="GeneralDomainDecomposition">
           <updateFrequency>INTEGER</updateFrequency>

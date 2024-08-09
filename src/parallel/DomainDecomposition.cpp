@@ -28,7 +28,7 @@ void DomainDecomposition::initMPIGridDims() {
 			Log::global_log->error() << "\tbut grid is " << _gridSize[0] << " x " << _gridSize[1] << " x " << _gridSize[2] << std::endl;
 			Log::global_log->error() << "\tresulting in " << numProcsGridSize << " subdomains!" << std::endl;
 			Log::global_log->error() << "\tplease check your input file!" << std::endl;
-			Simulation::exit(2134);
+			mardyn_exit(2134);
 		}
 	}
 
@@ -62,7 +62,7 @@ void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/, Par
 		Log::global_log->error() << "nonblocking P2P using separate messages for leaving and halo is currently not "
 							   "supported. Please use the indirect neighbor communication scheme!"
 							<< std::endl;
-		Simulation::exit(235861);
+		mardyn_exit(235861);
 	}
 }
 
@@ -75,7 +75,7 @@ void DomainDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/, Part
 		// Would first need to send leaving, then halo -> not good for overlapping!
 		Log::global_log->error()
 			<< "nonblocking P2P using separate messages for leaving and halo is currently not supported." << std::endl;
-		Simulation::exit(235861);
+		mardyn_exit(235861);
 	}
 }
 

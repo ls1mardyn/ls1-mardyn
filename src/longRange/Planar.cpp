@@ -14,6 +14,7 @@
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/FileUtils.h"
+#include "utils/mardyn_assert.h"
 
 
 Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition,
@@ -149,7 +150,7 @@ void Planar::init()
 			Log::global_log->info() << "Long Range Correction: Subject registered" << std::endl;
 		} else {
 			Log::global_log->error() << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
-			Simulation::exit(-1);
+			mardyn_exit(-1);
 		}
 	}
 }
@@ -194,12 +195,12 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	if(_nWriteFreqProfiles < 1)
 	{
 		Log::global_log->error() << "Long Range Correction: Write frequency < 1! Programm exit ..." << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 	if(_nStopWritingProfiles <= _nStartWritingProfiles)
 	{
 		Log::global_log->error() << "Long Range Correction: Writing profiles 'stop' <= 'start'! Programm exit ..." << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 	bool bInputIsValid = (bRet1 && bRet2 && bRet3);
 	if(true == bInputIsValid)
@@ -211,7 +212,7 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	else
 	{
 		Log::global_log->error() << "Long Range Correction: Write control parameters not valid! Programm exit ..." << std::endl;
-		Simulation::exit(-1);
+		mardyn_exit(-1);
 	}
 }
 

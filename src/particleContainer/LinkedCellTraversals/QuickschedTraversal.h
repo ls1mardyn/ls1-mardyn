@@ -10,7 +10,7 @@
 
 #include "C08BasedTraversals.h"
 #include "utils/Logger.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "particleContainer/LinkedCells.h"
 
 #ifdef QUICKSCHED
@@ -111,7 +111,7 @@ void QuickschedTraversal<CellTemplate>::init() {
                     Log::global_log->error() << "Blocksize is bigger than number of cells in dimension "
                                         << (char) ('x' + i) << ". (" << _taskBlocksize[i] << " > "
                                         << this->_dims[i] << ")" << std::endl;
-                    Simulation::exit(1);
+                    mardyn_exit(1);
                 }
             }
 

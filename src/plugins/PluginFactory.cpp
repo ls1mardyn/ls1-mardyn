@@ -4,7 +4,7 @@
 
 #include "PluginFactory.h"
 #include "Domain.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 
 #include <map>
 #include <string>
@@ -194,7 +194,7 @@ long PluginFactory<PluginBase>::enablePlugins(std::list<PluginBase*>& _plugins, 
 			} else {
 				Log::global_log->error() << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation
 									<< std::endl;
-				Simulation::exit(-1);
+				mardyn_exit(-1);
 			}
 		} else if (pluginname == "DomainProfiles") {
 			plugin = this->create("DensityProfileWriter");

@@ -9,6 +9,7 @@
 #include "TimerWriter.h"
 
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "parallel/DomainDecompBase.h"
 
 void TimerWriter::readXML(XMLfileUnits& xmlconfig) {
@@ -34,7 +35,7 @@ void TimerWriter::readXML(XMLfileUnits& xmlconfig) {
 	}
 	if (_timerNames.empty()) {
 		Log::global_log->error() << "TimerWriter: no timers given. make sure you specify them correctly." << std::endl;
-		Simulation::exit(242367);
+		mardyn_exit(242367);
 	}
 	xmlconfig.changecurrentnode(oldpath);
 }

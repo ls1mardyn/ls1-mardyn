@@ -1,6 +1,5 @@
 #include "utils/MPI_Info_object.h"
 
-#include "Simulation.h"
 #include "utils/Logger.h"
 
 #ifdef ENABLE_MPI

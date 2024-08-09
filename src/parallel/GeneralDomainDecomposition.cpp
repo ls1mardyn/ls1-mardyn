@@ -12,6 +12,9 @@
 #include "NeighborAcquirer.h"
 #include "NeighbourCommunicationScheme.h"
 
+#include "utils/String_utils.h"
+#include "utils/mardyn_assert.h"
+
 #include <numeric>
 #include <memory>
 #include <string>
@@ -56,7 +59,7 @@ void GeneralDomainDecomposition::initializeALL() {
 													  gridCoords, minimalDomainSize);
 #else
 	Log::global_log->error() << "ALL load balancing library not enabled. Aborting." << std::endl;
-	Simulation::exit(24235);
+	mardyn_exit(24235);
 #endif
 	Log::global_log->info() << "GeneralDomainDecomposition initial box: [" << _boxMin[0] << ", " << _boxMax[0] << "] x ["
 					   << _boxMin[1] << ", " << _boxMax[1] << "] x [" << _boxMin[2] << ", " << _boxMax[2] << "]"
@@ -195,7 +198,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 				<< particleContainer->getBoundingBoxMax(2) << "\n"
 				<< "Particle: \n" << *iter
 				<< std::endl;
-			Simulation::exit(2315);
+			mardyn_exit(2315);
 		}
 	}
 	particleContainer->clear();
@@ -289,7 +292,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 				Log::global_log->error()
 					<< "GeneralDomainDecomposition's gridSize should have three entries if a list is given, but has "
 					<< strings.size() << "!" << std::endl;
-				Simulation::exit(8134);
+				mardyn_exit(8134);
 			}
 			_gridSize = {std::stod(strings[0]), std::stod(strings[1]), std::stod(strings[2])};
 		} else {
@@ -301,7 +304,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 				Log::global_log->error() << "GeneralDomainDecomposition's gridSize (" << gridSize
 									<< ") is smaller than the interactionLength (" << _interactionLength
 									<< "). This is forbidden, as it leads to errors! " << std::endl;
-				Simulation::exit(8136);
+				mardyn_exit(8136);
 			}
 		}
 	}
@@ -318,12 +321,12 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		} else {
 			Log::global_log->error() << "GeneralDomainDecomposition: Unknown load balancer " << loadBalancerString
 								<< ". Aborting! Please select a valid option! Valid options: ALL";
-			Simulation::exit(1);
+			mardyn_exit(1);
 		}
 		_loadBalancer->readXML(xmlconfig);
 	} else {
 		Log::global_log->error() << "loadBalancer section missing! Aborting!" << std::endl;
-		Simulation::exit(8466);
+		mardyn_exit(8466);
 	}
 	xmlconfig.changecurrentnode("..");
 }

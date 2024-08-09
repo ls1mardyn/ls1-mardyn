@@ -18,8 +18,6 @@
 
 class DomainDecompBase;
 
-#include "Simulation.h"
-
 
 class LoadCalc {
 public:

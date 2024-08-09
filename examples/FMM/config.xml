@@ -64,7 +64,7 @@
 			<orderOfExpansions>10</orderOfExpansions>
 			<LJCellSubdivisionFactor>1</LJCellSubdivisionFactor>
 			<adaptiveContainer>false</adaptiveContainer>
-			<systemIsPeriodic>1</systemIsPeriodic>
+			<systemIsPeriodic>true</systemIsPeriodic>
 	  </electrostatic>
 
 	  <!-- TODO: we will probably want to disable ReactionField, when FMM is used?

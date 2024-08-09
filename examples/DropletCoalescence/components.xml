@@ -3,7 +3,7 @@
 <components>
 
   <moleculetype id="1" name="Argon">
-    <site type="LJ126" id="1" >
+    <site type="LJ126" id="1" name="Ar">
       <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
       <mass>39.948</mass>
       <sigma>3.3916</sigma>
@@ -18,7 +18,7 @@
   </moleculetype>
 
   <moleculetype id="2" name="Argon">
-    <site type="LJ126" id="1" >
+    <site type="LJ126" id="1" name="Ar">
       <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
       <mass>39.948</mass>
       <sigma>3.3916</sigma>

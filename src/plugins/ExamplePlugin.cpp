@@ -6,10 +6,12 @@
  */
 
 #include "ExamplePlugin.h"
-#include "Simulation.h"
 
+#include "utils/mardyn_assert.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
+
+#include <cstring>
 
 
 void ExamplePlugin::readXML(XMLfileUnits& xmlconfig) {
@@ -28,27 +30,27 @@ void ExamplePlugin::readXML(XMLfileUnits& xmlconfig) {
 			<< std::endl;
 
 	const char* str = displaySelectorString.c_str();
-	if (strcmp(str, "all") == 0) {
+	if (std::strcmp(str, "all") == 0) {
 		_displaySelector = WhereToDisplay::ALL;
 		Log::global_log->info() << "Displaying at all plugin positions."
 				<< std::endl;
-	} else if (strcmp(str, "beforeEventNewTimestep") == 0) {
+	} else if (std::strcmp(str, "beforeEventNewTimestep") == 0) {
 		_displaySelector = WhereToDisplay::BEFORE_EVENT_NEW_TIMESTEP;
 		Log::global_log->info() << "Displaying at beforeEventNewTimestep."
 				<< std::endl;
-	} else if (strcmp(str, "beforeForces") == 0) {
+	} else if (std::strcmp(str, "beforeForces") == 0) {
 		_displaySelector = WhereToDisplay::BEFORE_FORCES;
 		Log::global_log->info() << "Displaying at beforeForces." << std::endl;
-	} else if (strcmp(str, "afterForces") == 0) {
+	} else if (std::strcmp(str, "afterForces") == 0) {
 		_displaySelector = WhereToDisplay::AFTER_FORCES;
 		Log::global_log->info() << "Displaying at afterForces." << std::endl;
-	} else if (strcmp(str, "endStep") == 0) {
+	} else if (std::strcmp(str, "endStep") == 0) {
 		_displaySelector = WhereToDisplay::END_STEP;
 		Log::global_log->info() << "Displaying at endStep." << std::endl;
-	} else if (strcmp(str, "init") == 0) {
+	} else if (std::strcmp(str, "init") == 0) {
 		_displaySelector = WhereToDisplay::AT_INIT;
 		Log::global_log->info() << "Displaying at init." << std::endl;
-	} else if (strcmp(str, "finish") == 0) {
+	} else if (std::strcmp(str, "finish") == 0) {
 		_displaySelector = WhereToDisplay::AT_FINISH;
 		Log::global_log->info() << "Displaying at finish." << std::endl;
 	} else {
@@ -58,7 +60,7 @@ void ExamplePlugin::readXML(XMLfileUnits& xmlconfig) {
 		Log::global_log->error()
 				<< "Valid options are: all, beforeEventNewTimestep, beforeForces, afterForces, endStep, init, finish."
 				<< std::endl;
-		Simulation::exit(11);
+		mardyn_exit(11);
 	}
 }
 

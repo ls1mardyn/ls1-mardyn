@@ -6,7 +6,8 @@
  */
 
 #include "ZonalMethod.h"
-#include "Simulation.h"
+
+#include <algorithm>
 
 ZonalMethod::ZonalMethod() = default;
 

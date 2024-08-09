@@ -17,7 +17,7 @@
 #ifndef MARDYN
 #include "common/DrawableMolecule.h"
 #include "QObjects/ScenarioGenerator.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #endif
 
 

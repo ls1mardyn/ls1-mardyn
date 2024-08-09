@@ -44,7 +44,7 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <site>
+	   <site type="LJ126|Charge|Dipole|Quadrupole" id="UINT" name="STRING">
 	     <coords> <x>DOUBLE</x> <y>DOUBLE</y> <z>DOUBLE</z> </coords>
 	     <mass>DOUBLE</mass>
 	   </site>

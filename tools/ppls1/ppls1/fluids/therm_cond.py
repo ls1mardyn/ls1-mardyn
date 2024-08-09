@@ -139,6 +139,7 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
     
     na=6.02214076e23
     kb=1.380649e-23
+    u_mass=1.660539e-27
     
     if fluid == 'LJTS':
         fluid = 'Argon'
@@ -167,8 +168,8 @@ def lambda_lemmon(T,rho,fluid,units='reduced'):
         T = T/tc*150.687
         rho = rho/sig**3*1e30/na*1e-3
         # refTime, refLambda: tref, lref
-        tref=sig*1e-10*np.sqrt(mass*1.660538e-27/(kb*eps))
-        lref=1e3*kb/(sig*1e-10*tref) # [mW/m-K]
+        tref=sig*1e-10*np.sqrt(mass*u_mass/(kb*eps))
+        lref=1e3*kb/(sig*1e-10*tref) # Lemmon gives [mW/m-K] (see Table V in Paper)
     elif units == 'SI':
         pass
     else:
@@ -254,36 +255,19 @@ def lambda_fernandez(T,rho,L,QQ):
             lambda_f = lambda_f + coeff[i,j]*(T**(i))*(rho**(j))
     return lambda_f
 
-#%% Get thermal conductivity of LJTS fluid with data/fit by Guevara/Homes
-def lambda_guevara_homes(T,rho):
-    '''
-    Get thermal conductivity of LJTS fluid (Guevara/Homes)
 
-    :param float T: Temperature
-    :param float rho: Density
-    :return: float lambda_l: Thermal conductivity
-    '''
-    
-    p00=-364.1
-    p10=-1003
-    p01=2292
-    p20=-21.11
-    p11=2238
-    p02=-3751
-    p30=601.2
-    p21=-1482
-    p12=13.63
-    p03=1494
-    lambda_gh = p00 + p10*T + p01*rho + p20*T**2 + p11*T*rho + p02*rho**2 + p30*T**3 + p21*T**2*rho + p12*T*rho**2 + p03*rho**3
-    return lambda_gh
-
+#%% Tests
 if __name__ == '__main__':
-    print('Running test with LJTS ...')
     fluid = 'LJTS'
-    T = 0.8
-    rho = 0.55
-
+    T = 0.9
+    rho = 0.75
+    print(f'Running test with {fluid} ...')
     print('Lambda Lemmon:         '+str(lambda_lemmon(T,rho,fluid)))
     print('Lambda Lautenschlager: '+str(lambda_lauten(T,rho)))
-    print('Lambda Guevara/Homes:  '+str(lambda_guevara_homes(T,rho)))
 
+    fluid = 'Argon'
+    T = 100.0
+    rho = 33.0
+    print(f'Running test with {fluid} ...')
+    print('Eta Lemmon:     '+str(lambda_lemmon(T,rho,fluid)))
+    print('Eta Lemmon Lit: 111.266')  # Value from Table V in Lemmon2004

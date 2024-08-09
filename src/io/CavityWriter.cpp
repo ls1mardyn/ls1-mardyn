@@ -9,6 +9,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
 #include "Simulation.h"
 #include "ensemble/CavityEnsemble.h"
 
@@ -37,28 +38,28 @@ void CavityWriter::readXML(XMLfileUnits &xmlconfig) {
     xmlconfig.getNodeValue("maxNeighbours", _maxNeighbors);
     if (_maxNeighbors <= 0) {
         Log::global_log->error() << "[CavityWriter] Invalid number of maxNeighbors: " << _maxNeighbors << std::endl;
-        Simulation::exit(999);
+        mardyn_exit(999);
     }
 
     xmlconfig.getNodeValue("radius", _radius);
     if (_radius <= 0.0f) {
         Log::global_log->error() << "[CavityWriter] Invalid size of radius: " << _radius << std::endl;
-        Simulation::exit(999);
+        mardyn_exit(999);
     }
     xmlconfig.getNodeValue("Nx", _Nx);
     if (_Nx <= 0) {
         Log::global_log->error() << "[CavityWriter] Invalid number of cells Nx: " << _Nx << std::endl;
-        Simulation::exit(999);
+        mardyn_exit(999);
     }
     xmlconfig.getNodeValue("Ny", _Ny);
     if (_Ny <= 0) {
         Log::global_log->error() << "[CavityWriter] Invalid number of cells Ny: " << _Ny << std::endl;
-        Simulation::exit(999);
+        mardyn_exit(999);
     }
     xmlconfig.getNodeValue("Nz", _Nz);
     if (_Nz <= 0) {
         Log::global_log->error() << "[CavityWriter] Invalid number of cells Nz: " << _Nz << std::endl;
-        Simulation::exit(999);
+        mardyn_exit(999);
     }
 
     // Default Control Volume is entire Domain
@@ -76,13 +77,13 @@ void CavityWriter::readXML(XMLfileUnits &xmlconfig) {
         if (_controlVolume[d * 2] > _controlVolume[d * 2 + 1]) {
             Log::global_log->error() << "[CavityWriter] Lower Bound of Control Volume may not be larger than upper bound. "
                                 << std::endl;
-            Simulation::exit(999);
+            mardyn_exit(999);
         }
         if (_controlVolume[d * 2] < 0 ||
             _controlVolume[d * 2 + 1] > global_simulation->getDomain()->getGlobalLength(d)) {
             Log::global_log->error() << "[CavityWriter] Control volume bounds may not be outside of domain boundaries. "
                                 << std::endl;
-            Simulation::exit(999);
+            mardyn_exit(999);
         }
     }
 
