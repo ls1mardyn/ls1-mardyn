@@ -28,7 +28,7 @@ DimensionType BoundaryUtils::convertStringToDimension(std::string dimension) {
 	if(!isDimensionStringPermissible(dimension))
 	{
 		Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 		return DimensionType::ERROR;
 	}
 	if(dimension == "+x")
@@ -50,7 +50,7 @@ DimensionType BoundaryUtils::convertNumericToDimension(int dim)
 	if(!isDimensionNumericPermissible(dim))
 	{
 		Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 		return DimensionType::ERROR;
 	}
 	switch(findSign(dim))
@@ -72,7 +72,7 @@ DimensionType BoundaryUtils::convertNumericToDimension(int dim)
 			}
 		default: //should never happen
 			Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
-			Simulation::exit(1);
+			mardyn_exit(1);
 	}
 	return DimensionType::ERROR;
 }
@@ -132,7 +132,7 @@ std::string BoundaryUtils::convertDimensionToString(DimensionType dimension)
 
 	default:
 		Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 		return "error";
 	}
 }
@@ -166,7 +166,7 @@ int BoundaryUtils::convertDimensionToNumeric(DimensionType dimension)
 
 	default:
 		Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 		return 0;
 	}
 }
@@ -222,7 +222,7 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> BoundaryUtils::getInner
 	
 	default:
 		Log::global_log->error() << "Invalid dimension passed for inner buffer calculation" << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	return std::make_tuple(returnRegionBegin, returnRegionEnd);
 }
@@ -278,7 +278,7 @@ std::tuple<std::array<double,3>, std::array<double,3>> BoundaryUtils::getOuterBu
 	
 	default:
 		Log::global_log->error() << "Invalid dimension passed for inner buffer calculation" << std::endl;
-		Simulation::exit(1);
+		mardyn_exit(1);
 	}
 	return std::make_tuple(returnRegionBegin, returnRegionEnd);
 }
