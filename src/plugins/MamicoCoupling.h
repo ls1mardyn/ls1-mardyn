@@ -28,9 +28,6 @@ public:
   MamicoCoupling() = default;
   ~MamicoCoupling() override = default;
 
-  /**
-   * Currently only prints to log that mamico coupling is initialized
-   */
   void init(ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain) override;
 
