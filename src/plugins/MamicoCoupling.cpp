@@ -7,9 +7,7 @@ void MamicoCoupling::readXML(XMLfileUnits &xmlconfig) {}
 
 void MamicoCoupling::init(ParticleContainer *particleContainer,
                           DomainDecompBase *domainDecomp, Domain *domain) {
-
   Log::global_log->info() << "MaMiCo coupling plugin initialized" << std::endl;
-
 }
 
 void MamicoCoupling::beforeEventNewTimestep(
