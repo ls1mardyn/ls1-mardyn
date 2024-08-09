@@ -6,7 +6,6 @@
 #include <coupling/interface/impl/ls1/LS1RegionWrapper.h>
 #include <coupling/services/CouplingCellService.h>
 
-
 /**
  * Allows execution of MaMiCo code to enable coupling with MaMiCo.
  *
@@ -32,8 +31,8 @@ public:
             DomainDecompBase *domainDecomp, Domain *domain) override;
 
   /*
-  * No XML tags defined for this plugin, so does nothing
-  */
+   * No XML tags defined for this plugin, so does nothing
+   */
   void readXML(XMLfileUnits &xmlconfig) override;
 
   void beforeEventNewTimestep(ParticleContainer *particleContainer,
@@ -81,7 +80,7 @@ public:
   std::string getPluginName() override { return "MamicoCoupling"; }
 
   static PluginBase *createInstance() { return new MamicoCoupling(); }
-  
+
   /**
    * Sets the macroscopicCellService object that controls the inner coupling
    * logic.
