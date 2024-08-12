@@ -74,6 +74,7 @@ class Simulation {
 private:
 	Simulation(Simulation &simulation);
 	Simulation& operator=(Simulation &simulation);
+	void resetVirials();
 	void updateForces();
 
 public:

@@ -573,6 +573,13 @@ void FullMolecule::calcFM_site(const std::array<double, 3>& dsite, const std::ar
 	_M[2] += dsite[0] * Fsite[1] - dsite[1] * Fsite[0];
 }
 
+void FullMolecule::clearVirial() {
+	double zero3[] = {.0,.0,.0};
+	setVi(zero3);
+	setViN(0.0);
+	setViT(0.0);
+}
+
 void FullMolecule::calcFM() {
 	using std::isnan; // C++11 needed
 

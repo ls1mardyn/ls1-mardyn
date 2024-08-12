@@ -16,7 +16,8 @@ class LongRangeCorrection;
 class NoLRC: public LongRangeCorrection{
 
 public:
-	NoLRC(double /* cutoffRadius */, double /* cutoffRadiusLJ */,  Domain* domain, Simulation* /* simulation */) {
+	NoLRC(double /* cutoffRadius */, double /* cutoffRadiusLJ */,  Domain* domain, ParticleContainer* /* particleContainer */, Simulation* /* simulation */) 
+    {
         _domain = domain;
     };
 	virtual ~NoLRC() {}
@@ -26,7 +27,7 @@ public:
 	virtual void calculateLongRange() {
         _domain->setUpotCorr(0.);
         _domain->setVirialCorr(0.);
-      };
+    };
 	virtual void writeProfiles(DomainDecompBase* /* domainDecomp */, Domain* /* domain */, unsigned long /* simstep */) {}
 
 private:

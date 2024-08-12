@@ -367,6 +367,8 @@ public:
 
 	/** clear forces and moments */
 	void clearFM() override;
+	/** clear forces and moments */
+	void clearVirial() override;
 	/** calculate forces and moments for already given site forces */
 	void calcFM() override;
 

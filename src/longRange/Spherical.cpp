@@ -1048,11 +1048,12 @@ void Spherical::calculateLongRange() {
 		FcorrY[molID] = FShells_Mean_global[PartShells[molID]] * FcorrY[molID] / ksi[molID];
 		FcorrZ[molID] = FShells_Mean_global[PartShells[molID]] * FcorrZ[molID] / ksi[molID];
 
-		// Reset virial (maybe also done in molecule class or by missing communication?)
+		/* // Reset virial NOW DONE IN simulation.cpp
 		double zero3[] = {.0,.0,.0};
 		tempMol->setVi(zero3);
 		tempMol->setViN(0.0);
-		tempMol->setViT(0.0);
+		tempMol->setViT(0.0); 
+		*/
 
 		PNShellsCorr_Avg[PartShells[molID]] -= 0.5 * PNShells_Mean_global[PartShells[molID]];
 		PTShellsCorr_Avg[PartShells[molID]] -= 0.25 * PTShells_Mean_global[PartShells[molID]];

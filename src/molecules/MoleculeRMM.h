@@ -279,6 +279,7 @@ public:
 	void write(std::ostream& /*ostrm*/) const override;
 	void writeBinary(std::ostream& /*ostrm*/) const override {}
 	void clearFM() override {}
+	void clearVirial() override {}
 	void calcFM() override {}
 	void check(unsigned long /*id*/) override {}
 

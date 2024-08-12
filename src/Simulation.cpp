@@ -589,7 +589,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			else if("none" == type)
 			{
 				delete _longRangeCorrection;
-				_longRangeCorrection = new NoLRC(_cutoffRadius, _LJCutoffRadius, _domain, global_simulation);
+				_longRangeCorrection = new NoLRC(_cutoffRadius, _LJCutoffRadius, _domain, _moleculeContainer, global_simulation);
 			}
 			else
 			{
@@ -808,6 +808,17 @@ void Simulation::initConfigXML(const std::string& inputfilename) {
     _ensemble->initConfigXML(_moleculeContainer);
 }
 
+void Simulation::resetVirials() {
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		// iterate over all particles in case we are not using the Full Shell method.
+		for (auto i = _moleculeContainer->iterator(ParticleIterator::ALL_CELLS); i.isValid(); ++i){
+			i->clearVirial();
+		}
+	} // end pragma omp parallel
+}
 void Simulation::updateForces() {
 	#if defined(_OPENMP)
 	#pragma omp parallel
@@ -1142,6 +1153,9 @@ void Simulation::simulateOneTimestep()
 
 	// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
 	_longRangeCorrection->calculateLongRange();
+
+	// reset Virials. This used to be done in "clearFM()" but had to be moved after calculateLongRange(), because virials are needed for sphericalLRC
+	resetVirials();
 
 	// Update forces in molecules so they can be exchanged
 	updateForces();

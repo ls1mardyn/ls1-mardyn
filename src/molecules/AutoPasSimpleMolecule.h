@@ -309,6 +309,7 @@ public:
 			setF(d, 0.);
 		}
 	}
+	void clearVirial() override {}
 	void calcFM() override {}
 	void check(unsigned long id) override {}
 
