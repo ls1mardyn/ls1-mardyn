@@ -30,7 +30,6 @@ void SphericalSampling::init(ParticleContainer* /* particleContainer */, DomainD
 
 
     _distMax = *(std::min_element(_globalBoxLength.begin(), _globalBoxLength.end())) * 0.5;
-    _shellWidth = _distMax/_nShells;
     _shellMappingDistMax = _distMax*_distMax; // for position-to-shell mapping by squared distance from center
 
     // Entry per bin; all components sampled as one
@@ -220,8 +219,6 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
             dof_rot = _simulation.getEnsemble()->getComponent(0)->getRotationalDegreesOfFreedom();
             dof_total = (3 + dof_rot)*numMols;
 
-            const double vi_n = virN_step.global[i];
-            const double vi_t = virT_step.global[i];
             const double vi_x = virialVect_step[0].global[i];
             const double vi_y = virialVect_step[1].global[i];
             const double vi_z = virialVect_step[2].global[i];
@@ -230,10 +227,8 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
             _numMolecules_accum[i]            += numMols;
             _mass_accum[i]                    += mass_step.global[i];
             _ekin_accum[i]                    += ekin_step.global[i];
-            // _virial_accum[i]                  += vi_x + vi_y + vi_z;
-            // _virSph_accum[i]                  += vi_n + vi_t;
-            _virN_accum[i]                    += vi_n;
-            _virT_accum[i]                    += vi_t;
+            _virN_accum[i]                    += .5 * virN_step.global[i];
+            _virT_accum[i]                    += .5 * virT_step.global[i];
 
             _virialVect_accum[0][i]           += vi_x;
             _virialVect_accum[1][i]           += vi_y;
@@ -332,17 +327,17 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
 
                     double v_drift_squared = v_r*v_r;  // is this reasonable at all?
 
-                    vir_n = 0.5*_virN_accum[i]/numMols_accum;
-                    vir_t = 0.5*_virT_accum[i]/numMols_accum;
+                    vir_n = _virN_accum[i]/numMols_accum;
+                    vir_t = _virT_accum[i]/numMols_accum;
 
                     T           = (2*_ekin_accum[i]) / _doftotal_accum[i];
                     T_driftcorr = (2*_ekin_accum[i] - v_drift_squared*_mass_accum[i]) / _doftotal_accum[i];
                     ekin        = _ekin_accum[i] / numMols_accum;
                     p_xyz       = rho * ( (_virialVect_accum[0][i]+_virialVect_accum[1][i]+_virialVect_accum[2][i])/(3.0*numMols_accum) + T);
-                    p_sph       = rho * ( (vir_n + 2.*vir_t)/(3.0) + T);
+                    p_sph       = rho * ( T + (vir_n + 2.*vir_t)/(3.) );
 
-                    p_n         = rho * ( vir_n + T);
-                    p_t         = rho * ( vir_t + T);
+                    p_n         = rho * (T + vir_n);
+                    p_t         = rho * (T + vir_t);
                 }
                          
                          
