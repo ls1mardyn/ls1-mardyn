@@ -367,7 +367,6 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
             }
             ofs.close();
         }
-
         // Reset vectors to zero
         resetVectors();
     }

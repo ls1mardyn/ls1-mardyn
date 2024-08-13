@@ -494,12 +494,11 @@ void FullMolecule::clearFM() {
 
 
 
-
-					// _Vi[0]= _Vi[1]= _Vi[2]= 0.;
-					// _ViSph[0] =  _ViSph[1]= 0., _ViSph[2]= 0.;
-	/* 	Virials are needed later (by Spherical.cpp).
-		right now, _Visph is set to zero by Spherical.cpp 
-		---> very bad. this needs to be handled diffeerently. don't know how yet.
+	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
+	_ViSph[0] =  _ViSph[1]= 0., _ViSph[2]= 0.;
+	/* 	If Spherical.cpp wants to access Virials (eg to produce pressure output), 
+		this has to be moved after calculateLongrange in Simulation.cpp!
+		(use resetVirials();)
 	*/
 	_upot = 0.;
 

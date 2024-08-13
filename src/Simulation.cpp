@@ -1154,9 +1154,10 @@ void Simulation::simulateOneTimestep()
 	// longRangeCorrection is a site-wise force plugin, so we have to call it before updateForces()
 	_longRangeCorrection->calculateLongRange();
 
+/* 
 	// reset Virials. This used to be done in "clearFM()" but had to be moved after calculateLongRange(), because virials are needed for sphericalLRC
 	resetVirials();
-
+ */
 	// Update forces in molecules so they can be exchanged
 	updateForces();
 
