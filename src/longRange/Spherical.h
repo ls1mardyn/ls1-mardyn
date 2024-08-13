@@ -1,23 +1,21 @@
+/*
+ * SphericalSampling.cpp
+ *
+ *  Created on: Aug 2024
+ *      Author: JakNiem
+ */
 
-//Calculation of the surface tension in a system with spherical interfaces needs a Long Range Correction.
-//
-//The correction terms are based on Janecek (2006) and Lustig (1988).
 
-#ifndef SPHERICAL_H_
-#define SPHERICAL_H_
+#pragma once
 
 #include "LongRangeCorrection.h"
 #include "Simulation.h"
 
-#include <vector>
-#include <cmath>
-#include <string>
-#include <map>
-#include <cstdint>
 
-#include "molecules/MoleculeForwardDeclaration.h"
-class Domain;
-class ParticleContainer;
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 class Spherical:public LongRangeCorrection {
 public:
@@ -29,6 +27,7 @@ public:
 	virtual void calculateLongRange();
 	virtual void writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
 
+
 private:
 	template<typename T>
 	void resizeExactly(std::vector<T>& v, unsigned int numElements) const {
@@ -36,111 +35,70 @@ private:
 		v.resize(numElements);
 	}
 
-	// void centerCenter(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj); 
-	// void centerSite(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj);
-	// void siteSite(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj);
+	template<typename T>
+	void resizeCommVarVector(CommVar<std::vector<T>>& commVar, unsigned int len) const {
+		commVar.local.resize(len);
+		commVar.global.resize(len);
+	}
+	template<typename T>
+	void resizeCommVarVector(CommVar<std::vector<T>>& commVar) const {
+		commVar.local.resize(_lenVector);
+		commVar.global.resize(_lenVector);
+	}
 
-	void calcDensityProfiles();
 
-	double RhoP(double r, double rhov, double rhol, double D0, double R0);
-	double SICCu(int n, double r);
-	double SICSu(int n, double r, double tau);
-	double CS(int n, double r, double tau);
-	double SISSu(int n, double r, double tau1, double tau2);
-	double SS(int n, double r, double tau1, double tau2);
-	double SSLN(double r, double tau1, double tau2);
-	double TICCu(int n, double rc, double sigma2);
-	double TICSu(int n, double rc, double sigma2, double tau);
-	double TISSu(int n, double rc, double sigma2, double tau1, double tau2);
-	double TICCp(int n, double rc, double sigma2);
-	double TICSp(int n, double rc, double sigma2, double tau);
-	double TISSp(int n, double rc, double sigma2, double tau1, double tau2);
+    void resizeVectors();  // Change size of accumulation vectors
+    void resetVectors();   // Set accumulation vectors to zero
 
-	unsigned int nSamples;
-	unsigned int numComp;
-	unsigned long globalNumMols;
-	double rc;
-	double rcmax;
-	double UpotKorrLJ;
-	double VirialKorrLJ;
-	double TempRho;
-	bool droplet;
-	bool disableLRC;
-	std::string _outputPrefix;
-	double _T;
+	void calculateBulkDensities();
+	void calculateTanhProfile();
 
-	unsigned int NShells;
-	unsigned int calcFreq;
-	unsigned int writeFreq; //has to be a multiple of calculation Frequency
-	unsigned int NSMean;
-	double _drShells;
-	double _deltaShells;
-	std::vector<double> RShells;
-	std::vector<double> RShells2;
-	std::vector<double> RShells3;
-	std::vector<double> VShells;
-	std::vector<double> rhoShellsTemp;  // Density in current simstep
-	std::vector<double> rhoShellsTemp_global;  // Density in current simstep; after allreduce
-	std::vector<double> rhoShellsMean;  // Density of running average with windows size of NSMean*calcFreq; contains all data
-	std::vector<double> rhoShellsAvg;  // Density averaged over whole simulation
-	std::vector<double> rhoShellsAvg_global;  // Density averaged over whole simulation; after allreduce
-	std::vector<double> TShellsTemp;
-	std::vector<double> TShellsAvg;
-	std::vector<double> TShellsAvg_global;
-	std::vector<double> rhoShells;  // Running average density over last NSMean*calcFreq steps
-	std::vector<double> rhoShellsT;  // tanh Fit of density
-	std::vector<double> rhoShells_global;  // Running average density over last NSMean*calcFreq steps; after allreduce
-	std::vector<double> PartShells;
-	std::vector<double> UShells_Mean;
-	std::vector<double> UShells_Mean_global;
-	std::vector<double> FShells_Mean;
-	std::vector<double> FShells_Mean_global;
-	std::vector<double> PNShells_Mean;
-	std::vector<double> PNShells_Mean_global;
-	std::vector<double> PTShells_Mean;
-	std::vector<double> PTShells_Mean_global;
-	std::vector<double> PNShellsCorr_Avg;
-	std::vector<double> PNShellsCorr_Avg_global;
-	std::vector<double> PTShellsCorr_Avg;
-	std::vector<double> PTShellsCorr_Avg_global;
-	std::vector<double> VirShells_N;
-	std::vector<double> VirShells_N_global;
-	std::vector<double> VirShells_T;
-	std::vector<double> VirShells_T_global;
-	std::vector<unsigned> numLJ;
-	unsigned int numLJSum;
-	std::vector<unsigned> numLJSum2;
-	std::vector<double> ksi;
-	std::vector<double> FcorrX;
-	std::vector<double> FcorrY;
-	std::vector<double> FcorrZ;
-	std::vector<double> FcorrX_global;
-	std::vector<double> FcorrY_global;
-	std::vector<double> FcorrZ_global;
-	std::vector<double> lowerS;
-	std::vector<double> interS;
-	std::vector<double> upperS;
-	std::vector<double> eLong;
-	double boxlength[3];
-	double systemcenter[3];
 
+
+    double _cutoffLJ;
+	Domain* _domain;
+	DomainDecompBase* _domainDecomposition;
+	ParticleContainer* _particleContainer;
+
+    // Control: general
+    unsigned int _nShells {60};
+    unsigned int _lenVector {60+1};
+    bool _isBubble {false};
+	bool _disableLRC {false};
+    double _T {std::nan("0")};      // no default --> error message if not set
+	unsigned int _calcFreq {100};
+	unsigned int _writeFreq {1000}; //has to be a multiple of calculation Frequency
+    
+    std::string _outputPrefix {"sphericalLRC_"};
+
+
+    // Auxiliary variables
+    std::array<double, 3> _globalBoxLength;
+    std::array<double, 3> _globalCenter;
+	double _distMax;
+	// double _distMaxSquared;
+	// double _shellWidth;
+    unsigned long _globalNumMols;
+
+    std::vector<double> _shellVolume;             
+    std::vector<double> _shellLowerBound; //_shellUpperBound[i] = _shellLowerBound[i+1]            
+
+	std::vector<unsigned long> _numMolecules_accum;             // Number of molecules in bin
+	std::vector<double> _density_avg; 	//avg over time (TODO: so far: all time average -- should be changed in the future)
+	std::vector<double> _density_avg_fitted; 
+	std::vector<double> _virtual_density;   // _density_avg_fitted - homogenous density
+
+
+    unsigned long _numsamples {0};                   // Number of samples; can vary from bin to bin as some bins could be empty
+	
 	struct BulkBoundaries
 	{
 		int inside_from;
 		int inside_to;
 		int outside_from;
 		int outside_to;
-	} bulkBoundaries;
+	} _bulkBoundaries;
 
-	std::string filenameTanhParams;
-	std::string filenameGlobalCorrs;
-	std::string filenameThermData;
-	
-	ParticleContainer* _particleContainer;
-	Domain* _domain;
-	DomainDecompBase* _domainDecomposition;
-	
+	double _rho_in {0.};
+	double _rho_out {0.};
 };
-
-
-#endif /*SPHERICAL_H_*/
