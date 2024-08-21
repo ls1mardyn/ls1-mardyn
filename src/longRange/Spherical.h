@@ -175,4 +175,13 @@ private:
 	// void calculation_01_directCalc();
 	void calculation_2_getShellPropertiesByLoopingOverAllMolecules();
 	void calculation_3_getShellPropertiesFromRepresentativeParticles();
+	void calculation_4_isabelReverseEngineered();
+
+	double TICCu(int n, double rc, double sigma2);
+	double TICSu(int n, double rc, double sigma2, double tau);
+	double TISSu(int n, double rc, double sigma2, double tau1, double tau2);
+	double TICCp(int n, double rc, double sigma2);
+	double TICSp(int n, double rc, double sigma2, double tau);
+	double TISSp(int n, double rc, double sigma2, double tau1, double tau2);
+
 };
