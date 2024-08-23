@@ -16,7 +16,7 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), pairs_handler));
 
     Log::global_log->info()<<"[PMF]LegacyCellProcessor set\n";
-    Log::global_log->info()<<"[PMF] AdResS ParticlePairsHandler being used\n";
+    Log::global_log->info()<<"[PMF] ForcedAdapter Class being used\n";
 
     Log::global_log->info()<<"[PMF] Start the tracker sites\n";
     for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){

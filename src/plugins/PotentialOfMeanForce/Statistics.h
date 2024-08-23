@@ -14,4 +14,6 @@
 class StatisticsAdResS{
     private:
     std::vector<double> temperatures;
+
+
 };

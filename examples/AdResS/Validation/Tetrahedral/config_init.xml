@@ -97,5 +97,39 @@
                 <outputprefix>Tetrahedral</outputprefix>
             </outputplugin>
         </output>
+
+        <plugin name = "RadialDFCOM">
+    	    <totalBins>100</totalBins>
+    	    <sampleFrequency>1</sampleFrequency>
+        </plugin>
+
+        <plugin name="PMF">
+            <fpregions>
+              <!-- Only fp -->
+              <!-- <region id = "1"> -->
+                <!-- <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ> -->
+                <!-- <highX>108.43455</highX><highY>108.43455</highY><highZ>108.43455</highZ> -->
+                <!-- <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY> -->
+                <!-- <hybridDimZ>0.0</hybridDimZ> -->
+              <!-- </region> -->
+        
+              <!-- Only cg -->
+              <!-- <region id = "1"> -->
+                <!-- <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ> -->
+                <!-- <highX>0.0</highX><highY>0.0</highY><highZ>0.0</highZ> -->
+                <!-- <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY> -->
+                <!-- <hybridDimZ>0.0</hybridDimZ> -->
+              <!-- </region> -->
+        
+              <!-- Only hybrid region -->
+              <region id = "1">
+                <lowX>54.217275</lowX><lowY>54.217275</lowY><lowZ>54.217275</lowZ>
+                <highX>54.217275</highX><highY>54.217275</highY><highZ>54.217275</highZ>
+                <hybridDimX>54.217275</hybridDimX><hybridDimY>54.217275</hybridDimY>
+                <hybridDimZ>54.217275</hybridDimZ>
+              </region>
+        
+          </fpregions>
+          </plugin>
     </simulation>
 </mardyn>
