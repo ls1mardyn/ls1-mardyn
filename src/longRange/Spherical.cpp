@@ -190,8 +190,8 @@ void Spherical::calculateLongRange()
 
 
 
-		calculationV1_fromPaper_withIsabelsPrefactorAndRlow_repParticles();
-		// calculationV3_isabelsMethod();
+		// calculationV1_fromPaper_withIsabelsPrefactorAndRlow_repParticles();
+		calculationV3_isabelsMethod();
 	}   
 
 
@@ -677,6 +677,7 @@ void Spherical::calculationV1_fromPaper_withIsabelsPrefactorAndRlow_repParticles
 	chagnes:
 		-- used additiona prefactor *distanceFromCenter/4. that is only found in isabels code, not in the paper
 		-- used rlow from isabels code, not from paper.
+	>> incorrect results. droplets get destroyed, FCorr seems to be broken.
  */
 
 	//TODO: move to object? (only calc once):
@@ -762,7 +763,7 @@ void Spherical::calculationV1_fromPaper_withIsabelsPrefactorAndRlow_repParticles
 				std::cout << "continue for mol at ksi = "<< distCenter<< ", k = "<< k<<", lowerS = " << lowerS<< std::endl;
 				continue;
 			}
-
+			if (rLowerBound > rm){ continue; } // according to isabels code
 
 			double rLowerBound2 = rLowerBound*rLowerBound;
 			double rLowerBoundInv2 = std::pow(rLowerBound, -2);
@@ -1159,32 +1160,27 @@ void Spherical::calculationV3_isabelsMethod(){
 
 
 
-		double rlow, rlow2, rlowInv, rlowInv2, rdash2, rdashInv, UCorrTemp, rdash, rdashInv2, FCorrTemp, PNCorrTemp,
-			PTCorrTemp;
 		double ksi2 = 0.0;
 		
 		double drShells = _distMax/(_nShells+1);  //WHY: warum +1? und müsste ich dann hier sogar +2 rechnen? (weil _nShells bei mir nur die shells zählt, und bei isabel die außenhülle einberechnet wird?)
 
 		for (int i = 0; i < _lenVector; i++) {
-				double distCenter_x = _shellLowerBound[i] + drShells/2.;
-				double distCenter_y = 0;
-				double distCenter_z = 0;
-				double distCenter2 = distCenter_x*distCenter_x + distCenter_y*distCenter_y + distCenter_z*distCenter_z;
-				double distCenter = std::sqrt(distCenter2);
+			double distCenter_x = _shellLowerBound[i] + drShells/2.;
+			double distCenter_y = 0;
+			double distCenter_z = 0;
+			double distCenter2 = distCenter_x*distCenter_x + distCenter_y*distCenter_y + distCenter_z*distCenter_z;
+			double distCenter = std::sqrt(distCenter2);
 
-				double deltaShells = rCutoff / drShells;
-				
-				double realk = distCenter / drShells;
-				unsigned long k = std::round(realk);
+			double deltaShells = rCutoff / drShells;
+			
+			double realk = distCenter / drShells;
+			unsigned long k = std::round(realk);
 
-				double lowerS = std::min(static_cast<double>(std::floor((realk - deltaShells))), static_cast<double>(_nShells + 1));
-				double interS = std::max(static_cast<double>(std::ceil(abs(realk - deltaShells))), 1.0);
-				double upperS = std::min(static_cast<double>(std::ceil(realk + deltaShells)), static_cast<double>(_nShells + 2));
-
-
-
-			unsigned long molID = i;
-
+			double lowerS = std::min(static_cast<double>(std::floor((realk - deltaShells))), static_cast<double>(_nShells + 1));
+			double interS = std::max(static_cast<double>(std::ceil(abs(realk - deltaShells))), 1.0);
+			double upperS = std::min(static_cast<double>(std::ceil(realk + deltaShells)), static_cast<double>(_nShells + 2));
+			
+			std::cout << " ---- REP. MOLECULE " << i << ": lowerS = " << lowerS <<", interS = " << interS << ", upperS = " <<upperS << std::endl;
 
 
 			//stuff from multi-site-generalization
@@ -1212,36 +1208,20 @@ void Spherical::calculationV3_isabelsMethod(){
 			double sigma6 = sig2 * sig2 * sig2;
 			double factorU = -M_PI * drShells * eps24 * sigma6 / (6. * distCenter);
 			double factorF = -factorU / distCenter;
-			double factorP = 0.5 * factorF / distCenter;
+			// double factorP = 0.5 * factorF / distCenter;
+			double factorVirN = 0.5 * factorF / distCenter;
+			double factorVirT = 0.5 * factorF * distCenter;
 
 			double UCorrShells = 0.0;
 			double FCorrShells = 0.0;
-			double PNCorrShells = 0.0;
-			double PTCorrShells = 0.0;
+			double VirNCorrShells = 0.0;
+			double VirTCorrShells = 0.0;
 			// RShells[i] == _shellLowerBound[i+1] !!
 			const double rcmax = rm;
-			std::cout << " ---- REP. MOLECULE " << molID << ": lowerS = " << lowerS <<", interS = " << interS << ", upperS = " <<upperS << std::endl;
 			for (unsigned long j = 1; j < (_lenVector + 1); j++) {
 				double shellLowerBound2 = _shellLowerBound[j] * _shellLowerBound[j];
 
-                /* int sumOfTrue = 0;
-				if(j<(lowerS + 1)){
-                    rlow = distCenter - _shellLowerBound[j];
-                    sumOfTrue++;
-                } 
-				if(j >= interS && j < upperS){
-                    rlow = rCutoff; 
-                    sumOfTrue++;
-                }
-				if(j >= upperS && j < (_nShells + 2)){
-                    rlow = _shellLowerBound[j] - distCenter;
-                    sumOfTrue++;
-                }
-
-                if(sumOfTrue < 1){ continue;}
-                if(sumOfTrue > 1){ std::cout << "error in sphericalLRC. more than one condition true. exiting." << std::cout; _simulation.exit(0)}
-				 */
-
+				double rlow;
 				if (_density_avg_fitted[j - 1] != 0.0) {
                     if(j<(lowerS + 1)){
                         rlow = distCenter - _shellLowerBound[j];
@@ -1252,18 +1232,19 @@ void Spherical::calculationV3_isabelsMethod(){
                     } else {
                         continue;
                     }
-					rlowInv = 1. / rlow;
-					rlowInv2 = rlowInv * rlowInv;
-					rdashInv = 1. / (_shellLowerBound[j] + distCenter);
-					
+					double rlowInv = 1. / rlow;
+					double rlowInv2 = rlowInv * rlowInv;
+					double rlowInv12 = pow(rlowInv2, 6);
 
-					UCorrTemp = sigma6 * 0.2 * (pow(rdashInv, 10) - pow(rlowInv, 10)) -
+					double rdashInv = 1. / (_shellLowerBound[j] + distCenter);
+
+					double UCorrTemp = sigma6 * 0.2 * (pow(rdashInv, 10) - pow(rlowInv, 10)) -
 								0.5 * (pow(rdashInv, 4) - pow(rlowInv, 4));
 					if (rlow < rcmax) {
-						rdash = std::min(rcmax, (_shellLowerBound[j] + distCenter));
+						double rdash = std::min(rcmax, (_shellLowerBound[j] + distCenter));
 						rdashInv = 1. / rdash;
-						rdashInv2 = rdashInv * rdashInv;
-						FCorrTemp =
+						double rdashInv2 = rdashInv * rdashInv;
+						double FCorrTemp =
 							sigma6 * ((6. / 5. * rdash * rdash + ksi2 - shellLowerBound2) *
 											pow(rdashInv2, 6) -
 										(6. / 5. * rlow * rlow + ksi2 - shellLowerBound2) *
@@ -1272,42 +1253,43 @@ void Spherical::calculationV3_isabelsMethod(){
 							(1.5 * rlow * rlow + ksi2 - shellLowerBound2) * pow(rlowInv2, 3);
 						FCorrShells =
 							FCorrShells + FCorrTemp * factorF * _density_avg_fitted[j - 1] * _shellLowerBound[j];
-						PNCorrTemp =  // 1.5*sigma6 * (pow(rdashInv2,4) - pow(rlowInv2,4))
-							-3. * (rdashInv2 - rlowInv2) +
-							2. * (ksi2 - shellLowerBound2) *
-								(  // 6/5*sigma6 * (pow(rdashInv2,5) - pow(rlowInv2,5))
-									-1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2))) +
-							pow((ksi2 - shellLowerBound2), 2) *
-								(  // sigma6 * ( pow(rdashInv2,6) - pow(rlowInv2,6))
-									-(pow(rdashInv2, 3) - pow(rlowInv2, 3)));
-						PNCorrShells = PNCorrShells +
-										PNCorrTemp * factorP * _density_avg_fitted[j - 1] * _shellLowerBound[j];
-						PTCorrTemp = 6. / 5. * sigma6 * (pow(rdashInv2, 5) - pow(rlowInv2, 5)) -
-										1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2));
-						PTCorrShells = PTCorrShells + 4. * ksi2 * PTCorrTemp * factorP *
-															_density_avg_fitted[j - 1] * _shellLowerBound[j];
+						// double PNCorrTemp =  // 1.5*sigma6 * (pow(rdashInv2,4) - pow(rlowInv2,4))
+						// 	-3. * (rdashInv2 - rlowInv2) +
+						// 	2. * (ksi2 - shellLowerBound2) *
+						// 		(  // 6/5*sigma6 * (pow(rdashInv2,5) - pow(rlowInv2,5))
+						// 			-1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2))) +
+						// 	pow((ksi2 - shellLowerBound2), 2) *
+						// 		(  // sigma6 * ( pow(rdashInv2,6) - pow(rlowInv2,6))
+						// 			-(pow(rdashInv2, 3) - pow(rlowInv2, 3)));
+						double VirNCorrTemp =  // 1.5*sigma6 * (pow(rdashInv2,4) - pow(rlowInv2,4))
+							_virtual_density[j]*_shellLowerBound[j+1]*drShells 
+									*(
+									(1.5 * sigma6 * (pow(rdash, -8) - pow(rlow, -8)) - 3. * (rdashInv2 - rlowInv2))
+									+ 2.*(distCenter2- shellLowerBound2) * (1.2 * sigma6*(pow(rdash, -10) - pow(rlow, -10)) - 1.5*(pow(rdash, -4) - pow(rlow, -4)))
+									+ std::pow((distCenter2- shellLowerBound2), 2) * (sigma6*(pow(rdash, -12) - rlowInv12) - (pow(rdash, -6) - pow(rlow, -6)))
+									);
+						VirNCorrShells += 
+										VirNCorrTemp * factorVirN * _density_avg_fitted[j - 1] * _shellLowerBound[j];
+						// double PTCorrTemp = 6. / 5. * sigma6 * (pow(rdashInv2, 5) - pow(rlowInv2, 5)) -
+										// 1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2));
+						double VirTCorrTemp = 
+									_virtual_density[j]*_shellLowerBound[j+1]*drShells 
+									*(
+									1.2 * sigma6*(pow(rdash, -10) -pow(rlow, -10)) 
+									-1.5 * (pow(rdash, -4) - pow(rlow, -4))
+									);
+						VirTCorrShells += 4. * ksi2 * VirTCorrTemp * factorVirT *_density_avg_fitted[j - 1] * _shellLowerBound[j];
 					}
 					UCorrShells =
 						UCorrShells + UCorrTemp * factorU * _density_avg_fitted[j - 1] * _shellLowerBound[j];
 				}
 			}
 
-			int shellOfThisMol;
-			if (k >= _nShells) {
-				shellOfThisMol = _nShells;
-			} else if (k == 0) {
-				shellOfThisMol = k;
-			} else {
-				shellOfThisMol = k - 1;
-			}
-
-
-			PTCorrShells -= PNCorrShells;
+			VirTCorrShells -= VirNCorrShells;
 			_UcorrectionShell[i] = UCorrShells;
 			_FcorrectionShell[i] = FCorrShells;
-			PNShells_Mean_local[shellOfThisMol] = PNCorrShells; // unused
-			PTShells_Mean_local[shellOfThisMol] = PTCorrShells; // unused
-			// std::cout << shellOfThisMol<<std::endl;
+			_VirNcorrectionShell[i] = VirNCorrShells;
+			_VirTcorrectionShell[i] = VirTCorrShells;
 		}
 
 		// Distribution of Shell Corrections to every node
