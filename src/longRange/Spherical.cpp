@@ -190,9 +190,8 @@ void Spherical::calculateLongRange()
 
 
 
-		// calculation_2_getShellPropertiesByLoopingOverAllMolecules();
-		// calculation_3_getShellPropertiesFromRepresentativeParticles();
-		calculation_4_isabelReverseEngineered();
+		calculationV1_fromPaper_withIsabelsPrefactorAndRlow_repParticles();
+		// calculationV3_isabelsMethod();
 	}   
 
 
@@ -210,13 +209,14 @@ void Spherical::calculateLongRange()
 			double distCenter_z = mol->r(2) - _globalCenter[2];
 			double distCenter2 = distCenter_x*distCenter_x + distCenter_y*distCenter_y + distCenter_z*distCenter_z;
 			double distCenter = std::sqrt(distCenter2);
+			double distCenterInv = 1./distCenter;
 			const unsigned int shellIDofMol = std::min(_nShells, static_cast<unsigned int>((distCenter/_distMax)*_nShells));  // Shell index of molecule 
 
 			//APPLY CORRECTIONS:
 			double FcorrMolApprox[3] = {.0,.0,.0};
-			FcorrMolApprox[0] = _FcorrectionShell[shellIDofMol] * distCenter_x/distCenter; 
-			FcorrMolApprox[1] = _FcorrectionShell[shellIDofMol] * distCenter_y/distCenter;
-			FcorrMolApprox[2] = _FcorrectionShell[shellIDofMol] * distCenter_z/distCenter;
+			FcorrMolApprox[0] = _FcorrectionShell[shellIDofMol] * distCenter_x*distCenterInv; 
+			FcorrMolApprox[1] = _FcorrectionShell[shellIDofMol] * distCenter_y*distCenterInv;
+			FcorrMolApprox[2] = _FcorrectionShell[shellIDofMol] * distCenter_z*distCenterInv;
 			
 
 			// global_log->info() << "molid : shellid = "<< molID <<" :  "<< shellIDofMol << ":\n";
@@ -671,338 +671,13 @@ void Spherical::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, un
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// void Spherical::calculation_01_directCalc(){
-// 	// CALCULATION OF DENSITY FROM _NUMMOLECULES_ACCUM. TODO: rewrite using stl! OR: use openmp
-// 	for(int i = 0; i < _lenVector-1; i++){
-// 		_density_avg[i] = _numMolecules_accum[i] / (_numsamples * _shellVolume[i]);
-// 		// global_log->info() << "_density_avg["<<i<<"]="<<_density_avg[i] <<std::endl;
-// 	}
-// 	_density_avg[_lenVector-1] = _numMolecules_accum[_lenVector-1] / (_numsamples * _shellVolume[_lenVector-1]);
-
-// 	calculateBulkDensities();
-// 	calculateVirtualDensity(); 
-
-// 	//SHELLWISE CORRECTION VECTORS (COMMVAR)
-// 	//4 lines to initialize one vector? ugly ...
-// 	CommVar<std::vector<double>> UcorrectionSum_step; 	 //by shell, summed up over all molecules in that shell
-// 	initCommVarVector(UcorrectionSum_step);
-
-// 	//TODO: move to object? (only calc once):
-// 	double rCutoff = _cutoffLJ;
-// 	double rm = 16.; 		//TODO: find value for rm (hardcoded is quatsch)
-
-// 	double epsilon = 1.; 	//TODO: find correct epsilon
-// 	double sigma = 1.;		//TODO: find correct sigma
-// 	double sigma6 = std::pow(sigma, 6); 
-
-// 	double generalPrefactor =  2.*M_PI*epsilon*sigma6;
-
-// 	// LOOP OVER MOLECULES:
-// 	for (auto mol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mol.isValid(); ++mol) {
-// 		//MOLECULE PROPERTIES:
-// 		unsigned long molID = mol->getID();
-// 		//distance to center ("ksi" in Nitze2021):
-// 		double distCenter_x = mol->r(0) - _globalCenter[0];
-// 		double distCenter_y = mol->r(1) - _globalCenter[1];
-// 		double distCenter_z = mol->r(2) - _globalCenter[2];
-// 		double distCenter2 = distCenter_x*distCenter_x + distCenter_y*distCenter_y + distCenter_z*distCenter_z;
-// 		double distCenter = std::sqrt(distCenter2);
-// 		double distCenterInv = 1./(distCenter);
-// 		double distCenterInv3 = std::pow(distCenterInv,3);
-// 		const unsigned int shellIDofMol = std::min(_nShells, static_cast<unsigned int>((distCenter/_distMax)*_nShells));  // Shell index of molecule 
-
-
-// 		//MOLECULE CORRECTION BY MOL:
-// 		double fCorrectionMol = 0.;
-// 		double virNCorrectionMol = 0.;
-// 		double virTCorrectionMol = 0.;
-
-// 		double prefactorU = generalPrefactor;
-// 		double prefactorF = 2.*generalPrefactor * distCenterInv3;
-// 		double prefactorVirN = generalPrefactor * distCenterInv3; 
-// 		double prefactorVirT = 4.*generalPrefactor * distCenterInv;
-
-// 		//LOOP OVER SHELLS:
-// 		for(int k = 0; k < _nShells+1; k++){ //using k as shell index for consitency with Nitzke2021, equation (14)
-// 			//SHELL PROPERTIES:
-// 			double Rk = _shellLowerBound[k]; //TODO: this is not the definition of Rk that Nitzke2021 used in their implementation!
-// 			double Rk2 = Rk*Rk;
-// 			double shellWidth = _distMax/_nShells; //TODO: calculation is performed for each molecule over again. perhaps rather save in Spherical::-object
-
-// 			//MOLECULE<->SHELL INTERACTION RADIUS BOUNDS:
-// 			double rLowerBound = rCutoff < std::abs(distCenter-Rk) ? distCenter-Rk : rCutoff;
-// 			double rLowerBound2 = rLowerBound*rLowerBound;
-// 			double rLowerBoundInv2 = std::pow(rLowerBound, -2);
-// 			double rLowerBoundInv4 =  rLowerBoundInv2 * rLowerBoundInv2;
-// 			double rLowerBoundInv6 =  rLowerBoundInv2 * rLowerBoundInv4;
-// 			double rLowerBoundInv8 =  rLowerBoundInv4 * rLowerBoundInv4;
-// 			double rLowerBoundInv10 = rLowerBoundInv4 * rLowerBoundInv6;
-// 			double rLowerBoundInv12 = rLowerBoundInv6 * rLowerBoundInv6;
-
-// 			double rUpperBound = std::min(distCenter+Rk, rm);
-// 			double rUpperBound2 = rUpperBound*rUpperBound;
-// 			double rUpperBoundInv2 = std::pow(rUpperBound, -2);
-// 			double rUpperBoundInv4 = rUpperBoundInv2 * rUpperBoundInv2;
-// 			double rUpperBoundInv6 = rUpperBoundInv2 * rUpperBoundInv4;
-// 			double rUpperBoundInv8 = rUpperBoundInv4 * rUpperBoundInv4;
-// 			double rUpperBoundInv10 = rUpperBoundInv4 * rUpperBoundInv6;
-// 			double rUpperBoundInv12 = rUpperBoundInv6 * rUpperBoundInv6;
-
-// 			//U CORRECTION (CONTRIBUTION OF CURRENT MOL TO TO SHELL K):
-// 			UcorrectionSum_step.local[k] += prefactorU * _virtual_density[k]*Rk*shellWidth * (
-// 										.4 * sigma6 * (std::pow((distCenter + Rk), -10) - std::pow(rLowerBound, -10) ) 
-// 										- (std::pow((distCenter + Rk), -4)  - std::pow(rLowerBound, -4))
-// 										) / distCenter;
-// 			//F CORRECTION (CONTRIBUTION OF SHELL K TO CURRENT MOL):
-// 				fCorrectionMol += 	prefactorF * _virtual_density[k]*Rk*shellWidth 
-// 											*(
-// 											sigma6 * ((1.2*rUpperBound2 + distCenter2 - Rk2)*rUpperBoundInv12 - (1.2*rLowerBound2 + distCenter2 - Rk2)*rLowerBoundInv12)	
-// 											- 		 ((1.5*rUpperBound2 + distCenter2 - Rk2)*rUpperBoundInv6  - (1.5*rLowerBound2 + distCenter2 - Rk2)*rLowerBoundInv6)
-// 											);
-
-// 			//VIRIAL CORRECTION (CONTRIBUTION OF SHELL K TO CURRENT MOL):
-// 				virNCorrectionMol += 	prefactorVirN * _virtual_density[k]*Rk*shellWidth 
-// 												*(
-// 												(1.5 * sigma6 * (rUpperBoundInv8 - rLowerBoundInv8) - 3. * (rUpperBoundInv2 - rLowerBoundInv2))
-// 												+ 2.*(distCenter2- Rk2) * (1.2 * sigma6*(rUpperBoundInv10 - rLowerBoundInv10) - 1.5*(rUpperBoundInv4 - rLowerBoundInv4))
-// 												+ std::pow((distCenter2- Rk2), 2) * (sigma6*(rUpperBoundInv12 - rLowerBoundInv12) - (rUpperBoundInv6 - rLowerBoundInv6))
-// 												);
-// 				virTCorrectionMol += prefactorVirT * _virtual_density[k]*Rk*shellWidth 
-// 												*(
-// 												1.2 * sigma6*(rUpperBoundInv10-rLowerBoundInv10) 
-// 												-1.5 * (rUpperBoundInv4 - rLowerBoundInv4)
-// 												);
-
-// 		}
-		
-// 		// REORGA: über alle teilchen mitteln (pro shell), dann nur shell-wise speichern.
-// 		// take care not to multiply by prefactor twice!
-// 		double fCorrectionMolKartesian[3] = {distCenter_x * fCorrectionMol,
-// 											distCenter_y * fCorrectionMol,
-// 											distCenter_z * fCorrectionMol};
-// 		virTCorrectionMol -= virNCorrectionMol;
-
-// 	global_log->info() 	<< "[molid:fX:fY:fZ:virN:virT] = "
-// 						<< molID 
-// 						<< " : "
-// 						<< distCenter_x * fCorrectionMol
-// 						<< " : "
-// 						<< distCenter_y * fCorrectionMol
-// 						<< " : "
-// 						<< distCenter_z * fCorrectionMol
-// 						<< " : "
-// 						<< virNCorrectionMol
-// 						<< " : "
-// 						<< virTCorrectionMol
-// 						<< std::endl;
-// 	}
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void Spherical::calculation_2_getShellPropertiesByLoopingOverAllMolecules(){
-
-		//TODO: move to object? (only calc once):
-		double rCutoff = _cutoffLJ;	
-		double rm = 16.; 		//TODO: find value for rm (hardcoded is quatsch)
-
-		double epsilon = 1.; 	//TODO: find correct epsilon
-		double sigma = 1.;		//TODO: find correct sigma
-		double sigma6 = std::pow(sigma, 6); 
-
-		double generalPrefactor =  2.*M_PI*epsilon*sigma6;
-
-
-		//SHELLWISE CORRECTION VECTORS (COMMVAR)
-		//4 lines to initialize one vector? ugly ...
-		CommVar<std::vector<double>> UcorrectionSum_step; 	 //by shell, summed up over all molecules in that shell
-		CommVar<std::vector<double>> FcorrectionSum_step; 	 //by shell, summed up over all molecules in that shell
-		CommVar<std::vector<double>> VirNcorrectionSum_step; //by shell, summed up over all molecules in that shell
-		CommVar<std::vector<double>> VirTcorrectionSum_step; //by shell, summed up over all molecules in that shell
-		initCommVarVector(UcorrectionSum_step);
-		initCommVarVector(FcorrectionSum_step);
-		initCommVarVector(VirNcorrectionSum_step);
-		initCommVarVector(VirTcorrectionSum_step);
-
-		// LOOP OVER MOLECULES:
-		for (auto mol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mol.isValid(); ++mol) {
-			//MOLECULE PROPERTIES:
-			unsigned long molID = mol->getID();
-			//distance to center ("ksi" in Nitze2021):
-			double distCenter_x = mol->r(0) - _globalCenter[0];
-			double distCenter_y = mol->r(1) - _globalCenter[1];
-			double distCenter_z = mol->r(2) - _globalCenter[2];
-			double distCenter2 = distCenter_x*distCenter_x + distCenter_y*distCenter_y + distCenter_z*distCenter_z;
-			double distCenter = std::sqrt(distCenter2);
-			double distCenterInv = 1./(distCenter);
-			double distCenterInv2 = distCenterInv*distCenterInv;
-			double distCenterInv3 = std::pow(distCenterInv,3);
-			const unsigned int shellIDofMol = std::min(_nShells, static_cast<unsigned int>((distCenter/_distMax)*_nShells));  // Shell index of molecule 
-
-
-			//MOLECULE CORRECTION BY MOL:
-			double fCorrectionMol = 0.;
-			double virNCorrectionMol = 0.;
-			double virTCorrectionMol = 0.;
-
-			double prefactorU = generalPrefactor;
-			double prefactorF = 2.*generalPrefactor * distCenterInv2;
-			double prefactorVirN = generalPrefactor * distCenterInv3; 
-			double prefactorVirT = 4.*generalPrefactor * distCenterInv;
-
-			//LOOP OVER SHELLS:
-			for(int k = 0; k < _nShells+1; k++){ //using k as shell index for consitency with Nitzke2021, equation (14)
-				//SHELL PROPERTIES:
-				double Rk = _shellLowerBound[k]; //TODO: this is not the definition of Rk that Nitzke2021 used in their implementation!
-				double Rk2 = Rk*Rk;
-				double shellWidth = _distMax/_nShells; //TODO: calculation is performed for each molecule over again. perhaps rather save in Spherical::-object
-
-				//MOLECULE<->SHELL INTERACTION RADIUS BOUNDS:
-				double rLowerBound = rCutoff < std::abs(distCenter-Rk) ? distCenter-Rk : rCutoff;
-				double rLowerBound2 = rLowerBound*rLowerBound;
-				double rLowerBoundInv2 = std::pow(rLowerBound, -2);
-				double rLowerBoundInv4 =  rLowerBoundInv2 * rLowerBoundInv2;
-				double rLowerBoundInv6 =  rLowerBoundInv2 * rLowerBoundInv4;
-				double rLowerBoundInv8 =  rLowerBoundInv4 * rLowerBoundInv4;
-				double rLowerBoundInv10 = rLowerBoundInv4 * rLowerBoundInv6;
-				double rLowerBoundInv12 = rLowerBoundInv6 * rLowerBoundInv6;
-
-				double rUpperBound = std::min(distCenter+Rk, rm);
-				double rUpperBound2 = rUpperBound*rUpperBound;
-				double rUpperBoundInv2 = std::pow(rUpperBound, -2);
-				double rUpperBoundInv4 = rUpperBoundInv2 * rUpperBoundInv2;
-				double rUpperBoundInv6 = rUpperBoundInv2 * rUpperBoundInv4;
-				double rUpperBoundInv8 = rUpperBoundInv4 * rUpperBoundInv4;
-				double rUpperBoundInv10 = rUpperBoundInv4 * rUpperBoundInv6;
-				double rUpperBoundInv12 = rUpperBoundInv6 * rUpperBoundInv6;
-
-				//U CORRECTION (CONTRIBUTION OF CURRENT MOL TO TO SHELL K):
-				UcorrectionSum_step.local[k] += prefactorU * _virtual_density[k]*Rk*shellWidth * (
-											.4 * sigma6 * (std::pow((distCenter + Rk), -10) - std::pow(rLowerBound, -10) ) 
-											- (std::pow((distCenter + Rk), -4)  - std::pow(rLowerBound, -4))
-											) / distCenter;
-				//F CORRECTION (CONTRIBUTION OF SHELL K TO CURRENT MOL):
-				/* fCorrectionMol += */
-				FcorrectionSum_step.local[k]+=	prefactorF * _virtual_density[k]*Rk*shellWidth 
-												*(
-												sigma6 * ((1.2*rUpperBound2 + distCenter2 - Rk2)*rUpperBoundInv12 - (1.2*rLowerBound2 + distCenter2 - Rk2)*rLowerBoundInv12)	
-												- 		 ((1.5*rUpperBound2 + distCenter2 - Rk2)*rUpperBoundInv6  - (1.5*rLowerBound2 + distCenter2 - Rk2)*rLowerBoundInv6)
-												);
-
-				//VIRIAL CORRECTION (CONTRIBUTION OF SHELL K TO CURRENT MOL):
-				/* virNCorrectionMol += */ 
-				VirNcorrectionSum_step.local[k]+=	prefactorVirN * _virtual_density[k]*Rk*shellWidth 
-													*(
-													(1.5 * sigma6 * (rUpperBoundInv8 - rLowerBoundInv8) - 3. * (rUpperBoundInv2 - rLowerBoundInv2))
-													+ 2.*(distCenter2- Rk2) * (1.2 * sigma6*(rUpperBoundInv10 - rLowerBoundInv10) - 1.5*(rUpperBoundInv4 - rLowerBoundInv4))
-													+ std::pow((distCenter2- Rk2), 2) * (sigma6*(rUpperBoundInv12 - rLowerBoundInv12) - (rUpperBoundInv6 - rLowerBoundInv6))
-													);
-				/* virTCorrectionMol += */ 
-				VirTcorrectionSum_step.local[k]+=	prefactorVirT * _virtual_density[k]*Rk*shellWidth 
-													*(
-													1.2 * sigma6*(rUpperBoundInv10-rLowerBoundInv10) 
-													-1.5 * (rUpperBoundInv4 - rLowerBoundInv4)
-													);
-
-			}
-			/* 
-			// REORGA: über alle teilchen mitteln (pro shell), dann nur shell-wise speichern.
-			// take care not to multiply by prefactor twice!
-			fCorrectionMol *= prefactorF; 
-			double fCorrectionMolKartesian[3] = {distCenter_x * fCorrectionMol,
-												distCenter_y * fCorrectionMol,
-												distCenter_z * fCorrectionMol};
-			virNCorrectionMol *= prefactorVirN;
-			virTCorrectionMol = virTCorrectionMol*prefactorVirT - virNCorrectionMol;
-
-			// shellIDofMol
-			FcorrectionSum_step.local[shellIDofMol]		+= fCorrectionMol; 	
-			VirNcorrectionSum_step.local[shellIDofMol]	+= virNCorrectionMol; 
-			VirTcorrectionSum_step.local[shellIDofMol]	+= virTCorrectionMol; 
-			// mol->ViTadd(virTCorrectionMol); 
-			*/
-		}
-
-
-		// Gather quantities:
-/* 	#ifdef ENABLE_MPI
-		MPI_Allreduce(UcorrectionSum_step.local.data(), UcorrectionSum_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Allreduce(FcorrectionSum_step.local.data(), FcorrectionSum_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Allreduce(VirNcorrectionSum_step.local.data(), VirNcorrectionSum_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-		MPI_Allreduce(VirTcorrectionSum_step.local.data(), VirTcorrectionSum_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	#else
- */		for (unsigned long i = 0; i < _lenVector; i++) {
-			//TODO: würde das hier nicht auch ohne for-loop gehen? (einfach numMolecules_step.global = numMolecules_step.local;) 
-			UcorrectionSum_step.global[i] = UcorrectionSum_step.local[i];
-			FcorrectionSum_step.global[i] = FcorrectionSum_step.local[i];
-			VirNcorrectionSum_step.global[i] = VirNcorrectionSum_step.local[i];
-			VirTcorrectionSum_step.global[i] = VirTcorrectionSum_step.local[i];
-		}
-/* 	#endif
+void Spherical::calculationV1_fromPaper_withIsabelsPrefactorAndRlow_repParticles(){
+/* 
+	Implementation according to paper, using representative Particles to calculate Shellwise corrections.
+	chagnes:
+		-- used additiona prefactor *distanceFromCenter/4. that is only found in isabels code, not in the paper
+		-- used rlow from isabels code, not from paper.
  */
-		//TODO: ohne loop, mit stl-algorithm
-		for (unsigned long i = 0; i < _lenVector; i++) {
-			
-			if(_numMolecules_accum[i] * _numsamples!=0){
-				_UcorrectionShell[i]	= UcorrectionSum_step.global[i]    / _numMolecules_accum[i] * _numsamples;  //teile durch mittlere teilchenzahl in shell
-				_FcorrectionShell[i] 	= FcorrectionSum_step.global[i]    / _numMolecules_accum[i] * _numsamples;  //teile durch mittlere teilchenzahl in shell
-				_VirNcorrectionShell[i] = VirNcorrectionSum_step.global[i] / _numMolecules_accum[i] * _numsamples;  //teile durch mittlere teilchenzahl in shell
-				_VirTcorrectionShell[i] = VirTcorrectionSum_step.global[i] / _numMolecules_accum[i] * _numsamples;  //teile durch mittlere teilchenzahl in shell
-			}
-		
-		}
-}
-
-
-
-
-
-
-
-
-
-
-
-void Spherical::calculation_3_getShellPropertiesFromRepresentativeParticles(){
-
 
 	//TODO: move to object? (only calc once):
 	double rCutoff = _cutoffLJ;	//TODO: find correct rc
@@ -1046,11 +721,11 @@ void Spherical::calculation_3_getShellPropertiesFromRepresentativeParticles(){
 		double virNCorrectionMol {0.};
 		double virTCorrectionMol {0.};
 
-			//mir ist unklar, warum jeweils *(distCenter) gerechnet werden sollte.  entsprciht meiner ansicht nach nicht dem paper, scheint aber nur so zu funktioinieren.
-		double prefactorU 	 = /* (distCenter2*distCenter2/3000.)* */    generalPrefactor						;
-		double prefactorF 	 = /* (distCenter2*distCenter2/3000.)* */    2.*generalPrefactor * distCenterInv2 	;
-		double prefactorVirN = /* (distCenter2*distCenter2/3000.)* */    generalPrefactor * distCenterInv3 		; 
-		double prefactorVirT = /* (distCenter2*distCenter2/3000.)* */    4.*generalPrefactor * distCenterInv 	;
+			//mir ist unklar, warum jeweils *(distCenter/4.) gerechnet werden sollte.  entsprciht meiner ansicht nach nicht dem paper, scheint aber nur so zu funktioinieren, und isabel hats auch gemacht (zumindest bei fCorr, die anderen müsste man nochmal checken).
+		double prefactorU 	 = (distCenter/4.) * generalPrefactor						;
+		double prefactorF 	 = (distCenter/4.) * 2.*generalPrefactor * distCenterInv2 	;
+		double prefactorVirN = (distCenter/4.) * generalPrefactor * distCenterInv3 		; 
+		double prefactorVirT = (distCenter/4.) * 4.*generalPrefactor * distCenterInv 	;
 
 		//LOOP OVER SHELLS:
 		for(int k = 0; k < _nShells; k++){ //using k as shell index for consitency with Nitzke2021, equation (14)
@@ -1061,7 +736,33 @@ void Spherical::calculation_3_getShellPropertiesFromRepresentativeParticles(){
 
 			//MOLECULE<->SHELL INTERACTION RADIUS BOUNDS:
 			// double rLowerBound = rCutoff < std::abs(distCenter-Rk) ? distCenter-Rk : rCutoff;
-			double rLowerBound = std::max(std::abs(distCenter-Rk), rCutoff);
+			// double rLowerBound = std::max(std::abs(distCenter-Rk), rCutoff); //THIS SEEMS TO BE THE ROOT OF ALL EVIL
+			
+			
+			
+			double drShells = _distMax/(_nShells+1);  //WHY: warum +1? und müsste ich dann hier sogar +2 rechnen? (weil _nShells bei mir nur die shells zählt, und bei isabel die außenhülle einberechnet wird?)
+			double deltaShells = rCutoff / drShells;
+			double realk = distCenter / drShells;
+			double lowerS = std::min(static_cast<double>(std::floor((realk - deltaShells))), static_cast<double>(_nShells + 1));
+			double interS = std::max(static_cast<double>(std::ceil(abs(realk - deltaShells))), 1.0);
+			double upperS = std::min(static_cast<double>(std::ceil(realk + deltaShells)), static_cast<double>(_nShells + 2));
+
+			std::cout << "rep mol i " << i << ", k = "<< k<< ", lowerS = "<< lowerS<< std::endl;
+			double rLowerBound;
+			if(k < (lowerS + 1)){
+				std::cout << "is   I" << std::endl;
+				rLowerBound = distCenter - _shellLowerBound[k];
+			} else if(k >= interS && k < upperS){
+				std::cout << "is  II" << std::endl;
+				rLowerBound = rCutoff; 
+			} else if(k >= upperS && k < (_nShells + 2)){
+				std::cout << "is III" << std::endl;
+				rLowerBound = _shellLowerBound[k] - distCenter;
+			} else {
+				std::cout << "continue for mol at ksi = "<< distCenter<< ", k = "<< k<<", lowerS = " << lowerS<< std::endl;
+				continue;
+			}
+
 
 			double rLowerBound2 = rLowerBound*rLowerBound;
 			double rLowerBoundInv2 = std::pow(rLowerBound, -2);
@@ -1121,15 +822,21 @@ void Spherical::calculation_3_getShellPropertiesFromRepresentativeParticles(){
 
 		}
 		
+
 		uCorrectionMol 		*= prefactorU;
 		fCorrectionMol 		*= prefactorF;
 		virNCorrectionMol 	*= prefactorVirN;
 		virTCorrectionMol 	= prefactorVirT * virTCorrectionMol - virNCorrectionMol;
 
 		_UcorrectionShell[i]	= uCorrectionMol; 	
-		_FcorrectionShell[i]	= fCorrectionMol; 	
+		_FcorrectionShell[i]	= fCorrectionMol;	
 		_VirNcorrectionShell[i]	= .5* virNCorrectionMol; 
-		_VirTcorrectionShell[i] = .5 *virTCorrectionMol; 
+		_VirTcorrectionShell[i]	= .5* virTCorrectionMol;
+
+		// //FOR TESTING!!: 
+		// _VirNcorrectionShell[i] = fCorrectionMol; 
+		// _VirTcorrectionShell[i] = uCorrectionMol; 
+
 	}
 }
 
@@ -1145,11 +852,12 @@ void Spherical::calculation_3_getShellPropertiesFromRepresentativeParticles(){
 
 
 
+void Spherical::calculationV2_isabelsCode___abandoned(){
 
-
-
-void Spherical::calculation_4_isabelReverseEngineered(){
-
+/* 
+	Reverse engineered isabels code / made it fit into the new Spherical.cpp. 
+	abandoned in favor of V3, which yields same results, but better (less ragged & more efficient due to representative particles)
+ */
 
     std::vector<double> UShells_Mean_local;
     std::vector<double> FShells_Mean_local;
@@ -1182,232 +890,8 @@ void Spherical::calculation_4_isabelReverseEngineered(){
 	const int calcFreq = _calcFreq; // redundand, just a quickfix
 	const uint64_t simstep = _simulation.getSimulationStep();
 
-	if(false){ // density & temperature calculation
-			for (auto mol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mol.isValid(); ++mol) {
-			
-				double v2i = mol->v(0) * mol->v(0) + mol->v(1) * mol->v(1) + mol->v(2) * mol->v(2);  // velocity^2 of mol
-				unsigned long molID = mol->getID();
 
-				double distCenter_x = mol->r(0) - _globalCenter[0];
-				double distCenter_y = mol->r(1) - _globalCenter[1];
-				double distCenter_z = mol->r(2) - _globalCenter[2];
-				double distCenter2 = distCenter_x*distCenter_x + distCenter_y*distCenter_y + distCenter_z*distCenter_z;
-				double distCenter = std::sqrt(distCenter2);
-
-		/* 		double FcorrMol_x = distCenter_x; //TODO: das hier ist noch quatsch
-				double FcorrMol_y = distCenter_y;
-				double FcorrMol_z = distCenter_z; */
-
-
-
-				double drShells = _distMax/(_nShells+1);  //WHY: warum +1? und müsste ich dann hier sogar +2 rechnen? (weil _nShells bei mir nur die shells zählt, und bei isabel die außenhülle einberechnet wird?)
-				double deltaShells = rCutoff / drShells;
-				
-				double realk = distCenter / drShells;
-				unsigned long k = std::round(realk);
-
-				double lowerS = std::min(static_cast<double>(std::floor((realk - deltaShells))), static_cast<double>(_nShells + 1));
-				double interS = std::max(static_cast<double>(std::ceil(abs(realk - deltaShells))), 1.0);
-				double upperS = std::min(static_cast<double>(std::ceil(realk + deltaShells)), static_cast<double>(_nShells + 2));
-
-				std::vector<double> rhoShellsTemp; 	 
-				std::vector<double> TShellsTemp; 	 
-				resizeExactly(rhoShellsTemp, _nShells+1);
-				resizeExactly(TShellsTemp, _nShells+1);
-				std::fill(rhoShellsTemp.begin(), rhoShellsTemp.end(), 0.);
-				std::fill(TShellsTemp.begin(), TShellsTemp.end(), 0.);
-
-				int shellOfThisMol;
-
-				if (k > _nShells - 1) {
-					rhoShellsTemp[_nShells] += 1.;
-					TShellsTemp[_nShells] += v2i;
-					shellOfThisMol = _nShells;
-				} else if (k == 0) {
-					// rhoShellsTemp[k] += 1.; besser?
-					shellOfThisMol = k;
-				} else {
-					rhoShellsTemp[k - 1] += 1.;
-					TShellsTemp[k - 1] += v2i;
-					shellOfThisMol = k - 1;
-				}
-			}
-
-
-			/* // Distribution of the Density Profile and local Temperature to every node
-			_domainDecomposition->collCommInit(2 * _nShells);
-			for (unsigned i = 0; i < _nShells; i++) {
-				_domainDecomposition->collCommAppendDouble(rhoShellsAvg[i]);
-				_domainDecomposition->collCommAppendDouble(TShellsAvg[i]);
-			}
-			_domainDecomposition->collCommAllreduceSum();
-			for (unsigned i = 0; i < _nShells; i++) {
-				rhoShellsAvg_global[i] = _domainDecomposition->collCommGetDouble();
-				TShellsAvg_global[i] =
-					_domainDecomposition->collCommGetDouble() / (3 * rhoShellsAvg_global[i] / (simstep + 1) * VShells[i]);
-				
-				rhoShellsAvg_global[i] /= (simstep + 1);
-			}
-			_domainDecomposition->collCommFinalize(); */
-	}
-
-	/* unsigned long MeanIndex = (static_cast<int>(std::floor((simstep - 1) / calcFreq))) % NSMean;  // 1000
-	if (((simstep - 1) % calcFreq) == 0) {                                                      // 1000
-		std::fill(rhoShellsMean.begin() + _nShells * MeanIndex, rhoShellsMean.begin() + _nShells * (MeanIndex + 1), 0.0);
-	} */
-
-
-	// To get some results before NSMean*calcFreq, initialize rhoShellsMean with density at simstep = 0
-/* 	if (simstep == 0) {
-		for (unsigned int j = 0; j < NSMean; j++) {
-			for (unsigned int i = 0; i < _nShells; i++) {
-				rhoShellsMean[j * _nShells + i] += calcFreq * rhoShellsTemp[i];  // 1000
-				if (i==2932) { std::cout << "Init MeanIndex " << MeanIndex << " " << rhoShellsTemp[i] << std::endl; }
-			}
-		}
-	} else {
-		for (unsigned int i = 0; i < _nShells; i++) {
-			if (i==2932) { std::cout << "MeanIndex " << simstep << " " << MeanIndex << " " << rhoShellsMean[_nShells * MeanIndex + i] << std::endl; }
-			rhoShellsMean[_nShells * MeanIndex + i] += rhoShellsTemp[i];
-			if (i==2932) { std::cout << "MeanIndex " << simstep << " " << MeanIndex << " " << rhoShellsMean[_nShells * MeanIndex + i] << " added " << rhoShellsTemp[i] << std::endl; }
-		}
-	}
- */
 	if ((simstep) % _calcFreq == 0) {
-	// mittlere Dichte berechnen
-/* 		std::fill(rhoShells.begin(), rhoShells.end(), 0.0);
-		std::fill(rhoShells_global.begin(), rhoShells_global.end(), 0.0);
-		std::fill(rhoShellsTemp_global.begin(), rhoShellsTemp_global.end(), 0.0);
-
-		for (unsigned int j = 0; j < _nShells; j++) {
-			for (unsigned int i = 0; i < NSMean; i++) {
-				rhoShells[j] += (1./calcFreq) / NSMean * rhoShellsMean[i * _nShells + j];  // 1000 --- 0.001
-				if (j==2932) { std::cout << "rhoShellsMean " << rank << " " << simstep << " " << i << " " << (1./calcFreq) / NSMean * rhoShellsMean[i * _nShells + j] << std::endl; }
-			}
-			if (j==2932) { std::cout << "rhoShells " << rank << " " << simstep << " " << j << " " << rhoShells[j] << std::endl; }
-		}
-
-		// Distribution of the Density Profile to every node
-		_domainDecomposition->collCommInit(_nShells);
-		for (unsigned i = 0; i < _nShells; i++) {
-			_domainDecomposition->collCommAppendDouble(rhoShells[i]);
-		}
-		_domainDecomposition->collCommAllreduceSum();
-		for (unsigned i = 0; i < _nShells; i++) {
-			rhoShells_global[i] = _domainDecomposition->collCommGetDouble();
-			if (i==2932) { std::cout << "rhoShells_global[2932] " << rank << " " << simstep << " " << i << " " << rhoShells_global[i] << " " << rhoShellsAvg_global[i] << std::endl; }
-		}
-		_domainDecomposition->collCommFinalize();
-
-		// Distribution of the Density Profile to every node
-		_domainDecomposition->collCommInit(_nShells);
-		for (unsigned i = 0; i < _nShells; i++) {
-			_domainDecomposition->collCommAppendDouble(rhoShellsTemp[i]);
-		}
-		_domainDecomposition->collCommAllreduceSum();
-		for (unsigned i = 0; i < _nShells; i++) {
-			rhoShellsTemp_global[i] = _domainDecomposition->collCommGetDouble();
-		}
-		_domainDecomposition->collCommFinalize();
-
-
-		// NOTE: procedure to calculate the instantaneous inside and outside densities is risky here, because it makes a
-		// priori asumptions about where to find the phase boundary! Better Ideas are welcome.
-		double rho_in = 0.;
-		for (unsigned int i = bulkBoundaries.inside_from; i < bulkBoundaries.inside_to; i++) {
-			rho_in += rhoShells_global[i];
-		}
-		rho_in /= (bulkBoundaries.inside_to - bulkBoundaries.inside_from);
-
-		double rho_out = 0.;
-		for (unsigned int i = bulkBoundaries.outside_from; i < bulkBoundaries.outside_to; i++) {
-			rho_out += rhoShells_global[i];
-		}
-		rho_out /= (bulkBoundaries.outside_to - bulkBoundaries.outside_from);
-
-		global_log->info() << "[Long Range Correction] Averaged rho: rho_in = " << rho_in << " rho_out = " << rho_out << std::endl;
-
-		// D0 with 1090 (Baidakov et al.)
-		double Dmin = 0.0;
-		double Dmax = 0.0;
-
-		if (droplet) {
-			double r10 = rho_out + 0.1 * (rho_in - rho_out);
-			double r90 = rho_out + 0.9 * (rho_in - rho_out);
-			for (unsigned int i = 1; i < (_nShells - 10); i++) {  // TODO:WHY IS THERE A HARDCODED 10 HERE?!
-				if (rhoShells_global[i] > r90) {
-					Dmin = RShells[i];
-				}
-			}
-			for (unsigned int i = 1; i < (_nShells - 10); i++) {  // some value/limitation of the search space could be needed for the largest shells in case of droplet (low density)
-				// This could be written much better with a "backwards" loop and/or a break condition
-				unsigned int j = _nShells - i;
-				if (rhoShells_global[j] < r10) {
-					Dmax = RShells[j];
-				}
-			}
-		} else {
-			double r10 = rho_in + 0.1 * (rho_out - rho_in);
-			double r90 = rho_in + 0.9 * (rho_out - rho_in);
-			for (unsigned int i = 1; i < (_nShells - 10); i++) {  // some value/limitation of the search space could be needed for the smallest shells in case of bubble (low density)
-				if (rhoShells_global[i] < r10) {
-					Dmin = RShells[i];
-				}
-			}
-			for (unsigned int i = 1; i < (_nShells - 10); i++) {
-				unsigned int j = _nShells - i;
-				if (rhoShells_global[j] > r90) {
-					Dmax = RShells[j];
-				}
-			}
-		}
-
-		double D0 = (Dmax - Dmin);
-		double R0 = Dmin + 0.5 * D0;
-
-		// density profile
-		for (unsigned int i = 0; i < _nShells; i++) {
-			rhoShellsT[i] = RhoP(RShells[i], rho_out, rho_in, D0, R0);
-		}
-
-		// if (simstep % writeFreq == 0) {
-		// 	if (rank == 0) {
-		// 		ofstream outfilestreamTanhParams(filenameTanhParams, ios::app);
-		// 		outfilestreamTanhParams << std::setw(24) << std::setprecision(std::numeric_limits<double>::digits10)
-		// 								<< simstep;
-		// 		outfilestreamTanhParams << std::setw(24) << std::scientific
-		// 								<< std::setprecision(std::numeric_limits<double>::digits10) << rho_out;
-		// 		outfilestreamTanhParams << std::setw(24) << std::scientific
-		// 								<< std::setprecision(std::numeric_limits<double>::digits10) << rho_in;
-		// 		outfilestreamTanhParams << std::setw(24) << std::scientific
-		// 								<< std::setprecision(std::numeric_limits<double>::digits10) << D0;
-		// 		outfilestreamTanhParams << std::setw(24) << std::scientific
-		// 								<< std::setprecision(std::numeric_limits<double>::digits10) << R0;
-		// 		outfilestreamTanhParams << std::endl;
-		// 		outfilestreamTanhParams.close();
-		// 	}
-		// }
-
-		// shift for correction, since outer bulk only needs homogeneous correction
-		if (droplet) {
-			for (unsigned int i = 0; i < _nShells; i++) {
-				if (rhoShellsT[i] >= 1.02 * rho_out) {
-					rhoShellsT[i] -= rho_out;
-				} else {
-					rhoShellsT[i] = 0.0;
-				}
-			}
-		} else {
-			for (unsigned int i = 0; i < _nShells; i++) {
-				rhoShellsT[i] -= rho_out;
-				// if (rhoShellsT[i] <= 0.998 * rho_out) {
-				// 	rhoShellsT[i] -= rho_out;
-				// } else {
-				// 	rhoShellsT[i] = 0.0;
-				// }
-			}
-		} */
-
 
 		// U Correction of homogeneous system  for one component
 		double UCORR = _rho_out*(8./3.)*M_PI*(1./(3.*std::pow(rCutoff,9))-1./std::pow(rCutoff,3));
@@ -1421,13 +905,11 @@ void Spherical::calculation_4_isabelReverseEngineered(){
 
 
 
-
-
 		// Korrektur je Schale
-		std::fill(_FcorrectionShell.begin(), _FcorrectionShell.end(), 0.);		 
-		std::fill(_UcorrectionShell.begin(), _UcorrectionShell.end(), 0.);		 
-		std::fill(_VirNcorrectionShell.begin(), _VirNcorrectionShell.end(), 0.);		 
-		std::fill(_VirTcorrectionShell.begin(), _VirTcorrectionShell.end(), 0.);		
+		// std::fill(_FcorrectionShell.begin(), _FcorrectionShell.end(), 0.);		 
+		// std::fill(_UcorrectionShell.begin(), _UcorrectionShell.end(), 0.);		 
+		// std::fill(_VirNcorrectionShell.begin(), _VirNcorrectionShell.end(), 0.);		 
+		// std::fill(_VirTcorrectionShell.begin(), _VirTcorrectionShell.end(), 0.);		
 
 
 
@@ -1435,10 +917,6 @@ void Spherical::calculation_4_isabelReverseEngineered(){
 
 		double rlow, rlow2, rlowInv, rlowInv2, rdash2, rdashInv, UCorrTemp, rdash, rdashInv2, FCorrTemp, PNCorrTemp,
 			PTCorrTemp;
-		double UCorrShells = 0.0;
-		double FCorrShells = 0.0;
-		double PNCorrShells = 0.0;
-		double PTCorrShells = 0.0;
 		double ksi2 = 0.0;
 
 		for (auto mol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mol.isValid(); ++mol) {
@@ -1461,10 +939,11 @@ void Spherical::calculation_4_isabelReverseEngineered(){
 
 
 			unsigned long molID = mol->getID();
-			UCorrShells = 0.0;
-			FCorrShells = 0.0;
-			PNCorrShells = 0.0;
-			PTCorrShells = 0.0;
+
+			double UCorrShells = 0.0;
+			double FCorrShells = 0.0;
+			double PNCorrShells = 0.0;
+			double PTCorrShells = 0.0;
 
 
 			//stuff from multi-site-generalization
@@ -1496,18 +975,47 @@ void Spherical::calculation_4_isabelReverseEngineered(){
 
 			// RShells[i] == _shellLowerBound[i+1] !!
 			const double rcmax = rm;
-			
-			for (unsigned long j = 1; j < (lowerS + 1); j++) {  // Loop over Shells with smaller Radius
+			std::cout << " ---- MOLECULE " << molID << ": lowerS = " << lowerS <<", interS = " << interS << ", upperS = " <<upperS << std::endl;
+			for (unsigned long j = 1; j < (_lenVector + 1); j++) {
 				double shellLowerBound2 = _shellLowerBound[j] * _shellLowerBound[j];
+
+                /* int sumOfTrue = 0;
+				if(j<(lowerS + 1)){
+                    rlow = distCenter - _shellLowerBound[j];
+                    sumOfTrue++;
+                } 
+				if(j >= interS && j < upperS){
+                    rlow = rCutoff; 
+                    sumOfTrue++;
+                }
+				if(j >= upperS && j < (_nShells + 2)){
+                    rlow = _shellLowerBound[j] - distCenter;
+                    sumOfTrue++;
+                }
+
+                if(sumOfTrue < 1){ continue;}
+                if(sumOfTrue > 1){ std::cout << "error in sphericalLRC. more than one condition true. exiting." << std::cout; _simulation.exit(0)}
+				 */
+
 				if (_density_avg_fitted[j - 1] != 0.0) {
-					rlow = distCenter - _shellLowerBound[j];   // distCenter - _shellLowerBound[j];
+                    if(j<(lowerS + 1)){
+                        rlow = distCenter - _shellLowerBound[j];
+                    } else if(j >= interS && j < upperS){
+                        rlow = rCutoff; 
+                    } else if(j >= upperS && j < (_nShells + 2)){
+                        rlow = _shellLowerBound[j] - distCenter;
+                    } else {
+                        continue;
+                    }
 					rlowInv = 1. / rlow;
 					rlowInv2 = rlowInv * rlowInv;
 					rdashInv = 1. / (_shellLowerBound[j] + distCenter);
+					
+
 					UCorrTemp = sigma6 * 0.2 * (pow(rdashInv, 10) - pow(rlowInv, 10)) -
 								0.5 * (pow(rdashInv, 4) - pow(rlowInv, 4));
 					if (rlow < rcmax) {
-						rdash = std::min(rcmax, (_shellLowerBound[j ] + distCenter));
+						rdash = std::min(rcmax, (_shellLowerBound[j] + distCenter));
 						rdashInv = 1. / rdash;
 						rdashInv2 = rdashInv * rdashInv;
 						FCorrTemp =
@@ -1515,47 +1023,6 @@ void Spherical::calculation_4_isabelReverseEngineered(){
 											pow(rdashInv2, 6) -
 										(6. / 5. * rlow * rlow + ksi2 - shellLowerBound2) *
 											pow(rlowInv2, 6)) -
-							(1.5 * rdash * rdash + ksi2 - _shellLowerBound[j]) * pow(rdashInv2, 3) +
-							(1.5 * rlow * rlow + ksi2 - shellLowerBound2) * pow(rlowInv2, 3);
-						FCorrShells =
-							FCorrShells + FCorrTemp * factorF * _density_avg_fitted[j - 1] * _shellLowerBound[j];
-						PNCorrTemp =  // 1.5*sigma6 * (pow(rdashInv2,4) - pow(rlowInv2,4))
-							-3. * (rdashInv2 - rlowInv2) +
-							2. * (ksi2 - shellLowerBound2) *
-								(  // 6/5*sigma6 * (pow(rdashInv2,5) - pow(rlowInv2,5))
-									-1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2))) +
-							pow((ksi2 - shellLowerBound2), 2) *
-								(  // sigma6 * ( pow(rdashInv2,6) - pow(rlowInv2,6))
-									-(pow(rdashInv2, 3) - pow(rlowInv2, 3)));
-						PNCorrShells = PNCorrShells +
-										PNCorrTemp * factorP * _density_avg_fitted[j - 1] * _shellLowerBound[j];
-						PTCorrTemp = 6. / 5. * sigma6 * (pow(rdashInv2, 5) - pow(rlowInv2, 5)) -
-										1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2));
-						PTCorrShells = PTCorrShells + 4. * ksi2 * PTCorrTemp * factorP *
-															_density_avg_fitted[j - 1] * _shellLowerBound[j];
-					}
-					UCorrShells =
-						UCorrShells + UCorrTemp * factorU * _density_avg_fitted[j - 1] * _shellLowerBound[j];
-				}
-			}
-			for (unsigned long j = upperS; j < (_nShells + 1); j++) {
-				double shellLowerBound2 = _shellLowerBound[j] * _shellLowerBound[j];
-				if (_density_avg_fitted[j - 1] != 0.0) {
-					rlow = _shellLowerBound[j] - distCenter;
-					rlowInv = 1 / rlow;
-					rlowInv2 = rlowInv * rlowInv;
-					rdashInv = 1 / (_shellLowerBound[j] + distCenter);
-					UCorrTemp = sigma6 * 0.2 * (pow(rdashInv, 10) - pow(rlowInv, 10)) -
-								0.5 * (pow(rdashInv, 4) - pow(rlowInv, 4));
-					if (rlow < rcmax) {
-						rdash = std::min(rcmax, (_shellLowerBound[j] + distCenter));
-						rdashInv = 1 / rdash;
-						rdashInv2 = rdashInv * rdashInv;
-						FCorrTemp =
-							sigma6 * ((6. / 5. * rdash * rdash + ksi2 - shellLowerBound2) *
-											pow(rdashInv2, 6) -
-										(6. / 5. * rlow * rlow + ksi2 - shellLowerBound2) *
-											pow(rlowInv2, 6)) -
 							(1.5 * rdash * rdash + ksi2 - shellLowerBound2) * pow(rdashInv2, 3) +
 							(1.5 * rlow * rlow + ksi2 - shellLowerBound2) * pow(rlowInv2, 3);
 						FCorrShells =
@@ -1579,49 +1046,6 @@ void Spherical::calculation_4_isabelReverseEngineered(){
 						UCorrShells + UCorrTemp * factorU * _density_avg_fitted[j - 1] * _shellLowerBound[j];
 				}
 			}
-			for (unsigned long j = interS; j < upperS; j++) {  // Loop over partly contributing Shells
-				double shellLowerBound2 = _shellLowerBound[j] * _shellLowerBound[j];
-				if (_density_avg_fitted[j - 1] != 0.0) {
-					rlow = rCutoff;
-					rlowInv = 1 / rlow;
-					rlowInv2 = rlowInv * rlowInv;
-					rdashInv = 1 / (_shellLowerBound[j] + distCenter);
-					UCorrTemp = sigma6 * 0.2 * (pow(rdashInv, 10) - pow(rlowInv, 10)) -
-								0.5 * (pow(rdashInv, 4) - pow(rlowInv, 4));
-					if (rlow < rcmax) {
-						rdash = std::min(rcmax, (_shellLowerBound[j] + distCenter));
-						rdashInv = 1 / rdash;
-						rdashInv2 = rdashInv * rdashInv;
-						FCorrTemp =
-							sigma6 * ((6. / 5. * rdash * rdash + ksi2 - shellLowerBound2) *
-											pow(rdashInv2, 6) -
-										(6. / 5. * rlow * rlow + ksi2 - shellLowerBound2) *
-											pow(rlowInv2, 6)) -
-							(1.5 * rdash * rdash + ksi2 - shellLowerBound2) * pow(rdashInv2, 3) +
-							(1.5 * rlow * rlow + ksi2 - shellLowerBound2) * pow(rlowInv2, 3);
-						FCorrShells =
-							FCorrShells + FCorrTemp * factorF * _density_avg_fitted[j - 1] * _shellLowerBound[j];
-						PNCorrTemp =  // 1.5*sigma6 * (pow(rdashInv2,4) - pow(rlowInv2,4))
-							-3. * (rdashInv2 - rlowInv2) +
-							2. * (ksi2 - shellLowerBound2) *
-								(  // 6/5*sigma6 * (pow(rdashInv2,5) - pow(rlowInv2,5))
-									-1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2))) +
-							pow((ksi2 - shellLowerBound2), 2) *
-								(  // sigma6 * ( pow(rdashInv2,6) - pow(rlowInv2,6))
-									-(pow(rdashInv2, 3) - pow(rlowInv2, 3)));
-						PNCorrShells = PNCorrShells +
-										PNCorrTemp * factorP * _density_avg_fitted[j - 1] * _shellLowerBound[j];
-						PTCorrTemp = 6. / 5. * sigma6 * (pow(rdashInv2, 5) - pow(rlowInv2, 5)) -
-										1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2));
-						PTCorrShells = PTCorrShells + 4. * ksi2 * PTCorrTemp * factorP *
-															_density_avg_fitted[j - 1] * _shellLowerBound[j];
-					}
-					UCorrShells =
-						UCorrShells + UCorrTemp * factorU * _density_avg_fitted[j - 1] * _shellLowerBound[j];
-				}
-			}
-
-
 
 			int shellOfThisMol;
 
@@ -1660,15 +1084,265 @@ void Spherical::calculation_4_isabelReverseEngineered(){
 			}
 			
 			
-			_UcorrectionShell[i] = UShells_Mean_local[i];	
-			_FcorrectionShell[i] = FShells_Mean_local[i];	
-			_VirNcorrectionShell[i] = PNShells_Mean_local[i];//FALSE! just for output ...
-			_VirTcorrectionShell[i] = PTShells_Mean_local[i];//FALSE! just for output ...
+			// _UcorrectionShell[i] = UShells_Mean_local[i];	
+			// _FcorrectionShell[i] = FShells_Mean_local[i];	
+			// TESTING:
+			_UcorrectionShell[i] = FShells_Mean_local[i];//FOR TESTING PTShells_Mean_local[i];//FALSE! just for output ...
 		}
 	//TODO: würde das hier nicht auch ohne for-loop gehen? (einfach numMolecules_step.global = numMolecules_step.local;) 
 /* endif */
 	}
 }
+
+
+void Spherical::calculationV3_isabelsMethod(){
+/* 
+	-- reverse engineered from isabels code
+	-- uses representative particle method
+	-- main difference to V1: calculation of rlow
+	-- includes prefactor distanceFromCenter/4., that seems to not be in paper.
+ */
+
+    std::vector<double> UShells_Mean_local;
+    std::vector<double> FShells_Mean_local;
+    std::vector<double> PNShells_Mean_local;
+    std::vector<double> PTShells_Mean_local;
+	UShells_Mean_local.resize(_lenVector);
+	FShells_Mean_local.resize(_lenVector);
+	PNShells_Mean_local.resize(_lenVector);
+	PTShells_Mean_local.resize(_lenVector);
+	std::fill(UShells_Mean_local.begin(), UShells_Mean_local.end(), 0.);
+	std::fill(FShells_Mean_local.begin(), FShells_Mean_local.end(), 0.);
+	std::fill(PNShells_Mean_local.begin(), PNShells_Mean_local.end(), 0.);
+	std::fill(PTShells_Mean_local.begin(), PTShells_Mean_local.end(), 0.);
+
+	 
+	
+	
+
+	//TODO: move to object? (only calc once):
+	const double rCutoff = _cutoffLJ;	//TODO: find correct rc
+	const double rm = 16.; 		//TODO: find value for rm (hardcoded is quatsch)  // == rcmax?
+
+	const double epsilon = 1.; 	//TODO: find correct epsilon
+	const double sigma = 1.;		//TODO: find correct sigma
+	const double sigma6 = std::pow(sigma, 6); 
+
+	const double generalPrefactor =  2.*M_PI*epsilon*sigma6;
+
+
+	const int calcFreq = _calcFreq; // redundand, just a quickfix
+	const uint64_t simstep = _simulation.getSimulationStep();
+
+
+	if ((simstep) % _calcFreq == 0) {
+
+		// U Correction of homogeneous system  for one component
+		double UCORR = _rho_out*(8./3.)*M_PI*(1./(3.*std::pow(rCutoff,9))-1./std::pow(rCutoff,3));
+    	double PCORR = _rho_out*(16./3.)*M_PI*(2./(3.*std::pow(rCutoff,9))-1./std::pow(rCutoff,3));
+		// global_log->info() << "[Long Range Correction] Homogeneous term: rho_out = " << _rho_out << " UpotConstKorrLJ = " << UpotConstKorrLJ << " ; VirialConstKorrLJ = " << VirialConstKorrLJ << std::endl;
+		global_log->info() << "[Long Range Correction] Alt. homog. term: rho_out = " << _rho_out << " UpotConstKorrLJ = " << UCORR      << " ; VirialConstKorrLJ = " << PCORR << std::endl;
+
+
+
+
+
+
+
+		// Korrektur je Schale
+		// std::fill(_FcorrectionShell.begin(), _FcorrectionShell.end(), 0.);		 
+		// std::fill(_UcorrectionShell.begin(), _UcorrectionShell.end(), 0.);		 
+		// std::fill(_VirNcorrectionShell.begin(), _VirNcorrectionShell.end(), 0.);		 
+		// std::fill(_VirTcorrectionShell.begin(), _VirTcorrectionShell.end(), 0.);		
+
+
+
+
+
+		double rlow, rlow2, rlowInv, rlowInv2, rdash2, rdashInv, UCorrTemp, rdash, rdashInv2, FCorrTemp, PNCorrTemp,
+			PTCorrTemp;
+		double ksi2 = 0.0;
+		
+		double drShells = _distMax/(_nShells+1);  //WHY: warum +1? und müsste ich dann hier sogar +2 rechnen? (weil _nShells bei mir nur die shells zählt, und bei isabel die außenhülle einberechnet wird?)
+
+		for (int i = 0; i < _lenVector; i++) {
+				double distCenter_x = _shellLowerBound[i] + drShells/2.;
+				double distCenter_y = 0;
+				double distCenter_z = 0;
+				double distCenter2 = distCenter_x*distCenter_x + distCenter_y*distCenter_y + distCenter_z*distCenter_z;
+				double distCenter = std::sqrt(distCenter2);
+
+				double deltaShells = rCutoff / drShells;
+				
+				double realk = distCenter / drShells;
+				unsigned long k = std::round(realk);
+
+				double lowerS = std::min(static_cast<double>(std::floor((realk - deltaShells))), static_cast<double>(_nShells + 1));
+				double interS = std::max(static_cast<double>(std::ceil(abs(realk - deltaShells))), 1.0);
+				double upperS = std::min(static_cast<double>(std::ceil(realk + deltaShells)), static_cast<double>(_nShells + 2));
+
+
+
+			unsigned long molID = i;
+
+
+
+			//stuff from multi-site-generalization
+			unsigned int ci = 0;
+			unsigned int cj = 0;
+			ParaStrm& params = _domain->getComp2Params()(ci, cj);
+			params.reset_read();
+			unsigned si = 0;
+			unsigned sj = 0; 
+
+			double eps24;
+			double sigma;
+			double sig2;
+			double shift6;
+			double eps;
+			params >> eps24;
+			params >> sig2;
+			params >> shift6;
+			// sigma = sqrt(sig2);
+			// eps = eps24 / 24;
+			double tau1 = 0.;
+			double tau2 = 0.;
+			// double tau1 = 0.5;
+			// double tau2 = 0;
+			double sigma6 = sig2 * sig2 * sig2;
+			double factorU = -M_PI * drShells * eps24 * sigma6 / (6. * distCenter);
+			double factorF = -factorU / distCenter;
+			double factorP = 0.5 * factorF / distCenter;
+
+			double UCorrShells = 0.0;
+			double FCorrShells = 0.0;
+			double PNCorrShells = 0.0;
+			double PTCorrShells = 0.0;
+			// RShells[i] == _shellLowerBound[i+1] !!
+			const double rcmax = rm;
+			std::cout << " ---- REP. MOLECULE " << molID << ": lowerS = " << lowerS <<", interS = " << interS << ", upperS = " <<upperS << std::endl;
+			for (unsigned long j = 1; j < (_lenVector + 1); j++) {
+				double shellLowerBound2 = _shellLowerBound[j] * _shellLowerBound[j];
+
+                /* int sumOfTrue = 0;
+				if(j<(lowerS + 1)){
+                    rlow = distCenter - _shellLowerBound[j];
+                    sumOfTrue++;
+                } 
+				if(j >= interS && j < upperS){
+                    rlow = rCutoff; 
+                    sumOfTrue++;
+                }
+				if(j >= upperS && j < (_nShells + 2)){
+                    rlow = _shellLowerBound[j] - distCenter;
+                    sumOfTrue++;
+                }
+
+                if(sumOfTrue < 1){ continue;}
+                if(sumOfTrue > 1){ std::cout << "error in sphericalLRC. more than one condition true. exiting." << std::cout; _simulation.exit(0)}
+				 */
+
+				if (_density_avg_fitted[j - 1] != 0.0) {
+                    if(j<(lowerS + 1)){
+                        rlow = distCenter - _shellLowerBound[j];
+                    } else if(j >= interS && j < upperS){
+                        rlow = rCutoff; 
+                    } else if(j >= upperS && j < (_nShells + 2)){
+                        rlow = _shellLowerBound[j] - distCenter;
+                    } else {
+                        continue;
+                    }
+					rlowInv = 1. / rlow;
+					rlowInv2 = rlowInv * rlowInv;
+					rdashInv = 1. / (_shellLowerBound[j] + distCenter);
+					
+
+					UCorrTemp = sigma6 * 0.2 * (pow(rdashInv, 10) - pow(rlowInv, 10)) -
+								0.5 * (pow(rdashInv, 4) - pow(rlowInv, 4));
+					if (rlow < rcmax) {
+						rdash = std::min(rcmax, (_shellLowerBound[j] + distCenter));
+						rdashInv = 1. / rdash;
+						rdashInv2 = rdashInv * rdashInv;
+						FCorrTemp =
+							sigma6 * ((6. / 5. * rdash * rdash + ksi2 - shellLowerBound2) *
+											pow(rdashInv2, 6) -
+										(6. / 5. * rlow * rlow + ksi2 - shellLowerBound2) *
+											pow(rlowInv2, 6)) -
+							(1.5 * rdash * rdash + ksi2 - shellLowerBound2) * pow(rdashInv2, 3) +
+							(1.5 * rlow * rlow + ksi2 - shellLowerBound2) * pow(rlowInv2, 3);
+						FCorrShells =
+							FCorrShells + FCorrTemp * factorF * _density_avg_fitted[j - 1] * _shellLowerBound[j];
+						PNCorrTemp =  // 1.5*sigma6 * (pow(rdashInv2,4) - pow(rlowInv2,4))
+							-3. * (rdashInv2 - rlowInv2) +
+							2. * (ksi2 - shellLowerBound2) *
+								(  // 6/5*sigma6 * (pow(rdashInv2,5) - pow(rlowInv2,5))
+									-1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2))) +
+							pow((ksi2 - shellLowerBound2), 2) *
+								(  // sigma6 * ( pow(rdashInv2,6) - pow(rlowInv2,6))
+									-(pow(rdashInv2, 3) - pow(rlowInv2, 3)));
+						PNCorrShells = PNCorrShells +
+										PNCorrTemp * factorP * _density_avg_fitted[j - 1] * _shellLowerBound[j];
+						PTCorrTemp = 6. / 5. * sigma6 * (pow(rdashInv2, 5) - pow(rlowInv2, 5)) -
+										1.5 * (pow(rdashInv2, 2) - pow(rlowInv2, 2));
+						PTCorrShells = PTCorrShells + 4. * ksi2 * PTCorrTemp * factorP *
+															_density_avg_fitted[j - 1] * _shellLowerBound[j];
+					}
+					UCorrShells =
+						UCorrShells + UCorrTemp * factorU * _density_avg_fitted[j - 1] * _shellLowerBound[j];
+				}
+			}
+
+			int shellOfThisMol;
+			if (k >= _nShells) {
+				shellOfThisMol = _nShells;
+			} else if (k == 0) {
+				shellOfThisMol = k;
+			} else {
+				shellOfThisMol = k - 1;
+			}
+
+
+			PTCorrShells -= PNCorrShells;
+			_UcorrectionShell[i] = UCorrShells;
+			_FcorrectionShell[i] = FCorrShells;
+			PNShells_Mean_local[shellOfThisMol] = PNCorrShells; // unused
+			PTShells_Mean_local[shellOfThisMol] = PTCorrShells; // unused
+			// std::cout << shellOfThisMol<<std::endl;
+		}
+
+		// Distribution of Shell Corrections to every node
+/* #ifdef ENABLE_MPI //TODO: MPI
+	MPI_Allreduce(numMolecules_step.local.data(), numMolecules_step.global.data(), _lenVector, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+#else
+	*/    
+
+		/* 
+
+		for (unsigned long i = 0; i < _lenVector; i++) {
+			// if (_density_avg[i] != 0.0) { //WHY: is this the correct density? probably not ...
+			// //WTF: and if density_avg = 0 ? then we just leave it ... ok cool.
+			// 	UShells_Mean_local[i]  /= (_density_avg[i] * _shellVolume[i]);
+			// 	FShells_Mean_local[i]  /= (_density_avg[i] * _shellVolume[i]);
+			// 	PNShells_Mean_local[i] /= (_density_avg[i] * _shellVolume[i]);
+			// 	PTShells_Mean_local[i] /= (_density_avg[i] * _shellVolume[i]);
+			// }
+			
+			
+			_UcorrectionShell[i] = UShells_Mean_local[i];	
+			_FcorrectionShell[i] = FShells_Mean_local[i];	
+			// _VirNcorrectionShell[i] = PNShells_Mean_local[i];//FALSE! just for output ...
+			// _VirTcorrectionShell[i] = PTShells_Mean_local[i];//FALSE! just for output ...
+		} */
+	//TODO: würde das hier nicht auch ohne for-loop gehen? (einfach numMolecules_step.global = numMolecules_step.local;) 
+/* endif */
+	}
+}
+
+
+
+
+
+
 
 
 

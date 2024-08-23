@@ -172,10 +172,9 @@ private:
 
 
 	//for testing:
-	// void calculation_01_directCalc();
-	void calculation_2_getShellPropertiesByLoopingOverAllMolecules();
-	void calculation_3_getShellPropertiesFromRepresentativeParticles();
-	void calculation_4_isabelReverseEngineered();
+	void calculationV1_fromPaper_withIsabelsPrefactorAndRlow_repParticles();
+	void calculationV2_isabelsCode___abandoned();
+	void calculationV3_isabelsMethod();
 
 	double TICCu(int n, double rc, double sigma2);
 	double TICSu(int n, double rc, double sigma2, double tau);
