@@ -272,9 +272,9 @@ void InteractionForceAdapter::FluidPotType(Molecule& m1, Molecule& m2, ParaStrm&
 }
 
 
-/****************
- * ************** Potential and Force Calculations
- ***************/
+/****************************************************************
+ * ************** Potential and Force Calculations **************
+ ***************************************************************/
 
 double InteractionForceAdapter::PotentialOfMeanForce(double r){
     double dist = adres->GetRDFInterpolation().GetRDFAt(r);

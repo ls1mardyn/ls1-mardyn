@@ -68,6 +68,7 @@
 
 #include "plugins/RDFAtCOM.h"
 #include "plugins/PotentialOfMeanForce/PMF.h"
+#include "plugins/PotentialOfMeanForce/PotentialProfiler.h"
 
 #ifdef ENABLE_ADIOS2
 #include "io/Adios2Writer.h"
