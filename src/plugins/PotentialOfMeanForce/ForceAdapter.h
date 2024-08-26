@@ -66,7 +66,8 @@ class InteractionForceAdapter:public ParticlePairsHandler{
         int step_count=0;
         double tolerance = 0.1;
         
-        void MeasureLocalRDF();
+        void MeasureRDF();
+        void MeasurePotential();
         double Correction();
 
     };
