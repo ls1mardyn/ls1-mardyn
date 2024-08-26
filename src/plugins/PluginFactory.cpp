@@ -146,6 +146,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(WallPotential);
 	REGISTER_PLUGIN(XyzWriter);
 	REGISTER_PLUGIN(RadialDFCOM);
+	REGISTER_PLUGIN(PotentialProfiler);
 	REGISTER_PLUGIN(PMF);
 #ifdef VTK
 	REGISTER_PLUGIN(VTKMoleculeWriter);
