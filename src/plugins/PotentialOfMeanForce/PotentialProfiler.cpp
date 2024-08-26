@@ -114,7 +114,7 @@ void PotentialProfiler::WriteDataToFile(ParticleContainer* particleContainer, Do
         //outfile<<rmid<<"\t"<<data<<"\t"<<binvol<<"\t"<<den*(measured_steps-1)<<"\t"<<"\n";
         //outfile<<std::setw(8)<<std::left<<rmid<<"\t"<<std::setw(8)<<std::left<<data/den<<"\t"<<std::setw(8)<<std::left<<data<<"\t"<<den<<"\n";
         //outfile<<rmid<<"\t"<<data/den<<"\t"<<"\n";
-        outfile<<std::setw(8)<<std::left<<rmid<<"\t"<<std::setw(8)<<std::left<<data/den<<"\t"<<potential/(0.5*(double)bin_counts[i]*((double)bin_counts[i]-1.0))<<"\t"<<(0.5*(double)bin_counts[i]*((double)bin_counts[i]-1.0))<<"\t"<<averaged_potential[i]/(double)measured_steps<<std::endl;
+        outfile<<std::setw(8)<<std::left<<rmid<<"\t"<<std::setw(8)<<std::left<<data/den<<"\t"<<averaged_potential[i]/(double)measured_steps<<"\t"<<pot_values_per_timestep[1][i]<<std::endl;
     }
 
     outfile.close();
