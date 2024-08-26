@@ -19,8 +19,12 @@ void PotentialProfiler::init(ParticleContainer* pc, DomainDecompBase* dd, Domain
 
 void PotentialProfiler::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom, unsigned long simstep){
         for(int i=0;i<pot_vals.size();++i){
-            if(bin_counts[i]>0){
+            int N = 0.5*(double)pot_counts[i]*((double)pot_counts[i]-1.0);
+            if(N>0 && !std::isinf(pot_vals[i])){
                 pot_vals[i] = pot_vals[i]/(0.5*(double)pot_counts[i]*((double)pot_counts[i]-1.0));
+            }
+            else{
+                pot_vals[i]=0;
             }
         }
         pot_values_per_timestep.emplace_back(pot_vals);
@@ -90,12 +94,7 @@ void PotentialProfiler::WriteDataToFile(ParticleContainer* particleContainer, Do
 
     double rho_bulk=0.0;
     rho_bulk = (double)particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)/(double)domain->getGlobalVolume();
-    // outfile<<"#Total time steps averaged: "<<measured_steps<<"\n";
-    // outfile<<"#Bulk density: "<<rho_bulk<<"\n";
-    // int kk = domain->getglobalNumMolecules();
-    // outfile<<"#Total molecules: "<<domain->getglobalNumMolecules()<<"\n";//Same as from particle iterator above
-    // outfile<<"#Total volume: "<<domain->getGlobalVolume()<<"\n";
-    // outfile<<std::setw(8)<<"bin \t\t"<<std::setw(10)<<"g_r \t"<<std::setw(8)<<"N_avg \t"<<""<<"\n";
+
     double data=0.0;
     for(int i=0;i<number_bins;i++){
         double rmin, rmax, rmid, binvol, rmin3,rmax3, den;
@@ -109,11 +108,7 @@ void PotentialProfiler::WriteDataToFile(ParticleContainer* particleContainer, Do
         data = (double)bin_counts[i]/(double)measured_steps;
         double potential;
         potential = pot_vals[i];
-        //den = binvol*domain->getglobalNumMolecules()*domain->getglobalNumMolecules()/domain->getGlobalVolume();
-        //data = (double)bin_counts[i]/(double)(den*(measured_steps-1));
-        //outfile<<rmid<<"\t"<<data<<"\t"<<binvol<<"\t"<<den*(measured_steps-1)<<"\t"<<"\n";
-        //outfile<<std::setw(8)<<std::left<<rmid<<"\t"<<std::setw(8)<<std::left<<data/den<<"\t"<<std::setw(8)<<std::left<<data<<"\t"<<den<<"\n";
-        //outfile<<rmid<<"\t"<<data/den<<"\t"<<"\n";
+
         outfile<<std::setw(8)<<std::left<<rmid<<"\t"<<std::setw(8)<<std::left<<data/den<<"\t"<<averaged_potential[i]/(double)measured_steps<<"\t"<<pot_values_per_timestep[1][i]<<std::endl;
     }
 
@@ -148,7 +143,7 @@ double CustomCellProcessor::PotentialCallBack(double e, double s, double r2){
     double lj12 = lj6*lj6;
     double lj12m6 = lj12 - lj6;
     pot = lj12m6*e*4.0;
-
+    if(std::isinf(pot)) return 0.0;
     return pot;
 }
 

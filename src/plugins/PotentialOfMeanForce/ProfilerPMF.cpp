@@ -1,5 +1,9 @@
 #include "ProfilerPMF.h"
 
+InternalProfiler::InternalProfiler():cell_processor{nullptr},measured_steps{0}{
+
+}
+
 void InternalProfiler::init(ParticleContainer* pc, int bins, int freq){
     this->number_bins = bins;
     this->sample_frequency = freq;
@@ -8,18 +12,39 @@ void InternalProfiler::init(ParticleContainer* pc, int bins, int freq){
 
 }
 
+void InternalProfiler::InitRNodes(){
+    for(int i=0;i<number_bins;++i){
+        double rmid;
+        rmid = (i+0.5)*bin_width;
+        r_nodes[i] = rmid;
+    }  
+}
+
+void InternalProfiler::ResetBuffers(){
+
+    std::fill(rdf_buffer.begin(),rdf_buffer.end(),0.0);
+
+    std::fill(u_buffer.begin(),u_buffer.end(),0.0);
+
+    std::fill(pairs_buffer.begin(),pairs_buffer.end(),0.0);
+}
+
 
 void InternalProfiler::SetBinContainer(ParticleContainer* pc){
     this->bin_width = pc->getCutoff()/number_bins;
 
-    this->bin_counts.resize(number_bins);
-    std::fill(bin_counts.begin(),bin_counts.end(),0.0);
+    this->r_nodes.resize(number_bins);
+    std::fill(r_nodes.begin(),r_nodes.end(),0.0);
+    this->InitRNodes();
 
-    this->pot_vals.resize(number_bins);
-    std::fill(pot_vals.begin(),pot_vals.end(),0.0);
+    this->rdf_buffer.resize(number_bins);
+    std::fill(rdf_buffer.begin(),rdf_buffer.end(),0.0);
 
-    this->pot_counts.resize(number_bins);
-    std::fill(pot_counts.begin(),pot_counts.end(),0.0);
+    this->u_buffer.resize(number_bins);
+    std::fill(u_buffer.begin(),u_buffer.end(),0.0);
+
+    this->pairs_buffer.resize(number_bins);
+    std::fill(pairs_buffer.begin(),pairs_buffer.end(),0.0);
 
     Log::global_log->info()<<"[PMF] Internal profiler bin width "<<bin_width<<"\n";
     measured_distance_squared = bin_width*bin_width*number_bins*number_bins;
@@ -59,16 +84,15 @@ void InternalProfiler::ProcessDistance(double r, double pot){
     if(r > measured_distance_squared){ return;}
 
     int index = std::floor(std::sqrt(r)/bin_width);
-    this->bin_counts[index]++;
+    this->rdf_buffer[index]++;
     //here we compute the potential
-    pot_counts[index] ++;
-    pot_vals[index] += pot;
-
+    this->pairs_buffer[index] ++;
+    this->u_buffer[index] += pot;
     
 }  
 
 void InternalProfiler::GenerateInstantaneousData(ParticleContainer* particleContainer, Domain* domain){
-    //Generate RDF g(r) data
+    //Generate RDF g(r) data && U(r) instantaneous values
     for(int i=0;i<number_bins;++i){
         double rmin, rmax, rmid, binvol, rmin3,rmax3, den;
         rmid = (i+0.5)*bin_width;
@@ -78,7 +102,7 @@ void InternalProfiler::GenerateInstantaneousData(ParticleContainer* particleCont
         rmax3 = rmax*rmax*rmax;
         binvol = (4.0/3.0)*M_PI*(rmax3-rmin3);
         den = 0.5*domain->getglobalNumMolecules()*(domain->getglobalNumMolecules()-1.0)*binvol/domain->getGlobalVolume();
-        bin_counts[i] /= measured_steps;
-        bin_counts[i] /= den;
+        rdf_buffer[i] /= measured_steps;
+        rdf_buffer[i] /= den;
     }   
 }

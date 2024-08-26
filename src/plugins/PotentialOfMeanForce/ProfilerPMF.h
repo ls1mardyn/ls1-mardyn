@@ -30,12 +30,13 @@ class InternalProfiler{
     /**
      * Is time average
      */
-    std::vector<int> bin_counts;
+    std::vector<int> rdf_buffer;
     /**
      * Will be instantaneous
      */
-    std::vector<double> pot_vals;
-    std::vector<double> pot_counts;
+    std::vector<double> u_buffer;
+    std::vector<double> pairs_buffer;
+    std::vector<double> r_nodes;
     int sample_frequency;
     int measured_steps;
     double measured_distance_squared;
@@ -51,8 +52,17 @@ class InternalProfiler{
     void SetBinContainer(ParticleContainer* pc);
     std::array<double,3> GetCOM(Molecule* m);
     void ProcessDistance(double distance, double pot);
-
+    /**
+     * Evaluates RDF and U(r) into the buffers, data is then ruined
+     */
     void GenerateInstantaneousData(ParticleContainer* particleContainer, Domain* domain);
+    void ResetBuffers();
+    std::vector<double>& GetRDFValues();
+    std::vector<double>& GetPotentialValues();
+    std::vector<double>& GetRNodes();
+
+    private:
+    void InitRNodes();
 
 };
 

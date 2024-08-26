@@ -29,3 +29,79 @@ double InternalCellProcessor::PotentialCallBack(double e, double s, double r2){
 
     return pot;
 }
+
+void InternalCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, bool sumAll){
+
+    auto begin1 = c1.iterator();
+    auto begin2 = c2.iterator();
+    double distance=0.0;
+    std::array<double,3> com1={0.0,0.0,0.0};
+    std::array<double,3> com2={0.0,0.0,0.0};
+    if(sumAll){
+        for(auto it1=begin1;it1.isValid();++it1){
+            Molecule& m1 = *it1;
+            double eps, sig, pot;
+            sig = m1.component()->getSigma(0);
+            eps = m1.component()->getEps(0);
+
+            com1 = my_profiler->GetCOM(&m1);
+            for(auto it2 =begin2;it2.isValid();++it2){
+                Molecule& m2 = *it2;
+                com2 = my_profiler->GetCOM(&m2);
+                distance = DistanceBetweenCOMs(com1,com2);
+                if(distance < _cutoffRadiusSquare){
+                    pot = PotentialCallBack(eps,sig,distance);
+                    my_profiler->ProcessDistance(distance,pot);
+                }
+            }
+        }
+    }
+    else{
+        if(c1.isInnerCell()){//no hallo cells at all
+
+            for(auto it1=begin1;it1.isValid();++it1){
+                Molecule& m1 = *it1;
+                double eps, sig, pot;
+                sig = m1.component()->getSigma(0);
+                eps = m1.component()->getEps(0);
+                com1 = my_profiler->GetCOM(&m1);
+                for(auto it2=begin2;it2.isValid();++it2){
+                    Molecule& m2 = *it2;
+                    com2 = my_profiler->GetCOM(&m2);
+                    distance = DistanceBetweenCOMs(com1,com2);
+                    if(distance < _cutoffRadiusSquare){
+                        pot = PotentialCallBack(eps,sig,distance);
+                        my_profiler->ProcessDistance(distance,pot);
+                    }
+
+                }
+            }
+
+        }
+
+        if(c1.isBoundaryCell()){//c1 is  boundary
+            if(c2.isHaloCell() && !(c1.getCellIndex()<c2.getCellIndex())){
+                return;
+            }
+
+            for(auto it1=begin1;it1.isValid();++it1){
+                Molecule& m1 = *it1;
+                double eps, sig, pot;
+                sig = m1.component()->getSigma(0);
+                eps = m1.component()->getEps(0);
+                com1 = my_profiler->GetCOM(&m1);
+                for(auto it2=begin2;it2.isValid();++it2){
+                    Molecule& m2 = *it2;
+                    com2 = my_profiler->GetCOM(&m2);
+                    distance = DistanceBetweenCOMs(com1,com2);
+                    
+                    if(distance < _cutoffRadiusSquare){
+                        pot = PotentialCallBack(eps,sig,distance);
+                        my_profiler->ProcessDistance(distance,pot);
+                    }
+                }
+            }
+        }
+    }
+
+}
