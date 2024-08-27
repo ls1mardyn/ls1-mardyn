@@ -38,6 +38,8 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     current_rdf_interpolation.SetXValues(profiler.GetRNodes());
     potential_interpolation.SetXValues(profiler.GetRNodes());
     this->profiler.init(pc,200,1);
+    current_rdf_interpolation.SetXValues(profiler.GetRNodes());
+    potential_interpolation.SetXValues(profiler.GetRNodes());
 }
 
 void PMF::readXML(XMLfileUnits& xmlfile){
@@ -72,9 +74,6 @@ void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domain
     }
 
     resolution_handler.CheckResolution(pc,sites,regions);
-    //on every time step
-    //transfer buffers to interpolation
-    profiler.ResetBuffers();
 }
 
 void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
@@ -98,6 +97,10 @@ ResolutionType PMF::GetMoleculeResolution(unsigned long idx){
 
 InteractionSite PMF::GetMoleculeCOMSite(unsigned long idx){
     return sites[idx].first;
+}
+
+Interpolate& PMF::GetRDFInterpolation(){
+    return this->reference_rdf_interpolation;
 }
 
 Interpolate& PMF::GetRDFInterpolation(){

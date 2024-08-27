@@ -30,6 +30,38 @@ double InternalCellProcessor::PotentialCallBack(double e, double s, double r2){
     return pot;
 }
 
+void InternalCellProcessor::processCell(ParticleCell& cell){
+    if(cell.isInnerCell() || cell.isBoundaryCell()){
+        auto begin = cell.iterator();
+        double distance=0.0;
+        for(auto it1 = begin;it1.isValid();++it1){
+            std::array<double,3> com1={0.0,0.0,0.0};
+            Molecule& m1 = *it1;
+            double eps, sig, pot;
+            sig = m1.component()->getSigma(0);
+            eps = m1.component()->getEps(0);
+            com1 = my_profiler->GetCOM(&m1);
+            auto it2 = it1;
+            ++it2;
+            for(;it2.isValid();++it2){
+                Molecule& m2 = *it2;
+                std::array<double,3> com2={0.0,0.0,0.0};
+                com2 = my_profiler->GetCOM(&m2);
+                mardyn_assert(&m1 != &m2);
+                //Now we compute the distance between the COMs
+                distance = DistanceBetweenCOMs(com1,com2);
+                if(distance < _cutoffRadiusSquare){
+
+                    pot = PotentialCallBack(eps,sig,distance);
+                    my_profiler->ProcessDistance(distance, pot);
+                }
+    
+            }
+    
+        }
+    }
+}
+
 void InternalCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, bool sumAll){
 
     auto begin1 = c1.iterator();

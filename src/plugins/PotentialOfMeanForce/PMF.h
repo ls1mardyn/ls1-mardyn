@@ -55,6 +55,8 @@ class PMF:public PluginBase{
         //pass buffers to interpolations
         current_rdf_interpolation.SetYValues(profiler.GetRDFValues());
         potential_interpolation.SetYValues(profiler.GetPotentialValues());
+        //transfer buffers to interpolation
+        profiler.ResetBuffers();
     }
 
 
@@ -78,6 +80,8 @@ class PMF:public PluginBase{
     double WeightValue(const std::array<double,3>& pos, FPRegion& region);
     void ReadRDF();
     Interpolate& GetRDFInterpolation();
+    Interpolate& GetPotentialInterpolation();
+    Interpolate& GetCurrentRDFInterpolation();
 
     public: 
     /**
@@ -90,6 +94,7 @@ class PMF:public PluginBase{
      * Comply with newton 3rd law
      */
     void MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2);
+
 
 };
 

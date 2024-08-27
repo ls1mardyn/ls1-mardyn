@@ -87,8 +87,10 @@ void InternalProfiler::ProcessDistance(double r, double pot){
     if(r > measured_distance_squared){ return;}
 
     int index = std::floor(std::sqrt(r)/bin_width);
+    
     //Add count for rdf
     this->rdf_buffer[index]++;
+
     //Add count for potential pairs and potential value itself
     this->pairs_buffer[index] ++;
     this->u_buffer[index] += pot;

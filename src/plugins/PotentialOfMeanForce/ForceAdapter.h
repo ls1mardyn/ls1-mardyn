@@ -62,19 +62,6 @@ class InteractionForceAdapter:public ParticlePairsHandler{
     void ForceOfPotentialOfMeanForce(std::array<double,3>& f_com, double r);
 
     private:
-    struct IterativeBoltzmannInversion{
-        int step_count=0;
-        double tolerance = 0.1;
-        
-        void MeasureRDF();
-        void MeasurePotential();
-        double Correction();
-
-    };
-
-    IterativeBoltzmannInversion ibi;
-
-    private:
 
     ResolutionHandler& resolution_handler;
     PMF* adres;
