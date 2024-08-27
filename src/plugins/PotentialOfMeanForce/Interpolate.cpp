@@ -1,5 +1,17 @@
 #include "Interpolate.h"
 
+Interpolate::Interpolate(double def_val):default_value{def_val}{
+
+}
+
+void Interpolate::SetXValues(std::vector<double>& v){
+    this->x_values = v;
+}
+
+void Interpolate::SetYValues(std::vector<double>& v){
+    this->y_values = v;
+}
+
 void Interpolate::ReadInRDF(){
     std::string filename;
 
@@ -11,24 +23,24 @@ void Interpolate::ReadInRDF(){
     double n1, n2;
 
     while(file >> n1 >> n2){
-        r_nodes.push_back(n1);
-        g_nodes.push_back(n2);
+        x_values.push_back(n1);
+        y_values.push_back(n2);
     }
 }
 
 std::vector<double>& Interpolate::GetGValues(){
-    return this->g_nodes;
+    return this->y_values;
 }
 
 std::vector<double>& Interpolate::GetRValues(){
-    return this->r_nodes;
+    return this->x_values;
 }
 
 
 double Interpolate::GetRDFAt(double r){
     
     //need to artificially return a one
-    if(r > r_nodes[r_nodes.size()-1]){
+    if(r > x_values[x_values.size()-1]){
         return 1.0;
     }
 
@@ -49,7 +61,7 @@ double Interpolate::GetRDFAt(double r){
 
 double Interpolate::CentralFiniteDifference(double r){
     //need to artificially return a zero since profile is flat
-    if(r > r_nodes[r_nodes.size()-1]){
+    if(r > x_values[x_values.size()-1]){
         return 0.0;
     }
 
@@ -62,16 +74,16 @@ double Interpolate::CentralFiniteDifference(double r){
     low = up -1;
 
     double gb,ga,ra,rb;
-    ga = g_nodes[low]; ra = r_nodes[low];
-    gb = g_nodes[up]; rb = r_nodes[up];
+    ga = y_values[low]; ra = x_values[low];
+    gb = y_values[up]; rb = x_values[up];
 
     return (gb-ga)/(rb-ra);
 }
 
 double Interpolate::LinearInterpolation(int fa, int fb, double fx){
     double ga, gb, ra, rb;
-    ga = g_nodes[fa]; ra = r_nodes[fa];
-    gb = g_nodes[fb]; rb = r_nodes[fb];
+    ga = y_values[fa]; ra = x_values[fa];
+    gb = y_values[fb]; rb = x_values[fb];
 
     double gc =0.0;
     gc = ga + (gb-ga)/(rb-ra)*(fx-ra);
@@ -83,8 +95,8 @@ double Interpolate::LinearInterpolation(int fa, int fb, double fx){
 int Interpolate::GetUpperLimit(double r){
     
     int i=0;
-    int i_max = r_nodes.size()-1;
-    while(r>r_nodes[i]){
+    int i_max = x_values.size()-1;
+    while(r>x_values[i]){
         i++;
         if(i==i_max) break;
     }

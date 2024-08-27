@@ -1,9 +1,3 @@
-#pragma once
-#include "Domain.h"
-#include "parallel/DomainDecompBase.h"
-#include "particleContainer/ParticleContainer.h"
-#include "plugins/PluginBase.h"
-
 /*
  * Created on Thu Jun 20 2024
  * Author: Jose A. Pinzon Escobar
@@ -11,14 +5,26 @@
  * Copyright (c) 2024 Helmut-Schmidt University, Hamburg
  */
 
+#pragma once
+#include "Domain.h"
+#include "parallel/DomainDecompBase.h"
+#include "particleContainer/ParticleContainer.h"
+#include "plugins/PluginBase.h"
+
+
 class Interpolate{
     
     private:
 
-    std::vector<double> r_nodes;//always increases
-    std::vector<double> g_nodes;
+    std::vector<double> x_values;//function value
+    std::vector<double> y_values;
+    double default_value;
 
     public:
+    Interpolate()=default;
+    Interpolate(double def);     
+    void SetXValues(std::vector<double>& v);
+    void SetYValues(std::vector<double>& v);
 
     std::vector<double>& GetRValues();
     std::vector<double>& GetGValues();

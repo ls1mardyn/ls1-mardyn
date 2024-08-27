@@ -2,7 +2,7 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 
 
-PMF::PMF(){
+PMF::PMF():reference_rdf_interpolation{1.0},current_rdf_interpolation{1.0},potential_interpolation{0.0}{
     adres_cell_processor = new InteractionCellProcessor(0,0);
 }
 
@@ -35,6 +35,9 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     Log::global_log->info()<<"[PMF] Initializing the COM sites\n";
     resolution_handler.CheckResolution(pc,sites,regions);
     Log::global_log->info()<<"[PMF] Enabled "<<std::endl;
+    current_rdf_interpolation.SetXValues(profiler.GetRNodes());
+    potential_interpolation.SetXValues(profiler.GetRNodes());
+    this->profiler.init(pc,200,1);
 }
 
 void PMF::readXML(XMLfileUnits& xmlfile){
@@ -56,6 +59,8 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     }
     xmlfile.changecurrentnode(oldpath);
 
+
+
 }
 
 void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep){
@@ -67,6 +72,9 @@ void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domain
     }
 
     resolution_handler.CheckResolution(pc,sites,regions);
+    //on every time step
+    //transfer buffers to interpolation
+    profiler.ResetBuffers();
 }
 
 void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
@@ -93,12 +101,12 @@ InteractionSite PMF::GetMoleculeCOMSite(unsigned long idx){
 }
 
 Interpolate& PMF::GetRDFInterpolation(){
-    return this->rdf_interpolation;
+    return this->reference_rdf_interpolation;
 }
 
 void PMF::ReadRDF(){
 
-    rdf_interpolation.ReadInRDF();
+    reference_rdf_interpolation.ReadInRDF();
 
 }
 

@@ -17,6 +17,7 @@
 #include "Interpolate.h"
 #include "plugins/RDFAtCOM.h"
 #include "ForceAdapter.h"
+#include "ProfilerPMF.h"
 
 //TODO: who owns the InteractionCellProcessor, AdResS or Simulation?
 
@@ -27,7 +28,9 @@ class PMF:public PluginBase{
 
     //std::vector<double> r_nodes;//stores distance values
     //std::vector<double> v_nodes;//stores g(r) values
-    Interpolate rdf_interpolation;
+    Interpolate reference_rdf_interpolation;
+    Interpolate potential_interpolation;
+    Interpolate current_rdf_interpolation;
     std::vector<FPRegion> regions;//should create AT region with
     InteractionCellProcessor* adres_cell_processor;
     std::map<unsigned long, tracker> sites;
@@ -35,6 +38,8 @@ class PMF:public PluginBase{
     WeightFunction weight_function;
     RadialDFCOM rdf;
     InteractionForceAdapter* pairs_handler;
+    InternalProfiler profiler;
+    
 
     public:
     PMF();
@@ -46,9 +51,19 @@ class PMF:public PluginBase{
      * Updates resolution and tracker of each molecule
      */
     void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
-    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
-    void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
-    void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override{}
+    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{
+        //pass buffers to interpolations
+        current_rdf_interpolation.SetYValues(profiler.GetRDFValues());
+        potential_interpolation.SetYValues(profiler.GetPotentialValues());
+    }
+
+
+    void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{
+        this->profiler.ProfileData(particleContainer,simstep);
+    }
+    void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override{
+        this->profiler.GenerateInstantaneousData(particleContainer,domain);
+    }
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
     void siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) override;
 

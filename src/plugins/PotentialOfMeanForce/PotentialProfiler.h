@@ -38,9 +38,10 @@ class PotentialProfiler:public PluginBase{
     void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
     void afterForces(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep) override{   
         if(simstep%sample_frequency ==0 && simstep > global_simulation->getInitStatistics()){
-        measured_steps++;
-        pc->traverseCells(*cell_processor);    
-    }}
+            measured_steps++;
+            pc->traverseCells(*cell_processor);    
+        }
+    }
     void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{
         WriteDataToFile(particleContainer, domain);
@@ -82,7 +83,6 @@ class CustomCellProcessor: public CellProcessor{
     private:
 
     double DistanceBetweenCOMs(std::array<double,3>& com1, std::array<double,3>& com2);
-
     double PotentialCallBack(double eps, double sigma, double r);
 
 };

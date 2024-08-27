@@ -30,7 +30,7 @@ class InternalProfiler{
     /**
      * Is time average
      */
-    std::vector<int> rdf_buffer;
+    std::vector<double> rdf_buffer;
     /**
      * Will be instantaneous
      */
@@ -49,6 +49,10 @@ class InternalProfiler{
     }
 
     void init(ParticleContainer* pc, int bins, int freq);
+    /**
+     * Carries out the traversal and profiling
+     */
+    void ProfileData(ParticleContainer* pc, unsigned long simstep);
     void SetBinContainer(ParticleContainer* pc);
     std::array<double,3> GetCOM(Molecule* m);
     void ProcessDistance(double distance, double pot);
@@ -60,6 +64,7 @@ class InternalProfiler{
     std::vector<double>& GetRDFValues();
     std::vector<double>& GetPotentialValues();
     std::vector<double>& GetRNodes();
+
 
     private:
     void InitRNodes();

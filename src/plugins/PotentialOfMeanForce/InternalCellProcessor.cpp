@@ -26,7 +26,7 @@ double InternalCellProcessor::PotentialCallBack(double e, double s, double r2){
     double lj12 = lj6*lj6;
     double lj12m6 = lj12 - lj6;
     pot = lj12m6*e*4.0;
-
+    if(std::isinf(pot)) return 0.0;
     return pot;
 }
 

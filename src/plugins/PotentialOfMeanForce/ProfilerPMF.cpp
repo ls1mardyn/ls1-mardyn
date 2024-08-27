@@ -9,7 +9,9 @@ void InternalProfiler::init(ParticleContainer* pc, int bins, int freq){
     this->sample_frequency = freq;
     cell_processor=new InternalCellProcessor(global_simulation->getcutoffRadius(), this); 
 
-
+    this->SetBinContainer(pc);
+    this->InitRNodes();
+    Log::global_log->info()<<"[PMF] Profiler enabled "<<std::endl;
 }
 
 void InternalProfiler::InitRNodes(){
@@ -49,6 +51,7 @@ void InternalProfiler::SetBinContainer(ParticleContainer* pc){
     Log::global_log->info()<<"[PMF] Internal profiler bin width "<<bin_width<<"\n";
     measured_distance_squared = bin_width*bin_width*number_bins*number_bins;
     Log::global_log->info()<<"[PMF] Limit distance "<<measured_distance_squared<<"\n";
+
 }
 
 
@@ -84,16 +87,35 @@ void InternalProfiler::ProcessDistance(double r, double pot){
     if(r > measured_distance_squared){ return;}
 
     int index = std::floor(std::sqrt(r)/bin_width);
+    //Add count for rdf
     this->rdf_buffer[index]++;
-    //here we compute the potential
+    //Add count for potential pairs and potential value itself
     this->pairs_buffer[index] ++;
     this->u_buffer[index] += pot;
     
 }  
 
+std::vector<double>& InternalProfiler::GetRDFValues(){
+    return this->rdf_buffer;
+}
+std::vector<double>& InternalProfiler::GetPotentialValues(){
+    return this->u_buffer;
+}
+std::vector<double>& InternalProfiler::GetRNodes(){
+    return this->r_nodes;
+}
+
+void InternalProfiler::ProfileData(ParticleContainer* pc, unsigned long step){
+    if(step%sample_frequency==0 && step > global_simulation->getInitStatistics()){
+        measured_steps++;
+        pc->traverseCells(*cell_processor);
+    }
+}
+
 void InternalProfiler::GenerateInstantaneousData(ParticleContainer* particleContainer, Domain* domain){
-    //Generate RDF g(r) data && U(r) instantaneous values
+    
     for(int i=0;i<number_bins;++i){
+        //Generate RDF g(r) data && U(r) instantaneous values
         double rmin, rmax, rmid, binvol, rmin3,rmax3, den;
         rmid = (i+0.5)*bin_width;
         rmin = i*bin_width;
@@ -104,5 +126,13 @@ void InternalProfiler::GenerateInstantaneousData(ParticleContainer* particleCont
         den = 0.5*domain->getglobalNumMolecules()*(domain->getglobalNumMolecules()-1.0)*binvol/domain->getGlobalVolume();
         rdf_buffer[i] /= measured_steps;
         rdf_buffer[i] /= den;
+
+        //Generate U(r)_{cg} values for interpolation
+        double N = 0.5*pairs_buffer[i]*(pairs_buffer[i]-1.0);
+        if(N>0){
+            u_buffer[i]= u_buffer[i]/N;
+        }else{
+            u_buffer[i]=0;
+        }
     }   
 }
