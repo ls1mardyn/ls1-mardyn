@@ -103,8 +103,12 @@ Interpolate& PMF::GetRDFInterpolation(){
     return this->reference_rdf_interpolation;
 }
 
-Interpolate& PMF::GetRDFInterpolation(){
-    return this->reference_rdf_interpolation;
+Interpolate& PMF::GetCurrentRDFInterpolation(){
+    return this->current_rdf_interpolation;
+}
+
+Interpolate& PMF::GetPotentialInterpolation(){
+    return this->potential_interpolation;
 }
 
 void PMF::ReadRDF(){
@@ -153,6 +157,22 @@ void PMF::MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2){
         m1.Fdipoleadd(i,f.data());
         m2.Fdipolesub(i,f.data());
     }
+
+}
+
+double PMF::ConvergenceCheck(){
+    std::vector<double> difference;
+    std::vector<double>& v_0 = reference_rdf_interpolation.GetGValues();
+    std::vector<double>& v_i = current_rdf_interpolation.GetGValues();
+
+    difference.resize(v_0.size());
+    double vec_norm=0.0;
+
+    for(int i=0;i<v_0.size();++i){
+        vec_norm += std::pow(v_0[i]-v_i[i],2.0);
+    }
+
+    return vec_norm;
 
 }
 

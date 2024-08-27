@@ -65,6 +65,15 @@ class PMF:public PluginBase{
     }
     void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override{
         this->profiler.GenerateInstantaneousData(particleContainer,domain);
+        //convergence check??
+        if(global_simulation->getSimulationStep()>0){
+            Log::global_log->info()<<"[PMF] Convergence check: "<<ConvergenceCheck()<<std::endl;
+            std::string filename="rdf_"+std::to_string(simstep);
+            std::ofstream rdf_file(filename);
+            for(int i=0;i<current_rdf_interpolation.GetGValues().size();++i){
+                rdf_file<<std::setw(8)<<std::left<<current_rdf_interpolation.GetRValues()[i]<<"\t"<<std::setw(8)<<std::left<<current_rdf_interpolation.GetGValues()[i]<<std::endl;
+            }
+        }
     }
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
     void siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) override;
@@ -82,6 +91,7 @@ class PMF:public PluginBase{
     Interpolate& GetRDFInterpolation();
     Interpolate& GetPotentialInterpolation();
     Interpolate& GetCurrentRDFInterpolation();
+    double ConvergenceCheck();
 
     public: 
     /**

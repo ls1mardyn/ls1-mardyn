@@ -67,8 +67,7 @@ void RadialDFCOM::ProcessDistance(double r){
 void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* domain){
     std::ofstream outfile("rdf.txt");
 
-    double rho_bulk=0.0;
-    rho_bulk = (double)particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)/(double)domain->getGlobalVolume();
+
     // outfile<<"#Total time steps averaged: "<<measured_steps<<"\n";
     // outfile<<"#Bulk density: "<<rho_bulk<<"\n";
     // int kk = domain->getglobalNumMolecules();

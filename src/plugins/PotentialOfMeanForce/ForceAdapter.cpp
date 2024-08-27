@@ -277,17 +277,40 @@ void InteractionForceAdapter::FluidPotType(Molecule& m1, Molecule& m2, ParaStrm&
  ***************************************************************/
 
 double InteractionForceAdapter::PotentialOfMeanForce(double r){
-    double dist = adres->GetRDFInterpolation().GetRDFAt(r);
-    return -1.0*_simulation.getEnsemble()->T()*std::log(dist);
+    double potential;
+    if(global_simulation->getSimulationStep()==0){
+        double dist = adres->GetRDFInterpolation().GetRDFAt(r);
+        potential = -1.0*_simulation.getEnsemble()->T()*std::log(dist);
+    }
+    else{
+        //Compute correction value
+        double curr_rdf = adres->GetCurrentRDFInterpolation().GetRDFAt(r);
+        double ref_rdf = adres->GetRDFInterpolation().GetRDFAt(r);
+        //prevent division by zero
+        if(ref_rdf == 0.0){
+            ref_rdf =1.0;   
+        }
+        double ratio = curr_rdf/ref_rdf;
+        potential = -1.0*_simulation.getEnsemble()->T()*std::log(ratio);
+    }
+    
+    return potential;
 }
 
 void InteractionForceAdapter::ForceOfPotentialOfMeanForce(std::array<double,3>& f_com, double r){
+    if(global_simulation->getSimulationStep()==0){
+        double derivative = adres->GetRDFInterpolation().CentralFiniteDifference(r);
+        double rdf = adres->GetRDFInterpolation().GetRDFAt(r);
+        double f_scalar = -1.0*_simulation.getEnsemble()->T()*derivative/rdf;
+        for(int i=0;i<f_com.size();i++){
+            f_com[i] *= f_scalar;
+        }
+    }else{
 
-    double derivative = adres->GetRDFInterpolation().CentralFiniteDifference(r);
-    double rdf = adres->GetRDFInterpolation().GetRDFAt(r);
-    double f_scalar = -1.0*_simulation.getEnsemble()->T()*derivative/rdf;
-    for(int i=0;i<f_com.size();i++){
-        f_com[i] *= f_scalar;
+        double derivative = -1.0*adres->GetPotentialInterpolation().CentralFiniteDifference(r);
+        for(int i=0;i<f_com.size();i++){
+            f_com[i] *= derivative;
+        }
     }
 }
 
