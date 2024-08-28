@@ -10,6 +10,9 @@ void PotentialProfiler::readXML(XMLfileUnits& file){
     Log::global_log->info()<<"[Potential Profiler] Total bins "<<number_bins<<"\n";
     file.getNodeValue("sampleFrequency",sample_frequency);
     Log::global_log->info()<<"[Potential Profiler] Sample frequency "<<sample_frequency<<"\n";
+    file.getNodeValue("averageFrequency", average_frequency);
+    Log::global_log->info()<<"[Potential Profiler] Average frequency "<<average_frequency<<"\n";
+
 }
 
 void PotentialProfiler::init(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom){
@@ -18,6 +21,11 @@ void PotentialProfiler::init(ParticleContainer* pc, DomainDecompBase* dd, Domain
 }
 
 void PotentialProfiler::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* dom, unsigned long simstep){
+
+    //Generate && Print instantaneous data
+    if(simstep%sample_frequency ==0 && 
+    simstep > global_simulation->getInitStatistics()
+    ){
         for(int i=0;i<pot_vals.size();++i){
             int N = 0.5*(double)pot_counts[i]*((double)pot_counts[i]-1.0);
             if(N>0 && !std::isinf(pot_vals[i])){
@@ -28,6 +36,22 @@ void PotentialProfiler::endStep(ParticleContainer* pc, DomainDecompBase* dd, Dom
             }
         }
         pot_values_per_timestep.emplace_back(pot_vals);
+        WriteDataToFile(pc, dom, simstep);
+        
+        std::fill(pot_vals.begin(),pot_vals.end(),0.0);
+        std::fill(pot_counts.begin(),pot_counts.end(),0.0);
+
+    }
+        // for(int i=0;i<pot_vals.size();++i){
+            // int N = 0.5*(double)pot_counts[i]*((double)pot_counts[i]-1.0);
+            // if(N>0 && !std::isinf(pot_vals[i])){
+                // pot_vals[i] = pot_vals[i]/(0.5*(double)pot_counts[i]*((double)pot_counts[i]-1.0));
+            // }
+            // else{
+                // pot_vals[i]=0;
+            // }
+        // }
+        // pot_values_per_timestep.emplace_back(pot_vals);
 }
 
 std::array<double,3> PotentialProfiler::GetCOM(Molecule* m){
@@ -60,13 +84,19 @@ std::array<double,3> PotentialProfiler::GetCOM(Molecule* m){
 
 void PotentialProfiler::SetBinContainer(ParticleContainer* pc){
     bin_width = pc->getCutoff()/(double)number_bins;
+    
     this->bin_counts.resize(number_bins);
     std::fill(bin_counts.begin(),bin_counts.end(),0.0);
 
     this->pot_vals.resize(number_bins);
     std::fill(pot_vals.begin(),pot_vals.end(),0.0);
+
     this->pot_counts.resize(number_bins);
     std::fill(pot_counts.begin(),pot_counts.end(),0.0);
+
+    this->current_potential_average.resize(number_bins);
+    std::fill(current_potential_average.begin(),current_potential_average.end(),0.0);
+    
     Log::global_log->info()<<"[RDF COM] Bin  width "<<bin_width<<"\n";
     measured_distance_squared = bin_width*bin_width*number_bins*number_bins;
     Log::global_log->info()<<"[RDF COM] Limit distance "<<measured_distance_squared<<"\n";
@@ -82,34 +112,43 @@ void PotentialProfiler::ProcessDistance(double r, double pot){
     pot_vals[index] += pot;
 }  
 
-void PotentialProfiler::WriteDataToFile(ParticleContainer* particleContainer, Domain* domain){
-    std::ofstream outfile("profiling_data.txt");
-    std::vector<double> averaged_potential;
-    averaged_potential.resize(pot_vals.size());
-    for(int d=0;d<pot_values_per_timestep.size();++d){
-        for(int l=0;l<averaged_potential.size();++l){
-            averaged_potential[l] += pot_values_per_timestep[d][l];
-        }
-    }
+void PotentialProfiler::WriteDataToFile(ParticleContainer* particleContainer, Domain* domain, unsigned long simstep){
+    std::string filename="potential_data_"+std::to_string(simstep)+".txt";
+    std::ofstream outfile(filename);
 
-    double rho_bulk=0.0;
-    rho_bulk = (double)particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY)/(double)domain->getGlobalVolume();
+    //Averages over the stored data per timestep
+    if(simstep%average_frequency==0){
+        for(int d=0;d<pot_values_per_timestep.size();++d){
+            for(int l=0;l<current_potential_average.size();++l){
+                current_potential_average[l] += pot_values_per_timestep[d][l];
+            }
+
+        }
+
+        pot_values_per_timestep.clear();
+        
+    }
+    // std::vector<double> averaged_potential;
+    // averaged_potential.resize(pot_vals.size());
+    // for(int d=0;d<pot_values_per_timestep.size();++d){
+        // for(int l=0;l<averaged_potential.size();++l){
+            // averaged_potential[l] += pot_values_per_timestep[d][l];
+        // }
+    // }
 
     double data=0.0;
     for(int i=0;i<number_bins;i++){
-        double rmin, rmax, rmid, binvol, rmin3,rmax3, den;
+        double rmid;
         rmid = (i+0.5)*bin_width;
-        rmin = i*bin_width;
-        rmax =(i+1)*bin_width;
-        rmin3 = rmin*rmin*rmin;
-        rmax3 = rmax*rmax*rmax;
-        binvol = (4.0/3.0)*M_PI*(rmax3-rmin3);
-        den = 0.5*domain->getglobalNumMolecules()*(domain->getglobalNumMolecules()-1.0)*binvol/domain->getGlobalVolume();
-        data = (double)bin_counts[i]/(double)measured_steps;
-        double potential;
-        potential = pot_vals[i];
 
-        outfile<<std::setw(8)<<std::left<<rmid<<"\t"<<std::setw(8)<<std::left<<data/den<<"\t"<<averaged_potential[i]/(double)measured_steps<<"\t"<<pot_values_per_timestep[1][i]<<std::endl;
+
+
+        outfile<<std::setw(8)<<std::left<<rmid
+        <<"\t"<<std::setw(8)<<std::left<<pot_vals[i];
+        if(simstep%average_frequency==0){
+            outfile<<"\t"<<std::setw(8)<<std::left<<current_potential_average[i]/measured_steps;
+        }
+        outfile<<std::endl;
     }
 
     outfile.close();
