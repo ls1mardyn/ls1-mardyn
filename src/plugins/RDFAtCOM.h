@@ -24,10 +24,15 @@ class RadialDFCOM:public PluginBase{
     CellProcessor* cell_processor;
     int number_bins;
     double bin_width;
-    std::vector<int> bin_counts;//total number of COMs in bin[i]
+    std::vector<double> pairs_per_bin;//total number of COMs in bin[i]
+    std::vector<std::vector<double>> average_pairs_per_bin;//pairs per measured time step
+    std::vector<double> accumulated_com_rdf;//accumulated over all measured time steps
+    
     int sample_frequency;
     int measured_steps;
+    int average_frequency;//controls when the stored vectors are gonna be used
     double measured_distance_squared;
+
     public:
     RadialDFCOM();
     ~RadialDFCOM(){delete cell_processor;}
@@ -40,9 +45,21 @@ class RadialDFCOM:public PluginBase{
         measured_steps++;
         pc->traverseCells(*cell_processor);    
     }}
-    void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
+    void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override{
+        //Generate && Print instantaneous data
+        if(simstep%sample_frequency ==0 && 
+        simstep > global_simulation->getInitStatistics()
+        ){
+
+            average_pairs_per_bin.emplace_back(pairs_per_bin);
+            WriteRDFToFile(particleContainer, domain, simstep);
+
+            //reset instantaneous buffer after printout and end of step
+            std::fill(pairs_per_bin.begin(),pairs_per_bin.end(),0.0);
+        }   
+    }
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{
-        WriteRDFToFile(particleContainer, domain);
+        WriteRDFToFile(particleContainer, domain, global_simulation->getSimulationStep());
     }
     std::string getPluginName()  {return "RadialDFCOM";}
     static PluginBase* createInstance() {return new RadialDFCOM(); }
@@ -54,7 +71,7 @@ class RadialDFCOM:public PluginBase{
 
     private:
     void SetBinContainer(ParticleContainer* pc);
-    void WriteRDFToFile(ParticleContainer* particleContainer, Domain* domain);
+    void WriteRDFToFile(ParticleContainer* particleContainer, Domain* domain, unsigned long simstep);
     
 
 };

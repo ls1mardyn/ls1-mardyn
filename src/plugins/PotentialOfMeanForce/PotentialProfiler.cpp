@@ -97,9 +97,9 @@ void PotentialProfiler::SetBinContainer(ParticleContainer* pc){
     this->current_potential_average.resize(number_bins);
     std::fill(current_potential_average.begin(),current_potential_average.end(),0.0);
     
-    Log::global_log->info()<<"[RDF COM] Bin  width "<<bin_width<<"\n";
+    Log::global_log->info()<<"[PotentialProfiler] Bin  width "<<bin_width<<"\n";
     measured_distance_squared = bin_width*bin_width*number_bins*number_bins;
-    Log::global_log->info()<<"[RDF COM] Limit distance "<<measured_distance_squared<<"\n";
+    Log::global_log->info()<<"[PotentialProfiler] Limit distance "<<measured_distance_squared<<"\n";
 }
 
 void PotentialProfiler::ProcessDistance(double r, double pot){  
