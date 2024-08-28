@@ -301,7 +301,7 @@ void InteractionForceAdapter::ForceOfPotentialOfMeanForce(std::array<double,3>& 
     if(global_simulation->getSimulationStep()==0){
         double derivative = adres->GetRDFInterpolation().CentralFiniteDifference(r);
         double rdf = adres->GetRDFInterpolation().GetRDFAt(r);
-        double f_scalar = -1.0*_simulation.getEnsemble()->T()*derivative/rdf;
+        double f_scalar = -1.0*_simulation.getEnsemble()->T()*derivative/(rdf*r);
         for(int i=0;i<f_com.size();i++){
             f_com[i] *= f_scalar;
         }

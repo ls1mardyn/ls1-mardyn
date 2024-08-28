@@ -126,7 +126,7 @@ void InternalProfiler::GenerateInstantaneousData(ParticleContainer* particleCont
         rmax3 = rmax*rmax*rmax;
         binvol = (4.0/3.0)*M_PI*(rmax3-rmin3);
         den = 0.5*domain->getglobalNumMolecules()*(domain->getglobalNumMolecules()-1.0)*binvol/domain->getGlobalVolume();
-        rdf_buffer[i] /= measured_steps;
+        //rdf_buffer[i] /= measured_steps;
         rdf_buffer[i] /= den;
 
         //Generate U(r)_{cg} values for interpolation
