@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>50</steps>
+        <steps>1000</steps>
       </production>
     </run>
     
@@ -22,7 +22,7 @@
       <temperature unit="reduced">2.0</temperature>
       <domain type="box">
         <lx>13.5</lx>
-        <ly>13.5</ly>
+        <ly>13.5</ly>q
         <lz>13.5</lz>
       </domain>
       <components>
@@ -70,17 +70,25 @@
       <electrostatic type="ReactionField">
         <epsilon>1.0e+10</epsilon>
       </electrostatic>
+      <thermostats>
+       <!-- velocity scaling thermostat, if no component is specified the global thermostat is assumed -->
+      <thermostat type="VelocityScaling">
+        <!-- target temperature, if not specified the ensemble temperature will be used -->
+      </thermostat> 
+      </thermostats>
+      
     </algorithm>
     
     <output>
  
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
-      <writefrequency>10000</writefrequency>
+      <writefrequency>20</writefrequency>
     </outputplugin>
+
     <outputplugin name="CheckpointWriter">
       <type>binary</type>
-      <writefrequency>10000</writefrequency>
+      <writefrequency>100</writefrequency>
       <outputprefix>generic_lj_step</outputprefix>
     </outputplugin>
 
