@@ -107,9 +107,9 @@ void RadialDFCOM::WriteRDFToFile(ParticleContainer* particleContainer, Domain* d
         avg_data = accumulated_com_rdf[i]/(double)measured_steps;
 
         outfile<<std::setw(8)<<std::left<<rmid
-        <<"\t"<<std::setw(8)<<std::left<<data/den
-        <<"\t"<<std::setw(8)<<std::left<<data
-        <<"\t"<<std::setw(8)<<std::left<<den;
+        <<"\t"<<std::setw(8)<<std::left<<data/den;
+        // <<"\t"<<std::setw(8)<<std::left<<data
+        // <<"\t"<<std::setw(8)<<std::left<<den;
 
         if(simstep%average_frequency == 0){
             outfile<<"\t"<<std::setw(8)<<std::left<<avg_data/den;
