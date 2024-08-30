@@ -29,7 +29,8 @@ void PotentialProfiler::endStep(ParticleContainer* pc, DomainDecompBase* dd, Dom
         for(int i=0;i<pot_vals.size();++i){
             int N = 0.5*(double)pot_counts[i]*((double)pot_counts[i]-1.0);
             if(N>0 && !std::isinf(pot_vals[i])){
-                pot_vals[i] = pot_vals[i]/(0.5*(double)pot_counts[i]*((double)pot_counts[i]-1.0));
+                // pot_vals[i] = pot_vals[i]/(0.5*(double)pot_counts[i]*((double)pot_counts[i]-1.0));
+                pot_vals[i] = pot_vals[i]/pot_counts[i];
             }
             else{
                 pot_vals[i]=0;

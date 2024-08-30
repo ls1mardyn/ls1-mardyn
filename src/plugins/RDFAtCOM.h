@@ -12,11 +12,6 @@
 #include "particleContainer/ParticleContainer.h"
 #include "plugins/PluginBase.h"
 
-/**
- * Calculate radial distribution function on multi-site molecule center of mass.
- * Uses R = 
- */
-
 class RadialDFCOM:public PluginBase{
 
     private:
