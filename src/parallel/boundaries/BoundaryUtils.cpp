@@ -204,18 +204,23 @@ BoundaryUtils::getInnerBuffer(const std::array<double, 3> givenRegionBegin,
 
   switch (dimension) // can be done with findsign() too, but this is clearer
   {
+  // in positive case, set the beginning to end-width, or whole domain if width
+  // too large
   case DimensionType::POSX:
   case DimensionType::POSY:
   case DimensionType::POSZ:
     returnRegionBegin[dimensionLS1] =
-        returnRegionEnd[dimensionLS1] - regionWidth;
+        std::max(returnRegionEnd[dimensionLS1] - regionWidth,
+                 givenRegionBegin[dimensionLS1]);
     break;
-
+  // in negative case, set the end to beginning+width, or whole domain if width
+  // too large
   case DimensionType::NEGX:
   case DimensionType::NEGY:
   case DimensionType::NEGZ:
     returnRegionEnd[dimensionLS1] =
-        returnRegionBegin[dimensionLS1] + regionWidth;
+        std::min(returnRegionBegin[dimensionLS1] + regionWidth,
+                 givenRegionEnd[dimensionLS1]);
     break;
 
   default:
@@ -256,9 +261,11 @@ BoundaryUtils::getOuterBuffer(const std::array<double, 3> givenRegionBegin,
 
   int dimensionLS1 = convertDimensionToLS1Dims(dimension);
 
+  // find the two dimensions that are not being considered
   int extraDim1 = dimensionLS1 == 0 ? 1 : 0;
   int extraDim2 = dimensionLS1 == 2 ? 1 : 2;
 
+  // extend the extra dimensions to cover all ghost areas
   returnRegionBegin[extraDim1] =
       returnRegionBegin[extraDim1] - regionWidth[extraDim1];
   returnRegionEnd[extraDim1] =
@@ -271,6 +278,8 @@ BoundaryUtils::getOuterBuffer(const std::array<double, 3> givenRegionBegin,
 
   switch (dimension) // can be done with findsign() too, but this is clearer
   {
+  // in positive case, move the box begin to edge of domain, and box end to
+  // beyond
   case DimensionType::POSX:
   case DimensionType::POSY:
   case DimensionType::POSZ:
@@ -279,6 +288,8 @@ BoundaryUtils::getOuterBuffer(const std::array<double, 3> givenRegionBegin,
         returnRegionBegin[dimensionLS1] + regionWidth[dimensionLS1];
     break;
 
+  // in negative case, move the box end to edge of domain, and box begin to
+  // beyond
   case DimensionType::NEGX:
   case DimensionType::NEGY:
   case DimensionType::NEGZ:
