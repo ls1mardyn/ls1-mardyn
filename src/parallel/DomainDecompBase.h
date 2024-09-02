@@ -290,7 +290,7 @@ public:
 
 	virtual void printCommunicationPartners(std::string filename) const {};
 
-	void setGlobalBoundaryType(DimensionType dimension, BoundaryType boundary);
+	void setGlobalBoundaryType(BoundaryUtils::DimensionType dimension, BoundaryUtils::BoundaryType boundary);
 
 	void setLocalBoundariesFromGlobal(Domain* domain, Ensemble* ensemble);
 

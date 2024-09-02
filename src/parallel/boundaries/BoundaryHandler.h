@@ -7,41 +7,42 @@
 
 #pragma once
 
-#include <map>
-#include <vector>
-#include <string>
+#include "BoundaryUtils.h"
+
 #include <array>
-#include "BoundaryType.h"
-#include "DimensionType.h"
+#include <map>
+#include <string>
+#include <vector>
 
-
-class BoundaryHandler
-{
+class BoundaryHandler {
 public:
-	BoundaryHandler();
-	BoundaryType getGlobalWall(std::string dimension) const;
-	void setGlobalWall(std::string dimension, BoundaryType value);
-	BoundaryType getGlobalWall(DimensionType dimension) const;
-	void setGlobalWall(DimensionType dimension, BoundaryType value);
-	BoundaryType getGlobalWall(int dimension) const;
-	bool hasInvalidBoundary() const;
-	bool hasNonPeriodicBoundary() const;
+  BoundaryHandler();
+  BoundaryUtils::BoundaryType getGlobalWall(std::string dimension) const;
+  void setGlobalWall(std::string dimension, BoundaryUtils::BoundaryType value);
+  BoundaryUtils::BoundaryType
+  getGlobalWall(BoundaryUtils::DimensionType dimension) const;
+  void setGlobalWall(BoundaryUtils::DimensionType dimension,
+                     BoundaryUtils::BoundaryType value);
+  BoundaryUtils::BoundaryType getGlobalWall(int dimension) const;
+  bool hasInvalidBoundary() const;
+  bool hasNonPeriodicBoundary() const;
 
-	void setGlobalRegion(double* start, double* end);
-	void setLocalRegion(double* start, double* end);
+  void setGlobalRegion(double *start, double *end);
+  void setLocalRegion(double *start, double *end);
 
-	void setGlobalRegion(std::array<double,3> start, std::array<double,3> end);
-	void setLocalRegion(std::array<double,3> start, std::array<double,3> end);
+  void setGlobalRegion(std::array<double, 3> start, std::array<double, 3> end);
+  void setLocalRegion(std::array<double, 3> start, std::array<double, 3> end);
 
-	void findOuterWallsInLocalRegion();
-	bool isOuterWall(DimensionType dimension) const;
-	bool isOuterWall(int dimension) const;
-	bool processOuterWallLeavingParticles();
-	void removeNonPeriodicHalos();
+  void findOuterWallsInLocalRegion();
+  bool isOuterWall(BoundaryUtils::DimensionType dimension) const;
+  bool isOuterWall(int dimension) const;
+  bool processOuterWallLeavingParticles();
+  void removeNonPeriodicHalos();
 
 private:
-	std::map<DimensionType, BoundaryType> _boundaries;
-	std::map<DimensionType, bool> _isOuterWall;
-	std::array<double,3> _globalRegionStart, _globalRegionEnd;
-	std::array<double,3> _localRegionStart, _localRegionEnd;
+  std::map<BoundaryUtils::DimensionType, BoundaryUtils::BoundaryType>
+      _boundaries;
+  std::map<BoundaryUtils::DimensionType, bool> _isOuterWall;
+  std::array<double, 3> _globalRegionStart, _globalRegionEnd;
+  std::array<double, 3> _localRegionStart, _localRegionEnd;
 };
