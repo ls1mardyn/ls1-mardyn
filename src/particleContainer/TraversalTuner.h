@@ -132,7 +132,8 @@ TraversalTuner<CellTemplate>::~TraversalTuner() {
 
 template<class CellTemplate>
 void TraversalTuner<CellTemplate>::findOptimalTraversal() {
-	// TODO implement autotuning here! At the moment the traversal is chosen via readXML!
+  // ls1 always uses the traversal selected via the XML
+  // If you want auto tuning activate AutoPas via CMake
 
 	_optimalTraversal = _traversals[selectedTraversal].first;
 

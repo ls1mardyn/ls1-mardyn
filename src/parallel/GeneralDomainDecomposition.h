@@ -172,7 +172,7 @@ private:
 	std::pair<std::array<double, 3>, std::array<double, 3>> latchToGridSize(std::array<double, 3> boxMin,
 																			std::array<double, 3> boxMax) {
 		for (size_t ind = 0; ind < 3; ++ind) {
-			double currentGridSize = (*_gridSize)[ind];
+			const double currentGridSize = (*_gridSize)[ind];
 			// For boxmin, the lower domain boundary is 0, so that's always fine!
 			boxMin[ind] = std::round(boxMin[ind] / currentGridSize) * currentGridSize;
 			// update boxmax only if it isn't at the very top of the domain!
