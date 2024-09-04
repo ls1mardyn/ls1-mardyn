@@ -39,7 +39,8 @@ void GeneralDomainDecomposition::initializeALL() {
 	if (_forceLatchingToLinkedCellsGrid and not _latchGridSize.has_value()) {
 		std::array<double, 3> forcedGridSize{};
 		for(size_t dim = 0; dim < 3; ++dim){
-			size_t numCells = _domainLength[dim] / _interactionLength;
+			// if we calculate 3.5 cells per dim there is only space for 3 -> floor
+			const auto numCells = std::floor(_domainLength[dim] / _interactionLength);
 			forcedGridSize[dim] = _domainLength[dim] / numCells;
 		}
 		_latchGridSize = forcedGridSize;
