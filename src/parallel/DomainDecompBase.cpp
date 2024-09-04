@@ -40,12 +40,12 @@ void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* en
 	
 	_boundaryHandler.setLocalRegion(startRegion, endRegion);
 	_boundaryHandler.setGlobalRegion(globStartRegion, globEndRegion);
-	_boundaryHandler.findOuterWallsInLocalRegion();
+	_boundaryHandler.findGlobalWallsInLocalRegion();
 }
 
 void DomainDecompBase::processBoundaryConditions(ParticleContainer* moleculeContainer, double timestepLength) {
 	if(_boundaryHandler.hasNonPeriodicBoundary())	
-		_boundaryHandler.processOuterWallLeavingParticles(moleculeContainer, timestepLength);
+		_boundaryHandler.processGlobalWallLeavingParticles(moleculeContainer, timestepLength);
 }
 
 void DomainDecompBase::removeNonPeriodicHalos(ParticleContainer* moleculeContainer) {

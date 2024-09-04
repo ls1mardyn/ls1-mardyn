@@ -86,18 +86,18 @@ void BoundaryHandler::setLocalRegion(std::array<double, 3> start,
   _localRegionEnd = end;
 }
 
-void BoundaryHandler::findOuterWallsInLocalRegion() {
-  _isOuterWall[BoundaryUtils::DimensionType::POSX] =
+void BoundaryHandler::findGlobalWallsInLocalRegion() {
+  _isGlobalWall[BoundaryUtils::DimensionType::POSX] =
       (_localRegionEnd[0] == _globalRegionEnd[0]);
-  _isOuterWall[BoundaryUtils::DimensionType::NEGX] =
+  _isGlobalWall[BoundaryUtils::DimensionType::NEGX] =
       (_localRegionStart[0] == _globalRegionStart[0]);
-  _isOuterWall[BoundaryUtils::DimensionType::POSY] =
+  _isGlobalWall[BoundaryUtils::DimensionType::POSY] =
       (_localRegionEnd[1] == _globalRegionEnd[1]);
-  _isOuterWall[BoundaryUtils::DimensionType::NEGY] =
+  _isGlobalWall[BoundaryUtils::DimensionType::NEGY] =
       (_localRegionStart[1] == _globalRegionStart[1]);
-  _isOuterWall[BoundaryUtils::DimensionType::POSZ] =
+  _isGlobalWall[BoundaryUtils::DimensionType::POSZ] =
       (_localRegionEnd[2] == _globalRegionEnd[2]);
-  _isOuterWall[BoundaryUtils::DimensionType::NEGZ] =
+  _isGlobalWall[BoundaryUtils::DimensionType::NEGZ] =
       (_localRegionStart[2] == _globalRegionStart[2]);
 }
 
@@ -131,19 +131,19 @@ bool BoundaryHandler::hasNonPeriodicBoundary() const {
              BoundaryUtils::BoundaryType::PERIODIC;
 }
 
-bool BoundaryHandler::isOuterWall(
+bool BoundaryHandler::isGlobalWall(
     BoundaryUtils::DimensionType dimension) const {
-  return _isOuterWall.at(dimension);
+  return _isGlobalWall.at(dimension);
 }
 
-bool BoundaryHandler::isOuterWall(int dimension) const {
-  return isOuterWall(BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
+bool BoundaryHandler::isGlobalWall(int dimension) const {
+  return isGlobalWall(BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
 }
 
-void BoundaryHandler::processOuterWallLeavingParticles(ParticleContainer* moleculeContainer, double timestepLength) {
+void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer* moleculeContainer, double timestepLength) {
   double cutoff = moleculeContainer->getCutoff();
-  for (auto const &currentWall : _isOuterWall) {
-    if (!currentWall.second) // not an outer wall
+  for (auto const &currentWall : _isGlobalWall) {
+    if (!currentWall.second) // not a global wall
       continue;
 
     switch (getGlobalWall(currentWall.first)) {
@@ -153,7 +153,7 @@ void BoundaryHandler::processOuterWallLeavingParticles(ParticleContainer* molecu
 
     case BoundaryUtils::BoundaryType::OUTFLOW:
     case BoundaryUtils::BoundaryType::REFLECTING: {
-      // create region
+      // create region by using getInnerBuffer()
       std::array<double, 3> curWallRegionBegin, curWallRegionEnd;
       std::tie(curWallRegionBegin, curWallRegionEnd) =
           BoundaryUtils::getInnerBuffer(_localRegionStart, _localRegionEnd,
@@ -164,11 +164,15 @@ void BoundaryHandler::processOuterWallLeavingParticles(ParticleContainer* molecu
       const double cstylerend[] = {curWallRegionEnd[0], curWallRegionEnd[1],
                                    curWallRegionEnd[2]};
 
+      // grab an iterator from the converted coords
       auto particlesInRegion = moleculeContainer->regionIterator(
           cstylerbegin, cstylerend, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+
+      // iterate through all molecules
       for (auto it = particlesInRegion; it.isValid(); ++it) {
         Molecule curMolecule = *it;
 
+        // calculate the velocity adjustment from the leapfrog method
         int currentDim =
             BoundaryUtils::convertDimensionToLS1Dims(currentWall.first);
         double halfTimestep = .5 * timestepLength;
@@ -176,16 +180,19 @@ void BoundaryHandler::processOuterWallLeavingParticles(ParticleContainer* molecu
         double force = it->F(currentDim);
         double nextStepVelAdjustment = halfTimestepByMass * force;
 
+        // check if the molecule would leave the bounds
         if (BoundaryUtils::isMoleculeLeaving(
                 curMolecule, curWallRegionBegin, curWallRegionEnd,
                 currentWall.first, timestepLength, nextStepVelAdjustment)) {
           if (getGlobalWall(currentWall.first) ==
               BoundaryUtils::BoundaryType::REFLECTING) {
             double currentVel = it->v(currentDim);
+            // reflect the velocity, such that when the leapfrog integrator adds
+            // nextStepVelAdjustment in the next integration step, the final result
+            // ends up being currentVel+nextStepVelAdjustment in the negative direction of travel
             it->setv(currentDim, -currentVel - nextStepVelAdjustment -
                                      nextStepVelAdjustment);
-          } else // outflow
-          {
+          } else { // outflow, delete the particle if it would leave
             moleculeContainer->deleteMolecule(it, false);
           }
         }
@@ -201,12 +208,13 @@ void BoundaryHandler::processOuterWallLeavingParticles(ParticleContainer* molecu
 }
 
 void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer* moleculeContainer) {
+  // get halo lengths in each dimension
   double buffers[] = {
       moleculeContainer->get_halo_L(0) + moleculeContainer->getSkin(),
       moleculeContainer->get_halo_L(1) + moleculeContainer->getSkin(),
       moleculeContainer->get_halo_L(2) + moleculeContainer->getSkin()};
-  for (auto const &currentWall : _isOuterWall) {
-    if (!currentWall.second) // not an outer wall
+  for (auto const &currentWall : _isGlobalWall) {
+    if (!currentWall.second) // not a global wall
       continue;
 
     switch (getGlobalWall(currentWall.first)) {
@@ -216,7 +224,7 @@ void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer* moleculeContaine
 
     case BoundaryUtils::BoundaryType::OUTFLOW:
     case BoundaryUtils::BoundaryType::REFLECTING: {
-      // create region
+      // create region by using getOuterBuffer()
       std::array<double, 3> curWallRegionBegin, curWallRegionEnd;
       std::tie(curWallRegionBegin, curWallRegionEnd) =
           BoundaryUtils::getOuterBuffer(_localRegionStart, _localRegionEnd,
@@ -227,10 +235,11 @@ void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer* moleculeContaine
       const double cstylerend[] = {curWallRegionEnd[0], curWallRegionEnd[1],
                                    curWallRegionEnd[2]};
 
+      // grab an iterator from the converted coords
       auto particlesInRegion = moleculeContainer->regionIterator(
           cstylerbegin, cstylerend, ParticleIterator::ALL_CELLS);
       for (auto it = particlesInRegion; it.isValid(); ++it) {
-        
+        // delete all halo particles
         moleculeContainer->deleteMolecule(it, false);
       }
       break;

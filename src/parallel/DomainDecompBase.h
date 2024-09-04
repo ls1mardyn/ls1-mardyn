@@ -290,14 +290,19 @@ public:
 
 	virtual void printCommunicationPartners(std::string filename) const {};
 
+	/* Set the gloabl boundary type for the _boundaryHandler object. */
 	void setGlobalBoundaryType(BoundaryUtils::DimensionType dimension, BoundaryUtils::BoundaryType boundary);
 
+	/* Find which boundaries of a subdomain are actually global boundaries, and update _boundaryHandler. */
 	void setLocalBoundariesFromGlobal(Domain* domain, Ensemble* ensemble);
 
+	/* Check if any of the global boundaries are invalid. */
 	bool hasInvalidBoundary() const { return _boundaryHandler.hasInvalidBoundary();}
 
+	/* Processes leaving particles according to the boundary coundition of the wall the particles would be leaving. */
 	void processBoundaryConditions(ParticleContainer* moleculeContainer, double timestepLength);
 
+	/* Delete all halo particles outside global boundas that are non-periodic. */
 	void removeNonPeriodicHalos(ParticleContainer* moleculeContainer);
 
 protected:

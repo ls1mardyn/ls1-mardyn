@@ -38,16 +38,24 @@ enum class BoundaryType { PERIODIC, OUTFLOW, REFLECTING, ERROR };
 
 /**
  * enum storing the axes and direction.
+ * 
+ * The dimensions are POSX, NEGX, POSY, NEGY, POSZ and NEGZ.
  *
- * This is fixed for 3D, and ERROR is included for sanity checks
+ * This is hardcoded for 3D, and ERROR is included for sanity checks.
  */
 enum class DimensionType { POSX, NEGX, POSY, NEGY, POSZ, NEGZ, ERROR };
 
+/* List of all allowed dimensions in string format. */
 const std::array<std::string, 6> permissibleDimensionsString = {
     "+x", "+y", "+z", "-x", "-y", "-z"};
+
+/* List of all allowed dimensions in int format. */
 const std::array<int, 6> permissibleDimensionsInt = {-1, -2, -3, 1, 2, 3};
 
+/* Check if a dimension is allowed. */
 bool isDimensionStringPermissible(std::string dimension);
+
+/* Check if a dimension is allowed. */
 bool isDimensionNumericPermissible(int dim);
 
 DimensionType convertStringToDimension(std::string dimension);
@@ -61,9 +69,7 @@ int convertDimensionToNumeric(DimensionType dimension);
 int convertDimensionToNumericAbs(DimensionType dimension);
 int convertDimensionToLS1Dims(DimensionType dimension);
 
-/**
- * Used to convert string read from the XML input file
- */
+/* Used to convert string read from the XML input file. */
 BoundaryType convertStringToBoundary(std::string boundary);
 
 /**
@@ -118,7 +124,10 @@ getOuterBuffer(const std::array<double, 3> givenRegionBegin,
                const std::array<double, 3> givenRegionEnd,
                DimensionType dimension, double *regionWidth);
 
+/* Returns the sign of a number, used for determining direction from a dimension. */
 inline int findSign(int n) { return n < 0 ? -1 : 1; }
+
+/* Returns the sign of a number, used for determining direction from a dimension. */
 inline int findSign(DimensionType dimension) {
   return findSign(convertDimensionToNumeric(dimension));
 }

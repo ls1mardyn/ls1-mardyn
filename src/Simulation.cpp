@@ -439,6 +439,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					Log::global_log->error() << "Invalid boundary type! Please check the config file" << std::endl;
 					exit(1);
 				}
+				// go over all local boundaries, determine which are global
 				_domainDecomposition->setLocalBoundariesFromGlobal(_domain, _ensemble);
 				xmlconfig.changecurrentnode("..");
 			}
