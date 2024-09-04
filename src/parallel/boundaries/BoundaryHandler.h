@@ -8,6 +8,7 @@
 #pragma once
 
 #include "BoundaryUtils.h"
+#include "particleContainer/ParticleContainer.h"
 
 #include <array>
 #include <map>
@@ -36,8 +37,8 @@ public:
   void findOuterWallsInLocalRegion();
   bool isOuterWall(BoundaryUtils::DimensionType dimension) const;
   bool isOuterWall(int dimension) const;
-  bool processOuterWallLeavingParticles();
-  void removeNonPeriodicHalos();
+  void processOuterWallLeavingParticles(ParticleContainer* moleculeContainer, double timestepLength);
+  void removeNonPeriodicHalos(ParticleContainer* moleculeContainer);
 
 private:
   std::map<BoundaryUtils::DimensionType, BoundaryUtils::BoundaryType>

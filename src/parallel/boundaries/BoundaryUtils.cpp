@@ -242,9 +242,9 @@ bool BoundaryUtils::isMoleculeLeaving(const Molecule molecule,
   double newPos =
       molecule.r(ls1dim) +
       (timestepLength * (molecule.v(ls1dim) + nextStepVelAdjustment));
-  if (newPos < regionBegin[ls1dim] && direction < 0)
+  if (newPos <= regionBegin[ls1dim] && direction < 0)
     return true;
-  if (newPos > regionEnd[ls1dim] && direction > 0)
+  if (newPos >= regionEnd[ls1dim] && direction > 0)
     return true;
   return false;
 }

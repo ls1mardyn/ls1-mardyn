@@ -140,10 +140,7 @@ bool BoundaryHandler::isOuterWall(int dimension) const {
   return isOuterWall(BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
 }
 
-bool BoundaryHandler::processOuterWallLeavingParticles() {
-  auto moleculeContainer = global_simulation->getMoleculeContainer(); // :-(
-  double timestepLength =
-      (global_simulation->getIntegrator())->getTimestepLength();
+void BoundaryHandler::processOuterWallLeavingParticles(ParticleContainer* moleculeContainer, double timestepLength) {
   double cutoff = moleculeContainer->getCutoff();
   for (auto const &currentWall : _isOuterWall) {
     if (!currentWall.second) // not an outer wall
@@ -201,11 +198,9 @@ bool BoundaryHandler::processOuterWallLeavingParticles() {
       mardyn_exit(1);
     }
   }
-  return true;
 }
 
-void BoundaryHandler::removeNonPeriodicHalos() {
-  auto moleculeContainer = global_simulation->getMoleculeContainer();
+void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer* moleculeContainer) {
   double buffers[] = {
       moleculeContainer->get_halo_L(0) + moleculeContainer->getSkin(),
       moleculeContainer->get_halo_L(1) + moleculeContainer->getSkin(),
@@ -235,6 +230,7 @@ void BoundaryHandler::removeNonPeriodicHalos() {
       auto particlesInRegion = moleculeContainer->regionIterator(
           cstylerbegin, cstylerend, ParticleIterator::ALL_CELLS);
       for (auto it = particlesInRegion; it.isValid(); ++it) {
+        
         moleculeContainer->deleteMolecule(it, false);
       }
       break;

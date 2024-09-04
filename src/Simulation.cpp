@@ -1077,7 +1077,7 @@ void Simulation::simulateOneTimestep()
 		_ensemble->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
 		
 		global_simulation->timers()->start("SIMULATION_BOUNDARY_TREATMENT");
-		_domainDecomposition->processBoundaryConditions();
+		_domainDecomposition->processBoundaryConditions(_moleculeContainer, _integrator->getTimestepLength());
 		global_simulation->timers()->stop("SIMULATION_BOUNDARY_TREATMENT");
 		
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
@@ -1400,7 +1400,7 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
 
 	global_simulation->timers()->start("SIMULATION_BOUNDARY_TREATMENT");
-	_domainDecomposition->removeNonPeriodicHalos();
+	_domainDecomposition->removeNonPeriodicHalos(_moleculeContainer);
 	global_simulation->timers()->stop("SIMULATION_BOUNDARY_TREATMENT");
 
 	// The cache of the molecules must be updated/build after the exchange process,

@@ -43,14 +43,14 @@ void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* en
 	_boundaryHandler.findOuterWallsInLocalRegion();
 }
 
-void DomainDecompBase::processBoundaryConditions() {
+void DomainDecompBase::processBoundaryConditions(ParticleContainer* moleculeContainer, double timestepLength) {
 	if(_boundaryHandler.hasNonPeriodicBoundary())	
-		_boundaryHandler.processOuterWallLeavingParticles();
+		_boundaryHandler.processOuterWallLeavingParticles(moleculeContainer, timestepLength);
 }
 
-void DomainDecompBase::removeNonPeriodicHalos() {
+void DomainDecompBase::removeNonPeriodicHalos(ParticleContainer* moleculeContainer) {
 	if(_boundaryHandler.hasNonPeriodicBoundary())
-		_boundaryHandler.removeNonPeriodicHalos();
+		_boundaryHandler.removeNonPeriodicHalos(moleculeContainer);
 }
 
 void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>& invalidMolecules,

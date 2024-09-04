@@ -296,9 +296,9 @@ public:
 
 	bool hasInvalidBoundary() const { return _boundaryHandler.hasInvalidBoundary();}
 
-	void processBoundaryConditions();
+	void processBoundaryConditions(ParticleContainer* moleculeContainer, double timestepLength);
 
-	void removeNonPeriodicHalos();
+	void removeNonPeriodicHalos(ParticleContainer* moleculeContainer);
 
 protected:
 	void addLeavingMolecules(std::vector<Molecule>& invalidMolecules, ParticleContainer* moleculeContainer);
