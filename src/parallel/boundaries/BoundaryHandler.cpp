@@ -140,7 +140,8 @@ bool BoundaryHandler::isGlobalWall(int dimension) const {
   return isGlobalWall(BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
 }
 
-void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer* moleculeContainer, double timestepLength) {
+void BoundaryHandler::processGlobalWallLeavingParticles(
+    ParticleContainer *moleculeContainer, double timestepLength) {
   double cutoff = moleculeContainer->getCutoff();
   for (auto const &currentWall : _isGlobalWall) {
     if (!currentWall.second) // not a global wall
@@ -188,8 +189,9 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer* molec
               BoundaryUtils::BoundaryType::REFLECTING) {
             double currentVel = it->v(currentDim);
             // reflect the velocity, such that when the leapfrog integrator adds
-            // nextStepVelAdjustment in the next integration step, the final result
-            // ends up being currentVel+nextStepVelAdjustment in the negative direction of travel
+            // nextStepVelAdjustment in the next integration step, the final
+            // result ends up being currentVel+nextStepVelAdjustment in the
+            // negative direction of travel
             it->setv(currentDim, -currentVel - nextStepVelAdjustment -
                                      nextStepVelAdjustment);
           } else { // outflow, delete the particle if it would leave
@@ -207,7 +209,8 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer* molec
   }
 }
 
-void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer* moleculeContainer) {
+void BoundaryHandler::removeNonPeriodicHalos(
+    ParticleContainer *moleculeContainer) {
   // get halo lengths in each dimension
   double buffers[] = {
       moleculeContainer->get_halo_L(0) + moleculeContainer->getSkin(),

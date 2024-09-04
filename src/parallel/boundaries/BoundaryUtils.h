@@ -38,7 +38,7 @@ enum class BoundaryType { PERIODIC, OUTFLOW, REFLECTING, ERROR };
 
 /**
  * enum storing the axes and direction.
- * 
+ *
  * The dimensions are POSX, NEGX, POSY, NEGY, POSZ and NEGZ.
  *
  * This is hardcoded for 3D, and ERROR is included for sanity checks.
@@ -124,10 +124,12 @@ getOuterBuffer(const std::array<double, 3> givenRegionBegin,
                const std::array<double, 3> givenRegionEnd,
                DimensionType dimension, double *regionWidth);
 
-/* Returns the sign of a number, used for determining direction from a dimension. */
+/* Returns the sign of a number, used for determining direction from a
+ * dimension. */
 inline int findSign(int n) { return n < 0 ? -1 : 1; }
 
-/* Returns the sign of a number, used for determining direction from a dimension. */
+/* Returns the sign of a number, used for determining direction from a
+ * dimension. */
 inline int findSign(DimensionType dimension) {
   return findSign(convertDimensionToNumeric(dimension));
 }
