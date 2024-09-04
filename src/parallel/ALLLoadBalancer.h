@@ -21,7 +21,7 @@ public:
 		// nothing yet.
 	}
 
-	std::array<bool, 3> getCoversWholeDomain() override { return _coversWholeDomain; }
+	const std::array<bool, 3>& getCoversWholeDomain() const override { return _coversWholeDomain; }
 
 private:
 	ALL<double, double> _all;

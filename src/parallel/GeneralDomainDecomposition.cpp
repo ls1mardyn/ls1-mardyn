@@ -250,7 +250,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 
 void GeneralDomainDecomposition::initCommPartners(ParticleContainer* moleculeContainer,
 												  Domain* domain) {  // init communication partners
-	auto coversWholeDomain = _loadBalancer->getCoversWholeDomain();
+	const auto coversWholeDomain = _loadBalancer->getCoversWholeDomain();
 	for (int d = 0; d < DIMgeom; ++d) {
 		// this needs to be updated for proper initialization of the neighbours
 		_neighbourCommunicationScheme->setCoverWholeDomain(d, coversWholeDomain[d]);
