@@ -138,16 +138,18 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 	_optimalTraversal = _traversals[selectedTraversal].first;
 
 	// log traversal
-	if (dynamic_cast<HalfShellTraversal<CellTemplate> *>(_optimalTraversal))
+	if (dynamic_cast<SlicedCellPairTraversal<CellTemplate> *>(_optimalTraversal))
+		Log::global_log->debug() << "Using SlicedCellPairTraversal." << std::endl;
+	else if (dynamic_cast<C08CellPairTraversal<CellTemplate> *>(_optimalTraversal))
+		Log::global_log->debug() << "Using C08CellPairTraversal without eighthShell." << std::endl;
+	else if (dynamic_cast<C04CellPairTraversal<CellTemplate> *>(_optimalTraversal))
+		Log::global_log->debug() << "Using C04CellPairTraversal." << std::endl;
+	else if (dynamic_cast<C08CellPairTraversal<CellTemplate, true> *>(_optimalTraversal))
+		Log::global_log->debug() << "Using C08CellPairTraversal with eighthShell." << std::endl;
+	else if (dynamic_cast<HalfShellTraversal<CellTemplate> *>(_optimalTraversal))
 		Log::global_log->debug() << "Using HalfShellTraversal." << std::endl;
 	else if (dynamic_cast<OriginalCellPairTraversal<CellTemplate> *>(_optimalTraversal))
 		Log::global_log->debug() << "Using OriginalCellPairTraversal." << std::endl;
-	else if (dynamic_cast<C08CellPairTraversal<CellTemplate> *>(_optimalTraversal))
-		Log::global_log->debug() << "Using C08CellPairTraversal without eighthShell." << std::endl;
-	else if (dynamic_cast<C08CellPairTraversal<CellTemplate, true> *>(_optimalTraversal))
-		Log::global_log->debug() << "Using C08CellPairTraversal with eighthShell." << std::endl;
-	else if (dynamic_cast<C04CellPairTraversal<CellTemplate> *>(_optimalTraversal))
-		Log::global_log->debug() << "Using C04CellPairTraversal." << std::endl;
 	else if (dynamic_cast<MidpointTraversal<CellTemplate> *>(_optimalTraversal))
 		Log::global_log->debug() << "Using MidpointTraversal." << std::endl;
 	else if (dynamic_cast<NeutralTerritoryTraversal<CellTemplate> *>(_optimalTraversal))
@@ -158,9 +160,7 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 		Log::global_log->error() << "MarDyn was compiled without Quicksched Support. Aborting!" << std::endl;
 		mardyn_exit(1);
 #endif
-	} else if (dynamic_cast<SlicedCellPairTraversal<CellTemplate> *>(_optimalTraversal))
-		Log::global_log->debug() << "Using SlicedCellPairTraversal." << std::endl;
-	else
+	} else
 		Log::global_log->warning() << "Using unknown traversal." << std::endl;
 
 	if (_cellsInCutoff > _optimalTraversal->maxCellsInCutoff()) {
