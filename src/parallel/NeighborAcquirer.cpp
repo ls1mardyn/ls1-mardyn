@@ -75,12 +75,13 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 	std::vector<int> numberOfRegionsToSendToRank(num_processes, 0);       // outgoing row
 
+	// parse / deserialize received data
 	constexpr int bytesOneRegion =
 		sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) + sizeof(double) * 3;
 	// the regions I own and want to send: ranks<regions<regionData>>
 	std::vector<std::vector<std::vector<unsigned char>>> sendingList(num_processes);
-	std::vector<CommunicationPartner> comm_partners02;
 
+	std::vector<CommunicationPartner> comm_partners02{};
 	bufferPosition = 0;
 	while (bufferPosition < num_bytes_receive /*== buffer length*/) {
 
@@ -103,7 +104,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 			bufferPosition += sizeof(double);  // 4
 
 			// msg format one region: rmin | rmax | offset | width | shift
-			auto [regionsToTest, shifts] = getPotentiallyShiftedRegions(globalDomainLength, unshiftedRegion);
+			const auto [regionsToTest, shifts] = getPotentiallyShiftedRegions(globalDomainLength, unshiftedRegion);
 			// Before every set of push_backs make sure there is enough space for this set + all remaining.
 			// Work with the assumption that the others are of the same size as the current ones.
 			// This is potentially an overestimate but avoids a large number of resizes.
