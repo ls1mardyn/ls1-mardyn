@@ -205,6 +205,12 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>getGlobalUpot</b> (
 double&#160;</td><td class="memItemRight" valign="bottom"><b>getAverageGlobalUpotCSpec</b> ()</td></tr>
 <tr class="memdesc:ae97ddeecbede7af7f2794abd77c73a94"><td class="mdescLeft">&#160;</td><td class="mdescRight">by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction) <br /></td></tr>
 <tr class="separator:ae97ddeecbede7af7f2794abd77c73a94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abaebbe8a39548024de74f90e2d08c7eb"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomain.html#abaebbe8a39548024de74f90e2d08c7eb">getGlobalUkinTrans</a> ()</td></tr>
+<tr class="memdesc:abaebbe8a39548024de74f90e2d08c7eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the global kinetic energy  <a href="classDomain.html#abaebbe8a39548024de74f90e2d08c7eb">More...</a><br /></td></tr>
+<tr class="separator:abaebbe8a39548024de74f90e2d08c7eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7501306db4c7c2be1bdd291d5e8fbea1"><td class="memItemLeft" align="right" valign="top"><a id="a7501306db4c7c2be1bdd291d5e8fbea1" name="a7501306db4c7c2be1bdd291d5e8fbea1"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>getGlobalUkinRot</b> ()</td></tr>
+<tr class="separator:a7501306db4c7c2be1bdd291d5e8fbea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a72c1eeae491dd94b58d31a3aafa89da8"><td class="memItemLeft" align="right" valign="top">unsigned long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomain.html#a72c1eeae491dd94b58d31a3aafa89da8">getNumFluidMolecules</a> ()</td></tr>
 <tr class="separator:a72c1eeae491dd94b58d31a3aafa89da8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1e07a97dc6b1e0ea932a9a0155bdcf36"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomain.html#a1e07a97dc6b1e0ea932a9a0155bdcf36">getAverageGlobalVirial</a> ()</td></tr>
@@ -593,6 +599,34 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="abaebbe8a39548024de74f90e2d08c7eb" name="abaebbe8a39548024de74f90e2d08c7eb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abaebbe8a39548024de74f90e2d08c7eb">&#9670;&nbsp;</a></span>getGlobalUkinTrans()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double Domain::getGlobalUkinTrans </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>get the global kinetic energy </p>
+<p >Before this method is called, it has to be sure that the global energies has been calculated (method calculateGlobalValues) </p>
 
 </div>
 </div>
@@ -1006,7 +1040,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Aug 1 2024 11:46:58 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Thu Sep 5 2024 09:00:47 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
