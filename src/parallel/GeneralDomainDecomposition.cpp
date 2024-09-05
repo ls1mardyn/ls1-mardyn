@@ -97,7 +97,7 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			moleculeContainer->deleteOuterParticles();
 
 			// rebalance
-			Log::global_log->info() << "rebalancing..." << std::endl;
+			Log::global_log->debug() << "rebalancing..." << std::endl;
 
 			Log::global_log->set_mpi_output_all();
 			Log::global_log->debug() << "work:" << lastTraversalTime << std::endl;
@@ -107,7 +107,7 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 				std::tie(newBoxMin, newBoxMax) = latchToGridSize(newBoxMin, newBoxMax);
 			}
 			// migrate the particles, this will rebuild the moleculeContainer!
-			Log::global_log->info() << "migrating particles" << std::endl;
+			Log::global_log->debug() << "migrating particles" << std::endl;
 			migrateParticles(domain, moleculeContainer, newBoxMin, newBoxMax);
 
 #ifndef MARDYN_AUTOPAS
@@ -120,9 +120,9 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			_boxMax = newBoxMax;
 
 			// init communication partners
-			Log::global_log->info() << "updating communication partners" << std::endl;
+			Log::global_log->debug() << "updating communication partners" << std::endl;
 			initCommPartners(moleculeContainer, domain);
-			Log::global_log->info() << "rebalancing finished" << std::endl;
+			Log::global_log->debug() << "rebalancing finished" << std::endl;
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 		} else {
 			if (sendLeavingWithCopies()) {
