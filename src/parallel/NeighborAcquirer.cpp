@@ -18,49 +18,50 @@
  * saved in partners01.
  */
 std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> NeighborAcquirer::acquireNeighbors(
-	const std::array<double, 3> &globalDomainLength, HaloRegion *ownRegion, std::vector<HaloRegion> &desiredRegions,
+	const std::array<double, 3> &globalDomainLength, HaloRegion *ownRegion, const std::vector<HaloRegion> &desiredRegions,
 	const MPI_Comm &comm, bool excludeOwnRank) {
 
-	int my_rank;  // my rank
+	int my_rank{};  // my rank
 	MPI_Comm_rank(comm, &my_rank);
-	int num_processes;  // the number of processes in comm
+	int num_processes{};  // the number of processes in comm
 	MPI_Comm_size(comm, &num_processes);
 
-	int num_regions = desiredRegions.size();  // the number of regions I would like to acquire from other processes
+	const auto num_regions = desiredRegions.size();  // the number of regions I would like to acquire from other processes
 
 	// tell the other processes how much you are going to send
-	int num_bytes_send =
-		sizeof(int) * 2 + (sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) * 1) *
-							  num_regions;  // how many bytes am I going to send to all the other processes?
-	std::vector<int> num_bytes_receive_vec(num_processes, 0);  // vector of number of bytes I am going to receive
-	// MPI_Allreduce(&num_bytes_send, &num_bytes_receive, 1, MPI_INT, MPI_SUM, comm);
-	MPI_Allgather(&num_bytes_send, 1, MPI_INT, num_bytes_receive_vec.data(), 1, MPI_INT, comm);
+	// how many bytes am I going to send to all the other processes
+	const int num_bytes_send =
+		sizeof(int) * 2 + (sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) * 1) * num_regions;
 
-	// create byte buffer
+	// create byte send buffer
 	std::vector<unsigned char> outgoingDesiredRegionsVector(num_bytes_send);  // outgoing byte buffer
-	int i = 0;
-	int p = 0;
 
 	// msg format: rank | number_of_regions | region_01 | region_02 | ...
-
-	memcpy(outgoingDesiredRegionsVector.data() + i, &my_rank, sizeof(int));
-	i += sizeof(int);
-	memcpy(outgoingDesiredRegionsVector.data() + i, &num_regions, sizeof(int));
-	i += sizeof(int);
+	// fill the buffer
+	int bufferPosition = 0;
+	memcpy(outgoingDesiredRegionsVector.data() + bufferPosition, &my_rank, sizeof(int));
+	bufferPosition += sizeof(int);
+	memcpy(outgoingDesiredRegionsVector.data() + bufferPosition, &num_regions, sizeof(int));
+	bufferPosition += sizeof(int);
 
 	for (auto &region : desiredRegions) {  // filling up the outgoing byte buffer
-		memcpy(outgoingDesiredRegionsVector.data() + i, region.rmin, sizeof(double) * 3);
-		i += sizeof(double) * 3;
-		memcpy(outgoingDesiredRegionsVector.data() + i, region.rmax, sizeof(double) * 3);
-		i += sizeof(double) * 3;
-		memcpy(outgoingDesiredRegionsVector.data() + i, region.offset, sizeof(int) * 3);
-		i += sizeof(int) * 3;
-		memcpy(outgoingDesiredRegionsVector.data() + i, &region.width, sizeof(double));
-		i += sizeof(double);
+		memcpy(outgoingDesiredRegionsVector.data() + bufferPosition, region.rmin, sizeof(double) * 3);
+		bufferPosition += sizeof(double) * 3;
+		memcpy(outgoingDesiredRegionsVector.data() + bufferPosition, region.rmax, sizeof(double) * 3);
+		bufferPosition += sizeof(double) * 3;
+		memcpy(outgoingDesiredRegionsVector.data() + bufferPosition, region.offset, sizeof(int) * 3);
+		bufferPosition += sizeof(int) * 3;
+		memcpy(outgoingDesiredRegionsVector.data() + bufferPosition, &region.width, sizeof(double));
+		bufferPosition += sizeof(double);
 	}
 
+	// set up structure information data for the Allgatherv operation
+	// vector of number of bytes I am going to receive
+	std::vector<int> num_bytes_receive_vec(num_processes, 0);
+	MPI_Allgather(&num_bytes_send, 1, MPI_INT, num_bytes_receive_vec.data(), 1, MPI_INT, comm);
+	// vector of offsets (=displacement in MPI) in the receive buffer
+	std::vector<int> num_bytes_displacements(num_processes, 0);
 	int num_bytes_receive = 0;
-	std::vector<int> num_bytes_displacements(num_processes, 0);  // vector of number of bytes I am going to receive
 	for (int j = 0; j < num_processes; j++) {
 		num_bytes_displacements[j] = num_bytes_receive;
 		num_bytes_receive += num_bytes_receive_vec[j];
@@ -74,38 +75,40 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 	std::vector<int> numberOfRegionsToSendToRank(num_processes, 0);       // outgoing row
 
-	int bytesOneRegion =
+	constexpr int bytesOneRegion =
 		sizeof(double) * 3 + sizeof(double) * 3 + sizeof(int) * 3 + sizeof(double) + sizeof(double) * 3;
-	std::vector<std::vector<std::vector<unsigned char>>> sendingList(num_processes);  // the regions I own and want to send
+	// the regions I own and want to send: ranks<regions<regionData>>
+	std::vector<std::vector<std::vector<unsigned char>>> sendingList(num_processes);
 	std::vector<CommunicationPartner> comm_partners02;
 
-	i = 0;
-	while (i != num_bytes_receive) {
-		int rank;
-		int regions;
+	bufferPosition = 0;
+	while (bufferPosition < num_bytes_receive /*== buffer length*/) {
 
-		memcpy(&rank, incomingDesiredRegionsVector.data() + i, sizeof(int));
-		i += sizeof(int);  // 4
-		memcpy(&regions, incomingDesiredRegionsVector.data() + i, sizeof(int));
-		i += sizeof(int);  // 4
+		int rank{};
+		memcpy(&rank, incomingDesiredRegionsVector.data() + bufferPosition, sizeof(int));
+		bufferPosition += sizeof(int);  // 4
+		int regions{};
+		memcpy(&regions, incomingDesiredRegionsVector.data() + bufferPosition, sizeof(int));
+		bufferPosition += sizeof(int);  // 4
 
-		for (int j = 0; j < regions; j++) {
+		for (int regionId = 0; regionId < regions; ++regionId) {
 			HaloRegion unshiftedRegion{};
-			memcpy(unshiftedRegion.rmin, incomingDesiredRegionsVector.data() + i, sizeof(double) * 3);
-			i += sizeof(double) * 3;  // 24
-			memcpy(unshiftedRegion.rmax, incomingDesiredRegionsVector.data() + i, sizeof(double) * 3);
-			i += sizeof(double) * 3;  // 24
-			memcpy(unshiftedRegion.offset, incomingDesiredRegionsVector.data() + i, sizeof(int) * 3);
-			i += sizeof(int) * 3;  // 12
-			memcpy(&unshiftedRegion.width, incomingDesiredRegionsVector.data() + i, sizeof(double));
-			i += sizeof(double);  // 4
+			memcpy(unshiftedRegion.rmin, incomingDesiredRegionsVector.data() + bufferPosition, sizeof(double) * 3);
+			bufferPosition += sizeof(double) * 3;  // 24
+			memcpy(unshiftedRegion.rmax, incomingDesiredRegionsVector.data() + bufferPosition, sizeof(double) * 3);
+			bufferPosition += sizeof(double) * 3;  // 24
+			memcpy(unshiftedRegion.offset, incomingDesiredRegionsVector.data() + bufferPosition, sizeof(int) * 3);
+			bufferPosition += sizeof(int) * 3;  // 12
+			memcpy(&unshiftedRegion.width, incomingDesiredRegionsVector.data() + bufferPosition, sizeof(double));
+			bufferPosition += sizeof(double);  // 4
 
 			// msg format one region: rmin | rmax | offset | width | shift
-			auto shiftedRegionShiftPair = getPotentiallyShiftedRegions(globalDomainLength, unshiftedRegion);
-
-			std::vector<HaloRegion> regionsToTest = shiftedRegionShiftPair.first;
-			std::vector<std::array<double, 3>> shifts  = shiftedRegionShiftPair.second;
-
+			auto [regionsToTest, shifts] = getPotentiallyShiftedRegions(globalDomainLength, unshiftedRegion);
+			// Before every set of push_backs make sure there is enough space for this set + all remaining.
+			// Work with the assumption that the others are of the same size as the current ones.
+			// This is potentially an overestimate but avoids a large number of resizes.
+			sendingList.reserve(sendingList.size() + ((regions - regionId) * regionsToTest.size()));
+			comm_partners02.reserve(comm_partners02.size() + ((regions - regionId) * regionsToTest.size()));
 			for(size_t regionIndex = 0; regionIndex < regionsToTest.size(); ++regionIndex){
 				auto regionToTest = regionsToTest[regionIndex];
 				if ((not excludeOwnRank or rank != my_rank) and isIncluded(ownRegion, &regionToTest)) {
@@ -113,10 +116,10 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 					numberOfRegionsToSendToRank[rank]++;  // this is a region I will send to rank
 
-					auto overlappedRegion = overlap(*ownRegion, regionToTest);  // different shift for the overlap?
+					const auto overlappedRegion = overlap(*ownRegion, regionToTest);  // different shift for the overlap?
 
 					// make a note in partners02 - don't forget to squeeze partners02
-					bool enlarged[3][2] = {{false}};
+					constexpr bool enlarged[3][2] = {{false}};
 					for (int k = 0; k < 3; k++) currentShift[k] *= -1;
 
 					comm_partners02.emplace_back(rank, overlappedRegion.rmin, overlappedRegion.rmax, overlappedRegion.rmin,
@@ -143,7 +146,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 					std::vector<unsigned char> singleRegion(bytesOneRegion);
 
-					p = 0;
+					int p = 0;
 					memcpy(&singleRegion[p], unshiftedOverlappedRegion.rmin, sizeof(double) * 3);
 					p += sizeof(double) * 3;
 					memcpy(&singleRegion[p], unshiftedOverlappedRegion.rmax, sizeof(double) * 3);
@@ -155,7 +158,7 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 					memcpy(&singleRegion[p], currentShift.data(), sizeof(double) * 3);
 					//p += sizeof(double) * 3;
 
-					sendingList[rank].push_back(std::move(singleRegion));
+					sendingList[rank].emplace_back(std::move(singleRegion));
 				}
 			}
 		}
@@ -218,19 +221,17 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 	std::vector<CommunicationPartner> comm_partners01;  // the communication partners
 
 	// receive data (blocking)
-	int byte_counter = 0;
-
 	/**
 	 * We now receive as many regions as we previously determined that we will receive.
 	 * For that we keep track, how many regions we received and increase this according to the number of regions
 	 * received per MPI operation.
 	 */
-	while (byte_counter < numberOfRegionsToReceive[my_rank] * bytesOneRegion) {
+	for (int byte_counter = 0; byte_counter < numberOfRegionsToReceive[my_rank] * bytesOneRegion; ) {
 		// MPI_PROBE
 		MPI_Probe(MPI_ANY_SOURCE, 1, comm, &probe_status);
 		// interpret probe
-		int source = probe_status.MPI_SOURCE;
-		int bytes;
+		const auto source = probe_status.MPI_SOURCE;
+		int bytes{};
 		MPI_Get_count(&probe_status, MPI_BYTE, &bytes);
 		// we have receive `bytes` bytes. So we increase the byte_counter.
 		byte_counter += bytes;
@@ -238,24 +239,26 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 		std::vector<unsigned char> raw_neighbours(bytes);
 		MPI_Recv(raw_neighbours.data(), bytes, MPI_BYTE, source, 1, comm, &rec_status);
 		// Interpret Buffer and add neighbours
-		for (int k = 0; k < (bytes / bytesOneRegion); k++) {  // number of regions from this process
+		const auto numRegionsToReceive = bytes / bytesOneRegion;
+		comm_partners01.reserve(std::max(comm_partners01.size(), static_cast<size_t>(numberOfRegionsToReceive[my_rank] * numRegionsToReceive)));
+		for (int regionId = 0; regionId < numRegionsToReceive; ++regionId) {  // number of regions from this process
 			HaloRegion region{};
+			bufferPosition = regionId * bytesOneRegion;
+
+			memcpy(region.rmin, raw_neighbours.data() + bufferPosition, sizeof(double) * 3);
+			bufferPosition += sizeof(double) * 3;
+			memcpy(region.rmax, raw_neighbours.data() + bufferPosition, sizeof(double) * 3);
+			bufferPosition += sizeof(double) * 3;
+			memcpy(region.offset, raw_neighbours.data() + bufferPosition, sizeof(int) * 3);
+			bufferPosition += sizeof(int) * 3;
+			memcpy(&region.width, raw_neighbours.data() + bufferPosition, sizeof(double));
+			bufferPosition += sizeof(double);
+
 			double shift[3];
-			i = k * bytesOneRegion;
+			memcpy(shift, raw_neighbours.data() + bufferPosition, sizeof(double) * 3);
+			// bufferPosition += sizeof(double) * 3;
 
-			memcpy(region.rmin, raw_neighbours.data() + i, sizeof(double) * 3);
-			i += sizeof(double) * 3;
-			memcpy(region.rmax, raw_neighbours.data() + i, sizeof(double) * 3);
-			i += sizeof(double) * 3;
-			memcpy(region.offset, raw_neighbours.data() + i, sizeof(int) * 3);
-			i += sizeof(int) * 3;
-			memcpy(&region.width, raw_neighbours.data() + i, sizeof(double));
-			i += sizeof(double);
-
-			memcpy(shift, raw_neighbours.data() + i, sizeof(double) * 3);
-			i += sizeof(double) * 3;
-
-			bool enlarged[3][2] = {{false}};
+			constexpr bool enlarged[3][2] = {{false}};
 
 			comm_partners01.emplace_back(source, region.rmin, region.rmax, region.rmin, region.rmax, shift,
 										 region.offset, enlarged);
