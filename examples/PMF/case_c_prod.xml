@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>1000</steps>
+        <steps>100</steps>
       </production>
     </run>
     
@@ -30,36 +30,11 @@
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>restart_data_case_c/generic_lj_step-0390.restart.restart.header.xml</header>
+          <header>restart_data_case_c/generic_lj_step-0390.restart.header.xml</header>
           <data>restart_data_case_c/generic_lj_step-0390.restart.dat</data>
         </file>
+        <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
-      <!--phasespacepoint>
-        <generator name="MultiObjectGenerator">
-            <objectgenerator>
-                <filler type="GridFiller">
-                    <lattice system="cubic" centering="face">
-                        <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
-                        <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
-                        <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
-                    </lattice>
-                    <basis>
-                        <site>
-                            <componentid>0</componentid>
-                            <coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
-                        </site>
-                    </basis>
-                    <latticeOccupancy>1.</latticeOccupancy>
-                    <density>0.85</density>
-                </filler>
-                <object type="Cuboid">
-                    <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                    <upper> <x>15.0</x> <y>15.0</y> <z>15.0</z> </upper>
-                </object>
-                <velocityAssigner type="MaxwellVelocityDistribution"/>
-            </objectgenerator>
-        </generator>
-    </phasespacepoint-->
     </ensemble>
     
     <algorithm>
@@ -89,7 +64,7 @@
  
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
-      <writefrequency>20</writefrequency>
+      <writefrequency>5</writefrequency>
     </outputplugin>
 
     <outputplugin name="CheckpointWriter">
@@ -111,6 +86,19 @@
     	<sampleFrequency>1</sampleFrequency>
       <averageFrequency>5</averageFrequency>
     </plugin>
+
+    <plugin name="PMF">
+        <fpregions>
+          <!-- Only cg -->
+          <region id = "1">
+            <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+            <highX>0.0</highX><highY>0.0</highY><highZ>0.0</highZ>
+            <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
+            <hybridDimZ>0.0</hybridDimZ>
+          </region>
+        </fpregions>
+        <multiplier>1.0e23</multiplier>
+      </plugin>
         
   </simulation>
 </mardyn>

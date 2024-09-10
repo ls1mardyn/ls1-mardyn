@@ -39,6 +39,7 @@ class PMF:public PluginBase{
     RadialDFCOM rdf;
     InteractionForceAdapter* pairs_handler;
     InternalProfiler profiler;
+    double multiplier;
     
 
     public:
@@ -92,6 +93,9 @@ class PMF:public PluginBase{
     Interpolate& GetPotentialInterpolation();
     Interpolate& GetCurrentRDFInterpolation();
     double ConvergenceCheck();
+    double GetMultiplier(){
+        return multiplier;
+    }
 
     public: 
     /**

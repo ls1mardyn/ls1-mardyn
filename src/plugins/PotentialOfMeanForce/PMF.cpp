@@ -60,9 +60,7 @@ void PMF::readXML(XMLfileUnits& xmlfile){
         regions[id-1].readXML(xmlfile);
     }
     xmlfile.changecurrentnode(oldpath);
-
-
-
+    xmlfile.getNodeValue_double("multiplier",multiplier);
 }
 
 void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep){

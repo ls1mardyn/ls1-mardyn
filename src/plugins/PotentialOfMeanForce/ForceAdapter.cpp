@@ -278,6 +278,7 @@ void InteractionForceAdapter::FluidPotType(Molecule& m1, Molecule& m2, ParaStrm&
 
 double InteractionForceAdapter::PotentialOfMeanForce(double r){
     double potential;
+    double temperature = adres->GetMultiplier()*_simulation.getEnsemble()->T();
     if(global_simulation->getSimulationStep()==0){
         double dist = adres->GetRDFInterpolation().GetRDFAt(r);
         potential = -1.0*_simulation.getEnsemble()->T()*std::log(dist);
@@ -291,7 +292,7 @@ double InteractionForceAdapter::PotentialOfMeanForce(double r){
             ref_rdf =1.0;   
         }
         double ratio = curr_rdf/ref_rdf;
-        potential = -1.0*_simulation.getEnsemble()->T()*std::log(ratio);
+        potential = -1.0*temperature*std::log(ratio);
     }
     
     return potential;
