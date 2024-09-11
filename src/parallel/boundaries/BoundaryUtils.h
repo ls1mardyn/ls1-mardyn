@@ -160,4 +160,16 @@ inline int findSign(int n) { return n < 0 ? -1 : 1; }
 inline int findSign(DimensionType dimension) {
   return findSign(convertDimensionToNumeric(dimension));
 }
+
+/**
+ * Used for equality checks when comparing floats.
+ *
+ * Taken from AutoPas - src/autopas/utils/Math.h
+ */
+bool isNearRel(double a, double b, double maxRelativeDifference = 1e-9) {
+  const auto greaterNumber = std::max(std::abs(a), std::abs(b));
+  const auto absoluteDifference = maxRelativeDifference * greaterNumber;
+  const auto diff = std::abs(a - b);
+  return diff <= absoluteDifference;
+}
 } // namespace BoundaryUtils

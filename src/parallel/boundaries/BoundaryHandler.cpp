@@ -89,17 +89,17 @@ void BoundaryHandler::setLocalRegion(std::array<double, 3> start,
 
 void BoundaryHandler::findGlobalWallsInLocalRegion() {
   _isGlobalWall[BoundaryUtils::DimensionType::POSX] =
-      (_localRegionEnd[0] == _globalRegionEnd[0]);
+      BoundaryUtils::isNearRel(_localRegionEnd[0], _globalRegionEnd[0]);
   _isGlobalWall[BoundaryUtils::DimensionType::NEGX] =
-      (_localRegionStart[0] == _globalRegionStart[0]);
+      BoundaryUtils::isNearRel(_localRegionStart[0], _globalRegionStart[0]);
   _isGlobalWall[BoundaryUtils::DimensionType::POSY] =
-      (_localRegionEnd[1] == _globalRegionEnd[1]);
+      BoundaryUtils::isNearRel(_localRegionEnd[1], _globalRegionEnd[1]);
   _isGlobalWall[BoundaryUtils::DimensionType::NEGY] =
-      (_localRegionStart[1] == _globalRegionStart[1]);
+      BoundaryUtils::isNearRel(_localRegionStart[1], _globalRegionStart[1]);
   _isGlobalWall[BoundaryUtils::DimensionType::POSZ] =
-      (_localRegionEnd[2] == _globalRegionEnd[2]);
+      BoundaryUtils::isNearRel(_localRegionEnd[2], _globalRegionEnd[2]);
   _isGlobalWall[BoundaryUtils::DimensionType::NEGZ] =
-      (_localRegionStart[2] == _globalRegionStart[2]);
+      BoundaryUtils::isNearRel(_localRegionStart[2], _globalRegionStart[2]);
 }
 
 bool BoundaryHandler::hasInvalidBoundary() const {
