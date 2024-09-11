@@ -285,7 +285,5 @@ int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
 	MPI_Finalize();
 #endif
-	std::cout << "testend" << std::endl;
-	Log::global_log.reset();
-	std::cout << "testend2" << std::endl;
+
 }
