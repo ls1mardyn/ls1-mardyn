@@ -279,23 +279,28 @@ void InteractionForceAdapter::FluidPotType(Molecule& m1, Molecule& m2, ParaStrm&
 double InteractionForceAdapter::PotentialOfMeanForce(double r){
     double potential;
     double temperature = adres->GetMultiplier()*_simulation.getEnsemble()->T();
-    if(global_simulation->getSimulationStep()==0){
-        double dist = adres->GetRDFInterpolation().GetRDFAt(r);
-        potential = -1.0*_simulation.getEnsemble()->T()*std::log(dist);
-    }
-    else{
-        //Compute correction value
-        double curr_rdf = adres->GetCurrentRDFInterpolation().GetRDFAt(r);
-        double ref_rdf = adres->GetRDFInterpolation().GetRDFAt(r);
-        //prevent division by zero
-        if(ref_rdf == 0.0){
-            ref_rdf =1.0;   
-        }
-        double ratio = curr_rdf/ref_rdf;
-        potential = -1.0*temperature*std::log(ratio);
-    }
     
+    potential = adres->GetPotentialInterpolation().GetRDFAt(r);
+
     return potential;
+    
+    // if(global_simulation->getSimulationStep()==0){
+        // double dist = adres->GetRDFInterpolation().GetRDFAt(r);
+        // potential = -1.0*_simulation.getEnsemble()->T()*std::log(dist);
+    // }
+    // else{
+        // Compute correction value
+        // double curr_rdf = adres->GetCurrentRDFInterpolation().GetRDFAt(r);
+        // double ref_rdf = adres->GetRDFInterpolation().GetRDFAt(r);
+        // prevent division by zero
+        // if(ref_rdf == 0.0){
+            // ref_rdf =1.0;   
+        // }
+        // double ratio = curr_rdf/ref_rdf;
+        // potential = curr_rdf-1.0*temperature*std::log(ratio);
+    // }
+    // 
+    // return potential;
 }
 
 void InteractionForceAdapter::ForceOfPotentialOfMeanForce(std::array<double,3>& f_com, double r){

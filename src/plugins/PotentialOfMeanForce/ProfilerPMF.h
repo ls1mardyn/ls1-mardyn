@@ -64,6 +64,9 @@ class InternalProfiler{
     std::vector<double>& GetRDFValues();
     std::vector<double>& GetPotentialValues();
     std::vector<double>& GetRNodes();
+    double GetMeasuredSteps(){
+        return measured_steps;
+    }
 
 
     private:

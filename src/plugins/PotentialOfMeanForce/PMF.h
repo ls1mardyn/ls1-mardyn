@@ -31,6 +31,8 @@ class PMF:public PluginBase{
     Interpolate reference_rdf_interpolation;
     Interpolate potential_interpolation;
     Interpolate current_rdf_interpolation;
+    InternalProfiler profiler;
+
     std::vector<FPRegion> regions;//should create AT region with
     InteractionCellProcessor* adres_cell_processor;
     std::map<unsigned long, tracker> sites;
@@ -38,8 +40,12 @@ class PMF:public PluginBase{
     WeightFunction weight_function;
     RadialDFCOM rdf;
     InteractionForceAdapter* pairs_handler;
-    InternalProfiler profiler;
+
+
     double multiplier;
+    double internal_bins;
+    int measure_frequency;
+    std::vector<double> accumulate_rdf_buffer;//stores rdf measurement over all measured steps
     
 
     public:
@@ -47,35 +53,15 @@ class PMF:public PluginBase{
     ~PMF(){}
     void readXML(XMLfileUnits& xmlconfig) override;
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
-
     /**
      * Updates resolution and tracker of each molecule
      */
     void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
-    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{
-        //pass buffers to interpolations
-        current_rdf_interpolation.SetYValues(profiler.GetRDFValues());
-        potential_interpolation.SetYValues(profiler.GetPotentialValues());
-        //transfer buffers to interpolation
-        profiler.ResetBuffers();
-    }
+    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
 
 
-    void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{
-        this->profiler.ProfileData(particleContainer,simstep);
-    }
-    void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override{
-        this->profiler.GenerateInstantaneousData(particleContainer,domain);
-        //convergence check??
-        if(global_simulation->getSimulationStep()>0){
-            Log::global_log->info()<<"[PMF] Convergence check: "<<ConvergenceCheck()<<std::endl;
-            std::string filename="rdf_"+std::to_string(simstep);
-            std::ofstream rdf_file(filename);
-            for(int i=0;i<current_rdf_interpolation.GetGValues().size();++i){
-                rdf_file<<std::setw(8)<<std::left<<current_rdf_interpolation.GetRValues()[i]<<"\t"<<std::setw(8)<<std::left<<current_rdf_interpolation.GetGValues()[i]<<std::endl;
-            }
-        }
-    }
+    void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
+    void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
     void siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) override;
 
@@ -92,6 +78,20 @@ class PMF:public PluginBase{
     Interpolate& GetRDFInterpolation();
     Interpolate& GetPotentialInterpolation();
     Interpolate& GetCurrentRDFInterpolation();
+
+    /**
+     * Implements U(r)_0 = -T^*ln(g(r)_0)
+     */
+    void InitializePotentialValues();
+    void AddPotentialCorrection();
+    void AccumulateRDF(std::vector<double>& current_rdf);
+    /**
+     * 
+     * Returns accumulated RDF divided by measured steps from profiler
+     * Returns a full copy vector
+     * 
+     */
+    std::vector<double> GetAverageRDF();
     double ConvergenceCheck();
     double GetMultiplier(){
         return multiplier;
