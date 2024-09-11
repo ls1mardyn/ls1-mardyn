@@ -173,13 +173,13 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
       for (auto it = particlesInRegion; it.isValid(); ++it) {
         Molecule curMolecule = *it;
 
-        // calculate the velocity adjustment from the leapfrog method
-        int currentDim =
+        // Calculate the change in velocity, which the leapfrog method will apply in the next velocity update to the dimension of interest.
+        const int currentDim =
             BoundaryUtils::convertDimensionToLS1Dims(currentWall.first);
-        double halfTimestep = .5 * timestepLength;
-        double halfTimestepByMass = halfTimestep / it->mass();
-        double force = it->F(currentDim);
-        double nextStepVelAdjustment = halfTimestepByMass * force;
+        const double halfTimestep = .5 * timestepLength;
+        const double halfTimestepByMass = halfTimestep / it->mass();
+        const double force = it->F(currentDim);
+        const double nextStepVelAdjustment = halfTimestepByMass * force;
 
         // check if the molecule would leave the bounds
         if (BoundaryUtils::isMoleculeLeaving(
@@ -188,10 +188,9 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
           if (getGlobalWall(currentWall.first) ==
               BoundaryUtils::BoundaryType::REFLECTING) {
             double currentVel = it->v(currentDim);
-            // reflect the velocity, such that when the leapfrog integrator adds
-            // nextStepVelAdjustment in the next integration step, the final
-            // result ends up being currentVel+nextStepVelAdjustment in the
-            // negative direction of travel
+            // change the velocity in the dimension of interest such that when the leapfrog integrator adds
+            // nextStepVelAdjustment in the next velocity update, the final
+            // result ends up being the intended, reversed velocity: -(currentVel+nextStepVelAdjustment) 
             it->setv(currentDim, -currentVel - nextStepVelAdjustment -
                                      nextStepVelAdjustment);
           } else { // outflow, delete the particle if it would leave

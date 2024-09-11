@@ -159,7 +159,7 @@ int BoundaryUtils::convertDimensionToNumeric(DimensionType dimension) {
 
 int BoundaryUtils::convertDimensionToNumericAbs(DimensionType dimension) {
   int toReturn = convertDimensionToNumeric(dimension);
-  return findSign(toReturn) * toReturn;
+  return std::abs(toReturn);
 }
 
 int BoundaryUtils::convertDimensionToLS1Dims(DimensionType dimension) {
@@ -189,7 +189,7 @@ BoundaryUtils::getInnerBuffer(const std::array<double, 3> givenRegionBegin,
     returnRegionEnd[i] = givenRegionEnd[i];
   }
 
-  int dimensionLS1 = convertDimensionToLS1Dims(dimension);
+  const int dimensionLS1 = convertDimensionToLS1Dims(dimension);
 
   switch (dimension) // can be done with findsign() too, but this is clearer
   {
@@ -226,9 +226,9 @@ bool BoundaryUtils::isMoleculeLeaving(const Molecule &molecule,
                                       DimensionType dimension,
                                       double timestepLength,
                                       double nextStepVelAdjustment) {
-  int ls1dim = convertDimensionToLS1Dims(dimension);
-  int direction = findSign(dimension);
-  double newPos =
+  const int ls1dim = convertDimensionToLS1Dims(dimension);
+  const int direction = findSign(dimension);
+  const double newPos =
       molecule.r(ls1dim) +
       (timestepLength * (molecule.v(ls1dim) + nextStepVelAdjustment));
   if (newPos <= regionBegin[ls1dim] && direction < 0)
@@ -248,11 +248,11 @@ BoundaryUtils::getOuterBuffer(const std::array<double, 3> givenRegionBegin,
     returnRegionEnd[i] = givenRegionEnd[i];
   }
 
-  int dimensionLS1 = convertDimensionToLS1Dims(dimension);
+  const int dimensionLS1 = convertDimensionToLS1Dims(dimension);
 
   // find the two dimensions that are not being considered
-  int extraDim1 = dimensionLS1 == 0 ? 1 : 0;
-  int extraDim2 = dimensionLS1 == 2 ? 1 : 2;
+  const int extraDim1 = dimensionLS1 == 0 ? 1 : 0;
+  const int extraDim2 = dimensionLS1 == 2 ? 1 : 2;
 
   // extend the extra dimensions to cover all ghost areas
   returnRegionBegin[extraDim1] =

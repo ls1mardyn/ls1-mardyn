@@ -35,8 +35,8 @@ void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* en
 	double startRegion[3], endRegion[3];
 	getBoundingBoxMinMax(domain, startRegion, endRegion);
 
-	double* globStartRegion = ensemble->domain()->rmin();
-	double* globEndRegion = ensemble->domain()->rmax();
+	const double* globStartRegion = ensemble->domain()->rmin();
+	const double* globEndRegion = ensemble->domain()->rmax();
 	
 	_boundaryHandler.setLocalRegion(startRegion, endRegion);
 	_boundaryHandler.setGlobalRegion(globStartRegion, globEndRegion);

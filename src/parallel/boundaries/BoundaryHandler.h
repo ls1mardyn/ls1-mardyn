@@ -35,21 +35,21 @@ public:
   BoundaryHandler();
 
   /* Find the boundary type of a global wall for a particular dimension. */
-  BoundaryUtils::BoundaryType getGlobalWall(std::string dimension) const;
+  BoundaryUtils::BoundaryType getGlobalWallType(std::string dimension) const;
 
   /* Set the boundary type of a global wall for a particular dimension. */
-  void setGlobalWall(std::string dimension, BoundaryUtils::BoundaryType value);
+  void setGlobalWallType(std::string dimension, BoundaryUtils::BoundaryType value);
 
   /* Find the boundary type of a global wall for a particular dimension. */
   BoundaryUtils::BoundaryType
-  getGlobalWall(BoundaryUtils::DimensionType dimension) const;
+  getGlobalWallType(BoundaryUtils::DimensionType dimension) const;
 
   /* Set the boundary type of a global wall for a particular dimension. */
-  void setGlobalWall(BoundaryUtils::DimensionType dimension,
+  void setGlobalWallType(BoundaryUtils::DimensionType dimension,
                      BoundaryUtils::BoundaryType value);
-  BoundaryUtils::BoundaryType getGlobalWall(int dimension) const;
+  BoundaryUtils::BoundaryType getGlobalWallType(int dimension) const;
 
-  /* Check if any of the global boundaries are invalid. */
+  /* Check if any of the global boundaries have invalid types. */
   bool hasInvalidBoundary() const;
 
   /**
@@ -60,16 +60,16 @@ public:
    */
   bool hasNonPeriodicBoundary() const;
 
-  /* Set bounds for local subdomain. */
+  /* Set bounds for global subdomain. */
   void setGlobalRegion(double *start, double *end);
 
-  /* Set bounds for global subdomain. */
+  /* Set bounds for local subdomain. */
   void setLocalRegion(double *start, double *end);
 
-  /* Set bounds for local subdomain. */
+  /* Set bounds for global subdomain. */
   void setGlobalRegion(std::array<double, 3> start, std::array<double, 3> end);
 
-  /* Set bounds for global subdomain.*/
+  /* Set bounds for local subdomain.*/
   void setLocalRegion(std::array<double, 3> start, std::array<double, 3> end);
 
   /**
@@ -92,13 +92,14 @@ public:
    * Processes all particles that would leave the global domain.
    *
    * If a subdomain has no global walls, this function does nothing.
-   * For every global wall, the fucktion iterates through all particles that are
-   * one cutoff distance away from the wall. If these particles would leave the
+   * For every global wall, the function iterates through all particles that are
+   * within one cutoff distance away from the wall. If these particles would leave the
    * global box in the next simulation, the following is done:
    *
    * PERIODIC - nop (default behaviour).
    * REFLECTING - The particle's velocity is reversed normal to the wall it's
-   * leaving. OUTFLOW - The particle is deleted.
+   * leaving. 
+   * OUTFLOW - The particle is deleted.
    */
   void processGlobalWallLeavingParticles(ParticleContainer *moleculeContainer,
                                          double timestepLength);
@@ -107,8 +108,8 @@ public:
    * Processes all halo particles outside the global domain.
    *
    * If a subdomain has no global walls, this function does nothing.
-   * For every global wall, the fucktion iterates through all halo particles
-   * that are one cutoff distance away from the wall. The following is done for
+   * For every global wall, the function iterates through all halo particles
+   * that are within one cutoff distance away from the wall. The following is done for
    * each particle:
    *
    * PERIODIC - nop (default behaviour).
