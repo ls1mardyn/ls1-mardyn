@@ -49,9 +49,6 @@ enum class DimensionType { POSX, NEGX, POSY, NEGY, POSZ, NEGZ, ERROR };
 const std::array<std::string, 6> permissibleDimensionsString = {
     "+x", "+y", "+z", "-x", "-y", "-z"};
 
-/* List of all allowed dimensions in int format. */
-const std::array<int, 6> permissibleDimensionsInt = {-1, -2, -3, 1, 2, 3};
-
 /* Check if a dimension is allowed. */
 bool isDimensionStringPermissible(std::string dimension);
 
@@ -61,7 +58,6 @@ bool isDimensionNumericPermissible(int dim);
 DimensionType convertStringToDimension(std::string dimension);
 DimensionType convertNumericToDimension(int dim);
 DimensionType convertLS1DimsToDimensionPos(int dim);
-std::vector<DimensionType> convertHaloOffsetToDimensionVector(int *offset);
 
 std::string convertDimensionToString(DimensionType dimension);
 std::string convertDimensionToStringAbs(DimensionType dimension);

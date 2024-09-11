@@ -20,6 +20,7 @@ bool BoundaryUtils::isDimensionStringPermissible(std::string dimension) {
 }
 
 bool BoundaryUtils::isDimensionNumericPermissible(int dim) {
+  // permissible dimensions are {-1, -2, -3, 1, 2, 3}
   return (dim >= -3 && dim <= 3 && dim != 0);
 }
 
@@ -91,18 +92,6 @@ BoundaryUtils::convertLS1DimsToDimensionPos(int dim) {
     break;
   default: // case 2:
     toRet = DimensionType::POSZ;
-  }
-  return toRet;
-}
-
-std::vector<BoundaryUtils::DimensionType>
-BoundaryUtils::convertHaloOffsetToDimensionVector(int *offset) {
-  std::vector<DimensionType> toRet;
-  for (int i = 0; i < 3; i++) {
-    if (offset[i] != 0) {
-      int numeric = (i + 1) * offset[i];
-      toRet.push_back(convertNumericToDimension(numeric));
-    }
   }
   return toRet;
 }
