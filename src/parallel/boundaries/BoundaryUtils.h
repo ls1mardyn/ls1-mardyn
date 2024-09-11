@@ -26,7 +26,8 @@ namespace BoundaryUtils {
  * enum storing the types of boundaries currently supported.
  *
  * The currently supported boundary types are
- * PERIODIC_OR_LOCAL - periodic boundaries or local boundaries: both of which use the default (communicate particle transfers with neighbours) behaviour
+ * PERIODIC_OR_LOCAL - periodic boundaries or local boundaries: both of which
+ * use the default (communicate particle transfers with neighbours) behaviour
  * OUTFLOW - molecules exiting the boundary are deleted
  * REFLECTING - molecules exiting the boundary have their velocities
  * reversed in the direction they are leaving

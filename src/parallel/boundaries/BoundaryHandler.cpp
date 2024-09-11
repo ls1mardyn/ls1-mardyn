@@ -16,48 +16,49 @@
 
 BoundaryHandler::BoundaryHandler()
     : _boundaries{{BoundaryUtils::DimensionType::POSX,
-                   BoundaryUtils::BoundaryType::PERIODIC},
+                   BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
                   {BoundaryUtils::DimensionType::POSY,
-                   BoundaryUtils::BoundaryType::PERIODIC},
+                   BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
                   {BoundaryUtils::DimensionType::POSZ,
-                   BoundaryUtils::BoundaryType::PERIODIC},
+                   BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
                   {BoundaryUtils::DimensionType::NEGX,
-                   BoundaryUtils::BoundaryType::PERIODIC},
+                   BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
                   {BoundaryUtils::DimensionType::NEGY,
-                   BoundaryUtils::BoundaryType::PERIODIC},
+                   BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
                   {BoundaryUtils::DimensionType::NEGZ,
-                   BoundaryUtils::BoundaryType::PERIODIC},
+                   BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
                   {BoundaryUtils::DimensionType::ERROR,
                    BoundaryUtils::BoundaryType::ERROR}} {}
 
-BoundaryUtils::BoundaryType
-BoundaryHandler::getGlobalWall(BoundaryUtils::DimensionType dimension) const {
+BoundaryUtils::BoundaryType BoundaryHandler::getGlobalWallType(
+    BoundaryUtils::DimensionType dimension) const {
   return _boundaries.at(dimension);
 }
 
 BoundaryUtils::BoundaryType
-BoundaryHandler::getGlobalWall(std::string dimension) const {
+BoundaryHandler::getGlobalWallType(std::string dimension) const {
   BoundaryUtils::DimensionType convertedDimension =
       BoundaryUtils::convertStringToDimension(dimension);
-  return getGlobalWall(convertedDimension);
+  return getGlobalWallType(convertedDimension);
 }
 
 BoundaryUtils::BoundaryType
-BoundaryHandler::getGlobalWall(int dimension) const {
-  return getGlobalWall(BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
+BoundaryHandler::getGlobalWallType(int dimension) const {
+  return getGlobalWallType(
+      BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
 }
 
-void BoundaryHandler::setGlobalWall(BoundaryUtils::DimensionType dimension,
-                                    BoundaryUtils::BoundaryType value) {
+void BoundaryHandler::setGlobalWallType(BoundaryUtils::DimensionType dimension,
+                                        BoundaryUtils::BoundaryType value) {
   if (dimension != BoundaryUtils::DimensionType::ERROR)
     _boundaries[dimension] = value;
 }
 
-void BoundaryHandler::setGlobalWall(std::string dimension,
-                                    BoundaryUtils::BoundaryType value) {
+void BoundaryHandler::setGlobalWallType(std::string dimension,
+                                        BoundaryUtils::BoundaryType value) {
   BoundaryUtils::DimensionType convertedDimension =
       BoundaryUtils::convertStringToDimension(dimension);
-  setGlobalWall(convertedDimension, value);
+  setGlobalWallType(convertedDimension, value);
 }
 
 void BoundaryHandler::setGlobalRegion(double *start, double *end) {
@@ -118,17 +119,17 @@ bool BoundaryHandler::hasInvalidBoundary() const {
 
 bool BoundaryHandler::hasNonPeriodicBoundary() const {
   return _boundaries.at(BoundaryUtils::DimensionType::POSX) !=
-             BoundaryUtils::BoundaryType::PERIODIC ||
+             BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL ||
          _boundaries.at(BoundaryUtils::DimensionType::POSY) !=
-             BoundaryUtils::BoundaryType::PERIODIC ||
+             BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL ||
          _boundaries.at(BoundaryUtils::DimensionType::POSZ) !=
-             BoundaryUtils::BoundaryType::PERIODIC ||
+             BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL ||
          _boundaries.at(BoundaryUtils::DimensionType::NEGX) !=
-             BoundaryUtils::BoundaryType::PERIODIC ||
+             BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL ||
          _boundaries.at(BoundaryUtils::DimensionType::NEGY) !=
-             BoundaryUtils::BoundaryType::PERIODIC ||
+             BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL ||
          _boundaries.at(BoundaryUtils::DimensionType::NEGZ) !=
-             BoundaryUtils::BoundaryType::PERIODIC;
+             BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL;
 }
 
 bool BoundaryHandler::isGlobalWall(
@@ -147,8 +148,8 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
     if (!currentWall.second) // not a global wall
       continue;
 
-    switch (getGlobalWall(currentWall.first)) {
-    case BoundaryUtils::BoundaryType::PERIODIC:
+    switch (getGlobalWallType(currentWall.first)) {
+    case BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL:
       // default behaviour
       break;
 
@@ -173,7 +174,8 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
       for (auto it = particlesInRegion; it.isValid(); ++it) {
         Molecule curMolecule = *it;
 
-        // Calculate the change in velocity, which the leapfrog method will apply in the next velocity update to the dimension of interest.
+        // Calculate the change in velocity, which the leapfrog method will
+        // apply in the next velocity update to the dimension of interest.
         const int currentDim =
             BoundaryUtils::convertDimensionToLS1Dims(currentWall.first);
         const double halfTimestep = .5 * timestepLength;
@@ -185,12 +187,13 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
         if (BoundaryUtils::isMoleculeLeaving(
                 curMolecule, curWallRegionBegin, curWallRegionEnd,
                 currentWall.first, timestepLength, nextStepVelAdjustment)) {
-          if (getGlobalWall(currentWall.first) ==
+          if (getGlobalWallType(currentWall.first) ==
               BoundaryUtils::BoundaryType::REFLECTING) {
             double currentVel = it->v(currentDim);
-            // change the velocity in the dimension of interest such that when the leapfrog integrator adds
-            // nextStepVelAdjustment in the next velocity update, the final
-            // result ends up being the intended, reversed velocity: -(currentVel+nextStepVelAdjustment) 
+            // change the velocity in the dimension of interest such that when
+            // the leapfrog integrator adds nextStepVelAdjustment in the next
+            // velocity update, the final result ends up being the intended,
+            // reversed velocity: -(currentVel+nextStepVelAdjustment)
             it->setv(currentDim, -currentVel - nextStepVelAdjustment -
                                      nextStepVelAdjustment);
           } else { // outflow, delete the particle if it would leave
@@ -219,8 +222,8 @@ void BoundaryHandler::removeNonPeriodicHalos(
     if (!currentWall.second) // not a global wall
       continue;
 
-    switch (getGlobalWall(currentWall.first)) {
-    case BoundaryUtils::BoundaryType::PERIODIC:
+    switch (getGlobalWallType(currentWall.first)) {
+    case BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL:
       // default behaviour
       break;
 

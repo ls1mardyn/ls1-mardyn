@@ -169,7 +169,7 @@ int BoundaryUtils::convertDimensionToLS1Dims(DimensionType dimension) {
 BoundaryUtils::BoundaryType
 BoundaryUtils::convertStringToBoundary(std::string boundary) {
   if (boundary == "periodic")
-    return BoundaryType::PERIODIC;
+    return BoundaryType::PERIODIC_OR_LOCAL;
   if (boundary == "reflecting" || boundary == "reflective")
     return BoundaryType::REFLECTING;
   if (boundary == "outflow")

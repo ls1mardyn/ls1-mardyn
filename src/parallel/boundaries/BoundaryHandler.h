@@ -26,8 +26,9 @@
  * walls while the walls that are also the limits of the global domain are
  * 'global' walls.
  *
- * Since the behaviour of 'local' walls are unchanged, they are assigned to
- * 'PERIODIC'.
+ * Since the behaviour of 'local' walls are unchanged (and is identical to the
+ * behaviour of global periodic walls), they are assigned to
+ * 'PERIODIC_OR_LOCAL'.
  */
 
 class BoundaryHandler {
@@ -38,7 +39,8 @@ public:
   BoundaryUtils::BoundaryType getGlobalWallType(std::string dimension) const;
 
   /* Set the boundary type of a global wall for a particular dimension. */
-  void setGlobalWallType(std::string dimension, BoundaryUtils::BoundaryType value);
+  void setGlobalWallType(std::string dimension,
+                         BoundaryUtils::BoundaryType value);
 
   /* Find the boundary type of a global wall for a particular dimension. */
   BoundaryUtils::BoundaryType
@@ -46,7 +48,7 @@ public:
 
   /* Set the boundary type of a global wall for a particular dimension. */
   void setGlobalWallType(BoundaryUtils::DimensionType dimension,
-                     BoundaryUtils::BoundaryType value);
+                         BoundaryUtils::BoundaryType value);
   BoundaryUtils::BoundaryType getGlobalWallType(int dimension) const;
 
   /* Check if any of the global boundaries have invalid types. */
@@ -93,12 +95,12 @@ public:
    *
    * If a subdomain has no global walls, this function does nothing.
    * For every global wall, the function iterates through all particles that are
-   * within one cutoff distance away from the wall. If these particles would leave the
-   * global box in the next simulation, the following is done:
+   * within one cutoff distance away from the wall. If these particles would
+   * leave the global box in the next simulation, the following is done:
    *
-   * PERIODIC - nop (default behaviour).
+   * PERIODIC_OR_LOCAL - No actions taken (default behaviour).
    * REFLECTING - The particle's velocity is reversed normal to the wall it's
-   * leaving. 
+   * leaving.
    * OUTFLOW - The particle is deleted.
    */
   void processGlobalWallLeavingParticles(ParticleContainer *moleculeContainer,
@@ -109,12 +111,13 @@ public:
    *
    * If a subdomain has no global walls, this function does nothing.
    * For every global wall, the function iterates through all halo particles
-   * that are within one cutoff distance away from the wall. The following is done for
-   * each particle:
+   * that are within one cutoff distance away from the wall. The following is
+   * done for each particle:
    *
-   * PERIODIC - nop (default behaviour).
-   * REFLECTING - The halo particle is deleted.
-   * OUTFLOW - The halo particle is deleted.
+   * PERIODIC_OR_LOCAL - No actions taken (default behaviour).
+   * REFLECTING / OUTFLOW - The halo particle is deleted, so that particles
+   * approaching the boundary do not decelerate due to influence from the halo
+   * particles, and preserve their velocities before being bounced/deleted
    */
   void removeNonPeriodicHalos(ParticleContainer *moleculeContainer);
 
