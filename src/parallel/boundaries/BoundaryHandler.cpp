@@ -61,14 +61,14 @@ void BoundaryHandler::setGlobalWallType(std::string dimension,
   setGlobalWallType(convertedDimension, value);
 }
 
-void BoundaryHandler::setGlobalRegion(double *start, double *end) {
+void BoundaryHandler::setGlobalRegion(const double *start, const double *end) {
   for (short int i = 0; i < 3; i++) {
     _globalRegionStart[i] = start[i];
     _globalRegionEnd[i] = end[i];
   }
 }
 
-void BoundaryHandler::setLocalRegion(double *start, double *end) {
+void BoundaryHandler::setLocalRegion(const double *start, const double *end) {
   for (short int i = 0; i < 3; i++) {
     _localRegionStart[i] = start[i];
     _localRegionEnd[i] = end[i];

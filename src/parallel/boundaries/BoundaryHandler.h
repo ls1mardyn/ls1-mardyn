@@ -63,10 +63,10 @@ public:
   bool hasNonPeriodicBoundary() const;
 
   /* Set bounds for global subdomain. */
-  void setGlobalRegion(double *start, double *end);
+  void setGlobalRegion(const double *start, const double *end);
 
   /* Set bounds for local subdomain. */
-  void setLocalRegion(double *start, double *end);
+  void setLocalRegion(const double *start, const double *end);
 
   /* Set bounds for global subdomain. */
   void setGlobalRegion(std::array<double, 3> start, std::array<double, 3> end);

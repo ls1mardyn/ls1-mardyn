@@ -166,10 +166,6 @@ inline int findSign(DimensionType dimension) {
  *
  * Taken from AutoPas - src/autopas/utils/Math.h
  */
-bool isNearRel(double a, double b, double maxRelativeDifference = 1e-9) {
-  const auto greaterNumber = std::max(std::abs(a), std::abs(b));
-  const auto absoluteDifference = maxRelativeDifference * greaterNumber;
-  const auto diff = std::abs(a - b);
-  return diff <= absoluteDifference;
-}
+bool isNearRel(double a, double b, double maxRelativeDifference = 1e-9);
+
 } // namespace BoundaryUtils

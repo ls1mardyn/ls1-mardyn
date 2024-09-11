@@ -27,7 +27,7 @@ void DomainDecompBase::readXML(XMLfileUnits& /* xmlconfig */) {
 }
 
 void DomainDecompBase::setGlobalBoundaryType(BoundaryUtils::DimensionType dimension, BoundaryUtils::BoundaryType boundary) {
-	_boundaryHandler.setGlobalWall(dimension, boundary);
+	_boundaryHandler.setGlobalWallType(dimension, boundary);
 }
 
 void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* ensemble) {
@@ -316,7 +316,7 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const {
 	
 	//reflecting and outflow boundaries do not expect halo particles
-	if(_boundaryHandler.getGlobalWall(dim) != BoundaryUtils::BoundaryType::PERIODIC)
+	if(_boundaryHandler.getGlobalWallType(dim) != BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL)
 		return;
 	
 	double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
