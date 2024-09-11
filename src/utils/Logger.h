@@ -93,7 +93,7 @@ private:
 	logLevel _msg_log_level;
 	bool _do_output;
 	std::string _filename;
-	std::shared_ptr<std::ostream> _log_stream;
+	std::ostream *_log_stream;
 	std::map<logLevel, std::string> logLevelNames;
 #ifdef USE_GETTIMEOFDAY
 	timeval _starttime;
@@ -129,7 +129,7 @@ public:
 
 	Logger(logLevel level, std::string prefix);  // Write to file
 
-	~Logger() = default;
+	~Logger();
 
 	/// General output template for variables, strings, etc.
 	template<typename T>

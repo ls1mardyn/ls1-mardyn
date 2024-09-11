@@ -39,10 +39,15 @@ Logger::Logger(logLevel level, std::string prefix) :
 	filenamestream << ".log";
 	_filename = filenamestream.str();
 	
-	_log_stream = std::make_shared<std::ofstream>(_filename.c_str());
+	_log_stream = new std::ofstream(_filename.c_str());
 	*_log_stream << std::boolalpha;  // Print boolean as true/false
 }
 
+Logger::~Logger() {
+	*_log_stream << std::flush;
+	if (_filename != "")
+		(static_cast<std::ofstream*> (_log_stream))->close();
+}
 
 /// allow logging only for a single process
 void Logger::set_mpi_output_root(int root) {
