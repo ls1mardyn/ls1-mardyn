@@ -6,12 +6,15 @@
 
 namespace Log {
 
-std::shared_ptr<Logger> global_log;
+std::unique_ptr<Logger> global_log;
 
 // Write to stream
 Logger::Logger(logLevel level, std::ostream *os) :
 	_log_level(level), _msg_log_level(Log::Error),
-	_do_output(true), _filename(""), _log_stream(os),
+	_do_output(true), _filename(""),
+	// std::cout is managed globally,
+	// so do nothing when _log_stream goes out of scope
+	_log_stream(os, [](std::ostream*){/* no-op deleter */}),
 	logLevelNames(), _starttime(), _rank(0)
 {
 	init_starting_time();
@@ -42,7 +45,6 @@ Logger::Logger(logLevel level, std::string prefix) :
 	_log_stream = std::make_shared<std::ofstream>(_filename.c_str());
 	*_log_stream << std::boolalpha;  // Print boolean as true/false
 }
-
 
 /// allow logging only for a single process
 void Logger::set_mpi_output_root(int root) {

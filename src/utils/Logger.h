@@ -47,12 +47,12 @@ namespace Log {
 class Logger;
 
 /**
- * Gobal logger variable for use in the entire program.
+ * Global logger variable for use in the entire program.
  * Must be initialized with constructor
  * Namespace visibility:
  *    */
 #ifndef LOGGER_SRC
-extern std::shared_ptr<Log::Logger> global_log;
+extern std::unique_ptr<Log::Logger> global_log;
 #endif
 
 /**

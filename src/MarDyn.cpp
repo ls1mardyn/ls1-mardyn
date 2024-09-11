@@ -59,42 +59,42 @@ void initOptions(optparse::OptionParser *op) {
 /**
  * @brief Helper function outputting program build information to given logger
  */
-void program_build_info(std::shared_ptr<Log::Logger> log) {
-	log->info() << "Compilation info:" << std::endl;
+void program_build_info() {
+	Log::global_log->info() << "Compilation info:" << std::endl;
 
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_compiler_info(info_str);
-	log->info() << "	Compiler:	" << info_str << std::endl;
+	Log::global_log->info() << "	Compiler:	" << info_str << std::endl;
 	get_compile_time(info_str);
-	log->info() << "	Compiled on:	" << info_str << std::endl;
+	Log::global_log->info() << "	Compiled on:	" << info_str << std::endl;
 	get_precision_info(info_str);
-	log->info() << "	Precision:	" << info_str << std::endl;
+	Log::global_log->info() << "	Precision:	" << info_str << std::endl;
 	get_intrinsics_info(info_str);
-	log->info() << "	Intrinsics:	" << info_str << std::endl;
+	Log::global_log->info() << "	Intrinsics:	" << info_str << std::endl;
 	get_rmm_normal_info(info_str);
-	log->info() << "	RMM/normal:	" << info_str << std::endl;
+	Log::global_log->info() << "	RMM/normal:	" << info_str << std::endl;
 	get_openmp_info(info_str);
-	log->info() << "	OpenMP:		" << info_str << std::endl;
+	Log::global_log->info() << "	OpenMP:		" << info_str << std::endl;
 	get_mpi_info(info_str);
-	log->info() << "	MPI:		" << info_str << std::endl;
+	Log::global_log->info() << "	MPI:		" << info_str << std::endl;
 }
 
 /**
  * @brief Helper function outputting program invocation information to given logger
  */
-void program_execution_info(int argc, char **argv, std::shared_ptr<Log::Logger> log) {
-	log->info() << "Execution info:" << std::endl;
+void program_execution_info(int argc, char **argv) {
+	Log::global_log->info() << "Execution info:" << std::endl;
 
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_timestamp(info_str);
-	log->info() << "	Started: " << info_str << std::endl;
+	Log::global_log->info() << "	Started: " << info_str << std::endl;
 	get_host(info_str);
-	log->info() << "	Execution host: " << info_str << std::endl;
+	Log::global_log->info() << "	Execution host: " << info_str << std::endl;
 	std::stringstream arguments;
 	for (int i = 0; i < argc; i++) {
 		arguments << " " << argv[i];
 	}
-	log->info() << "	Started with arguments: " << arguments.str() << std::endl;
+	Log::global_log->info() << "	Started with arguments: " << arguments.str() << std::endl;
 
 #if defined(_OPENMP)
 	int num_threads = mardyn_get_max_threads();
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
 #endif
 
 	/* Initialize the global log file */
-	Log::global_log = std::make_shared<Log::Logger>(Log::Info);
+	Log::global_log = std::make_unique<Log::Logger>(Log::Info);
 #ifdef ENABLE_MPI
 	Log::global_log->set_mpi_output_root(0);
 	//global_log->set_mpi_output_all();
@@ -161,7 +161,8 @@ int main(int argc, char** argv) {
 	if( options.is_set_by_user("logfile") ) {
 		std::string logfileNamePrefix(options.get("logfile"));
 		Log::global_log->info() << "Using logfile with prefix " << logfileNamePrefix << std::endl;
-		Log::global_log = std::make_shared<Log::Logger>(Log::Info, logfileNamePrefix);
+		Log::global_log.reset();
+		Log::global_log = std::make_unique<Log::Logger>(Log::Info, logfileNamePrefix);
 	}
 	if( options.is_set_by_user("verbose") ) {
 		Log::global_log->info() << "Enabling verbose log output." << std::endl;
@@ -173,8 +174,8 @@ int main(int argc, char** argv) {
 		registerSigsegvHandler();  // from SigsegvHandler.h
 	}
 #endif
-	program_build_info(Log::global_log);
-	program_execution_info(argc, argv, Log::global_log);
+	program_build_info();
+	program_execution_info(argc, argv);
 
 
 	/* Run built in tests and exit */
@@ -284,4 +285,7 @@ int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
 	MPI_Finalize();
 #endif
+	std::cout << "testend" << std::endl;
+	Log::global_log.reset();
+	std::cout << "testend2" << std::endl;
 }
