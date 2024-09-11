@@ -98,7 +98,7 @@ getInnerBuffer(const std::array<double, 3> givenRegionBegin,
  * so that it can handle the change in velocity due to forces. This is not done
  * by the util function itself, to keep it as generic as possible.
  */
-bool isMoleculeLeaving(const Molecule molecule,
+bool isMoleculeLeaving(const Molecule &molecule,
                        const std::array<double, 3> regionBegin,
                        const std::array<double, 3> regionEnd,
                        DimensionType dimension, double timestepLength,

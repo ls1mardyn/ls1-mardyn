@@ -220,7 +220,7 @@ BoundaryUtils::getInnerBuffer(const std::array<double, 3> givenRegionBegin,
   return std::make_tuple(returnRegionBegin, returnRegionEnd);
 }
 
-bool BoundaryUtils::isMoleculeLeaving(const Molecule molecule,
+bool BoundaryUtils::isMoleculeLeaving(const Molecule &molecule,
                                       const std::array<double, 3> regionBegin,
                                       const std::array<double, 3> regionEnd,
                                       DimensionType dimension,
