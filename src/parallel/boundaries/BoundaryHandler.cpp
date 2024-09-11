@@ -160,15 +160,17 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
       std::tie(curWallRegionBegin, curWallRegionEnd) =
           BoundaryUtils::getInnerBuffer(_localRegionStart, _localRegionEnd,
                                         currentWall.first, cutoff);
-      // conversion
-      const double cstylerbegin[] = {
+      // convert the regions into c-style arrays, so that they can be passed to
+      // the region iterator
+      const double cStyleRegionBegin[] = {
           curWallRegionBegin[0], curWallRegionBegin[1], curWallRegionBegin[2]};
-      const double cstylerend[] = {curWallRegionEnd[0], curWallRegionEnd[1],
-                                   curWallRegionEnd[2]};
+      const double cStyleRegionEnd[] = {
+          curWallRegionEnd[0], curWallRegionEnd[1], curWallRegionEnd[2]};
 
       // grab an iterator from the converted coords
       auto particlesInRegion = moleculeContainer->regionIterator(
-          cstylerbegin, cstylerend, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+          cStyleRegionBegin, cStyleRegionEnd,
+          ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
       // iterate through all molecules
       for (auto it = particlesInRegion; it.isValid(); ++it) {
@@ -234,15 +236,16 @@ void BoundaryHandler::removeNonPeriodicHalos(
       std::tie(curWallRegionBegin, curWallRegionEnd) =
           BoundaryUtils::getOuterBuffer(_localRegionStart, _localRegionEnd,
                                         currentWall.first, buffers);
-      // conversion
-      const double cstylerbegin[] = {
+      // convert the regions into c-style arrays, so that they can be passed to
+      // the region iterator
+      const double cStyleRegionBegin[] = {
           curWallRegionBegin[0], curWallRegionBegin[1], curWallRegionBegin[2]};
-      const double cstylerend[] = {curWallRegionEnd[0], curWallRegionEnd[1],
-                                   curWallRegionEnd[2]};
+      const double cStyleRegionEnd[] = {
+          curWallRegionEnd[0], curWallRegionEnd[1], curWallRegionEnd[2]};
 
       // grab an iterator from the converted coords
       auto particlesInRegion = moleculeContainer->regionIterator(
-          cstylerbegin, cstylerend, ParticleIterator::ALL_CELLS);
+          cStyleRegionBegin, cStyleRegionEnd, ParticleIterator::ALL_CELLS);
       for (auto it = particlesInRegion; it.isValid(); ++it) {
         // delete all halo particles
         moleculeContainer->deleteMolecule(it, false);
