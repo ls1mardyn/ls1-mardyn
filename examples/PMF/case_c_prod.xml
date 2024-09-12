@@ -96,7 +96,7 @@
             <hybridDimZ>0.0</hybridDimZ>
           </region>
         </fpregions>
-        <multiplier>1.0</multiplier>
+        <multiplier>0.2</multiplier>
         <internalBins>100</internalBins>
         <measureFreq>1</measureFreq>
       </plugin>

@@ -305,7 +305,7 @@ double InteractionForceAdapter::PotentialOfMeanForce(double r){
 
 void InteractionForceAdapter::ForceOfPotentialOfMeanForce(std::array<double,3>& f_com, double r){
 
-    double derivative = adres->GetPotentialInterpolation().CentralFiniteDifference(r);
+    double derivative = -1.0*adres->GetMultiplier()* adres->GetPotentialInterpolation().CentralFiniteDifference(r);
     for(int i=0;i<f_com.size();i++){
         f_com[i] *= derivative;
     }
