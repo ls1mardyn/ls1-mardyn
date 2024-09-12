@@ -14,6 +14,8 @@ Logger::Logger(logLevel level, std::ostream *os) :
 	_do_output(true), _filename(""),
 	// std::cout is managed globally,
 	// so do nothing when _log_stream goes out of scope
+	// --> any passed ostream other than std::cout needs to be
+	// deleted manually!
 	_log_stream(os, [](std::ostream*){/* no-op deleter */}),
 	logLevelNames(), _starttime(), _rank(0)
 {

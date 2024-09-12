@@ -59,7 +59,7 @@ void initOptions(optparse::OptionParser *op) {
 /**
  * @brief Helper function outputting program build information to given logger
  */
-void program_build_info() {
+void log_program_build_info() {
 	Log::global_log->info() << "Compilation info:" << std::endl;
 
 	char info_str[MAX_INFO_STRING_LENGTH];
@@ -82,7 +82,7 @@ void program_build_info() {
 /**
  * @brief Helper function outputting program invocation information to given logger
  */
-void program_execution_info(int argc, char **argv) {
+void log_program_execution_info(int argc, char **argv) {
 	Log::global_log->info() << "Execution info:" << std::endl;
 
 	char info_str[MAX_INFO_STRING_LENGTH];
@@ -136,17 +136,26 @@ int main(int argc, char** argv) {
 	MPI_Init(&argc, &argv);
 #endif
 
-	/* Initialize the global log file */
-	Log::global_log = std::make_unique<Log::Logger>(Log::Info);
-#ifdef ENABLE_MPI
-	Log::global_log->set_mpi_output_root(0);
-	//global_log->set_mpi_output_all();
-#endif
-
 	optparse::OptionParser op;
 	initOptions(&op);
 	optparse::Values options = op.parse_args(argc, argv);
 	std::vector<std::string> args = op.args();
+
+	/* Initialize the global log file */
+	if( options.is_set_by_user("logfile") ) {
+		// Print to file
+		std::string logfileNamePrefix(options.get("logfile"));
+		std::cout << "Using logfile with prefix " << logfileNamePrefix << std::endl;
+		Log::global_log = std::make_unique<Log::Logger>(Log::Info, logfileNamePrefix);
+	} else {
+		// Print to stream (default: std::cout)
+		Log::global_log = std::make_unique<Log::Logger>(Log::Info);
+	}
+
+#ifdef ENABLE_MPI
+	Log::global_log->set_mpi_output_root(0);
+	//global_log->set_mpi_output_all();
+#endif
 
 	Log::global_log->info() << "Running ls1-MarDyn version " << MARDYN_VERSION << std::endl;
 
@@ -158,12 +167,6 @@ int main(int argc, char** argv) {
 	Log::global_log->warning() << "This ls1-MarDyn binary is a DEBUG build!" << std::endl;
 #endif
 
-	if( options.is_set_by_user("logfile") ) {
-		std::string logfileNamePrefix(options.get("logfile"));
-		Log::global_log->info() << "Using logfile with prefix " << logfileNamePrefix << std::endl;
-		Log::global_log.reset();
-		Log::global_log = std::make_unique<Log::Logger>(Log::Info, logfileNamePrefix);
-	}
 	if( options.is_set_by_user("verbose") ) {
 		Log::global_log->info() << "Enabling verbose log output." << std::endl;
 		Log::global_log->set_log_level(Log::All);
@@ -174,8 +177,8 @@ int main(int argc, char** argv) {
 		registerSigsegvHandler();  // from SigsegvHandler.h
 	}
 #endif
-	program_build_info();
-	program_execution_info(argc, argv);
+	log_program_build_info();
+	log_program_execution_info(argc, argv);
 
 
 	/* Run built in tests and exit */
@@ -285,5 +288,4 @@ int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
 	MPI_Finalize();
 #endif
-
 }

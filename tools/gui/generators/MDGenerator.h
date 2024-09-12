@@ -77,7 +77,7 @@ protected:
 
 	MDGenerator(std::string name);
 
-	virtual ~MDGenerator() {};
+	virtual ~MDGenerator() = default;
 
 	/**
 	 * determine the velocity according to the temperature.

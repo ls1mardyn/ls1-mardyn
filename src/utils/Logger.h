@@ -50,7 +50,7 @@ class Logger;
  * Global logger variable for use in the entire program.
  * Must be initialized with constructor
  * Namespace visibility:
- *    */
+ */
 #ifndef LOGGER_SRC
 extern std::unique_ptr<Log::Logger> global_log;
 #endif
@@ -73,8 +73,12 @@ typedef enum {
  *
  * Provides easy interface to handle log messages. Initialize either with
  * output level and stream or output level and filename or use default constructor
- * values (Error, &(std::cout)). With a given file basename and MPI Support each rank will
- * create and write to his own file.
+ * values (Error, &(std::cout)).
+ * Note: Due to the default argument (std::cout), the passed ostream pointer
+ * will not be deleted automatically! Any passed ostream pointer other than
+ * std::cout must be deleted manually!
+ * With a given file basename and MPI Support each rank will create
+ * and write to its own file.
  * For writing log messages use fatal(), error(), warning(), info() or debug() as
  * with normal streams, e.g.
  * > log.error() << "Wrong parameter." << std::endl;
@@ -123,11 +127,23 @@ private:
 	Logger& operator=(const Logger&) { return *this; }
 
 public:
-	/** Initializes the log level, log stream and the list of log level names.
-	 * If ENABLE_MPI is enabled by default all process perform logging output. */
-	Logger(logLevel level = Log::Error, std::ostream *os = &(std::cout));  // Write to stream
-
-	Logger(logLevel level, std::string prefix);  // Write to file
+	/**
+	 * Constructor for a logger to a stream.
+	 *
+	 * Initializes the log level, log stream and the list of log level names.
+	 * If ENABLE_MPI is enabled by default, all process perform logging output.
+	 * Note: Due to the default argument (std::cout), the passed ostream pointer
+	 * will not be deleted automatically! Any passed ostream pointer other than
+	 * std::cout must be deleted manually!
+	 */
+	Logger(logLevel level = Log::Error, std::ostream *os = &(std::cout));
+	/**
+	 * Constructor for a logger to a file.
+	 *
+	 * Initializes the log level, log stream and the list of log level names.
+	 * If ENABLE_MPI is enabled by default, all process perform logging output.
+	 */
+	Logger(logLevel level, std::string prefix);
 
 	~Logger() = default;
 
