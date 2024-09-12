@@ -55,7 +55,9 @@ private:
 	//these arrays save for every halo element the specific size -> if neighbour rank order is changed these arrays have to be changed too but nothing else
 	std::vector<int> _areaHaloSizes, _edgeHaloSizes; //corner Arrays are always of the same size!
 	std::vector<int> _areaNeighbours, _edgeNeighbours,_cornerNeighbours;
-	MPI_Request * _areaRequests, *_edgeRequests, *_cornerRequests;
+	std::vector<MPI_Request> _areaRequests;
+	std::vector<MPI_Request> _edgeRequests;
+	std::vector<MPI_Request> _cornerRequests;
 	MPI_Comm _comm;
 	bool _isSend;
 	bool _doNT;
@@ -75,7 +77,8 @@ private:
 template <class T>
 HaloBufferOverlap<T>::HaloBufferOverlap(Vector3<int> areaHaloSize, Vector3<int> edgeHaloSize,
 		int cornerHaloSize, MPI_Comm comm, std::vector<int>& areaNeighbours,std::vector<int>& edgeNeighbours,std::vector<int>& cornerNeighbours, bool isSend, bool doNT, int areaNumber, int edgeNumber, int cornerNumber, std::vector<std::vector<std::vector<int>>> allRanks, Vector3<int> numCellsOnGlobalLevel, bool fuseGlobalCommunication):
-_areaBuffers(areaNumber), _edgeBuffers(edgeNumber), _cornerBuffers(cornerNumber),  _areaHaloSize(areaHaloSize), _edgeHaloSize(edgeHaloSize), _areaNeighbours(areaNeighbours), _edgeNeighbours(edgeNeighbours), _cornerNeighbours(cornerNeighbours), _doNT(doNT), _allRanks(allRanks), _numCellsOnGlobalLevel(numCellsOnGlobalLevel), _fuseGlobalCommunication(fuseGlobalCommunication) {
+_areaBuffers(areaNumber), _edgeBuffers(edgeNumber), _cornerBuffers(cornerNumber),  _areaHaloSize(areaHaloSize), _edgeHaloSize(edgeHaloSize), _areaNeighbours(areaNeighbours), _edgeNeighbours(edgeNeighbours), _cornerNeighbours(cornerNeighbours), _doNT(doNT), _allRanks(allRanks), _numCellsOnGlobalLevel(numCellsOnGlobalLevel), _fuseGlobalCommunication(fuseGlobalCommunication),
+_areaRequests(areaNumber), _edgeRequests(edgeNumber), _cornerRequests(cornerNumber) {
 
 	_cornerHaloSize = cornerHaloSize;
 	if(edgeNumber == 0){
@@ -90,16 +93,6 @@ _areaBuffers(areaNumber), _edgeBuffers(edgeNumber), _cornerBuffers(cornerNumber)
 	}
 	else{
 		_isGlobal = false;
-	}
-
-	if(areaNumber != 0){
-		std::vector<MPI_Request> _areaRequests(_areaBuffers.size());
-	}
-	if(edgeNumber != 0){
-		std::vector<MPI_Request> _edgeRequests(_edgeBuffers.size());
-	}
-	if(cornerNumber != 0){
-		std::vector<MPI_Request> _cornerRequests(_cornerBuffers.size());
 	}
 
 	fillArraySizes(areaHaloSize,edgeHaloSize);
@@ -527,13 +520,13 @@ template <class T>
 void HaloBufferOverlap<T>::startCommunication(){
 	//outdated!!!
 	if(not(_doNT)){
-		 MPI_Startall(_areaBuffers.size(), _areaRequests);
-		 MPI_Startall(_edgeBuffers.size(), _edgeRequests);
-		 MPI_Startall(_cornerBuffers.size(), _cornerRequests);
+		 MPI_Startall(_areaBuffers.size(), _areaRequests.data());
+		 MPI_Startall(_edgeBuffers.size(), _edgeRequests.data());
+		 MPI_Startall(_cornerBuffers.size(), _cornerRequests.data());
 	}
 	else{
-		MPI_Startall(4, _areaRequests);
-		MPI_Startall(2, _edgeRequests);
+		MPI_Startall(4, _areaRequests.data());
+		MPI_Startall(2, _edgeRequests.data());
 	}
 //	 std::cout << _areaBuffers.size() << _edgeBuffers.size() << _cornerBuffers.size() <<"\n";
 }
@@ -543,20 +536,20 @@ void HaloBufferOverlap<T>::wait(){
 	//outdated!!!
 	if(not(_doNT)){
 		MPI_Status * areaStatusArray = new MPI_Status[_areaBuffers.size()];
-		MPI_Waitall(_areaBuffers.size(),_areaRequests, areaStatusArray);
+		MPI_Waitall(_areaBuffers.size(),_areaRequests.data(), areaStatusArray);
 
 		MPI_Status * edgeStatusArray = new MPI_Status[_edgeBuffers.size()];
-		MPI_Waitall(_edgeBuffers.size(),_edgeRequests, edgeStatusArray);
+		MPI_Waitall(_edgeBuffers.size(),_edgeRequests.data(), edgeStatusArray);
 
 		MPI_Status * cornerStatusArray = new MPI_Status[_cornerBuffers.size()];
-		MPI_Waitall(_cornerBuffers.size(),_cornerRequests, cornerStatusArray);
+		MPI_Waitall(_cornerBuffers.size(),_cornerRequests.data(), cornerStatusArray);
 	}
 	else{
 		MPI_Status * areaStatusArray = new MPI_Status[4];
-		MPI_Waitall(4,_areaRequests, areaStatusArray);
+		MPI_Waitall(4,_areaRequests.data(), areaStatusArray);
 
 		MPI_Status * edgeStatusArray = new MPI_Status[2];
-		MPI_Waitall(2,_edgeRequests, edgeStatusArray);
+		MPI_Waitall(2,_edgeRequests.data(), edgeStatusArray);
 	}
 }
 
@@ -567,13 +560,13 @@ int HaloBufferOverlap<T>::testIfFinished(){
 		if(!_isGlobal){
 
 			std::vector<MPI_Status> areaStatusArray(_areaBuffers.size());
-			MPI_Testall(_areaBuffers.size(),_areaRequests, &areaFlag, areaStatusArray.data());
+			MPI_Testall(_areaBuffers.size(),_areaRequests.data(), &areaFlag, areaStatusArray.data());
 
 			std::vector<MPI_Status> edgeStatusArray(_edgeBuffers.size());
-			MPI_Testall(_edgeBuffers.size(),_edgeRequests, &edgeFlag, edgeStatusArray.data());
+			MPI_Testall(_edgeBuffers.size(),_edgeRequests.data(), &edgeFlag, edgeStatusArray.data());
 
 			std::vector<MPI_Status> cornerStatusArray(_cornerBuffers.size());
-			MPI_Testall(_cornerBuffers.size(),_cornerRequests, &cornerFlag, cornerStatusArray.data());
+			MPI_Testall(_cornerBuffers.size(),_cornerRequests.data(), &cornerFlag, cornerStatusArray.data());
 
 			return areaFlag * edgeFlag * cornerFlag;
 		}
@@ -581,17 +574,17 @@ int HaloBufferOverlap<T>::testIfFinished(){
 //			std::cout << _areaBuffers.size() << "\n";
 			if(_areaBuffers.size() == 0) return true;
 			std::vector<MPI_Status> areaStatusArray(_areaBuffers.size());
-			MPI_Testall(_areaBuffers.size(),_areaRequests, &areaFlag, areaStatusArray.data());
+			MPI_Testall(_areaBuffers.size(),_areaRequests.data(), &areaFlag, areaStatusArray.data());
 			return areaFlag;
 		}
 	}
 	else{
 		if(!_isGlobal){
 			MPI_Status areaStatusArray[4];
-			MPI_Testall(4,_areaRequests, &areaFlag, areaStatusArray);
+			MPI_Testall(4,_areaRequests.data(), &areaFlag, areaStatusArray);
 
 			MPI_Status edgeStatusArray[2];
-			MPI_Testall(2,_edgeRequests, &edgeFlag, edgeStatusArray);
+			MPI_Testall(2,_edgeRequests.data(), &edgeFlag, edgeStatusArray);
 			return areaFlag * edgeFlag;
 		}
 		else{
@@ -605,7 +598,7 @@ int HaloBufferOverlap<T>::testIfFinished(){
 			}
 			if(numRequests == 0) return true;
 			std::vector<MPI_Status> areaStatusArray(numRequests);
-			MPI_Testall(numRequests,_areaRequests, &areaFlag, areaStatusArray.data());
+			MPI_Testall(numRequests,_areaRequests.data(), &areaFlag, areaStatusArray.data());
 //			MPI_Status status;
 //
 //			for(int i= 0; i<numberOfSends; i++){
