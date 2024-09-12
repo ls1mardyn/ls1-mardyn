@@ -56,6 +56,15 @@ double Interpolate::GetRDFAt(double r){
     //get indeces gr values
     //interpolate
     gr = LinearInterpolation(low,up,r);
+
+    if(!std::isfinite(gr)){
+        int i=0;
+        while(std::isinf(y_values[i])){
+            i++;
+        }
+        return y_values[i];
+    }
+
     return gr;
 }
 
@@ -76,8 +85,13 @@ double Interpolate::CentralFiniteDifference(double r){
     double gb,ga,ra,rb;
     ga = y_values[low]; ra = x_values[low];
     gb = y_values[up]; rb = x_values[up];
+    double ratio =(gb-ga)/(rb-ra);
 
-    return (gb-ga)/(rb-ra);
+    if(!std::isfinite(ratio)){
+        return 5.0;
+    }
+
+    return ratio;
 }
 
 double Interpolate::LinearInterpolation(int fa, int fb, double fx){

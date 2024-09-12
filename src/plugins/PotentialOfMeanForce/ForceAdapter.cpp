@@ -280,7 +280,7 @@ double InteractionForceAdapter::PotentialOfMeanForce(double r){
     double potential;
     double temperature = adres->GetMultiplier()*_simulation.getEnsemble()->T();
     
-    potential = adres->GetPotentialInterpolation().GetRDFAt(r);
+    potential = temperature*adres->GetPotentialInterpolation().GetRDFAt(r);
 
     return potential;
     
@@ -304,20 +304,26 @@ double InteractionForceAdapter::PotentialOfMeanForce(double r){
 }
 
 void InteractionForceAdapter::ForceOfPotentialOfMeanForce(std::array<double,3>& f_com, double r){
-    if(global_simulation->getSimulationStep()==0){
-        double derivative = adres->GetRDFInterpolation().CentralFiniteDifference(r);
-        double rdf = adres->GetRDFInterpolation().GetRDFAt(r);
-        double f_scalar = -1.0*_simulation.getEnsemble()->T()*derivative/(rdf*r);
-        for(int i=0;i<f_com.size();i++){
-            f_com[i] *= f_scalar;
-        }
-    }else{
 
-        double derivative = -1.0*adres->GetPotentialInterpolation().CentralFiniteDifference(r);
-        for(int i=0;i<f_com.size();i++){
-            f_com[i] *= derivative;
-        }
+    double derivative = adres->GetPotentialInterpolation().CentralFiniteDifference(r);
+    for(int i=0;i<f_com.size();i++){
+        f_com[i] *= derivative;
     }
+
+    // if(global_simulation->getSimulationStep()==0){
+        // double derivative = adres->GetRDFInterpolation().CentralFiniteDifference(r);
+        // double rdf = adres->GetRDFInterpolation().GetRDFAt(r);
+        // double f_scalar = -1.0*_simulation.getEnsemble()->T()*derivative/(rdf*r);
+        // for(int i=0;i<f_com.size();i++){
+            // f_com[i] *= f_scalar;
+        // }
+    // }else{
+// 
+        // double derivative = -1.0*adres->GetPotentialInterpolation().CentralFiniteDifference(r);
+        // for(int i=0;i<f_com.size();i++){
+            // f_com[i] *= derivative;
+        // }
+    // }
 }
 
 double InteractionForceAdapter::SqrdDistanceBetweenCOMs(std::array<double,3> c1,std::array<double,3> c2){

@@ -2,7 +2,7 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 
 
-PMF::PMF():reference_rdf_interpolation{1.0},current_rdf_interpolation{1.0},potential_interpolation{0.0}{
+PMF::PMF():reference_rdf_interpolation{1.0},current_rdf_interpolation{1.0},potential_interpolation{0.0},avg_rdf_interpolation{1.0}{
     adres_cell_processor = new InteractionCellProcessor(0,0);
 }
 
@@ -38,11 +38,12 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     Log::global_log->info()<<"[PMF] Enabled "<<std::endl;
 
     Log::global_log->info()<<"[PMF] InternalProfiler uses "<<internal_bins
-                           <<" measures every "<<measure_frequency<<" steps\n";
+                           <<" bins, measures every "<<measure_frequency<<" steps\n";
     this->profiler.init(pc,internal_bins,measure_frequency);
     Log::global_log->info()<<"[PMF] InternalProfiler initialized\n";
     current_rdf_interpolation.SetXValues(profiler.GetRNodes());
     potential_interpolation.SetXValues(profiler.GetRNodes());
+    avg_rdf_interpolation.SetXValues(profiler.GetRNodes());
 
     accumulate_rdf_buffer.resize(internal_bins);
 
@@ -67,8 +68,8 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     }
     xmlfile.changecurrentnode(oldpath);
     xmlfile.getNodeValue_double("multiplier",multiplier);
-    xmlfile.getNodeValue_double("internal-bins",internal_bins);
-    xmlfile.getNodeValue_int("measureFreq",measure_frequency);
+    xmlfile.getNodeValue("internalBins",internal_bins);
+    xmlfile.getNodeValue("measureFreq",measure_frequency);
     Log::global_log->info()<<"[PMF] Target temperature = "<<_simulation.getEnsemble()->T()<<std::endl;
 }
 
@@ -89,17 +90,27 @@ void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long
 
 void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, unsigned long step){
 
+    //Generates instantaneous rdf values
     this->profiler.GenerateInstantaneousData(pc,domain);
+    //Accumulates values
     AccumulateRDF(profiler.GetRDFValues());
+    std::vector<double> avg_rdf = GetAverageRDF();
+    //Pass to interpolation
+    avg_rdf_interpolation.SetYValues(avg_rdf);
 
     if(global_simulation->getSimulationStep()>0){
         Log::global_log->info()<<"[PMF] Convergence check: "<<ConvergenceCheck()<<std::endl;
-        std::string filename="rdf_"+std::to_string(step);
+        std::string filename="avg_rdf_"+std::to_string(step)+".txt";
         std::ofstream rdf_file(filename);
-        for(int i=0;i<current_rdf_interpolation.GetGValues().size();++i){
-            rdf_file<<std::setw(8)<<std::left<<current_rdf_interpolation.GetRValues()[i]<<"\t"<<std::setw(8)<<std::left<<current_rdf_interpolation.GetGValues()[i]<<std::endl;
+        for(int i=0;i<avg_rdf_interpolation.GetGValues().size();++i){
+            rdf_file<<std::setw(8)<<std::left<<avg_rdf_interpolation.GetRValues()[i]<<"\t"<<std::setw(8)<<std::left<<avg_rdf_interpolation.GetGValues()[i]<<std::endl;
         }
+        rdf_file.close();
     }
+
+    //need to check if correction required
+    AddPotentialCorrection();
+    profiler.ResetBuffers();
 
 }
 
@@ -123,7 +134,7 @@ void PMF::InitializePotentialValues(){
 void PMF::AddPotentialCorrection(){
     std::vector<double> pot_i = potential_interpolation.GetGValues();
     for(int i=0;i<pot_i.size();++i){
-        double correction = std::log(GetAverageRDF()[i])/std::log(reference_rdf_interpolation.GetGValues()[i]);
+        double correction = std::log(avg_rdf_interpolation.GetGValues()[i])/std::log(reference_rdf_interpolation.GetGValues()[i]);
         pot_i[i] +=  -1.0*_simulation.getEnsemble()->T()*correction;
     }
     potential_interpolation.SetYValues(pot_i);
@@ -161,14 +172,16 @@ Interpolate& PMF::GetCurrentRDFInterpolation(){
     return this->current_rdf_interpolation;
 }
 
+Interpolate& PMF::GetAVGRDFInterpolation(){
+    return this->avg_rdf_interpolation;
+}
+
 Interpolate& PMF::GetPotentialInterpolation(){
     return this->potential_interpolation;
 }
 
 void PMF::ReadRDF(){
-
     reference_rdf_interpolation.ReadInRDF();
-
 }
 
 void PMF::MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2){

@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>100</steps>
+        <steps>300</steps>
       </production>
     </run>
     
@@ -89,7 +89,6 @@
 
     <plugin name="PMF">
         <fpregions>
-          <!-- Only cg -->
           <region id = "1">
             <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
             <highX>0.0</highX><highY>0.0</highY><highZ>0.0</highZ>
@@ -98,7 +97,7 @@
           </region>
         </fpregions>
         <multiplier>1.0</multiplier>
-        <internal-bins>100</internal-bins>
+        <internalBins>100</internalBins>
         <measureFreq>1</measureFreq>
       </plugin>
         

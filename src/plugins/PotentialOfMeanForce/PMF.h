@@ -26,26 +26,36 @@ class PMF:public PluginBase{
     using tracker = std::pair<InteractionSite,ResolutionType>;
     private:
 
+
+
     //std::vector<double> r_nodes;//stores distance values
     //std::vector<double> v_nodes;//stores g(r) values
-    Interpolate reference_rdf_interpolation;
-    Interpolate potential_interpolation;
-    Interpolate current_rdf_interpolation;
-    InternalProfiler profiler;
+    Interpolate reference_rdf_interpolation;//should not touch
+    Interpolate potential_interpolation;//updated on every step
+    Interpolate current_rdf_interpolation;//not needed
+    Interpolate avg_rdf_interpolation;//current avg value so far 
+
+    InternalProfiler profiler;//measuring tool
 
     std::vector<FPRegion> regions;//should create AT region with
     InteractionCellProcessor* adres_cell_processor;
     std::map<unsigned long, tracker> sites;
     ResolutionHandler resolution_handler;
     WeightFunction weight_function;
-    RadialDFCOM rdf;
+    RadialDFCOM rdf;//used to generate COM mapping and refresh COMs
     InteractionForceAdapter* pairs_handler;
 
+    double internal_bins;//used for profiler
+    int measure_frequency;//used for profiler
 
-    double multiplier;
-    double internal_bins;
-    int measure_frequency;
-    std::vector<double> accumulate_rdf_buffer;//stores rdf measurement over all measured steps
+    double multiplier;//alpha for step size
+    /**
+     * Intermediate buffer, is a sum of all rdf values per step
+     * Does NOT give an avg
+     * Must not be used as data
+     * Only through GetAverageRDF method if required
+     */
+    std::vector<double> accumulate_rdf_buffer;
     
 
     public:
@@ -61,6 +71,14 @@ class PMF:public PluginBase{
 
 
     void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
+
+    /**
+     * 
+     * Print avg rdf value to file
+     * Convergence check
+     * Set up interpolation buffers
+     * Accumulate to internal buffer
+     */
     void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
     void siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) override;
@@ -76,6 +94,7 @@ class PMF:public PluginBase{
     double WeightValue(const std::array<double,3>& pos, FPRegion& region);
     void ReadRDF();
     Interpolate& GetRDFInterpolation();
+    Interpolate& GetAVGRDFInterpolation();
     Interpolate& GetPotentialInterpolation();
     Interpolate& GetCurrentRDFInterpolation();
 
