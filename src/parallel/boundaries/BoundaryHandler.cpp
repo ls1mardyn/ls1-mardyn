@@ -154,10 +154,10 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
       break;
 
     case BoundaryUtils::BoundaryType::OUTFLOW:
+        [[fallthrough]];
     case BoundaryUtils::BoundaryType::REFLECTING: {
       // create region by using getInnerBuffer()
-      std::array<double, 3> curWallRegionBegin, curWallRegionEnd;
-      std::tie(curWallRegionBegin, curWallRegionEnd) =
+      const auto [curWallRegionBegin, curWallRegionEnd] =
           BoundaryUtils::getInnerBuffer(_localRegionStart, _localRegionEnd,
                                         currentWall.first, cutoff);
       // convert the regions into c-style arrays, so that they can be passed to

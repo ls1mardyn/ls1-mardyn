@@ -32,8 +32,8 @@ void DomainDecompBase::setGlobalBoundaryType(BoundaryUtils::DimensionType dimens
 
 void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* ensemble) {
 	//find which walls to consider
-	double startRegion[3], endRegion[3];
-	getBoundingBoxMinMax(domain, startRegion, endRegion);
+	std::array<double, 3> startRegion{}, endRegion{};
+	getBoundingBoxMinMax(domain, startRegion.data(), endRegion.data());
 
 	const double* globStartRegion = ensemble->domain()->rmin();
 	const double* globEndRegion = ensemble->domain()->rmax();
