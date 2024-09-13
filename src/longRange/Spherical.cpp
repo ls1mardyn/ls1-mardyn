@@ -838,6 +838,13 @@ void Spherical::calculateLongRange() {
 		}
 
 		// Distribution of Shell Corrections to every node does not have to be done -> each node just calculated for themselves!
+		for (unsigned i = 0; i < NShells; i++) {
+			UShells_Mean_global[i] = UShells_Mean[i];
+			FShells_Mean_global[i] = FShells_Mean[i];
+			PNShells_Mean_global[i] =PNShells_Mean[i];
+			PTShells_Mean_global[i] =PTShells_Mean[i];
+		}
+
 
 		// Only Root writes to files
 		if (rank == 0) {
