@@ -8,7 +8,7 @@ if(NOT ENABLE_UNIT_TESTS)
     list(FILTER MY_SRC EXCLUDE REGEX "/tests/")
 endif()
 
-# if mpi is not enabled, remove the uneeded source files
+# if mpi is not enabled, remove the unneeded source files
 if(NOT ENABLE_MPI)
     # duplicate the list
     set(MY_SRC_BACK ${MY_SRC})
