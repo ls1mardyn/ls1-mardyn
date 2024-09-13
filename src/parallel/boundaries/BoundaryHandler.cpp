@@ -87,7 +87,7 @@ void BoundaryHandler::setLocalRegion(std::array<double, 3> start,
   _localRegionEnd = end;
 }
 
-void BoundaryHandler::findGlobalWallsInLocalRegion() {
+void BoundaryHandler::updateGlobalWallLookup() {
   _isGlobalWall[BoundaryUtils::DimensionType::POSX] =
       BoundaryUtils::isNearRel(_localRegionEnd[0], _globalRegionEnd[0]);
   _isGlobalWall[BoundaryUtils::DimensionType::NEGX] =

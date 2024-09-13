@@ -80,7 +80,7 @@ public:
    * Should be called after changing global and local regions (typically after a
    * rebalance).
    */
-  void findGlobalWallsInLocalRegion();
+  void updateGlobalWallLookup();
 
   /* Check if the local wall in a particular dimension is actually a global
    * wall. */
