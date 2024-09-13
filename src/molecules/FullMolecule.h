@@ -78,8 +78,14 @@ public:
 	/** get the virial */
 	double Vi(unsigned short d) const override { return _Vi[d] + _ViConstCorr; }
 
-	double VirN() { return _VirN; }
-	double VirT() { return _VirT; }
+	double VirN() { 		
+		// Log::global_log->info() << "ViN of MolID: " << getID() << " : " << _VirN << std::endl;
+		return _VirN; 
+	}
+	double VirT() { 
+		// Log::global_log->info() << "ViT of MolID: " << getID() << " : " << _VirT << std::endl;
+		return _VirT;
+		}
 
 	/** get the constant correction of potential energy */
 	double UpotConstCorr() const override { return _upotConstCorr; }

@@ -1,4 +1,3 @@
-
 #include "Domain.h"
 #include "longRange/Spherical.h"
 #include "molecules/Molecule.h"
@@ -37,7 +36,7 @@ Spherical::Spherical(double /*cutoffT*/, double cutoffLJ, Domain* domain, Domain
 	global_log->info() << "[Long Range Correction] golbalNumMols set to: " << globalNumMols << " during initialization"
 					   << std::endl;
 
-	rcmax = 8.0;
+	rcmax = 8.0; // I DONT THINK THIS SOULD BE HARDCODED!
 	UpotKorrLJ = 0.0;
 	VirialKorrLJ = 0.0;
 	droplet = true;
@@ -93,6 +92,8 @@ void Spherical::init() {
 	resizeExactly(lowerS, globalNumMols);         // requires refreshIDs=1 in simulation options
 	resizeExactly(interS, globalNumMols);         // requires refreshIDs=1 in simulation options
 	resizeExactly(upperS, globalNumMols);         // requires refreshIDs=1 in simulation options
+
+	resizeExactly(repParticles, NShells);
 
 	std::fill(ksi.begin(), ksi.end(), 0.0);
 	std::fill(FcorrX.begin(), FcorrX.end(), 0.0);
@@ -232,6 +233,33 @@ void Spherical::init() {
 	double outside_from_coord = (bulkBoundaries.outside_from*systemcenter[0])/NShells;
 	double outside_to_coord = (bulkBoundaries.outside_to*systemcenter[0])/NShells;
 
+	/////  PREPARATIONS FOR REPRESENTATIVE PARTICLE METHOD /////
+	/* all of this only needs to be calculated once, since the rep.Particles are fixed in each shell, and don't change position */
+	for (int i = 0; i< NShells; i++) {
+		RepresentativeParticle& repPart = repParticles[i]; 
+		repPart.x = systemcenter[0] + _drShells*i + _drShells/2; // position of representative Particle (y==systemcenter, z==systemcenter)
+		double y = systemcenter[1];
+		double z = systemcenter[2];
+		repPart.ksiX = systemcenter[0] - repPart.x; 
+		double ksiY = 0.;
+		double ksiZ = 0.;
+
+		repPart.FcorrX = repPart.ksiX;
+		repPart.FcorrY = ksiY; //==0, because rep.Particle is on the same y-Coord as systemcenter
+		repPart.FcorrZ = ksiZ; //==0, because rep.Particle is on the same z-Coord as systemcenter
+		repPart.ksi = std::abs(repPart.ksiX); // (because only x-position is different from systemcenter)
+
+		repPart.realk = repPart.ksi / _drShells;
+		repPart.lowerS = std::min(static_cast<double>(std::floor((repPart.realk - _deltaShells))), static_cast<double>(NShells)); 
+		repPart.interS = std::max(static_cast<double>(std::ceil(abs(repPart.realk - _deltaShells))), 1.0);
+		repPart.upperS = std::min(static_cast<double>(std::ceil(repPart.realk + _deltaShells)), static_cast<double>(NShells + 1));
+		repPart.k = std::round(repPart.realk);
+	}
+
+
+
+
+
 	global_log->warning() << "[Long Range Correction] Calculating rho_inside from " << inside_from_coord << " (Shell " << bulkBoundaries.inside_from << ")"
 																	   << " to " << inside_to_coord << " (Shell " << bulkBoundaries.inside_to << ")"
 														 << " and rho_out from " << outside_from_coord << " (Shell " << bulkBoundaries.outside_from << ")"
@@ -321,14 +349,15 @@ void Spherical::calculateLongRange() {
 	std::fill(rhoShellsTemp.begin(), rhoShellsTemp.end(), 0.0);
 	std::fill(TShellsTemp.begin(), TShellsTemp.end(), 0.0);
 
+	/////  DENSITY CALCULATION /////
 	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid();
 		 ++tempMol) {
 		double v2i = tempMol->v(0) * tempMol->v(0) + tempMol->v(1) * tempMol->v(1) +
 					 tempMol->v(2) * tempMol->v(2);  // velocity^2 of tempMol
 
 		unsigned long molID = tempMol->getID();
-		for (unsigned short d = 0; d < 3; ++d) {
-			FcorrX[molID] = systemcenter[0] - tempMol->r(0);
+		for (unsigned short d = 0; d < 3; ++d) { //WAS IST DAS FÜR 1 CODE?! :D
+			FcorrX[molID] = systemcenter[0] - tempMol->r(0); // =-(distanceFromCenter) 
 			FcorrY[molID] = systemcenter[1] - tempMol->r(1);
 			FcorrZ[molID] = systemcenter[2] - tempMol->r(2);
 		}
@@ -336,10 +365,9 @@ void Spherical::calculateLongRange() {
 							   (tempMol->r(1) - systemcenter[1]) * (tempMol->r(1) - systemcenter[1]) +
 							   (tempMol->r(2) - systemcenter[2]) * (tempMol->r(2) - systemcenter[2]));
 		double realk = ksi[molID] / _drShells;
-		lowerS[molID] = std::min(static_cast<double>(std::floor((realk - _deltaShells))), static_cast<double>(NShells));
+		lowerS[molID] = std::min(static_cast<double>(std::floor((realk - _deltaShells))), static_cast<double>(NShells)); //can probably be removed, once representativeParticle Method is implemented
 		interS[molID] = std::max(static_cast<double>(std::ceil(abs(realk - _deltaShells))), 1.0);
-		upperS[molID] =
-			std::min(static_cast<double>(std::ceil(realk + _deltaShells)), static_cast<double>(NShells + 1));
+		upperS[molID] = std::min(static_cast<double>(std::ceil(realk + _deltaShells)), static_cast<double>(NShells + 1));
 		unsigned long k = std::round(realk);
 		if (k > NShells - 1) {
 			rhoShellsTemp[NShells - 1] += 1.;
@@ -636,14 +664,15 @@ void Spherical::calculateLongRange() {
 		double PTCorrShells = 0.0;
 		double ksi2 = 0.0;
 
-		for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid();
-			 ++tempMol) {
-			unsigned long molID = tempMol->getID();
+		// Correction per shell calculation, now using representative Particle Method:
+		for (int i = 0; i< NShells; i++) { // shell index == rep.Particle Index
+			RepresentativeParticle& repPart = repParticles[i]; 
+			double ksi = repPart.ksi;
 			UCorrShells = 0.0;
 			FCorrShells = 0.0;
 			PNCorrShells = 0.0;
 			PTCorrShells = 0.0;
-			ksi2 = ksi[molID] * ksi[molID];
+			ksi2 = ksi * ksi;
 			for (unsigned ci = 0; ci < numComp; ++ci) {
 				for (unsigned cj = 0; cj < numComp; ++cj) {
 					ParaStrm& params = _domain->getComp2Params()(ci, cj);
@@ -665,21 +694,21 @@ void Spherical::calculateLongRange() {
 							// double tau1 = 0.5;
 							// double tau2 = 0;
 							double sigma6 = sig2 * sig2 * sig2;
-							double factorU = -M_PI * _drShells * eps24 * sigma6 / (6. * ksi[molID]);
-							double factorF = -factorU / ksi[molID];
-							double factorP = 0.5 * factorF / ksi[molID];
+							double factorU = -M_PI * _drShells * eps24 * sigma6 / (6. * ksi);
+							double factorF = -factorU / ksi;
+							double factorP = 0.5 * factorF / ksi;
+							///////////////SOMEWHERE INBETWEEN THESE BARRIERES --------------------------__
 							if ((tau1 == 0.0) && (tau2 == 0.0)) {  // Center-Center
-								for (unsigned long j = 1; j < (lowerS[molID] + 1);
-									 j++) {  // Loop over Shells with smaller Radius
+								for (int j = 1; static_cast<double>(j) < (repParticles[i].lowerS + 1.); j++) {  // Loop over Shells with smaller Radius
 									if (rhoShellsT[j - 1] != 0.0) {
-										rlow = ksi[molID] - RShells[j - 1];
+										rlow = ksi - RShells[j - 1];
 										rlowInv = 1. / rlow;
 										rlowInv2 = rlowInv * rlowInv;
-										rdashInv = 1. / (RShells[j - 1] + ksi[molID]);
+										rdashInv = 1. / (RShells[j - 1] + ksi);
 										UCorrTemp = sigma6 * 0.2 * (pow(rdashInv, 10) - pow(rlowInv, 10)) -
 													0.5 * (pow(rdashInv, 4) - pow(rlowInv, 4));
 										if (rlow < rcmax) {
-											rdash = min(rcmax, (RShells[j - 1] + ksi[molID]));
+											rdash = std::min(rcmax, (RShells[j - 1] + ksi));
 											rdashInv = 1. / rdash;
 											rdashInv2 = rdashInv * rdashInv;
 											FCorrTemp =
@@ -710,16 +739,17 @@ void Spherical::calculateLongRange() {
 											UCorrShells + UCorrTemp * factorU * rhoShellsT[j - 1] * RShells[j - 1];
 									}
 								}
-								for (unsigned long j = upperS[molID]; j < (NShells + 1); j++) {
+							///////////////SOMEWHERE INBETWEEN THESE BARRIERES --------------------------__
+								for (unsigned long j = repPart.upperS; j < (NShells + 1); j++) {
 									if (rhoShellsT[j - 1] != 0.0) {
-										rlow = RShells[j - 1] - ksi[molID];
+										rlow = RShells[j - 1] - ksi;
 										rlowInv = 1 / rlow;
 										rlowInv2 = rlowInv * rlowInv;
-										rdashInv = 1 / (RShells[j - 1] + ksi[molID]);
+										rdashInv = 1 / (RShells[j - 1] + ksi);
 										UCorrTemp = sigma6 * 0.2 * (pow(rdashInv, 10) - pow(rlowInv, 10)) -
 													0.5 * (pow(rdashInv, 4) - pow(rlowInv, 4));
 										if (rlow < rcmax) {
-											rdash = min(rcmax, (RShells[j - 1] + ksi[molID]));
+											rdash = std::min(rcmax, (RShells[j - 1] + ksi));
 											rdashInv = 1 / rdash;
 											rdashInv2 = rdashInv * rdashInv;
 											FCorrTemp =
@@ -750,17 +780,17 @@ void Spherical::calculateLongRange() {
 											UCorrShells + UCorrTemp * factorU * rhoShellsT[j - 1] * RShells[j - 1];
 									}
 								}
-								for (unsigned long j = interS[molID]; j < upperS[molID];
+								for (unsigned long j = repPart.interS; j < repPart.upperS;
 									 j++) {  // Loop over partly contributing Shells
 									if (rhoShellsT[j - 1] != 0.0) {
 										rlow = rc;
 										rlowInv = 1 / rlow;
 										rlowInv2 = rlowInv * rlowInv;
-										rdashInv = 1 / (RShells[j - 1] + ksi[molID]);
+										rdashInv = 1 / (RShells[j - 1] + ksi);
 										UCorrTemp = sigma6 * 0.2 * (pow(rdashInv, 10) - pow(rlowInv, 10)) -
 													0.5 * (pow(rdashInv, 4) - pow(rlowInv, 4));
 										if (rlow < rcmax) {
-											rdash = min(rcmax, (RShells[j - 1] + ksi[molID]));
+											rdash = std::min(rcmax, (RShells[j - 1] + ksi));
 											rdashInv = 1 / rdash;
 											rdashInv2 = rdashInv * rdashInv;
 											FCorrTemp =
@@ -802,10 +832,10 @@ void Spherical::calculateLongRange() {
 					}
 				}
 				PTCorrShells -= PNCorrShells;
-				UShells_Mean[PartShells[molID]] += UCorrShells;
-				FShells_Mean[PartShells[molID]] += FCorrShells;
-				PNShells_Mean[PartShells[molID]] += PNCorrShells;
-				PTShells_Mean[PartShells[molID]] += PTCorrShells;
+				UShells_Mean[i] += UCorrShells;
+				FShells_Mean[i] += FCorrShells;
+				PNShells_Mean[i] += PNCorrShells;
+				PTShells_Mean[i] += PTCorrShells;
 			}
 		}
 
@@ -826,19 +856,11 @@ void Spherical::calculateLongRange() {
 		}
 		_domainDecomposition->collCommFinalize();
 
-		for (unsigned int i = 0; i < NShells; i++) {
-			if (rhoShellsTemp_global[i] != 0.0) {
-				UShells_Mean_global[i] /= (rhoShellsTemp_global[i] * VShells[i]);
-				FShells_Mean_global[i] /= (rhoShellsTemp_global[i] * VShells[i]);
-				PNShells_Mean_global[i] /= (rhoShellsTemp_global[i] * VShells[i]);
-				PTShells_Mean_global[i] /= (rhoShellsTemp_global[i] * VShells[i]);
-			}
-		}
 		// Only Root writes to files
 		if (rank == 0) {
 			if (simstep % writeFreq == 0) {  // reduced from 100 to 100000, should be enough, no?
 
-				// calculating and writing thermoData:
+/* 				// calculating and writing thermoData:
 
 				// int inside_from = NShells / 10;
 				// int inside_to = NShells / 6;
@@ -949,7 +971,7 @@ void Spherical::calculateLongRange() {
 				// outfilestreamThermData << std::endl;
 
 				// outfilestreamThermData.close();
-
+ */
 				// output for GlobalCorrs:
 				filenameGlobalCorrs = _outputPrefix + "_globalCorrections_" + std::to_string(simstep) + ".csv";
 				ofstream outfilestreamGlobalCorrs(filenameGlobalCorrs, ios::out);

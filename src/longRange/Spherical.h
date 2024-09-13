@@ -19,6 +19,25 @@
 class Domain;
 class ParticleContainer;
 
+struct RepresentativeParticle
+{
+	double x; //y and z position stays fixed on systemcenter, since position can be chosen arbitrarily.
+	double ksiX;
+	double ksi; //=abs(ksiX)
+
+
+	double lowerS;
+	double interS;
+	double upperS;
+
+	double FcorrX; //may be unused
+	double FcorrY; //may be unused
+	double FcorrZ; //may be unused
+
+	double realk;
+	unsigned long k;
+};
+
 class Spherical:public LongRangeCorrection {
 public:
 	Spherical(double cutoffT,double cutoffLJ,Domain* domain,  DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, Simulation* simulation);
@@ -121,6 +140,7 @@ private:
 	std::vector<double> interS;
 	std::vector<double> upperS;
 	std::vector<double> eLong;
+	std::vector<RepresentativeParticle> repParticles;
 	double boxlength[3];
 	double systemcenter[3];
 
