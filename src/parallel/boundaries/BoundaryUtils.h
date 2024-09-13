@@ -47,7 +47,7 @@ enum class BoundaryType { PERIODIC_OR_LOCAL, OUTFLOW, REFLECTING, ERROR };
 enum class DimensionType { POSX, NEGX, POSY, NEGY, POSZ, NEGZ, ERROR };
 
 /* List of all allowed dimensions in string format. */
-const std::array<std::string, 6> permissibleDimensionsString = {
+constexpr std::array<std::string, 6> permissibleDimensionsString = {
     "+x", "+y", "+z", "-x", "-y", "-z"};
 
 /* Check if a dimension is allowed. */

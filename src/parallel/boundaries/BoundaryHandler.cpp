@@ -229,6 +229,7 @@ void BoundaryHandler::removeNonPeriodicHalos(
       break;
 
     case BoundaryUtils::BoundaryType::OUTFLOW:
+      [[fallthrough]];
     case BoundaryUtils::BoundaryType::REFLECTING: {
       // create region by using getOuterBuffer()
       std::array<double, 3> curWallRegionBegin, curWallRegionEnd;
