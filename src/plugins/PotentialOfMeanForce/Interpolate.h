@@ -24,7 +24,7 @@ class Interpolate{
     Interpolate()=default;
     Interpolate(double def);     
     void SetXValues(std::vector<double>& v);
-    void SetYValues(std::vector<double>& v);
+    void SetYValues(std::vector<double> v);
 
     std::vector<double>& GetXValues();
     std::vector<double>& GetYValues();

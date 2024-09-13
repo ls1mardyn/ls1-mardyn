@@ -8,8 +8,14 @@ void Interpolate::SetXValues(std::vector<double>& v){
     this->x_values = v;
 }
 
-void Interpolate::SetYValues(std::vector<double>& v){
-    this->y_values = v;
+void Interpolate::SetYValues(std::vector<double> v){
+    if(v.size() != y_values.size()){
+        y_values.resize(v.size());
+    }
+    for(int i=0;i<v.size();++i){
+        y_values[i] = v[i];
+    }
+    // this->y_values=v;
 }
 
 std::vector<double>& Interpolate::GetXValues(){
