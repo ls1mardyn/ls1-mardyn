@@ -350,8 +350,8 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 					fac = f[d]/drs[d]; //drs != 0 for at least one dimension
 				}
 
-				VNi = 0.5*fac*drm_ni*drs_ni/absi2; // evtl. muss hier += stehen? (+= war es in isabel's orig. code)
-				VNj = 0.5*fac*drm_nj*drs_nj/absj2; // evtl. muss hier += stehen? (+= war es in isabel's orig. code)
+				VNi += 0.5*fac*drm_ni*drs_ni/absi2; // evtl. muss hier = stehen? (+= war es in isabel's orig. code)
+				VNj += 0.5*fac*drm_nj*drs_nj/absj2; // evtl. muss hier = stehen? (+= war es in isabel's orig. code)
 
 				double drm_ti[3];
 				double drs_ti[3];
