@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>300</steps>
+        <steps>40</steps>
       </production>
     </run>
     
@@ -75,17 +75,17 @@
 
     </output>
 
-    <plugin name = "RadialDFCOM">
+    <!--plugin name = "RadialDFCOM">
     	<totalBins>100</totalBins>
     	<sampleFrequency>1</sampleFrequency>
       <averageFrequency>5</averageFrequency>
-    </plugin>
+    </plugin-->
 	
-	  <plugin name = "PotentialProfiler">
+	  <!--plugin name = "PotentialProfiler">
     	<totalBins>100</totalBins>
     	<sampleFrequency>1</sampleFrequency>
       <averageFrequency>5</averageFrequency>
-    </plugin>
+    </plugin-->
 
     <plugin name="PMF">
         <fpregions>

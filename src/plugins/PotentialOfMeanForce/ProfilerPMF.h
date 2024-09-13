@@ -34,11 +34,10 @@ class InternalProfiler{
     /**
      * Will be instantaneous
      */
-    std::vector<double> u_buffer;
-    std::vector<double> pairs_buffer;
+
     std::vector<double> r_nodes;
     int sample_frequency;
-    int measured_steps;
+    int measured_steps;//increases on every call to ProfileData
     double measured_distance_squared;
 
     public:
@@ -49,29 +48,40 @@ class InternalProfiler{
     }
 
     void init(ParticleContainer* pc, int bins, int freq);
+    
     /**
      * Carries out the traversal and profiling
      */
     void ProfileData(ParticleContainer* pc, unsigned long simstep);
-    void SetBinContainer(ParticleContainer* pc);
-    std::array<double,3> GetCOM(Molecule* m);
-    void ProcessDistance(double distance, double pot);
+
     /**
-     * Evaluates RDF and U(r) into the buffers, data is then ruined
+     * Computes center of mass
+     */
+    std::array<double,3> GetCOM(Molecule* m);
+    
+    /**
+     * Bins distances
+     */
+    void ProcessDistance(double distance, double pot);
+    
+    /**
+     * Evaluates RDF and U(r) into the buffers, data is then ruined and clear is required
      */
     void GenerateInstantaneousData(ParticleContainer* particleContainer, Domain* domain);
+    
+    /**
+     * Fills rdf buffer with 0s
+     */
     void ResetBuffers();
+    
     std::vector<double>& GetRDFValues();
-    std::vector<double>& GetPotentialValues();
     std::vector<double>& GetRNodes();
-    double GetMeasuredSteps(){
-        return measured_steps;
-    }
+    double GetMeasuredSteps();
 
 
     private:
     void InitRNodes();
-
+    void SetBinContainer(ParticleContainer* pc);
 };
 
 class InternalCellProcessor: public CellProcessor{

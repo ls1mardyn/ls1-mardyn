@@ -25,10 +25,6 @@ void InternalProfiler::InitRNodes(){
 void InternalProfiler::ResetBuffers(){
 
     std::fill(rdf_buffer.begin(),rdf_buffer.end(),0.0);
-
-    std::fill(u_buffer.begin(),u_buffer.end(),0.0);
-
-    std::fill(pairs_buffer.begin(),pairs_buffer.end(),0.0);
 }
 
 
@@ -40,13 +36,7 @@ void InternalProfiler::SetBinContainer(ParticleContainer* pc){
     this->InitRNodes();
 
     this->rdf_buffer.resize(number_bins);
-    std::fill(rdf_buffer.begin(),rdf_buffer.end(),0.0);
-
-    this->u_buffer.resize(number_bins);
-    std::fill(u_buffer.begin(),u_buffer.end(),0.0);
-
-    this->pairs_buffer.resize(number_bins);
-    std::fill(pairs_buffer.begin(),pairs_buffer.end(),0.0);
+    std::fill(rdf_buffer.begin(),rdf_buffer.end(),0.0);;
 
     Log::global_log->info()<<"[PMF] Internal profiler bin width "<<bin_width<<"\n";
     measured_distance_squared = bin_width*bin_width*number_bins*number_bins;
@@ -68,12 +58,6 @@ std::array<double,3> InternalProfiler::GetCOM(Molecule* m){
         }
 
     }
-    for(int qs=0;qs<comp->numCharges();qs++){
-        Charge& q_center = comp->charge(qs);
-        for(int idx=0;idx<q_center.r().size();idx++){               
-            com[idx] += q_center.m()*m->charge_d_abs(qs)[idx];
-        }
-    }
 
     for(int i=0;i<com.size();i++){
         com[i] /= total_mass;
@@ -83,6 +67,10 @@ std::array<double,3> InternalProfiler::GetCOM(Molecule* m){
 
 }
 
+double InternalProfiler::GetMeasuredSteps(){
+    return measured_steps;
+}
+
 void InternalProfiler::ProcessDistance(double r, double pot){  
     if(r > measured_distance_squared){ return;}
 
@@ -90,19 +78,13 @@ void InternalProfiler::ProcessDistance(double r, double pot){
     
     //Add count for rdf
     this->rdf_buffer[index]++;
-
-    //Add count for potential pairs and potential value itself
-    this->pairs_buffer[index] ++;
-    this->u_buffer[index] += pot;
     
 }  
 
 std::vector<double>& InternalProfiler::GetRDFValues(){
     return this->rdf_buffer;
 }
-std::vector<double>& InternalProfiler::GetPotentialValues(){
-    return this->u_buffer;
-}
+
 std::vector<double>& InternalProfiler::GetRNodes(){
     return this->r_nodes;
 }
@@ -129,12 +111,5 @@ void InternalProfiler::GenerateInstantaneousData(ParticleContainer* particleCont
         //rdf_buffer[i] /= measured_steps;
         rdf_buffer[i] /= den;
 
-        //Generate U(r)_{cg} values for interpolation
-        double N = 0.5*pairs_buffer[i]*(pairs_buffer[i]-1.0);
-        if(N>0){
-            u_buffer[i]= u_buffer[i]/N;
-        }else{
-            u_buffer[i]=0;
-        }
     }   
 }

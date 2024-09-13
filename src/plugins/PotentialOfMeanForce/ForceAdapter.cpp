@@ -280,7 +280,7 @@ double InteractionForceAdapter::PotentialOfMeanForce(double r){
     double potential;
     double temperature = adres->GetMultiplier()*_simulation.getEnsemble()->T();
     
-    potential = temperature*adres->GetPotentialInterpolation().GetRDFAt(r);
+    potential = temperature*adres->GetPotentialInterpolation().InterpolateAt(r);
 
     return potential;
     

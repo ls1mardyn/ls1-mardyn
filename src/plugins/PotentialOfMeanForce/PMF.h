@@ -11,7 +11,6 @@
 #include "particleContainer/ParticleContainer.h"
 #include "plugins/PluginBase.h"
 #include "Region.h"
-#include "InteractionCellProcessor.h"
 #include "Resolution.h"
 #include "WeightFunction.h"
 #include "Interpolate.h"
@@ -19,35 +18,34 @@
 #include "ForceAdapter.h"
 #include "ProfilerPMF.h"
 
-//TODO: who owns the InteractionCellProcessor, AdResS or Simulation?
 
 class InteractionSite;
 class PMF:public PluginBase{
     using tracker = std::pair<InteractionSite,ResolutionType>;
     private:
 
-
-
-    //std::vector<double> r_nodes;//stores distance values
-    //std::vector<double> v_nodes;//stores g(r) values
     Interpolate reference_rdf_interpolation;//should not touch
-    Interpolate potential_interpolation;//updated on every step
+    Interpolate potential_interpolation;//updated on every step or stride
     Interpolate current_rdf_interpolation;//not needed
     Interpolate avg_rdf_interpolation;//current avg value so far 
 
     InternalProfiler profiler;//measuring tool
 
-    std::vector<FPRegion> regions;//should create AT region with
-    InteractionCellProcessor* adres_cell_processor;
+    std::vector<FPRegion> regions;
+    /**
+     * Stores a COM site for every molecule (needs improvement)
+     */
     std::map<unsigned long, tracker> sites;
     ResolutionHandler resolution_handler;
+    /**
+     * L2 norm, used for hybrid
+     */
     WeightFunction weight_function;
-    RadialDFCOM rdf;//used to generate COM mapping and refresh COMs
     InteractionForceAdapter* pairs_handler;
 
     double internal_bins;//used for profiler
     int measure_frequency;//used for profiler
-
+    int update_stride;//how often to IBI
     double multiplier;//alpha for step size
     /**
      * Intermediate buffer, is a sum of all rdf values per step
@@ -67,9 +65,7 @@ class PMF:public PluginBase{
      * Updates resolution and tracker of each molecule
      */
     void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
-    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
-
-
+    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
     void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
 
     /**

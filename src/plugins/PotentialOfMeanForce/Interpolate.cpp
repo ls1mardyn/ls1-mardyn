@@ -12,39 +12,23 @@ void Interpolate::SetYValues(std::vector<double>& v){
     this->y_values = v;
 }
 
-void Interpolate::ReadInRDF(){
-    std::string filename;
-
-    filename = "rdf.txt";
-    std::ifstream file{filename};
-    if(!file){
-        Log::global_log->error()<<"[PMF] I could not read the rdf data file"<<std::endl;
-    }
-    double n1, n2;
-
-    while(file >> n1 >> n2){
-        x_values.push_back(n1);
-        y_values.push_back(n2);
-    }
-}
-
-std::vector<double>& Interpolate::GetGValues(){
+std::vector<double>& Interpolate::GetXValues(){
     return this->y_values;
 }
 
-std::vector<double>& Interpolate::GetRValues(){
+std::vector<double>& Interpolate::GetYValues(){
     return this->x_values;
 }
 
 
-double Interpolate::GetRDFAt(double r){
+double Interpolate::InterpolateAt(double r){
     
     //need to artificially return a one
     if(r > x_values[x_values.size()-1]){
-        return 1.0;
+        return default_value;
     }
 
-    double gr =0.0;
+    double y_at_r =0.0;
 
     //find between which 2 values
     int low, up;
@@ -55,9 +39,9 @@ double Interpolate::GetRDFAt(double r){
     low = up -1;
     //get indeces gr values
     //interpolate
-    gr = LinearInterpolation(low,up,r);
+    y_at_r = LinearInterpolation(low,up,r);
 
-    if(!std::isfinite(gr)){
+    if(!std::isfinite(y_at_r)){
         int i=0;
         while(std::isinf(y_values[i])){
             i++;
@@ -65,7 +49,7 @@ double Interpolate::GetRDFAt(double r){
         return y_values[i];
     }
 
-    return gr;
+    return y_at_r;
 }
 
 double Interpolate::CentralFiniteDifference(double r){
@@ -95,12 +79,12 @@ double Interpolate::CentralFiniteDifference(double r){
 }
 
 double Interpolate::LinearInterpolation(int fa, int fb, double fx){
-    double ga, gb, ra, rb;
-    ga = y_values[fa]; ra = x_values[fa];
-    gb = y_values[fb]; rb = x_values[fb];
+    double ya, yb, xa, xb;
+    ya = y_values[fa]; xa = x_values[fa];
+    yb = y_values[fb]; xb = x_values[fb];
 
     double gc =0.0;
-    gc = ga + (gb-ga)/(rb-ra)*(fx-ra);
+    gc = ya + (yb-ya)/(xb-xa)*(fx-xa);
 
     return gc;
 

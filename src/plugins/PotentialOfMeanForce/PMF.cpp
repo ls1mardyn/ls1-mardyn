@@ -3,7 +3,6 @@
 
 
 PMF::PMF():reference_rdf_interpolation{1.0},current_rdf_interpolation{1.0},potential_interpolation{0.0},avg_rdf_interpolation{1.0}{
-    adres_cell_processor = new InteractionCellProcessor(0,0);
 }
 
 
@@ -22,7 +21,7 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     Log::global_log->info()<<"[PMF] Start the tracker sites\n";
     for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
         unsigned long m_id = it->getID();
-        std::array<double,3> com = rdf.GetCOM(&(*it));
+        std::array<double,3> com = profiler.GetCOM(&(*it));
         sites[m_id].first.SetPosition(com);
     }
 
@@ -73,11 +72,15 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     Log::global_log->info()<<"[PMF] Target temperature = "<<_simulation.getEnsemble()->T()<<std::endl;
 }
 
+void PMF::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep){
+
+}
+
 void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep){
 
     for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
         unsigned long m_id = it->getID();
-        std::array<double,3> com = rdf.GetCOM(&(*it));
+        std::array<double,3> com = profiler.GetCOM(&(*it));
         sites[m_id].first.SetPosition(com);
     }
 
@@ -102,8 +105,8 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
         Log::global_log->info()<<"[PMF] Convergence check: "<<ConvergenceCheck()<<std::endl;
         std::string filename="avg_rdf_"+std::to_string(step)+".txt";
         std::ofstream rdf_file(filename);
-        for(int i=0;i<avg_rdf_interpolation.GetGValues().size();++i){
-            rdf_file<<std::setw(8)<<std::left<<avg_rdf_interpolation.GetRValues()[i]<<"\t"<<std::setw(8)<<std::left<<avg_rdf_interpolation.GetGValues()[i]<<std::endl;
+        for(int i=0;i<avg_rdf_interpolation.GetYValues().size();++i){
+            rdf_file<<std::setw(8)<<std::left<<avg_rdf_interpolation.GetXValues()[i]<<"\t"<<std::setw(8)<<std::left<<avg_rdf_interpolation.GetYValues()[i]<<std::endl;
         }
         rdf_file.close();
     }
@@ -123,7 +126,7 @@ void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned l
 
 
 void PMF::InitializePotentialValues(){
-    std::vector<double> pot0 = reference_rdf_interpolation.GetGValues();
+    std::vector<double> pot0 = reference_rdf_interpolation.GetYValues();
     for(int i=0;i<pot0.size();++i){
         pot0[i] = -1.0*_simulation.getEnsemble()->T()*std::log(pot0[i]);
     }
@@ -132,9 +135,9 @@ void PMF::InitializePotentialValues(){
 }
 
 void PMF::AddPotentialCorrection(){
-    std::vector<double> pot_i = potential_interpolation.GetGValues();
+    std::vector<double> pot_i = potential_interpolation.GetYValues();
     for(int i=0;i<pot_i.size();++i){
-        double correction = std::log(avg_rdf_interpolation.GetGValues()[i])/std::log(reference_rdf_interpolation.GetGValues()[i]);
+        double correction = std::log(avg_rdf_interpolation.GetYValues()[i])/std::log(reference_rdf_interpolation.GetYValues()[i]);
         pot_i[i] +=  -1.0*_simulation.getEnsemble()->T()*correction;
     }
     potential_interpolation.SetYValues(pot_i);
@@ -181,7 +184,26 @@ Interpolate& PMF::GetPotentialInterpolation(){
 }
 
 void PMF::ReadRDF(){
-    reference_rdf_interpolation.ReadInRDF();
+
+    std::string filename;
+    std::vector<double> x_values;
+    std::vector<double> y_values;
+
+    filename = "rdf.txt";
+    std::ifstream file{filename};
+    if(!file){
+        Log::global_log->error()<<"[PMF] I could not read the rdf data file"<<std::endl;
+    }
+    double n1, n2;
+
+    while(file >> n1 >> n2){
+        x_values.push_back(n1);
+        y_values.push_back(n2);
+    }
+
+    reference_rdf_interpolation.SetXValues(x_values);
+    reference_rdf_interpolation.SetYValues(y_values);
+
 }
 
 void PMF::MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2){
@@ -238,7 +260,7 @@ std::vector<double> PMF::GetAverageRDF(){
 
 double PMF::ConvergenceCheck(){
     std::vector<double> difference;
-    std::vector<double>& v_0 = reference_rdf_interpolation.GetGValues();
+    std::vector<double>& v_0 = reference_rdf_interpolation.GetYValues();
     std::vector<double> v_i = GetAverageRDF();
 
     difference.resize(v_0.size());

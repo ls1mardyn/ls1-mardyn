@@ -26,11 +26,10 @@ class Interpolate{
     void SetXValues(std::vector<double>& v);
     void SetYValues(std::vector<double>& v);
 
-    std::vector<double>& GetRValues();
-    std::vector<double>& GetGValues();
-    double GetRDFAt(double r);
+    std::vector<double>& GetXValues();
+    std::vector<double>& GetYValues();
+    double InterpolateAt(double r);
     double LinearInterpolation(int a, int b, double x);
-    void ReadInRDF();
     /**
      * Essentially figure out between which values r is, and do central differences
      */
