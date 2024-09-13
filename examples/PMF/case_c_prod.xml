@@ -99,7 +99,7 @@
         <multiplier>0.2</multiplier>
         <internalBins>100</internalBins>
         <measureFreq>1</measureFreq>
-      </plugin>
+    </plugin>
         
   </simulation>
 </mardyn>
