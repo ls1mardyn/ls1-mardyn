@@ -26,7 +26,6 @@ class PMF:public PluginBase{
 
     Interpolate reference_rdf_interpolation;//should not touch
     Interpolate potential_interpolation;//updated on every step or stride
-    Interpolate current_rdf_interpolation;//not needed
     Interpolate avg_rdf_interpolation;//current avg value so far 
 
     InternalProfiler profiler;//measuring tool
@@ -45,7 +44,7 @@ class PMF:public PluginBase{
 
     double internal_bins;//used for profiler
     int measure_frequency;//used for profiler
-    int update_stride;//how often to IBI
+    int update_stride=1;//how often to IBI
     double multiplier;//alpha for step size
     /**
      * Intermediate buffer, is a sum of all rdf values per step
@@ -83,23 +82,28 @@ class PMF:public PluginBase{
     static PluginBase* createInstance() {return new PMF(); }
 
     public:
+    void ReadRDF();
+
 
     std::vector<FPRegion>& GetRegions();
     ResolutionType GetMoleculeResolution(unsigned long idx);
     InteractionSite GetMoleculeCOMSite(unsigned long idx);
     double WeightValue(const std::array<double,3>& pos, FPRegion& region);
-    void ReadRDF();
     Interpolate& GetRDFInterpolation();
     Interpolate& GetAVGRDFInterpolation();
     Interpolate& GetPotentialInterpolation();
-    Interpolate& GetCurrentRDFInterpolation();
 
     /**
      * Implements U(r)_0 = -T^*ln(g(r)_0)
      */
     void InitializePotentialValues();
+
+    /**
+     * Implements U(r)_{i+1} =U(r)_i - alpha*T^*ln(g(r)_i/g(r)_*)
+     */
     void AddPotentialCorrection();
     void AccumulateRDF(std::vector<double>& current_rdf);
+
     /**
      * 
      * Returns accumulated RDF divided by measured steps from profiler

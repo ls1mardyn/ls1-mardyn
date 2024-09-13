@@ -13,11 +13,11 @@ void Interpolate::SetYValues(std::vector<double>& v){
 }
 
 std::vector<double>& Interpolate::GetXValues(){
-    return this->y_values;
+    return this->x_values;
 }
 
 std::vector<double>& Interpolate::GetYValues(){
-    return this->x_values;
+    return this->y_values;
 }
 
 

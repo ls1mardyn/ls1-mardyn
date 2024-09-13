@@ -2,7 +2,7 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 
 
-PMF::PMF():reference_rdf_interpolation{1.0},current_rdf_interpolation{1.0},potential_interpolation{0.0},avg_rdf_interpolation{1.0}{
+PMF::PMF():reference_rdf_interpolation{1.0},potential_interpolation{0.0},avg_rdf_interpolation{1.0}{
 }
 
 
@@ -40,7 +40,6 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
                            <<" bins, measures every "<<measure_frequency<<" steps\n";
     this->profiler.init(pc,internal_bins,measure_frequency);
     Log::global_log->info()<<"[PMF] InternalProfiler initialized\n";
-    current_rdf_interpolation.SetXValues(profiler.GetRNodes());
     potential_interpolation.SetXValues(profiler.GetRNodes());
     avg_rdf_interpolation.SetXValues(profiler.GetRNodes());
 
@@ -169,10 +168,6 @@ InteractionSite PMF::GetMoleculeCOMSite(unsigned long idx){
 
 Interpolate& PMF::GetRDFInterpolation(){
     return this->reference_rdf_interpolation;
-}
-
-Interpolate& PMF::GetCurrentRDFInterpolation(){
-    return this->current_rdf_interpolation;
 }
 
 Interpolate& PMF::GetAVGRDFInterpolation(){
