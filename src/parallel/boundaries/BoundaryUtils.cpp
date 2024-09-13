@@ -259,21 +259,23 @@ BoundaryUtils::getOuterBuffer(const std::array<double, 3> &givenRegionBegin,
   // in positive case, move the box begin to edge of domain, and box end to
   // beyond
   case DimensionType::POSX:
+    [[fallthrough]];
   case DimensionType::POSY:
+    [[fallthrough]];
   case DimensionType::POSZ:
     returnRegionBegin[dimensionLS1] = returnRegionEnd[dimensionLS1];
-    returnRegionEnd[dimensionLS1] =
-        returnRegionBegin[dimensionLS1] + regionWidth[dimensionLS1];
+    returnRegionEnd[dimensionLS1] += regionWidth[dimensionLS1];
     break;
 
   // in negative case, move the box end to edge of domain, and box begin to
   // beyond
   case DimensionType::NEGX:
+    [[fallthrough]];
   case DimensionType::NEGY:
+    [[fallthrough]];
   case DimensionType::NEGZ:
     returnRegionEnd[dimensionLS1] = returnRegionBegin[dimensionLS1];
-    returnRegionBegin[dimensionLS1] =
-        returnRegionEnd[dimensionLS1] - regionWidth[dimensionLS1];
+    returnRegionBegin[dimensionLS1] -= regionWidth[dimensionLS1];
     break;
 
   default:
