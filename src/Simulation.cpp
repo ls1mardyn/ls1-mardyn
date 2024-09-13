@@ -410,35 +410,30 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_lastTraversalTimeHistory.setCapacity(timerForLoadAveragingLength);
 
 			if(xmlconfig.changecurrentnode("boundaries")) {
-				std::string xBoundary, yBoundary, zBoundary;
-				if(_overlappingP2P)
-				{
-					Log::global_log->info() << "Non-periodic boundaries not supported with overlappingP2P enabled! Defaulting to periodic boundaries" << std::endl;
-					xBoundary = yBoundary = zBoundary = "periodic";
-				}
-				else
-				{
-					xmlconfig.getNodeValue("x", xBoundary);
-					xmlconfig.getNodeValue("y", yBoundary);
-					xmlconfig.getNodeValue("z", zBoundary);
-				}
-				
-				Log::global_log->info() << "x boundary " << xBoundary << std::endl;
-				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::POSX, BoundaryUtils::convertStringToBoundary(xBoundary));
-				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::NEGX, BoundaryUtils::convertStringToBoundary(xBoundary));
-				
-				Log::global_log->info() << "y boundary " << yBoundary << std::endl;
-				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::POSY, BoundaryUtils::convertStringToBoundary(yBoundary));
-				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::NEGY, BoundaryUtils::convertStringToBoundary(yBoundary));
-				
-				Log::global_log->info() << "z boundary " << zBoundary << std::endl;
-				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::POSZ, BoundaryUtils::convertStringToBoundary(zBoundary));
-				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::NEGZ, BoundaryUtils::convertStringToBoundary(zBoundary));
-
+				std::string xBoundaryFromFile, yBoundaryFromFile, zBoundaryFromFile;
+				xmlconfig.getNodeValue("x", xBoundaryFromFile);
+				xmlconfig.getNodeValue("y", yBoundaryFromFile);
+				xmlconfig.getNodeValue("z", zBoundaryFromFile);
+				BoundaryUtils::BoundaryType xBoundary = BoundaryUtils::convertStringToBoundary(xBoundaryFromFile);
+				BoundaryUtils::BoundaryType yBoundary = BoundaryUtils::convertStringToBoundary(yBoundaryFromFile);
+				BoundaryUtils::BoundaryType zBoundary = BoundaryUtils::convertStringToBoundary(zBoundaryFromFile);
+				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::POSX, xBoundary);
+				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::NEGX, xBoundary);
+				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::POSY, yBoundary);
+				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::NEGY, yBoundary);
+				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::POSZ, zBoundary);
+				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::NEGZ, zBoundary);
 				if (_domainDecomposition->hasInvalidBoundary()) {
 					Log::global_log->error() << "Invalid boundary type! Please check the config file" << std::endl;
 					exit(1);
 				}
+				if(_overlappingP2P && _domainDecomposition->hasNonPeriodicBoundary()) {
+					Log::global_log->info() << "Non-periodic boundaries not supported with overlappingP2P enabled! Exiting..." << std::endl;
+					exit(1);
+				}
+				Log::global_log->info() << "Boundary conditions: x - " <<  BoundaryUtils::convertBoundaryToString(xBoundary)
+					<< " y - " << BoundaryUtils::convertBoundaryToString(yBoundary)
+					<< " z - " << BoundaryUtils::convertBoundaryToString(zBoundary) << std::endl;
 				// go over all local boundaries, determine which are global
 				_domainDecomposition->setLocalBoundariesFromGlobal(_domain, _ensemble);
 				xmlconfig.changecurrentnode("..");

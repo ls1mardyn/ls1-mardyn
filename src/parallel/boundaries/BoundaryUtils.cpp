@@ -175,8 +175,23 @@ BoundaryUtils::convertStringToBoundary(std::string boundary) {
   if (boundary == "outflow")
     return BoundaryType::OUTFLOW;
   Log::global_log->error()
-      << "Invalid boundary type passed. Check your input file!" << std::endl;
-  return BoundaryType::ERROR;
+      << "Invalid boundary type passed to BoundaryUtils::convertStringToBoundary. Check your input file!" << std::endl;
+  mardyn_exit(1);
+}
+
+std::string BoundaryUtils::convertBoundaryToString(BoundaryType boundary) { 
+  switch(boundary) {
+    case BoundaryType::PERIODIC_OR_LOCAL:
+      return "periodic";
+    case BoundaryType::REFLECTING:
+      return "reflecting";
+    case BoundaryType::OUTFLOW:
+      return "outflow";
+    default:
+      Log::global_log->error()
+      << "Invalid boundary type passed to BoundaryUtils::convertBoundaryToString. Check your input file!" << std::endl;
+      mardyn_exit(1);
+  }
 }
 
 std::tuple<std::array<double, 3>, std::array<double, 3>>

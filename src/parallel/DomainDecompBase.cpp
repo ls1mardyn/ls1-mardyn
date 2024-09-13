@@ -44,12 +44,12 @@ void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* en
 }
 
 void DomainDecompBase::processBoundaryConditions(ParticleContainer* moleculeContainer, double timestepLength) {
-	if(_boundaryHandler.hasNonPeriodicBoundary())	
+	if(hasNonPeriodicBoundary())	
 		_boundaryHandler.processGlobalWallLeavingParticles(moleculeContainer, timestepLength);
 }
 
 void DomainDecompBase::removeNonPeriodicHalos(ParticleContainer* moleculeContainer) {
-	if(_boundaryHandler.hasNonPeriodicBoundary())
+	if(hasNonPeriodicBoundary())
 		_boundaryHandler.removeNonPeriodicHalos(moleculeContainer);
 }
 

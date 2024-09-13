@@ -99,6 +99,8 @@ int convertDimensionToLS1Dims(DimensionType dimension);
 /* Used to convert string read from the XML input file. */
 BoundaryType convertStringToBoundary(std::string boundary);
 
+std::string convertBoundaryToString(BoundaryType boundary);
+
 /**
  * When given a domain delimited by givenRegionBegin and givenRegionEnd
  * and a DimensionType, and a requested regionWidth,  this function
