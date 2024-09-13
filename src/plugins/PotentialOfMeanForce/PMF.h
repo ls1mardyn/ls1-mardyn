@@ -46,14 +46,6 @@ class PMF:public PluginBase{
     int measure_frequency;//used for profiler
     int update_stride=1;//how often to IBI
     double multiplier;//alpha for step size
-    /**
-     * Intermediate buffer, is a sum of all rdf values per step
-     * Does NOT give an avg
-     * Must not be used as data
-     * Only through GetAverageRDF method if required
-     */
-    std::vector<double> accumulate_rdf_buffer;
-    
 
     public:
     PMF();
@@ -77,9 +69,15 @@ class PMF:public PluginBase{
     void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
     void siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) override;
-
     std::string getPluginName(){ return "PMF";}
     static PluginBase* createInstance() {return new PMF(); }
+
+    /***********************
+     * 
+     * FUNCTIONS NOT FROM INTERFACE
+     * 
+     ***********************/
+    public:
     std::vector<FPRegion>& GetRegions();
     ResolutionType GetMoleculeResolution(unsigned long idx);
     InteractionSite GetMoleculeCOMSite(unsigned long idx);
@@ -127,10 +125,7 @@ class PMF:public PluginBase{
      */
     void AddPotentialCorrection();
 
-    /**
-     * 
-     */
-    void AccumulateRDF(std::vector<double>& current_rdf);
+    void AccumulateRDF(ParticleContainer* pc, Domain* domain);
 
 
 
