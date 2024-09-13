@@ -177,50 +177,48 @@ BoundaryUtils::convertStringToBoundary(std::string boundary) {
   return BoundaryType::ERROR;
 }
 
-std::tuple<std::array<double, 3>, std::array<double, 3>>
-BoundaryUtils::getInnerBuffer(const std::array<double, 3> givenRegionBegin,
-                              const std::array<double, 3> givenRegionEnd,
-                              DimensionType dimension, double regionWidth) {
-  std::array<double, 3> returnRegionBegin, returnRegionEnd;
-  for (int i = 0; i < 3; i++) {
-    returnRegionBegin[i] = givenRegionBegin[i];
-    returnRegionEnd[i] = givenRegionEnd[i];
-  }
+std::tuple<std::array<double, 3>, std::array<double, 3>> BoundaryUtils::getInnerBuffer(
+  const std::array<double, 3> &givenRegionBegin,
+  const std::array<double, 3> &givenRegionEnd,
+  DimensionType dimension,
+  double regionWidth) {
+
+  std::array<double, 3> returnRegionBegin = givenRegionBegin;
+  std::array<double, 3> returnRegionEnd = givenRegionBegin;
 
   const int dimensionLS1 = convertDimensionToLS1Dims(dimension);
+  switch (dimension) {
+    // in positive case, set the beginning to end-width, or whole domain if width too large
+    case DimensionType::POSX:
+      [[fallthrough]];
+    case DimensionType::POSY:
+      [[fallthrough]];
+    case DimensionType::POSZ:
+      returnRegionBegin[dimensionLS1] =
+        std::max(returnRegionEnd[dimensionLS1] - regionWidth, givenRegionBegin[dimensionLS1]);
+      break;
+    // in negative case, set the end to beginning+width, or whole domain if width too large
+    case DimensionType::NEGX:
+      [[fallthrough]];
+    case DimensionType::NEGY:
+      [[fallthrough]];
+    case DimensionType::NEGZ:
+      returnRegionEnd[dimensionLS1] =
+        std::min(returnRegionBegin[dimensionLS1] + regionWidth, givenRegionEnd[dimensionLS1]);
+      break;
 
-  switch (dimension) // can be done with findsign() too, but this is clearer
-  {
-  // in positive case, set the beginning to end-width, or whole domain if width
-  // too large
-  case DimensionType::POSX:
-  case DimensionType::POSY:
-  case DimensionType::POSZ:
-    returnRegionBegin[dimensionLS1] =
-        std::max(returnRegionEnd[dimensionLS1] - regionWidth,
-                 givenRegionBegin[dimensionLS1]);
-    break;
-  // in negative case, set the end to beginning+width, or whole domain if width
-  // too large
-  case DimensionType::NEGX:
-  case DimensionType::NEGY:
-  case DimensionType::NEGZ:
-    returnRegionEnd[dimensionLS1] =
-        std::min(returnRegionBegin[dimensionLS1] + regionWidth,
-                 givenRegionEnd[dimensionLS1]);
-    break;
-
-  default:
-    Log::global_log->error()
-        << "Invalid dimension passed for inner buffer calculation" << std::endl;
-    mardyn_exit(1);
+    default:
+      Log::global_log->error() << "Invalid dimension (" 
+                               << dimension 
+                               << ") passed for inner buffer calculation\n";
+      mardyn_exit(1);
   }
-  return std::make_tuple(returnRegionBegin, returnRegionEnd);
+  return {returnRegionBegin, returnRegionEnd};
 }
 
 bool BoundaryUtils::isMoleculeLeaving(const Molecule &molecule,
-                                      const std::array<double, 3> regionBegin,
-                                      const std::array<double, 3> regionEnd,
+                                      const std::array<double, 3> &regionBegin,
+                                      const std::array<double, 3> &regionEnd,
                                       DimensionType dimension,
                                       double timestepLength,
                                       double nextStepVelAdjustment) {
@@ -237,10 +235,12 @@ bool BoundaryUtils::isMoleculeLeaving(const Molecule &molecule,
 }
 
 std::tuple<std::array<double, 3>, std::array<double, 3>>
-BoundaryUtils::getOuterBuffer(const std::array<double, 3> givenRegionBegin,
-                              const std::array<double, 3> givenRegionEnd,
+BoundaryUtils::getOuterBuffer(const std::array<double, 3> &givenRegionBegin,
+                              const std::array<double, 3> &givenRegionEnd,
                               DimensionType dimension, double *regionWidth) {
-  std::array<double, 3> returnRegionBegin, returnRegionEnd;
+  std::array<double, 3> returnRegionBegin = givenRegionBegin;
+  std::array<double, 3> returnRegionBegin = givenRegionEnd;
+
   for (int i = 0; i < 3; i++) {
     returnRegionBegin[i] = givenRegionBegin[i];
     returnRegionEnd[i] = givenRegionEnd[i];
@@ -253,15 +253,11 @@ BoundaryUtils::getOuterBuffer(const std::array<double, 3> givenRegionBegin,
   const int extraDim2 = dimensionLS1 == 2 ? 1 : 2;
 
   // extend the extra dimensions to cover all ghost areas
-  returnRegionBegin[extraDim1] =
-      returnRegionBegin[extraDim1] - regionWidth[extraDim1];
-  returnRegionEnd[extraDim1] =
-      returnRegionEnd[extraDim1] + regionWidth[extraDim1];
+  returnRegionBegin[extraDim1] -= regionWidth[extraDim1];
+  returnRegionEnd[extraDim1] += regionWidth[extraDim1];
 
-  returnRegionBegin[extraDim2] =
-      returnRegionBegin[extraDim2] - regionWidth[extraDim2];
-  returnRegionEnd[extraDim2] =
-      returnRegionEnd[extraDim2] + regionWidth[extraDim2];
+  returnRegionBegin[extraDim2] -= regionWidth[extraDim2];
+  returnRegionEnd[extraDim2] += regionWidth[extraDim2];
 
   switch (dimension) // can be done with findsign() too, but this is clearer
   {
