@@ -80,11 +80,6 @@ class PMF:public PluginBase{
 
     std::string getPluginName(){ return "PMF";}
     static PluginBase* createInstance() {return new PMF(); }
-
-    public:
-    void ReadRDF();
-
-
     std::vector<FPRegion>& GetRegions();
     ResolutionType GetMoleculeResolution(unsigned long idx);
     InteractionSite GetMoleculeCOMSite(unsigned long idx);
@@ -94,15 +89,15 @@ class PMF:public PluginBase{
     Interpolate& GetPotentialInterpolation();
 
     /**
-     * Implements U(r)_0 = -T^*ln(g(r)_0)
+     * Maps the com forces to FP, formula:
+     * F_{i\alpha\beta} = \num{m_{i\alpha}}\den{\sum_{i\alpha}{m_{i\alpha}}}F^{cm}_{\alpha\beta}
+     * 
+     * Receives f already weighted
+     * Same callbacks as in potforce
+     * Assume both m1 and m2 have the same component class...
+     * Comply with newton 3rd law
      */
-    void InitializePotentialValues();
-
-    /**
-     * Implements U(r)_{i+1} =U(r)_i - alpha*T^*ln(g(r)_i/g(r)_*)
-     */
-    void AddPotentialCorrection();
-    void AccumulateRDF(std::vector<double>& current_rdf);
+    void MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2);
 
     /**
      * 
@@ -116,17 +111,27 @@ class PMF:public PluginBase{
         return multiplier;
     }
 
-    public: 
+    private:
     /**
-     * Maps the com forces to FP, formula:
-     * F_{i\alpha\beta} = \num{m_{i\alpha}}\den{\sum_{i\alpha}{m_{i\alpha}}}F^{cm}_{\alpha\beta}
-     * 
-     * Receives f already weighted
-     * Same callbacks as in potforce
-     * Assume both m1 and m2 have the same component class...
-     * Comply with newton 3rd law
+     * Read in reference RDF
      */
-    void MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2);
+    void ReadRDF();
+
+    /**
+     * Implements U(r)_0 = -T^*ln(g(r)_0)
+     */
+    void InitializePotentialValues();
+
+    /**
+     * Implements U(r)_{i+1} =U(r)_i - alpha*T^*ln(g(r)_i/g(r)_*)
+     */
+    void AddPotentialCorrection();
+
+    /**
+     * 
+     */
+    void AccumulateRDF(std::vector<double>& current_rdf);
+
 
 
 };

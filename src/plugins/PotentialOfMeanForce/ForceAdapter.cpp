@@ -277,17 +277,16 @@ void InteractionForceAdapter::FluidPotType(Molecule& m1, Molecule& m2, ParaStrm&
  ***************************************************************/
 
 double InteractionForceAdapter::PotentialOfMeanForce(double r){
+
     double potential;
-    double temperature = adres->GetMultiplier()*_simulation.getEnsemble()->T();
-    
-    potential = temperature*adres->GetPotentialInterpolation().InterpolateAt(r);
+    potential = adres->GetPotentialInterpolation().InterpolateAt(r);
 
     return potential;
 }
 
 void InteractionForceAdapter::ForceOfPotentialOfMeanForce(std::array<double,3>& f_com, double r){
 
-    double derivative = -1.0*adres->GetMultiplier()* adres->GetPotentialInterpolation().CentralFiniteDifference(r);
+    double derivative = -1.0* adres->GetPotentialInterpolation().CentralFiniteDifference(r);
     for(int i=0;i<f_com.size();i++){
         f_com[i] *= derivative;
     }
