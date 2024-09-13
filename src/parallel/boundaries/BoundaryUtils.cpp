@@ -25,7 +25,7 @@ bool BoundaryUtils::isDimensionNumericPermissible(int dim) {
 }
 
 BoundaryUtils::DimensionType
-BoundaryUtils::convertStringToDimension(std::string dimension) {
+BoundaryUtils::convertStringToDimension(const std::string &dimension) {
   if (!isDimensionStringPermissible(dimension)) {
     Log::global_log->error()
         << "Invalid dimension passed for enum conversion" << std::endl;
@@ -82,18 +82,16 @@ BoundaryUtils::DimensionType BoundaryUtils::convertNumericToDimension(int dim) {
 
 BoundaryUtils::DimensionType
 BoundaryUtils::convertLS1DimsToDimensionPos(int dim) {
-  DimensionType toRet = DimensionType::ERROR;
   switch (dim) {
   case 0:
-    toRet = DimensionType::POSX;
-    break;
+    return DimensionType::POSX;
   case 1:
-    toRet = DimensionType::POSY;
-    break;
-  default: // case 2:
-    toRet = DimensionType::POSZ;
+    return DimensionType::POSY;
+  case 2:
+    return DimensionType::POSz;
+  default:
+    return DimensionType::ERROR;
   }
-  return toRet;
 }
 
 std::string BoundaryUtils::convertDimensionToString(DimensionType dimension) {
