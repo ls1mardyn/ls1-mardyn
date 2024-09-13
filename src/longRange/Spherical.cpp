@@ -697,7 +697,6 @@ void Spherical::calculateLongRange() {
 							double factorU = -M_PI * _drShells * eps24 * sigma6 / (6. * ksi);
 							double factorF = -factorU / ksi;
 							double factorP = 0.5 * factorF / ksi;
-							///////////////SOMEWHERE INBETWEEN THESE BARRIERES --------------------------__
 							if ((tau1 == 0.0) && (tau2 == 0.0)) {  // Center-Center
 								for (int j = 1; static_cast<double>(j) < (repParticles[i].lowerS + 1.); j++) {  // Loop over Shells with smaller Radius
 									if (rhoShellsT[j - 1] != 0.0) {
@@ -739,7 +738,6 @@ void Spherical::calculateLongRange() {
 											UCorrShells + UCorrTemp * factorU * rhoShellsT[j - 1] * RShells[j - 1];
 									}
 								}
-							///////////////SOMEWHERE INBETWEEN THESE BARRIERES --------------------------__
 								for (unsigned long j = repPart.upperS; j < (NShells + 1); j++) {
 									if (rhoShellsT[j - 1] != 0.0) {
 										rlow = RShells[j - 1] - ksi;
@@ -839,22 +837,7 @@ void Spherical::calculateLongRange() {
 			}
 		}
 
-		// Distribution of Shell Corrections to every node
-		_domainDecomposition->collCommInit(4 * NShells);
-		for (unsigned i = 0; i < NShells; i++) {
-			_domainDecomposition->collCommAppendDouble(UShells_Mean[i]);
-			_domainDecomposition->collCommAppendDouble(FShells_Mean[i]);
-			_domainDecomposition->collCommAppendDouble(PNShells_Mean[i]);
-			_domainDecomposition->collCommAppendDouble(PTShells_Mean[i]);
-		}
-		_domainDecomposition->collCommAllreduceSum();
-		for (unsigned i = 0; i < NShells; i++) {
-			UShells_Mean_global[i] = _domainDecomposition->collCommGetDouble();
-			FShells_Mean_global[i] = _domainDecomposition->collCommGetDouble();
-			PNShells_Mean_global[i] = _domainDecomposition->collCommGetDouble();
-			PTShells_Mean_global[i] = _domainDecomposition->collCommGetDouble();
-		}
-		_domainDecomposition->collCommFinalize();
+		// Distribution of Shell Corrections to every node does not have to be done -> each node just calculated for themselves!
 
 		// Only Root writes to files
 		if (rank == 0) {
