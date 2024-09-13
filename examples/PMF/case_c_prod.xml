@@ -22,7 +22,7 @@
       <temperature unit="reduced">2.0</temperature>
       <domain type="box">
         <lx>15.0</lx>
-        <ly>15.0</ly>q
+        <ly>15.0</ly>
         <lz>15.0</lz>
       </domain>
       <components>
