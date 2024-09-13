@@ -145,10 +145,10 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
     ParticleContainer *moleculeContainer, double timestepLength) {
   const auto cutoff = moleculeContainer->getCutoff();
   for (auto const [currentDim, currentWallIsGlobalWall] : _isGlobalWall) {
-    if (not currentWallIsGlobalWall)
+    if (!currentWallIsGlobalWall)
       continue;
 
-    switch (getGlobalWallType(currentWall.first)) {
+    switch (getGlobalWallType(currentDim)) {
     case BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL:
       // default behaviour
       break;
@@ -159,7 +159,7 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
       // create region by using getInnerBuffer()
       const auto [curWallRegionBegin, curWallRegionEnd] =
           BoundaryUtils::getInnerBuffer(_localRegionStart, _localRegionEnd,
-                                        currentWall.first, cutoff);
+                                        currentDim, cutoff);
       // convert the regions into c-style arrays, so that they can be passed to
       // the region iterator
       const double cStyleRegionBegin[] = {
@@ -178,25 +178,25 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
 
         // Calculate the change in velocity, which the leapfrog method will
         // apply in the next velocity update to the dimension of interest.
-        const int currentDim =
-            BoundaryUtils::convertDimensionToLS1Dims(currentWall.first);
+        const int currentDimInt =
+            BoundaryUtils::convertDimensionToLS1Dims(currentDim);
         const double halfTimestep = .5 * timestepLength;
         const double halfTimestepByMass = halfTimestep / it->mass();
-        const double force = it->F(currentDim);
+        const double force = it->F(currentDimInt);
         const double nextStepVelAdjustment = halfTimestepByMass * force;
 
         // check if the molecule would leave the bounds
         if (BoundaryUtils::isMoleculeLeaving(
                 curMolecule, curWallRegionBegin, curWallRegionEnd,
-                currentWall.first, timestepLength, nextStepVelAdjustment)) {
-          if (getGlobalWallType(currentWall.first) ==
+                currentDim, timestepLength, nextStepVelAdjustment)) {
+          if (getGlobalWallType(currentDim) ==
               BoundaryUtils::BoundaryType::REFLECTING) {
-            double currentVel = it->v(currentDim);
+            double currentVel = it->v(currentDimInt);
             // change the velocity in the dimension of interest such that when
             // the leapfrog integrator adds nextStepVelAdjustment in the next
             // velocity update, the final result ends up being the intended,
             // reversed velocity: -(currentVel+nextStepVelAdjustment)
-            it->setv(currentDim, -currentVel - nextStepVelAdjustment -
+            it->setv(currentDimInt, -currentVel - nextStepVelAdjustment -
                                      nextStepVelAdjustment);
           } else { // outflow, delete the particle if it would leave
             moleculeContainer->deleteMolecule(it, false);
@@ -220,10 +220,10 @@ void BoundaryHandler::removeNonPeriodicHalos(
                       moleculeContainer->get_halo_L(1),
                       moleculeContainer->get_halo_L(2)};
   for (auto const [currentDim, currentWallIsGlobalWall] : _isGlobalWall) {
-    if (not currentWallIsGlobalWall)
+    if (!currentWallIsGlobalWall)
       continue;
 
-    switch (getGlobalWallType(currentWall.first)) {
+    switch (getGlobalWallType(currentDim)) {
     case BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL:
       // default behaviour
       break;
@@ -234,7 +234,7 @@ void BoundaryHandler::removeNonPeriodicHalos(
       std::array<double, 3> curWallRegionBegin, curWallRegionEnd;
       std::tie(curWallRegionBegin, curWallRegionEnd) =
           BoundaryUtils::getOuterBuffer(_localRegionStart, _localRegionEnd,
-                                        currentWall.first, buffers);
+                                        currentDim, buffers);
       // convert the regions into c-style arrays, so that they can be passed to
       // the region iterator
       const double cStyleRegionBegin[] = {
