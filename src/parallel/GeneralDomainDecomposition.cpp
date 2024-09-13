@@ -133,7 +133,7 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			}
 		}
 		_boundaryHandler.setLocalRegion(_boxMin,_boxMax);
-		_boundaryHandler.findGlobalWallsInLocalRegion();
+		_boundaryHandler.updateGlobalWallLookupTable();
 	}
 	++_steps;
 }

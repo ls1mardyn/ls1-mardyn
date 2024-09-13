@@ -331,7 +331,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		std::array<double, 3> startRegion{}, endRegion{};
 		getBoundingBoxMinMax(domain, startRegion.data(), endRegion.data());
 		_boundaryHandler.setLocalRegion(startRegion,endRegion);
-		_boundaryHandler.findGlobalWallsInLocalRegion();
+		_boundaryHandler.updateGlobalWallLookupTable();
 	}
 }
 

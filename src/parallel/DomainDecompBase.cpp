@@ -40,7 +40,7 @@ void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* en
 	
 	_boundaryHandler.setLocalRegion(startRegion, endRegion);
 	_boundaryHandler.setGlobalRegion(globStartRegion, globEndRegion);
-	_boundaryHandler.findGlobalWallsInLocalRegion();
+	_boundaryHandler.updateGlobalWallLookupTable();
 }
 
 void DomainDecompBase::processBoundaryConditions(ParticleContainer* moleculeContainer, double timestepLength) {
