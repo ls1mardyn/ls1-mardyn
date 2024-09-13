@@ -9,7 +9,21 @@ PMF::PMF():reference_rdf_interpolation{1.0},potential_interpolation{0.0},avg_rdf
 void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* domain){
     
     this->ReadRDF();
+
+
+    std::string ref_rdf_name = "ref_rdf_"+std::to_string(0000)+".txt";
+    std::ofstream ref_rdf_file(ref_rdf_name);
+    for(int i=0;i<reference_rdf_interpolation.GetYValues().size();++i){
+        ref_rdf_file<<std::setw(8)<<std::left
+        <<reference_rdf_interpolation.GetXValues()[i]
+        <<"\t"
+        <<std::setw(8)<<std::left<<reference_rdf_interpolation.GetYValues()[i]<<std::endl;
+    }
+
+    ref_rdf_file.close();
+
     this->InitializePotentialValues();
+
     Log::global_log->info()<<"[PMF] RDF has been read successfully\n";
     pairs_handler = new InteractionForceAdapter(resolution_handler,this);
     _simulation.setParticlePairsHandler(pairs_handler);
@@ -43,6 +57,19 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     potential_interpolation.SetXValues(profiler.GetRNodes());
     avg_rdf_interpolation.SetXValues(profiler.GetRNodes());
     avg_rdf_interpolation.GetYValues().resize(internal_bins);
+
+    std::string pot_name = "init_pot_"+std::to_string(0000)+".txt";
+    std::ofstream pot_file(pot_name);
+    for(int i=0;i<potential_interpolation.GetYValues().size();++i){
+        pot_file<<std::setw(8)<<std::left
+        <<potential_interpolation.GetXValues()[i]
+        <<"\t"
+        <<std::setw(8)<<std::left<<potential_interpolation.GetYValues()[i]<<std::endl;
+    }
+
+    pot_file.close();
+
+
 }
 
 void PMF::readXML(XMLfileUnits& xmlfile){
@@ -91,8 +118,6 @@ void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long
 void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, unsigned long step){
 
     AccumulateRDF(pc,domain);
-    AddPotentialCorrection();
-
     // this->profiler.GenerateInstantaneousData(pc,domain);
     // AccumulateRDF(profiler.GetRDFValues());
     // std::vector<double> avg_rdf = GetAverageRDF();
@@ -107,9 +132,19 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
             rdf_file<<std::setw(8)<<std::left<<avg_rdf_interpolation.GetXValues()[i]<<"\t"<<std::setw(8)<<std::left<<GetAverageRDF()[i]<<std::endl;
         }
         rdf_file.close();
+        AddPotentialCorrection();
     }
-    AddPotentialCorrection();
-    // profiler.ResetBuffers();
+
+    std::string potential_file = "potential_"+std::to_string(step)+".txt";
+    std::ofstream potential(potential_file);
+    for(int i=0;i<potential_interpolation.GetYValues().size();++i){
+        potential<<std::setw(8)<<std::left
+        <<potential_interpolation.GetXValues()[i]
+        <<"\t"
+        <<std::setw(8)<<std::left<<potential_interpolation.GetYValues()[i]<<std::endl;
+    }
+    potential.close();
+    
 
 }
 
@@ -135,7 +170,7 @@ void PMF::AddPotentialCorrection(){
 
     for(int i=0;i<pot_i.size();++i){
         double correction = std::log(avg_rdf_interpolation.GetYValues()[i])/std::log(reference_rdf_interpolation.GetYValues()[i]);
-        pot_i[i] +=  -1.0*_simulation.getEnsemble()->T()*correction;
+        pot_i[i] +=  -1.0*multiplier*_simulation.getEnsemble()->T()*correction;
     }
 
     potential_interpolation.SetYValues(pot_i);
@@ -157,7 +192,7 @@ void PMF::AccumulateRDF(ParticleContainer* pc, Domain* dom){
         accumulated_rdf[i] += current_rdf[i];
 
     }
-
+    avg_rdf_interpolation.SetYValues(accumulated_rdf);
     profiler.ResetBuffers();
 }
 
