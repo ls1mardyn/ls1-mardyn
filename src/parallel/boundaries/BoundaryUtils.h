@@ -46,18 +46,11 @@ enum class BoundaryType { PERIODIC_OR_LOCAL, OUTFLOW, REFLECTING, ERROR };
  */
 enum class DimensionType { POSX, NEGX, POSY, NEGY, POSZ, NEGZ, ERROR };
 
-/* List of all allowed dimensions in string format. */
-constexpr std::array<std::string, 6> permissibleDimensionsString = {
-    "+x", "+y", "+z", "-x", "-y", "-z"};
-
 /* Check if a dimension is allowed. */
 bool isDimensionStringPermissible(std::string dimension);
 
 /* Check if a dimension is allowed. */
 bool isDimensionNumericPermissible(int dim);
-
-/* Convert a string from permissibleDimensionsString into DimensionType */
-DimensionType convertStringToDimension(std::string dimension);
 
 /* Convert a dimension from number to DimensionType, where x = +-1, y = +-2 and
  * z = +-3 */
@@ -113,8 +106,8 @@ std::string convertBoundaryToString(BoundaryType boundary);
  * demarcated by givenRegion{begin,end}.
  */
 std::tuple<std::array<double, 3>, std::array<double, 3>>
-getInnerBuffer(const std::array<double, 3> givenRegionBegin,
-               const std::array<double, 3> givenRegionEnd,
+getInnerBuffer(const std::array<double, 3> &givenRegionBegin,
+               const std::array<double, 3> &givenRegionEnd,
                DimensionType dimension, double regionWidth);
 
 /**
@@ -132,8 +125,8 @@ getInnerBuffer(const std::array<double, 3> givenRegionBegin,
  * by the util function itself, to keep it as generic as possible.
  */
 bool isMoleculeLeaving(const Molecule &molecule,
-                       const std::array<double, 3> regionBegin,
-                       const std::array<double, 3> regionEnd,
+                       const std::array<double, 3> &regionBegin,
+                       const std::array<double, 3> &regionEnd,
                        DimensionType dimension, double timestepLength,
                        double nextStepVelAdjustment);
 
@@ -149,8 +142,8 @@ bool isMoleculeLeaving(const Molecule &molecule,
  * from +x.
  */
 std::tuple<std::array<double, 3>, std::array<double, 3>>
-getOuterBuffer(const std::array<double, 3> givenRegionBegin,
-               const std::array<double, 3> givenRegionEnd,
+getOuterBuffer(const std::array<double, 3> &givenRegionBegin,
+               const std::array<double, 3> &givenRegionEnd,
                DimensionType dimension, double *regionWidth);
 
 /* Returns the sign of a number, used for determining direction from a

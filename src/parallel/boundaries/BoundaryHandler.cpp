@@ -36,13 +36,6 @@ BoundaryUtils::BoundaryType BoundaryHandler::getGlobalWallType(
 }
 
 BoundaryUtils::BoundaryType
-BoundaryHandler::getGlobalWallType(std::string dimension) const {
-  BoundaryUtils::DimensionType convertedDimension =
-      BoundaryUtils::convertStringToDimension(dimension);
-  return getGlobalWallType(convertedDimension);
-}
-
-BoundaryUtils::BoundaryType
 BoundaryHandler::getGlobalWallType(int dimension) const {
   return getGlobalWallType(
       BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
@@ -52,13 +45,6 @@ void BoundaryHandler::setGlobalWallType(BoundaryUtils::DimensionType dimension,
                                         BoundaryUtils::BoundaryType value) {
   if (dimension != BoundaryUtils::DimensionType::ERROR)
     _boundaries[dimension] = value;
-}
-
-void BoundaryHandler::setGlobalWallType(std::string dimension,
-                                        BoundaryUtils::BoundaryType value) {
-  BoundaryUtils::DimensionType convertedDimension =
-      BoundaryUtils::convertStringToDimension(dimension);
-  setGlobalWallType(convertedDimension, value);
 }
 
 void BoundaryHandler::setGlobalRegion(const double *start, const double *end) {
@@ -187,8 +173,8 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
 
         // check if the molecule would leave the bounds
         if (BoundaryUtils::isMoleculeLeaving(
-                curMolecule, curWallRegionBegin, curWallRegionEnd,
-                currentDim, timestepLength, nextStepVelAdjustment)) {
+                curMolecule, curWallRegionBegin, curWallRegionEnd, currentDim,
+                timestepLength, nextStepVelAdjustment)) {
           if (getGlobalWallType(currentDim) ==
               BoundaryUtils::BoundaryType::REFLECTING) {
             double currentVel = it->v(currentDimInt);
@@ -197,7 +183,7 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
             // velocity update, the final result ends up being the intended,
             // reversed velocity: -(currentVel+nextStepVelAdjustment)
             it->setv(currentDimInt, -currentVel - nextStepVelAdjustment -
-                                     nextStepVelAdjustment);
+                                        nextStepVelAdjustment);
           } else { // outflow, delete the particle if it would leave
             moleculeContainer->deleteMolecule(it, false);
           }

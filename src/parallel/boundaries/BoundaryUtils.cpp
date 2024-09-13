@@ -13,37 +13,9 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 
-bool BoundaryUtils::isDimensionStringPermissible(std::string dimension) {
-  return std::find(permissibleDimensionsString.begin(),
-                   permissibleDimensionsString.end(),
-                   dimension) != permissibleDimensionsString.end();
-}
-
 bool BoundaryUtils::isDimensionNumericPermissible(int dim) {
   // permissible dimensions are {-1, -2, -3, 1, 2, 3}
   return (dim >= -3 && dim <= 3 && dim != 0);
-}
-
-BoundaryUtils::DimensionType
-BoundaryUtils::convertStringToDimension(const std::string &dimension) {
-  if (!isDimensionStringPermissible(dimension)) {
-    Log::global_log->error()
-        << "Invalid dimension passed for enum conversion" << std::endl;
-    mardyn_exit(1);
-    return DimensionType::ERROR;
-  }
-  if (dimension == "+x")
-    return DimensionType::POSX;
-  if (dimension == "+y")
-    return DimensionType::POSY;
-  if (dimension == "+z")
-    return DimensionType::POSZ;
-  if (dimension == "-x")
-    return DimensionType::NEGX;
-  if (dimension == "-y")
-    return DimensionType::NEGY;
-  // if(dimension == "-z")
-  return DimensionType::NEGZ;
 }
 
 BoundaryUtils::DimensionType BoundaryUtils::convertNumericToDimension(int dim) {
@@ -88,7 +60,7 @@ BoundaryUtils::convertLS1DimsToDimensionPos(int dim) {
   case 1:
     return DimensionType::POSY;
   case 2:
-    return DimensionType::POSz;
+    return DimensionType::POSZ;
   default:
     return DimensionType::ERROR;
   }
@@ -173,60 +145,68 @@ BoundaryUtils::convertStringToBoundary(std::string boundary) {
   if (boundary == "outflow")
     return BoundaryType::OUTFLOW;
   Log::global_log->error()
-      << "Invalid boundary type passed to BoundaryUtils::convertStringToBoundary. Check your input file!" << std::endl;
+      << "Invalid boundary type passed to "
+         "BoundaryUtils::convertStringToBoundary. Check your input file!"
+      << std::endl;
   mardyn_exit(1);
+  return BoundaryType::ERROR; // warning suppression
 }
 
-std::string BoundaryUtils::convertBoundaryToString(BoundaryType boundary) { 
-  switch(boundary) {
-    case BoundaryType::PERIODIC_OR_LOCAL:
-      return "periodic";
-    case BoundaryType::REFLECTING:
-      return "reflecting";
-    case BoundaryType::OUTFLOW:
-      return "outflow";
-    default:
-      Log::global_log->error()
-      << "Invalid boundary type passed to BoundaryUtils::convertBoundaryToString. Check your input file!" << std::endl;
-      mardyn_exit(1);
+std::string BoundaryUtils::convertBoundaryToString(BoundaryType boundary) {
+  switch (boundary) {
+  case BoundaryType::PERIODIC_OR_LOCAL:
+    return "periodic";
+  case BoundaryType::REFLECTING:
+    return "reflecting";
+  case BoundaryType::OUTFLOW:
+    return "outflow";
+  default:
+    Log::global_log->error()
+        << "Invalid boundary type passed to "
+           "BoundaryUtils::convertBoundaryToString. Check your input file!"
+        << std::endl;
+    mardyn_exit(1);
   }
+  return "error"; // warning suppression
 }
 
-std::tuple<std::array<double, 3>, std::array<double, 3>> BoundaryUtils::getInnerBuffer(
-  const std::array<double, 3> &givenRegionBegin,
-  const std::array<double, 3> &givenRegionEnd,
-  DimensionType dimension,
-  double regionWidth) {
+std::tuple<std::array<double, 3>, std::array<double, 3>>
+BoundaryUtils::getInnerBuffer(const std::array<double, 3> &givenRegionBegin,
+                              const std::array<double, 3> &givenRegionEnd,
+                              DimensionType dimension, double regionWidth) {
 
   std::array<double, 3> returnRegionBegin = givenRegionBegin;
   std::array<double, 3> returnRegionEnd = givenRegionBegin;
 
   const int dimensionLS1 = convertDimensionToLS1Dims(dimension);
   switch (dimension) {
-    // in positive case, set the beginning to end-width, or whole domain if width too large
-    case DimensionType::POSX:
-      [[fallthrough]];
-    case DimensionType::POSY:
-      [[fallthrough]];
-    case DimensionType::POSZ:
-      returnRegionBegin[dimensionLS1] =
-        std::max(returnRegionEnd[dimensionLS1] - regionWidth, givenRegionBegin[dimensionLS1]);
-      break;
-    // in negative case, set the end to beginning+width, or whole domain if width too large
-    case DimensionType::NEGX:
-      [[fallthrough]];
-    case DimensionType::NEGY:
-      [[fallthrough]];
-    case DimensionType::NEGZ:
-      returnRegionEnd[dimensionLS1] =
-        std::min(returnRegionBegin[dimensionLS1] + regionWidth, givenRegionEnd[dimensionLS1]);
-      break;
+  // in positive case, set the beginning to end-width, or whole domain if width
+  // too large
+  case DimensionType::POSX:
+    [[fallthrough]];
+  case DimensionType::POSY:
+    [[fallthrough]];
+  case DimensionType::POSZ:
+    returnRegionBegin[dimensionLS1] =
+        std::max(returnRegionEnd[dimensionLS1] - regionWidth,
+                 givenRegionBegin[dimensionLS1]);
+    break;
+  // in negative case, set the end to beginning+width, or whole domain if width
+  // too large
+  case DimensionType::NEGX:
+    [[fallthrough]];
+  case DimensionType::NEGY:
+    [[fallthrough]];
+  case DimensionType::NEGZ:
+    returnRegionEnd[dimensionLS1] =
+        std::min(returnRegionBegin[dimensionLS1] + regionWidth,
+                 givenRegionEnd[dimensionLS1]);
+    break;
 
-    default:
-      Log::global_log->error() << "Invalid dimension (" 
-                               << dimension 
-                               << ") passed for inner buffer calculation\n";
-      mardyn_exit(1);
+  default:
+    Log::global_log->error()
+        << "Invalid dimension passed for inner buffer calculation\n";
+    mardyn_exit(1);
   }
   return {returnRegionBegin, returnRegionEnd};
 }
@@ -254,7 +234,7 @@ BoundaryUtils::getOuterBuffer(const std::array<double, 3> &givenRegionBegin,
                               const std::array<double, 3> &givenRegionEnd,
                               DimensionType dimension, double *regionWidth) {
   std::array<double, 3> returnRegionBegin = givenRegionBegin;
-  std::array<double, 3> returnRegionBegin = givenRegionEnd;
+  std::array<double, 3> returnRegionEnd = givenRegionEnd;
 
   for (int i = 0; i < 3; i++) {
     returnRegionBegin[i] = givenRegionBegin[i];
