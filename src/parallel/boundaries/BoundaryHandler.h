@@ -36,13 +36,6 @@ public:
   BoundaryHandler();
 
   /* Find the boundary type of a global wall for a particular dimension. */
-  BoundaryUtils::BoundaryType getGlobalWallType(std::string dimension) const;
-
-  /* Set the boundary type of a global wall for a particular dimension. */
-  void setGlobalWallType(std::string dimension,
-                         BoundaryUtils::BoundaryType value);
-
-  /* Find the boundary type of a global wall for a particular dimension. */
   BoundaryUtils::BoundaryType
   getGlobalWallType(BoundaryUtils::DimensionType dimension) const;
 

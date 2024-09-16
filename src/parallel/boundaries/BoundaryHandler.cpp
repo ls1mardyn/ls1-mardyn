@@ -219,7 +219,7 @@ void BoundaryHandler::removeNonPeriodicHalos(
     case BoundaryUtils::BoundaryType::REFLECTING: {
       // create region by using getOuterBuffer()
       std::array<double, 3> curWallRegionBegin, curWallRegionEnd;
-      std::tie(curWallRegionBegin, curWallRegionEnd) =
+      auto const [curWallRegionBegin, curWallRegionEnd] =
           BoundaryUtils::getOuterBuffer(_localRegionStart, _localRegionEnd,
                                         currentDim, buffers);
       // convert the regions into c-style arrays, so that they can be passed to
