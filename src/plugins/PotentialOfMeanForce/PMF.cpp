@@ -46,6 +46,7 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     potential_interpolation.SetXValues(profiler.GetRNodes());
     avg_rdf_interpolation.SetXValues(profiler.GetRNodes());
     avg_rdf_interpolation.GetYValues().resize(internal_bins);
+    avg_rdf_interpolation.SetYValues(reference_rdf_interpolation.GetYValues());
 }
 
 void PMF::readXML(XMLfileUnits& xmlfile){
@@ -116,6 +117,7 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
 
     AddPotentialCorrection(step);
     std::vector<double> current_rdf = GetAverageRDF();
+
     convergence_check.ConvergenceCheck(reference_rdf_interpolation.GetYValues(),current_rdf);
     std::string conv_name = "convergence.txt";
     std::ofstream conv{conv_name};
@@ -156,8 +158,8 @@ void PMF::AddPotentialCorrection(unsigned long step){
 
     for(int i=0;i<pot_i.size();++i){
         double ratio = avg_rdf[i]/reference_rdf_interpolation.GetYValues()[i];
-        current_correction[i] = std::log(ratio);
-        pot_i[i] = potential_interpolation.GetYValues()[i] - multiplier* _simulation.getEnsemble()->T()*current_correction[i];
+        current_correction[i] = multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
+        pot_i[i] = potential_interpolation.GetYValues()[i] -current_correction[i];
     }
 
     potential_interpolation.SetYValues(pot_i);
@@ -167,6 +169,7 @@ void PMF::AddPotentialCorrection(unsigned long step){
         std::ofstream corr{name};
         for(int i=0;i<internal_bins;++i){
             corr<<reference_rdf_interpolation.GetXValues()[i]
+                <<"\t"
                 <<current_correction[i]
                 <<std::endl;
         }
@@ -292,7 +295,7 @@ std::vector<double> PMF::GetAverageRDF(){
     std::vector<double> average_rdf = avg_rdf_interpolation.GetYValues();
     
     for(int i=0;i<average_rdf.size();++i){
-        average_rdf[i] /= (double)profiler.GetMeasuredSteps();
+        average_rdf[i] /= ((double)profiler.GetMeasuredSteps()+1.0);
     }
 
     return average_rdf;

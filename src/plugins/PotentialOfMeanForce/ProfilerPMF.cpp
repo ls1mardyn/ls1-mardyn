@@ -90,7 +90,7 @@ std::vector<double>& InternalProfiler::GetRNodes(){
 }
 
 void InternalProfiler::ProfileData(ParticleContainer* pc, unsigned long step){
-    if(step%sample_frequency==0 && step > global_simulation->getInitStatistics()){
+    if(step%sample_frequency==0){
         measured_steps++;
         pc->traverseCells(*cell_processor);
     }
