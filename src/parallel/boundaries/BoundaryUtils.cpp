@@ -101,35 +101,28 @@ BoundaryUtils::convertDimensionToStringAbs(DimensionType dimension) {
 
 int BoundaryUtils::convertDimensionToNumeric(DimensionType dimension) {
   switch (dimension) {
-  case DimensionType::POSX:
-    return 1;
-
-  case DimensionType::POSY:
-    return 2;
-
-  case DimensionType::POSZ:
-    return 3;
-
-  case DimensionType::NEGX:
-    return -1;
-
-  case DimensionType::NEGY:
-    return -2;
-
-  case DimensionType::NEGZ:
-    return -3;
-
-  default:
-    Log::global_log->error()
-        << "Invalid dimension passed for enum conversion" << std::endl;
-    mardyn_exit(1);
-    return 0;
+    case DimensionType::POSX:
+      return 1;
+    case DimensionType::POSY:
+      return 2;
+    case DimensionType::POSZ:
+      return 3;
+    case DimensionType::NEGX:
+      return -1;
+    case DimensionType::NEGY:
+      return -2;
+    case DimensionType::NEGZ:
+      return -3;
+    default:
+      Log::global_log->error()
+          << "Invalid dimension passed for enum conversion" << std::endl;
+      mardyn_exit(1);
+      return 0;
   }
 }
 
 int BoundaryUtils::convertDimensionToNumericAbs(DimensionType dimension) {
-  int toReturn = convertDimensionToNumeric(dimension);
-  return std::abs(toReturn);
+  return std::abs(convertDimensionToNumeric(dimension));
 }
 
 int BoundaryUtils::convertDimensionToLS1Dims(DimensionType dimension) {
@@ -137,7 +130,7 @@ int BoundaryUtils::convertDimensionToLS1Dims(DimensionType dimension) {
 }
 
 BoundaryUtils::BoundaryType
-BoundaryUtils::convertStringToBoundary(std::string boundary) {
+BoundaryUtils::convertStringToBoundary(const std::string &boundary) {
   if (boundary == "periodic")
     return BoundaryType::PERIODIC_OR_LOCAL;
   if (boundary == "reflecting" || boundary == "reflective")

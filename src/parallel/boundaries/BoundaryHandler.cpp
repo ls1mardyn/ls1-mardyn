@@ -146,16 +146,9 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
       const auto [curWallRegionBegin, curWallRegionEnd] =
           BoundaryUtils::getInnerBuffer(_localRegionStart, _localRegionEnd,
                                         currentDim, cutoff);
-      // convert the regions into c-style arrays, so that they can be passed to
-      // the region iterator
-      const double cStyleRegionBegin[] = {
-          curWallRegionBegin[0], curWallRegionBegin[1], curWallRegionBegin[2]};
-      const double cStyleRegionEnd[] = {
-          curWallRegionEnd[0], curWallRegionEnd[1], curWallRegionEnd[2]};
-
       // grab an iterator from the converted coords
-      auto particlesInRegion = moleculeContainer->regionIterator(
-          cStyleRegionBegin, cStyleRegionEnd,
+      const auto particlesInRegion = moleculeContainer->regionIterator(
+          curWallRegionBegin.data(), curWallRegionEnd.data(),
           ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
       // iterate through all molecules
