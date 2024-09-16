@@ -20,6 +20,33 @@
 
 
 class InteractionSite;
+/**
+ * Removes infs via linear extrapolation
+ * 
+ */
+
+class DataPostProcess{
+    public:
+
+    void LinearExtrapolation(Interpolate& interpolation){
+        std::vector<double> x_values = interpolation.GetXValues();
+        std::vector<double> y_values = interpolation.GetYValues();
+
+        for(int i = y_values.size()-1;i>=0;--i){
+            if(std::isfinite(y_values[i])){
+                continue;
+            }
+            double y_k = y_values[i+1];
+            double y_k_1 = y_values[i+2];
+            double x_k = x_values[i+1];
+            double x_k_1 = x_values[i+2];
+            double x_star = x_values[i];
+            y_values[i] = y_k_1 + (x_star-x_k_1)/(x_k-x_k_1)*(y_k-y_k_1);
+        }
+
+        interpolation.SetYValues(y_values);
+    }
+};
 class PMF:public PluginBase{
 
     using tracker = std::pair<InteractionSite,ResolutionType>;
@@ -48,6 +75,7 @@ class PMF:public PluginBase{
     int update_stride=1;//how often to IBI
     double multiplier;//alpha for step size
     bool output;
+    DataPostProcess post_processing;
 
     struct Convergence{
         bool ConvergenceCheck(std::vector<double>& ref, std::vector<double>& crrnt){
@@ -152,6 +180,7 @@ class PMF:public PluginBase{
 
 
 };
+
 
 /**
  * Stores velocity, position, force, potential

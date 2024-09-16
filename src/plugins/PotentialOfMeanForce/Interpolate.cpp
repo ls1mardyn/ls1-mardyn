@@ -78,7 +78,7 @@ double Interpolate::CentralFiniteDifference(double r){
     double ratio =(gb-ga)/(rb-ra);
 
     if(!std::isfinite(ratio)){
-        return 5.0;
+        return 100000.0;
     }
 
     return ratio;
