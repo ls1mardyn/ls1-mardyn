@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>50</steps>
+        <steps>100</steps>
       </production>
     </run>
     
@@ -30,8 +30,8 @@
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>restart_data_case_c/generic_lj_step-0390.restart.header.xml</header>
-          <data>restart_data_case_c/generic_lj_step-0390.restart.dat</data>
+          <header>restart_data_case_c/generic_lj_step-2239.restart.header.xml</header>
+          <data>restart_data_case_c/generic_lj_step-2239.restart.dat</data>
         </file>
         <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
@@ -67,11 +67,11 @@
       <writefrequency>5</writefrequency>
     </outputplugin>
 
-    <outputplugin name="CheckpointWriter">
+    <!--outputplugin name="CheckpointWriter">
       <type>binary</type>
       <writefrequency>100</writefrequency>
       <outputprefix>generic_lj_step</outputprefix>
-    </outputplugin>
+    </outputplugin-->
 
     </output>
 
@@ -97,8 +97,9 @@
           </region>
         </fpregions>
         <multiplier>1.0</multiplier>
-        <internalBins>100</internalBins>
+        <internalBins>250</internalBins>
         <measureFreq>1</measureFreq>
+        <output>true</output>
     </plugin>
         
   </simulation>

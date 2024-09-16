@@ -21,6 +21,7 @@
 
 class InteractionSite;
 class PMF:public PluginBase{
+
     using tracker = std::pair<InteractionSite,ResolutionType>;
     private:
 
@@ -46,6 +47,27 @@ class PMF:public PluginBase{
     int measure_frequency;//used for profiler
     int update_stride=1;//how often to IBI
     double multiplier;//alpha for step size
+    bool output;
+
+    struct Convergence{
+        bool ConvergenceCheck(std::vector<double>& ref, std::vector<double>& crrnt){
+            double conv=0.0;
+            for(int i=0;i<ref.size();++i){
+                conv += std::abs(ref[i]-crrnt[i]);
+            }
+            convergence_per_step.emplace_back(conv);
+            ++ibi_iteration;
+            if(conv<tolerance)
+            return true;
+
+            return false;
+        }
+        double tolerance=0.05;
+        std::vector<double> convergence_per_step;
+        int ibi_iteration=0;
+    };
+
+    Convergence convergence_check;
 
     public:
     PMF();
@@ -123,7 +145,7 @@ class PMF:public PluginBase{
     /**
      * Implements U(r)_{i+1} =U(r)_i - alpha*T^*ln(g(r)_i/g(r)_*)
      */
-    void AddPotentialCorrection();
+    void AddPotentialCorrection(unsigned long step);
 
     void AccumulateRDF(ParticleContainer* pc, Domain* domain);
 

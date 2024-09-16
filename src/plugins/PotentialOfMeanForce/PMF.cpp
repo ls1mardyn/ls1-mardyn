@@ -10,18 +10,6 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     
     this->ReadRDF();
 
-
-    std::string ref_rdf_name = "ref_rdf_"+std::to_string(0000)+".txt";
-    std::ofstream ref_rdf_file(ref_rdf_name);
-    for(int i=0;i<reference_rdf_interpolation.GetYValues().size();++i){
-        ref_rdf_file<<std::setw(8)<<std::left
-        <<reference_rdf_interpolation.GetXValues()[i]
-        <<"\t"
-        <<std::setw(8)<<std::left<<reference_rdf_interpolation.GetYValues()[i]<<std::endl;
-    }
-
-    ref_rdf_file.close();
-
     this->InitializePotentialValues();
 
     Log::global_log->info()<<"[PMF] RDF has been read successfully\n";
@@ -58,20 +46,6 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     potential_interpolation.SetXValues(profiler.GetRNodes());
     avg_rdf_interpolation.SetXValues(profiler.GetRNodes());
     avg_rdf_interpolation.GetYValues().resize(internal_bins);
-    
-
-    std::string pot_name = "init_pot_"+std::to_string(0000)+".txt";
-    std::ofstream pot_file(pot_name);
-    for(int i=0;i<potential_interpolation.GetYValues().size();++i){
-        pot_file<<std::setw(8)<<std::left
-        <<potential_interpolation.GetXValues()[i]
-        <<"\t"
-        <<std::setw(8)<<std::left<<potential_interpolation.GetYValues()[i]<<std::endl;
-    }
-
-    pot_file.close();
-
-
 }
 
 void PMF::readXML(XMLfileUnits& xmlfile){
@@ -95,6 +69,7 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     xmlfile.getNodeValue("multiplier",multiplier);
     xmlfile.getNodeValue("internalBins",internal_bins);
     xmlfile.getNodeValue("measureFreq",measure_frequency);
+    xmlfile.getNodeValue("output",output);
     Log::global_log->info()<<"[PMF] Target temperature = "<<_simulation.getEnsemble()->T()<<std::endl;
 }
 
@@ -120,29 +95,38 @@ void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long
 void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, unsigned long step){
 
     AccumulateRDF(pc,domain);
-
-    if(global_simulation->getSimulationStep()>0){
-        
-        Log::global_log->info()<<"[PMF] Convergence check: "<<ConvergenceCheck()<<std::endl;
+    
+    if(output){
         std::string filename="avg_rdf_"+std::to_string(step)+".txt";
         std::ofstream rdf_file(filename);
         for(int i=0;i<avg_rdf_interpolation.GetYValues().size();++i){
             rdf_file<<std::setw(8)<<std::left<<avg_rdf_interpolation.GetXValues()[i]<<"\t"<<std::setw(8)<<std::left<<GetAverageRDF()[i]<<std::endl;
         }
         rdf_file.close();
-        AddPotentialCorrection();
+        std::string potential_file = "potential_"+std::to_string(step)+".txt";
+        std::ofstream potential(potential_file);
+        for(int i=0;i<potential_interpolation.GetYValues().size();++i){
+            potential<<std::setw(8)<<std::left
+            <<potential_interpolation.GetXValues()[i]
+            <<"\t"
+            <<std::setw(8)<<std::left<<potential_interpolation.GetYValues()[i]<<std::endl;
+        }
+        potential.close();
     }
 
-    std::string potential_file = "potential_"+std::to_string(step)+".txt";
-    std::ofstream potential(potential_file);
-    for(int i=0;i<potential_interpolation.GetYValues().size();++i){
-        potential<<std::setw(8)<<std::left
-        <<potential_interpolation.GetXValues()[i]
+    AddPotentialCorrection(step);
+    std::vector<double> current_rdf = GetAverageRDF();
+    convergence_check.ConvergenceCheck(reference_rdf_interpolation.GetYValues(),current_rdf);
+    std::string conv_name = "convergence.txt";
+    std::ofstream conv{conv_name};
+    for(int i=0;i<convergence_check.convergence_per_step.size();++i){
+        conv<<std::setw(8)<<std::left
+        <<i
         <<"\t"
-        <<std::setw(8)<<std::left<<potential_interpolation.GetYValues()[i]<<std::endl;
+        <<std::setw(8)<<std::left<<convergence_check.convergence_per_step[i]
+        <<std::endl;
     }
-    potential.close();
-    
+    conv.close();
 
 }
 
@@ -163,23 +147,31 @@ void PMF::InitializePotentialValues(){
     potential_interpolation.SetYValues(pot0);
 }
 
-void PMF::AddPotentialCorrection(){
+void PMF::AddPotentialCorrection(unsigned long step){
     std::vector<double> pot_i;
     std::vector<double> avg_rdf = GetAverageRDF();
+    std::vector<double> current_correction;
+    current_correction.resize(internal_bins);
     pot_i.resize(internal_bins);
 
     for(int i=0;i<pot_i.size();++i){
         double ratio = avg_rdf[i]/reference_rdf_interpolation.GetYValues()[i];
-        double correction = std::log(ratio);
-        // double correction = std::log(avg_rdf[i])/std::log(reference_rdf_interpolation.GetYValues()[i]);
-        pot_i[i] = potential_interpolation.GetYValues()[i] - multiplier* _simulation.getEnsemble()->T()*correction;
-        std::cout<<"i= "<<i<<"\n";
-        std::cout<<"Correction= "<<multiplier*_simulation.getEnsemble()->T()*correction<<"/"<<correction<<"/"<<std::log(avg_rdf[i])<<"//"<<std::log(reference_rdf_interpolation.GetYValues()[i])<<"/"<<"\n";
-        std::cout<<"U(i)= "<<potential_interpolation.GetYValues()[i]<<"\n";
-        std::cout<<"U(i)_new= "<<potential_interpolation.GetYValues()[i] -  multiplier*_simulation.getEnsemble()->T()*correction<<"\n";
+        current_correction[i] = std::log(ratio);
+        pot_i[i] = potential_interpolation.GetYValues()[i] - multiplier* _simulation.getEnsemble()->T()*current_correction[i];
     }
 
     potential_interpolation.SetYValues(pot_i);
+
+    if(output){
+        std::string name="correction_step_"+std::to_string(step)+".txt";
+        std::ofstream corr{name};
+        for(int i=0;i<internal_bins;++i){
+            corr<<reference_rdf_interpolation.GetXValues()[i]
+                <<current_correction[i]
+                <<std::endl;
+        }
+
+    }
 
 }
 
