@@ -169,7 +169,9 @@ void PMF::AddPotentialCorrection(){
     pot_i.resize(internal_bins);
 
     for(int i=0;i<pot_i.size();++i){
-        double correction = std::log(avg_rdf[i])/std::log(reference_rdf_interpolation.GetYValues()[i]);
+        double ratio = avg_rdf[i]/reference_rdf_interpolation.GetYValues()[i];
+        double correction = std::log(ratio);
+        // double correction = std::log(avg_rdf[i])/std::log(reference_rdf_interpolation.GetYValues()[i]);
         pot_i[i] = potential_interpolation.GetYValues()[i] - multiplier* _simulation.getEnsemble()->T()*correction;
         std::cout<<"i= "<<i<<"\n";
         std::cout<<"Correction= "<<multiplier*_simulation.getEnsemble()->T()*correction<<"/"<<correction<<"/"<<std::log(avg_rdf[i])<<"//"<<std::log(reference_rdf_interpolation.GetYValues()[i])<<"/"<<"\n";
