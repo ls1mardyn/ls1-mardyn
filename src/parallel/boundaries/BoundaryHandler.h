@@ -92,7 +92,7 @@ public:
    * OUTFLOW - The particle is deleted.
    */
   void processGlobalWallLeavingParticles(ParticleContainer *moleculeContainer,
-                                         double timestepLength);
+                                         double timestepLength) const;
 
   /**
    * Processes all halo particles outside the global domain.
@@ -107,7 +107,7 @@ public:
    * approaching the boundary do not decelerate due to influence from the halo
    * particles, and preserve their velocities before being bounced/deleted
    */
-  void removeNonPeriodicHalos(ParticleContainer *moleculeContainer);
+  void removeNonPeriodicHalos(ParticleContainer *moleculeContainer) const;
 
 private:
   /* List of global boundary type per dimension. */

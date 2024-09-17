@@ -29,6 +29,11 @@ void BoundaryHandler::setGlobalWallType(BoundaryUtils::DimensionType dimension,
                                         BoundaryUtils::BoundaryType value) {
   if (dimension != BoundaryUtils::DimensionType::ERROR)
     _boundaries[dimension] = value;
+  else {
+    Log::global_log->error()
+          << "DimensionType::ERROR received in setGlobalWallType!!" << std::endl;
+      mardyn_exit(1);
+  }
 }
 
 void BoundaryHandler::setGlobalRegion(const double *start, const double *end) {
@@ -84,7 +89,7 @@ bool BoundaryHandler::isGlobalWall(int dimension) const {
 }
 
 void BoundaryHandler::processGlobalWallLeavingParticles(
-    ParticleContainer *moleculeContainer, double timestepLength) {
+    ParticleContainer *moleculeContainer, double timestepLength) const {
   const auto cutoff = moleculeContainer->getCutoff();
   for (auto const [currentDim, currentWallIsGlobalWall] : _isGlobalWall) {
     if (!currentWallIsGlobalWall)
@@ -92,7 +97,8 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
 
     switch (getGlobalWallType(currentDim)) {
     case BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL:
-      // default behaviour
+      // nothing changes from normal ls1 behaviour, so leaving particles not touched by BoundaryHandler and are processed by
+      // DomainDecompBase::handleDomainLeavingParticles()
       break;
 
     case BoundaryUtils::BoundaryType::OUTFLOW:
@@ -108,33 +114,31 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
           ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
       // iterate through all molecules
-      for (auto it = particlesInRegion; it.isValid(); ++it) {
-        Molecule curMolecule = *it;
-
+      for (auto moleculeIter = particlesInRegion; moleculeIter.isValid(); ++moleculeIter) {
         // Calculate the change in velocity, which the leapfrog method will
         // apply in the next velocity update to the dimension of interest.
         const int currentDimInt =
             BoundaryUtils::convertDimensionToLS1Dims(currentDim);
         const double halfTimestep = .5 * timestepLength;
-        const double halfTimestepByMass = halfTimestep / it->mass();
-        const double force = it->F(currentDimInt);
+        const double halfTimestepByMass = halfTimestep / moleculeIter->mass();
+        const double force = moleculeIter->F(currentDimInt);
         const double nextStepVelAdjustment = halfTimestepByMass * force;
 
         // check if the molecule would leave the bounds
         if (BoundaryUtils::isMoleculeLeaving(
-                curMolecule, curWallRegionBegin, curWallRegionEnd, currentDim,
+                *moleculeIter, curWallRegionBegin, curWallRegionEnd, currentDim,
                 timestepLength, nextStepVelAdjustment)) {
           if (getGlobalWallType(currentDim) ==
               BoundaryUtils::BoundaryType::REFLECTING) {
-            double currentVel = it->v(currentDimInt);
+            double currentVel = moleculeIter->v(currentDimInt);
             // change the velocity in the dimension of interest such that when
             // the leapfrog integrator adds nextStepVelAdjustment in the next
             // velocity update, the final result ends up being the intended,
             // reversed velocity: -(currentVel+nextStepVelAdjustment)
-            it->setv(currentDimInt, -currentVel - nextStepVelAdjustment -
+            moleculeIter->setv(currentDimInt, -currentVel - nextStepVelAdjustment -
                                         nextStepVelAdjustment);
           } else { // outflow, delete the particle if it would leave
-            moleculeContainer->deleteMolecule(it, false);
+            moleculeContainer->deleteMolecule(moleculeIter, false);
           }
         }
       }
@@ -149,7 +153,7 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
 }
 
 void BoundaryHandler::removeNonPeriodicHalos(
-    ParticleContainer *moleculeContainer) {
+    ParticleContainer *moleculeContainer) const {
   // get halo lengths in each dimension
   double buffers[] = {moleculeContainer->get_halo_L(0),
                       moleculeContainer->get_halo_L(1),
@@ -160,7 +164,7 @@ void BoundaryHandler::removeNonPeriodicHalos(
 
     switch (getGlobalWallType(currentDim)) {
     case BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL:
-      // default behaviour
+      // nothing changes from normal ls1 behaviour, so empty case, and halo particles left untouched
       break;
 
     case BoundaryUtils::BoundaryType::OUTFLOW:
