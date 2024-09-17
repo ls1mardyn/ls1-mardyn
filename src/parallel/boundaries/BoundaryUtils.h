@@ -90,7 +90,7 @@ int convertDimensionToNumericAbs(DimensionType dimension);
 int convertDimensionToLS1Dims(DimensionType dimension);
 
 /* Used to convert string read from the XML input file. */
-BoundaryType convertStringToBoundary(std::string boundary);
+BoundaryType convertStringToBoundary(const std::string &boundary);
 
 std::string convertBoundaryToString(BoundaryType boundary);
 

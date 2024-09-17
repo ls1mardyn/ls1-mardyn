@@ -14,22 +14,6 @@
 
 #include "utils/Logger.h"
 
-BoundaryHandler::BoundaryHandler()
-    : _boundaries{{BoundaryUtils::DimensionType::POSX,
-                   BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
-                  {BoundaryUtils::DimensionType::POSY,
-                   BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
-                  {BoundaryUtils::DimensionType::POSZ,
-                   BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
-                  {BoundaryUtils::DimensionType::NEGX,
-                   BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
-                  {BoundaryUtils::DimensionType::NEGY,
-                   BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
-                  {BoundaryUtils::DimensionType::NEGZ,
-                   BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
-                  {BoundaryUtils::DimensionType::ERROR,
-                   BoundaryUtils::BoundaryType::ERROR}} {}
-
 BoundaryUtils::BoundaryType BoundaryHandler::getGlobalWallType(
     BoundaryUtils::DimensionType dimension) const {
   return _boundaries.at(dimension);
@@ -61,18 +45,6 @@ void BoundaryHandler::setLocalRegion(const double *start, const double *end) {
   }
 }
 
-void BoundaryHandler::setGlobalRegion(std::array<double, 3> start,
-                                      std::array<double, 3> end) {
-  _globalRegionStart = start;
-  _globalRegionEnd = end;
-}
-
-void BoundaryHandler::setLocalRegion(std::array<double, 3> start,
-                                     std::array<double, 3> end) {
-  _localRegionStart = start;
-  _localRegionEnd = end;
-}
-
 void BoundaryHandler::updateGlobalWallLookupTable() {
   _isGlobalWall[BoundaryUtils::DimensionType::POSX] =
       BoundaryUtils::isNearRel(_localRegionEnd[0], _globalRegionEnd[0]);
@@ -89,33 +61,17 @@ void BoundaryHandler::updateGlobalWallLookupTable() {
 }
 
 bool BoundaryHandler::hasInvalidBoundary() const {
-  return _boundaries.at(BoundaryUtils::DimensionType::POSX) ==
-             BoundaryUtils::BoundaryType::ERROR ||
-         _boundaries.at(BoundaryUtils::DimensionType::POSY) ==
-             BoundaryUtils::BoundaryType::ERROR ||
-         _boundaries.at(BoundaryUtils::DimensionType::POSZ) ==
-             BoundaryUtils::BoundaryType::ERROR ||
-         _boundaries.at(BoundaryUtils::DimensionType::NEGX) ==
-             BoundaryUtils::BoundaryType::ERROR ||
-         _boundaries.at(BoundaryUtils::DimensionType::NEGY) ==
-             BoundaryUtils::BoundaryType::ERROR ||
-         _boundaries.at(BoundaryUtils::DimensionType::NEGZ) ==
-             BoundaryUtils::BoundaryType::ERROR;
+  return std::any_of(_boundaries.begin(), _boundaries.end(),[](const auto &keyVal) {
+    const auto [dim, boundaryType] = keyVal;
+    return boundaryType == BoundaryUtils::BoundaryType::ERROR;
+  });
 }
 
 bool BoundaryHandler::hasNonPeriodicBoundary() const {
-  return _boundaries.at(BoundaryUtils::DimensionType::POSX) !=
-             BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL ||
-         _boundaries.at(BoundaryUtils::DimensionType::POSY) !=
-             BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL ||
-         _boundaries.at(BoundaryUtils::DimensionType::POSZ) !=
-             BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL ||
-         _boundaries.at(BoundaryUtils::DimensionType::NEGX) !=
-             BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL ||
-         _boundaries.at(BoundaryUtils::DimensionType::NEGY) !=
-             BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL ||
-         _boundaries.at(BoundaryUtils::DimensionType::NEGZ) !=
-             BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL;
+  return std::any_of(_boundaries.begin(), _boundaries.end(),[](const auto &keyVal) {
+    const auto [dim, boundaryType] = keyVal;
+    return boundaryType == BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL;
+  });
 }
 
 bool BoundaryHandler::isGlobalWall(
@@ -211,20 +167,13 @@ void BoundaryHandler::removeNonPeriodicHalos(
       [[fallthrough]];
     case BoundaryUtils::BoundaryType::REFLECTING: {
       // create region by using getOuterBuffer()
-      std::array<double, 3> curWallRegionBegin, curWallRegionEnd;
       auto const [curWallRegionBegin, curWallRegionEnd] =
           BoundaryUtils::getOuterBuffer(_localRegionStart, _localRegionEnd,
                                         currentDim, buffers);
-      // convert the regions into c-style arrays, so that they can be passed to
-      // the region iterator
-      const double cStyleRegionBegin[] = {
-          curWallRegionBegin[0], curWallRegionBegin[1], curWallRegionBegin[2]};
-      const double cStyleRegionEnd[] = {
-          curWallRegionEnd[0], curWallRegionEnd[1], curWallRegionEnd[2]};
 
       // grab an iterator from the converted coords
       auto particlesInRegion = moleculeContainer->regionIterator(
-          cStyleRegionBegin, cStyleRegionEnd, ParticleIterator::ALL_CELLS);
+          curWallRegionBegin.data(), curWallRegionEnd.data(), ParticleIterator::ALL_CELLS);
       for (auto it = particlesInRegion; it.isValid(); ++it) {
         // delete all halo particles
         moleculeContainer->deleteMolecule(it, false);

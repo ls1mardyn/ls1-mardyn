@@ -33,7 +33,7 @@
 
 class BoundaryHandler {
 public:
-  BoundaryHandler();
+  BoundaryHandler() = default;
 
   /* Find the boundary type of a global wall for a particular dimension. */
   BoundaryUtils::BoundaryType
@@ -42,6 +42,8 @@ public:
   /* Set the boundary type of a global wall for a particular dimension. */
   void setGlobalWallType(BoundaryUtils::DimensionType dimension,
                          BoundaryUtils::BoundaryType value);
+  
+
   BoundaryUtils::BoundaryType getGlobalWallType(int dimension) const;
 
   /* Check if any of the global boundaries have invalid types. */
@@ -60,13 +62,6 @@ public:
 
   /* Set bounds for local subdomain. */
   void setLocalRegion(const double *start, const double *end);
-
-  /* Set bounds for global subdomain. */
-  void setGlobalRegion(std::array<double, 3> start, std::array<double, 3> end);
-
-  /* Set bounds for local subdomain.*/
-  void setLocalRegion(std::array<double, 3> start, std::array<double, 3> end);
-
   /**
    * Determine which walls in the local region are actually global walls.
    *
@@ -117,7 +112,12 @@ public:
 private:
   /* List of global boundary type per dimension. */
   std::map<BoundaryUtils::DimensionType, BoundaryUtils::BoundaryType>
-      _boundaries;
+      _boundaries {{BoundaryUtils::DimensionType::POSX, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
+                  {BoundaryUtils::DimensionType::POSY, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
+                  {BoundaryUtils::DimensionType::POSZ, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
+                  {BoundaryUtils::DimensionType::NEGX, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
+                  {BoundaryUtils::DimensionType::NEGY, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
+                  {BoundaryUtils::DimensionType::NEGZ,BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL}};
 
   /* Lookup table to check if a local wall is also global. */
   std::map<BoundaryUtils::DimensionType, bool> _isGlobalWall;
