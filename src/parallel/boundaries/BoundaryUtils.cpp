@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <string>
+#include <cctype>
 
 #include "BoundaryUtils.h"
 
@@ -21,7 +22,7 @@ bool BoundaryUtils::isDimensionNumericPermissible(int dim) {
 BoundaryUtils::DimensionType BoundaryUtils::convertNumericToDimension(int dim) {
   if (!isDimensionNumericPermissible(dim)) {
     Log::global_log->error()
-        << "Invalid dimension passed for enum conversion" << std::endl;
+        << "Invalid dimension passed for enum conversion. Received value: " << dim << std::endl;
     mardyn_exit(1);
     return DimensionType::ERROR;
   }
@@ -131,11 +132,14 @@ int BoundaryUtils::convertDimensionToLS1Dims(DimensionType dimension) {
 
 BoundaryUtils::BoundaryType
 BoundaryUtils::convertStringToBoundary(const std::string &boundary) {
-  if (boundary == "periodic")
+  std::string boundaryLowercase;
+  std::transform(boundary.begin(), boundary.end(), boundaryLowercase.begin(),
+    [](unsigned char c){ return std::tolower(c); });
+  if (boundaryLowercase.find("per") != std::string::npos)
     return BoundaryType::PERIODIC_OR_LOCAL;
-  if (boundary == "reflecting" || boundary == "reflective")
+  if (boundaryLowercase.find("ref") != std::string::npos)
     return BoundaryType::REFLECTING;
-  if (boundary == "outflow")
+  if (boundaryLowercase.find("out") != std::string::npos)
     return BoundaryType::OUTFLOW;
   Log::global_log->error()
       << "Invalid boundary type passed to "
@@ -225,7 +229,8 @@ bool BoundaryUtils::isMoleculeLeaving(const Molecule &molecule,
 std::tuple<std::array<double, 3>, std::array<double, 3>>
 BoundaryUtils::getOuterBuffer(const std::array<double, 3> &givenRegionBegin,
                               const std::array<double, 3> &givenRegionEnd,
-                              DimensionType dimension, double *regionWidth) {
+                              DimensionType dimension, 
+                              const std::array<double, 3> &regionWidth) {
   std::array<double, 3> returnRegionBegin = givenRegionBegin;
   std::array<double, 3> returnRegionEnd = givenRegionEnd;
 

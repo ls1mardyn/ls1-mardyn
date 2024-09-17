@@ -61,8 +61,7 @@ inline void LinearRegression(const std::vector<T1>& x, const std::vector<T1>& y,
  * @return true 
  * @return false 
  */
-bool inline isNearRel(double a, double b,
-							double maxRelativeDifference = 1e-9) 
+bool inline isNearRel(double a, double b, double maxRelativeDifference = 1e-9) 
 {
 	const auto greaterNumber = std::max(std::abs(a), std::abs(b));
 	const auto absoluteDifference = maxRelativeDifference * greaterNumber;
