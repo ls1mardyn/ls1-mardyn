@@ -23,7 +23,7 @@ BoundaryUtils::BoundaryType BoundaryHandler::getGlobalWallType(
 BoundaryUtils::BoundaryType
 BoundaryHandler::getGlobalWallType(int dimension) const {
   return getGlobalWallType(
-      BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
+      BoundaryUtils::convertLS1DimIndexToEnumPos(dimension));
 }
 
 void BoundaryHandler::setGlobalWallType(BoundaryUtils::DimensionType dimension,
@@ -86,7 +86,7 @@ bool BoundaryHandler::isGlobalWall(
 }
 
 bool BoundaryHandler::isGlobalWall(int dimension) const {
-  return isGlobalWall(BoundaryUtils::convertLS1DimsToDimensionPos(dimension));
+  return isGlobalWall(BoundaryUtils::convertLS1DimIndexToEnumPos(dimension));
 }
 
 void BoundaryHandler::processGlobalWallLeavingParticles(
@@ -119,7 +119,7 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
         // Calculate the change in velocity, which the leapfrog method will
         // apply in the next velocity update to the dimension of interest.
         const int currentDimInt =
-            BoundaryUtils::convertDimensionToLS1Dims(currentDim);
+            BoundaryUtils::convertEnumToLS1DimIndex(currentDim);
         const double halfTimestep = .5 * timestepLength;
         const double halfTimestepByMass = halfTimestep / moleculeIter->mass();
         const double force = moleculeIter->F(currentDimInt);

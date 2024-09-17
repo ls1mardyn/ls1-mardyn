@@ -58,7 +58,7 @@ DimensionType convertNumericToDimension(int dim);
  * x = 0, y = 1 and z = 2 Since this does not contain direction information, the
  * positive direction is returned.
  */
-DimensionType convertLS1DimsToDimensionPos(int dim);
+DimensionType convertLS1DimIndexToEnumPos(int dim);
 
 /* Convert a DimensionType into a string from permissibleDimensionsString */
 std::string convertDimensionToString(DimensionType dimension);
@@ -84,7 +84,7 @@ int convertDimensionToNumericAbs(DimensionType dimension);
  * = 0, y = 1 and z = 2 Since this does not contain direction information, both
  * POSX and NEGX return 0, for example.
  */
-int convertDimensionToLS1Dims(DimensionType dimension);
+int convertEnumToLS1DimIndex(DimensionType dimension);
 
 /* Used to convert string read from the XML input file. */
 BoundaryType convertStringToBoundary(const std::string &boundary);

@@ -54,7 +54,7 @@ BoundaryUtils::DimensionType BoundaryUtils::convertNumericToDimension(int dim) {
 }
 
 BoundaryUtils::DimensionType
-BoundaryUtils::convertLS1DimsToDimensionPos(int dim) {
+BoundaryUtils::convertLS1DimIndexToEnumPos(int dim) {
   switch (dim) {
   case 0:
     return DimensionType::POSX;
@@ -126,7 +126,7 @@ int BoundaryUtils::convertDimensionToNumericAbs(DimensionType dimension) {
   return std::abs(convertDimensionToNumeric(dimension));
 }
 
-int BoundaryUtils::convertDimensionToLS1Dims(DimensionType dimension) {
+int BoundaryUtils::convertEnumToLS1DimIndex(DimensionType dimension) {
   return convertDimensionToNumericAbs(dimension) - 1;
 }
 
@@ -175,7 +175,7 @@ BoundaryUtils::getInnerBuffer(const std::array<double, 3> &givenRegionBegin,
   std::array<double, 3> returnRegionBegin = givenRegionBegin;
   std::array<double, 3> returnRegionEnd = givenRegionBegin;
 
-  const int dimensionLS1 = convertDimensionToLS1Dims(dimension);
+  const int dimensionLS1 = convertEnumToLS1DimIndex(dimension);
   switch (dimension) {
   // in positive case, set the beginning to end-width, or whole domain if width
   // too large
@@ -214,7 +214,7 @@ bool BoundaryUtils::isMoleculeLeaving(const Molecule &molecule,
                                       DimensionType dimension,
                                       double timestepLength,
                                       double nextStepVelAdjustment) {
-  const int ls1dim = convertDimensionToLS1Dims(dimension);
+  const int ls1dim = convertEnumToLS1DimIndex(dimension);
   const int direction = findSign(dimension);
   const double newPos =
       molecule.r(ls1dim) +
@@ -239,7 +239,7 @@ BoundaryUtils::getOuterBuffer(const std::array<double, 3> &givenRegionBegin,
     returnRegionEnd[i] = givenRegionEnd[i];
   }
 
-  const int dimensionLS1 = convertDimensionToLS1Dims(dimension);
+  const int dimensionLS1 = convertEnumToLS1DimIndex(dimension);
 
   // find the two dimensions that are not being considered
   const int extraDim1 = dimensionLS1 == 0 ? 1 : 0;
