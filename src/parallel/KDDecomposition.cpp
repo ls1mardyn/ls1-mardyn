@@ -328,8 +328,8 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, true /*doHaloPositionCheck*/, removeRecvDuplicates);
 
-		std::array<double, 3> startRegion{}, endRegion{};
-		getBoundingBoxMinMax(domain, startRegion.data(), endRegion.data());
+		double startRegion[3], endRegion[3];
+		getBoundingBoxMinMax(domain, startRegion, endRegion);
 		_boundaryHandler.setLocalRegion(startRegion,endRegion);
 		_boundaryHandler.updateGlobalWallLookupTable();
 	}

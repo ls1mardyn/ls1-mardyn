@@ -132,7 +132,7 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 			}
 		}
-		_boundaryHandler.setLocalRegion(_boxMin,_boxMax);
+		_boundaryHandler.setLocalRegion(_boxMin.data(),_boxMax.data());
 		_boundaryHandler.updateGlobalWallLookupTable();
 	}
 	++_steps;

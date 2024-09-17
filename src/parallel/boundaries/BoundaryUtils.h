@@ -156,11 +156,4 @@ inline int findSign(DimensionType dimension) {
   return findSign(convertDimensionToNumeric(dimension));
 }
 
-/**
- * Used for equality checks when comparing floats.
- *
- * Taken from AutoPas - src/autopas/utils/Math.h
- */
-bool isNearRel(double a, double b, double maxRelativeDifference = 1e-9);
-
 } // namespace BoundaryUtils

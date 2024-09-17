@@ -11,6 +11,7 @@
 
 #include "Simulation.h"
 #include "integrators/Integrator.h"
+#include "utils/Math.h"
 
 #include "utils/Logger.h"
 
@@ -52,17 +53,17 @@ void BoundaryHandler::setLocalRegion(const double *start, const double *end) {
 
 void BoundaryHandler::updateGlobalWallLookupTable() {
   _isGlobalWall[BoundaryUtils::DimensionType::POSX] =
-      BoundaryUtils::isNearRel(_localRegionEnd[0], _globalRegionEnd[0]);
+      isNearRel(_localRegionEnd[0], _globalRegionEnd[0]);
   _isGlobalWall[BoundaryUtils::DimensionType::NEGX] =
-      BoundaryUtils::isNearRel(_localRegionStart[0], _globalRegionStart[0]);
+      isNearRel(_localRegionStart[0], _globalRegionStart[0]);
   _isGlobalWall[BoundaryUtils::DimensionType::POSY] =
-      BoundaryUtils::isNearRel(_localRegionEnd[1], _globalRegionEnd[1]);
+      isNearRel(_localRegionEnd[1], _globalRegionEnd[1]);
   _isGlobalWall[BoundaryUtils::DimensionType::NEGY] =
-      BoundaryUtils::isNearRel(_localRegionStart[1], _globalRegionStart[1]);
+      isNearRel(_localRegionStart[1], _globalRegionStart[1]);
   _isGlobalWall[BoundaryUtils::DimensionType::POSZ] =
-      BoundaryUtils::isNearRel(_localRegionEnd[2], _globalRegionEnd[2]);
+      isNearRel(_localRegionEnd[2], _globalRegionEnd[2]);
   _isGlobalWall[BoundaryUtils::DimensionType::NEGZ] =
-      BoundaryUtils::isNearRel(_localRegionStart[2], _globalRegionStart[2]);
+      isNearRel(_localRegionStart[2], _globalRegionStart[2]);
 }
 
 bool BoundaryHandler::hasInvalidBoundary() const {
@@ -130,7 +131,7 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
                 timestepLength, nextStepVelAdjustment)) {
           if (getGlobalWallType(currentDim) ==
               BoundaryUtils::BoundaryType::REFLECTING) {
-            double currentVel = moleculeIter->v(currentDimInt);
+            const double currentVel = moleculeIter->v(currentDimInt);
             // change the velocity in the dimension of interest such that when
             // the leapfrog integrator adds nextStepVelAdjustment in the next
             // velocity update, the final result ends up being the intended,
@@ -178,9 +179,9 @@ void BoundaryHandler::removeNonPeriodicHalos(
       // grab an iterator from the converted coords
       auto particlesInRegion = moleculeContainer->regionIterator(
           curWallRegionBegin.data(), curWallRegionEnd.data(), ParticleIterator::ALL_CELLS);
-      for (auto it = particlesInRegion; it.isValid(); ++it) {
+      for (auto moleculeIter = particlesInRegion; moleculeIter.isValid(); ++moleculeIter) {
         // delete all halo particles
-        moleculeContainer->deleteMolecule(it, false);
+        moleculeContainer->deleteMolecule(moleculeIter, false);
       }
       break;
     }

@@ -278,11 +278,3 @@ BoundaryUtils::getOuterBuffer(const std::array<double, 3> &givenRegionBegin,
   }
   return std::make_tuple(returnRegionBegin, returnRegionEnd);
 }
-
-bool BoundaryUtils::isNearRel(double a, double b,
-                              double maxRelativeDifference) {
-  const auto greaterNumber = std::max(std::abs(a), std::abs(b));
-  const auto absoluteDifference = maxRelativeDifference * greaterNumber;
-  const auto diff = std::abs(a - b);
-  return diff <= absoluteDifference;
-}
