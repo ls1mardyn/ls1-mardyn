@@ -1,4 +1,5 @@
 #include "Interpolate.h"
+#include "Filter.h"
 
 Interpolate::Interpolate(double def_val):default_value{def_val}{
 
@@ -9,12 +10,18 @@ void Interpolate::SetXValues(std::vector<double>& v){
 }
 
 void Interpolate::SetYValues(std::vector<double> v){
+
     if(v.size() != y_values.size()){
         y_values.resize(v.size());
     }
-    for(int i=0;i<v.size();++i){
-        y_values[i] = v[i];
-    }
+    
+    Filter filter;
+
+    y_values = filter.MovingAverage(v);
+
+    // for(int i=0;i<v.size();++i){
+        // y_values[i] = v[i];
+    // }
     // this->y_values=v;
 }
 
@@ -59,6 +66,7 @@ double Interpolate::InterpolateAt(double r){
 }
 
 double Interpolate::CentralFiniteDifference(double r){
+    if(r <1.0) return 0.0;
     //need to artificially return a zero since profile is flat
     if(r > x_values[x_values.size()-1]){
         return 0.0;
@@ -77,9 +85,9 @@ double Interpolate::CentralFiniteDifference(double r){
     gb = y_values[up]; rb = x_values[up];
     double ratio =(gb-ga)/(rb-ra);
 
-    if(!std::isfinite(ratio)){
-        return 100000.0;
-    }
+    // if(!std::isfinite(ratio)){
+    //     return 100000.0;
+    // }
 
     return ratio;
 }

@@ -46,14 +46,6 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     avg_rdf_interpolation.GetYValues().resize(internal_bins);
 
     this->InitializePotentialValues();
-
-    std::vector<double> piece = reference_rdf_interpolation.GetYValues();
-    
-    for(int i=0;i<piece.size();++i){
-        piece[i] *= 223965.0;
-    }
-
-    avg_rdf_interpolation.SetYValues(piece);
 }
 
 void PMF::readXML(XMLfileUnits& xmlfile){
@@ -154,7 +146,6 @@ void PMF::InitializePotentialValues(){
     }
 
     potential_interpolation.SetYValues(pot0);
-
     post_processing.LinearExtrapolation(potential_interpolation);
 }
 
@@ -165,11 +156,27 @@ void PMF::AddPotentialCorrection(unsigned long step){
     current_correction.resize(internal_bins);
     pot_i.resize(internal_bins);
 
-    for(int i=0;i<pot_i.size();++i){
+    for(int i=0;i<internal_bins;++i){
         double ratio = avg_rdf[i]/reference_rdf_interpolation.GetYValues()[i];
         current_correction[i] = multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
+    }
+
+    current_correction = post_processing.LinearExtrapolation(current_correction,potential_interpolation.GetXValues());
+
+    for(int i=0;i<current_correction.size();++i){
+        if(potential_interpolation.GetXValues()[i]<=1.0){
+            current_correction[i]=0.0;
+        }
+    }
+
+    Filter filter;
+    current_correction = filter.MovingAverage(current_correction);
+
+    for(int i=0;i<pot_i.size();++i){
         pot_i[i] = potential_interpolation.GetYValues()[i] -current_correction[i];
     }
+
+    
 
     potential_interpolation.SetYValues(pot_i);
 
@@ -304,25 +311,25 @@ std::vector<double> PMF::GetAverageRDF(){
     std::vector<double> average_rdf = avg_rdf_interpolation.GetYValues();
     
     for(int i=0;i<average_rdf.size();++i){
-        average_rdf[i] /= ((double)profiler.GetMeasuredSteps()+ (double)223965.0 );
+        average_rdf[i] /= ((double)profiler.GetMeasuredSteps());
     }
 
     return average_rdf;
 }
 
-double PMF::ConvergenceCheck(){
-    std::vector<double> difference;
-    std::vector<double>& v_0 = reference_rdf_interpolation.GetYValues();
-    std::vector<double> v_i = GetAverageRDF();
+// double PMF::ConvergenceCheck(){
+//     std::vector<double> difference;
+//     std::vector<double>& v_0 = reference_rdf_interpolation.GetYValues();
+//     std::vector<double> v_i = GetAverageRDF();
 
-    difference.resize(v_0.size());
-    double vec_norm=0.0;
+//     difference.resize(v_0.size());
+//     double vec_norm=0.0;
 
-    for(int i=0;i<v_0.size();++i){
-        vec_norm += std::pow(v_0[i]-v_i[i],2.0);
-    }
+//     for(int i=0;i<v_0.size();++i){
+//         vec_norm += std::pow(v_0[i]-v_i[i],2.0);
+//     }
 
-    return vec_norm;
+//     return vec_norm;
 
-}
+// }
 

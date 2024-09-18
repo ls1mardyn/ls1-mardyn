@@ -9,8 +9,6 @@
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
-#include "plugins/PluginBase.h"
-
 
 class Interpolate{
     
@@ -36,6 +34,5 @@ class Interpolate{
     double CentralFiniteDifference(double r);
 
     private:
-
     int GetUpperLimit(double r);
 };

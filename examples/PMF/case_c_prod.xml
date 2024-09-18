@@ -62,10 +62,10 @@
     
     <output>
  
-    <outputplugin name="VTKMoleculeWriter">
+    <!--outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
       <writefrequency>5</writefrequency>
-    </outputplugin>
+    </outputplugin-->
 
     <!--outputplugin name="CheckpointWriter">
       <type>binary</type>

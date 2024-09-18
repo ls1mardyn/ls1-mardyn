@@ -112,4 +112,6 @@ void InternalProfiler::GenerateInstantaneousData(ParticleContainer* particleCont
         rdf_buffer[i] /= den;
 
     }   
+
+    // rdf_buffer = filter.MovingAverage(rdf_buffer);
 }

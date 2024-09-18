@@ -18,12 +18,14 @@
 #include "Interpolate.h"
 #include "plugins/RDFAtCOM.h"
 #include "ForceAdapter.h"
+#include "Filter.h"
 
 class InternalCellProcessor;
 class InternalProfiler{
 
     private:
 
+    Filter filter;
     CellProcessor* cell_processor;
     int number_bins;
     double bin_width;
