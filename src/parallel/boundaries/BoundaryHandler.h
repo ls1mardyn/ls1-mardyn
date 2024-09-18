@@ -7,7 +7,9 @@
 
 #pragma once
 
+#include "RegionUtils.h"
 #include "BoundaryUtils.h"
+#include "DimensionUtils.h"
 #include "particleContainer/ParticleContainer.h"
 
 #include <array>
@@ -37,10 +39,10 @@ public:
 
   /* Find the boundary type of a global wall for a particular dimension. */
   BoundaryUtils::BoundaryType
-  getGlobalWallType(BoundaryUtils::DimensionType dimension) const;
+  getGlobalWallType(DimensionUtils::DimensionType dimension) const;
 
   /* Set the boundary type of a global wall for a particular dimension. */
-  void setGlobalWallType(BoundaryUtils::DimensionType dimension,
+  void setGlobalWallType(DimensionUtils::DimensionType dimension,
                          BoundaryUtils::BoundaryType value);
   
 
@@ -72,7 +74,7 @@ public:
 
   /* Check if the local wall in a particular dimension is actually a global
    * wall. */
-  bool isGlobalWall(BoundaryUtils::DimensionType dimension) const;
+  bool isGlobalWall(DimensionUtils::DimensionType dimension) const;
 
   /* Check if the local wall in a particular dimension is actually a global
    * wall. */
@@ -111,16 +113,16 @@ public:
 
 private:
   /* List of global boundary type per dimension. */
-  std::map<BoundaryUtils::DimensionType, BoundaryUtils::BoundaryType>
-      _boundaries {{BoundaryUtils::DimensionType::POSX, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
-                  {BoundaryUtils::DimensionType::POSY, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
-                  {BoundaryUtils::DimensionType::POSZ, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
-                  {BoundaryUtils::DimensionType::NEGX, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
-                  {BoundaryUtils::DimensionType::NEGY, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
-                  {BoundaryUtils::DimensionType::NEGZ,BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL}};
+  std::map<DimensionUtils::DimensionType, BoundaryUtils::BoundaryType>
+      _boundaries {{DimensionUtils::DimensionType::POSX, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
+                  {DimensionUtils::DimensionType::POSY, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
+                  {DimensionUtils::DimensionType::POSZ, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
+                  {DimensionUtils::DimensionType::NEGX, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
+                  {DimensionUtils::DimensionType::NEGY, BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL},
+                  {DimensionUtils::DimensionType::NEGZ,BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL}};
 
   /* Lookup table to check if a local wall is also global. */
-  std::map<BoundaryUtils::DimensionType, bool> _isGlobalWall;
+  std::map<DimensionUtils::DimensionType, bool> _isGlobalWall;
 
   /* Global region start/end. */
   std::array<double, 3> _globalRegionStart, _globalRegionEnd;

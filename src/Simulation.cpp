@@ -417,12 +417,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				BoundaryUtils::BoundaryType xBoundary = BoundaryUtils::convertStringToBoundary(xBoundaryFromFile);
 				BoundaryUtils::BoundaryType yBoundary = BoundaryUtils::convertStringToBoundary(yBoundaryFromFile);
 				BoundaryUtils::BoundaryType zBoundary = BoundaryUtils::convertStringToBoundary(zBoundaryFromFile);
-				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::POSX, xBoundary);
-				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::NEGX, xBoundary);
-				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::POSY, yBoundary);
-				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::NEGY, yBoundary);
-				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::POSZ, zBoundary);
-				_domainDecomposition->setGlobalBoundaryType(BoundaryUtils::DimensionType::NEGZ, zBoundary);
+				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::POSX, xBoundary);
+				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::NEGX, xBoundary);
+				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::POSY, yBoundary);
+				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::NEGY, yBoundary);
+				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::POSZ, zBoundary);
+				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::NEGZ, zBoundary);
 				if (_domainDecomposition->hasInvalidBoundary()) {
 					Log::global_log->error() << "Invalid boundary type! Please check the config file" << std::endl;
 					exit(1);

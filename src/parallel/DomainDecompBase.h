@@ -291,7 +291,7 @@ public:
 	virtual void printCommunicationPartners(std::string filename) const {};
 
 	/* Set the global boundary type for the _boundaryHandler object. */
-	void setGlobalBoundaryType(BoundaryUtils::DimensionType dimension, BoundaryUtils::BoundaryType boundary);
+	void setGlobalBoundaryType(DimensionUtils::DimensionType dimension, BoundaryUtils::BoundaryType boundary);
 
 	/* Find which boundaries of a subdomain are actually global boundaries, and update _boundaryHandler. */
 	void setLocalBoundariesFromGlobal(Domain* domain, Ensemble* ensemble);

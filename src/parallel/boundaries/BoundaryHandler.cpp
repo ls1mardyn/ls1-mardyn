@@ -9,26 +9,26 @@
 
 #include "BoundaryHandler.h"
 
-#include "Simulation.h"
 #include "integrators/Integrator.h"
-#include "utils/Math.h"
 
+#include "utils/Math.h"
+#include "utils/mardyn_assert.h"
 #include "utils/Logger.h"
 
 BoundaryUtils::BoundaryType BoundaryHandler::getGlobalWallType(
-    BoundaryUtils::DimensionType dimension) const {
+    DimensionUtils::DimensionType dimension) const {
   return _boundaries.at(dimension);
 }
 
 BoundaryUtils::BoundaryType
 BoundaryHandler::getGlobalWallType(int dimension) const {
   return getGlobalWallType(
-      BoundaryUtils::convertLS1DimIndexToEnumPos(dimension));
+      DimensionUtils::convertLS1DimIndexToEnumPositive(dimension));
 }
 
-void BoundaryHandler::setGlobalWallType(BoundaryUtils::DimensionType dimension,
+void BoundaryHandler::setGlobalWallType(DimensionUtils::DimensionType dimension,
                                         BoundaryUtils::BoundaryType value) {
-  if (dimension != BoundaryUtils::DimensionType::ERROR)
+  if (dimension != DimensionUtils::DimensionType::ERROR)
     _boundaries[dimension] = value;
   else {
     Log::global_log->error()
@@ -52,17 +52,17 @@ void BoundaryHandler::setLocalRegion(const double *start, const double *end) {
 }
 
 void BoundaryHandler::updateGlobalWallLookupTable() {
-  _isGlobalWall[BoundaryUtils::DimensionType::POSX] =
+  _isGlobalWall[DimensionUtils::DimensionType::POSX] =
       isNearRel(_localRegionEnd[0], _globalRegionEnd[0]);
-  _isGlobalWall[BoundaryUtils::DimensionType::NEGX] =
+  _isGlobalWall[DimensionUtils::DimensionType::NEGX] =
       isNearRel(_localRegionStart[0], _globalRegionStart[0]);
-  _isGlobalWall[BoundaryUtils::DimensionType::POSY] =
+  _isGlobalWall[DimensionUtils::DimensionType::POSY] =
       isNearRel(_localRegionEnd[1], _globalRegionEnd[1]);
-  _isGlobalWall[BoundaryUtils::DimensionType::NEGY] =
+  _isGlobalWall[DimensionUtils::DimensionType::NEGY] =
       isNearRel(_localRegionStart[1], _globalRegionStart[1]);
-  _isGlobalWall[BoundaryUtils::DimensionType::POSZ] =
+  _isGlobalWall[DimensionUtils::DimensionType::POSZ] =
       isNearRel(_localRegionEnd[2], _globalRegionEnd[2]);
-  _isGlobalWall[BoundaryUtils::DimensionType::NEGZ] =
+  _isGlobalWall[DimensionUtils::DimensionType::NEGZ] =
       isNearRel(_localRegionStart[2], _globalRegionStart[2]);
 }
 
@@ -81,12 +81,12 @@ bool BoundaryHandler::hasNonPeriodicBoundary() const {
 }
 
 bool BoundaryHandler::isGlobalWall(
-    BoundaryUtils::DimensionType dimension) const {
+    DimensionUtils::DimensionType dimension) const {
   return _isGlobalWall.at(dimension);
 }
 
 bool BoundaryHandler::isGlobalWall(int dimension) const {
-  return isGlobalWall(BoundaryUtils::convertLS1DimIndexToEnumPos(dimension));
+  return isGlobalWall(DimensionUtils::convertLS1DimIndexToEnumPositive(dimension));
 }
 
 void BoundaryHandler::processGlobalWallLeavingParticles(
@@ -107,7 +107,7 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
     case BoundaryUtils::BoundaryType::REFLECTING: {
       // create region by using getInnerRegionSlab()
       const auto [curWallRegionBegin, curWallRegionEnd] =
-          BoundaryUtils::getInnerRegionSlab(_localRegionStart, _localRegionEnd,
+          RegionUtils::getInnerRegionSlab(_localRegionStart, _localRegionEnd,
                                         currentDim, cutoff);
       // grab an iterator from the converted coords
       const auto particlesInRegion = moleculeContainer->regionIterator(
@@ -119,14 +119,14 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
         // Calculate the change in velocity, which the leapfrog method will
         // apply in the next velocity update to the dimension of interest.
         const int currentDimInt =
-            BoundaryUtils::convertEnumToLS1DimIndex(currentDim);
+            DimensionUtils::convertEnumToLS1DimIndex(currentDim);
         const double halfTimestep = .5 * timestepLength;
         const double halfTimestepByMass = halfTimestep / moleculeIter->mass();
         const double force = moleculeIter->F(currentDimInt);
         const double nextStepVelAdjustment = halfTimestepByMass * force;
 
         // check if the molecule would leave the bounds
-        if (BoundaryUtils::isMoleculeLeaving(
+        if (RegionUtils::isMoleculeLeaving(
                 *moleculeIter, curWallRegionBegin, curWallRegionEnd, currentDim,
                 timestepLength, nextStepVelAdjustment)) {
           if (getGlobalWallType(currentDim) ==
@@ -174,7 +174,7 @@ void BoundaryHandler::removeNonPeriodicHalos(
     case BoundaryUtils::BoundaryType::REFLECTING: {
       // create region by using getOuterRegionSlab()
       auto const [curWallRegionBegin, curWallRegionEnd] =
-          BoundaryUtils::getOuterRegionSlab(_localRegionStart, _localRegionEnd,
+          RegionUtils::getOuterRegionSlab(_localRegionStart, _localRegionEnd,
                                         currentDim, haloWidths);
 
       // grab an iterator from the converted coords

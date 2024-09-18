@@ -26,7 +26,7 @@ DomainDecompBase::~DomainDecompBase() {
 void DomainDecompBase::readXML(XMLfileUnits& /* xmlconfig */) {
 }
 
-void DomainDecompBase::setGlobalBoundaryType(BoundaryUtils::DimensionType dimension, BoundaryUtils::BoundaryType boundary) {
+void DomainDecompBase::setGlobalBoundaryType(DimensionUtils::DimensionType dimension, BoundaryUtils::BoundaryType boundary) {
 	_boundaryHandler.setGlobalWallType(dimension, boundary);
 }
 
