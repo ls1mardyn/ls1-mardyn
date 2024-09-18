@@ -26,31 +26,21 @@ BoundaryUtils::DimensionType BoundaryUtils::convertNumericToDimension(int dim) {
     mardyn_exit(1);
     return DimensionType::ERROR;
   }
-  switch (findSign(dim)) {
-  case -1:
-    switch (dim) {
-    case 1:
-      return DimensionType::NEGX;
-    case 2:
-      return DimensionType::NEGY;
-    default:
-      return DimensionType::NEGZ; // case 3
-    }
-  case 1:
-    switch (dim) {
+  switch (dim) {
     case 1:
       return DimensionType::POSX;
     case 2:
       return DimensionType::POSY;
-    default:
+    case 3:
       return DimensionType::POSZ; // case 3
-    }
-  default: // should never happen
-    Log::global_log->error()
-        << "Invalid dimension passed for enum conversion" << std::endl;
-    mardyn_exit(1);
+    case -1:
+      return DimensionType::NEGX;
+    case -2:
+        return DimensionType::NEGY;
+    case -3:
+        return DimensionType::NEGZ;
   }
-  return DimensionType::ERROR;
+  return DimensionType::ERROR; //warning suppression
 }
 
 BoundaryUtils::DimensionType
@@ -168,7 +158,7 @@ std::string BoundaryUtils::convertBoundaryToString(BoundaryType boundary) {
 }
 
 std::tuple<std::array<double, 3>, std::array<double, 3>>
-BoundaryUtils::getInnerBuffer(const std::array<double, 3> &givenRegionBegin,
+BoundaryUtils::getInnerRegionSlab(const std::array<double, 3> &givenRegionBegin,
                               const std::array<double, 3> &givenRegionEnd,
                               DimensionType dimension, double regionWidth) {
 
@@ -227,7 +217,7 @@ bool BoundaryUtils::isMoleculeLeaving(const Molecule &molecule,
 }
 
 std::tuple<std::array<double, 3>, std::array<double, 3>>
-BoundaryUtils::getOuterBuffer(const std::array<double, 3> &givenRegionBegin,
+BoundaryUtils::getOuterRegionSlab(const std::array<double, 3> &givenRegionBegin,
                               const std::array<double, 3> &givenRegionEnd,
                               DimensionType dimension, 
                               const std::array<double, 3> &regionWidth) {

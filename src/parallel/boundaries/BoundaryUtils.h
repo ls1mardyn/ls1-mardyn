@@ -12,6 +12,7 @@
 #include <tuple>
 #include <vector>
 
+#include "utils/Math.h"
 #include "molecules/Molecule.h"
 
 /**
@@ -103,7 +104,7 @@ std::string convertBoundaryToString(BoundaryType boundary);
  * demarcated by givenRegion{begin,end}.
  */
 std::tuple<std::array<double, 3>, std::array<double, 3>>
-getInnerBuffer(const std::array<double, 3> &givenRegionBegin,
+getInnerRegionSlab(const std::array<double, 3> &givenRegionBegin,
                const std::array<double, 3> &givenRegionEnd,
                DimensionType dimension, double regionWidth);
 
@@ -139,19 +140,18 @@ bool isMoleculeLeaving(const Molecule &molecule,
  * from +x.
  */
 std::tuple<std::array<double, 3>, std::array<double, 3>>
-getOuterBuffer(const std::array<double, 3> &givenRegionBegin,
+getOuterRegionSlab(const std::array<double, 3> &givenRegionBegin,
                const std::array<double, 3> &givenRegionEnd,
                DimensionType dimension, 
                const std::array<double, 3> &regionWidth);
 
 /* Returns the sign of a number, used for determining direction from a
  * dimension. */
-inline int findSign(int n) { return n < 0 ? -1 : 1; }
 
 /* Returns the sign of a number, used for determining direction from a
  * dimension. */
 inline int findSign(DimensionType dimension) {
-  return findSign(convertDimensionToNumeric(dimension));
+  return ::findSign(convertDimensionToNumeric(dimension));
 }
 
 } // namespace BoundaryUtils

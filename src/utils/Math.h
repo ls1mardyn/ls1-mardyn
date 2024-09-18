@@ -51,7 +51,8 @@ inline void LinearRegression(const std::vector<T1>& x, const std::vector<T1>& y,
 }
 
 /**
- * @brief Used for equality checks when comparing floats.
+ * @brief Check whether two floats are within some maximum relative difference.
+ * Used to check for equality while taking floating-point errors into account.
  * 
  * Taken from AutoPas - src/autopas/utils/Math.h
  * 
@@ -68,4 +69,12 @@ bool inline isNearRel(double a, double b, double maxRelativeDifference = 1e-9)
 	const auto diff = std::abs(a - b);
 	return diff <= absoluteDifference;
 }
+
+/**
+ * @brief Find whether an int is positive or negative (zero is positive).
+ * 
+ * @param n the number to be checked
+ * @return int -1 if the number is negative, and 1 otherwise
+ */
+inline short int findSign(int n) { return n < 0 ? -1 : 1; }
 #endif /* MATH_H_ */

@@ -105,9 +105,9 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
     case BoundaryUtils::BoundaryType::OUTFLOW:
       [[fallthrough]];
     case BoundaryUtils::BoundaryType::REFLECTING: {
-      // create region by using getInnerBuffer()
+      // create region by using getInnerRegionSlab()
       const auto [curWallRegionBegin, curWallRegionEnd] =
-          BoundaryUtils::getInnerBuffer(_localRegionStart, _localRegionEnd,
+          BoundaryUtils::getInnerRegionSlab(_localRegionStart, _localRegionEnd,
                                         currentDim, cutoff);
       // grab an iterator from the converted coords
       const auto particlesInRegion = moleculeContainer->regionIterator(
@@ -156,7 +156,7 @@ void BoundaryHandler::processGlobalWallLeavingParticles(
 void BoundaryHandler::removeNonPeriodicHalos(
     ParticleContainer *moleculeContainer) const {
   // get halo lengths in each dimension
-  const std::array<double, 3> buffers = {
+  const std::array<double, 3> haloWidths = {
                       moleculeContainer->getHaloWidthForDimension(0),
                       moleculeContainer->getHaloWidthForDimension(1),
                       moleculeContainer->getHaloWidthForDimension(2)};
@@ -172,10 +172,10 @@ void BoundaryHandler::removeNonPeriodicHalos(
     case BoundaryUtils::BoundaryType::OUTFLOW:
       [[fallthrough]];
     case BoundaryUtils::BoundaryType::REFLECTING: {
-      // create region by using getOuterBuffer()
+      // create region by using getOuterRegionSlab()
       auto const [curWallRegionBegin, curWallRegionEnd] =
-          BoundaryUtils::getOuterBuffer(_localRegionStart, _localRegionEnd,
-                                        currentDim, buffers);
+          BoundaryUtils::getOuterRegionSlab(_localRegionStart, _localRegionEnd,
+                                        currentDim, haloWidths);
 
       // grab an iterator from the converted coords
       auto particlesInRegion = moleculeContainer->regionIterator(
