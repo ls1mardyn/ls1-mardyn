@@ -22,7 +22,7 @@ void InternalProfiler::InitRNodes(){
     }  
 }
 
-void InternalProfiler::ResetBuffers(){
+void InternalProfiler::ResetBuffer(){
 
     std::fill(rdf_buffer.begin(),rdf_buffer.end(),0.0);
 }
@@ -81,11 +81,11 @@ void InternalProfiler::ProcessDistance(double r, double pot){
     
 }  
 
-std::vector<double>& InternalProfiler::GetRDFValues(){
+std::vector<double>& InternalProfiler::GetBinCounts(){
     return this->rdf_buffer;
 }
 
-std::vector<double>& InternalProfiler::GetRNodes(){
+std::vector<double>& InternalProfiler::GetBinCenters(){
     return this->r_nodes;
 }
 
@@ -96,7 +96,10 @@ void InternalProfiler::ProfileData(ParticleContainer* pc, unsigned long step){
     }
 }
 
-void InternalProfiler::GenerateInstantaneousData(ParticleContainer* particleContainer, Domain* domain){
+std::vector<double> InternalProfiler::GetInstantaneousData(ParticleContainer* particleContainer, Domain* domain){
+
+    std::vector<double> instantaneous_rdf;
+    instantaneous_rdf.resize(number_bins);
     
     for(int i=0;i<number_bins;++i){
         //Generate RDF g(r) data && U(r) instantaneous values
@@ -108,10 +111,10 @@ void InternalProfiler::GenerateInstantaneousData(ParticleContainer* particleCont
         rmax3 = rmax*rmax*rmax;
         binvol = (4.0/3.0)*M_PI*(rmax3-rmin3);
         den = 0.5*domain->getglobalNumMolecules()*(domain->getglobalNumMolecules()-1.0)*binvol/domain->getGlobalVolume();
-        //rdf_buffer[i] /= measured_steps;
-        rdf_buffer[i] /= den;
+        // rdf_buffer[i] /= den;
+        instantaneous_rdf[i] = rdf_buffer[i]/den;
 
     }   
-
-    // rdf_buffer = filter.MovingAverage(rdf_buffer);
+    ResetBuffer();
+    return instantaneous_rdf;
 }

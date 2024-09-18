@@ -17,7 +17,7 @@
 #include "plugins/RDFAtCOM.h"
 #include "ForceAdapter.h"
 #include "ProfilerPMF.h"
-
+#include "Filter.h"
 
 class InteractionSite;
 /**
@@ -84,10 +84,10 @@ class PMF:public PluginBase{
 
     Interpolate reference_rdf_interpolation;//should not touch
     Interpolate potential_interpolation;//updated on every step or stride
-    Interpolate avg_rdf_interpolation;//current avg value so far 
+    Interpolate acc_rdf_interpolation;//current avg value so far 
 
     InternalProfiler profiler;//measuring tool
-
+    Filter filter;
     std::vector<FPRegion> regions;
     /**
      * Stores a COM site for every molecule (needs improvement)
@@ -184,7 +184,6 @@ class PMF:public PluginBase{
      * 
      */
     std::vector<double> GetAverageRDF();
-    // double ConvergenceCheck();
     double GetMultiplier(){
         return multiplier;
     }

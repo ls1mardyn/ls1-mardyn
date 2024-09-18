@@ -18,14 +18,12 @@
 #include "Interpolate.h"
 #include "plugins/RDFAtCOM.h"
 #include "ForceAdapter.h"
-#include "Filter.h"
 
 class InternalCellProcessor;
 class InternalProfiler{
 
     private:
 
-    Filter filter;
     CellProcessor* cell_processor;
     int number_bins;
     double bin_width;
@@ -69,19 +67,17 @@ class InternalProfiler{
     /**
      * Evaluates RDF and U(r) into the buffers, data is then ruined and clear is required
      */
-    void GenerateInstantaneousData(ParticleContainer* particleContainer, Domain* domain);
-    
-    /**
-     * Fills rdf buffer with 0s
-     */
-    void ResetBuffers();
-    
-    std::vector<double>& GetRDFValues();
-    std::vector<double>& GetRNodes();
+    std::vector<double> GetInstantaneousData(ParticleContainer* particleContainer, Domain* domain);    
+    std::vector<double>& GetBinCounts();
+    std::vector<double>& GetBinCenters();
     double GetMeasuredSteps();
 
 
     private:
+    /**
+     * Fills rdf buffer with 0s
+     */
+    void ResetBuffer();
     void InitRNodes();
     void SetBinContainer(ParticleContainer* pc);
 };

@@ -17,12 +17,17 @@ class Interpolate{
     std::vector<double> x_values;//function value
     std::vector<double> y_values;
     double default_value;
+    int first_valid;// everything below is force limit
+    double derivative_limit= -10000000;
+    bool check_for_isfinite;
+
 
     public:
     Interpolate()=default;
-    Interpolate(double def);     
+    Interpolate(double def, bool checks=false);     
     void SetXValues(std::vector<double>& v);
     void SetYValues(std::vector<double> v);
+    void FirstValid();
 
     std::vector<double>& GetXValues();
     std::vector<double>& GetYValues();
@@ -32,6 +37,7 @@ class Interpolate{
      * Essentially figure out between which values r is, and do central differences
      */
     double CentralFiniteDifference(double r);
+    void AddVector(std::vector<double>& v);
 
     private:
     int GetUpperLimit(double r);
