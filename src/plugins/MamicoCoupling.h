@@ -36,8 +36,7 @@ public:
 	 */
 	void readXML(XMLfileUnits &) {}
 
-	void beforeEventNewTimestep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-								unsigned long simstep) {}
+	void beforeEventNewTimestep(ParticleContainer *, DomainDecompBase *, unsigned long) {}
 
 	/**
 	 * @brief Takes coupling steps such as particle insertion, to make sure they are
@@ -65,10 +64,9 @@ public:
 	void afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
 					 unsigned long simstep) override;
 
-	void endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
-				 unsigned long simstep) {}
+	void endStep(ParticleContainer *, DomainDecompBase *, Domain *, unsigned long) {}
 
-	void finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {}
+	void finish(ParticleContainer *, DomainDecompBase *, Domain *) {}
 
 	std::string getPluginName() override { return "MamicoCoupling"; }
 
@@ -77,9 +75,11 @@ public:
 	/**
 	 * @brief Sets the macroscopicCellService object that controls the inner coupling logic.
 	 *
-	 * MaMiCo extracts the MamicoCoupling plugin object from the simulation object after initialization and uses this function to set the macroscopicCellCervice. 
-	 * 
-	 * The code for this object can be found in https://github.com/HSU-HPC/MaMiCo/blob/master/coupling/services/CouplingCellService.cpph
+	 * MaMiCo extracts the MamicoCoupling plugin object from the simulation object after initialization and uses this
+	 * function to set the macroscopicCellCervice.
+	 *
+	 * The code for this object can be found in
+	 * https://github.com/HSU-HPC/MaMiCo/blob/master/coupling/services/CouplingCellService.cpph
 	 */
 	void setMamicoCouplingCellService(coupling::services::CouplingCellService<3> *couplingCellService) {
 		_couplingCellService =
@@ -89,7 +89,7 @@ public:
 	/**
 	 * @brief Enables coupling logic, allowing coupling steps to run while simulation is running.
 	 *
-	 * Set from within MaMiCo, check 
+	 * Set from within MaMiCo, check
 	 * https://github.com/HSU-HPC/MaMiCo/blob/master/coupling/interface/MDSimulationFactory.h, class LS1MDSimulation
 	 */
 	void switchOnCoupling() { _couplingEnabled = true; }
