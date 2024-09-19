@@ -40,8 +40,7 @@ std::string BoundaryUtils::convertBoundaryToString(BoundaryType boundary) {
 	case BoundaryType::OUTFLOW:
 		return "outflow";
 	default:
-		Log::global_log->error() << "Invalid boundary type passed to "
-									"BoundaryUtils::convertBoundaryToString. Check your input file!"
+		Log::global_log->error() << "BoundaryType::ERROR received in BoundaryUtils::convertBoundaryToString!"
 								 << std::endl;
 		mardyn_exit(1);
 	}

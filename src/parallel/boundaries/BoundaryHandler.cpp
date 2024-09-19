@@ -27,7 +27,8 @@ void BoundaryHandler::setGlobalWallType(DimensionUtils::DimensionType dimension,
 	if (dimension != DimensionUtils::DimensionType::ERROR)
 		_boundaries[dimension] = value;
 	else {
-		Log::global_log->error() << "DimensionType::ERROR received in setGlobalWallType!!" << std::endl;
+		Log::global_log->error() << "DimensionType::ERROR received in BoundaryHandler::setGlobalWallType!!"
+								 << std::endl;
 		mardyn_exit(1);
 	}
 }
@@ -128,7 +129,8 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *molec
 			break;
 		}
 		default:
-			Log::global_log->error() << "Boundary type error! Received type not allowed!" << std::endl;
+			Log::global_log->error()
+				<< "BoundaryType::ERROR received in BoundaryHandler::processGlobalWallLeavingParticles!" << std::endl;
 			mardyn_exit(1);
 		}
 	}
@@ -165,11 +167,9 @@ void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer *moleculeContaine
 			break;
 		}
 		default:
-			Log::global_log->error() << "Boundary type error! Received type not allowed!" << std::endl;
+			Log::global_log->error() << "BoundaryType::ERROR received in BoundaryHandler::removeNonPeriodicHalos!"
+									 << std::endl;
 			mardyn_exit(1);
 		}
 	}
-#ifndef MARDYN_AUTOPAS
-	moleculeContainer->updateBoundaryAndHaloMoleculeCaches();
-#endif
 }

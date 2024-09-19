@@ -39,7 +39,7 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getInnerRe
 		break;
 
 	default:
-		Log::global_log->error() << "Invalid dimension passed for inner buffer calculation\n";
+		Log::global_log->error() << "DimensionType::ERROR received in RegionUtils::getInnerRegionSlab" << std::endl;
 		mardyn_exit(1);
 	}
 	return {returnRegionBegin, returnRegionEnd};
@@ -106,7 +106,7 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getOuterRe
 		break;
 
 	default:
-		Log::global_log->error() << "Invalid dimension passed for inner buffer calculation" << std::endl;
+		Log::global_log->error() << "DimensionType::ERROR received in RegionUtils::getOuterRegionSlab" << std::endl;
 		mardyn_exit(1);
 	}
 	return std::make_tuple(returnRegionBegin, returnRegionEnd);

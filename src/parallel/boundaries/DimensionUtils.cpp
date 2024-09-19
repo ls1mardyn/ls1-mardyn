@@ -66,7 +66,8 @@ std::string DimensionUtils::convertDimensionToString(DimensionType dimension) {
 	case DimensionType::NEGZ:
 		return "-z";
 	default: // ERROR
-		Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
+		Log::global_log->error() << "DimesionType::ERROR received in DimensionUtils::convertDimensionToString!"
+								 << std::endl;
 		mardyn_exit(1);
 		return "error";
 	}
@@ -91,7 +92,8 @@ int DimensionUtils::convertDimensionToNumeric(DimensionType dimension) {
 	case DimensionType::NEGZ:
 		return -3;
 	default:
-		Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
+		Log::global_log->error() << "DimesionType::ERROR received in DimensionUtils::convertDimensionToNumeric!"
+								 << std::endl;
 		mardyn_exit(1);
 		return 0;
 	}
