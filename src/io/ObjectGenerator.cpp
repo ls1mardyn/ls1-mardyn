@@ -126,7 +126,7 @@ ObjectGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* do
 	_filler->setObject(boundedObject);
 	_filler->init();
 
-	Molecule molecule;
+	Molecule molecule(0, nullptr, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 	unsigned long moleculeID = _moleculeIdPool->getNewMoleculeId();
 	while(_filler->getMolecule(&molecule) > 0) {
 		molecule.setid(moleculeID);

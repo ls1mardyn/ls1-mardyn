@@ -72,7 +72,9 @@ public:
 		return Molecule (
 			getMolUid(index), nullptr,
 			getMolR(0,index), getMolR(1,index), getMolR(2,index),
-			getMolV(0,index), getMolV(1,index), getMolV(2,index));
+			getMolV(0,index), getMolV(1,index), getMolV(2,index),
+			1.0, 0.0, 0.0, 0.0,
+			0.0, 0.0, 0.0);
 	}
 
 	void readImmutableMolecule(size_t index, MoleculeInterface& m) const {
