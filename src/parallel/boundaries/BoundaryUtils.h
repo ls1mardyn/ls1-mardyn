@@ -8,32 +8,48 @@
 #pragma once
 
 #include <string>
+
 /**
- * Includes enums and helper functions for processing boundary conditions.
- *
- * Does not actually work on any molecule containers, hence can be used
- * in a general sense for other calculations.
+ * @brief Includes the BoundaryType enum and helper functions for boundary types.
+ * @author Amartya Das Sharma
  */
 namespace BoundaryUtils {
 
 /**
- * enum storing the types of boundaries currently supported.
+ * @brief enum storing the types of global boundaries currently supported.
  *
  * The currently supported boundary types are
- * PERIODIC_OR_LOCAL - periodic boundaries or local boundaries: both of which
- * use the default (communicate particle transfers with neighbours) behaviour
+ * PERIODIC - periodic boundaries, using the default (communicate particle transfers with neighbours) behaviour
  * OUTFLOW - molecules exiting the boundary are deleted
- * REFLECTING - molecules exiting the boundary have their velocities
- * reversed in the direction they are leaving
- * ERROR - kept for sanity checks
+ * REFLECTING - molecules exiting the boundary have their velocities reversed in the direction they are leaving (i.e.
+ * reflected) ERROR - kept for sanity checks
  *
  * This can be extended if needed.
  */
-enum class BoundaryType { PERIODIC_OR_LOCAL, OUTFLOW, REFLECTING, ERROR };
+enum class BoundaryType { PERIODIC, OUTFLOW, REFLECTING, ERROR };
 
-/* Used to convert string read from the XML input file. */
+/**
+ * @brief Convert strings read from the XML input file into BoundaryType enum members.
+ *
+ * The conversion logic is as follows:
+ * - Any string with "per" - BoundaryType::PERIODIC
+ * - Any string with "ref" - BoundaryType::REFLECTING
+ * - Any string with "out" - BoundaryType::OUTFLOW
+ * An error occurs if none of the substrings are found.
+ *
+ * @param boundary string read from xml file
+ * @return BoundaryType which is the corresponding BoundaryType enum member
+ */
 BoundaryType convertStringToBoundary(const std::string &boundary);
 
+/**
+ * @brief Converts BoundaryType enum members into strings.
+ *
+ * Used mainly for logging.
+ *
+ * @param boundary BoundaryType enum member
+ * @return std::string corresponding to the enum member
+ */
 std::string convertBoundaryToString(BoundaryType boundary);
 
 } // namespace BoundaryUtils

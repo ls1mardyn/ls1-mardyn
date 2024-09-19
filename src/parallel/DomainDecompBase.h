@@ -297,9 +297,9 @@ public:
 	void setLocalBoundariesFromGlobal(Domain* domain, Ensemble* ensemble);
 
 	/* Check if any of the global boundaries are invalid. */
-	bool hasInvalidBoundary() const { return _boundaryHandler.hasInvalidBoundary();}
+	bool hasGlobalInvalidBoundary() const { return _boundaryHandler.hasGlobalInvalidBoundary();}
 
-	bool hasNonPeriodicBoundary() const { return _boundaryHandler.hasNonPeriodicBoundary();}
+	bool hasGlobalNonPeriodicBoundary() const { return _boundaryHandler.hasGlobalNonPeriodicBoundary();}
 
 	/* Processes leaving particles according to the boundary coundition of the wall the particles would be leaving. */
 	void processBoundaryConditions(ParticleContainer* moleculeContainer, double timestepLength);

@@ -5,21 +5,21 @@
  *      Author: amartyads
  */
 
-#include <algorithm>
-#include <cctype>
-#include <string>
-
 #include "BoundaryUtils.h"
 
 #include "utils/Logger.h"
 #include "utils/mardyn_assert.h"
+
+#include <algorithm>
+#include <cctype>
+#include <string>
 
 BoundaryUtils::BoundaryType BoundaryUtils::convertStringToBoundary(const std::string &boundary) {
 	std::string boundaryLowercase;
 	std::transform(boundary.begin(), boundary.end(), boundaryLowercase.begin(),
 				   [](unsigned char c) { return std::tolower(c); });
 	if (boundaryLowercase.find("per") != std::string::npos)
-		return BoundaryType::PERIODIC_OR_LOCAL;
+		return BoundaryType::PERIODIC;
 	if (boundaryLowercase.find("ref") != std::string::npos)
 		return BoundaryType::REFLECTING;
 	if (boundaryLowercase.find("out") != std::string::npos)
@@ -33,7 +33,7 @@ BoundaryUtils::BoundaryType BoundaryUtils::convertStringToBoundary(const std::st
 
 std::string BoundaryUtils::convertBoundaryToString(BoundaryType boundary) {
 	switch (boundary) {
-	case BoundaryType::PERIODIC_OR_LOCAL:
+	case BoundaryType::PERIODIC:
 		return "periodic";
 	case BoundaryType::REFLECTING:
 		return "reflecting";

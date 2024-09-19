@@ -5,8 +5,6 @@
  *      Author: amartyads
  */
 
-#include <algorithm>
-
 #include "BoundaryHandler.h"
 
 #include "integrators/Integrator.h"
@@ -14,6 +12,8 @@
 #include "utils/Logger.h"
 #include "utils/Math.h"
 #include "utils/mardyn_assert.h"
+
+#include <algorithm>
 
 BoundaryUtils::BoundaryType BoundaryHandler::getGlobalWallType(DimensionUtils::DimensionType dimension) const {
 	return _boundaries.at(dimension);
@@ -55,17 +55,17 @@ void BoundaryHandler::updateGlobalWallLookupTable() {
 	_isGlobalWall[DimensionUtils::DimensionType::NEGZ] = isNearRel(_localRegionStart[2], _globalRegionStart[2]);
 }
 
-bool BoundaryHandler::hasInvalidBoundary() const {
+bool BoundaryHandler::hasGlobalInvalidBoundary() const {
 	return std::any_of(_boundaries.begin(), _boundaries.end(), [](const auto &keyVal) {
 		const auto [dim, boundaryType] = keyVal;
 		return boundaryType == BoundaryUtils::BoundaryType::ERROR;
 	});
 }
 
-bool BoundaryHandler::hasNonPeriodicBoundary() const {
+bool BoundaryHandler::hasGlobalNonPeriodicBoundary() const {
 	return std::any_of(_boundaries.begin(), _boundaries.end(), [](const auto &keyVal) {
 		const auto [dim, boundaryType] = keyVal;
-		return boundaryType == BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL;
+		return boundaryType == BoundaryUtils::BoundaryType::PERIODIC;
 	});
 }
 
@@ -85,7 +85,7 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *molec
 			continue;
 
 		switch (getGlobalWallType(currentDim)) {
-		case BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL:
+		case BoundaryUtils::BoundaryType::PERIODIC:
 			// nothing changes from normal ls1 behaviour, so leaving particles not touched by BoundaryHandler and are
 			// processed by DomainDecompBase::handleDomainLeavingParticles()
 			break;
@@ -144,7 +144,7 @@ void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer *moleculeContaine
 			continue;
 
 		switch (getGlobalWallType(currentDim)) {
-		case BoundaryUtils::BoundaryType::PERIODIC_OR_LOCAL:
+		case BoundaryUtils::BoundaryType::PERIODIC:
 			// nothing changes from normal ls1 behaviour, so empty case, and halo particles left untouched
 			break;
 

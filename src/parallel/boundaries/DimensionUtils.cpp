@@ -55,23 +55,17 @@ std::string DimensionUtils::convertDimensionToString(DimensionType dimension) {
 	switch (dimension) {
 	case DimensionType::POSX:
 		return "+x";
-
 	case DimensionType::POSY:
 		return "+y";
-
 	case DimensionType::POSZ:
 		return "+z";
-
 	case DimensionType::NEGX:
 		return "-x";
-
 	case DimensionType::NEGY:
 		return "-y";
-
 	case DimensionType::NEGZ:
 		return "-z";
-
-	default:
+	default: // ERROR
 		Log::global_log->error() << "Invalid dimension passed for enum conversion" << std::endl;
 		mardyn_exit(1);
 		return "error";

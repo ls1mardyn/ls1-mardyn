@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <numeric>
+#include <cmath>
 
 template<typename T>
 struct square

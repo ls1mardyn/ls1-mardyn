@@ -423,11 +423,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::NEGY, yBoundary);
 				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::POSZ, zBoundary);
 				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::NEGZ, zBoundary);
-				if (_domainDecomposition->hasInvalidBoundary()) {
+				if (_domainDecomposition->hasGlobalInvalidBoundary()) {
 					Log::global_log->error() << "Invalid boundary type! Please check the config file" << std::endl;
 					exit(1);
 				}
-				if(_overlappingP2P && _domainDecomposition->hasNonPeriodicBoundary()) {
+				if(_overlappingP2P && _domainDecomposition->hasGlobalNonPeriodicBoundary()) {
 					Log::global_log->info() << "Non-periodic boundaries not supported with overlappingP2P enabled! Exiting..." << std::endl;
 					exit(1);
 				}
