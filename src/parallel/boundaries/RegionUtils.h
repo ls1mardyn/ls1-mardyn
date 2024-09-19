@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <tuple>
 #include "DimensionUtils.h"
 #include "molecules/Molecule.h"
+#include <tuple>
 
 namespace RegionUtils {
 
@@ -24,10 +24,9 @@ namespace RegionUtils {
  * units from the +x boundary wall, in the original domain
  * demarcated by givenRegion{begin,end}.
  */
-std::tuple<std::array<double, 3>, std::array<double, 3>>
-getInnerRegionSlab(const std::array<double, 3> &givenRegionBegin,
-               const std::array<double, 3> &givenRegionEnd,
-               DimensionUtils::DimensionType dimension, double regionWidth);
+std::tuple<std::array<double, 3>, std::array<double, 3>> getInnerRegionSlab(
+	const std::array<double, 3> &givenRegionBegin, const std::array<double, 3> &givenRegionEnd,
+	DimensionUtils::DimensionType dimension, double regionWidth);
 
 /**
  * Checks if a given molecule is leaving the given region in the next timestep,
@@ -43,11 +42,9 @@ getInnerRegionSlab(const std::array<double, 3> &givenRegionBegin,
  * so that it can handle the change in velocity due to forces. This is not done
  * by the util function itself, to keep it as generic as possible.
  */
-bool isMoleculeLeaving(const Molecule &molecule,
-                       const std::array<double, 3> &regionBegin,
-                       const std::array<double, 3> &regionEnd,
-                       DimensionUtils::DimensionType dimension, double timestepLength,
-                       double nextStepVelAdjustment);
+bool isMoleculeLeaving(const Molecule &molecule, const std::array<double, 3> &regionBegin,
+					   const std::array<double, 3> &regionEnd, DimensionUtils::DimensionType dimension,
+					   double timestepLength, double nextStepVelAdjustment);
 
 /**
  * When given a domain delimited by givenRegionBegin and givenRegionEnd
@@ -60,10 +57,8 @@ bool isMoleculeLeaving(const Molecule &molecule,
  * returns a box, which contains every ghost particle that is 3 units away
  * from +x.
  */
-std::tuple<std::array<double, 3>, std::array<double, 3>>
-getOuterRegionSlab(const std::array<double, 3> &givenRegionBegin,
-               const std::array<double, 3> &givenRegionEnd,
-               DimensionUtils::DimensionType dimension, 
-               const std::array<double, 3> &regionWidth);
+std::tuple<std::array<double, 3>, std::array<double, 3>> getOuterRegionSlab(
+	const std::array<double, 3> &givenRegionBegin, const std::array<double, 3> &givenRegionEnd,
+	DimensionUtils::DimensionType dimension, const std::array<double, 3> &regionWidth);
 
 } // namespace RegionUtils

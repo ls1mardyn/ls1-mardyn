@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <string>
 #include "utils/Math.h"
+#include <string>
 
 namespace DimensionUtils {
 /**
@@ -60,11 +60,8 @@ int convertDimensionToNumericAbs(DimensionType dimension);
  */
 int convertEnumToLS1DimIndex(DimensionType dimension);
 
-
 /* Returns the sign of a number, used for determining direction from a
  * dimension. */
-inline int findSign(DimensionType dimension) {
-  return ::findSign(convertDimensionToNumeric(dimension));
-}
+inline int findSign(DimensionType dimension) { return ::findSign(convertDimensionToNumeric(dimension)); }
 
 } // namespace DimensionUtils
