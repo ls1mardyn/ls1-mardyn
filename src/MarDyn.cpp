@@ -136,6 +136,10 @@ int main(int argc, char** argv) {
 	MPI_Init(&argc, &argv);
 #endif
 
+	// Open scope to exclude MPI_Init() and MPI_Finalize().
+	// This way, all simulation objects are cleaned up before MPI finalizes.
+	{
+
 	optparse::OptionParser op;
 	initOptions(&op);
 	optparse::Values options = op.parse_args(argc, argv);
@@ -284,6 +288,8 @@ int main(int argc, char** argv) {
 	Log::global_log->info() << "Used resources: " << std::fixed << std::setprecision(3) << resources << " core-hours" << std::endl << std::fixed << std::setprecision(5);
 
 	simulation.finalize();
+
+	} // End of scope to exclude MPI_Init() and MPI_Finalize()
 
 #ifdef ENABLE_MPI
 	MPI_Finalize();
