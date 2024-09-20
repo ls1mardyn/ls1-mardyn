@@ -149,12 +149,12 @@ public:
 	double getLocalVirial() const;
 
 	//! @brief get thermostat scaling for translations
-	double getGlobalBetaTrans() const;
-	double getGlobalBetaTrans(int thermostat) const;
+	double getGlobalBetaTrans();
+	double getGlobalBetaTrans(int thermostat);
 
 	//! @brief get thermostat scaling for rotations
-	double getGlobalBetaRot() const;
-	double getGlobalBetaRot(int thermostat) const;
+	double getGlobalBetaRot();
+	double getGlobalBetaRot(int thermostat);
 
 	//! @brief return the length of the domain
 	//!
@@ -168,9 +168,9 @@ public:
 	void setGlobalLength(int index, double length);
 
 	//! @brief get the global temperature for the whole system (i.e. thermostat ID 0)
-	double getGlobalCurrentTemperature() const { return getCurrentTemperature(0); }
-	double getCurrentTemperature(int thermostatID) const { return _globalTemperatureMap[thermostatID]; }
-	double getTargetTemperature(int thermostatID) const { return _universalTargetTemperature[thermostatID]; }
+	double getGlobalCurrentTemperature() { return getCurrentTemperature(0); }
+	double getCurrentTemperature(int thermostatID) { return _globalTemperatureMap[thermostatID]; }
+	double getTargetTemperature(int thermostatID) { return _universalTargetTemperature[thermostatID]; }
 
 	//! @brief set the global temperature
 	void setGlobalTemperature(double T) { setTargetTemperature(0, T); }
@@ -208,7 +208,7 @@ public:
 	void updateMaxMoleculeID(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp);
 
 	//! @brief get the global pressure
-	double getGlobalPressure() const;
+	double getGlobalPressure();
 
 	//! @brief get the global average potential per particle
 	//!
@@ -231,7 +231,7 @@ public:
 
 	//! by Stefan Becker: determine and return the totel number of fluid molecules
 	//! this method assumes all molecules with a component-ID less than _numFluidComponent to be fluid molecules
-	unsigned long getNumFluidMolecules();
+	unsigned long getNumFluidMolecules() const;
 
 	//! @brief get the global average virial per particle
 	//!
@@ -258,7 +258,7 @@ public:
 	void setglobalRho(double grho);
 
 	//! @brief get globalRotDOF
-	unsigned long getglobalRotDOF() const;
+	unsigned long getglobalRotDOF();
 
 	//! @brief set globalRotDOF
 	void setglobalRotDOF(unsigned long grotdof);
@@ -331,7 +331,7 @@ public:
 	//! It should be obvious that this method only returns sensible values
 	//! for thermostats marked as "undirected", because otherwise the
 	//! directed velocity is not explicitly computed.
-	double getThermostatDirectedVelocity(int thermostat, int d) const { return this->_universalThermostatDirectedVelocity[thermostat][d]; }
+	double getThermostatDirectedVelocity(int thermostat, int d) { return this->_universalThermostatDirectedVelocity[thermostat][d]; }
 
 	//! @brief returns whether there are several distinct thermostats in the system
 	bool severalThermostats() { return this->_componentwiseThermostat; }
