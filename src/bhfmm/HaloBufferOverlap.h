@@ -97,7 +97,6 @@ _areaRequests(areaNumber), _edgeRequests(edgeNumber), _cornerRequests(cornerNumb
 
 	fillArraySizes(areaHaloSize,edgeHaloSize);
 
-//	_cornerHaloSizes = new int[_cornerBuffers.size()];
 	_comm = comm;
 	if(areaNumber != 0){
 		for(unsigned int i=0; i<_areaBuffers.size();i++){
@@ -174,12 +173,6 @@ void HaloBufferOverlap<T>::fillArraySizes(Vector3<int> areaSizes, Vector3<int> e
 			_edgeHaloSizes[i] = edgeSizes[2-i/4];
 		}
 	}
-	else{
-//		_edgeHaloSizes = new int[_edgeBuffers.size()];
-//		for(unsigned int i = 0; i < _edgeBuffers.size(); i++){
-//			_edgeHaloSizes[i] = edgeSizes[0];
-//		}
-	}
 }
 
 template <class T>
@@ -206,8 +199,6 @@ void HaloBufferOverlap<T>::initCommunicationDouble(){
 	for (unsigned int i = 0; i < _areaBuffers.size(); i++){
 		if(_isSend){
 			MPI_Rsend_init(_areaBuffers[i].data(), _areaHaloSizes[i], MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
-			//MPI_Rsend_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
-
 		}
 		else{
 			//adjusts that the tag of receive corresponds to send
@@ -218,8 +209,6 @@ void HaloBufferOverlap<T>::initCommunicationDouble(){
 	for (unsigned int i = 0; i < _edgeBuffers.size(); i++){
 		if(_isSend){
 			MPI_Rsend_init(_edgeBuffers[i].data(), _edgeHaloSizes[i], MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
-			//MPI_Rsend_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
-
 		}
 		else{
 			int indexShift = (i%2 == 0)? +1: -1;
@@ -229,7 +218,6 @@ void HaloBufferOverlap<T>::initCommunicationDouble(){
 	for (unsigned int i = 0; i < _cornerBuffers.size(); i++){
 		if(_isSend){
 			MPI_Rsend_init(_cornerBuffers[i].data(), _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
-		//	MPI_Rsend_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
 		}
 		else{
 			int indexShift = (i%2 == 0)? +1: -1;
@@ -261,8 +249,6 @@ void HaloBufferOverlap<T>::communicate(bool postProcessing){
 				MPI_Irsend(_areaBuffers[i].data(), _areaHaloSizes[i], MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[requestIndex]);
 
 			requestIndex++;
-			//MPI_Rsend_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
-
 		}
 		else{
 			if(_doNT){
@@ -303,8 +289,6 @@ void HaloBufferOverlap<T>::communicate(bool postProcessing){
 			else
 				MPI_Irsend(_edgeBuffers[i].data(), _edgeHaloSizes[i], MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[requestIndex]);
 			requestIndex++;
-			//MPI_Rsend_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
-
 		}
 		else{
 			if(_doNT){
@@ -330,7 +314,6 @@ void HaloBufferOverlap<T>::communicate(bool postProcessing){
 			if(_isSend){
 				MPI_Irsend(_cornerBuffers[i].data(), _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[requestIndex]);
 				requestIndex++;
-			//	MPI_Rsend_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
 			}
 			else{
 				int indexShift = (i%2 == 0)? +1: -1;
@@ -477,7 +460,6 @@ void HaloBufferOverlap<T>::communicateLevelGlobal(int level, int globalLevel, in
 							}
 						}
 						indexPosition++;
-					//	MPI_Rsend_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
 					}
 					else{
 //						std::cout << indexPosition << "\n";
@@ -521,7 +503,6 @@ void HaloBufferOverlap<T>::startCommunication(){
 		MPI_Startall(4, _areaRequests.data());
 		MPI_Startall(2, _edgeRequests.data());
 	}
-//	 std::cout << _areaBuffers.size() << _edgeBuffers.size() << _cornerBuffers.size() <<"\n";
 }
 
 template <class T>
@@ -564,7 +545,6 @@ int HaloBufferOverlap<T>::testIfFinished(){
 			return areaFlag * edgeFlag * cornerFlag;
 		}
 		else{
-//			std::cout << _areaBuffers.size() << "\n";
 			if(_areaBuffers.size() == 0) return true;
 			std::vector<MPI_Status> areaStatusArray(_areaBuffers.size());
 			MPI_Testall(_areaBuffers.size(),_areaRequests.data(), &areaFlag, areaStatusArray.data());

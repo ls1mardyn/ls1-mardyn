@@ -13,7 +13,6 @@ public:
 	HaloBufferNoOverlap(int xHaloSize, int yHaloSize, int zHaloSize);
 	virtual ~HaloBufferNoOverlap() = default;
 
-	//void initNoOverlap(int xHaloSize, int yHaloSize, int zHaloSize);
 	auto getFrontBuffer(){
 		return _frontBuffer;
 	}
