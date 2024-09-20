@@ -70,15 +70,15 @@ public:
 		return _expansionL;
 	}
 
-	void writeValuesToMPIBuffer(double * buf, int& position) const {
+	void writeValuesToMPIBuffer(std::vector<double> buf, int& position) const {
 		_expansionL.writeValuesToMPIBuffer(buf, position);
 	}
 
-	void readValuesFromMPIBuffer(double * buf, int& position) {
+	void readValuesFromMPIBuffer(std::vector<double> buf, int& position) {
 		_expansionL.readValuesFromMPIBuffer(buf,position);
 	}
 
-	void addValuesFromMPIBuffer(double * buf, int& position) {
+	void addValuesFromMPIBuffer(std::vector<double> buf, int& position) {
 		_expansionL.addValuesFromMPIBuffer(buf,position);
 	}
 

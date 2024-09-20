@@ -22,7 +22,7 @@ public:
 	HaloBufferOverlap(Vector3<int> areaHaloSize, Vector3<int> edgeHaloSize,
 		int cornerHaloSize, MPI_Comm comm, std::vector<int>& areaNeighbours,std::vector<int>& edgeNeighbours,std::vector<int>& cornerNeighbours, bool isSend, bool doNT,
 		int areaNumber = 6, int edgeNumber = 12, int cornerNumber = 8 , std::vector<std::vector<std::vector<int>>> allRanks = std::vector<std::vector<std::vector<int>>>(0), Vector3<int> numCellsOnGlobalLevel = Vector3<int>(1), bool fuseGlobalCommunication = false);
-	virtual ~HaloBufferOverlap();
+	virtual ~HaloBufferOverlap() = default;
 	void startCommunication();
 	//communicate without persistent sends and receives
 	void communicate(bool postProcessing);
@@ -30,13 +30,13 @@ public:
 
 	void wait();
 	int testIfFinished();
-	std::vector<T *>& getAreaBuffers(){
+	auto & getAreaBuffers(){
 		return _areaBuffers;
 	}
-	std::vector<T *>& getEdgeBuffers(){
+	auto & getEdgeBuffers(){
 		return _edgeBuffers;
 	}
-	std::vector<T *>& getCornerBuffers(){
+	auto & getCornerBuffers(){
 		return _cornerBuffers;
 	}
 
@@ -49,7 +49,7 @@ private:
 	void communicateLevelGlobal(int level, int globalLevel, int offset, bool backCommunication);
 	void initCommunicationDouble();
 	void fillArraySizes(Vector3<int> areaSizes, Vector3<int> edgeSizes);
-	std::vector<T *>  _areaBuffers,  _edgeBuffers,  _cornerBuffers; //arrays for MPI halo transfer (send)
+	std::vector<std::vector<T>> _areaBuffers, _edgeBuffers, _cornerBuffers; //arrays for MPI halo transfer (send)
 	Vector3<int> _areaHaloSize,_edgeHaloSize;
 	int _cornerHaloSize;
 	//these arrays save for every halo element the specific size -> if neighbour rank order is changed these arrays have to be changed too but nothing else
@@ -102,22 +102,22 @@ _areaRequests(areaNumber), _edgeRequests(edgeNumber), _cornerRequests(cornerNumb
 	if(areaNumber != 0){
 		for(unsigned int i=0; i<_areaBuffers.size();i++){
 			if(!_isGlobal){
-				_areaBuffers[i] = new T[_areaHaloSizes[i]];
+				_areaBuffers[i] = std::vector<T>(_areaHaloSizes[i]);
 			}
 			else{
-				_areaBuffers[i] = new T[_areaHaloSizes[0]];
+				_areaBuffers[i] = std::vector<T>(_areaHaloSizes[0]);
 			}
 		}
 	}
 
 	if(edgeNumber != 0){
 		for(unsigned int i=0; i<_edgeBuffers.size();i++){
-			_edgeBuffers[i] = new T[_edgeHaloSizes[i]];
+			_edgeBuffers[i] = std::vector<T>(_edgeHaloSizes[i]);
 		}
 	}
 	if(cornerNumber != 0){
 		for(unsigned int i=0; i<_cornerBuffers.size();i++){
-			_cornerBuffers[i] = new T[cornerHaloSize];
+			_cornerBuffers[i] = std::vector<T>(cornerHaloSize);
 		}
 	}
 	_isSend = isSend;
@@ -181,41 +181,22 @@ void HaloBufferOverlap<T>::fillArraySizes(Vector3<int> areaSizes, Vector3<int> e
 //		}
 	}
 }
-template <class T>
-HaloBufferOverlap<T>::~HaloBufferOverlap() {
-
-	for(unsigned int i=0; i<_areaBuffers.size();i++){
-//		MPI_Request_free(&_areaRequests[i]);
-		delete[] (_areaBuffers[i]);
-	}
-	if(!_isGlobal){
-
-		for(unsigned int i=0; i<_edgeBuffers.size();i++){
-	//		MPI_Request_free(&_edgeRequests[i]);
-			delete[] _edgeBuffers[i];
-		}
-		for(unsigned int i=0; i<_cornerBuffers.size();i++){
-	//		MPI_Request_free(&_cornerRequests[i]);
-			delete[] _cornerBuffers[i];
-		}
-	}
-}
 
 template <class T>
 void HaloBufferOverlap<T>::clear(){
 	for(unsigned int i = 0; i < _areaBuffers.size(); i++){
 		if(!_isGlobal){
-			std::fill(_areaBuffers[i], _areaBuffers[i] + _areaHaloSizes[i] , 0.0);
+			std::fill(_areaBuffers[i].begin(), _areaBuffers[i].end(), 0.0);
 		}
 		else{
-			std::fill(_areaBuffers[i], _areaBuffers[i] + _areaHaloSizes[0] , 0.0);
+			std::fill(_areaBuffers[i].begin(), _areaBuffers[i].end(), 0.0);
 		}
 	}
 	for(unsigned int i = 0; i < _edgeBuffers.size(); i++){
-		std::fill(_edgeBuffers[i], _edgeBuffers[i] + _edgeHaloSizes[i] , 0.0);
+		std::fill(_edgeBuffers[i].begin(), _edgeBuffers[i].end(), 0.0);
 	}
 	for(unsigned int i = 0; i < _cornerBuffers.size(); i++){
-		std::fill(_cornerBuffers[i], _cornerBuffers[i] + _cornerHaloSize , 0.0);
+		std::fill(_cornerBuffers[i].begin(), _cornerBuffers[i].end(), 0.0);
 	}
 }
 
@@ -224,35 +205,35 @@ template <class T>
 void HaloBufferOverlap<T>::initCommunicationDouble(){
 	for (unsigned int i = 0; i < _areaBuffers.size(); i++){
 		if(_isSend){
-			MPI_Rsend_init(_areaBuffers[i], _areaHaloSizes[i], MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
+			MPI_Rsend_init(_areaBuffers[i].data(), _areaHaloSizes[i], MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
 			//MPI_Rsend_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
 
 		}
 		else{
 			//adjusts that the tag of receive corresponds to send
 			int indexShift = (i%2 == 0)? +1: -1;
-			MPI_Recv_init(_areaBuffers[i], _areaHaloSizes[i], MPI_DOUBLE, _areaNeighbours[i], i + 42 + indexShift, _comm, &_areaRequests[i]);
+			MPI_Recv_init(_areaBuffers[i].data(), _areaHaloSizes[i], MPI_DOUBLE, _areaNeighbours[i], i + 42 + indexShift, _comm, &_areaRequests[i]);
 		}
 	}
 	for (unsigned int i = 0; i < _edgeBuffers.size(); i++){
 		if(_isSend){
-			MPI_Rsend_init(_edgeBuffers[i], _edgeHaloSizes[i], MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
+			MPI_Rsend_init(_edgeBuffers[i].data(), _edgeHaloSizes[i], MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
 			//MPI_Rsend_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
 
 		}
 		else{
 			int indexShift = (i%2 == 0)? +1: -1;
-			MPI_Recv_init(_edgeBuffers[i], _edgeHaloSizes[i], MPI_DOUBLE, _edgeNeighbours[i], i + 42 + indexShift, _comm, &_edgeRequests[i]);
+			MPI_Recv_init(_edgeBuffers[i].data(), _edgeHaloSizes[i], MPI_DOUBLE, _edgeNeighbours[i], i + 42 + indexShift, _comm, &_edgeRequests[i]);
 		}
 	}
 	for (unsigned int i = 0; i < _cornerBuffers.size(); i++){
 		if(_isSend){
-			MPI_Rsend_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
+			MPI_Rsend_init(_cornerBuffers[i].data(), _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
 		//	MPI_Rsend_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
 		}
 		else{
 			int indexShift = (i%2 == 0)? +1: -1;
-			MPI_Recv_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42 + indexShift, _comm, &_cornerRequests[i]);
+			MPI_Recv_init(_cornerBuffers[i].data(), _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42 + indexShift, _comm, &_cornerRequests[i]);
 		}
 	}
 }
@@ -275,9 +256,9 @@ void HaloBufferOverlap<T>::communicate(bool postProcessing){
 				}
 			}
 			if(postProcessing)
-				MPI_Isend(_areaBuffers[i], _areaHaloSizes[i], MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[requestIndex]);
+				MPI_Isend(_areaBuffers[i].data(), _areaHaloSizes[i], MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[requestIndex]);
 			else
-				MPI_Irsend(_areaBuffers[i], _areaHaloSizes[i], MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[requestIndex]);
+				MPI_Irsend(_areaBuffers[i].data(), _areaHaloSizes[i], MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[requestIndex]);
 
 			requestIndex++;
 			//MPI_Rsend_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
@@ -298,7 +279,7 @@ void HaloBufferOverlap<T>::communicate(bool postProcessing){
 			}
 			//adjusts that the tag of receive corresponds to send
 			int indexShift = (i%2 == 0)? +1: -1;
-			MPI_Irecv(_areaBuffers[i], _areaHaloSizes[i], MPI_DOUBLE, _areaNeighbours[i], i + 42 + indexShift, _comm, &_areaRequests[requestIndex]);
+			MPI_Irecv(_areaBuffers[i].data(), _areaHaloSizes[i], MPI_DOUBLE, _areaNeighbours[i], i + 42 + indexShift, _comm, &_areaRequests[requestIndex]);
 			requestIndex++;
 		}
 	}
@@ -318,9 +299,9 @@ void HaloBufferOverlap<T>::communicate(bool postProcessing){
 				}
 			}
 			if(postProcessing)
-				MPI_Isend(_edgeBuffers[i], _edgeHaloSizes[i], MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[requestIndex]);
+				MPI_Isend(_edgeBuffers[i].data(), _edgeHaloSizes[i], MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[requestIndex]);
 			else
-				MPI_Irsend(_edgeBuffers[i], _edgeHaloSizes[i], MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[requestIndex]);
+				MPI_Irsend(_edgeBuffers[i].data(), _edgeHaloSizes[i], MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[requestIndex]);
 			requestIndex++;
 			//MPI_Rsend_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
 
@@ -339,7 +320,7 @@ void HaloBufferOverlap<T>::communicate(bool postProcessing){
 				}
 			}
 			int indexShift = (i%2 == 0)? +1: -1;
-			MPI_Irecv(_edgeBuffers[i], _edgeHaloSizes[i], MPI_DOUBLE, _edgeNeighbours[i], i + 42 + indexShift, _comm, &_edgeRequests[requestIndex]);
+			MPI_Irecv(_edgeBuffers[i].data(), _edgeHaloSizes[i], MPI_DOUBLE, _edgeNeighbours[i], i + 42 + indexShift, _comm, &_edgeRequests[requestIndex]);
 			requestIndex++;
 		}
 	}
@@ -347,13 +328,13 @@ void HaloBufferOverlap<T>::communicate(bool postProcessing){
 	if(not(_doNT)){
 		for (unsigned int i = 0; i < _cornerBuffers.size(); i++){
 			if(_isSend){
-				MPI_Irsend(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[requestIndex]);
+				MPI_Irsend(_cornerBuffers[i].data(), _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[requestIndex]);
 				requestIndex++;
 			//	MPI_Rsend_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
 			}
 			else{
 				int indexShift = (i%2 == 0)? +1: -1;
-				MPI_Irecv(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42 + indexShift, _comm, &_cornerRequests[requestIndex]);
+				MPI_Irecv(_cornerBuffers[i].data(), _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42 + indexShift, _comm, &_cornerRequests[requestIndex]);
 				requestIndex++;
 			}
 		}
@@ -473,14 +454,26 @@ void HaloBufferOverlap<T>::communicateLevelGlobal(int level, int globalLevel, in
 					int numCellsOnLevel = (level == globalLevel)? _numCellsOnGlobalLevel[0] * _numCellsOnGlobalLevel[1] * _numCellsOnGlobalLevel[2] : 1;
 					if(_isSend){
 						if(!backCommunication){
-							MPI_Irsend(_areaBuffers[8*(globalLevel-level) + 4*zOffset + 2*yOffset + xOffset], _areaHaloSizes[0], MPI_DOUBLE, rank, 1000 + zOffset * 4 + yOffset * 2 + xOffset + 8 * (globalLevel - level), _comm, &_areaRequests[indexPosition + offset]);
+							MPI_Irsend(_areaBuffers[8*(globalLevel-level) + 4*zOffset + 2*yOffset + xOffset].data(),
+									   _areaHaloSizes[0],
+									   MPI_DOUBLE,
+									   rank,
+									   1000 + zOffset * 4 + yOffset * 2 + xOffset + 8 * (globalLevel - level),
+									   _comm,
+									   &_areaRequests[indexPosition + offset]);
 						}
 						else{
 							if(_fuseGlobalCommunication){ //in the back communication only 1 (or equal to the number of cells one owns on global level) cell is send instead of 8
-								MPI_Isend(_areaBuffers[indexPosition + offset], _areaHaloSizes[0] / 8 * numCellsOnLevel , MPI_DOUBLE, rank, 1000 + zOffset * 4 + yOffset * 2 + xOffset + 8 * (globalLevel - level), _comm, &_areaRequests[indexPosition + offset]);
+								MPI_Isend(_areaBuffers[indexPosition + offset].data(),
+										  _areaHaloSizes[0] / 8 * numCellsOnLevel , MPI_DOUBLE, rank,
+										  1000 + zOffset * 4 + yOffset * 2 + xOffset + 8 * (globalLevel - level),
+										  _comm, &_areaRequests[indexPosition + offset]);
 							}
 							else{
-								MPI_Isend(_areaBuffers[indexPosition + offset], _areaHaloSizes[0], MPI_DOUBLE, rank, 1000 + zOffset * 4 + yOffset * 2 + xOffset + 8 * (globalLevel - level), _comm, &_areaRequests[indexPosition + offset]);
+								MPI_Isend(_areaBuffers[indexPosition + offset].data(),
+										  _areaHaloSizes[0], MPI_DOUBLE, rank,
+										  1000 + zOffset * 4 + yOffset * 2 + xOffset + 8 * (globalLevel - level),
+										  _comm, &_areaRequests[indexPosition + offset]);
 							}
 						}
 						indexPosition++;
@@ -490,14 +483,14 @@ void HaloBufferOverlap<T>::communicateLevelGlobal(int level, int globalLevel, in
 //						std::cout << indexPosition << "\n";
 //						MPI_Barrier(_comm);
 						if(!backCommunication){
-							MPI_Irecv(_areaBuffers[indexPosition + offset], _areaHaloSizes[0], MPI_DOUBLE, rank, 1000 + zOffset * 4 + yOffset * 2 + xOffset + 8 * (globalLevel - level), _comm, &_areaRequests[indexPosition + offset]);
+							MPI_Irecv(_areaBuffers[indexPosition + offset].data(), _areaHaloSizes[0], MPI_DOUBLE, rank, 1000 + zOffset * 4 + yOffset * 2 + xOffset + 8 * (globalLevel - level), _comm, &_areaRequests[indexPosition + offset]);
 						}
 						else{
 							if(_fuseGlobalCommunication){ //in the back communication only 1 (or equal to the number of cells one owns on global level) cell is send instead if 8
-								MPI_Irecv(_areaBuffers[indexPosition + offset], _areaHaloSizes[0] / 8 * numCellsOnLevel, MPI_DOUBLE, rank, 1000 + zOffset * 4 + yOffset * 2 + xOffset + 8 * (globalLevel - level), _comm, &_areaRequests[indexPosition + offset]);
+								MPI_Irecv(_areaBuffers[indexPosition + offset].data(), _areaHaloSizes[0] / 8 * numCellsOnLevel, MPI_DOUBLE, rank, 1000 + zOffset * 4 + yOffset * 2 + xOffset + 8 * (globalLevel - level), _comm, &_areaRequests[indexPosition + offset]);
 							}
 							else{
-								MPI_Irecv(_areaBuffers[indexPosition + offset], _areaHaloSizes[0], MPI_DOUBLE, rank, 1000 + zOffset * 4 + yOffset * 2 + xOffset + 8 * (globalLevel - level), _comm, &_areaRequests[indexPosition + offset]);
+								MPI_Irecv(_areaBuffers[indexPosition + offset].data(), _areaHaloSizes[0], MPI_DOUBLE, rank, 1000 + zOffset * 4 + yOffset * 2 + xOffset + 8 * (globalLevel - level), _comm, &_areaRequests[indexPosition + offset]);
 							}
 						}
 						indexPosition++;

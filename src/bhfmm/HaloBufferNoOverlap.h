@@ -11,25 +11,25 @@
 template <class T> class HaloBufferNoOverlap {
 public:
 	HaloBufferNoOverlap(int xHaloSize, int yHaloSize, int zHaloSize);
-	virtual ~HaloBufferNoOverlap();
-	void initOverlap();
+	virtual ~HaloBufferNoOverlap() = default;
+
 	//void initNoOverlap(int xHaloSize, int yHaloSize, int zHaloSize);
-	T * getFrontBuffer(){
+	auto getFrontBuffer(){
 		return _frontBuffer;
 	}
-	T * getBackBuffer(){
+	auto getBackBuffer(){
 		return _backBuffer;
 	}
-	T * getTopBuffer(){
+	auto getTopBuffer(){
 		return _topBuffer;
 	}
-	T * getBottomBuffer(){
+	auto getBottomBuffer(){
 		return _bottomBuffer;
 	}
-	T * getLeftBuffer(){
+	auto getLeftBuffer(){
 		return _leftBuffer;
 	}
-	T * getRightBuffer(){
+	auto getRightBuffer(){
 		return _rightBuffer;
 	}
 	int  getXSize(){
@@ -44,10 +44,9 @@ public:
 
 	void clear();
 private:
-	T* _leftBuffer, * _rightBuffer, * _topBuffer, * _bottomBuffer, * _frontBuffer, * _backBuffer; //arrays for MPI halo transfer (send)
+	// arrays for MPI halo transfer (send)
+	std::vector<T> _leftBuffer, _rightBuffer, _topBuffer, _bottomBuffer, _frontBuffer, _backBuffer;
 	int _xHaloSize,_yHaloSize,_zHaloSize;
-
-
 };
 
 #include <algorithm>
@@ -59,33 +58,23 @@ HaloBufferNoOverlap<T>::HaloBufferNoOverlap(int xHaloSize, int yHaloSize, int zH
 	_yHaloSize = yHaloSize;
 	_zHaloSize = zHaloSize;
 
-	_leftBuffer = new T[_xHaloSize];
-	_rightBuffer = new T[_xHaloSize];
+	_leftBuffer = std::vector<T>(_xHaloSize);
+	_rightBuffer = std::vector<T>(_xHaloSize);
 
-	_bottomBuffer = new T[_yHaloSize];
-	_topBuffer = new T[_yHaloSize];
+	_bottomBuffer = std::vector<T>(_yHaloSize);
+	_topBuffer = std::vector<T>(_yHaloSize);
 
-	_backBuffer = new T[_zHaloSize];
-	_frontBuffer = new T[_zHaloSize];
-}
-
-template <class T>
-HaloBufferNoOverlap<T>::~HaloBufferNoOverlap() {
-	delete[] _leftBuffer;
-	delete[] _rightBuffer;
-	delete[] _bottomBuffer;
-	delete[] _topBuffer;
-	delete[] _backBuffer;
-	delete[] _frontBuffer;
+	_backBuffer = std::vector<T>(_zHaloSize);
+	_frontBuffer = std::vector<T>(_zHaloSize);
 }
 
 template <class T>
 void HaloBufferNoOverlap<T>::clear(){
-	std::fill(_leftBuffer, _leftBuffer + _xHaloSize , 0.0);
-	std::fill(_rightBuffer, _rightBuffer + _xHaloSize , 0.0);
-	std::fill(_frontBuffer, _frontBuffer + _zHaloSize, 0.0);
-	std::fill(_backBuffer, _backBuffer + _zHaloSize, 0.0);
-	std::fill(_topBuffer, _topBuffer + _yHaloSize, 0.0);
-	std::fill(_bottomBuffer, _bottomBuffer + _yHaloSize, 0.0);
+	std::fill(_leftBuffer.begin(), _leftBuffer.end(), 0.0);
+	std::fill(_rightBuffer.begin(), _rightBuffer.end(), 0.0);
+	std::fill(_frontBuffer.begin(), _frontBuffer.end(), 0.0);
+	std::fill(_backBuffer.begin(), _backBuffer.end(), 0.0);
+	std::fill(_topBuffer.begin(), _topBuffer.end(), 0.0);
+	std::fill(_bottomBuffer.begin(), _bottomBuffer.end(), 0.0);
 }
 #endif /* HALOBUFFER_H_ */
