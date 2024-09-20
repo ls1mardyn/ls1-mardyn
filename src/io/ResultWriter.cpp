@@ -15,7 +15,7 @@ void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "[ResultWriter] Write frequency: " << _writeFrequency << std::endl;
 	if (_writeFrequency <= 0) {
 		Log::global_log->error() << "[ResultWriter] Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
-		mardyn_exit(123);
+		mardyn_exit(13831);
 	}
 
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
@@ -66,9 +66,8 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 
 	// Writing of cavities now handled by CavityWriter
 
-	unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
-	double cv = domain->cv();
-	double ekin = domain->getGlobalUkinTrans()+domain->getGlobalUkinRot();
+	const unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
+	const double ekin = domain->getGlobalUkinTrans()+domain->getGlobalUkinRot();
 
 	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_U_kin_acc->addEntry(ekin);
@@ -90,7 +89,7 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 		printOutput(_p_acc->getAverage());
 		printOutput(domain->getGlobalBetaTrans());
 		printOutput(domain->getGlobalBetaRot());
-		printOutput(cv);
+		printOutput(domain->cv());
 		printOutput(globalNumMolecules);
 		resultStream << std::endl;
 		resultStream.close();
