@@ -1505,7 +1505,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 					//Fixme? special case for curlevel == 2? -> 64 cells only? unnecessary communication in this case?
 					//possible optimization only add up values that were modified in NT method
 					int numCells = (curLevel == 1)? 8 : 216;
-					auto buffer = std::vector<double>(numCells * 2 * _expansionSize);
+					auto buffer = std::vector<double>(static_cast<size_t>(numCells) * 2 * _expansionSize);
 					int index = 0;
 					int start, end;
 					if(curLevel == 1){
