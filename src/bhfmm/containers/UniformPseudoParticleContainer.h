@@ -199,7 +199,7 @@ private:
 	 * @param bottomLevel: lowest level
 	 * @param buffer: buffer where values are should be stored
 	 */
-	void getHaloValues(Vector3<int> localMpCellsBottom,int bottomLevel, std::vector<double> buffer,
+	void getHaloValues(const Vector3<int> &localMpCellsBottom,int bottomLevel, std::vector<double> &buffer,
 			int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh, bool doLocalExpansion);
 	/**
 	 * Sets multipole or local expansion values in a defined area into a buffer for each level in local tree (e.g. halo values)
@@ -211,7 +211,7 @@ private:
 	 * @param bottomLevel: lowest level
 	 * @param buffer: buffer where values are stored in which should be written into the area
 	 */
-	void setHaloValues(Vector3<int> localMpCellsBottom,int bottomLevel, std::vector<double> bufferRec,
+	void setHaloValues(const Vector3<int> &localMpCellsBottom,int bottomLevel, std::vector<double> &bufferRec,
 			int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh, bool doLocalExpansion);
 	//for parallelization
 	void communicateHalosNoOverlap();
@@ -235,8 +235,8 @@ private:
 	void communicateHalosX();
 	void communicateHalosY();
 	void communicateHalosZ();
-	void communicateHalosAlongAxis(std::vector<double> lowerNeighbourBuffer, std::vector<double> higherNeighbourBuffer,
-			std::vector<double> lowerNeighbourBufferRec, std::vector<double> higherNeighbourBufferRec,
+	void communicateHalosAlongAxis(std::vector<double> &lowerNeighbourBuffer, std::vector<double> &higherNeighbourBuffer,
+			std::vector<double> &lowerNeighbourBufferRec, std::vector<double> &higherNeighbourBufferRec,
 			int lowerNeighbour, int higherNeighbour, int haloSize
 			);
 	bool _doNTLocal, _doNTGlobal; //indicate if NT method should be applied to the local tree part and/or the global tree part

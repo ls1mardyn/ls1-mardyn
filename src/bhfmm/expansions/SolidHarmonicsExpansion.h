@@ -318,7 +318,7 @@ public:
 	 * @param buf buffer to write to
 	 * @param position index at which next entry should be written, note that it's value is updated!
 	 */
-	void writeValuesToMPIBuffer(std::vector<double> buf, int& position) const {
+	void writeValuesToMPIBuffer(std::vector<double> &buf, int& position) const {
 		const int end = _c.getTotalNumValues();
 		for (int i = 0; i < end; ++i) {
 			buf[position++] = acc_c_C_seq(i);
@@ -328,7 +328,7 @@ public:
 		}
 	}
 
-	void readValuesFromMPIBuffer(std::vector<double> buf, int& position) {
+	void readValuesFromMPIBuffer(std::vector<double> &buf, int& position) {
 		const int end = _c.getTotalNumValues();
 		for (int i = 0; i < end; ++i) {
 			acc_C_seq(i) = buf[position++];
@@ -337,7 +337,7 @@ public:
 			acc_S_seq(i) = buf[position++];
 		}
 	}
-	void addValuesFromMPIBuffer(std::vector<double> buf, int& position) {
+	void addValuesFromMPIBuffer(std::vector<double> &buf, int& position) {
 		const int end = _c.getTotalNumValues();
 		for (int i = 0; i < end; ++i) {
 			acc_C_seq(i) += buf[position++];

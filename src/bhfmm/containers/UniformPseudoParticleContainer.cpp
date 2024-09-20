@@ -3484,7 +3484,7 @@ void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _cur
 	global_simulation->timers()->stop("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE_ME");
 }
 
-void UniformPseudoParticleContainer::getHaloValues(Vector3<int> localMpCellsBottom,int bottomLevel, std::vector<double> buffer,
+void UniformPseudoParticleContainer::getHaloValues(const Vector3<int> &localMpCellsBottom,int bottomLevel, std::vector<double> &buffer,
 		int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh, bool doLocalExpansion){
 #if defined(ENABLE_MPI)
 	int coeffIndex = 0;
@@ -3521,7 +3521,7 @@ void UniformPseudoParticleContainer::getHaloValues(Vector3<int> localMpCellsBott
 #endif
 }
 
-void UniformPseudoParticleContainer::setHaloValues(Vector3<int> localMpCellsBottom,int bottomLevel, std::vector<double> bufferRec,
+void UniformPseudoParticleContainer::setHaloValues(const Vector3<int> &localMpCellsBottom,int bottomLevel, std::vector<double> &bufferRec,
 		int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh, bool doLocalExpansion){
 #if defined(ENABLE_MPI)
 
@@ -4314,10 +4314,10 @@ void UniformPseudoParticleContainer::communicateHalosOverlapPostProcessingStart(
 #endif
 }
 
-void UniformPseudoParticleContainer::communicateHalosAlongAxis(std::vector<double>lowerNeighbourBuffer,
-															   std::vector<double>higherNeighbourBuffer,
-															   std::vector<double>lowerNeighbourBufferRec,
-															   std::vector<double>higherNeighbourBufferRec,
+void UniformPseudoParticleContainer::communicateHalosAlongAxis(std::vector<double> &lowerNeighbourBuffer,
+															   std::vector<double> &higherNeighbourBuffer,
+															   std::vector<double> &lowerNeighbourBufferRec,
+															   std::vector<double> &higherNeighbourBufferRec,
 															   int lowerNeighbour,
 															   int higherNeighbour,
 															   int haloSize) {
