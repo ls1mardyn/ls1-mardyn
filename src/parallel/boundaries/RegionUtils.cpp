@@ -17,30 +17,30 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getInnerRe
 
 	const int dimensionLS1 = convertEnumToLS1DimIndex(dimension);
 	switch (dimension) {
-	// in positive case, set the beginning to end-width, or whole domain if width
-	// too large
-	case DimensionUtils::DimensionType::POSX:
-		[[fallthrough]];
-	case DimensionUtils::DimensionType::POSY:
-		[[fallthrough]];
-	case DimensionUtils::DimensionType::POSZ:
-		returnRegionBegin[dimensionLS1] =
-			std::max(returnRegionEnd[dimensionLS1] - regionWidth, givenRegionBegin[dimensionLS1]);
-		break;
-	// in negative case, set the end to beginning+width, or whole domain if width
-	// too large
-	case DimensionUtils::DimensionType::NEGX:
-		[[fallthrough]];
-	case DimensionUtils::DimensionType::NEGY:
-		[[fallthrough]];
-	case DimensionUtils::DimensionType::NEGZ:
-		returnRegionEnd[dimensionLS1] =
-			std::min(returnRegionBegin[dimensionLS1] + regionWidth, givenRegionEnd[dimensionLS1]);
-		break;
+		// in positive case, set the beginning to end-width, or whole domain if width
+		// too large
+		case DimensionUtils::DimensionType::POSX:
+			[[fallthrough]];
+		case DimensionUtils::DimensionType::POSY:
+			[[fallthrough]];
+		case DimensionUtils::DimensionType::POSZ:
+			returnRegionBegin[dimensionLS1] =
+				std::max(returnRegionEnd[dimensionLS1] - regionWidth, givenRegionBegin[dimensionLS1]);
+			break;
+		// in negative case, set the end to beginning+width, or whole domain if width
+		// too large
+		case DimensionUtils::DimensionType::NEGX:
+			[[fallthrough]];
+		case DimensionUtils::DimensionType::NEGY:
+			[[fallthrough]];
+		case DimensionUtils::DimensionType::NEGZ:
+			returnRegionEnd[dimensionLS1] =
+				std::min(returnRegionBegin[dimensionLS1] + regionWidth, givenRegionEnd[dimensionLS1]);
+			break;
 
-	default:
-		Log::global_log->error() << "DimensionType::ERROR received in RegionUtils::getInnerRegionSlab" << std::endl;
-		mardyn_exit(1);
+		default:
+			Log::global_log->error() << "DimensionType::ERROR received in RegionUtils::getInnerRegionSlab" << std::endl;
+			mardyn_exit(1);
 	}
 	return {returnRegionBegin, returnRegionEnd};
 }
@@ -83,31 +83,31 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getOuterRe
 	returnRegionEnd[extraDim2] += regionWidth[extraDim2];
 
 	switch (dimension) {
-	// in positive case, move the box begin to edge of domain, and box end to
-	// beyond
-	case DimensionUtils::DimensionType::POSX:
-		[[fallthrough]];
-	case DimensionUtils::DimensionType::POSY:
-		[[fallthrough]];
-	case DimensionUtils::DimensionType::POSZ:
-		returnRegionBegin[dimensionLS1] = returnRegionEnd[dimensionLS1];
-		returnRegionEnd[dimensionLS1] += regionWidth[dimensionLS1];
-		break;
+		// in positive case, move the box begin to edge of domain, and box end to
+		// beyond
+		case DimensionUtils::DimensionType::POSX:
+			[[fallthrough]];
+		case DimensionUtils::DimensionType::POSY:
+			[[fallthrough]];
+		case DimensionUtils::DimensionType::POSZ:
+			returnRegionBegin[dimensionLS1] = returnRegionEnd[dimensionLS1];
+			returnRegionEnd[dimensionLS1] += regionWidth[dimensionLS1];
+			break;
 
-	// in negative case, move the box end to edge of domain, and box begin to
-	// beyond
-	case DimensionUtils::DimensionType::NEGX:
-		[[fallthrough]];
-	case DimensionUtils::DimensionType::NEGY:
-		[[fallthrough]];
-	case DimensionUtils::DimensionType::NEGZ:
-		returnRegionEnd[dimensionLS1] = returnRegionBegin[dimensionLS1];
-		returnRegionBegin[dimensionLS1] -= regionWidth[dimensionLS1];
-		break;
+		// in negative case, move the box end to edge of domain, and box begin to
+		// beyond
+		case DimensionUtils::DimensionType::NEGX:
+			[[fallthrough]];
+		case DimensionUtils::DimensionType::NEGY:
+			[[fallthrough]];
+		case DimensionUtils::DimensionType::NEGZ:
+			returnRegionEnd[dimensionLS1] = returnRegionBegin[dimensionLS1];
+			returnRegionBegin[dimensionLS1] -= regionWidth[dimensionLS1];
+			break;
 
-	default:
-		Log::global_log->error() << "DimensionType::ERROR received in RegionUtils::getOuterRegionSlab" << std::endl;
-		mardyn_exit(1);
+		default:
+			Log::global_log->error() << "DimensionType::ERROR received in RegionUtils::getOuterRegionSlab" << std::endl;
+			mardyn_exit(1);
 	}
 	return std::make_tuple(returnRegionBegin, returnRegionEnd);
 }

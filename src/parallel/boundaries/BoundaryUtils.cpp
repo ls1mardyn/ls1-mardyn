@@ -33,16 +33,16 @@ BoundaryUtils::BoundaryType BoundaryUtils::convertStringToBoundary(const std::st
 
 std::string BoundaryUtils::convertBoundaryToString(BoundaryType boundary) {
 	switch (boundary) {
-	case BoundaryType::PERIODIC:
-		return "periodic";
-	case BoundaryType::REFLECTING:
-		return "reflecting";
-	case BoundaryType::OUTFLOW:
-		return "outflow";
-	default:
-		Log::global_log->error() << "BoundaryType::ERROR received in BoundaryUtils::convertBoundaryToString!"
-								 << std::endl;
-		mardyn_exit(1);
+		case BoundaryType::PERIODIC:
+			return "periodic";
+		case BoundaryType::REFLECTING:
+			return "reflecting";
+		case BoundaryType::OUTFLOW:
+			return "outflow";
+		default:
+			Log::global_log->error() << "BoundaryType::ERROR received in BoundaryUtils::convertBoundaryToString!"
+									 << std::endl;
+			mardyn_exit(1);
 	}
 	return "error"; // warning suppression
 }
