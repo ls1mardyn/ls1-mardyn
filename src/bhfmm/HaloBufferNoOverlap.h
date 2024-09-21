@@ -13,22 +13,22 @@ public:
 	HaloBufferNoOverlap(int xHaloSize, int yHaloSize, int zHaloSize);
 	virtual ~HaloBufferNoOverlap() = default;
 
-	auto getFrontBuffer(){
+	auto & getFrontBuffer(){
 		return _frontBuffer;
 	}
-	auto getBackBuffer(){
+	auto & getBackBuffer(){
 		return _backBuffer;
 	}
-	auto getTopBuffer(){
+	auto & getTopBuffer(){
 		return _topBuffer;
 	}
-	auto getBottomBuffer(){
+	auto & getBottomBuffer(){
 		return _bottomBuffer;
 	}
-	auto getLeftBuffer(){
+	auto & getLeftBuffer(){
 		return _leftBuffer;
 	}
-	auto getRightBuffer(){
+	auto & getRightBuffer(){
 		return _rightBuffer;
 	}
 	int  getXSize(){
