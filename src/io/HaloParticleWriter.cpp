@@ -18,7 +18,7 @@ void HaloParticleWriter::readXML(XMLfileUnits& xmlconfig) {
 
 	if(_writeFrequency == 0) {
 		Log::global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 
 	std::string HaloParticleType = "unknown";

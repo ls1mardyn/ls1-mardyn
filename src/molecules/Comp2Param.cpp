@@ -59,7 +59,7 @@ void Comp2Param::initialize(
 							[=](double epsi, double epsj) { return xi * sqrt(epsi * epsj); }};  // mixingEpsilon
 				} else {
 					Log::global_log->error() << "Mixing: Only LB rule supported" << std::endl;
-					mardyn_exit(1);
+					MARDYN_EXIT(1);
 					return {};
 				}
 			}();

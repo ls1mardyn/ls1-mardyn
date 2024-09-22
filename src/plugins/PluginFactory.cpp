@@ -194,7 +194,7 @@ long PluginFactory<PluginBase>::enablePlugins(std::list<PluginBase*>& _plugins, 
 			} else {
 				Log::global_log->error() << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation
 									<< std::endl;
-				mardyn_exit(-1);
+				MARDYN_EXIT(-1);
 			}
 		} else if (pluginname == "DomainProfiles") {
 			plugin = this->create("DensityProfileWriter");

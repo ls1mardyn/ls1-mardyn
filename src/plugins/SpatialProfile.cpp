@@ -46,7 +46,7 @@ void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 		samplInfo.cylinder = false;
 	} else {
 		Log::global_log->error() << "[SpatialProfile] Invalid mode. cylinder/cartesian" << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 
 	Log::global_log->info() << "[SpatialProfile] Binning units: " << samplInfo.universalProfileUnit[0] << " "
@@ -404,7 +404,7 @@ long SpatialProfile::getCylUID(ParticleIterator& thismol) {
 		Log::global_log->error() << "Severe error!! Invalid profile unit (" << R2 << " / " << yc << " / " << phi << ").\n\n";
 		Log::global_log->error() << "Coordinates off center (" << xc << " / " << yc << " / " << zc << ").\n";
 		Log::global_log->error() << "unID = " << unID << "\n";
-		mardyn_exit(707);
+		MARDYN_EXIT(707);
 	}
 	return unID;
 }

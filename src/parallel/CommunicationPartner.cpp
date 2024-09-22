@@ -196,7 +196,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		}
 		default:
 			Log::global_log->error() << "[CommunicationPartner] MessageType unknown!" << std::endl;
-			mardyn_exit(1);
+			MARDYN_EXIT(1);
 	}
 
 	#ifndef NDEBUG
@@ -600,7 +600,7 @@ void CommunicationPartner::collectLeavingMoleculesFromInvalidParticles(std::vect
 	auto shiftAndAdd = [domain, lowCorner, highCorner, shift, this, &numMolsAlreadyIn](Molecule& m) {
 		if (not m.inBox(lowCorner, highCorner)) {
 			Log::global_log->error() << "trying to remove a particle that is not in the halo region" << std::endl;
-			mardyn_exit(456);
+			MARDYN_EXIT(456);
 		}
 		for (int dim = 0; dim < 3; dim++) {
 			if (shift[dim] != 0) {

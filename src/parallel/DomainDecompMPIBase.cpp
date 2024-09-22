@@ -151,7 +151,7 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 	} else {
 		Log::global_log->error() << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'es', 'hs', 'mp' and 'nt'"
 				<< std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 	}
 	Log::global_log->info() << "Using zonal method: " << zonalMethod << std::endl;
 
@@ -167,7 +167,7 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 	} else {
 		Log::global_log->error() << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'"
 				<< std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 	}
 }
 

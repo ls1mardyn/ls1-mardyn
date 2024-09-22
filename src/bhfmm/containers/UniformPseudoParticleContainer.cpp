@@ -112,7 +112,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 #endif
 #if WIGNER == 1
 	//global_log->error() << "not supported yet" << std::endl;
-	mardyn_exit(-1);
+	MARDYN_EXIT(-1);
 #endif
 #ifdef ENABLE_MPI
 	/*
@@ -176,7 +176,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_globalLevel = ceil(log2(numProcessors)/3.0);
 	if(_globalLevel > _maxLevel){
 		std::cout << "too many MPI ranks \n";
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 	//numProcessers has to be a power of 2
 	mardyn_assert(pow(2,log2(numProcessors)) == numProcessors);
@@ -379,7 +379,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		MPI_Comm_size(_neighbourhoodComms[i], &size2);
 		if(size2 > 8){ //neighbourhood comms need to have size 8
 			std::cout << "Error wrong communicator \n";
-			mardyn_exit(1);
+			MARDYN_EXIT(1);
 		}
 	}
 #endif

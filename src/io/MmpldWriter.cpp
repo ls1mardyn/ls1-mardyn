@@ -56,7 +56,7 @@ MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64
 		_color_type(MMPLD_COLOR_NONE)
 {
 	if (0 == _writeFrequency) {
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 }
 
@@ -89,7 +89,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 			break;
 		default:
 			Log::global_log->error() << "Unsupported MMPLD version:" << _mmpldversion << std::endl;
-			mardyn_exit(1);
+			MARDYN_EXIT(1);
 			break;
 	}
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
@@ -102,7 +102,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	Log::global_log->info() << "[MMPLD Writer] Number of sites: " << numSites << std::endl;
 	if(numSites < 1) {
 		Log::global_log->fatal() << "[MMPLD Writer] No site parameters specified." << std::endl;
-		mardyn_exit(48973);
+		MARDYN_EXIT(48973);
 	}
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator outputSiteIter;
@@ -144,7 +144,7 @@ void MmpldWriter::init(ParticleContainer *particleContainer,
 {
 	if ( (htole32(1) != 1) || (htole64(1.0) != 1.0) ) {
 		Log::global_log->error() << "[MMPLD Writer] The MMPLD Writer currently only supports running on little endian systems." << std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 	}
 
 	// only executed once
@@ -392,7 +392,7 @@ long MmpldWriter::get_data_frame_header_size() {
 			break;
 		default:
 			Log::global_log->error() << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << std::endl;
-			mardyn_exit(1);
+			MARDYN_EXIT(1);
 			break;
 	}
 	return data_frame_header_size;

@@ -345,11 +345,11 @@ void OptionParser::process_opt(const Option& o, const std::string& opt, const st
 	}
 	else if (o.action() == "help") {
 		print_help();
-		mardyn_exit(0);
+		MARDYN_EXIT(0);
 	}
 	else if (o.action() == "version") {
 		print_version();
-		mardyn_exit(0);
+		MARDYN_EXIT(0);
 	}
 	else if (o.action() == "callback" && o.callback()) {
 		(*o.callback())(o, opt, value, *this);
@@ -437,12 +437,12 @@ void OptionParser::print_version() const {
 }
 
 void OptionParser::exit() const {
-	mardyn_exit(2);
+	MARDYN_EXIT(2);
 }
 void OptionParser::error(const std::string& msg) const {
 	print_usage(std::cerr);
 	std::cerr << prog() << ": " << _("error") << ": " << msg << std::endl;
-	mardyn_exit(-4);
+	MARDYN_EXIT(-4);
 }
 ////////// } class OptionParser //////////
 

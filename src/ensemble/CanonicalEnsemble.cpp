@@ -196,7 +196,7 @@ void CanonicalEnsemble::readXML(XMLfileUnits& xmlconfig) {
 		_domain = new BoxDomain();
 	} else {
 		Log::global_log->error() << "Volume type not supported." << std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 	}
 	xmlconfig.changecurrentnode("domain");
 	_domain->readXML(xmlconfig);

@@ -155,7 +155,7 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 		Log::global_log->info() << "Using QuickschedTraversal." << std::endl;
 #ifndef QUICKSCHED
 		Log::global_log->error() << "MarDyn was compiled without Quicksched Support. Aborting!" << std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 #endif
 	} else if (dynamic_cast<SlicedCellPairTraversal<CellTemplate> *>(_optimalTraversal))
 		Log::global_log->info() << "Using SlicedCellPairTraversal." << std::endl;
@@ -165,7 +165,7 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 	if (_cellsInCutoff > _optimalTraversal->maxCellsInCutoff()) {
 		Log::global_log->error() << "Traversal supports up to " << _optimalTraversal->maxCellsInCutoff()
 							<< " cells in cutoff, but value is chosen as " << _cellsInCutoff << std::endl;
-		mardyn_exit(45);
+		MARDYN_EXIT(45);
 	}
 }
 
@@ -245,7 +245,7 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 												<< " direction is <2 and thereby invalid! ("
 												<< quiData->taskBlockSize[j] << ")"
 												<< std::endl;
-							mardyn_exit(1);
+							MARDYN_EXIT(1);
 						}
 					}
 					break;
@@ -307,7 +307,7 @@ void TraversalTuner<CellTemplate>::rebuild(std::vector<CellTemplate> &cells, con
 				} break;
 				default:
 					Log::global_log->error() << "Unknown traversal data found in TraversalTuner._traversals!" << std::endl;
-					mardyn_exit(1);
+					MARDYN_EXIT(1);
 			}
 		}
 		traversalPointerReference->rebuild(cells, dims, cellLength, cutoff, traversalData);
@@ -336,7 +336,7 @@ inline void TraversalTuner<CellTemplate>::traverseCellPairs(traversalNames name,
 			break;
 		default:
 			Log::global_log->error()<< "Calling traverseCellPairs(traversalName, CellProcessor&) for something else than the Sliced Traversal is disabled for now. Aborting." << std::endl;
-			mardyn_exit(1);
+			MARDYN_EXIT(1);
 			break;
 		}
 	}

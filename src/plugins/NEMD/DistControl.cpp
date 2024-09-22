@@ -80,7 +80,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
 	{
 		Log::global_log->error() << "[DistControl] Missing attribute \"subdivision@type\"! Programm exit..." << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 	if("number" == strSubdivisionType)
 	{
@@ -88,7 +88,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
 		{
 			Log::global_log->error() << "[DistControl] Missing element \"subdivision/number\"! Programm exit..." << std::endl;
-			mardyn_exit(-1);
+			MARDYN_EXIT(-1);
 		}
 		else
 			this->SetSubdivision(nNumSlabs);
@@ -99,7 +99,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
 		{
 			Log::global_log->error() << "[DistControl] Missing element \"subdivision/width\"! Programm exit..." << std::endl;
-			mardyn_exit(-1);
+			MARDYN_EXIT(-1);
 		}
 		else
 			this->SetSubdivision(dSlabWidth);
@@ -107,7 +107,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	else
 	{
 		Log::global_log->error() << "[DistControl] Wrong attribute \"subdivision@type\". Expected: type=\"number|width\"! Programm exit..." << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 
 	// init method
@@ -138,7 +138,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		else
 		{
 			Log::global_log->error() << "[DistControl] Missing elements \"init/values/left\" or \"init/values/right\" or both! Programm exit..." << std::endl;
-			mardyn_exit(-1);
+			MARDYN_EXIT(-1);
 		}
 	}
 	else if("file" == strInitMethodType)
@@ -155,14 +155,14 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		else
 		{
 			Log::global_log->error() << "[DistControl] Missing elements \"init/file\" or \"init/simstep\" or both! Programm exit..." << std::endl;
-			mardyn_exit(-1);
+			MARDYN_EXIT(-1);
 		}
 	}
 	else
 	{
 		Log::global_log->error() << "[DistControl] Wrong attribute \"init@type\", type = " << strInitMethodType << ", "
 				"expected: type=\"startconfig|values|file\"! Programm exit..." << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 
 	// update method
@@ -190,7 +190,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		else
 		{
 			Log::global_log->error() << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << std::endl;
-			mardyn_exit(-1);
+			MARDYN_EXIT(-1);
 		}
 	}
 	else if("denderiv" == strUpdateMethodType)
@@ -214,14 +214,14 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		else
 		{
 			Log::global_log->error() << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << std::endl;
-			mardyn_exit(-1);
+			MARDYN_EXIT(-1);
 		}
 	}
 	else
 	{
 		Log::global_log->error() << "[DistControl] Wrong attribute \"method@type\", type = " << strUpdateMethodType << ", "
 				"expected: type=\"density|denderiv\"! Programm exit..." << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 }
 
@@ -267,7 +267,7 @@ void DistControl::PrepareSubdivision()
 	case SDOPT_UNKNOWN:
 	default:
 		Log::global_log->error() << "[DistControl] PrepareSubdivision(): Neither _binParams.width nor _binParams.count was set correctly! Programm exit..." << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 
 	_binParams.invWidth = 1. / _binParams.width;
@@ -703,7 +703,7 @@ void DistControl::UpdatePositionsInit(ParticleContainer* particleContainer)
 	case DCIM_UNKNOWN:
 	default:
 		Log::global_log->error() << "[DistControl] Wrong Init Method! Programm exit..." << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 
 #ifndef NDEBUG
@@ -739,7 +739,7 @@ void DistControl::UpdatePositions(const uint64_t& simstep)
 	case DCUM_UNKNOWN:
 	default:
 		Log::global_log->error() << "[DistControl] UpdatePositions() Corrupted code!!! Programm exit..." << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 
 	// update positions

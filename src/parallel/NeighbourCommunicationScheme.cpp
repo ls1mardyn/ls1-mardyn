@@ -266,7 +266,7 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 			neighbour.print(ss);
 			Log::global_log->error_always_output() << ss.str() << std::endl;
 		}
-		mardyn_exit(544);
+		MARDYN_EXIT(544);
 	}
 }
 
@@ -396,7 +396,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 				});
 			}
 
-			mardyn_exit(457);
+			MARDYN_EXIT(457);
 		}
 
 	}  // while not allDone
@@ -425,7 +425,7 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 			Log::global_log->error() << "WRONG type in selectNeighbours - this should not be used for push-pull-partners "
 								   "selectNeighbours method"
 								<< std::endl;
-			mardyn_exit(1);
+			MARDYN_EXIT(1);
 			break;
 	}
 }
@@ -594,7 +594,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 			for (int i = 0; i < numNeighbours; ++i) {
 				(*_neighbours)[d][i].deadlockDiagnosticSendRecv();
 			}
-			mardyn_exit(457);
+			MARDYN_EXIT(457);
 		}
 
 	} // while not allDone

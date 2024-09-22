@@ -20,7 +20,7 @@ void KDTreePrinter::readXML(XMLfileUnits &xmlconfig) {
 	if (_writeFrequency == 0) {
 		Log::global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency
 								 << std::endl;
-		mardyn_exit(948947);
+		MARDYN_EXIT(948947);
 	}
 
 	_outputPrefix = "mardyn";

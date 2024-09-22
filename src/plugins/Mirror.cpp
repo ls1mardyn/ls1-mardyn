@@ -86,7 +86,7 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 			subject->registerObserver(this);
 		else {
 			Log::global_log->error() << "[Mirror] Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
-			mardyn_exit(-1);
+			MARDYN_EXIT(-1);
 		}
 	}
 	Log::global_log->info() << "[Mirror] Enabled at position: y = " << _position.coord << std::endl;
@@ -125,14 +125,14 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 	if(MT_ZERO_GRADIENT == _type)
 	{
 		Log::global_log->error() << "[Mirror] Method 3 (MT_ZERO_GRADIENT) is deprecated. Use 5 (MT_MELAND_2004) instead. Program exit ..." << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 
 	/** normal distributions */
 	if(MT_NORMDISTR_MB == _type)
 	{
 		Log::global_log->error() << "[Mirror] Method 4 (MT_NORMDISTR_MB) is deprecated. Use 5 (MT_MELAND_2004) instead. Program exit ..." << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 
 	/** Meland2004 */
@@ -143,7 +143,7 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 		if(!xmlconfig.getNodeValue("meland/velo_target", _melandParams.velo_target))
 		{
 			Log::global_log->error() << "[Mirror] Meland: Parameters for method 5 (MT_MELAND_2004) provided in config-file *.xml corrupted/incomplete. Program exit ..." << std::endl;
-			mardyn_exit(-2004);
+			MARDYN_EXIT(-2004);
 		}
 		else {
 			Log::global_log->info() << "[Mirror] Meland: target velocity = " << _melandParams.velo_target << std::endl;
@@ -169,12 +169,12 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 
 		if (not bRet) {
 			Log::global_log->error() << "[Mirror] Ramping: Parameters for method 5 (MT_RAMPING) provided in config-file *.xml corrupted/incomplete. Program exit ..." << std::endl;
-			mardyn_exit(-1);
+			MARDYN_EXIT(-1);
 		}
 		else {
 			if(_rampingParams.startStep > _rampingParams.stopStep) {
 				Log::global_log->error() << "[Mirror] Ramping: Start > Stop. Program exit ..." << std::endl;
-				mardyn_exit(-1);
+				MARDYN_EXIT(-1);
 			}
 			else {
 				Log::global_log->info() << "[Mirror] Ramping from " << _rampingParams.startStep << " to " << _rampingParams.stopStep << std::endl;
@@ -186,7 +186,7 @@ void Mirror::readXML(XMLfileUnits& xmlconfig)
 						break;
 					default:
 						Log::global_log->error() << "[Mirror] Ramping: No proper treatment was set. Use 0 (Deletion) or 1 (Transmission). Program exit ..." << std::endl;
-						mardyn_exit(-1);
+						MARDYN_EXIT(-1);
 				}
 				Log::global_log->info() << "[Mirror] Ramping: Treatment for non-reflected particles: " << _rampingParams.treatment << " ( " << treatmentStr << " ) " << std::endl;
 			}

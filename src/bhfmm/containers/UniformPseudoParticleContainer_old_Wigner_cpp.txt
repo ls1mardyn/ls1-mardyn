@@ -45,7 +45,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 #endif
 #if WIGNER == 1
 	//global_log->error() << "not supported yet" << std::endl;
-	mardyn_exit(-1);
+	MARDYN_EXIT(-1);
 #endif
 #ifdef ENABLE_MPI
 	_timerProcessCells.set_sync(false);
@@ -81,7 +81,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_globalLevel = log2(numProcessors)/3;
 	if(_globalLevel > _maxLevel){
 		std::cout << "too many MPI ranks \n";
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 	//numProcessers has to be a power of 8
 	mardyn_assert(log2(numProcessors) == _globalLevel * 3);
@@ -778,7 +778,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 				for (m2z = LoLim(2) + 2; m2z <= HiLim(2) + 2; m2z++) {
 					if (m2z < 0 or m2z >= localMpCells) {
 						std::cout << "Error \n";
-						mardyn_exit(-1);
+						MARDYN_EXIT(-1);
 					}
 
 
@@ -786,7 +786,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 					for (m2y = LoLim(1) + 2; m2y <= HiLim(1) + 2; m2y++) {
 						if (m2y < 0 or m2y >= localMpCells) {
 							std::cout << "Error \n";
-							mardyn_exit(-1);
+							MARDYN_EXIT(-1);
 						}
 
 
@@ -794,7 +794,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 						for (m2x = LoLim(0) + 2; m2x <= HiLim(0) + 2; m2x++) {
 							if (m2x < 0 or m2x >= localMpCells) {
 								std::cout << "Error \n";
-								mardyn_exit(-1);
+								MARDYN_EXIT(-1);
 							}
 
 							m2v[0] = m2x;

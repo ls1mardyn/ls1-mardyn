@@ -36,7 +36,7 @@ void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
 	// TODO:
 	if(_writeToFile) {
 		Log::global_log->error() << "TODO: file output not yet supported." << std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 	}
 
 	if(_writeToFile) {

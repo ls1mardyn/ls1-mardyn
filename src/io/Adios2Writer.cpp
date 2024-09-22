@@ -265,14 +265,14 @@ void Adios2Writer::initAdios2() {
 		resetContainers();
 	} catch (std::invalid_argument& e) {
 		Log::global_log->fatal() << "Invalid argument exception, STOPPING PROGRAM from rank: " << e.what() << std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 	} catch (std::ios_base::failure& e) {
 		Log::global_log->fatal() << "IO System base failure exception, STOPPING PROGRAM from rank: " << e.what() << std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 	} catch (std::exception& e) {
 		Log::global_log->fatal() << "Exception, STOPPING PROGRAM from rank: " << e.what()
 							<< std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 	}
 	Log::global_log->info() << "[Adios2Writer] Init complete." << std::endl;
 }

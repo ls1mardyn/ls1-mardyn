@@ -536,19 +536,19 @@ void Adios2Reader::initAdios2() {
                 << "[Adios2Reader] Invalid argument exception, STOPPING PROGRAM from rank"
                 << domainDecomp.getRank()
                 << ": " << e.what() << std::endl;
-	mardyn_exit(1);
+	MARDYN_EXIT(1);
     } catch (std::ios_base::failure& e) {
         Log::global_log->fatal()
                 << "[Adios2Reader] IO System base failure exception, STOPPING PROGRAM from rank "
                 << domainDecomp.getRank()
                 << ": " << e.what() << std::endl;
-	mardyn_exit(1);
+	MARDYN_EXIT(1);
     } catch (std::exception& e) {
         Log::global_log->fatal()
                 << "[Adios2Reader] Exception, STOPPING PROGRAM from rank"
                 << domainDecomp.getRank()
                 << ": " << e.what() << std::endl;
-	mardyn_exit(1);
+	MARDYN_EXIT(1);
     }
     Log::global_log->info() << "[Adios2Reader] Init complete." << std::endl;
 };

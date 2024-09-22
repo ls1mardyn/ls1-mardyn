@@ -38,7 +38,7 @@ std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> addValuesAndGet
 			if (not originalIter.isValid()) {
 				// This should not happen
 				std::cout << "Original molecule not usePreviousIterator";
-				mardyn_exit(1);
+				MARDYN_EXIT(1);
 			}
 
 			mardyn_assert(originalIter->getID() == haloMolecule.getID());

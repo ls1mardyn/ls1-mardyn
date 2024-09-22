@@ -94,7 +94,7 @@ utils::Test::~Test() { }
 void utils::Test::setTestDataDirectory(std::string& testDataDir) {
 	if (!fileExists(testDataDir.c_str())) {
 		test_log->error() << "Directory '" << testDataDirectory << "' for test input data does not exist!" << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 	testDataDirectory = testDataDir;
 }
@@ -105,7 +105,7 @@ std::string utils::Test::getTestDataFilename(const std::string& file, bool check
 
 	if (!fileExists(fullPath.c_str()) and checkExistence) {
 		test_log->error() << "File " << fullPath << " for test input data does not exist!" << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 	return fullPath;
 }

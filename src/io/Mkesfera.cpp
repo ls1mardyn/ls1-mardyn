@@ -176,7 +176,7 @@ MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* 
 					   idx[2] - startx[2] >= fl_units_local[2] or startx[0] > idx[0] or startx[1] > idx[1] or
 					   startx[2] > idx[2]) {
 						Log::global_log->error() << "Error in calculation of start and end values! \n";
-						mardyn_exit(0);
+						MARDYN_EXIT(0);
 					}
 					fill[idx[0] - startx[0]][idx[1] - startx[1]][idx[2] - startx[2]][p] = tfill;
 					if(tfill) {

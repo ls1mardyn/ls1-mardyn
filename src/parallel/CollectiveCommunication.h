@@ -171,7 +171,7 @@ public:
 			break;
 		default:
 			Log::global_log->error()<<"invalid reducetype, aborting." << std::endl;
-			mardyn_exit(1);
+			MARDYN_EXIT(1);
 		}
 
 		MPI_CHECK(
@@ -193,7 +193,7 @@ public:
 				break;
 			default:
 				Log::global_log->error()<<"invalid reducetype, aborting." << std::endl;
-				mardyn_exit(1);
+				MARDYN_EXIT(1);
 			}
 			MPI_CHECK(MPI_Allreduce( MPI_IN_PLACE, &_values[i], 1, _types[i], op, _communicator ));
 		}

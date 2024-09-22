@@ -82,7 +82,7 @@ void Homogeneous::init() {
 					double tau2 = sqrt(xj * xj + yj * yj + zj * zj);
 					if (tau1 + tau2 >= _cutoffLJ) {
 						Log::global_log->error() << "Error calculating cutoff corrections, rc too small" << std::endl;
-						mardyn_exit(1);
+						MARDYN_EXIT(1);
 					}
 					double eps24;
 					params >> eps24;

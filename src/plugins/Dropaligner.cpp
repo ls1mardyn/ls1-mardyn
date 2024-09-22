@@ -27,7 +27,7 @@ void Dropaligner::readXML(XMLfileUnits& xmlconfig) {
 		Log::global_log->error() << "[Dropaligner] HALTING SIMULATION" << std::endl;
 		_enabled = false;
 		// HALT SIM
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 		return;
 	}
 

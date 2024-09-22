@@ -59,7 +59,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_phaseSpaceHeaderFileStream >> token;
 	if(token != "mardyn") {
 		Log::global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 	}
 
 	std::string inputversion;
@@ -67,12 +67,12 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	// FIXME: remove tag trunk from file specification?
 	if(token != "trunk") {
 		Log::global_log->error() << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 	}
 
 	if(strtoul(inputversion.c_str(), NULL, 0) < 20080701) {
 		Log::global_log->error() << "Input version tool old (" << inputversion << ")" << std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(1);
 	}
 
 	Log::global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << std::endl;
@@ -117,7 +117,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 				 || ntypestring == "IRV")) {
 				Log::global_log->error() << "Unknown molecule format: '"
 									<< ntypestring << "'" << std::endl;
-				mardyn_exit(1);
+				MARDYN_EXIT(1);
 			}
 			_moleculeFormat = ntypestring;
 			Log::global_log->info() << " molecule format: " << ntypestring << std::endl;
@@ -183,7 +183,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 											>> numquadrupoles >> numtersoff;
 				if(numtersoff != 0) {
 					Log::global_log->error() << "tersoff no longer supported." << std::endl;
-					mardyn_exit(-1);
+					MARDYN_EXIT(-1);
 				}
 				double x, y, z, m;
 				for(unsigned int j = 0; j < numljcenters; j++) {
@@ -656,6 +656,6 @@ void MPI_IOReader::handle_error(int i) {
 
 	Log::global_log->error() << "Writing of file was not successfull " << " , " << i
 			<< " , " << error_string << std::endl;
-	mardyn_exit(1);
+	MARDYN_EXIT(1);
 #endif
 }

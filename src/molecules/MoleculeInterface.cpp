@@ -31,7 +31,7 @@ bool MoleculeInterface::isLessThan(const MoleculeInterface& m2) const {
 				return false;
 			else {
 				Log::global_log->error() << "LinkedCells::isFirstParticle: both Particles have the same position" << std::endl;
-				mardyn_exit(1);
+				MARDYN_EXIT(1);
 			}
 		}
 	}

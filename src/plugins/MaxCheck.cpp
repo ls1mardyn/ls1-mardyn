@@ -76,7 +76,7 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "[MaxCheck] Number of component targets: " << numTargets << std::endl;
 	if (numTargets < 1) {
 		Log::global_log->warning() << "[MaxCheck] No target parameters specified. Program exit ..." << std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(-1);
 	}
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator nodeIter;

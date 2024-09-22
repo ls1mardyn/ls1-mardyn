@@ -34,7 +34,7 @@ RDF::RDF() :
 void RDF::init() {
 	if(!_readConfig){
 		Log::global_log->error() << "RDF initialized without reading the configuration, exiting" << std::endl;
-		mardyn_exit(25);
+		MARDYN_EXIT(25);
 	}
 
 	_cellProcessor = new RDFCellProcessor(global_simulation->getcutoffRadius(), this);

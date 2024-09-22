@@ -553,7 +553,7 @@ void Domain::writeCheckpointHeader(std::string filename,
 						}
 					} else {
 						Log::global_log->error() << "Only LB mixing rule supported" << std::endl;
-						mardyn_exit(123);
+						MARDYN_EXIT(123);
 					}
 				}
 			}
@@ -711,7 +711,7 @@ void Domain::enableComponentwiseThermostat()
 void Domain::setComponentThermostat(int cid, int thermostat) {
 	if ((0 > cid) || (0 >= thermostat)) {
 		Log::global_log->error() << "Domain::setComponentThermostat: cid or thermostat id too low" << std::endl;
-		mardyn_exit(787);
+		MARDYN_EXIT(787);
 	}
 	this->_componentToThermostatIdMap[cid] = thermostat;
 	this->_universalThermostatN[thermostat] = 0;

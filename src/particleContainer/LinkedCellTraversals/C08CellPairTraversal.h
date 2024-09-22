@@ -79,7 +79,7 @@ void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsOuter(
 		CellProcessor& cellProcessor) {
 	if(eighthShell){
 		Log::global_log->error() << "eightshell + overlapping not yet supported." << std::endl;
-		mardyn_exit(-2);
+		MARDYN_EXIT(-2);
 	}
 	using std::array;
 

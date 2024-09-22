@@ -187,7 +187,7 @@ auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString,
 		Log::global_log->error() << e.what() << std::endl;
 		Log::global_log->error() << "Possible options: "
 							<< autopas::utils::ArrayUtils::to_string(OptionType::getAllOptions()) << std::endl;
-		mardyn_exit(4432);
+		MARDYN_EXIT(4432);
 		// dummy return
 		return decltype(OptionType::template parseOptions<OutputContainer>(""))();
 	}
@@ -399,7 +399,7 @@ void AutoPasContainer::update() {
 							   "Remaining invalid particles:\n"
 							<< autopas::utils::ArrayUtils::to_string(_invalidParticles, "\n", {"", ""})
 							<< std::endl;
-		mardyn_exit(434);
+		MARDYN_EXIT(434);
 	}
 
 	_invalidParticles = _autopasContainer.updateContainer();
