@@ -20,7 +20,7 @@ on:
 
 # abort old runs if a new one is started
 concurrency:
-  group: ${{ github.head_ref }}-tests
+  group: ${{ github.head_ref }}-codeql-test
   cancel-in-progress: true
 
 jobs:
