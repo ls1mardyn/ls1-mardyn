@@ -5,13 +5,11 @@ if (NOT CLANG_FORMAT_BIN)
     message(FATAL_ERROR "clang-format not found!")
 endif()
 
-# List of file extensions to format
-set(FORMAT_EXTENSIONS cpp h hpp c)
-
 # Recursively find all files with the specified extensions
 file(GLOB_RECURSE ALL_SOURCE_FILES 
-    ${PROJECT_SOURCE_DIR}/*.[ch]pp
-    ${PROJECT_SOURCE_DIR}/*.[ch])
+    ${PROJECT_SOURCE_DIR}/*.h
+    ${PROJECT_SOURCE_DIR}/*.cpp
+)
 
 # Define clang-format target
 add_custom_target(clang-format

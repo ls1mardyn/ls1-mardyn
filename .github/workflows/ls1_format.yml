@@ -26,13 +26,11 @@ jobs:
 
       - name: Run clang-format and check for differences
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          # Run clang-format and collect changes
-          clang-format -i $(find . -regex '.*\.\(cpp\|h\|hpp\|c\)')
+          # Run clang-format and get changes
+          clang-format -i $(find src -name "*.h" -or -name "*.cpp")
           git diff > patch.diff
           
-      - name: Check if clang-format made changes
+      - name: Check changes
         id: check_diff
         run: |
           if [ -s patch.diff ]; then
@@ -47,7 +45,7 @@ jobs:
         if: ${{ steps.check_diff.outputs.formatting_issues == 'true' }}
         run: exit 1
 
-      - name: Post comment if clang-format failed
+      - name: Post comment if issues found
         if: ${{ steps.check_diff.outputs.formatting_issues == 'true' }}
         uses: actions/github-script@v5
         with:
