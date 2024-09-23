@@ -35,30 +35,31 @@ jobs:
         run: |
           if [ -s diff_files.log ]; then
             echo "Formatting issues detected!"
-            echo "::set-output name=formatting_issues::true"
+            echo "formatting_issues=true" >> "$GITHUB_ENV"
           else
             echo "No formatting issues found"
-            echo "::set-output name=formatting_issues::false"
+            echo "formatting_issues=false" >> "$GITHUB_ENV"
           fi
 
       - name: Post comment if issues found
-        if: ${{ steps.check_diff.outputs.formatting_issues == 'true' }}
+        if: env.formatting_issues == 'true'
         uses: actions/github-script@v5
         with:
           script: |
             const { context, github } = require('@actions/github');
-            const issue_number = context.payload.pull_request.number;
-
-            const body = `The CI detected formatting issues in this pull request. Please run clang-format locally to resolve them.`;
-
-            await github.issues.createComment({
-              ...context.repo,
-              issue_number: issue_number,
-              body: body
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `
+                :warning: The CI detected formatting issues in this pull request.
+                Please run clang-format locally to resolve them.
+                Details are shown in the job log.
+              `
             });
 
       - name: Exit with failure if clang-format found issues
-        if: ${{ steps.check_diff.outputs.formatting_issues == 'true' }}
+        if: env.formatting_issues == 'true'
         run: |
           echo "Formatting issues detected!"
           echo "Format the following files properly:"
