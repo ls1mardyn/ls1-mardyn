@@ -59,7 +59,9 @@ jobs:
       - name: Exit with failure if clang-format found issues
         if: env.formatting_issues == 'true'
         run: |
-          echo "Formatting issues detected!"
-          echo "Format the following files properly:"
-          cat diff_files.log
+          echo "#### :warning: Formatting issues detected!" >> $GITHUB_STEP_SUMMARY
+          echo "Format the following files properly:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat diff_files.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 #          exit 1
