@@ -28,22 +28,18 @@ jobs:
         run: |
           # Run clang-format and get changes
           clang-format -i $(find src -name "*.h" -or -name "*.cpp")
-          git diff > patch.diff
+          git diff --name-only > diff_files.log
           
       - name: Check changes
         id: check_diff
         run: |
-          if [ -s patch.diff ]; then
+          if [ -s diff_files.log ]; then
             echo "Formatting issues detected!"
             echo "::set-output name=formatting_issues::true"
           else
             echo "No formatting issues found"
             echo "::set-output name=formatting_issues::false"
           fi
-
-      - name: Fail if clang-format found issues
-        if: ${{ steps.check_diff.outputs.formatting_issues == 'true' }}
-        run: exit 1
 
       - name: Post comment if issues found
         if: ${{ steps.check_diff.outputs.formatting_issues == 'true' }}
@@ -60,3 +56,11 @@ jobs:
               issue_number: issue_number,
               body: body
             });
+
+      - name: Exit with failure if clang-format found issues
+        if: ${{ steps.check_diff.outputs.formatting_issues == 'true' }}
+        run: |
+          echo "Formatting issues detected!"
+          echo "Format the following files properly:"
+          cat diff_files.log
+          exit 0
