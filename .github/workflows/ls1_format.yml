@@ -1,0 +1,64 @@
+name: clang-format check for ls1
+
+on:
+  push:
+    # pushes to master
+    branches: [ master ]
+  pull_request:
+    # PRs to master
+    branches: [ master ]
+
+# abort old runs if a new one is started
+concurrency:
+  group: ${{ github.head_ref }}-tests
+  cancel-in-progress: true
+
+jobs:
+  clang-format-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format
+
+      - name: Run clang-format and check for differences
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          # Run clang-format and collect changes
+          clang-format -i $(find . -regex '.*\.\(cpp\|h\|hpp\|c\)')
+          git diff > patch.diff
+          
+      - name: Check if clang-format made changes
+        id: check_diff
+        run: |
+          if [ -s patch.diff ]; then
+            echo "Formatting issues detected!"
+            echo "::set-output name=formatting_issues::true"
+          else
+            echo "No formatting issues found"
+            echo "::set-output name=formatting_issues::false"
+          fi
+
+      - name: Fail if clang-format found issues
+        if: ${{ steps.check_diff.outputs.formatting_issues == 'true' }}
+        run: exit 1
+
+      - name: Post comment if clang-format failed
+        if: ${{ steps.check_diff.outputs.formatting_issues == 'true' }}
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const { context, github } = require('@actions/github');
+            const issue_number = context.payload.pull_request.number;
+
+            const body = `The CI detected formatting issues in this pull request. Please run clang-format locally to resolve them.`;
+
+            await github.issues.createComment({
+              ...context.repo,
+              issue_number: issue_number,
+              body: body
+            });

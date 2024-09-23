@@ -18,6 +18,11 @@ on:
     # The branches below must be a subset of the branches above
     branches: [ "master" ]
 
+# abort old runs if a new one is started
+concurrency:
+  group: ${{ github.head_ref }}-tests
+  cancel-in-progress: true
+
 jobs:
   analyze:
     name: Analyze
