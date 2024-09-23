@@ -15,8 +15,8 @@
 #include <string>
 
 BoundaryUtils::BoundaryType BoundaryUtils::convertStringToBoundary(const std::string &boundary) {
-	std::string boundaryLowercase;
-	std::transform(boundary.begin(), boundary.end(), boundaryLowercase.begin(),
+	std::string boundaryLowercase(boundary);
+	std::transform(boundaryLowercase.begin(), boundaryLowercase.end(), boundaryLowercase.begin(),
 				   [](unsigned char c) { return std::tolower(c); });
 	if (boundaryLowercase.find("per") != std::string::npos)
 		return BoundaryType::PERIODIC;
