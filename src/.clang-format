@@ -1,20 +1,17 @@
 ---
 Language:        Cpp
 BasedOnStyle:  Google
-AccessModifierOffset: -2  #-2
+AccessModifierOffset: -4  #-2
 AllowShortBlocksOnASingleLine: Empty #Never
 AllowShortIfStatementsOnASingleLine: Never  #Never
 AllowShortLoopsOnASingleLine: false  #false
-BraceWrapping:
-  BeforeCatch:     true #false
-  BeforeElse:      true #false
-BreakBeforeBraces: Custom #Attach
+BreakBeforeBraces: Attach
 ColumnLimit:     120 #80
-IncludeBlocks:   Preserve  #Preserve
-IndentCaseLabels: false  #false
-IndentWidth:     4 #4
-ObjCBlockIndentWidth: 4 #4
-PenaltyReturnTypeOnItsOwnLine: 2000000 #60
-PointerAlignment: Right #Right
+IncludeBlocks:   Regroup
+IndentCaseLabels: true  #false
+IndentWidth:     4 #2
+ObjCBlockIndentWidth: 4 #2
+PenaltyReturnTypeOnItsOwnLine: 2000000 #200
+PointerAlignment: Left #Right
 TabWidth:        4 #8
 UseTab:          Always #Never
