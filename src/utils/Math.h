@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <numeric>
+#include <cmath>
 
 template<typename T>
 struct square
@@ -50,5 +51,31 @@ inline void LinearRegression(const std::vector<T1>& x, const std::vector<T1>& y,
 		beta2 = beta1 = 0.;
 }
 
+/**
+ * @brief Check whether two floats are within some maximum relative difference.
+ * Used to check for equality while taking floating-point errors into account.
+ * 
+ * Taken from AutoPas - src/autopas/utils/Math.h
+ * 
+ * @param a 
+ * @param b 
+ * @param maxRelativeDifference optional, default value 1e-9
+ * @return true 
+ * @return false 
+ */
+bool inline isNearRel(double a, double b, double maxRelativeDifference = 1e-9) 
+{
+	const auto greaterNumber = std::max(std::abs(a), std::abs(b));
+	const auto absoluteDifference = maxRelativeDifference * greaterNumber;
+	const auto diff = std::abs(a - b);
+	return diff <= absoluteDifference;
+}
 
+/**
+ * @brief Find whether an int is positive or negative (zero is positive).
+ * 
+ * @param n the number to be checked
+ * @return int -1 if the number is negative, and 1 otherwise
+ */
+inline short int findSign(int n) { return n < 0 ? -1 : 1; }
 #endif /* MATH_H_ */
