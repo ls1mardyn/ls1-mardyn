@@ -41,20 +41,20 @@ jobs:
             echo "formatting_issues=false" >> "$GITHUB_ENV"
           fi
 
-      - name: Post comment if issues found
-        if: env.formatting_issues == 'true'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: ':warning: The CI detected formatting issues in this pull request. '
-                    + 'Please run clang-format locally to resolve them.\n'
-                    + 'Details are shown in the [job log](https://github.com/'
-                    + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ').'
-            })
+#      - name: Post comment if issues found
+#        if: env.formatting_issues == 'true'
+#        uses: actions/github-script@v6
+#        with:
+#          script: |
+#            github.rest.issues.createComment({
+#              issue_number: context.issue.number,
+#              owner: context.repo.owner,
+#              repo: context.repo.repo,
+#              body: ':warning: The CI detected formatting issues in this pull request. '
+#                    + 'Please run clang-format locally to resolve them.\n'
+#                    + 'Details are shown in the [job log](https://github.com/'
+#                    + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ').'
+#            })
 
       - name: Exit with failure if clang-format found issues
         if: env.formatting_issues == 'true'
@@ -62,4 +62,4 @@ jobs:
           echo "Formatting issues detected!"
           echo "Format the following files properly:"
           cat diff_files.log
-          exit 0
+#          exit 1
