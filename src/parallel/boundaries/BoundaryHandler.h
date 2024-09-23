@@ -21,20 +21,17 @@
  * @brief Class to handle boundary conditions, namely leaving and halo particles.
  * @author Amartya Das Sharma
  *
- * The objects of this class store the local and global bounds of the subdomain
- * in every process, and provide functions to deal with leaving particles, and
- * delete halo particles.
+ * The objects of this class store the local and global bounds of the subdomain in every process, and provide functions
+ * to deal with leaving particles, and delete halo particles.
  *
- * The internal walls of the subdomain, touching other subdomains are 'local'
- * walls while the walls that are also the limits of the global domain are
- * 'global' walls.
+ * The internal walls of the subdomain, touching other subdomains are 'local' walls while the walls that are also the
+ * limits of the global domain are 'global' walls.
  *
- * All subdomains have a copy of the global wall types, and do not store their local
- * boundary conditions; instead they check whether a particular local wall is also a
- * global wall, and then use the global lookup table to ascertain what boundary effects to use.
+ * All subdomains have a copy of the global wall types, and do not store their local boundary conditions; instead they
+ * check whether a particular local wall is also a global wall, and then use the global lookup table to ascertain what
+ * boundary effects to use.
  *
  * The default state for all global walls is 'PERIODIC', since that is the default ls1 behaviour.
- *
  */
 class BoundaryHandler {
 public:
@@ -171,7 +168,12 @@ public:
 	void removeNonPeriodicHalos(ParticleContainer *moleculeContainer) const;
 
 private:
-	/* List of global boundary type per dimension. */
+	/**
+	 * @brief Lookup table for global boundary type in every dimension.
+	 *
+	 * Set as periodic by default, since the default behaviour of LS1 is all periodic boundaries.
+	 * This allows the <boundaries> tag to be optional.
+	 */
 	std::map<DimensionUtils::DimensionType, BoundaryUtils::BoundaryType> _boundaries{
 		{DimensionUtils::DimensionType::POSX, BoundaryUtils::BoundaryType::PERIODIC},
 		{DimensionUtils::DimensionType::POSY, BoundaryUtils::BoundaryType::PERIODIC},
