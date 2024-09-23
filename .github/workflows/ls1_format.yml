@@ -53,8 +53,8 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: ':warning: The CI detected formatting issues in this pull request. '
-                    + 'Please run clang-format locally to resolve them. '
-                    + Details are shown in the [job log](https://github.com/'
+                    + 'Please run clang-format locally to resolve them.\n'
+                    + 'Details are shown in the [job log](https://github.com/'
                     + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + ${{ github.event.workflow_run.id }} + ').'
             });
 
