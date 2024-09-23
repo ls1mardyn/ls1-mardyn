@@ -5,6 +5,7 @@ AccessModifierOffset: -2  #-2
 AllowShortBlocksOnASingleLine: Empty #Never
 AllowShortIfStatementsOnASingleLine: Never  #Never
 AllowShortLoopsOnASingleLine: false  #false
+BraceWrapping:
   BeforeCatch:     true #false
   BeforeElse:      true #false
 BreakBeforeBraces: Custom #Attach
