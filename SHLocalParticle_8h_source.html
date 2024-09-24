@@ -119,14 +119,14 @@ $(function() {
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        <span class="keywordflow">return</span> _expansionM;</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    }</div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keywordtype">void</span> writeValuesToMPIBuffer(<span class="keywordtype">double</span> * buf, <span class="keywordtype">int</span>&amp; position)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        _expansionM.<a class="code hl_function" href="classbhfmm_1_1SolidHarmonicsExpansion.html#a2089c4244f9abde33b121b584761127d">writeValuesToMPIBuffer</a>(buf, position);</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keywordtype">void</span> writeValuesToMPIBuffer(std::vector&lt;double&gt; &amp;buf, <span class="keywordtype">int</span>&amp; position)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        _expansionM.<a class="code hl_function" href="classbhfmm_1_1SolidHarmonicsExpansion.html#a4f543e31da625ef83fcae926434d29e3">writeValuesToMPIBuffer</a>(buf, position);</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    }</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    <span class="keywordtype">void</span> readValuesFromMPIBuffer(<span class="keywordtype">double</span> * buf, <span class="keywordtype">int</span>&amp; position) {</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    <span class="keywordtype">void</span> readValuesFromMPIBuffer(std::vector&lt;double&gt; &amp;buf, <span class="keywordtype">int</span>&amp; position) {</div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        _expansionM.readValuesFromMPIBuffer(buf,position);</div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    }</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keywordtype">void</span> addValuesFromMPIBuffer(<span class="keywordtype">double</span> * buf, <span class="keywordtype">int</span>&amp; position) {</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keywordtype">void</span> addValuesFromMPIBuffer(std::vector&lt;double&gt; &amp;buf, <span class="keywordtype">int</span>&amp; position) {</div>
 <div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>        _expansionM.addValuesFromMPIBuffer(buf,position);</div>
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    }</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
@@ -149,7 +149,7 @@ $(function() {
 <div class="ttc" id="aclassbhfmm_1_1SHLocalParticle_html_ae38a22930408e91eca62153d22414442"><div class="ttname"><a href="classbhfmm_1_1SHLocalParticle.html#ae38a22930408e91eca62153d22414442">bhfmm::SHLocalParticle::actOnLocalParticle</a></div><div class="ttdeci">void actOnLocalParticle(LocalParticle &amp;small) const</div><div class="ttdef"><b>Definition:</b> SHLocalParticle.cpp:86</div></div>
 <div class="ttc" id="aclassbhfmm_1_1SHLocalParticle_html_af5d6c3e37bb6e0beb507ac508967ef29"><div class="ttname"><a href="classbhfmm_1_1SHLocalParticle.html#af5d6c3e37bb6e0beb507ac508967ef29">bhfmm::SHLocalParticle::addMultipoleParticle_Wigner</a></div><div class="ttdeci">void addMultipoleParticle_Wigner(const MultipoleParticle &amp;multipole, Vector3&lt; double &gt; periodicShift, double *cellWid, std::map&lt; Vector3&lt; int &gt;, RotationParams, Vector3&lt; int &gt;::compare &gt; &amp;M2L_Wigner)</div><div class="ttdef"><b>Definition:</b> SHLocalParticle.cpp:49</div></div>
 <div class="ttc" id="aclassbhfmm_1_1SolidHarmonicsExpansion_html"><div class="ttname"><a href="classbhfmm_1_1SolidHarmonicsExpansion.html">bhfmm::SolidHarmonicsExpansion</a></div><div class="ttdef"><b>Definition:</b> SolidHarmonicsExpansion.h:75</div></div>
-<div class="ttc" id="aclassbhfmm_1_1SolidHarmonicsExpansion_html_a2089c4244f9abde33b121b584761127d"><div class="ttname"><a href="classbhfmm_1_1SolidHarmonicsExpansion.html#a2089c4244f9abde33b121b584761127d">bhfmm::SolidHarmonicsExpansion::writeValuesToMPIBuffer</a></div><div class="ttdeci">void writeValuesToMPIBuffer(double *buf, int &amp;position) const</div><div class="ttdef"><b>Definition:</b> SolidHarmonicsExpansion.h:321</div></div>
+<div class="ttc" id="aclassbhfmm_1_1SolidHarmonicsExpansion_html_a4f543e31da625ef83fcae926434d29e3"><div class="ttname"><a href="classbhfmm_1_1SolidHarmonicsExpansion.html#a4f543e31da625ef83fcae926434d29e3">bhfmm::SolidHarmonicsExpansion::writeValuesToMPIBuffer</a></div><div class="ttdeci">void writeValuesToMPIBuffer(std::vector&lt; double &gt; &amp;buf, int &amp;position) const</div><div class="ttdef"><b>Definition:</b> SolidHarmonicsExpansion.h:321</div></div>
 <div class="ttc" id="aclassbhfmm_1_1Vector3_1_1compare_html"><div class="ttname"><a href="classbhfmm_1_1Vector3_1_1compare.html">bhfmm::Vector3::compare</a></div><div class="ttdef"><b>Definition:</b> Vector3.h:158</div></div>
 <div class="ttc" id="aclassbhfmm_1_1Vector3_html"><div class="ttname"><a href="classbhfmm_1_1Vector3.html">bhfmm::Vector3</a></div><div class="ttdef"><b>Definition:</b> Vector3.h:34</div></div>
 <div class="ttc" id="aclassbhfmm_1_1WignerMatrix_html"><div class="ttname"><a href="classbhfmm_1_1WignerMatrix.html">bhfmm::WignerMatrix</a></div><div class="ttdef"><b>Definition:</b> WignerMatrix.h:22</div></div>
@@ -157,7 +157,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Sep 5 2024 09:00:45 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Sep 24 2024 20:06:33 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

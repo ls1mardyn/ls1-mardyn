@@ -83,13 +83,8 @@ $(function() {
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a6229bcb647bd58af323abbceb80b5654"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLog_1_1Logger.html#a6229bcb647bd58af323abbceb80b5654">Logger</a> (logLevel level=Log::Error, std::ostream *os=&amp;(std::cout))</td></tr>
 <tr class="separator:a6229bcb647bd58af323abbceb80b5654"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae91a926e4f8e537ac3f7203d570071e4"><td class="memItemLeft" align="right" valign="top"><a id="ae91a926e4f8e537ac3f7203d570071e4" name="ae91a926e4f8e537ac3f7203d570071e4"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Logger</b> (logLevel level, std::string prefix)</td></tr>
+<tr class="memitem:ae91a926e4f8e537ac3f7203d570071e4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLog_1_1Logger.html#ae91a926e4f8e537ac3f7203d570071e4">Logger</a> (logLevel level, std::string prefix)</td></tr>
 <tr class="separator:ae91a926e4f8e537ac3f7203d570071e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f9ed9c24db66c09cd4f7b0cf4f0e913"><td class="memItemLeft" align="right" valign="top"><a id="a6f9ed9c24db66c09cd4f7b0cf4f0e913" name="a6f9ed9c24db66c09cd4f7b0cf4f0e913"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>~Logger</b> ()</td></tr>
-<tr class="memdesc:a6f9ed9c24db66c09cd4f7b0cf4f0e913"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor flushes stream. <br /></td></tr>
-<tr class="separator:a6f9ed9c24db66c09cd4f7b0cf4f0e913"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a14b974bdc897779826aa0265071f0670"><td class="memTemplParams" colspan="2"><a id="a14b974bdc897779826aa0265071f0670" name="a14b974bdc897779826aa0265071f0670"></a>
 template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a14b974bdc897779826aa0265071f0670"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classLog_1_1Logger.html">Logger</a> &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>operator&lt;&lt;</b> (T const &amp;t)</td></tr>
@@ -166,13 +161,13 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>set_mpi_output_ranks<
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >The <a class="el" href="classLog_1_1Logger.html" title="The Logger class provides a simple interface to handle log messages.">Logger</a> class provides a simple interface to handle log messages. </p>
-<p >Provides easy interface to handle log messages. Initialize either with output level and stream or output level and filename or use default constructor values (Error, &amp;(std::cout)). With a given file basename and MPI Support each rank will create and write to his own file. For writing log messages use <a class="el" href="classLog_1_1Logger.html#a83d2bc6bc77e16ff495e63fb149e6649" title="shorthand versions for easy usage of the different log levels">fatal()</a>, <a class="el" href="namespacexml__schema.html#a13e2122658f2abee3c2da9829f2de129" title="Error condition.">error()</a>, warning(), info() or debug() as with normal streams, e.g. </p><blockquote class="doxtable">
+<p >Provides easy interface to handle log messages. Initialize either with output level and stream or output level and filename or use default constructor values (Error, &amp;(std::cout)). Note: Due to the default argument (std::cout), the passed ostream pointer will not be deleted automatically! Any passed ostream pointer other than std::cout must be deleted manually! With a given file basename and MPI Support each rank will create and write to its own file. For writing log messages use <a class="el" href="classLog_1_1Logger.html#a83d2bc6bc77e16ff495e63fb149e6649" title="shorthand versions for easy usage of the different log levels">fatal()</a>, <a class="el" href="namespacexml__schema.html#a13e2122658f2abee3c2da9829f2de129" title="Error condition.">error()</a>, warning(), info() or debug() as with normal streams, e.g. </p><blockquote class="doxtable">
 <p ><a class="el" href="namespacexml__schema.html#a13e2122658f2abee3c2da9829f2de129" title="Error condition.">log.error()</a> &lt;&lt; "Wrong parameter." &lt;&lt; std::endl; </p>
 </blockquote>
 <p>For easy handling of output within MPI applications there are the following methods: <a class="el" href="classLog_1_1Logger.html#a94823b4458dcac7bf5c710c8684752e2" title="allow logging only for a single process">set_mpi_output_root(int root)</a> set_mpi_output_rall() <a class="el" href="classLog_1_1Logger.html#a36c84ac1dfd62c7b990c32df3e1eb4cc" title="allow a set of processes for logging">set_mpi_output_ranks(int num_ranks, int * ranks)</a> Please include std::endl statements at the end of output as they will flush the stream buffers. If ENABLE_MPI is enabled logger initialization has to take place after the MPI_Init call. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a6229bcb647bd58af323abbceb80b5654" name="a6229bcb647bd58af323abbceb80b5654"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6229bcb647bd58af323abbceb80b5654">&#9670;&nbsp;</a></span>Logger()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a6229bcb647bd58af323abbceb80b5654">&#9670;&nbsp;</a></span>Logger() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -196,7 +191,38 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>set_mpi_output_ranks<
         </tr>
       </table>
 </div><div class="memdoc">
-<p >Initializes the log level, log stream and the list of log level names. If ENABLE_MPI is enabled by default all process perform logging output. </p>
+<p >Constructor for a logger to a stream.</p>
+<p >Initializes the log level, log stream and the list of log level names. If ENABLE_MPI is enabled by default, all process perform logging output. Note: Due to the default argument (std::cout), the passed ostream pointer will not be deleted automatically! Any passed ostream pointer other than std::cout must be deleted manually! </p>
+
+</div>
+</div>
+<a id="ae91a926e4f8e537ac3f7203d570071e4" name="ae91a926e4f8e537ac3f7203d570071e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae91a926e4f8e537ac3f7203d570071e4">&#9670;&nbsp;</a></span>Logger() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Log::Logger::Logger </td>
+          <td>(</td>
+          <td class="paramtype">logLevel&#160;</td>
+          <td class="paramname"><em>level</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>prefix</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Constructor for a logger to a file.</p>
+<p >Initializes the log level, log stream and the list of log level names. If ENABLE_MPI is enabled by default, all process perform logging output. </p>
 
 </div>
 </div>
@@ -207,7 +233,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>set_mpi_output_ranks<
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Sep 5 2024 09:00:50 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Sep 24 2024 20:06:37 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

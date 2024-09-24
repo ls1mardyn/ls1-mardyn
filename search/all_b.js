@@ -10,7 +10,7 @@ var searchData=
   ['legacycellprocessor_7',['LegacyCellProcessor',['../classLegacyCellProcessor.html',1,'']]],
   ['linkedcells_8',['LinkedCells',['../classLinkedCells.html',1,'LinkedCells'],['../classLinkedCells.html#abdc1b139d5baaee28699da985b3e6d10',1,'LinkedCells::LinkedCells()'],['../classLinkedCells.html#ad2acc78e77affd4c432443a64dca74af',1,'LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3], double cutoffRadius)']]],
   ['list_5fstream_9',['list_stream',['../namespacexml__schema.html#ab6c818ac91e70a25620375e0d000be83',1,'xml_schema']]],
-  ['ljcenter_10',['LJcenter',['../classLJcenter.html',1,'LJcenter'],['../classLJcenter.html#aaec87826c5caaad9ee8af7f374582024',1,'LJcenter::LJcenter()'],['../classLJcenter.html#a1e03c1361a8fe31edabc6aa33438c31f',1,'LJcenter::LJcenter(double x, double y, double z, double m, double epsilon, double sigma, double shift)']]],
+  ['ljcenter_10',['LJcenter',['../classLJcenter.html',1,'LJcenter'],['../classLJcenter.html#a1e03c1361a8fe31edabc6aa33438c31f',1,'LJcenter::LJcenter(double x, double y, double z, double m, double epsilon, double sigma, double shift)'],['../classLJcenter.html#aaec87826c5caaad9ee8af7f374582024',1,'LJcenter::LJcenter()']]],
   ['loadbalancer_11',['LoadBalancer',['../classLoadBalancer.html',1,'']]],
   ['loadbalancer_2eh_12',['LoadBalancer.h',['../LoadBalancer_8h.html',1,'']]],
   ['loadbalancewriter_13',['LoadbalanceWriter',['../classLoadbalanceWriter.html',1,'']]],
@@ -19,7 +19,7 @@ var searchData=
   ['localidrangesize_16',['localIdRangeSize',['../classMoleculeIdPool.html#a9002e3d642e21c5a636576595ebda814',1,'MoleculeIdPool']]],
   ['localparticle_17',['LocalParticle',['../classbhfmm_1_1LocalParticle.html',1,'bhfmm']]],
   ['localthermostatvariables_18',['LocalThermostatVariables',['../classLocalThermostatVariables.html',1,'']]],
-  ['logger_19',['Logger',['../classLog_1_1Logger.html',1,'Log::Logger'],['../classLog_1_1Logger.html#a6229bcb647bd58af323abbceb80b5654',1,'Log::Logger::Logger()']]],
+  ['logger_19',['Logger',['../classLog_1_1Logger.html',1,'Log::Logger'],['../classLog_1_1Logger.html#a6229bcb647bd58af323abbceb80b5654',1,'Log::Logger::Logger(logLevel level=Log::Error, std::ostream *os=&amp;(std::cout))'],['../classLog_1_1Logger.html#ae91a926e4f8e537ac3f7203d570071e4',1,'Log::Logger::Logger(logLevel level, std::string prefix)']]],
   ['long_5f_20',['long_',['../namespacexml__schema.html#a1d78aacee49e26cb7a69d5aa97df1268',1,'xml_schema']]],
   ['longrangecorrection_21',['LongRangeCorrection',['../classLongRangeCorrection.html',1,'']]],
   ['lorentzberthelotmixingrule_22',['LorentzBerthelotMixingRule',['../classLorentzBerthelotMixingRule.html',1,'']]]

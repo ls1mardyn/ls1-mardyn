@@ -6,5 +6,5 @@ var searchData=
   ['linkedcells_3',['LinkedCells',['../classLinkedCells.html#ad2acc78e77affd4c432443a64dca74af',1,'LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3], double cutoffRadius)'],['../classLinkedCells.html#abdc1b139d5baaee28699da985b3e6d10',1,'LinkedCells::LinkedCells()']]],
   ['ljcenter_4',['LJcenter',['../classLJcenter.html#aaec87826c5caaad9ee8af7f374582024',1,'LJcenter::LJcenter()'],['../classLJcenter.html#a1e03c1361a8fe31edabc6aa33438c31f',1,'LJcenter::LJcenter(double x, double y, double z, double m, double epsilon, double sigma, double shift)']]],
   ['localidrangesize_5',['localIdRangeSize',['../classMoleculeIdPool.html#a9002e3d642e21c5a636576595ebda814',1,'MoleculeIdPool']]],
-  ['logger_6',['Logger',['../classLog_1_1Logger.html#a6229bcb647bd58af323abbceb80b5654',1,'Log::Logger']]]
+  ['logger_6',['Logger',['../classLog_1_1Logger.html#a6229bcb647bd58af323abbceb80b5654',1,'Log::Logger::Logger(logLevel level=Log::Error, std::ostream *os=&amp;(std::cout))'],['../classLog_1_1Logger.html#ae91a926e4f8e537ac3f7203d570071e4',1,'Log::Logger::Logger(logLevel level, std::string prefix)']]]
 ];

@@ -109,15 +109,15 @@ const <a class="el" href="classbhfmm_1_1SolidHarmonicsExpansion.html">SolidHarmo
 <tr class="memitem:aa4b73c99b55f4cf796062264355c60d3"><td class="memItemLeft" align="right" valign="top"><a id="aa4b73c99b55f4cf796062264355c60d3" name="aa4b73c99b55f4cf796062264355c60d3"></a>
 <a class="el" href="classbhfmm_1_1SolidHarmonicsExpansion.html">SolidHarmonicsExpansion</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getExpansion</b> ()</td></tr>
 <tr class="separator:aa4b73c99b55f4cf796062264355c60d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:add666663ef2c8c9d961a6fb1565e4deb"><td class="memItemLeft" align="right" valign="top"><a id="add666663ef2c8c9d961a6fb1565e4deb" name="add666663ef2c8c9d961a6fb1565e4deb"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>writeValuesToMPIBuffer</b> (double *buf, int &amp;position) const</td></tr>
-<tr class="separator:add666663ef2c8c9d961a6fb1565e4deb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4abe68c44eba39353f848633773a4d7e"><td class="memItemLeft" align="right" valign="top"><a id="a4abe68c44eba39353f848633773a4d7e" name="a4abe68c44eba39353f848633773a4d7e"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>readValuesFromMPIBuffer</b> (double *buf, int &amp;position)</td></tr>
-<tr class="separator:a4abe68c44eba39353f848633773a4d7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac7e007cfc2a1783c180a27a9c2c06ef6"><td class="memItemLeft" align="right" valign="top"><a id="ac7e007cfc2a1783c180a27a9c2c06ef6" name="ac7e007cfc2a1783c180a27a9c2c06ef6"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>addValuesFromMPIBuffer</b> (double *buf, int &amp;position)</td></tr>
-<tr class="separator:ac7e007cfc2a1783c180a27a9c2c06ef6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc791c014648fa56cd802e2f87d3646a"><td class="memItemLeft" align="right" valign="top"><a id="adc791c014648fa56cd802e2f87d3646a" name="adc791c014648fa56cd802e2f87d3646a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>writeValuesToMPIBuffer</b> (std::vector&lt; double &gt; &amp;buf, int &amp;position) const</td></tr>
+<tr class="separator:adc791c014648fa56cd802e2f87d3646a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3ee3d5f4ca92dcb4cd53a93f7642a91"><td class="memItemLeft" align="right" valign="top"><a id="ae3ee3d5f4ca92dcb4cd53a93f7642a91" name="ae3ee3d5f4ca92dcb4cd53a93f7642a91"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>readValuesFromMPIBuffer</b> (std::vector&lt; double &gt; &amp;buf, int &amp;position)</td></tr>
+<tr class="separator:ae3ee3d5f4ca92dcb4cd53a93f7642a91"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8a0335404c4a480667d0467a3fe8f19"><td class="memItemLeft" align="right" valign="top"><a id="ab8a0335404c4a480667d0467a3fe8f19" name="ab8a0335404c4a480667d0467a3fe8f19"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>addValuesFromMPIBuffer</b> (std::vector&lt; double &gt; &amp;buf, int &amp;position)</td></tr>
+<tr class="separator:ab8a0335404c4a480667d0467a3fe8f19"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classbhfmm_1_1PseudoParticle"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classbhfmm_1_1PseudoParticle')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classbhfmm_1_1PseudoParticle.html">bhfmm::PseudoParticle</a></td></tr>
 <tr class="memitem:a23cb5d49b01e28eebe5551796f915f57 inherit pub_methods_classbhfmm_1_1PseudoParticle"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classbhfmm_1_1Vector3.html">Vector3</a>&lt; double &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbhfmm_1_1PseudoParticle.html#a23cb5d49b01e28eebe5551796f915f57">getCenter</a> () const</td></tr>
 <tr class="separator:a23cb5d49b01e28eebe5551796f915f57 inherit pub_methods_classbhfmm_1_1PseudoParticle"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -446,7 +446,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_order</b></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Sep 5 2024 09:00:50 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Sep 24 2024 20:06:37 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
