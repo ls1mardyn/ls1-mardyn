@@ -6,11 +6,14 @@
  */
 
 #include "utils/Testing.h"
+
+#include <memory>
+
 #include "utils/Logger.h"
 #include "utils/FileUtils.h"
 #include "utils/mardyn_assert.h"
 
-Log::Logger* test_log;
+std::shared_ptr<Log::Logger> test_log;
 
 #ifdef UNIT_TESTS
   #ifdef USE_CPPUNIT
@@ -30,7 +33,7 @@ Log::Logger* test_log;
 int runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const std::string& testcases) {
 	Log::logLevel globalLogLevel = Log::global_log->get_log_level();
 
-	test_log = new Log::Logger(testLogLevel);
+	test_log = std::make_shared<Log::Logger>(testLogLevel);
 	test_log->set_do_output(Log::global_log->get_do_output());
 	if (testLogLevel > Log::Info) {
 		Log::global_log->set_log_level(Log::Debug);

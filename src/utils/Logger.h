@@ -12,6 +12,7 @@
 #include <string>
 #include <sstream>
 #include <chrono>
+#include <memory>
 
 #ifdef USE_GETTIMEOFDAY
 #include <sys/time.h>
@@ -46,12 +47,12 @@ namespace Log {
 class Logger;
 
 /**
- * Gobal logger variable for use in the entire program.
- * Must be initialized with constructor e.g. new Log::Logger().
+ * Global logger variable for use in the entire program.
+ * Must be initialized with constructor
  * Namespace visibility:
- *    */
+ */
 #ifndef LOGGER_SRC
-extern Log::Logger *global_log;
+extern std::unique_ptr<Log::Logger> global_log;
 #endif
 
 /**
@@ -72,8 +73,12 @@ typedef enum {
  *
  * Provides easy interface to handle log messages. Initialize either with
  * output level and stream or output level and filename or use default constructor
- * values (Error, &(std::cout)). With a given file basename and MPI Support each rank will
- * create and write to his own file.
+ * values (Error, &(std::cout)).
+ * Note: Due to the default argument (std::cout), the passed ostream pointer
+ * will not be deleted automatically! Any passed ostream pointer other than
+ * std::cout must be deleted manually!
+ * With a given file basename and MPI Support each rank will create
+ * and write to its own file.
  * For writing log messages use fatal(), error(), warning(), info() or debug() as
  * with normal streams, e.g.
  * > log.error() << "Wrong parameter." << std::endl;
@@ -92,7 +97,7 @@ private:
 	logLevel _msg_log_level;
 	bool _do_output;
 	std::string _filename;
-	std::ostream *_log_stream;
+	std::shared_ptr<std::ostream> _log_stream;
 	std::map<logLevel, std::string> logLevelNames;
 #ifdef USE_GETTIMEOFDAY
 	timeval _starttime;
@@ -115,21 +120,32 @@ private:
 
 	// don't allow copy-construction
 	Logger(const Logger&) : _log_level(Log::Error), _msg_log_level(Log::Error), _do_output(true),
-			_filename(""), _log_stream(0), logLevelNames(), _starttime(), _rank(0)
+			_filename(""), _log_stream(nullptr), logLevelNames(), _starttime(), _rank(0)
 	{ }
 
 	// don't allow assignment
 	Logger& operator=(const Logger&) { return *this; }
 
 public:
-	/** Initializes the log level, log stream and the list of log level names.
-	 * If ENABLE_MPI is enabled by default all process perform logging output. */
+	/**
+	 * Constructor for a logger to a stream.
+	 *
+	 * Initializes the log level, log stream and the list of log level names.
+	 * If ENABLE_MPI is enabled by default, all process perform logging output.
+	 * Note: Due to the default argument (std::cout), the passed ostream pointer
+	 * will not be deleted automatically! Any passed ostream pointer other than
+	 * std::cout must be deleted manually!
+	 */
 	Logger(logLevel level = Log::Error, std::ostream *os = &(std::cout));
-
+	/**
+	 * Constructor for a logger to a file.
+	 *
+	 * Initializes the log level, log stream and the list of log level names.
+	 * If ENABLE_MPI is enabled by default, all process perform logging output.
+	 */
 	Logger(logLevel level, std::string prefix);
 
-	/// Destructor flushes stream
-	~Logger();
+	~Logger() = default;
 
 	/// General output template for variables, strings, etc.
 	template<typename T>

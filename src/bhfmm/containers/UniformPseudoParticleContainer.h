@@ -111,12 +111,12 @@ private:
 	int _globalNumCellsPerDim;
 	Domain* _domain;
 	int _globalNumCells;	//total amount of cells
-	int* _occVector; // array for MPI allgather
+	std::vector<int> _occVector; // array for MPI allgather
 
 	int _coeffVectorLength; //size of MPI buffer for multipole coefficients
 	int _expansionSize; //size of one local or multipole expansion in doubles
-	double* _coeffVector; // array for MPI allgather
-	double* _coeffVector_me;
+	std::vector<double> _coeffVector; // array for MPI allgather
+	std::vector<double> _coeffVector_me;
 #ifdef ENABLE_MPI
 	HaloBufferNoOverlap<double> * _multipoleRecBuffer, *_multipoleBuffer; //Buffer with use for non-overlapping communication
 	HaloBufferOverlap<double> * _multipoleRecBufferOverlap, * _multipoleBufferOverlap, * _multipoleBufferOverlapGlobal, * _multipoleRecBufferOverlapGlobal; //Buffers for receiving and sending of global and local tree halos
@@ -199,7 +199,7 @@ private:
 	 * @param bottomLevel: lowest level
 	 * @param buffer: buffer where values are should be stored
 	 */
-	void getHaloValues(Vector3<int> localMpCellsBottom,int bottomLevel, double *buffer,
+	void getHaloValues(const Vector3<int> &localMpCellsBottom,int bottomLevel, std::vector<double> &buffer,
 			int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh, bool doLocalExpansion);
 	/**
 	 * Sets multipole or local expansion values in a defined area into a buffer for each level in local tree (e.g. halo values)
@@ -211,7 +211,7 @@ private:
 	 * @param bottomLevel: lowest level
 	 * @param buffer: buffer where values are stored in which should be written into the area
 	 */
-	void setHaloValues(Vector3<int> localMpCellsBottom,int bottomLevel, double *bufferRec,
+	void setHaloValues(const Vector3<int> &localMpCellsBottom,int bottomLevel, std::vector<double> &bufferRec,
 			int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh, bool doLocalExpansion);
 	//for parallelization
 	void communicateHalosNoOverlap();
@@ -235,8 +235,8 @@ private:
 	void communicateHalosX();
 	void communicateHalosY();
 	void communicateHalosZ();
-	void communicateHalosAlongAxis(double * lowerNeighbourBuffer, double * higherNeighbourBuffer,
-			double * lowerNeighbourBufferRec, double * higherNeighbourBufferRec,
+	void communicateHalosAlongAxis(std::vector<double> &lowerNeighbourBuffer, std::vector<double> &higherNeighbourBuffer,
+			std::vector<double> &lowerNeighbourBufferRec, std::vector<double> &higherNeighbourBufferRec,
 			int lowerNeighbour, int higherNeighbour, int haloSize
 			);
 	bool _doNTLocal, _doNTGlobal; //indicate if NT method should be applied to the local tree part and/or the global tree part
