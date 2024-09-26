@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>300</steps>
+        <steps>2210000</steps>
       </production>
     </run>
     
@@ -30,8 +30,8 @@
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>restart_data_case_c/generic_lj_step-2239.restart.header.xml</header>
-          <data>restart_data_case_c/generic_lj_step-2239.restart.dat</data>
+          <header>restart_data_case_c/generic_lj_step-100.restart.header.xml</header>
+          <data>restart_data_case_c/generic_lj_step-100.restart.dat</data>
         </file>
         <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
@@ -53,7 +53,7 @@
       </electrostatic>
       <thermostats>
        <!-- velocity scaling thermostat, if no component is specified the global thermostat is assumed -->
-      <thermostat type="VelocityScaling">
+      <thermostat type="VelocityScaling" componentId="global">
         <!-- target temperature, if not specified the ensemble temperature will be used -->
       </thermostat> 
       </thermostats>
@@ -62,16 +62,16 @@
     
     <output>
  
-    <outputplugin name="VTKMoleculeWriter">
+    <!--outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
       <writefrequency>5</writefrequency>
-    </outputplugin>
-
-    <!--outputplugin name="CheckpointWriter">
-      <type>binary</type>
-      <writefrequency>100</writefrequency>
-      <outputprefix>generic_lj_step</outputprefix>
     </outputplugin-->
+
+    <outputplugin name="CheckpointWriter">
+      <type>binary</type>
+      <writefrequency>2210000</writefrequency>
+      <outputprefix>ibi</outputprefix>
+    </outputplugin>
 
     </output>
 
@@ -88,18 +88,14 @@
     </plugin-->
 
     <plugin name="PMF">
-        <fpregions>
-          <region id = "1">
-            <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
-            <highX>0.0</highX><highY>0.0</highY><highZ>0.0</highZ>
-            <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
-            <hybridDimZ>0.0</hybridDimZ>
-          </region>
-        </fpregions>
-        <multiplier>1.0</multiplier>
-        <internalBins>250</internalBins>
-        <measureFreq>1</measureFreq>
-        <output>true</output>
+        <singleRun>true</singleRun>
+        <stepsEquil>1e+4</stepsEquil>
+        <stepsMeasure>1e+3</stepsMeasure>
+
+        <alpha>0.2</alpha>
+        <bins>300</bins>
+        <!--rdfPath>../../examples/PMF/restart_data_case_c/rdf_0.txt</rdfPath-->
+        <!--potPath>../../examples/PMF/restart_data_case_c/pot_1.txt</potPath-->
     </plugin>
         
   </simulation>

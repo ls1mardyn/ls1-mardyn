@@ -2,327 +2,264 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 
 
-PMF::PMF():reference_rdf_interpolation{1.0},potential_interpolation{0.0},avg_rdf_interpolation{1.0}{
+void PMF::readXML(XMLfileUnits& xmlfile) {
+    xmlfile.getNodeValue("singleRun", mode_single_run);
+    // using this double tmp buffer here to allow for easier configuration in xml file
+    double tmp = 1e+6;
+    xmlfile.getNodeValue("stepsEquil", tmp);
+    steps_equilibration = static_cast<int>(tmp);
+    tmp = 1e+5;
+    xmlfile.getNodeValue("stepsMeasure", tmp);
+    steps_measurement = static_cast<int>(tmp);
+
+    xmlfile.getNodeValue("alpha", alpha);
+
+    int bins;
+    xmlfile.getNodeValue("bins", bins);
+    profiler.init(bins);
+
+    xmlfile.getNodeValue("equilibrate", mode_equilibrate);
+
+    xmlfile.getNodeValue("rdfPath", rdf_path);
+    xmlfile.getNodeValue("potPath", pot_path);
+
+    if (rdf_path.empty()) mode_initial_rdf = true;
+    if (pot_path.empty()) ibi_iteration = 0;
+    else {
+        auto idx = pot_path.find_last_of('_');
+        if (idx == std::string::npos) throw std::runtime_error("pot file has no iteration suffix.");
+        const auto begin = idx + 1;
+
+        idx = pot_path.find_last_of('.');
+        if (idx == std::string::npos) throw std::runtime_error("pot file has no file ending.");
+        const auto end = idx;
+        const auto it_str = pot_path.substr(begin, end - begin);
+        ibi_iteration = std::stoi(it_str);
+    }
+
+    if (mode_initial_rdf) mode_equilibrate = false;
 }
 
+void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* domain) {
+    if (mode_initial_rdf || mode_single_run) return;
 
-void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* domain){
-    
-    this->ReadRDF();
+    T = _simulation.getEnsemble()->T();
+    Log::global_log->info() << "[PMF] Target temperature = " << T << std::endl;
 
-    Log::global_log->info()<<"[PMF] RDF has been read successfully\n";
-    pairs_handler = new InteractionForceAdapter(resolution_handler,this);
+    reference_rdf.read(rdf_path);
+    Log::global_log->info() << "[PMF] RDF has been read successfully" << std::endl;
+    InitializePotentialValues();
+
+    pairs_handler = new IBIPairsHandler();
     _simulation.setParticlePairsHandler(pairs_handler);
     _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), pairs_handler));
 
-    Log::global_log->info()<<"[PMF]LegacyCellProcessor set\n";
-    Log::global_log->info()<<"[PMF] ForcedAdapter Class being used\n";
+    if (pot_path.empty()) pairs_handler->getPotentialFunction() = reference_potential;
+    else pairs_handler->getPotentialFunction().read(pot_path);
+    DerivativeOfPotential();
 
-    Log::global_log->info()<<"[PMF] Start the tracker sites\n";
-    for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
-        unsigned long m_id = it->getID();
-        std::array<double,3> com = profiler.GetCOM(&(*it));
-        sites[m_id].first.SetPosition(com);
-    }
-
-    for(auto it= begin(regions);it!=end(regions);++it){
-        Log::global_log->info()<<"[PMF] The hybrid region spans from: ("<<it->_lowHybrid[0]<<","<<it->_lowHybrid[1]<<","<<it->_lowHybrid[2]<<") to ("<<it->_highHybrid[0]<<","<<it->_highHybrid[1]<<","<<it->_highHybrid[2]<<")"<<std::endl;
-
-        Log::global_log->info()<<"[PMF] The atomistic region spans from: ("<<it->_low[0]<<","<<it->_low[1]<<","<<it->_low[2]<<") to ("<<it->_high[0]<<","<<it->_high[1]<<","<<it->_high[2]<<")"<<std::endl;
-
-        Log::global_log->info()<<"[PMF] The region  center is located at: ("<<it->_center[0]<<","<<it->_center[1]<<","<<it->_center[2]<<")"<<std::endl;
-    }
-    Log::global_log->info()<<"[PMF] Initializing the COM sites\n";
-    resolution_handler.CheckResolution(pc,sites,regions);
-    Log::global_log->info()<<"[PMF] Enabled "<<std::endl;
-
-    Log::global_log->info()<<"[PMF] InternalProfiler uses "<<internal_bins
-                           <<" bins, measures every "<<measure_frequency<<" steps\n";
-    this->profiler.init(pc,internal_bins,measure_frequency);
-    Log::global_log->info()<<"[PMF] InternalProfiler initialized\n";
-    Log::global_log->info()<<"[PMF] Step size of "<<multiplier<<"\n";
-    potential_interpolation.SetXValues(profiler.GetRNodes());
-    avg_rdf_interpolation.SetXValues(profiler.GetRNodes());
-    avg_rdf_interpolation.GetYValues().resize(internal_bins);
-
-    this->InitializePotentialValues();
-
-    std::vector<double> piece = reference_rdf_interpolation.GetYValues();
-    
-    for(int i=0;i<piece.size();++i){
-        piece[i] *= 223965.0;
-    }
-
-    avg_rdf_interpolation.SetYValues(piece);
+    Log::global_log->info() << "[PMF] LegacyCellProcessor set" << std::endl;
+    Log::global_log->info() << "[PMF] ForcedAdapter Class being used" << std::endl;
+    Log::global_log->info() << "[PMF] Enabled " << std::endl;
+    Log::global_log->info() << "[PMF] Damping factor of "<< alpha << std::endl;
 }
 
-void PMF::readXML(XMLfileUnits& xmlfile){
+void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) {
+    if (mode_single_run) {
+        current_steps++;
 
-    //create AT regions
-    int num_regions =0;
-    XMLfile::Query query = xmlfile.query("fpregions/region");
-    num_regions = query.card();
+        switch (ibi_phase) {
+            case FIRST_INIT: {
+                if (current_steps < steps_measurement) { profiler.ProfileData(pc); break; }
 
-    this->regions.resize(num_regions);
+                ibi_phase = EQUILIBRATE;
+                current_steps = 0;
+                ibi_iteration = 0;
 
-    XMLfile::Query::const_iterator region_iterator;
-    std::string oldpath = xmlfile.getcurrentnodepath();
-    for(region_iterator = query.begin();region_iterator;region_iterator++){
-        xmlfile.changecurrentnode(region_iterator);
-        unsigned int id=0;
-        xmlfile.getNodeValue("@id",id);
-        regions[id-1].readXML(xmlfile);
-    }
-    xmlfile.changecurrentnode(oldpath);
-    xmlfile.getNodeValue("multiplier",multiplier);
-    xmlfile.getNodeValue("internalBins",internal_bins);
-    xmlfile.getNodeValue("measureFreq",measure_frequency);
-    xmlfile.getNodeValue("output",output);
-    Log::global_log->info()<<"[PMF] Target temperature = "<<_simulation.getEnsemble()->T()<<std::endl;
-}
+                // create rdf_0
+                std::vector<double> avg_rdf;
+                profiler.GetRDFTotal(avg_rdf);
 
-void PMF::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep){
+                reference_rdf.SetXValues(profiler.GetRNodes());
+                reference_rdf.SetYValues(avg_rdf);
+                reference_rdf.write(createFilepath("rdf"));
 
-}
+                profiler.ResetBuffers();
 
-void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep){
+                // set up remaining fields
+                T = _simulation.getEnsemble()->T();
+                InitializePotentialValues();
 
-    for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
-        unsigned long m_id = it->getID();
-        std::array<double,3> com = profiler.GetCOM(&(*it));
-        sites[m_id].first.SetPosition(com);
-    }
+                pairs_handler = new IBIPairsHandler();
+                _simulation.setParticlePairsHandler(pairs_handler);
+                _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), pairs_handler));
+                pairs_handler->getPotentialFunction() = reference_potential;
+                DerivativeOfPotential();
 
-    resolution_handler.CheckResolution(pc,sites,regions);
-}
+                Log::global_log->info() << "[PMF] Transitioning from first initialization to equilibration with PMF" << std::endl;
+                break;
+            }
+            case EQUILIBRATE: {
+                if (current_steps < steps_equilibration) break;
+                ibi_phase = MEASURE;
+                current_steps = 0;
+                // nothing else to do in this phase
+                Log::global_log->info() << "[PMF] Transitioning from equilibration to measurement" << std::endl;
+                break;
+            }
+            case MEASURE: {
+                if (current_steps < steps_measurement) { profiler.ProfileData(pc); break; }
 
-void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
-    profiler.ProfileData(pc,step);
-}
+                ibi_phase = EQUILIBRATE;
+                current_steps = 0;
 
-void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, unsigned long step){
-
-    AccumulateRDF(pc,domain);
-    
-    if(output){
-        std::string filename="avg_rdf_"+std::to_string(step)+".txt";
-        std::ofstream rdf_file(filename);
-        for(int i=0;i<avg_rdf_interpolation.GetYValues().size();++i){
-            rdf_file<<std::setw(8)<<std::left<<avg_rdf_interpolation.GetXValues()[i]<<"\t"<<std::setw(8)<<std::left<<GetAverageRDF()[i]<<std::endl;
+                // update pot -> derivative
+                AddPotentialCorrection();
+                ibi_iteration++;
+                pairs_handler->getPotentialFunction().write(createFilepath("pot"));
+                DerivativeOfPotential();
+                WriteRDF();
+                Log::global_log->info() << "[PMF] Convergence: " << ConvergenceCheck() << std::endl;
+                Log::global_log->info() << "[PMF] Transitioning from measurement to equilibration" << std::endl;
+                profiler.ResetBuffers();
+                break;
+            }
         }
-        rdf_file.close();
-        std::string potential_file = "potential_"+std::to_string(step)+".txt";
-        std::ofstream potential(potential_file);
-        for(int i=0;i<potential_interpolation.GetYValues().size();++i){
-            potential<<std::setw(8)<<std::left
-            <<potential_interpolation.GetXValues()[i]
-            <<"\t"
-            <<std::setw(8)<<std::left<<potential_interpolation.GetYValues()[i]<<std::endl;
+
+        return;
+    }
+
+
+    if (!mode_equilibrate) profiler.ProfileData(pc);
+}
+
+void PMF::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
+    // everything else was already done during afterForces
+    if (mode_single_run) {
+        pairs_handler->getPotentialFunction().write("final_pot.txt");
+
+        std::stringstream ss;
+        for (double conv : convergence_steps) {
+            ss << conv << " ";
         }
-        potential.close();
+        Log::global_log->info() << "[PMF] Convergence steps: " << ss.str() << std::endl;
+        return;
     }
 
-    AddPotentialCorrection(step);
-    std::vector<double> current_rdf = GetAverageRDF();
-
-    convergence_check.ConvergenceCheck(reference_rdf_interpolation.GetYValues(),current_rdf);
-    std::string conv_name = "convergence.txt";
-    std::ofstream conv{conv_name};
-    for(int i=0;i<convergence_check.convergence_per_step.size();++i){
-        conv<<std::setw(8)<<std::left
-        <<i
-        <<"\t"
-        <<std::setw(8)<<std::left<<convergence_check.convergence_per_step[i]
-        <<std::endl;
+    // only want to create RDF after this run
+    if (mode_initial_rdf) {
+        WriteRDF(); return;
     }
-    conv.close();
 
+    // only want to update potential during this run
+    if (!mode_equilibrate) {
+        AddPotentialCorrection();
+
+        ibi_iteration++;
+        WriteRDF();
+        pairs_handler->getPotentialFunction().write(createFilepath("pot"));
+        Log::global_log->info() << "[PMF] Convergence: " << ConvergenceCheck() << std::endl;
+    }
 }
 
-void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
-
-}
 /********************
  * ****************** FUNCTIONS NOT FROM THE INTERFACE
  *******************/
 
+void PMF::InitializePotentialValues() {
+    reference_potential.SetXValues(reference_rdf.GetXValues());
+    reference_potential.SetYValues(reference_rdf.GetYValues());
 
-void PMF::InitializePotentialValues(){
-    std::vector<double> pot0 = reference_rdf_interpolation.GetYValues();
-    for(int i=0;i<pot0.size();++i){
-        pot0[i] = -1.0*_simulation.getEnsemble()->T()*std::log(pot0[i]);
+    std::vector<double>& u0 = reference_potential.GetYValues();
+    for (double& u : u0) u = -T * std::log(u);
+
+    // extrapolate function values (linearly) for which log was undefined in range of [0, r_min)
+    // first find r_min
+    int r_min_idx = -1;
+    for (int idx = 0; idx < reference_potential.GetXValues().size(); idx++) {
+        if (std::isfinite(reference_potential.GetYValues()[idx])) { r_min_idx = idx; break; }
     }
-
-    potential_interpolation.SetYValues(pot0);
-
-    post_processing.LinearExtrapolation(potential_interpolation);
-}
-
-void PMF::AddPotentialCorrection(unsigned long step){
-    std::vector<double> pot_i;
-    std::vector<double> avg_rdf = GetAverageRDF();
-    std::vector<double> current_correction;
-    current_correction.resize(internal_bins);
-    pot_i.resize(internal_bins);
-
-    for(int i=0;i<pot_i.size();++i){
-        double ratio = avg_rdf[i]/reference_rdf_interpolation.GetYValues()[i];
-        current_correction[i] = multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
-        pot_i[i] = potential_interpolation.GetYValues()[i] -current_correction[i];
-    }
-
-    potential_interpolation.SetYValues(pot_i);
-
-    if(output){
-        std::string name="correction_step_"+std::to_string(step)+".txt";
-        std::ofstream corr{name};
-        for(int i=0;i<internal_bins;++i){
-            corr<<reference_rdf_interpolation.GetXValues()[i]
-                <<"\t"
-                <<current_correction[i]
-                <<std::endl;
+    // there are inf values -> need to do something
+    // r_min_idx has the first position with a valid y value
+    if (r_min_idx != -1) {
+        const double dy = reference_potential.GetYValues()[r_min_idx + 1] - reference_potential.GetYValues()[r_min_idx];
+        double y_val = reference_potential.GetYValues()[r_min_idx];
+        for (int idx = r_min_idx; idx >= 0; idx--) {
+            reference_potential.GetYValues()[idx] = y_val;
+            y_val -= dy;
         }
-
     }
 
+    reference_potential.write("pot_0.txt");
 }
 
-void PMF::AccumulateRDF(ParticleContainer* pc, Domain* dom){
-    this->profiler.GenerateInstantaneousData(pc,dom);
+void PMF::AddPotentialCorrection() {
+    std::vector<double> avg_rdf;
+    profiler.GetRDFTotal(avg_rdf);
 
-    std::vector<double>& current_rdf = profiler.GetRDFValues();
-    std::vector<double>& accumulated_rdf = avg_rdf_interpolation.GetYValues();
-
-    if(current_rdf.size()!=accumulated_rdf.size()){
-        Log::global_log->error()<<"[PMF] Buffer sizes do not match"<<std::endl;
-    }
-
-    for(int i=0;i<current_rdf.size();++i){
-
-        accumulated_rdf[i] += current_rdf[i];
-
-    }
-    avg_rdf_interpolation.SetYValues(accumulated_rdf);
-    profiler.ResetBuffers();
-}
-
-double PMF::WeightValue(const std::array<double,3>& pos, FPRegion& region){
-    return weight_function.WeightValue(pos,region);
-}
-
-std::vector<FPRegion>& PMF::GetRegions(){
-    return this->regions;
-}
-
-ResolutionType PMF::GetMoleculeResolution(unsigned long idx){
-    return sites[idx].second;
-}
-
-InteractionSite PMF::GetMoleculeCOMSite(unsigned long idx){
-    return sites[idx].first;
-}
-
-Interpolate& PMF::GetRDFInterpolation(){
-    return this->reference_rdf_interpolation;
-}
-
-Interpolate& PMF::GetAVGRDFInterpolation(){
-    return this->avg_rdf_interpolation;
-}
-
-Interpolate& PMF::GetPotentialInterpolation(){
-    return this->potential_interpolation;
-}
-
-void PMF::ReadRDF(){
-
-    std::string filename;
-    std::vector<double> x_values;
-    std::vector<double> y_values;
-
-    filename = "rdf.txt";
-    std::ifstream file{filename};
-    if(!file){
-        Log::global_log->error()<<"[PMF] I could not read the rdf data file"<<std::endl;
-    }
-    double n1, n2;
-
-    while(file >> n1 >> n2){
-        x_values.push_back(n1);
-        y_values.push_back(n2);
-    }
-
-    reference_rdf_interpolation.SetXValues(x_values);
-    reference_rdf_interpolation.SetYValues(y_values);
-
-}
-
-void PMF::MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2){
-    //does something
-    double mass = m1.mass();
-    
-    //a loop for every type of charge
-    for(int i=0;i<m1.numLJcenters();i++){
-        double site_ratio = m1.component()->ljcenter(i).m()/mass;
-        for(int j=0;j<f.size();j++){
-            f[j] *= site_ratio;
+    std::vector<double>& pot = pairs_handler->getPotentialFunction().GetYValues();
+    FunctionPL updateFunction {};
+    updateFunction.SetXValues(pairs_handler->getPotentialFunction().GetXValues());
+    updateFunction.GetYValues().resize(pot.size(), 0.0);
+    for (int idx = 0; idx < pot.size(); idx++) {
+        const double update = alpha * T * std::log(avg_rdf[idx] / reference_rdf.GetYValues()[idx]);
+        if (std::isfinite(update)) {
+            pot[idx] -= update;
+            updateFunction.GetYValues()[idx] = update;
         }
-        m1.Fljcenteradd(i,f.data());
-        m2.Fljcentersub(i,f.data());
     }
+    updateFunction.write(createFilepath("update"));
 
-    for(int i=0;i<m1.numCharges();i++){
-        double site_ratio = m1.component()->charge(i).m()/mass;
-        for(int j=0;j<f.size();j++){
-            f[j] *= site_ratio;
+    // extrapolate function values (linearly) for which log was undefined in range of [0, r_min)
+    // first find r_min
+    int r_min_idx = -1;
+    for (int idx = 0; idx < reference_rdf.GetXValues().size(); idx++) {
+        if (reference_rdf.GetYValues()[idx] != 0.0) { r_min_idx = idx; break; }
+    }
+    // r_min_idx has the first position with a valid y value
+    if (r_min_idx != -1) {
+        const double dy = pot[r_min_idx + 1] - pot[r_min_idx];
+        double y_val = pot[r_min_idx];
+        for (int idx = r_min_idx; idx >= 0; idx--) {
+            pot[idx] = y_val;
+            y_val -= dy;
         }
-        m1.Fchargeadd(i,f.data());
-        m2.Fchargesub(i,f.data());
     }
-
-    for(int i=0;i<m1.numQuadrupoles();i++){
-        double site_ratio = m1.component()->quadrupole(i).m()/mass;
-        for(int j=0;j<f.size();j++){
-            f[j] *= site_ratio;
-        }
-        m1.Fquadrupoleadd(i,f.data());
-        m2.Fquadrupolesub(i,f.data());
-    }
-
-    for(int i=0;i<m1.numDipoles();i++){
-        double site_ratio = m1.component()->dipole(i).m()/mass;
-        for(int j=0;j<f.size();j++){
-            f[j] *= site_ratio;
-        }
-        m1.Fdipoleadd(i,f.data());
-        m2.Fdipolesub(i,f.data());
-    }
-
 }
 
-std::vector<double> PMF::GetAverageRDF(){
-    std::vector<double> average_rdf = avg_rdf_interpolation.GetYValues();
-    
-    for(int i=0;i<average_rdf.size();++i){
-        average_rdf[i] /= ((double)profiler.GetMeasuredSteps()+ (double)223965.0 );
-    }
-
-    return average_rdf;
+void PMF::DerivativeOfPotential() {
+    pairs_handler->getForceFunction() = pairs_handler->getPotentialFunction().Derivative(1e+6, 0.0);
+    pairs_handler->getForceFunction() *= -1;
+    pairs_handler->getForceFunction().write(createFilepath("force"));
 }
 
-double PMF::ConvergenceCheck(){
-    std::vector<double> difference;
-    std::vector<double>& v_0 = reference_rdf_interpolation.GetYValues();
-    std::vector<double> v_i = GetAverageRDF();
+double PMF::ConvergenceCheck() {
+    std::vector<double>& g_0 = reference_rdf.GetYValues();
+    std::vector<double> g_i;
+    profiler.GetRDFTotal(g_i);
 
-    difference.resize(v_0.size());
-    double vec_norm=0.0;
-
-    for(int i=0;i<v_0.size();++i){
-        vec_norm += std::pow(v_0[i]-v_i[i],2.0);
+    double vec_norm = 0.0;
+    for (int i = 0; i < g_0.size(); ++i) {
+        vec_norm += std::pow(g_0[i] - g_i[i], 2.0);
     }
 
+    convergence_steps.push_back(vec_norm);
     return vec_norm;
+}
 
+void PMF::WriteRDF() {
+    std::vector<double> avg_rdf;
+    profiler.GetRDFTotal(avg_rdf);
+
+    FunctionPL rdfFunction {};
+    rdfFunction.SetXValues(profiler.GetRNodes());
+    rdfFunction.SetYValues(avg_rdf);
+    rdfFunction.write(createFilepath("rdf"));
+}
+
+std::string PMF::createFilepath(const std::string &prefix) const {
+    std::stringstream path;
+    path << prefix << "_" << ibi_iteration << ".txt";
+    return path.str();
 }
 

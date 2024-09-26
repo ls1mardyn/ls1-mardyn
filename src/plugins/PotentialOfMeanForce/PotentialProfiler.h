@@ -5,96 +5,71 @@
 #include "particleContainer/ParticleContainer.h"
 #include "plugins/PluginBase.h"
 
-class PotentialProfiler:public PluginBase{
-    private:
-
-    CellProcessor* cell_processor;
-    int number_bins;
-    double bin_width;
-    //counts of occurance, used for N total pairs
-    std::vector<int> bin_counts;//total number of COMs in bin[i]
-    std::vector<double> pot_counts;//pretty much the same as above
-    //instant data
-    std::vector<double> pot_vals;//U values within the bin[i]
-    //Average data container and last stored average
-    std::vector<std::vector<double>> pot_values_per_timestep;
-    std::vector<double> current_potential_average;
-    
-
-    int sample_frequency;
-    int average_frequency;
-    int measured_steps;//should this come down?
-    double measured_distance_squared;
-    
-
-    public:
-    
-    PotentialProfiler();
-    ~PotentialProfiler(){delete cell_processor;}
+class PotentialProfiler : public PluginBase {
+public:
+    PotentialProfiler() = default;
+    ~PotentialProfiler() override { delete cell_processor; }
     void readXML(XMLfileUnits& xmlconfig) override;
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
-    void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{
-        // std::cout<<"End of step\n";
-        // for(int i=0;i<pot_vals.size();++i){
-        //     std::cout<<"Value: "<<pot_vals[i]<<"\t"<<pot_counts[i]<<"\n";
-        // }
-        for(int i=0;i<pot_vals.size();++i){
-            pot_counts[i]=0;
-            pot_vals[i] =0;
-        }
-    }
-    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{}
-    void afterForces(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep) override{   
-        if(simstep%sample_frequency ==0 && 
-        simstep > global_simulation->getInitStatistics()
-        ){
-            measured_steps++;
-            pc->traverseCells(*cell_processor);    
-        }
-    }
+    void afterForces(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep) override;
     void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
-    void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{
-        //WriteDataToFile(particleContainer, domain);
-    }
+
+    //==========================
+    // Unused methods
+    //==========================
+    void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override {};
+    void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override {};
+    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override {};
+
+    //==========================
+    // Util methods
+    //==========================
     std::string getPluginName()  {return "PotentialProfiler";}
-    static PluginBase* createInstance() {
-        return new PotentialProfiler(); 
-    }
+    static PluginBase* createInstance() { return new PotentialProfiler(); }
 
+private:
+    void WriteDataToFile(unsigned long simstep);
+
+    std::vector<double> current_potential_average {};
+    int sample_frequency = 0;
+    int avg_frequency = 0;
+    int measured_steps = 0;
+    int number_bins = 0;
+    double bin_width = 0;
+
+    class InternalCellProcessor : public CellProcessor {
     public:
+        InternalCellProcessor& operator=(const InternalCellProcessor&)=delete;
+        InternalCellProcessor(double cutoff, double bin_width, int num_bins, double max_r);
+        ~InternalCellProcessor() override = default;
 
-    std::array<double,3> GetCOM(Molecule* m);
-    void ProcessDistance(double distance, double pot);
+        void initTraversal() override;
+        void preprocessCell(ParticleCell& cell) override {}
+        void processCell(ParticleCell& cell) override;
+        void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll=false) override;
+        double processSingleMolecule(Molecule* m1, ParticleCell& cell) override {return 0.0;}
+        void postprocessCell(ParticleCell& cell) override {}
+        void endTraversal() override;
 
+        std::vector<double>& get_sample_counts() { return single_sample_counts; }
+        std::vector<double>& get_sample_pots() { return single_sample_pots; }
     private:
-    void SetBinContainer(ParticleContainer* pc);
-    void WriteDataToFile(ParticleContainer* particleContainer, Domain* domain, unsigned long simstep=0000);
+        /// Checks distance and adds to RDF buffer if in range
+        void handleMoleculePair(Molecule& m1, Molecule& m2, int thread);
+        /// Calculates potential with given parameters
+        double calcPot(double sigma, double epsilon, double r2);
 
-
-};
-
-class CustomCellProcessor: public CellProcessor{
-
-    private: 
-
-    PotentialProfiler* const my_profiler;
-
-    public:
-    CustomCellProcessor& operator=(const CustomCellProcessor&)=delete;
-    CustomCellProcessor(const double cutoff, PotentialProfiler* r);
-    ~CustomCellProcessor(){};
-
-    void initTraversal() override {}
-    void preprocessCell(ParticleCell& cell) override {}
-    void processCell(ParticleCell& cell) override;
-    void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll=false) override;
-    double processSingleMolecule(Molecule* m1, ParticleCell& cell) override {return 0.0;}
-    void postprocessCell(ParticleCell& cell) override {}
-    void endTraversal() override {}
-
-    private:
-
-    double DistanceBetweenCOMs(std::array<double,3>& com1, std::array<double,3>& com2);
-    double PotentialCallBack(double eps, double sigma, double r);
-
+        /// count buffer across a single timestep
+        std::vector<double> single_sample_counts;
+        /// pot buffer across a single timestep
+        std::vector<double> single_sample_pots;
+        /// thread local data of single_sample_counts
+        std::vector<std::vector<double>> thread_single_sample_counts;
+        /// thread local data of single_sample_pots
+        std::vector<std::vector<double>> thread_single_sample_pots;
+        /// distance between two r nodes
+        double bin_width;
+        /// maximum measure distance
+        double max_r;
+    } *cell_processor = nullptr;
 };

@@ -10,196 +10,86 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "plugins/PluginBase.h"
-#include "Region.h"
-#include "Resolution.h"
-#include "WeightFunction.h"
-#include "Interpolate.h"
 #include "plugins/RDFAtCOM.h"
-#include "ForceAdapter.h"
-#include "ProfilerPMF.h"
+#include "IBIPairsHandler.h"
+#include "RDFProfiler.h"
 
-
-class InteractionSite;
 /**
- * Removes infs via linear extrapolation
- * 
- */
-
-class DataPostProcess{
-    public:
-
-    void LinearExtrapolation(Interpolate& interpolation){
-        std::vector<double> x_values = interpolation.GetXValues();
-        std::vector<double> y_values = interpolation.GetYValues();
-
-        for(int i = y_values.size()-1;i>=0;--i){
-            if(std::isfinite(y_values[i])){
-                continue;
-            }
-            double y_k = y_values[i+1];
-            double y_k_1 = y_values[i+2];
-            double x_k = x_values[i+1];
-            double x_k_1 = x_values[i+2];
-            double x_star = x_values[i];
-            y_values[i] = y_k_1 + (x_star-x_k_1)/(x_k-x_k_1)*(y_k-y_k_1);
-        }
-
-        interpolation.SetYValues(y_values);
-    }
-};
-class PMF:public PluginBase{
-
-    using tracker = std::pair<InteractionSite,ResolutionType>;
-    private:
-
-    Interpolate reference_rdf_interpolation;//should not touch
-    Interpolate potential_interpolation;//updated on every step or stride
-    Interpolate avg_rdf_interpolation;//current avg value so far 
-
-    InternalProfiler profiler;//measuring tool
-
-    std::vector<FPRegion> regions;
-    /**
-     * Stores a COM site for every molecule (needs improvement)
-     */
-    std::map<unsigned long, tracker> sites;
-    ResolutionHandler resolution_handler;
-    /**
-     * L2 norm, used for hybrid
-     */
-    WeightFunction weight_function;
-    InteractionForceAdapter* pairs_handler;
-
-    double internal_bins;//used for profiler
-    int measure_frequency;//used for profiler
-    int update_stride=1;//how often to IBI
-    double multiplier;//alpha for step size
-    bool output;
-    DataPostProcess post_processing;
-
-    struct Convergence{
-        bool ConvergenceCheck(std::vector<double>& ref, std::vector<double>& crrnt){
-            double conv=0.0;
-            for(int i=0;i<ref.size();++i){
-                conv += std::abs(ref[i]-crrnt[i]);
-            }
-            convergence_per_step.emplace_back(conv);
-            ++ibi_iteration;
-            if(conv<tolerance)
-            return true;
-
-            return false;
-        }
-        double tolerance=0.05;
-        std::vector<double> convergence_per_step;
-        int ibi_iteration=0;
-    };
-
-    Convergence convergence_check;
-
-    public:
-    PMF();
-    ~PMF(){}
+ * Performs IBI on the current phasespace.
+ * */
+class PMF : public PluginBase {
+public:
+    //========================================
+    // INTERFACE METHODS
+    //========================================
     void readXML(XMLfileUnits& xmlconfig) override;
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
-    /**
-     * Updates resolution and tracker of each molecule
-     */
-    void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
-    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
     void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
+    void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
 
-    /**
-     * 
-     * Print avg rdf value to file
-     * Convergence check
-     * Set up interpolation buffers
-     * Accumulate to internal buffer
-     */
-    void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
-    void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
-    void siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) override;
-    std::string getPluginName(){ return "PMF";}
-    static PluginBase* createInstance() {return new PMF(); }
+    std::string getPluginName() { return "PMF"; }
+    static PluginBase* createInstance() {return dynamic_cast<PluginBase*>( new PMF()); }
 
-    /***********************
-     * 
-     * FUNCTIONS NOT FROM INTERFACE
-     * 
-     ***********************/
-    public:
-    std::vector<FPRegion>& GetRegions();
-    ResolutionType GetMoleculeResolution(unsigned long idx);
-    InteractionSite GetMoleculeCOMSite(unsigned long idx);
-    double WeightValue(const std::array<double,3>& pos, FPRegion& region);
-    Interpolate& GetRDFInterpolation();
-    Interpolate& GetAVGRDFInterpolation();
-    Interpolate& GetPotentialInterpolation();
+    //========================================
+    // NOT USED
+    //========================================
 
-    /**
-     * Maps the com forces to FP, formula:
-     * F_{i\alpha\beta} = \num{m_{i\alpha}}\den{\sum_{i\alpha}{m_{i\alpha}}}F^{cm}_{\alpha\beta}
-     * 
-     * Receives f already weighted
-     * Same callbacks as in potforce
-     * Assume both m1 and m2 have the same component class...
-     * Comply with newton 3rd law
-     */
-    void MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2);
+    /// Print avg rdf value to file, checks convergence. Then sets up interpolation buffers and accumulates to those.
+    void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override { };
+    void siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) override { };
+    void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override { };
+    void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override { };
 
-    /**
-     * 
-     * Returns accumulated RDF divided by measured steps from profiler
-     * Returns a full copy vector
-     * 
-     */
-    std::vector<double> GetAverageRDF();
+    //========================================
+    // FUNCTIONS NOT FROM INTERFACE
+    //========================================
+    FunctionPL& GetRDFInterpolation() { return reference_rdf; };
     double ConvergenceCheck();
-    double GetMultiplier(){
-        return multiplier;
-    }
 
-    private:
-    /**
-     * Read in reference RDF
-     */
-    void ReadRDF();
-
-    /**
-     * Implements U(r)_0 = -T^*ln(g(r)_0)
-     */
+private:
+    /// Implements U(r)_0 = -T^*ln(g(r)_0)
     void InitializePotentialValues();
+    /// Implements U(r)_{i+1} =U(r)_i - alpha*T^*ln(g(r)_i/g(r)_*)
+    void AddPotentialCorrection();
+    /// Implements F(r) = - d/dr U(r)
+    void DerivativeOfPotential();
+    /// Writes the total average RDF
+    void WriteRDF();
+    /// Generates file paths
+    [[nodiscard]] std::string createFilepath(const std::string& prefix) const;
 
-    /**
-     * Implements U(r)_{i+1} =U(r)_i - alpha*T^*ln(g(r)_i/g(r)_*)
-     */
-    void AddPotentialCorrection(unsigned long step);
-
-    void AccumulateRDF(ParticleContainer* pc, Domain* domain);
-
-
-
-};
-
-
-/**
- * Stores velocity, position, force, potential
- */
-class InteractionSite:public Site{
-    private:
-    double u_com;
-    std::array<double,3> f_com;
-    std::array<double,3> v_com;//not used
-
-    public: 
-    void SubForce(std::array<double, 3> f);
-    void AddForce(std::array<double,3> f);
-    void AddPotential(double pot);
-    void SetPosition(std::array<double,3> pos);
-    void SetVelocity(std::array<double,3> pos);
-
-    std::array<double,3>& GetPosition();
-    std::array<double,3>& GetVelocity();
-
-
+    /// g*(r)
+    FunctionPL reference_rdf {0.0, 1.0};
+    /// V0(r)
+    FunctionPL reference_potential {1e+6, 0.0};
+    /// measuring tool
+    RDFProfiler profiler;
+    /// pair handler to comp forces
+    IBIPairsHandler* pairs_handler = nullptr;
+    /// alpha for step size
+    double alpha = 0.0;
+    /// disables most functionality and only outputs rdf at the end of the simulation
+    bool mode_initial_rdf = false;
+    /// Target simulation temperature
+    double T = 0.0;
+    /// path to rdf0 file
+    std::string rdf_path = "";
+    /// path to active potential file (may not be set, then U0 is used)
+    std::string pot_path = "";
+    /// IBI iteration counter
+    int ibi_iteration = 0;
+    /// disables potential update and rdf sampling
+    bool mode_equilibrate = true;
+    /// number of equilibration steps
+    int steps_equilibration = 1e+6;
+    /// number of rdf measurement steps
+    int steps_measurement = 1e+5;
+    /// different execution path -> do all steps in one simulation
+    bool mode_single_run = false;
+    /// counter for elapsed simulation steps of current IBI phase
+    int current_steps = 0;
+    /// single run: current ibi phase
+    enum { FIRST_INIT, EQUILIBRATE, MEASURE } ibi_phase = FIRST_INIT;
+    /// collection of convergence values
+    std::vector<double> convergence_steps;
 };

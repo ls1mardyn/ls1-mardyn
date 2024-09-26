@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>1000</steps>
+        <steps>1000000</steps>
       </production>
     </run>
     
@@ -22,19 +22,19 @@
       <temperature unit="reduced">2.0</temperature>
       <domain type="box">
         <lx>15.0</lx>
-        <ly>15.0</ly>q
+        <ly>15.0</ly>
         <lz>15.0</lz>
       </domain>
       <components>
         <include query="/components/moleculetype">./lj_fluid.xml</include>
       </components>
-      <phasespacepoint>
+      <!--phasespacepoint>
         <file type="binary">
           <header>restart_data_case_c/generic_lj_step-0390.restart.restart.header.xml</header>
           <data>restart_data_case_c/generic_lj_step-0390.restart.dat</data>
         </file>
-      </phasespacepoint>
-      <!--phasespacepoint>
+      </phasespacepoint-->
+      <phasespacepoint>
         <generator name="MultiObjectGenerator">
             <objectgenerator>
                 <filler type="GridFiller">
@@ -50,7 +50,7 @@
                         </site>
                     </basis>
                     <latticeOccupancy>1.</latticeOccupancy>
-                    <density>0.85</density>
+                    <density>0.18</density>
                 </filler>
                 <object type="Cuboid">
                     <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
@@ -59,7 +59,7 @@
                 <velocityAssigner type="MaxwellVelocityDistribution"/>
             </objectgenerator>
         </generator>
-    </phasespacepoint-->
+    </phasespacepoint>
     </ensemble>
     
     <algorithm>
@@ -89,28 +89,28 @@
  
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
-      <writefrequency>20</writefrequency>
+      <writefrequency>10000</writefrequency>
     </outputplugin>
 
     <outputplugin name="CheckpointWriter">
       <type>binary</type>
-      <writefrequency>100</writefrequency>
+      <writefrequency>10000</writefrequency>
       <outputprefix>generic_lj_step</outputprefix>
     </outputplugin>
 
     </output>
 
-    <plugin name = "RadialDFCOM">
+    <!--plugin name = "RadialDFCOM">
     	<totalBins>100</totalBins>
     	<sampleFrequency>1</sampleFrequency>
       <averageFrequency>5</averageFrequency>
-    </plugin>
+    </plugin-->
 	
-	  <plugin name = "PotentialProfiler">
+	  <!--plugin name = "PotentialProfiler">
     	<totalBins>100</totalBins>
     	<sampleFrequency>1</sampleFrequency>
       <averageFrequency>5</averageFrequency>
-    </plugin>
+    </plugin-->
         
   </simulation>
 </mardyn>
