@@ -11,7 +11,7 @@ IncludeBlocks:   Regroup
 IndentCaseLabels: true  #false
 IndentWidth:     4 #2
 ObjCBlockIndentWidth: 4 #2
-PenaltyReturnTypeOnItsOwnLine: 2000000 #200
+PenaltyReturnTypeOnItsOwnLine: 2000000 #tries to force function return type and function name to be on the same line, default 200 (google)
 PointerAlignment: Left #Right
 TabWidth:        4 #8
 UseTab:          Always #Never
