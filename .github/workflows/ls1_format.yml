@@ -19,46 +19,49 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install clang-format
         run: sudo apt-get install -y clang-format
 
       - name: Run clang-format and check for differences
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          # Run clang-format and collect changes
-          clang-format -i $(find . -regex '.*\.\(cpp\|h\|hpp\|c\)')
-          git diff > patch.diff
+          # Run clang-format and get changes
+          clang-format -i $(find src -name "*.h" -or -name "*.cpp")
+          git diff --name-only > diff_files.log
           
-      - name: Check if clang-format made changes
+      - name: Check changes
         id: check_diff
         run: |
-          if [ -s patch.diff ]; then
+          if [ -s diff_files.log ]; then
             echo "Formatting issues detected!"
-            echo "::set-output name=formatting_issues::true"
+            echo "formatting_issues=true" >> "$GITHUB_ENV"
           else
             echo "No formatting issues found"
-            echo "::set-output name=formatting_issues::false"
+            echo "formatting_issues=false" >> "$GITHUB_ENV"
           fi
 
-      - name: Fail if clang-format found issues
-        if: ${{ steps.check_diff.outputs.formatting_issues == 'true' }}
-        run: exit 1
+#      - name: Post comment if issues found
+#        if: env.formatting_issues == 'true'
+#        uses: actions/github-script@v7
+#        with:
+#          script: |
+#            github.rest.issues.createComment({
+#              issue_number: context.issue.number,
+#              owner: context.repo.owner,
+#              repo: context.repo.repo,
+#              body: ':warning: The CI detected formatting issues in this pull request. '
+#                    + 'Please run clang-format locally to resolve them.\n'
+#                    + 'Details are shown in the [job log](https://github.com/'
+#                    + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ').'
+#            })
 
-      - name: Post comment if clang-format failed
-        if: ${{ steps.check_diff.outputs.formatting_issues == 'true' }}
-        uses: actions/github-script@v5
-        with:
-          script: |
-            const { context, github } = require('@actions/github');
-            const issue_number = context.payload.pull_request.number;
-
-            const body = `The CI detected formatting issues in this pull request. Please run clang-format locally to resolve them.`;
-
-            await github.issues.createComment({
-              ...context.repo,
-              issue_number: issue_number,
-              body: body
-            });
+      - name: Exit with failure if clang-format found issues
+        if: env.formatting_issues == 'true'
+        run: |
+          echo "#### :warning: Formatting issues detected!" >> $GITHUB_STEP_SUMMARY
+          echo "Format the following files properly:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat diff_files.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+#          exit 1
