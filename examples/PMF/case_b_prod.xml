@@ -19,7 +19,7 @@
     </run>
     
     <ensemble type="NVT">
-      <temperature unit="reduced">2.0</temperature>
+      <temperature unit="reduced">1.5</temperature>
       <domain type="box">
         <lx>15.0</lx>
         <ly>15.0</ly>
@@ -30,8 +30,8 @@
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>restart_data_case_c/generic_lj_step-100.restart.header.xml</header>
-          <data>restart_data_case_c/generic_lj_step-100.restart.dat</data>
+          <header>restart_data_case_b/generic_lj_step-100.restart.header.xml</header>
+          <data>restart_data_case_b/generic_lj_step-100.restart.dat</data>
         </file>
         <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>

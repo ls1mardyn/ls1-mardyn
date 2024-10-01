@@ -28,12 +28,6 @@
       <components>
         <include query="/components/moleculetype">./lj_fluid.xml</include>
       </components>
-      <!--phasespacepoint>
-        <file type="binary">
-          <header>restart_data_case_c/generic_lj_step-0390.restart.restart.header.xml</header>
-          <data>restart_data_case_c/generic_lj_step-0390.restart.dat</data>
-        </file>
-      </phasespacepoint-->
       <phasespacepoint>
         <generator name="MultiObjectGenerator">
             <objectgenerator>
@@ -99,18 +93,6 @@
     </outputplugin>
 
     </output>
-
-    <!--plugin name = "RadialDFCOM">
-    	<totalBins>100</totalBins>
-    	<sampleFrequency>1</sampleFrequency>
-      <averageFrequency>5</averageFrequency>
-    </plugin-->
-	
-	  <!--plugin name = "PotentialProfiler">
-    	<totalBins>100</totalBins>
-    	<sampleFrequency>1</sampleFrequency>
-      <averageFrequency>5</averageFrequency>
-    </plugin-->
         
   </simulation>
 </mardyn>

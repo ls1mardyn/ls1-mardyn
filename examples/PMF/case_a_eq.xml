@@ -14,12 +14,12 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>1101000</steps>
+        <steps>1000000</steps>
       </production>
     </run>
     
     <ensemble type="NVT">
-      <temperature unit="reduced">2.0</temperature>
+      <temperature unit="reduced">0.5</temperature>
       <domain type="box">
         <lx>15.0</lx>
         <ly>15.0</ly>
@@ -28,13 +28,38 @@
       <components>
         <include query="/components/moleculetype">./lj_fluid.xml</include>
       </components>
-      <phasespacepoint>
+      <!--phasespacepoint>
         <file type="binary">
-          <header>restart_data_case_c/generic_lj_step-100.restart.header.xml</header>
-          <data>restart_data_case_c/generic_lj_step-100.restart.dat</data>
+          <header>restart_data_case_c/generic_lj_step-0390.restart.restart.header.xml</header>
+          <data>restart_data_case_c/generic_lj_step-0390.restart.dat</data>
         </file>
-        <ignoreCheckpointTime>true</ignoreCheckpointTime>
-      </phasespacepoint>
+      </phasespacepoint-->
+      <phasespacepoint>
+        <generator name="MultiObjectGenerator">
+            <objectgenerator>
+                <filler type="GridFiller">
+                    <lattice system="cubic" centering="face">
+                        <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
+                        <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
+                        <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
+                    </lattice>
+                    <basis>
+                        <site>
+                            <componentid>0</componentid>
+                            <coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
+                        </site>
+                    </basis>
+                    <latticeOccupancy>1.</latticeOccupancy>
+                    <density>0.85</density>
+                </filler>
+                <object type="Cuboid">
+                    <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+                    <upper> <x>15.0</x> <y>15.0</y> <z>15.0</z> </upper>
+                </object>
+                <velocityAssigner type="MaxwellVelocityDistribution"/>
+            </objectgenerator>
+        </generator>
+    </phasespacepoint>
     </ensemble>
     
     <algorithm>
@@ -53,7 +78,7 @@
       </electrostatic>
       <thermostats>
        <!-- velocity scaling thermostat, if no component is specified the global thermostat is assumed -->
-      <thermostat type="VelocityScaling" componentId="global">
+      <thermostat type="VelocityScaling">
         <!-- target temperature, if not specified the ensemble temperature will be used -->
       </thermostat> 
       </thermostats>
@@ -61,42 +86,17 @@
     </algorithm>
     
     <output>
- 
-    <!--outputplugin name="VTKMoleculeWriter">
+    <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
-      <writefrequency>5</writefrequency>
-    </outputplugin-->
+      <writefrequency>10000</writefrequency>
+    </outputplugin>
 
     <outputplugin name="CheckpointWriter">
       <type>binary</type>
-      <writefrequency>1101000</writefrequency>
-      <outputprefix>ibi</outputprefix>
+      <writefrequency>10000</writefrequency>
+      <outputprefix>generic_lj_step</outputprefix>
     </outputplugin>
 
     </output>
-
-    <!--plugin name = "RadialDFCOM">
-    	<totalBins>100</totalBins>
-    	<sampleFrequency>1</sampleFrequency>
-      <averageFrequency>5</averageFrequency>
-    </plugin-->
-	
-	  <!--plugin name = "PotentialProfiler">
-    	<totalBins>100</totalBins>
-    	<sampleFrequency>1</sampleFrequency>
-      <averageFrequency>5</averageFrequency>
-    </plugin-->
-
-    <plugin name="PMF">
-        <singleRun>true</singleRun>
-        <stepsEquil>1e+4</stepsEquil>
-        <stepsMeasure>1e+3</stepsMeasure>
-
-        <alpha>0.2</alpha>
-        <bins>300</bins>
-        <!--rdfPath>../../examples/PMF/restart_data_case_c/rdf_0.txt</rdfPath-->
-        <!--potPath>../../examples/PMF/restart_data_case_c/pot_1.txt</potPath-->
-    </plugin>
-        
   </simulation>
 </mardyn>
