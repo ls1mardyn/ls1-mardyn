@@ -316,15 +316,12 @@ public:
 	void Madd(const double a[]) override { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
 	void Viadd(const double a[]) override { for(unsigned short d=0;d<3;++d) _Vi[d]+=a[d]; }
 	void ViSphadd(const double a[]) override { 
-		// std::cout<<">>>>>>>ViSphadd("<< a[0]<< ", "<< a[1]<< ", "<< a[2]<< ") called "<< std::endl;
 		for(unsigned short d=0;d<3;++d){	
 		_ViSph[d]+=a[d]; }
 		} 
 	void ViNadd(const double a) override { 
-		// std::cout<<">>>>>>>ViNadd("<< a<< ") called on mol "<< _id<< std::endl;
 		_ViSph[0]+=a; }
 	void ViTadd(const double a) override { 
-		// std::cout<<">>>>>>>ViTadd("<< a<< ") called on mol "<< _id<< std::endl;
 		_ViSph[1]+=a; }
 	void vadd(const double ax, const double ay, const double az) override {
 		_v[0] += ax; _v[1] += ay; _v[2] += az;
@@ -397,14 +394,14 @@ protected:
 	double _M[3];  /**< torsional moment */
 	double _L[3];  /**< angular momentum */
 	double _Vi[3]; /** Virial tensor **/
-	double _ViSph[3]; /** Spherical Virial (only has N and T component) **/
+	double _ViSph[3]; /** Spherical Virial (only has N and T component, _ViSph[2] is unused) **/
     unsigned long _id;  /**< IDentification number of that molecule */
 
 	double _upot; /**< potential energy */
 	double _upotConstCorr; /** Correction of potential energy, not changing during simulation (homogeneous system) **/
-	double _ViConstCorr; /** Correction of one virial element, not changing during simulation (homogeneous system) **/
-	double _VirNConstCorr; /** Correction of normal virial element **/
-	double _VirTConstCorr; /** Correction of normal virial element **/
+	double _ViConstCorr; /** Const. LRC of one virial element, not changing during simulation (homogeneous system) **/
+	double _VirNConstCorr; /** Const. LRC of normal virial element **/
+	double _VirTConstCorr; /** Const. LRC of normal virial element **/
 
 
 

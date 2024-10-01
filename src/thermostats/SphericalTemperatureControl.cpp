@@ -2,7 +2,7 @@
  * SphericalTemperatureControl.cpp
  *
  *  Created on: 13.11.2023
- *      Author: jniemann, based on TemperatureControl.cpp by mheinen
+ *      Author: jniemann, based on TemperatureControl plugin by mheinen
  */
 
 #include "thermostats/SphericalTemperatureControl.h"
@@ -51,35 +51,29 @@ void AbstrControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("target/temperature", _dTargetTemperature);
 	xmlconfig.getNodeValue("target/component", _nTargetComponentID);
 
-
-	// ControlMethod "VelocityScaling/Andersen/Mixed"
-	std::string methods = "";
+	// ControlMethod "VelocityScaling/Andersen"
+	std::string methods;
 	xmlconfig.getNodeValue("method", methods);
-	if (methods != "") {
-		if (methods == "VelocityScaling") {
-			_localMethod = VelocityScaling;
-
-			// init data structures
-			this->VelocityScalingInit(xmlconfig);
-		} else if (methods == "Andersen") {
-			_localMethod = Andersen;
-			xmlconfig.getNodeValue("settings/nu", _nuAndersen);
-			_timestep = global_simulation->getIntegrator()->getTimestepLength();
-			_nuDt = _nuAndersen * _timestep;
-		} else {
-			global_log->error() << "[TemperatureControl] REGION: Invalid 'method' param: " << methods << std::endl;
-			Simulation::exit(-1);
-		}
-		global_log->info() << "[TemperatureControl] REGION 'method' param: " << methods << std::endl;
-	}
-	//
-	else {
+	if (methods == "") {
 		_localMethod = VelocityScaling;
 		global_log->info() << "[TemperatureControl] REGION: no method specified, selecting VelocityScaling"
-						   << std::endl;
-
+						<< std::endl;
 		// init data structures
 		this->VelocityScalingInit(xmlconfig);
+	} else if (methods == "VelocityScaling") {
+		_localMethod = VelocityScaling;
+		// init data structures
+		this->VelocityScalingInit(xmlconfig);
+		global_log->info() << "[TemperatureControl] REGION 'method' param: " << methods << std::endl;
+	} else if (methods == "Andersen") {
+		_localMethod = Andersen;
+		xmlconfig.getNodeValue("settings/nu", _nuAndersen);
+		_timestep = global_simulation->getIntegrator()->getTimestepLength();
+		_nuDt = _nuAndersen * _timestep;
+		global_log->info() << "[TemperatureControl] REGION 'method' param: " << methods << std::endl;
+	} else {
+		global_log->error() << "[TemperatureControl] REGION: Invalid 'method' param: " << methods << std::endl;
+		Simulation::exit(-1);
 	}
 
 	// measure added kin. energy
@@ -110,25 +104,12 @@ void AbstrControlRegionT::VelocityScalingInit(XMLfileUnits& xmlconfig) {
 	}
 	this->InitBetaLogfile();
 	_localThermVarsThreadBuffer.resize(mardyn_get_max_threads());
-	for (auto& localThermVars : _localThermVarsThreadBuffer) {
-		localThermVars.resize(1); //_nNumSlabs==1
-	}
-	_globalThermVars.resize(1); //_nNumSlabs==1
-
-	// init data structure for measure of added kin. energy
-	_addedEkin.data.local.resize(1); //_nNumSlabs==1
-	_addedEkin.data.global.resize(1); //_nNumSlabs==1
 
 	_addedEkinLocalThreadBuffer.resize(mardyn_get_max_threads());
-	for (auto& addedEkinLocal : _addedEkinLocalThreadBuffer) {
-		addedEkinLocal.resize(1); //_nNumSlabs==1
-	}
 
-	std::vector<double>& v = _addedEkin.data.local;
-	std::fill(v.begin(), v.end(), 0.);
-
+	_addedEkin.data.local = 0.;
 	for (auto& addedEkinLocal : _addedEkinLocalThreadBuffer) {
-		std::fill(addedEkinLocal.begin(), addedEkinLocal.end(), 0.);
+		addedEkinLocal = 0.;
 	}
 }
 
@@ -138,60 +119,46 @@ void AbstrControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp) {
 #endif
 	if (_localMethod != VelocityScaling) return;
 	domainDecomp->collCommInit(4);
-	for (unsigned s = 0; s < 1; ++s) { //_nNumSlabs==1
-		unsigned long numMolecules{}, numRotationalDOF{};
-		double ekinTrans{}, ekinRot{};
-		for (const auto& threadBuffers : _localThermVarsThreadBuffer) {
-			const auto& localVar = threadBuffers[s];
-			numMolecules += localVar._numMolecules;
-			numRotationalDOF += localVar._numRotationalDOF;
-			ekinTrans += localVar._ekinTrans;
-			ekinRot += localVar._ekinRot;
-		}
-		domainDecomp->collCommAppendUnsLong(numMolecules);
-		domainDecomp->collCommAppendUnsLong(numRotationalDOF);
-		domainDecomp->collCommAppendDouble(ekinRot);
-		domainDecomp->collCommAppendDouble(ekinTrans);
+	
+	unsigned long numMolecules{}, numRotationalDOF{};
+	double ekinTrans{}, ekinRot{};
+	for (const auto& localVar : _localThermVarsThreadBuffer) {
+		numMolecules += localVar._numMolecules;
+		numRotationalDOF += localVar._numRotationalDOF;
+		ekinTrans += localVar._ekinTrans;
+		ekinRot += localVar._ekinRot;
 	}
+
+	domainDecomp->collCommAppendUnsLong(numMolecules);
+	domainDecomp->collCommAppendUnsLong(numRotationalDOF);
+	domainDecomp->collCommAppendDouble(ekinRot);
+	domainDecomp->collCommAppendDouble(ekinTrans);
 	domainDecomp->collCommAllreduceSum();
-	for (unsigned s = 0; s < 1; ++s) { //_nNumSlabs==1
-		GlobalThermostatVariables& globalTV = _globalThermVars[s];  // do not forget &
-		globalTV._numMolecules = domainDecomp->collCommGetUnsLong();
-		globalTV._numRotationalDOF = domainDecomp->collCommGetUnsLong();
-		globalTV._ekinRot = domainDecomp->collCommGetDouble();
-		globalTV._ekinTrans = domainDecomp->collCommGetDouble();
-	}
+	_globalThermVars._numMolecules = domainDecomp->collCommGetUnsLong();
+	_globalThermVars._numRotationalDOF = domainDecomp->collCommGetUnsLong();
+	_globalThermVars._ekinRot = domainDecomp->collCommGetDouble();
+	_globalThermVars._ekinTrans = domainDecomp->collCommGetDouble();
 	domainDecomp->collCommFinalize();
 
 	// Adjust target temperature
 	uint64_t simstep = _simulation.getSimulationStep();
 
-	// calc betaTrans, betaRot, and their sum
-	double dBetaTransSumSlabs = 0.;
-	double dBetaRotSumSlabs = 0.;
 
-	for (unsigned int s = 0; s < 1; ++s) { //_nNumSlabs==1
-		GlobalThermostatVariables& globalTV = _globalThermVars[s];  // do not forget &
-		if (globalTV._numMolecules < 1)
-			globalTV._betaTrans = 1.;
-		else
-			globalTV._betaTrans = pow(
-				3 * globalTV._numMolecules * _dTargetTemperature / globalTV._ekinTrans,
-				_dTemperatureExponent);
+	if (_globalThermVars._numMolecules < 1)
+		_globalThermVars._betaTrans = 1.;
+	else
+		_globalThermVars._betaTrans = pow(
+			3 * _globalThermVars._numMolecules * _dTargetTemperature / _globalThermVars._ekinTrans,
+			_dTemperatureExponent);
 
-		if (globalTV._numRotationalDOF < 1)
-			globalTV._betaRot = 1.;
-		else
-			globalTV._betaRot =
-				pow(globalTV._numRotationalDOF * _dTargetTemperature / globalTV._ekinRot, _dTemperatureExponent);
+	if (_globalThermVars._numRotationalDOF < 1)
+		_globalThermVars._betaRot = 1.;
+	else
+		_globalThermVars._betaRot = pow(_globalThermVars._numRotationalDOF * _dTargetTemperature / _globalThermVars._ekinRot, _dTemperatureExponent);
 
-		// calc sums over all slabs
-		dBetaTransSumSlabs += globalTV._betaTrans;
-		dBetaRotSumSlabs += globalTV._betaRot;
-	}
 	// calc ensemble average of beta_trans, beta_rot
-	_dBetaTransSumGlobal += dBetaTransSumSlabs;
-	_dBetaRotSumGlobal += dBetaRotSumSlabs;
+	_dBetaTransSumGlobal += _globalThermVars._betaTrans;
+	_dBetaRotSumGlobal += _globalThermVars._betaRot;
 	_numSampledConfigs++;
 }
 
@@ -215,8 +182,7 @@ void AbstrControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* 
 	if(!this->ContainsMolecule(mol)) return;
 
 	auto myThreadNum = mardyn_get_thread_num();
-	double nPosIndex = 0;
-	LocalThermostatVariables& localTV = _localThermVarsThreadBuffer[myThreadNum].at(nPosIndex);  // do not forget &  
+	LocalThermostatVariables& localTV = _localThermVarsThreadBuffer[myThreadNum];  // do not forget &  
 	localTV._ekinTrans += _accumulator->CalcKineticEnergyContribution(mol);
 
 	// sum up rot. kinetic energy (2x)
@@ -243,12 +209,11 @@ void AbstrControlRegionT::ControlTemperature(Molecule* mol) {
 	// check for method
 	if (_localMethod == VelocityScaling) {
 		
-		double nPosIndex = 0;
-		GlobalThermostatVariables& globalTV = _globalThermVars[nPosIndex];  // do not forget &
-		if (globalTV._numMolecules < 1) return;
+		GlobalThermostatVariables& globalTV = _globalThermVars;  // do not forget &
+		if (_globalThermVars._numMolecules < 1) return;
 		// scale velocity
-		double vcorr = 2. - 1. / globalTV._betaTrans;
-		double Dcorr = 2. - 1. / globalTV._betaRot;
+		double vcorr = 2. - 1. / _globalThermVars._betaTrans;
+		double Dcorr = 2. - 1. / _globalThermVars._betaRot;
 
 		// measure added kin. energy
 		double v2_old = mol->v2();
@@ -260,7 +225,7 @@ void AbstrControlRegionT::ControlTemperature(Molecule* mol) {
 		// measure added kin. energy
 		double v2_new = mol->v2();
 		int mythread = mardyn_get_thread_num();
-		_addedEkinLocalThreadBuffer[mythread].at(nPosIndex) += (v2_new - v2_old);
+		_addedEkinLocalThreadBuffer[mythread] += (v2_new - v2_old);
 
 		mol->scale_D(Dcorr);
 	} else if (_localMethod == Andersen) {
@@ -285,9 +250,7 @@ void AbstrControlRegionT::ResetLocalValues() {
 #endif
 	// reset local values
 	for (int thread = 0; thread < mardyn_get_max_threads(); ++thread) {
-		for (unsigned int s = 0; s < 1; ++s) {//_nNumSlabs==1
-			_localThermVarsThreadBuffer[thread][s].clear();
-		}
+		_localThermVarsThreadBuffer[thread].clear();
 	}
 }
 
@@ -333,10 +296,8 @@ void AbstrControlRegionT::WriteBetaLogfile(unsigned long simstep) {
 	if (rank != 0) return;
 #endif
 
-	// double dInvNumConfigsSlabs = 1. / (double)(_numSampledConfigs*_nNumSlabs);
-	double dInvNumConfigsSlabs = 1. / (double)(_numSampledConfigs); //_nNumSlabs==1
-	double dBetaTrans = _dBetaTransSumGlobal * dInvNumConfigsSlabs;
-	double dBetaRot = _dBetaRotSumGlobal * dInvNumConfigsSlabs;
+	double dBetaTrans = _dBetaTransSumGlobal  / (double)(_numSampledConfigs);
+	double dBetaRot = _dBetaRotSumGlobal  / (double)(_numSampledConfigs);
 
 	// writing to file
 	const std::string fname = _strFilenamePrefixBetaLog + "_reg" + std::to_string(this->GetID()) + ".dat";
@@ -387,13 +348,9 @@ void AbstrControlRegionT::InitAddedEkin() {
 #endif
 		// touch file
 		const std::string fname = "addedEkin_reg" + std::to_string(this->GetID()) + "_cid" + std::to_string(_nTargetComponentID) + ".dat";
-		std::ofstream ofs;
-		ofs.open(fname, std::ios::out);
+		std::ofstream ofs(fname, std::ios::out);
 		ofs << std::setw(12) << "simstep";
-		for (int i = 0; i < 1; ++i) { //_nNumSlabs==1
-			std::string s = "bin" + std::to_string(i+1);
-			ofs << std::setw(24) << s;
-		}
+		ofs << std::setw(24) << "regionData";
 		ofs << std::endl;
 		ofs.close();
 	}
@@ -408,24 +365,20 @@ void AbstrControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const u
 	if (simstep % _addedEkin.writeFreq != 0) return;
 
 	for (int thread = 0; thread < mardyn_get_max_threads(); ++thread) {
-		mardyn_assert(_addedEkin.data.local.size() == 1);//_nNumSlabs==1
-		for (std::size_t slabID = 0; slabID < 1; ++slabID) { //_nNumSlabs==1
-			_addedEkin.data.local[slabID] += _addedEkinLocalThreadBuffer[thread][slabID];
-		}
+		_addedEkin.data.local += _addedEkinLocalThreadBuffer[thread] ;
 	}
 	// calc global values
 #ifdef ENABLE_MPI
 	MPI_Reduce(_addedEkin.data.local.data(), _addedEkin.data.global.data(), _addedEkin.data.local.size(), MPI_DOUBLE,
 			   MPI_SUM, 0, MPI_COMM_WORLD);
 #else
-	std::memcpy(_addedEkin.data.global.data(), _addedEkin.data.local.data(), _addedEkin.data.local.size());
+	_addedEkin.data.global = _addedEkin.data.local;
 #endif
 
 	// reset local values
-	std::vector<double>& vl = _addedEkin.data.local;
-	std::fill(vl.begin(), vl.end(), 0.);
+	_addedEkin.data.local = 0.;
 	for (auto& addedEkinLocal : _addedEkinLocalThreadBuffer) {
-		std::fill(addedEkinLocal.begin(), addedEkinLocal.end(), 0.);
+		addedEkinLocal = 0.;
 	}
 
 #ifdef ENABLE_MPI
@@ -435,10 +388,7 @@ void AbstrControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const u
 #endif
 
 	// dekin = d2ekin * 0.5
-	std::vector<double>& vg = _addedEkin.data.global;
-	for (double& it : vg) {
-		it *= 0.5;
-	}
+	_addedEkin.data.global *= 0.5;
 
 	// writing .dat-files
 	const std::string fname = "addedEkin_reg" + std::to_string(this->GetID()) + "_cid" + std::to_string(_nTargetComponentID) + ".dat";
@@ -446,9 +396,7 @@ void AbstrControlRegionT::writeAddedEkin(DomainDecompBase* domainDecomp, const u
 	ofs.open(fname, std::ios::app);
 	
 	ofs << std::setw(12) << simstep;
-	for (double& it : vg) {
-		ofs << FORMAT_SCI_MAX_DIGITS << it;
-	}
+	ofs << FORMAT_SCI_MAX_DIGITS << _addedEkin.data.global;
 	ofs << std::endl;
 	ofs.close();
 }
@@ -511,17 +459,17 @@ void SphericalControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 
 
 	// observer mechanism
-				std::vector<uint32_t> refCoordsID(6, 0);
-				xmlconfig.getNodeValue("coords/lcx@refcoordsID", refCoordsID.at(0));
-				xmlconfig.getNodeValue("coords/lcy@refcoordsID", refCoordsID.at(1));
-				xmlconfig.getNodeValue("coords/lcz@refcoordsID", refCoordsID.at(2));
-				xmlconfig.getNodeValue("coords/ucx@refcoordsID", refCoordsID.at(3));
-				xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID.at(4));
-				xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID.at(5));
+	std::vector<uint32_t> refCoordsID(6, 0);
+	xmlconfig.getNodeValue("coords/lcx@refcoordsID", refCoordsID.at(0));
+	xmlconfig.getNodeValue("coords/lcy@refcoordsID", refCoordsID.at(1));
+	xmlconfig.getNodeValue("coords/lcz@refcoordsID", refCoordsID.at(2));
+	xmlconfig.getNodeValue("coords/ucx@refcoordsID", refCoordsID.at(3));
+	xmlconfig.getNodeValue("coords/ucy@refcoordsID", refCoordsID.at(4));
+	xmlconfig.getNodeValue("coords/ucz@refcoordsID", refCoordsID.at(5));
 
-				_bIsObserver = (std::accumulate(refCoordsID.begin(), refCoordsID.end(), 0u)) > 0;
-				if (true == _bIsObserver) this->PrepareAsObserver(refCoordsID);
-				// Registration as observer has to be done later by method prepare_start() when DistControl plugin is present.
+	_bIsObserver = (std::accumulate(refCoordsID.begin(), refCoordsID.end(), 0u)) > 0;
+	if (true == _bIsObserver) this->PrepareAsObserver(refCoordsID);
+	// Registration as observer has to be done later by method prepare_start() when DistControl plugin is present.
 
 
 	AbstrControlRegionT::readXML(xmlconfig);

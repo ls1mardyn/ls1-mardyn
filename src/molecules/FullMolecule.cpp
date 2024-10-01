@@ -486,21 +486,17 @@ void FullMolecule::writeBinary(std::ostream& ostrm) const {
 // these are only used when compiling molecule.cpp and therefore might be inlined without any problems
 
 void FullMolecule::clearFM() {
-	// Log::global_log->info() << "-- void FullMolecule::clearFM() has been called on mol " << _id << ". _Vi set to 0. " << std::endl;
 	mardyn_assert(_soa != nullptr);
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;
-	// std::cout << ">>>Vi[] of MolID: " << getID() << ": [" << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << "]." << std::endl;
+	_upot = 0.;
 
-
-
+	/* 	If Spherical.cpp wants to access Virials (eg to produce pressure output), 
+		the resetting of the virials has to be moved after calculateLongrange in Simulation.cpp!
+		(use clearVirial();)
+	*/
 	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
 	_ViSph[0] =  _ViSph[1]= 0., _ViSph[2]= 0.;
-	/* 	If Spherical.cpp wants to access Virials (eg to produce pressure output), 
-		this has to be moved after calculateLongrange in Simulation.cpp!
-		(use resetVirials();)
-	*/
-	_upot = 0.;
 
 	std::array<vcp_real_accum, 3> clearance = {0.0, 0.0, 0.0};
 
@@ -519,7 +515,7 @@ void FullMolecule::clearFM() {
 
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::CHARGE, index_in_soa);
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::CHARGE, index_in_soa);
-		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL_SPHERICAL, ConcSites::SiteType::LJC, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL_SPHERICAL, ConcSites::SiteType::CHARGE, index_in_soa);
 	}
 	ns = numDipoles();
 	for (unsigned i = 0; i < ns; ++i) {
@@ -527,7 +523,7 @@ void FullMolecule::clearFM() {
 
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::DIPOLE, index_in_soa);
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::DIPOLE, index_in_soa);
-		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL_SPHERICAL, ConcSites::SiteType::LJC, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL_SPHERICAL, ConcSites::SiteType::DIPOLE, index_in_soa);
 
 		_soa->_dipoles_M.x(index_in_soa) = 0.0;
 		_soa->_dipoles_M.y(index_in_soa) = 0.0;
@@ -539,7 +535,7 @@ void FullMolecule::clearFM() {
 
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
-		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL_SPHERICAL, ConcSites::SiteType::LJC, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL_SPHERICAL, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 
 		_soa->_quadrupoles_M.x(index_in_soa) = 0.0;
 		_soa->_quadrupoles_M.y(index_in_soa) = 0.0;
@@ -575,8 +571,8 @@ void FullMolecule::calcFM_site(const std::array<double, 3>& dsite, const std::ar
 void FullMolecule::clearVirial() {
 	double zero3[] = {.0,.0,.0};
 	setVi(zero3);
-	setViN(0.0);
-	setViT(0.0);
+	setViN(.0);
+	setViT(.0);
 }
 
 void FullMolecule::calcFM() {
@@ -618,6 +614,7 @@ void FullMolecule::calcFM() {
 
 		const unsigned index_in_soa = i + _soa_index_c;
 		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::CHARGE, index_in_soa);
+		// interimSph = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL_SPHERICAL, ConcSites::SiteType::CHARGE, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
@@ -634,6 +631,7 @@ void FullMolecule::calcFM() {
 
 		const unsigned index_in_soa = i + _soa_index_d;
 		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::DIPOLE, index_in_soa);
+		// interimSph = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL_SPHERICAL, ConcSites::SiteType::DIPOLE, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
@@ -654,6 +652,7 @@ void FullMolecule::calcFM() {
 
 		const unsigned index_in_soa = i + _soa_index_q;
 		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
+		// interimSph = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIAL_SPHERICAL, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
@@ -673,11 +672,10 @@ void FullMolecule::calcFM() {
 	mardyn_assert(!std::isnan(temp_Vi[1]));
 	mardyn_assert(!std::isnan(temp_Vi[2]));
 	Viadd(temp_Vi);
-	ViNadd(temp_ViSph[0]); // correct?
-	ViTadd(temp_ViSph[1]*0.5);  // *.5 correct here?
+	ViNadd(temp_ViSph[0]);
+	ViTadd(temp_ViSph[1]*0.5);
 	Madd(temp_M);
 }
-
 
 /**
  * catches NaN values and missing data
@@ -703,8 +701,8 @@ void FullMolecule::check(unsigned long id) {
   if (!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2])|| !isfinite(_ViSph[0])|| !isfinite(_ViSph[1])  ) {
     std::cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = ("
          << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")" 
-		 << " and spherical Virial ViSph = ([)" 
-         << _ViSph[0] << ", " << _ViSph[1] << ", " << _ViSph[2] << ")" 
+		 << " and spherical Virial ViSph = (" 
+         << _ViSph[0] << ", " << _ViSph[1] << ")" 
 		 << std::endl;
     _Vi[0] = 0.0;
     _Vi[1] = 0.0;

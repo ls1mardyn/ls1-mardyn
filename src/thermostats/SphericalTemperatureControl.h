@@ -2,7 +2,11 @@
  * SphericalTemperatureControl.h
  *
  *  Created on: 13.11.2023
- *      Author: jniemann, based on TemperatureControl.cpp by mheinen
+ *      Author: jniemann, based on TemperatureControl plugin by mheinen
+ * 
+ * Description: In vle of droplets, the Temperature may develop differently in both phases, if only a global thermostat is used, 
+ * 				due to systematic differences in how well the integrators function in both phases.
+ * 				To correct this, a thermostat with the ability to adjust the Temperature inside and outside a spherical Region serperatly from one another is needed.
  */
 
 #pragma once
@@ -22,8 +26,7 @@
 #include "utils/Region.h"
 
 
-
-/* 
+/*  XML setup:
 <thermostat type="SphericalTemperatureControl">
 	<control>
 		<start>INT</start>   						<!-- Simstep to start sampling; default 0 -->
@@ -43,11 +46,11 @@
 				<component>0</component>
 			</target>
 			<settings>
-				<numslabs>1</numslabs>
+				<numslabs>1</numslabs>							<!-- Legacy; please ignore / don't change. values different from 1 will not have an effect. -->
 				<exponent>DOUBLE</exponent>
 				<directions>xyz</directions>
 			</settings>
-			<writefreq>INT</writefreq>
+			<writefreq>INT</writefreq>							<!-- Write Frequency; default 1000 -->
 			<fileprefix>STRING</fileprefix>
 		</region>
 	</regions>
@@ -58,18 +61,12 @@ class DistControl;
 class XMLfileUnits;
 class DomainDecompBase;
 class ParticleContainer;
-// class Accumulator;
 class SphericalTemperatureControl;
 
 class AbstrControlRegionT {
 public:
 	AbstrControlRegionT();
 	virtual ~AbstrControlRegionT();
-
-	/** @brief Read in XML configuration for TemperatureControl and all its included objects.
-	*TODO: write something here.
-	*/
-
 
 	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
@@ -110,13 +107,11 @@ private:
 	// create accumulator object dependent on which translatoric directions should be thermostated (xyz)
 	Accumulator* CreateAccumulatorInstance();
 
-	// double radiusBondary;
-
 	/**
 	 * Thread buffer for the local thermostat variables.
 	 */
-	std::vector<std::vector<LocalThermostatVariables>> _localThermVarsThreadBuffer;
-	std::vector<GlobalThermostatVariables> _globalThermVars;
+	std::vector<LocalThermostatVariables> _localThermVarsThreadBuffer;
+	GlobalThermostatVariables _globalThermVars;
 
 	double _dTargetTemperature;
 	double _dTemperatureExponent;
@@ -138,13 +133,13 @@ private:
 
 	struct AddedEkin {
 		uint32_t writeFreq;
-		CommVar<std::vector<double>> data;  // \Delta E_kin * 2/m = v^2_2 - v^2_1
+		CommVar<double> data;  // \Delta E_kin * 2/m = v^2_2 - v^2_1
 	} _addedEkin;
 
 	/**
 	 * Thread buffer for the local kinetic energy.
 	 */
-	std::vector<std::vector<double>> _addedEkinLocalThreadBuffer;
+	std::vector<double> _addedEkinLocalThreadBuffer;
 
 	struct Ramp {
 		bool enabled;
@@ -163,23 +158,10 @@ public:
 	SphericalControlRegionT(SphericalTemperatureControl* const parent);
 	~SphericalControlRegionT() override;
 
-	/** @brief Read in XML configuration for TemperatureControl and all its included objects.
-	*TODO: write something here.
-	*/
-
 	bool ContainsMolecule(Molecule* mol) override;
 
 	void readXML(XMLfileUnits& xmlconfig) override;
 	unsigned int GetID() override { return _nID; };
-	// void VelocityScalingInit(XMLfileUnits& xmlconfig);
-	// void CalcGlobalValues(DomainDecompBase* domainDecomp);
-	// void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp);
-	// void ControlTemperature(Molecule* mol);
-	// void ResetLocalValues();
-
-	// // beta log file
-	// void InitBetaLogfile();
-	// void WriteBetaLogfile(unsigned long simstep);
 
 	enum LocalControlMethod {
 		VelocityScaling,
@@ -190,27 +172,12 @@ public:
 	void registerAsObserver() override;
 	void update(SubjectBase* subject) override;
 
-	// // measure added kin. energy
-	// void InitAddedEkin();
-	// void writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep);
-
 private:
-	// // create accumulator object dependent on which translatoric directions should be thermostated (xyz)
-	// Accumulator* CreateAccumulatorInstance();
-
-	// // observer mechanism: update region coords dependent on the interface position, determined by plugin DistControl
-	// DistControl* getDistControl();
-
-	// // instances / ID
-	// static unsigned short _nStaticID;
-
-	// double radiusBondary;
-
 	/**
 	 * Thread buffer for the local thermostat variables.
 	 */
-	std::vector<std::vector<LocalThermostatVariables>> _localThermVarsThreadBuffer;
-	std::vector<GlobalThermostatVariables> _globalThermVars;
+	std::vector<LocalThermostatVariables> _localThermVarsThreadBuffer;
+	GlobalThermostatVariables _globalThermVars;
 
 	double _dTargetTemperature;
 	double _dTemperatureExponent;
@@ -250,15 +217,6 @@ public:
 	bool ContainsMolecule(Molecule* mol) override;
 	void readXML(XMLfileUnits& xmlconfig) override;
 	unsigned int GetID() override { return SphericalRegion::_nID; };
-	// void VelocityScalingInit(XMLfileUnits& xmlconfig);
-	// void CalcGlobalValues(DomainDecompBase* domainDecomp);
-	// void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp);
-	// void ControlTemperature(Molecule* mol);
-	// void ResetLocalValues();
-
-	// // beta log file
-	// void InitBetaLogfile();
-	// void WriteBetaLogfile(unsigned long simstep);
 
 	enum LocalControlMethod {
 		VelocityScaling,
@@ -269,27 +227,12 @@ public:
 	void registerAsObserver() override;
 	void update(SubjectBase* subject) override;
 
-	// // measure added kin. energy
-	// void InitAddedEkin();
-	// void writeAddedEkin(DomainDecompBase* domainDecomp, const uint64_t& simstep);
-
 private:
-	// // create accumulator object dependent on which translatoric directions should be thermostated (xyz)
-	// Accumulator* CreateAccumulatorInstance();
-
-	// // observer mechanism: update region coords dependent on the interface position, determined by plugin DistControl
-	// DistControl* getDistControl();
-
-	// // instances / ID
-	// static unsigned short _nStaticID;
-
-	// double radiusBondary;
-
 	/**
 	 * Thread buffer for the local thermostat variables.
 	 */
-	std::vector<std::vector<LocalThermostatVariables>> _localThermVarsThreadBuffer;
-	std::vector<GlobalThermostatVariables> _globalThermVars;
+	std::vector<LocalThermostatVariables> _localThermVarsThreadBuffer;
+	GlobalThermostatVariables _globalThermVars;
 
 	double _dTargetTemperature;
 	double _dTemperatureExponent;
@@ -319,11 +262,6 @@ private:
 	 */
 	std::vector<std::vector<double>> _addedEkinLocalThreadBuffer;
 };
-
-
-
-
-
 
 
 

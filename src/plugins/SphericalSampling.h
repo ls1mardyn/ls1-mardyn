@@ -17,13 +17,12 @@
 #include "parallel/DomainDecompBase.h"
 
 /** @brief
-* Plugin: can be enabled via config.xml <br>
+* Plugin: Samples values shellwisewise in radial direction. Shell-Center = center of simulation domain.
+* There is NO differentiation between components; it is assumed that all (pseudo) components have the same mass (eg for temperature calculation)
 *
-* Samples values binwise in radial and y-direction
-* There is NO differentiation between components; it is assumed that all (pseudo) components have the same mass (for correct calculation of temperature)
 * \code{.xml}
 * <plugin name="SphericalSampling">
-*           <nShells>INT</nShells>                  <!-- Width of sampling bins; default 1.0 -->
+*           <nShells>INT</nShells>                      <!-- Number of shells (not including the outermost reditual region); default 60 -->
             <start>INT</start>                          <!-- Simstep to start sampling; default 0 -->
             <writefrequency>INT</writefrequency>        <!-- Simstep to write out result file; default 10000 -->
             <stop>INT</stop>                            <!-- Simstep to stop sampling; default MAX -->
@@ -35,7 +34,7 @@ class SphericalSampling : public PluginBase {
  private:
     // Control: general
     unsigned int _nShells {60};
-    unsigned long _startSampling {0ul};
+    unsigned long _startSampling {};
     unsigned long _writeFrequency {1000ul};
     unsigned long _stopSampling {std::numeric_limits<unsigned long>::max()};
 
@@ -44,7 +43,7 @@ class SphericalSampling : public PluginBase {
     unsigned long _lenVector {_nShells + 1}; // outer-most element for residual volume (cuboid minus sphere)
     std::array<double, 3> _globalBoxLength;
     std::array<double, 3> _globalCenter;
-    double _distMax;
+    double _distMax; //maximum outer radius of outermost shell ( = min(_globalBoxLength)/2.)  
 
     // Accumulated quantities over _writeFrequency per bin
     // NOTE: Only the root process knows correct values (except number of molecules and temperature)
@@ -52,20 +51,23 @@ class SphericalSampling : public PluginBase {
     
     
     std::vector<unsigned long> _numMolecules_accum;             // Number of molecules in bin
-    std::vector<unsigned long> _doftotal_accum;                 // DOF in bin
+    std::vector<unsigned long> _doftotal_accum;                 // degrees of freedom in bin
     std::vector<double> _mass_accum;                            // Mass
     std::vector<double> _ekin_accum;                            // Kinetic energy including drift
     std::vector<double> _virSph_accum;                          // Virial (sum over Spherical Coord)
     std::vector<double> _virN_accum;                            // Virial in normal diection
     std::vector<double> _virT_accum;                            // Virial in tangential diection
-    std::vector<double> _velocityN_accum;                            // Virial in tangential diection
+    std::vector<double> _velocityN_accum;                       // Virial in tangential diection
     std::array<std::vector<double>, 3> _virialVect_accum;       // Virial in x,y,z direction
     std::array<std::vector<double>, 3> _ekinVect_accum;         // Kinetic energy in each direction (drift corrected); radial, height (y), tangantial
-
+     
+    std::vector<double> _shell_lowerBound;
+    std::vector<double> _shell_centralRadius;
+    std::vector<double> _shell_volume;
     std::vector<unsigned long> _countSamples;                   // Number of samples; can vary from bin to bin as some bins could be empty
 
     void resizeVectors();  // Change size of accumulation vectors
-    void resetVectors();   // Set accumulation vectors to zero
+    void resetAccumVectors();   // Set accumulation vectors to zero
 
  public:
     SphericalSampling();

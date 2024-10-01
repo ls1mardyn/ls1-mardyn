@@ -220,34 +220,20 @@ void VectorizedCellProcessor::endTraversal() {
 
 		//CALCULATION OF V_n and V_t:
 		/* 
-		  --- ANNAHMEN:
-		   f_x 		= kraft zwischen mols in x-richtugn
-		   m1_r_x 	= x-position von mol 1
-		   r1_x 	= x-position von site 1
-
- 		*/
+		 * --- ANNAHMEN:
+		 *  f_x 	= kraft zwischen mols in x-richtugn
+		 *  m1_r_x 	= x-position von mol 1
+		 *  r1_x 	= x-position von site 1
+ 		 */
 
 
 		double cx = 0.5*_simulation.getDomain()->getGlobalLength(0);
 		double cy = 0.5*_simulation.getDomain()->getGlobalLength(1);
 		double cz = 0.5*_simulation.getDomain()->getGlobalLength(2);
-		/* 
-		Problem: ich will eine konstante auf jedes element eines RealCalcVectors addieren.
-		Lösung (vermutlich schlecht): ich erstelle einen RealCalcVec, bei dem alle elemente gelich der konstante sind und addiere die vektoren
-		Problem: mit welcher dieser funktoinen erstelle ich den hilfsvektor?:
-				static RealVec set1(const float& v)
-				static RealVec aligned_load(const float * const a)  <- führt zu segmentation fault (direkt an dieser stelle)
-				static RealVec broadcast(const float * const a)
-		set1 und broadcast scheinen zu funktionieren. keine ahung, ob sie verschiedene dinge tun.
-		--> oben (defintion der vektoren "one", "two", ... wird set1 verwednet -> machen wir so.)
-		*/
 		
 		const RealCalcVec center_x = RealCalcVec::set1(cx);
 		const RealCalcVec center_y = RealCalcVec::set1(cy);
 		const RealCalcVec center_z = RealCalcVec::set1(cz);
-		// const RealCalcVec center_x = RealCalcVec::broadcast(&cx);
-		// const RealCalcVec center_y = RealCalcVec::broadcast(&cy);
-		// const RealCalcVec center_z = RealCalcVec::broadcast(&cz);
 
 		const RealCalcVec ksi1_x = r1_x - center_x;
 		const RealCalcVec ksi1_y = r1_y - center_y;
@@ -275,9 +261,6 @@ void VectorizedCellProcessor::endTraversal() {
 		const RealCalcVec xj_scalar_r = RealCalcVec::scal_prod(ksi2_x, ksi2_y, ksi2_z, m_dx, m_dy, m_dz);//wrong by factor -1, but factor is lost when squared below 
 		const RealCalcVec rNij2 = (xi_scalar_r * xi_scalar_r) / r1_ksi2; 
 		const RealCalcVec rNji2 = (xj_scalar_r * xj_scalar_r) / r2_ksi2;
-
-		// Log::global_log->info() << "VectorizedCellProcessor: scale = "<< scale << std::endl;
-
 
 		V1_n = RealAccumVec::convertCalcToAccum(rNij2 * scale); 
 		V2_n = RealAccumVec::convertCalcToAccum(rNji2 * scale); 
@@ -914,7 +897,7 @@ void VectorizedCellProcessor::_calculatePairs(CellDataSoA & soa1, CellDataSoA & 
 		 vcp_real_accum * const soa1_ljc_V_z = soa1.getBeginAccum(QuantityType::VIRIAL, SiteType::LJC, Coordinate::Z);
 		 vcp_real_accum * const soa1_ljc_V_n = soa1.getBeginAccum(QuantityType::VIRIAL_SPHERICAL, SiteType::LJC, Coordinate::X); // X used for N
 		 vcp_real_accum * const soa1_ljc_V_t = soa1.getBeginAccum(QuantityType::VIRIAL_SPHERICAL, SiteType::LJC, Coordinate::Y); // Y used for T
-		//  vcp_real_accum * const soa1_ljc_V__ = soa1.getBeginAccum(QuantityType::VIRIAL_SPHERICAL, SiteType::LJC, Coordinate::Z); // Z unused
+		// vcp_real_accum * const soa1_ljc_V__ = soa1.getBeginAccum(QuantityType::VIRIAL_SPHERICAL, SiteType::LJC, Coordinate::Z); // Z unused
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
 	const vcp_ljc_id_t * const soa1_ljc_id = soa1._ljc_id;
 

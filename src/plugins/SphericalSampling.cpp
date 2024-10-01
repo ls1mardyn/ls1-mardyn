@@ -22,23 +22,6 @@
 
 SphericalSampling::SphericalSampling() {}
 
-void SphericalSampling::init(ParticleContainer* /* particleContainer */, DomainDecompBase* domainDecomp, Domain* domain) {
-
-    _globalBoxLength[0] = domain->getGlobalLength(0);
-    _globalBoxLength[1] = domain->getGlobalLength(1);
-    _globalBoxLength[2] = domain->getGlobalLength(2);
-
-
-    _distMax = *(std::min_element(_globalBoxLength.begin(), _globalBoxLength.end())) * 0.5;
-    _shellMappingDistMax = _distMax*_distMax; // for position-to-shell mapping by squared distance from center
-
-    // Entry per bin; all components sampled as one
-    _lenVector = _nShells + 1;
-
-    resizeVectors();
-    resetVectors();
-}
-
 void SphericalSampling ::readXML(XMLfileUnits& xmlconfig) {
 
     xmlconfig.getNodeValue("nShells", _nShells);
@@ -46,13 +29,46 @@ void SphericalSampling ::readXML(XMLfileUnits& xmlconfig) {
     xmlconfig.getNodeValue("writefrequency", _writeFrequency);
     xmlconfig.getNodeValue("stop", _stopSampling);
 
-
     Log::global_log->info() << getPluginName() << "  Start:WriteFreq:Stop: " << _startSampling << " : " << _writeFrequency << " : " << _stopSampling << std::endl;
     Log::global_log->info() << getPluginName() << "  nShells: " << _nShells << std::endl;
-    Log::global_log->info() << getPluginName() << "  All components treated as single one" << std::endl;
+    Log::global_log->info() << getPluginName() << "  all components treated as one" << std::endl;
 }
 
-void SphericalSampling ::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {
+
+void SphericalSampling::init(ParticleContainer* /* particleContainer */, DomainDecompBase* domainDecomp, Domain* domain) {
+
+    // Entry per bin; all components sampled as one
+    _lenVector = _nShells + 1;
+    resizeVectors();
+    resetAccumVectors();
+
+    // calculate geometric properties of box and shells:
+    _globalBoxLength[0] = domain->getGlobalLength(0);
+    _globalBoxLength[1] = domain->getGlobalLength(1);
+    _globalBoxLength[2] = domain->getGlobalLength(2);
+    _distMax = *(std::min_element(_globalBoxLength.begin(), _globalBoxLength.end())) * 0.5;
+    std::transform(_globalBoxLength.begin(), _globalBoxLength.end(), _globalCenter.begin(), [](auto& c){return c*.5;});
+
+    _shellMappingDistMax = _distMax*_distMax; // for position-to-shell mapping by squared distance from center
+
+    /* idea: shells are distributed not with constant thickness, but rather with the lower bound of shell i is proportional to sqrt(i). 
+     * This makes shell volume less dependent on shell position (tiny innermost shells have bad statistics) 
+     */ 
+    //this implementation is problably bad. perhaps better using stl-algorithm? (#todo):
+    _shell_lowerBound[0] = 0;
+    const double nShellsInv = 1./_nShells;
+    for(int i = 1; i < _lenVector; i++){
+        _shell_lowerBound[i] = std::sqrt( static_cast<double>(i)*nShellsInv*_shellMappingDistMax );
+        _shell_centralRadius[i-1] = (_shell_lowerBound[i-1] + _shell_lowerBound[i])/2.;
+        _shell_volume[i-1] = 4./3. * M_PI * ( std::pow(_shell_lowerBound[i],3) - std::pow(_shell_lowerBound[i-1],3) );
+    }
+    _shell_centralRadius[_lenVector-1] = (_shell_lowerBound[_lenVector-1] + (_distMax/_nShells)); // not very precise
+    _shell_volume[_lenVector-1] = _globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2] - 4./3.*M_PI*std::pow(_shell_lowerBound[_lenVector-1],3);
+    // \end bad implementation
+}
+
+
+void SphericalSampling::afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) {
 
     // Sampling starts after _startSampling and is conducted up to _stopSampling
     if ((simstep <= _startSampling) or (simstep > _stopSampling)) {
@@ -74,17 +90,16 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
         regionSize[d] = regionHighCorner[d] - regionLowCorner[d];
     }
 
-
     CommVar<std::vector<unsigned long>> numMolecules_step;
     CommVar<std::vector<double>> mass_step;
-    CommVar<std::vector<double>> ekin_step;                        // Including drift energy
+    CommVar<std::vector<double>> ekin_step;       // Including drift energy
     CommVar<std::vector<double>> virN_step;
     CommVar<std::vector<double>> virT_step;
     CommVar<std::vector<double>> velocityN_step;
     std::array<CommVar<std::vector<double>>, 3> ekinVect_step;
     std::array<CommVar<std::vector<double>>, 3> virialVect_step;
 
-    numMolecules_step.local.resize(_lenVector);
+    numMolecules_step.local.resize(_lenVector); // shouldn't there be a cleaner way to do this?
     mass_step.local.resize(_lenVector);
     ekin_step.local.resize(_lenVector);
     virN_step.local.resize(_lenVector);
@@ -106,31 +121,31 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
     }
 
     std::fill(numMolecules_step.local.begin(), numMolecules_step.local.end(), 0ul);
-    std::fill(mass_step.local.begin(),         mass_step.local.end(), 0.0f);
-    std::fill(ekin_step.local.begin(),         ekin_step.local.end(), 0.0f);
-    std::fill(virN_step.local.begin(),         virN_step.local.end(), 0.0f);
-    std::fill(virT_step.local.begin(),         virT_step.local.end(), 0.0f);
-    std::fill(velocityN_step.local.begin(),    velocityN_step.local.end(), 0.0f);
+    std::fill(mass_step.local.begin(),         mass_step.local.end(), 0.);
+    std::fill(ekin_step.local.begin(),         ekin_step.local.end(), 0.);
+    std::fill(virN_step.local.begin(),         virN_step.local.end(), 0.);
+    std::fill(virT_step.local.begin(),         virT_step.local.end(), 0.);
+    std::fill(velocityN_step.local.begin(),    velocityN_step.local.end(), 0.);
 
     std::fill(numMolecules_step.global.begin(), numMolecules_step.global.end(), 0ul);
-    std::fill(mass_step.global.begin(),   mass_step.global.end(), 0.0f);
-    std::fill(ekin_step.global.begin(),   ekin_step.global.end(), 0.0f);
-    std::fill(virN_step.global.begin(),   virN_step.global.end(), 0.0f);
-    std::fill(virT_step.global.begin(),   virT_step.global.end(), 0.0f);
-    std::fill(velocityN_step.global.begin(),   velocityN_step.global.end(), 0.0f);
+    std::fill(mass_step.global.begin(),   mass_step.global.end(), 0.);
+    std::fill(ekin_step.global.begin(),   ekin_step.global.end(), 0.);
+    std::fill(virN_step.global.begin(),   virN_step.global.end(), 0.);
+    std::fill(virT_step.global.begin(),   virT_step.global.end(), 0.);
+    std::fill(velocityN_step.global.begin(),   velocityN_step.global.end(), 0.);
 
     for (unsigned short d = 0; d < 3; d++) {
-        std::fill(ekinVect_step[d].local.begin(),      ekinVect_step[d].local.end(), 0.0f);
-        std::fill(virialVect_step[d].local.begin(),   virialVect_step[d].local.end(), 0.0f);
+        std::fill(ekinVect_step[d].local.begin(),      ekinVect_step[d].local.end(), 0.);
+        std::fill(virialVect_step[d].local.begin(),   virialVect_step[d].local.end(), 0.);
 
-        std::fill(ekinVect_step[d].global.begin(),      ekinVect_step[d].global.end(), 0.0f);
-        std::fill(virialVect_step[d].global.begin(),   virialVect_step[d].global.end(), 0.0f);
+        std::fill(ekinVect_step[d].global.begin(),      ekinVect_step[d].global.end(), 0.);
+        std::fill(virialVect_step[d].global.begin(),   virialVect_step[d].global.end(), 0.);
     }
 
     for (auto pit = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); pit.isValid(); ++pit) {
-        const double distCenter_x = pit->r(0) - (_globalBoxLength[0] * 0.5);
-        const double distCenter_y = pit->r(1) - (_globalBoxLength[1] * 0.5);
-        const double distCenter_z = pit->r(2) - (_globalBoxLength[2] * 0.5);
+        const double distCenter_x = pit->r(0) - (_globalCenter[0]);
+        const double distCenter_y = pit->r(1) - (_globalCenter[1]);
+        const double distCenter_z = pit->r(2) - (_globalCenter[2]);
         const double distCenterSquared = std::pow(distCenter_x,2) + std::pow(distCenter_y,2) + std::pow(distCenter_z,2);
         const double distCenter = std::sqrt(distCenterSquared);
         // // Do not consider particles outside of most outer radius
@@ -140,7 +155,7 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
 
         const unsigned int index = std::min(_nShells, static_cast<unsigned int>((distCenterSquared/_shellMappingDistMax)*_nShells));  // Index of bin of radius
 
-        numMolecules_step.local[index] ++;
+        numMolecules_step.local[index]++;
 
         const double u_x = pit->v(0);
         const double u_y = pit->v(1);
@@ -157,13 +172,6 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
         
         velocityN_step.local[index] = (distCenter_x*u_x + distCenter_y*u_y + distCenter_z*u_z)/distCenter;  // Radial 
 
-        /* 
-        // was used for adjusting temperature for macroscopic velocity --> drop here; we're assuming that macroscopic velo is 0
-        velocityVect_step[0].local[index] += u_x;
-        velocityVect_step[1].local[index] += u_y;
-        velocityVect_step[2].local[index] += u_z;
-        */
-        
         virialVect_step[0].local[index] += vi_x;
         virialVect_step[1].local[index] += vi_y;
         virialVect_step[2].local[index] += vi_z;
@@ -173,7 +181,6 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
         ekinVect_step[0].local[index] += 0.5*mass*u_x*u_x;
         ekinVect_step[1].local[index] += 0.5*mass*u_y*u_y;
         ekinVect_step[2].local[index] += 0.5*mass*u_z*u_z;
-
     }
 
 // Gather quantities. Note: MPI_Reduce instead of MPI_Allreduce! Therefore, only root has correct values
@@ -262,49 +269,23 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
                 << std::setw(24) << "p_(sphVir)"  // Pressure (using spherical vir)
                 << std::setw(24) << "p_n"        // Pressure in normal direction; 
                 << std::setw(24) << "p_t"        // Pressure in tangantial direction; 
-                << std::setw(24) << "VirX"          // virial -- for testing
-                << std::setw(24) << "VirY"          // virial -- for testing
-                << std::setw(24) << "VirZ"          // virial -- for testing
-                << std::setw(24) << "VirN"          // virial -- for testing
-                << std::setw(24) << "VirT"          // virial -- for testing
+                << std::setw(24) << "VirN"          // virial in normal direction
+                << std::setw(24) << "VirT"          // virial in tangential direction
                 << std::setw(24) << "T"             // Temperature, assuming that there is no drift
-                << std::setw(24) << "T_driftcorr"   // Temperature without drift (i.e. "real" temperature)
-                // << std::setw(24) << "T_n"        // Temperature in radial direction
-                // << std::setw(24) << "T_t"        // Temperature in tangantial direction
-                << std::setw(24) << "shellVolume"   // Average number of molecules in bin per step
+                << std::setw(24) << "T_driftcorr"   // Temperature without radial drift (i.e. "real" temperature; given that there is no non-radial drift)
+                << std::setw(24) << "shellVolume"   // Volume of Shell
                 << std::setw(24) << "numParts"   // Average number of molecules in bin per step
                 << std::setw(24) << "ekin"       // Kinetic energy including drift
-                << std::setw(24) << "v_r"        // Drift velocity in radial direction
+                << std::setw(24) << "v_r"        // drift velocity in radial direction
                 << std::setw(24) << "numSamples";    // Number of samples (<= _writeFrequency)
             ofs << std::endl;
 
-            //this implementation is probaobly bad, but meant to be only temporary (#todo):
-            std::vector<double> shell_lowerBound;
-            std::vector<double> shell_centralRadius;
-            // std::vector<double> shell_width;
-            std::vector<double> shell_volume;
-            shell_lowerBound.resize(_lenVector);
-            shell_centralRadius.resize(_lenVector);
-            // shell_width.resize(_lenVector);
-            shell_volume.resize(_lenVector);
-
-            shell_lowerBound[0] = 0;
-            const double nShellsInv = 1./_nShells;
-            for(int i = 1; i < _lenVector; i++){
-                shell_lowerBound[i] = std::sqrt( static_cast<double>(i)*nShellsInv*_shellMappingDistMax );
-                shell_centralRadius[i-1] = (shell_lowerBound[i-1] + shell_lowerBound[i])/2.;
-                // shell_width[i-1] = shell_lowerBound[i] - shell_lowerBound[i-1];
-                shell_volume[i-1] = 4./3. * M_PI * ( std::pow(shell_lowerBound[i],3) - std::pow(shell_lowerBound[i-1],3) );
-            }
-            shell_centralRadius[_lenVector-1] = (shell_lowerBound[_lenVector-1] + (_distMax/_nShells)); // not very precise
-            shell_volume[_lenVector-1] = _globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2] - 4./3.*M_PI*std::pow(shell_lowerBound[_lenVector-1],3);
-            // \end bad implementation
 
             for (unsigned long i = 0; i < _lenVector; i++) {
-                unsigned long numSamples {0ul};
+                unsigned long numSamples = _countSamples[i];
                 double numMolsPerStep {std::nan("0")}; // Not an int as particles change bin during simulation
-                double rho {0.0};
-                double T {std::nan("0")};
+                double rho {};
+                double T {std::nan("0")};            //initialized to NaN, because should be NaN in case no particles are in the shell 
                 double T_driftcorr {std::nan("0")};
                 double ekin {std::nan("0")};
                 double p_xyz {std::nan("0")};
@@ -315,17 +296,14 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
                 double vir_n {std::nan("0")};
                 double vir_t {std::nan("0")};
                  
-                if ((_countSamples[i] > 0ul) and (_doftotal_accum[i]) > 0ul) {
+                if ((numSamples > 0ul) and (_numMolecules_accum[i] > 0ul) and (_doftotal_accum[i]) > 0ul) {
                     const double numMols_accum = static_cast<double>(_numMolecules_accum[i]);
-                    numSamples = _countSamples[i];
 
                     numMolsPerStep = numMols_accum    /numSamples;
-                    rho         = numMolsPerStep      / shell_volume[i];
+                    rho         = numMolsPerStep      / _shell_volume[i];
                     v_r         = _velocityN_accum[i] / numSamples;
-                    // v_y         = _velocityVect_accum[1][i]   / numSamples;
-                    // v_t         = _velocityVect_accum[2][i]   / numSamples;
 
-                    double v_drift_squared = v_r*v_r;  // is this reasonable at all?
+                    double v_drift_squared = v_r*v_r;  // considering only radial drift
 
                     vir_n = _virN_accum[i]/numMols_accum;
                     vir_t = _virT_accum[i]/numMols_accum;
@@ -340,35 +318,27 @@ void SphericalSampling ::afterForces(ParticleContainer* particleContainer, Domai
                     p_t         = rho * (T + vir_t);
                 }
                          
-                         
-                //FOR TESTING ONNLY (could lead to crashes (or undef. bhv?))
-                const double numMols_accum = static_cast<double>(_numMolecules_accum[i]);
-                // \END for testing only
-
-                ofs << FORMAT_SCI_MAX_DIGITS << shell_centralRadius[i]  // Radius bin
+                ofs << FORMAT_SCI_MAX_DIGITS << _shell_centralRadius[i]  // Radius bin
                     << FORMAT_SCI_MAX_DIGITS << rho
                     << FORMAT_SCI_MAX_DIGITS << p_xyz
                     << FORMAT_SCI_MAX_DIGITS << p_sph
                     << FORMAT_SCI_MAX_DIGITS << p_n
                     << FORMAT_SCI_MAX_DIGITS << p_t
-                    << FORMAT_SCI_MAX_DIGITS << _virialVect_accum[0][i]/numMols_accum
-                    << FORMAT_SCI_MAX_DIGITS << _virialVect_accum[1][i]/numMols_accum
-                    << FORMAT_SCI_MAX_DIGITS << _virialVect_accum[2][i]/numMols_accum
                     << FORMAT_SCI_MAX_DIGITS << vir_n
                     << FORMAT_SCI_MAX_DIGITS << vir_t
                     << FORMAT_SCI_MAX_DIGITS << T
                     << FORMAT_SCI_MAX_DIGITS << T_driftcorr
-                    << FORMAT_SCI_MAX_DIGITS << shell_volume[i]
+                    << FORMAT_SCI_MAX_DIGITS << _shell_volume[i]
                     << FORMAT_SCI_MAX_DIGITS << numMolsPerStep
                     << FORMAT_SCI_MAX_DIGITS << ekin
                     << FORMAT_SCI_MAX_DIGITS << v_r
                     << FORMAT_SCI_MAX_DIGITS << numSamples
                     << std::endl;
             }
-            ofs.close();
+            // ofs.close(); #automatically handled by std::ofstream's destructor.
         }
-        // Reset vectors to zero
-        resetVectors();
+        // Reset accumulation-vectors to zero
+        resetAccumVectors();
     }
 }
 
@@ -388,11 +358,15 @@ void SphericalSampling ::resizeVectors() {
         _virialVect_accum[d].resize(_lenVector);
     }
 
+    _shell_lowerBound.resize(_lenVector);
+    _shell_centralRadius.resize(_lenVector);
+    _shell_volume.resize(_lenVector);
+
     _countSamples.resize(_lenVector);
 }
 
-// Fill vectors with zeros
-void SphericalSampling ::resetVectors() {
+// Fill vectors with zeros. take care not to list vectors here, that are not supposed to be reset.
+void SphericalSampling ::resetAccumVectors() {
     std::fill(_numMolecules_accum.begin(), _numMolecules_accum.end(), 0ul);
     std::fill(_doftotal_accum.begin(), _doftotal_accum.end(), 0ul);
     std::fill(_mass_accum.begin(), _mass_accum.end(), 0.0f);
@@ -406,6 +380,6 @@ void SphericalSampling ::resetVectors() {
         std::fill(_ekinVect_accum[d].begin(), _ekinVect_accum[d].end(), 0.0f);
         std::fill(_virialVect_accum[d].begin(), _virialVect_accum[d].end(), 0.0f);
     }
-    
+
     std::fill(_countSamples.begin(), _countSamples.end(), 0ul);
 }

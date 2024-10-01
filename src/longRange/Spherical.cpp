@@ -86,6 +86,11 @@ void Spherical::readXML(XMLfileUnits& xmlconfig)
 
 void Spherical::init()
 {
+	global_log->info() 	<< "[Long Range Correction] Spherical LRC currently not functional. Please consider using SphericalLRC--legacy version. Be careful though, it has been proven to produce false results for bubbles."
+						<< "\n" "Simulation exiting." << std::endl;
+	_simulation.exit(0);
+
+
 	global_log->info() << "[Long Range Correction] Initializing. Is this function called once, twice or not at all?!" << std::endl;
 
     initVectors();
@@ -190,8 +195,8 @@ void Spherical::calculateLongRange()
 
 
 
-		// calculationV1_fromPaper_withIsabelsPrefactorAndRlow_repParticles();
-		calculationV3_isabelsMethod();
+		calculationV1_fromPaper_withIsabelsPrefactorAndRlow_repParticles();
+		// calculationV3_isabelsMethod();
 	}   
 
 
@@ -214,9 +219,9 @@ void Spherical::calculateLongRange()
 
 			//APPLY CORRECTIONS:
 			double FcorrMolApprox[3] = {.0,.0,.0};
-			FcorrMolApprox[0] = _FcorrectionShell[shellIDofMol] * distCenter_x*distCenterInv; 
-			FcorrMolApprox[1] = _FcorrectionShell[shellIDofMol] * distCenter_y*distCenterInv;
-			FcorrMolApprox[2] = _FcorrectionShell[shellIDofMol] * distCenter_z*distCenterInv;
+			FcorrMolApprox[0] = _FcorrectionShell[shellIDofMol] * distCenter_x*distCenterInv * (-1.); // *(-1.) according to definition of x_i between (15) and (16) in nitze2021
+			FcorrMolApprox[1] = _FcorrectionShell[shellIDofMol] * distCenter_y*distCenterInv * (-1.); //
+			FcorrMolApprox[2] = _FcorrectionShell[shellIDofMol] * distCenter_z*distCenterInv * (-1.); // 
 			
 
 			// global_log->info() << "molid : shellid = "<< molID <<" :  "<< shellIDofMol << ":\n";
@@ -644,22 +649,6 @@ void Spherical::writeProfiles(DomainDecompBase* domainDecomp, Domain* domain, un
 		std::fill(_VirZ_accum.begin(), _VirZ_accum.end(), 0.); 				 
 		std::fill(_velocityN_accum.begin(), _velocityN_accum.end(), 0.); 				 
 		std::fill(_numMolecules_accum_output.begin(), _numMolecules_accum_output.end(), 0.); 				 
-
-
-
-
-
-
-
-
-		
-		
-		
-		
-		
-		
-
-
 	}
 }
 
