@@ -20,63 +20,7 @@
 #include "Filter.h"
 
 class InteractionSite;
-/**
- * Removes infs via linear extrapolation
- * 
- */
 
-class DataPostProcess{
-    public:
-
-    std::vector<double> LinearExtrapolation(std::vector<double>& y_values, std::vector<double>& x_values){
-        for(int i = y_values.size()-1;i>=0;--i){
-            if(std::isfinite(y_values[i])){
-                continue;
-            }
-            double y_k = y_values[i+1];
-            double y_k_1 = y_values[i+2];
-            double x_k = x_values[i+1];
-            double x_k_1 = x_values[i+2];
-            double x_star = x_values[i];
-            y_values[i] = y_k_1 + 1.0*(x_star-x_k_1)/(x_k-x_k_1)*(y_k-y_k_1);
-        }
-
-        std::vector<double> new_values = y_values;
-        return new_values;
-    }
-
-    void LinearExtrapolation(Interpolate& interpolation){
-        std::vector<double> x_values = interpolation.GetXValues();
-        std::vector<double> y_values = interpolation.GetYValues();
-        int count =2.0;
-
-        double last_good_value =0.0;
-        for(int i = y_values.size()-1;i>=0;--i){
-            if(std::isfinite(y_values[i])){
-                continue;
-            }
-
-            last_good_value = y_values[i+1];
-            break;
-        }
-
-        for(int i = y_values.size()-1;i>=0;--i){
-            if(std::isfinite(y_values[i])){
-                continue;
-            }
-            double y_k = y_values[i+1];
-            double y_k_1 = y_values[i+2];
-            double x_k = x_values[i+1];
-            double x_k_1 = x_values[i+2];
-            double x_star = x_values[i];
-            // y_values[i] = y_k_1 + 0.1*(x_star-x_k_1)/(x_k-x_k_1)*(y_k-y_k_1);
-            y_values[i] = last_good_value*count*3.0;
-            count++;
-        }
-
-        interpolation.SetYValues(y_values);
-    }
-};
 class PMF:public PluginBase{
 
     using tracker = std::pair<InteractionSite,ResolutionType>;
@@ -85,6 +29,7 @@ class PMF:public PluginBase{
     Interpolate reference_rdf_interpolation;//should not touch
     Interpolate potential_interpolation;//updated on every step or stride
     Interpolate acc_rdf_interpolation;//current avg value so far 
+    Interpolate derivative_interpolation;//stores derivatives potential
 
     InternalProfiler profiler;//measuring tool
     Filter filter;
@@ -105,7 +50,9 @@ class PMF:public PluginBase{
     int update_stride=1;//how often to IBI
     double multiplier;//alpha for step size
     bool output;
-    DataPostProcess post_processing;
+
+
+    // DataPostProcess post_processing;
 
     struct Convergence{
         bool ConvergenceCheck(std::vector<double>& ref, std::vector<double>& crrnt){
@@ -193,17 +140,14 @@ class PMF:public PluginBase{
      * Read in reference RDF
      */
     void ReadRDF();
-
     /**
      * Implements U(r)_0 = -T^*ln(g(r)_0)
      */
     void InitializePotentialValues();
-
     /**
      * Implements U(r)_{i+1} =U(r)_i - alpha*T^*ln(g(r)_i/g(r)_*)
      */
     void AddPotentialCorrection(unsigned long step);
-
     void AccumulateRDF(ParticleContainer* pc, Domain* domain);
 
 

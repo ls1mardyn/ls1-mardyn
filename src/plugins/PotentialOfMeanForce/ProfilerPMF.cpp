@@ -77,6 +77,9 @@ void InternalProfiler::ProcessDistance(double r, double pot){
     int index = std::floor(std::sqrt(r)/bin_width);
     
     //Add count for rdf
+    #if defined _OPENMP
+	#pragma omp atomic
+	#endif
     this->rdf_buffer[index]++;
     
 }  

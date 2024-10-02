@@ -1,31 +1,26 @@
 #include "Interpolate.h"
 
-Interpolate::Interpolate(double def_val, bool checks):default_value{def_val},check_for_isfinite{checks}{
+Interpolate::Interpolate(double def_val, bool checks):default_value{def_val}{
 
 }
 
-void Interpolate::FirstValid(){
+// void Interpolate::FirstValid(){
     
-    int i=0;
-    while(!std::isfinite(y_values[i])){
-        i++;
-    }
-    if(i>=y_values.size()){
-        Log::global_log->error()<<"[Interpolate]Out of bounds"<<std::endl;
-    }
-    first_valid = i;
-}
+//     int i=0;
+//     while(!std::isfinite(y_values[i])){
+//         i++;
+//     }
+//     if(i>=y_values.size()){
+//         Log::global_log->error()<<"[Interpolate]Out of bounds"<<std::endl;
+//     }
+//     first_valid = i;
+// }
 
 void Interpolate::SetXValues(std::vector<double>& v){
     this->x_values = v;
 }
 
-void Interpolate::SetYValues(std::vector<double> v){
-
-    if(v.size() != y_values.size()){
-        y_values.resize(v.size());
-    }
-
+void Interpolate::SetYValues(std::vector<double>& v){
     this->y_values = v;
 }
 
@@ -51,9 +46,9 @@ double Interpolate::InterpolateAt(double r){
     int low, up;
     up = GetUpperLimit(r);
 
-    if(up <= first_valid && check_for_isfinite){
-        return y_values[first_valid];
-    }
+    // if(up <= first_valid && check_for_isfinite){
+    //     return y_values[first_valid];
+    // }
 
     if(up ==0){
         return y_values[0];
@@ -72,7 +67,7 @@ void Interpolate::AddVector(std::vector<double>& v){
         Log::global_log->error()<<"[Interpolate]Not same size add"<<std::endl;
     }
 
-    for(int i=first_valid;i<v.size();++i){
+    for(int i=0;i<v.size();++i){
         if(x_values[i]>1.0){
             y_values[i] -= v[i];
         }
@@ -90,9 +85,9 @@ double Interpolate::CentralFiniteDifference(double r){
     up = GetUpperLimit(r);
 
     
-    if(up <= first_valid && check_for_isfinite){
-        return derivative_limit;
-    }
+    // if(up <= first_valid && check_for_isfinite){
+    //     return derivative_limit;
+    // }
 
 
     low = up -1;
@@ -102,9 +97,9 @@ double Interpolate::CentralFiniteDifference(double r){
     gb = y_values[up]; rb = x_values[up];
     double ratio =(gb-ga)/(2.0*(rb-ra));
 
-    if(!std::isfinite(ratio)){
-        return derivative_limit;
-    }
+    // if(!std::isfinite(ratio)){
+    //     return derivative_limit;
+    // }
 
     return ratio;
 }
@@ -127,4 +122,23 @@ int Interpolate::GetUpperLimit(double r){
         if(i==i_max) break;
     }
     return i;
+}
+
+void Interpolate::LinearExtrapolation(){
+
+    for(int i= y_values.size()-1;i>=0;--i){
+
+        if(std::isfinite(y_values[i])){
+            continue;
+        }
+
+        double y_k = y_values[i+1];
+        double y_k_1 = y_values[i+2];
+        double x_k = x_values[i+1];
+        double x_k_1 = x_values[i+2];
+        double x_star = x_values[i];
+        y_values[i] = y_k_1 + 1.0*(x_star-x_k_1)/(x_k-x_k_1)*(y_k-y_k_1);
+        
+    }
+
 }

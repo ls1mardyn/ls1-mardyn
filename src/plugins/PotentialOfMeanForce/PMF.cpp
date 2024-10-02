@@ -49,7 +49,6 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     acc_rdf_interpolation.GetYValues().resize(internal_bins);
 
     this->InitializePotentialValues();
-    this->potential_interpolation.FirstValid();//only call once
 }
 
 void PMF::readXML(XMLfileUnits& xmlfile){
@@ -118,7 +117,7 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
         potential.close();
     }
 
-    AddPotentialCorrection(step);
+    // AddPotentialCorrection(step);
     std::vector<double> current_rdf = GetAverageRDF();
 
     convergence_check.ConvergenceCheck(reference_rdf_interpolation.GetYValues(),current_rdf);
@@ -150,6 +149,7 @@ void PMF::InitializePotentialValues(){
     }
 
     potential_interpolation.SetYValues(pot0);
+    potential_interpolation.LinearExtrapolation();
 }
 
 void PMF::AddPotentialCorrection(unsigned long step){
@@ -164,7 +164,7 @@ void PMF::AddPotentialCorrection(unsigned long step){
         current_correction[i] = multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
     }
 
-    current_correction = filter.MovingAverage(current_correction);
+    // current_correction = filter.MovingAverage(current_correction);
 
     potential_interpolation.AddVector(current_correction);
 
@@ -186,7 +186,7 @@ void PMF::AccumulateRDF(ParticleContainer* pc, Domain* dom){
     std::vector<double> rdf_i = this->profiler.GetInstantaneousData(pc,dom);
     std::vector<double>& accumulated_rdf = acc_rdf_interpolation.GetYValues();
 
-    rdf_i = filter.MovingAverage(rdf_i);
+    // rdf_i = filter.MovingAverage(rdf_i);
 
     for(int i=0;i<rdf_i.size();++i){
 

@@ -34,10 +34,6 @@ class PotentialProfiler:public PluginBase{
     void readXML(XMLfileUnits& xmlconfig) override;
     void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
     void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override{
-        // std::cout<<"End of step\n";
-        // for(int i=0;i<pot_vals.size();++i){
-        //     std::cout<<"Value: "<<pot_vals[i]<<"\t"<<pot_counts[i]<<"\n";
-        // }
         for(int i=0;i<pot_vals.size();++i){
             pot_counts[i]=0;
             pot_vals[i] =0;
