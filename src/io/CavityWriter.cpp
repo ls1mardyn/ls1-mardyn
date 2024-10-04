@@ -37,29 +37,34 @@ void CavityWriter::readXML(XMLfileUnits &xmlconfig) {
 
     xmlconfig.getNodeValue("maxNeighbours", _maxNeighbors);
     if (_maxNeighbors <= 0) {
-        Log::global_log->error() << "[CavityWriter] Invalid number of maxNeighbors: " << _maxNeighbors << std::endl;
-        MARDYN_EXIT(999);
+        std::ostringstream error_message;
+        error_message << "[CavityWriter] Invalid number of maxNeighbors: " << _maxNeighbors << std::endl;
+        MARDYN_EXIT(error_message);
     }
 
     xmlconfig.getNodeValue("radius", _radius);
     if (_radius <= 0.0f) {
-        Log::global_log->error() << "[CavityWriter] Invalid size of radius: " << _radius << std::endl;
-        MARDYN_EXIT(999);
+        std::ostringstream error_message;
+        error_message << "[CavityWriter] Invalid size of radius: " << _radius << std::endl;
+        MARDYN_EXIT(error_message);
     }
     xmlconfig.getNodeValue("Nx", _Nx);
     if (_Nx <= 0) {
-        Log::global_log->error() << "[CavityWriter] Invalid number of cells Nx: " << _Nx << std::endl;
-        MARDYN_EXIT(999);
+        std::ostringstream error_message;
+        error_message << "[CavityWriter] Invalid number of cells Nx: " << _Nx << std::endl;
+        MARDYN_EXIT(error_message);
     }
     xmlconfig.getNodeValue("Ny", _Ny);
     if (_Ny <= 0) {
-        Log::global_log->error() << "[CavityWriter] Invalid number of cells Ny: " << _Ny << std::endl;
-        MARDYN_EXIT(999);
+        std::ostringstream error_message;
+        error_message << "[CavityWriter] Invalid number of cells Ny: " << _Ny << std::endl;
+        MARDYN_EXIT(error_message);
     }
     xmlconfig.getNodeValue("Nz", _Nz);
     if (_Nz <= 0) {
-        Log::global_log->error() << "[CavityWriter] Invalid number of cells Nz: " << _Nz << std::endl;
-        MARDYN_EXIT(999);
+        std::ostringstream error_message;
+        error_message << "[CavityWriter] Invalid number of cells Nz: " << _Nz << std::endl;
+        MARDYN_EXIT(error_message);
     }
 
     // Default Control Volume is entire Domain
@@ -75,15 +80,13 @@ void CavityWriter::readXML(XMLfileUnits &xmlconfig) {
     xmlconfig.getNodeValue("ControlVolume/z1", _controlVolume[5]);
     for (int d = 0; d < 3; d++) {
         if (_controlVolume[d * 2] > _controlVolume[d * 2 + 1]) {
-            Log::global_log->error() << "[CavityWriter] Lower Bound of Control Volume may not be larger than upper bound. "
-                                << std::endl;
-            MARDYN_EXIT(999);
+            std::ostringstream error_message;            error_message << "[CavityWriter] Lower Bound of Control Volume may not be larger than upper bound. "
+                                << std::endl;            MARDYN_EXIT(error_message);
         }
         if (_controlVolume[d * 2] < 0 ||
             _controlVolume[d * 2 + 1] > global_simulation->getDomain()->getGlobalLength(d)) {
-            Log::global_log->error() << "[CavityWriter] Control volume bounds may not be outside of domain boundaries. "
-                                << std::endl;
-            MARDYN_EXIT(999);
+            std::ostringstream error_message;            error_message << "[CavityWriter] Control volume bounds may not be outside of domain boundaries. "
+                                << std::endl;            MARDYN_EXIT(error_message);
         }
     }
 

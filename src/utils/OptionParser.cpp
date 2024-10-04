@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <complex>
+#include <sstream>
 
 #if defined(ENABLE_NLS) && ENABLE_NLS
 # include <libintl.h>
@@ -345,11 +346,13 @@ void OptionParser::process_opt(const Option& o, const std::string& opt, const st
 	}
 	else if (o.action() == "help") {
 		print_help();
-		MARDYN_EXIT(0);
+		std::ostringstream empty_message;
+		mardyn_exit(empty_message, __FILE__, __LINE__, EXIT_SUCCESS);
 	}
 	else if (o.action() == "version") {
 		print_version();
-		MARDYN_EXIT(0);
+		std::ostringstream empty_message;
+		mardyn_exit(empty_message, __FILE__, __LINE__, EXIT_SUCCESS);
 	}
 	else if (o.action() == "callback" && o.callback()) {
 		(*o.callback())(o, opt, value, *this);
@@ -437,12 +440,15 @@ void OptionParser::print_version() const {
 }
 
 void OptionParser::exit() const {
-	MARDYN_EXIT(2);
+	std::ostringstream error_message;
+	error_message << "OptionParser::exit() called" << std::endl;
+	MARDYN_EXIT(error_message);
 }
 void OptionParser::error(const std::string& msg) const {
 	print_usage(std::cerr);
-	std::cerr << prog() << ": " << _("error") << ": " << msg << std::endl;
-	MARDYN_EXIT(-4);
+	std::ostringstream error_message;
+	error_message << prog() << ": " << _("error") << ": " << msg << std::endl;
+	MARDYN_EXIT(error_message);
 }
 ////////// } class OptionParser //////////
 

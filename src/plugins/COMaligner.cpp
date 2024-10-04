@@ -7,6 +7,10 @@
 
 #include "COMaligner.h"
 
+#include <sstream>
+
+#include "utils/mardyn_assert.h"
+
 //! @brief will be called to read configuration
 //!
 //! All values have defaults and are not mandatory to be supplied<br>
@@ -27,11 +31,12 @@ void COMaligner::readXML(XMLfileUnits& xmlconfig){
 
     // SANITY CHECK
     if(_interval < 1 || _alignmentCorrection < 0 || _alignmentCorrection > 1){
-        Log::global_log -> error() << "[COMaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
-        Log::global_log -> error() << "[COMaligner] HALTING SIMULATION" << std::endl;
+        std::ostringstream error_message;
+        error_message << "[COMaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
+        error_message << "[COMaligner] HALTING SIMULATION" << std::endl;
         _enabled = false;
         // HALT SIM
-        MARDYN_EXIT(1);
+        MARDYN_EXIT(error_message);
         return;
     }
 

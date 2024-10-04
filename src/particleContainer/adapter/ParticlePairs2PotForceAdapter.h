@@ -175,7 +175,9 @@ public:
                 FluidPot(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, calculateLJ);
                 return dummy1 / 6.0 + dummy2 + dummy3;
             default:
-                MARDYN_EXIT(666);
+				std::ostringstream error_message;
+				error_message << "[ParticlePairs2PotForceAdapter9] pairType is unknown" << std::endl;
+                MARDYN_EXIT(error_message);
         }
         return 0.0;
 	}

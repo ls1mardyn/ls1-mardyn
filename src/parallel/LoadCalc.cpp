@@ -40,13 +40,12 @@ std::vector<double> TunerLoad::readVec(std::istream& in, int& count1, int& count
 			tempCount2 = i;
 		} else {
 			if (i != tempCount2) {
-				Log::global_log->error_always_output()
-						<< "The file contains data of 2D-vectors with a different amounts of elements in the second dimension!"
-						<< std::endl;
-				Log::global_log->error_always_output()
-						<< "This means the files is corrupted. Please remove it (or disallow the tuner to read from inputfiles) before restarting!"
-						<< std::endl;
-				MARDYN_EXIT(1);
+				std::ostringstream error_message;
+				error_message << "The file contains data of 2D-vectors"
+						<< " with a different amounts of elements in the second dimension!" << std::endl;
+				error_message << "This means the files is corrupted. "
+						<< "Please remove it (or disallow the tuner to read from inputfiles) before restarting!" << std::endl;
+				MARDYN_EXIT(error_message);
 			}
 		}
 	}
@@ -122,23 +121,31 @@ TunerLoad::TunerLoad(int count1, int count2, std::vector<double>&& ownTime, std:
 				calcConsts(_cornerTime, false)) {
 
 	if (_ownTime.size() != size_t(_count1 * _count2)) {
-		Log::global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _ownTime.size()
+		std::ostringstream error_message;
+		error_message << "_edgeTime was initialized with the wrong size of " << _ownTime.size()
 				<< " expected: " << _count1 * _count2;
+		MARDYN_EXIT(error_message);
 	}
 
 	if (_faceTime.size() != size_t(count1 * _count2)) {
-		Log::global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _faceTime.size()
+		std::ostringstream error_message;
+		error_message << "_edgeTime was initialized with the wrong size of " << _faceTime.size()
 				<< " expected: " << _count1 * _count2;
+		MARDYN_EXIT(error_message);
 	}
 
 	if (_edgeTime.size() != size_t(_count1 * _count2)) {
-		Log::global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _edgeTime.size()
+		std::ostringstream error_message;
+		error_message << "_edgeTime was initialized with the wrong size of " << _edgeTime.size()
 				<< " expected: " << _count1 * _count2;
+		MARDYN_EXIT(error_message);
 	}
 
 	if (_cornerTime.size() != size_t(_count1 * _count2)) {
-		Log::global_log->error_always_output() << "_edgeTime was initialized with the wrong size of " << _cornerTime.size()
+		std::ostringstream error_message;
+		error_message << "_edgeTime was initialized with the wrong size of " << _cornerTime.size()
 				<< " expected: " << _count1 * _count2;
+		MARDYN_EXIT(error_message);
 	}
 }
 
@@ -146,9 +153,10 @@ TunerLoad TunerLoad::read(std::istream& stream) {
 	std::string inStr { };
 	std::getline(stream, inStr);
 	if (inStr != "Vectorization Tuner File") {
-		Log::global_log->error() << "The tunerfile is corrupted! Missing header \"Vectorization Tuner File\"";
-		Log::global_log->error() << "Please remove it or fix it before restarting!";
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;
+		error_message << "The tunerfile is corrupted! Missing header \"Vectorization Tuner File\"";
+		error_message << "Please remove it or fix it before restarting!";
+		MARDYN_EXIT(error_message);
 	}
 
 	int count1;
@@ -156,33 +164,37 @@ TunerLoad TunerLoad::read(std::istream& stream) {
 
 	std::getline(stream, inStr);
 	if (inStr != "own") {
-		Log::global_log->error() << "The tunerfile is corrupted! Missing Section \"own\"";
-		Log::global_log->error() << "Please remove it or fix it before restarting!";
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;
+		error_message << "The tunerfile is corrupted! Missing Section \"own\"";
+		error_message << "Please remove it or fix it before restarting!";
+		MARDYN_EXIT(error_message);
 	}
 	auto ownTime = readVec(stream, count1, count2);
 	std::getline(stream, inStr);
 
 	if (inStr != "face") {
-		Log::global_log->error() << "The tunerfile is corrupted! Missing Section \"face\"";
-		Log::global_log->error() << "Please remove it or fix it before restarting!";
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;
+		error_message<< "The tunerfile is corrupted! Missing Section \"face\"";
+		error_message << "Please remove it or fix it before restarting!";
+		MARDYN_EXIT(error_message);
 	}
 	auto faceTime = readVec(stream, count1, count2);
 	std::getline(stream, inStr);
 
 	if (inStr != "edge") {
-		Log::global_log->error() << "The tunerfile is corrupted! Missing Section \"edge\"";
-		Log::global_log->error() << "Please remove it or fix it before restarting!";
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;
+		error_message << "The tunerfile is corrupted! Missing Section \"edge\"";
+		error_message << "Please remove it or fix it before restarting!";
+		MARDYN_EXIT(error_message);
 	}
 	auto edgeTime = readVec(stream, count1, count2);
 	std::getline(stream, inStr);
 
 	if (inStr != "corner") {
-		Log::global_log->error() << "The tunerfile is corrupted! Missing Section \"corner\"";
-		Log::global_log->error() << "Please remove it or fix it before restarting!";
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;
+		error_message << "The tunerfile is corrupted! Missing Section \"corner\"";
+		error_message << "Please remove it or fix it before restarting!";
+		MARDYN_EXIT(error_message);
 	}
 	auto cornerTime = readVec(stream, count1, count2);
 	return TunerLoad { count1, count2, std::move(ownTime), std::move(faceTime), std::move(edgeTime), std::move(

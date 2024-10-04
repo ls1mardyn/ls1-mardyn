@@ -14,6 +14,7 @@
 #include "bhfmm/HaloBufferNoOverlap.h"
 #include "bhfmm/HaloBufferOverlap.h"
 #include <string>
+#include <sstream>
 #include <algorithm>
 #include <array>
 #ifdef _OPENMP
@@ -111,8 +112,9 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_comm = domainDecomp.getCommunicator();
 #endif
 #if WIGNER == 1
-	//global_log->error() << "not supported yet" << std::endl;
-	MARDYN_EXIT(-1);
+	std::ostringstream error_message;
+	error_message << "WIGNER not supported yet" << std::endl;
+	MARDYN_EXIT(error_message);
 #endif
 #ifdef ENABLE_MPI
 	/*
@@ -175,8 +177,9 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	MPI_Comm_size(_comm,&numProcessors);
 	_globalLevel = ceil(log2(numProcessors)/3.0);
 	if(_globalLevel > _maxLevel){
-		std::cout << "too many MPI ranks \n";
-		MARDYN_EXIT(-1);
+		std::ostringstream error_message;
+		error_message << "Too many MPI ranks" << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	//numProcessers has to be a power of 2
 	mardyn_assert(pow(2,log2(numProcessors)) == numProcessors);
@@ -378,8 +381,9 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		int size2;
 		MPI_Comm_size(_neighbourhoodComms[i], &size2);
 		if(size2 > 8){ //neighbourhood comms need to have size 8
-			std::cout << "Error wrong communicator \n";
-			MARDYN_EXIT(1);
+			std::ostringstream error_message;
+			error_message << "Error wrong communicator" << std::endl;
+			MARDYN_EXIT(error_message);
 		}
 	}
 #endif

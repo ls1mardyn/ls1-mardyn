@@ -190,8 +190,9 @@ inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairsBackend(
 
 	// Note: in the following we quasi-reimplement an OpenMP for-loop parallelisation with static scheduling
 	if (not isApplicable(start, end) ) {
-		Log::global_log->error() << "The SlicedCellPairTraversal is not applicable. Aborting." << std::endl;
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;
+		error_message << "The SlicedCellPairTraversal is not applicable. Aborting." << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 
 	std::array<unsigned long, 3> diff;

@@ -54,13 +54,13 @@ void ExamplePlugin::readXML(XMLfileUnits& xmlconfig) {
 		_displaySelector = WhereToDisplay::AT_FINISH;
 		Log::global_log->info() << "Displaying at finish." << std::endl;
 	} else {
-		Log::global_log->error()
-				<< "Unknown option specified to ExamplePlugin::where_to_display."
-				<< std::endl;
-		Log::global_log->error()
+		std::ostringstream error_message;
+		error_message
+				<< "Unknown option specified to ExamplePlugin::where_to_display." << std::endl;
+		error_message
 				<< "Valid options are: all, beforeEventNewTimestep, beforeForces, afterForces, endStep, init, finish."
 				<< std::endl;
-		MARDYN_EXIT(11);
+		MARDYN_EXIT(error_message);
 	}
 }
 

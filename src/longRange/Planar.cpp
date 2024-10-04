@@ -149,8 +149,9 @@ void Planar::init()
 			_subject->registerObserver(this);
 			Log::global_log->info() << "Long Range Correction: Subject registered" << std::endl;
 		} else {
-			Log::global_log->error() << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
-			MARDYN_EXIT(-1);
+			std::ostringstream error_message;
+			error_message << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
+			MARDYN_EXIT(error_message);
 		}
 	}
 }
@@ -194,13 +195,15 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	bool bRet3 = xmlconfig.getNodeValue("writecontrol/stop", _nStopWritingProfiles);
 	if(_nWriteFreqProfiles < 1)
 	{
-		Log::global_log->error() << "Long Range Correction: Write frequency < 1! Programm exit ..." << std::endl;
-		MARDYN_EXIT(-1);
+		std::ostringstream error_message;
+		error_message << "Long Range Correction: Write frequency < 1! Programm exit ..." << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	if(_nStopWritingProfiles <= _nStartWritingProfiles)
 	{
-		Log::global_log->error() << "Long Range Correction: Writing profiles 'stop' <= 'start'! Programm exit ..." << std::endl;
-		MARDYN_EXIT(-1);
+		std::ostringstream error_message;
+		error_message << "Long Range Correction: Writing profiles 'stop' <= 'start'! Programm exit ..." << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	bool bInputIsValid = (bRet1 && bRet2 && bRet3);
 	if(true == bInputIsValid)
@@ -211,8 +214,9 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	}
 	else
 	{
-		Log::global_log->error() << "Long Range Correction: Write control parameters not valid! Programm exit ..." << std::endl;
-		MARDYN_EXIT(-1);
+		std::ostringstream error_message;
+		error_message << "Long Range Correction: Write control parameters not valid! Programm exit ..." << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 }
 

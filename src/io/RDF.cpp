@@ -33,8 +33,9 @@ RDF::RDF() :
 
 void RDF::init() {
 	if(!_readConfig){
-		Log::global_log->error() << "RDF initialized without reading the configuration, exiting" << std::endl;
-		MARDYN_EXIT(25);
+		std::ostringstream error_message;
+		error_message << "RDF initialized without reading the configuration, exiting" << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 
 	_cellProcessor = new RDFCellProcessor(global_simulation->getcutoffRadius(), this);
@@ -153,27 +154,27 @@ void RDF::init() {
 void RDF::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
+	Log::global_log->info() << "[RDF] Write frequency: " << _writeFrequency << std::endl;
 
 	_samplingFrequency = 1;
 	xmlconfig.getNodeValue("samplingfrequency", _samplingFrequency);
-	Log::global_log->info() << "Sampling frequency: " << _samplingFrequency << std::endl;
+	Log::global_log->info() << "[RDF] Sampling frequency: " << _samplingFrequency << std::endl;
 
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
-	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
+	Log::global_log->info() << "[RDF] Output prefix: " << _outputPrefix << std::endl;
 
 	_bins = 1;
 	xmlconfig.getNodeValue("bins", _bins);
-	Log::global_log->info() << "Number of bins: " << _bins << std::endl;
+	Log::global_log->info() << "[RDF] Number of bins: " << _bins << std::endl;
 
 	_angularBins = 1;
 	xmlconfig.getNodeValue("angularbins", _angularBins);
-	Log::global_log->info() << "Number of angular bins: " << _angularBins << std::endl;
+	Log::global_log->info() << "[RDF] Number of angular bins: " << _angularBins << std::endl;
 
 	_intervalLength = 1;
 	xmlconfig.getNodeValueReduced("intervallength", _intervalLength);
-	Log::global_log->info() << "Interval length: " << _intervalLength << std::endl;
+	Log::global_log->info() << "[RDF] Interval length: " << _intervalLength << std::endl;
 	_readConfig = true;
 }
 

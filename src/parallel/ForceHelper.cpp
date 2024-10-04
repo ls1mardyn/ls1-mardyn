@@ -1,6 +1,7 @@
 
 #include "ForceHelper.h"
 
+#include <sstream>
 #include <variant>
 
 #include "utils/mardyn_assert.h"
@@ -37,8 +38,9 @@ std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> addValuesAndGet
 		[&](auto originalIter) {
 			if (not originalIter.isValid()) {
 				// This should not happen
-				std::cout << "Original molecule not usePreviousIterator";
-				MARDYN_EXIT(1);
+				std::ostringstream error_message;
+				error_message << "Original molecule not usePreviousIterator" << std::endl;
+				MARDYN_EXIT(error_message);
 			}
 
 			mardyn_assert(originalIter->getID() == haloMolecule.getID());

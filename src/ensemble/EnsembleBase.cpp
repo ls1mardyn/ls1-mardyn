@@ -23,8 +23,9 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	numComponents = query.card();
 	Log::global_log->info() << "Number of components: " << numComponents << std::endl;
 	if (numComponents == 0) {
-		Log::global_log->fatal() << "No components found. Please verify that you have input them correctly." << std::endl;
-		MARDYN_EXIT(96123);
+		std::ostringstream error_message;
+		error_message << "No components found. Please verify that you have input them correctly." << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	_components.resize(numComponents);
 	XMLfile::Query::const_iterator componentIter;
@@ -57,8 +58,9 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 			mixingrule = std::make_shared<LorentzBerthelotMixingRule>();
 
 		} else {
-			Log::global_log->error() << "Unknown mixing rule " << mixingruletype << std::endl;
-			MARDYN_EXIT(1);
+			std::ostringstream error_message;
+			error_message << "Unknown mixing rule " << mixingruletype << std::endl;
+			MARDYN_EXIT(error_message);
 		}
 		mixingrule->readXML(xmlconfig);
 
@@ -67,9 +69,10 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		// Check if cid is larger than number of components
 		// cid starts with 0 and cid2 is always larger than cid1
 		if (cid2 >= numComponents) {
-			Log::global_log->error() << "Mixing: cid=" << cid2+1 << " is larger than number of components ("
-									 << numComponents << ")" << std::endl;
-			MARDYN_EXIT(1);
+			std::ostringstream error_message;
+			error_message << "Mixing: cid=" << cid2+1 << " is larger than number of components ("
+							<< numComponents << ")" << std::endl;
+			MARDYN_EXIT(error_message);
 		}
 		_mixingrules[cid1][cid2] = mixingrule;
 	}
@@ -115,17 +118,20 @@ void Ensemble::setMixingrule(std::shared_ptr<MixingRuleBase> mixingrule) {
 
 	// Check if cids are valid
 	if (cid1 == cid2) {
-		Log::global_log->error() << "Mixing setMixingrule: cids must not be the same" << std::endl;
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;
+		error_message << "Mixing setMixingrule: cids must not be the same" << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	if (std::min(cid1, cid2) < 0) {
-		Log::global_log->error() << "Mixing setMixingrule: cids must not be negative" << std::endl;
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;
+		error_message << "Mixing setMixingrule: cids must not be negative" << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	if (std::max(cid1, cid2) >= _components.size()) {
-		Log::global_log->error() << "Mixing setMixingrule: cids must not exceed number of components ("
-								 << _components.size() << ")" << std::endl;
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;
+		error_message << "Mixing setMixingrule: cids must not exceed number of components ("
+						<< _components.size() << ")" << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	
 	_mixingrules[cid1][cid2] = mixingrule;

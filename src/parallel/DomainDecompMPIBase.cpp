@@ -149,9 +149,8 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 	} else if(zonalMethod=="nt") {
 		zonalMethodP = new NeutralTerritory();
 	} else {
-		Log::global_log->error() << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'es', 'hs', 'mp' and 'nt'"
-				<< std::endl;
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;		error_message << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'es', 'hs', 'mp' and 'nt'"
+				<< std::endl;		MARDYN_EXIT(error_message);
 	}
 	Log::global_log->info() << "Using zonal method: " << zonalMethod << std::endl;
 
@@ -165,9 +164,8 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 		Log::global_log->info() << "DomainDecompMPIBase: Using IndirectCommunicationScheme" << std::endl;
 		_neighbourCommunicationScheme = std::make_unique<IndirectNeighbourCommunicationScheme>(zonalMethodP);
 	} else {
-		Log::global_log->error() << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'"
-				<< std::endl;
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;		error_message << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'"
+				<< std::endl;		MARDYN_EXIT(error_message);
 	}
 }
 
@@ -197,7 +195,7 @@ void DomainDecompMPIBase::assertIntIdentity(int IX) {
 			MPI_CHECK(MPI_Recv(&recv, 1, MPI_INT, i, 2 * i + 17, _comm, &s));
 			if (recv != IX) {
 				Log::global_log->error() << "IX is " << IX << " for rank 0, but " << recv << " for rank " << i << ".\n";
-				MPI_Abort(_comm, 911);
+				MPI_Abort(_comm, 911); // TODO FIXME
 			}
 		}
 		Log::global_log->info() << "IX = " << recv << " for all " << _numProcs << " ranks.\n";

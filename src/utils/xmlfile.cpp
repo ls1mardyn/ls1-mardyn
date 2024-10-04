@@ -193,9 +193,10 @@ bool XMLfile::initfile_local(const std::string& filepath) {
 	//version using ifstream
 	std::ifstream fstrm(filepathTrimmed.c_str(),std::ifstream::binary|std::ifstream::ate);
 	if(!fstrm) {
-		std::cerr << "ERROR opening " << filepathTrimmed << std::endl;
+		std::ostringstream error_message;
+		error_message << "ERROR opening " << filepathTrimmed << std::endl;
 		clear();
-		MARDYN_EXIT(1);
+		MARDYN_EXIT(error_message);
 	}
 	std::ifstream::pos_type filesize=fstrm.tellg();
 	fstrm.close(); fstrm.clear();
@@ -538,17 +539,19 @@ template<typename T> bool XMLfile::Node::getValue(T& value) const
 		// Check if input has correct sign
 		if (std::is_unsigned_v<T>) {
 			if (ss.str().find_first_of("-") != std::string::npos) {
-				std::cerr << "ERROR parsing \"" << ss.str() << "\" to data type " << typeid(T).name() << " from tag \"<" << name() << ">\" in xml file" << std::endl;
-				std::cerr << "The tag contains a negative value but an unsigned value was expected." << std::endl;
-				MARDYN_EXIT(1);
+				std::ostringstream error_message;
+				error_message << "ERROR parsing \"" << ss.str() << "\" to data type " << typeid(T).name() << " from tag \"<" << name() << ">\" in xml file" << std::endl;
+				error_message << "The tag contains a negative value but an unsigned value was expected." << std::endl;
+				MARDYN_EXIT(error_message);
 			}
 		}
 		ss >> value;
 		// Check if the entire string was consumed
 		if (!ss.eof() || ss.fail()) {
-			std::cerr << "ERROR parsing all chars of \"" << ss.str() << "\" from tag \"<" << name() << ">\" in xml file" << std::endl;
-			std::cerr << "This might be the result of using a float while an integer is expected." << std::endl;
-			MARDYN_EXIT(1);
+			std::ostringstream error_message;
+			error_message << "ERROR parsing all chars of \"" << ss.str() << "\" from tag \"<" << name() << ">\" in xml file" << std::endl;
+			error_message << "This might be the result of using a float while an integer is expected." << std::endl;
+			MARDYN_EXIT(error_message);
 		}
 		return true;
 	}
@@ -582,9 +585,10 @@ template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 		} else if (v == "FALSE" || v == "NO" || v == "OFF") {
 			value = false;
 		} else {
-			std::cerr << "ERROR parsing \"" << v << "\" to boolean from tag \"" << name() << "\" in xml file."
+			std::ostringstream error_message;
+			error_message << "ERROR parsing \"" << v << "\" to boolean from tag \"" << name() << "\" in xml file."
 				<< " Valid values are: true, false, yes, no, on, off. " << std::endl;
-			MARDYN_EXIT(1);
+			MARDYN_EXIT(error_message);
 		}
 	}
 	return found;

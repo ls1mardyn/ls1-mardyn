@@ -100,19 +100,20 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 							(phiUN < _phiIncrements)) {
 							unID = (hUN * _rIncrements * _phiIncrements) + (rUN * _phiIncrements) + phiUN;
 						} else {
-							Log::global_log->error()
+							std::ostringstream error_message;
+							error_message
 								<< "INV PROFILE UNITS " << _universalInvProfileUnit[0] << " "
 								<< _universalInvProfileUnit[1] << " " << _universalInvProfileUnit[2] << "\n";
-							Log::global_log->error() << "PROFILE UNITS " << _rIncrements << " " << _hIncrements << " "
+							error_message << "PROFILE UNITS " << _rIncrements << " " << _hIncrements << " "
 												<< _phiIncrements << "\n";
-							Log::global_log->error() << "Severe error!! Invalid profile ID (" << rUN << " / " << hUN << " / "
+							error_message << "Severe error!! Invalid profile ID (" << rUN << " / " << hUN << " / "
 												<< phiUN << ").\n\n";
-							Log::global_log->error() << "Severe error!! Invalid profile unit (" << R2 << " / " << yc << " / "
+							error_message << "Severe error!! Invalid profile unit (" << R2 << " / " << yc << " / "
 												<< phi << ").\n\n";
-							Log::global_log->error()
+							error_message
 								<< "Coordinates off center (" << xc << " / " << yc << " / " << zc << ").\n";
-							Log::global_log->error() << "unID = " << unID << "\n";
-							MARDYN_EXIT(707);
+							error_message << "unID = " << unID << "\n";
+							MARDYN_EXIT(error_message);
 						}
 						// ADD VELOCITCY AND VIRIAL TO RESPECTIVE BIN
 						_localnumberOfParticles[unID] += 1.;

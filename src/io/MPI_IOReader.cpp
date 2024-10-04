@@ -58,21 +58,24 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_phaseSpaceHeaderFileStream.open(_phaseSpaceHeaderFile.c_str());
 	_phaseSpaceHeaderFileStream >> token;
 	if(token != "mardyn") {
-		Log::global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << std::endl;
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;
+		error_message << _phaseSpaceHeaderFile << " not a valid mardyn input file." << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 
 	std::string inputversion;
 	_phaseSpaceHeaderFileStream >> token >> inputversion;
 	// FIXME: remove tag trunk from file specification?
 	if(token != "trunk") {
-		Log::global_log->error() << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << std::endl;
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;
+		error_message << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 
 	if(strtoul(inputversion.c_str(), NULL, 0) < 20080701) {
-		Log::global_log->error() << "Input version tool old (" << inputversion << ")" << std::endl;
-		MARDYN_EXIT(1);
+		std::ostringstream error_message;
+		error_message << "Input version tool old (" << inputversion << ")" << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 
 	Log::global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << std::endl;
@@ -115,9 +118,8 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 			if(!(ntypestring == "ICRVQD" || ntypestring == "ICRV"
 				 || ntypestring == "IRV")) {
-				Log::global_log->error() << "Unknown molecule format: '"
-									<< ntypestring << "'" << std::endl;
-				MARDYN_EXIT(1);
+				std::ostringstream error_message;				error_message << "Unknown molecule format: '"
+									<< ntypestring << "'" << std::endl;				MARDYN_EXIT(error_message);
 			}
 			_moleculeFormat = ntypestring;
 			Log::global_log->info() << " molecule format: " << ntypestring << std::endl;
@@ -182,8 +184,9 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 				_phaseSpaceHeaderFileStream >> numljcenters >> numcharges >> numdipoles
 											>> numquadrupoles >> numtersoff;
 				if(numtersoff != 0) {
-					Log::global_log->error() << "tersoff no longer supported." << std::endl;
-					MARDYN_EXIT(-1);
+					std::ostringstream error_message;
+					error_message << "tersoff no longer supported." << std::endl;
+					MARDYN_EXIT(error_message);
 				}
 				double x, y, z, m;
 				for(unsigned int j = 0; j < numljcenters; j++) {
@@ -654,8 +657,7 @@ void MPI_IOReader::handle_error(int i) {
 
 	MPI_Error_string(i, error_string, &length_of_error_string);
 
-	Log::global_log->error() << "Writing of file was not successfull " << " , " << i
-			<< " , " << error_string << std::endl;
-	MARDYN_EXIT(1);
+	std::ostringstream error_message;	error_message << "Writing of file was not successfull " << " , " << i
+			<< " , " << error_string << std::endl;	MARDYN_EXIT(error_message);
 #endif
 }

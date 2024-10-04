@@ -29,10 +29,11 @@ void FixRegion::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 	// SANITY CHECK
 	if (_xMin < 0. || _yMin < 0. || _zMin < 0. || _xMax > _boxLength[0] || _yMax > _boxLength[1] ||
 		_zMax > _boxLength[2]) {
-		Log::global_log->error() << "[FixRegion] INVALID INPUT!!! DISABLED!" << std::endl;
-		Log::global_log->error() << "[FixRegion] HALTING SIMULATION" << std::endl;
+		std::ostringstream error_message;
+		error_message << "[FixRegion] INVALID INPUT!!! DISABLED!" << std::endl;
+		error_message << "[FixRegion] HALTING SIMULATION" << std::endl;
 		// HALT SIM
-		MARDYN_EXIT(1);
+		MARDYN_EXIT(error_message);
 		return;
 	}
 

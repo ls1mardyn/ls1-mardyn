@@ -16,6 +16,7 @@
 #include "utils/mardyn_assert.h"
 
 #include <array>
+#include <sstream>
 
 
 MaxCheck::MaxCheck() {
@@ -75,8 +76,9 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 	numTargets = query.card();
 	Log::global_log->info() << "[MaxCheck] Number of component targets: " << numTargets << std::endl;
 	if (numTargets < 1) {
-		Log::global_log->warning() << "[MaxCheck] No target parameters specified. Program exit ..." << std::endl;
-		MARDYN_EXIT(-1);
+		std::ostringstream error_message;
+		error_message << "[MaxCheck] No target parameters specified. Program exit ..." << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator nodeIter;

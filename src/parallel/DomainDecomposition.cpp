@@ -1,10 +1,13 @@
 #include "DomainDecomposition.h"
 
+#include <sstream>
+
 #include "Domain.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "parallel/HaloRegion.h"
 #include "ParticleData.h"
@@ -23,12 +26,13 @@ void DomainDecomposition::initMPIGridDims() {
 	{
 		auto numProcsGridSize = _gridSize[0] * _gridSize[1] * _gridSize[2];
 		if (numProcsGridSize != _numProcs and numProcsGridSize != 0) {
-			Log::global_log->error() << "DomainDecomposition: Wrong grid size given!" << std::endl;
-			Log::global_log->error() << "\tnumProcs is " << _numProcs << "," << std::endl;
-			Log::global_log->error() << "\tbut grid is " << _gridSize[0] << " x " << _gridSize[1] << " x " << _gridSize[2] << std::endl;
-			Log::global_log->error() << "\tresulting in " << numProcsGridSize << " subdomains!" << std::endl;
-			Log::global_log->error() << "\tplease check your input file!" << std::endl;
-			MARDYN_EXIT(2134);
+			std::ostringstream error_message;
+			error_message << "DomainDecomposition: Wrong grid size given!" << std::endl;
+			error_message << "\tnumProcs is " << _numProcs << "," << std::endl;
+			error_message << "\tbut grid is " << _gridSize[0] << " x " << _gridSize[1] << " x " << _gridSize[2] << std::endl;
+			error_message << "\tresulting in " << numProcsGridSize << " subdomains!" << std::endl;
+			error_message << "\tplease check your input file!" << std::endl;
+			MARDYN_EXIT(error_message);
 		}
 	}
 
@@ -59,10 +63,11 @@ void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/, Par
 														 LEAVING_AND_HALO_COPIES);
 	} else {
 		// Would first need to send leaving, then halo -> not good for overlapping!
-		Log::global_log->error() << "nonblocking P2P using separate messages for leaving and halo is currently not "
+		std::ostringstream error_message;
+		error_message << "nonblocking P2P using separate messages for leaving and halo is currently not "
 							   "supported. Please use the indirect neighbor communication scheme!"
 							<< std::endl;
-		MARDYN_EXIT(235861);
+		MARDYN_EXIT(error_message);
 	}
 }
 
@@ -73,9 +78,10 @@ void DomainDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/, Part
 														LEAVING_AND_HALO_COPIES);
 	} else {
 		// Would first need to send leaving, then halo -> not good for overlapping!
-		Log::global_log->error()
+		std::ostringstream error_message;
+		error_message
 			<< "nonblocking P2P using separate messages for leaving and halo is currently not supported." << std::endl;
-		MARDYN_EXIT(235861);
+		MARDYN_EXIT(error_message);
 	}
 }
 

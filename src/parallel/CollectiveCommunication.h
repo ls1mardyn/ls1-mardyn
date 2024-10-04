@@ -170,8 +170,9 @@ public:
 							commutative, &agglomeratedTypeAddOperator));
 			break;
 		default:
-			Log::global_log->error()<<"invalid reducetype, aborting." << std::endl;
-			MARDYN_EXIT(1);
+			std::ostringstream error_message;
+			error_message<<"invalid reducetype, aborting." << std::endl;
+			MARDYN_EXIT(error_message);
 		}
 
 		MPI_CHECK(
@@ -192,8 +193,9 @@ public:
 				op = MPI_MAX;
 				break;
 			default:
-				Log::global_log->error()<<"invalid reducetype, aborting." << std::endl;
-				MARDYN_EXIT(1);
+				std::ostringstream error_message;
+				error_message<<"invalid reducetype, aborting." << std::endl;
+				MARDYN_EXIT(error_message);
 			}
 			MPI_CHECK(MPI_Allreduce( MPI_IN_PLACE, &_values[i], 1, _types[i], op, _communicator ));
 		}

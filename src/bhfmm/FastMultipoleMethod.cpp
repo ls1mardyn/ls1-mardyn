@@ -67,10 +67,11 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 			and _LJCellSubdivisionFactor != 2
 			and _LJCellSubdivisionFactor != 4
 			and _LJCellSubdivisionFactor != 8) {
-		Log::global_log->error() << "Fast Multipole Method: bad subdivision factor:"
+		std::ostringstream error_message;
+		error_message << "Fast Multipole Method: bad subdivision factor:"
 				<< _LJCellSubdivisionFactor << std::endl;
-		Log::global_log->error() << "expected 1,2,4 or 8" << std::endl;
-		MARDYN_EXIT(5);
+		error_message << "expected 1,2,4 or 8" << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	Log::global_log->info()
 			<< "Fast Multipole Method: each LJ cell will be subdivided in "
@@ -107,8 +108,9 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 	} else {
 		// TODO: Debugging in Progress!
 #if defined(ENABLE_MPI)
-		Log::global_log->error() << "MPI in combination with adaptive is not supported yet" << std::endl;
-		MARDYN_EXIT(-1);
+		std::ostringstream error_message;
+		error_message << "MPI in combination with adaptive is not supported yet" << std::endl;
+		MARDYN_EXIT(error_message);
 #endif
 		//int threshold = 100;
 		_pseudoParticleContainer = new AdaptivePseudoParticleContainer(
@@ -313,8 +315,9 @@ void FastMultipoleMethod::runner(int type, void *data) {
 #else
 #pragma omp critical
 	{
-	Log::global_log->error() << "Quicksched runner without FMM_FFT not implemented!" << std::endl;
-	MARDYN_EXIT(1);
+	std::ostringstream error_message;
+	error_message << "Quicksched runner without FMM_FFT not implemented!" << std::endl;
+	MARDYN_EXIT(error_message);
 	}
 #endif /* FMM_FFT */
 }

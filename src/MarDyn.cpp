@@ -192,9 +192,10 @@ int main(int argc, char** argv) {
 
 	auto numArgs = args.size();
 	if(numArgs != 1) {
-		Log::global_log->error() << "Incorrect number of arguments provided." << std::endl;
 		op.print_usage();
-		MARDYN_EXIT(-1);
+		std::ostringstream error_message;
+		error_message << "Incorrect number of arguments provided." << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
 	std::string configFileName(args[0]);
@@ -202,8 +203,9 @@ int main(int argc, char** argv) {
 		Log::global_log->info() << "Config file: " << configFileName << std::endl;
 		simulation.readConfigFile(configFileName);
 	} else {
-		Log::global_log->error() << "Cannot open config file '" << configFileName << "'" << std::endl;
-		MARDYN_EXIT(-2);
+		std::ostringstream error_message;
+		error_message << "Cannot open config file '" << configFileName << "'" << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 
 	/* processing command line arguments */
