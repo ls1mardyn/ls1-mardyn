@@ -10,6 +10,8 @@
 
 #include <string>
 #include <sstream>
+#include <iostream>
+#include <cstdlib>
 
 #include "Logger.h"
 
@@ -17,14 +19,15 @@
 #define MARDYN_EXIT(exit_message) mardyn_exit(exit_message, __FILE__, __LINE__)
 
 inline void mardyn_exit(const std::ostringstream & exit_message,
-						const char* file, const int line) {
-	Log::global_log->error_always_output()
-		<< "Exit called in file `" << file << ":" << line << "`" << std::endl;
-	Log::global_log->error_always_output()
-		<< exit_message << std::endl;
+						const char* file, const int line, const int exit_code=EXIT_FAILURE) {
+	if (exit_code == EXIT_FAILURE) {
+		Log::global_log->error_always_output()
+			<< "Exit called in file `" << file << ":" << line << "` with message:" << std::endl;
+		std::cerr << exit_message.str() << std::endl;
+	}
 #ifdef ENABLE_MPI
 	// terminate all mpi processes and return exitcode
-	MPI_Abort(MPI_COMM_WORLD, code);
+	MPI_Abort(MPI_COMM_WORLD, exit_code);
 #else
 	// call global abort - this stops the debugger at the right spot.
 	::abort();
