@@ -2,7 +2,7 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 
 
-PMF::PMF():reference_rdf_interpolation{1.0,false},potential_interpolation{0.0,true},acc_rdf_interpolation{1.0,false}{
+PMF::PMF():reference_rdf_interpolation{1.0,false},potential_interpolation{0.0,true},acc_rdf_interpolation{1.0,false},convergence{0.5}{
 }
 
 
@@ -73,6 +73,7 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     xmlfile.getNodeValue("internalBins",internal_bins);
     xmlfile.getNodeValue("measureFreq",measure_frequency);
     xmlfile.getNodeValue("output",output);
+    xmlfile.getNodeValue("updateStride",update_stride);
     Log::global_log->info()<<"[PMF] Target temperature = "<<_simulation.getEnsemble()->T()<<std::endl;
 }
 
@@ -98,14 +99,31 @@ void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long
 void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, unsigned long step){
 
     AccumulateRDF(pc,domain);
-    
-    if(output){
+
+    convergence.PrintGlobalConvergence2File();
+
+    if(step > 0 && step%100==0){
         std::string filename="avg_rdf_"+std::to_string(step)+".txt";
         std::ofstream rdf_file(filename);
         for(int i=0;i<acc_rdf_interpolation.GetYValues().size();++i){
             rdf_file<<std::setw(8)<<std::left<<acc_rdf_interpolation.GetXValues()[i]<<"\t"<<std::setw(8)<<std::left<<GetAverageRDF()[i]<<std::endl;
         }
         rdf_file.close();
+    }
+    
+    std::vector<double> current_rdf = GetAverageRDF();
+
+    convergence.CheckConvergence(reference_rdf_interpolation.GetYValues(),current_rdf);
+    convergence.PrintLocalConvergence2File(step);
+    
+    // if(convergence.TriggerPotentialUpdate()){
+    if(step%update_stride ==0 && step>0){
+        Log::global_log->info()<<"[UpdatePotential]Update potential now"<<std::endl;
+        AddPotentialCorrection(step);
+    }
+    
+    if(output && step%update_stride ==0){
+        
         std::string potential_file = "potential_"+std::to_string(step)+".txt";
         std::ofstream potential(potential_file);
         for(int i=0;i<potential_interpolation.GetYValues().size();++i){
@@ -116,23 +134,8 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
         }
         potential.close();
     }
-    if(step&update_stride ==0 && step>0){
-        AddPotentialCorrection(step);
-    }
-    // AddPotentialCorrection(step);
-    std::vector<double> current_rdf = GetAverageRDF();
+    
 
-    convergence_check.ConvergenceCheck(reference_rdf_interpolation.GetYValues(),current_rdf);
-    std::string conv_name = "convergence.txt";
-    std::ofstream conv{conv_name};
-    for(int i=0;i<convergence_check.convergence_per_step.size();++i){
-        conv<<std::setw(8)<<std::left
-        <<i
-        <<"\t"
-        <<std::setw(8)<<std::left<<convergence_check.convergence_per_step[i]
-        <<std::endl;
-    }
-    conv.close();
 
 }
 
@@ -168,7 +171,7 @@ void PMF::AddPotentialCorrection(unsigned long step){
 
     potential_interpolation.AddVector(current_correction);
 
-    if(output){
+    if(output && step%update_stride ==0 ){
         std::string name="correction_step_"+std::to_string(step)+".txt";
         std::ofstream corr{name};
         for(int i=0;i<internal_bins;++i){

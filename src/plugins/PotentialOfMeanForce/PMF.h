@@ -18,6 +18,7 @@
 #include "ForceAdapter.h"
 #include "ProfilerPMF.h"
 #include "Filter.h"
+#include "Convergence.h"
 
 class InteractionSite;
 
@@ -33,6 +34,7 @@ class PMF:public PluginBase{
 
     InternalProfiler profiler;//measuring tool
     Filter filter;
+    Convergence convergence;
     std::vector<FPRegion> regions;
     /**
      * Stores a COM site for every molecule (needs improvement)
@@ -47,14 +49,14 @@ class PMF:public PluginBase{
 
     double internal_bins;//used for profiler
     int measure_frequency;//used for profiler
-    int update_stride=100;//how often to IBI
+    int update_stride=300;//how often to IBI
     double multiplier;//alpha for step size
     bool output;
 
 
     // DataPostProcess post_processing;
 
-    struct Convergence{
+    struct ConvergenceTest{
         bool ConvergenceCheck(std::vector<double>& ref, std::vector<double>& crrnt){
             double conv=0.0;
             for(int i=0;i<ref.size();++i){
@@ -72,7 +74,7 @@ class PMF:public PluginBase{
         int ibi_iteration=0;
     };
 
-    Convergence convergence_check;
+    ConvergenceTest convergence_check;
 
     public:
     PMF();

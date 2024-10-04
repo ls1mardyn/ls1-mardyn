@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>1000</steps>
+        <steps>10000</steps>
       </production>
     </run>
     
@@ -96,9 +96,11 @@
             <hybridDimZ>0.0</hybridDimZ>
           </region>
         </fpregions>
-        <multiplier>0.8</multiplier>
+        <multiplier>0.7</multiplier>
         <internalBins>250</internalBins>
         <measureFreq>1</measureFreq>
+        <updateStride>1000</updateStride>
+        <rdfOutputStide>100</rdfOutputStide>
         <output>true</output>
     </plugin>
         
