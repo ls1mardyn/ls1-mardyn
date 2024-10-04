@@ -47,7 +47,7 @@ class PMF:public PluginBase{
 
     double internal_bins;//used for profiler
     int measure_frequency;//used for profiler
-    int update_stride=1;//how often to IBI
+    int update_stride=100;//how often to IBI
     double multiplier;//alpha for step size
     bool output;
 

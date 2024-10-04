@@ -68,9 +68,8 @@ void Interpolate::AddVector(std::vector<double>& v){
     }
 
     for(int i=0;i<v.size();++i){
-        if(x_values[i]>1.0){
-            y_values[i] -= v[i];
-        }
+        if(!std::isfinite(v[i])) continue;
+            y_values[i] += v[i];
     }
 
 }

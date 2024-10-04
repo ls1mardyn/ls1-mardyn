@@ -116,7 +116,9 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
         }
         potential.close();
     }
-
+    if(step&update_stride ==0 && step>0){
+        AddPotentialCorrection(step);
+    }
     // AddPotentialCorrection(step);
     std::vector<double> current_rdf = GetAverageRDF();
 
@@ -161,10 +163,8 @@ void PMF::AddPotentialCorrection(unsigned long step){
 
     for(int i=0;i<internal_bins;++i){
         double ratio = avg_rdf[i]/reference_rdf_interpolation.GetYValues()[i];
-        current_correction[i] = multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
+        current_correction[i] = -1.0*multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
     }
-
-    // current_correction = filter.MovingAverage(current_correction);
 
     potential_interpolation.AddVector(current_correction);
 
