@@ -32,7 +32,7 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
 
         Log::global_log->info()<<"[PMF] The region  center is located at: ("<<it->_center[0]<<","<<it->_center[1]<<","<<it->_center[2]<<")"<<std::endl;
     }
-    resolution_handler.CheckResolution(pc,sites,regions);
+    // resolution_handler.CheckResolution(pc,sites,regions);
     Log::global_log->info()<<"[PMF] Resolutions started "<<std::endl;
 
 
@@ -82,13 +82,13 @@ void PMF::beforeForces(ParticleContainer* particleContainer, DomainDecompBase* d
 
 void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep){
 
-    for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
-        unsigned long m_id = it->getID();
-        std::array<double,3> com = profiler.GetCOM(&(*it));
-        sites[m_id].first.SetPosition(com);
-    }
-
-    resolution_handler.CheckResolution(pc,sites,regions);
+    // for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
+        // unsigned long m_id = it->getID();
+        // std::array<double,3> com = profiler.GetCOM(&(*it));
+        // sites[m_id].first.SetPosition(com);
+    // }
+// 
+    // resolution_handler.CheckResolution(pc,sites,regions);
 }
 
 void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){

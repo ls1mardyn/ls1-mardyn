@@ -92,7 +92,8 @@ double InteractionForceAdapter::processPairBackend(Molecule& m1, Molecule& m2, d
 void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, InteractionType interaction){
     //Pure interaction case
     if(interaction == InteractionType::onlyfp){
-        PotForce(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
+        // Log::global_log->error()<<"PotForceType cannot be FP"<<std::endl;
+        PotForceOnlyCG(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
     }
 
     if(interaction == InteractionType::onlycg){
@@ -100,13 +101,14 @@ void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm&
     }
 
     if(interaction == InteractionType::mixed){
+        // Log::global_log->error()<<"PotForceType cannot be Mixed"<<std::endl;
         /**
          * m1 hy vs m2 cg
          * m1 hy vs m2 at
          * viceversa
 		 * m1 hy vs m2 hy
          */
-        PotForceHybrid(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
+        PotForceOnlyCG(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
         //PotForce(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
     }
 }
@@ -118,11 +120,11 @@ void InteractionForceAdapter::FluidPotType(Molecule& m1, Molecule& m2, ParaStrm&
     }
 
     if(interaction == InteractionType::onlycg){
-        Log::global_log->info()<<"Not implemented for cg"<<std::endl;
+        Log::global_log->error()<<"Not implemented for cg"<<std::endl;
     }
 
     if(interaction == InteractionType::mixed){
-        Log::global_log->info()<<"Not implemented for mixed"<<std::endl;
+        Log::global_log->error()<<"Not implemented for mixed"<<std::endl;
     }
 }
 
@@ -231,8 +233,11 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
 
     //Get both molecules COMs
     //TODO: Check this assumption: Assume they are updated
-    std::array<double, 3> com1 = adres->GetMoleculeCOMSite(m1.getID()).r();
-    std::array<double, 3> com2 = adres->GetMoleculeCOMSite(m2.getID()).r();
+    // std::array<double, 3> com1 = adres->GetMoleculeCOMSite(m1.getID()).r();
+    // std::array<double, 3> com2 = adres->GetMoleculeCOMSite(m2.getID()).r();
+
+    std::array<double, 3> com1 = m1.r_arr();
+    std::array<double, 3> com2 = m2.r_arr();
 
     double r_com = std::sqrt(SqrdDistanceBetweenCOMs(com1,com2));
     //Interact only on com sites
@@ -247,9 +252,12 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
         Upot = PotentialOfMeanForce(r_com);
         ForceOfPotentialOfMeanForce(f,r_com);
         //Set quantities
-        adres->GetMoleculeCOMSite(m1.getID()).AddPotential(Upot);
-        adres->GetMoleculeCOMSite(m1.getID()).AddForce(f);
-		adres->GetMoleculeCOMSite(m2.getID()).SubForce(f);
+        // adres->GetMoleculeCOMSite(m1.getID()).AddPotential(Upot);
+        // adres->GetMoleculeCOMSite(m1.getID()).AddForce(f);
+		// adres->GetMoleculeCOMSite(m2.getID()).SubForce(f);
+
+        m1.Fljcenteradd(0,f.data());
+        m2.Fljcentersub(0,f.data());
 
 		Upot6LJ += Upot;
 
@@ -257,7 +265,7 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
 			virial[d] += 0.5*distance[d]*f[d];
 		}
 
-        adres->MapToAtomistic(f,m1,m2);
+        // adres->MapToAtomistic(f,m1,m2);
 
     }
 
@@ -292,7 +300,7 @@ void InteractionForceAdapter::ForceOfPotentialOfMeanForce(std::array<double,3>& 
     }
     norm = std::sqrt(norm);
 
-    double derivative = -1.0* adres->GetPotentialInterpolation().CentralFiniteDifference(r);
+    double derivative = 1.0* adres->GetPotentialInterpolation().CentralFiniteDifference(r);
     for(int i=0;i<f_com.size();i++){
         f_com[i] *= derivative/norm;
     }
