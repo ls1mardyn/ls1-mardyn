@@ -100,7 +100,7 @@
         <internalBins>250</internalBins>
         <measureFreq>1</measureFreq>
         <updateStride>1000</updateStride>
-        <rdfOutputStide>100</rdfOutputStide>
+        <rdfOutputStride>100</rdfOutputStride>
         <output>true</output>
     </plugin>
         
