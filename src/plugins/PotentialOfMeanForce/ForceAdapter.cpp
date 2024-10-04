@@ -236,8 +236,11 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
     // std::array<double, 3> com1 = adres->GetMoleculeCOMSite(m1.getID()).r();
     // std::array<double, 3> com2 = adres->GetMoleculeCOMSite(m2.getID()).r();
 
-    std::array<double, 3> com1 = m1.r_arr();
-    std::array<double, 3> com2 = m2.r_arr();
+    // std::array<double, 3> com1 = m1.r_arr();
+    // std::array<double, 3> com2 = m2.r_arr();
+
+    std::array<double, 3> com1 = CenterOfMass(m1);
+    std::array<double, 3> com2 = CenterOfMass(m2);
 
     double r_com = std::sqrt(SqrdDistanceBetweenCOMs(com1,com2));
     //Interact only on com sites
@@ -256,16 +259,17 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
         // adres->GetMoleculeCOMSite(m1.getID()).AddForce(f);
 		// adres->GetMoleculeCOMSite(m2.getID()).SubForce(f);
 
-        m1.Fljcenteradd(0,f.data());
-        m2.Fljcentersub(0,f.data());
+
+        MapToAtomistic(m1,m2,f);
+
+        // m1.Fljcenteradd(0,f.data());
+        // m2.Fljcentersub(0,f.data());
 
 		Upot6LJ += Upot;
 
 		for(unsigned short d=0;d<3; ++d){
 			virial[d] += 0.5*distance[d]*f[d];
 		}
-
-        // adres->MapToAtomistic(f,m1,m2);
 
     }
 
@@ -315,4 +319,53 @@ double InteractionForceAdapter::SqrdDistanceBetweenCOMs(std::array<double,3> c1,
     }
 
     return r2;
+}
+
+std::array<double, 3> InteractionForceAdapter::CenterOfMass(Molecule& m1){
+
+    std::array<double, 3> com{0,0,0};
+    double total_mass = m1.component()->m();
+
+    for(int lj=0;lj<m1.component()->numLJcenters();++lj){
+        auto lj_site = m1.ljcenter_d_abs(lj);
+        double site_mass = m1.component()->ljcenter(lj).m();
+        for(int i=0;i<3;++i){
+            com[i] += lj_site[i]*site_mass;
+            com[i] = com[i]/total_mass;
+        }
+    }
+
+    // auto lj = m1.ljcenter_d_abs(0);
+// 
+    // for(int i=0;i<3;++i){
+        // com[i] += lj[i]*m1.component()->ljcenter(0).m();
+        // com[i] = com[i]/total_mass;
+    // }
+
+    return com;
+
+}
+
+void InteractionForceAdapter::MapToAtomistic(Molecule& m1, Molecule& m2, std::array<double,3>& force){
+    double total_mass = m1.component()->m();
+
+    for(int lj=0;lj<m1.component()->numLJcenters();++lj){
+        std::array<double,3> site_force{0,0,0};
+        double site_mass = m1.component()->ljcenter(lj).m();
+        for(int i=0;i<3;++i){
+            site_force[i] = force[i] * site_mass/total_mass;
+        }
+
+        m1.Fljcenteradd(lj,site_force.data());
+        m2.Fljcentersub(lj,site_force.data());
+
+    }
+
+    // for(int i=0;i<3;++i){
+        // f_alpha[i] = force[i] * m1.component()->ljcenter(0).m()/total_mass;
+    // }
+
+    // m1.Fljcenteradd(0,f_alpha.data());
+    // m2.Fljcentersub(0,f_alpha.data());
+
 }

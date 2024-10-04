@@ -57,6 +57,9 @@ class InteractionForceAdapter:public ParticlePairsHandler{
     double SqrdDistanceBetweenCOMs(std::array<double,3> c1,std::array<double,3> c2);
     void ForceOfPotentialOfMeanForce(std::array<double,3>& f_com, double r);
 
+    std::array<double, 3> CenterOfMass(Molecule& m1);
+    void MapToAtomistic(Molecule& m1,Molecule& m2, std::array<double,3>& force);
+
     private:
 
     ResolutionHandler& resolution_handler;
