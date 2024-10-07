@@ -115,7 +115,9 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
 
     convergence.CheckConvergence(reference_rdf_interpolation.GetYValues(),current_rdf);
     convergence.PrintLocalConvergence2File(step);
-    
+    // #if defined _OPENMP
+    // #pragma omp barrier
+    // #endif
     // if(convergence.TriggerPotentialUpdate()){
     if(step%update_stride ==0 && step>0){
         Log::global_log->info()<<"[UpdatePotential]Update potential now"<<std::endl;
@@ -166,7 +168,7 @@ void PMF::AddPotentialCorrection(unsigned long step){
 
     for(int i=0;i<internal_bins;++i){
         double ratio = avg_rdf[i]/reference_rdf_interpolation.GetYValues()[i];
-        current_correction[i] = -1.0*multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
+        current_correction[i] = 1.0*multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
     }
 
     potential_interpolation.AddVector(current_correction);
