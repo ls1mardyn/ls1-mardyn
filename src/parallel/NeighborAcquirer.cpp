@@ -122,12 +122,16 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 
 					// make a note in partners02 - don't forget to squeeze partners02
 					constexpr bool enlarged[3][2] = {{false}};
-					for (int k = 0; k < 3; k++) currentShift[k] *= -1;
+					for (int k = 0; k < 3; k++) {
+						currentShift[k] *= -1;
+					}
 
 					comm_partners02.emplace_back(rank, overlappedRegion.rmin, overlappedRegion.rmax, overlappedRegion.rmin,
 												 overlappedRegion.rmax, currentShift.data(), overlappedRegion.offset, enlarged);
 
-					for (int k = 0; k < 3; k++) currentShift[k] *= -1;
+					for (int k = 0; k < 3; k++) {
+						currentShift[k] *= -1;
+					}
 
 					// Undo the shift. So it is again in the perspective of the rank we got this region from.
 					// We cannot use unshiftedRegion, as it is not overlapped and thus potentially too big.
