@@ -106,9 +106,10 @@ std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>>
 			// msg format one region: rmin | rmax | offset | width | shift
 			const auto [regionsToTest, shifts] = getPotentiallyShiftedRegions(globalDomainLength, unshiftedRegion);
 			// Before every set of push_backs make sure there is enough space for this set + all remaining.
-			// Work with the assumption that the others are of the same size as the current ones.
-			// This is potentially an overestimate but avoids a large number of resizes.
-			sendingList.reserve(sendingList.size() + ((regions - regionId) * regionsToTest.size()));
+			// This guarantees that there is enough space for the current set of push_backs, and, if subsequent sets
+			// are smaller, further reallocations can be avoided. This potentially leads to an overestimate but comes
+			// with the advantage of fewer resizes.
+			sendingList[rank].reserve(sendingList[rank].size() + ((regions - regionId) * regionsToTest.size()));
 			comm_partners02.reserve(comm_partners02.size() + ((regions - regionId) * regionsToTest.size()));
 			for(size_t regionIndex = 0; regionIndex < regionsToTest.size(); ++regionIndex){
 				auto regionToTest = regionsToTest[regionIndex];
