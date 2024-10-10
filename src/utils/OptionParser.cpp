@@ -14,6 +14,10 @@
 #include <complex>
 #include <sstream>
 
+#ifdef ENABLE_MPI
+#include <mpi.h>  // For MPI_Finalize()
+#endif
+
 #if defined(ENABLE_NLS) && ENABLE_NLS
 # include <libintl.h>
 # define _(s) gettext(s)
@@ -346,13 +350,17 @@ void OptionParser::process_opt(const Option& o, const std::string& opt, const st
 	}
 	else if (o.action() == "help") {
 		print_help();
-		std::ostringstream empty_message;
-		mardyn_exit(empty_message, __FILE__, __LINE__, EXIT_SUCCESS);
+		#ifdef ENABLE_MPI
+			MPI_Finalize();
+		#endif
+		std::exit(EXIT_SUCCESS);
 	}
 	else if (o.action() == "version") {
 		print_version();
-		std::ostringstream empty_message;
-		mardyn_exit(empty_message, __FILE__, __LINE__, EXIT_SUCCESS);
+		#ifdef ENABLE_MPI
+			MPI_Finalize();
+		#endif
+		std::exit(EXIT_SUCCESS);
 	}
 	else if (o.action() == "callback" && o.callback()) {
 		(*o.callback())(o, opt, value, *this);

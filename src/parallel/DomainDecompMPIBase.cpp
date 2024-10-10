@@ -6,6 +6,7 @@
  */
 #include <memory>
 #include <algorithm>
+#include <sstream>
 
 #include "DomainDecompMPIBase.h"
 #include "molecules/Molecule.h"

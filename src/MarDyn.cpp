@@ -183,7 +183,7 @@ int main(int argc, char** argv) {
 		#ifdef ENABLE_MPI
 		MPI_Finalize();
 		#endif
-		exit(testresult); // using exit here should be OK
+		std::exit(testresult); // using exit here should be OK
 	}
 
 
