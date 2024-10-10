@@ -177,7 +177,7 @@ public:
             default:
 				std::ostringstream error_message;
 				error_message << "[ParticlePairs2PotForceAdapter9] pairType is unknown" << std::endl;
-                MARDYN_EXIT(error_message);
+                MARDYN_EXIT(error_message.str());
         }
         return 0.0;
 	}

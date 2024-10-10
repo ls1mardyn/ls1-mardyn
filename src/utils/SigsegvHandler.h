@@ -28,7 +28,7 @@ void handler(int sig) {
   // print out all the frames to stderr
   fprintf(stderr, "Error: signal %d:\n", sig);
   backtrace_symbols_fd(array, size, STDERR_FILENO);
-  MARDYN_EXIT(error_message);
+  MARDYN_EXIT(error_message.str());
 }
 
 void registerSigsegvHandler() {

@@ -69,7 +69,7 @@ void KDDecomposition::init(Domain* domain){
         error_message << "KDDecomposition not possible. Each process needs at least "
 						<< minCellCountPerProc << " cells." << std::endl;
         error_message << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << std::endl;
-        MARDYN_EXIT(error_message);
+        MARDYN_EXIT(error_message.str());
     }
     _decompTree->buildKDTree();
     _ownArea = _decompTree->findAreaForProcess(_rank);
@@ -106,7 +106,7 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	if(KDDStaticValues::minNumCellsPerDimension==0u){
 		std::ostringstream error_message;
 		error_message << "KDDecomposition minNumCellsPerDimension has to be bigger than zero!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	xmlconfig.getNodeValue("updateFrequency", _frequency);
 	Log::global_log->info() << "KDDecomposition update frequency: " << _frequency << std::endl;
@@ -129,7 +129,7 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 				std::ostringstream error_message;
 				error_message << "Wrong deviationReductionOperation given: " << _deviationReductionOperation
 									<< ". Should be 'max' or 'sum'." << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 		}
 		Log::global_log->info() << "KDDecomposition uses " << deviationReductionOperation
@@ -322,7 +322,7 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 			std::ostringstream error_message;
 			error_message << "A problem occurred during particle migration between old decomposition and new decomposition of the KDDecomposition." << std::endl;
 			error_message << "Aborting. Please save your input files and last available checkpoint and contact TUM SCCS." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		delete _decompTree;
 		_decompTree = newDecompRoot;
@@ -560,7 +560,7 @@ void KDDecomposition::fillTimeVecs(CellProcessor **cellProc){
 	if(cellProc == nullptr){
 		std::ostringstream error_message;
 		error_message << "The cellProcessor was not yet set! Please reorder fillTimeVecs, so that there won't be a problem!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	auto _tunerLoadCalc = dynamic_cast<TunerLoad*>(_loadCalc);
 	if(_tunerLoadCalc){
@@ -1031,7 +1031,7 @@ bool KDDecomposition::calculateAllPossibleSubdivisions(KDNode* node, std::list<K
 				if(_accumulatedProcessorSpeeds.empty()){
 					std::ostringstream error_message;
 					error_message << "no processor speeds given" << std::endl;
-					MARDYN_EXIT(error_message);
+					MARDYN_EXIT(error_message.str());
 				}
 				double optimalLoad = (_accumulatedProcessorSpeeds[node->_owningProc + node->_numProcs] - _accumulatedProcessorSpeeds[node->_owningProc]) * leftRightLoadRatio
 						/ (1. + leftRightLoadRatio);
@@ -1095,7 +1095,7 @@ bool KDDecomposition::calculateAllPossibleSubdivisions(KDNode* node, std::list<K
 				//continue;
 				std::ostringstream error_message;
 				error_message << "ERROR in calculateAllPossibleSubdivisions(), part of the domain was not assigned to a proc" << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 			mardyn_assert( clone->_child1->isResolvable() && clone->_child2->isResolvable() );
 
@@ -1256,7 +1256,7 @@ void KDDecomposition::calculateCostsPar(KDNode* area, std::vector<std::vector<do
 									default:
 										std::ostringstream error_message;
 										error_message << "[KDDecomposition] zeroCounts too large!" << std::endl;
-										MARDYN_EXIT(error_message);
+										MARDYN_EXIT(error_message.str());
 								}
 							}
 						}
@@ -1442,14 +1442,14 @@ void KDDecomposition::calcNumParticlesPerCell(ParticleContainer* moleculeContain
 std::vector<int> KDDecomposition::getNeighbourRanks() {
 	std::ostringstream error_message;
 	error_message << "KDDecomposition::getNeighbourRanks() not implemented" << std::endl;
-	MARDYN_EXIT(error_message);
+	MARDYN_EXIT(error_message.str());
 	return std::vector<int> (0);
 }
 
 std::vector<int> KDDecomposition::getNeighbourRanksFullShell() {
 	std::ostringstream error_message;
 	error_message << "KDDecomposition::getNeighbourRanksFullShell() not implemented" << std::endl;
-	MARDYN_EXIT(error_message);
+	MARDYN_EXIT(error_message.str());
 	return std::vector<int> (0);
 }
 
@@ -1784,7 +1784,7 @@ bool KDDecomposition::calculateHeteroSubdivision(KDNode* node, KDNode*& optimalN
 	if (costsLeft[biggestDim].size()<=2){
 		std::ostringstream error_message;
 		error_message << "The domain is far to small!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	int startIndex = 1;
@@ -1829,7 +1829,7 @@ bool KDDecomposition::calculateHeteroSubdivision(KDNode* node, KDNode*& optimalN
 	        (optimalNode->_child1->getNumMaxProcs() + optimalNode->_child2->getNumMaxProcs())) {
 		std::ostringstream error_message;
 		error_message << "Domain is not resolvable at all!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	while ( (! optimalNode->_child1->isResolvable()) && optimalNode->_child2->isResolvable()) {
@@ -1858,7 +1858,7 @@ bool KDDecomposition::calculateHeteroSubdivision(KDNode* node, KDNode*& optimalN
 		//continue;
 		std::ostringstream error_message;
 		error_message << "ERROR in calculateHeteroSubdivision(), part of the domain was not assigned to a proc" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	mardyn_assert( optimalNode->_child1->isResolvable() && optimalNode->_child2->isResolvable() );
 

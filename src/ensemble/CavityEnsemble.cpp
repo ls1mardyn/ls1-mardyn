@@ -97,7 +97,7 @@ void CavityEnsemble::setControlVolume(double x0, double y0, double z0, double x1
         error_message << "\nInvalid control volume (" << x0 << " / " << y0
                             << " / " << z0 << ") to (" << x1 << " / " << y1 << " / "
                             << z1 << ")." << std::endl;
-        MARDYN_EXIT(error_message);
+        MARDYN_EXIT(error_message.str());
     }
 
     this->restrictedControlVolume = true;
@@ -114,22 +114,22 @@ void CavityEnsemble::init(Component *component, unsigned Nx, unsigned Ny, unsign
     if (this->ownrank < 0) {
         std::ostringstream error_message;
         error_message << "\nInvalid rank " << ownrank << ".\n";
-        MARDYN_EXIT(error_message);
+        MARDYN_EXIT(error_message.str());
     }
     if (this->initialized) {
         std::ostringstream error_message;
         error_message << "\nCavity ensemble initialized twice.\n";
-        MARDYN_EXIT(error_message);
+        MARDYN_EXIT(error_message.str());
     }
     if (0.0 >= this->T) {
         std::ostringstream error_message;
         error_message << "\nInvalid temperature T = " << T << ".\n";
-        MARDYN_EXIT(error_message);
+        MARDYN_EXIT(error_message.str());
     }
     if (0.0 >= this->globalV) {
         std::ostringstream error_message;
         error_message << "\nInvalid control volume V_ctrl = " << globalV << ".\n";
-        MARDYN_EXIT(error_message);
+        MARDYN_EXIT(error_message.str());
     }
 
     this->componentid = component->ID();

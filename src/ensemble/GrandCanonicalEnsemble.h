@@ -42,7 +42,7 @@ public:
 	void readXML(XMLfileUnits& xmlconfig) override {
 		std::ostringstream error_message;
 		error_message << "[GrandCanonicalEnsemble] readXML not implemented!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	};
 
 	unsigned long N() override {
@@ -73,7 +73,7 @@ public:
 	void updateGlobalVariable(ParticleContainer* particleContainer, GlobalVariable variable) override {
 		std::ostringstream error_message;
 		error_message << "[GrandCanonicalEnsemble] updateGlobalVariable not implemented!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	};
 
 	/*! Runs steps formerly in initConfigXML in simulation.cpp */

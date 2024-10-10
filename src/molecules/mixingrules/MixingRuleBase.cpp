@@ -17,11 +17,11 @@ void MixingRuleBase::readXML(const XMLfileUnits& xmlconfig) {
 	if (cid1 == cid2) {
 		std::ostringstream error_message;
 		error_message << "Mixing rules: cid1 and cid2 must not be the same but are both " << cid1 << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	} else if (std::min(cid1, cid2) < 0) {
 		std::ostringstream error_message;
 		error_message << "Mixing rules: cid1 and cid2 must be greater than zero" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	} 
 	
 	// Symmetry for mixing rules is assumed

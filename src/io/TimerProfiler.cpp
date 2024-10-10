@@ -39,7 +39,7 @@ void TimerProfiler::readXML(XMLfileUnits& xmlconfig) {
 		} else {
 			std::ostringstream error_message;
 			error_message << "Unknown display mode: " << displayMode << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 }

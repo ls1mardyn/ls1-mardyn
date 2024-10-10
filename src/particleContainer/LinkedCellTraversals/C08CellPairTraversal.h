@@ -80,7 +80,7 @@ void C08CellPairTraversal<CellTemplate, eighthShell>::traverseCellPairsOuter(
 	if(eighthShell){
 		std::ostringstream error_message;
 		error_message << "eightshell + overlapping not yet supported." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	using std::array;
 

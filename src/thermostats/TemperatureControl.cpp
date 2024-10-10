@@ -169,7 +169,7 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 		} else {
 			std::ostringstream error_message;
 			error_message << "[TemperatureControl] REGION: Invalid 'method' param: " << methods << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		Log::global_log->info() << "[TemperatureControl] REGION 'method' param: " << methods << std::endl;
 	}
@@ -194,7 +194,7 @@ void ControlRegionT::VelocityScalingInit(XMLfileUnits& xmlconfig, std::string st
 	if (_nNumSlabs < 1) {
 		std::ostringstream error_message;
 		error_message << "TemperatureControl: need at least one slab! (settings/numslabs)";
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	xmlconfig.getNodeValue("settings/exponent", _dTemperatureExponent);
 	xmlconfig.getNodeValue("settings/directions", strDirections);
@@ -421,7 +421,7 @@ void ControlRegionT::ControlTemperature(Molecule* mol) {
 	} else {
 		std::ostringstream error_message;
 		error_message << "[TemperatureControl] Invalid localMethod param: " << _localMethod << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -510,7 +510,7 @@ void ControlRegionT::registerAsObserver() {
 			std::ostringstream error_message;
 			error_message << "TemperatureControl->region[" << this->GetID()
 								<< "]: Initialization of plugin DistControl is needed before!" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 }

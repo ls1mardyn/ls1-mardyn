@@ -28,7 +28,7 @@ void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
 	} else {
 		std::ostringstream error_message;
 		error_message << "Unknown FlopRateOutputPlugin::mode. Choose \"stdout\", \"file\" or \"both\"." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_writeFrequency = 1;
@@ -39,7 +39,7 @@ void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
 	if(_writeToFile) {
 		std::ostringstream error_message;
 		error_message << "TODO: file output not yet supported." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if(_writeToFile) {

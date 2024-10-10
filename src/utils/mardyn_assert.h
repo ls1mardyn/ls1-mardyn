@@ -18,11 +18,11 @@
 // Macro to wrap mardyn_exit and pass the caller file and line
 #define MARDYN_EXIT(exit_message) mardyn_exit(exit_message, __FILE__, __LINE__)
 
-inline void mardyn_exit(const std::ostringstream & exit_message,
+inline void mardyn_exit(const std::string & exit_message,
 						const char* file, const int line) {
 	Log::global_log->error_always_output()
 		<< "Exit called in file `" << file << ":" << line << "` with message:" << std::endl;
-	std::cerr << exit_message.str() << std::endl;
+	std::cerr << exit_message << std::endl;
 #ifdef ENABLE_MPI
 	// terminate all mpi processes and return exitcode
 	MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
@@ -35,7 +35,7 @@ inline void mardyn_exit(const std::ostringstream & exit_message,
 inline void __mardyn_assert__(const char * expr, const char* file, int line) {
 	std::ostringstream error_message;
 	error_message << "Assertion \"" << expr << "\" failed at " << file << ":" << line << std::endl;
-	MARDYN_EXIT(error_message);
+	MARDYN_EXIT(error_message.str());
 }
 
 #ifdef NDEBUG

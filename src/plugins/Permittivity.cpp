@@ -79,7 +79,7 @@ void Permittivity::init(ParticleContainer* particleContainer, DomainDecompBase* 
 			if(not orientationIsCorrect){
 				std::ostringstream error_message;
 				error_message << "Wrong dipole vector chosen! Please always choose [eMyx eMyy eMyz] = [0 0 1] when using the permittivity plugin" << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 		}
 	}

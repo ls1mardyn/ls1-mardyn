@@ -27,7 +27,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		if(!_filler) {
 			std::ostringstream error_message;
 			error_message << "Object filler could not be created" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		Log::global_log->debug() << "Using object filler of type: " << _filler->getPluginName() << std::endl;
 		_filler->readXML(xmlconfig);
@@ -35,7 +35,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 	} else {
 		std::ostringstream error_message;
 		error_message << "No filler specified." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if(xmlconfig.changecurrentnode("object")) {
@@ -47,7 +47,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		if(!_object) {
 			std::ostringstream error_message;
 			error_message << "Unknown object type: " << objectType << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		Log::global_log->debug() << "Created object of type: " << _object->getPluginName() << std::endl;
 		_object->readXML(xmlconfig);
@@ -55,7 +55,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 	} else {
 		std::ostringstream error_message;
 		error_message << "No object specified." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if(xmlconfig.changecurrentnode("velocityAssigner")) {
@@ -86,7 +86,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		} else {
 			std::ostringstream error_message;
 			error_message << "Unknown velocity assigner specified." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		Ensemble* ensemble = _simulation.getEnsemble();
 		Log::global_log->info() << "Setting temperature for velocity assigner to " << ensemble->T() << std::endl;

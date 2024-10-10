@@ -58,7 +58,7 @@ MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64
 	if (0 == _writeFrequency) {
 		std::ostringstream error_message;
 		error_message << "[MMPLD Writer] writefrequency must not be 0" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -92,7 +92,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 		default:
 			std::ostringstream error_message;
 			error_message << "Unsupported MMPLD version:" << _mmpldversion << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 			break;
 	}
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
@@ -106,7 +106,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	if(numSites < 1) {
 		std::ostringstream error_message;
 		error_message << "[MMPLD Writer] No site parameters specified." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator outputSiteIter;
@@ -149,7 +149,7 @@ void MmpldWriter::init(ParticleContainer *particleContainer,
 	if ( (htole32(1) != 1) || (htole64(1.0) != 1.0) ) {
 		std::ostringstream error_message;
 		error_message << "[MMPLD Writer] The MMPLD Writer currently only supports running on little endian systems." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// only executed once
@@ -398,7 +398,7 @@ long MmpldWriter::get_data_frame_header_size() {
 		default:
 			std::ostringstream error_message;
 			error_message << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 			break;
 	}
 	return data_frame_header_size;

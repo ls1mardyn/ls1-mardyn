@@ -42,7 +42,7 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 	if((_numMolecules == 0 && density == -1.) || (_numMolecules != 0 && density != -1.) ){
 		std::ostringstream error_message;
 		error_message << "Error in CubicGridGeneratorInternal: You have to set either density or numMolecules!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if(density != -1.){
@@ -50,7 +50,7 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 		if(density <= 0){
 			std::ostringstream error_message;
 			error_message << "Error in CubicGridGeneratorInternal: Density has to be positive and non-zero!" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		double vol = 1.0;
 		for (int d = 0; d < 3; ++d)
@@ -68,7 +68,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 		std::ostringstream error_message;
 		error_message << "Error in CubicGridGeneratorInternal: numMolecules is not set!"
 				<< std::endl << "Please make sure to run readXML()!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// create a body centered cubic layout, by creating by placing the molecules on the
@@ -149,7 +149,7 @@ std::array<unsigned long, 3> CubicGridGeneratorInternal::determineMolsPerDimensi
 			std::ostringstream error_message;
 			error_message << "computed num Molecules along dimension " << d << ": " << answer << std::endl;
 			error_message << "Should be larger than 1. Exiting." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 
 		ret[d] = answer;

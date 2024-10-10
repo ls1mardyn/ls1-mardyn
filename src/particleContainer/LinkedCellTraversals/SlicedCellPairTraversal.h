@@ -192,7 +192,7 @@ inline void SlicedCellPairTraversal<CellTemplate>::traverseCellPairsBackend(
 	if (not isApplicable(start, end) ) {
 		std::ostringstream error_message;
 		error_message << "The SlicedCellPairTraversal is not applicable. Aborting." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	std::array<unsigned long, 3> diff;

@@ -114,7 +114,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 #if WIGNER == 1
 	std::ostringstream error_message;
 	error_message << "WIGNER not supported yet" << std::endl;
-	MARDYN_EXIT(error_message);
+	MARDYN_EXIT(error_message.str());
 #endif
 #ifdef ENABLE_MPI
 	/*
@@ -179,7 +179,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	if(_globalLevel > _maxLevel){
 		std::ostringstream error_message;
 		error_message << "Too many MPI ranks" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	//numProcessers has to be a power of 2
 	mardyn_assert(pow(2,log2(numProcessors)) == numProcessors);
@@ -383,7 +383,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		if(size2 > 8){ //neighbourhood comms need to have size 8
 			std::ostringstream error_message;
 			error_message << "Error wrong communicator" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 #endif

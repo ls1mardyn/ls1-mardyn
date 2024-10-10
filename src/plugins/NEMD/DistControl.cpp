@@ -81,7 +81,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	{
 		std::ostringstream error_message;
 		error_message << "[DistControl] Missing attribute \"subdivision@type\"! Programm exit..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	if("number" == strSubdivisionType)
 	{
@@ -90,7 +90,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		{
 			std::ostringstream error_message;
 			error_message << "[DistControl] Missing element \"subdivision/number\"! Programm exit..." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		else
 			this->SetSubdivision(nNumSlabs);
@@ -102,7 +102,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		{
 			std::ostringstream error_message;
 			error_message << "[DistControl] Missing element \"subdivision/width\"! Programm exit..." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		else
 			this->SetSubdivision(dSlabWidth);
@@ -111,7 +111,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	{
 		std::ostringstream error_message;
 		error_message << "[DistControl] Wrong attribute \"subdivision@type\". Expected: type=\"number|width\"! Programm exit..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// init method
@@ -143,7 +143,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		{
 			std::ostringstream error_message;
 			error_message << "[DistControl] Missing elements \"init/values/left\" or \"init/values/right\" or both! Programm exit..." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 	else if("file" == strInitMethodType)
@@ -161,7 +161,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		{
 			std::ostringstream error_message;
 			error_message << "[DistControl] Missing elements \"init/file\" or \"init/simstep\" or both! Programm exit..." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 	else
@@ -169,7 +169,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		std::ostringstream error_message;
 		error_message << "[DistControl] Wrong attribute \"init@type\", type = " << strInitMethodType << ", "
 				"expected: type=\"startconfig|values|file\"! Programm exit..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// update method
@@ -198,7 +198,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		{
 			std::ostringstream error_message;
 			error_message << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 	else if("denderiv" == strUpdateMethodType)
@@ -223,7 +223,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		{
 			std::ostringstream error_message;
 			error_message << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 	else
@@ -231,7 +231,7 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		std::ostringstream error_message;
 		error_message << "[DistControl] Wrong attribute \"method@type\", type = " << strUpdateMethodType << ", "
 				"expected: type=\"density|denderiv\"! Programm exit..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -278,7 +278,7 @@ void DistControl::PrepareSubdivision()
 	default:
 		std::ostringstream error_message;
 		error_message << "[DistControl] PrepareSubdivision(): Neither _binParams.width nor _binParams.count was set correctly! Programm exit..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_binParams.invWidth = 1. / _binParams.width;
@@ -715,7 +715,7 @@ void DistControl::UpdatePositionsInit(ParticleContainer* particleContainer)
 	default:
 		std::ostringstream error_message;
 		error_message << "[DistControl] Wrong Init Method! Programm exit..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 #ifndef NDEBUG
@@ -752,7 +752,7 @@ void DistControl::UpdatePositions(const uint64_t& simstep)
 	default:
 		std::ostringstream error_message;
 		error_message << "[DistControl] UpdatePositions() Corrupted code!!! Programm exit..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// update positions

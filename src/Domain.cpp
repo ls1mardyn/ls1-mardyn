@@ -96,7 +96,7 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 		else {
 			std::ostringstream error_message;
 			error_message << "Unsupported volume type " << type << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		xmlconfig.changecurrentnode("..");
 	}
@@ -557,7 +557,7 @@ void Domain::writeCheckpointHeader(std::string filename,
 					} else {
 						std::ostringstream error_message;
 						error_message << "Only LB mixing rule supported" << std::endl;
-						MARDYN_EXIT(error_message);
+						MARDYN_EXIT(error_message.str());
 					}
 				}
 			}
@@ -716,7 +716,7 @@ void Domain::setComponentThermostat(int cid, int thermostat) {
 	if ((0 > cid) || (0 >= thermostat)) {
 		std::ostringstream error_message;
 		error_message << "Domain::setComponentThermostat: cid or thermostat id too low" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	this->_componentToThermostatIdMap[cid] = thermostat;
 	this->_universalThermostatN[thermostat] = 0;

@@ -78,7 +78,7 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 	if (numTargets < 1) {
 		std::ostringstream error_message;
 		error_message << "[MaxCheck] No target parameters specified. Program exit ..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator nodeIter;

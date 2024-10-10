@@ -60,7 +60,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	if(token != "mardyn") {
 		std::ostringstream error_message;
 		error_message << _phaseSpaceHeaderFile << " not a valid mardyn input file." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	std::string inputversion;
@@ -69,13 +69,13 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	if(token != "trunk") {
 		std::ostringstream error_message;
 		error_message << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if(strtoul(inputversion.c_str(), NULL, 0) < 20080701) {
 		std::ostringstream error_message;
 		error_message << "Input version tool old (" << inputversion << ")" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	Log::global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << std::endl;
@@ -121,7 +121,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 				std::ostringstream error_message;
 				error_message << "Unknown molecule format: '"
 									<< ntypestring << "'" << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 			_moleculeFormat = ntypestring;
 			Log::global_log->info() << " molecule format: " << ntypestring << std::endl;
@@ -188,7 +188,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 				if(numtersoff != 0) {
 					std::ostringstream error_message;
 					error_message << "tersoff no longer supported." << std::endl;
-					MARDYN_EXIT(error_message);
+					MARDYN_EXIT(error_message.str());
 				}
 				double x, y, z, m;
 				for(unsigned int j = 0; j < numljcenters; j++) {
@@ -662,6 +662,6 @@ void MPI_IOReader::handle_error(int i) {
 	std::ostringstream error_message;
 	error_message << "Writing of file was not successfull " << " , " << i
 			<< " , " << error_string << std::endl;
-	MARDYN_EXIT(error_message);
+	MARDYN_EXIT(error_message.str());
 #endif
 }

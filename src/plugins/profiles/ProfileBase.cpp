@@ -48,7 +48,7 @@ void ProfileBase::writeKartMatrix (std::ofstream& outfile) {
 void ProfileBase::writeSimpleMatrix (std::ofstream& outfile) {
 	std::ostringstream error_message;
 	error_message << "SIMPLE MATRIX OUTPUT NOT IMPLEMENTED!\n";
-	MARDYN_EXIT(error_message);
+	MARDYN_EXIT(error_message.str());
 }
 
 void ProfileBase::writeCylMatrix (std::ofstream& outfile) {

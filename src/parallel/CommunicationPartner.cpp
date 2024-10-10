@@ -197,7 +197,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		default:
 			std::ostringstream error_message;
 			error_message << "[CommunicationPartner] MessageType unknown!" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 	}
 
 	#ifndef NDEBUG
@@ -602,7 +602,7 @@ void CommunicationPartner::collectLeavingMoleculesFromInvalidParticles(std::vect
 		if (not m.inBox(lowCorner, highCorner)) {
 			std::ostringstream error_message;
 			error_message << "trying to remove a particle that is not in the halo region" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		for (int dim = 0; dim < 3; dim++) {
 			if (shift[dim] != 0) {

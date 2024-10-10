@@ -112,7 +112,7 @@ void QuickschedTraversal<CellTemplate>::init() {
                     error_message << "Blocksize is bigger than number of cells in dimension "
                                         << (char) ('x' + i) << ". (" << _taskBlocksize[i] << " > "
                                         << this->_dims[i] << ")" << std::endl;
-                    MARDYN_EXIT(error_message);
+                    MARDYN_EXIT(error_message.str());
                 }
             }
 

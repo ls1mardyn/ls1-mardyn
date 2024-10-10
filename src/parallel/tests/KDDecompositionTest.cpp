@@ -419,7 +419,7 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 		if (not isOK) {
 			std::ostringstream error_message;
 			error_message << "[KDDecompositionTest] Deadlock detected." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		delete kdd->_decompTree;
 		kdd->_decompTree = newDecompRoot;

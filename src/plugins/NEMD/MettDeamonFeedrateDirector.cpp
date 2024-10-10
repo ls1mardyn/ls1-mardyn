@@ -136,12 +136,12 @@ void MettDeamonFeedrateDirector::beforeForces(
 	if(nullptr == mirror) {
 		std::ostringstream error_message;
 		error_message << "[MettDeamonFeedrateDirector] No Mirror plugin found in plugin list. Program exit ..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	if(nullptr == mettDeamon) {
 		std::ostringstream error_message;
 		error_message << "[MettDeamonFeedrateDirector] No MettDeamon plugin found in plugin list. Program exit ..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// Get number of deleted/reflected particles from Mirror plugin

@@ -20,7 +20,7 @@ AutoPasSimpleMolecule::AutoPasSimpleMolecule(unsigned long id, Component* compon
 	} else if (_component != component and component != nullptr) {
 		Log::global_log->warning() << "AutoPasSimpleMolecule can only handle one component" << std::endl;
 		_component = component;
-		// MARDYN_EXIT(error_message);
+		// MARDYN_EXIT(error_message.str());
 	}
 }
 

@@ -177,7 +177,7 @@ MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* 
 					   startx[2] > idx[2]) {
 						std::ostringstream error_message;
 						error_message << "Error in calculation of start and end values! \n";
-						MARDYN_EXIT(error_message);
+						MARDYN_EXIT(error_message.str());
 					}
 					fill[idx[0] - startx[0]][idx[1] - startx[1]][idx[2] - startx[2]][p] = tfill;
 					if(tfill) {

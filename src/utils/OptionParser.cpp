@@ -450,13 +450,13 @@ void OptionParser::print_version() const {
 void OptionParser::exit() const {
 	std::ostringstream error_message;
 	error_message << "OptionParser::exit() called" << std::endl;
-	MARDYN_EXIT(error_message);
+	MARDYN_EXIT(error_message.str());
 }
 void OptionParser::error(const std::string& msg) const {
 	print_usage(std::cerr);
 	std::ostringstream error_message;
 	error_message << prog() << ": " << _("error") << ": " << msg << std::endl;
-	MARDYN_EXIT(error_message);
+	MARDYN_EXIT(error_message.str());
 }
 ////////// } class OptionParser //////////
 

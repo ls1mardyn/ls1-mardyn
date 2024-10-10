@@ -25,7 +25,7 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	if (numComponents == 0) {
 		std::ostringstream error_message;
 		error_message << "No components found. Please verify that you have input them correctly." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	_components.resize(numComponents);
 	XMLfile::Query::const_iterator componentIter;
@@ -60,7 +60,7 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		} else {
 			std::ostringstream error_message;
 			error_message << "Unknown mixing rule " << mixingruletype << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		mixingrule->readXML(xmlconfig);
 
@@ -72,7 +72,7 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 			std::ostringstream error_message;
 			error_message << "Mixing: cid=" << cid2+1 << " is larger than number of components ("
 							<< numComponents << ")" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		_mixingrules[cid1][cid2] = mixingrule;
 	}
@@ -120,18 +120,18 @@ void Ensemble::setMixingrule(std::shared_ptr<MixingRuleBase> mixingrule) {
 	if (cid1 == cid2) {
 		std::ostringstream error_message;
 		error_message << "Mixing setMixingrule: cids must not be the same" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	if (std::min(cid1, cid2) < 0) {
 		std::ostringstream error_message;
 		error_message << "Mixing setMixingrule: cids must not be negative" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	if (std::max(cid1, cid2) >= _components.size()) {
 		std::ostringstream error_message;
 		error_message << "Mixing setMixingrule: cids must not exceed number of components ("
 						<< _components.size() << ")" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	
 	_mixingrules[cid1][cid2] = mixingrule;

@@ -152,7 +152,7 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 	} else {
 		std::ostringstream error_message;
 		error_message << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'es', 'hs', 'mp' and 'nt'" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	Log::global_log->info() << "Using zonal method: " << zonalMethod << std::endl;
 
@@ -168,7 +168,7 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 	} else {
 		std::ostringstream error_message;
 		error_message << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -200,7 +200,7 @@ void DomainDecompMPIBase::assertIntIdentity(int IX) {
 				std::ostringstream error_message;
 				error_message << "[DomainDecompMPIBase] IX is " << IX << " for rank 0, "
 					<< "but " << recv << " for rank " << i << "." << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 		}
 		Log::global_log->info() << "IX = " << recv << " for all " << _numProcs << " ranks.\n";
@@ -229,7 +229,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 			if(check.find(m->getID()) != check.end()){
 				std::ostringstream error_message;
 				error_message << "Rank 0 contains a duplicated particle with id " << m->getID() << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 			check[m->getID()] = 0;
 		}
@@ -254,7 +254,7 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 		if (not isOk) {
 			std::ostringstream error_message;
 			error_message << "Aborting because of duplicated particles." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 
 		Log::global_log->info() << "Data consistency checked: No duplicate IDs detected among " << check.size()

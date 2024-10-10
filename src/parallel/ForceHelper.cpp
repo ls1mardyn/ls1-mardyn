@@ -40,7 +40,7 @@ std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> addValuesAndGet
 				// This should not happen
 				std::ostringstream error_message;
 				error_message << "Original molecule not usePreviousIterator" << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 
 			mardyn_assert(originalIter->getID() == haloMolecule.getID());

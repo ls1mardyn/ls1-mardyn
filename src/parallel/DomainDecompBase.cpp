@@ -233,7 +233,7 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 		if (not m.inBox(haloRegion.rmin, haloRegion.rmax)) {
 			std::ostringstream error_message;
 			error_message << "trying to remove a particle that is not in the halo region" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		for (int dim = 0; dim < 3; dim++) {
 			if (shift[dim] != 0) {

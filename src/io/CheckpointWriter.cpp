@@ -21,7 +21,7 @@ void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 	if(_writeFrequency == 0) {
 		std::ostringstream error_message;
 		error_message << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	std::string checkpointType = "unknown";
@@ -35,7 +35,7 @@ void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 	else {
 		std::ostringstream error_message;
 		error_message << "Unknown CheckpointWriter type '" << checkpointType << "', expected: ASCII|binary." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_outputPrefix = "mardyn";

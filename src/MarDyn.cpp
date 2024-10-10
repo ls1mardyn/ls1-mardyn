@@ -195,7 +195,7 @@ int main(int argc, char** argv) {
 		op.print_usage();
 		std::ostringstream error_message;
 		error_message << "Incorrect number of arguments provided." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
 	std::string configFileName(args[0]);
@@ -205,7 +205,7 @@ int main(int argc, char** argv) {
 	} else {
 		std::ostringstream error_message;
 		error_message << "Cannot open config file '" << configFileName << "'" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	/* processing command line arguments */

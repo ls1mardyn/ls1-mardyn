@@ -31,7 +31,7 @@ void ParticleDataRMM::getMPIType(MPI_Datatype &sendPartType) {
 	} else {
 		std::ostringstream error_message;
 		error_message << "invalid size of vcp_real_calc";
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	//if the following statement is not true, then the 6 double values do not follow one after the other.

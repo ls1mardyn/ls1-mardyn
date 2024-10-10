@@ -221,7 +221,7 @@ void PressureGradient::specifyTauPrime(double tauPrime, double dt)
 	{
 		std::ostringstream error_message;
 		error_message << "SEVERE ERROR: unknown UCAT!\n";
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	unsigned int vql = (unsigned int)ceil(tauPrime / (dt*this->_universalConstantAccelerationTimesteps));
 	std::map<unsigned int, unsigned int>::iterator vqlit;

@@ -36,7 +36,7 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 	} else {
 		std::ostringstream error_message;
 		error_message << R"(Unknown FlopRateOutputPlugin::mode. Choose "stdout" or "file".)" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_outputPrefix = "mardyn";
@@ -66,7 +66,7 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 		error_message
 			<< R"(Unknown FlopRateOutputPlugin::moleculecntincreasetype. Choose "linear" or "exponential" or "both".)"
 			<< std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	Log::global_log->info() << "Molecule count increase type: " << incTypeStr << std::endl;
 
@@ -286,7 +286,7 @@ void VectorizationTuner::tune(std::vector<Component>& componentList, TunerLoad& 
 		if(componentList.size() > 2){
 			std::ostringstream error_message;
 			error_message << "The tuner currently supports only two different particle types!" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 
 		int maxMols = particleNums.at(0);

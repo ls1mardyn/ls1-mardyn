@@ -151,7 +151,7 @@ void Planar::init()
 		} else {
 			std::ostringstream error_message;
 			error_message << "Long Range Correction: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 }
@@ -197,13 +197,13 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	{
 		std::ostringstream error_message;
 		error_message << "Long Range Correction: Write frequency < 1! Programm exit ..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	if(_nStopWritingProfiles <= _nStartWritingProfiles)
 	{
 		std::ostringstream error_message;
 		error_message << "Long Range Correction: Writing profiles 'stop' <= 'start'! Programm exit ..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	bool bInputIsValid = (bRet1 && bRet2 && bRet3);
 	if(true == bInputIsValid)
@@ -216,7 +216,7 @@ void Planar::readXML(XMLfileUnits& xmlconfig)
 	{
 		std::ostringstream error_message;
 		error_message << "Long Range Correction: Write control parameters not valid! Programm exit ..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 }
 

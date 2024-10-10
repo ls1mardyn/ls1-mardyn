@@ -172,7 +172,7 @@ public:
 		default:
 			std::ostringstream error_message;
 			error_message<<"invalid reducetype, aborting." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 
 		MPI_CHECK(
@@ -195,7 +195,7 @@ public:
 			default:
 				std::ostringstream error_message;
 				error_message<<"invalid reducetype, aborting." << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 			MPI_CHECK(MPI_Allreduce( MPI_IN_PLACE, &_values[i], 1, _types[i], op, _communicator ));
 		}

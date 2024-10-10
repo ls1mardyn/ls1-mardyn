@@ -148,20 +148,20 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 		if (inputPluginName != "BinaryReader") {
 			std::ostringstream error_message;
 			error_message << "[ReplicaFiller] ReplicaFiller only works with inputPlugins: BinaryReader at the moment" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		setInputReader(std::make_shared<BinaryReader>());
 		_inputReader->readXML(xmlconfig);
 		if (_inputReader == nullptr) {
 			std::ostringstream error_message;
 			error_message << "[ReplicaFiller] Could not create input reader " << inputPluginName << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		xmlconfig.changecurrentnode("..");
 	} else {
 		std::ostringstream error_message;
 		error_message << "[ReplicaFiller] Input reader for original not specified." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	if (xmlconfig.changecurrentnode("origin")) {
 		Coordinate3D origin;
@@ -181,7 +181,7 @@ void ReplicaFiller::readXML(XMLfileUnits& xmlconfig) {
 		if ((componentid < 1) || (componentid > numComps)) {
 			std::ostringstream error_message;
 			error_message << "[ReplicaFiller] Specified componentid is invalid. Valid range: 1 <= componentid <= " << numComps << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		_componentid = componentid - 1;  // Internally stored in array starting at index 0
 		_keepComponent = false;
@@ -211,7 +211,7 @@ void ReplicaFiller::init() {
 	if (numberOfParticles == 0) {
 		std::ostringstream error_message;
 		error_message << "[ReplicaFiller] No molecules in replica, aborting! " << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	Log::global_log->info() << "[ReplicaFiller] Setting simulation time to 0.0" << std::endl;

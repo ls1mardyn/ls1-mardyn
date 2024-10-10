@@ -189,7 +189,7 @@ auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString,
 		error_message << e.what() << std::endl;
 		error_message << "Possible options: "
 							<< autopas::utils::ArrayUtils::to_string(OptionType::getAllOptions()) << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 		// dummy return
 		return decltype(OptionType::template parseOptions<OutputContainer>(""))();
 	}
@@ -244,7 +244,7 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	} else {
 		std::ostringstream error_message;
 		error_message << "Input XML specifies skin AND skinPerTimestep. Please choose only one." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	_relativeOptimumRange = xmlconfig.getNodeValue_double("optimumRange", _relativeOptimumRange);
 	_relativeBlacklistRange = xmlconfig.getNodeValue_double("blacklistRange", _relativeBlacklistRange);
@@ -404,7 +404,7 @@ void AutoPasContainer::update() {
 							   "Remaining invalid particles:\n"
 							<< autopas::utils::ArrayUtils::to_string(_invalidParticles, "\n", {"", ""})
 							<< std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_invalidParticles = _autopasContainer.updateContainer();

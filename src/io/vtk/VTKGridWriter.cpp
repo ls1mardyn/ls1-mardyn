@@ -36,7 +36,7 @@ void VTKGridWriter::readXML(XMLfileUnits& xmlconfig) {
 	if (_writeFrequency <= 0) {
 		std::ostringstream error_message;
 		error_message << "VTKMoleculeWriter: writeFrequency must be > 0!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -51,7 +51,7 @@ void  VTKGridWriter::endStep(
 	if (container == NULL) {
 		std::ostringstream error_message;
 		error_message << "VTKGridWriter works only with plottable LinkedCells!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 #endif
 
@@ -118,7 +118,7 @@ void  VTKGridWriter::init(ParticleContainer *particleContainer,
 	if (dynamic_cast<LinkedCells*>(particleContainer) == NULL) {
 		std::ostringstream error_message;
 		error_message << "VTKGridWriter works only with LinkCells!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 #endif
 }

@@ -60,7 +60,7 @@ void ExamplePlugin::readXML(XMLfileUnits& xmlconfig) {
 		error_message
 				<< "Valid options are: all, beforeEventNewTimestep, beforeForces, afterForces, endStep, init, finish."
 				<< std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 }
 

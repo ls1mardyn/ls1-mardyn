@@ -95,7 +95,7 @@ void utils::Test::setTestDataDirectory(std::string& testDataDir) {
 	if (!fileExists(testDataDir.c_str())) {
 		std::ostringstream error_message;
 		error_message << "Directory '" << testDataDir.c_str() << "' for test input data does not exist!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	testDataDirectory = testDataDir;
 }
@@ -107,7 +107,7 @@ std::string utils::Test::getTestDataFilename(const std::string& file, bool check
 	if (!fileExists(fullPath.c_str()) and checkExistence) {
 		std::ostringstream error_message;
 		error_message << "File " << fullPath << " for test input data does not exist!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	return fullPath;
 }

@@ -78,11 +78,11 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 		} else if (siteType == "Tersoff") {
 			std::ostringstream error_message;
 			error_message << "Tersoff no longer supported:" << siteType << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		} else {
 			std::ostringstream error_message;
 			error_message << "Unknown site type:" << siteType << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		// go back to initial level, to be consistent, even if no site information is found.
 		xmlconfig.changecurrentnode("..");

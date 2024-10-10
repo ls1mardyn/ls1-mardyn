@@ -58,7 +58,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	if(token != "mardyn") {
 		std::ostringstream error_message;
 		error_message << _phaseSpaceHeaderFile << " not a valid mardyn input file." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	std::string inputversion;
@@ -67,13 +67,13 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	if(token != "trunk") {
 		std::ostringstream error_message;
 		error_message << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if(std::stoi(inputversion) < 20080701) {
 		std::ostringstream error_message;
 		error_message << "Input version too old (" << inputversion << ")" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	Log::global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << std::endl;
@@ -168,7 +168,7 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 				if(numtersoff != 0) {
 					std::ostringstream error_message;
 					error_message << "tersoff no longer supported." << std::endl;
-					MARDYN_EXIT(error_message);
+					MARDYN_EXIT(error_message.str());
 				}
 				double x, y, z, m;
 				for(unsigned int j = 0; j < numljcenters; j++) {
@@ -279,7 +279,7 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 	if(!_phaseSpaceFileStream.is_open()) {
 		std::ostringstream error_message;
 		error_message << "Could not open phaseSpaceFile " << _phaseSpaceFile << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	Log::global_log->info() << "Reading phase space file " << _phaseSpaceFile << std::endl;
 #ifdef ENABLE_MPI
@@ -306,7 +306,7 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 	if((token != "NumberOfMolecules") && (token != "N")) {
 		std::ostringstream error_message;
 		error_message << "Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	_phaseSpaceFileStream >> nummolecules;
 #ifdef ENABLE_MPI
@@ -334,7 +334,7 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 		else {
 			std::ostringstream error_message;
 			error_message << "Unknown molecule format '" << ntypestring << "'" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 	} else {
 		_phaseSpaceFileStream.seekg(spos);
@@ -396,7 +396,7 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 			default:
 				std::ostringstream error_message;
 				error_message << "[ASCIIReader.cpp] Unknown ntype" << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 		}
 		if((x < 0.0 || x >= domain->getGlobalLength(0))
 		   || (y < 0.0 || y >= domain->getGlobalLength(1))
@@ -409,7 +409,7 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 			error_message << "Molecule id " << id
 								<< " has a component ID greater than the existing number of components: "
 								<< componentid << ">" << numcomponents << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		// ComponentIDs are used as array IDs, hence need to start at 0.
 		// In the input files they always start with 1 so we need to adapt that all the time.

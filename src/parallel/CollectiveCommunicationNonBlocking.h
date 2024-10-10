@@ -42,7 +42,7 @@ public:
 			std::ostringstream error_message;
 			error_message << "CollectiveCommunicationNonBlocking: previous communication with key " << _currentKey
 					<< " not yet finalized" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 
 		_currentKey = key;
@@ -61,7 +61,7 @@ public:
 				std::ostringstream error_message;
 				error_message << "CollectiveCommunicationNonBlocking: key " << _currentKey
 									<< " could not be inserted. Aborting!" << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 		}
 		_comms.at(_currentKey).init(communicator, numValues, _currentKey);

@@ -75,7 +75,7 @@ void StaticIrregDomainDecomposition::readXML(XMLfileUnits &xmlconfig) {
                 << " axis have a non-natural number! Only integer weights > "
                    "0 allowed, please check XML file!"
                 << std::endl;
-            MARDYN_EXIT(error_message);
+            MARDYN_EXIT(error_message.str());
           }
           _subdomainWeights[i].push_back(temp);
           if (ss.peek() == ',' || ss.peek() == ' ') // skip commas and spaces

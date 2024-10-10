@@ -419,7 +419,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 		if(numChanges < 1) {
 			std::ostringstream error_message;
 			error_message << "[MettDeamon] No component change defined in XML-config file. Program exit ..." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		std::string oldpath = xmlconfig.getcurrentnodepath();
 		XMLfile::Query::const_iterator changeIter;
@@ -438,7 +438,7 @@ void MettDeamon::readXML(XMLfileUnits& xmlconfig)
 	else {
 		std::ostringstream error_message;
 		error_message << "[MettDeamon] No component changes defined in XML-config file. Program exit ..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -1193,7 +1193,7 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	if(not _reservoir->nextBin(_nMaxMoleculeID.global) ) {
 		std::ostringstream error_message;
 		error_message << "[MettDeamon] Failed to activate new bin of particle Reservoir's BinQueue => Program exit." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	Log::global_log->debug() << "[" << nRank << "]: ADDED " << numAdded.local << "/" << numParticlesCurrentSlab.local << " particles (" << numAdded.local/static_cast<float>(numParticlesCurrentSlab.local)*100 << ")%." << std::endl;
 	// calc global values
@@ -1214,7 +1214,7 @@ void MettDeamon::initRestart()
 	{
 		std::ostringstream error_message;
 		error_message << "[MettDeamon] Failed to activate reservoir bin after restart! Program exit ... " << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	_feedrate.feed.sum = _restartInfo.dYsum;
 }
@@ -1232,7 +1232,7 @@ void MettDeamon::readNormDistr()
 	if (!ifs.vxz.is_open() || !ifs.vy.is_open() ) {
 		std::ostringstream error_message;
 		error_message << "[MettDeamon] There was a problem opening the input file!\n";
-		MARDYN_EXIT(error_message);//exit or do additional error checking
+		MARDYN_EXIT(error_message.str());//exit or do additional error checking
 	}
 
 	double dVal = 0.0;
@@ -1250,7 +1250,7 @@ void MettDeamon::readNormDistr()
 		else {
 			std::ostringstream error_message;
 			error_message << "[MettDeamon] Something went wrong with the direction." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 	// close files
@@ -1321,7 +1321,7 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 	else {
 		std::ostringstream error_message;
 		error_message << "[MettDeamon] Reservoir file type not specified or unknown. Programm exit ..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// Possibly change component IDs
@@ -1332,7 +1332,7 @@ void Reservoir::readXML(XMLfileUnits& xmlconfig)
 		if(numChanges < 1) {
 			std::ostringstream error_message;
 			error_message << "[MettDeamon] No component change defined in XML-config file. Program exit ..." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		std::string oldpath = xmlconfig.getcurrentnodepath();
 		XMLfile::Query::const_iterator changeIter;
@@ -1362,7 +1362,7 @@ void Reservoir::readParticleData(DomainDecompBase* domainDecomp, ParticleContain
 		default:
 			std::ostringstream error_message;
 			error_message << "[MettDeamon] Unknown (or ambiguous) method to read reservoir for feature MettDeamon. Program exit ..." << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 	}
 
 	// sort particles into bins
@@ -1492,7 +1492,7 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 			default:
 				std::ostringstream error_message;
 				error_message << "[MettDeamon] Unknown moving direction" << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 		}
 		// check if molecule is in bounding box of the process domain
 		bool bIsInsideBB = domainDecomp->procOwnsPos(mol.r(0), mol.r(1), mol.r(2), domain);
@@ -1524,7 +1524,7 @@ void Reservoir::sortParticlesToBins(DomainDecompBase* domainDecomp, ParticleCont
 		default:
 			std::ostringstream error_message;
 			error_message << "[MettDeamon] Unknown moving direction" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -1538,7 +1538,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 	if (!ifs.is_open()) {
 		std::ostringstream error_message;
 		error_message << "[MettDeamon] Could not open Mettdeamon Reservoirfile " << _filepath.data << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	Log::global_log->info() << "[MettDeamon] Reading Mettdeamon Reservoirfile " << _filepath.data << std::endl;
 
@@ -1568,7 +1568,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 	if((token != "NumberOfMolecules") && (token != "N")) {
 		std::ostringstream error_message;
 		error_message << "[MettDeamon] Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	ifs >> _numMoleculesRead;
 
@@ -1589,7 +1589,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 		else {
 			std::ostringstream error_message;
 			error_message << "[MettDeamon] Unknown molecule format '" << ntypestring << "'" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 	} else {
 		ifs.seekg(spos);
@@ -1632,7 +1632,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 			default:
 				std::ostringstream error_message;
 				error_message << "[MettDeamon] Unknown molecule format" << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 		}
 
 		if( componentid > numcomponents ) {
@@ -1642,7 +1642,7 @@ void Reservoir::readFromFile(DomainDecompBase* domainDecomp, ParticleContainer* 
 								<< componentid
 								<< ">"
 								<< numcomponents << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		// ComponentIDs are used as array IDs, hence need to start at 0.
 		// In the input files they always start with 1 so we need to adapt that all the time.
@@ -1672,7 +1672,7 @@ void Reservoir::readFromFileBinaryHeader()
 		std::ostringstream error_message;
 		error_message << "[MettDeamon] Could not find root node /mardyn in XML header file or file itself." << std::endl;
 		error_message << "[MettDeamon] Not a valid MarDyn XML header file." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	bool bInputOk = true;
@@ -1701,7 +1701,7 @@ void Reservoir::readFromFileBinaryHeader()
 	{
 		std::ostringstream error_message;
 		error_message << "[MettDeamon] Content of file: '" << _filepath.header << "' corrupted! Program exit ..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if("ICRVQD" == strMoleculeFormat)
@@ -1714,7 +1714,7 @@ void Reservoir::readFromFileBinaryHeader()
 	{
 		std::ostringstream error_message;
 		error_message << "[MettDeamon] Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -1734,7 +1734,7 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp, ParticleConta
 	if (!ifs.is_open()) {
 		std::ostringstream error_message;
 		error_message << "[MettDeamon] Could not open reservoir phaseSpaceFile " << _filepath.data << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	Log::global_log->info() << "[MettDeamon] Reading phase space file " << _filepath.data << std::endl;
@@ -1755,7 +1755,7 @@ void Reservoir::readFromFileBinary(DomainDecompBase* domainDecomp, ParticleConta
 		default:
 			std::ostringstream error_message;
 			error_message << "[MettDeamon] Unknown molecule format" << std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 	}
 
 	for (uint64_t pi=0; pi<_numMoleculesRead; pi++) {
@@ -1840,7 +1840,7 @@ bool Reservoir::isRelevant(DomainDecompBase* domainDecomp, Domain* domain, Molec
 	default:
 		std::ostringstream error_message;
 		error_message << "[MettDeamon] Unknown moving direction" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	return domainDecomp->procOwnsPos(mol.r(0), y-dOffset, mol.r(2), domain);
 }

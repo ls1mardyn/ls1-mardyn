@@ -113,7 +113,7 @@ void DirectedPM::beforeForces(ParticleContainer* particleContainer, DomainDecomp
 							error_message
 								<< "Coordinates off center (" << xc << " / " << yc << " / " << zc << ").\n";
 							error_message << "unID = " << unID << "\n";
-							MARDYN_EXIT(error_message);
+							MARDYN_EXIT(error_message.str());
 						}
 						// ADD VELOCITCY AND VIRIAL TO RESPECTIVE BIN
 						_localnumberOfParticles[unID] += 1.;

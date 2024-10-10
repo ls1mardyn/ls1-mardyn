@@ -286,7 +286,7 @@ bool ChemicalPotential::decideDeletion(double deltaUTilde)
 		}
 		std::ostringstream error_message;
 		error_message << "No decision is possible." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	float dec = *_remainingDecisions.begin();
 	_remainingDecisions.erase(_remainingDecisions.begin());
@@ -320,7 +320,7 @@ bool ChemicalPotential::decideInsertion(double deltaUTilde)
 		}
 		std::ostringstream error_message;
 		error_message << "No decision is possible." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	double acc = _globalReducedVolume * exp(_muTilde - deltaUTilde)
 			/ (1.0 + (double) (_globalN));
@@ -379,7 +379,7 @@ void ChemicalPotential::setControlVolume(double x0, double y0, double z0,
 		error_message << "\nInvalid control volume (" << x0 << " / " << y0
 				<< " / " << z0 << ") to (" << x1 << " / " << y1 << " / " << z1
 				<< ")." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	_restrictedControlVolume = true;
 	_globalV = (x1 - x0) * (y1 - y0) * (z1 - z0);

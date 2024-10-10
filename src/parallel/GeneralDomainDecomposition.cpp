@@ -61,7 +61,7 @@ void GeneralDomainDecomposition::initializeALL() {
 #else
 	std::ostringstream error_message;
 	error_message << "ALL load balancing library not enabled. Aborting." << std::endl;
-	MARDYN_EXIT(error_message);
+	MARDYN_EXIT(error_message.str());
 #endif
 	Log::global_log->info() << "GeneralDomainDecomposition initial box: [" << _boxMin[0] << ", " << _boxMax[0] << "] x ["
 					   << _boxMin[1] << ", " << _boxMax[1] << "] x [" << _boxMin[2] << ", " << _boxMax[2] << "]"
@@ -199,7 +199,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 				<< particleContainer->getBoundingBoxMax(2) << "\n"
 				<< "Particle: \n" << *iter
 				<< std::endl;
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 	particleContainer->clear();
@@ -294,7 +294,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 				error_message
 					<< "GeneralDomainDecomposition's gridSize should have three entries if a list is given, but has "
 					<< strings.size() << "!" << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 			_gridSize = {std::stod(strings[0]), std::stod(strings[1]), std::stod(strings[2])};
 		} else {
@@ -307,7 +307,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 				error_message << "GeneralDomainDecomposition's gridSize (" << gridSize
 									<< ") is smaller than the interactionLength (" << _interactionLength
 									<< "). This is forbidden, as it leads to errors! " << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 		}
 	}
@@ -325,13 +325,13 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 			std::ostringstream error_message;
 			error_message << "GeneralDomainDecomposition: Unknown load balancer " << loadBalancerString
 								<< ". Aborting! Please select a valid option! Valid options: ALL";
-			MARDYN_EXIT(error_message);
+			MARDYN_EXIT(error_message.str());
 		}
 		_loadBalancer->readXML(xmlconfig);
 	} else {
 		std::ostringstream error_message;
 		error_message << "loadBalancer section missing! Aborting!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	xmlconfig.changecurrentnode("..");
 }

@@ -267,17 +267,17 @@ void Adios2Writer::initAdios2() {
 		std::ostringstream error_message;
 		error_message << "Invalid argument exception:" << std::endl;
 		error_message << e.what() << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	} catch (std::ios_base::failure& e) {
 		std::ostringstream error_message;
 		error_message << "IO System base failure exception: " << std::endl;
 		error_message << e.what() << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	} catch (std::exception& e) {
 		std::ostringstream error_message;
 		error_message << "Exception: " << std::endl;
 		error_message << e.what() << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	Log::global_log->info() << "[Adios2Writer] Init complete." << std::endl;
 }
@@ -425,17 +425,17 @@ void Adios2Writer::endStep(ParticleContainer* particleContainer, DomainDecompBas
 		std::ostringstream error_message;
 		error_message << "[Adios2Writer] Invalid argument exception:" << std::endl;
 		error_message << e.what();
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	} catch (std::ios_base::failure& e) {
 		std::ostringstream error_message;
 		error_message << "[Adios2Writer] IO System base failure exception:" << std::endl;
 		error_message << e.what();
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	} catch (std::exception& e) {
 		std::ostringstream error_message;
 		error_message << "[Adios2Writer] Exception:" << std::endl;
 		error_message << e.what();
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	Log::global_log->info() << "[Adios2Writer] endStep." << std::endl;
 }

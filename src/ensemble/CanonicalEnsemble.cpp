@@ -197,7 +197,7 @@ void CanonicalEnsemble::readXML(XMLfileUnits& xmlconfig) {
 	} else {
 		std::ostringstream error_message;
 		error_message << "Volume type not supported." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 	xmlconfig.changecurrentnode("domain");
 	_domain->readXML(xmlconfig);

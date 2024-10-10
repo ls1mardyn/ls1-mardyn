@@ -83,7 +83,7 @@ void Homogeneous::init() {
 					if (tau1 + tau2 >= _cutoffLJ) {
 						std::ostringstream error_message;
 						error_message << "Error calculating cutoff corrections, rc too small" << std::endl;
-						MARDYN_EXIT(error_message);
+						MARDYN_EXIT(error_message.str());
 					}
 					double eps24;
 					params >> eps24;

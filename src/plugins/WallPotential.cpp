@@ -42,7 +42,7 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
         _potential = LJ9_3;
         // TODO: is this allowed or should simulation be halted
         // HALT SIM
-        //MARDYN_EXIT(error_message);
+        //MARDYN_EXIT(error_message.str());
     }
 
     XMLfile::Query query = xmlconfig.query("component");
@@ -91,7 +91,7 @@ void WallPotential::readXML(XMLfileUnits &xmlconfig) {
     else{
         std::ostringstream error_message;
         error_message << "[WallPotential] Unknown wall potential" << std::endl;
-        MARDYN_EXIT(error_message);
+        MARDYN_EXIT(error_message.str());
     }
 
 }

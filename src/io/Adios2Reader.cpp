@@ -90,7 +90,7 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
 	} else {
 		std::ostringstream error_message;
 		error_message << "[Adios2Reader] Unknown _mode '" << _mode << "'" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_simulation.setSimulationTime(_simtime);
@@ -537,17 +537,17 @@ void Adios2Reader::initAdios2() {
 		std::ostringstream error_message;
         error_message << "[Adios2Reader] Invalid argument exception, STOPPING PROGRAM from rank"
                 << domainDecomp.getRank() << ": " << e.what() << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
     } catch (std::ios_base::failure& e) {
 		std::ostringstream error_message;
         error_message << "[Adios2Reader] IO System base failure exception, STOPPING PROGRAM from rank "
                 << domainDecomp.getRank() << ": " << e.what() << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
     } catch (std::exception& e) {
 		std::ostringstream error_message;
         error_message << "[Adios2Reader] Exception, STOPPING PROGRAM from rank"
                 << domainDecomp.getRank() << ": " << e.what() << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
     }
     Log::global_log->info() << "[Adios2Reader] Init complete." << std::endl;
 };

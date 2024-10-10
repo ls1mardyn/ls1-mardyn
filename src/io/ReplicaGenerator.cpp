@@ -59,7 +59,7 @@ void ReplicaGenerator::readReplicaPhaseSpaceHeader(SubDomain& subDomain) {
 		std::ostringstream error_message;
 		error_message << "Could not find root node /mardyn in XML input file." << std::endl;
 		error_message << "Not a valid MarDyn XML input file." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	bool bInputOk = true;
@@ -83,7 +83,7 @@ void ReplicaGenerator::readReplicaPhaseSpaceHeader(SubDomain& subDomain) {
 	if(not bInputOk) {
 		std::ostringstream error_message;
 		error_message << "Content of file: '" << subDomain.strFilePathHeader << "' corrupted!" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if("ICRVQD" == strMoleculeFormat)
@@ -95,7 +95,7 @@ void ReplicaGenerator::readReplicaPhaseSpaceHeader(SubDomain& subDomain) {
 	else {
 		std::ostringstream error_message;
 		error_message << "Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -110,7 +110,7 @@ void ReplicaGenerator::readReplicaPhaseSpaceData(SubDomain& subDomain, DomainDec
 	if(!ifs.is_open()) {
 		std::ostringstream error_message;
 		error_message << "Could not open phaseSpaceFile " << subDomain.strFilePathData << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	Log::global_log->info() << "Reading phase space file " << subDomain.strFilePathData << std::endl;
@@ -193,7 +193,7 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig) {
 	} else {
 		std::ostringstream error_message;
 		error_message << "Specified wrong type at XML path: " << xmlconfig.getcurrentnodepath() << "/type" << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	SubDomain sd;
@@ -245,7 +245,7 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig) {
 			if(numChanges < 1) {
 				std::ostringstream error_message;
 				error_message << "No component change defined in XML-config file. Program exit ..." << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 			XMLfile::Query::const_iterator changeIter;
 			for(changeIter = query.begin(); changeIter; changeIter++) {
@@ -269,7 +269,7 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig) {
 			if(numChanges < 1) {
 				std::ostringstream error_message;
 				error_message << "No component change defined in XML-config file. Program exit ..." << std::endl;
-				MARDYN_EXIT(error_message);
+				MARDYN_EXIT(error_message.str());
 			}
 			XMLfile::Query::const_iterator changeIter;
 			for(changeIter = query.begin(); changeIter; changeIter++) {
@@ -536,7 +536,7 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 		std::ostringstream error_message;
 		error_message << "Number of particles: " << numParticlesGlobal << " (added) != "
 						<< (_numParticlesTotal - numAddedParticlesFreespaceGlobal) << " (expected)." << std::endl;
-		MARDYN_EXIT(error_message);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	global_simulation->timers()->stop("REPLICA_GENERATOR_VLE_INPUT");

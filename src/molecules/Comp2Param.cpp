@@ -60,7 +60,7 @@ void Comp2Param::initialize(
 				} else {
 					std::ostringstream error_message;
 					error_message << "Mixing: Only LB rule supported" << std::endl;
-					MARDYN_EXIT(error_message);
+					MARDYN_EXIT(error_message.str());
 					return {};
 				}
 			}();
