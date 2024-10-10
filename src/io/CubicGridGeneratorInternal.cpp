@@ -48,9 +48,9 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 	if(density != -1.){
 		// density has been set
 		if(density <= 0){
-			std::ostringstream error_message;			error_message
-					<< "Error in CubicGridGeneratorInternal: Density has to be positive and non-zero!"
-					<< std::endl;			MARDYN_EXIT(error_message);
+			std::ostringstream error_message;
+			error_message << "Error in CubicGridGeneratorInternal: Density has to be positive and non-zero!" << std::endl;
+			MARDYN_EXIT(error_message);
 		}
 		double vol = 1.0;
 		for (int d = 0; d < 3; ++d)
@@ -65,8 +65,10 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 	Log::global_log->info() << "Reading phase space file (CubicGridGenerator)." << std::endl;
 
 	if(_numMolecules == 0){
-		std::ostringstream error_message;		error_message << "Error in CubicGridGeneratorInternal: numMolecules is not set!"
-				<< std::endl << "Please make sure to run readXML()!" << std::endl;		MARDYN_EXIT(error_message);
+		std::ostringstream error_message;
+		error_message << "Error in CubicGridGeneratorInternal: numMolecules is not set!"
+				<< std::endl << "Please make sure to run readXML()!" << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 
 	// create a body centered cubic layout, by creating by placing the molecules on the

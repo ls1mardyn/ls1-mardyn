@@ -375,9 +375,11 @@ void ChemicalPotential::setControlVolume(double x0, double y0, double z0,
 		double x1, double y1, double z1)
 {
 	if ((x0 >= x1) || (y0 >= y1) || (z0 >= z1)) {
-		std::ostringstream error_message;		error_message << "\nInvalid control volume (" << x0 << " / " << y0
+		std::ostringstream error_message;
+		error_message << "\nInvalid control volume (" << x0 << " / " << y0
 				<< " / " << z0 << ") to (" << x1 << " / " << y1 << " / " << z1
-				<< ")." << std::endl;		MARDYN_EXIT(error_message);
+				<< ")." << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	_restrictedControlVolume = true;
 	_globalV = (x1 - x0) * (y1 - y0) * (z1 - z0);

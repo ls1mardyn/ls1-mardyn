@@ -84,9 +84,11 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	_vecPriority.push_back(0);
 	const uint32_t nRet = this->tokenize_int_list(_vecPriority, strPrio);
 	if (nRet != numComponents) {
-		std::ostringstream error_message;		error_message << "[DensityControl] Number of component IDs specified in element <priority>...</priority>"
+		std::ostringstream error_message;
+		error_message << "[DensityControl] Number of component IDs specified in element <priority>...</priority>"
 							<< " does not match the number of components in the simulation. Programm exit ..."
-							<< std::endl;		MARDYN_EXIT(error_message);
+							<< std::endl;
+		MARDYN_EXIT(error_message);
 	}
 
 	// targets

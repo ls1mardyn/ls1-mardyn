@@ -166,8 +166,9 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 				_phaseSpaceHeaderFileStream >> numljcenters >> numcharges >> numdipoles
 											>> numquadrupoles >> numtersoff;
 				if(numtersoff != 0) {
-					std::ostringstream error_message;					error_message << "tersoff no longer supported."
-										<< std::endl;					MARDYN_EXIT(error_message);
+					std::ostringstream error_message;
+					error_message << "tersoff no longer supported." << std::endl;
+					MARDYN_EXIT(error_message);
 				}
 				double x, y, z, m;
 				for(unsigned int j = 0; j < numljcenters; j++) {
@@ -404,11 +405,11 @@ ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain
 		}
 
 		if(componentid > numcomponents) {
-			std::ostringstream error_message;			error_message << "Molecule id " << id
+			std::ostringstream error_message;
+			error_message << "Molecule id " << id
 								<< " has a component ID greater than the existing number of components: "
-								<< componentid
-								<< ">"
-								<< numcomponents << std::endl;			MARDYN_EXIT(error_message);
+								<< componentid << ">" << numcomponents << std::endl;
+			MARDYN_EXIT(error_message);
 		}
 		// ComponentIDs are used as array IDs, hence need to start at 0.
 		// In the input files they always start with 1 so we need to adapt that all the time.

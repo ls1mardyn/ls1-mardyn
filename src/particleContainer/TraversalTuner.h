@@ -164,8 +164,10 @@ void TraversalTuner<CellTemplate>::findOptimalTraversal() {
 		Log::global_log->warning() << "Using unknown traversal." << std::endl;
 
 	if (_cellsInCutoff > _optimalTraversal->maxCellsInCutoff()) {
-		std::ostringstream error_message;		error_message << "Traversal supports up to " << _optimalTraversal->maxCellsInCutoff()
-							<< " cells in cutoff, but value is chosen as " << _cellsInCutoff << std::endl;		MARDYN_EXIT(error_message);
+		std::ostringstream error_message;
+		error_message << "Traversal supports up to " << _optimalTraversal->maxCellsInCutoff()
+							<< " cells in cutoff, but value is chosen as " << _cellsInCutoff << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 }
 
@@ -240,11 +242,13 @@ void TraversalTuner<CellTemplate>::readXML(XMLfileUnits &xmlconfig) {
 						tag += (dimension + j);
 						xmlconfig.getNodeValue(tag, quiData->taskBlockSize[j]);
 						if (quiData->taskBlockSize[j] < 2) {
-							std::ostringstream error_message;							error_message << "Task block size in "
+							std::ostringstream error_message;
+							error_message << "Task block size in "
 												<< (char) (dimension + j)
 												<< " direction is <2 and thereby invalid! ("
 												<< quiData->taskBlockSize[j] << ")"
-												<< std::endl;							MARDYN_EXIT(error_message);
+												<< std::endl;
+							MARDYN_EXIT(error_message);
 						}
 					}
 					break;

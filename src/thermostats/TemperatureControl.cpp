@@ -507,8 +507,10 @@ void ControlRegionT::registerAsObserver() {
 		if (distControl != nullptr)
 			distControl->registerObserver(this);
 		else {
-			std::ostringstream error_message;			error_message << "TemperatureControl->region[" << this->GetID()
-								<< "]: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;			MARDYN_EXIT(error_message);
+			std::ostringstream error_message;
+			error_message << "TemperatureControl->region[" << this->GetID()
+								<< "]: Initialization of plugin DistControl is needed before!" << std::endl;
+			MARDYN_EXIT(error_message);
 		}
 	}
 }

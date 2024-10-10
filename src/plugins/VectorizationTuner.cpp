@@ -62,9 +62,11 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 	} else if (incTypeStr == "both") {
 		_moleculeCntIncreaseType = MoleculeCntIncreaseTypeEnum::both;
 	} else {
-		std::ostringstream error_message;		error_message
+		std::ostringstream error_message;
+		error_message
 			<< R"(Unknown FlopRateOutputPlugin::moleculecntincreasetype. Choose "linear" or "exponential" or "both".)"
-			<< std::endl;		MARDYN_EXIT(error_message);
+			<< std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	Log::global_log->info() << "Molecule count increase type: " << incTypeStr << std::endl;
 

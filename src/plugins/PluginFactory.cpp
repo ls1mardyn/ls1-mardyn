@@ -192,8 +192,9 @@ long PluginFactory<PluginBase>::enablePlugins(std::list<PluginBase*>& _plugins, 
 			} else if ("multi" == sphere_representation) {
 				plugin = new MmpldWriterMultiSphere();
 			} else {
-				std::ostringstream error_message;				error_message << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation
-									<< std::endl;				MARDYN_EXIT(error_message);
+				std::ostringstream error_message;
+				error_message << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation << std::endl;
+				MARDYN_EXIT(error_message);
 			}
 		} else if (pluginname == "DomainProfiles") {
 			plugin = this->create("DensityProfileWriter");

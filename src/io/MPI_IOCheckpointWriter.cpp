@@ -434,7 +434,9 @@ void MPI_IOCheckpointWriter::handle_error(int i) {
 
 	MPI_Error_string(i, error_string, &length_of_error_string);
 
-	std::ostringstream error_message;	error_message << "Writing of file was not successfull " << " , " << i
-			<< " , " << error_string << std::endl;	MARDYN_EXIT(error_message);
+	std::ostringstream error_message;
+	error_message << "Writing of file was not successfull " << " , " << i
+			<< " , " << error_string << std::endl;
+	MARDYN_EXIT(error_message);
 #endif
 }

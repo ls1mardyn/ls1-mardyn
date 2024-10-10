@@ -39,8 +39,10 @@ public:
 	//! @param numValues number of values that shall be communicated
 	void init(MPI_Comm communicator, int numValues, int key = 0) override {
 		if (_currentKey != -1) {
-			std::ostringstream error_message;			error_message << "CollectiveCommunicationNonBlocking: previous communication with key " << _currentKey
-					<< " not yet finalized" << std::endl;			MARDYN_EXIT(error_message);
+			std::ostringstream error_message;
+			error_message << "CollectiveCommunicationNonBlocking: previous communication with key " << _currentKey
+					<< " not yet finalized" << std::endl;
+			MARDYN_EXIT(error_message);
 		}
 
 		_currentKey = key;
@@ -56,8 +58,10 @@ public:
 			// Creates the CollectiveCommunicationSingleNonBlocking object
 			auto [_, inserted] = _comms.try_emplace(_currentKey);
 			if (not inserted) {
-				std::ostringstream error_message;				error_message << "CollectiveCommunicationNonBlocking: key " << _currentKey
-									<< " could not be inserted. Aborting!" << std::endl;				MARDYN_EXIT(error_message);
+				std::ostringstream error_message;
+				error_message << "CollectiveCommunicationNonBlocking: key " << _currentKey
+									<< " could not be inserted. Aborting!" << std::endl;
+				MARDYN_EXIT(error_message);
 			}
 		}
 		_comms.at(_currentKey).init(communicator, numValues, _currentKey);

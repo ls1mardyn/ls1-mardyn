@@ -135,8 +135,10 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	_phaseSpaceFileStream.open(_phaseSpaceFile.c_str(),
 							   std::ios::binary | std::ios::in);
 	if(!_phaseSpaceFileStream.is_open()) {
-		std::ostringstream error_message;		error_message << "Could not open phaseSpaceFile "
-							<< _phaseSpaceFile << std::endl;		MARDYN_EXIT(error_message);
+		std::ostringstream error_message;
+		error_message << "Could not open phaseSpaceFile "
+							<< _phaseSpaceFile << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 	Log::global_log->info() << "Reading phase space file " << _phaseSpaceFile
 					   << std::endl;
@@ -178,8 +180,10 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 		if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif
 		if(_phaseSpaceFileStream.eof()) {
-			std::ostringstream error_message;			error_message << "End of file was hit before all " << numMolecules << " expected molecules were read."
-				<< std::endl;			MARDYN_EXIT(error_message);
+			std::ostringstream error_message;
+			error_message << "End of file was hit before all " << numMolecules << " expected molecules were read."
+				<< std::endl;
+			MARDYN_EXIT(error_message);
         }
 		_phaseSpaceFileStream.read(reinterpret_cast<char*> (&id), 8);
 		switch (_nMoleculeFormat) {

@@ -81,8 +81,9 @@ void ReplicaGenerator::readReplicaPhaseSpaceHeader(SubDomain& subDomain) {
 	subDomain.dDensity = subDomain.numParticles / subDomain.dVolume;
 
 	if(not bInputOk) {
-		std::ostringstream error_message;		error_message << "Content of file: '" << subDomain.strFilePathHeader << "' corrupted! Program exit ..."
-							<< std::endl;		MARDYN_EXIT(error_message);
+		std::ostringstream error_message;
+		error_message << "Content of file: '" << subDomain.strFilePathHeader << "' corrupted!" << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 
 	if("ICRVQD" == strMoleculeFormat)
@@ -190,8 +191,9 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig) {
 	} else if("heterogeneous_LV" == strType) {
 		_nSystemType = ST_HETEROGENEOUS_LIQUID_VAPOR;
 	} else {
-		std::ostringstream error_message;		error_message << "Specified wrong type at XML path: " << xmlconfig.getcurrentnodepath() << "/type"
-							<< std::endl;		MARDYN_EXIT(error_message);
+		std::ostringstream error_message;
+		error_message << "Specified wrong type at XML path: " << xmlconfig.getcurrentnodepath() << "/type" << std::endl;
+		MARDYN_EXIT(error_message);
 	}
 
 	SubDomain sd;

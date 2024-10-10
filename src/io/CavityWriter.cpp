@@ -80,13 +80,15 @@ void CavityWriter::readXML(XMLfileUnits &xmlconfig) {
     xmlconfig.getNodeValue("ControlVolume/z1", _controlVolume[5]);
     for (int d = 0; d < 3; d++) {
         if (_controlVolume[d * 2] > _controlVolume[d * 2 + 1]) {
-            std::ostringstream error_message;            error_message << "[CavityWriter] Lower Bound of Control Volume may not be larger than upper bound. "
-                                << std::endl;            MARDYN_EXIT(error_message);
+            std::ostringstream error_message;
+            error_message << "[CavityWriter] Lower Bound of Control Volume may not be larger than upper bound." << std::endl;
+            MARDYN_EXIT(error_message);
         }
         if (_controlVolume[d * 2] < 0 ||
             _controlVolume[d * 2 + 1] > global_simulation->getDomain()->getGlobalLength(d)) {
-            std::ostringstream error_message;            error_message << "[CavityWriter] Control volume bounds may not be outside of domain boundaries. "
-                                << std::endl;            MARDYN_EXIT(error_message);
+            std::ostringstream error_message;
+            error_message << "[CavityWriter] Control volume bounds may not be outside of domain boundaries." << std::endl;
+            MARDYN_EXIT(error_message);
         }
     }
 
