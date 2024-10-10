@@ -11,6 +11,7 @@
 #include "plugins/PluginBase.h"
 
 #include <fstream>
+#include <sstream>
 
 class FlopCounter;
 

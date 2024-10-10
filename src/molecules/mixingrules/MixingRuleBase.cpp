@@ -15,11 +15,13 @@ void MixingRuleBase::readXML(const XMLfileUnits& xmlconfig) {
 
     // catch invalid inputs
 	if (cid1 == cid2) {
-		Log::global_log->error() << "Mixing rules: cid1 and cid2 must not be the same but are both " << cid1 << std::endl;
-		mardyn_exit(1);
+		std::ostringstream error_message;
+		error_message << "Mixing rules: cid1 and cid2 must not be the same but are both " << cid1 << std::endl;
+		MARDYN_EXIT(error_message.str());
 	} else if (std::min(cid1, cid2) < 0) {
-		Log::global_log->error() << "Mixing rules: cid1 and cid2 must be greater than zero" << std::endl;
-		mardyn_exit(1);
+		std::ostringstream error_message;
+		error_message << "Mixing rules: cid1 and cid2 must be greater than zero" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	} 
 	
 	// Symmetry for mixing rules is assumed

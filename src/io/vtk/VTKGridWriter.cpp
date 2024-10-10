@@ -34,7 +34,9 @@ void VTKGridWriter::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "VTKMoleculeWriter: Output prefix: " << _fileName << std::endl;
 
 	if (_writeFrequency <= 0) {
-		Log::global_log->error() << "VTKMoleculeWriter: writeFrequency must be > 0!" << std::endl;
+		std::ostringstream error_message;
+		error_message << "VTKMoleculeWriter: writeFrequency must be > 0!" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -47,8 +49,9 @@ void  VTKGridWriter::endStep(
 	LinkedCells* container = dynamic_cast<LinkedCells*>(particleContainer);
 #ifndef NDEBUG
 	if (container == NULL) {
-		Log::global_log->error() << "VTKGridWriter works only with plottable LinkedCells!" << std::endl;
-		mardyn_exit(1);
+		std::ostringstream error_message;
+		error_message << "VTKGridWriter works only with plottable LinkedCells!" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 #endif
 
@@ -113,8 +116,9 @@ void  VTKGridWriter::init(ParticleContainer *particleContainer,
                           DomainDecompBase * /*domainDecomposition*/, Domain * /*domain*/) {
 #ifndef NDEBUG
 	if (dynamic_cast<LinkedCells*>(particleContainer) == NULL) {
-		Log::global_log->error() << "VTKGridWriter works only with LinkCells!" << std::endl;
-		mardyn_exit(1);
+		std::ostringstream error_message;
+		error_message << "VTKGridWriter works only with LinkCells!" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 #endif
 }

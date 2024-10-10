@@ -2,8 +2,11 @@
 // Created by Kruegener on 10/25/2018.
 //
 
+#include <sstream>
+
 #include "ProfileBase.h"
 #include "plugins/SpatialProfile.h"
+#include "utils/mardyn_assert.h"
 
 void ProfileBase::writeMatrix (std::ofstream& outfile) {
 	if (_samplInfo.cylinder) {
@@ -43,7 +46,9 @@ void ProfileBase::writeKartMatrix (std::ofstream& outfile) {
 }
 
 void ProfileBase::writeSimpleMatrix (std::ofstream& outfile) {
-	Log::global_log->error() << "SIMPLE MATRIX OUTPUT NOT IMPLEMENTED!\n";
+	std::ostringstream error_message;
+	error_message << "SIMPLE MATRIX OUTPUT NOT IMPLEMENTED!\n";
+	MARDYN_EXIT(error_message.str());
 }
 
 void ProfileBase::writeCylMatrix (std::ofstream& outfile) {

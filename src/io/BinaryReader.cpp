@@ -76,9 +76,10 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	XMLfileUnits inp(_phaseSpaceHeaderFile);
 
 	if(not inp.changecurrentnode("/mardyn")) {
-		Log::global_log->error() << "Could not find root node /mardyn in XML input file." << std::endl;
-		Log::global_log->fatal() << "Not a valid MarDyn XML input file." << std::endl;
-		mardyn_exit(1);
+		std::ostringstream error_message;
+		error_message << "Could not find root node /mardyn in XML input file." << std::endl;
+		error_message << "Not a valid MarDyn XML input file." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	bool bInputOk = true;
@@ -95,8 +96,9 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	bInputOk = bInputOk && inp.getNodeValue("format@type", strMoleculeFormat);
 
 	if(not bInputOk) {
-		Log::global_log->error() << "Content of file: '" << _phaseSpaceHeaderFile << "' corrupted! Program exit ..." << std::endl;
-		mardyn_exit(1);
+		std::ostringstream error_message;
+		error_message << "Content of file: '" << _phaseSpaceHeaderFile << "' corrupted! Program exit ..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if("ICRVQD" == strMoleculeFormat)
@@ -106,8 +108,9 @@ void BinaryReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	else if("ICRV" == strMoleculeFormat)
 		_nMoleculeFormat = ICRV;
 	else {
-		Log::global_log->error() << "Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << std::endl;
-		mardyn_exit(1);
+		std::ostringstream error_message;
+		error_message << "Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// Set parameters of Domain and Simulation class
@@ -132,9 +135,10 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 	_phaseSpaceFileStream.open(_phaseSpaceFile.c_str(),
 							   std::ios::binary | std::ios::in);
 	if(!_phaseSpaceFileStream.is_open()) {
-		Log::global_log->error() << "Could not open phaseSpaceFile "
+		std::ostringstream error_message;
+		error_message << "Could not open phaseSpaceFile "
 							<< _phaseSpaceFile << std::endl;
-		mardyn_exit(1);
+		MARDYN_EXIT(error_message.str());
 	}
 	Log::global_log->info() << "Reading phase space file " << _phaseSpaceFile
 					   << std::endl;
@@ -176,9 +180,10 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 		if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif
 		if(_phaseSpaceFileStream.eof()) {
-			Log::global_log->error() << "End of file was hit before all " << numMolecules << " expected molecules were read."
+			std::ostringstream error_message;
+			error_message << "End of file was hit before all " << numMolecules << " expected molecules were read."
 				<< std::endl;
-			mardyn_exit(1);
+			MARDYN_EXIT(error_message.str());
         }
 		_phaseSpaceFileStream.read(reinterpret_cast<char*> (&id), 8);
 		switch (_nMoleculeFormat) {
@@ -219,9 +224,10 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 				_phaseSpaceFileStream.read(reinterpret_cast<char*> (&vz), 8);
 				break;
 			default:
-				Log::global_log->error() << "BinaryReader: Unknown phase space format: " << _nMoleculeFormat << std::endl
+				std::ostringstream error_message;
+				error_message << "BinaryReader: Unknown phase space format: " << _nMoleculeFormat << std::endl
 									<< "Aborting simulation." << std::endl;
-				mardyn_exit(12);
+				MARDYN_EXIT(error_message.str());
 		}
 		if ((x < 0.0 || x >= domain->getGlobalLength(0)) || (y < 0.0 || y >= domain->getGlobalLength(1)) ||
 			(z < 0.0 || z >= domain->getGlobalLength(2))) {
@@ -229,17 +235,18 @@ BinaryReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
 		}
 
 		if(componentid > numcomponents) {
-			Log::global_log->error() << "Molecule id " << id
+			std::ostringstream error_message;
+			error_message << "Molecule id " << id
 								<< " has a component ID greater than the existing number of components: "
 								<< componentid
 								<< ">"
 								<< numcomponents << std::endl;
-			mardyn_exit(1);
+			MARDYN_EXIT(error_message.str());
 		}
 		if(componentid == 0) {
-			Log::global_log->error() << "Molecule id " << id
-								<< " has componentID == 0." << std::endl;
-			mardyn_exit(1);
+			std::ostringstream error_message;
+			error_message << "Molecule id " << id << " has componentID == 0." << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		// ComponentIDs are used as array IDs, hence need to start at 0.
 		// In the input files they always start with 1 so we need to adapt that all the time.

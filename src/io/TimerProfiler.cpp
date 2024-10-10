@@ -7,11 +7,13 @@
 
 #include <cmath>
 #include <tuple>
+#include <sstream>
 
 #include "TimerProfiler.h"
 #include "utils/Logger.h"
 #include "utils/String_utils.h"
 #include "utils/xmlfileUnits.h"
+#include "utils/mardyn_assert.h"
 
 
 
@@ -35,7 +37,9 @@ void TimerProfiler::readXML(XMLfileUnits& xmlconfig) {
 		} else if (displayMode == "none") {
 			setDisplayMode(Displaymode::NONE);
 		} else {
-			Log::global_log->error() << "Unknown display mode: " << displayMode << std::endl;
+			std::ostringstream error_message;
+			error_message << "Unknown display mode: " << displayMode << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 }

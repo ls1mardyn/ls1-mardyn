@@ -84,10 +84,11 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	_vecPriority.push_back(0);
 	const uint32_t nRet = this->tokenize_int_list(_vecPriority, strPrio);
 	if (nRet != numComponents) {
-		Log::global_log->error() << "[DensityControl] Number of component IDs specified in element <priority>...</priority>"
+		std::ostringstream error_message;
+		error_message << "[DensityControl] Number of component IDs specified in element <priority>...</priority>"
 							<< " does not match the number of components in the simulation. Programm exit ..."
 							<< std::endl;
-		mardyn_exit(-1);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// targets
@@ -111,8 +112,9 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	numTargets = query.card();
 	Log::global_log->info() << "[DensityControl] Number of component targets: " << numTargets << std::endl;
 	if (numTargets < 1) {
-		Log::global_log->error() << "[DensityControl] No target parameters specified. Program exit ..." << std::endl;
-		mardyn_exit(-1);
+		std::ostringstream error_message;
+		error_message << "[DensityControl] No target parameters specified. Program exit ..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	const std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator nodeIter;

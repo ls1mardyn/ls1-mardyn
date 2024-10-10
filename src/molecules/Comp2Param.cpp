@@ -58,8 +58,9 @@ void Comp2Param::initialize(
 					return {[=](double sigi, double sigj) { return eta * (sigi + sigj); },      // mixingSigma
 							[=](double epsi, double epsj) { return xi * sqrt(epsi * epsj); }};  // mixingEpsilon
 				} else {
-					Log::global_log->error() << "Mixing: Only LB rule supported" << std::endl;
-					mardyn_exit(1);
+					std::ostringstream error_message;
+					error_message << "Mixing: Only LB rule supported" << std::endl;
+					MARDYN_EXIT(error_message.str());
 					return {};
 				}
 			}();

@@ -7,6 +7,7 @@
 #include <particleContainer/adapter/LegacyCellProcessor.h>
 #include <particleContainer/adapter/VectorizedCellProcessor.h>
 #include <exception>
+#include <sstream>
 #include "Domain.h"
 #include "Simulation.h"
 #include "utils/mardyn_assert.h"
@@ -183,11 +184,12 @@ auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString,
 	try {
 		return OptionType::template parseOptions<OutputContainer>(stringInXml);
 	} catch (const std::exception &e) {
-		Log::global_log->error() << "AutoPasContainer: error when parsing " << xmlString << ":" << std::endl;
-		Log::global_log->error() << e.what() << std::endl;
-		Log::global_log->error() << "Possible options: "
+		std::ostringstream error_message;
+		error_message << "AutoPasContainer: error when parsing " << xmlString << ":" << std::endl;
+		error_message << e.what() << std::endl;
+		error_message << "Possible options: "
 							<< autopas::utils::ArrayUtils::to_string(OptionType::getAllOptions()) << std::endl;
-		mardyn_exit(4432);
+		MARDYN_EXIT(error_message.str());
 		// dummy return
 		return decltype(OptionType::template parseOptions<OutputContainer>(""))();
 	}
@@ -240,7 +242,9 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	} else if (vlSkinPerTimestep == -1 ){
 		_verletSkin = vlSkin;
 	} else {
-		Log::global_log->error() << "Input XML specifies skin AND skinPerTimestep. Please choose only one." << std::endl;
+		std::ostringstream error_message;
+		error_message << "Input XML specifies skin AND skinPerTimestep. Please choose only one." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	_relativeOptimumRange = xmlconfig.getNodeValue_double("optimumRange", _relativeOptimumRange);
 	_relativeBlacklistRange = xmlconfig.getNodeValue_double("blacklistRange", _relativeBlacklistRange);
@@ -394,12 +398,13 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 void AutoPasContainer::update() {
 	// in case we update the container before handling the invalid particles, this might lead to lost particles.
 	if (not _invalidParticles.empty()) {
-		Log::global_log->error() << "AutoPasContainer: trying to update container, even though invalidParticles still "
+		std::ostringstream error_message;
+		error_message << "AutoPasContainer: trying to update container, even though invalidParticles still "
 							   "exist. This would lead to lost particles => ERROR!\n"
 							   "Remaining invalid particles:\n"
 							<< autopas::utils::ArrayUtils::to_string(_invalidParticles, "\n", {"", ""})
 							<< std::endl;
-		mardyn_exit(434);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_invalidParticles = _autopasContainer.updateContainer();

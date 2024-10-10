@@ -45,8 +45,9 @@ void SpatialProfile::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("z", samplInfo.universalProfileUnit[2]);
 		samplInfo.cylinder = false;
 	} else {
-		Log::global_log->error() << "[SpatialProfile] Invalid mode. cylinder/cartesian" << std::endl;
-		mardyn_exit(-1);
+		std::ostringstream error_message;
+		error_message << "[SpatialProfile] Invalid mode. cylinder/cartesian" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	Log::global_log->info() << "[SpatialProfile] Binning units: " << samplInfo.universalProfileUnit[0] << " "
@@ -394,17 +395,18 @@ long SpatialProfile::getCylUID(ParticleIterator& thismol) {
 		unID = (long) (hUn * samplInfo.universalProfileUnit[0] * samplInfo.universalProfileUnit[2]
 					   + rUn * samplInfo.universalProfileUnit[2] + phiUn);
 	} else {
-		Log::global_log->error() << "INV PROFILE UNITS " << samplInfo.universalInvProfileUnit[0] << " "
+		std::ostringstream error_message;
+		error_message << "INV PROFILE UNITS " << samplInfo.universalInvProfileUnit[0] << " "
 							<< samplInfo.universalInvProfileUnit[1] << " " << samplInfo.universalInvProfileUnit[2]
 							<< "\n";
-		Log::global_log->error() << "PROFILE UNITS " << samplInfo.universalProfileUnit[0] << " "
+		error_message << "PROFILE UNITS " << samplInfo.universalProfileUnit[0] << " "
 							<< samplInfo.universalProfileUnit[1] << " " << samplInfo.universalProfileUnit[2] << "\n";
-		Log::global_log->error() << "Severe error!! Invalid profile ID (" << rUn << " / " << hUn << " / " << phiUn
+		error_message << "Severe error!! Invalid profile ID (" << rUn << " / " << hUn << " / " << phiUn
 							<< ").\n\n";
-		Log::global_log->error() << "Severe error!! Invalid profile unit (" << R2 << " / " << yc << " / " << phi << ").\n\n";
-		Log::global_log->error() << "Coordinates off center (" << xc << " / " << yc << " / " << zc << ").\n";
-		Log::global_log->error() << "unID = " << unID << "\n";
-		mardyn_exit(707);
+		error_message << "Severe error!! Invalid profile unit (" << R2 << " / " << yc << " / " << phi << ").\n\n";
+		error_message << "Coordinates off center (" << xc << " / " << yc << " / " << zc << ").\n";
+		error_message << "unID = " << unID << "\n";
+		MARDYN_EXIT(error_message.str());
 	}
 	return unID;
 }

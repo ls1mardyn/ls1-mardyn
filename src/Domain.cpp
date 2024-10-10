@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <cmath>
 #include <cstdint>
 
@@ -93,7 +94,9 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 				<< _globalLength[2] << std::endl;
 		}
 		else {
-			Log::global_log->error() << "Unsupported volume type " << type << std::endl;
+			std::ostringstream error_message;
+			error_message << "Unsupported volume type " << type << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		xmlconfig.changecurrentnode("..");
 	}
@@ -552,8 +555,9 @@ void Domain::writeCheckpointHeader(std::string filename,
 							mixingss << "\t";
 						}
 					} else {
-						Log::global_log->error() << "Only LB mixing rule supported" << std::endl;
-						mardyn_exit(123);
+						std::ostringstream error_message;
+						error_message << "Only LB mixing rule supported" << std::endl;
+						MARDYN_EXIT(error_message.str());
 					}
 				}
 			}
@@ -710,8 +714,9 @@ void Domain::enableComponentwiseThermostat()
 
 void Domain::setComponentThermostat(int cid, int thermostat) {
 	if ((0 > cid) || (0 >= thermostat)) {
-		Log::global_log->error() << "Domain::setComponentThermostat: cid or thermostat id too low" << std::endl;
-		mardyn_exit(787);
+		std::ostringstream error_message;
+		error_message << "Domain::setComponentThermostat: cid or thermostat id too low" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	this->_componentToThermostatIdMap[cid] = thermostat;
 	this->_universalThermostatN[thermostat] = 0;
