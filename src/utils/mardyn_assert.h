@@ -27,14 +27,14 @@ inline void mardyn_exit(const std::string & exit_message,
 	// The following code extracts this relative path from "filepath"
 	// It starts searching from the end (i.e. from the right) to avoid user-specific "src" dirs
 	const char* filepath_truncated = nullptr;
-    const char* temp = filepath;
-    while ((temp = std::strstr(temp, "/src/")) != nullptr) {
-        filepath_truncated = temp;
-        temp++;
-    }
-    if (filepath_truncated == nullptr) {
-        filepath_truncated = filepath;
-    }
+	const char* temp = filepath;
+	while ((temp = std::strstr(temp, "/src/")) != nullptr) {
+		filepath_truncated = temp;
+		temp++;
+	}
+	if (filepath_truncated == nullptr) {
+		filepath_truncated = filepath;
+	}
 
 	// Print code location from which MARDYN_EXIT() was called
 	Log::global_log->error_always_output()
@@ -43,17 +43,17 @@ inline void mardyn_exit(const std::string & exit_message,
 		<< "` with message:" << std::endl;
 
 	// Print exit message line by line to always have Logger output
-    std::stringstream ss(exit_message);
-    std::string exit_message_line;
-    std::vector<std::string> exit_message_lines;
+	std::stringstream ss(exit_message);
+	std::string exit_message_line;
+	std::vector<std::string> exit_message_lines;
 	// First, split exit message by "\n"
-    while (std::getline(ss, exit_message_line, '\n')) {
-        exit_message_lines.push_back(exit_message_line);
-    }
-    // Second, print each line separately and prepend Logger output
-    for (const auto& message_line : exit_message_lines) {
-        Log::global_log->error_always_output() << message_line << std::endl;
-    }
+	while (std::getline(ss, exit_message_line, '\n')) {
+		exit_message_lines.push_back(exit_message_line);
+	}
+	// Second, print each line separately and prepend Logger output
+	for (const auto& message_line : exit_message_lines) {
+		Log::global_log->error_always_output() << message_line << std::endl;
+	}
 
 #ifdef ENABLE_MPI
 	// terminate all mpi processes and return exitcode
