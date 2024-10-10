@@ -392,7 +392,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 						<< "Executable was compiled without support for parallel execution: "
 						<< parallelisationtype
 						<< " not available. Using serial mode." << std::endl;
-				//MARDYN_EXIT(error_message.str());
 			}
 			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
 		#endif
