@@ -12,17 +12,49 @@
 #include <sstream>
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
+#include <vector>
 
 #include "Logger.h"
 
 // Macro to wrap mardyn_exit and pass the caller file and line
-#define MARDYN_EXIT(exit_message) mardyn_exit(exit_message, __FILE__, __LINE__)
+#define MARDYN_EXIT(exit_message) mardyn_exit(exit_message, __func__, __FILE__, __LINE__)
 
 inline void mardyn_exit(const std::string & exit_message,
-						const char* file, const int line) {
+						const char* function, const char* filepath, const int line) {
+	
+	// Only print the file path relative to the "/src/" directory
+	// The following code extracts this relative path from "filepath"
+	// It starts searching from the end (i.e. from the right) to avoid user-specific "src" dirs
+	const char* filepath_truncated = nullptr;
+    const char* temp = filepath;
+    while ((temp = std::strstr(temp, "/src/")) != nullptr) {
+        filepath_truncated = temp;
+        temp++;
+    }
+    if (filepath_truncated == nullptr) {
+        filepath_truncated = filepath;
+    }
+
+	// Print code location from which MARDYN_EXIT() was called
 	Log::global_log->error_always_output()
-		<< "Exit called in file `" << file << ":" << line << "` with message:" << std::endl;
-	std::cerr << exit_message << std::endl;
+		<< "Exit called from function `" << function << "`"
+		<< " in file `" << filepath_truncated+1 << ":" << line  // +1 to ignore the first "/"
+		<< "` with message:" << std::endl;
+
+	// Print exit message line by line to always have Logger output
+    std::stringstream ss(exit_message);
+    std::string exit_message_line;
+    std::vector<std::string> exit_message_lines;
+	// First, split exit message by "\n"
+    while (std::getline(ss, exit_message_line, '\n')) {
+        exit_message_lines.push_back(exit_message_line);
+    }
+    // Second, print each line separately and prepend Logger output
+    for (const auto& message_line : exit_message_lines) {
+        Log::global_log->error_always_output() << message_line << std::endl;
+    }
+
 #ifdef ENABLE_MPI
 	// terminate all mpi processes and return exitcode
 	MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
