@@ -13,6 +13,7 @@
 #include "particleContainer/LinkedCells.h"
 #include "io/ASCIIReader.h"
 #include "parallel/NeighbourCommunicationScheme.h"
+#include <utils/mardyn_assert.h>
 
 #include <sstream>
 #include <cmath>
@@ -415,9 +416,11 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 		kdd->barrier();
 
 		ASSERT_TRUE_MSG("Deadlock!", isOK);
-		if (not isOK)
-			MPI_Abort(MPI_COMM_WORLD, 1);
-
+		if (not isOK) {
+			std::ostringstream error_message;
+			error_message << "[KDDecompositionTest] Deadlock detected." << std::endl;
+			MARDYN_EXIT(error_message);
+		}
 		delete kdd->_decompTree;
 		kdd->_decompTree = newDecompRoot;
 		kdd->_ownArea = newOwnLeaf;
