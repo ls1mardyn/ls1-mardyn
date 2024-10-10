@@ -123,7 +123,7 @@ inline void OriginalCellPairTraversal<CellTemplate>::computeNeighbourOffsets() {
 	mardyn_assert(forwardNeighbourIndex == 13);
 	mardyn_assert(backwardNeighbourIndex == 13);
 
-	Log::global_log->info() << "Neighbour offsets are bounded by "
+	Log::global_log->debug() << "Neighbour offsets are bounded by "
 			<< minNeighbourOffset << ", " << maxNeighbourOffset << std::endl;
 
 }

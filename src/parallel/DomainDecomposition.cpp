@@ -87,15 +87,15 @@ bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalan
 void DomainDecomposition::balanceAndExchange(double /*lastTraversalTime*/, bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain) {
 	if (sendLeavingWithCopies()) {
-		Log::global_log->debug() << "DD: Sending Leaving and Halos." << std::endl;
+		Log::global_log->debug() << "DD: Sending Leaving and Halos.\n";
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
 	} else {
-		Log::global_log->debug() << "DD: Sending Leaving." << std::endl;
+		Log::global_log->debug() << "DD: Sending Leaving.\n";
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
 #ifndef MARDYN_AUTOPAS
 		moleculeContainer->deleteOuterParticles();
 #endif
-		Log::global_log->debug() << "DD: Sending Halos." << std::endl;
+		Log::global_log->debug() << "DD: Sending Halos.\n";
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 	}
 }
