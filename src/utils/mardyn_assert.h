@@ -40,7 +40,7 @@ inline void mardyn_exit(const std::string & exit_message,
 	}
 
 	// Print code location from which MARDYN_EXIT() was called
-	Log::global_log->error()
+	Log::global_log->error_always_output()
 		<< "Exit called from function `" << function << "`"
 		<< " in file `" << filepath_truncated << ":" << line
 		<< "` with message:" << std::endl;
@@ -50,7 +50,7 @@ inline void mardyn_exit(const std::string & exit_message,
 	std::string exit_message_line;
 	// Split exit message by "\n" and print via Logger
 	while (std::getline(ss, exit_message_line, '\n')) {
-		Log::global_log->error() << exit_message_line << std::endl;
+		Log::global_log->error_always_output() << exit_message_line << std::endl;
 	}
 
 #ifdef ENABLE_MPI
