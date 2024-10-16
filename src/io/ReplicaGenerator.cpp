@@ -7,6 +7,7 @@
 #include <vector>
 #include <cstdint>
 #include <numeric>
+#include <memory>
 
 #include "Domain.h"
 #include "Simulation.h"
@@ -117,13 +118,13 @@ void ReplicaGenerator::readReplicaPhaseSpaceData(SubDomain& subDomain, DomainDec
 	// Select appropriate reader
 	switch (_nMoleculeFormat) {
 		case ICRVQD:
-			_moleculeDataReader = new MoleculeDataReaderICRVQD();
+			_moleculeDataReader = std::make_unique<MoleculeDataReaderICRVQD>();
 			break;
 		case ICRV:
-			_moleculeDataReader = new MoleculeDataReaderICRV();
+			_moleculeDataReader = std::make_unique<MoleculeDataReaderICRV>();
 			break;
 		case IRV:
-			_moleculeDataReader = new MoleculeDataReaderIRV();
+			_moleculeDataReader = std::make_unique<MoleculeDataReaderIRV>();
 			break;
 	}
 

@@ -84,14 +84,14 @@ public:
 		return _expansionM;
 	}
 
-	void writeValuesToMPIBuffer(double * buf, int& position) const {
+	void writeValuesToMPIBuffer(std::vector<double> &buf, int& position) const {
 		_expansionM.writeValuesToMPIBuffer(buf, position);
 	}
 
-	void readValuesFromMPIBuffer(double * buf, int& position) {
+	void readValuesFromMPIBuffer(std::vector<double> &buf, int& position) {
 		_expansionM.readValuesFromMPIBuffer(buf,position);
 	}
-	void addValuesFromMPIBuffer(double * buf, int& position) {
+	void addValuesFromMPIBuffer(std::vector<double> &buf, int& position) {
 		_expansionM.addValuesFromMPIBuffer(buf,position);
 	}
 

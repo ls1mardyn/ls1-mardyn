@@ -318,8 +318,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_globalNumCells = pow(_globalNumCellsPerDim, 3);
 #if defined(ENABLE_MPI)
 	_globalLevelNumCells = pow(8,_globalLevel);
-	_occVector = new int[_globalLevelNumCells];
-	std::fill(_occVector, _occVector + _globalLevelNumCells, 0);
+	_occVector = std::vector<int>(_globalLevelNumCells, 0);
 #endif
 	_coeffVectorLength = 0;
 	_expansionSize = 0;
@@ -489,8 +488,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_coeffVectorLength = _expansionSize*numCells;
 #endif
 
-	_coeffVector = new double[_coeffVectorLength * 2];
-	std::fill(_coeffVector, _coeffVector + _coeffVectorLength * 2, 0.0);
+	_coeffVector = std::vector<double>(_coeffVectorLength * 2, 0.0);
 	Log::global_log->info() << "UniformPseudoParticleContainer: coeffVectorLength="
 							<< _coeffVectorLength << " Size of MPI Buffers is "
 							<< (8 * (_coeffVectorLength * 2 + _globalNumCells)
@@ -534,9 +532,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 	delete _leafContainer;
-	delete[] _coeffVector;
 #if defined(ENABLE_MPI)
-	delete[] _occVector;
 	if(!_overlapComm){
 		delete _multipoleBuffer;
 		delete _multipoleRecBuffer;
@@ -1174,7 +1170,7 @@ int UniformPseudoParticleContainer::optimizeAllReduce(/*ParticleContainer* ljCon
 		}
 		_coeffVectorLength = _expansionSize*numCells;
 
-		_coeffVector = new double[_coeffVectorLength * 2];
+		_coeffVector = std::vector<double>(_coeffVectorLength * 2);
 
 		_leafContainer->clearParticles();
 
@@ -1253,21 +1249,20 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 				}
 				int cellIndex = ((coordsLevel[2]) * mpCells + coordsLevel[1]) * mpCells + coordsLevel[0];
 				if(!_fuseGlobalCommunication){
-					double * buffer = new double[2*_expansionSize];
+					auto buffer = std::vector<double>(2*_expansionSize);
 					MpCell & currentCell = _mpCellGlobalTop[curLevel][cellIndex];
 					int index = 0;
 					currentCell.multipole.writeValuesToMPIBuffer(buffer,index);
-					MPI_Allreduce(MPI_IN_PLACE,buffer,2 * _expansionSize,MPI_DOUBLE,MPI_SUM,_neighbourhoodComms[curLevel]);
+					MPI_Allreduce(MPI_IN_PLACE,buffer.data(),2 * _expansionSize,MPI_DOUBLE,MPI_SUM,_neighbourhoodComms[curLevel]);
 					index = 0;
 					currentCell.multipole.readValuesFromMPIBuffer(buffer,index);
-					delete[] buffer;
 				}
 				else{ //get values of 8 values from previous level that contributed to the parent level in addition to parent value (9 values each 2 expansions)
 					int coordsFlooredPreviousLevel[3];
 					for(int d = 0; d < 3; d++){
 						coordsFlooredPreviousLevel[d] = (((coords[d] * _numCellsOnGlobalLevel[d]) / (stride/2)) / 2) * 2;
 					}
-					double * buffer = new double[18*_expansionSize];
+					auto buffer = std::vector<double>(18*_expansionSize);
 					MpCell & currentCell = _mpCellGlobalTop[curLevel][cellIndex];
 					int index = 0;
 					currentCell.multipole.writeValuesToMPIBuffer(buffer,index);
@@ -1282,7 +1277,7 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 							}
 						}
 					}
-					MPI_Allreduce(MPI_IN_PLACE,buffer,18 * _expansionSize,MPI_DOUBLE,MPI_SUM,_neighbourhoodComms[curLevel]);
+					MPI_Allreduce(MPI_IN_PLACE,buffer.data(),18 * _expansionSize,MPI_DOUBLE,MPI_SUM,_neighbourhoodComms[curLevel]);
 					index = 0;
 					MpCell & currentCell2 = _mpCellGlobalTop[curLevel][cellIndex];
 					currentCell2.multipole.readValuesFromMPIBuffer(buffer,index);
@@ -1326,7 +1321,7 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 			coordsFlooredLevel[d] = (((coords[d] * _numCellsOnGlobalLevel[d]) / (stride)) / 2) * 2;
 		}
 
-		double * buffer = new double[16*_expansionSize];
+		auto buffer = std::vector<double>(16*_expansionSize);
 		int index = 0;
 		for(int z = 0; z < 2; z++){
 			for(int y = 0; y < 2; y++){
@@ -1338,7 +1333,7 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 				}
 			}
 		}
-		MPI_Allreduce(MPI_IN_PLACE,buffer,16 * _expansionSize,MPI_DOUBLE,MPI_SUM,_neighbourhoodComms[_stopLevel - 1]);
+		MPI_Allreduce(MPI_IN_PLACE,buffer.data(),16 * _expansionSize,MPI_DOUBLE,MPI_SUM,_neighbourhoodComms[_stopLevel - 1]);
 		index = 0;
 
 		for(int z = 0; z < 2; z++){
@@ -1510,7 +1505,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 					//Fixme? special case for curlevel == 2? -> 64 cells only? unnecessary communication in this case?
 					//possible optimization only add up values that were modified in NT method
 					int numCells = (curLevel == 1)? 8 : 216;
-					double * buffer = new double[numCells * 2 * _expansionSize];
+					auto buffer = std::vector<double>(static_cast<size_t>(numCells) * 2 * _expansionSize);
 					int index = 0;
 					int start, end;
 					if(curLevel == 1){
@@ -1536,7 +1531,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 							}
 						}
 					}
-					MPI_Allreduce(MPI_IN_PLACE,buffer,numCells * 2 * _expansionSize,MPI_DOUBLE,MPI_SUM,_neighbourhoodComms[curLevel - 1]);
+					MPI_Allreduce(MPI_IN_PLACE,buffer.data(),numCells * 2 * _expansionSize,MPI_DOUBLE,MPI_SUM,_neighbourhoodComms[curLevel - 1]);
 					index = 0;
 
 					for(int z = start; z < end; z++){
@@ -3373,8 +3368,8 @@ void UniformPseudoParticleContainer::clear() {
 
 	// clear the MPI buffers
 #ifdef ENABLE_MPI
-	std::fill(_coeffVector, _coeffVector + _coeffVectorLength*2, 0.0);
-	std::fill(_occVector, _occVector + _globalLevelNumCells, 0);
+	std::fill(_coeffVector.begin(), _coeffVector.end(), 0.0);
+	std::fill(_occVector.begin(), _occVector.end(), 0);
 #endif
 }
 
@@ -3392,8 +3387,8 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
 		_occVector[cellIndex] = currentCell.occ;
 	}
 
-	MPI_Allreduce(MPI_IN_PLACE, _coeffVector, _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, _comm);
-	MPI_Allreduce(MPI_IN_PLACE, _occVector, _globalLevelNumCells, MPI_INT, MPI_SUM, _comm);
+	MPI_Allreduce(MPI_IN_PLACE, _coeffVector.data(), _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, _comm);
+	MPI_Allreduce(MPI_IN_PLACE, _occVector.data(), _globalLevelNumCells, MPI_INT, MPI_SUM, _comm);
 
 
 	coeffIndex = 0;
@@ -3405,7 +3400,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
 
 	}
 
-	std::fill(_coeffVector, _coeffVector + _coeffVectorLength * 2, 0.0);
+	std::fill(_coeffVector.begin(), _coeffVector.end(), 0.0);
 
 #endif
 	global_simulation->timers()->stop("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE");
@@ -3429,7 +3424,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevelToTop(int num
 			numCellsLevelTemp /= 8;
 		}
 		int commLevel = (_avoidAllReduce && _stopLevel <= _globalLevel)? _stopLevel: _globalLevel;
-		MPI_Iallreduce(MPI_IN_PLACE, _coeffVector, _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, _allReduceComms[commLevel], &_allReduceRequest);
+		MPI_Iallreduce(MPI_IN_PLACE, _coeffVector.data(), _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, _allReduceComms[commLevel], &_allReduceRequest);
 	}
 
 #endif
@@ -3450,7 +3445,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsSetValues(int numC
 		}
 		numCellsLevelTemp /= 8;
 	}
-	std::fill(_coeffVector, _coeffVector + _coeffVectorLength * 2, 0.0);
+	std::fill(_coeffVector.begin(), _coeffVector.end(), 0.0);
 	}
 #endif
 }
@@ -3471,7 +3466,7 @@ void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _cur
 		currentCell.local.writeValuesToMPIBuffer(_coeffVector, coeffIndex);
 
 	}
-	MPI_Allreduce(MPI_IN_PLACE, _coeffVector, coeffIndex, MPI_DOUBLE, MPI_SUM, _comm);
+	MPI_Allreduce(MPI_IN_PLACE, _coeffVector.data(), coeffIndex, MPI_DOUBLE, MPI_SUM, _comm);
 
 	coeffIndex = 0;
 
@@ -3483,13 +3478,13 @@ void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _cur
 
 	}
 
-	std::fill(_coeffVector, _coeffVector + _coeffVectorLength * 2, 0.0);
+	std::fill(_coeffVector.begin(), _coeffVector.end(), 0.0);
 
 #endif
 	global_simulation->timers()->stop("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE_ME");
 }
 
-void UniformPseudoParticleContainer::getHaloValues(Vector3<int> localMpCellsBottom,int bottomLevel, double *buffer,
+void UniformPseudoParticleContainer::getHaloValues(const Vector3<int> &localMpCellsBottom,int bottomLevel, std::vector<double> &buffer,
 		int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh, bool doLocalExpansion){
 #if defined(ENABLE_MPI)
 	int coeffIndex = 0;
@@ -3526,7 +3521,7 @@ void UniformPseudoParticleContainer::getHaloValues(Vector3<int> localMpCellsBott
 #endif
 }
 
-void UniformPseudoParticleContainer::setHaloValues(Vector3<int> localMpCellsBottom,int bottomLevel, double *bufferRec,
+void UniformPseudoParticleContainer::setHaloValues(const Vector3<int> &localMpCellsBottom,int bottomLevel, std::vector<double> &bufferRec,
 		int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh, bool doLocalExpansion){
 #if defined(ENABLE_MPI)
 
@@ -4319,10 +4314,10 @@ void UniformPseudoParticleContainer::communicateHalosOverlapPostProcessingStart(
 #endif
 }
 
-void UniformPseudoParticleContainer::communicateHalosAlongAxis(double *lowerNeighbourBuffer,
-															   double *higherNeighbourBuffer,
-															   double *lowerNeighbourBufferRec,
-															   double *higherNeighbourBufferRec,
+void UniformPseudoParticleContainer::communicateHalosAlongAxis(std::vector<double> &lowerNeighbourBuffer,
+															   std::vector<double> &higherNeighbourBuffer,
+															   std::vector<double> &lowerNeighbourBufferRec,
+															   std::vector<double> &higherNeighbourBufferRec,
 															   int lowerNeighbour,
 															   int higherNeighbour,
 															   int haloSize) {
@@ -4331,13 +4326,13 @@ void UniformPseudoParticleContainer::communicateHalosAlongAxis(double *lowerNeig
 
 	MPI_Status lowRecv,highRecv;
 
-	MPI_Isend(lowerNeighbourBuffer, haloSize, MPI_DOUBLE, lowerNeighbour, 1,
+	MPI_Isend(lowerNeighbourBuffer.data(), haloSize, MPI_DOUBLE, lowerNeighbour, 1,
 	_comm, &low);
-	MPI_Isend(higherNeighbourBuffer, haloSize, MPI_DOUBLE, higherNeighbour, 3,
+	MPI_Isend(higherNeighbourBuffer.data(), haloSize, MPI_DOUBLE, higherNeighbour, 3,
 	_comm, &high);
 
-	MPI_Recv(lowerNeighbourBufferRec, haloSize,MPI_DOUBLE, lowerNeighbour,3,_comm, &lowRecv);
-	MPI_Recv(higherNeighbourBufferRec, haloSize,MPI_DOUBLE, higherNeighbour,1,_comm, &highRecv);
+	MPI_Recv(lowerNeighbourBufferRec.data(), haloSize,MPI_DOUBLE, lowerNeighbour,3,_comm, &lowRecv);
+	MPI_Recv(higherNeighbourBufferRec.data(), haloSize,MPI_DOUBLE, higherNeighbour,1,_comm, &highRecv);
 
 
 #endif

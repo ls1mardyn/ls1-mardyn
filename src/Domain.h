@@ -215,10 +215,17 @@ public:
 	//! Before this method is called, it has to be sure that the
 	//! global potential has been calculated (method calculateGlobalValues)
 	double getAverageGlobalUpot();
-        double getGlobalUpot() const;
+	double getGlobalUpot() const;
 
 	//! by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction)
 	double getAverageGlobalUpotCSpec();
+
+	//! @brief get the global kinetic energy
+	//!
+	//! Before this method is called, it has to be sure that the
+	//! global energies has been calculated (method calculateGlobalValues)
+	double getGlobalUkinTrans() { return 0.5*_globalsummv2; }
+	double getGlobalUkinRot() { return 0.5*_globalsumIw2; }
 
 	//! by Stefan Becker: determine and return the totel number of fluid molecules
 	//! this method assumes all molecules with a component-ID less than _numFluidComponent to be fluid molecules
@@ -365,8 +372,8 @@ public:
 	void evaluateRho(unsigned long localN, DomainDecompBase* comm);
 	void submitDU(unsigned cid, double DU, double* r);
 	void setLambda(double lambda) { this->_universalLambda = lambda; }
-        void setDensityCoefficient(float coeff) { _globalDecisiveDensity = coeff; }
-        void setProfiledComponentMass(double m) { _universalProfiledComponentMass = m; }
+	void setDensityCoefficient(float coeff) { _globalDecisiveDensity = coeff; }
+	void setProfiledComponentMass(double m) { _universalProfiledComponentMass = m; }
 
 	void init_cv(unsigned N, double U, double UU) {
 		this->_globalUSteps = N;
@@ -376,7 +383,7 @@ public:
 	void record_cv();
 	double cv();
 
-    // by Stefan Becker <stefan.becker@mv.uni-kl.de>
+	// by Stefan Becker <stefan.becker@mv.uni-kl.de>
 	/* method returning the sigma parameter of a component
 	=> needed in the output of the MmspdWriter (specifying the particles' radii in a movie) */
 	double getSigma(unsigned cid, unsigned nthSigma);
@@ -386,8 +393,8 @@ public:
 	void setUpotCorr(double upotcorr){ _UpotCorr = upotcorr; }
 	void setVirialCorr(double virialcorr){ _VirialCorr = virialcorr; }
 
-    // explosion heuristics, NOTE: turn off when using slab thermostat
-    void setExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
+	// explosion heuristics, NOTE: turn off when using slab thermostat
+	void setExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
 
 private:
 
@@ -408,6 +415,10 @@ private:
 	double _globalUpot;
 	//! global component specific potential (fluid-fluid and fluid-solid but NOT solid-solid)
 	double _globalUpotCspecif;
+	//! global translational kinetic energy times two
+	double _globalsummv2;
+	//! global rotational kinetic energy times two
+	double _globalsumIw2;
 	//! global virial
 	double _globalVirial;
 	//! global density
@@ -455,9 +466,9 @@ private:
 	double _globalSigmaUU;
 	//! which components should be considered?
 	std::map<unsigned, bool> _universalProfiledComponents;
-        double _universalProfiledComponentMass;  // set from outside
-        double _universalLambda;  // set from outside
-        float _globalDecisiveDensity;  // set from outside
+	double _universalProfiledComponentMass;  // set from outside
+	double _universalLambda;  // set from outside
+	float _globalDecisiveDensity;  // set from outside
 
 	int _universalSelectiveThermostatCounter;
 	int _universalSelectiveThermostatWarning;
@@ -486,8 +497,8 @@ private:
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;
 
-    // explosion heuristics, NOTE: turn off when using slab thermostat
-    bool _bDoExplosionHeuristics;
+	// explosion heuristics, NOTE: turn off when using slab thermostat
+	bool _bDoExplosionHeuristics;
 };
 
 

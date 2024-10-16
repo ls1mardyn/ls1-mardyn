@@ -10,6 +10,7 @@
 
 #include "utils/Logger.h"
 #include <vector>
+#include <memory>
 
 /**
  *  Places drops of different sizes in the domain, so that a given percentage
@@ -41,7 +42,7 @@ public:
 	 *         - each class covering the same volume in total
 	 *         - the size of a sphere is determined by pow(0.9, i) * maxSphereRadius; i in [1,maxSphereSize]
 	 */
-	DropletPlacement(double fluidVolume, double maxSphereVolume, int numSphereSizes, Log::Logger* logger);
+	DropletPlacement(double fluidVolume, double maxSphereVolume, int numSphereSizes, std::shared_ptr<Log::Logger> logger);
 
 	/**
 	 * Generates droplets with sizes as specified by numSphereSizes, fluidVolume
@@ -59,7 +60,7 @@ private:
 	int _numOccupied;
 	std::vector<std::vector<std::vector<bool> > > _occupiedFields;
 
-	Log::Logger* _logger;
+	std::shared_ptr<Log::Logger> _logger;
 
 	/**
 	 * Initialize vector _occupiedFields

@@ -9,6 +9,7 @@
 #include <string>
 #include <iostream>
 #include <cstdint>
+#include <memory>
 
 
 enum SystemTypes : uint8_t {
@@ -72,7 +73,7 @@ private:
 	uint32_t _nIndexLiqBeginY;
 	uint32_t _nIndexLiqEndY;
 	uint32_t _nMoleculeFormat;
-	MoleculeDataReader* _moleculeDataReader;
+	std::unique_ptr<MoleculeDataReader> _moleculeDataReader;
 	double _dMoleculeDiameter;
 	double _fspY[6];  // free space positions
 	uint8_t _nSystemType;
