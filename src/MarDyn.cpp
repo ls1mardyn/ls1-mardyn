@@ -191,7 +191,7 @@ int main(int argc, char** argv) {
 		#ifdef ENABLE_MPI
 		MPI_Finalize();
 		#endif
-		exit(testresult); // using exit here should be OK
+		std::exit(testresult); // using exit here should be OK
 	}
 
 
@@ -200,9 +200,10 @@ int main(int argc, char** argv) {
 
 	auto numArgs = args.size();
 	if(numArgs != 1) {
-		Log::global_log->error() << "Incorrect number of arguments provided." << std::endl;
 		op.print_usage();
-		mardyn_exit(-1);
+		std::ostringstream error_message;
+		error_message << "Incorrect number of arguments provided." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
 	std::string configFileName(args[0]);
@@ -210,8 +211,9 @@ int main(int argc, char** argv) {
 		Log::global_log->info() << "Config file: " << configFileName << std::endl;
 		simulation.readConfigFile(configFileName);
 	} else {
-		Log::global_log->error() << "Cannot open config file '" << configFileName << "'" << std::endl;
-		mardyn_exit(-2);
+		std::ostringstream error_message;
+		error_message << "Cannot open config file '" << configFileName << "'" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	/* processing command line arguments */

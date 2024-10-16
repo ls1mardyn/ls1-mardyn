@@ -42,16 +42,18 @@ void PerCellGenerator::readXML(XMLfileUnits &xmlconfig) {
 	if (_numMoleculesPerCell != std::numeric_limits<unsigned int>::max()) {
 		Log::global_log->info() << "numMoleculesPerCell: " << _numMoleculesPerCell << std::endl;
 	} else {
-		Log::global_log->error() << "Missing required field numMoleculesPerCell. Aborting!" << std::endl;
-		mardyn_exit(1949);
+		std::ostringstream error_message;
+		error_message << "Missing required field numMoleculesPerCell. Aborting!" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	xmlconfig.getNodeValue("initTemperature", _initTemperature);
 	if (_initTemperature > 0.) {
 		Log::global_log->info() << "initTemperature: " << _initTemperature << std::endl;
 	} else {
-		Log::global_log->error() << "Missing required field initTemperature. Aborting!" << std::endl;
-		mardyn_exit(1949);
+		std::ostringstream error_message;
+		error_message << "Missing required field initTemperature. Aborting!" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	xmlconfig.getNodeValue("generateAtLeastTwoParticles", _generateAtLeastTwoParticles);

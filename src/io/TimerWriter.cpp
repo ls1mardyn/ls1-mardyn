@@ -34,8 +34,9 @@ void TimerWriter::readXML(XMLfileUnits& xmlconfig) {
 						   << std::endl;
 	}
 	if (_timerNames.empty()) {
-		Log::global_log->error() << "TimerWriter: no timers given. make sure you specify them correctly." << std::endl;
-		mardyn_exit(242367);
+		std::ostringstream error_message;
+		error_message << "TimerWriter: no timers given. make sure you specify them correctly." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	xmlconfig.changecurrentnode(oldpath);
 }

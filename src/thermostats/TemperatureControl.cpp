@@ -167,8 +167,9 @@ void ControlRegionT::readXML(XMLfileUnits& xmlconfig) {
 			_timestep = global_simulation->getIntegrator()->getTimestepLength();
 			_nuDt = _nuAndersen * _timestep;
 		} else {
-			Log::global_log->error() << "[TemperatureControl] REGION: Invalid 'method' param: " << methods << std::endl;
-			mardyn_exit(-1);
+			std::ostringstream error_message;
+			error_message << "[TemperatureControl] REGION: Invalid 'method' param: " << methods << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		Log::global_log->info() << "[TemperatureControl] REGION 'method' param: " << methods << std::endl;
 	}
@@ -191,8 +192,9 @@ void ControlRegionT::VelocityScalingInit(XMLfileUnits& xmlconfig, std::string st
 	// settings
 	xmlconfig.getNodeValue("settings/numslabs", _nNumSlabs);
 	if (_nNumSlabs < 1) {
-		Log::global_log->fatal() << "TemperatureControl: need at least one slab! (settings/numslabs)";
-		mardyn_exit(932);
+		std::ostringstream error_message;
+		error_message << "TemperatureControl: need at least one slab! (settings/numslabs)";
+		MARDYN_EXIT(error_message.str());
 	}
 	xmlconfig.getNodeValue("settings/exponent", _dTemperatureExponent);
 	xmlconfig.getNodeValue("settings/directions", strDirections);
@@ -417,8 +419,9 @@ void ControlRegionT::ControlTemperature(Molecule* mol) {
 			}
 		}
 	} else {
-		Log::global_log->error() << "[TemperatureControl] Invalid localMethod param: " << _localMethod << std::endl;
-		mardyn_exit(-1);
+		std::ostringstream error_message;
+		error_message << "[TemperatureControl] Invalid localMethod param: " << _localMethod << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -504,9 +507,10 @@ void ControlRegionT::registerAsObserver() {
 		if (distControl != nullptr)
 			distControl->registerObserver(this);
 		else {
-			Log::global_log->error() << "TemperatureControl->region[" << this->GetID()
-								<< "]: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
-			mardyn_exit(-1);
+			std::ostringstream error_message;
+			error_message << "TemperatureControl->region[" << this->GetID()
+								<< "]: Initialization of plugin DistControl is needed before!" << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 }

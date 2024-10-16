@@ -14,8 +14,9 @@ void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	Log::global_log->info() << "[ResultWriter] Write frequency: " << _writeFrequency << std::endl;
 	if (_writeFrequency <= 0) {
-		Log::global_log->error() << "[ResultWriter] Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
-		mardyn_exit(123);
+		std::ostringstream error_message;
+		error_message << "[ResultWriter] Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
