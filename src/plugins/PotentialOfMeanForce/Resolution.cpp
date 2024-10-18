@@ -46,6 +46,19 @@ void ResolutionHandler::CheckAndModifyMoleculeResolution(std::pair<InteractionSi
 }
 
 
+
+
+
+
+
+
+void ResolutionComponentHandler::init(){
+    AddCGComponent();
+    AddComponents2Ensemble();
+}
+
+
+
 void ResolutionComponentHandler::AddComponents2Ensemble(){
     _simulation.getEnsemble()->addComponent(cg);
 }
@@ -60,7 +73,7 @@ void ResolutionComponentHandler::AddCGComponent(){
 
 }
 
-void ResolutionComponentHandler::CheckResolution(ParticleContainer* pc, std::vector<FPRegion>& regions{
+void ResolutionComponentHandler::CheckResolution(ParticleContainer* pc, std::vector<FPRegion>& regions){
     for(auto it = pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
         
         bool stop=false;
@@ -101,7 +114,9 @@ void ResolutionComponentHandler::CheckAndModifyMoleculeResolution(Molecule& mol,
 
     if(target == CoarseGrain){
         if(mol.componentid() != 10){
-            mol.setComponent(_simulation.getEnsemble()->getComponent(10));
+
+            Coarsen(mol);
+            
         }
     }
 
@@ -109,4 +124,12 @@ void ResolutionComponentHandler::CheckAndModifyMoleculeResolution(Molecule& mol,
         Log::global_log->error()<<"[ResolutionHandler] Hybrid not implemented"<<std::endl;
     }
 
+}
+
+void ResolutionComponentHandler::Coarsen(Molecule& m){
+    std::array<double, 3> com = ComputeCOM(m);
+    m.setComponent(_simulation.getEnsemble()->getComponent(10));
+    m.setr(0,com[0]);
+    m.setr(1,com[1]);
+    m.setr(2,com[2]);
 }

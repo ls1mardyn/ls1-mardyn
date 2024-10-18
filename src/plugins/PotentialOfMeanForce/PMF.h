@@ -41,6 +41,7 @@ class PMF:public PluginBase{
      */
     std::map<unsigned long, tracker> sites;
     ResolutionHandler resolution_handler;
+    ResolutionComponentHandler res_comp_handler;
     /**
      * L2 norm, used for hybrid
      */

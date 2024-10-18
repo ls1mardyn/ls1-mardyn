@@ -4,7 +4,7 @@
 #include "molecules/Component.h"
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
-
+#include "plugins/PotentialOfMeanForce/common.h"
 #include <vector>
 class InteractionSite;
 
@@ -33,7 +33,10 @@ class ResolutionComponentHandler{
     Component cg;
     Component hy;
 
+
     public:
+
+    void init();
 
     void AddComponents2Ensemble();
 
@@ -41,4 +44,8 @@ class ResolutionComponentHandler{
 
     void CheckResolution(ParticleContainer* pc, std::vector<FPRegion>& regions);
     void CheckAndModifyMoleculeResolution(Molecule& mol, ResolutionType target_resolution);
+
+    private:
+
+    void Coarsen(Molecule& mol);
 };

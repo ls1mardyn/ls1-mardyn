@@ -92,8 +92,8 @@ double InteractionForceAdapter::processPairBackend(Molecule& m1, Molecule& m2, d
 void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, InteractionType interaction){
     //Pure interaction case
     if(interaction == InteractionType::onlyfp){
-        // Log::global_log->error()<<"PotForceType cannot be FP"<<std::endl;
-        PotForceOnlyCG(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
+        Log::global_log->error()<<"PotForceType cannot be FP"<<std::endl;
+        // PotForceOnlyCG(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
     }
 
     if(interaction == InteractionType::onlycg){
@@ -101,14 +101,14 @@ void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm&
     }
 
     if(interaction == InteractionType::mixed){
-        // Log::global_log->error()<<"PotForceType cannot be Mixed"<<std::endl;
+        Log::global_log->error()<<"PotForceType cannot be Mixed"<<std::endl;
         /**
          * m1 hy vs m2 cg
          * m1 hy vs m2 at
          * viceversa
 		 * m1 hy vs m2 hy
          */
-        PotForceOnlyCG(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
+        // PotForceOnlyCG(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
         //PotForce(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
     }
 }
@@ -231,14 +231,6 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
 	virial[1] = 0.0;
 	virial[2] = 0.0;
 
-    //Get both molecules COMs
-    //TODO: Check this assumption: Assume they are updated
-    // std::array<double, 3> com1 = adres->GetMoleculeCOMSite(m1.getID()).r();
-    // std::array<double, 3> com2 = adres->GetMoleculeCOMSite(m2.getID()).r();
-
-    // std::array<double, 3> com1 = m1.r_arr();
-    // std::array<double, 3> com2 = m2.r_arr();
-
     std::array<double, 3> com1 = CenterOfMass(m1);
     std::array<double, 3> com2 = CenterOfMass(m2);
 
@@ -254,16 +246,9 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
         //Compute potential and force
         Upot = PotentialOfMeanForce(r_com);
         ForceOfPotentialOfMeanForce(f,r_com);
-        //Set quantities
-        // adres->GetMoleculeCOMSite(m1.getID()).AddPotential(Upot);
-        // adres->GetMoleculeCOMSite(m1.getID()).AddForce(f);
-		// adres->GetMoleculeCOMSite(m2.getID()).SubForce(f);
 
 
         MapToAtomistic(m1,m2,f);
-
-        // m1.Fljcenteradd(0,f.data());
-        // m2.Fljcentersub(0,f.data());
 
 		Upot6LJ += Upot;
 
@@ -335,13 +320,6 @@ std::array<double, 3> InteractionForceAdapter::CenterOfMass(Molecule& m1){
         }
     }
 
-    // auto lj = m1.ljcenter_d_abs(0);
-// 
-    // for(int i=0;i<3;++i){
-        // com[i] += lj[i]*m1.component()->ljcenter(0).m();
-        // com[i] = com[i]/total_mass;
-    // }
-
     return com;
 
 }
@@ -360,12 +338,5 @@ void InteractionForceAdapter::MapToAtomistic(Molecule& m1, Molecule& m2, std::ar
         m2.Fljcentersub(lj,site_force.data());
 
     }
-
-    // for(int i=0;i<3;++i){
-        // f_alpha[i] = force[i] * m1.component()->ljcenter(0).m()/total_mass;
-    // }
-
-    // m1.Fljcenteradd(0,f_alpha.data());
-    // m2.Fljcentersub(0,f_alpha.data());
 
 }
