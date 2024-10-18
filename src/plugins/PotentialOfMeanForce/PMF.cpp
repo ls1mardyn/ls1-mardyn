@@ -121,7 +121,9 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
     // if(convergence.TriggerPotentialUpdate()){
     if(step%update_stride ==0 && step>0){
         Log::global_log->info()<<"[UpdatePotential]Update potential now"<<std::endl;
+        convergence.PrepareUpdate();
         AddPotentialCorrection(step);
+        
     }
     
     if(output && step%update_stride ==0){

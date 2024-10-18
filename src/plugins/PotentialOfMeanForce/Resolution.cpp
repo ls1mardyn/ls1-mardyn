@@ -44,3 +44,69 @@ void ResolutionHandler::CheckAndModifyMoleculeResolution(std::pair<InteractionSi
 
     tracker.second=res_type;
 }
+
+
+void ResolutionComponentHandler::AddComponents2Ensemble(){
+    _simulation.getEnsemble()->addComponent(cg);
+}
+
+void ResolutionComponentHandler::AddCGComponent(){
+    double mass = _simulation.getEnsemble()->getComponent(1)->m();
+
+    this->cg.addLJcenter(0,0,0,
+                         mass,0,0,0);
+    cg.setID(10);
+    cg.setName("CG");
+
+}
+
+void ResolutionComponentHandler::CheckResolution(ParticleContainer* pc, std::vector<FPRegion>& regions{
+    for(auto it = pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
+        
+        bool stop=false;
+
+        for(auto& reg:regions){
+            if(reg.IsInsideResolutionRegion(it->r_arr(),FullParticle)){
+                //Modify if needed
+                CheckAndModifyMoleculeResolution(*it,FullParticle);
+                stop=true;
+                break;
+            }
+        }
+
+        if(stop) continue;
+
+        for(auto& reg:regions){
+            if(reg.IsInsideResolutionRegion(it->r_arr(),Hybrid)){
+                //Modify if needed
+                CheckAndModifyMoleculeResolution(*it,Hybrid);
+                stop=true;
+                break;
+            }
+        }
+
+        if(stop) continue;
+
+        CheckAndModifyMoleculeResolution(*it, CoarseGrain);
+    }
+}
+
+void ResolutionComponentHandler::CheckAndModifyMoleculeResolution(Molecule& mol,ResolutionType target){
+
+    if(target == FullParticle){
+        if(mol.componentid() != 1){
+            mol.setComponent(_simulation.getEnsemble()->getComponent(1));
+        }
+    }
+
+    if(target == CoarseGrain){
+        if(mol.componentid() != 10){
+            mol.setComponent(_simulation.getEnsemble()->getComponent(10));
+        }
+    }
+
+    if(target == Hybrid){
+        Log::global_log->error()<<"[ResolutionHandler] Hybrid not implemented"<<std::endl;
+    }
+
+}

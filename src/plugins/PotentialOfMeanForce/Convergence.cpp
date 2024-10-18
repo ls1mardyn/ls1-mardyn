@@ -20,6 +20,13 @@ bool Convergence::CheckConvergence(std::vector<double>& rdf_ref, std::vector<dou
 
 }
 
+void Convergence::PrepareUpdate(){
+    int local_steps = local_convergence.size();
+    ibi_convergence.emplace_back(local_convergence[local_steps-1]);
+    ++ibi_iteration;            
+    local_convergence.clear();
+}
+
 bool Convergence::TriggerPotentialUpdate(){
 
     bool trigger = false;

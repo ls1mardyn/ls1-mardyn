@@ -30,5 +30,5 @@ class Convergence{
 
     void PrintLocalConvergence2File(int step);
     void PrintGlobalConvergence2File();
-
+    void PrepareUpdate();
 };
