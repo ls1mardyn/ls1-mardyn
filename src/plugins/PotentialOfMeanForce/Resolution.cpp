@@ -54,7 +54,15 @@ void ResolutionHandler::CheckAndModifyMoleculeResolution(std::pair<InteractionSi
 
 void ResolutionComponentHandler::init(){
     AddCGComponent();
-    AddComponents2Ensemble();
+    // AddComponents2Ensemble();
+}
+
+
+ResolutionType ResolutionComponentHandler::GetMoleculeResolution(const Molecule& m){
+    if(m.component()->getName() == "CG")
+        return ResolutionType::CoarseGrain;
+    
+    return ResolutionType::FullParticle;
 }
 
 
@@ -64,12 +72,17 @@ void ResolutionComponentHandler::AddComponents2Ensemble(){
 }
 
 void ResolutionComponentHandler::AddCGComponent(){
-    double mass = _simulation.getEnsemble()->getComponent(1)->m();
-
+    double mass = _simulation.getEnsemble()->getComponent("LJ")->m();
+    std::cout<<"Mass "<<mass<<std::endl;
     this->cg.addLJcenter(0,0,0,
-                         mass,0,0,0);
-    cg.setID(10);
+                         mass,0,0,
+                         0);
+    cg.setID(5);
     cg.setName("CG");
+
+    _simulation.getEnsemble()->addComponent(cg);
+    std::ostream& out = std::cout;
+    _simulation.getEnsemble()->getComponent("CG")->write(out);
 
 }
 
@@ -108,12 +121,12 @@ void ResolutionComponentHandler::CheckAndModifyMoleculeResolution(Molecule& mol,
 
     if(target == FullParticle){
         if(mol.componentid() != 1){
-            mol.setComponent(_simulation.getEnsemble()->getComponent(1));
+            mol.setComponent(_simulation.getEnsemble()->getComponent("LJ"));
         }
     }
 
     if(target == CoarseGrain){
-        if(mol.componentid() != 10){
+        if(mol.component()->getName() != "CG"){
 
             Coarsen(mol);
             
@@ -126,10 +139,10 @@ void ResolutionComponentHandler::CheckAndModifyMoleculeResolution(Molecule& mol,
 
 }
 
-void ResolutionComponentHandler::Coarsen(Molecule& m){
-    std::array<double, 3> com = ComputeCOM(m);
-    m.setComponent(_simulation.getEnsemble()->getComponent(10));
-    m.setr(0,com[0]);
-    m.setr(1,com[1]);
-    m.setr(2,com[2]);
+void ResolutionComponentHandler::Coarsen(Molecule& mol){
+    std::array<double, 3> com = ComputeCOM(mol);
+    mol.setComponent(_simulation.getEnsemble()->getComponent("CG"));
+    mol.setr(0,com[0]);
+    mol.setr(1,com[1]);
+    mol.setr(2,com[2]);
 }

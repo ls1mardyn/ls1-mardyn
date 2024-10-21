@@ -24,7 +24,7 @@ class InteractionSite;
 
 class PMF:public PluginBase{
 
-    using tracker = std::pair<InteractionSite,ResolutionType>;
+    // using tracker = std::pair<InteractionSite,ResolutionType>;
     private:
 
     Interpolate reference_rdf_interpolation;//should not touch
@@ -39,7 +39,7 @@ class PMF:public PluginBase{
     /**
      * Stores a COM site for every molecule (needs improvement)
      */
-    std::map<unsigned long, tracker> sites;
+    // std::map<unsigned long, tracker> sites;
     ResolutionHandler resolution_handler;
     ResolutionComponentHandler res_comp_handler;
     /**
@@ -109,12 +109,15 @@ class PMF:public PluginBase{
      ***********************/
     public:
     std::vector<FPRegion>& GetRegions();
-    ResolutionType GetMoleculeResolution(unsigned long idx);
-    InteractionSite GetMoleculeCOMSite(unsigned long idx);
+    // ResolutionType GetMoleculeResolution(unsigned long idx);
+    // InteractionSite GetMoleculeCOMSite(unsigned long idx);
     double WeightValue(const std::array<double,3>& pos, FPRegion& region);
     Interpolate& GetRDFInterpolation();
     Interpolate& GetAVGRDFInterpolation();
     Interpolate& GetPotentialInterpolation();
+    ResolutionComponentHandler& GetResolutionHandler(){
+        return res_comp_handler;
+    }
 
     /**
      * Maps the com forces to FP, formula:

@@ -42,19 +42,20 @@ double InteractionForceAdapter::processPair(Molecule& m1, Molecule& m2, double d
     //check if any of the 2 molecules is hybrid
     bool has_hybrid = false;
     InteractionType interaction;
-    if(adres->GetMoleculeResolution(m1.getID())==Hybrid || adres->GetMoleculeResolution(m2.getID()==Hybrid)){
+    if(adres->GetResolutionHandler().GetMoleculeResolution(m1)==Hybrid || adres->GetResolutionHandler().GetMoleculeResolution(m2)==Hybrid)
+    {
         has_hybrid = true;
         interaction = InteractionType::mixed;
     }
 
     //Check if both are 
-    if(adres->GetMoleculeResolution(m1.getID())==CoarseGrain && adres->GetMoleculeResolution(m2.getID())==CoarseGrain){
+    if(adres->GetResolutionHandler().GetMoleculeResolution(m1)==CoarseGrain && adres->GetResolutionHandler().GetMoleculeResolution(m2)==CoarseGrain){
         interaction = InteractionType::onlycg;
     }
 
     //check if any of the 2 molecules is coarsegrain
     //Check if both are 
-    if(adres->GetMoleculeResolution(m1.getID())==FullParticle && adres->GetMoleculeResolution(m2.getID())==FullParticle){
+    if(adres->GetResolutionHandler().GetMoleculeResolution(m1)==FullParticle && adres->GetResolutionHandler().GetMoleculeResolution(m2)==FullParticle){
         interaction = InteractionType::onlyfp;
     }
     
@@ -140,8 +141,8 @@ void InteractionForceAdapter::PotForceHybrid(Molecule& m1, Molecule& m2, ParaStr
 
 void InteractionForceAdapter::PotForceHybridBackend(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ, FPRegion& region){
 
-    std::array<double, 3> com1 = adres->GetMoleculeCOMSite(m1.getID()).r();
-    std::array<double, 3> com2 = adres->GetMoleculeCOMSite(m2.getID()).r();
+    std::array<double, 3> com1;
+    std::array<double, 3> com2;
 
     //assume both m1 and m2 are hybrid molecules
 
@@ -212,9 +213,9 @@ void InteractionForceAdapter::PotForceHybridBackend(Molecule& m1, Molecule& m2, 
         Upot = PotentialOfMeanForce(r_com);
         ForceOfPotentialOfMeanForce(f_com,r_com);
         //Set quantities
-        adres->GetMoleculeCOMSite(m1.getID()).AddPotential(Upot);
-        adres->GetMoleculeCOMSite(m1.getID()).AddForce(f_com);
-		adres->GetMoleculeCOMSite(m2.getID()).SubForce(f_com);
+        // adres->GetMoleculeCOMSite(m1.getID()).AddPotential(Upot);
+        // adres->GetMoleculeCOMSite(m1.getID()).AddForce(f_com);
+		// adres->GetMoleculeCOMSite(m2.getID()).SubForce(f_com);
     }
 
     for(int i=0;i<f_com.size();i++){
@@ -248,7 +249,7 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
         ForceOfPotentialOfMeanForce(f,r_com);
 
 
-        MapToAtomistic(m1,m2,f);
+        // MapToAtomistic(m1,m2,f);
 
 		Upot6LJ += Upot;
 

@@ -18,11 +18,14 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     this->ReadRDF();
     Log::global_log->info()<<"[PMF] RDF has been read successfully\n";
 
-    for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
-        unsigned long m_id = it->getID();
-        std::array<double,3> com = profiler.GetCOM(&(*it));
-        sites[m_id].first.SetPosition(com);
-    }
+    // for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
+    //     unsigned long m_id = it->getID();
+    //     std::array<double,3> com = profiler.GetCOM(&(*it));
+    //     sites[m_id].first.SetPosition(com);
+    // }
+    res_comp_handler.init();
+    res_comp_handler.CheckResolution(pc,regions);
+
      Log::global_log->info()<<"[PMF] Started the tracker sites\n";
 
     for(auto it= begin(regions);it!=end(regions);++it){
@@ -211,13 +214,13 @@ std::vector<FPRegion>& PMF::GetRegions(){
     return this->regions;
 }
 
-ResolutionType PMF::GetMoleculeResolution(unsigned long idx){
-    return sites[idx].second;
-}
+// ResolutionType PMF::GetMoleculeResolution(unsigned long idx){
+//     return sites[idx].second;
+// }
 
-InteractionSite PMF::GetMoleculeCOMSite(unsigned long idx){
-    return sites[idx].first;
-}
+// InteractionSite PMF::GetMoleculeCOMSite(unsigned long idx){
+//     return sites[idx].first;
+// }
 
 Interpolate& PMF::GetRDFInterpolation(){
     return this->reference_rdf_interpolation;

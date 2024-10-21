@@ -41,7 +41,7 @@ class ResolutionComponentHandler{
     void AddComponents2Ensemble();
 
     void AddCGComponent();
-
+    ResolutionType GetMoleculeResolution(const Molecule& m);
     void CheckResolution(ParticleContainer* pc, std::vector<FPRegion>& regions);
     void CheckAndModifyMoleculeResolution(Molecule& mol, ResolutionType target_resolution);
 
