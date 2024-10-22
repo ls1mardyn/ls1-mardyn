@@ -66,7 +66,7 @@ bool BoundaryHandler::hasGlobalInvalidBoundary() const {
 bool BoundaryHandler::hasGlobalNonPeriodicBoundary() const {
 	return std::any_of(_boundaries.begin(), _boundaries.end(), [](const auto &keyVal) {
 		const auto [dim, boundaryType] = keyVal;
-		return boundaryType == BoundaryUtils::BoundaryType::PERIODIC;
+		return boundaryType != BoundaryUtils::BoundaryType::PERIODIC;
 	});
 }
 

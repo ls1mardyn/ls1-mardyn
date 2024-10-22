@@ -57,10 +57,10 @@
 			</electrostatic>
 		</algorithm>
 		<output>
-			<!--<outputplugin name="VTKMoleculeWriter">
+			<outputplugin name="VTKMoleculeWriter">
 				<outputprefix>vtkOutput</outputprefix>
 				<writefrequency>1</writefrequency>
-			</ouputplugin>-->
+			</ouputplugin>
 			<outputplugin name="Adios2Writer">
 		  		<outputfile>particles.bp</outputfile>
 		  		<adios2enginetype>BP4</adios2enginetype>

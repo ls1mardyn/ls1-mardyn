@@ -13,7 +13,7 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getInnerRe
 	DimensionUtils::DimensionType dimension, double regionWidth) {
 
 	std::array<double, 3> returnRegionBegin = givenRegionBegin;
-	std::array<double, 3> returnRegionEnd = givenRegionBegin;
+	std::array<double, 3> returnRegionEnd = givenRegionEnd;
 
 	const int dimensionLS1 = convertEnumToLS1DimIndex(dimension);
 	switch (dimension) {
