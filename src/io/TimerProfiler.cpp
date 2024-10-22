@@ -197,6 +197,7 @@ void TimerProfiler::readInitialTimersFromFile(std::string fileName){
 		std::make_tuple("QUICKSCHED", std::vector<std::string>{"SIMULATION_LOOP"}, true),
 #endif
 		std::make_tuple("SIMULATION_PER_STEP_IO", std::vector<std::string>{"SIMULATION_LOOP"}, true),
+		std::make_tuple("SIMULATION_BOUNDARY_TREATMENT", std::vector<std::string>{"SIMULATION_LOOP"}, true),
 		std::make_tuple("SIMULATION_IO", std::vector<std::string>{"SIMULATION"}, true),
 		std::make_tuple("SIMULATION_UPDATE_CONTAINER", std::vector<std::string>{"SIMULATION_DECOMPOSITION"}, true),
 		std::make_tuple("SIMULATION_MPI_OMP_COMMUNICATION", std::vector<std::string>{"SIMULATION_DECOMPOSITION"}, true),

@@ -95,7 +95,7 @@ class ParticleContainerToBasisWrapper : public ParticleContainer {
 
 	void deleteOuterParticles() override {}
 
-	double get_halo_L(int index) const override { return 0.0; }
+	double getHaloWidthForDimension(int index) const override { return 0.0; }
 
 	double getCutoff() const override { return 0.0; }
 

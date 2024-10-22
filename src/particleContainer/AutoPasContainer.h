@@ -89,7 +89,7 @@ public:
 
 	void deleteOuterParticles() override;
 
-	double get_halo_L(int index) const override;
+	double getHaloWidthForDimension(int index) const override;
 
 	double getCutoff() const override;
 

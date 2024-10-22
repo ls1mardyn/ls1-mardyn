@@ -628,7 +628,7 @@ void AutoPasContainer::deleteOuterParticles() {
 	}
 }
 
-double AutoPasContainer::get_halo_L(int /*index*/) const { return _cutoff; }
+double AutoPasContainer::getHaloWidthForDimension(int /*index*/) const { return _cutoff; }
 
 double AutoPasContainer::getCutoff() const { return _cutoff; }
 
