@@ -6,6 +6,7 @@ build*/
 .idea/
 .project
 .settings
+.vscode
 
 # Generated documentation
 doxygen_doc/

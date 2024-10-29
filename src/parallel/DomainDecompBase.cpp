@@ -15,6 +15,8 @@
 #include "utils/MPI_Info_object.h"
 #endif
 
+#include "boundaries/BoundaryUtils.h"
+
 DomainDecompBase::DomainDecompBase() : _rank(0), _numProcs(1) {
 }
 
@@ -22,6 +24,32 @@ DomainDecompBase::~DomainDecompBase() {
 }
 
 void DomainDecompBase::readXML(XMLfileUnits& /* xmlconfig */) {
+}
+
+void DomainDecompBase::setGlobalBoundaryType(DimensionUtils::DimensionType dimension, BoundaryUtils::BoundaryType boundary) {
+	_boundaryHandler.setGlobalWallType(dimension, boundary);
+}
+
+void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* ensemble) {
+	//find which walls to consider
+	double startRegion[3], endRegion[3];
+	getBoundingBoxMinMax(domain, startRegion, endRegion);
+	const double* globStartRegion = ensemble->domain()->rmin();
+	const double* globEndRegion = ensemble->domain()->rmax();
+	
+	_boundaryHandler.setLocalRegion(startRegion, endRegion);
+	_boundaryHandler.setGlobalRegion(globStartRegion, globEndRegion);
+	_boundaryHandler.updateGlobalWallLookupTable();
+}
+
+void DomainDecompBase::processBoundaryConditions(ParticleContainer* moleculeContainer, double timestepLength) {
+	if(hasGlobalNonPeriodicBoundary())	
+		_boundaryHandler.processGlobalWallLeavingParticles(moleculeContainer, timestepLength);
+}
+
+void DomainDecompBase::removeNonPeriodicHalos(ParticleContainer* moleculeContainer) {
+	if(hasGlobalNonPeriodicBoundary())
+		_boundaryHandler.removeNonPeriodicHalos(moleculeContainer);
 }
 
 void DomainDecompBase::addLeavingMolecules(std::vector<Molecule>& invalidMolecules,
@@ -285,6 +313,11 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 }
 
 void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const {
+	
+	//reflecting and outflow boundaries do not expect halo particles
+	if(_boundaryHandler.getGlobalWallType(dim) != BoundaryUtils::BoundaryType::PERIODIC)
+		return;
+	
 	double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
 	// molecules that have crossed the lower boundary need a positive shift
