@@ -6,7 +6,9 @@
  */
 
 #include "RegionUtils.h"
-#include "utils/mardyn_assert.h" //for mardyn_exit()
+#include "utils/mardyn_assert.h" //for MARDYN_EXIT()
+
+#include <sstream> // for ostringstream
 
 std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getInnerRegionSlab(
 	const std::array<double, 3> &givenRegionBegin, const std::array<double, 3> &givenRegionEnd,
@@ -39,8 +41,9 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getInnerRe
 			break;
 
 		default:
-			Log::global_log->error() << "DimensionType::ERROR received in RegionUtils::getInnerRegionSlab" << std::endl;
-			mardyn_exit(1);
+			std::ostringstream error_message;
+			error_message << "DimensionType::ERROR received in RegionUtils::getInnerRegionSlab" << std::endl;
+			MARDYN_EXIT(error_message.str());
 	}
 	return {returnRegionBegin, returnRegionEnd};
 }
@@ -106,8 +109,9 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getOuterRe
 			break;
 
 		default:
-			Log::global_log->error() << "DimensionType::ERROR received in RegionUtils::getOuterRegionSlab" << std::endl;
-			mardyn_exit(1);
+			std::ostringstream error_message;
+			error_message << "DimensionType::ERROR received in RegionUtils::getOuterRegionSlab" << std::endl;
+			MARDYN_EXIT(error_message.str());
 	}
 	return std::make_tuple(returnRegionBegin, returnRegionEnd);
 }

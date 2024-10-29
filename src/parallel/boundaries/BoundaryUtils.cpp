@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
+#include <sstream> // for ostringstream
 
 BoundaryUtils::BoundaryType BoundaryUtils::convertStringToBoundary(const std::string &boundary) {
 	std::string boundaryLowercase(boundary);
@@ -24,10 +25,9 @@ BoundaryUtils::BoundaryType BoundaryUtils::convertStringToBoundary(const std::st
 		return BoundaryType::REFLECTING;
 	if (boundaryLowercase.find("out") != std::string::npos)
 		return BoundaryType::OUTFLOW;
-	Log::global_log->error() << "Invalid boundary type passed to "
-								"BoundaryUtils::convertStringToBoundary. Check your input file!"
-							 << std::endl;
-	mardyn_exit(1);
+	std::ostringstream error_message;
+	error_message << "Invalid boundary type passed to BoundaryUtils::convertStringToBoundary. Check your input file!" << std::endl;
+	MARDYN_EXIT(error_message.str());
 	return BoundaryType::ERROR; // warning suppression
 }
 
@@ -40,9 +40,9 @@ std::string BoundaryUtils::convertBoundaryToString(BoundaryType boundary) {
 		case BoundaryType::OUTFLOW:
 			return "outflow";
 		default:
-			Log::global_log->error() << "BoundaryType::ERROR received in BoundaryUtils::convertBoundaryToString!"
-									 << std::endl;
-			mardyn_exit(1);
+			std::ostringstream error_message;
+			error_message << "BoundaryType::ERROR received in BoundaryUtils::convertBoundaryToString!" << std::endl;
+			MARDYN_EXIT(error_message.str());
 	}
 	return "error"; // warning suppression
 }

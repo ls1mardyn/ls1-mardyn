@@ -14,6 +14,7 @@
 #include "utils/mardyn_assert.h"
 
 #include <algorithm>
+#include <sstream> // for ostringstream
 
 BoundaryUtils::BoundaryType BoundaryHandler::getGlobalWallType(DimensionUtils::DimensionType dimension) const {
 	return _boundaries.at(dimension);
@@ -27,9 +28,9 @@ void BoundaryHandler::setGlobalWallType(DimensionUtils::DimensionType dimension,
 	if (dimension != DimensionUtils::DimensionType::ERROR)
 		_boundaries[dimension] = value;
 	else {
-		Log::global_log->error() << "DimensionType::ERROR received in BoundaryHandler::setGlobalWallType!!"
-								 << std::endl;
-		mardyn_exit(1);
+		std::ostringstream error_message;
+		error_message << "DimensionType::ERROR received in BoundaryHandler::setGlobalWallType!!" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -130,10 +131,9 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *molec
 				break;
 			}
 			default:
-				Log::global_log->error()
-					<< "BoundaryType::ERROR received in BoundaryHandler::processGlobalWallLeavingParticles!"
-					<< std::endl;
-				mardyn_exit(1);
+				std::ostringstream error_message;
+				error_message << "BoundaryType::ERROR received in BoundaryHandler::processGlobalWallLeavingParticles!" << std::endl;
+				MARDYN_EXIT(error_message.str());
 		}
 	}
 }
@@ -169,9 +169,9 @@ void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer *moleculeContaine
 				break;
 			}
 			default:
-				Log::global_log->error() << "BoundaryType::ERROR received in BoundaryHandler::removeNonPeriodicHalos!"
-										 << std::endl;
-				mardyn_exit(1);
+				std::ostringstream error_message;
+				error_message << "BoundaryType::ERROR received in BoundaryHandler::removeNonPeriodicHalos!" << std::endl;
+				MARDYN_EXIT(error_message.str());
 		}
 	}
 }
