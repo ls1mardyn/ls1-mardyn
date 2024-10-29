@@ -12,6 +12,11 @@
 #include <cstdlib>
 #include <algorithm>
 #include <complex>
+#include <sstream>
+
+#ifdef ENABLE_MPI
+#include <mpi.h>  // For MPI_Finalize()
+#endif
 
 #if defined(ENABLE_NLS) && ENABLE_NLS
 # include <libintl.h>
@@ -345,11 +350,17 @@ void OptionParser::process_opt(const Option& o, const std::string& opt, const st
 	}
 	else if (o.action() == "help") {
 		print_help();
-		mardyn_exit(0);
+		#ifdef ENABLE_MPI
+			MPI_Finalize();
+		#endif
+		std::exit(EXIT_SUCCESS);
 	}
 	else if (o.action() == "version") {
 		print_version();
-		mardyn_exit(0);
+		#ifdef ENABLE_MPI
+			MPI_Finalize();
+		#endif
+		std::exit(EXIT_SUCCESS);
 	}
 	else if (o.action() == "callback" && o.callback()) {
 		(*o.callback())(o, opt, value, *this);
@@ -437,12 +448,15 @@ void OptionParser::print_version() const {
 }
 
 void OptionParser::exit() const {
-	mardyn_exit(2);
+	std::ostringstream error_message;
+	error_message << "OptionParser::exit() called" << std::endl;
+	MARDYN_EXIT(error_message.str());
 }
 void OptionParser::error(const std::string& msg) const {
 	print_usage(std::cerr);
-	std::cerr << prog() << ": " << _("error") << ": " << msg << std::endl;
-	mardyn_exit(-4);
+	std::ostringstream error_message;
+	error_message << prog() << ": " << _("error") << ": " << msg << std::endl;
+	MARDYN_EXIT(error_message.str());
 }
 ////////// } class OptionParser //////////
 

@@ -76,11 +76,13 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			quadrupoleSite.readXML(xmlconfig);
 			addQuadrupole(quadrupoleSite);
 		} else if (siteType == "Tersoff") {
-			Log::global_log->error() << "Tersoff no longer supported:" << siteType << std::endl;
-			mardyn_exit(-1);
+			std::ostringstream error_message;
+			error_message << "Tersoff no longer supported:" << siteType << std::endl;
+			MARDYN_EXIT(error_message.str());
 		} else {
-			Log::global_log->error() << "Unknown site type:" << siteType << std::endl;
-			mardyn_exit(-1);
+			std::ostringstream error_message;
+			error_message << "Unknown site type:" << siteType << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		// go back to initial level, to be consistent, even if no site information is found.
 		xmlconfig.changecurrentnode("..");

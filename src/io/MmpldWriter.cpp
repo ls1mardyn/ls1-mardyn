@@ -56,7 +56,9 @@ MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64
 		_color_type(MMPLD_COLOR_NONE)
 {
 	if (0 == _writeFrequency) {
-		mardyn_exit(-1);
+		std::ostringstream error_message;
+		error_message << "[MMPLD Writer] writefrequency must not be 0" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -88,8 +90,9 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 		case 102:
 			break;
 		default:
-			Log::global_log->error() << "Unsupported MMPLD version:" << _mmpldversion << std::endl;
-			mardyn_exit(1);
+			std::ostringstream error_message;
+			error_message << "Unsupported MMPLD version:" << _mmpldversion << std::endl;
+			MARDYN_EXIT(error_message.str());
 			break;
 	}
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
@@ -101,8 +104,9 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	numSites = query.card();
 	Log::global_log->info() << "[MMPLD Writer] Number of sites: " << numSites << std::endl;
 	if(numSites < 1) {
-		Log::global_log->fatal() << "[MMPLD Writer] No site parameters specified." << std::endl;
-		mardyn_exit(48973);
+		std::ostringstream error_message;
+		error_message << "[MMPLD Writer] No site parameters specified." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator outputSiteIter;
@@ -143,8 +147,9 @@ void MmpldWriter::init(ParticleContainer *particleContainer,
 						DomainDecompBase *domainDecomp, Domain *domain)
 {
 	if ( (htole32(1) != 1) || (htole64(1.0) != 1.0) ) {
-		Log::global_log->error() << "[MMPLD Writer] The MMPLD Writer currently only supports running on little endian systems." << std::endl;
-		mardyn_exit(1);
+		std::ostringstream error_message;
+		error_message << "[MMPLD Writer] The MMPLD Writer currently only supports running on little endian systems." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// only executed once
@@ -391,8 +396,9 @@ long MmpldWriter::get_data_frame_header_size() {
 			data_frame_header_size = sizeof(float) + sizeof(uint32_t);
 			break;
 		default:
-			Log::global_log->error() << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << std::endl;
-			mardyn_exit(1);
+			std::ostringstream error_message;
+			error_message << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << std::endl;
+			MARDYN_EXIT(error_message.str());
 			break;
 	}
 	return data_frame_header_size;

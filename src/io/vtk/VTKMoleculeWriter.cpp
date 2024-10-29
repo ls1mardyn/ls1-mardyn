@@ -36,7 +36,9 @@ void VTKMoleculeWriter::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "VTKMoleculeWriter: Output prefix: " << _fileName << std::endl;
 
 	if (_writeFrequency <= 0) {
-		Log::global_log->error() << "VTKMoleculeWriter: writeFrequency must be > 0!" << std::endl;
+		std::ostringstream error_message;
+		error_message << "VTKMoleculeWriter: writeFrequency must be > 0!" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
