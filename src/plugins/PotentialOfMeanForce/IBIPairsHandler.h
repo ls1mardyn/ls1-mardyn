@@ -31,7 +31,7 @@ public:
     FunctionPL& getPotentialFunction() { return potential_function; }
 
 private:
-    inline void PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ);
+    inline void PotForceOnlyCG(Molecule& m1, Molecule& m2, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ);
     std::array<double, 3> getActingForce(const std::array<double, 3>& dr, double r);
 
     /// is either PMF or updated version

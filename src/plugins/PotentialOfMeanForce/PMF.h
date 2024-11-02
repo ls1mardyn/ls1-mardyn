@@ -44,7 +44,6 @@ public:
     // FUNCTIONS NOT FROM INTERFACE
     //========================================
     FunctionPL& GetRDFInterpolation() { return reference_rdf; };
-    double ConvergenceCheck();
 
 private:
     /// Implements U(r)_0 = -T^*ln(g(r)_0)
@@ -55,6 +54,8 @@ private:
     void DerivativeOfPotential();
     /// Writes the total average RDF
     void WriteRDF();
+    /// Creates a new single site component and replaces the comp pointer of all molecules
+    void CreateSwapComponent();
     /// Generates file paths
     [[nodiscard]] std::string createFilepath(const std::string& prefix) const;
 
@@ -90,6 +91,40 @@ private:
     int current_steps = 0;
     /// single run: current ibi phase
     enum { FIRST_INIT, EQUILIBRATE, MEASURE } ibi_phase = FIRST_INIT;
-    /// collection of convergence values
-    std::vector<double> convergence_steps;
+
+    /**
+     * Provides methods for convergence checking
+     * */
+    struct Convergence {
+        void init(double threshold, const std::string& mode_str = "l2", const std::string& stop_str = "worse", int window = 10);
+
+        /**
+         * Computes integrals over r_i and r_0... see https://arxiv.org/pdf/1410.1853
+         * */
+        std::pair<bool, double> integral(const FunctionPL& ref, RDFProfiler& profiler);
+
+        /**
+         * Computes simple l2 norm over functions
+         * */
+        std::pair<bool, double> l2(const FunctionPL& ref, RDFProfiler& profiler);
+
+        std::pair<bool, double> operator()(const FunctionPL &ref, RDFProfiler& profiler);
+
+        void LogValues(std::ostream& ostream);
+
+        bool ShouldStop();
+
+    private:
+        /// Convergence values of each iteration
+        std::vector<double> conv_values;
+        /// mode selection
+        enum {INTEGRAL, L2} mode = L2;
+        /// conv threshold
+        double threshold;
+        /// early stopping method
+        enum {ON_WORSE, WINDOW} stopping_mode = ON_WORSE;
+        /// window size for window stopping method
+        int window_size;
+
+    } ConvergenceCheck;
 };

@@ -51,17 +51,16 @@ void IBIPairsHandler::finish(){
 double IBIPairsHandler::processPair(Molecule& m1, Molecule& m2, double distance[3], PairType pair, double dd, bool CalculateLJ){
     const int tid = mardyn_get_thread_num();
     ParticlePairs2PotForceAdapter::PP2PFAThreadData& data = *thread_data[tid];
-    ParaStrm params = (*data._comp2Param)(m1.componentid(),m2.componentid());
 
     switch(pair){
         double Virial[3];
         double dummy1,dummy2,dummy3,dummy4[3];
         case MOLECULE_MOLECULE:
-            PotForceOnlyCG(m1,m2,params,distance,data._upot6LJ,data._upotXpoles,data._myRF,Virial,CalculateLJ);
+            PotForceOnlyCG(m1,m2,distance,data._upot6LJ,data._upotXpoles,data._myRF,Virial,CalculateLJ);
             return data._upot6LJ+data._upotXpoles;
 
         case MOLECULE_HALOMOLECULE:
-            PotForceOnlyCG(m1,m2,params,distance,dummy1,dummy2,dummy3,dummy4,CalculateLJ);
+            PotForceOnlyCG(m1,m2,distance,dummy1,dummy2,dummy3,dummy4,CalculateLJ);
             return 0.0;
 
         case MOLECULE_MOLECULE_FLUID:
@@ -73,7 +72,7 @@ double IBIPairsHandler::processPair(Molecule& m1, Molecule& m2, double distance[
     return 0.0;
 }
 
-void IBIPairsHandler::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ) {
+void IBIPairsHandler::PotForceOnlyCG(Molecule& m1, Molecule& m2, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ) {
 	virial[0] = 0.0;
 	virial[1] = 0.0;
 	virial[2] = 0.0;

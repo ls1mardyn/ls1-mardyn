@@ -23,6 +23,16 @@ void PMF::readXML(XMLfileUnits& xmlfile) {
     xmlfile.getNodeValue("rdfPath", rdf_path);
     xmlfile.getNodeValue("potPath", pot_path);
 
+    double conv_threshold = 0.01;
+    std::string conv_method = "l2";
+    std::string stop_method = "worse";
+    int window_size = 10;
+    xmlfile.getNodeValue("convergence/threshold", conv_threshold);
+    xmlfile.getNodeValue("convergence/method", conv_method);
+    xmlfile.getNodeValue("convergence/stop-method", stop_method);
+    xmlfile.getNodeValue("convergence/window-size", window_size);
+    ConvergenceCheck.init(conv_threshold, conv_method, stop_method, window_size);
+
     if (rdf_path.empty()) mode_initial_rdf = true;
     if (pot_path.empty()) ibi_iteration = 0;
     else {
@@ -42,6 +52,9 @@ void PMF::readXML(XMLfileUnits& xmlfile) {
 
 void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* domain) {
     if (mode_initial_rdf || mode_single_run) return;
+
+    // check if we have more than one component
+    if (_simulation.getEnsemble()->getComponents()->size() != 1) throw std::runtime_error("IBI does not support multi-component systems.");
 
     T = _simulation.getEnsemble()->T();
     Log::global_log->info() << "[PMF] Target temperature = " << T << std::endl;
@@ -97,6 +110,7 @@ void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long
                 DerivativeOfPotential();
 
                 Log::global_log->info() << "[PMF] Transitioning from first initialization to equilibration with PMF" << std::endl;
+                CreateSwapComponent();
                 break;
             }
             case EQUILIBRATE: {
@@ -119,7 +133,16 @@ void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long
                 pairs_handler->getPotentialFunction().write(createFilepath("pot"));
                 DerivativeOfPotential();
                 WriteRDF();
-                Log::global_log->info() << "[PMF] Convergence: " << ConvergenceCheck() << std::endl;
+
+                auto conv = ConvergenceCheck(reference_rdf, profiler);
+                Log::global_log->info() << "[PMF] Convergence: target_reached=" << conv.first << " value=" << conv.second << std::endl;
+                const bool should_stop = ConvergenceCheck.ShouldStop();
+                if (should_stop) {
+                    Log::global_log->info() << "[PMF] Convergence: stopping criterion reached. Stopping now." << std::endl;
+                    _simulation.setNumTimesteps(_simulation.getSimulationStep());
+                    break;
+                }
+
                 Log::global_log->info() << "[PMF] Transitioning from measurement to equilibration" << std::endl;
                 profiler.ResetBuffers();
                 break;
@@ -139,9 +162,7 @@ void PMF::finish(ParticleContainer *particleContainer, DomainDecompBase *domainD
         pairs_handler->getPotentialFunction().write("final_pot.txt");
 
         std::stringstream ss;
-        for (double conv : convergence_steps) {
-            ss << conv << " ";
-        }
+        ConvergenceCheck.LogValues(ss);
         Log::global_log->info() << "[PMF] Convergence steps: " << ss.str() << std::endl;
         return;
     }
@@ -158,7 +179,8 @@ void PMF::finish(ParticleContainer *particleContainer, DomainDecompBase *domainD
         ibi_iteration++;
         WriteRDF();
         pairs_handler->getPotentialFunction().write(createFilepath("pot"));
-        Log::global_log->info() << "[PMF] Convergence: " << ConvergenceCheck() << std::endl;
+        auto conv = ConvergenceCheck(reference_rdf, profiler);
+        Log::global_log->info() << "[PMF] Convergence: target_reached=" << conv.first << "value=" << conv.second << std::endl;
     }
 }
 
@@ -233,20 +255,6 @@ void PMF::DerivativeOfPotential() {
     pairs_handler->getForceFunction().write(createFilepath("force"));
 }
 
-double PMF::ConvergenceCheck() {
-    std::vector<double>& g_0 = reference_rdf.GetYValues();
-    std::vector<double> g_i;
-    profiler.GetRDFTotal(g_i);
-
-    double vec_norm = 0.0;
-    for (int i = 0; i < g_0.size(); ++i) {
-        vec_norm += std::pow(g_0[i] - g_i[i], 2.0);
-    }
-
-    convergence_steps.push_back(vec_norm);
-    return vec_norm;
-}
-
 void PMF::WriteRDF() {
     std::vector<double> avg_rdf;
     profiler.GetRDFTotal(avg_rdf);
@@ -257,9 +265,132 @@ void PMF::WriteRDF() {
     rdfFunction.write(createFilepath("rdf"));
 }
 
+void PMF::CreateSwapComponent() {
+    auto* components = _simulation.getEnsemble()->getComponents();
+    // we have asserted during init that we only have one active component
+    if (components->at(0).numSites() == 1 && components->at(0).numLJcenters() == 1) return; // no need to change
+
+    //=================================================
+    // Create new Component
+    Component comp {};
+    comp.setID(1);
+    comp.setName("IBI-Comp");
+
+    LJcenter site {};
+    site.setR(0, 0.0);
+    site.setR(1, 0.0);
+    site.setR(2, 0.0);
+    double mass = 0;
+    for (int i = 0; i < components->at(0).numLJcenters(); i++) mass += components->at(0).ljcenter(i).m();
+    site.setM(mass);
+    std::string site_name = "LJ126";
+    site.setName(site_name);
+
+    comp.addLJcenter(site);
+    components->push_back(comp);
+    _simulation.getEnsemble()->setComponentLookUpIDs();
+
+    //=================================================
+    // Replace comp pointer with new comp
+    Component* new_comp = &components->at(1);
+    for (auto it = _simulation.getMoleculeContainer()->iterator(ParticleIterator::ALL_CELLS); it.isValid(); ++it) {
+        it->setComponent(new_comp);
+    }
+}
+
 std::string PMF::createFilepath(const std::string &prefix) const {
     std::stringstream path;
     path << prefix << "_" << ibi_iteration << ".txt";
     return path.str();
 }
 
+//=============================================================
+//  CONVERGENCE CHECK
+//=============================================================
+
+void PMF::Convergence::init(double th, const std::string &mode_str, const std::string &stop_str, int window) {
+    if (mode_str == "l2") mode = L2;
+    else mode = INTEGRAL;
+    threshold = th;
+    if (stop_str == "worse") stopping_mode = ON_WORSE;
+    else stopping_mode = WINDOW;
+    window_size = window;
+}
+
+std::pair<bool, double> PMF::Convergence::integral(const FunctionPL &ref, RDFProfiler& profiler) {
+    const std::vector<double>& x = ref.GetXValues();
+    const std::vector<double>& g_0 = ref.GetYValues();
+    std::vector<double> g_i;
+    profiler.GetRDFTotal(g_i);
+
+    // integrate diff
+    double diff = 0;
+    for (int idx = 0; idx < x.size()-1; idx++) {
+        const double dx = x[idx+1] - x[idx];
+        const double lower = std::abs(g_i[idx] - g_0[idx]);
+        const double upper = std::abs(g_i[idx+1] - g_0[idx+1]);
+        diff += dx * (upper + lower) / 2.0;
+    }
+
+    // integrate sum
+    double sum = 0;
+    for (int idx = 0; idx < x.size()-1; idx++) {
+        const double dx = x[idx+1] - x[idx];
+        const double lower = std::abs(g_i[idx] + g_0[idx]);
+        const double upper = std::abs(g_i[idx+1] + g_0[idx+1]);
+        sum += dx * (upper + lower) / 2.0;
+    }
+
+    if (sum == 0) sum = 1e-15;
+    const double conv_value = 1.0 - (diff / sum);
+    conv_values.push_back(conv_value);
+    return {conv_value <= threshold, conv_value};
+}
+
+std::pair<bool, double> PMF::Convergence::l2(const FunctionPL &ref, RDFProfiler& profiler) {
+    const std::vector<double>& g_0 = ref.GetYValues();
+    std::vector<double> g_i;
+    profiler.GetRDFTotal(g_i);
+
+    double vec_norm = 0.0;
+    for (int i = 0; i < g_0.size(); ++i) {
+        vec_norm += std::pow(g_0[i] - g_i[i], 2.0);
+    }
+
+    conv_values.push_back(vec_norm);
+    return {vec_norm <= threshold, vec_norm};
+}
+
+void PMF::Convergence::LogValues(std::ostream &ostream) {
+    for (double conv : conv_values) {
+        ostream << conv << " ";
+    }
+}
+
+std::pair<bool, double> PMF::Convergence::operator()(const FunctionPL &ref, RDFProfiler& profiler) {
+    if (mode == L2) return l2(ref, profiler);
+    else if (mode == INTEGRAL) return integral(ref, profiler);
+    else throw std::runtime_error("Unknown convergence method");
+}
+
+bool PMF::Convergence::ShouldStop() {
+    const auto steps = conv_values.size();
+
+    if (stopping_mode == ON_WORSE) {
+        if (steps < 2) return false;
+
+        if (conv_values[steps-2] > threshold) return false;
+        if (conv_values[steps-1] <= threshold) return false;
+        return true;
+    }
+    else if (stopping_mode == WINDOW) {
+        if (steps < window_size) return false;
+        bool all_leq = true;
+        for (int i = 0; i < window_size; i++) {
+            all_leq &= conv_values[steps - 1 - i] <= threshold;
+        }
+
+        return all_leq;
+    }
+    throw std::runtime_error("Unknown stopping method");
+}
