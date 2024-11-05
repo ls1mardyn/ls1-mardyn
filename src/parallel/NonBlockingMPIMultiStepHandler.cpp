@@ -27,12 +27,26 @@ NonBlockingMPIMultiStepHandler::~NonBlockingMPIMultiStepHandler() {
 
 void NonBlockingMPIMultiStepHandler::performComputation() {
 	int stageCount = _domainDecomposition->getNonBlockingStageCount();
+	// first clear all arrived particles from previous iterations
+	_moleculeContainer->_arriving_molecules.clear();
 
 	mardyn_assert(stageCount > 0);
 
 	global_simulation->timers()->start("SIMULATION_COMPUTATION");
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
 	_cellProcessor->initTraversal();
+
+	// we change the order of functions:
+	// first update all molecule caches
+	// _moleculeContainer->updateBoundaryAndHaloMoleculeCaches();  // update the caches of the other molecules (non-inner cells)
+	_moleculeContainer->updateMoleculeCaches();
+	
+	// then traverse outer and halo cells
+	_moleculeContainer->traverseNonInnermostCells(*_cellProcessor);
+
+	// _moleculeContainer->updateInnerMoleculeCaches();  // only the caches of the innermost molecules have to be updated.
+
+	// then comm start and inner comp
 	global_simulation->timers()->stop("SIMULATION_FORCE_CALCULATION");
 	global_simulation->timers()->stop("SIMULATION_COMPUTATION");
 	for (unsigned int i = 0; i < static_cast<unsigned int>(stageCount); ++i) {
@@ -79,15 +93,21 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	}
 
 	global_simulation->timers()->start("SIMULATION_DECOMPOSITION");
-	_moleculeContainer
-		->updateBoundaryAndHaloMoleculeCaches();  // update the caches of the other molecules (non-inner cells)
+	// _moleculeContainer
+	// 	->updateBoundaryAndHaloMoleculeCaches();  // update the caches of the other molecules (non-inner cells)
 	global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
 
 	// remaining force calculation and other pair interaction related computations
 	Log::global_log->debug() << "Traversing non-innermost cells" << std::endl;
 	global_simulation->timers()->start("SIMULATION_COMPUTATION");
 	global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
-	_moleculeContainer->traverseNonInnermostCells(*_cellProcessor);
+	// _moleculeContainer->traverseNonInnermostCells(*_cellProcessor);
+
+	// refresh newly arrived molecules (inefficiently)
+	_moleculeContainer->updateMoleculeCachesWithoutClearFM();
+	// traverse newly arrived molecules
+	_moleculeContainer->traverseCellsWithNewMolecules(*_cellProcessor);
+	
 	_cellProcessor->endTraversal();
 }
 
@@ -102,7 +122,7 @@ void NonBlockingMPIMultiStepHandler::initBalanceAndExchange(bool forceRebalancin
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	global_simulation->timers()->start("SIMULATION_UPDATE_CONTAINER");
-	_moleculeContainer->updateInnerMoleculeCaches();  // only the caches of the innermost molecules have to be updated.
+	// _moleculeContainer->updateInnerMoleculeCaches();  // only the caches of the innermost molecules have to be updated.
 	global_simulation->timers()->stop("SIMULATION_UPDATE_CONTAINER");
 
 	global_simulation->timers()->stop("SIMULATION_DECOMPOSITION");
