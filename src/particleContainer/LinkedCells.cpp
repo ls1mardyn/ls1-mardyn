@@ -448,6 +448,9 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 		if (rebuildCaches) {
 			_cells[cellIndex].buildSoACaches();
 		}
+
+		if (wasInserted)
+			_arriving_molecules.emplace_back(std::pair(&_cells[cellIndex], particle.getID()));
 	}
 	return wasInserted;
 }
@@ -569,6 +572,71 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	cellProcessor.initTraversal();
 	_traversalTuner->traverseCellPairs(cellProcessor);
 	cellProcessor.endTraversal();
+}
+
+void LinkedCells::traverseCellsWithNewMolecules(CellProcessor& cellProcessor)
+{
+	if (not _cellsValid) {
+		Log::global_log->error() << "Cell structure in LinkedCells (traversePartialInnermostCells) invalid, call update first" << std::endl;
+		Simulation::exit(1);
+	}
+
+	// get neighbouring cell offets
+	std::vector<long> forwardNeighbourOffsets; // now vector
+	std::vector<long> backwardNeighbourOffsets; // now vector
+	calculateNeighbourIndices(forwardNeighbourOffsets, backwardNeighbourOffsets);
+	
+	// loop through arrived molecules
+	for (auto pair : _arriving_molecules) 
+	{
+		ParticleCell& cell = *pair.first;
+		auto cellIndex = cell.getCellIndex();
+
+		auto m1_id = pair.second;
+		auto begin = cell.iterator();
+
+		Molecule* m1 = nullptr;
+
+		// inefficient way of choosing molecule
+		for (auto it = begin; it.isValid(); ++it) 
+		{
+			Molecule& mt = *it;
+
+			if (mt.getID() == m1_id)
+			{
+				m1 = &mt;
+				break;
+			}
+		}
+
+		if (m1 == nullptr)
+			continue;
+		
+		// all cells in backward direction
+		for (size_t j = 0; j < backwardNeighbourOffsets.size(); j++) 
+		{
+			size_t const neighbourIndex = cellIndex - backwardNeighbourOffsets[j];
+			if (neighbourIndex >= _cells.size()) {
+				// handles cell_index < 0 (indices are unsigned!)
+				mardyn_assert(cell.isHaloCell());
+				continue;
+			}
+
+			cellProcessor.processSingleMolecule(m1, _cells[neighbourIndex]);
+		}
+		// all cells in forward direction
+		for (size_t j = 0; j < forwardNeighbourOffsets.size(); j++) 
+		{
+			size_t const neighbourIndex = cellIndex + forwardNeighbourOffsets[j];
+			if (neighbourIndex >= _cells.size()) {
+				// handles cell_index < 0 (indices are unsigned!)
+				mardyn_assert(cell.isHaloCell());
+				continue;
+			}
+
+			cellProcessor.processSingleMolecule(m1, _cells[neighbourIndex]);
+		}
+	}
 }
 
 unsigned long LinkedCells::getNumberOfParticles(ParticleIterator::Type t /* = ParticleIterator::ALL_CELLS */) {
