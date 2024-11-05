@@ -656,6 +656,10 @@ void AutoPasContainer::updateMoleculeCaches() {
 	// nothing needed
 }
 
+void AutoPasContainer::updateMoleculeCachesWithoutClearFM() {
+	// nothing needed
+}
+
 std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> AutoPasContainer::getMoleculeAtPosition(
 	const double *pos) {
 	std::array<double, 3> pos_arr{pos[0], pos[1], pos[2]};

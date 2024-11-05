@@ -1105,6 +1105,18 @@ void LinkedCells::updateMoleculeCaches() {
 	}
 }
 
+void LinkedCells::updateMoleculeCachesWithoutClearFM() {
+	// magic numbers: empirically determined to be somewhat efficient.
+	const int chunk_size = chunk_size::getChunkSize(_cells.size(), 10000, 100);
+
+	#if defined(_OPENMP)
+	#pragma omp parallel for schedule(dynamic, chunk_size)
+	#endif
+	for (size_t cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
+		_cells[cellIndex].buildSoACachesWithoutClearFM();
+	}
+}
+
 size_t LinkedCells::getTotalSize() {
 	size_t totalSize = sizeof(LinkedCells);
 	for (auto& cell : _cells) {

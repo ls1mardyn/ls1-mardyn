@@ -220,6 +220,8 @@ public:
 	//! @brief Update the caches of the molecules.
 	virtual void updateMoleculeCaches() = 0;
 
+	virtual void updateMoleculeCachesWithoutClearFM() = 0;
+
 	/**
 	 * @brief Gets a molecule by its position.
 	 * @param pos Molecule position

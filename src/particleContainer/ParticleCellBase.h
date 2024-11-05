@@ -63,6 +63,8 @@ public:
 
 	virtual void buildSoACaches() = 0;
 
+	virtual void buildSoACachesWithoutClearFM() = 0;
+
 	virtual void increaseMoleculeStorage(size_t numMols) = 0;
 
 	virtual bool testPointInCell(const double point[3]) const {

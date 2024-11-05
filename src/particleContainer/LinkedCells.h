@@ -244,6 +244,9 @@ public:
 	// documentation in base class
 	virtual void updateMoleculeCaches() override;
 
+	// my function
+	virtual void updateMoleculeCachesWithoutClearFM() override;
+
 	ParticleIterator iterator (ParticleIterator::Type t) override {
 		const ParticleIterator::CellIndex_T offset = mardyn_get_thread_num();
 		const ParticleIterator::CellIndex_T stride = mardyn_get_num_threads();

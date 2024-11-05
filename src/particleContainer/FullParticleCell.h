@@ -97,6 +97,8 @@ public:
 
 	void buildSoACaches() override;
 
+	void buildSoACachesWithoutClearFM() override;
+
 	void increaseMoleculeStorage(size_t numExtraMols) override;
 
 	virtual size_t getMoleculeVectorDynamicSize() const override {
