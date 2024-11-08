@@ -14,11 +14,13 @@
                 <steps>0</steps>
             </equilibration>
             <production>
-                <steps>20</steps>
+                <steps>10000</steps>
             </production>
         </run>
-        <integrator type="Langevin">
-            <!-- MD ODE integrator -->
+        <integrator type="Leapfrog">
+            <timestep unit="reduced">0.001</timestep>
+        </integrator>
+        <!--integrator type="Langevin">
             <timestep unit="reduced">0.001</timestep>
             <friction>0.1</friction>
             <ActiveRegions>
@@ -27,13 +29,13 @@
                     <upper> <x>10</x> <y>10</y> <z>10</z> </upper>
                 </region>
             </ActiveRegions>
-        </integrator>
+        </integrator-->
         <ensemble type="NVT">
             <!-- Target temperature is 1000K -->
             <!-- real gas closer to ideal gas at higher temperatures but lower pressures -->
-            <temperature unit="reduced" >8.3144621</temperature>
+            <temperature unit="reduced" >100</temperature>
             <domain type="box">
-                <lx unit="reduced">10</lx>
+                <lx unit="reduced">30</lx>
                 <ly unit="reduced">10</ly>
                 <lz unit="reduced">10</lz>
             </domain>
@@ -43,18 +45,18 @@
             </components>
 
             <phasespacepoint>
-                <generator name="MultiObjectGenerator">/home/alex/Prog/__UNI/bachelor/ls1-mardyn/examples/AdResS/Validation/CO2
+                <generator name="MultiObjectGenerator">
                     <objectgenerator>
                         <filler type="ReplicaFiller">
                             <input type="BinaryReader">
-                                <header>Tetrahedral-20k-ADR-FTH-S2_0-1.restart.header.xml</header>
-                                <data>Tetrahedral-20k-ADR-FTH-S2_0-1.restart.dat</data>
+                                <header>TET-ADR-EQ-200k-1.restart.header.xml</header>
+                                <data>TET-ADR-EQ-200k-1.restart.dat</data>
                             </input>
                         </filler>
 
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>10</x> <y>10</y> <z>10</z> </upper>
+                            <upper> <x>30</x> <y>10</y> <z>10</z> </upper>
                         </object>
                     </objectgenerator>
                 </generator>
@@ -68,13 +70,16 @@
                 <traversalSelector>c08</traversalSelector>
             </datastructure>
             <cutoffs type="CenterOfMass" >
-                <radiusLJ unit="reduced" >2.5</radiusLJ>
+                <radiusLJ unit="reduced" >5</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField" >
                 <epsilon>0</epsilon>
             </electrostatic>
             <thermostats>
-                <thermostat type="TemperatureObserver">
+                <thermostat type="VelocityScaling" componentId="global">
+                    <temperature>100</temperature>
+                </thermostat>
+                <!--thermostat type="TemperatureObserver">
                     <samples>100</samples>
                     <ActiveRegions>
                         <region>
@@ -82,15 +87,15 @@
                             <upper> <x>10</x> <y>10</y> <z>10</z> </upper>
                         </region>
                     </ActiveRegions>
-                </thermostat>
+                </thermostat-->
             </thermostats>
         </algorithm>
 
         <output>
             <!--outputplugin name="CheckpointWriter">
                 <type>binary</type>
-                <writefrequency>20000</writefrequency>
-                <outputprefix>Tetrahedral-20k-ADR-FTH-S2_0</outputprefix>
+                <writefrequency>200000</writefrequency>
+                <outputprefix>TET-ADR-EQ-200k</outputprefix>
             </outputplugin-->
             <!--outputplugin name="RDF">
                 <writefrequency>20</writefrequency>
@@ -112,17 +117,35 @@
                 <filename>Tetrahedral-Pressure-ADR-FTH_</filename>
             </outputplugin-->
         </output>
-        <!--plugin name="SpatialProfile">
+
+        <plugin name="AdResS">
+            <weightImpl>near</weightImpl>
+            <sampler type="Direct">
+                <sampleGap>2000000</sampleGap>
+                <dim>0</dim>
+                <binWidth>3.0e-1</binWidth>
+            </sampler>
+
+            <fpregions>
+                <region id="1">
+                    <lowX>10.0</lowX><lowY>-5.0</lowY><lowZ>-5.0</lowZ>
+                    <highX>20.0</highX><highY>15.0</highY><highZ>15.0</highZ>
+                    <hybridDimX>5.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                </region>
+            </fpregions>
+        </plugin>
+
+        <plugin name="SpatialProfile">
             <mode>cartesian</mode>
             <x>100</x>
             <y>1</y>
             <z>1</z>
-            <writefrequency>2000</writefrequency>
+            <writefrequency>10000</writefrequency>
             <timesteps>
-                <init>1</init>
+                <init>0</init>
                 <recording>1</recording>
             </timesteps>
-            <outputprefix>Tetrahedral-density-ADR-FTH_</outputprefix>
+            <outputprefix>ADR-density_</outputprefix>
             <profiledComponent>all</profiledComponent>
             <profiles>
                 <density>true</density>
@@ -131,6 +154,6 @@
                 <velocity3d>false</velocity3d>
                 <virial>false</virial>
             </profiles>
-        </plugin-->
+        </plugin>
     </simulation>
 </mardyn>
