@@ -544,25 +544,25 @@ void RDF::writeToFile(const Domain* domain, const std::string& filename, unsigne
 
 		rdfout << rmid << "\t" << N_pair/N_pair_norm << " " << N_pair_int/N_pair_int_norm
 				<< "\t" << N_Apair/N_Apair_norm << " " << N_Apair_int/N_Apair_int_norm
-				<< "\t\t" << dV << "\t" << N_pair << "\t" << N_Apair
+				<< "\t\t" << dV << "\t AA" << N_pair << " AA\t" << N_Apair
 				<< "\t\t" << N_pair_norm << "\t" << N_Apair_norm;
 
-		if(ni+nj > 2) {
-			for(unsigned m=0; m < ni; m++) {
-				rdfout << "\t";
-				for(unsigned n=0; n < nj; n++) {
+		// if(ni+nj > 2) {
+			// for(unsigned m=0; m < ni; m++) {
+				// rdfout << "\t";
+				// for(unsigned n=0; n < nj; n++) {
 					// the correctionFactor fixes a duplicated calculation of pairwise interactions when interacting particles with the same component id.
 					// see observeRDF(...).
-					double correctionFactor = (i == j and m != n) ? 0.5 : 1.;
-					double p = correctionFactor * _siteDistribution.global[i][j-i][m][n][l] / (double)_numberOfRDFTimesteps;
-					Nsite_pair_int[m][n] += p;
-					double ap = correctionFactor * _globalAccumulatedSiteDistribution[i][j-i][m][n][l] / (double)_accumulatedNumberOfRDFTimesteps;
-					Nsite_Apair_int[m][n] += ap;
-					rdfout << "\t" << p/N_pair_norm << " " << Nsite_pair_int[m][n]/N_pair_int_norm
-					       << "   " << ap/N_Apair_norm << " " << Nsite_Apair_int[m][n]/N_Apair_int_norm;
-				}
-			}
-		}
+					// double correctionFactor = (i == j and m != n) ? 0.5 : 1.;
+					// double p = correctionFactor * _siteDistribution.global[i][j-i][m][n][l] / (double)_numberOfRDFTimesteps;
+					// Nsite_pair_int[m][n] += p;
+					// double ap = correctionFactor * _globalAccumulatedSiteDistribution[i][j-i][m][n][l] / (double)_accumulatedNumberOfRDFTimesteps;
+					// Nsite_Apair_int[m][n] += ap;
+					// rdfout << "\t" << p/N_pair_norm << " " << Nsite_pair_int[m][n]/N_pair_int_norm
+					    //    << "   " << ap/N_Apair_norm << " " << Nsite_Apair_int[m][n]/N_Apair_int_norm;
+				// }
+			// }
+		// }
 		rdfout << "\n";
 	}
 	rdfout.close();

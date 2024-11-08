@@ -1,0 +1,12 @@
+mardyn trunk 20090721
+currentTime     0.00
+#rho   0.001893
+# Vmax 0.006831
+Temperature     1.0
+Length          10.0000 10.0000 10.0000
+NumberOfComponents	1
+1	0	0	0	0
+0 0 0	1 1 1 0 0
+0 0 0
+NumberOfMolecules       0
+MoleculeFormat  ICRV

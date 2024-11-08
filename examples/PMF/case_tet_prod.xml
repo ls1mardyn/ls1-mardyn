@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mardyn version="20100525">
+  <refunits type="SI">
+    <length unit="nm">0.0529177</length>
+    <mass unit="u">1000</mass>
+    <energy unit="eV">27.2126</energy>
+  </refunits>
+  <simulation type="MD">
+    <integrator type="Leapfrog">
+      <timestep unit="reduced">0.001</timestep>
+    </integrator>
+    
+    <run>
+      <currenttime>0</currenttime>
+      <equilibration> <steps>0</steps> </equilibration>
+      <production>
+        <steps>10000000</steps>
+      </production>
+    </run>
+    
+    <ensemble type="NVT">
+      <temperature unit="reduced">20.0</temperature>
+      <domain type="box">
+        <lx>15.0</lx>
+        <ly>15.0</ly>
+        <lz>15.0</lz>
+      </domain>
+      <components>
+        <include query="/components/moleculetype">./lj_fluid_tet.xml</include>
+      </components>
+      <phasespacepoint>
+        <file type="binary">
+          <header>restart_data_case_tet/generic_lj_T20_step-100.restart.header.xml</header>
+          <data>restart_data_case_tet/generic_lj_T20_step-100.restart.dat</data>
+        </file>
+        <ignoreCheckpointTime>true</ignoreCheckpointTime>
+      </phasespacepoint>
+    </ensemble>
+    
+    <algorithm>
+      <parallelisation type="DomainDecomposition">
+        <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+        <overlappingCollectives>False</overlappingCollectives>
+      </parallelisation>
+      <datastructure type="LinkedCells">
+        <cellsInCutoffRadius>1</cellsInCutoffRadius>
+      </datastructure>
+      <cutoffs type="CenterOfMass">
+        <radiusLJ unit="reduced">3</radiusLJ>
+      </cutoffs>
+      <electrostatic type="ReactionField">
+        <epsilon>1.0e+10</epsilon>
+      </electrostatic>
+      <thermostats>
+       <!-- velocity scaling thermostat, if no component is specified the global thermostat is assumed -->
+      <thermostat type="VelocityScaling" componentId="global">
+        <!-- target temperature, if not specified the ensemble temperature will be used -->
+      </thermostat> 
+      </thermostats>
+      
+    </algorithm>
+    
+    <output>
+ 
+    <!--outputplugin name="VTKMoleculeWriter">
+      <outputprefix>vtkOutput</outputprefix>
+      <writefrequency>5</writefrequency>
+    </outputplugin-->
+
+    <outputplugin name="CheckpointWriter">
+      <type>binary</type>
+      <writefrequency>10000000</writefrequency>
+      <outputprefix>ibi</outputprefix>
+    </outputplugin>
+
+    </output>
+
+    <!--plugin name = "RadialDFCOM">
+    	<totalBins>100</totalBins>
+    	<sampleFrequency>1</sampleFrequency>
+      <averageFrequency>5</averageFrequency>
+    </plugin-->
+	
+	  <!--plugin name = "PotentialProfiler">
+    	<totalBins>100</totalBins>
+    	<sampleFrequency>1</sampleFrequency>
+      <averageFrequency>5</averageFrequency>
+    </plugin-->
+
+    <plugin name="PMF">
+        <singleRun>true</singleRun>
+        <stepsEquil>5e+4</stepsEquil>
+        <stepsMeasure>5e+3</stepsMeasure>
+
+        <alpha>0.2</alpha>
+        <bins>300</bins>
+
+        <convergence>
+            <threshold>0.99</threshold>
+            <method>integral</method>
+            <stop-method>worse</stop-method>
+            <window-size>5</window-size>
+        </convergence>
+        <!--rdfPath>../../examples/PMF/restart_data_case_c/rdf_0.txt</rdfPath-->
+        <!--potPath>../../examples/PMF/restart_data_case_c/pot_1.txt</potPath-->
+    </plugin>
+        
+  </simulation>
+</mardyn>
