@@ -189,8 +189,13 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 	_resolutionHandler.init(resConf);
     // todo add check that no region overlap even in hybrid considering periodic bounds
 
+    std::string cg_force_path = "";
+    xmlconfig.getNodeValue("CG-Force", cg_force_path);
+    std::string cg_pot_path = "";
+    xmlconfig.getNodeValue("CG-Pot", cg_pot_path);
+
 	// we set the pair handler regardless, in case some other plugin requires pair wise interactions using AdResS
-	_forceAdapter = new AdResSForceAdapter(_resolutionHandler);
+	_forceAdapter = new AdResSForceAdapter(_resolutionHandler, cg_force_path, cg_pot_path);
 	_simulation.setParticlePairsHandler(_forceAdapter);
 	if(_simulation.usingLegacyCellProcessor()) {
 		_simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), _forceAdapter));

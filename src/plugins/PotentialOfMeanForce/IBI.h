@@ -17,7 +17,7 @@
 /**
  * Performs IBI on the current phasespace.
  * */
-class PMF : public PluginBase {
+class IBI : public PluginBase {
 public:
     //========================================
     // INTERFACE METHODS
@@ -28,7 +28,7 @@ public:
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
 
     std::string getPluginName() { return "PMF"; }
-    static PluginBase* createInstance() {return dynamic_cast<PluginBase*>( new PMF()); }
+    static PluginBase* createInstance() {return dynamic_cast<PluginBase*>( new IBI()); }
 
     //========================================
     // NOT USED

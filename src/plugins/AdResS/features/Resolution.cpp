@@ -18,6 +18,11 @@ void Resolution::Handler::init(Resolution::Config& config) {
 	}
 
 	_config.comp_to_res.resize(_config.components->size());
+    if (_config.comp_to_res.size() > 3) {
+        Log::global_log->fatal() << "[AdResS] Only supporting single component simulation at the moment" << std::endl;
+        exit(669);
+    }
+
 	for(Component& comp : *_config.components) {
 		unsigned int id = comp.ID();
 		if(id % ResolutionCount == FullParticle) {

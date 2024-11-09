@@ -67,7 +67,7 @@
 #include "plugins/WallPotential.h"
 
 #include "plugins/RDFAtCOM.h"
-#include "plugins/PotentialOfMeanForce/PMF.h"
+#include "plugins/PotentialOfMeanForce/IBI.h"
 #include "plugins/PotentialOfMeanForce/PotentialProfiler.h"
 
 #ifdef ENABLE_ADIOS2
@@ -147,7 +147,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(XyzWriter);
 	REGISTER_PLUGIN(RadialDFCOM);
 	REGISTER_PLUGIN(PotentialProfiler);
-	REGISTER_PLUGIN(PMF);
+	REGISTER_PLUGIN(IBI);
 #ifdef VTK
 	REGISTER_PLUGIN(VTKMoleculeWriter);
 #ifndef MARDYN_AUTOPAS

@@ -13,6 +13,8 @@
 #include "plugins/AdResS/util/Region.h"
 #include "plugins/AdResS/features/Resolution.h"
 
+#include "plugins/PotentialOfMeanForce/IBI_Math.h"
+
 /**
  * Handles all force calculation done in AdResS method.
  * */
@@ -22,7 +24,7 @@ public:
      * Constructor
      * @param resolutionHandler Resolution Handler reference from AdResS plugin
      * */
-    explicit AdResSForceAdapter(Resolution::Handler& resolutionHandler);
+    explicit AdResSForceAdapter(Resolution::Handler& resolutionHandler, const std::string& cgForcePath, const std::string& cgPotPath);
 
     /**
      * Destructor: clears allocated memory
@@ -95,7 +97,7 @@ public:
      * @param[in] noHybrid if true both molecules must be non hybrid
      * @param[in] compResMap      a map from AdResS plugin instance that maps all component ids to the resolution
      */
-    static void potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double * drm, double &Upot6LJ,
+    void potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double * drm, double &Upot6LJ,
                          double &UpotXpoles,
                          double &MyRF, double Virial[3], bool calculateLJ, bool noHybrid,
                          const std::vector<Resolution::ResolutionType> &compResMap, const Resolution::FPRegion &region);
@@ -119,7 +121,7 @@ public:
      * @param[in] noHybrid if true both molecules must be non hybrid
      * @param[in] compResMap      a map from AdResS plugin instance that maps all component ids to the resolution
      */
-    static void fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double * drm, double &Upot6LJ,
+    void fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double * drm, double &Upot6LJ,
                          double &UpotXpoles,
                          double &MyRF, bool calculateLJ, bool noHybrid,
                          const std::vector<Resolution::ResolutionType> &compResMap, const Resolution::FPRegion &region);
@@ -130,6 +132,12 @@ private:
     std::vector<PP2PFAThreadData*> _threadData;
     //! @brief Reference to AdResS submodule responsible for resolution management
     Resolution::Handler& _resolutionHandler;
+    //! @brief Force Function from IBI
+    FunctionPL _ibiForce;
+    //! @brief Potential Function from IBI
+    FunctionPL _ibiPot;
+    //! @brief flag to enable _ibiForce and _ibiPot
+    bool _useIBIFunctions;
 
 	/**
  * Simple container for mesoscopic values.
@@ -192,7 +200,7 @@ private:
      * @param[out] Virial   Virial
      * @param[in]  caculateLJ    enable or disable calculation of Lennard Jones interactions
      */
-    static void
+    void
     potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &params, double * drm, double &Upot6LJ,
                        double &UpotXpoles, double &MyRF, double Virial[3], bool calculateLJ, const Resolution::FPRegion &region);
     /** @brief Computes potential and force where only one molecule is hybrid.
@@ -212,7 +220,7 @@ private:
      * @param[out] Virial   Virial
      * @param[in]  caculateLJ    enable or disable calculation of Lennard Jones interactions
      */
-    static void
+    void
     potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &params, double * drm, double &Upot6LJ,
                          double &UpotXpoles, double &MyRF, double Virial[3], bool calculateLJ, const Resolution::FPRegion &region,
 						 Resolution::ResolutionType resolutionJ);
@@ -235,7 +243,7 @@ private:
      * @param[out] Virial   Virial
      * @param[in]  caculateLJ    enable or disable calculation of Lennard Jones interactions
      */
-    static void
+    void
     fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &params, double * drm, double &Upot6LJ,
                        double &UpotXpoles, double &MyRF, bool calculateLJ, const Resolution::FPRegion &region);
     /** @brief Computes potential where only one molecule is hybrid.
@@ -255,10 +263,14 @@ private:
      * @param[out] Virial   Virial
      * @param[in]  caculateLJ    enable or disable calculation of Lennard Jones interactions
      */
-    static void
+    void
     fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &params, double * drm, double &Upot6LJ,
                          double &UpotXpoles, double &MyRF, bool calculateLJ, const Resolution::FPRegion &region,
 						 Resolution::ResolutionType resolutionJ);
+
+    void PotForceIBI(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3]);
+
+    void FluidPotIBI(Molecule& mi, Molecule& mj, ParaStrm& params, double /*drm*/[3], double& Upot6LJ, double& UpotXpoles, double& MyRF);
 };
 
 

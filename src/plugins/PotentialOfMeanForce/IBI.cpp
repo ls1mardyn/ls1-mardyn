@@ -1,8 +1,8 @@
-#include"PMF.h"
+#include"IBI.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 
 
-void PMF::readXML(XMLfileUnits& xmlfile) {
+void IBI::readXML(XMLfileUnits& xmlfile) {
     xmlfile.getNodeValue("singleRun", mode_single_run);
     // using this double tmp buffer here to allow for easier configuration in xml file
     double tmp = 1e+6;
@@ -50,7 +50,7 @@ void PMF::readXML(XMLfileUnits& xmlfile) {
     if (mode_initial_rdf) mode_equilibrate = false;
 }
 
-void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* domain) {
+void IBI::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* domain) {
     if (mode_initial_rdf || mode_single_run) return;
 
     // check if we have more than one component
@@ -77,7 +77,7 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     Log::global_log->info() << "[PMF] Damping factor of "<< alpha << std::endl;
 }
 
-void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) {
+void IBI::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) {
     if (mode_single_run) {
         current_steps++;
 
@@ -156,7 +156,7 @@ void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long
     if (!mode_equilibrate) profiler.ProfileData(pc);
 }
 
-void PMF::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
+void IBI::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
     // everything else was already done during afterForces
     if (mode_single_run) {
         pairs_handler->getPotentialFunction().write("final_pot.txt");
@@ -188,7 +188,7 @@ void PMF::finish(ParticleContainer *particleContainer, DomainDecompBase *domainD
  * ****************** FUNCTIONS NOT FROM THE INTERFACE
  *******************/
 
-void PMF::InitializePotentialValues() {
+void IBI::InitializePotentialValues() {
     reference_potential.SetXValues(reference_rdf.GetXValues());
     reference_potential.SetYValues(reference_rdf.GetYValues());
 
@@ -215,7 +215,7 @@ void PMF::InitializePotentialValues() {
     reference_potential.write("pot_0.txt");
 }
 
-void PMF::AddPotentialCorrection() {
+void IBI::AddPotentialCorrection() {
     std::vector<double> avg_rdf;
     profiler.GetRDFTotal(avg_rdf);
 
@@ -249,13 +249,13 @@ void PMF::AddPotentialCorrection() {
     }
 }
 
-void PMF::DerivativeOfPotential() {
+void IBI::DerivativeOfPotential() {
     pairs_handler->getForceFunction() = pairs_handler->getPotentialFunction().Derivative(1e+6, 0.0);
     pairs_handler->getForceFunction() *= -1;
     pairs_handler->getForceFunction().write(createFilepath("force"));
 }
 
-void PMF::WriteRDF() {
+void IBI::WriteRDF() {
     std::vector<double> avg_rdf;
     profiler.GetRDFTotal(avg_rdf);
 
@@ -265,7 +265,7 @@ void PMF::WriteRDF() {
     rdfFunction.write(createFilepath("rdf"));
 }
 
-void PMF::CreateSwapComponent() {
+void IBI::CreateSwapComponent() {
     auto* components = _simulation.getEnsemble()->getComponents();
     // we have asserted during init that we only have one active component
     if (components->at(0).numSites() == 1 && components->at(0).numLJcenters() == 1) return; // no need to change
@@ -298,7 +298,7 @@ void PMF::CreateSwapComponent() {
     }
 }
 
-std::string PMF::createFilepath(const std::string &prefix) const {
+std::string IBI::createFilepath(const std::string &prefix) const {
     std::stringstream path;
     path << prefix << "_" << ibi_iteration << ".txt";
     return path.str();
@@ -308,7 +308,7 @@ std::string PMF::createFilepath(const std::string &prefix) const {
 //  CONVERGENCE CHECK
 //=============================================================
 
-void PMF::Convergence::init(double th, const std::string &mode_str, const std::string &stop_str, int window) {
+void IBI::Convergence::init(double th, const std::string &mode_str, const std::string &stop_str, int window) {
     if (mode_str == "l2") mode = L2;
     else mode = INTEGRAL;
     threshold = th;
@@ -317,7 +317,7 @@ void PMF::Convergence::init(double th, const std::string &mode_str, const std::s
     window_size = window;
 }
 
-std::pair<bool, double> PMF::Convergence::integral(const FunctionPL &ref, RDFProfiler& profiler) {
+std::pair<bool, double> IBI::Convergence::integral(const FunctionPL &ref, RDFProfiler& profiler) {
     const std::vector<double>& x = ref.GetXValues();
     const std::vector<double>& g_0 = ref.GetYValues();
     std::vector<double> g_i;
@@ -347,7 +347,7 @@ std::pair<bool, double> PMF::Convergence::integral(const FunctionPL &ref, RDFPro
     return {conv_value <= threshold, conv_value};
 }
 
-std::pair<bool, double> PMF::Convergence::l2(const FunctionPL &ref, RDFProfiler& profiler) {
+std::pair<bool, double> IBI::Convergence::l2(const FunctionPL &ref, RDFProfiler& profiler) {
     const std::vector<double>& g_0 = ref.GetYValues();
     std::vector<double> g_i;
     profiler.GetRDFTotal(g_i);
@@ -361,19 +361,19 @@ std::pair<bool, double> PMF::Convergence::l2(const FunctionPL &ref, RDFProfiler&
     return {vec_norm <= threshold, vec_norm};
 }
 
-void PMF::Convergence::LogValues(std::ostream &ostream) {
+void IBI::Convergence::LogValues(std::ostream &ostream) {
     for (double conv : conv_values) {
         ostream << conv << " ";
     }
 }
 
-std::pair<bool, double> PMF::Convergence::operator()(const FunctionPL &ref, RDFProfiler& profiler) {
+std::pair<bool, double> IBI::Convergence::operator()(const FunctionPL &ref, RDFProfiler& profiler) {
     if (mode == L2) return l2(ref, profiler);
     else if (mode == INTEGRAL) return integral(ref, profiler);
     else throw std::runtime_error("Unknown convergence method");
 }
 
-bool PMF::Convergence::ShouldStop() {
+bool IBI::Convergence::ShouldStop() {
     const auto steps = conv_values.size();
 
     if (stopping_mode == ON_WORSE) {

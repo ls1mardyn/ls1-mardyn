@@ -1,6 +1,6 @@
 #include "IBIPairsHandler.h"
 #include "molecules/potforce.h"
-#include "PMF.h"
+#include "IBI.h"
 
 IBIPairsHandler::IBIPairsHandler() {
     const int number_threads = mardyn_get_max_threads();

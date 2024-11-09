@@ -6,8 +6,33 @@
 #include "molecules/potforce.h"
 #include "plugins/AdResS/AdResS.h"
 
-AdResSForceAdapter::AdResSForceAdapter(Resolution::Handler& resolutionHandler) : _resolutionHandler(resolutionHandler),
-																				 _mesoValues() {
+AdResSForceAdapter::AdResSForceAdapter(Resolution::Handler& resolutionHandler, const std::string& cgForcePath, const std::string& cgPotPath) :
+_resolutionHandler(resolutionHandler), _mesoValues(), _ibiForce(), _ibiPot(), _useIBIFunctions(false) {
+    if (!cgForcePath.empty() && !cgPotPath.empty()) {
+        _ibiForce.read(cgForcePath);
+        _ibiPot.read(cgPotPath);
+        _useIBIFunctions = true;
+        Log::global_log->info() << "[AdResSForceAdapter]: Enabling IBI generated force function" << std::endl;
+    }
+    if (cgForcePath.empty() xor cgPotPath.empty()) {
+        Log::global_log->info() << "[AdResSForceAdapter]: Provided only one of ibi pot and ibi force." << std::endl;
+        Log::global_log->info() << "[AdResSForceAdapter]: Both are required!" << std::endl;
+        _simulation.exit(-1);
+    }
+
+    // when using IBI force assert that CG comp only has one site
+    if (_useIBIFunctions) {
+        int cg_idx = 0;
+        for (int idx = 0; idx < _resolutionHandler.getCompResMap().size(); idx++) {
+            if (_resolutionHandler.getCompResMap()[idx] == Resolution::CoarseGrain) cg_idx = idx;
+        }
+
+        if (auto& comp = _simulation.getEnsemble()->getComponents()->at(cg_idx); comp.numSites() != 1 || comp.numLJcenters() != 1) {
+            Log::global_log->info() << "[AdResSForceAdapter]: Using IBI force requires a single LJ-site CG model." << std::endl;
+            _simulation.exit(-1);
+        }
+    }
+
     const int numThreads = mardyn_get_max_threads();
     Log::global_log->info() << "[AdResSForceAdapter]: allocate data for " << numThreads << " threads." << std::endl;
 
@@ -106,27 +131,23 @@ AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaS
                              double &UpotXpoles,
                              double &MyRF, double Virial[3], bool calculateLJ, bool noHybrid,
                              const std::vector<Resolution::ResolutionType> &compResMap, const Resolution::FPRegion &region) {
-    if(noHybrid) {
-        PotForce(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ);
-        return;
-    }
-
     bool isHybridI, isHybridJ;
     isHybridI = compResMap[mi.componentid()] == Resolution::Hybrid;
     isHybridJ = compResMap[mj.componentid()] == Resolution::Hybrid;
 
-    if(isHybridI && isHybridJ) {
-        potForceFullHybrid(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ, region);
-        return;
+    if(noHybrid) {
+        bool isCGI, isCGJ;
+        isCGI = compResMap[mi.componentid()] == Resolution::CoarseGrain;
+        isCGJ = compResMap[mj.componentid()] == Resolution::CoarseGrain;
+        if (isCGI && isCGJ) return PotForceIBI(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial);
+        if (isCGI xor isCGJ) throw std::runtime_error("AdResSForceAdapter: CG and FP are interacting.");
+
+        return PotForce(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ);
     }
-    if(isHybridI) {
-        potForceSingleHybrid(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ, region, compResMap[mj.componentid()]);
-        return;
-    }
-    if(isHybridJ) {
-        potForceSingleHybrid(mj, mi, paramInv, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ, region, compResMap[mi.componentid()]);
-        return;
-    }
+
+    if(isHybridI && isHybridJ) return potForceFullHybrid(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ, region);
+    if(isHybridI) return potForceSingleHybrid(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ, region, compResMap[mj.componentid()]);
+    if(isHybridJ) return potForceSingleHybrid(mj, mi, paramInv, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ, region, compResMap[mi.componentid()]);
 
     // we should never reach this point
     // only get to here if some particles component is not set correctly, can happen during initialization
@@ -138,27 +159,23 @@ AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaS
 void AdResSForceAdapter::fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, ParaStrm &paramInv, double *drm, double &Upot6LJ,
                                   double &UpotXpoles, double &MyRF, bool calculateLJ, bool noHybrid,
                                   const std::vector<Resolution::ResolutionType> &compResMap, const Resolution::FPRegion &region) {
-    if(noHybrid) {
-        FluidPot(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ);
-        return;
-    }
-
     bool isHybridI, isHybridJ;
     isHybridI = compResMap[mi.componentid()] == Resolution::Hybrid;
     isHybridJ = compResMap[mj.componentid()] == Resolution::Hybrid;
 
-    if(isHybridI && isHybridJ) {
-        fluidPotFullHybrid(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ, region);
-        return;
+    if(noHybrid) {
+        bool isCGI, isCGJ;
+        isCGI = compResMap[mi.componentid()] == Resolution::CoarseGrain;
+        isCGJ = compResMap[mj.componentid()] == Resolution::CoarseGrain;
+        if (isCGI && isCGJ) return FluidPotIBI(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF);
+        if (isCGI xor isCGJ) throw std::runtime_error("AdResSForceAdapter: CG and FP are interacting.");
+
+        return FluidPot(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ);
     }
-    if(isHybridI) {
-        fluidPotSingleHybrid(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ, region, compResMap[mj.componentid()]);
-        return;
-    }
-    if(isHybridJ) {
-        fluidPotSingleHybrid(mj, mi, paramInv, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ, region, compResMap[mi.componentid()]);
-        return;
-    }
+
+    if(isHybridI && isHybridJ) return fluidPotFullHybrid(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ, region);
+    if(isHybridI) return fluidPotSingleHybrid(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ, region, compResMap[mj.componentid()]);
+    if(isHybridJ) return fluidPotSingleHybrid(mj, mi, paramInv, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ, region, compResMap[mi.componentid()]);
 
     // we should never reach this point
     //Simulation::exit(671);
@@ -213,18 +230,32 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
                 double shift6;
                 params >> shift6; // must be 0.0 for full LJ
                 if (calculateLJ) {
-                    PotForceLJ(drs, dr2, eps24, sig2, f, u);
-                    u += shift6;
+                    if (_useIBIFunctions && isCGi) {
+                        double r = std::sqrt(dr2);
+                        const double Upot = _ibiPot.EvaluateAt(r);
+                        const double F = _ibiForce.EvaluateAt(r);
+                        for (int d = 0; d < 3; d++) f[d] = F * (drs[d] / r) * (1 - wi * wj);
+                        u = Upot * (1 - wi * wj);
 
-                    //if mass 0 -> weight inv; if mass > 0 weight
-                    if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; }
-                    else { for (double &d: f) d *= wi * wj; u *= wi * wj; }
+                        mi.Fljcenteradd(si, f);
+                        mj.Fljcentersub(sj, f);
+                        Upot6LJ += u;
+                        for (unsigned short d = 0; d < 3; ++d)
+                            Virial[d] += 0.5*drm[d] * f[d];
+                    } else {
+                        PotForceLJ(drs, dr2, eps24, sig2, f, u);
+                        u += shift6;
 
-                    mi.Fljcenteradd(si, f);
-                    mj.Fljcentersub(sj, f);
-                    Upot6LJ += u;
-                    for (unsigned short d = 0; d < 3; ++d)
-                        Virial[d] += 0.5*drm[d] * f[d];
+                        //if mass 0 -> weight inv; if mass > 0 weight
+                        if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; }
+                        else { for (double &d: f) d *= wi * wj; u *= wi * wj; }
+
+                        mi.Fljcenteradd(si, f);
+                        mj.Fljcentersub(sj, f);
+                        Upot6LJ += u;
+                        for (unsigned short d = 0; d < 3; ++d)
+                            Virial[d] += 0.5*drm[d] * f[d];
+                    }
                 }
             }
         }
@@ -543,18 +574,32 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
                 double shift6;
                 params >> shift6; // must be 0.0 for full LJ
                 if (calculateLJ) {
-                    PotForceLJ(drs, dr2, eps24, sig2, f, u);
-                    u += shift6;
+                    if (_useIBIFunctions && isCGSiteI) {
+                        double r = std::sqrt(dr2);
+                        const double Upot = _ibiPot.EvaluateAt(r);
+                        const double F = _ibiForce.EvaluateAt(r);
+                        for (int d = 0; d < 3; d++) f[d] = F * (drs[d] / r) * (1 - wi * wj);
+                        u = Upot * (1 - wi * wj);
 
-                    //if mass 0 -> weight inv; if mass > 0 weight
-                    if(isCGSiteI) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj;}
-                    else { for (double &d: f) d *= wi * wj; u *= wi * wj;}
+                        mi.Fljcenteradd(si, f);
+                        mj.Fljcentersub(sj, f);
+                        Upot6LJ += u;
+                        for (unsigned short d = 0; d < 3; ++d)
+                            Virial[d] += 0.5*drm[d] * f[d];
+                    } else {
+                        PotForceLJ(drs, dr2, eps24, sig2, f, u);
+                        u += shift6;
 
-                    mi.Fljcenteradd(si, f);
-                    mj.Fljcentersub(sj, f);
-                    Upot6LJ += u;
-                    for (unsigned short d = 0; d < 3; ++d)
-                        Virial[d] += 0.5*drm[d] * f[d];
+                        //if mass 0 -> weight inv; if mass > 0 weight
+                        if(isCGSiteI) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj;}
+                        else { for (double &d: f) d *= wi * wj; u *= wi * wj;}
+
+                        mi.Fljcenteradd(si, f);
+                        mj.Fljcentersub(sj, f);
+                        Upot6LJ += u;
+                        for (unsigned short d = 0; d < 3; ++d)
+                            Virial[d] += 0.5*drm[d] * f[d];
+                    }
                 }
             }
         }
@@ -866,11 +911,19 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
                 double shift6;
                 params >> shift6; // must be 0.0 for full LJ
                 if (calculateLJ) {
-                    PotForceLJ(drs, dr2, eps24, sig2, f, u);
-                    if(isCGi) { u *= 1 - wi * wj;}
-                    else { u *= wi * wj;}
-                    u += shift6;
-                    Upot6LJ += u;
+                    if (_useIBIFunctions && isCGi) {
+                        double r = std::sqrt(dr2);
+                        const double Upot = _ibiPot.EvaluateAt(r);
+                        u = Upot * (1 - wi * wj);
+                        Upot6LJ += u;
+                    }
+                    else {
+                        PotForceLJ(drs, dr2, eps24, sig2, f, u);
+                        if(isCGi) { u *= 1 - wi * wj;}
+                        else { u *= wi * wj;}
+                        u += shift6;
+                        Upot6LJ += u;
+                    }
                 }
             }
         }
@@ -1108,11 +1161,19 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
                 double shift6;
                 params >> shift6; // must be 0.0 for full LJ
                 if (calculateLJ) {
-                    PotForceLJ(drs, dr2, eps24, sig2, f, u);
-                    if(isCGSiteI) { u *= 1 - wi * wj;}
-                    else { u *= wi * wj;}
-                    u += shift6;
-                    Upot6LJ += u;
+                    if (_useIBIFunctions && isCGSiteI) {
+                        double r = std::sqrt(dr2);
+                        const double Upot = _ibiPot.EvaluateAt(r);
+                        u = Upot * (1 - wi * wj);
+                        Upot6LJ += u;
+                    }
+                    else {
+                        PotForceLJ(drs, dr2, eps24, sig2, f, u);
+                        if(isCGSiteI) { u *= 1 - wi * wj;}
+                        else { u *= wi * wj;}
+                        u += shift6;
+                        Upot6LJ += u;
+                    }
                 }
             }
         }
@@ -1303,5 +1364,50 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
         }
     }
     // check whether all parameters were used
+    mardyn_assert(params.eos());
+}
+
+void AdResSForceAdapter::PotForceIBI(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3]) {
+    double f[3];
+    double u;
+    double drs[3], dr2; // site distance vector & length^2
+    Virial[0]=0.;
+    Virial[1]=0.;
+    Virial[2]=0.;
+
+    const std::array<double,3> dii = mi.ljcenter_d_abs(0);
+    const std::array<double,3> djj = mj.ljcenter_d_abs(0);
+    SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+    double eps24, sig2, shift6;
+    params >> eps24; params >> sig2; params >> shift6;
+
+    double r = std::sqrt(dr2);
+    const double Upot = _ibiPot.EvaluateAt(r);
+    const double F = _ibiForce.EvaluateAt(r);
+    for (int d = 0; d < 3; d++) f[d] = F * (drs[d] / r);
+    u = Upot;
+
+    mi.Fljcenteradd(0, f);
+    mj.Fljcentersub(0, f);
+    Upot6LJ += u;
+    for (unsigned short d = 0; d < 3; ++d)
+        Virial[d] += 0.5*drm[d] * f[d];
+
+    mardyn_assert(params.eos());
+}
+
+void AdResSForceAdapter::FluidPotIBI(Molecule &mi, Molecule &mj, ParaStrm &params, double *, double &Upot6LJ,
+                                     double &, double &) {
+    double drs[3], dr2; // site distance vector & length^2
+
+    const std::array<double,3> dii = mi.ljcenter_d_abs(0);
+    const std::array<double,3> djj = mj.ljcenter_d_abs(0);
+    SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+    double eps24, sig2, shift6;
+    params >> eps24; params >> sig2; params >> shift6;
+
+    double r = std::sqrt(dr2);
+    Upot6LJ += _ibiPot.EvaluateAt(r);
+
     mardyn_assert(params.eos());
 }
