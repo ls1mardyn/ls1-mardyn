@@ -1,4 +1,4 @@
-#include "PMF.h"
+#include "Resolution.h"
 
 void InteractionSite::SubForce(std::array<double,3> f){
     for(int i=0;i<f.size();i++){
@@ -16,16 +16,16 @@ void InteractionSite::AddPotential(double u){
     this->u_com += u;
 }
 
-void InteractionSite::SetPosition(std::array<double, 3> pos){
-    this->_r=pos;
+void InteractionSite::SetPosition(std::array<double, 3>& pos){
+    this->r_com=pos;
 }
 
-void InteractionSite::SetVelocity(std::array<double, 3> vel){
+void InteractionSite::SetVelocity(std::array<double, 3>& vel){
     this->v_com = vel;
 }
 
 std::array<double,3>& InteractionSite::GetPosition(){
-    return this->_r;
+    return this->r_com;
 }
 
 std::array<double,3>& InteractionSite::GetVelocity(){

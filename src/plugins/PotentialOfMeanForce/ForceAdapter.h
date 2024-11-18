@@ -24,7 +24,7 @@ class InteractionForceAdapter:public ParticlePairsHandler{
     enum class InteractionType {onlyfp=0, mixed=1, onlycg=2, unspecified=3};
     public: 
 
-    InteractionForceAdapter(ResolutionHandler& res, PMF* pmf);
+    InteractionForceAdapter(ResolutionHandler& res,ResolutionComponentHandler&, PMF* pmf);
     virtual ~InteractionForceAdapter() override {}
     //Interface methods
     void init() override;
@@ -63,6 +63,7 @@ class InteractionForceAdapter:public ParticlePairsHandler{
     private:
 
     ResolutionHandler& resolution_handler;
+    ResolutionComponentHandler& component_handler;
     PMF* adres;
     std::vector<ParticlePairs2PotForceAdapter::PP2PFAThreadData*> thread_data;
 };

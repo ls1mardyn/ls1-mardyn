@@ -37,9 +37,6 @@ void InternalCellProcessor::processCell(ParticleCell& cell){
         for(auto it1 = begin;it1.isValid();++it1){
             std::array<double,3> com1={0.0,0.0,0.0};
             Molecule& m1 = *it1;
-            double eps, sig, pot;
-            sig = m1.component()->getSigma(0);
-            eps = m1.component()->getEps(0);
             com1 = my_profiler->GetCOM(&m1);
             auto it2 = it1;
             ++it2;
@@ -51,9 +48,7 @@ void InternalCellProcessor::processCell(ParticleCell& cell){
                 //Now we compute the distance between the COMs
                 distance = DistanceBetweenCOMs(com1,com2);
                 if(distance < _cutoffRadiusSquare){
-
-                    pot = PotentialCallBack(eps,sig,distance);
-                    my_profiler->ProcessDistance(distance, pot);
+                    my_profiler->ProcessDistance(distance, 0.0);
                 }
     
             }
@@ -82,7 +77,7 @@ void InternalCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, 
                 com2 = my_profiler->GetCOM(&m2);
                 distance = DistanceBetweenCOMs(com1,com2);
                 if(distance < _cutoffRadiusSquare){
-                    pot = PotentialCallBack(eps,sig,distance);
+                    // pot = PotentialCallBack(eps,sig,distance);
                     my_profiler->ProcessDistance(distance,pot);
                 }
             }
@@ -102,7 +97,7 @@ void InternalCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, 
                     com2 = my_profiler->GetCOM(&m2);
                     distance = DistanceBetweenCOMs(com1,com2);
                     if(distance < _cutoffRadiusSquare){
-                        pot = PotentialCallBack(eps,sig,distance);
+                        // pot = PotentialCallBack(eps,sig,distance);
                         my_profiler->ProcessDistance(distance,pot);
                     }
 
@@ -128,7 +123,7 @@ void InternalCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, 
                     distance = DistanceBetweenCOMs(com1,com2);
                     
                     if(distance < _cutoffRadiusSquare){
-                        pot = PotentialCallBack(eps,sig,distance);
+                        // pot = PotentialCallBack(eps,sig,distance);
                         my_profiler->ProcessDistance(distance,pot);
                     }
                 }

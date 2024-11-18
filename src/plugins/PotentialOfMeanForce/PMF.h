@@ -17,31 +17,22 @@
 #include "plugins/RDFAtCOM.h"
 #include "ForceAdapter.h"
 #include "ProfilerPMF.h"
-#include "Filter.h"
 #include "Convergence.h"
-
+#include "plugins/PotentialOfMeanForce/common.h"
 class InteractionSite;
 
 class PMF:public PluginBase{
-
-    // using tracker = std::pair<InteractionSite,ResolutionType>;
     private:
 
     Interpolate reference_rdf_interpolation;//should not touch
     Interpolate potential_interpolation;//updated on every step or stride
     Interpolate acc_rdf_interpolation;//current avg value so far 
     Interpolate derivative_interpolation;//stores derivatives potential
-
     InternalProfiler profiler;//measuring tool
-    Filter filter;
     Convergence convergence;
     std::vector<FPRegion> regions;
-    /**
-     * Stores a COM site for every molecule (needs improvement)
-     */
-    // std::map<unsigned long, tracker> sites;
     ResolutionHandler resolution_handler;
-    ResolutionComponentHandler res_comp_handler;
+    ResolutionComponentHandler component_handler;
     /**
      * L2 norm, used for hybrid
      */
@@ -53,9 +44,6 @@ class PMF:public PluginBase{
     int update_stride=300;//how often to IBI
     double multiplier;//alpha for step size
     bool output;
-
-
-    // DataPostProcess post_processing;
 
     struct ConvergenceTest{
         bool ConvergenceCheck(std::vector<double>& ref, std::vector<double>& crrnt){
@@ -115,10 +103,10 @@ class PMF:public PluginBase{
     Interpolate& GetRDFInterpolation();
     Interpolate& GetAVGRDFInterpolation();
     Interpolate& GetPotentialInterpolation();
-    ResolutionComponentHandler& GetResolutionHandler(){
-        return res_comp_handler;
-    }
 
+    ResolutionHandler& GetResolutionHandler(){
+        return this->resolution_handler;
+    }
     /**
      * Maps the com forces to FP, formula:
      * F_{i\alpha\beta} = \num{m_{i\alpha}}\den{\sum_{i\alpha}{m_{i\alpha}}}F^{cm}_{\alpha\beta}
@@ -156,29 +144,6 @@ class PMF:public PluginBase{
     void AddPotentialCorrection(unsigned long step);
     void AccumulateRDF(ParticleContainer* pc, Domain* domain);
 
-
-
-};
-
-
-/**
- * Stores velocity, position, force, potential
- */
-class InteractionSite:public Site{
-    private:
-    double u_com;
-    std::array<double,3> f_com;
-    std::array<double,3> v_com;//not used
-
-    public: 
-    void SubForce(std::array<double, 3> f);
-    void AddForce(std::array<double,3> f);
-    void AddPotential(double pot);
-    void SetPosition(std::array<double,3> pos);
-    void SetVelocity(std::array<double,3> pos);
-
-    std::array<double,3>& GetPosition();
-    std::array<double,3>& GetVelocity();
 
 
 };

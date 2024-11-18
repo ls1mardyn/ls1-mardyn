@@ -2,7 +2,7 @@
 #include "molecules/potforce.h"
 #include "PMF.h"
 
-InteractionForceAdapter::InteractionForceAdapter(ResolutionHandler& handle, PMF* pmf):resolution_handler{handle},adres{pmf}{
+InteractionForceAdapter::InteractionForceAdapter(ResolutionHandler& handle,ResolutionComponentHandler& hdler,  PMF* pmf):resolution_handler{handle},adres{pmf},component_handler{hdler}{
 
     const int number_threads = mardyn_get_max_threads();
     Log::global_log->info()<<"[InteractionForceAdapter]: allocate data for "<<number_threads<<" threads."<<std::endl;
@@ -29,7 +29,7 @@ void InteractionForceAdapter::init(){
 		const int own_id = mardyn_get_thread_num();
 		thread_data[own_id]->initComp2Param(domain->getComp2Params());
 		thread_data[own_id]->clear();
-	}
+    }
 
 }
 
@@ -39,23 +39,28 @@ void InteractionForceAdapter::finish(){
 
 double InteractionForceAdapter::processPair(Molecule& m1, Molecule& m2, double distance[3], PairType pair, double dd, bool CalculateLJ){
     std::vector<FPRegion>& regions = adres->GetRegions();
-    //check if any of the 2 molecules is hybrid
+
+    std::array<double, 3> com1 = CenterOfMass(m1);
+    std::array<double, 3> com2 = CenterOfMass(m2);
+
     bool has_hybrid = false;
     InteractionType interaction;
-    if(adres->GetResolutionHandler().GetMoleculeResolution(m1)==Hybrid || adres->GetResolutionHandler().GetMoleculeResolution(m2)==Hybrid)
+    // if(component_handler.GetMoleculeResolution(m1)==ResolutionType::Hybrid || component_handler.GetMoleculeResolution(m2)==ResolutionType::Hybrid)
+    if(resolution_handler.GetCOMResolution(com1,regions)==Hybrid || resolution_handler.GetCOMResolution(com2,regions)==Hybrid)
     {
         has_hybrid = true;
         interaction = InteractionType::mixed;
     }
 
-    //Check if both are 
-    if(adres->GetResolutionHandler().GetMoleculeResolution(m1)==CoarseGrain && adres->GetResolutionHandler().GetMoleculeResolution(m2)==CoarseGrain){
+    // if(component_handler.GetMoleculeResolution(m1)==ResolutionType::CoarseGrain && component_handler.GetMoleculeResolution(m2)==CoarseGrain)
+    if(resolution_handler.GetCOMResolution(com1,regions)==CoarseGrain && resolution_handler.GetCOMResolution(com2,regions)==CoarseGrain)
+    {
         interaction = InteractionType::onlycg;
     }
 
-    //check if any of the 2 molecules is coarsegrain
-    //Check if both are 
-    if(adres->GetResolutionHandler().GetMoleculeResolution(m1)==FullParticle && adres->GetResolutionHandler().GetMoleculeResolution(m2)==FullParticle){
+    // if(component_handler.GetMoleculeResolution(m1)==ResolutionType::FullParticle && component_handler.GetMoleculeResolution(m2) == FullParticle)
+    if(resolution_handler.GetCOMResolution(com1,regions)==FullParticle && resolution_handler.GetCOMResolution(com2,regions)==FullParticle)
+    {
         interaction = InteractionType::onlyfp;
     }
     
@@ -93,8 +98,8 @@ double InteractionForceAdapter::processPairBackend(Molecule& m1, Molecule& m2, d
 void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, InteractionType interaction){
     //Pure interaction case
     if(interaction == InteractionType::onlyfp){
-        Log::global_log->error()<<"PotForceType cannot be FP"<<std::endl;
-        // PotForceOnlyCG(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
+        // Log::global_log->error()<<"PotForceType cannot be FP"<<std::endl;
+        PotForceOnlyCG(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
     }
 
     if(interaction == InteractionType::onlycg){
@@ -102,14 +107,14 @@ void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm&
     }
 
     if(interaction == InteractionType::mixed){
-        Log::global_log->error()<<"PotForceType cannot be Mixed"<<std::endl;
+        // Log::global_log->error()<<"PotForceType cannot be Mixed"<<std::endl;
         /**
          * m1 hy vs m2 cg
          * m1 hy vs m2 at
          * viceversa
 		 * m1 hy vs m2 hy
          */
-        // PotForceOnlyCG(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
+        PotForceHybrid(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
         //PotForce(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
     }
 }
@@ -141,8 +146,8 @@ void InteractionForceAdapter::PotForceHybrid(Molecule& m1, Molecule& m2, ParaStr
 
 void InteractionForceAdapter::PotForceHybridBackend(Molecule& m1, Molecule& m2, ParaStrm& params, double* distance, double& Upot6LJ, double& UpotXPoles, double& MyRF, double virial[3], bool calcLJ, FPRegion& region){
 
-    std::array<double, 3> com1;
-    std::array<double, 3> com2;
+    std::array<double, 3> com1 = CenterOfMass(m1);
+    std::array<double, 3> com2 = CenterOfMass(m2);
 
     //assume both m1 and m2 are hybrid molecules
 
@@ -212,10 +217,7 @@ void InteractionForceAdapter::PotForceHybridBackend(Molecule& m1, Molecule& m2, 
         //Compute potential and force
         Upot = PotentialOfMeanForce(r_com);
         ForceOfPotentialOfMeanForce(f_com,r_com);
-        //Set quantities
-        // adres->GetMoleculeCOMSite(m1.getID()).AddPotential(Upot);
-        // adres->GetMoleculeCOMSite(m1.getID()).AddForce(f_com);
-		// adres->GetMoleculeCOMSite(m2.getID()).SubForce(f_com);
+
     }
 
     for(int i=0;i<f_com.size();i++){
@@ -235,6 +237,10 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
     std::array<double, 3> com1 = CenterOfMass(m1);
     std::array<double, 3> com2 = CenterOfMass(m2);
 
+    // std::array<double, 3> com1 = resolution_handler.GetMoleculeTrackerPosition(m1.getID());
+    // std::array<double, 3> com2 = resolution_handler.GetMoleculeTrackerPosition(m2.getID());
+
+
     double r_com = std::sqrt(SqrdDistanceBetweenCOMs(com1,com2));
     //Interact only on com sites
     {
@@ -249,7 +255,7 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
         ForceOfPotentialOfMeanForce(f,r_com);
 
 
-        // MapToAtomistic(m1,m2,f);
+        MapToAtomistic(m1,m2,f);
 
 		Upot6LJ += Upot;
 
