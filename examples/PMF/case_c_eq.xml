@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>1000</steps>
+        <steps>100000</steps>
       </production>
     </run>
     
