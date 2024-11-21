@@ -102,6 +102,7 @@
         <updateStride>1000</updateStride>
         <rdfOutputStride>100</rdfOutputStride>
         <output>true</output>
+        <mode>OnlyCG</mode>
     </plugin>
         
   </simulation>

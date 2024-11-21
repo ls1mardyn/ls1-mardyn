@@ -224,7 +224,7 @@ void InteractionForceAdapter::PotForceHybridBackend(Molecule& m1, Molecule& m2, 
         f_com[i] *= (1.0-w1*w2);
     }
     //need to map f_{com} to F_{at}
-	adres->MapToAtomistic(f_com,m1,m2);
+	MapToAtomistic(m1,m2,f_com);
     
 }
 

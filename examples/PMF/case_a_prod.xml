@@ -62,10 +62,10 @@
     
     <output>
  
-    <!--outputplugin name="VTKMoleculeWriter">
+    <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
       <writefrequency>5</writefrequency>
-    </outputplugin-->
+    </outputplugin>
 
     <!--outputplugin name="CheckpointWriter">
       <type>binary</type>
@@ -78,11 +78,17 @@
     <plugin name="PMF">
         <fpregions>
           <region id = "1">
+            <lowX>6.5</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+            <highX>8.5</highX><highY>15</highY><highZ>15</highZ>
+            <hybridDimX>3</hybridDimX><hybridDimY>0.0</hybridDimY>
+            <hybridDimZ>0.0</hybridDimZ>
+          </region>
+          <!--region id = "1">
             <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
             <highX>0.0</highX><highY>0.0</highY><highZ>0.0</highZ>
             <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
             <hybridDimZ>0.0</hybridDimZ>
-          </region>
+          </region-->
         </fpregions>
         <multiplier>0.7</multiplier>
         <internalBins>100</internalBins>
@@ -90,6 +96,7 @@
         <updateStride>1000</updateStride>
         <rdfOutputStride>100</rdfOutputStride>
         <output>true</output>
+        <mode>Production</mode>
     </plugin>
         
   </simulation>

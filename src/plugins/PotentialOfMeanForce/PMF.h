@@ -19,11 +19,14 @@
 #include "ProfilerPMF.h"
 #include "Convergence.h"
 #include "plugins/PotentialOfMeanForce/common.h"
+#include "Statistics.h"
 class InteractionSite;
+enum class Mode{Equilibration, OnlyCG, Production};
 
 class PMF:public PluginBase{
-    private:
 
+    private:
+    Mode mode = Mode::OnlyCG;
     Interpolate reference_rdf_interpolation;//should not touch
     Interpolate potential_interpolation;//updated on every step or stride
     Interpolate acc_rdf_interpolation;//current avg value so far 
@@ -38,6 +41,8 @@ class PMF:public PluginBase{
      */
     WeightFunction weight_function;
     InteractionForceAdapter* pairs_handler;
+
+    StatisticsAdResS adres_statistics;
 
     double internal_bins;//used for profiler
     int measure_frequency;//used for profiler
@@ -134,6 +139,7 @@ class PMF:public PluginBase{
      * Read in reference RDF
      */
     void ReadRDF();
+    void ReadEffectivePotential();
     /**
      * Implements U(r)_0 = -T^*ln(g(r)_0)
      */

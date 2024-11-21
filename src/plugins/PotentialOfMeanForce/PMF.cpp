@@ -16,10 +16,6 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), pairs_handler));
     Log::global_log->info()<<"[PMF]LegacyCellProcessor set\n";
 
-    
-    this->ReadRDF();
-    Log::global_log->info()<<"[PMF] RDF has been read successfully\n";
-
     for(auto it= pc->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);it.isValid();++it){
         unsigned long m_id = it->getID();
         std::array<double,3> com = ComputeCOM(*it);
@@ -52,9 +48,25 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     acc_rdf_interpolation.SetXValues(profiler.GetBinCenters());
     acc_rdf_interpolation.GetYValues().resize(internal_bins);
 
-    this->InitializePotentialValues();
+    this->ReadRDF();
+    Log::global_log->info()<<"[PMF] RDF has been read successfully\n";
+
+    if(mode == Mode::Production){
+        this->ReadEffectivePotential();
+        Log::global_log->info()<<"[PMF] Effective potential has been read successfully\n";
+    }
+
+    if(mode ==Mode::OnlyCG){
+        this->InitializePotentialValues();
+        Log::global_log->info()<<"[PMF] PMF computed as initial guess\n";
+    }
+
     component_handler.init();
     Log::global_log->info()<<"[PMF] Component handler initialized"<<std::endl;
+
+    adres_statistics.init(regions[0]);
+    Log::global_log->info()<<"[PMF] Statistical tool initialized"<<std::endl;
+
 }
 
 void PMF::readXML(XMLfileUnits& xmlfile){
@@ -80,8 +92,21 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     xmlfile.getNodeValue("measureFreq",measure_frequency);
     xmlfile.getNodeValue("output",output);
     xmlfile.getNodeValue("updateStride",update_stride);
+    std::string mode_name;
+    xmlfile.getNodeValue("mode",mode_name);
+    if(mode_name == "Equilibration"){
+        mode = Mode::Equilibration;
+    }
+    if(mode_name == "OnlyCG"){
+        mode = Mode::OnlyCG;
+    }
+    if(mode_name == "Production"){
+        mode = Mode::Production;
+    }
     Log::global_log->info()<<"[PMF] Target temperature = "<<_simulation.getEnsemble()->T()<<std::endl;
-
+    if(mode == Mode::Production){
+        Log::global_log->info()<<"[PMF] Mode set to Production"<<std::endl;
+    }
 }
 
 void PMF::beforeForces(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep){
@@ -106,10 +131,9 @@ void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long
 }
 
 void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, unsigned long step){
-
+    adres_statistics.MeasureStatistics(pc);
+    adres_statistics.Output();
     AccumulateRDF(pc,domain);
-
-    convergence.PrintGlobalConvergence2File();
 
     if(step > 0 && step%100==0){
         std::string filename="avg_rdf_"+std::to_string(step)+".txt";
@@ -120,14 +144,14 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
         rdf_file.close();
     }
     
+    if(mode == Mode::OnlyCG){
+    Log::global_log->info()<<"[UpdatePotential]Computing effective potential"<<std::endl;
     std::vector<double> current_rdf = GetAverageRDF();
 
+    convergence.PrintGlobalConvergence2File();
     convergence.CheckConvergence(reference_rdf_interpolation.GetYValues(),current_rdf);
     convergence.PrintLocalConvergence2File(step);
-    // #if defined _OPENMP
-    // #pragma omp barrier
-    // #endif
-    // if(convergence.TriggerPotentialUpdate()){
+
     if(step%update_stride ==0 && step>0){
         Log::global_log->info()<<"[UpdatePotential]Update potential now"<<std::endl;
         convergence.PrepareUpdate();
@@ -148,7 +172,7 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
         potential.close();
     }
 
-
+    }
 }
 
 void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
@@ -249,6 +273,29 @@ void PMF::ReadRDF(){
 
     reference_rdf_interpolation.SetXValues(x_values);
     reference_rdf_interpolation.SetYValues(y_values);
+
+}
+
+void PMF::ReadEffectivePotential(){
+
+    std::string filename;
+    std::vector<double> x_values;
+    std::vector<double> y_values;
+
+    filename = "cg_potential.txt";
+    std::ifstream file{filename};
+    if(!file){
+        Log::global_log->error()<<"[PMF] I could not read the potential data file"<<std::endl;
+    }
+    double n1, n2;
+
+    while(file >> n1 >> n2){
+        x_values.push_back(n1);
+        y_values.push_back(n2);
+    }
+
+    potential_interpolation.SetXValues(x_values);
+    potential_interpolation.SetYValues(y_values);
 
 }
 
