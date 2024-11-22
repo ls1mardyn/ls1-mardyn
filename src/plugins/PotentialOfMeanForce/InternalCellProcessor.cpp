@@ -1,6 +1,13 @@
 #include "ProfilerPMF.h"
 
-InternalCellProcessor::InternalCellProcessor(const double cr, InternalProfiler* r):CellProcessor{cr,cr},my_profiler{r}{
+InternalCellProcessor::InternalCellProcessor(const double cr, int bins, double width):CellProcessor{cr,cr},bin_width{width}{
+
+    thread_data.resize(mardyn_get_max_threads());
+    global_buffer.resize(bins,0.0);
+    #pragma omp parallel
+    {
+        thread_data[mardyn_get_thread_num()].resize(bins,0.0);
+    }
 
 }
 
@@ -17,40 +24,18 @@ double InternalCellProcessor::DistanceBetweenCOMs(std::array<double,3>& c1, std:
 
 }
 
-double InternalCellProcessor::PotentialCallBack(double e, double s, double r2){
-    double pot=0;
-
-    double inv_r2 = 1.0/r2;
-    double lj6 = s*s*inv_r2;
-    lj6 = lj6*lj6*lj6;
-    double lj12 = lj6*lj6;
-    double lj12m6 = lj12 - lj6;
-    pot = lj12m6*e*4.0;
-    if(std::isinf(pot)) return 0.0;
-    return pot;
-}
-
 void InternalCellProcessor::processCell(ParticleCell& cell){
     if(cell.isInnerCell() || cell.isBoundaryCell()){
         auto begin = cell.iterator();
         double distance=0.0;
         for(auto it1 = begin;it1.isValid();++it1){
-            std::array<double,3> com1={0.0,0.0,0.0};
             Molecule& m1 = *it1;
-            com1 = my_profiler->GetCOM(&m1);
             auto it2 = it1;
             ++it2;
             for(;it2.isValid();++it2){
                 Molecule& m2 = *it2;
-                std::array<double,3> com2={0.0,0.0,0.0};
-                com2 = my_profiler->GetCOM(&m2);
                 mardyn_assert(&m1 != &m2);
-                //Now we compute the distance between the COMs
-                distance = DistanceBetweenCOMs(com1,com2);
-                if(distance < _cutoffRadiusSquare){
-                    my_profiler->ProcessDistance(distance, 0.0);
-                }
-    
+                this->ProcessPairData(m1,m2);
             }
     
         }
@@ -61,25 +46,12 @@ void InternalCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, 
 
     auto begin1 = c1.iterator();
     auto begin2 = c2.iterator();
-    double distance=0.0;
-    std::array<double,3> com1={0.0,0.0,0.0};
-    std::array<double,3> com2={0.0,0.0,0.0};
     if(sumAll){
         for(auto it1=begin1;it1.isValid();++it1){
             Molecule& m1 = *it1;
-            double eps, sig, pot;
-            sig = m1.component()->getSigma(0);
-            eps = m1.component()->getEps(0);
-
-            com1 = my_profiler->GetCOM(&m1);
             for(auto it2 =begin2;it2.isValid();++it2){
                 Molecule& m2 = *it2;
-                com2 = my_profiler->GetCOM(&m2);
-                distance = DistanceBetweenCOMs(com1,com2);
-                if(distance < _cutoffRadiusSquare){
-                    // pot = PotentialCallBack(eps,sig,distance);
-                    my_profiler->ProcessDistance(distance,pot);
-                }
+                this->ProcessPairData(m1,m2);
             }
         }
     }
@@ -88,19 +60,9 @@ void InternalCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, 
 
             for(auto it1=begin1;it1.isValid();++it1){
                 Molecule& m1 = *it1;
-                double eps, sig, pot;
-                sig = m1.component()->getSigma(0);
-                eps = m1.component()->getEps(0);
-                com1 = my_profiler->GetCOM(&m1);
                 for(auto it2=begin2;it2.isValid();++it2){
                     Molecule& m2 = *it2;
-                    com2 = my_profiler->GetCOM(&m2);
-                    distance = DistanceBetweenCOMs(com1,com2);
-                    if(distance < _cutoffRadiusSquare){
-                        // pot = PotentialCallBack(eps,sig,distance);
-                        my_profiler->ProcessDistance(distance,pot);
-                    }
-
+                    this->ProcessPairData(m1,m2);
                 }
             }
 
@@ -113,22 +75,36 @@ void InternalCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, 
 
             for(auto it1=begin1;it1.isValid();++it1){
                 Molecule& m1 = *it1;
-                double eps, sig, pot;
-                sig = m1.component()->getSigma(0);
-                eps = m1.component()->getEps(0);
-                com1 = my_profiler->GetCOM(&m1);
                 for(auto it2=begin2;it2.isValid();++it2){
                     Molecule& m2 = *it2;
-                    com2 = my_profiler->GetCOM(&m2);
-                    distance = DistanceBetweenCOMs(com1,com2);
-                    
-                    if(distance < _cutoffRadiusSquare){
-                        // pot = PotentialCallBack(eps,sig,distance);
-                        my_profiler->ProcessDistance(distance,pot);
-                    }
+                    this->ProcessPairData(m1,m2);
                 }
             }
         }
+    }
+
+}
+
+void InternalCellProcessor::endTraversal(){
+    
+    for(int b=0;b<global_buffer.size();++b){
+        for(int t=0;t<thread_data.size();++t){
+            global_buffer[b] += thread_data[t][b];
+        }
+    }
+}
+
+void InternalCellProcessor::ProcessPairData(Molecule& m1, Molecule& m2){
+    double distance2=0.0;
+    std::array<double,3> com1={0.0,0.0,0.0};
+    std::array<double,3> com2={0.0,0.0,0.0};
+    com1 = ComputeCOM(m1);
+    com2 = ComputeCOM(m2);
+    distance2 = DistanceBetweenCOMs(com1,com2);
+
+    if(distance2 < _cutoffRadiusSquare){
+        int index = std::floor(std::sqrt(distance2)/bin_width);
+        thread_data[mardyn_get_thread_num()][index]++;
     }
 
 }

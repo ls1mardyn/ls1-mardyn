@@ -2,15 +2,15 @@
 
 InternalProfiler::InternalProfiler():cell_processor{nullptr},measured_steps{0}{
 
+
 }
 
 void InternalProfiler::init(ParticleContainer* pc, int bins, int freq){
     this->number_bins = bins;
     this->sample_frequency = freq;
-    cell_processor=new InternalCellProcessor(global_simulation->getcutoffRadius(), this); 
-
     this->SetBinContainer(pc);
     this->InitRNodes();
+    cell_processor=new InternalCellProcessor(global_simulation->getcutoffRadius(), bins,bin_width); 
     Log::global_log->info()<<"[PMF] Profiler enabled "<<std::endl;
 }
 
@@ -44,45 +44,9 @@ void InternalProfiler::SetBinContainer(ParticleContainer* pc){
 
 }
 
-
-std::array<double,3> InternalProfiler::GetCOM(Molecule* m){
-
-    std::array<double,3> com{0.0,0.0,0.0};
-    double total_mass;//TODO:Can be computed once for every component
-    Component* comp = m->component();
-    total_mass = comp->m();
-    for(int lj=0;lj<comp->numLJcenters();lj++){
-        LJcenter& lj_center = comp->ljcenter(lj);
-        for(int idx=0;idx<lj_center.r().size();idx++){               
-            com[idx] += lj_center.m()*m->ljcenter_d_abs(lj)[idx];
-        }
-
-    }
-
-    for(int i=0;i<com.size();i++){
-        com[i] /= total_mass;
-    }
-
-    return com;
-
-}
-
 double InternalProfiler::GetMeasuredSteps(){
     return measured_steps;
 }
-
-void InternalProfiler::ProcessDistance(double r, double pot){  
-    if(r > measured_distance_squared){ return;}
-
-    int index = std::floor(std::sqrt(r)/bin_width);
-    
-    //Add count for rdf
-    #if defined _OPENMP
-	#pragma omp atomic
-	#endif
-    this->rdf_buffer[index]++;
-    
-}  
 
 std::vector<double>& InternalProfiler::GetBinCounts(){
     return this->rdf_buffer;
@@ -99,7 +63,7 @@ void InternalProfiler::ProfileData(ParticleContainer* pc, unsigned long step){
     }
 }
 
-std::vector<double> InternalProfiler::GetInstantaneousData(ParticleContainer* particleContainer, Domain* domain){
+std::vector<double> InternalProfiler::GetInstantaneousData(Domain* domain){
 
     std::vector<double> instantaneous_rdf;
     instantaneous_rdf.resize(number_bins);
