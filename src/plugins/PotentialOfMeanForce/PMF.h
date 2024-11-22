@@ -49,6 +49,7 @@ class PMF:public PluginBase{
     int update_stride=300;//how often to IBI
     double multiplier;//alpha for step size
     bool output;
+    int output_frequency;
 
     struct ConvergenceTest{
         bool ConvergenceCheck(std::vector<double>& ref, std::vector<double>& crrnt){

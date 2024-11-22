@@ -91,6 +91,7 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     xmlfile.getNodeValue("internalBins",internal_bins);
     xmlfile.getNodeValue("measureFreq",measure_frequency);
     xmlfile.getNodeValue("output",output);
+    xmlfile.getNodeValue("rdfOutputStride",output_frequency);
     xmlfile.getNodeValue("updateStride",update_stride);
     std::string mode_name;
     xmlfile.getNodeValue("mode",mode_name);
@@ -135,7 +136,7 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
     adres_statistics.Output();
     AccumulateRDF(pc,domain);
 
-    if(step > 0 && step%100==0){
+    if(step > 0 && step%output_frequency==0){
         std::string filename="avg_rdf_"+std::to_string(step)+".txt";
         std::ofstream rdf_file(filename);
         for(int i=0;i<acc_rdf_interpolation.GetYValues().size();++i){
@@ -222,7 +223,7 @@ void PMF::AddPotentialCorrection(unsigned long step){
 }
 
 void PMF::AccumulateRDF(ParticleContainer* pc, Domain* dom){
-    std::vector<double> rdf_i = this->profiler.GetInstantaneousData(pc,dom);
+    std::vector<double> rdf_i = this->profiler.GetInstantaneousData(dom);
     std::vector<double>& accumulated_rdf = acc_rdf_interpolation.GetYValues();
 
     for(int i=0;i<rdf_i.size();++i){

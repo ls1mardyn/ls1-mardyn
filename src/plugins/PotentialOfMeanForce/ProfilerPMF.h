@@ -28,7 +28,7 @@ class InternalProfiler{
     InternalCellProcessor* cell_processor;
     int number_bins;
     double bin_width;
-    std::vector<double> rdf_buffer;
+    // std::vector<double> rdf_buffer;
     std::vector<double> r_nodes;
     int sample_frequency;
     int measured_steps;//increases on every call to ProfileData

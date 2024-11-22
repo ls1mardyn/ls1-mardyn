@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mardyn version="20100525">
+  <refunits type="SI">
+    <length unit="nm">0.0529177</length>
+    <mass unit="u">1000</mass>
+    <energy unit="eV">27.2126</energy>
+  </refunits>
+  <simulation type="MD">
+    <integrator type="Leapfrog">
+      <timestep unit="reduced">0.001</timestep>
+    </integrator>
+    
+    <run>
+      <currenttime>0</currenttime>
+      <equilibration> <steps>0</steps> </equilibration>
+      <production>
+        <steps>100000</steps>
+      </production>
+    </run>
+    
+    <ensemble type="NVT">
+      <temperature unit="reduced">1.0</temperature>
+      <domain type="box">
+        <lx>15.0</lx>
+        <ly>15.0</ly>
+        <lz>15.0</lz>
+      </domain>
+      <components>
+        <include query="/components/moleculetype">./lj_fluid.xml</include>
+      </components>
+      <phasespacepoint>
+        <file type="binary">
+          <header>restart_data_case_a/generic_lj_step-261.restart.header.xml</header>
+          <data>restart_data_case_a/generic_lj_step-261.restart.dat</data>
+        </file>
+        <ignoreCheckpointTime>true</ignoreCheckpointTime>
+      </phasespacepoint>
+    </ensemble>
+    
+    <algorithm>
+      <parallelisation type="DomainDecomposition">
+        <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+        <overlappingCollectives>False</overlappingCollectives>
+      </parallelisation>
+      <datastructure type="LinkedCells">
+        <cellsInCutoffRadius>1</cellsInCutoffRadius>
+      </datastructure>
+      <cutoffs type="CenterOfMass">
+        <radiusLJ unit="reduced">3</radiusLJ>
+      </cutoffs>
+      <electrostatic type="ReactionField">
+        <epsilon>1.0e+10</epsilon>
+      </electrostatic>
+      <thermostats>
+       <!-- velocity scaling thermostat, if no component is specified the global thermostat is assumed -->
+      <thermostat type="VelocityScaling">
+        <!-- target temperature, if not specified the ensemble temperature will be used -->
+      </thermostat> 
+      </thermostats>
+      
+    </algorithm>
+    
+    <output>
+ 
+    <outputplugin name="VTKMoleculeWriter">
+      <outputprefix>vtkOutput</outputprefix>
+      <writefrequency>5</writefrequency>
+    </outputplugin>
+
+    <!--outputplugin name="CheckpointWriter">
+      <type>binary</type>
+      <writefrequency>100</writefrequency>
+      <outputprefix>generic_lj_step</outputprefix>
+    </outputplugin-->
+
+    </output>
+
+    <plugin name="PMF">
+        <fpregions>
+          <region id = "1">
+            <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+            <highX>0.0</highX><highY>0.0</highY><highZ>0.0</highZ>
+            <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
+            <hybridDimZ>0.0</hybridDimZ>
+          </region>
+        </fpregions>
+        <multiplier>0.7</multiplier>
+        <internalBins>100</internalBins>
+        <measureFreq>1</measureFreq>
+        <updateStride>1000</updateStride>
+        <rdfOutputStride>5</rdfOutputStride>
+        <output>true</output>
+        <mode>OnlyCG</mode>
+    </plugin>
+        
+  </simulation>
+</mardyn>
