@@ -94,7 +94,7 @@
         <internalBins>100</internalBins>
         <measureFreq>1</measureFreq>
         <updateStride>1000</updateStride>
-        <rdfOutputStride>100</rdfOutputStride>
+        <rdfOutputStride>5</rdfOutputStride>
         <output>true</output>
         <mode>Production</mode>
     </plugin>

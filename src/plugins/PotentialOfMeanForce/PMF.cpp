@@ -143,6 +143,13 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
             rdf_file<<std::setw(8)<<std::left<<acc_rdf_interpolation.GetXValues()[i]<<"\t"<<std::setw(8)<<std::left<<GetAverageRDF()[i]<<std::endl;
         }
         rdf_file.close();
+
+        filename = "density_"+std::to_string(step)+".txt";
+        std::ofstream density_file(filename);
+        for(int i=0;i<profiler.GetDensity(domain).size();++i){
+            density_file<<std::setw(8)<<std::left<<profiler.GetBinCenters()[i]<<"\t"<<std::setw(8)<<std::left<<profiler.GetDensity(domain)[i]<<std::endl;
+        }
+
     }
     
     if(mode == Mode::OnlyCG){

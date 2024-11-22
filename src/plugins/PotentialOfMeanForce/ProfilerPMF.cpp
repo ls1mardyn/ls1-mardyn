@@ -22,10 +22,6 @@ void InternalProfiler::InitRNodes(){
     }  
 }
 
-void InternalProfiler::ResetBuffer(){
-
-    // std::fill(rdf_buffer.begin(),rdf_buffer.end(),0.0);
-}
 
 
 void InternalProfiler::SetBinContainer(ParticleContainer* pc){
@@ -34,9 +30,6 @@ void InternalProfiler::SetBinContainer(ParticleContainer* pc){
     this->r_nodes.resize(number_bins);
     std::fill(r_nodes.begin(),r_nodes.end(),0.0);
     this->InitRNodes();
-
-    // this->rdf_buffer.resize(number_bins);
-    // std::fill(rdf_buffer.begin(),rdf_buffer.end(),0.0);;
 
     Log::global_log->info()<<"[PMF] Internal profiler bin width "<<bin_width<<"\n";
     measured_distance_squared = bin_width*bin_width*number_bins*number_bins;
@@ -50,6 +43,10 @@ double InternalProfiler::GetMeasuredSteps(){
 
 std::vector<double>& InternalProfiler::GetBinCounts(){
     return this->cell_processor->GetBuffer();
+}
+
+std::vector<double>& InternalProfiler::GetDensityCounts(){
+    return this->cell_processor->GetDensityBuffer();
 }
 
 std::vector<double>& InternalProfiler::GetBinCenters(){
@@ -81,6 +78,22 @@ std::vector<double> InternalProfiler::GetInstantaneousData(Domain* domain){
         instantaneous_rdf[i] = GetBinCounts()[i]/den;
 
     }   
-    // ResetBuffer();
     return instantaneous_rdf;
 }
+
+std::vector<double> InternalProfiler::GetDensity(Domain* domain){
+
+    std::vector<double> density;
+    density.resize(number_bins);
+    
+    for(int i=0;i<number_bins;++i){
+
+        double binvol,den;
+        binvol = domain->getGlobalVolume()/number_bins;
+        den = binvol*GetMeasuredSteps();
+        density[i] = GetBinCounts()[i]/den;
+
+    }   
+    return density;
+}
+

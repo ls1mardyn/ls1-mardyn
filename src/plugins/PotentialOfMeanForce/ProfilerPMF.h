@@ -28,7 +28,6 @@ class InternalProfiler{
     InternalCellProcessor* cell_processor;
     int number_bins;
     double bin_width;
-    // std::vector<double> rdf_buffer;
     std::vector<double> r_nodes;
     int sample_frequency;
     int measured_steps;//increases on every call to ProfileData
@@ -52,16 +51,15 @@ class InternalProfiler{
      * Evaluates RDF and U(r) into the buffers, data is then ruined and clear is required
      */
     std::vector<double> GetInstantaneousData(Domain* domain);    
+    std::vector<double> GetDensity(Domain* domain);    
     std::vector<double>& GetBinCounts();
+    std::vector<double>& GetDensityCounts();
     std::vector<double>& GetBinCenters();
     double GetMeasuredSteps();
 
 
     private:
-    /**
-     * Fills rdf buffer with 0s
-     */
-    void ResetBuffer();
+
     void InitRNodes();
     void SetBinContainer(ParticleContainer* pc);
 };
@@ -72,8 +70,11 @@ class InternalCellProcessor: public CellProcessor{
     using Data = std::vector<double>;
     std::vector<Data> thread_data;
     std::vector<double> global_buffer;
+    std::vector<Data> thread_density_data;
+    std::vector<double> global_density_buffer;
     double bin_width;
-
+    double density_bin_width;
+    bool profile_density=true;
     public:
     InternalCellProcessor& operator=(const InternalCellProcessor&)=delete;
     InternalCellProcessor(const double cutoff, int bins, double width);
@@ -81,10 +82,12 @@ class InternalCellProcessor: public CellProcessor{
 
     void initTraversal() override {
         std::fill(global_buffer.begin(),global_buffer.end(),0.0);
+        // std::fill(global_density_buffer.begin(),global_density_buffer.end(),0.0);
         #pragma omp parallel
         {
             int own_id = mardyn_get_thread_num();
             std::fill(thread_data[own_id].begin(),thread_data[own_id].end(),0.0);
+            std::fill(thread_density_data[own_id].begin(),thread_density_data[own_id].end(),0.0);
         }
     }
     void preprocessCell(ParticleCell& cell) override {}
@@ -94,13 +97,26 @@ class InternalCellProcessor: public CellProcessor{
     void postprocessCell(ParticleCell& cell) override {}
     void endTraversal() override;
 
+    void SetMeasureDensity(bool b){
+        profile_density = b;
+    }
+
+    void SetBinWidth(double w){
+        density_bin_width = w;
+    }
+
     std::vector<double>& GetBuffer(){
         return global_buffer;
+    }
+
+    std::vector<double>& GetDensityBuffer(){
+        return global_density_buffer;
     }
 
     private:
 
     double DistanceBetweenCOMs(std::array<double,3>& com1, std::array<double,3>& com2);
     void ProcessPairData(Molecule& m1, Molecule& m2);
+    void ProcessSingleData(Molecule& m2);
 
 };

@@ -3,10 +3,14 @@
 InternalCellProcessor::InternalCellProcessor(const double cr, int bins, double width):CellProcessor{cr,cr},bin_width{width}{
 
     thread_data.resize(mardyn_get_max_threads());
+    thread_density_data.resize(mardyn_get_max_threads());
     global_buffer.resize(bins,0.0);
+    global_density_buffer.resize(bins,0.0);
+    density_bin_width = _simulation.getDomain()->getGlobalLength(0)/bins;
     #pragma omp parallel
     {
         thread_data[mardyn_get_thread_num()].resize(bins,0.0);
+        thread_density_data[mardyn_get_thread_num()].resize(bins,0.0);
     }
 
 }
@@ -30,6 +34,9 @@ void InternalCellProcessor::processCell(ParticleCell& cell){
         double distance=0.0;
         for(auto it1 = begin;it1.isValid();++it1){
             Molecule& m1 = *it1;
+            if(profile_density){
+                ProcessSingleData(m1);
+            }
             auto it2 = it1;
             ++it2;
             for(;it2.isValid();++it2){
@@ -90,6 +97,7 @@ void InternalCellProcessor::endTraversal(){
     for(int b=0;b<global_buffer.size();++b){
         for(int t=0;t<thread_data.size();++t){
             global_buffer[b] += thread_data[t][b];
+            global_density_buffer[b] += thread_density_data[t][b];
         }
     }
 }
@@ -106,5 +114,14 @@ void InternalCellProcessor::ProcessPairData(Molecule& m1, Molecule& m2){
         int index = std::floor(std::sqrt(distance2)/bin_width);
         thread_data[mardyn_get_thread_num()][index]++;
     }
+
+}
+
+void InternalCellProcessor::ProcessSingleData(Molecule& m1){
+
+    double x = m1.r(0);
+    int index = std::floor(x/density_bin_width);
+
+    thread_density_data[mardyn_get_thread_num()][index]++;
 
 }
