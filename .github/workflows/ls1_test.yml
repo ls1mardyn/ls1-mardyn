@@ -90,7 +90,7 @@ jobs:
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
                 -DENABLE_UNIT_TESTS=ON \
-                -DENABLE_VTK \
+                -DENABLE_VTK=ON \
               ..
         
           cmake --build . --parallel 1
@@ -151,7 +151,7 @@ jobs:
                 -DENABLE_ALLLBL=$alllbl_enabled \
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
-                -DENABLE_VTK \
+                -DENABLE_VTK=ON \
               ..
         
           cmake --build . --parallel 1
