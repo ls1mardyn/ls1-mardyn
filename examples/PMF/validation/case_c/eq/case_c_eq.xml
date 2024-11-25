@@ -14,20 +14,26 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>10000</steps>
+        <steps>100000</steps>
       </production>
     </run>
     
     <ensemble type="NVT">
-      <temperature unit="reduced">1.0</temperature>
+      <temperature unit="reduced">2.0</temperature>
       <domain type="box">
         <lx>15.0</lx>
         <ly>15.0</ly>q
         <lz>15.0</lz>
       </domain>
       <components>
-        <include query="/components/moleculetype">./lj_fluid.xml</include>
+        <include query="/components/moleculetype">../../components/lj_fluid.xml</include>
       </components>
+      <!--phasespacepoint>
+        <file type="binary">
+          <header>restart_data_case_c/generic_lj_step-0390.restart.restart.header.xml</header>
+          <data>restart_data_case_c/generic_lj_step-0390.restart.dat</data>
+        </file>
+      </phasespacepoint-->
       <phasespacepoint>
         <generator name="MultiObjectGenerator">
             <objectgenerator>
@@ -95,16 +101,10 @@
     </output>
 
     <plugin name = "RadialDFCOM">
-    	<totalBins>100</totalBins>
+    	<totalBins>250</totalBins>
     	<sampleFrequency>1</sampleFrequency>
       <averageFrequency>5</averageFrequency>
     </plugin>
 	
-	  <plugin name = "PotentialProfiler">
-    	<totalBins>100</totalBins>
-    	<sampleFrequency>1</sampleFrequency>
-      <averageFrequency>5</averageFrequency>
-    </plugin>
-        
   </simulation>
 </mardyn>
