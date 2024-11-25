@@ -107,10 +107,6 @@ public:
 
 	void updateMoleculeCaches() override;
 
-	void updateMoleculeCachesWithoutClearFM() override;
-
-	void traverseCellsWithNewMolecules(CellProcessor& CellProcessor) override {}
-
 	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>>
 	getMoleculeAtPosition(const double pos[3]) override;
 

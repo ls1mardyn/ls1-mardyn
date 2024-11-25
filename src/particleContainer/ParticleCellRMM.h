@@ -37,8 +37,6 @@ public:
 
 	void buildSoACaches() override {}
 
-	void buildSoACachesWithoutClearFM() override {}
-
 	void increaseMoleculeStorage(size_t numExtraMols) override;
 
 	int countInRegion(double lowCorner[3], double highCorner[3]) const;

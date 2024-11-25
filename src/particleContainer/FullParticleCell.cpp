@@ -191,59 +191,6 @@ void FullParticleCell::buildSoACaches() {
 	}
 }
 
-void FullParticleCell::buildSoACachesWithoutClearFM() {
-	
-	// Determine the total number of centers.
-	size_t numMolecules = _molecules.size();
-	size_t nLJCenters = 0;
-	size_t nCharges = 0;
-	size_t nDipoles = 0;
-	size_t nQuadrupoles = 0;
-
-	for (size_t m = 0;  m < numMolecules; ++m) {
-		nLJCenters += _molecules[m].numLJcenters();
-		nCharges += _molecules[m].numCharges();
-		nDipoles += _molecules[m].numDipoles();
-		nQuadrupoles += _molecules[m].numQuadrupoles();
-	}
-
-	// Construct the SoA.
-	_cellDataSoA.resize(numMolecules,nLJCenters,nCharges,nDipoles,nQuadrupoles);
-
-	size_t iLJCenters = 0;
-	size_t iCharges = 0;
-	size_t iDipoles = 0;
-	size_t iQuadrupoles = 0;
-
-	// For each molecule iterate over all its centers.
-	for (size_t i = 0; i < _molecules.size(); ++i) {
-		Molecule & M = _molecules[i];
-		const size_t mol_ljc_num = M.numLJcenters();
-		const size_t mol_charges_num = M.numCharges();
-		const size_t mol_dipoles_num = M.numDipoles();
-		const size_t mol_quadrupoles_num = M.numQuadrupoles();
-
-		_cellDataSoA._mol_ljc_num[i] = mol_ljc_num;
-		_cellDataSoA._mol_charges_num[i] = mol_charges_num;
-		_cellDataSoA._mol_dipoles_num[i] = mol_dipoles_num;
-		_cellDataSoA._mol_quadrupoles_num[i] = mol_quadrupoles_num;
-
-		_cellDataSoA._mol_pos.x(i) = M.r(0);
-		_cellDataSoA._mol_pos.y(i) = M.r(1);
-		_cellDataSoA._mol_pos.z(i) = M.r(2);
-
-		M.setupSoACache(&_cellDataSoA, iLJCenters, iCharges, iDipoles, iQuadrupoles);
-
-		iLJCenters += mol_ljc_num;
-		iCharges += mol_charges_num;
-		iDipoles += mol_dipoles_num;
-		iQuadrupoles += mol_quadrupoles_num;
-
-		// Comment this, so forces and so on is not cleared
-		// M.clearFM();
-	}
-}
-
 void FullParticleCell::increaseMoleculeStorage(size_t numExtraMols) {
 	_molecules.reserve(_molecules.size() + numExtraMols);
 }

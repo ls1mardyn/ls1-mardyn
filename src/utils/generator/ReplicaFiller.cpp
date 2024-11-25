@@ -110,11 +110,6 @@ class ParticleContainerToBasisWrapper : public ParticleContainer {
 
 	void updateMoleculeCaches() override {}
 
-	void updateMoleculeCachesWithoutClearFM() override {}
-
-	void traverseCellsWithNewMolecules(CellProcessor& CellProcessor) override {}
-
-
 	// Pure virtual in ParticleContainer.h
 	// Returns invalid iterator.
 	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override { return {}; }
