@@ -98,6 +98,7 @@
         </fpregions>
         <multiplier>0.7</multiplier>
         <internalBins>250</internalBins>
+        <densityBins>25</densityBins>
         <measureFreq>1</measureFreq>
         <updateStride>1000</updateStride>
         <rdfOutputStride>100</rdfOutputStride>

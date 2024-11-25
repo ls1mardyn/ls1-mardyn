@@ -25,6 +25,39 @@ class InternalProfiler{
 
     private:
 
+    struct ProfileBins{
+        std::string name="not-set";
+        int total_bins=0;
+        double bin_width=0;
+        std::vector<double> bin_centers;
+        std::vector<double> bin_counts;
+
+        ProfileBins(const char* n):name{n}{
+
+        }
+
+        void InitBins(int bins, double dimension){
+            total_bins = bins;
+            bin_width = dimension/(double)total_bins;
+            bin_centers.resize(total_bins,0.0);
+            bin_counts.resize(total_bins,0.0);
+            SetBinCenters();
+            Log::global_log->info()<<"[PMF] Profiling "<<name<<std::endl;
+            Log::global_log->info()<<"[PMF] Profer "<<name<<" has total bins"<< total_bins<<std::endl;
+
+        }
+
+        private:
+        void SetBinCenters(){
+            for(int i=0;i<total_bins;++i){
+                double rmid;
+                rmid = (i+0.5)*bin_width;
+                bin_centers[i] = rmid;
+            }
+        }
+    };
+    ProfileBins density{"density"};
+
     InternalCellProcessor* cell_processor;
     int number_bins;
     double bin_width;
@@ -40,7 +73,7 @@ class InternalProfiler{
 
     }
 
-    void init(ParticleContainer* pc, int bins, int freq);
+    void init(ParticleContainer* pc, int bins, int freq, int density_bins=0);
     
     /**
      * Carries out the traversal and profiling
@@ -55,6 +88,9 @@ class InternalProfiler{
     std::vector<double>& GetBinCounts();
     std::vector<double>& GetDensityCounts();
     std::vector<double>& GetBinCenters();
+    std::vector<double>& GetDensityBinCenters(){
+        return density.bin_centers;
+    }
     double GetMeasuredSteps();
 
 
@@ -73,11 +109,11 @@ class InternalCellProcessor: public CellProcessor{
     std::vector<Data> thread_density_data;
     std::vector<double> global_density_buffer;
     double bin_width;
-    double density_bin_width;
+    double density_bin_width;//For indexing
     bool profile_density=true;
     public:
     InternalCellProcessor& operator=(const InternalCellProcessor&)=delete;
-    InternalCellProcessor(const double cutoff, int bins, double width);
+    InternalCellProcessor(const double cutoff, int bins, double width, double dwidth=0);
     ~InternalCellProcessor(){};
 
     void initTraversal() override {

@@ -45,6 +45,7 @@ class PMF:public PluginBase{
     StatisticsAdResS adres_statistics;
 
     double internal_bins;//used for profiler
+    double density_bins;//used for density profiler
     int measure_frequency;//used for profiler
     int update_stride=300;//how often to IBI
     double multiplier;//alpha for step size

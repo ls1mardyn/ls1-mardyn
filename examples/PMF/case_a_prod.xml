@@ -19,7 +19,7 @@
     </run>
     
     <ensemble type="NVT">
-      <temperature unit="reduced">2.0</temperature>
+      <temperature unit="reduced">1.0</temperature>
       <domain type="box">
         <lx>15.0</lx>
         <ly>15.0</ly>
@@ -92,6 +92,7 @@
         </fpregions>
         <multiplier>0.7</multiplier>
         <internalBins>100</internalBins>
+        <densityBins>25</densityBins>
         <measureFreq>1</measureFreq>
         <updateStride>1000</updateStride>
         <rdfOutputStride>5</rdfOutputStride>

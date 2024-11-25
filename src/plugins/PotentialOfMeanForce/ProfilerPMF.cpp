@@ -5,12 +5,15 @@ InternalProfiler::InternalProfiler():cell_processor{nullptr},measured_steps{0}{
 
 }
 
-void InternalProfiler::init(ParticleContainer* pc, int bins, int freq){
+void InternalProfiler::init(ParticleContainer* pc, int bins, int freq,int density_bins){
     this->number_bins = bins;
     this->sample_frequency = freq;
     this->SetBinContainer(pc);
     this->InitRNodes();
-    cell_processor=new InternalCellProcessor(global_simulation->getcutoffRadius(), bins,bin_width); 
+    density.InitBins(density_bins,_simulation.getDomain()->getGlobalLength(0));
+    cell_processor=new InternalCellProcessor(global_simulation->getcutoffRadius(), bins,bin_width,density.bin_width); 
+
+
     Log::global_log->info()<<"[PMF] Profiler enabled "<<std::endl;
 }
 
@@ -83,17 +86,18 @@ std::vector<double> InternalProfiler::GetInstantaneousData(Domain* domain){
 
 std::vector<double> InternalProfiler::GetDensity(Domain* domain){
 
-    std::vector<double> density;
-    density.resize(number_bins);
-    
-    for(int i=0;i<number_bins;++i){
+    std::vector<double> buffer_density;
+    buffer_density.resize(density.total_bins);
+    double binvol = domain->getGlobalVolume()/density.total_bins;
+    double den = den = binvol*GetMeasuredSteps();
+    for(int i=0;i<density.total_bins;++i){
 
-        double binvol,den;
-        binvol = domain->getGlobalVolume()/number_bins;
-        den = binvol*GetMeasuredSteps();
-        density[i] = GetBinCounts()[i]/den;
+        // double binvol,den;
+        // binvol = domain->getGlobalVolume()/number_bins;
+        // den = binvol*GetMeasuredSteps();
+        buffer_density[i] = GetDensityCounts()[i]/den;
 
     }   
-    return density;
+    return buffer_density;
 }
 

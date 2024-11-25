@@ -36,7 +36,7 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     Log::global_log->info()<<"[PMF] Resolutions started "<<std::endl;
 
 
-    this->profiler.init(pc,internal_bins,measure_frequency);
+    this->profiler.init(pc,internal_bins,measure_frequency,density_bins);
     Log::global_log->info()<<"[PMF] InternalProfiler uses "<<internal_bins
                            <<" bins, measures every "<<measure_frequency<<" steps\n";
     Log::global_log->info()<<"[PMF] InternalProfiler initialized\n";
@@ -89,6 +89,7 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     xmlfile.changecurrentnode(oldpath);
     xmlfile.getNodeValue("multiplier",multiplier);
     xmlfile.getNodeValue("internalBins",internal_bins);
+    xmlfile.getNodeValue("densityBins",density_bins);
     xmlfile.getNodeValue("measureFreq",measure_frequency);
     xmlfile.getNodeValue("output",output);
     xmlfile.getNodeValue("rdfOutputStride",output_frequency);
@@ -147,7 +148,7 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
         filename = "density_"+std::to_string(step)+".txt";
         std::ofstream density_file(filename);
         for(int i=0;i<profiler.GetDensity(domain).size();++i){
-            density_file<<std::setw(8)<<std::left<<profiler.GetBinCenters()[i]<<"\t"<<std::setw(8)<<std::left<<profiler.GetDensity(domain)[i]<<std::endl;
+            density_file<<std::setw(8)<<std::left<<profiler.GetDensityBinCenters()[i]<<"\t"<<std::setw(8)<<std::left<<profiler.GetDensity(domain)[i]<<std::endl;
         }
 
     }
