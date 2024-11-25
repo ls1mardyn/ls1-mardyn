@@ -129,7 +129,7 @@ $(function() {
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        <span class="keywordflow">if</span>( existing != _pluginFactoryMap.end() ) {</div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            <span class="keywordflow">return</span> existing-&gt;second(); <span class="comment">/* call createInstance for plugin */</span></div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        }</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        Log::global_log-&gt;warning() &lt;&lt; <span class="stringliteral">&quot;Plugin not found: &quot;</span> &lt;&lt; pluginname &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        MARDYN_EXIT(<span class="stringliteral">&quot;Requested plugin not found: &quot;</span> + pluginname + <span class="stringliteral">&quot;. Is it enabled in CMake?&quot;</span>);</div>
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    }</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
@@ -147,7 +147,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Nov 6 2024 14:43:04 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Nov 25 2024 12:15:21 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
