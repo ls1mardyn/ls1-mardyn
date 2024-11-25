@@ -157,8 +157,6 @@ public:
 
 	virtual void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) = 0;
 
-	virtual void traverseCellsWithNewMolecules(CellProcessor& CellProcessor) = 0;
-
 	virtual ParticleIterator iterator (ParticleIterator::Type t) = 0;
 	virtual RegionParticleIterator regionIterator (const double startCorner[3], const double endCorner[3], ParticleIterator::Type t) = 0;
 
@@ -283,9 +281,6 @@ public:
 	 */
 	virtual std::string getConfigurationAsString() = 0;
 
-
-	// for storing arriving molecules
-	std::vector<std::pair<ParticleCell*, size_t>> _arriving_molecules;
 protected:
 	/**
 	 * Coordinates of the left, lower, front corner of the local bounding box.

@@ -176,9 +176,6 @@ public:
 
 	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) override;
 
-	void traverseCellsWithNewMolecules(CellProcessor& CellProcessor) override;
-
-
 	//! @brief Gets number of particles stored in Linked Cells
 	//! @param t Type of particles to count, e.g. ONLY_INNER_AND_BOUNDARY to dismiss halo particles. Argument defaults to ALL_CELLS
 	//! @return the number of particles stored in the Linked Cells
