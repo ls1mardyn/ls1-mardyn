@@ -50,7 +50,7 @@
                         </site>
                     </basis>
                     <latticeOccupancy>1.</latticeOccupancy>
-                    <density>0.85</density>
+                    <density>0.18</density>
                 </filler>
                 <object type="Cuboid">
                     <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
@@ -100,11 +100,23 @@
 
     </output>
 
-    <plugin name = "RadialDFCOM">
-    	<totalBins>250</totalBins>
-    	<sampleFrequency>1</sampleFrequency>
-      <averageFrequency>5</averageFrequency>
-    </plugin>
+    <plugin name="PMF">
+      <fpregions>
+        <region id = "1">
+          <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+          <highX>15.0</highX><highY>15.0</highY><highZ>15.0</highZ>
+          <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
+          <hybridDimZ>0.0</hybridDimZ>
+        </region>
+      </fpregions>
+      <multiplier>1.0</multiplier>
+      <internalBins>200</internalBins>
+      <measureFreq>1</measureFreq>
+      <updateStride>1000</updateStride>
+      <outputFreq>100</outputFreq>
+      <output>true</output>
+      <mode>Equilibration</mode>
+  </plugin>
 	
   </simulation>
 </mardyn>

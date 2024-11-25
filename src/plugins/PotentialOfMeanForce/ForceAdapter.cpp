@@ -2,7 +2,7 @@
 #include "molecules/potforce.h"
 #include "PMF.h"
 
-InteractionForceAdapter::InteractionForceAdapter(ResolutionHandler& handle,ResolutionComponentHandler& hdler,  PMF* pmf):resolution_handler{handle},adres{pmf},component_handler{hdler}{
+InteractionForceAdapter::InteractionForceAdapter(ResolutionHandler& handle,  PMF* pmf):resolution_handler{handle},adres{pmf}{
 
     const int number_threads = mardyn_get_max_threads();
     Log::global_log->info()<<"[InteractionForceAdapter]: allocate data for "<<number_threads<<" threads."<<std::endl;
@@ -99,15 +99,17 @@ void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm&
     //Pure interaction case
     if(interaction == InteractionType::onlyfp){
         // Log::global_log->error()<<"PotForceType cannot be FP"<<std::endl;
-        PotForceOnlyCG(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
+        PotForce(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
     }
 
     if(interaction == InteractionType::onlycg){
+         Log::global_log->error()<<"PotForceType cannot be CG"<<std::endl;
+
         PotForceOnlyCG(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
     }
 
     if(interaction == InteractionType::mixed){
-        // Log::global_log->error()<<"PotForceType cannot be Mixed"<<std::endl;
+         Log::global_log->error()<<"PotForceType cannot be Mixed"<<std::endl;
         /**
          * m1 hy vs m2 cg
          * m1 hy vs m2 at

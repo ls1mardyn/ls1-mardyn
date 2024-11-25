@@ -5,15 +5,22 @@ InternalProfiler::InternalProfiler():cell_processor{nullptr},measured_steps{0}{
 
 }
 
-void InternalProfiler::init(ParticleContainer* pc, int bins, int freq,int density_bins){
-    this->number_bins = bins;
-    this->sample_frequency = freq;
-    this->SetBinContainer(pc);
+void InternalProfiler::ReadXML(XMLfileUnits& xmlconfig){
+    //RDF config
+    xmlconfig.getNodeValue("internalBins",number_bins);
+    xmlconfig.getNodeValue("densityBins",density.total_bins);
+    xmlconfig.getNodeValue("measureFreq",sample_frequency);
+    xmlconfig.getNodeValue("outputFreq",output_frequency);
+
+}
+
+void InternalProfiler::init(double rc){
+
+    this->SetBinContainer(rc);
     this->InitRNodes();
-    density.InitBins(density_bins,_simulation.getDomain()->getGlobalLength(0));
-    cell_processor=new InternalCellProcessor(global_simulation->getcutoffRadius(), bins,bin_width,density.bin_width); 
 
-
+        density.InitBins(_simulation.getDomain()->getGlobalLength(0));
+        cell_processor=new InternalCellProcessor(global_simulation->getcutoffRadius(), number_bins,bin_width,density.bin_width); 
     Log::global_log->info()<<"[PMF] Profiler enabled "<<std::endl;
 }
 
@@ -27,8 +34,8 @@ void InternalProfiler::InitRNodes(){
 
 
 
-void InternalProfiler::SetBinContainer(ParticleContainer* pc){
-    this->bin_width = pc->getCutoff()/number_bins;
+void InternalProfiler::SetBinContainer(double rc){
+    this->bin_width = rc/number_bins;
 
     this->r_nodes.resize(number_bins);
     std::fill(r_nodes.begin(),r_nodes.end(),0.0);
@@ -45,7 +52,7 @@ double InternalProfiler::GetMeasuredSteps(){
 }
 
 std::vector<double>& InternalProfiler::GetBinCounts(){
-    return this->cell_processor->GetBuffer();
+    return this->cell_processor->GetPairCountBuffer();
 }
 
 std::vector<double>& InternalProfiler::GetDensityCounts(){
@@ -63,7 +70,7 @@ void InternalProfiler::ProfileData(ParticleContainer* pc, unsigned long step){
     }
 }
 
-std::vector<double> InternalProfiler::GetInstantaneousData(Domain* domain){
+std::vector<double> InternalProfiler::GetRDF(){
 
     std::vector<double> instantaneous_rdf;
     instantaneous_rdf.resize(number_bins);
@@ -77,27 +84,45 @@ std::vector<double> InternalProfiler::GetInstantaneousData(Domain* domain){
         rmin3 = rmin*rmin*rmin;
         rmax3 = rmax*rmax*rmax;
         binvol = (4.0/3.0)*M_PI*(rmax3-rmin3);
-        den = 0.5*domain->getglobalNumMolecules()*(domain->getglobalNumMolecules()-1.0)*binvol/domain->getGlobalVolume();
+        den = 0.5*_simulation.getDomain()->getglobalNumMolecules()*(_simulation.getDomain()->getglobalNumMolecules()-1.0)*binvol/_simulation.getDomain()->getGlobalVolume();
         instantaneous_rdf[i] = GetBinCounts()[i]/den;
-
+        instantaneous_rdf[i] /= GetMeasuredSteps();
     }   
     return instantaneous_rdf;
 }
 
-std::vector<double> InternalProfiler::GetDensity(Domain* domain){
+std::vector<double> InternalProfiler::GetDensity(){
 
     std::vector<double> buffer_density;
     buffer_density.resize(density.total_bins);
-    double binvol = domain->getGlobalVolume()/density.total_bins;
+    double binvol = _simulation.getDomain()->getGlobalVolume()/density.total_bins;
     double den = den = binvol*GetMeasuredSteps();
     for(int i=0;i<density.total_bins;++i){
-
-        // double binvol,den;
-        // binvol = domain->getGlobalVolume()/number_bins;
-        // den = binvol*GetMeasuredSteps();
         buffer_density[i] = GetDensityCounts()[i]/den;
-
     }   
     return buffer_density;
 }
 
+void InternalProfiler::PrintOutput2Files(unsigned long ss){
+    if(ss>0 && ss%output_frequency == 0){
+        std::string file_name=rdf_file_name_+std::to_string(ss)+".txt";
+        std::ofstream output_file(file_name);
+
+        for(int i=0;i<number_bins;++i){
+            output_file<<std::setw(8)<<std::left<<r_nodes[i]<<"\t"<<std::setw(8)<<std::left<<GetRDF()[i]<<std::endl;
+        }
+
+        output_file.close();
+        if(measure_density){
+            file_name = "density_"+std::to_string(ss)+".txt";
+            std::ofstream density_file(file_name);
+            for(int i=0;i<density.bin_width;++i){
+                density_file<<std::setw(8)<<std::left<<density.bin_centers[i]<<"\t"<<std::setw(8)<<std::left<<GetDensity()[i]<<std::endl;
+            }
+
+            density_file.close();
+
+        }
+
+    }
+}

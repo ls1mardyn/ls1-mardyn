@@ -2,7 +2,7 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 
 
-PMF::PMF():reference_rdf_interpolation{1.0,false},potential_interpolation{0.0,true},acc_rdf_interpolation{1.0,false},convergence{0.5}{
+PMF::PMF():reference_rdf_interpolation{1.0,false},potential_interpolation{0.0,true},avg_rdf_interpolation{1.0,false},convergence{0.5}{
 
 
 }
@@ -10,20 +10,11 @@ PMF::PMF():reference_rdf_interpolation{1.0,false},potential_interpolation{0.0,tr
 
 void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* domain){
 
-    pairs_handler = new InteractionForceAdapter(resolution_handler,component_handler,this);
+    pairs_handler = new InteractionForceAdapter(resolution_handler,this);
     _simulation.setParticlePairsHandler(pairs_handler);
     Log::global_log->info()<<"[PMF] InteractionForcedAdapter Class being used\n";
     _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), pairs_handler));
     Log::global_log->info()<<"[PMF]LegacyCellProcessor set\n";
-
-    for(auto it= pc->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY);it.isValid();++it){
-        unsigned long m_id = it->getID();
-        std::array<double,3> com = ComputeCOM(*it);
-        resolution_handler.SetMoleculeTrackerPosition(m_id,com);
-    }
-
-
-     Log::global_log->info()<<"[PMF] Started the tracker sites\n";
 
     for(auto it= begin(regions);it!=end(regions);++it){
         Log::global_log->info()<<"[PMF] The hybrid region spans from: ("<<it->_lowHybrid[0]<<","<<it->_lowHybrid[1]<<","<<it->_lowHybrid[2]<<") to ("<<it->_highHybrid[0]<<","<<it->_highHybrid[1]<<","<<it->_highHybrid[2]<<")"<<std::endl;
@@ -32,37 +23,6 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
 
         Log::global_log->info()<<"[PMF] The region  center is located at: ("<<it->_center[0]<<","<<it->_center[1]<<","<<it->_center[2]<<")"<<std::endl;
     }
-    resolution_handler.CheckResolution(pc,regions);
-    Log::global_log->info()<<"[PMF] Resolutions started "<<std::endl;
-
-
-    this->profiler.init(pc,internal_bins,measure_frequency,density_bins);
-    Log::global_log->info()<<"[PMF] InternalProfiler uses "<<internal_bins
-                           <<" bins, measures every "<<measure_frequency<<" steps\n";
-    Log::global_log->info()<<"[PMF] InternalProfiler initialized\n";
-    Log::global_log->info()<<"[PMF] Alpha value "<<multiplier<<"\n";
-
-
-
-    potential_interpolation.SetXValues(profiler.GetBinCenters());
-    acc_rdf_interpolation.SetXValues(profiler.GetBinCenters());
-    acc_rdf_interpolation.GetYValues().resize(internal_bins);
-
-    this->ReadRDF();
-    Log::global_log->info()<<"[PMF] RDF has been read successfully\n";
-
-    if(mode == Mode::Production){
-        this->ReadEffectivePotential();
-        Log::global_log->info()<<"[PMF] Effective potential has been read successfully\n";
-    }
-
-    if(mode ==Mode::OnlyCG){
-        this->InitializePotentialValues();
-        Log::global_log->info()<<"[PMF] PMF computed as initial guess\n";
-    }
-
-    component_handler.init();
-    Log::global_log->info()<<"[PMF] Component handler initialized"<<std::endl;
 
     adres_statistics.init(regions[0]);
     Log::global_log->info()<<"[PMF] Statistical tool initialized"<<std::endl;
@@ -88,44 +48,52 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     }
     xmlfile.changecurrentnode(oldpath);
     xmlfile.getNodeValue("multiplier",multiplier);
-    xmlfile.getNodeValue("internalBins",internal_bins);
-    xmlfile.getNodeValue("densityBins",density_bins);
-    xmlfile.getNodeValue("measureFreq",measure_frequency);
     xmlfile.getNodeValue("output",output);
-    xmlfile.getNodeValue("rdfOutputStride",output_frequency);
     xmlfile.getNodeValue("updateStride",update_stride);
+
     std::string mode_name;
     xmlfile.getNodeValue("mode",mode_name);
     if(mode_name == "Equilibration"){
         mode = Mode::Equilibration;
+        Log::global_log->info()<<"[PMF] Mode set to Equilibration"<<std::endl;
     }
-    if(mode_name == "OnlyCG"){
-        mode = Mode::OnlyCG;
+    if(mode_name == "EffectivePotential"){
+        mode = Mode::EffectivePotential;
+        Log::global_log->info()<<"[PMF] Mode set to EffectivePotential"<<std::endl;
+        this->ReadRDF();
+        this->SetPotentialInitialGuess();
+        Log::global_log->info()<<"[PMF] PMF set as initial guess\n";
+        Log::global_log->info()<<"[PMF] RDF has been read successfully\n";
     }
     if(mode_name == "Production"){
+        profiler.SetMeasureDensity(true);
         mode = Mode::Production;
-    }
-    Log::global_log->info()<<"[PMF] Target temperature = "<<_simulation.getEnsemble()->T()<<std::endl;
-    if(mode == Mode::Production){
         Log::global_log->info()<<"[PMF] Mode set to Production"<<std::endl;
+        this->ReadEffectivePotential();
+        Log::global_log->info()<<"[PMF] Effective potential has been read successfully\n";
     }
+
+
+    profiler.ReadXML(xmlfile);
+    Log::global_log->info()<<"[PMF] Target temperature = "<<_simulation.getEnsemble()->T()<<std::endl;    
+
+
+    this->profiler.init(_simulation.getcutoffRadius());
+    Log::global_log->info()<<"[PMF] InternalProfiler initialized\n";
+    Log::global_log->info()<<"[PMF] Alpha value "<<multiplier<<"\n";
+
+    potential_interpolation.SetXValues(profiler.GetBinCenters());
+    avg_rdf_interpolation.ResizeVectors(profiler.GetBinCenters().size());
+    avg_rdf_interpolation.SetXValues(profiler.GetBinCenters());
+
 }
 
 void PMF::beforeForces(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep){
-    // component_handler.CheckResolution(pc,regions);
 }
 
 void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep){
 
-    // component_handler.CheckResolution(pc,regions);
-    
-    for(auto it= pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
-        unsigned long m_id = it->getID();
-        std::array<double,3> com = ComputeCOM(*it);
-        resolution_handler.SetMoleculeTrackerPosition(m_id,com);
-    }
 
-    resolution_handler.CheckResolution(pc,regions);
 }
 
 void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
@@ -133,53 +101,50 @@ void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long
 }
 
 void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, unsigned long step){
-    adres_statistics.MeasureStatistics(pc);
-    adres_statistics.Output();
-    AccumulateRDF(pc,domain);
 
-    if(step > 0 && step%output_frequency==0){
-        std::string filename="avg_rdf_"+std::to_string(step)+".txt";
-        std::ofstream rdf_file(filename);
-        for(int i=0;i<acc_rdf_interpolation.GetYValues().size();++i){
-            rdf_file<<std::setw(8)<<std::left<<acc_rdf_interpolation.GetXValues()[i]<<"\t"<<std::setw(8)<<std::left<<GetAverageRDF()[i]<<std::endl;
-        }
-        rdf_file.close();
+    //Update RDF interpolation
+    UpdateRDFInterpolation();
 
-        filename = "density_"+std::to_string(step)+".txt";
-        std::ofstream density_file(filename);
-        for(int i=0;i<profiler.GetDensity(domain).size();++i){
-            density_file<<std::setw(8)<<std::left<<profiler.GetDensityBinCenters()[i]<<"\t"<<std::setw(8)<<std::left<<profiler.GetDensity(domain)[i]<<std::endl;
-        }
+
+    if(mode == Mode::Production){
+       adres_statistics.MeasureStatistics(pc);
+        adres_statistics.Output(); 
+    }
+
+
+
+    if(output){
+
+        profiler.PrintOutput2Files(step);
 
     }
     
-    if(mode == Mode::OnlyCG){
-    Log::global_log->info()<<"[UpdatePotential]Computing effective potential"<<std::endl;
-    std::vector<double> current_rdf = GetAverageRDF();
+    if(mode == Mode::EffectivePotential){
 
-    convergence.PrintGlobalConvergence2File();
-    convergence.CheckConvergence(reference_rdf_interpolation.GetYValues(),current_rdf);
-    convergence.PrintLocalConvergence2File(step);
-
-    if(step%update_stride ==0 && step>0){
-        Log::global_log->info()<<"[UpdatePotential]Update potential now"<<std::endl;
-        convergence.PrepareUpdate();
-        AddPotentialCorrection(step);
-        
-    }
+        std::vector<double> current_rdf = profiler.GetRDF();
+        convergence.PrintGlobalConvergence2File();
+        convergence.CheckConvergence(reference_rdf_interpolation.GetYValues(),current_rdf);
+        convergence.PrintLocalConvergence2File(step);
     
-    if(output && step%update_stride ==0){
-        
-        std::string potential_file = "potential_"+std::to_string(step)+".txt";
-        std::ofstream potential(potential_file);
-        for(int i=0;i<potential_interpolation.GetYValues().size();++i){
-            potential<<std::setw(8)<<std::left
-            <<potential_interpolation.GetXValues()[i]
-            <<"\t"
-            <<std::setw(8)<<std::left<<potential_interpolation.GetYValues()[i]<<std::endl;
+        if(step%update_stride ==0 && step>0){
+            Log::global_log->info()<<"[UpdatePotential]Update potential now"<<std::endl;
+            convergence.PrepareUpdate();
+            AddPotentialCorrection(step);
+            
         }
-        potential.close();
-    }
+        
+        if(output && step%update_stride ==0){
+            
+            std::string potential_file = "potential_"+std::to_string(step)+".txt";
+            std::ofstream potential(potential_file);
+            for(int i=0;i<potential_interpolation.GetYValues().size();++i){
+                potential<<std::setw(8)<<std::left
+                <<potential_interpolation.GetXValues()[i]
+                <<"\t"
+                <<std::setw(8)<<std::left<<potential_interpolation.GetYValues()[i]<<std::endl;
+            }
+            potential.close();
+        }
 
     }
 }
@@ -192,7 +157,7 @@ void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned l
  *******************/
 
 
-void PMF::InitializePotentialValues(){
+void PMF::SetPotentialInitialGuess(){
     std::vector<double> pot0 = reference_rdf_interpolation.GetYValues();
     for(int i=0;i<pot0.size();++i){
         pot0[i] = -1.0*_simulation.getEnsemble()->T()*std::log(pot0[i]);
@@ -203,23 +168,24 @@ void PMF::InitializePotentialValues(){
 }
 
 void PMF::AddPotentialCorrection(unsigned long step){
+    std::vector<double> avg_rdf = profiler.GetRDF();
+    int total_data_points = avg_rdf.size();
     std::vector<double> pot_i;
-    std::vector<double> avg_rdf = GetAverageRDF();
     std::vector<double> current_correction;
-    current_correction.resize(internal_bins);
-    pot_i.resize(internal_bins);
+    current_correction.resize(total_data_points,0.0);
+    pot_i.resize(total_data_points,0.0);
 
-    for(int i=0;i<internal_bins;++i){
+    for(int i=0;i<total_data_points;++i){
         double ratio = avg_rdf[i]/reference_rdf_interpolation.GetYValues()[i];
         current_correction[i] = 1.0*multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
     }
 
-    potential_interpolation.AddVector(current_correction);
-
-    if(output && step%update_stride ==0 ){
+    // potential_interpolation.AddVector(current_correction);
+    VectorAdd(potential_interpolation.GetYValues(),current_correction);
+    if(output){
         std::string name="correction_step_"+std::to_string(step)+".txt";
         std::ofstream corr{name};
-        for(int i=0;i<internal_bins;++i){
+        for(int i=0;i<total_data_points;++i){
             corr<<reference_rdf_interpolation.GetXValues()[i]
                 <<"\t"
                 <<current_correction[i]
@@ -230,16 +196,9 @@ void PMF::AddPotentialCorrection(unsigned long step){
 
 }
 
-void PMF::AccumulateRDF(ParticleContainer* pc, Domain* dom){
-    std::vector<double> rdf_i = this->profiler.GetInstantaneousData(dom);
-    std::vector<double>& accumulated_rdf = acc_rdf_interpolation.GetYValues();
-
-    for(int i=0;i<rdf_i.size();++i){
-
-        accumulated_rdf[i] += rdf_i[i];
-
-    }
-    acc_rdf_interpolation.SetYValues(accumulated_rdf);
+void PMF::UpdateRDFInterpolation(){
+    std::vector<double> rdf_i = this->profiler.GetRDF();
+    avg_rdf_interpolation.SetYValues(rdf_i);
 }
 
 double PMF::WeightValue(const std::array<double,3>& pos, FPRegion& region){
@@ -255,7 +214,7 @@ Interpolate& PMF::GetRDFInterpolation(){
 }
 
 Interpolate& PMF::GetAVGRDFInterpolation(){
-    return this->acc_rdf_interpolation;
+    return this->avg_rdf_interpolation;
 }
 
 Interpolate& PMF::GetPotentialInterpolation(){
@@ -349,14 +308,4 @@ void PMF::MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2){
         m2.Fdipolesub(i,f.data());
     }
 
-}
-
-std::vector<double> PMF::GetAverageRDF(){
-    std::vector<double> average_rdf = acc_rdf_interpolation.GetYValues();
-    
-    for(int i=0;i<average_rdf.size();++i){
-        average_rdf[i] /= ((double)profiler.GetMeasuredSteps());
-    }
-
-    return average_rdf;
 }

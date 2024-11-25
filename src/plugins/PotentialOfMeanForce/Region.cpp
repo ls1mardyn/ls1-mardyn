@@ -121,13 +121,20 @@ bool FPRegion::IsInsideResolutionRegion(std::array<double,3> point, ResolutionTy
 
 		shifted_high[1]+= _simulation.getcutoffRadius();
 		shifted_high[2]+= _simulation.getcutoffRadius();
-
-		if(_low[0]==0.0 && (_low[1] != 0.0)){
+		
+		//That is, if the fp region covers the whole domain
+		if(_low[0]==0.0 
+	   && (_low[1]== 0.0)
+	   && (_low[2]== 0.0)
+	      ){
 			shifted_low[0] -= _simulation.getcutoffRadius();
 		}
 
 
-		if(_high[0]==_simulation.getDomain()->getGlobalLength(0) && (_high[1] != 0.0)){
+		if(_high[0]==_simulation.getDomain()->getGlobalLength(0) 
+	   && (_high[1]==_simulation.getDomain()->getGlobalLength(0))
+	   && (_high[1]==_simulation.getDomain()->getGlobalLength(0))
+	   ){
 			shifted_high[0] += _simulation.getcutoffRadius();
 		}
 

@@ -30,17 +30,14 @@ class InternalProfiler{
         int total_bins=0;
         double bin_width=0;
         std::vector<double> bin_centers;
-        std::vector<double> bin_counts;
 
         ProfileBins(const char* n):name{n}{
 
         }
 
-        void InitBins(int bins, double dimension){
-            total_bins = bins;
+        void InitBins(double dimension){
             bin_width = dimension/(double)total_bins;
             bin_centers.resize(total_bins,0.0);
-            bin_counts.resize(total_bins,0.0);
             SetBinCenters();
             Log::global_log->info()<<"[PMF] Profiling "<<name<<std::endl;
             Log::global_log->info()<<"[PMF] Profer "<<name<<" has total bins"<< total_bins<<std::endl;
@@ -56,8 +53,9 @@ class InternalProfiler{
             }
         }
     };
+    bool measure_density=false;
     ProfileBins density{"density"};
-
+    std::string rdf_file_name_="avg_rdf";
     InternalCellProcessor* cell_processor;
     int number_bins;
     double bin_width;
@@ -65,26 +63,28 @@ class InternalProfiler{
     int sample_frequency;
     int measured_steps;//increases on every call to ProfileData
     double measured_distance_squared;
-
+    int output_frequency;
     public:
 
     InternalProfiler();
     ~InternalProfiler(){
 
     }
-
-    void init(ParticleContainer* pc, int bins, int freq, int density_bins=0);
+    void ReadXML(XMLfileUnits& xmlconfig);
+    void init(double rc);
     
     /**
      * Carries out the traversal and profiling
      */
     void ProfileData(ParticleContainer* pc, unsigned long simstep);
-    
+    void SetMeasureDensity(bool d){
+        measure_density=d;
+    }
     /**
      * Evaluates RDF and U(r) into the buffers, data is then ruined and clear is required
      */
-    std::vector<double> GetInstantaneousData(Domain* domain);    
-    std::vector<double> GetDensity(Domain* domain);    
+    std::vector<double> GetRDF();    
+    std::vector<double> GetDensity();    
     std::vector<double>& GetBinCounts();
     std::vector<double>& GetDensityCounts();
     std::vector<double>& GetBinCenters();
@@ -92,12 +92,12 @@ class InternalProfiler{
         return density.bin_centers;
     }
     double GetMeasuredSteps();
-
+    void PrintOutput2Files(unsigned long simstep);
 
     private:
 
     void InitRNodes();
-    void SetBinContainer(ParticleContainer* pc);
+    void SetBinContainer(double rc);
 };
 
 class InternalCellProcessor: public CellProcessor{
@@ -117,7 +117,7 @@ class InternalCellProcessor: public CellProcessor{
     ~InternalCellProcessor(){};
 
     void initTraversal() override {
-        std::fill(global_buffer.begin(),global_buffer.end(),0.0);
+        // std::fill(global_buffer.begin(),global_buffer.end(),0.0);
         // std::fill(global_density_buffer.begin(),global_density_buffer.end(),0.0);
         #pragma omp parallel
         {
@@ -141,7 +141,7 @@ class InternalCellProcessor: public CellProcessor{
         density_bin_width = w;
     }
 
-    std::vector<double>& GetBuffer(){
+    std::vector<double>& GetPairCountBuffer(){
         return global_buffer;
     }
 
