@@ -97,7 +97,7 @@ ReturnType SendCouplingMDCommand::executeProcessing()
 	double rmax =  moleculeContainer->getBoundingBoxMax(dim);
 
 	logger->debug() << "dim is " << dim << ", dir is " << dir << std::endl;
-	logger->debug() << "halo is " << moleculeContainer->getHaloWidthForDimension(dim) << std::endl;
+	logger->debug() << "halo is " << moleculeContainer->get_halo_L(dim) << std::endl;
 	Molecule* currentMolecule;
 
 	double low_limit = rmin; // particles below this limit have to be copied or moved to the lower process
