@@ -68,7 +68,7 @@ bool inline isNearRel(double a, double b, double maxRelativeDifference = 1e-9)
 	const auto greaterNumber = std::max(std::abs(a), std::abs(b));
 	const auto absoluteDifference = maxRelativeDifference * greaterNumber;
 	const auto diff = std::abs(a - b);
-	return diff <= absoluteDifference;
+	return (diff <= absoluteDifference);
 }
 
 /**
