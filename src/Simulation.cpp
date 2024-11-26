@@ -427,13 +427,13 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_lastTraversalTimeHistory.setCapacity(timerForLoadAveragingLength);
 
 			if(xmlconfig.changecurrentnode("boundaries")) {
-				std::string xBoundaryFromFile, yBoundaryFromFile, zBoundaryFromFile;
-				xmlconfig.getNodeValue("x", xBoundaryFromFile);
-				xmlconfig.getNodeValue("y", yBoundaryFromFile);
-				xmlconfig.getNodeValue("z", zBoundaryFromFile);
-				BoundaryUtils::BoundaryType xBoundary = BoundaryUtils::convertStringToBoundary(xBoundaryFromFile);
-				BoundaryUtils::BoundaryType yBoundary = BoundaryUtils::convertStringToBoundary(yBoundaryFromFile);
-				BoundaryUtils::BoundaryType zBoundary = BoundaryUtils::convertStringToBoundary(zBoundaryFromFile);
+				std::string xBoundaryFromConfig, yBoundaryFromConfig, zBoundaryFromConfig;
+				xmlconfig.getNodeValue("x", xBoundaryFromConfig);
+				xmlconfig.getNodeValue("y", yBoundaryFromConfig);
+				xmlconfig.getNodeValue("z", zBoundaryFromConfig);
+				BoundaryUtils::BoundaryType xBoundary = BoundaryUtils::convertStringToBoundary(xBoundaryFromConfig);
+				BoundaryUtils::BoundaryType yBoundary = BoundaryUtils::convertStringToBoundary(yBoundaryFromConfig);
+				BoundaryUtils::BoundaryType zBoundary = BoundaryUtils::convertStringToBoundary(zBoundaryFromConfig);
 				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::POSX, xBoundary);
 				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::NEGX, xBoundary);
 				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::POSY, yBoundary);
