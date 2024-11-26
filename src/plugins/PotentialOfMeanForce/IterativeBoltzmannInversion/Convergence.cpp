@@ -48,7 +48,7 @@ bool Convergence::TriggerPotentialUpdate(){
 
 }
 
-void Convergence::PrintLocalConvergence2File(int step){
+void Convergence::PrintLocalConvergence2File(){
     std::string conv_name = "local_convergence_ibi_"+std::to_string(ibi_iteration)+".txt";
     std::ofstream conv{conv_name};
     for(int i=0;i<local_convergence.size();++i){

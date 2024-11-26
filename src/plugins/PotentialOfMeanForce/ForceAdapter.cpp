@@ -98,12 +98,12 @@ double InteractionForceAdapter::processPairBackend(Molecule& m1, Molecule& m2, d
 void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, InteractionType interaction){
     //Pure interaction case
     if(interaction == InteractionType::onlyfp){
-        // Log::global_log->error()<<"PotForceType cannot be FP"<<std::endl;
+        Log::global_log->error()<<"PotForceType cannot be FP"<<std::endl;
         PotForce(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
     }
 
     if(interaction == InteractionType::onlycg){
-         Log::global_log->error()<<"PotForceType cannot be CG"<<std::endl;
+        //  Log::global_log->error()<<"PotForceType cannot be CG"<<std::endl;
 
         PotForceOnlyCG(m1,m2,params,drm,Upot6LJ,UpotXpoles,MyRF,Virial,calcLJ);
     }
@@ -239,10 +239,6 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
     std::array<double, 3> com1 = CenterOfMass(m1);
     std::array<double, 3> com2 = CenterOfMass(m2);
 
-    // std::array<double, 3> com1 = resolution_handler.GetMoleculeTrackerPosition(m1.getID());
-    // std::array<double, 3> com2 = resolution_handler.GetMoleculeTrackerPosition(m2.getID());
-
-
     double r_com = std::sqrt(SqrdDistanceBetweenCOMs(com1,com2));
     //Interact only on com sites
     {
@@ -335,13 +331,13 @@ std::array<double, 3> InteractionForceAdapter::CenterOfMass(Molecule& m1){
 
 void InteractionForceAdapter::MapToAtomistic(Molecule& m1, Molecule& m2, std::array<double,3>& force){
     double total_mass = m1.component()->m();
-
     for(int lj=0;lj<m1.component()->numLJcenters();++lj){
         std::array<double,3> site_force{0,0,0};
         double site_mass = m1.component()->ljcenter(lj).m();
         for(int i=0;i<3;++i){
             site_force[i] = force[i] * site_mass/total_mass;
         }
+
 
         m1.Fljcenteradd(lj,site_force.data());
         m2.Fljcentersub(lj,site_force.data());

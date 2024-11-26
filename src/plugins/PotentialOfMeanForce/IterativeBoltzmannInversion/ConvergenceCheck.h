@@ -4,7 +4,8 @@
 #include<math.h>
 
 struct ConvergenceTest{
-        bool ConvergenceCheck(std::vector<double>& ref, std::vector<double>& crrnt){
+
+        bool ConvergenceCheck(const std::vector<double>& ref, std::vector<double>& crrnt){
             double conv=0.0;
             for(int i=0;i<ref.size();++i){
                 conv += std::abs(ref[i]-crrnt[i]);

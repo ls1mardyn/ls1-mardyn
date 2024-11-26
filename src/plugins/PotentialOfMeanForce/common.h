@@ -27,6 +27,7 @@ inline void VectorAdd(std::vector<double>& v1, const std::vector<double>& v2){
         Log::global_log->error()<<"[VectorAdd]Not same size add"<<std::endl;
     }
     for(int i=0;i<v1.size();++i){
+        if(!std::isfinite(v2[i])) continue;
         v1[i] += v2[i];
     }
 }

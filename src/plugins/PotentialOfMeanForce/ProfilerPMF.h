@@ -110,7 +110,7 @@ class InternalCellProcessor: public CellProcessor{
     std::vector<double> global_density_buffer;
     double bin_width;
     double density_bin_width;//For indexing
-    bool profile_density=true;
+    bool profile_density=false;
     public:
     InternalCellProcessor& operator=(const InternalCellProcessor&)=delete;
     InternalCellProcessor(const double cutoff, int bins, double width, double dwidth=0);

@@ -12,10 +12,12 @@
 #include<iostream>
 #include<fstream>
 #include<iomanip>
+
+
 class Convergence{
 
     private:
-    int ibi_iteration;
+    int ibi_iteration=0;
     double tolerance;
     std::vector<double> ibi_convergence;
     std::vector<double> local_convergence;
@@ -28,7 +30,7 @@ class Convergence{
     bool CheckConvergence(std::vector<double>& rdf_ref, std::vector<double>& rdf_i);
     bool TriggerPotentialUpdate();
 
-    void PrintLocalConvergence2File(int step);
+    void PrintLocalConvergence2File();
     void PrintGlobalConvergence2File();
     void PrepareUpdate();
 };

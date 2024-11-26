@@ -52,7 +52,8 @@ class PMF:public PluginBase{
     double multiplier;//alpha for step size
     bool output;
 
-    ConvergenceTest convergence_check;
+    std::string ref_rdf_path;
+
 
     public:
     PMF();

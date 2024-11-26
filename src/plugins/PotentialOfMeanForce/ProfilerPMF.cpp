@@ -18,9 +18,13 @@ void InternalProfiler::init(double rc){
 
     this->SetBinContainer(rc);
     this->InitRNodes();
-
+    
+    if(measure_density){
         density.InitBins(_simulation.getDomain()->getGlobalLength(0));
-        cell_processor=new InternalCellProcessor(global_simulation->getcutoffRadius(), number_bins,bin_width,density.bin_width); 
+    }
+    
+    cell_processor=new InternalCellProcessor(global_simulation->getcutoffRadius(), number_bins,bin_width,density.bin_width); 
+    cell_processor->SetMeasureDensity(measure_density);
     Log::global_log->info()<<"[PMF] Profiler enabled "<<std::endl;
 }
 

@@ -50,7 +50,7 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     xmlfile.getNodeValue("multiplier",multiplier);
     xmlfile.getNodeValue("output",output);
     xmlfile.getNodeValue("updateStride",update_stride);
-
+    xmlfile.getNodeValue("rdfPath",ref_rdf_path);
     std::string mode_name;
     xmlfile.getNodeValue("mode",mode_name);
     if(mode_name == "Equilibration"){
@@ -82,10 +82,13 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     Log::global_log->info()<<"[PMF] InternalProfiler initialized\n";
     Log::global_log->info()<<"[PMF] Alpha value "<<multiplier<<"\n";
 
-    potential_interpolation.SetXValues(profiler.GetBinCenters());
+    if(mode == Mode::EffectivePotential){
+        potential_interpolation.SetXValues(profiler.GetBinCenters());
+        this->SetPotentialInitialGuess();
+    }
+
     avg_rdf_interpolation.ResizeVectors(profiler.GetBinCenters().size());
     avg_rdf_interpolation.SetXValues(profiler.GetBinCenters());
-
 }
 
 void PMF::beforeForces(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep){
@@ -107,7 +110,7 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
 
 
     if(mode == Mode::Production){
-       adres_statistics.MeasureStatistics(pc);
+        adres_statistics.MeasureStatistics(pc);
         adres_statistics.Output(); 
     }
 
@@ -124,7 +127,7 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
         std::vector<double> current_rdf = profiler.GetRDF();
         convergence.PrintGlobalConvergence2File();
         convergence.CheckConvergence(reference_rdf_interpolation.GetYValues(),current_rdf);
-        convergence.PrintLocalConvergence2File(step);
+        convergence.PrintLocalConvergence2File();
     
         if(step%update_stride ==0 && step>0){
             Log::global_log->info()<<"[UpdatePotential]Update potential now"<<std::endl;
@@ -228,7 +231,7 @@ void PMF::ReadRDF(){
     std::vector<double> y_values;
 
     filename = "rdf.txt";
-    std::ifstream file{filename};
+    std::ifstream file{ref_rdf_path};
     if(!file){
         Log::global_log->error()<<"[PMF] I could not read the rdf data file"<<std::endl;
     }
