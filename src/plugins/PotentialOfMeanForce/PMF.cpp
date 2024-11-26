@@ -51,6 +51,7 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     xmlfile.getNodeValue("output",output);
     xmlfile.getNodeValue("updateStride",update_stride);
     xmlfile.getNodeValue("rdfPath",ref_rdf_path);
+    xmlfile.getNodeValue("epPath",effective_potential_path);
     std::string mode_name;
     xmlfile.getNodeValue("mode",mode_name);
     if(mode_name == "Equilibration"){
@@ -249,12 +250,10 @@ void PMF::ReadRDF(){
 
 void PMF::ReadEffectivePotential(){
 
-    std::string filename;
     std::vector<double> x_values;
     std::vector<double> y_values;
 
-    filename = "cg_potential.txt";
-    std::ifstream file{filename};
+    std::ifstream file{effective_potential_path};
     if(!file){
         Log::global_log->error()<<"[PMF] I could not read the potential data file"<<std::endl;
     }

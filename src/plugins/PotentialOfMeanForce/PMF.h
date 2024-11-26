@@ -53,7 +53,7 @@ class PMF:public PluginBase{
     bool output;
 
     std::string ref_rdf_path;
-
+    std::string effective_potential_path;
 
     public:
     PMF();

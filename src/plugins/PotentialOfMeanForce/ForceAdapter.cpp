@@ -98,7 +98,7 @@ double InteractionForceAdapter::processPairBackend(Molecule& m1, Molecule& m2, d
 void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, InteractionType interaction){
     //Pure interaction case
     if(interaction == InteractionType::onlyfp){
-        Log::global_log->error()<<"PotForceType cannot be FP"<<std::endl;
+        // Log::global_log->error()<<"PotForceType cannot be FP"<<std::endl;
         PotForce(m1,m2,params,drm,Upot6LJ, UpotXpoles, MyRF, Virial,calcLJ);
     }
 
@@ -109,7 +109,7 @@ void InteractionForceAdapter::PotForceType(Molecule& m1, Molecule& m2, ParaStrm&
     }
 
     if(interaction == InteractionType::mixed){
-         Log::global_log->error()<<"PotForceType cannot be Mixed"<<std::endl;
+        //  Log::global_log->error()<<"PotForceType cannot be Mixed"<<std::endl;
         /**
          * m1 hy vs m2 cg
          * m1 hy vs m2 at

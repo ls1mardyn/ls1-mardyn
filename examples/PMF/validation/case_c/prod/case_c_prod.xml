@@ -90,20 +90,22 @@
     <plugin name="PMF">
         <fpregions>
           <region id = "1">
-            <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
-            <highX>0.0</highX><highY>0.0</highY><highZ>0.0</highZ>
-            <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
+            <lowX>6.5</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+            <highX>8.5</highX><highY>15</highY><highZ>15</highZ>
+            <hybridDimX>3</hybridDimX><hybridDimY>0.0</hybridDimY>
             <hybridDimZ>0.0</hybridDimZ>
           </region>
         </fpregions>
-        <multiplier>0.7</multiplier>
-        <internalBins>250</internalBins>
-        <densityBins>25</densityBins>
+        <multiplier>1.0</multiplier>
+        <internalBins>200</internalBins>
+        <densityBins>50</densityBins>
         <measureFreq>1</measureFreq>
         <updateStride>1000</updateStride>
         <rdfOutputStride>100</rdfOutputStride>
         <output>true</output>
-        <mode>OnlyCG</mode>
+        <mode>Production</mode>
+        <rdfPath>../../restart_data/avg_rdf26900.txt</rdfPath>
+        <epPath>../ep/results/avg_rdf26900.txt</epPath>
     </plugin>
         
   </simulation>
