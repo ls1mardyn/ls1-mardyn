@@ -63,7 +63,7 @@ inline void LinearRegression(const std::vector<T1>& x, const std::vector<T1>& y,
  * @return true 
  * @return false 
  */
-bool inline isNearRel(double a, double b, double maxRelativeDifference = 1e-9) 
+bool isNearRel(double a, double b, double maxRelativeDifference = 1e-9) 
 {
 	const auto greaterNumber = std::max(std::abs(a), std::abs(b));
 	const auto absoluteDifference = maxRelativeDifference * greaterNumber;
@@ -77,5 +77,5 @@ bool inline isNearRel(double a, double b, double maxRelativeDifference = 1e-9)
  * @param n the number to be checked
  * @return int -1 if the number is negative, and 1 otherwise
  */
-inline short int findSign(int n) { return n < 0 ? -1 : 1; }
+short int findSign(int n) { return n < 0 ? -1 : 1; }
 #endif /* MATH_H_ */
