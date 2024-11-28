@@ -16,7 +16,8 @@
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "utils/Logger.h"  // is this used?
 
-
+#include "boundaries/BoundaryHandler.h"
+#include "ensemble/EnsembleBase.h"
 
 class Component;
 class Domain;
@@ -289,6 +290,23 @@ public:
 
 	virtual void printCommunicationPartners(std::string filename) const {};
 
+	/* Set the global boundary type for the _boundaryHandler object. */
+	void setGlobalBoundaryType(DimensionUtils::DimensionType dimension, BoundaryUtils::BoundaryType boundary);
+
+	/* Find which boundaries of a subdomain are actually global boundaries, and update _boundaryHandler. */
+	void setLocalBoundariesFromGlobal(Domain* domain, Ensemble* ensemble);
+
+	/* Check if any of the global boundaries are invalid. */
+	bool hasGlobalInvalidBoundary() const { return _boundaryHandler.hasGlobalInvalidBoundary();}
+
+	bool hasGlobalNonPeriodicBoundary() const { return _boundaryHandler.hasGlobalNonPeriodicBoundary();}
+
+	/* Processes leaving particles according to the boundary coundition of the wall the particles would be leaving. */
+	void processBoundaryConditions(ParticleContainer* moleculeContainer, double timestepLength);
+
+	/* Delete all halo particles outside global boundas that are non-periodic. */
+	void removeNonPeriodicHalos(ParticleContainer* moleculeContainer);
+
 protected:
 	void addLeavingMolecules(std::vector<Molecule>& invalidMolecules, ParticleContainer* moleculeContainer);
 
@@ -337,6 +355,8 @@ protected:
 
 	//! total number of processes in the simulation
 	int _numProcs;
+
+	BoundaryHandler _boundaryHandler;
 
 private:
 	CollectiveCommBase _collCommBase;
