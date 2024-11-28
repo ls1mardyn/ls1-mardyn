@@ -69,10 +69,7 @@ std::string DimensionUtils::convertDimensionToString(DimensionType dimension) {
 		case DimensionType::NEGZ:
 			return "-z";
 		default: // ERROR
-			std::ostringstream error_message;
-			error_message << "DimesionType::ERROR received in DimensionUtils::convertDimensionToString!"
-									 << std::endl;
-			MARDYN_EXIT(error_message.str());
+			MARDYN_EXIT("DimesionType::ERROR received in DimensionUtils::convertDimensionToString!");
 			return "error";
 	}
 }
@@ -96,10 +93,7 @@ int DimensionUtils::convertDimensionToNumeric(DimensionType dimension) {
 		case DimensionType::NEGZ:
 			return -3;
 		default:
-			std::ostringstream error_message;
-			error_message << "DimesionType::ERROR received in DimensionUtils::convertDimensionToNumeric!"
-									 << std::endl;
-			MARDYN_EXIT(error_message.str());
+			MARDYN_EXIT("DimesionType::ERROR received in DimensionUtils::convertDimensionToNumeric!");
 			return 0;
 	}
 }

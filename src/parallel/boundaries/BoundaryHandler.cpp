@@ -131,9 +131,7 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *molec
 				break;
 			}
 			default:
-				std::ostringstream error_message;
-				error_message << "BoundaryType::ERROR received in BoundaryHandler::processGlobalWallLeavingParticles!" << std::endl;
-				MARDYN_EXIT(error_message.str());
+				MARDYN_EXIT("BoundaryType::ERROR received in BoundaryHandler::processGlobalWallLeavingParticles!");
 		}
 	}
 }
@@ -169,9 +167,7 @@ void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer *moleculeContaine
 				break;
 			}
 			default:
-				std::ostringstream error_message;
-				error_message << "BoundaryType::ERROR received in BoundaryHandler::removeNonPeriodicHalos!" << std::endl;
-				MARDYN_EXIT(error_message.str());
+				MARDYN_EXIT("BoundaryType::ERROR received in BoundaryHandler::removeNonPeriodicHalos!");
 		}
 	}
 }

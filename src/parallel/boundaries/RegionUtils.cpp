@@ -41,9 +41,7 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getInnerRe
 			break;
 
 		default:
-			std::ostringstream error_message;
-			error_message << "DimensionType::ERROR received in RegionUtils::getInnerRegionSlab" << std::endl;
-			MARDYN_EXIT(error_message.str());
+			MARDYN_EXIT("DimensionType::ERROR received in RegionUtils::getInnerRegionSlab");
 	}
 	return {returnRegionBegin, returnRegionEnd};
 }
