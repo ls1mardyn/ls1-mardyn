@@ -54,9 +54,8 @@ bool RegionUtils::isMoleculeLeaving(const Molecule &molecule, const std::array<d
 	const int ls1dim = convertEnumToLS1DimIndex(dimension);
 	const int direction = findSign(dimension);
 	const double newPos = molecule.r(ls1dim) + (timestepLength * (molecule.v(ls1dim) + nextStepVelAdjustment));
-	if (newPos <= regionBegin[ls1dim] && direction < 0)
-		return true;
-	if (newPos >= regionEnd[ls1dim] && direction > 0)
+	if ((newPos <= regionBegin[ls1dim] && direction < 0) 
+	    or (newPos >= regionEnd[ls1dim] && direction > 0))
 		return true;
 	return false;
 }
@@ -113,5 +112,5 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getOuterRe
 			error_message << "DimensionType::ERROR received in RegionUtils::getOuterRegionSlab" << std::endl;
 			MARDYN_EXIT(error_message.str());
 	}
-	return std::make_tuple(returnRegionBegin, returnRegionEnd);
+	return {returnRegionBegin, returnRegionEnd};
 }
