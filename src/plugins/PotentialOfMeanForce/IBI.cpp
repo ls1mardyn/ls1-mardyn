@@ -226,7 +226,7 @@ void IBI::AddPotentialCorrection() {
     for (int idx = 0; idx < pot.size(); idx++) {
         const double update = alpha * T * std::log(avg_rdf[idx] / reference_rdf.GetYValues()[idx]);
         if (std::isfinite(update)) {
-            pot[idx] -= update;
+            pot[idx] += update;
             updateFunction.GetYValues()[idx] = update;
         }
     }

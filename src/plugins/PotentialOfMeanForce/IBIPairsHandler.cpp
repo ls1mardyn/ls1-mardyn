@@ -81,7 +81,7 @@ void IBIPairsHandler::PotForceOnlyCG(Molecule& m1, Molecule& m2, double* distanc
     std::array<double, 3> com1 = m1.r_arr();
     std::array<double, 3> com2 = m2.r_arr();
 
-    const std::array<double, 3> dr = {com2[0] - com1[0], com2[1] - com1[1], com2[2] - com1[2]};
+    const std::array<double, 3> dr = {com1[0] - com2[0], com1[1] - com2[1], com1[2] - com2[2]};
     const double r = Distance(com1, com2);
     const double Upot = potential_function.EvaluateAt(r);
     std::array<double,3> force = getActingForce(dr, r);
