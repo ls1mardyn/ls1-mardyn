@@ -19,19 +19,19 @@
     </run>
     
     <ensemble type="NVT">
-      <temperature unit="reduced">20.0</temperature>
+      <temperature unit="reduced">100.0</temperature>
       <domain type="box">
-        <lx>15.0</lx>
-        <ly>15.0</ly>
-        <lz>15.0</lz>
+        <lx>30.0</lx>
+        <ly>10.0</ly>
+        <lz>10.0</lz>
       </domain>
       <components>
         <include query="/components/moleculetype">./lj_fluid_tet.xml</include>
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>restart_data_case_tet/generic_lj_T20_step-100.restart.header.xml</header>
-          <data>restart_data_case_tet/generic_lj_T20_step-100.restart.dat</data>
+          <header>../AdResS/Validation/Tetrahedral/TET-REF-EQ-500k-1.restart.header.xml</header>
+          <data>../AdResS/Validation/Tetrahedral/TET-REF-EQ-500k-1.restart.dat</data>
         </file>
         <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
@@ -46,7 +46,7 @@
         <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass">
-        <radiusLJ unit="reduced">3</radiusLJ>
+        <radiusLJ unit="reduced">5</radiusLJ>
       </cutoffs>
       <electrostatic type="ReactionField">
         <epsilon>1.0e+10</epsilon>
@@ -87,7 +87,7 @@
       <averageFrequency>5</averageFrequency>
     </plugin-->
 
-    <plugin name="PMF">
+    <plugin name="IBI">
         <singleRun>true</singleRun>
         <stepsEquil>5e+4</stepsEquil>
         <stepsMeasure>5e+3</stepsMeasure>
@@ -96,7 +96,7 @@
         <bins>300</bins>
 
         <convergence>
-            <threshold>0.99</threshold>
+            <threshold>0.98</threshold>
             <method>integral</method>
             <stop-method>worse</stop-method>
             <window-size>5</window-size>

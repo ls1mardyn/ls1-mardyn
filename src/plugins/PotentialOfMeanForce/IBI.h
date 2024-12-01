@@ -27,7 +27,7 @@ public:
     void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
     void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
 
-    std::string getPluginName() { return "PMF"; }
+    std::string getPluginName() { return "IBI"; }
     static PluginBase* createInstance() {return dynamic_cast<PluginBase*>( new IBI()); }
 
     //========================================
