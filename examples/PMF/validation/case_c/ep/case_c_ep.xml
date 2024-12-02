@@ -64,37 +64,35 @@
  
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
-      <writefrequency>2</writefrequency>
+      <writefrequency>50</writefrequency>
     </outputplugin>
 
-    <!--outputplugin name="CheckpointWriter">
+    <outputplugin name="CheckpointWriter">
       <type>binary</type>
-      <writefrequency>100</writefrequency>
+      <writefrequency>1000</writefrequency>
       <outputprefix>generic_lj_step</outputprefix>
-    </outputplugin-->
+    </outputplugin>
 
     </output>
 
     <plugin name="PMF">
-        <fpregions>
-          <region id = "1">
-            <lowX>6.5</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
-            <highX>8.5</highX><highY>15</highY><highZ>15</highZ>
-            <hybridDimX>3</hybridDimX><hybridDimY>0.0</hybridDimY>
-            <hybridDimZ>0.0</hybridDimZ>
-          </region>
-        </fpregions>
-        <multiplier>1.0</multiplier>
-        <internalBins>200</internalBins>
-        <densityBins>100</densityBins>
-        <measureFreq>1</measureFreq>
-        <updateStride>1000</updateStride>
-        <outputFreq>20</outputFreq>
-        <output>true</output>
-        <mode>Production</mode>
-        <rdfPath>../../restart_data/avg_rdf26900.txt</rdfPath>
-        <epPath>../../ep/results/potential_11000.txt</epPath>
-    </plugin>
-        
+      <fpregions>
+        <region id = "1">
+          <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+          <highX>0.0</highX><highY>0.0</highY><highZ>0.0</highZ>
+          <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
+          <hybridDimZ>0.0</hybridDimZ>
+        </region>
+      </fpregions>
+      <multiplier>1.0</multiplier>
+      <internalBins>200</internalBins>
+      <measureFreq>1</measureFreq>
+      <updateStride>1000</updateStride>
+      <outputFreq>10</outputFreq>
+      <output>true</output>
+      <mode>EffectivePotential</mode>
+      <rdfPath>../../restart_data/avg_rdf26900.txt</rdfPath>
+  </plugin>
+	
   </simulation>
 </mardyn>

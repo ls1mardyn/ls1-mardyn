@@ -19,14 +19,14 @@
     </run>
     
     <ensemble type="NVT">
-      <temperature unit="reduced">2.0</temperature>
+      <temperature unit="reduced">1.0</temperature>
       <domain type="box">
-        <lx>15.0</lx>
-        <ly>15.0</ly>q
-        <lz>15.0</lz>
+        <lx>36.845</lx>
+        <ly>36.845</ly>
+        <lz>36.845</lz>
       </domain>
       <components>
-        <include query="/components/moleculetype">../../components/lj_fluid.xml</include>
+        <include query="/components/moleculetype">../../components/lj_tetrahedral.xml</include>
       </components>
       <!--phasespacepoint>
         <file type="binary">
@@ -50,11 +50,11 @@
                         </site>
                     </basis>
                     <latticeOccupancy>1.</latticeOccupancy>
-                    <density>0.18</density>
+                    <density>0.1</density>
                 </filler>
                 <object type="Cuboid">
                     <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                    <upper> <x>15.0</x> <y>15.0</y> <z>15.0</z> </upper>
+                    <upper> <x>36.845</x> <y>36.845</y> <z>36.845</z> </upper>
                 </object>
                 <velocityAssigner type="MaxwellVelocityDistribution"/>
             </objectgenerator>
@@ -71,7 +71,7 @@
         <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass">
-        <radiusLJ unit="reduced">3</radiusLJ>
+        <radiusLJ unit="reduced">4.5</radiusLJ>
       </cutoffs>
       <electrostatic type="ReactionField">
         <epsilon>1.0e+10</epsilon>
@@ -89,13 +89,13 @@
  
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
-      <writefrequency>20</writefrequency>
+      <writefrequency>1000</writefrequency>
     </outputplugin>
 
     <outputplugin name="CheckpointWriter">
       <type>binary</type>
       <writefrequency>100</writefrequency>
-      <outputprefix>generic_lj_step</outputprefix>
+      <outputprefix>tetrahedral_step</outputprefix>
     </outputplugin>
 
     </output>
@@ -104,7 +104,7 @@
       <fpregions>
         <region id = "1">
           <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
-          <highX>15.0</highX><highY>15.0</highY><highZ>15.0</highZ>
+          <highX>36.845</highX><highY>36.845</highY><highZ>36.845</highZ>
           <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
           <hybridDimZ>0.0</hybridDimZ>
         </region>
@@ -114,7 +114,7 @@
       <densityBins>25</densityBins>
       <measureFreq>1</measureFreq>
       <updateStride>1000</updateStride>
-      <outputFreq>100</outputFreq>
+      <outputFreq>5</outputFreq>
       <output>true</output>
       <mode>Equilibration</mode>
   </plugin>

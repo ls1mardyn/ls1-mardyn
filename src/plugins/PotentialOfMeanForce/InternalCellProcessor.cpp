@@ -1,11 +1,11 @@
 #include "ProfilerPMF.h"
 
-InternalCellProcessor::InternalCellProcessor(const double cr, int bins, double width,double dwidth):CellProcessor{cr,cr},bin_width{width},density_bin_width{dwidth}{
+InternalCellProcessor::InternalCellProcessor(const double cr, int bins, double width,double dwidth,int dbins):CellProcessor{cr,cr},bin_width{width},density_bin_width{dwidth}{
 
     thread_data.resize(mardyn_get_max_threads());
     thread_density_data.resize(mardyn_get_max_threads());
     global_buffer.resize(bins,0.0);
-    global_density_buffer.resize(bins,0.0);
+    global_density_buffer.resize(dbins,0.0);
     #pragma omp parallel
     {
         thread_data[mardyn_get_thread_num()].resize(bins,0.0);
@@ -118,8 +118,8 @@ double InternalCellProcessor::DistanceBetweenCOMs(std::array<double,3>& c1, std:
 
 void InternalCellProcessor::ProcessSingleData(Molecule& m1){
 
-    double x = m1.r(0);
-    int index = std::floor(x/density_bin_width);
+    std::array<double,3> com = ComputeCOM(m1);
+    int index = std::floor(com[0]/density_bin_width);
 
     thread_density_data[mardyn_get_thread_num()][index]++;
 

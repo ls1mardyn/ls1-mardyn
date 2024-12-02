@@ -113,7 +113,7 @@ class InternalCellProcessor: public CellProcessor{
     bool profile_density=false;
     public:
     InternalCellProcessor& operator=(const InternalCellProcessor&)=delete;
-    InternalCellProcessor(const double cutoff, int bins, double width, double dwidth=0);
+    InternalCellProcessor(const double cutoff, int bins, double width, double dwidth=0, int dbins=0);
     ~InternalCellProcessor(){};
 
     void initTraversal() override {

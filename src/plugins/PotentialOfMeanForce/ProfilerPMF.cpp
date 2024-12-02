@@ -23,7 +23,7 @@ void InternalProfiler::init(double rc){
         density.InitBins(_simulation.getDomain()->getGlobalLength(0));
     }
     
-    cell_processor=new InternalCellProcessor(global_simulation->getcutoffRadius(), number_bins,bin_width,density.bin_width); 
+    cell_processor=new InternalCellProcessor(global_simulation->getcutoffRadius(), number_bins,bin_width,density.bin_width,density.total_bins); 
     cell_processor->SetMeasureDensity(measure_density);
     Log::global_log->info()<<"[PMF] Profiler enabled "<<std::endl;
 }
@@ -120,13 +120,10 @@ void InternalProfiler::PrintOutput2Files(unsigned long ss){
         if(measure_density){
             file_name = "density_"+std::to_string(ss)+".txt";
             std::ofstream density_file(file_name);
-            for(int i=0;i<density.bin_width;++i){
+            for(int i=0;i<density.total_bins;++i){
                 density_file<<std::setw(8)<<std::left<<density.bin_centers[i]<<"\t"<<std::setw(8)<<std::left<<GetDensity()[i]<<std::endl;
             }
-
             density_file.close();
-
         }
-
     }
 }
