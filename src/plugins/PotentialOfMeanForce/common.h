@@ -14,8 +14,13 @@ inline std::array<double, 3> ComputeCOM(Molecule& m1){
         double site_mass = m1.component()->ljcenter(lj).m();
         for(int i=0;i<3;++i){
             com[i] += lj_site[i]*site_mass;
-            com[i] = com[i]/total_mass;
+            // com[i] = com[i]/total_mass;
         }
+    }
+
+
+    for(int i=0;i<3;++i){
+        com[i] = com[i]/total_mass;
     }
 
     return com;

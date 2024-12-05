@@ -19,7 +19,7 @@
     </run>
     
     <ensemble type="NVT">
-      <temperature unit="reduced">100.0</temperature>
+      <temperature unit="reduced">2.0</temperature>
       <domain type="box">
         <lx>20.0</lx>
         <ly>20.0</ly>
@@ -28,13 +28,13 @@
       <components>
         <include query="/components/moleculetype">../../components/lj_tetrahedral.xml</include>
       </components>
-      <!--phasespacepoint>
-        <file type="binary">
-          <header>restart_data_case_c/generic_lj_step-0390.restart.restart.header.xml</header>
-          <data>restart_data_case_c/generic_lj_step-0390.restart.dat</data>
-        </file>
-      </phasespacepoint-->
       <phasespacepoint>
+        <file type="binary">
+          <header>restart_data_case_c/generic_lj_step-99.restart.restart.header.xml</header>
+          <data>restart_data_case_c/generic_lj_step-99.restart.dat</data>
+        </file>
+      </phasespacepoint>
+      <!--phasespacepoint>
         <generator name="MultiObjectGenerator">
             <objectgenerator>
                 <filler type="GridFiller">
@@ -59,7 +59,7 @@
                 <velocityAssigner type="MaxwellVelocityDistribution"/>
             </objectgenerator>
         </generator>
-    </phasespacepoint>
+    </phasespacepoint-->
     </ensemble>
     
     <algorithm>
@@ -114,7 +114,7 @@
       <densityBins>25</densityBins>
       <measureFreq>1</measureFreq>
       <updateStride>1000</updateStride>
-      <outputFreq>50</outputFreq>
+      <outputFreq>100</outputFreq>
       <output>true</output>
       <mode>Equilibration</mode>
   </plugin>

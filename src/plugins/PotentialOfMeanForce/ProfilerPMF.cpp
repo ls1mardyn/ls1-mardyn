@@ -78,10 +78,8 @@ std::vector<double> InternalProfiler::GetRDF(){
 
     std::vector<double> instantaneous_rdf;
     instantaneous_rdf.resize(number_bins);
-    // std::cout<<"Total molecules "<<_simulation.getDomain()->getglobalNumMolecules()<<std::endl;
     
     for(int i=0;i<number_bins;++i){
-        //Generate RDF g(r) data && U(r) instantaneous values
         double rmin, rmax, rmid, binvol, rmin3,rmax3, den;
         rmid = (i+0.5)*bin_width;
         rmin = i*bin_width;
