@@ -24,8 +24,24 @@ void StatisticsAdResS::init(FPRegion& region){
     hy2.high=region._highHybrid;
 }
 
-void StatisticsAdResS::Output(){
-    Log::global_log->info()<<"[AdResSStatistics] T_fp="<<temperatures[1]<<"\tT_cg="<<temperatures[0]<<"\tT_hy="<<temperatures[2]<<std::endl;
+void StatisticsAdResS::Output2File(long step){
+
+    if(step % output_stride ==0){
+        std::ofstream statistics(file_name);
+        statistics<<"T_{cg1}\t T_{hy1}\t T_{fp}\t"<<std::endl;
+        for(int i=0;i<fp_temp.size();++i){
+            statistics<<std::setw(8)<<std::left<<i<<"\t"
+                      <<std::setw(8)<<std::left<<cg1_temp[i]<<"\t"
+                      <<std::setw(8)<<std::left<<hy1_temp[i]<<"\t"
+                      <<std::setw(8)<<std::left<<fp_temp[i]<<"\t"
+                    //   <<std::setw(8)<<std::left<<fp_temp[i]<<"\t"
+                      <<std::endl;
+
+        }
+
+        statistics.close();
+    }
+
 }
 
 void StatisticsAdResS::MeasureCGTemperature(ParticleContainer* particleContainer){
@@ -54,7 +70,7 @@ void StatisticsAdResS::MeasureCGTemperature(ParticleContainer* particleContainer
 
     E_kin /= mass;
     T_cg1 = E_kin/(3.0*N);
-    temperatures[0]=T_cg1;
+    cg1_temp.push_back(T_cg1);
 }
 
 void StatisticsAdResS::MeasureFPTemperature(ParticleContainer* particleContainer){
@@ -73,7 +89,7 @@ void StatisticsAdResS::MeasureFPTemperature(ParticleContainer* particleContainer
     }
     E_kin /= mass;
     T_fp = E_kin/(3.0*N);
-    temperatures[1]=T_fp;
+    fp_temp.push_back(T_fp);
 
 }
 
@@ -104,6 +120,6 @@ void StatisticsAdResS::MeasureHYTemperature(ParticleContainer* particleContainer
 
     E_kin /= mass;
     T_hy = E_kin/(3.0*N);
-    temperatures[2]=T_hy;
-
+    hy1_temp.push_back(T_hy);
+    
 }

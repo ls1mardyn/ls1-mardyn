@@ -112,7 +112,7 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
 
     if(mode == Mode::Production){
         adres_statistics.MeasureStatistics(pc);
-        adres_statistics.Output(); 
+        adres_statistics.Output2File(step); 
     }
 
 

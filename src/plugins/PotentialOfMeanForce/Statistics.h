@@ -22,15 +22,16 @@ class StatisticsAdResS{
     };
     ResRegion fp, cg1, cg2, hy1, hy2;
 
-    std::array<double,3> temperatures;//0 is cg, 1 is fp, 2 is hy
+    std::vector<double> fp_temp, cg1_temp, cg2_temp, hy1_temp, hy2_temp;
     std::string fp_component = "LJ";
-    
+    std::string file_name = "AdResSStatistics.output";
+    int output_stride = 10;
     public:
     /**
      * Set the regions
      */
     void init(FPRegion& region);
-    void Output();
+    void Output2File(long step);
     void MeasureStatistics(ParticleContainer* pc){
         MeasureFPTemperature(pc);
         MeasureCGTemperature(pc);
