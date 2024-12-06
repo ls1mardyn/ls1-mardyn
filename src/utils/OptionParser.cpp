@@ -216,7 +216,7 @@ const Option& OptionParser::lookup_long_opt(const std::string& opt) const {
 
 	std::list<std::string> matching;
 	for (optMap::const_iterator it = _optmap_l.begin(); it != _optmap_l.end(); ++it) {
-		if (it->first.compare(0, opt.length(), opt) == 0)
+		if (it->first == opt)
 			matching.push_back(it->first);
 	}
 	if (matching.size() > 1) {
