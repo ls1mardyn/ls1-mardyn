@@ -14,21 +14,27 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>10000</steps>
+        <steps>100000</steps>
       </production>
     </run>
     
     <ensemble type="NVT">
-      <temperature unit="reduced">1.0</temperature>
+      <temperature unit="reduced">0.5</temperature>
       <domain type="box">
         <lx>15.0</lx>
-        <ly>15.0</ly>q
+        <ly>15.0</ly>
         <lz>15.0</lz>
       </domain>
       <components>
         <include query="/components/moleculetype">../../components/lj_fluid.xml</include>
       </components>
       <phasespacepoint>
+        <file type="binary">
+        <header>../restart_data/generic_lj_step-99.restart.header.xml</header>
+          <data>../restart_data/generic_lj_step-99.restart.dat</data>
+        </file>
+      </phasespacepoint>
+      <!-- <phasespacepoint>
         <generator name="MultiObjectGenerator">
             <objectgenerator>
                 <filler type="GridFiller">
@@ -53,7 +59,7 @@
                 <velocityAssigner type="MaxwellVelocityDistribution"/>
             </objectgenerator>
         </generator>
-    </phasespacepoint>
+    </phasespacepoint> -->
     </ensemble>
     
     <algorithm>
@@ -80,12 +86,12 @@
     </algorithm>
     
     <output>
- 
+
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
       <writefrequency>20</writefrequency>
     </outputplugin>
-
+ 
     <outputplugin name="CheckpointWriter">
       <type>binary</type>
       <writefrequency>100</writefrequency>
@@ -94,11 +100,24 @@
 
     </output>
 
-    <plugin name = "RadialDFCOM">
-    	<totalBins>100</totalBins>
-    	<sampleFrequency>1</sampleFrequency>
-      <averageFrequency>5</averageFrequency>
-    </plugin>
+    <plugin name="PMF">
+      <fpregions>
+        <region id = "1">
+          <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+          <highX>15.0</highX><highY>15.0</highY><highZ>15.0</highZ>
+          <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
+          <hybridDimZ>0.0</hybridDimZ>
+        </region>
+      </fpregions>
+      <multiplier>1.0</multiplier>
+      <internalBins>250</internalBins>
+      <densityBins>25</densityBins>
+      <measureFreq>1</measureFreq>
+      <updateStride>1000</updateStride>
+      <outputFreq>100</outputFreq>
+      <output>true</output>
+      <mode>Equilibration</mode>
+  </plugin>
 
         
   </simulation>

@@ -19,19 +19,19 @@
     </run>
     
     <ensemble type="NVT">
-      <temperature unit="reduced">1.0</temperature>
+      <temperature unit="reduced">0.5</temperature>
       <domain type="box">
         <lx>15.0</lx>
         <ly>15.0</ly>
         <lz>15.0</lz>
       </domain>
       <components>
-        <include query="/components/moleculetype">./lj_fluid.xml</include>
+        <include query="/components/moleculetype">../../components/lj_fluid.xml</include>
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>restart_data_case_a/generic_lj_step-261.restart.header.xml</header>
-          <data>restart_data_case_a/generic_lj_step-261.restart.dat</data>
+          <header>../restart_data/generic_lj_step-999.restart.header.xml</header>
+            <data>../restart_data/generic_lj_step-999.restart.dat</data>
         </file>
         <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
@@ -90,14 +90,16 @@
             <hybridDimZ>0.0</hybridDimZ>
           </region-->
         </fpregions>
-        <multiplier>0.7</multiplier>
-        <internalBins>100</internalBins>
-        <densityBins>25</densityBins>
+        <multiplier>1.0</multiplier>
+        <internalBins>250</internalBins>
+        <densityBins>100</densityBins>
         <measureFreq>1</measureFreq>
         <updateStride>1000</updateStride>
-        <rdfOutputStride>5</rdfOutputStride>
+        <outputFreq>5</outputFreq>
         <output>true</output>
         <mode>Production</mode>
+        <rdfPath>../../restart_data/avg_rdf100000.txt</rdfPath>
+        <epPath>../../restart_data/potential_32000.txt</epPath>
     </plugin>
         
   </simulation>
