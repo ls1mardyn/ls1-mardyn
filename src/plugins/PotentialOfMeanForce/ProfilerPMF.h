@@ -62,7 +62,7 @@ class InternalProfiler{
     std::vector<double> r_nodes;
     int sample_frequency;
     int measured_steps;//increases on every call to ProfileData
-    double measured_distance_squared=-1;
+    double measured_distance_squared;
     int output_frequency;
     public:
 
@@ -111,6 +111,7 @@ class InternalCellProcessor: public CellProcessor{
     double bin_width;
     double density_bin_width;//For indexing
     bool profile_density=false;
+
     public:
     InternalCellProcessor& operator=(const InternalCellProcessor&)=delete;
     InternalCellProcessor(const double cutoff, int bins, double width, double dwidth=0, int dbins=0);

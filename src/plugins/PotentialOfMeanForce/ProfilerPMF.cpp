@@ -11,7 +11,6 @@ void InternalProfiler::ReadXML(XMLfileUnits& xmlconfig){
     xmlconfig.getNodeValue("densityBins",density.total_bins);
     xmlconfig.getNodeValue("measureFreq",sample_frequency);
     xmlconfig.getNodeValue("outputFreq",output_frequency);
-    xmlconfig.getNodeValue("rdfMeasureDistance",measured_distance_squared);
 }
 
 void InternalProfiler::init(double rc){
@@ -23,7 +22,7 @@ void InternalProfiler::init(double rc){
         density.InitBins(_simulation.getDomain()->getGlobalLength(0));
     }
     
-    cell_processor=new InternalCellProcessor(global_simulation->getcutoffRadius(), number_bins,bin_width,density.bin_width,density.total_bins); 
+    cell_processor=new InternalCellProcessor(rc, number_bins,bin_width,density.bin_width,density.total_bins); 
     cell_processor->SetMeasureDensity(measure_density);
     Log::global_log->info()<<"[PMF] Profiler enabled "<<std::endl;
 }
@@ -46,12 +45,8 @@ void InternalProfiler::SetBinContainer(double rc){
     this->InitRNodes();
 
     Log::global_log->info()<<"[PMF] Internal profiler bin width "<<bin_width<<"\n";
-    if(measured_distance_squared == -1){
-        measured_distance_squared = bin_width*bin_width*number_bins*number_bins;
-    }
-    else{
-        measured_distance_squared = std::pow(measured_distance_squared,2.0);
-    }
+    measured_distance_squared = bin_width*bin_width*number_bins*number_bins;
+
     Log::global_log->info()<<"[PMF] Limit distance "<<measured_distance_squared<<"\n";
 
 }
