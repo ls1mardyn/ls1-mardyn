@@ -6,12 +6,12 @@ InternalProfiler::InternalProfiler():cell_processor{nullptr},measured_steps{0}{
 }
 
 void InternalProfiler::ReadXML(XMLfileUnits& xmlconfig){
-    //RDF config
+
     xmlconfig.getNodeValue("internalBins",number_bins);
     xmlconfig.getNodeValue("densityBins",density.total_bins);
     xmlconfig.getNodeValue("measureFreq",sample_frequency);
     xmlconfig.getNodeValue("outputFreq",output_frequency);
-
+    xmlconfig.getNodeValue("rdfMeasureDistance",measured_distance_squared);
 }
 
 void InternalProfiler::init(double rc){
@@ -46,7 +46,12 @@ void InternalProfiler::SetBinContainer(double rc){
     this->InitRNodes();
 
     Log::global_log->info()<<"[PMF] Internal profiler bin width "<<bin_width<<"\n";
-    measured_distance_squared = bin_width*bin_width*number_bins*number_bins;
+    if(measured_distance_squared == -1){
+        measured_distance_squared = bin_width*bin_width*number_bins*number_bins;
+    }
+    else{
+        measured_distance_squared = std::pow(measured_distance_squared,2.0);
+    }
     Log::global_log->info()<<"[PMF] Limit distance "<<measured_distance_squared<<"\n";
 
 }

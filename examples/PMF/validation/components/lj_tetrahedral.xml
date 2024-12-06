@@ -6,28 +6,28 @@
             <mass>1.0</mass>
             <sigma>1.0</sigma>
             <epsilon>1.0</epsilon>
-            <shifted>false</shifted>
+            <shifted>true</shifted>
         </site>
         <site type="LJ126" id="2" >
             <coords> <x>-0.057735027</x> <y>-0.057735027</y> <z>0.057735027</z> </coords>
             <mass>1.0</mass>
             <sigma>1.0</sigma>
             <epsilon>1.0</epsilon>
-            <shifted>false</shifted>
+            <shifted>true</shifted>
         </site>
         <site type="LJ126" id="3" >
             <coords> <x>-0.057735027</x> <y>0.057735027</y> <z>-0.057735027</z> </coords>
             <mass>1.0</mass>
             <sigma>1.0</sigma>
             <epsilon>1.0</epsilon>
-            <shifted>false</shifted>
+            <shifted>true</shifted>
         </site>
         <site type="LJ126" id="4" >
             <coords> <x>0.057735027</x> <y>-0.057735027</y> <z>-0.057735027</z> </coords>
             <mass>1.0</mass>
             <sigma>1.0</sigma>
             <epsilon>1.0</epsilon>
-            <shifted>false</shifted>
+            <shifted>true</shifted>
         </site>
         <momentsofinertia rotates="xyz">
             <Ixx>1.0</Ixx>

@@ -19,22 +19,22 @@
     </run>
     
     <ensemble type="NVT">
-      <temperature unit="reduced">2.0</temperature>
+      <temperature unit="reduced">1.0</temperature>
       <domain type="box">
-        <lx>20.0</lx>
-        <ly>20.0</ly>
-        <lz>20.0</lz>
+        <lx>36.845</lx>
+        <ly>36.845</ly>
+        <lz>36.845</lz>
       </domain>
       <components>
         <include query="/components/moleculetype">../../components/lj_tetrahedral.xml</include>
       </components>
-      <phasespacepoint>
+      <!-- <phasespacepoint>
         <file type="binary">
           <header>restart_data_case_c/generic_lj_step-99.restart.restart.header.xml</header>
           <data>restart_data_case_c/generic_lj_step-99.restart.dat</data>
         </file>
-      </phasespacepoint>
-      <!--phasespacepoint>
+      </phasespacepoint> -->
+      <phasespacepoint>
         <generator name="MultiObjectGenerator">
             <objectgenerator>
                 <filler type="GridFiller">
@@ -54,12 +54,12 @@
                 </filler>
                 <object type="Cuboid">
                     <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                    <upper> <x>20.0</x> <y>20.0</y> <z>20.0</z> </upper>
+                    <upper> <x>36.845</x> <y>36.845</y> <z>36.845</z> </upper>
                 </object>
                 <velocityAssigner type="MaxwellVelocityDistribution"/>
             </objectgenerator>
         </generator>
-    </phasespacepoint-->
+    </phasespacepoint>
     </ensemble>
     
     <algorithm>
@@ -86,25 +86,22 @@
     </algorithm>
     
     <output>
- 
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
       <writefrequency>5</writefrequency>
     </outputplugin>
-
     <outputplugin name="CheckpointWriter">
       <type>binary</type>
       <writefrequency>100</writefrequency>
       <outputprefix>tetrahedral_step</outputprefix>
     </outputplugin>
-
     </output>
 
     <plugin name="PMF">
       <fpregions>
         <region id = "1">
           <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
-          <highX>20.0</highX><highY>20.0</highY><highZ>20.0</highZ>
+          <highX>36.845</highX><highY>36.845</highY><highZ>36.845</highZ>
           <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
           <hybridDimZ>0.0</hybridDimZ>
         </region>
@@ -113,11 +110,12 @@
       <internalBins>200</internalBins>
       <densityBins>25</densityBins>
       <measureFreq>1</measureFreq>
+      <rdfMeasureDistance>5</rdfMeasureDistance>
       <updateStride>1000</updateStride>
-      <outputFreq>100</outputFreq>
+      <outputFreq>20</outputFreq>
       <output>true</output>
       <mode>Equilibration</mode>
-  </plugin>
+    </plugin>
 	
   </simulation>
 </mardyn>

@@ -62,7 +62,7 @@ class InternalProfiler{
     std::vector<double> r_nodes;
     int sample_frequency;
     int measured_steps;//increases on every call to ProfileData
-    double measured_distance_squared;
+    double measured_distance_squared=-1;
     int output_frequency;
     public:
 
