@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <vector>
 #include <string>
 
@@ -22,7 +23,7 @@ public:
 class MemoryProfiler {
 private:
 	std::vector<MemoryProfilable **> _list;
-	int _hugePageSize; // in kB
+	int _hugePageSize; // Hugepagesize in kB
 public:
 	MemoryProfiler();
 
