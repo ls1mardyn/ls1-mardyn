@@ -184,7 +184,8 @@
           </basis>
           <origin> <x>0.0</x> <y>0.0</y> <z>0.0</z> </origin>
         </generator>
-
+        <!-- If true, the simulation ignores the timestep in the loaded checkpoint and starts the simulation from timestep 0. Default: false-->
+        <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
     </ensemble>
 
