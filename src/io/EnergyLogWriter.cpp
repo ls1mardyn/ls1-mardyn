@@ -60,6 +60,15 @@ void EnergyLogWriter::endStep(ParticleContainer *particleContainer, DomainDecomp
 	}
 
 	// calculate global values
+#ifdef ENABLE_PERSISTENT
+	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), nNumMolsGlobalEnergyLocal, UkinLocal, UkinTransLocal, UkinRotLocal);
+	collComm.persistent();
+	unsigned long nNumMolsGlobalEnergyGlobal;
+	double UkinGlobal;
+	double UkinTransGlobal;
+	double UkinRotGlobal;
+	collComm.get(nNumMolsGlobalEnergyGlobal, UkinGlobal, UkinTransGlobal, UkinRotGlobal);
+#else
 	domainDecomp->collCommInit(4);
 	domainDecomp->collCommAppendUnsLong(nNumMolsGlobalEnergyLocal);
 	domainDecomp->collCommAppendDouble(UkinLocal);
@@ -71,6 +80,7 @@ void EnergyLogWriter::endStep(ParticleContainer *particleContainer, DomainDecomp
 	double UkinTransGlobal = domainDecomp->collCommGetDouble();
 	double UkinRotGlobal = domainDecomp->collCommGetDouble();
 	domainDecomp->collCommFinalize();
+#endif
 
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
