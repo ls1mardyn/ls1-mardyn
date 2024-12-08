@@ -17,6 +17,88 @@ void Resolution::Handler::init(Resolution::Config& config) {
 			<< region._hybridDims[0] << "," << region._hybridDims[1] << "," << region._hybridDims[2] << "]" << std::endl;
 	}
 
+    // handle components
+    if (_config.components->size() != 1) {
+        Log::global_log->fatal() << "[AdResS] Only supporting single component simulation at the moment" << std::endl;
+        exit(669);
+    }
+
+    //=================================
+    // create other components
+    //=================================
+    // Hybrid
+    {
+        Component comp {};
+        comp.setID(1);
+        comp.setName("Hybrid");
+
+        // add CG interaction site
+        Component& fp_comp = _config.components->at(0);
+        std::array<double,3> com{0.0,0.0,0.0};
+        const double total_mass = fp_comp.m();
+        for (int lj = 0; lj < fp_comp.numLJcenters(); lj++) {
+            LJcenter& lj_center = fp_comp.ljcenter(lj);
+            for (int dim = 0; dim < 3; dim++) {
+                com[dim] += lj_center.m() * lj_center.r()[dim];
+            }
+        }
+        for (int i = 0; i < 3; i++) com[i] /= total_mass;
+        LJcenter lj_site {};
+        lj_site.setR(0, com[0]); lj_site.setR(1, com[1]); lj_site.setR(2, com[2]);
+        lj_site.setM(0);
+        std::string site_name = "LJ126";
+        lj_site.setName(site_name);
+        comp.addLJcenter(lj_site);
+
+        // add all other sites
+        for (auto& lj : fp_comp.ljcenters()) {
+            LJcenter site_copy = lj;
+            comp.addLJcenter(site_copy);
+        }
+        for (auto& c : fp_comp.charges()) {
+            Charge site_copy = c;
+            comp.addCharge(site_copy);
+        }
+        for (auto& d : fp_comp.dipoles()) {
+            Dipole site_copy = d;
+            comp.addDipole(site_copy);
+        }
+        for (auto& q : fp_comp.quadrupoles()) {
+            Quadrupole site_copy = q;
+            comp.addQuadrupole(site_copy);
+        }
+
+        comp.setI11(fp_comp.I11());
+        comp.setI22(fp_comp.I22());
+        comp.setI33(fp_comp.I33());
+
+        _config.components->push_back(comp);
+    }
+    // CG
+    {
+        Component comp {};
+        comp.setID(2);
+        comp.setName("CG");
+
+        Component& fp_comp = _config.components->at(0);
+        const double total_mass = fp_comp.m();
+        LJcenter lj_site {};
+        lj_site.setR(0, 0); lj_site.setR(1, 0); lj_site.setR(2, 0);
+        lj_site.setM(total_mass);
+        std::string site_name = "LJ126";
+        lj_site.setName(site_name);
+        comp.addLJcenter(lj_site);
+
+        comp.setI11(fp_comp.I11());
+        comp.setI22(fp_comp.I22());
+        comp.setI33(fp_comp.I33());
+
+        _config.components->push_back(comp);
+    }
+
+    _simulation.getEnsemble()->setComponentLookUpIDs();
+    int n = _config.components->size();
+    _config.domain->getmixcoeff().resize(n * (n-1), 1.0);
 	_config.comp_to_res.resize(_config.components->size());
     if (_config.comp_to_res.size() > 3) {
         Log::global_log->fatal() << "[AdResS] Only supporting single component simulation at the moment" << std::endl;
@@ -25,30 +107,9 @@ void Resolution::Handler::init(Resolution::Config& config) {
 
 	for(Component& comp : *_config.components) {
 		unsigned int id = comp.ID();
-		if(id % ResolutionCount == FullParticle) {
-			if(comp.getName().rfind("FP_", 0) == 0) _config.comp_to_res[id] = FullParticle;
-			else {
-				Log::global_log->fatal() << "[AdResS] Component with id=" << id+1 << " does not have FP_ prefix in name."
-									<< "Uncertain if this component should be Full Particle representation." << std::endl;
-				exit(669);
-			}
-		}
-		if(id % ResolutionCount == Hybrid) {
-			if(comp.getName().rfind("H_", 0) == 0) _config.comp_to_res[id] = Hybrid;
-			else {
-				Log::global_log->fatal() << "[AdResS] Component with id=" << id+1 << " does not have H_ prefix in name."
-									<< "Uncertain if this component should be Hybrid representation." << std::endl;
-				exit(669);
-			}
-		}
-		if(id % ResolutionCount == CoarseGrain) {
-			if(comp.getName().rfind("CG_", 0) == 0) _config.comp_to_res[id] = CoarseGrain;
-			else {
-				Log::global_log->fatal() << "[AdResS] Component with id=" << id+1 << " does not have CG_ prefix in name."
-									<< "Uncertain if this component should be Coarse Grain representation." << std::endl;
-				exit(669);
-			}
-		}
+		if(id % ResolutionCount == FullParticle) _config.comp_to_res[id] = FullParticle;
+		if(id % ResolutionCount == Hybrid) _config.comp_to_res[id] = Hybrid;
+		if(id % ResolutionCount == CoarseGrain) _config.comp_to_res[id] = CoarseGrain;
 	}
 }
 
