@@ -104,7 +104,7 @@ private:
      * Provides methods for convergence checking
      * */
     struct Convergence {
-        void init(double threshold, const std::string& mode_str = "l2", const std::string& stop_str = "worse", int window = 10);
+        void init(double threshold, const std::string& mode_str = "l2", const std::string& stop_str = "worse", int window = 10, int ignore = 0);
 
         /**
          * Computes integrals over r_i and r_0... see https://arxiv.org/pdf/1410.1853
@@ -133,6 +133,8 @@ private:
         enum {ON_WORSE, WINDOW} stopping_mode = ON_WORSE;
         /// window size for window stopping method
         int window_size;
+        /// offset counter, will not return true for should stop as long as this is > 0
+        int ignore_counter = 0;
 
     } ConvergenceCheck;
 

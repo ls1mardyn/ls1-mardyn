@@ -40,11 +40,13 @@ void IBI::readXML(XMLfileUnits& xmlfile) {
     std::string conv_method = "l2";
     std::string stop_method = "worse";
     int window_size = 10;
+    int ignore = 0;
     xmlfile.getNodeValue("convergence/threshold", conv_threshold);
     xmlfile.getNodeValue("convergence/method", conv_method);
     xmlfile.getNodeValue("convergence/stop-method", stop_method);
     xmlfile.getNodeValue("convergence/window-size", window_size);
-    ConvergenceCheck.init(conv_threshold, conv_method, stop_method, window_size);
+    xmlfile.getNodeValue("convergence/offset", ignore);
+    ConvergenceCheck.init(conv_threshold, conv_method, stop_method, window_size, ignore);
 
     if (rdf_path.empty()) mode_initial_rdf = true;
     if (pot_path.empty()) ibi_iteration = 0;
@@ -307,13 +309,14 @@ void IBI::CreateOptimizer() {
 //  CONVERGENCE CHECK
 //=============================================================
 
-void IBI::Convergence::init(double th, const std::string &mode_str, const std::string &stop_str, int window) {
+void IBI::Convergence::init(double th, const std::string &mode_str, const std::string &stop_str, int window, int ignore) {
     if (mode_str == "l2") mode = L2;
     else mode = INTEGRAL;
     threshold = th;
     if (stop_str == "worse") stopping_mode = ON_WORSE;
     else stopping_mode = WINDOW;
     window_size = window;
+    ignore_counter = ignore;
 }
 
 std::pair<bool, double> IBI::Convergence::integral(const FunctionPL &ref, RDFProfiler& profiler) {
@@ -373,6 +376,8 @@ std::pair<bool, double> IBI::Convergence::operator()(const FunctionPL &ref, RDFP
 }
 
 bool IBI::Convergence::ShouldStop() {
+    if (0 < ignore_counter--) return false;
+
     const auto steps = conv_values.size();
 
     if (stopping_mode == ON_WORSE) {
