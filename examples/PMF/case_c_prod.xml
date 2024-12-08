@@ -87,7 +87,7 @@
       <averageFrequency>5</averageFrequency>
     </plugin-->
 
-    <plugin name="PMF">
+    <plugin name="IBI">
         <singleRun>true</singleRun>
         <stepsEquil>2e+4</stepsEquil>
         <stepsMeasure>2e+3</stepsMeasure>

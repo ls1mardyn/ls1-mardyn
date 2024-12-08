@@ -30,8 +30,8 @@
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>restart_data_case_a/generic_lj_step-100.restart.header.xml</header>
-          <data>restart_data_case_a/generic_lj_step-100.restart.dat</data>
+          <header>restart_data_case_a_shifted/generic_lj_step-100.restart.header.xml</header>
+          <data>restart_data_case_a_shifted/generic_lj_step-100.restart.dat</data>
         </file>
         <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>

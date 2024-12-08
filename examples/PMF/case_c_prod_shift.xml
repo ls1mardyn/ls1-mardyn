@@ -14,12 +14,12 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>1101000</steps>
+        <steps>2202000</steps>
       </production>
     </run>
     
     <ensemble type="NVT">
-      <temperature unit="reduced">0.5</temperature>
+      <temperature unit="reduced">2.0</temperature>
       <domain type="box">
         <lx>15.0</lx>
         <ly>15.0</ly>
@@ -30,8 +30,8 @@
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>restart_data_case_a/generic_lj_step-100.restart.header.xml</header>
-          <data>restart_data_case_a/generic_lj_step-100.restart.dat</data>
+          <header>restart_data_case_c_shifted/generic_lj_step-100.restart.header.xml</header>
+          <data>restart_data_case_c_shifted/generic_lj_step-100.restart.dat</data>
         </file>
         <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
@@ -69,7 +69,7 @@
 
     <outputplugin name="CheckpointWriter">
       <type>binary</type>
-      <writefrequency>1101000</writefrequency>
+      <writefrequency>2202000</writefrequency>
       <outputprefix>ibi</outputprefix>
     </outputplugin>
 
@@ -89,11 +89,18 @@
 
     <plugin name="IBI">
         <singleRun>true</singleRun>
-        <stepsEquil>1e+4</stepsEquil>
-        <stepsMeasure>1e+3</stepsMeasure>
+        <stepsEquil>2e+4</stepsEquil>
+        <stepsMeasure>2e+3</stepsMeasure>
 
         <alpha>0.2</alpha>
         <bins>300</bins>
+
+        <convergence>
+            <threshold>0.99</threshold>
+            <method>integral</method>
+            <stop-method>worse</stop-method>
+            <window-size>5</window-size>
+        </convergence>
         <!--rdfPath>../../examples/PMF/restart_data_case_c/rdf_0.txt</rdfPath-->
         <!--potPath>../../examples/PMF/restart_data_case_c/pot_1.txt</potPath-->
     </plugin>
