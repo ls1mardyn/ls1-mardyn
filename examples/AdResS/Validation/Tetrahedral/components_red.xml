@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<components version="20100525">
+    <moleculetype id="1" name="FP_M">
+        <site type="LJ126" id="1" >
+            <coords> <x>0.35355339</x> <y>0.35355339</y> <z>0.35355339</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>0.01</epsilon>
+            <shifted>true</shifted>
+        </site>
+        <site type="LJ126" id="2" >
+            <coords> <x>-0.35355339</x> <y>-0.35355339</y> <z>0.35355339</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>0.01</epsilon>
+            <shifted>true</shifted>
+        </site>
+        <site type="LJ126" id="3" >
+            <coords> <x>-0.35355339</x> <y>0.35355339</y> <z>-0.35355339</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>0.01</epsilon>
+            <shifted>true</shifted>
+        </site>
+        <site type="LJ126" id="4" >
+            <coords> <x>0.35355339</x> <y>-0.35355339</y> <z>-0.35355339</z> </coords>
+            <mass>1.0</mass>
+            <sigma>1.0</sigma>
+            <epsilon>0.01</epsilon>
+            <shifted>true</shifted>
+        </site>
+        <momentsofinertia rotates="xyz">
+            <Ixx>1.0</Ixx>
+            <Iyy>1.0</Iyy>
+            <Izz>1.0</Izz>
+        </momentsofinertia>
+    </moleculetype>
+</components>
