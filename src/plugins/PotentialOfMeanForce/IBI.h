@@ -58,6 +58,8 @@ private:
     void CreateSwapComponent();
     /// Generates file paths
     [[nodiscard]] std::string createFilepath(const std::string& prefix) const;
+    /// Creates the optimizer based on the current configuration
+    void CreateOptimizer();
 
     /// g*(r)
     FunctionPL reference_rdf {0.0, 1.0};
@@ -67,8 +69,6 @@ private:
     RDFProfiler profiler;
     /// pair handler to comp forces
     IBIPairsHandler* pairs_handler = nullptr;
-    /// alpha for step size
-    double alpha = 0.0;
     /// disables most functionality and only outputs rdf at the end of the simulation
     bool mode_initial_rdf = false;
     /// Target simulation temperature
@@ -91,6 +91,14 @@ private:
     int current_steps = 0;
     /// single run: current ibi phase
     enum { FIRST_INIT, EQUILIBRATE, MEASURE } ibi_phase = FIRST_INIT;
+    /// configuration parameters for optimization
+    struct OptConfig {
+        enum { DEFAULT, ADAM } type;
+        double alpha;
+        double beta1;
+        double beta2;
+        double eps;
+    } optConfig;
 
     /**
      * Provides methods for convergence checking
@@ -127,4 +135,7 @@ private:
         int window_size;
 
     } ConvergenceCheck;
+
+    /// handles the update step
+    std::unique_ptr<IBIOptimizer> optimizer;
 };

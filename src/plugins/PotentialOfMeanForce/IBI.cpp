@@ -12,7 +12,20 @@ void IBI::readXML(XMLfileUnits& xmlfile) {
     xmlfile.getNodeValue("stepsMeasure", tmp);
     steps_measurement = static_cast<int>(tmp);
 
-    xmlfile.getNodeValue("alpha", alpha);
+    std::array<const std::string, 2> opt_types {"default", "adam"};
+    std::string opt_type = opt_types[0];
+    double opt_alpha = 0.001, opt_beta1 = 0.9, opt_beta2 = 0.999, opt_eps = 1e-8;
+    xmlfile.getNodeValue("optimizer/type", opt_type);
+    xmlfile.getNodeValue("optimizer/alpha", opt_alpha);
+    xmlfile.getNodeValue("optimizer/beta1", opt_beta1);
+    xmlfile.getNodeValue("optimizer/beta2", opt_beta2);
+    xmlfile.getNodeValue("optimizer/eps", opt_eps);
+    if (opt_type == opt_types[1]) optConfig.type = OptConfig::ADAM;
+    else optConfig.type = OptConfig::DEFAULT;
+    optConfig.alpha = opt_alpha;
+    optConfig.beta1 = opt_beta1;
+    optConfig.beta2 = opt_beta2;
+    optConfig.eps = opt_eps;
 
     int bins;
     xmlfile.getNodeValue("bins", bins);
@@ -74,7 +87,7 @@ void IBI::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
     Log::global_log->info() << "[PMF] LegacyCellProcessor set" << std::endl;
     Log::global_log->info() << "[PMF] ForcedAdapter Class being used" << std::endl;
     Log::global_log->info() << "[PMF] Enabled " << std::endl;
-    Log::global_log->info() << "[PMF] Damping factor of "<< alpha << std::endl;
+    //Log::global_log->info() << "[PMF] Damping factor of "<< alpha << std::endl;
 }
 
 void IBI::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) {
@@ -111,6 +124,7 @@ void IBI::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long
 
                 Log::global_log->info() << "[PMF] Transitioning from first initialization to equilibration with PMF" << std::endl;
                 CreateSwapComponent();
+                CreateOptimizer();
                 break;
             }
             case EQUILIBRATE: {
@@ -219,34 +233,7 @@ void IBI::AddPotentialCorrection() {
     std::vector<double> avg_rdf;
     profiler.GetRDFTotal(avg_rdf);
 
-    std::vector<double>& pot = pairs_handler->getPotentialFunction().GetYValues();
-    FunctionPL updateFunction {};
-    updateFunction.SetXValues(pairs_handler->getPotentialFunction().GetXValues());
-    updateFunction.GetYValues().resize(pot.size(), 0.0);
-    for (int idx = 0; idx < pot.size(); idx++) {
-        const double update = alpha * T * std::log(avg_rdf[idx] / reference_rdf.GetYValues()[idx]);
-        if (std::isfinite(update)) {
-            pot[idx] += update;
-            updateFunction.GetYValues()[idx] = update;
-        }
-    }
-    updateFunction.write(createFilepath("update"));
-
-    // extrapolate function values (linearly) for which log was undefined in range of [0, r_min)
-    // first find r_min
-    int r_min_idx = -1;
-    for (int idx = 0; idx < reference_rdf.GetXValues().size(); idx++) {
-        if (reference_rdf.GetYValues()[idx] != 0.0) { r_min_idx = idx; break; }
-    }
-    // r_min_idx has the first position with a valid y value
-    if (r_min_idx != -1) {
-        const double dy = pot[r_min_idx + 1] - pot[r_min_idx];
-        double y_val = pot[r_min_idx];
-        for (int idx = r_min_idx; idx >= 0; idx--) {
-            pot[idx] = y_val;
-            y_val -= dy;
-        }
-    }
+    optimizer->step(avg_rdf, ibi_iteration);
 }
 
 void IBI::DerivativeOfPotential() {
@@ -302,6 +289,18 @@ std::string IBI::createFilepath(const std::string &prefix) const {
     std::stringstream path;
     path << prefix << "_" << ibi_iteration << ".txt";
     return path.str();
+}
+
+void IBI::CreateOptimizer() {
+    if (optConfig.type == OptConfig::ADAM) {
+        optimizer = std::make_unique<AdamOptimizer>(pairs_handler->getPotentialFunction(), reference_potential,
+                                                    reference_rdf, T, optConfig.alpha, optConfig.beta1,
+                                                    optConfig.beta2, optConfig.eps);
+    }
+    else {
+        optimizer = std::make_unique<DefaultOptimizer>(pairs_handler->getPotentialFunction(),
+                                                       reference_potential, reference_rdf, T, optConfig.alpha);
+    }
 }
 
 //=============================================================

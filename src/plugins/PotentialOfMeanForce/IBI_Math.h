@@ -52,6 +52,74 @@ private:
     double default_value_upper;
 };
 
+class IBIOptimizer {
+public:
+    IBIOptimizer(FunctionPL& pot, FunctionPL& ref_pot, FunctionPL& ref_rdf, double T) : _pot(pot), _ref_pot(ref_pot), _ref_rdf(ref_rdf), _temp(T) {}
+    virtual ~IBIOptimizer() = default;
+    /**
+     * @brief performs the actual optimization step
+     * @param rdf current rdf
+     * */
+    virtual void step(const std::vector<double>& rdf, int ibi_step) = 0;
+
+protected:
+    [[nodiscard]] std::string createFilepath(const std::string& prefix, int step) const;
+    void extrapolate();
+
+    /// potential function
+    FunctionPL& _pot;
+    /// reference potential
+    FunctionPL& _ref_pot;
+    /// reference rdf
+    FunctionPL& _ref_rdf;
+    /// Target Temperature
+    const double _temp;
+};
+
+/**
+ * Implements the default update process for IBI
+ * */
+class DefaultOptimizer final : public IBIOptimizer {
+public:
+    DefaultOptimizer(FunctionPL& pot, FunctionPL& ref_pot, FunctionPL& ref_rdf, double T, double alpha);
+    ~DefaultOptimizer() final = default;
+
+    void step(const std::vector<double> &rdf, int ibi_step) override;
+
+private:
+    FunctionPL _updateFunction;
+    double _alpha;
+};
+
+class AdamOptimizer final : public IBIOptimizer {
+public:
+    AdamOptimizer(FunctionPL& pot, FunctionPL& ref_pot, FunctionPL& ref_rdf, double T, double alpha, double beta1, double beta2, double eps);
+    ~AdamOptimizer() final = default;
+
+    void step(const std::vector<double> &rdf, int ibi_step) override;
+private:
+    void computeGradient(const std::vector<double> &rdf);
+    void updateMean();
+    void updateVar();
+
+    /// means -> accumulate velocity
+    FunctionPL _m;
+    /// variances -> stop high frequency oscillation
+    FunctionPL _v;
+    /// current gradient
+    FunctionPL _grad;
+    /// update term
+    FunctionPL _update;
+    /// update rate
+    const double _alpha;
+    /// retention rate mean
+    const double _beta1;
+    /// retention rate variance
+    const double _beta2;
+    /// variance zero offset
+    const double _eps;
+};
+
 //===============================================================
 // UTIL FUNCTION
 //===============================================================

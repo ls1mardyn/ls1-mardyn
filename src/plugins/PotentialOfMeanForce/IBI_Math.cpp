@@ -110,6 +110,111 @@ void FunctionPL::write(const std::string &path) {
     file.close();
 }
 
+std::string IBIOptimizer::createFilepath(const std::string &prefix, int step) const {
+    std::stringstream path;
+    path << prefix << "_" << step << ".txt";
+    return path.str();
+}
+
+void IBIOptimizer::extrapolate() {
+    // extrapolate function values (linearly) for which log was undefined in range of [0, r_min)
+    // first find r_min
+    int r_min_idx = -1;
+    for (int idx = 0; idx < _ref_rdf.GetXValues().size(); idx++) {
+        if (_ref_rdf.GetYValues()[idx] != 0.0) { r_min_idx = idx; break; }
+    }
+    // r_min_idx has the first position with a valid y value
+    if (r_min_idx != -1) {
+        const double dy = _pot.GetYValues()[r_min_idx + 1] - _pot.GetYValues()[r_min_idx];
+        double y_val = _pot.GetYValues()[r_min_idx];
+        for (int idx = r_min_idx; idx >= 0; idx--) {
+            _pot.GetYValues()[idx] = y_val;
+            y_val -= dy;
+        }
+    }
+}
+
+DefaultOptimizer::DefaultOptimizer(FunctionPL &pot, FunctionPL &ref_pot, FunctionPL &ref_rdf, double T, double alpha)
+: IBIOptimizer(pot, ref_pot, ref_rdf, T), _updateFunction(), _alpha(alpha) {
+    _updateFunction.SetXValues(ref_rdf.GetXValues());
+    _updateFunction.GetYValues().resize(ref_pot.GetYValues().size(), 0.0);
+}
+
+void DefaultOptimizer::step(const std::vector<double> &rdf, int ibi_step) {
+    for (int idx = 0; idx < _pot.GetXValues().size(); idx++) {
+        const double update = _alpha * _temp * std::log(rdf[idx] / _ref_rdf.GetYValues()[idx]);
+        if (std::isfinite(update)) {
+            _pot.GetYValues()[idx] += update;
+            _updateFunction.GetYValues()[idx] = update;
+        }
+    }
+    _updateFunction.write(createFilepath("update", ibi_step));
+
+    extrapolate();
+}
+
+AdamOptimizer::AdamOptimizer(
+        FunctionPL &pot, FunctionPL &ref_pot, FunctionPL &ref_rdf,
+        double T, double alpha, double beta1, double beta2, double eps) :
+        IBIOptimizer(pot, ref_pot, ref_rdf, T), _m(), _v(), _grad(), _update(),
+        _alpha(alpha), _beta1(beta1), _beta2(beta2), _eps(eps) {
+    auto& nodes = ref_rdf.GetXValues();
+    _m.SetXValues(nodes);
+    _v.SetXValues(nodes);
+    _grad.SetXValues(nodes);
+    _update.SetXValues(nodes);
+
+    const auto size = nodes.size();
+    _m.GetYValues().resize(size, 0.0);
+    _v.GetYValues().resize(size, 0.0);
+    _grad.GetYValues().resize(size, 0.0);
+    _update.GetYValues().resize(size, 0.0);
+}
+
+void AdamOptimizer::step(const std::vector<double> &rdf, int ibi_step) {
+    computeGradient(rdf);
+    updateMean();
+    updateVar();
+
+    const double m_div = (1 - std::pow(_beta1, ibi_step+1));
+    const double v_div = (1 - std::pow(_beta2, ibi_step+1));
+    //compute and add update term
+    for (int idx = 0; idx < _update.GetYValues().size(); idx++) {
+        //add bias correction
+        const double m_hat = _m.GetYValues()[idx] / m_div;
+        const double v_hat = _v.GetYValues()[idx] / v_div;
+
+        const double update = - _alpha * m_hat / (std::sqrt(v_hat) + _eps);
+        _update.GetYValues()[idx] = update;
+        _pot.GetYValues()[idx] += update;
+    }
+    _update.write(createFilepath("update", ibi_step));
+
+    extrapolate();
+}
+
+void AdamOptimizer::computeGradient(const std::vector<double> &rdf) {
+    for (int idx = 0; idx < rdf.size(); idx++) {
+        double grad = 0;
+        double tmp = (2.0 / (_temp)) * (std::log(_ref_rdf.GetYValues()[idx]) - std::log(rdf[idx]));
+        if (std::isfinite(tmp)) grad = tmp;
+        _grad.GetYValues()[idx] = grad;
+    }
+}
+
+void AdamOptimizer::updateMean() {
+    for (int idx = 0; idx < _m.GetYValues().size(); idx++) {
+        _m.GetYValues()[idx] = _beta1 * _m.GetYValues()[idx] + (1 - _beta1) * _grad.GetYValues()[idx];
+    }
+}
+
+void AdamOptimizer::updateVar() {
+    for (int idx = 0; idx < _v.GetYValues().size(); idx++) {
+        const double grad = _grad.GetYValues()[idx];
+        _v.GetYValues()[idx] = _beta2 * _v.GetYValues()[idx] + (1 - _beta2) * (grad * grad);
+    }
+}
+
 //===============================================================
 // UTIL FUNCTION
 //===============================================================
