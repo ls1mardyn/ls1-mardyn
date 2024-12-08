@@ -378,19 +378,26 @@ bool IBI::Convergence::ShouldStop() {
 
     if (stopping_mode == ON_WORSE) {
         if (steps < 2) return false;
-
-        if (conv_values[steps-2] > threshold) return false;
-        if (conv_values[steps-1] <= threshold) return false;
-        return true;
+        if (mode == INTEGRAL) {
+            if (conv_values[steps-2] < threshold) return false;
+            if (conv_values[steps-2] <= conv_values[steps-1]) return false;
+            return true;
+        }
+        if (mode == L2) {
+            if (conv_values[steps-2] > threshold) return false;
+            if (conv_values[steps-2] >= conv_values[steps-1]) return false;
+            return true;
+        }
     }
+
     else if (stopping_mode == WINDOW) {
         if (steps < window_size) return false;
-        bool all_leq = true;
+        bool all_in_range = true;
         for (int i = 0; i < window_size; i++) {
-            all_leq &= conv_values[steps - 1 - i] <= threshold;
+            if (mode == INTEGRAL) all_in_range &= conv_values[steps - 1 - i] >= threshold;
+            if (mode == L2) all_in_range &= conv_values[steps - 1 - i] <= threshold;
         }
-
-        return all_leq;
+        return all_in_range;
     }
     throw std::runtime_error("Unknown stopping method");
 }
