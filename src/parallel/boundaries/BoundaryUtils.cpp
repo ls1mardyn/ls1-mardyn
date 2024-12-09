@@ -12,8 +12,8 @@
 
 #include <algorithm>
 #include <cctype>
-#include <string>
 #include <sstream> // for ostringstream
+#include <string>
 
 BoundaryUtils::BoundaryType BoundaryUtils::convertStringToBoundary(const std::string &boundary) {
 	std::string boundaryLowercase(boundary);
@@ -26,7 +26,8 @@ BoundaryUtils::BoundaryType BoundaryUtils::convertStringToBoundary(const std::st
 	if (boundaryLowercase.find("out") != std::string::npos)
 		return BoundaryType::OUTFLOW;
 	std::ostringstream error_message;
-	error_message << "Invalid boundary type passed to BoundaryUtils::convertStringToBoundary. Check your input file!" << std::endl;
+	error_message << "Invalid boundary type passed to BoundaryUtils::convertStringToBoundary. Check your input file!"
+				  << std::endl;
 	MARDYN_EXIT(error_message.str());
 	return BoundaryType::ERROR; // warning suppression
 }

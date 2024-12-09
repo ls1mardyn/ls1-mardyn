@@ -19,8 +19,7 @@ bool DimensionUtils::isDimensionNumericPermissible(int dim) {
 DimensionUtils::DimensionType DimensionUtils::convertNumericToDimension(int dim) {
 	if (!isDimensionNumericPermissible(dim)) {
 		std::ostringstream error_message;
-		error_message << "Invalid dimension passed for enum conversion. Received value: " << dim
-								 << std::endl;
+		error_message << "Invalid dimension passed for enum conversion. Received value: " << dim << std::endl;
 		MARDYN_EXIT(error_message.str());
 		return DimensionType::ERROR; // warning suppression
 	}
