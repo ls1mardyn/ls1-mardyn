@@ -140,7 +140,7 @@ public:
 	unsigned getNumFluidComponents();
 
 	//! @brief get the fluid and fluid-solid potential of the local process
-	double getLocalUpotCompSpecific();
+	double getLocalUpotCompSpecific() const;
 
 	//! @brief set the virial of the local process
 	void setLocalVirial(double Virial);
@@ -214,28 +214,30 @@ public:
 	//!
 	//! Before this method is called, it has to be sure that the
 	//! global potential has been calculated (method calculateGlobalValues)
-	double getAverageGlobalUpot();
+	double getAverageGlobalUpot() const;
 	double getGlobalUpot() const;
 
 	//! by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction)
-	double getAverageGlobalUpotCSpec();
+	double getAverageGlobalUpotCSpec() const;
 
 	//! @brief get the global kinetic energy
 	//!
-	//! Before this method is called, it has to be sure that the
-	//! global energies has been calculated (method calculateGlobalValues)
-	double getGlobalUkinTrans() { return 0.5*_globalsummv2; }
-	double getGlobalUkinRot() { return 0.5*_globalsumIw2; }
+	//! Before this method is called, the user has to be sure that the
+	//! global energy (rot and trans) has been calculated via calculateGlobalValues()
+	//! Since variables _globalsummv2 and _globalsumIw2 store the sum of m_i*(v_i^2).
+	//! Therefore, the constant factor 0.5 has to be applied to yield the kinetic energies
+	double getGlobalUkinTrans() const { return 0.5*_globalsummv2; }
+	double getGlobalUkinRot() const { return 0.5*_globalsumIw2; }
 
 	//! by Stefan Becker: determine and return the totel number of fluid molecules
 	//! this method assumes all molecules with a component-ID less than _numFluidComponent to be fluid molecules
-	unsigned long getNumFluidMolecules();
+	unsigned long getNumFluidMolecules() const;
 
 	//! @brief get the global average virial per particle
 	//!
 	//! Before this method is called, it has to be sure that the
 	//! global virial has been calculated (method calculateGlobalValues)
-	double getAverageGlobalVirial();
+	double getAverageGlobalVirial() const;
 
 	//! @brief sets _localSummv2 to the given value
 	void setLocalSummv2(double summv2, int thermostat);
@@ -250,7 +252,7 @@ public:
 	}
 
 	//! @brief get globalRho
-	double getglobalRho();
+	double getglobalRho() const;
 
 	//! @brief set globalRho
 	void setglobalRho(double grho);
@@ -386,9 +388,9 @@ public:
 	// by Stefan Becker <stefan.becker@mv.uni-kl.de>
 	/* method returning the sigma parameter of a component
 	=> needed in the output of the MmspdWriter (specifying the particles' radii in a movie) */
-	double getSigma(unsigned cid, unsigned nthSigma);
+	double getSigma(unsigned cid, unsigned nthSigma) const;
 	// needed for the MmspdWriter (MegaMol)
-	unsigned getNumberOfComponents();
+	unsigned getNumberOfComponents() const;
 
 	void setUpotCorr(double upotcorr){ _UpotCorr = upotcorr; }
 	void setVirialCorr(double virialcorr){ _VirialCorr = virialcorr; }

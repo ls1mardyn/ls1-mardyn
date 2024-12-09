@@ -86,6 +86,8 @@
 #include <coupling/interface/impl/ls1/LS1StaticCommData.h>
 #endif
 
+#include "parallel/boundaries/BoundaryUtils.h"
+
 Simulation* global_simulation;
 
 Simulation::Simulation()
@@ -423,6 +425,34 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				MARDYN_EXIT(error_message.str());
 			}
 			_lastTraversalTimeHistory.setCapacity(timerForLoadAveragingLength);
+
+			if(xmlconfig.changecurrentnode("boundaries")) {
+				std::string xBoundaryFromConfig, yBoundaryFromConfig, zBoundaryFromConfig;
+				xmlconfig.getNodeValue("x", xBoundaryFromConfig);
+				xmlconfig.getNodeValue("y", yBoundaryFromConfig);
+				xmlconfig.getNodeValue("z", zBoundaryFromConfig);
+				BoundaryUtils::BoundaryType xBoundary = BoundaryUtils::convertStringToBoundary(xBoundaryFromConfig);
+				BoundaryUtils::BoundaryType yBoundary = BoundaryUtils::convertStringToBoundary(yBoundaryFromConfig);
+				BoundaryUtils::BoundaryType zBoundary = BoundaryUtils::convertStringToBoundary(zBoundaryFromConfig);
+				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::POSX, xBoundary);
+				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::NEGX, xBoundary);
+				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::POSY, yBoundary);
+				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::NEGY, yBoundary);
+				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::POSZ, zBoundary);
+				_domainDecomposition->setGlobalBoundaryType(DimensionUtils::DimensionType::NEGZ, zBoundary);
+				if (_domainDecomposition->hasGlobalInvalidBoundary()) {
+					MARDYN_EXIT("Invalid boundary type! Please check the config file");
+				}
+				if(_overlappingP2P && _domainDecomposition->hasGlobalNonPeriodicBoundary()) {
+					MARDYN_EXIT("Non-periodic boundaries not supported with overlappingP2P enabled! Exiting...");
+				}
+				Log::global_log->info() << "Boundary conditions: x - " <<  BoundaryUtils::convertBoundaryToString(xBoundary)
+					<< " y - " << BoundaryUtils::convertBoundaryToString(yBoundary)
+					<< " z - " << BoundaryUtils::convertBoundaryToString(zBoundary) << std::endl;
+				// go over all local boundaries, determine which are global
+				_domainDecomposition->setBoundsAndGlobalBoundaries(_domain, _ensemble);
+				xmlconfig.changecurrentnode("..");
+			}
 
 			xmlconfig.changecurrentnode("..");
 		}
@@ -1014,13 +1044,14 @@ void Simulation::preSimLoopSteps()
 	global_simulation->timers()->setOutputString("SIMULATION_UPDATE_CACHES", "Cache update took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_INIT_SEND", "initSend() took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
+	global_simulation->timers()->setOutputString("SIMULATION_BOUNDARY_TREATMENT", "Enforcing boundary conditions took:");
 
 	// all timers except the ioTimer measure inside the main loop
 
 	//global_simulation->timers()->getTimer("SIMULATION_LOOP")->set_sync(true);
 	//global_simulation->timers()->setSyncTimer("SIMULATION_LOOP", true);
 #ifdef WITH_PAPI
-	const char *papi_event_list[] = { "PAPI_TOT_CYC", "PAPI_TOT_INS" /*, "PAPI_VEC_DP", "PAPI_L2_DCM", "PAPI_L2_ICM", "PAPI_L1_ICM", "PAPI_DP_OPS", "PAPI_VEC_INS" }; */
+	const char *papi_event_list[] = { "PAPI_TOT_CYC", "PAPI_TOT_INS" };/*, "PAPI_VEC_DP", "PAPI_L2_DCM", "PAPI_L2_ICM", "PAPI_L1_ICM", "PAPI_DP_OPS", "PAPI_VEC_INS" }; */
 	int num_papi_events = sizeof(papi_event_list) / sizeof(papi_event_list[0]);
 	global_simulation->timers()->getTimer("SIMULATION_LOOP")->add_papi_counters(num_papi_events, (char**) papi_event_list);
 #endif
@@ -1077,9 +1108,13 @@ void Simulation::simulateOneTimestep()
 			global_simulation->timers()->stop(plugin->getPluginName());
         }
 
-	_ensemble->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
-
-	_integrator->eventNewTimestep(_moleculeContainer, _domain);
+		_ensemble->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
+		
+		global_simulation->timers()->start("SIMULATION_BOUNDARY_TREATMENT");
+		_domainDecomposition->processBoundaryConditions(_moleculeContainer, _integrator->getTimestepLength());
+		global_simulation->timers()->stop("SIMULATION_BOUNDARY_TREATMENT");
+		
+		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
         // beforeForces Plugin Call
         Log::global_log -> debug() << "[BEFORE FORCES] Performing BeforeForces plugin call" << std::endl;
@@ -1401,6 +1436,10 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 	_domainDecomposition->balanceAndExchange(averageLastTraversalTime, forceRebalancing, _moleculeContainer,
 											 _domain);
 	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
+
+	global_simulation->timers()->start("SIMULATION_BOUNDARY_TREATMENT");
+	_domainDecomposition->removeNonPeriodicHalos(_moleculeContainer);
+	global_simulation->timers()->stop("SIMULATION_BOUNDARY_TREATMENT");
 
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
