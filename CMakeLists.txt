@@ -70,9 +70,6 @@ include(autopas)
 # ----- include mamico
 include(mamico)
 
-# ----- resilience plugin dependencies are set here
-include(compression)
-
 # ----- add adios2 dependency
 include(adios2)
 
