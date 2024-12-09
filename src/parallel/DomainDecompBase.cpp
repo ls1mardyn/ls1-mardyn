@@ -31,7 +31,7 @@ void DomainDecompBase::setGlobalBoundaryType(DimensionUtils::DimensionType dimen
 	_boundaryHandler.setGlobalWallType(dimension, boundary);
 }
 
-void DomainDecompBase::setLocalBoundariesFromGlobal(Domain* domain, Ensemble* ensemble) {
+void DomainDecompBase::setBoundsAndGlobalBoundaries(Domain* domain, Ensemble* ensemble) {
 	//find which walls to consider
 	double startRegion[3], endRegion[3];
 	getBoundingBoxMinMax(domain, startRegion, endRegion);

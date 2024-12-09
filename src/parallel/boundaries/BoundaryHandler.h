@@ -54,7 +54,7 @@ public:
 	 * Since this returns the global wall type, every subdomain on every rank will return
 	 * the same value for the same input.
 	 *
-	 * @param dimension tte dimension of interest, must be an ls1-style index (0 for x, 1 for y, 2 for z)
+	 * @param dimension the dimension of interest, must be an ls1-style index (0 for x, 1 for y, 2 for z)
 	 * @return BoundaryUtils::BoundaryType enum member corresponding to the global wall type
 	 */
 	BoundaryUtils::BoundaryType getGlobalWallType(int dimension) const;

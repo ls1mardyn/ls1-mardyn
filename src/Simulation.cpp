@@ -450,7 +450,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					<< " y - " << BoundaryUtils::convertBoundaryToString(yBoundary)
 					<< " z - " << BoundaryUtils::convertBoundaryToString(zBoundary) << std::endl;
 				// go over all local boundaries, determine which are global
-				_domainDecomposition->setLocalBoundariesFromGlobal(_domain, _ensemble);
+				_domainDecomposition->setBoundsAndGlobalBoundaries(_domain, _ensemble);
 				xmlconfig.changecurrentnode("..");
 			}
 
