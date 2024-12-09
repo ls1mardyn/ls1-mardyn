@@ -22,7 +22,7 @@ DimensionUtils::DimensionType DimensionUtils::convertNumericToDimension(int dim)
 		error_message << "Invalid dimension passed for enum conversion. Received value: " << dim
 								 << std::endl;
 		MARDYN_EXIT(error_message.str());
-		return DimensionType::ERROR;
+		return DimensionType::ERROR; // warning suppression
 	}
 	switch (dim) {
 		case 1:
@@ -70,7 +70,7 @@ std::string DimensionUtils::convertDimensionToString(DimensionType dimension) {
 			return "-z";
 		default: // ERROR
 			MARDYN_EXIT("DimesionType::ERROR received in DimensionUtils::convertDimensionToString!");
-			return "error";
+			return "error"; // warning suppression
 	}
 }
 
@@ -94,7 +94,7 @@ int DimensionUtils::convertDimensionToNumeric(DimensionType dimension) {
 			return -3;
 		default:
 			MARDYN_EXIT("DimesionType::ERROR received in DimensionUtils::convertDimensionToNumeric!");
-			return 0;
+			return 0; // warning suppression
 	}
 }
 
@@ -105,3 +105,4 @@ int DimensionUtils::convertDimensionToNumericAbs(DimensionType dimension) {
 int DimensionUtils::convertEnumToLS1DimIndex(DimensionType dimension) {
 	return convertDimensionToNumericAbs(dimension) - 1;
 }
+int DimensionUtils::findSign(DimensionType dimension) { return ::findSign(convertDimensionToNumeric(dimension)); }

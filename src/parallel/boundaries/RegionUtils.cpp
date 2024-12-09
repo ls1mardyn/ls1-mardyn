@@ -8,8 +8,6 @@
 #include "RegionUtils.h"
 #include "utils/mardyn_assert.h" //for MARDYN_EXIT()
 
-#include <sstream> // for ostringstream
-
 std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getInnerRegionSlab(
 	const std::array<double, 3> &givenRegionBegin, const std::array<double, 3> &givenRegionEnd,
 	DimensionUtils::DimensionType dimension, double regionWidth) {
@@ -106,9 +104,7 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getOuterRe
 			break;
 
 		default:
-			std::ostringstream error_message;
-			error_message << "DimensionType::ERROR received in RegionUtils::getOuterRegionSlab" << std::endl;
-			MARDYN_EXIT(error_message.str());
+			MARDYN_EXIT("DimensionType::ERROR received in RegionUtils::getOuterRegionSlab");
 	}
 	return {returnRegionBegin, returnRegionEnd};
 }

@@ -8,6 +8,8 @@
 #ifndef MATH_H_
 #define MATH_H_
 
+#pragma once
+
 #include <vector>
 #include <numeric>
 #include <cmath>
@@ -63,13 +65,7 @@ inline void LinearRegression(const std::vector<T1>& x, const std::vector<T1>& y,
  * @return true 
  * @return false 
  */
-bool isNearRel(double a, double b, double maxRelativeDifference = 1e-9) 
-{
-	const auto greaterNumber = std::max(std::abs(a), std::abs(b));
-	const auto absoluteDifference = maxRelativeDifference * greaterNumber;
-	const auto diff = std::abs(a - b);
-	return (diff <= absoluteDifference);
-}
+bool isNearRel(double a, double b, double maxRelativeDifference = 1e-9);
 
 /**
  * @brief Find whether an int is positive or negative (zero is positive).
@@ -77,5 +73,5 @@ bool isNearRel(double a, double b, double maxRelativeDifference = 1e-9)
  * @param n the number to be checked
  * @return int -1 if the number is negative, and 1 otherwise
  */
-short int findSign(int n) { return n < 0 ? -1 : 1; }
+short int findSign(int n);
 #endif /* MATH_H_ */

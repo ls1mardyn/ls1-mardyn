@@ -118,6 +118,6 @@ int convertEnumToLS1DimIndex(DimensionType dimension);
  * @param dimension DimensionType enum member
  * @return int which is 1 if the direction is positive, and -1 otherwise
  */
-inline int findSign(DimensionType dimension) { return ::findSign(convertDimensionToNumeric(dimension)); }
+int findSign(DimensionType dimension);
 
 } // namespace DimensionUtils
