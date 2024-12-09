@@ -24,7 +24,7 @@ unset TEMP
 
 function print_help() {
 cat <<EOF
-$0 is a script to execute MarDyn examples from a inputfile list file
+$(basename $0) is a script to execute MarDyn examples from a inputfile list file
 
 A inputlist file contains one path per line to a configuration file to be passed to MarDyn.
 MarDyn is executed with one configuration file at a time.
