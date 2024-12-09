@@ -110,7 +110,9 @@ all_examples=()
 failed_examples=()
 
 while IFS= read -r line ; do
+  # Skip comment lines, starting with `#`.
   [[ "$line" =~ ^#.*$ ]] && continue
+  # Skip empty lines
   [[ "$line" =~ ^$ ]] && continue
 
   example="$line"
