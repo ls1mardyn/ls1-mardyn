@@ -69,10 +69,12 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 	MPI_Get_processor_name(_processorName, &processorNameLength);
 	MPI_Comm_rank(MPI_COMM_WORLD, &_thisRank);
 #endif
-	std::ostringstream outputFilename;
-	outputFilename << _outputprefix << ".tsv";
-	std::ofstream outputFile(outputFilename.str().c_str());
-	outputFile << "milliseconds\tsimstep\tjoules" << std::endl;
+	if (!_outputprefix.empty()) {
+		std::ostringstream outputFilename;
+		outputFilename << _outputprefix << ".tsv";
+		std::ofstream outputFile(outputFilename.str().c_str());
+		outputFile << "milliseconds\tsimstep\tjoules" << std::endl;
+	}
 	// For each package...
 	const int numberOfPackages = getNumberOfPackages();
 	for (int packageIdx = 0; packageIdx < numberOfPackages; packageIdx++) {
