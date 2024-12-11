@@ -14,10 +14,6 @@
 #include <chrono>
 #include <memory>
 
-#ifdef USE_GETTIMEOFDAY
-#include <sys/time.h>
-#endif
-
 #ifdef ENABLE_MPI
 #include <mpi.h>
 
@@ -99,12 +95,8 @@ private:
 	std::string _filename;
 	std::shared_ptr<std::ostream> _log_stream;
 	std::map<logLevel, std::string> logLevelNames;
-#ifdef USE_GETTIMEOFDAY
-	timeval _starttime;
-#else
-	time_t _starttime;
-#endif
 
+	std::chrono::system_clock::time_point _starttime;
 	int _rank;
 
 	/// initialize the list of log levels with the corresponding short names
@@ -180,22 +172,15 @@ public:
 				_msg_log_level = level;
 		if (_msg_log_level <= _log_level && _do_output) {
 			// Include timestamp
-			const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-			tm unused{};
-			const auto* lt = localtime_r(&now, &unused);
-			//*_log_stream << ctime(&t) << " ";
+			const auto now = std::chrono::system_clock::now();
+			const auto time_since_start = now - _starttime;
+
+			auto now_time_t = std::chrono::system_clock::to_time_t(now);
+			std::tm now_local{};
+			localtime_r(&now_time_t, &now_local);
 			std::stringstream timestampstream;
-			// maybe sprintf is easier here...
-			timestampstream << std::setfill('0') << std::setw(4) << (1900 + lt->tm_year) << std::setw(2) << (1 + lt->tm_mon) << std::setw(2) << lt->tm_mday << "T" << std::setw(2) << lt->tm_hour << std::setw(2) << lt->tm_min << std::setw(2) << lt->tm_sec;
-			*_log_stream << logLevelNames[level] << ":\t" << timestampstream.str() << " ";
-			//timestampstream.str(""); timestampstream.clear();
-#ifdef USE_GETTIMEOFDAY
-			timeval tod;
-			gettimeofday(&tod, 0);
-			*_log_stream << std::setw(8) << tod.tv_sec - _starttime.tv_sec + (tod.tv_usec - _starttime.tv_usec) / 1.E6 << " ";
-#else
-			*_log_stream << t-_starttime << "\t";
-#endif
+			*_log_stream << logLevelNames[level] << ":\t" << std::put_time(&now_local, "%Y-%m-%dT%H:%M:%S") << " ";
+			*_log_stream << std::setw(8) << std::chrono::duration<double>(time_since_start).count() << " ";
 
 			*_log_stream << "[" << _rank << "]\t";
 		}
@@ -259,11 +244,7 @@ public:
 
 	/// initialize starting time
 	void init_starting_time() {
-#ifdef USE_GETTIMEOFDAY
-		gettimeofday(&_starttime, 0);
-#else
-		_starttime = time(NULL);
-#endif
+		_starttime = std::chrono::system_clock::now();
 	}
 
 	/* methods for easy handling of output processes */
