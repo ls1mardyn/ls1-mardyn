@@ -9,14 +9,10 @@ namespace Log {
 std::unique_ptr<Logger> global_log;
 
 // Write to stream
-Logger::Logger(logLevel level, std::ostream *os) :
+Logger::Logger(logLevel level, std::shared_ptr<std::ostream> os) :
 	_log_level(level), _msg_log_level(Log::Error),
 	_do_output(true),
-	// std::cout is managed globally,
-	// so do nothing when _log_stream goes out of scope
-	// --> any passed ostream other than std::cout needs to be
-	// deleted manually!
-	_log_stream(os, [](std::ostream*){/* no-op deleter */}),
+	_log_stream(os),
 	logLevelNames(), _starttime(), _rank(0)
 {
 	init_starting_time();

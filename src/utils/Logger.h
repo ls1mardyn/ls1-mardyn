@@ -120,11 +120,10 @@ public:
 	 *
 	 * Initializes the log level, log stream and the list of log level names.
 	 * If ENABLE_MPI is enabled by default, all process perform logging output.
-	 * Note: Due to the default argument (std::cout), the passed ostream pointer
-	 * will not be deleted automatically! Any passed ostream pointer other than
-	 * std::cout must be deleted manually!
+	 * Note: The default stream used (std::cout) cannot be deleted. Therefore the
+	 * passed shared pointer to it uses a no-op deleter function.
 	 */
-	Logger(logLevel level = Log::Error, std::ostream *os = &(std::cout));
+	Logger(logLevel level = Log::Error, std::shared_ptr<std::ostream> os = std::shared_ptr<std::ostream>(&std::cout, [](void*){ /* no-op */}));
 
 	~Logger() = default;
 
