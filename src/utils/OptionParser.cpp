@@ -7,11 +7,10 @@
 
 #include "OptionParser.h"
 
-#include "utils/mardyn_assert.h"
-
-#include <cstdlib>
 #include <algorithm>
 #include <complex>
+#include <cstdlib>
+#include <iostream>
 #include <sstream>
 
 #ifdef ENABLE_MPI
@@ -448,15 +447,13 @@ void OptionParser::print_version() const {
 }
 
 void OptionParser::exit() const {
-	std::ostringstream error_message;
-	error_message << "OptionParser::exit() called" << std::endl;
-	MARDYN_EXIT(error_message.str());
+	std::cerr << "OptionParser::exit() called" << std::endl;
+	std::exit(1);
 }
 void OptionParser::error(const std::string& msg) const {
+	std::cerr << "Optionparser error: " << msg << std::endl;
 	print_usage(std::cerr);
-	std::ostringstream error_message;
-	error_message << prog() << ": " << _("error") << ": " << msg << std::endl;
-	MARDYN_EXIT(error_message.str());
+	std::exit(1);
 }
 ////////// } class OptionParser //////////
 
