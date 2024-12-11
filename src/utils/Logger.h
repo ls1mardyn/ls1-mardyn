@@ -233,6 +233,10 @@ public:
 		return _log_level;
 	}
 
+	void set_log_stream(std::shared_ptr<std::ostream> os) {
+		_log_stream = os;
+	}
+
 	/// switch on / off output
 	bool set_do_output(bool val) {
 		return _do_output = val;
