@@ -67,11 +67,7 @@ typedef enum {
 
 /** @brief The Logger class provides a simple interface to handle log messages.
  *
- * Provides easy interface to handle log messages. Initialize either with
- * output level and stream or use default constructor values (Error, &(std::cout)).
- * Note: Due to the default argument (std::cout), the passed ostream pointer
- * will not be deleted automatically! Any passed ostream pointer other than
- * std::cout must be deleted manually!
+ * The logger provides an easy way to output logging messages with various log levels.
  * For writing log messages use fatal(), error(), warning(), info() or debug() as
  * with normal streams, e.g.
  * > log.error() << "Wrong parameter." << std::endl;
