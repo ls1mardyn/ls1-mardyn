@@ -163,7 +163,7 @@ public:
 			const auto now = std::chrono::system_clock::now();
 			const auto time_since_start = now - _starttime;
 
-			auto now_time_t = std::chrono::system_clock::to_time_t(now);
+			const auto now_time_t = std::chrono::system_clock::to_time_t(now);
 			std::tm now_local{};
 			localtime_r(&now_time_t, &now_local);
 			std::stringstream timestampstream;
