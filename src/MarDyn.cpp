@@ -152,12 +152,12 @@ int main(int argc, char** argv) {
 	if( options.is_set_by_user("logfile") ) {
 		// Print to file
 		std::string logfileNamePrefix(options.get("logfile"));
-		std::cout << "Using logfile with prefix " << logfileNamePrefix << std::endl;
 		std::string logfile_name = logfileNamePrefix;
 #ifdef ENABLE_MPI
 		logfile_name += "_R" + std::to_string(world_rank);
 #endif
 		logfile_name += ".log";
+		Log::global_log->info() << "Using logfile " << logfile_name << " for further log output." << std::endl;
 		std::shared_ptr<std::ostream> logfile_ptr = std::make_shared<std::ofstream>(logfile_name);
 		Log::global_log->set_log_stream(logfile_ptr);
 	}
