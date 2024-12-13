@@ -60,17 +60,17 @@ while true; do
        continue
        ;;
     '--mardyn_args')
-       MARDYN_EXE="$2"
+       MARDYN_ARGS="$2"
        shift 2
        continue
        ;;
     '--mpirun_exe')
-       MARDYN_EXE="$2"
+       MPIRUN_EXE="$2"
        shift 2
        continue
        ;;
     '--mpirun_args')
-       MARDYN_EXE="$2"
+       MPIRUN_ARGS="$2"
        shift 2
        continue
        ;;
