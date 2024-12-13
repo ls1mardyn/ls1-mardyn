@@ -162,7 +162,6 @@ public:
 			const auto now_time_t = std::chrono::system_clock::to_time_t(now);
 			std::tm now_local{};
 			localtime_r(&now_time_t, &now_local);
-			std::stringstream timestampstream;
 			*_log_stream << logLevelNames[level] << ":\t" << std::put_time(&now_local, "%Y-%m-%dT%H:%M:%S") << " ";
 			*_log_stream << std::setw(8) << std::chrono::duration<double>(time_since_start).count() << " ";
 
