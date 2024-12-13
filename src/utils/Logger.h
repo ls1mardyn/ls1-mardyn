@@ -102,14 +102,6 @@ private:
 		logLevelNames.insert(std::pair<logLevel, std::string>(All,     "ALL"      ));
 	}
 
-	// don't allow copy-construction
-	Logger(const Logger&) : _log_level(Log::Error), _msg_log_level(Log::Error), _do_output(true),
-			_log_stream(nullptr), logLevelNames(), _starttime(), _rank(0)
-	{ }
-
-	// don't allow assignment
-	Logger& operator=(const Logger&) { return *this; }
-
 public:
 	/**
 	 * Constructor for a logger to a stream.
