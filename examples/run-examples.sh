@@ -8,6 +8,7 @@
 MARDYN_EXE="$PWD/../src/MarDyn"
 MARDYN_ARGS="--steps 20 -v"
 MPIRUN_EXE="mpirun"
+# Oversubscribe is specific to OpenMPI. If you use something different this flag needs to be removed / replaced.
 MPIRUN_ARGS="-n 4 --oversubscribe"
 EXAMPLE_LIST_FILE=${EXAMPLE_LIST_FILE:=example-list.txt}
 LOGFILE=${LOGFILE:=$PWD/run-examples.log}
