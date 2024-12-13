@@ -189,10 +189,8 @@ public:
 	}
 	/// set log level from string
 	logLevel set_log_level(std::string l) {
-		// identify the loglevel by comparing the first char of the names
 		for (const auto& [lvl, name] : logLevelNames) {
-			// case-insensitive matching
-			if (std::toupper(name[0]) == std::toupper(l[0])) {
+			if (name == l) {
 				_log_level = lvl;
 				return _log_level;
 			}
