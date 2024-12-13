@@ -2,8 +2,6 @@
 
 #include "Logger.h"
 
-#include <memory>
-
 namespace Log {
 
 std::unique_ptr<Logger> global_log;
