@@ -15,7 +15,7 @@
  * @author Ruben Horn
  *
  * The output of this plugin is either written to the info logger or to a tab separated file (.tsv) with the columns
- * milliseconds, simstep and joules every \c writefrequency simulation steps or once at the end.
+ * milliseconds, simstep and joule every \c writefrequency simulation steps or once at the end.
  *
  * \b NOTE:
  *  - You must ensure that the files under /sys/class/powercap/intel-rapl/ are readable.
@@ -37,19 +37,25 @@ private:
 		/**
 		 * @brief Path to the file containing the current value for this domain
 		 */
-		std::string _microJoulesPath;
+		std::string _microJoulePath;
 		/**
 		 * @brief Last value measured
 		 */
-		long long _lastMicroJoules;
+		long long _lastMicroJoule;
 		/**
 		 * @brief Maximum counter value (used for overflow detection)
 		 */
-		long long _rangeMicroJoules;
+		long long _rangeMicroJoule;
+
 		/**
 		 * @brief Aggregated value since initialization or reset
 		 */
-		long long _microJoules;
+		long long _joule;
+
+		/**
+		 * @brief Aggregated value (< 10^6)  since initialization or reset
+		 */
+		long long _microJoule;
 
 	public:
 		/**
@@ -93,7 +99,7 @@ private:
 	/**
 	 * @brief Aggregated energy consumption over all \ref _counters
 	 */
-	double _joules;
+	double _joule;
 	/**
 	 * @brief Simulation step (updated by plugin hook)
 	 */
@@ -123,7 +129,7 @@ private:
 	 * @brief Compute and output the energy consumed over all RAPLCounter instances on all nodes
 	 * (Only outputs on the root rank using MPI)
 	 */
-	void outputEnergyJoules();
+	void outputEnergyJoule();
 
 public:
 	/**

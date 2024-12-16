@@ -16,33 +16,37 @@ EnergyRAPL::RAPLCounter::RAPLCounter(const std::string& domainBasePath) {
 	// File path for reading current micro joules
 	std::ostringstream microJoulesPath;
 	microJoulesPath << domainBasePath << "/energy_uj";
-	_microJoulesPath = microJoulesPath.str();
+	_microJoulePath = microJoulesPath.str();
 	// Range, i.e., maximum value of RAPL energy counter, in micro-joules
 	std::ostringstream rangeMicroJoulesPath;
 	rangeMicroJoulesPath << domainBasePath << "/max_energy_range_uj";
 	std::ifstream rangeMicroJoulesFile(rangeMicroJoulesPath.str());
-	rangeMicroJoulesFile >> _rangeMicroJoules;
+	rangeMicroJoulesFile >> _rangeMicroJoule;
 	reset();
 }
 
 void EnergyRAPL::RAPLCounter::reset() {
 	// Update last micro joules
 	update();
-	_microJoules = 0;
+	_microJoule = 0;
+	_joule = 0;
 }
 
 double EnergyRAPL::RAPLCounter::update() {
 	long long currentMicroJoules;
-	std::ifstream packageIdFile(_microJoulesPath);
+	std::ifstream packageIdFile(_microJoulePath);
 	packageIdFile >> currentMicroJoules;
-	long long deltaMicroJoules = currentMicroJoules - _lastMicroJoules;
+	long long deltaMicroJoules = currentMicroJoules - _lastMicroJoule;
 	// Correct counter overflow (occurs around every 60 seconds)
 	if (0 > deltaMicroJoules) {
-		deltaMicroJoules += _rangeMicroJoules;
+		deltaMicroJoules += _rangeMicroJoule;
 	}
-	_lastMicroJoules = currentMicroJoules;
-	_microJoules += deltaMicroJoules;
-	return static_cast<double>(_microJoules) * 1e-6;  // Convert micro joules to joules
+	_lastMicroJoule = currentMicroJoules;
+	_microJoule += deltaMicroJoules;
+	const int microJoulePerJoule = 1e6;
+	_joule += _microJoule / microJoulePerJoule;
+	_microJoule %= microJoulePerJoule;
+	return static_cast<double>(_microJoule) / microJoulePerJoule + _joule;
 }
 
 int EnergyRAPL::getNumberOfPackages() {
@@ -114,13 +118,13 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 
 void EnergyRAPL::endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
 						 unsigned long simstep) {
-	_joules = 0;
+	_joule = 0;
 	for (auto counter : _counters) {
-		_joules += counter.update();
+		_joule += counter.update();
 	}
 	_simstep = simstep;
 	if (0 < _writeFrequency && simstep % _writeFrequency == 0) {
-		outputEnergyJoules();
+		outputEnergyJoule();
 	}
 }
 
@@ -129,8 +133,8 @@ void EnergyRAPL::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("outputprefix", _outputprefix);
 }
 
-void EnergyRAPL::outputEnergyJoules() {
-	double joules = _joules;
+void EnergyRAPL::outputEnergyJoule() {
+	double joules = _joule;
 #ifdef ENABLE_MPI
 	// Collect results from all nodes (matching of separate messages over tag)
 	if (_thisRank == 0) {
@@ -170,6 +174,6 @@ void EnergyRAPL::outputEnergyJoules() {
 
 void EnergyRAPL::finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
 	if (0 == _writeFrequency) {
-		outputEnergyJoules();
+		outputEnergyJoule();
 	}
 }
