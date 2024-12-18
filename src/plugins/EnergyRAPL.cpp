@@ -81,10 +81,10 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 		int numberOfRanks;
 		MPI_Comm_size(MPI_COMM_WORLD, &numberOfRanks);
 		for (int otherRank = 1; otherRank < numberOfRanks; otherRank++) {
-			char processorName[MPI_MAX_PROCESSOR_NAME];
-			MPI_Recv(processorName, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, otherRank, /* tag */ otherRank, MPI_COMM_WORLD,
+			char otherRankProcessorName[MPI_MAX_PROCESSOR_NAME];
+			MPI_Recv(otherRankProcessorName, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, otherRank, /* tag */ otherRank, MPI_COMM_WORLD,
 					 &status);
-			processorsRaplRank[processorName] = otherRank;
+			processorsRaplRank[otherRankProcessorName] = otherRank;
 		}
 		processorsRaplRank[processorName] = _thisRank;  // Root rank should measure
 		std::set<int> raplRanks;                        // Only measure on one rank per processor (node)
