@@ -87,6 +87,7 @@ jobs:
           cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
                 -DENABLE_AUTOPAS=${{ matrix.autopas }} \
+                -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON \
                 -DENABLE_ALLLBL=$alllbl_enabled \
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
@@ -149,6 +150,7 @@ jobs:
           cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
                 -DENABLE_AUTOPAS=${{ matrix.autopas }} \
+                -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON \
                 -DENABLE_ALLLBL=$alllbl_enabled \
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
