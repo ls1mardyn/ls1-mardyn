@@ -331,6 +331,11 @@ void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceReb
 		initCommunicationPartners(_cutoffRadius, domain, moleculeContainer);
 
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, true /*doHaloPositionCheck*/, removeRecvDuplicates);
+
+		double startRegion[3], endRegion[3];
+		getBoundingBoxMinMax(domain, startRegion, endRegion);
+		_boundaryHandler.setLocalRegion(startRegion,endRegion);
+		_boundaryHandler.updateGlobalWallLookupTable();
 	}
 }
 

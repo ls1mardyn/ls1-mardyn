@@ -197,6 +197,16 @@
           <overlappingCollectives>False</overlappingCollectives> <!-- true if overlapping collectives should be used, false otherwise. REQUIRES MPI>=3! -->
           <overlappingStartAtStep>5</overlappingStartAtStep> <!-- Start overlapping at given step (default: 5), only relevant if overlappingCollectives==True -->
           <overlappingP2P>False</overlappingP2P> <!-- Defines whether to use overlapping p2p communication or not. Default: False -->
+          <!-- Select the boundary type for each dimension. Available options are reflecting/reflective, outflow and periodic (default).
+            particles interacting with a periodic boundary for a certain axis are copied over to the corresponding subdomain, as usual
+            particles interacting with a reflecting boundary for a certain axis have their velocities reversed for that axis
+            particles interacting with an outflow boundary with any axis get deleted, irrespective of the other boundary conditions
+            -->
+          <boundaries> 
+              <x>reflective</x>
+              <y>outflow</y>
+              <z>periodic</z>
+          </boundaries> 
       </parallelisation>
       <parallelisation type="StaticIrregDomainDecomposition">
           <!-- Provide weights that determine the relative widths of each subdomain

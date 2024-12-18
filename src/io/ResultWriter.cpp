@@ -67,9 +67,8 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 
 	// Writing of cavities now handled by CavityWriter
 
-	unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
-	double cv = domain->cv();
-	double ekin = domain->getGlobalUkinTrans()+domain->getGlobalUkinRot();
+	const unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
+	const double ekin = domain->getGlobalUkinTrans()+domain->getGlobalUkinRot();
 
 	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_U_kin_acc->addEntry(ekin);
@@ -91,7 +90,7 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 		printOutput(_p_acc->getAverage());
 		printOutput(domain->getGlobalBetaTrans());
 		printOutput(domain->getGlobalBetaRot());
-		printOutput(cv);
+		printOutput(domain->cv());
 		printOutput(globalNumMolecules);
 		resultStream << std::endl;
 		resultStream.close();
