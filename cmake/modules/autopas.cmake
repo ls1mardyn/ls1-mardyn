@@ -23,8 +23,8 @@ if (ENABLE_AUTOPAS)
     set(AUTOPAS_USE_VECTORIZATION ${USE_VECTORIZATION} CACHE BOOL "Set via USE_VECTORIZATION" FORCE)
     set(AUTOPAS_VECTOR_INSTRUCTIONS ${VECTOR_INSTRUCTIONS} CACHE STRING "Set via VECTOR_INSTRUCTIONS_OPTIONS" FORCE)
 
-    # Merge of #830 (fixRegionIterators); includes #787 (combined tuning)
-    set(AUTOPAS_TAG faef573 CACHE STRING "AutoPas Git tag or commit id to use")
+    # Last version without 3 Body support. Newer versions have API changes
+    set(AUTOPAS_TAG v2.0.0 CACHE STRING "AutoPas Git tag or commit id to use")
 
     FetchContent_Declare(
             autopasfetch
