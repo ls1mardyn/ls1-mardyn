@@ -57,7 +57,7 @@ jobs:
         sudo apt-get update
         # MPICH 4.0.3 seems to have a bug that triggers a FP exception in our collective communication when doing 0+0.
         sudo apt-get install -y \
-          automake              \
+          uuid                  \
           libcppunit-dev        \
           libopenmpi-dev        \
           libomp-dev            \
