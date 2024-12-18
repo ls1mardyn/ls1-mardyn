@@ -44,7 +44,7 @@ double EnergyRAPL::RAPLCounter::update() {
 	_lastMicroJoule = currentMicroJoule;
 	_microJoule += deltaMicroJoule;
 	// Avoid overflow of _microJoule
-	const int microJoulePerJoule = 1e6;
+	const long long microJoulePerJoule = 1000000L;
 	_joule += _microJoule / microJoulePerJoule;
 	_microJoule %= microJoulePerJoule;
 	return static_cast<double>(_microJoule) / microJoulePerJoule + _joule;
@@ -71,7 +71,6 @@ int EnergyRAPL::getNumberOfPackages() {
 void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
 #ifdef ENABLE_MPI
 	bool thisRankShouldMeasure = false;
-	MPI_Status status;
 	char processorName[MPI_MAX_PROCESSOR_NAME];
 	int processorNameLength;
 	MPI_Get_processor_name(processorName, &processorNameLength);
@@ -83,7 +82,7 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 		for (int otherRank = 1; otherRank < numberOfRanks; otherRank++) {
 			char otherRankProcessorName[MPI_MAX_PROCESSOR_NAME];
 			MPI_Recv(otherRankProcessorName, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, otherRank, /* tag */ otherRank, MPI_COMM_WORLD,
-					 &status);
+					 MPI_STATUS_IGNORE);
 			processorsRaplRank[otherRankProcessorName] = otherRank;
 		}
 		processorsRaplRank[processorName] = _thisRank;  // Root rank should measure
@@ -96,11 +95,11 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 		thisRankShouldMeasure = raplRanks.find(_thisRank) != raplRanks.end();
 		for (int i = 1; i < numberOfRanks; i++) {
 			bool otherRankShouldMeasure = raplRanks.find(i) != raplRanks.end();
-			MPI_Send(&otherRankShouldMeasure, 1, MPI_C_BOOL, /* dest */ i, /* tag */ i, MPI_COMM_WORLD);
+			MPI_Send(&otherRankShouldMeasure, 1, MPI_CXX_BOOL, /* dest */ i, /* tag */ i, MPI_COMM_WORLD);
 		}
 	} else {
 		MPI_Send(processorName, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, /* dest */ 0, /* tag */ _thisRank, MPI_COMM_WORLD);
-		MPI_Recv(&thisRankShouldMeasure, 1, MPI_C_BOOL, 0, /* tag */ _thisRank, MPI_COMM_WORLD, &status);
+		MPI_Recv(&thisRankShouldMeasure, 1, MPI_CXX_BOOL, 0, /* tag */ _thisRank, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 	if (!thisRankShouldMeasure) {
 		return;  // Do not set up any counters
