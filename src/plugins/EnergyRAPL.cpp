@@ -13,36 +13,37 @@
 #include "utils/xmlfileUnits.h"
 
 EnergyRAPL::RAPLCounter::RAPLCounter(const std::string& domainBasePath) {
-	// File path for reading current micro joules
-	std::ostringstream microJoulesPath;
-	microJoulesPath << domainBasePath << "/energy_uj";
-	_microJoulePath = microJoulesPath.str();
-	// Range, i.e., maximum value of RAPL energy counter, in micro-joules
-	std::ostringstream rangeMicroJoulesPath;
-	rangeMicroJoulesPath << domainBasePath << "/max_energy_range_uj";
-	std::ifstream rangeMicroJoulesFile(rangeMicroJoulesPath.str());
-	rangeMicroJoulesFile >> _rangeMicroJoule;
+	// File path for reading current micro joule
+	std::ostringstream microJoulePath;
+	microJoulePath << domainBasePath << "/energy_uj";
+	_microJoulePath = microJoulePath.str();
+	// Range, i.e., maximum value of RAPL energy counter, in micro-joule
+	std::ostringstream rangeMicroJoulePath;
+	rangeMicroJoulePath << domainBasePath << "/max_energy_range_uj";
+	std::ifstream rangeMicroJouleFile(rangeMicroJoulePath.str());
+	rangeMicroJouleFile >> _rangeMicroJoule;
 	reset();
 }
 
 void EnergyRAPL::RAPLCounter::reset() {
-	// Update last micro joules
+	// Update last micro joule
 	update();
 	_microJoule = 0;
 	_joule = 0;
 }
 
 double EnergyRAPL::RAPLCounter::update() {
-	long long currentMicroJoules;
-	std::ifstream packageIdFile(_microJoulePath);
-	packageIdFile >> currentMicroJoules;
-	long long deltaMicroJoules = currentMicroJoules - _lastMicroJoule;
+	long long currentMicroJoule;
+	std::ifstream microJouleFile(_microJoulePath);
+	microJouleFile >> currentMicroJoule;
+	long long deltaMicroJoule = currentMicroJoule - _lastMicroJoule;
 	// Correct counter overflow (occurs around every 60 seconds)
-	if (0 > deltaMicroJoules) {
-		deltaMicroJoules += _rangeMicroJoule;
+	if (0 > deltaMicroJoule) {
+		deltaMicroJoule += _rangeMicroJoule;
 	}
-	_lastMicroJoule = currentMicroJoules;
-	_microJoule += deltaMicroJoules;
+	_lastMicroJoule = currentMicroJoule;
+	_microJoule += deltaMicroJoule;
+	// Avoid overflow of _microJoule
 	const int microJoulePerJoule = 1e6;
 	_joule += _microJoule / microJoulePerJoule;
 	_microJoule %= microJoulePerJoule;
@@ -69,16 +70,43 @@ int EnergyRAPL::getNumberOfPackages() {
 
 void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
 #ifdef ENABLE_MPI
+	bool thisRankShouldMeasure = false;
+	MPI_Status status;
+	char processorName[MPI_MAX_PROCESSOR_NAME];
 	int processorNameLength;
-	MPI_Get_processor_name(_processorName, &processorNameLength);
+	MPI_Get_processor_name(processorName, &processorNameLength);
 	MPI_Comm_rank(MPI_COMM_WORLD, &_thisRank);
-#endif
-	if (!_outputprefix.empty()) {
-		std::ostringstream outputFilename;
-		outputFilename << _outputprefix << ".tsv";
-		std::ofstream outputFile(outputFilename.str().c_str());
-		outputFile << "milliseconds\tsimstep\tjoules" << std::endl;
+	if (_thisRank == 0) {
+		std::map<std::string, int> processorsRaplRank;
+		int numberOfRanks;
+		MPI_Comm_size(MPI_COMM_WORLD, &numberOfRanks);
+		for (int otherRank = 1; otherRank < numberOfRanks; otherRank++) {
+			char processorName[MPI_MAX_PROCESSOR_NAME];
+			MPI_Recv(processorName, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, otherRank, /* tag */ otherRank, MPI_COMM_WORLD,
+					 &status);
+			processorsRaplRank[processorName] = otherRank;
+		}
+		processorsRaplRank[processorName] = _thisRank;  // Root rank should measure
+		std::set<int> raplRanks;                        // Only measure on one rank per processor (node)
+		for (auto item : processorsRaplRank) {
+			Log::global_log->debug() << "[" << getPluginName() << "] RAPL measurements for " << item.first
+									 << " are performed on MPI rank " << item.second << std::endl;
+			raplRanks.insert(item.second);
+		}
+		thisRankShouldMeasure = raplRanks.find(_thisRank) != raplRanks.end();
+		for (int i = 1; i < numberOfRanks; i++) {
+			bool otherRankShouldMeasure = raplRanks.find(i) != raplRanks.end();
+			MPI_Send(&otherRankShouldMeasure, 1, MPI_C_BOOL, /* dest */ i, /* tag */ i, MPI_COMM_WORLD);
+		}
+	} else {
+		MPI_Send(processorName, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, /* dest */ 0, /* tag */ _thisRank, MPI_COMM_WORLD);
+		MPI_Recv(&thisRankShouldMeasure, 1, MPI_C_BOOL, 0, /* tag */ _thisRank, MPI_COMM_WORLD, &status);
 	}
+	if (!thisRankShouldMeasure) {
+		return;  // Do not set up any counters
+	}
+
+#endif
 	// For each package...
 	const int numberOfPackages = getNumberOfPackages();
 	for (int packageIdx = 0; packageIdx < numberOfPackages; packageIdx++) {
@@ -110,9 +138,20 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 			_counters.push_back(RAPLCounter(packageBasePath.str()));
 		}
 	}
-	_simstart = std::chrono::steady_clock::now();
 	for (auto counter : _counters) {
 		counter.reset();
+	}
+#ifdef ENABLE_MPI
+	if (_thisRank != 0) {
+		return;  // Only output on root rank
+	}
+#endif
+	_simstart = std::chrono::steady_clock::now();
+	if (!_outputprefix.empty()) {
+		std::ostringstream outputFilename;
+		outputFilename << _outputprefix << ".tsv";
+		std::ofstream outputFile(outputFilename.str().c_str());
+		outputFile << "milliseconds\tsimstep\tjoule" << std::endl;
 	}
 }
 
@@ -134,41 +173,26 @@ void EnergyRAPL::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void EnergyRAPL::outputEnergyJoule() {
-	double joules = _joule;
+	double joule = _joule;
 #ifdef ENABLE_MPI
-	// Collect results from all nodes (matching of separate messages over tag)
-	if (_thisRank == 0) {
-		std::map<std::string, double> nodeJoules;
-		nodeJoules[_processorName] = joules;  // Store result of rank 0
-		int numberOfRanks;
-		MPI_Comm_size(MPI_COMM_WORLD, &numberOfRanks);
-		for (int otherRank = 1; otherRank < numberOfRanks; otherRank++) {
-			MPI_Status status;
-			char processorName[MPI_MAX_PROCESSOR_NAME];
-			MPI_Recv(&processorName[0], MPI_MAX_PROCESSOR_NAME, MPI_CHAR, otherRank, /* tag */ otherRank,
-					 MPI_COMM_WORLD, &status);
-			MPI_Recv(&joules, 1, MPI_DOUBLE, otherRank, /* tag */ otherRank, MPI_COMM_WORLD, &status);
-			nodeJoules[_processorName] = joules;
-		}
-		joules = 0;
-		for (const auto [_, value] : nodeJoules) {
-			joules += value;
-		}
-	} else {
-		MPI_Send(_processorName, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, /* dest */ 0, /* tag */ _thisRank, MPI_COMM_WORLD);
-		MPI_Send(&joules, 1, MPI_DOUBLE, /* dest */ 0, /* tag */ _thisRank, MPI_COMM_WORLD);
-		return;
+	MPI_Reduce(&_joule, &joule, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	if (_thisRank != 0) {
+		return;  // Only output on root rank
 	}
 #endif
+	std::string jouleStr;
+	std::stringstream sstream;
+	sstream << std::fixed << std::setprecision(6) << joule;
+	jouleStr = sstream.str();
 	if (_outputprefix.empty()) {
-		Log::global_log->info() << "Simstep = " << _simstep << "\tEnergy consumed = " << joules << " J" << std::endl;
+		Log::global_log->info() << "Simstep = " << _simstep << "\tEnergy consumed = " << jouleStr << " J" << std::endl;
 	} else {
 		std::ostringstream outputFilename;
 		outputFilename << _outputprefix << ".tsv";
 		std::ofstream outputFile(outputFilename.str().c_str(), std::ios_base::app);
 		int64_t milliseconds =
 			std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - _simstart).count();
-		outputFile << milliseconds << "\t" << _simstep << "\t" << joules << std::endl;
+		outputFile << milliseconds << "\t" << _simstep << "\t" << jouleStr << std::endl;
 	}
 }
 

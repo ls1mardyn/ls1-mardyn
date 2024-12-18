@@ -64,7 +64,7 @@ private:
 		 * @param domainBasePath The sysfs base path of the corresponding RAPL domain (must contain the files: name,
 		 * max_energy_range_uj, energy_uj)
 		 */
-		RAPLCounter(const std::string &domainBasePath);
+		RAPLCounter(const std::string& domainBasePath);
 
 		/**
 		 * @brief Reset the counter for this domain to 0
@@ -110,10 +110,6 @@ private:
 	std::chrono::time_point<std::chrono::steady_clock> _simstart;
 
 #ifdef ENABLE_MPI
-	/**
-	 * @brief Unique name of the node associated with the MPI rank
-	 */
-	char _processorName[MPI_MAX_PROCESSOR_NAME];
 	/**
 	 * @brief The MPI rank
 	 */
