@@ -192,7 +192,6 @@ void TimerProfiler::readInitialTimersFromFile(std::string fileName){
 		std::make_tuple("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P", std::vector<std::string>{"CELL_PROCESSORS"}, true),
 		std::make_tuple("BINARY_READER_INPUT", std::vector<std::string>{"IO"}, true),
 		std::make_tuple("INPUT_OLDSTYLE_INPUT", std::vector<std::string>{"IO"}, true),
-		std::make_tuple("MPI_IO_READER_INPUT", std::vector<std::string>{"IO"}, true),
 		std::make_tuple("MPI_CHECKPOINT_WRITER_INPUT", std::vector<std::string>{"IO"}, true),
 		std::make_tuple("SIMULATION_LOOP", std::vector<std::string>{"SIMULATION"}, true),
 		std::make_tuple("SIMULATION_DECOMPOSITION", std::vector<std::string>{"SIMULATION_LOOP"}, true),
