@@ -2,21 +2,15 @@
 
 #include "Logger.h"
 
-#include <memory>
-
 namespace Log {
 
 std::unique_ptr<Logger> global_log;
 
 // Write to stream
-Logger::Logger(logLevel level, std::ostream *os) :
+Logger::Logger(logLevel level, std::shared_ptr<std::ostream> os) :
 	_log_level(level), _msg_log_level(Log::Error),
-	_do_output(true), _filename(""),
-	// std::cout is managed globally,
-	// so do nothing when _log_stream goes out of scope
-	// --> any passed ostream other than std::cout needs to be
-	// deleted manually!
-	_log_stream(os, [](std::ostream*){/* no-op deleter */}),
+	_do_output(true),
+	_log_stream(os),
 	logLevelNames(), _starttime(), _rank(0)
 {
 	init_starting_time();
@@ -24,27 +18,6 @@ Logger::Logger(logLevel level, std::ostream *os) :
 #ifdef ENABLE_MPI
 	MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
 #endif
-	*_log_stream << std::boolalpha;  // Print boolean as true/false
-}
-
-// Write to file
-Logger::Logger(logLevel level, std::string prefix) :
-	_log_level(level), _msg_log_level(Log::Error),
-	_do_output(true), _filename(""), _log_stream(nullptr),
-	logLevelNames(), _starttime(), _rank(0)
-{
-	init_starting_time();
-	this->init_log_levels();
-	std::stringstream filenamestream;
-	filenamestream << prefix;
-#ifdef ENABLE_MPI
-	MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
-	filenamestream << "_R" << _rank;
-#endif
-	filenamestream << ".log";
-	_filename = filenamestream.str();
-	
-	_log_stream = std::make_shared<std::ofstream>(_filename.c_str());
 	*_log_stream << std::boolalpha;  // Print boolean as true/false
 }
 
