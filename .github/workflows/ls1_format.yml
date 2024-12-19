@@ -21,13 +21,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install clang-format
-        run: sudo apt-get install -y clang-format
+      - name: Install clang-format (Version 18)
+        run: sudo apt-get install -y clang-format-18
 
       - name: Run clang-format and check for differences
         run: |
           # Run clang-format and get changes
-          clang-format -i $(find src -name "*.h" -or -name "*.cpp")
+          clang-format-18 -i $(find src -name "*.h" -or -name "*.cpp")
           git diff --name-only > diff_files.log
           
       - name: Check changes
@@ -51,7 +51,7 @@ jobs:
 #              owner: context.repo.owner,
 #              repo: context.repo.repo,
 #              body: ':warning: The CI detected formatting issues in this pull request. '
-#                    + 'Please run clang-format locally to resolve them.\n'
+#                    + 'Please run clang-format (version 18) locally to resolve them.\n'
 #                    + 'Details are shown in the [job log](https://github.com/'
 #                    + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ').'
 #            })
