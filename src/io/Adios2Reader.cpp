@@ -88,7 +88,9 @@ unsigned long Adios2Reader::readPhaseSpace(ParticleContainer* particleContainer,
 	} else if (_mode == "parallelRead") {
 		parallelRead(particleContainer, domain, domainDecomp);
 	} else {
-		Log::global_log->error() << "[Adios2Reader] Unknown _mode '" << _mode << "'" << std::endl;
+		std::ostringstream error_message;
+		error_message << "[Adios2Reader] Unknown _mode '" << _mode << "'" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_simulation.setSimulationTime(_simtime);
@@ -532,23 +534,20 @@ void Adios2Reader::initAdios2() {
         }
   }
     catch (std::invalid_argument& e) {
-        Log::global_log->fatal()
-                << "[Adios2Reader] Invalid argument exception, STOPPING PROGRAM from rank"
-                << domainDecomp.getRank()
-                << ": " << e.what() << std::endl;
-	mardyn_exit(1);
+		std::ostringstream error_message;
+        error_message << "[Adios2Reader] Invalid argument exception, STOPPING PROGRAM from rank"
+                << domainDecomp.getRank() << ": " << e.what() << std::endl;
+		MARDYN_EXIT(error_message.str());
     } catch (std::ios_base::failure& e) {
-        Log::global_log->fatal()
-                << "[Adios2Reader] IO System base failure exception, STOPPING PROGRAM from rank "
-                << domainDecomp.getRank()
-                << ": " << e.what() << std::endl;
-	mardyn_exit(1);
+		std::ostringstream error_message;
+        error_message << "[Adios2Reader] IO System base failure exception, STOPPING PROGRAM from rank "
+                << domainDecomp.getRank() << ": " << e.what() << std::endl;
+		MARDYN_EXIT(error_message.str());
     } catch (std::exception& e) {
-        Log::global_log->fatal()
-                << "[Adios2Reader] Exception, STOPPING PROGRAM from rank"
-                << domainDecomp.getRank()
-                << ": " << e.what() << std::endl;
-	mardyn_exit(1);
+		std::ostringstream error_message;
+        error_message << "[Adios2Reader] Exception, STOPPING PROGRAM from rank"
+                << domainDecomp.getRank() << ": " << e.what() << std::endl;
+		MARDYN_EXIT(error_message.str());
     }
     Log::global_log->info() << "[Adios2Reader] Init complete." << std::endl;
 };

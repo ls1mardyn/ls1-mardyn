@@ -2,6 +2,9 @@
 
 #include <variant>
 
+#include "particleContainer/ParticleContainer.h"
+#include "particleContainer/ParticleIterator.h"
+
 /**
  * Adds the force values (force (F), torque (M) and virial (Vi)) of haloMolecule to the particle at the given position.
  * The function will reuse the previousIterator if after an increment it points to a particle at the given position.

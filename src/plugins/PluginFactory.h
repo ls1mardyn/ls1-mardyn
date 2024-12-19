@@ -83,7 +83,7 @@ public:
 		if( existing != _pluginFactoryMap.end() ) {
 			return existing->second(); /* call createInstance for plugin */
 		}
-		Log::global_log->warning() << "Plugin not found: " << pluginname << std::endl;
+		MARDYN_EXIT("Requested plugin not found: " + pluginname + ". Is it enabled in CMake?");
 		return nullptr;
 	}
 

@@ -61,11 +61,6 @@ else()
         )
 endif()
 
-# dependencies for lz4
-if (ENABLE_LZ4)
-    add_dependencies(MarDyn liblz4)
-endif()
-
 # find adios
 if (NOT ENABLE_ADIOS2)
     list(FILTER MY_SRC EXCLUDE REGEX "adios2")

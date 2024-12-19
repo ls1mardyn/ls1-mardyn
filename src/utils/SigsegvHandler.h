@@ -15,7 +15,7 @@
 #include <unistd.h>
 
 #include "mardyn_assert.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 
 
 void handler(int sig) {
@@ -28,7 +28,7 @@ void handler(int sig) {
   // print out all the frames to stderr
   fprintf(stderr, "Error: signal %d:\n", sig);
   backtrace_symbols_fd(array, size, STDERR_FILENO);
-  Simulation::exit(1);
+  MARDYN_EXIT(error_message.str());
 }
 
 void registerSigsegvHandler() {

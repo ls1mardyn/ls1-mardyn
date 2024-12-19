@@ -10,7 +10,7 @@
 
 #include "C08BasedTraversals.h"
 #include "utils/Logger.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "particleContainer/LinkedCells.h"
 
 #ifdef QUICKSCHED
@@ -108,10 +108,11 @@ void QuickschedTraversal<CellTemplate>::init() {
             // check that blocksize is within domain size
             for (int i = 0; i < 3; ++i) {
                 if (_taskBlocksize[i] > this->_dims[i]) {
-                    Log::global_log->error() << "Blocksize is bigger than number of cells in dimension "
+                    std::ostringstream error_message;
+                    error_message << "Blocksize is bigger than number of cells in dimension "
                                         << (char) ('x' + i) << ". (" << _taskBlocksize[i] << " > "
                                         << this->_dims[i] << ")" << std::endl;
-                    Simulation::exit(1);
+                    MARDYN_EXIT(error_message.str());
                 }
             }
 
@@ -175,8 +176,7 @@ void QuickschedTraversal<CellTemplate>::init() {
             break;
         } /* end case PackedAdjustable */
         default:
-            Log::global_log->error() << "QuickschedHandler::init() received non existing task type!"
-                                << std::endl;
+            Log::global_log->error() << "QuickschedHandler::init() received non existing task type!" << std::endl;
     }
 #endif // QUICKSCHED
 }

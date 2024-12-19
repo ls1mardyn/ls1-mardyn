@@ -13,6 +13,7 @@
 #include "molecules/Molecule.h"
 #include "utils/FileUtils.h"
 #include "utils/xmlfileUnits.h"
+#include "utils/mardyn_assert.h"
 #include "DistControl.h"
 
 #include <iostream>
@@ -170,8 +171,9 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			distControl->registerObserver(this);
 		else
 		{
-			Log::global_log->error() << "RegionSampling->region["<<this->GetID()<<"]: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
-			Simulation::exit(-1);
+			std::ostringstream error_message;
+			error_message << "RegionSampling->region["<<this->GetID()<<"]: Initialization of plugin DistControl is needed before! Program exit..." << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 
@@ -182,8 +184,9 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 	numSamplingModules = query.card();
 	Log::global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]: Number of sampling modules: " << numSamplingModules << std::endl;
 	if(numSamplingModules < 1) {
-		Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: No sampling module parameters specified. Program exit ..." << std::endl;
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "RegionSampling->region["<<this->GetID()-1<<"]: No sampling module parameters specified. Program exit ..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	XMLfile::Query::const_iterator outputSamplingIter;
@@ -218,16 +221,18 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			std::string strSubdivisionType;
 			if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
 			{
-				Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing attribute subdivision@type! Program exit..." << std::endl;
-				Simulation::exit(-1);
+				std::ostringstream error_message;
+				error_message << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing attribute subdivision@type! Program exit..." << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
 			if("number" == strSubdivisionType)
 			{
 				unsigned int nNumSlabs = 0;
 				if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
 				{
-					Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/number! Program exit..." << std::endl;
-					Simulation::exit(-1);
+					std::ostringstream error_message;
+					error_message << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/number! Program exit..." << std::endl;
+					MARDYN_EXIT(error_message.str());
 				}
 				else
 				{
@@ -240,8 +245,9 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				double dSlabWidth = 0.;
 				if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
 				{
-					Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/width! Program exit..." << std::endl;
-					Simulation::exit(-1);
+					std::ostringstream error_message;
+					error_message << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/width! Program exit..." << std::endl;
+					MARDYN_EXIT(error_message.str());
 				}
 				else
 				{
@@ -251,8 +257,9 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			}
 			else
 			{
-				Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Wrong attribute subdivision@type. Expected type=\"number|width\"! Program exit..." << std::endl;
-				Simulation::exit(-1);
+				std::ostringstream error_message;
+				error_message << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Wrong attribute subdivision@type. Expected type=\"number|width\"! Program exit..." << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
 		}
 		else if("VDF" == strSamplingModuleType || "FDF" == strSamplingModuleType)
@@ -295,8 +302,9 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				numDiscretizations = query_vd.card();
 				Log::global_log->info() << "RegionSampling->region["<<this->GetID()-1<<"]: Number of velocity discretizations: " << numDiscretizations << std::endl;
 				if(numDiscretizations < 1) {
-					Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: No velocity discretizations specified for VDF sampling. Program exit ..." << std::endl;
-					Simulation::exit(-1);
+					std::ostringstream error_message;
+					error_message << "RegionSampling->region["<<this->GetID()-1<<"]: No velocity discretizations specified for VDF sampling. Program exit ..." << std::endl;
+					MARDYN_EXIT(error_message.str());
 				}
 				XMLfile::Query::const_iterator nodeIter;
 				for( nodeIter = query_vd.begin(); nodeIter != query_vd.end(); nodeIter++ )
@@ -305,8 +313,9 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 					uint32_t cid = 0;
 					bool bVal = xmlconfig.getNodeValue("@cid", cid);
 					if( (cid > _numComponents) || ((not bVal) && (not _boolSingleComp)) ){
-						Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: VDF velocity discretization corrupted. Program exit ..." << std::endl;
-						Simulation::exit(-1);
+						std::ostringstream error_message;
+						error_message << "RegionSampling->region["<<this->GetID()-1<<"]: VDF velocity discretization corrupted. Program exit ..." << std::endl;
+						MARDYN_EXIT(error_message.str());
 					}
 
 					if(_boolSingleComp){
@@ -332,16 +341,18 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			std::string strSubdivisionType;
 			if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
 			{
-				Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing attribute subdivision@type! Program exit..." << std::endl;
-				Simulation::exit(-1);
+				std::ostringstream error_message;
+				error_message << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing attribute subdivision@type! Program exit..." << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
 			if("number" == strSubdivisionType)
 			{
 				unsigned int nNumSlabs = 0;
 				if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
 				{
-					Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/number! Program exit..." << std::endl;
-					Simulation::exit(-1);
+					std::ostringstream error_message;
+					error_message << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/number! Program exit..." << std::endl;
+					MARDYN_EXIT(error_message.str());
 				}
 				else
 				{
@@ -354,8 +365,9 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				double dSlabWidth = 0.;
 				if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
 				{
-					Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/width! Program exit..." << std::endl;
-					Simulation::exit(-1);
+					std::ostringstream error_message;
+					error_message << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Missing element subdivision/width! Program exit..." << std::endl;
+					MARDYN_EXIT(error_message.str());
 				}
 				else
 				{
@@ -365,8 +377,9 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			}
 			else
 			{
-				Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Wrong attribute subdivision@type. Expected type=\"number|width\"! Program exit..." << std::endl;
-				Simulation::exit(-1);
+				std::ostringstream error_message;
+				error_message << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Wrong attribute subdivision@type. Expected type=\"number|width\"! Program exit..." << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
 		}
 		else if("fieldYR" == strSamplingModuleType)
@@ -396,8 +409,9 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 				"staring with prefix: " << _strFilePrefixFieldYR << std::endl;
 			else
 			{
-				Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Parameters of element: 'outputfile' corrupted! Program exit..." << std::endl;
-				Simulation::exit(-1);
+				std::ostringstream error_message;
+				error_message << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Parameters of element: 'outputfile' corrupted! Program exit..." << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
 
 			// control
@@ -413,8 +427,9 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			}
 			else
 			{
-				Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Parameters of element: 'control' corrupted! Program exit..." << std::endl;
-				Simulation::exit(-1);
+				std::ostringstream error_message;
+				error_message << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Parameters of element: 'control' corrupted! Program exit..." << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
 
 			// subdivision of region
@@ -422,9 +437,10 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 			XMLfile::Query query_sd = xmlconfig.query("subdivision");
 			numSubdivisions = query_sd.card();
 			if(numSubdivisions != 2) {
-				Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: Found " << numSubdivisions << " 'subdivision' elements, "
+				std::ostringstream error_message;
+				error_message << "RegionSampling->region["<<this->GetID()-1<<"]: Found " << numSubdivisions << " 'subdivision' elements, "
 						"expected: 2. Program exit ..." << std::endl;
-				Simulation::exit(-1);
+				MARDYN_EXIT(error_message.str());
 			}
 			std::string oldpath = xmlconfig.getcurrentnodepath();
 			XMLfile::Query::const_iterator outputSubdivisionIter;
@@ -472,16 +488,18 @@ void SampleRegion::readXML(XMLfileUnits& xmlconfig)
 
 				if(not bInputIsValid)
 				{
-					Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Parameters for elements: 'subdivision' corrupted! Program exit..." << std::endl;
-					Simulation::exit(-1);
+					std::ostringstream error_message;
+					error_message << "RegionSampling->region["<<this->GetID()-1<<"]->sampling('"<<strSamplingModuleType<<"'): Parameters for elements: 'subdivision' corrupted! Program exit..." << std::endl;
+					MARDYN_EXIT(error_message.str());
 				}
 			}  // for( outputSubdivisionIter = query.begin(); outputSubdivisionIter; outputSubdivisionIter++ )
 			xmlconfig.changecurrentnode(oldpath);
 		}
 		else
 		{
-			Log::global_log->error() << "RegionSampling->region["<<this->GetID()-1<<"]: Wrong attribute 'sampling@type', expected type='profiles|VDF|fieldYR'! Program exit..." << std::endl;
-			Simulation::exit(-1);
+			std::ostringstream error_message;
+			error_message << "RegionSampling->region["<<this->GetID()-1<<"]: Wrong attribute 'sampling@type', expected type='profiles|VDF|fieldYR'! Program exit..." << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 	}  // for( outputSamplingIter = query.begin(); outputSamplingIter; outputSamplingIter++ )
 }
@@ -505,8 +523,9 @@ void SampleRegion::prepareSubdivisionProfiles()
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		Log::global_log->error() << "tec::ControlRegion::PrepareSubdivisionProfiles(): Unknown subdivision type! Program exit..." << std::endl;
-		exit(-1);
+		std::ostringstream error_message;
+		error_message << "tec::ControlRegion::PrepareSubdivisionProfiles(): Unknown subdivision type! Program exit..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -529,8 +548,9 @@ void SampleRegion::prepareSubdivisionVDF()
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		Log::global_log->error() << "ERROR in SampleRegion::PrepareSubdivisionVDF(): Unknown subdivision type! Program exit..." << std::endl;
-		exit(-1);
+		std::ostringstream error_message;
+		error_message << "ERROR in SampleRegion::PrepareSubdivisionVDF(): Unknown subdivision type! Program exit..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -553,8 +573,9 @@ void SampleRegion::prepareSubdivisionFieldYR()
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		Log::global_log->error() << "SampleRegion::PrepareSubdivisionFieldYR(): Unknown subdivision type! Program exit..." << std::endl;
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "SampleRegion::PrepareSubdivisionFieldYR(): Unknown subdivision type! Program exit..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	dWidth = (this->GetWidth(0) < this->GetWidth(2) ) ? this->GetWidth(0) : this->GetWidth(2);
@@ -572,8 +593,9 @@ void SampleRegion::prepareSubdivisionFieldYR()
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		Log::global_log->error() << "SampleRegion::PrepareSubdivisionFieldYR(): Unknown subdivision type! Program exit..." << std::endl;
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "SampleRegion::PrepareSubdivisionFieldYR(): Unknown subdivision type! Program exit..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -2046,8 +2068,9 @@ void RegionSampling::readXML(XMLfileUnits& xmlconfig)
 	numRegions = query.card();
 	Log::global_log->info() << "RegionSampling: Number of sampling regions: " << numRegions << std::endl;
 	if(numRegions < 1) {
-		Log::global_log->warning() << "RegionSampling: No region parameters specified. Program exit ..." << std::endl;
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "RegionSampling: No region parameters specified. Program exit ..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator outputRegionIter;

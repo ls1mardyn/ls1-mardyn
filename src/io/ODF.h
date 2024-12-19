@@ -6,7 +6,9 @@
 
 #pragma once
 
-#include <particleContainer/adapter/ODFCellProcessor.h>
+#include <memory>
+
+#include "particleContainer/adapter/ODFCellProcessor.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"

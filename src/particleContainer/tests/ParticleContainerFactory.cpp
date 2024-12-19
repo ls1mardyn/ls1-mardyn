@@ -14,6 +14,7 @@
 #include "parallel/DomainDecomposition.h"
 #endif
 #include "Domain.h"
+#include "Simulation.h"
 
 #include "io/ASCIIReader.h"
 #include "utils/Logger.h"

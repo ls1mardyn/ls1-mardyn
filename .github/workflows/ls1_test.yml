@@ -57,9 +57,11 @@ jobs:
         sudo apt-get update
         # MPICH 4.0.3 seems to have a bug that triggers a FP exception in our collective communication when doing 0+0.
         sudo apt-get install -y \
+          uuid-dev              \
           libcppunit-dev        \
           libopenmpi-dev        \
-          libomp-dev
+          libomp-dev            \
+          libxerces-c-dev
         echo "Running ${JOBNAME}"
         git status
         mkdir build_${JOBNAME}
@@ -85,10 +87,12 @@ jobs:
           cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
                 -DENABLE_AUTOPAS=${{ matrix.autopas }} \
+                -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON \
                 -DENABLE_ALLLBL=$alllbl_enabled \
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
                 -DENABLE_UNIT_TESTS=ON \
+                -DENABLE_VTK=ON \
               ..
         
           cmake --build . --parallel 1
@@ -146,9 +150,11 @@ jobs:
           cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
                 -DENABLE_AUTOPAS=${{ matrix.autopas }} \
+                -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON \
                 -DENABLE_ALLLBL=$alllbl_enabled \
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
+                -DENABLE_VTK=ON \
               ..
         
           cmake --build . --parallel 1

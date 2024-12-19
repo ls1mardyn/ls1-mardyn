@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "WrapOpenMP.h"
 
@@ -58,42 +59,42 @@ void initOptions(optparse::OptionParser *op) {
 /**
  * @brief Helper function outputting program build information to given logger
  */
-void program_build_info(Log::Logger *log) {
-	log->info() << "Compilation info:" << std::endl;
+void log_program_build_info() {
+	Log::global_log->info() << "Compilation info:" << std::endl;
 
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_compiler_info(info_str);
-	log->info() << "	Compiler:	" << info_str << std::endl;
+	Log::global_log->info() << "	Compiler:	" << info_str << std::endl;
 	get_compile_time(info_str);
-	log->info() << "	Compiled on:	" << info_str << std::endl;
+	Log::global_log->info() << "	Compiled on:	" << info_str << std::endl;
 	get_precision_info(info_str);
-	log->info() << "	Precision:	" << info_str << std::endl;
+	Log::global_log->info() << "	Precision:	" << info_str << std::endl;
 	get_intrinsics_info(info_str);
-	log->info() << "	Intrinsics:	" << info_str << std::endl;
+	Log::global_log->info() << "	Intrinsics:	" << info_str << std::endl;
 	get_rmm_normal_info(info_str);
-	log->info() << "	RMM/normal:	" << info_str << std::endl;
+	Log::global_log->info() << "	RMM/normal:	" << info_str << std::endl;
 	get_openmp_info(info_str);
-	log->info() << "	OpenMP:		" << info_str << std::endl;
+	Log::global_log->info() << "	OpenMP:		" << info_str << std::endl;
 	get_mpi_info(info_str);
-	log->info() << "	MPI:		" << info_str << std::endl;
+	Log::global_log->info() << "	MPI:		" << info_str << std::endl;
 }
 
 /**
  * @brief Helper function outputting program invocation information to given logger
  */
-void program_execution_info(int argc, char **argv, Log::Logger *log) {
-	log->info() << "Execution info:" << std::endl;
+void log_program_execution_info(int argc, char **argv) {
+	Log::global_log->info() << "Execution info:" << std::endl;
 
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_timestamp(info_str);
-	log->info() << "	Started: " << info_str << std::endl;
+	Log::global_log->info() << "	Started: " << info_str << std::endl;
 	get_host(info_str);
-	log->info() << "	Execution host: " << info_str << std::endl;
+	Log::global_log->info() << "	Execution host: " << info_str << std::endl;
 	std::stringstream arguments;
 	for (int i = 0; i < argc; i++) {
 		arguments << " " << argv[i];
 	}
-	log->info() << "	Started with arguments: " << arguments.str() << std::endl;
+	Log::global_log->info() << "	Started with arguments: " << arguments.str() << std::endl;
 
 #if defined(_OPENMP)
 	int num_threads = mardyn_get_max_threads();
@@ -135,17 +136,30 @@ int main(int argc, char** argv) {
 	MPI_Init(&argc, &argv);
 #endif
 
-	/* Initialize the global log file */
-	Log::global_log = new Log::Logger(Log::Info);
-#ifdef ENABLE_MPI
-	Log::global_log->set_mpi_output_root(0);
-	//global_log->set_mpi_output_all();
-#endif
+	// Open scope to exclude MPI_Init() and MPI_Finalize().
+	// This way, all simulation objects are cleaned up before MPI finalizes.
+	{
 
 	optparse::OptionParser op;
 	initOptions(&op);
 	optparse::Values options = op.parse_args(argc, argv);
 	std::vector<std::string> args = op.args();
+
+	/* Initialize the global log file */
+	if( options.is_set_by_user("logfile") ) {
+		// Print to file
+		std::string logfileNamePrefix(options.get("logfile"));
+		std::cout << "Using logfile with prefix " << logfileNamePrefix << std::endl;
+		Log::global_log = std::make_unique<Log::Logger>(Log::Info, logfileNamePrefix);
+	} else {
+		// Print to stream (default: std::cout)
+		Log::global_log = std::make_unique<Log::Logger>(Log::Info);
+	}
+
+#ifdef ENABLE_MPI
+	Log::global_log->set_mpi_output_root(0);
+	//global_log->set_mpi_output_all();
+#endif
 
 	Log::global_log->info() << "Running ls1-MarDyn version " << MARDYN_VERSION << std::endl;
 
@@ -157,12 +171,6 @@ int main(int argc, char** argv) {
 	Log::global_log->warning() << "This ls1-MarDyn binary is a DEBUG build!" << std::endl;
 #endif
 
-	if( options.is_set_by_user("logfile") ) {
-		std::string logfileNamePrefix(options.get("logfile"));
-		Log::global_log->info() << "Using logfile with prefix " << logfileNamePrefix << std::endl;
-		delete Log::global_log;
-		Log::global_log = new Log::Logger(Log::Info, logfileNamePrefix);
-	}
 	if( options.is_set_by_user("verbose") ) {
 		Log::global_log->info() << "Enabling verbose log output." << std::endl;
 		Log::global_log->set_log_level(Log::All);
@@ -173,8 +181,8 @@ int main(int argc, char** argv) {
 		registerSigsegvHandler();  // from SigsegvHandler.h
 	}
 #endif
-	program_build_info(Log::global_log);
-	program_execution_info(argc, argv, Log::global_log);
+	log_program_build_info();
+	log_program_execution_info(argc, argv);
 
 
 	/* Run built in tests and exit */
@@ -183,7 +191,7 @@ int main(int argc, char** argv) {
 		#ifdef ENABLE_MPI
 		MPI_Finalize();
 		#endif
-		exit(testresult); // using exit here should be OK
+		std::exit(testresult); // using exit here should be OK
 	}
 
 
@@ -192,9 +200,10 @@ int main(int argc, char** argv) {
 
 	auto numArgs = args.size();
 	if(numArgs != 1) {
-		Log::global_log->error() << "Incorrect number of arguments provided." << std::endl;
 		op.print_usage();
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "Incorrect number of arguments provided." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
 	std::string configFileName(args[0]);
@@ -202,8 +211,9 @@ int main(int argc, char** argv) {
 		Log::global_log->info() << "Config file: " << configFileName << std::endl;
 		simulation.readConfigFile(configFileName);
 	} else {
-		Log::global_log->error() << "Cannot open config file '" << configFileName << "'" << std::endl;
-		Simulation::exit(-2);
+		std::ostringstream error_message;
+		error_message << "Cannot open config file '" << configFileName << "'" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	/* processing command line arguments */
@@ -281,7 +291,7 @@ int main(int argc, char** argv) {
 
 	simulation.finalize();
 
-	delete Log::global_log;
+	} // End of scope to exclude MPI_Init() and MPI_Finalize()
 
 #ifdef ENABLE_MPI
 	MPI_Finalize();

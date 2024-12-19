@@ -2,13 +2,21 @@
 
 #include "Logger.h"
 
+#include <memory>
+
 namespace Log {
 
-Logger *global_log;
+std::unique_ptr<Logger> global_log;
 
+// Write to stream
 Logger::Logger(logLevel level, std::ostream *os) :
 	_log_level(level), _msg_log_level(Log::Error),
-	_do_output(true), _filename(""),_log_stream(os),
+	_do_output(true), _filename(""),
+	// std::cout is managed globally,
+	// so do nothing when _log_stream goes out of scope
+	// --> any passed ostream other than std::cout needs to be
+	// deleted manually!
+	_log_stream(os, [](std::ostream*){/* no-op deleter */}),
 	logLevelNames(), _starttime(), _rank(0)
 {
 	init_starting_time();
@@ -19,10 +27,10 @@ Logger::Logger(logLevel level, std::ostream *os) :
 	*_log_stream << std::boolalpha;  // Print boolean as true/false
 }
 
-
+// Write to file
 Logger::Logger(logLevel level, std::string prefix) :
 	_log_level(level), _msg_log_level(Log::Error),
-	_do_output(true), _filename(""), _log_stream(0),
+	_do_output(true), _filename(""), _log_stream(nullptr),
 	logLevelNames(), _starttime(), _rank(0)
 {
 	init_starting_time();
@@ -35,16 +43,10 @@ Logger::Logger(logLevel level, std::string prefix) :
 #endif
 	filenamestream << ".log";
 	_filename = filenamestream.str();
-	_log_stream = new std::ofstream(_filename.c_str());
+	
+	_log_stream = std::make_shared<std::ofstream>(_filename.c_str());
 	*_log_stream << std::boolalpha;  // Print boolean as true/false
 }
-
-Logger::~Logger() {
-	*_log_stream << std::flush;
-	if (_filename != "")
-		(static_cast<std::ofstream*> (_log_stream))->close();
-}
-
 
 /// allow logging only for a single process
 void Logger::set_mpi_output_root(int root) {

@@ -10,6 +10,8 @@
 
 #include "PluginBase.h"
 
+#include <string>
+
 /**
  * The purpose of this class is to show the basic usage of Plugins.
  * It just outputs a string that the user specified in the XML at the

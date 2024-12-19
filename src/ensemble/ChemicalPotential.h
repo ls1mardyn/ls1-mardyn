@@ -2,6 +2,7 @@
 #pragma once
 
 #include <list>
+#include <memory>
 
 #include "utils/Random.h"
 #include "molecules/Molecule.h"
@@ -43,9 +44,9 @@ public:
 #ifndef NDEBUG
 		old.check(old.getID());
 #endif
-		_reservoir = new Molecule(old);
+		_reservoir = std::make_unique<Molecule>(old);
 	}
-	bool hasSample() { return _reservoir != NULL; }
+	bool hasSample() { return _reservoir != nullptr; }
 
 	void setPlanckConstant(double h_in) { _h = h_in; }
 	void submitTemperature(double T_in);
@@ -128,7 +129,7 @@ private:
 	// Using the widom method is just a way to determine the potential. This has nothing to do with actual insertions or
 	// deletions!
 
-	Molecule* _reservoir;
+	std::unique_ptr<Molecule> _reservoir;
 
 	/* Moved from LinkedCells! */
 	int _localInsertionsMinusDeletions; //!< balance of the grand canonical ensemble
