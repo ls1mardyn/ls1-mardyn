@@ -143,7 +143,7 @@ static <a class="el" href="classPluginBase.html">PluginBase</a> *&#160;</td><td 
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >This plugin computes the energy consumption of the simulation using RAPL counters via the sysfs interface. </p>
 <dl class="section author"><dt>Author</dt><dd>Ruben Horn</dd></dl>
-<p>The output of this plugin is either written to the info logger or to a tab separated file (.tsv) with the columns milliseconds, simstep and joules every <code>writefrequency</code> simulation steps or once at the end.</p>
+<p>The output of this plugin is either written to the info logger or to a tab separated file (.tsv) with the columns milliseconds, simstep and joule every <code>writefrequency</code> simulation steps or once at the end.</p>
 <p ><b>NOTE:</b> </p><ul>
 <li>You must ensure that the files under /sys/class/powercap/intel-rapl/ are readable.</li>
 <li>The total energy is measured over the package and DRAM domains, if present. (See section 15.10.2 of the <a href="https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html">Intel Architectures Software Developer’s Manuals</a> Volume 3. The actual domains that are used are printed to the info log.) Energy measurements using RAPL are <b>not</b> representative of the total energy consumption of the system and comparing different systems is not trivially possible. Instead, they should only be used to compare the energy consumption of different applications/settings on the same system. For more practical information on RAPL, see <a href="https://doi.org/10.1145/3177754">Khan et al. 2018</a>. RAPL is an Intel technology and has limited support on AMD (cf. <a href="https://arxiv.org/abs/2108.00808">Schöne et al. 2021</a>). </li>
@@ -369,7 +369,7 @@ static <a class="el" href="classPluginBase.html">PluginBase</a> *&#160;</td><td 
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Dec 18 2024 15:35:27 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Thu Dec 19 2024 06:21:26 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
