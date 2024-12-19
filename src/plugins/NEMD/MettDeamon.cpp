@@ -475,20 +475,32 @@ void MettDeamon::findMaxMoleculeID(DomainDecompBase* domainDecomp)
 	}
 
 	// global max IDs
+#ifdef ENABLE_PERSISTENT
+	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), _nMaxMoleculeID.local);
+	collComm.persistent();
+	collComm.get(_nMaxMoleculeID.global);
+#else
 	domainDecomp->collCommInit(1);
 	domainDecomp->collCommAppendUnsLong(_nMaxMoleculeID.local);
 	domainDecomp->collCommAllreduceSum();
 	_nMaxMoleculeID.global = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
+#endif
 }
 
 uint64_t MettDeamon::getnNumMoleculesDeleted2( DomainDecompBase* domainDecomposition)
 {
+#ifdef ENABLE_PERSISTENT
+	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomposition->getCommunicator(), _nNumMoleculesTooFast.local);
+	collComm.persistent();
+	collComm.get(_nNumMoleculesTooFast.global);
+#else
 	domainDecomposition->collCommInit(1);
 	domainDecomposition->collCommAppendUnsLong(_nNumMoleculesTooFast.local);
 	domainDecomposition->collCommAllreduceSum();
 	_nNumMoleculesTooFast.global = domainDecomposition->collCommGetUnsLong();
 	domainDecomposition->collCommFinalize();
+#endif
 	return _nNumMoleculesTooFast.global;
 }
 
@@ -793,6 +805,13 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 	if( (FRM_DIRECTED == _nFeedRateMethod) && (global_simulation->getSimulationStep() % _nUpdateFreq == 0) )
 	{
 		// update global number of particles / calc global number of deleted particles
+#ifdef ENABLE_PERSISTENT
+		auto collComm = make_CollCommObj_AllreduceAdd(domainDecomposition->getCommunicator(), nNumMoleculesLocal, _feedrate.numMolecules.inserted.local, _feedrate.numMolecules.deleted.local, 
+																									_feedrate.numMolecules.changed_to.local, _feedrate.numMolecules.changed_from.local);
+		collComm.persistent();
+		collComm.get(nNumMoleculesLocal, _feedrate.numMolecules.inserted.local, _feedrate.numMolecules.deleted.local, 
+										_feedrate.numMolecules.changed_to.local, _feedrate.numMolecules.changed_from.local);
+#else
 		domainDecomposition->collCommInit(5);
 		domainDecomposition->collCommAppendUnsLong(nNumMoleculesLocal);
 		domainDecomposition->collCommAppendUnsLong(_feedrate.numMolecules.inserted.local);
@@ -806,6 +825,7 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 		_feedrate.numMolecules.changed_to.global = domainDecomposition->collCommGetUnsLong();
 		_feedrate.numMolecules.changed_from.global = domainDecomposition->collCommGetUnsLong();
 		domainDecomposition->collCommFinalize();
+#endif
 		_nNumMoleculesDeletedGlobalAlltime += _feedrate.numMolecules.deleted.global;
 		_feedrate.numMolecules.inserted.local = 0;
 		_feedrate.numMolecules.deleted.local = 0;
@@ -849,11 +869,17 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 	else
 	{
 		// update global number of particles
+#ifdef ENABLE_PERSISTENT
+		auto collComm = make_CollCommObj_AllreduceAdd(domainDecomposition->getCommunicator(), nNumMoleculesLocal);
+		collComm.persistent();
+		collComm.get(nNumMoleculesLocal);
+#else
 		domainDecomposition->collCommInit(1);
 		domainDecomposition->collCommAppendUnsLong(nNumMoleculesLocal);
 		domainDecomposition->collCommAllreduceSum();
 		nNumMoleculesGlobal = domainDecomposition->collCommGetUnsLong();
 		domainDecomposition->collCommFinalize();
+#endif
 	}
 	global_simulation->getDomain()->setglobalNumMolecules(nNumMoleculesGlobal);
 
@@ -954,6 +980,11 @@ void MettDeamon::logReleased()
 		return;
 
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
+#ifdef ENABLE_PERSISTENT
+	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp.getCommunicator(), _released.count.local, _released.deleted.local);
+	collComm.persistent();
+	collComm.get(_released.count.global, _released.deleted.global);
+#else
 	domainDecomp.collCommInit(2);
 	domainDecomp.collCommAppendUnsLong(_released.count.local);
 	domainDecomp.collCommAppendUnsLong(_released.deleted.local);
@@ -961,6 +992,7 @@ void MettDeamon::logReleased()
 	_released.count.global = domainDecomp.collCommGetUnsLong();
 	_released.deleted.global = domainDecomp.collCommGetUnsLong();
 	domainDecomp.collCommFinalize();
+#endif
 
 	// reset local values
 	_released.count.local = 0;
@@ -1154,11 +1186,17 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	CommVar<uint64_t> numParticlesCurrentSlab;
 	numParticlesCurrentSlab.local = currentReservoirSlab.size();
 	// calc global values
+#ifdef ENABLE_PERSISTENT
+	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp.getCommunicator(), numParticlesCurrentSlab.local);
+	collComm.persistent();
+	collComm.get(numParticlesCurrentSlab.global);
+#else
 	domainDecomp.collCommInit(1);
 	domainDecomp.collCommAppendUnsLong(numParticlesCurrentSlab.local);
 	domainDecomp.collCommAllreduceSum();
 	numParticlesCurrentSlab.global = domainDecomp.collCommGetUnsLong();
 	domainDecomp.collCommFinalize();
+#endif
 
 	// get available particle IDs
 	CommVar<std::vector<uint64_t> > particleIDs_available;
@@ -1197,11 +1235,17 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	}
 	Log::global_log->debug() << "[" << nRank << "]: ADDED " << numAdded.local << "/" << numParticlesCurrentSlab.local << " particles (" << numAdded.local/static_cast<float>(numParticlesCurrentSlab.local)*100 << ")%." << std::endl;
 	// calc global values
+#ifdef ENABLE_PERSISTENT
+	collComm = make_CollCommObj_AllreduceAdd(domainDecomp.getCommunicator(), numAdded.local);
+	collComm.persistent();
+	collComm.get(numAdded.global);
+#else
 	domainDecomp.collCommInit(1);
 	domainDecomp.collCommAppendUnsLong(numAdded.local);
 	domainDecomp.collCommAllreduceSum();
 	numAdded.global = domainDecomp.collCommGetUnsLong();
 	domainDecomp.collCommFinalize();
+#endif
 
 	if(0 == nRank)
 		Log::global_log->debug() << "[" << nRank << "]: ADDED " << numAdded.global << "/" << numParticlesCurrentSlab.global << " particles (" << numAdded.global/static_cast<float>(numParticlesCurrentSlab.global)*100 << ")%." << std::endl;
