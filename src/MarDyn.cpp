@@ -133,8 +133,20 @@ int run_unit_tests(const Values &options, const std::vector<std::string> &args) 
  */
 int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
-	MPI_Init(&argc, &argv);
-#endif
+#if defined(_OPENMP)
+	const int thread_support_level_requested = MPI_THREAD_FUNNELED; /* So far only the main thread makes MPI calls */
+#else
+	const int thread_support_level_requested = MPI_THREAD_SINGLE; /* No thread support required */
+#endif /* _OPENMP */
+	int thread_support_level_provided;
+	MPI_Init_thread(&argc, &argv, thread_support_level_requested, &thread_support_level_provided);
+	if (thread_support_level_provided < thread_support_level_requested) {
+		/* The logging infrastructure is not initalized yet, therfore perform manual output and exit. */
+		std::cerr << "ERROR: ls1 was build with OpenMP. However, the MPI implementation does not provide the necessary thread support level." << std::endl;
+		MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+		::exit(EXIT_FAILURE);
+	}
+#endif /* ENABLE_MPI */
 
 	// Open scope to exclude MPI_Init() and MPI_Finalize().
 	// This way, all simulation objects are cleaned up before MPI finalizes.
