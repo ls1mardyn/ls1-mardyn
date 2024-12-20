@@ -8,9 +8,9 @@ enum MoleculeCntIncreaseTypeEnum{
 	both         //!< both, do linear and exponential measurements, linear measurements will stop after 32 molecules.
 };
 
-
-#include <vector>
+#include <fstream>
 #include <string>
+#include <vector>
 
 #include "particleContainer/adapter/CellProcessor.h"
 #include "particleContainer/adapter/FlopCounter.h"
