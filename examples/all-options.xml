@@ -337,6 +337,15 @@
         <outputprefix>default</outputprefix>
       </outputplugin>
 
+      <!-- CSVWriter plugin
+        Writes thermodynamic properties to a CSV file. -->
+      <outputplugin name="CSVWriter">
+        <writefrequency>1000</writefrequency>
+        <outputprefix>results</outputprefix>
+        <accumulation_steps>1000</accumulation_steps>
+        <writeprecision>5</writeprecision>
+      </outputplugin>
+
       <!-- Flop counter plugin
       This writer outputs the actual FLOPS rate of the force calculations. -->
       <outputplugin name="FlopRateWriter">
