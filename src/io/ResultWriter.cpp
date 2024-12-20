@@ -46,7 +46,8 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 		const auto nowStr = std::put_time(localtime_r(&now, &unused), "%c");
 		resultStream << "# ls1 MarDyn simulation started at " << nowStr << std::endl;
 		resultStream << "# Averages are the accumulated values over " << _U_pot_acc->getWindowLength()  << " time steps."<< std::endl;
-		resultStream << std::setw(10) << "simstep" << std::setw(_writeWidth) << "time"
+		resultStream << std::setw(10) << "simstep"
+			<< std::setw(_writeWidth) << "time"
 			<< std::setw(_writeWidth) << "U_pot"
 			<< std::setw(_writeWidth) << "U_pot_avg"
 			<< std::setw(_writeWidth) << "U_kin"
