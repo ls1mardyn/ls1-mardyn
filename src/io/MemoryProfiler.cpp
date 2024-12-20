@@ -7,34 +7,31 @@
 
 #include "MemoryProfiler.h"
 
-#include <iomanip>
-#include <iostream>
+#include <cstdlib>
+#include <fstream>
+#include <memory>
+#include <regex>
 #include <sstream>
 #include <string>
-#include <cstring>
-#include "sys/types.h"
 #include "sys/sysinfo.h"
-
+#ifndef _SX
+#include <sys/sysinfo.h>
+#endif
 #include "utils/Logger.h"
 
 MemoryProfiler::MemoryProfiler() :
 		_list(), _hugePageSize(0) {
 
-	const size_t MAXLEN = 1024;
-	FILE *fp;
-	char buf[MAXLEN];
-	fp = fopen("/proc/meminfo", "r");
-	char *p1;
-	while (fgets(buf, MAXLEN, fp)) {
-		p1 = strstr(buf, "Hugepagesize:");
-		if (p1 != NULL) {
-			int colon = ':';
-			p1 = strchr(buf, colon) + 1;
-			_hugePageSize = atoi(p1);
+	std::ifstream meminfo_file("/proc/meminfo");
+	std::string token;
+	while(meminfo_file >> token) {
+		if (token == "Hugepagesize:") {
+			meminfo_file >> _hugePageSize;
+			break;
 		}
 	}
-	if (std::getenv("HUGETLB_DEFAULT_PAGE_SIZE")!=NULL){
-		std::string hugepsString = std::getenv("HUGETLB_DEFAULT_PAGE_SIZE");
+	if (const char *env_p = std::getenv("HUGETLB_DEFAULT_PAGE_SIZE")) {
+		std::string hugepsString(env_p);
 		_hugePageSize = std::stoi(hugepsString);
 		if( hugepsString.find("G") != std::string::npos or hugepsString.find("g") != std::string::npos ){
 			_hugePageSize *= 1024 * 1024;
@@ -42,7 +39,6 @@ MemoryProfiler::MemoryProfiler() :
 			_hugePageSize *= 1024;
 		}
 	}
-	fclose(fp);
 }
 
 void MemoryProfiler::registerObject(MemoryProfilable** object) {
@@ -67,72 +63,46 @@ void MemoryProfiler::doOutput(const std::string& myString) {
 
 unsigned long long MemoryProfiler::getCachedSize() {
 	unsigned long long cached_size = 0;
-	const size_t MAXLEN = 1024;
-	FILE *fp;
-	char buf[MAXLEN];
-	fp = fopen("/proc/meminfo", "r");
-	while (fgets(buf, MAXLEN, fp)) {
-		char *p1 = strstr(buf, "Cached:");
-		if (p1 != NULL) {
-			int colon = ':';
-			p1 = strchr(buf, colon) + 1;
-			cached_size = strtoull(p1, NULL, 10);
+	std::ifstream meminfo_file("/proc/meminfo");
+	std::string token;
+	while(meminfo_file >> token) {
+		if (token == "Cached:") {
+			meminfo_file >> cached_size;
 			break;
 		}
 	}
-	fclose(fp);
 	return cached_size;
 }
 
-int MemoryProfiler::parseLine(char* line) {
-	// This assumes that a digit will be found and the line ends in " Kb".
-	int i = strlen(line);
-	const char* p = line;
-	while (*p < '0' || *p > '9')
-		p++;
-	line[i - 3] = '\0';
-	i = atoi(p);
-	return i;
-}
-
 int MemoryProfiler::countHugePages() {
-	FILE* file = fopen("/proc/self/numa_maps", "r");
-	if (!file) {
-		return 0;
-	}
+	std::ifstream numa_maps_file("/proc/self/numa_maps");
+
 	int hugepagecount = 0;
-	char line[1024];
-	while (fgets(line, 1024, file) != NULL) {
+	std::string line;
+	while(std::getline(numa_maps_file, line)) {
 		//if (/huge.*dirty=(\d+)/) {
-		std::string linestring(line);
-		if (linestring.find("huge") != std::string::npos) {
-			auto pos = linestring.find("dirty");
-			if (pos != std::string::npos) {
-				linestring = linestring.substr(pos);
-				auto eqpos = linestring.find("=");
-				auto spacepos = linestring.find(" ");
-				linestring = linestring.substr(eqpos + 1, spacepos - eqpos - 1);
-				hugepagecount += std::stoi(linestring);
+		if (line.find("huge") != std::string::npos) {
+			const std::regex re("dirty=(\\d+) ");
+			std::smatch match;
+			if (std::regex_match(line, match, re)) {
+				hugepagecount += std::stoi(match[1].str());
 			}
 		}
 	}
-	fclose(file);
 	return hugepagecount;
 }
 
 int MemoryProfiler::getOwnMemory() { //Note: this value is in KB!
-	FILE* file = fopen("/proc/self/status", "r");
-	int result = -1;
-	char line[1024];
-
-	while (fgets(line, 128, file) != NULL) {
-		if (strncmp(line, "VmRSS:", 6) == 0) {
-			result = parseLine(line);
+	int vmrss = 0;
+	std::ifstream self_status_file("/proc/self/status");
+	std::string token;
+	while(self_status_file >> token) {
+		if (token == "VmRSS:") {
+			self_status_file >> vmrss;
 			break;
 		}
 	}
-	fclose(file);
-	return result;
+	return vmrss;
 }
 
 void MemoryProfiler::printGeneralInfo(const std::string& myString) {
