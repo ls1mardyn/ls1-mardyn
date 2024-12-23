@@ -38,7 +38,6 @@ public:
 	MPICheckpointWriter(unsigned long writeFrequency
 	                   , std::string outputPrefix, bool incremental=true
 	                   , std::string datarep=std::string(""));
-	//~MPICheckpointWriter() {};
 
 	/** @brief Read in XML configuration for MPICheckpointWriter and all its included objects.
 	 *
