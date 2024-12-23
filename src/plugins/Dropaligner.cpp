@@ -76,6 +76,11 @@ void Dropaligner::beforeForces(ParticleContainer* particleContainer, DomainDecom
 		}
 
 		// COMMUNICATION
+#ifdef ENABLE_PERSISTENT
+		auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), _balance[0], _balance[1], _balance[2], _mass);
+		collComm.persistent();
+		collComm.get(_balance[0], _balance[1], _balance[2], _mass);
+#else
 		domainDecomp->collCommInit(4);
 		for (int d = 0; d < 3; d++) {
 			domainDecomp->collCommAppendDouble(_balance[d]);
@@ -87,6 +92,7 @@ void Dropaligner::beforeForces(ParticleContainer* particleContainer, DomainDecom
 		}
 		_mass = domainDecomp->collCommGetDouble();
 		domainDecomp->collCommFinalize();
+#endif
 
 		// CALCULATE MOTION
 
