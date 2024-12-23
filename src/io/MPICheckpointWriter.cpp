@@ -55,20 +55,14 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 	Log::global_log->info() << "[MPICheckpointWriter]\toutput prefix: " << _outputPrefix << std::endl;
 
 	_incremental = false;
-	int incremental = 1;
-	xmlconfig.getNodeValue("incremental", incremental);
-	//_incremental = (incremental != 0);
-	if(incremental > 0) {
-		_incremental = true;
+	xmlconfig.getNodeValue("incremental", _incremental);
+	if(_incremental) {
 		Log::global_log->info() << "[MPICheckpointWriter]\tusing incremental numbers in file names" << std::endl;
 	}
 
 	_appendTimestamp = false;
-	int appendTimestamp = 0;
-	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
-	//_appendTimestamp = (appendTimestamp != 0);
-	if(appendTimestamp > 0) {
-		_appendTimestamp = true;
+	xmlconfig.getNodeValue("appendTimestamp", _appendTimestamp);
+	if(_appendTimestamp) {
 		Log::global_log->info() << "[MPICheckpointWriter]\tappend timestamp to file names" << std::endl;
 	}
 
@@ -79,11 +73,8 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 		Log::global_log->info() << "[MPICheckpointWriter]\tdata representation: " << _datarep << std::endl;
 
 	_measureTime = false;
-	int measureTime = 0;
-	xmlconfig.getNodeValue("measureTime", measureTime);
-	//_measureTime = (measureTime != 0);
-	if(measureTime > 0) {
-		_measureTime = true;
+	xmlconfig.getNodeValue("measureTime", _measureTime);
+	if(_measureTime) {
 		Log::global_log->info() << "[MPICheckpointWriter]\texecution wall time will be measured" << std::endl;
 	}
 
