@@ -40,6 +40,20 @@ public:
 	                   , std::string datarep=std::string(""));
 	//~MPICheckpointWriter() {};
 
+	/** @brief Read in XML configuration for MPICheckpointWriter and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+		<outputplugin name="MPICheckpointWriter">
+			<writefrequency>INTEGER</writefrequency> <!-- Frequency in which the output is written; Default: 1 -->
+			<outputprefix>STRING</outputprefix> <!-- Prefix of the output file; Default: "mardyn" -->
+			<incremental>BOOL</incremental> <!-- Checkpoint files will get individual numbers; Default: false -->
+			<appendTimestamp>BOOL</appendTimestamp> <!-- Append timestamp to checkpoint files; Default: false -->
+			<datarep>STRING</datarep> <!-- MPI I/O output representation to use, valid values are "native", "internal", "external32"; Default: "" -->
+			<mpi_info><!-- see MPI_Info_object class documentation --></mpi_info> <!-- MPI infos to be used for MPI file I/O writing the checkpoint files -->
+		</outputplugin>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
 	void init(ParticleContainer *particleContainer,
