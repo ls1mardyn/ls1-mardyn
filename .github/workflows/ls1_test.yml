@@ -173,7 +173,7 @@ jobs:
             fi
 
             # run the example with the new exe
-            printf "   Running example: $i"
+            printf "   Running example: $i ... "
             EXE=$repoPath/build_${JOBNAME}/src/MarDyn
         
             # when using OpenMPI --oversubscribe is needed. Remove it if you switch to MPICH.
