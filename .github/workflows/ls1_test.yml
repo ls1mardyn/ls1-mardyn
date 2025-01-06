@@ -182,6 +182,7 @@ jobs:
             printf "Done\n"
 
             # compare the output of the run to the validation file
+            # validation files are named after the respective config xml but without the file extension (::-4)
             python3 ${repoPath}/checks/validation_compare_files.py \
               --validation-file "validation_$(basename ${i::-4}).json" \
               --logfile "output_${{ join(matrix.*, '-') }}"
