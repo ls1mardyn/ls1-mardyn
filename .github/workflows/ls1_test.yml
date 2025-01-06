@@ -61,8 +61,9 @@ jobs:
           libcppunit-dev        \
           libopenmpi-dev        \
           libomp-dev            \
-          libxerces-c-dev       \
-          python3-numpy
+          libxerces-c-dev
+        # Install python modules to execute validation script
+        pip3 install numpy pandas
         echo "Running ${JOBNAME}"
         git status
         mkdir build_${JOBNAME}
