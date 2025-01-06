@@ -61,7 +61,8 @@ jobs:
           libcppunit-dev        \
           libopenmpi-dev        \
           libomp-dev            \
-          libxerces-c-dev
+          libxerces-c-dev       \
+          python3-numpy
         echo "Running ${JOBNAME}"
         git status
         mkdir build_${JOBNAME}
