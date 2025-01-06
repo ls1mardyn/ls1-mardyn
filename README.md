@@ -21,7 +21,7 @@ Prerequisites
 * [FFTW3](http://www.fftw.org)
 * [VTK](http://www.vtk.org)
 * [QuickSched](https://arxiv.org/abs/1601.05384)
-
+* If [AutoPas](https://autopas.github.io/doxygen_documentation/git-master/) is enabled, make sure to have [its requirements](https://github.com/AutoPas/AutoPas/blob/master/docs/userdoc/Building.md) installed.
 
 Installation
 ------------
