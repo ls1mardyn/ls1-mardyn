@@ -10,13 +10,7 @@ PMF::PMF():reference_rdf_interpolation{1.0,false},potential_interpolation{0.0,tr
 
 void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* domain){
 
-    pairs_handler = new InteractionForceAdapter(resolution_handler,this);
-    _simulation.setParticlePairsHandler(pairs_handler);
-    Log::global_log->info()<<"[PMF] InteractionForcedAdapter Class being used\n";
-    _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), pairs_handler));
-    Log::global_log->info()<<"[PMF]LegacyCellProcessor set\n";
-
-    for(auto it= begin(regions);it!=end(regions);++it){
+    for(auto it= begin(resolution_handler->GetRegions());it!=end(resolution_handler->GetRegions());++it){
         Log::global_log->info()<<"[PMF] The hybrid region spans from: ("<<it->_lowHybrid[0]<<","<<it->_lowHybrid[1]<<","<<it->_lowHybrid[2]<<") to ("<<it->_highHybrid[0]<<","<<it->_highHybrid[1]<<","<<it->_highHybrid[2]<<")"<<std::endl;
 
         Log::global_log->info()<<"[PMF] The atomistic region spans from: ("<<it->_low[0]<<","<<it->_low[1]<<","<<it->_low[2]<<") to ("<<it->_high[0]<<","<<it->_high[1]<<","<<it->_high[2]<<")"<<std::endl;
@@ -24,19 +18,23 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
         Log::global_log->info()<<"[PMF] The region  center is located at: ("<<it->_center[0]<<","<<it->_center[1]<<","<<it->_center[2]<<")"<<std::endl;
     }
 
-    adres_statistics.init(regions[0]);
+
+
+    adres_statistics.init(resolution_handler->GetRegions()[0]);
     Log::global_log->info()<<"[PMF] Statistical tool initialized"<<std::endl;
 
 }
 
 void PMF::readXML(XMLfileUnits& xmlfile){
 
+    resolution_handler = new ResolutionComponentHandler();
+
     //create AT regions
     int num_regions =0;
     XMLfile::Query query = xmlfile.query("fpregions/region");
     num_regions = query.card();
 
-    this->regions.resize(num_regions);
+    resolution_handler->GetRegions().resize(num_regions);
 
     XMLfile::Query::const_iterator region_iterator;
     std::string oldpath = xmlfile.getcurrentnodepath();
@@ -44,7 +42,7 @@ void PMF::readXML(XMLfileUnits& xmlfile){
         xmlfile.changecurrentnode(region_iterator);
         unsigned int id=0;
         xmlfile.getNodeValue("@id",id);
-        regions[id-1].readXML(xmlfile);
+        resolution_handler->GetRegions()[id-1].readXML(xmlfile);
     }
     xmlfile.changecurrentnode(oldpath);
     xmlfile.getNodeValue("multiplier",multiplier);
@@ -90,13 +88,31 @@ void PMF::readXML(XMLfileUnits& xmlfile){
 
     avg_rdf_interpolation.ResizeVectors(profiler.GetBinCenters().size());
     avg_rdf_interpolation.SetXValues(profiler.GetBinCenters());
+
+    resolution_handler->init();
+    Log::global_log->info()<<"[PMF]Initialized resolution manager\n";
+
+    pairs_handler = new InteractionForceAdapter(resolution_handler,this);
+
+    _simulation.setParticlePairsHandler(pairs_handler);
+    _simulation.useLegacyCellProcessor();
+    Log::global_log->info()<<"[PMF] InteractionForcedAdapter Class being used\n";
+    _simulation.setCellProcessor(new LegacyCellProcessor(_simulation.getcutoffRadius(), _simulation.getLJCutoff(), pairs_handler));
+    Log::global_log->info()<<"[PMF]LegacyCellProcessor set\n";
+
+
+
 }
 
 void PMF::beforeForces(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep){
+
+    resolution_handler->CheckContainerResolution(pc);
+
+
+
 }
 
 void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domainDecomp, unsigned long simstep){
-
 
 }
 
@@ -106,8 +122,9 @@ void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long
 
 void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, unsigned long step){
 
-    //Update RDF interpolation
-    UpdateRDFInterpolation();
+    if(mode == Mode::EffectivePotential){
+        UpdateRDFInterpolation();
+    }
 
 
     if(mode == Mode::Production){
@@ -184,7 +201,7 @@ void PMF::AddPotentialCorrection(unsigned long step){
         current_correction[i] = 1.0*multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
     }
 
-    // potential_interpolation.AddVector(current_correction);
+
     VectorAdd(potential_interpolation.GetYValues(),current_correction);
     if(output){
         std::string name="correction_step_"+std::to_string(step)+".txt";
@@ -210,7 +227,7 @@ double PMF::WeightValue(const std::array<double,3>& pos, FPRegion& region){
 }
 
 std::vector<FPRegion>& PMF::GetRegions(){
-    return this->regions;
+    return resolution_handler->GetRegions();
 }
 
 Interpolate& PMF::GetRDFInterpolation(){

@@ -80,7 +80,7 @@ void Interpolate::AddVector(std::vector<double>& v){
 double Interpolate::CentralFiniteDifference(double r){
     // Return zero since we are at the limit and function is flat
     if(r > _simulation.getcutoffRadius()){
-        Log::global_log->info()<<"Why are we checking beyond r_c="<<x_values[x_values.size()-1]<<"\t r="<<r<<std::endl;
+        Log::global_log->warning()<<"Why are we checking beyond r_c="<<x_values[x_values.size()-1]<<"\t r="<<r<<std::endl;
         return 0.0;
     }
 

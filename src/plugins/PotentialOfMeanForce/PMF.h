@@ -38,8 +38,7 @@ class PMF:public PluginBase{
     Interpolate derivative_interpolation;//stores derivatives potential
     InternalProfiler profiler;//measuring tool
     Convergence convergence;
-    std::vector<FPRegion> regions;
-    ResolutionHandler resolution_handler;
+    ResolutionHandlerBase* resolution_handler;
     /**
      * L2 norm, used for hybrid
      */
@@ -64,7 +63,8 @@ class PMF:public PluginBase{
     void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
     void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
     void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) override;
-    void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{};
+    void finish(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override{
+    };
     void siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step) override;
     std::string getPluginName(){ return "PMF";}
     static PluginBase* createInstance() {return new PMF(); }
