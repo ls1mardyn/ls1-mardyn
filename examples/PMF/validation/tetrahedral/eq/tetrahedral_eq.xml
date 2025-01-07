@@ -26,7 +26,7 @@
         <lz>36.845</lz>
       </domain>
       <components>
-        <include query="/components/moleculetype">../../components/lj_tetrahedral.xml</include>
+        <include query="/components/moleculetype">../../components/lj_tetrahedral_red.xml</include>
       </components>
       <!-- <phasespacepoint>
         <file type="binary">
