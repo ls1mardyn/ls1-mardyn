@@ -86,16 +86,20 @@ jobs:
             alllbl_enabled='OFF'
           fi
 
-          cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
-                -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
-                -DENABLE_AUTOPAS=${{ matrix.autopas }} \
-                -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON \
-                -DENABLE_ALLLBL=$alllbl_enabled \
-                -DOPENMP=${{ matrix.openmp }} \
-                -DENABLE_MPI=$mpi_enabled \
-                -DENABLE_UNIT_TESTS=ON \
-                -DENABLE_VTK=ON \
-              ..
+          cmake_exec="cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
+            -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
+            -DENABLE_AUTOPAS=${{ matrix.autopas }} \
+            -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON \
+            -DENABLE_ALLLBL=$alllbl_enabled \
+            -DOPENMP=${{ matrix.openmp }} \
+            -DENABLE_MPI=$mpi_enabled \
+            -DENABLE_UNIT_TESTS=ON \
+            -DENABLE_VTK=ON \
+            .."
+
+          echo "The following cmake command is executed:\n${cmake_exec}\n\n"
+
+          ${cmake_exec}
         
           cmake --build . --parallel 1
 
@@ -117,8 +121,12 @@ jobs:
     - if: ${{ matrix.parall == 'PAR' }}
       name: Validation
       run: |
+          #set strict pipefail option
+          set -eo pipefail
+          
           #save absolute path to root of ls1 directory
           repoPath=$PWD
+          
           #example list of new version is used
           examplesFile="branchExamples_${JOBNAME}.txt"
           # choose and save examples (so that the same file name could be used regardless of AutoPas is on or off)
@@ -128,23 +136,6 @@ jobs:
           else
             cp ./examples/example-list.txt "${examplesFile}"
           fi
-
-          #translate matrix to ON/OFF for certain entries
-          if [[ ${{ matrix.parall }} == 'PAR' ]]
-          then
-            mpi_enabled='ON'
-          else
-            mpi_enabled='OFF'
-          fi
-          if [[ ${{ matrix.parall }} == 'PAR' ]] && [[ ${{ matrix.autopas }} == 'ON' ]]
-          then
-            alllbl_enabled='ON'
-          else
-            alllbl_enabled='OFF'
-          fi
-
-          #set strict pipefail option
-          set -eo pipefail
         
           # execute all examples. These calls create artifacts which we will then compare to the validation JSON file
           IFS=$'\n'
