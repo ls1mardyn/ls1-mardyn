@@ -31,7 +31,9 @@
       <phasespacepoint>
         <file type="binary">
           <header>../restart_data/generic_lj_step-260.restart.header.xml</header>
-          <data>../restart_data/generic_lj_step-260.restart.dat</data>
+            <data>../restart_data/generic_lj_step-260.restart.dat</data>
+            <!-- <header>../restart_data/generic_lj_step-003.restart.header.xml</header> -->
+              <!-- <data>../restart_data/generic_lj_step-003.restart.dat</data> -->
         </file>
         <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
@@ -53,7 +55,7 @@
       </electrostatic>
       <thermostats>
        <!-- velocity scaling thermostat, if no component is specified the global thermostat is assumed -->
-      <thermostat type="VelocityScaling">
+      <thermostat type="VelocityScaling" componentId="global">
         <!-- target temperature, if not specified the ensemble temperature will be used -->
       </thermostat> 
       </thermostats>
@@ -64,8 +66,8 @@
  
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
-      <writefrequency>50</writefrequency>
-    </outputplugin>
+      <writefrequency>1</writefrequency>
+    </outputplugin> 
 
     <outputplugin name="CheckpointWriter">
       <type>binary</type>
@@ -86,6 +88,7 @@
       </fpregions>
       <multiplier>1.0</multiplier>
       <internalBins>200</internalBins>
+      <densityBins>25</densityBins>
       <measureFreq>1</measureFreq>
       <updateStride>1000</updateStride>
       <outputFreq>10</outputFreq>

@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>100000</steps>
+        <steps>20000</steps>
       </production>
     </run>
     
@@ -64,7 +64,7 @@
  
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
-      <writefrequency>2</writefrequency>
+      <writefrequency>1</writefrequency>
     </outputplugin>
 
     <!--outputplugin name="CheckpointWriter">
@@ -85,15 +85,16 @@
           </region>
         </fpregions>
         <multiplier>1.0</multiplier>
+        <updateStride>1000</updateStride>
+        <useProfiler>true</useProfiler>
         <internalBins>200</internalBins>
         <densityBins>100</densityBins>
-        <measureFreq>1</measureFreq>
-        <updateStride>1000</updateStride>
-        <outputFreq>20</outputFreq>
         <output>true</output>
+        <measureFreq>1</measureFreq>
+        <outputFreq>20</outputFreq>
         <mode>Production</mode>
         <rdfPath>../../restart_data/avg_rdf26900.txt</rdfPath>
-        <epPath>../../ep/results/potential_11000.txt</epPath>
+        <epPath>../../ep/results/potential_1000.txt</epPath>
     </plugin>
         
   </simulation>

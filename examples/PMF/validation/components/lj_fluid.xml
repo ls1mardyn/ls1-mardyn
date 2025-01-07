@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <components version="20100525" >
 
-	<moleculetype id="1" name="LJ">
+	<moleculetype id="1" name="FP">
 		<site type="LJ126" id="1" >
 			<coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
 			<mass>1</mass>

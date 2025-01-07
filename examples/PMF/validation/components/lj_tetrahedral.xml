@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <components version="20100525">
-    <moleculetype id="1" name="FP_M">
+    <moleculetype id="1" name="FP">
         <site type="LJ126" id="1" >
             <coords> <x>0.057735027</x> <y>0.057735027</y> <z>0.057735027</z> </coords>
             <mass>1.0</mass>
