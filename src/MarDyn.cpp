@@ -134,7 +134,10 @@ int run_unit_tests(const Values &options, const std::vector<std::string> &args) 
 int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
 	MPI_Init(&argc, &argv);
+	int world_rank = 0;
+	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 #endif
+	Log::global_log = std::make_unique<Log::Logger>(Log::Info);
 
 	// Open scope to exclude MPI_Init() and MPI_Finalize().
 	// This way, all simulation objects are cleaned up before MPI finalizes.
@@ -149,11 +152,14 @@ int main(int argc, char** argv) {
 	if( options.is_set_by_user("logfile") ) {
 		// Print to file
 		std::string logfileNamePrefix(options.get("logfile"));
-		std::cout << "Using logfile with prefix " << logfileNamePrefix << std::endl;
-		Log::global_log = std::make_unique<Log::Logger>(Log::Info, logfileNamePrefix);
-	} else {
-		// Print to stream (default: std::cout)
-		Log::global_log = std::make_unique<Log::Logger>(Log::Info);
+		std::string logfile_name = logfileNamePrefix;
+#ifdef ENABLE_MPI
+		logfile_name += "_R" + std::to_string(world_rank);
+#endif
+		logfile_name += ".log";
+		Log::global_log->info() << "Using logfile " << logfile_name << " for further log output." << std::endl;
+		std::shared_ptr<std::ostream> logfile_ptr = std::make_shared<std::ofstream>(logfile_name);
+		Log::global_log->set_log_stream(logfile_ptr);
 	}
 
 #ifdef ENABLE_MPI
