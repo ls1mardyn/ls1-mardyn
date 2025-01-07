@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['e_0',['E',['../classEnsemble.html#af263cdac2ae93aec25afac6412790c5c',1,'Ensemble::E()'],['../classCanonicalEnsemble.html#ae630b7b2043eefe6b8bf1a5b2d5d64dc',1,'CanonicalEnsemble::E()']]],
+  ['e_0',['E',['../classCanonicalEnsemble.html#ae630b7b2043eefe6b8bf1a5b2d5d64dc',1,'CanonicalEnsemble']]],
   ['e_1',['e',['../classOrientedSite.html#ab873bc29a7e6229210cef9e02fa1f1f6',1,'OrientedSite']]],
-  ['e_2',['E',['../classGrandCanonicalEnsemble.html#a6e9f8faa5e76994451feaf15a4703e68',1,'GrandCanonicalEnsemble']]],
+  ['e_2',['E',['../classGrandCanonicalEnsemble.html#a6e9f8faa5e76994451feaf15a4703e68',1,'GrandCanonicalEnsemble::E()'],['../classEnsemble.html#af263cdac2ae93aec25afac6412790c5c',1,'Ensemble::E()']]],
   ['empty_3',['empty',['../classParaStrm.html#aef36fba63cacc1ab03671883636f7362',1,'ParaStrm::empty()'],['../classXMLfile_1_1Query.html#ab99f94ee6b696a2f5764039fdef8d0fb',1,'XMLfile::Query::empty()']]],
   ['enablecomponentwisethermostat_4',['enableComponentwiseThermostat',['../classDomain.html#acfd1f29b739ad254062d3d53d4fa8a30',1,'Domain']]],
   ['enableplugins_5',['enablePlugins',['../classPluginFactory.html#ab2ce5bc97bb64117b3e651ba36b65f1f',1,'PluginFactory']]],
