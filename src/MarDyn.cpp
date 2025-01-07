@@ -26,6 +26,10 @@
 #include "autopas/Version.h"
 #endif
 
+#ifdef ENABLE_PERSISTENT
+#include "parallel/CollectiveCommunicationPersistent.h"
+#endif
+
 
 using optparse::Values;
 
@@ -195,6 +199,9 @@ int main(int argc, char** argv) {
 	if (options.is_set_by_user("tests")) {
 		int testresult = run_unit_tests(options, args);
 		#ifdef ENABLE_MPI
+		#ifdef ENABLE_PERSISTENT
+		Coll_Comm_Deallocator::deallocate();
+		#endif
 		MPI_Finalize();
 		#endif
 		std::exit(testresult); // using exit here should be OK
@@ -300,6 +307,9 @@ int main(int argc, char** argv) {
 	} // End of scope to exclude MPI_Init() and MPI_Finalize()
 
 #ifdef ENABLE_MPI
+	#ifdef ENABLE_PERSISTENT
+	Coll_Comm_Deallocator::deallocate();
+	#endif
 	MPI_Finalize();
 #endif
 }
