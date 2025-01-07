@@ -5,7 +5,9 @@ import numpy as np
 from validation_createJSON import parse_resultwriter_file, parse_log_file
 
 def compare_data(new_data, validation_data):
-    '''Compares new and validation data sets using numpy's isclose with a specified tolerance'''
+    '''
+    Compares new and validation data sets using numpy's isclose with a specified tolerance
+    '''
     differences = []
     for i, (new_entry, validation_entry) in enumerate(zip(new_data, validation_data)):
         entry_differences = {}
@@ -14,14 +16,16 @@ def compare_data(new_data, validation_data):
                 if not np.isclose(new_entry[key], validation_entry[key], atol=abstolerance, rtol=reltolerance):
                     entry_differences[key] = {
                         'presentRun': new_entry[key],
-                        'validation': validation_entry[key]
+                        'reference': validation_entry[key]
                     }
         if entry_differences:
             differences.append({'index': i, 'differences': entry_differences})
     return differences
 
 def compare_validation_file(validation_file, new_log_file):
-    '''Compares the new files with the data stored in the validation JSON file.'''
+    '''
+    Compares the new files with the data stored in the validation JSON file.
+    '''
     try:
         with open(validation_file, 'r') as f:
             validation_data = json.load(f)
