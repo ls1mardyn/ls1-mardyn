@@ -62,6 +62,8 @@ jobs:
           libopenmpi-dev        \
           libomp-dev            \
           libxerces-c-dev
+        # Install python modules to execute validation script
+        pip3 install numpy pandas
         echo "Running ${JOBNAME}"
         git status
         mkdir build_${JOBNAME}
@@ -171,7 +173,7 @@ jobs:
             fi
 
             # run the example with the new exe
-            printf "   Running example: $i"
+            printf "   Running example: $i ... "
             EXE=$repoPath/build_${JOBNAME}/src/MarDyn
         
             # when using OpenMPI --oversubscribe is needed. Remove it if you switch to MPICH.
