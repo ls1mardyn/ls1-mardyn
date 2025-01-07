@@ -97,7 +97,10 @@ jobs:
             -DENABLE_VTK=ON \
             .."
 
-          echo "The following cmake command is executed:\n${cmake_exec}\n\n"
+          # Omit quotes to trim whitespace of cmake_exec in second echo command
+          echo "The following cmake command is executed:"
+          echo CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} ${cmake_exec}
+          echo ""
 
           ${cmake_exec}
         
