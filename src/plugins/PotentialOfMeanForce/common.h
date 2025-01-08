@@ -48,15 +48,28 @@ inline void NormalizeVector(std::array<double,3>& V){
 
 }
 
-inline void ExtrapolateVector(std::array<double,3>& V){
-    //find first non Nan/inf value
-    int idx=0;
-    for(int i=0;i<V.size();++i){
-        if(std::isfinite(V[i])){
-            idx=i;
-            break;
+inline void ExtrapolateVector(const std::vector<double>& Vx, std::vector<double>& Vy){
+
+
+    for(int i= Vy.size()-1;i>=0;--i){
+
+        if(std::isfinite(Vy[i])){
+            continue;
         }
+
+        double y_k = Vy[i+1];
+        double y_k_1 = Vy[i+2];
+        double x_k = Vx[i+1];
+        double x_k_1 = Vx[i+2];
+        double x_star = Vx[i];
+        Vy[i] = y_k_1 + 1.0*(x_star-x_k_1)/(x_k-x_k_1)*(y_k-y_k_1);
+        
     }
+
+
+
+
+
 
 
 
