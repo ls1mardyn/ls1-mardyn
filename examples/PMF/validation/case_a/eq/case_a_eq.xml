@@ -28,12 +28,6 @@
       <components>
         <include query="/components/moleculetype">../../components/lj_fluid.xml</include>
       </components>
-      <!-- <phasespacepoint> -->
-        <!-- <file type="binary"> -->
-        <!-- <header>../restart_data/generic_lj_step-99.restart.header.xml</header> -->
-          <!-- <data>../restart_data/generic_lj_step-99.restart.dat</data> -->
-        <!-- </file> -->
-      <!-- </phasespacepoint> -->
       <phasespacepoint>
         <generator name="MultiObjectGenerator">
             <objectgenerator>
@@ -89,7 +83,7 @@
 
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
-      <writefrequency>20</writefrequency>
+      <writefrequency>100</writefrequency>
     </outputplugin>
  
     <outputplugin name="CheckpointWriter">

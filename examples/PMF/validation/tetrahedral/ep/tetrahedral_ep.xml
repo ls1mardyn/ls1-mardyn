@@ -14,24 +14,24 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>20000</steps>
+        <steps>100000</steps>
       </production>
     </run>
     
     <ensemble type="NVT">
-      <temperature unit="reduced">2.0</temperature>
+      <temperature unit="reduced">1.0</temperature>
       <domain type="box">
-        <lx>15.0</lx>
-        <ly>15.0</ly>
-        <lz>15.0</lz>
+        <lx>36.845</lx>
+        <ly>36.845</ly>
+        <lz>36.845</lz>
       </domain>
       <components>
-        <include query="/components/moleculetype">../../components/lj_fluid.xml</include>
+        <include query="/components/moleculetype">../../components/lj_tetrahedral_red.xml</include>
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>../restart_data/generic_lj_step-260.restart.header.xml</header>
-          <data>../restart_data/generic_lj_step-260.restart.dat</data>
+          <header>../restart_data/tetrahedral_step-2210.restart.header.xml</header>
+            <data>../restart_data/tetrahedral_step-2210.restart.dat</data>
         </file>
         <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
@@ -46,7 +46,7 @@
         <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass">
-        <radiusLJ unit="reduced">3</radiusLJ>
+        <radiusLJ unit="reduced">5.0</radiusLJ>
       </cutoffs>
       <electrostatic type="ReactionField">
         <epsilon>1.0e+10</epsilon>
@@ -61,41 +61,37 @@
     </algorithm>
     
     <output>
- 
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
-      <writefrequency>1</writefrequency>
+      <writefrequency>5</writefrequency>
     </outputplugin>
-
-    <!--outputplugin name="CheckpointWriter">
+    <outputplugin name="CheckpointWriter">
       <type>binary</type>
       <writefrequency>100</writefrequency>
-      <outputprefix>generic_lj_step</outputprefix>
-    </outputplugin-->
-
+      <outputprefix>tetrahedral_step</outputprefix>
+    </outputplugin>
     </output>
 
     <plugin name="PMF">
-        <fpregions>
-          <region id = "1">
-            <lowX>6.5</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
-            <highX>8.5</highX><highY>15</highY><highZ>15</highZ>
-            <hybridDimX>3</hybridDimX><hybridDimY>0.0</hybridDimY>
-            <hybridDimZ>0.0</hybridDimZ>
-          </region>
-        </fpregions>
-        <multiplier>1.0</multiplier>
-        <updateStride>1000</updateStride>
-        <useProfiler>true</useProfiler>
-        <internalBins>200</internalBins>
-        <densityBins>100</densityBins>
-        <output>true</output>
-        <measureFreq>1</measureFreq>
-        <outputFreq>20</outputFreq>
-        <mode>Production</mode>
-        <rdfPath>../../restart_data/avg_rdf26900.txt</rdfPath>
-        <epPath>../../ep/results/potential_9000.txt</epPath>
+      <fpregions>
+        <region id = "1">
+          <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+          <highX>0</highX><highY>0</highY><highZ>0</highZ>
+          <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
+          <hybridDimZ>0.0</hybridDimZ>
+        </region>
+      </fpregions>
+      <multiplier>1.0</multiplier>
+      <internalBins>200</internalBins>
+      <densityBins>25</densityBins>
+      <measureFreq>1</measureFreq>
+      <rdfMeasureDistance>5</rdfMeasureDistance>
+      <updateStride>1000</updateStride>
+      <outputFreq>20</outputFreq>
+      <output>true</output>
+      <mode>EffectivePotential</mode>
+      <rdfPath>../../restart_data/avg_rdf26900.txt</rdfPath>
     </plugin>
-        
+	
   </simulation>
 </mardyn>
