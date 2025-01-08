@@ -325,6 +325,14 @@ void InteractionForceAdapter::PotForceHybridFPBackend(Molecule& m1, Molecule& m2
     double Upot = PotentialOfMeanForce(r_com);
     ForceOfPotentialOfMeanForce(f_com,r_com);
 
+    //check if forces are finite
+    for(int i=0;i<3;++i){
+        if(!std::isfinite(f_com[i])){
+            Log::global_log->error()<<"[HybridCGBackend] F["<<i<<"] is not finite"<<std::endl;
+            mardyn_assert(false);
+        }
+    }
+
     for(int i=0;i<3;i++)
     {
         f[i] *= (1.0-w1*w2);//F^{com}
@@ -354,6 +362,14 @@ void InteractionForceAdapter::PotForceHybridCGBackend(Molecule& m1, Molecule& m2
     double r_com = std::sqrt(dr2);
     Upot = PotentialOfMeanForce(r_com);
     ForceOfPotentialOfMeanForce(f,r_com);
+
+    //check if forces are finite
+    for(int i=0;i<3;++i){
+        if(!std::isfinite(f[i])){
+            Log::global_log->error()<<"[HybridCGBackend] F["<<i<<"] is not finite"<<std::endl;
+            mardyn_assert(false);
+        }
+    }
 
     m1.Fljcenteradd(0,f.data());
     m2.Fljcentersub(0,f.data());
