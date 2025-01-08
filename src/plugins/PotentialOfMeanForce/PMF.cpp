@@ -201,7 +201,7 @@ void PMF::AddPotentialCorrection(unsigned long step){
         current_correction[i] = 1.0*multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
     }
 
-
+    ExtrapolateVector(reference_rdf_interpolation.GetXValues(),current_correction);
     VectorAdd(potential_interpolation.GetYValues(),current_correction);
     if(output){
         std::string name="correction_step_"+std::to_string(step)+".txt";
