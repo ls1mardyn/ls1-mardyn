@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>100000</steps>
+        <steps>10000</steps>
       </production>
     </run>
     
@@ -63,7 +63,7 @@
     <output>
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
-      <writefrequency>5</writefrequency>
+      <writefrequency>1</writefrequency>
     </outputplugin>
     <outputplugin name="CheckpointWriter">
       <type>binary</type>
@@ -75,22 +75,23 @@
     <plugin name="PMF">
       <fpregions>
         <region id = "1">
-          <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
-          <highX>0</highX><highY>0</highY><highZ>0</highZ>
-          <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
+          <lowX>13.4225</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+          <highX>23.4225</highX><highY>36.845</highY><highZ>36.845</highZ>
+          <hybridDimX>9.4225</hybridDimX><hybridDimY>0.0</hybridDimY>
           <hybridDimZ>0.0</hybridDimZ>
         </region>
       </fpregions>
       <multiplier>1.0</multiplier>
       <internalBins>200</internalBins>
-      <densityBins>25</densityBins>
+      <densityBins>200</densityBins>
       <measureFreq>1</measureFreq>
       <rdfMeasureDistance>5</rdfMeasureDistance>
       <updateStride>1000</updateStride>
-      <outputFreq>20</outputFreq>
+      <outputFreq>1</outputFreq>
       <output>true</output>
-      <mode>EffectivePotential</mode>
+      <mode>Production</mode>
       <rdfPath>../../restart_data/avg_rdf221000.txt</rdfPath>
+      <epPath>../../restart_data/potential_45000.txt</epPath>
     </plugin>
 	
   </simulation>

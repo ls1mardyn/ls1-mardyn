@@ -38,7 +38,12 @@ void ResolutionComponentHandler::init(){
     int n = _simulation.getEnsemble()->getComponents()->size();
     _simulation.getDomain()->getmixcoeff().resize(n*(n-1),1.0);
     for(int i=0;i<n;++i){
-    Log::global_log->info()<<"NAME: "<<_simulation.getEnsemble()->getComponents()->at(i).getName()<<" ID :"<<_simulation.getEnsemble()->getComponents()->at(i).getLookUpId()<<std::endl;
+    Log::global_log->info()
+    <<"i= "<<i
+    <<" NAME: "<<_simulation.getEnsemble()->getComponents()->at(i).getName()
+    <<" LOOKUP ID :"<<_simulation.getEnsemble()->getComponents()->at(i).getLookUpId()
+    <<" MASS= "<<_simulation.getEnsemble()->getComponents()->at(i).m()
+    <<std::endl;
     }
     Log::global_log->info()<<"[ResolutionHandler]Added "<<n<<" components"<<std::endl;
     Log::global_log->info()<<"[ResolutionHandler]Initialized"<<std::endl;

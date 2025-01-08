@@ -48,6 +48,7 @@ class PMF:public PluginBase{
     StatisticsAdResS adres_statistics;
 
     int update_stride=1000;//how often to IBI
+    int output_freq=1;
     double multiplier;//alpha for step size
     bool output;
 

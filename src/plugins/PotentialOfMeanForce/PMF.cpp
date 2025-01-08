@@ -47,6 +47,7 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     xmlfile.changecurrentnode(oldpath);
     xmlfile.getNodeValue("multiplier",multiplier);
     xmlfile.getNodeValue("output",output);
+    xmlfile.getNodeValue("outputFreq",output_freq);
     xmlfile.getNodeValue("updateStride",update_stride);
     xmlfile.getNodeValue("rdfPath",ref_rdf_path);
     xmlfile.getNodeValue("epPath",effective_potential_path);
@@ -168,6 +169,26 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
         }
 
     }
+    if(output && step%output_freq==0)
+    {
+            std::string forces_file="forces_step_"+std::to_string(step)+".txt";
+            std::ofstream forces(forces_file);
+
+            for(auto it=pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
+                forces<<std::setw(8)<<std::left
+                <<it->getID()
+                <<"\t"
+                <<std::setw(8)<<std::left<<it->F(0)
+                <<"\t"
+                <<std::setw(8)<<std::left<<it->F(1)
+                <<"\t"
+                <<std::setw(8)<<std::left<<it->F(2)
+                <<"\t"
+                <<std::setw(8)<<std::left<<it->component()->getName()
+                <<std::endl;
+            }
+            forces.close();
+        }
 }
 
 void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
