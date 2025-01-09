@@ -29,6 +29,11 @@ void StatisticsAdResS::init(FPRegion& region){
     statistics.open(file_name,std::ofstream::app);
     statistics<<"Step \t T_{fp}\t N_{fp} \t T_{hy1} \t N_{hy1} \t T_{hy2}\t N_{hy2}\t T_{hy}\t N_{hy}\t T_{cg1} \t N_{cg1} \t T_{cg2}\t N_{cg2}\t T_{cg}\t N_{cg}"<<std::endl;
     statistics.close();
+
+    //setup profilers
+    fp_profiler.init(_simulation.getcutoffRadius());
+    fp_profiler.SetFilePrefix("fp_rdf_");
+    fp_profiler.SetTotalMolecules(_simulation.getEnsemble()->getComponents()->at(0).getNumMolecules());
 }
 
 void StatisticsAdResS::Output2File(long step){
@@ -55,7 +60,6 @@ void StatisticsAdResS::Output2File(long step){
 
     }
     statistics.close();
-    ClearAll();
 }
 
 void StatisticsAdResS::MeasureCGTemperature(ParticleContainer* particleContainer){

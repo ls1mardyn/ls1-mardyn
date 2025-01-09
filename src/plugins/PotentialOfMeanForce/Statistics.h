@@ -11,59 +11,52 @@
 #include "particleContainer/ParticleContainer.h"
 #include "plugins/PluginBase.h"
 #include "plugins/PotentialOfMeanForce/Region.h"
+#include "plugins/PotentialOfMeanForce/common.h"
 
 struct ResRegion{
     std::array<double,3> low;
     std::array<double,3> high;
 };
 
-class StatisticsAdResS{
-
-    private:
-    ResRegion fp, cg1, cg2, hy1, hy2;
-
-    double fp_temp, cg1_temp, cg2_temp, hy1_temp, hy2_temp;
-    double cg_temp, hy_temp;
-    int N_fp, N_cg1, N_cg2, N_hy1, N_hy2;
-    std::string file_name = "AdResSStatistics.output";
-    std::ofstream statistics;
-    int output_stride = 1;
-
-    public:
-    /**
-     * Set the regions
-     */
-    void init(FPRegion& region);
-    void Output2File(long step);
-    void MeasureStatistics(ParticleContainer* pc){
-        MeasureFPTemperature(pc);
-        MeasureCGTemperature(pc);
-        MeasureHYTemperature(pc);
-    }
-
-    private:
-    void MeasureHYTemperature(ParticleContainer* pc);
-    void MeasureFPTemperature(ParticleContainer* particleContainer);
-    void MeasureCGTemperature(ParticleContainer* particleContainer);
-
-    void ClearAll();
-};
+class RegionCellProcessor;
 
 class RegionRDFProfiler{
 
     private:
     ResRegion& region;
     std::vector<double> centers;
-    std::vector<double> values;
-    int total_bins;
+    int total_bins=50;
     double bin_width;
+    RegionCellProcessor* processor;
+    int output_frequency=1;
+    int sample_frequency=1;
+    int measured_steps=0;//increases on every call to ProfileData
+    std::string file_prefix="not-set";
+    int N;//total molecules for the respective component
+
+
     public:
 
     RegionRDFProfiler(ResRegion& r);
-    void init(int tb);
-    void MeasureRDF(ParticleContainer* pc);
-
+    void init(int rc);
+    void MeasureRDF(ParticleContainer* pc, unsigned long step);
+    void SetFilePrefix(const char* name){
+        file_prefix = name;
+    }
+    void SetTotalMolecules(int n){
+        this->N=n;
+    }
+    void PrintOutput2Files(unsigned long simstep, ParticleContainer* pc);
     private:
+    double RegionVolume(){
+        double volume=0;
+
+        double lx =region.high[0]-region.low[0];
+        double ly =region.high[1]-region.low[1];
+        double lz =region.high[2]-region.low[2];
+
+        return lx*ly*lz;
+    }
     void InitCenters(){
         for(int i=0;i<centers.size();++i){
             double center;
@@ -71,6 +64,11 @@ class RegionRDFProfiler{
             centers[i] = center;
         }
     }
+
+    int CountMoleculesInRegion(ParticleContainer* pc);
+
+
+
 
 };
 
@@ -80,13 +78,12 @@ class RegionCellProcessor:public CellProcessor{
     using Data = std::vector<double>;
     std::vector<Data> thread_data;
     std::vector<double> global_buffer;
-    FPRegion& region;
+    ResRegion& region;
 
     double bin_width;
-
     public:
     RegionCellProcessor& operator=(const RegionCellProcessor&)=delete;
-    RegionCellProcessor(const double cutoff, int bins, double width, FPRegion& region);
+    RegionCellProcessor(const double cutoff, int bins, double width, ResRegion& region);
     ~RegionCellProcessor(){};
 
     void initTraversal() override {
@@ -110,10 +107,50 @@ class RegionCellProcessor:public CellProcessor{
 
 
     private:
-
-    double DistanceBetweenCOMs(std::array<double,3>& com1, std::array<double,3>& com2);
+    bool CellInRegion(ParticleCell& cell);
     void ProcessPairData(Molecule& m1, Molecule& m2);
-    void ProcessSingleData(Molecule& m2);
 
 
+};
+
+class StatisticsAdResS{
+
+    private:
+    ResRegion fp, cg1, cg2, hy1, hy2;
+
+    double fp_temp, cg1_temp, cg2_temp, hy1_temp, hy2_temp;
+    double cg_temp, hy_temp;
+    int N_fp, N_cg1, N_cg2, N_hy1, N_hy2;
+    std::string file_name = "AdResSStatistics.output";
+    std::ofstream statistics;
+    int output_stride = 1;
+
+    RegionRDFProfiler fp_profiler{fp};
+
+    public:
+    /**
+     * Set the regions
+     */
+    void init(FPRegion& region);
+    void Output2File(long step);
+    void PrintRDFs2File(unsigned long step,ParticleContainer* pc){
+        fp_profiler.PrintOutput2Files(step, pc);
+    }
+    void MeasureStatistics(ParticleContainer* pc){
+        ClearAll();
+        MeasureFPTemperature(pc);
+        MeasureCGTemperature(pc);
+        MeasureHYTemperature(pc);
+    }
+
+    void MeasureLocalRDFs(ParticleContainer* pc, unsigned long simstep){
+        fp_profiler.MeasureRDF(pc,simstep);
+    }
+    void ClearAll();
+    private:
+    void MeasureHYTemperature(ParticleContainer* pc);
+    void MeasureFPTemperature(ParticleContainer* particleContainer);
+    void MeasureCGTemperature(ParticleContainer* particleContainer);
+
+    
 };

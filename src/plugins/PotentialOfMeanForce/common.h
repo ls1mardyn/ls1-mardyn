@@ -25,6 +25,18 @@ inline std::array<double, 3> ComputeCOM(Molecule& m1){
     return com;
 }
 
+inline double Distance2BetweenCOMs(std::array<double,3>& c1, std::array<double,3>& c2){
+    double r =0.0;
+    std::array<double,3> diff={0.0,0.0,0.0};
+    
+    for(int i=0;i<diff.size();i++){
+        diff[i]=c1[i]-c2[i];
+    }
+
+    r = diff[0]*diff[0]+diff[1]*diff[1]+diff[2]*diff[2];
+    return r;
+}
+
 inline void VectorAdd(std::vector<double>& v1, const std::vector<double>& v2){
     if(v1.size()!=v2.size()){
         Log::global_log->error()<<"[VectorAdd]Not same size add"<<std::endl;

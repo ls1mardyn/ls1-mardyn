@@ -119,6 +119,9 @@ void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domain
 
 void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
     profiler.ProfileData(pc,step);
+    if(mode==Mode::Production){
+        adres_statistics.MeasureLocalRDFs(pc,step);
+    }
 }
 
 void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, unsigned long step){
@@ -131,6 +134,7 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
     if(mode == Mode::Production){
         adres_statistics.MeasureStatistics(pc);
         adres_statistics.Output2File(step); 
+        adres_statistics.PrintRDFs2File(step, pc);
     }
 
 
