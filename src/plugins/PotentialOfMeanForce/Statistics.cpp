@@ -18,7 +18,7 @@ void StatisticsAdResS::init(FPRegion& region){
     cg1.high={region._lowHybrid[0],_simulation.getDomain()->getGlobalLength(1),_simulation.getDomain()->getGlobalLength(2)};
 
     hy1.low=region._lowHybrid;
-    hy1.high={region._low[0],region._low[0],region._low[0]};
+    hy1.high={region._low[0],_simulation.getDomain()->getGlobalLength(1),_simulation.getDomain()->getGlobalLength(2)};
 
     hy2.low={region._high[0],0,0};
     hy2.high=region._highHybrid;
@@ -35,25 +35,24 @@ void StatisticsAdResS::Output2File(long step){
     statistics.open(file_name,std::ofstream::app);
     if(step % output_stride ==0){
         size_t width = 4;
-        // std::ofstream statistics(file_name);
         statistics<<step<<"\t "
                   <<std::setw(width)<<std::left<<fp_temp<<"\t"
                   <<std::setw(width)<<std::left<<N_fp<<"\t"
                   <<std::setw(width)<<std::left<<hy1_temp<<"\t"
                   <<std::setw(width)<<std::left<<N_hy1<<"\t"
-                  <<std::setw(width)<<std::left<<hy1_temp<<"\t"
+                  <<std::setw(width)<<std::left<<hy2_temp<<"\t"
                   <<std::setw(width)<<std::left<<N_hy2<<"\t"
-                  <<std::setw(width)<<std::left<<(hy1_temp+hy2_temp)/2.0<<"\t"
-                  <<std::setw(width)<<std::left<<(N_hy2+N_hy1)/2.0<<"\t"
+                  <<std::setw(width)<<std::left<<hy_temp<<"\t"
+                  <<std::setw(width)<<std::left<<(N_hy2+N_hy1)<<"\t"
                   <<std::setw(width)<<std::left<<cg1_temp<<"\t"
                   <<std::setw(width)<<std::left<<N_cg1<<"\t"
                   <<std::setw(width)<<std::left<<cg2_temp<<"\t"
                   <<std::setw(width)<<std::left<<N_cg2<<"\t"
-                  <<std::setw(width)<<std::left<<(cg1_temp+cg2_temp)/2.0<<"\t"
-                  <<std::setw(width)<<std::left<<(N_cg2+N_cg1)/2.0<<"\t"
+                  <<std::setw(width)<<std::left<<cg_temp<<"\t"
+                  <<std::setw(width)<<std::left<<(N_cg2+N_cg1)<<"\t"
                   <<std::endl;
 
-        // statistics.close();
+
     }
     statistics.close();
     ClearAll();
@@ -87,6 +86,8 @@ void StatisticsAdResS::MeasureCGTemperature(ParticleContainer* particleContainer
     E_kin2 *= mass;
     cg2_temp = E_kin2/(3.0*N2);
     N_cg2 = N2;
+
+    cg_temp = (E_kin1+E_kin2)/(3.0*(N1+N2));
 }
 
 void StatisticsAdResS::MeasureFPTemperature(ParticleContainer* particleContainer){
@@ -138,6 +139,8 @@ void StatisticsAdResS::MeasureHYTemperature(ParticleContainer* particleContainer
     E_kin2 *= mass;
     hy2_temp = E_kin2/(3.0*N2);
     N_hy2 = N2;
+
+    hy_temp = (E_kin1+E_kin2)/(3.0*(N1+N2));
 }
 
 void StatisticsAdResS::ClearAll(){

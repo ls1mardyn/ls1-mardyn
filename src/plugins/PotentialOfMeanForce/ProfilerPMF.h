@@ -40,7 +40,7 @@ class InternalProfiler{
             bin_centers.resize(total_bins,0.0);
             SetBinCenters();
             Log::global_log->info()<<"[PMF] Profiling "<<name<<std::endl;
-            Log::global_log->info()<<"[PMF] Profer "<<name<<" has total bins"<< total_bins<<std::endl;
+            Log::global_log->info()<<"[PMF] Profiler "<<name<<" has total bins"<< total_bins<<std::endl;
 
         }
 
@@ -78,6 +78,7 @@ class InternalProfiler{
      */
     void ProfileData(ParticleContainer* pc, unsigned long simstep);
     void SetMeasureDensity(bool d){
+        Log::global_log->info()<<"[PMF] Measuring density"<<std::endl;
         measure_density=d;
     }
     /**
@@ -101,7 +102,7 @@ class InternalProfiler{
 };
 
 class InternalCellProcessor: public CellProcessor{
-
+    //TODO: still uses ComputeCOM, is this correct?
     private: 
     using Data = std::vector<double>;
     std::vector<Data> thread_data;
@@ -137,6 +138,7 @@ class InternalCellProcessor: public CellProcessor{
     void SetMeasureDensity(bool b){
         profile_density = b;
     }
+
 
     void SetBinWidth(double w){
         density_bin_width = w;
