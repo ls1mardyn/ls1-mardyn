@@ -52,7 +52,7 @@ void RegionRDFProfiler::PrintOutput2Files(unsigned long simstep,ParticleContaine
 
         double region_volume = RegionVolume();
         for(int i=0;i<total_bins;++i){
-            double rmin, rmax, binvol, rmin3,rmax3, den;
+            double rmin, rmax, binvol, rmin3,rmax3;
             rmin = i*bin_width;
             rmax =(i+1)*bin_width;
             rmin3 = rmin*rmin*rmin;
@@ -60,9 +60,10 @@ void RegionRDFProfiler::PrintOutput2Files(unsigned long simstep,ParticleContaine
             binvol = (4.0/3.0)*M_PI*(rmax3-rmin3);
 
             double val = data[i]*region_volume/binvol;
+            val /= (0.5*N*(N-1.0));
             val /= measured_steps;
 
-            output_file<<std::setw(8)<<std::left<<centers[i]<<"\t"<<std::setw(8)<<std::left<<val<<std::endl;
+            output_file<<std::setw(8)<<std::left<<centers[i]<<"\t"<<std::setw(8)<<std::left<<val<<"\t"<<std::setw(8)<<std::left<<data[i]<<std::endl;
         }
 
         output_file.close();
@@ -100,10 +101,14 @@ void RegionCellProcessor::processCell(ParticleCell& cell){
         double distance=0.0;
         for(auto it1 = begin;it1.isValid();++it1){
             Molecule& m1 = *it1;
+            if(m1.component()->getName() != component_name)
+            continue;
             auto it2 = it1;
             ++it2;
             for(;it2.isValid();++it2){
                 Molecule& m2 = *it2;
+                if(m2.component()->getName() != component_name)
+                    continue;
                 mardyn_assert(&m1 != &m2);
                 this->ProcessPairData(m1,m2);
             }
@@ -122,8 +127,12 @@ void RegionCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, bo
     if(sumAll){
         for(auto it1=begin1;it1.isValid();++it1){
             Molecule& m1 = *it1;
+            if(m1.component()->getName() != component_name)
+            continue;
             for(auto it2 =begin2;it2.isValid();++it2){
                 Molecule& m2 = *it2;
+                if(m2.component()->getName() != component_name)
+                continue;
                 this->ProcessPairData(m1,m2);
             }
         }
@@ -133,8 +142,12 @@ void RegionCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, bo
 
             for(auto it1=begin1;it1.isValid();++it1){
                 Molecule& m1 = *it1;
+                if(m1.component()->getName() != component_name)
+                continue;
                 for(auto it2=begin2;it2.isValid();++it2){
                     Molecule& m2 = *it2;
+                    if(m2.component()->getName() != component_name)
+                    continue;   
                     this->ProcessPairData(m1,m2);
                 }
             }
@@ -148,8 +161,12 @@ void RegionCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, bo
 
             for(auto it1=begin1;it1.isValid();++it1){
                 Molecule& m1 = *it1;
+                if(m1.component()->getName() != component_name)
+                continue;
                 for(auto it2=begin2;it2.isValid();++it2){
                     Molecule& m2 = *it2;
+                    if(m2.component()->getName() != component_name)
+                    continue;
                     this->ProcessPairData(m1,m2);
                 }
             }

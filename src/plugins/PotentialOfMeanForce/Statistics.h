@@ -33,7 +33,8 @@ class RegionRDFProfiler{
     int measured_steps=0;//increases on every call to ProfileData
     std::string file_prefix="not-set";
     int N;//total molecules for the respective component
-
+    int component_index=0;//component index in vector of ensemble
+    std::string component_name="FP";
 
     public:
 
@@ -49,11 +50,16 @@ class RegionRDFProfiler{
     void PrintOutput2Files(unsigned long simstep, ParticleContainer* pc);
     private:
     double RegionVolume(){
-        double volume=0;
+        std::array<double,3> low{0,0,0};
+        std::array<double,3> high{0,0,0};
+        low[1] = region.low[1]-_simulation.getcutoffRadius();
+        low[2] = region.low[2]-_simulation.getcutoffRadius();
+        high[1] = region.high[1]+_simulation.getcutoffRadius();
+        high[2] = region.high[2]+_simulation.getcutoffRadius();
 
         double lx =region.high[0]-region.low[0];
-        double ly =region.high[1]-region.low[1];
-        double lz =region.high[2]-region.low[2];
+        double ly =high[1]-low[1];
+        double lz =high[2]-low[2];
 
         return lx*ly*lz;
     }
@@ -79,6 +85,7 @@ class RegionCellProcessor:public CellProcessor{
     std::vector<Data> thread_data;
     std::vector<double> global_buffer;
     ResRegion& region;
+    std::string component_name="FP";
 
     double bin_width;
     public:
