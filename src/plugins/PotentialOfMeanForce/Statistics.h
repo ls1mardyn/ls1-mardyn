@@ -16,6 +16,7 @@
 struct ResRegion{
     std::array<double,3> low;
     std::array<double,3> high;
+    std::string component_name = "not-set";
 };
 
 class RegionCellProcessor;
@@ -25,16 +26,15 @@ class RegionRDFProfiler{
     private:
     ResRegion& region;
     std::vector<double> centers;
-    int total_bins=50;
+    int total_bins=100;
     double bin_width;
     RegionCellProcessor* processor;
     int output_frequency=1;
     int sample_frequency=1;
     int measured_steps=0;//increases on every call to ProfileData
     std::string file_prefix="not-set";
-    int N;//total molecules for the respective component
-    int component_index=0;//component index in vector of ensemble
-    std::string component_name="FP";
+
+    bool measure_local_rdfs=true;
 
     public:
 
@@ -44,20 +44,26 @@ class RegionRDFProfiler{
     void SetFilePrefix(const char* name){
         file_prefix = name;
     }
-    void SetTotalMolecules(int n){
-        this->N=n;
-    }
     void PrintOutput2Files(unsigned long simstep, ParticleContainer* pc);
     private:
+    //TODO: do on every step?
     double RegionVolume(){
         std::array<double,3> low{0,0,0};
         std::array<double,3> high{0,0,0};
+        //TODO: only considers left side cg region
+        if(region.component_name == "CG"){
+            low[0] = region.low[0]-_simulation.getcutoffRadius();
+        }
+
         low[1] = region.low[1]-_simulation.getcutoffRadius();
         low[2] = region.low[2]-_simulation.getcutoffRadius();
         high[1] = region.high[1]+_simulation.getcutoffRadius();
         high[2] = region.high[2]+_simulation.getcutoffRadius();
 
         double lx =region.high[0]-region.low[0];
+        if(region.component_name == "CG"){
+            lx=region.high[0]-low[0];
+        }
         double ly =high[1]-low[1];
         double lz =high[2]-low[2];
 
@@ -70,7 +76,9 @@ class RegionRDFProfiler{
             centers[i] = center;
         }
     }
-
+    /**
+     * Extends region to include halo and gets N molecules, is there better option?
+     */
     int CountMoleculesInRegion(ParticleContainer* pc);
 
 
@@ -78,6 +86,7 @@ class RegionRDFProfiler{
 
 };
 
+//TODO: verification of components seems pretty primitive, better alternative?
 class RegionCellProcessor:public CellProcessor{
 
     public:
@@ -112,8 +121,17 @@ class RegionCellProcessor:public CellProcessor{
         return global_buffer;
     }
 
+    void SetComponentName(const char* name){
+        component_name=name;
+    }
+
 
     private:
+    /*TODO: can this be better, the volume and the visited cells do not match.
+            i.e., incomplete cells also belong in the region, but the region 
+            dpes not match with the cells. What to do?
+    */
+    
     bool CellInRegion(ParticleCell& cell);
     void ProcessPairData(Molecule& m1, Molecule& m2);
 
@@ -123,16 +141,17 @@ class RegionCellProcessor:public CellProcessor{
 class StatisticsAdResS{
 
     private:
-    ResRegion fp, cg1, cg2, hy1, hy2;
 
-    double fp_temp, cg1_temp, cg2_temp, hy1_temp, hy2_temp;
-    double cg_temp, hy_temp;
+    ResRegion fp, cg1, cg2, hy1, hy2;
+    double fp_temp, cg1_temp, cg2_temp, hy1_temp, hy2_temp;//per region
+    double cg_temp, hy_temp;//average component
     int N_fp, N_cg1, N_cg2, N_hy1, N_hy2;
     std::string file_name = "AdResSStatistics.output";
     std::ofstream statistics;
     int output_stride = 1;
 
     RegionRDFProfiler fp_profiler{fp};
+    RegionRDFProfiler cg1_profiler{cg1};
 
     public:
     /**
@@ -141,7 +160,8 @@ class StatisticsAdResS{
     void init(FPRegion& region);
     void Output2File(long step);
     void PrintRDFs2File(unsigned long step,ParticleContainer* pc){
-        fp_profiler.PrintOutput2Files(step, pc);
+        // fp_profiler.PrintOutput2Files(step, pc);
+        cg1_profiler.PrintOutput2Files(step,pc);
     }
     void MeasureStatistics(ParticleContainer* pc){
         ClearAll();
@@ -151,7 +171,8 @@ class StatisticsAdResS{
     }
 
     void MeasureLocalRDFs(ParticleContainer* pc, unsigned long simstep){
-        fp_profiler.MeasureRDF(pc,simstep);
+        // fp_profiler.MeasureRDF(pc,simstep);
+        cg1_profiler.MeasureRDF(pc,simstep);
     }
     void ClearAll();
     private:

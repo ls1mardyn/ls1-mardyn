@@ -10,19 +10,22 @@
 void StatisticsAdResS::init(FPRegion& region){
     fp.low=region._low;
     fp.high = region._high;
+    fp.component_name="FP";
 
     cg2.low= {region._highHybrid[0],0,0};
     cg2.high= {_simulation.getDomain()->getGlobalLength(0),_simulation.getDomain()->getGlobalLength(1),_simulation.getDomain()->getGlobalLength(2)};
+    cg2.component_name="CG";
 
     cg1.low={0,0,0};
     cg1.high={region._lowHybrid[0],_simulation.getDomain()->getGlobalLength(1),_simulation.getDomain()->getGlobalLength(2)};
+    cg1.component_name="CG";
 
     hy1.low=region._lowHybrid;
     hy1.high={region._low[0],_simulation.getDomain()->getGlobalLength(1),_simulation.getDomain()->getGlobalLength(2)};
-
+    hy1.component_name="HY";
     hy2.low={region._high[0],0,0};
     hy2.high=region._highHybrid;
-
+    hy2.component_name="HY";
     //open for writing and clear
     statistics.open(file_name,std::ofstream::out|std::ofstream::trunc);
     statistics.close();
@@ -33,7 +36,8 @@ void StatisticsAdResS::init(FPRegion& region){
     //setup profilers
     fp_profiler.init(_simulation.getcutoffRadius());
     fp_profiler.SetFilePrefix("fp_rdf_");
-    fp_profiler.SetTotalMolecules(_simulation.getEnsemble()->getComponents()->at(0).getNumMolecules());
+    cg1_profiler.init(_simulation.getcutoffRadius());
+    cg1_profiler.SetFilePrefix("cg_rdf_");
 }
 
 void StatisticsAdResS::Output2File(long step){

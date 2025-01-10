@@ -14,6 +14,7 @@ void RegionRDFProfiler::init(int rc){
     Log::global_log->info()<<"[AdResSStatistics] Measuring local RDFs with "<<total_bins<<" bins"<<std::endl;
     Log::global_log->info()<<"[AdResSStatistics] Bin width"<<bin_width<<std::endl;
     processor = new RegionCellProcessor(rc,total_bins,bin_width,region);
+    processor->SetComponentName(region.component_name.data());
 }
 
 void RegionRDFProfiler::MeasureRDF(ParticleContainer* particleContainer, unsigned long step){
@@ -48,8 +49,9 @@ void RegionRDFProfiler::PrintOutput2Files(unsigned long simstep,ParticleContaine
         std::ofstream output_file(file_name);
 
         std::vector<double>& data = processor->GetPairCountBuffer();
-        N = CountMoleculesInRegion(pc);
-
+        int N = CountMoleculesInRegion(pc);//TODO: would be good to aovid this on every step(every n steps?)
+        //TODO:_simulation.getEnsemble()->getComponents()->at(0).getNumMolecules() returns different amount of molecules, why? 
+        // N = _simulation.getEnsemble()->getComponents()->at(0).getNumMolecules();//see todo above
         double region_volume = RegionVolume();
         for(int i=0;i<total_bins;++i){
             double rmin, rmax, binvol, rmin3,rmax3;
@@ -219,14 +221,14 @@ bool RegionCellProcessor::CellInRegion(ParticleCell& cell){
     if(cell_max > reg_min 
         && cell_max < reg_max)
     {
-        return false;
+        return true;
     }
 
     //Cell lower is within region
     if(cell_min > reg_min
         && cell_min < reg_max)
     {
-        return false;    
+        return true;    
     }
 
     return false;
