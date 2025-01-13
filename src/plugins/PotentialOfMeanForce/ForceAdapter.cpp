@@ -250,8 +250,8 @@ void InteractionForceAdapter::PotForcePureHybridBackend(Molecule& m1, Molecule& 
     }
 
     //only at site 0 (CG site)
-    m1.Fljcenteradd(0, f_com.data());
-    m2.Fljcentersub(0, f_com.data());
+    // m1.Fljcenteradd(0, f_com.data());
+    // m2.Fljcentersub(0, f_com.data());
     //TODO: what about the virial?
 }
 
@@ -335,11 +335,11 @@ void InteractionForceAdapter::PotForceHybridFPBackend(Molecule& m1, Molecule& m2
 
     for(int i=0;i<3;i++)
     {
-        f[i] *= (1.0-w1*w2);//F^{com}
+        f_com[i] *= (1.0-w1*w2);//F^{com}
     }
 
-    m1.Fljcenteradd(0, f_com.data());
-    SubtractAndMapForceToFP(f_com,m2);
+    // m1.Fljcenteradd(0, f_com.data());
+    // SubtractAndMapForceToFP(f_com,m2);
 
 
 }

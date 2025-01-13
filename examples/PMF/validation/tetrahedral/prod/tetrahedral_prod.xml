@@ -87,7 +87,7 @@
       <measureFreq>1</measureFreq>
       <rdfMeasureDistance>5</rdfMeasureDistance>
       <updateStride>1000</updateStride>
-      <outputFreq>1</outputFreq>
+      <outputFreq>10</outputFreq>
       <output>true</output>
       <mode>Production</mode>
       <rdfPath>../../restart_data/avg_rdf221000.txt</rdfPath>
