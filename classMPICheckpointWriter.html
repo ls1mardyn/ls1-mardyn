@@ -86,7 +86,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ad5f327a44985319d1ba7e1b5e20a67f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">writes a checkpoint file that can be used to continue the simulation using MPIIO  <a href="classMPICheckpointWriter.html#ad5f327a44985319d1ba7e1b5e20a67f0">More...</a><br /></td></tr>
 <tr class="separator:ad5f327a44985319d1ba7e1b5e20a67f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7613abd2c2628e4db90822b26ad1a436"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMPICheckpointWriter.html#a7613abd2c2628e4db90822b26ad1a436">readXML</a> (<a class="el" href="classXMLfileUnits.html">XMLfileUnits</a> &amp;xmlconfig)</td></tr>
-<tr class="memdesc:a7613abd2c2628e4db90822b26ad1a436"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method readXML will be called once for each plugin section in the input file.  <a href="classMPICheckpointWriter.html#a7613abd2c2628e4db90822b26ad1a436">More...</a><br /></td></tr>
+<tr class="memdesc:a7613abd2c2628e4db90822b26ad1a436"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read in XML configuration for <a class="el" href="classMPICheckpointWriter.html">MPICheckpointWriter</a> and all its included objects.  <a href="classMPICheckpointWriter.html#a7613abd2c2628e4db90822b26ad1a436">More...</a><br /></td></tr>
 <tr class="separator:a7613abd2c2628e4db90822b26ad1a436"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5afb8c877dd5dd7be6e54ac7b4fae418"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMPICheckpointWriter.html#a5afb8c877dd5dd7be6e54ac7b4fae418">init</a> (<a class="el" href="classParticleContainer.html">ParticleContainer</a> *particleContainer, <a class="el" href="classDomainDecompBase.html">DomainDecompBase</a> *domainDecomp, <a class="el" href="classDomain.html">Domain</a> *domain)</td></tr>
 <tr class="memdesc:a5afb8c877dd5dd7be6e54ac7b4fae418"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method init will be called at the begin of the simulation.  <a href="classMPICheckpointWriter.html#a5afb8c877dd5dd7be6e54ac7b4fae418">More...</a><br /></td></tr>
@@ -403,19 +403,16 @@ static <a class="el" href="classPluginBase.html">PluginBase</a> *&#160;</td><td 
 </table>
 </div><div class="memdoc">
 
-<p>Method readXML will be called once for each plugin section in the input file. </p>
-<p >This method can be used to read in parameters from the corresponding plugin section in the xml config file. The method will be called once after an instance of the plugin is created.</p>
-<dl class="section note"><dt>Note</dt><dd>The same plugins may be specified multiple times in the xml config file. It is the responsibility of the plugin to handle this case in a propper way.</dd></dl>
-<p>The following xml object structure will be provided to the plugin: </p><div class="fragment"><div class="line">&lt;<span class="keywordtype">plugin</span> <span class="keyword">name</span>=<span class="stringliteral">&quot;plugin name&quot;</span>&gt;</div>
-<div class="line">  <span class="comment">&lt;!-- options for the specific plugin --&gt;</span></div>
-<div class="line">&lt;/<span class="keywordtype">plugin</span>&gt;</div>
-</div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">xmlconfig</td><td>section of the xml file </td></tr>
-  </table>
-  </dd>
-</dl>
-
+<p>Read in XML configuration for <a class="el" href="classMPICheckpointWriter.html">MPICheckpointWriter</a> and all its included objects. </p>
+<p >The following xml object structure is handled by this method: </p><div class="fragment"><div class="line">&lt;<span class="keywordtype">outputplugin</span> <span class="keyword">name</span>=<span class="stringliteral">&quot;MPICheckpointWriter&quot;</span>&gt;</div>
+<div class="line">   &lt;<span class="keywordtype">writefrequency</span>&gt;<span class="keyword">INTEGER</span>&lt;/<span class="keywordtype">writefrequency</span>&gt; <span class="comment">&lt;!-- Frequency in which the output is written; Default: 1 --&gt;</span></div>
+<div class="line">   &lt;<span class="keywordtype">outputprefix</span>&gt;<span class="keyword">STRING</span>&lt;/<span class="keywordtype">outputprefix</span>&gt; <span class="comment">&lt;!-- Prefix of the output file; Default: &quot;mardyn&quot; --&gt;</span></div>
+<div class="line">   &lt;<span class="keywordtype">incremental</span>&gt;<span class="keyword">BOOL</span>&lt;/<span class="keywordtype">incremental</span>&gt; <span class="comment">&lt;!-- Checkpoint files will get individual numbers; Default: false --&gt;</span></div>
+<div class="line">   &lt;<span class="keywordtype">appendTimestamp</span>&gt;<span class="keyword">BOOL</span>&lt;/<span class="keywordtype">appendTimestamp</span>&gt; <span class="comment">&lt;!-- Append timestamp to checkpoint files; Default: false --&gt;</span></div>
+<div class="line">   &lt;<span class="keywordtype">datarep</span>&gt;<span class="keyword">STRING</span>&lt;/<span class="keywordtype">datarep</span>&gt; <span class="comment">&lt;!-- MPI I/O output representation to use, valid values are &quot;native&quot;, &quot;internal&quot;, &quot;external32&quot;; Default: &quot;&quot; --&gt;</span></div>
+<div class="line">   &lt;<span class="keywordtype">mpi_info</span>&gt;<span class="comment">&lt;!-- see MPI_Info_object class documentation --&gt;</span>&lt;/<span class="keywordtype">mpi_info</span>&gt; <span class="comment">&lt;!-- MPI infos to be used for MPI file I/O writing the checkpoint files --&gt;</span></div>
+<div class="line">&lt;/<span class="keywordtype">outputplugin</span>&gt;</div>
+</div><!-- fragment --> 
 <p>Implements <a class="el" href="classPluginBase.html#a8a934b89aa2a46081c62351d4d95c71b">PluginBase</a>.</p>
 
 </div>
@@ -427,7 +424,7 @@ static <a class="el" href="classPluginBase.html">PluginBase</a> *&#160;</td><td 
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jan 7 2025 11:26:26 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Mon Jan 13 2025 08:47:08 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
