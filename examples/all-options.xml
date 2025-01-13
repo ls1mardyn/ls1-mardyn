@@ -427,7 +427,7 @@
         <outputprefix>default</outputprefix>
         <appendTimestamp>true</appendTimestamp>
         <datarep>native</datarep>
-        <measureTime>1</measureTime>
+        <measureTime>true</measureTime>
       </outputplugin>
 
       <!-- more output plugins -->
