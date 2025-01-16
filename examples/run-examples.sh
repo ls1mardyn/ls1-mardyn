@@ -13,7 +13,7 @@ MPIRUN_ARGS="-n 4 --oversubscribe"
 EXAMPLE_LIST_FILE=${EXAMPLE_LIST_FILE:=example-list.txt}
 LOGFILE=${LOGFILE:=$PWD/run-examples.log}
 
-TEMP=$(getopt -o vh --long "help,inputlist:,logfile:,mardyn_args:,mardyn_exe:,mpirun_args:,mpirun_exe:,verbose" -- "$@")
+TEMP=$(getopt -o vh --long "help,inputlist:,logfile:,mardyn-args:,mardyn-exe:,mpirun-args:,mpirun-exe:,verbose" -- "$@")
 
 if [ $? -ne 0 ]; then
   echo "Error parsing commandline"
@@ -38,10 +38,10 @@ Usage:
 Options:
  -i,--inputlist   <FILE>    path to an inputfile list
     --logfile     <FILE>    path for the logfile
-    --mpirun_exe  <mpirun>  mpirun command or path to mpirun executable
-    --mpirun_args <ARGS>    arguments to be passed to the mpirun command
-    --mardyn_exe  <MarDyn>  path to a MarDyn executable
-    --mardyn_args <ARGS>    arguments to be passed to MarDyn for each input file
+    --mpirun-exe  <mpirun>  mpirun command or path to mpirun executable
+    --mpirun-args <ARGS>    arguments to be passed to the mpirun command
+    --mardyn-exe  <MarDyn>  path to a MarDyn executable
+    --mardyn-args <ARGS>    arguments to be passed to MarDyn for each input file
  -v,--verbose               verbose output
  -h,--help                  show this help
 
@@ -55,22 +55,22 @@ while true; do
       shift 2
       continue
       ;;
-    '--mardyn_exe')
+    '--mardyn-exe')
        MARDYN_EXE="$2"
        shift 2
        continue
        ;;
-    '--mardyn_args')
+    '--mardyn-args')
        MARDYN_ARGS="$2"
        shift 2
        continue
        ;;
-    '--mpirun_exe')
+    '--mpirun-exe')
        MPIRUN_EXE="$2"
        shift 2
        continue
        ;;
-    '--mpirun_args')
+    '--mpirun-args')
        MPIRUN_ARGS="$2"
        shift 2
        continue
