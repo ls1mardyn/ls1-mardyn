@@ -34,7 +34,6 @@
 
 #endif  /* ENABLE_MPI */
 
-
 /* we use a separate namespace because we have some global definitions for
  * the log level */
 namespace Log {
@@ -72,8 +71,6 @@ typedef enum {
  * > log.error() << "Wrong parameter." << std::endl;
  * Please include std::endl statements at the end of output as they will flush
  * the stream buffers.
- * If ENABLE_MPI is enabled logger initialization has to take place after the
- * MPI_Init call.
  */
 class Logger {
 private:
@@ -84,7 +81,7 @@ private:
 	std::map<logLevel, std::string> logLevelNames;
 
 	std::chrono::system_clock::time_point _starttime;
-	int _rank;
+	std::string _msg_prefix;
 
 	/// initialize the list of log levels with the corresponding short names
 	void init_log_levels() {
@@ -151,8 +148,7 @@ public:
 			localtime_r(&now_time_t, &now_local);
 			*_log_stream << logLevelNames[level] << ":\t" << std::put_time(&now_local, "%Y-%m-%dT%H:%M:%S") << " ";
 			*_log_stream << std::setw(8) << std::chrono::duration<double>(time_since_start).count() << " ";
-
-			*_log_stream << "[" << _rank << "]\t";
+			*_log_stream << _msg_prefix;
 		}
 		return *this;
 	}
@@ -219,8 +215,17 @@ public:
 		_starttime = std::chrono::system_clock::now();
 	}
 
+	/// set message prefix
+	void set_msg_prefix(std::string msg_prefix) {
+		_msg_prefix = msg_prefix;
+	}
 
+	/// return message prefix
+	std::string get_msg_prefix() {
+		return _msg_prefix;
+	}
 }; /* end of class Logger */
+
 } /* end of namespace */
 
 #endif /*LOGGER_H_*/

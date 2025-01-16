@@ -132,12 +132,14 @@ int run_unit_tests(const Values &options, const std::vector<std::string> &args) 
  * all classes.
  */
 int main(int argc, char** argv) {
+	Log::global_log = std::make_unique<Log::Logger>(Log::Info);
+
 #ifdef ENABLE_MPI
 	MPI_Init(&argc, &argv);
 	int world_rank = 0;
 	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+	Log::global_log->set_msg_prefix("[" + std::to_string(world_rank) + "]\t");
 #endif
-	Log::global_log = std::make_unique<Log::Logger>(Log::Info);
 
 	// Open scope to exclude MPI_Init() and MPI_Finalize().
 	// This way, all simulation objects are cleaned up before MPI finalizes.
