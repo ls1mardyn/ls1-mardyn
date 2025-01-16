@@ -100,9 +100,7 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			// rebalance
 			Log::global_log->info() << "rebalancing..." << std::endl;
 
-			Log::global_log->set_mpi_output_all();
 			Log::global_log->debug() << "work:" << lastTraversalTime << std::endl;
-			Log::global_log->set_mpi_output_root(0);
 			auto [newBoxMin, newBoxMax] = _loadBalancer->rebalance(lastTraversalTime);
 			if (_gridSize.has_value()) {
 				std::tie(newBoxMin, newBoxMax) = latchToGridSize(newBoxMin, newBoxMax);
@@ -154,7 +152,6 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 		ownDomain.offset[i] = 0;
 		newDomain.offset[i] = 0;
 	}
-	Log::global_log->set_mpi_output_all();
 	Log::global_log->debug() << "migrating from"
 						<< " [" << oldBoxMin[0] << ", " << oldBoxMax[0] << "] x"
 						<< " [" << oldBoxMin[1] << ", " << oldBoxMax[1] << "] x"
@@ -163,7 +160,6 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 						<< " [" << newMin[0] << ", " << newMax[0] << "] x"
 						<< " [" << newMin[1] << ", " << newMax[1] << "] x"
 						<< " [" << newMin[2] << ", " << newMax[2] << "]." << std::endl;
-	Log::global_log->set_mpi_output_root(0);
 	std::vector<HaloRegion> desiredDomain{newDomain};
 	std::vector<CommunicationPartner> sendNeighbors{}, recvNeighbors{};
 

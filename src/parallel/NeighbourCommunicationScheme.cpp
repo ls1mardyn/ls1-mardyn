@@ -328,7 +328,6 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 
 	double waitCounter = 50.0;
 	double deadlockTimeOut = 360.0;
-	Log::global_log->set_mpi_output_all();
 	while (not allDone) {
 		allDone = true;
 		if (_pushPull) {
@@ -404,8 +403,6 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		}
 
 	}  // while not allDone
-
-	Log::global_log->set_mpi_output_root(0);
 }
 
 void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool import) {
@@ -552,7 +549,6 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 
 	double waitCounter = 50.0;
 	double deadlockTimeOut = 360.0;
-	Log::global_log->set_mpi_output_all();
 	for (int i = 0; i < numNeighbours; ++i) { // reset receive status
 		if (domainDecomp->getRank() != (*_neighbours)[d][i].getRank()) {
 			(*_neighbours)[d][i].resetReceive();
@@ -604,7 +600,6 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 		}
 
 	} // while not allDone
-	Log::global_log->set_mpi_output_root(0);
 }
 
 void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI1D(ParticleContainer* moleculeContainer, Domain* domain,

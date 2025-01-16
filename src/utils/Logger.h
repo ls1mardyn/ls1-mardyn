@@ -70,10 +70,6 @@ typedef enum {
  * For writing log messages use fatal(), error(), warning(), info() or debug() as
  * with normal streams, e.g.
  * > log.error() << "Wrong parameter." << std::endl;
- * For easy handling of output within MPI applications there are the following methods:
- * set_mpi_output_root(int root)
- * set_mpi_output_rall()
- * set_mpi_output_ranks(int num_ranks, int * ranks)
  * Please include std::endl statements at the end of output as they will flush
  * the stream buffers.
  * If ENABLE_MPI is enabled logger initialization has to take place after the
@@ -222,18 +218,6 @@ public:
 	void init_starting_time() {
 		_starttime = std::chrono::system_clock::now();
 	}
-
-	/* methods for easy handling of output processes */
-
-	/// allow logging only for a single process
-	void set_mpi_output_root(int root = 0);
-
-	/// all processes shall perform logging
-	void set_mpi_output_all();
-
-	/// allow a set of processes for logging
-	bool set_mpi_output_ranks(int num_nums, int* nums);
-
 
 
 }; /* end of class Logger */

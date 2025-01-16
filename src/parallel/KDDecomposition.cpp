@@ -480,7 +480,6 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 	sendTogether &= neighborschemeAllowsDirect;
 	updateSendLeavingWithCopies(sendTogether);
 
-	Log::global_log->set_mpi_output_all();
 	double waitCounter = 5.0;
 	double deadlockTimeOut = 360.0;
 	bool allDone = false;
@@ -538,8 +537,6 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		}
 
 	} // while not allDone
-
-	Log::global_log->set_mpi_output_root(0);
 
 	moleculeContainer->update();
 
