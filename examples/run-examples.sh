@@ -1,7 +1,7 @@
 #!/bin/bash
 # Testscript running all examples from example-list.txt
 #
-# Copyright (c) 2017-2024 Christoph Niethammer <niethammer@hlrs.de>
+# Copyright (c) 2017-2025 Christoph Niethammer <niethammer@hlrs.de>
 #
 
 # Some default values
@@ -13,7 +13,7 @@ MPIRUN_ARGS="-n 4 --oversubscribe"
 EXAMPLE_LIST_FILE=${EXAMPLE_LIST_FILE:=example-list.txt}
 LOGFILE=${LOGFILE:=$PWD/run-examples.log}
 
-TEMP=$(getopt -o vh --long "help,inputlist:,logfile:,mardyn_args:,mardyn_exe:,mpirun_args:,mpirun_exe:,verbose" -- $@)
+TEMP=$(getopt -o vh --long "help,inputlist:,logfile:,mardyn_args:,mardyn_exe:,mpirun_args:,mpirun_exe:,verbose" -- "$@")
 
 if [ $? -ne 0 ]; then
   echo "Error parsing commandline"
