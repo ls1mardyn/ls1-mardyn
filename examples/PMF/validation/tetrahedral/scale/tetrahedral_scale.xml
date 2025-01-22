@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mardyn version="20100525">
+  <refunits type="SI">
+    <length unit="nm">0.0529177</length>
+    <mass unit="u">1000</mass>
+    <energy unit="eV">27.2126</energy>
+  </refunits>
+  <simulation type="MD">
+    <integrator type="Leapfrog">
+      <timestep unit="reduced">0.001</timestep>
+    </integrator>
+    
+    <run>
+      <currenttime>0</currenttime>
+      <equilibration> <steps>0</steps> </equilibration>
+      <production>
+        <steps>50</steps>
+      </production>
+    </run>
+    
+    <ensemble type="NVT">
+      <temperature unit="reduced">1.0</temperature>
+      <domain type="box">
+        <lx>36.845</lx>
+        <ly>36.845</ly>
+        <lz>36.845</lz>
+      </domain>
+      <components>
+        <include query="/components/moleculetype">../../components/lj_tetrahedral_red.xml</include>
+      </components>
+      <phasespacepoint>
+        <file type="binary">
+          <header>../restart_data/tetrahedral_step-2210.restart.header.xml</header>
+            <data>../restart_data/tetrahedral_step-2210.restart.dat</data>
+        </file>
+        <ignoreCheckpointTime>true</ignoreCheckpointTime>
+      </phasespacepoint>
+    </ensemble>
+    
+    <algorithm>
+      <parallelisation type="DomainDecomposition">
+        <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+        <overlappingCollectives>False</overlappingCollectives>
+      </parallelisation>
+      <datastructure type="LinkedCells">
+        <cellsInCutoffRadius>1</cellsInCutoffRadius>
+      </datastructure>
+      <cutoffs type="CenterOfMass">
+        <radiusLJ unit="reduced">3</radiusLJ>
+      </cutoffs>
+      <electrostatic type="ReactionField">
+        <epsilon>1.0e+10</epsilon>
+      </electrostatic>
+      <thermostats>
+       <!-- velocity scaling thermostat, if no component is specified the global thermostat is assumed -->
+      <thermostat type="VelocityScaling">
+        <!-- target temperature, if not specified the ensemble temperature will be used -->
+      </thermostat> 
+      </thermostats>
+      
+    </algorithm>
+    
+    <output>
+    <outputplugin name="VTKMoleculeWriter">
+      <outputprefix>vtkOutput</outputprefix>
+      <writefrequency>1000</writefrequency>
+    </outputplugin>
+    <outputplugin name="CheckpointWriter">
+      <type>binary</type>
+      <writefrequency>1000</writefrequency>
+      <outputprefix>tetrahedral_step</outputprefix>
+    </outputplugin>
+    </output>
+
+    <plugin name="PMF">
+      <fpregions>
+        <region id = "1">
+          <lowX>13.4225</lowX>
+          <!-- <lowX>0.0</lowX> -->
+          <lowy>0.0</lowy>
+          <lowZ>0.0</lowZ>
+          <highX>23.4225</highX>
+          <!-- <highX>36.845</highX> -->
+          <highY>36.845</highY>
+          <highZ>36.845</highZ>
+          
+          <!-- <highX>0.0</highX> -->
+          <!-- <highY>0.0</highY> -->
+          <!-- <highZ>0.0</highZ> -->
+
+          <hybridDimX>9.4225</hybridDimX>
+          <!-- <hybridDimX>0.0</hybridDimX> -->
+          <hybridDimY>0.0</hybridDimY>
+          <hybridDimZ>0.0</hybridDimZ>
+        </region>
+      </fpregions>
+      <multiplier>1.0</multiplier>
+      <internalBins>200</internalBins>
+      <densityBins>200</densityBins>
+      <measureFreq>1000</measureFreq>
+      <rdfMeasureDistance>5</rdfMeasureDistance>
+      <updateStride>1000</updateStride>
+      <outputFreq>10000</outputFreq>
+      <output>false</output>
+      <mode>Production</mode>
+      <doNothing>true</doNothing>
+      <rdfPath>../../restart_data/avg_rdf221000.txt</rdfPath>
+      <epPath>../../restart_data/potential_45000.txt</epPath>
+    </plugin>
+	
+  </simulation>
+</mardyn>
