@@ -51,6 +51,7 @@ class PMF:public PluginBase{
     int output_freq=1;
     double multiplier;//alpha for step size
     bool output;
+    bool do_nothing;//kill switch for all functionalities
 
     std::string ref_rdf_path;
     std::string effective_potential_path;

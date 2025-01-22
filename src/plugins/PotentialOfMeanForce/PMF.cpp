@@ -51,8 +51,17 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     xmlfile.getNodeValue("updateStride",update_stride);
     xmlfile.getNodeValue("rdfPath",ref_rdf_path);
     xmlfile.getNodeValue("epPath",effective_potential_path);
+    xmlfile.getNodeValue("doNothing",do_nothing);
+    if(do_nothing){
+        Log::global_log->info()<<"[PMF] Do Nothing set"<<std::endl;
+    }
+
     std::string mode_name;
     xmlfile.getNodeValue("mode",mode_name);
+    if(do_nothing && mode_name != "Production"){
+        Log::global_log->info()<<"[PMF] Warning, do nothing but not in production mode, exiting"<<std::endl;
+        Simulation::exit(1);
+    }
     if(mode_name == "Equilibration"){
         mode = Mode::Equilibration;
         Log::global_log->info()<<"[PMF] Mode set to Equilibration"<<std::endl;
@@ -118,20 +127,23 @@ void PMF::beforeEventNewTimestep(ParticleContainer* pc, DomainDecompBase* domain
 }
 
 void PMF::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
-    profiler.ProfileData(pc,step);
-    if(mode==Mode::Production){
-        adres_statistics.MeasureLocalRDFs(pc,step);
+    if(!do_nothing){
+        profiler.ProfileData(pc,step);
+        if(mode==Mode::Production){
+            adres_statistics.MeasureLocalRDFs(pc,step);
+        }  
     }
+    
 }
 
 void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, unsigned long step){
 
-    if(mode == Mode::EffectivePotential){
+    if(mode == Mode::EffectivePotential && !do_nothing){
         UpdateRDFInterpolation();
     }
 
 
-    if(mode == Mode::Production){
+    if(mode == Mode::Production && !do_nothing){
         adres_statistics.MeasureStatistics(pc);
         adres_statistics.Output2File(step); 
         adres_statistics.PrintRDFs2File(step, pc);
@@ -139,7 +151,7 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
 
 
 
-    if(output){
+    if(output && !do_nothing){
 
         profiler.PrintOutput2Files(step);
 
@@ -173,26 +185,6 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
         }
 
     }
-    if(output && step%output_freq==0)
-    {
-            std::string forces_file="forces_step_"+std::to_string(step)+".txt";
-            std::ofstream forces(forces_file);
-
-            for(auto it=pc->iterator(ParticleIterator::ALL_CELLS);it.isValid();++it){
-                forces<<std::setw(8)<<std::left
-                <<it->getID()
-                <<"\t"
-                <<std::setw(8)<<std::left<<it->F(0)
-                <<"\t"
-                <<std::setw(8)<<std::left<<it->F(1)
-                <<"\t"
-                <<std::setw(8)<<std::left<<it->F(2)
-                <<"\t"
-                <<std::setw(8)<<std::left<<it->component()->getName()
-                <<std::endl;
-            }
-            forces.close();
-        }
 }
 
 void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){

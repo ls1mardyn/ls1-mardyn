@@ -164,7 +164,8 @@ void TimerProfiler::readInitialTimersFromFile(std::string fileName){
 		"GENERATORS",
 		"CELL_PROCESSORS",
 		"TUNERS",
-		"IO"
+		"IO",
+		"ADRES_FORCES"
 	};
 
 	/**************************************************************
@@ -225,7 +226,9 @@ void TimerProfiler::readInitialTimersFromFile(std::string fileName){
 		std::make_tuple("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_EVAL_M", std::vector<std::string>{"UNIFORM_PSEUDO_PARTICLE_CONTAINER"}, true),
 		std::make_tuple("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_EVAL_LM", std::vector<std::string>{"UNIFORM_PSEUDO_PARTICLE_CONTAINER"}, true),
 		std::make_tuple("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE_ME", std::vector<std::string>{"UNIFORM_PSEUDO_PARTICLE_CONTAINER"}, true),
-		std::make_tuple("UNIFORM_PSEUDO_PARTICLE_CONTAINER_STOP_LEVEL", std::vector<std::string>{"UNIFORM_PSEUDO_PARTICLE_CONTAINER"}, true)
+		std::make_tuple("UNIFORM_PSEUDO_PARTICLE_CONTAINER_STOP_LEVEL", std::vector<std::string>{"UNIFORM_PSEUDO_PARTICLE_CONTAINER"}, true),
+		std::make_tuple("ADRES_FORCES_PAIRS", std::vector<std::string>{"ADRES_FORCES"}, true)
+
 	};
 
 	for (auto timerClass : timerClasses){

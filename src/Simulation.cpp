@@ -1060,7 +1060,7 @@ void Simulation::preSimLoopSteps()
 	global_simulation->timers()->setOutputString("SIMULATION_UPDATE_CACHES", "Cache update took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_INIT_SEND", "initSend() took:");
 	global_simulation->timers()->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
-
+	global_simulation->timers()->setOutputString("ADRES_FORCES_PAIRS", "processPairs() took:");
 	// all timers except the ioTimer measure inside the main loop
 
 	//global_simulation->timers()->getTimer("SIMULATION_LOOP")->set_sync(true);
@@ -1165,10 +1165,11 @@ void Simulation::simulateOneTimestep()
 		Log::global_log->debug() << "Traversing pairs" << std::endl;
 		global_simulation->timers()->start("SIMULATION_COMPUTATION");
 		global_simulation->timers()->start("SIMULATION_FORCE_CALCULATION");
-
+		global_simulation->timers()->getTimer("ADRES_FORCES_PAIRS")->start();
 		_moleculeContainer->traverseCells(*_cellProcessor);
 		// Force timer and computation timer are running at this point!
-	}
+	}	
+		global_simulation->timers()->getTimer("ADRES_FORCES_PAIRS")->stop();
 
 		// siteWiseForces Plugin Call
 		Log::global_log -> debug() << "[SITEWISE FORCES] Performing siteWiseForces plugin call" << std::endl;

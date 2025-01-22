@@ -76,7 +76,7 @@ double InteractionForceAdapter::processPairBackend(Molecule& m1, Molecule& m2, d
     ParticlePairs2PotForceAdapter::PP2PFAThreadData& data = *thread_data[tid];
     ParaStrm params = (*data._comp2Param)(m1.componentid(),m2.componentid());
     ParaStrm paramsInv = (*data._comp2Param)(m2.componentid(),m1.componentid());
-
+    
     switch(pair){
         double Virial[3];
         double dummy1,dummy2,dummy3,dummy4[3];
@@ -95,6 +95,7 @@ double InteractionForceAdapter::processPairBackend(Molecule& m1, Molecule& m2, d
 		default:
 		Simulation::exit(670);
     }
+
     return 0.0;
 }
 
@@ -250,8 +251,8 @@ void InteractionForceAdapter::PotForcePureHybridBackend(Molecule& m1, Molecule& 
     }
 
     //only at site 0 (CG site)
-    // m1.Fljcenteradd(0, f_com.data());
-    // m2.Fljcentersub(0, f_com.data());
+    m1.Fljcenteradd(0, f_com.data());
+    m2.Fljcentersub(0, f_com.data());
     //TODO: what about the virial?
 }
 
@@ -338,8 +339,8 @@ void InteractionForceAdapter::PotForceHybridFPBackend(Molecule& m1, Molecule& m2
         f_com[i] *= (1.0-w1*w2);//F^{com}
     }
 
-    // m1.Fljcenteradd(0, f_com.data());
-    // SubtractAndMapForceToFP(f_com,m2);
+    m1.Fljcenteradd(0, f_com.data());
+    SubtractAndMapForceToFP(f_com,m2);
 
 
 }
