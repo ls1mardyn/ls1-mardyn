@@ -34,9 +34,9 @@ public:
 	/**
 	 * No XML tags defined for this plugin, so does nothing
 	 */
-	void readXML(XMLfileUnits &) {}
+	void readXML(XMLfileUnits &) override {}
 
-	void beforeEventNewTimestep(ParticleContainer *, DomainDecompBase *, unsigned long) {}
+	void beforeEventNewTimestep(ParticleContainer *, DomainDecompBase *, unsigned long) override {}
 
 	/**
 	 * @brief Takes coupling steps such as particle insertion, to make sure they are
@@ -64,9 +64,9 @@ public:
 	void afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
 					 unsigned long simstep) override;
 
-	void endStep(ParticleContainer *, DomainDecompBase *, Domain *, unsigned long) {}
+	void endStep(ParticleContainer *, DomainDecompBase *, Domain *, unsigned long) override {}
 
-	void finish(ParticleContainer *, DomainDecompBase *, Domain *) {}
+	void finish(ParticleContainer *, DomainDecompBase *, Domain *) override {}
 
 	std::string getPluginName() override { return "MamicoCoupling"; }
 
