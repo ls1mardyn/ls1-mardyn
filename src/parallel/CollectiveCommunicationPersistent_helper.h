@@ -10,6 +10,7 @@
 #include <bit>
 #include <algorithm>
 #include <type_traits>
+#include <tuple>
 #include <mpi.h>
 
 //! @brief This file contains auxiliary classes and functions for the Coll_Comm_Obj in mpi_perscomm_obj.h
