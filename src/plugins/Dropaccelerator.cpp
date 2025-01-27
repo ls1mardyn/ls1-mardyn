@@ -86,17 +86,9 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 						  domainDecomp->getCommunicator());
 #endif
 
-#ifdef ENABLE_PERSISTENT
 			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), particlesInDrop);
-			collComm.persistent();
+			collComm.communicate();
 			collComm.get(particlesInDrop);
-#else
-			domainDecomp->collCommInit(1);
-			domainDecomp->collCommAppendInt(particlesInDrop);
-			domainDecomp->collCommAllreduceSum();
-			particlesInDrop = domainDecomp->collCommGetInt();
-			domainDecomp->collCommFinalize();
-#endif
 		}
 
 		// ITERATE OVER PARTICLES AND ACCELERATE ONLY DROPMOLECULES
@@ -110,17 +102,9 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 				}
 			}
 
-#ifdef ENABLE_PERSISTENT
 			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), particlesInDrop);
-			collComm.persistent();
+			collComm.communicate();
 			collComm.get(particlesInDrop);
-#else
-			domainDecomp->collCommInit(1);
-			domainDecomp->collCommAppendInt(particlesInDrop);
-			domainDecomp->collCommAllreduceSum();
-			particlesInDrop = domainDecomp->collCommGetInt();
-			domainDecomp->collCommFinalize();
-#endif
 		}
 
 		// CHECK IF VELOCITY HAS REACHED AND IF NOT ACCELERATE AGAIN
@@ -143,23 +127,10 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 			}
 
 			// COMMUNICATION
-#ifdef ENABLE_PERSISTENT
 			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _velocNow, particlesInDrop);
-			collComm.persistent();
+			collComm.communicate();
 			collComm.get(_velocNow, particlesInDrop);
-#else
-			domainDecomp->collCommInit(1);
-			domainDecomp->collCommAppendDouble(_velocNow);
-			domainDecomp->collCommAllreduceSum();
-			_velocNow = domainDecomp->collCommGetDouble();
-			domainDecomp->collCommFinalize();
 
-			domainDecomp->collCommInit(1);
-			domainDecomp->collCommAppendInt(particlesInDrop);
-			domainDecomp->collCommAllreduceSum();
-			particlesInDrop = domainDecomp->collCommGetInt();
-			domainDecomp->collCommFinalize();
-#endif
 			// CALCULATE AVERAGE SPEED
 			_velocNow = _velocNow / particlesInDrop;
 			deltavelocity = _veloc - _velocNow;

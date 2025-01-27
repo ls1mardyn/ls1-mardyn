@@ -90,7 +90,6 @@ void FlopCounter::_PotentialCounts::collCommGet() {
 void FlopCounter::_Counts::allReduce() {
 	DomainDecompBase& domainDecomp =  global_simulation->domainDecomposition();
 
-#ifdef ENABLE_PERSISTENT
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp.getCommunicator(), _moleculeDistances, _potCounts[0]._numKernelCalls, _potCounts[0]._numMacroCalls
 																									, _potCounts[1]._numKernelCalls, _potCounts[1]._numMacroCalls
 																									, _potCounts[2]._numKernelCalls, _potCounts[2]._numMacroCalls
@@ -98,7 +97,7 @@ void FlopCounter::_Counts::allReduce() {
 																									, _potCounts[4]._numKernelCalls, _potCounts[4]._numMacroCalls
 																									, _potCounts[5]._numKernelCalls, _potCounts[5]._numMacroCalls
 																									, _potCounts[6]._numKernelCalls, _potCounts[6]._numMacroCalls);
-	collComm.persistent();
+	collComm.communicate();
 	collComm.get(_moleculeDistances, _potCounts[0]._numKernelCalls, _potCounts[0]._numMacroCalls
 									, _potCounts[1]._numKernelCalls, _potCounts[1]._numMacroCalls
 									, _potCounts[2]._numKernelCalls, _potCounts[2]._numMacroCalls
@@ -106,25 +105,6 @@ void FlopCounter::_Counts::allReduce() {
 									, _potCounts[4]._numKernelCalls, _potCounts[4]._numMacroCalls
 									, _potCounts[5]._numKernelCalls, _potCounts[5]._numMacroCalls
 									, _potCounts[6]._numKernelCalls, _potCounts[6]._numMacroCalls);
-
-#else
-	domainDecomp.collCommInit(15, 734);
-
-	domainDecomp.collCommAppendDouble(_moleculeDistances);
-
-	for (int i = 0; i < NUM_POTENTIALS; ++i) {
-		_potCounts[i].collCommAppend();//adds 2 values each
-	}
-
-	domainDecomp.collCommAllreduceSumAllowPrevious();
-	_moleculeDistances = domainDecomp.collCommGetDouble();
-
-	for (int i = 0; i < NUM_POTENTIALS; ++i) {
-		_potCounts[i].collCommGet();
-	}
-
-	domainDecomp.collCommFinalize();
-#endif
 }
 
 

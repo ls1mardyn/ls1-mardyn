@@ -211,19 +211,11 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 	}
 	_logger->info() << std::endl;
 
-#ifdef ENABLE_PERSISTENT
 	auto collComm = makeCollCommObjScanAdd(domainDecomp->getCommunicator(), id);
-	collComm.persistent();
+	collComm.communicate();
 	unsigned long idOffset;
 	collComm.get(idOffset);
 	idOffset -= id;
-#else
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(id);//number of local molecules
-	domainDecomp->collCommScanSum();
-	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - id;
-	domainDecomp->collCommFinalize();
-#endif
 	// fix ID's to be unique:
 	for (auto mol = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mol.isValid(); ++mol) {
 		mol->setid(mol->getID()+idOffset);

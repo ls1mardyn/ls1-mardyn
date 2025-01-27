@@ -184,17 +184,11 @@ void Permittivity::collect(DomainDecompBase* domainDecomp) {
 	}
 
 	_outputSquaredM[_currentOutputNum] /= ((double)_accumulatedSteps-1);
-#ifdef ENABLE_PERSISTENT
+
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _numParticlesLocal);
-	collComm.persistent();
+	collComm.communicate();
 	collComm.get(_numParticles[_currentOutputNum]);
-#else
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(_numParticlesLocal);
-	domainDecomp->collCommAllreduceSum();
-	_numParticles[_currentOutputNum] = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
-#endif
+
 	_currentOutputNum++;
 }
 

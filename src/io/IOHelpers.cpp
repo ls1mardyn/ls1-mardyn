@@ -23,23 +23,9 @@ void IOHelpers::removeMomentum(ParticleContainer* particleContainer, const std::
 		}
 	}
 
-#ifdef ENABLE_PERSISTENT
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), mass_sum, momentum_sum[0], momentum_sum[1], momentum_sum[2]);
-	collComm.persistent();
+	collComm.communicate();
 	collComm.get(mass_sum, momentum_sum[0], momentum_sum[1], momentum_sum[2]);
-#else
-	domainDecomp->collCommInit(4);
-	domainDecomp->collCommAppendDouble(mass_sum);
-	domainDecomp->collCommAppendDouble(momentum_sum[0]);
-	domainDecomp->collCommAppendDouble(momentum_sum[1]);
-	domainDecomp->collCommAppendDouble(momentum_sum[2]);
-	domainDecomp->collCommAllreduceSum();
-	mass_sum = domainDecomp->collCommGetDouble();
-	momentum_sum[0] = domainDecomp->collCommGetDouble();
-	momentum_sum[1] = domainDecomp->collCommGetDouble();
-	momentum_sum[2] = domainDecomp->collCommGetDouble();
-	domainDecomp->collCommFinalize();
-#endif
 
 	Log::global_log->info() << "momentumsum prior to removal: " << momentum_sum[0] << " " << momentum_sum[1] << " "
 							<< momentum_sum[2] << std::endl;
@@ -113,19 +99,12 @@ unsigned long IOHelpers::makeParticleIdsUniqueAndGetTotalNumParticles(ParticleCo
 																	  DomainDecompBase* domainDecomp) {
 	unsigned long localNumParticles = particleContainer->getNumberOfParticles();
 
-#ifdef ENABLE_PERSISTENT
 	auto collCommScan = makeCollCommObjScanAdd(domainDecomp->getCommunicator(), localNumParticles);
-	collCommScan.persistent();
+	collCommScan.communicate();
 	unsigned long idOffset;
-	collCommScan.get(idOffset);
+	collCommScan.get(idOffset);	
 	idOffset -= localNumParticles;
-#else
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(localNumParticles);
-	domainDecomp->collCommScanSum();
-	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - localNumParticles;
-	domainDecomp->collCommFinalize();
-#endif
+
 	// fix ID's to be unique:
 #if defined(_OPENMP)
 #pragma omp parallel
@@ -136,17 +115,9 @@ unsigned long IOHelpers::makeParticleIdsUniqueAndGetTotalNumParticles(ParticleCo
 		}
 	}
 
-#ifdef ENABLE_PERSISTENT
 	auto collComm = makeCollCommObjAllreduceAdd<2>(domainDecomp->getCommunicator(), localNumParticles);
-	collComm.persistent();
-	unsigned long globalNumParticles;
+	collComm.communicate();
+	unsigned long globalNumParticles
 	collComm.get(globalNumParticles);
-#else
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(localNumParticles);
-	domainDecomp->collCommAllreduceSum();
-	unsigned long globalNumParticles = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
-#endif
 	return globalNumParticles;
 }

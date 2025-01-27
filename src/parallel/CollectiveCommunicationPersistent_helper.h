@@ -341,6 +341,76 @@ struct min_struct
 };
 
 
+// Pre-C++20 constraint to formulate the requirement that a template arg is an operation type
+template < typename T >
+struct is_op
+: public std::false_type {};
+
+template <>
+struct is_op < add_struct >
+: public std::true_type {};
+
+template <>
+struct is_op < max_struct >
+: public std::true_type {};
+
+template <>
+struct is_op < min_struct >
+: public std::true_type {};
+
+template< typename T >
+constexpr bool is_op_v = is_op<T>::value;
+
+
+// Pre-C++20 constraint to formulate the requirement that a template arg is a communicator
+template < typename T >
+struct is_comm
+: public std::false_type {};
+
+template <>
+struct is_comm < MPI_Comm >
+: public std::true_type {};
+
+template< typename T >
+constexpr bool is_comm_v = is_comm<T>::value;
+
+// Pre-C++20 constraint to formulate the requirement that a function is an allreduce
+template < int I >
+struct is_allreduce
+: public std::false_type {};
+
+template <>
+struct is_allreduce < static_cast<int>(MPI_CollFunctions::Allreduce) >
+: public std::true_type {};
+
+template< int T >
+constexpr bool is_allreduce_v = is_allreduce<T>::value;
+
+// Pre-C++20 constraint to formulate the requirement that a function is a bcast
+template < int I >
+struct is_bcast
+: public std::false_type {};
+
+template <>
+struct is_bcast < static_cast<int>(MPI_CollFunctions::Bcast) >
+: public std::true_type {};
+
+template< int T >
+constexpr bool is_bcast_v = is_bcast<T>::value;
+
+// Pre-C++20 constraint to formulate the requirement that a function is a bcast
+template < int I >
+struct is_scan
+: public std::false_type {};
+
+template <>
+struct is_scan < static_cast<int>(MPI_CollFunctions::Scan) >
+: public std::true_type {};
+
+template< int T >
+constexpr bool is_scan_v = is_scan<T>::value;
+
+
 // class to handle deallocation of MPI allocations
 class Coll_Comm_Deallocator
 {

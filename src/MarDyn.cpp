@@ -2,6 +2,7 @@
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
+#include "parallel/CollectiveCommunicationPersistent.h"
 #endif
 
 #include <ctime>
@@ -23,10 +24,6 @@
 #include "utils/SigsegvHandler.h"
 #ifdef MARDYN_AUTOPAS
 #include "autopas/Version.h"
-#endif
-
-#ifdef ENABLE_PERSISTENT
-#include "parallel/CollectiveCommunicationPersistent.h"
 #endif
 
 

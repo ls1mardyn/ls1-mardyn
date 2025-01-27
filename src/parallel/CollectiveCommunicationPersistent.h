@@ -178,75 +178,34 @@ public:
             // check if we were given a communicator
             if constexpr( std::is_same_v<Comm, MPI_Comm> )
                 _mpi_comm = comm;
-            // check if we were can cerate a persistent communication request
-            if constexpr( Fn != 0 )
-                _init_persistent_request();
-        }
+#ifdef ENABLE_PERSISTENT
+            // check if we should create a persistent communication request
+            _init_persistent_request();
+#endif
+	    }
     }
 
-    // this function requires that the MPI_Comm and MPI_Op have been setup in the constructor
-    template<typename T = Comm, typename U = Op>
-    auto allreduce()
-        -> std::enable_if_t<std::is_same_v<T, MPI_Comm> && (std::is_same_v<U, add_struct> || std::is_same_v<U, max_struct> || std::is_same_v<U, min_struct>)>
-    {
-        MPI_Allreduce( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(), _mpi_comm );
-    }
-    // this function requires that the MPI_Op has been setup in the constructor
-    template<typename U = Op>
-    auto allreduce(MPI_Comm comm)
-        -> std::enable_if_t<std::is_same_v<U, add_struct> || std::is_same_v<U, max_struct> || std::is_same_v<U, min_struct>>
-    {
-        MPI_Allreduce( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(), comm );
-    }
+    /**
+     * Starts the communication and it is only available if enough information has been given to the constructor.
+     */
 
-    // this function requires that the MPI_Comm and root have been setup in the constructor
-    template<typename T = Comm, typename U = Root>
-    auto bcast()
-        -> std::enable_if_t<std::is_same_v<T, MPI_Comm> && std::is_same_v<U, int>>
-    {
-        MPI_Bcast( _buffer.data(), 1, _mpi_members->get_type(), _root, _mpi_comm);
-    }
-    // this function requires that the MPI_Comm and has been setup in the constructor
-    template<typename T = Comm>
-    auto bcast(int root)
-        -> std::enable_if_t<std::is_same_v<T, MPI_Comm>>
-    {
-        MPI_Bcast( _buffer.data(), 1, _mpi_members->get_type(), root, _mpi_comm);
-    }
-    // this function requires that the root has been setup in the constructor
-    template<typename U = Root>
-    auto bcast(MPI_Comm comm)
-        -> std::enable_if_t<std::is_same_v<U, int>>
-    {
-        MPI_Bcast( _buffer.data(), 1, _mpi_members->get_type(), _root, comm);
-    }
-    // this function is given a communicator and a root rank, so there are no requirements
-    auto bcast(int root, MPI_Comm comm)
-    {
-        MPI_Bcast( _buffer.data(), 1, _mpi_members->get_type(), root, comm);
-    }
-
-
-    // these functions requires that the MPI_Comm and MPI_Op have been setup in the constructor    
-    template<int T = Fn>
-    auto persistent()
-        -> std::enable_if_t< T != 0 >
-    {
+    auto communicate()
+        -> std::enable_if_t<
+            (is_allreduce_v<Fn> && is_op_v<Op> && is_comm_v<Comm>) ||            // checks if everything for an allreduce has been given
+            (is_bcast_v<Fn> && is_comm_v<Comm> && std::is_same_v<Root, int>) ||    // checks if everything for an bcast has been given
+            (is_scan_v<Fn> && is_op_v<Op> && is_comm_v<Comm>)                    // checks if everything for an scan has been given
+        > {
+#ifdef ENABLE_PERSISTENT
         MPI_Start( &_mpi_members->get_request() );
         MPI_Wait( &_mpi_members->get_request(), MPI_STATUS_IGNORE );
-    }
-    // these functions represent nonblocking persistent collective communication
-    template<int T = Fn>
-    auto persistent_start()
-        -> std::enable_if_t< T != 0 >
-    {
-        MPI_Start( &_mpi_members->get_request() );
-    }
-    template<int T = Fn>
-    auto persistent_end()
-        -> std::enable_if_t< T != 0 >
-    {
-        MPI_Wait( &_mpi_members->get_request(), MPI_STATUS_IGNORE );
+#else
+        if constexpr ( Fn == static_cast<int>(MPI_CollFunctions::Allreduce) )
+            MPI_Allreduce( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(), _mpi_comm );
+        else if constexpr ( Fn == static_cast<int>(MPI_CollFunctions::Bcast) )
+            MPI_Bcast( _buffer.data(), 1, _mpi_members->get_type(), _root, _mpi_comm );
+        else if constexpr ( Fn == static_cast<int>(MPI_CollFunctions::Scan) )
+            MPI_Scan( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(), _mpi_comm );
+#endif
     }
 
     // getter for retrieving values
@@ -255,29 +214,38 @@ public:
         helper_get(_buffer.data(), args...);
     }
 
+
 private:
-    void _init_persistent_request()
-    {
-        if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Allreduce))
-        {
+    /**
+     * Creates an persistent collective communication request, if the correct parameters were given.
+     * 
+     * We hide this function inside an ENABLE_PERSISTENT ifdef, because the persistent collective communication requests
+     * require >= MPI 4.0. Disabling ENABLE_PERSISTENT allows lower MPI versions to compile the code.
+     */
+#ifdef ENABLE_PERSISTENT
+    auto _init_persistent_request()
+        -> std::enable_if_t<
+            (is_allreduce_v<Fn> && is_op_v<Op> && is_comm_v<Comm>) ||            // checks if everything for an allreduce has been given
+            (is_bcast_v<Fn> && is_comm_v<Comm> && std::is_same_v<Root, int>) ||    // checks if everything for an bcast has been given
+            (is_scan_v<Fn> && is_op_v<Op> && is_comm_v<Comm>)                    // checks if everything for an scan has been given
+        > {
+        if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Allreduce)) {
             MPI_Allreduce_init( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(), _mpi_comm, MPI_INFO_NULL, &_mpi_members->get_request() );
             // Register allocated MPI Request
             Coll_Comm_Deallocator::emplace_back(&_mpi_members->get_request());
         }
-        else if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Bcast))
-        {
+        else if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Bcast)) {
             MPI_Bcast_init( _buffer.data(), 1, _mpi_members->get_type(), _root, _mpi_comm, MPI_INFO_NULL, &_mpi_members->get_request() );
             // Register allocated MPI Request
             Coll_Comm_Deallocator::emplace_back(&_mpi_members->get_request());
         }
-        else if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Scan))
-        {
+        else if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Scan)) {
             MPI_Scan_init( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(), _mpi_comm, MPI_INFO_NULL, &_mpi_members->get_request() );
             // Register allocated MPI Request
             Coll_Comm_Deallocator::emplace_back(&_mpi_members->get_request());
         }
     }
-
+#endif
 
     // class to hide MPI types as private members
     class MPI_Members
@@ -307,10 +275,18 @@ private:
 
 
     // private member variables
-    alignas(16) static inline std::array<std::byte, sizeof...(Ts) * get_max_size(Ts{}...)> _buffer;
-    static inline MPI_Members* _mpi_members = nullptr;
-    MPI_Comm _mpi_comm;
-    int _root;
+
+    // it is more portable to make the communcation buffer non-static, 
+    // but then persistent collective would not be possible in the current implementation
+#ifdef ENABLE_PERSISTENT
+    alignas(16) static inline std::array<std::byte, sizeof...(Ts) * get_max_size(Ts{}...)> _buffer{};
+#else
+    alignas(16) std::array<std::byte, sizeof...(Ts) * get_max_size(Ts{}...)> _buffer{};
+#endif
+    static inline std::mutex _mtx {};
+    static inline MPI_Members* _mpi_members {};
+    static inline MPI_Comm _mpi_comm {};
+    static inline int _root {};
 };
 
 // this struct is used to leave some template arguments "empty"
@@ -346,7 +322,7 @@ auto makeCollCommObjAllreduceMax(MPI_Comm comm, Ts... args) {
 template<int tag = 0, typename... Ts>
 auto makeCollCommObjAllreduceMax(Ts... args) {
     // This variable determines if and which persistent request should be created. 0 means none.
-    constexpr auto fn = 0;
+    constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
     return CollCommObj<tag, fn, max_struct, empty_template_t, empty_template_t, Ts...>(max_struct{}, empty_template_t{}, empty_template_t{}, args...);
 }
 
@@ -362,7 +338,7 @@ auto makeCollCommObjAllreduceMin(MPI_Comm comm, Ts... args) {
 template<int tag = 0, typename... Ts>
 auto makeCollCommObjAllreduceMin(Ts... args) {
     // This variable determines if and which persistent request should be created. 0 means none.
-    constexpr auto fn = 0;
+    constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
     return CollCommObj<tag, fn, min_struct, empty_template_t, empty_template_t, Ts...>(min_struct{}, empty_template_t{}, empty_template_t{}, args...);
 }
 
@@ -385,7 +361,7 @@ auto makeCollCommObjScanAdd(MPI_Comm comm, Ts... args) {
 template<int tag = 0, typename... Ts>
 auto makeCollCommObjScanAdd(Ts... args) {
     // This variable determines if and which persistent request should be created.
-    constexpr auto fn = 0;
+    constexpr auto fn = static_cast<int>(MPI_CollFunctions::Scan);
     return CollCommObj<tag, fn, add_struct, empty_template_t, empty_template_t, Ts...>(add_struct{}, empty_template_t{}, empty_template_t{}, args...);
 }
 

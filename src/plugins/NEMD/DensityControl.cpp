@@ -188,17 +188,9 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer, Domain
 	numMolecules.local = vec_pacID.local.size();
 
 #ifdef ENABLE_MPI
-#ifdef ENABLE_PERSISTENT
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numMolecules.local);
-	collComm.persistent();
+	collComm.communicate();
 	collComm.get(numMolecules.global);
-#else
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(numMolecules.local);
-	domainDecomp->collCommAllreduceSum();
-	numMolecules.global = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
-#endif
 #else
 	numMolecules.global = numMolecules.local;
 #endif
