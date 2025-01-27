@@ -187,26 +187,31 @@ constexpr void free_fill_buffer(std::byte* buffer, Ts... args)
 
 // get values out of byte vector into variadic template values
 // overload
-template<typename T>
-void free_get(std::byte* buffer, size_t size, size_t offset, T& head)
-{
+template<int id, int size, typename T, typename... TTs>
+constexpr void free_get(std::byte* buffer, std::tuple<TTs...>& tuple, size_t offset, T head) {
     std::memcpy(&head, buffer + offset, sizeof(head));
+    std::get<id>(tuple) = head;
 }
 // base case: used when pack is non-empty
-template<typename T, typename... Ts>
-void free_get(std::byte* buffer, size_t size, size_t offset, T& head, Ts&... tail)
-{
+template<int id, int size, typename T, typename... Ts, typename... TTs>
+constexpr void free_get(std::byte* buffer, std::tuple<TTs...>& tuple, size_t offset, T head, Ts... tail) {
     std::memcpy(&head, buffer + offset, sizeof(head));
+    std::get<id>(tuple) = head;
+
     offset += size;
-    free_get(buffer, size, offset, tail...);
+
+    free_get<id+1, size>(buffer, tuple, offset, tail...);
 }
 // helper function
 template<typename... Ts>
-void helper_get(std::byte* buffer, Ts&... args)
-{
-    size_t size = get_max_size(args...);
+constexpr std::tuple<Ts...> helper_get(std::byte* buffer) {
+    std::tuple<Ts...> tuple;
+
+    constexpr size_t size = get_max_size(Ts{}...);
     size_t offset = 0;
-    free_get(buffer, size, offset, args...);
+    free_get<0, size>(buffer, tuple, offset, Ts{}...);
+
+    return tuple;
 }
 
 // print variadic template values

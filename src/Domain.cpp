@@ -170,7 +170,7 @@ void Domain::calculateGlobalValues(
 
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), Upot, Virial);
 	collComm.communicate();
-	collComm.get(Upot, Virial);
+	std::tie(Upot, Virial) = collComm.get();
 
 	// Process 0 has to add the dipole correction:
 	// m_UpotCorr and m_VirialCorr already contain constant (internal) dipole correction
@@ -210,7 +210,7 @@ void Domain::calculateGlobalValues(
 
 		auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), summv2, sumIw2, numMolecules, rotDOF);
 		collComm.communicate();
-		collComm.get(summv2, sumIw2, numMolecules, rotDOF);
+		std::tie(summv2, sumIw2, numMolecules, rotDOF) = collComm.get();
 
 		Log::global_log->debug() << "[ thermostat ID " << thermit->first << "]\tN = " << numMolecules << "\trotDOF = " << rotDOF
 			<< "\tmv2 = " <<  summv2 << "\tIw2 = " << sumIw2 << std::endl;
@@ -311,7 +311,7 @@ void Domain::calculateGlobalValues(
 
 			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), sigv[0], sigv[1], sigv[2]);
 			collComm.communicate();
-			collComm.get(sigv[0], sigv[1], sigv[2]);
+			std::tie(sigv[0], sigv[1], sigv[2]) = collComm.get();
 
 			_localThermostatDirectedVelocity[thermit->first].fill(0.0);
 
@@ -730,7 +730,7 @@ void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, Doma
 #ifdef ENABLE_MPI
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numMolecules.local);
 	collComm.communicate();
-	collComm.get(numMolecules.global);
+	std::tie(numMolecules.global) = collComm.get();
 #else
 	numMolecules.global = numMolecules.local;
 #endif

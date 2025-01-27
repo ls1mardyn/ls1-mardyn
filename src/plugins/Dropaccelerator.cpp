@@ -88,7 +88,7 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 
 			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), particlesInDrop);
 			collComm.communicate();
-			collComm.get(particlesInDrop);
+			std::tie(particlesInDrop) = collComm.get();
 		}
 
 		// ITERATE OVER PARTICLES AND ACCELERATE ONLY DROPMOLECULES
@@ -104,7 +104,7 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 
 			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), particlesInDrop);
 			collComm.communicate();
-			collComm.get(particlesInDrop);
+			std::tie(particlesInDrop) = collComm.get();
 		}
 
 		// CHECK IF VELOCITY HAS REACHED AND IF NOT ACCELERATE AGAIN
@@ -129,7 +129,7 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 			// COMMUNICATION
 			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _velocNow, particlesInDrop);
 			collComm.communicate();
-			collComm.get(_velocNow, particlesInDrop);
+			std::tie(_velocNow, particlesInDrop) = collComm.get();
 
 			// CALCULATE AVERAGE SPEED
 			_velocNow = _velocNow / particlesInDrop;

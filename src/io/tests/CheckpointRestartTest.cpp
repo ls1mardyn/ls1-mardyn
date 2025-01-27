@@ -62,8 +62,7 @@ unsigned long CheckpointRestartTest::getGlobalParticleNumber(ParticleContainer* 
 	unsigned long localParticleCount = particleContainer->getNumberOfParticles();
 	auto collComm = makeCollCommObjAllreduceAdd(_domainDecomposition->getCommunicator(), localParticleCount);
 	collComm.communicate();
-	unsigned long globalNumParticles;
-	collComm.get(globalNumParticles);
+	auto [globalNumParticles] = collComm.get();
 
 	return globalNumParticles;
 }

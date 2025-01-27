@@ -135,7 +135,7 @@ unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particl
 
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), globalNumMolecules);
 	collComm.communicate();
-	collComm.get(globalNumMolecules);
+	std::tie(globalNumMolecules) = collComm.get();
 
 	domain->setglobalNumMolecules(globalNumMolecules);
 	global_simulation->timers()->stop("REYLEIGH_TAYLOR_GENERATOR_INPUT");

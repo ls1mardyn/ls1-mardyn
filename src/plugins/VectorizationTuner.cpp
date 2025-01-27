@@ -821,21 +821,18 @@ void VectorizationTuner::VTWriterStatistics::writeStatistics(double input, const
 
 	auto collComm = makeCollCommObjAllreduceAdd(dd.getCommunicator(), input, square);
 	collComm.communicate();
-	double d0, d1;
-	collComm.get(d0, d1);
-	double average = d0 / numRanks;
-	double average2 = d1 / numRanks;
+	auto [average, average2] = collComm.get();
+	average /= numRanks;
+	average2 /= numRanks;
 
 	auto collCommMin = makeCollCommObjAllreduceMin(dd.getCommunicator(), input);
 	collCommMin.communicate();
-	double min;
-	collCommMin.get(min);
-	
+	auto [min] = collCommMin.get();
+
 	auto collCommMax = makeCollCommObjAllreduceMax(dd.getCommunicator(), input);
 	collCommMax.communicate();
-	double max;
-	collCommMax.get(max);
-	
+	auto [max] = collCommMax.get();
+
 	double stddev = std::sqrt(average2  - average * average);
 
 	if (not std::isfinite(stddev)) stddev = 0.;

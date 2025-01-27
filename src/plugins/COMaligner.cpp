@@ -128,7 +128,7 @@ void COMaligner::beforeForces(ParticleContainer* particleContainer,
         // COMMUNICATION
         auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _balance[0], _balance[1], _balance[2], _mass);
         collComm.communicate();
-        collComm.get(_balance[0], _balance[1], _balance[2], _mass);
+        std::tie(_balance[0], _balance[1], _balance[2], _mass) = collComm.get();
 
         // CALCULATE MOTION
         for (int d = _dim_start; d < _dim_end; d += _dim_step) {

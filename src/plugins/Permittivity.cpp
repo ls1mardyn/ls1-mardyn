@@ -187,7 +187,7 @@ void Permittivity::collect(DomainDecompBase* domainDecomp) {
 
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _numParticlesLocal);
 	collComm.communicate();
-	collComm.get(_numParticles[_currentOutputNum]);
+	std::tie(_numParticles[_currentOutputNum]) = collComm.get();
 
 	_currentOutputNum++;
 }

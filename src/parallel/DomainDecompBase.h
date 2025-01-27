@@ -200,7 +200,7 @@ public:
 				// Count all processes that need to send separately
 		auto collComm = makeCollCommObjAllreduceAdd(getCommunicator(), static_cast<int>(!sendTogether));
 		collComm.communicate();
-		collComm.get(_sendLeavingAndCopiesSeparately);
+		std::tie(_sendLeavingAndCopiesSeparately) = collComm.get();
 
 		Log::global_log->info() << "Sending leaving particles and halo copies "
 				<< (sendLeavingWithCopies() ? "together" : "separately") << std::endl;

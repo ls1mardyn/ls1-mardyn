@@ -495,8 +495,7 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 
 	auto collCommScan = makeCollCommObjScanAdd<2>(domainDecomp->getCommunicator(), numAddedParticlesLocal);
 	collCommScan.communicate();
-	unsigned long idOffset;
-	collCommScan.get(idOffset);
+	auto [idOffset] = collCommScan.get();
 	idOffset -= numAddedParticlesLocal;
 
 	// fix ID's to be unique:
@@ -507,13 +506,11 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 
 	// update global number of particles, perform number checks
 	uint64_t numParticlesLocal = particleContainer->getNumberOfParticles();
-	uint64_t numParticlesGlobal = 0;
-	uint64_t numAddedParticlesFreespaceGlobal = 0;
 	mardyn_assert(numParticlesLocal == numAddedParticlesLocal);
 
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numParticlesLocal, numAddedParticlesFreespaceLocal);
 	collComm.communicate();
-	collComm.get(numParticlesGlobal, numAddedParticlesFreespaceGlobal);
+	auto [numParticlesGlobal, numAddedParticlesFreespaceGlobal] = collComm.get();
 
 	mardyn_assert(numParticlesGlobal == _numParticlesTotal - numAddedParticlesFreespaceGlobal);
 

@@ -66,7 +66,7 @@ void FixRegion::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 	}
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _molCount);
 	collComm.communicate();
-	collComm.get(_molCount);
+	std::tie(_molCount) = collComm.get();
 
 	Log::global_log->info() << _molCount << " molecules are inside a fixed region" << std::endl;
 }

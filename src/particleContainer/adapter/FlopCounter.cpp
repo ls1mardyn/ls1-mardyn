@@ -98,13 +98,13 @@ void FlopCounter::_Counts::allReduce() {
 																									, _potCounts[5]._numKernelCalls, _potCounts[5]._numMacroCalls
 																									, _potCounts[6]._numKernelCalls, _potCounts[6]._numMacroCalls);
 	collComm.communicate();
-	collComm.get(_moleculeDistances, _potCounts[0]._numKernelCalls, _potCounts[0]._numMacroCalls
+	std::tie(_moleculeDistances, _potCounts[0]._numKernelCalls, _potCounts[0]._numMacroCalls
 									, _potCounts[1]._numKernelCalls, _potCounts[1]._numMacroCalls
 									, _potCounts[2]._numKernelCalls, _potCounts[2]._numMacroCalls
 									, _potCounts[3]._numKernelCalls, _potCounts[3]._numMacroCalls
 									, _potCounts[4]._numKernelCalls, _potCounts[4]._numMacroCalls
 									, _potCounts[5]._numKernelCalls, _potCounts[5]._numMacroCalls
-									, _potCounts[6]._numKernelCalls, _potCounts[6]._numMacroCalls);
+									, _potCounts[6]._numKernelCalls, _potCounts[6]._numMacroCalls) = collComm.get();
 }
 
 

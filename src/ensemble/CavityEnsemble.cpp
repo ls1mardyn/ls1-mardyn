@@ -220,7 +220,7 @@ unsigned long CavityEnsemble::communicateNumCavities(DomainDecompBase *comm) {
 
 	auto collComm = makeCollCommObjAllreduceAdd(comm->getCommunicator(), this->active.size());
 	collComm.communicate();
-	collComm.get(this->globalActive);
+	std::tie(this->globalActive) = collComm.get();
 
     return this->globalActive;
 }

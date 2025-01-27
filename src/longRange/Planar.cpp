@@ -460,7 +460,7 @@ void Planar::calculateLongRange() {
 	// Summation of the correction terms
 	auto collComm = makeCollCommObjAllreduceAdd(_domainDecomposition->getCommunicator(), Upot_c, Virial_c);
 	collComm.communicate();
-	collComm.get(Upot_c, Virial_c);
+	std::tie(Upot_c, Virial_c) = collComm.get();
 
 	// Setting the Energy and Virial correction
 	_domain->setUpotCorr(Upot_c);

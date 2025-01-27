@@ -172,7 +172,7 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp.getCommunicator(), _particleManipCount.deleted.local.at(cid));
 	collComm.communicate();
-	collComm.get(_particleManipCount.deleted.global.at(cid));
+	std::tie(_particleManipCount.deleted.global.at(cid)) = collComm.get();
 
 	// reset local values
 	this->resetLocalValues();

@@ -25,7 +25,7 @@ void IOHelpers::removeMomentum(ParticleContainer* particleContainer, const std::
 
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), mass_sum, momentum_sum[0], momentum_sum[1], momentum_sum[2]);
 	collComm.communicate();
-	collComm.get(mass_sum, momentum_sum[0], momentum_sum[1], momentum_sum[2]);
+	std::tie(mass_sum, momentum_sum[0], momentum_sum[1], momentum_sum[2]) = collComm.get();
 
 	Log::global_log->info() << "momentumsum prior to removal: " << momentum_sum[0] << " " << momentum_sum[1] << " "
 							<< momentum_sum[2] << std::endl;
@@ -101,8 +101,7 @@ unsigned long IOHelpers::makeParticleIdsUniqueAndGetTotalNumParticles(ParticleCo
 
 	auto collCommScan = makeCollCommObjScanAdd(domainDecomp->getCommunicator(), localNumParticles);
 	collCommScan.communicate();
-	unsigned long idOffset;
-	collCommScan.get(idOffset);	
+	auto [idOffset] = collCommScan.get();
 	idOffset -= localNumParticles;
 
 	// fix ID's to be unique:
@@ -117,7 +116,7 @@ unsigned long IOHelpers::makeParticleIdsUniqueAndGetTotalNumParticles(ParticleCo
 
 	auto collComm = makeCollCommObjAllreduceAdd<2>(domainDecomp->getCommunicator(), localNumParticles);
 	collComm.communicate();
-	unsigned long globalNumParticles
-	collComm.get(globalNumParticles);
+	auto [globalNumParticles] = collComm.get();
+
 	return globalNumParticles;
 }

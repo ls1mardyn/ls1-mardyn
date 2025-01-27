@@ -190,7 +190,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer, Domain
 #ifdef ENABLE_MPI
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numMolecules.local);
 	collComm.communicate();
-	collComm.get(numMolecules.global);
+	std::tie(numMolecules.global) = collComm.get();
 #else
 	numMolecules.global = numMolecules.local;
 #endif

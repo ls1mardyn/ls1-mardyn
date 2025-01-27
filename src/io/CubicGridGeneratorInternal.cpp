@@ -90,8 +90,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 
 	auto collComm = makeCollCommObjScanAdd(domainDecomp->getCommunicator(), id);
 	collComm.communicate();
-	unsigned long idOffset;
-	collComm.get(idOffset);
+	auto [idOffset] = collComm.get();
 	idOffset -= id;
 
 	// fix ID's to be unique:

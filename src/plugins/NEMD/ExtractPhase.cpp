@@ -91,7 +91,7 @@ void ExtractPhase::beforeForces(ParticleContainer* particleContainer, DomainDeco
 
 	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numParticles.local);
 	collComm.communicate();
-	collComm.get(numParticles.global);
+	std::tie(numParticles.global) = collComm.get();
 
 	_densityTarget.value = numParticles.global / V;
 

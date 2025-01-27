@@ -208,10 +208,11 @@ public:
 #endif
     }
 
-    // getter for retrieving values
-    void get(Ts&... args)
-    {
-        helper_get(_buffer.data(), args...);
+    /**
+     * Get the communicated values out of the buffer.
+     */
+    std::tuple<Ts...> get() {
+        return helper_get<Ts...> (_buffer.data());
     }
 
 
