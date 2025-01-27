@@ -249,8 +249,7 @@ private:
 #endif
 
     // class to hide MPI types as private members
-    class MPI_Members
-    {
+    class MPI_Members {
     public:
         MPI_Members() = default;
 
@@ -258,8 +257,7 @@ private:
         MPI_Op& get_op() { return _op; }
         MPI_Request& get_request() { return _request; }
 
-        ~MPI_Members()
-        {
+        ~MPI_Members() {
             if (_type != MPI_DATATYPE_NULL)
                 MPI_Type_free(&_type);
             if (_op != MPI_OP_NULL)
