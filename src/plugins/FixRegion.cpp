@@ -65,7 +65,7 @@ void FixRegion::init(ParticleContainer* particleContainer, DomainDecompBase* dom
 		_molCount++;
 	}
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), _molCount);
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _molCount);
 	collComm.persistent();
 	collComm.get(_molCount);
 #else

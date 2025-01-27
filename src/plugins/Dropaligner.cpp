@@ -76,7 +76,7 @@ void Dropaligner::beforeForces(ParticleContainer* particleContainer, DomainDecom
 
 		// COMMUNICATION
 #ifdef ENABLE_PERSISTENT
-		auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), _balance[0], _balance[1], _balance[2], _mass);
+		auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _balance[0], _balance[1], _balance[2], _mass);
 		collComm.persistent();
 		collComm.get(_balance[0], _balance[1], _balance[2], _mass);
 #else

@@ -169,7 +169,7 @@ void Domain::calculateGlobalValues(
 	// to this point
 
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), Upot, Virial);
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), Upot, Virial);
 	collComm.persistent();
 	collComm.get(Upot, Virial);
 #else
@@ -220,7 +220,7 @@ void Domain::calculateGlobalValues(
 		double sumIw2 = (rotDOF > 0)? _local2KERot[thermit->first]: 0.0;
 
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), summv2, sumIw2, numMolecules, rotDOF);
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), summv2, sumIw2, numMolecules, rotDOF);
 	collComm.persistent();
 	collComm.get(summv2, sumIw2, numMolecules, rotDOF);
 #else
@@ -334,7 +334,7 @@ void Domain::calculateGlobalValues(
 			std::array<double, 3> sigv = _localThermostatDirectedVelocity[thermit->first];
 
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), sigv[0], sigv[1], sigv[2]);
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), sigv[0], sigv[1], sigv[2]);
 	collComm.persistent();
 	collComm.get(sigv[0], sigv[1], sigv[2]);
 #else
@@ -762,7 +762,7 @@ void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, Doma
 #ifdef ENABLE_MPI
 
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), numMolecules.local);
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numMolecules.local);
 	collComm.persistent();
 	collComm.get(numMolecules.global);
 #else

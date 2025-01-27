@@ -459,7 +459,7 @@ void Planar::calculateLongRange() {
 
 	// Summation of the correction terms
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(_domainDecomposition->getCommunicator(), Upot_c, Virial_c);
+	auto collComm = makeCollCommObjAllreduceAdd(_domainDecomposition->getCommunicator(), Upot_c, Virial_c);
 	collComm.persistent();
 	collComm.get(Upot_c, Virial_c);
 #else

@@ -24,7 +24,7 @@ void IOHelpers::removeMomentum(ParticleContainer* particleContainer, const std::
 	}
 
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), mass_sum, momentum_sum[0], momentum_sum[1], momentum_sum[2]);
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), mass_sum, momentum_sum[0], momentum_sum[1], momentum_sum[2]);
 	collComm.persistent();
 	collComm.get(mass_sum, momentum_sum[0], momentum_sum[1], momentum_sum[2]);
 #else
@@ -114,7 +114,7 @@ unsigned long IOHelpers::makeParticleIdsUniqueAndGetTotalNumParticles(ParticleCo
 	unsigned long localNumParticles = particleContainer->getNumberOfParticles();
 
 #ifdef ENABLE_PERSISTENT
-	auto collCommScan = make_CollCommObj_ScanAdd(domainDecomp->getCommunicator(), localNumParticles);
+	auto collCommScan = makeCollCommObjScanAdd(domainDecomp->getCommunicator(), localNumParticles);
 	collCommScan.persistent();
 	unsigned long idOffset;
 	collCommScan.get(idOffset);
@@ -137,7 +137,7 @@ unsigned long IOHelpers::makeParticleIdsUniqueAndGetTotalNumParticles(ParticleCo
 	}
 
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd<2>(domainDecomp->getCommunicator(), localNumParticles);
+	auto collComm = makeCollCommObjAllreduceAdd<2>(domainDecomp->getCommunicator(), localNumParticles);
 	collComm.persistent();
 	unsigned long globalNumParticles;
 	collComm.get(globalNumParticles);

@@ -87,7 +87,7 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 #endif
 
 #ifdef ENABLE_PERSISTENT
-			auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), particlesInDrop);
+			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), particlesInDrop);
 			collComm.persistent();
 			collComm.get(particlesInDrop);
 #else
@@ -111,7 +111,7 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 			}
 
 #ifdef ENABLE_PERSISTENT
-			auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), particlesInDrop);
+			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), particlesInDrop);
 			collComm.persistent();
 			collComm.get(particlesInDrop);
 #else
@@ -144,7 +144,7 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 
 			// COMMUNICATION
 #ifdef ENABLE_PERSISTENT
-			auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), _velocNow, particlesInDrop);
+			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _velocNow, particlesInDrop);
 			collComm.persistent();
 			collComm.get(_velocNow, particlesInDrop);
 #else

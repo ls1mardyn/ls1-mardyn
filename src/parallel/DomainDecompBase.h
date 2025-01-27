@@ -201,7 +201,7 @@ public:
 	void updateSendLeavingWithCopies(bool sendTogether){
 				// Count all processes that need to send separately
 #ifdef ENABLE_PERSISTENT
-		auto collComm = make_CollCommObj_AllreduceAdd(getCommunicator(), static_cast<int>(!sendTogether));
+		auto collComm = makeCollCommObjAllreduceAdd(getCommunicator(), static_cast<int>(!sendTogether));
 		collComm.persistent();
 		collComm.get(_sendLeavingAndCopiesSeparately);
 #else

@@ -89,7 +89,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 	Log::global_log->info() << "Finished reading molecules: 100%" << std::endl;
 
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_ScanAdd(domainDecomp->getCommunicator(), id);
+	auto collComm = makeCollCommObjScanAdd(domainDecomp->getCommunicator(), id);
 	collComm.persistent();
 	unsigned long idOffset;
 	collComm.get(idOffset);

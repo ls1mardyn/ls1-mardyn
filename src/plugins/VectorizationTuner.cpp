@@ -819,7 +819,7 @@ void VectorizationTuner::VTWriterStatistics::writeStatistics(double input, const
 
 	double square = input * input;
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(dd.getCommunicator(), input, square);
+	auto collComm = makeCollCommObjAllreduceAdd(dd.getCommunicator(), input, square);
 	collComm.persistent();
 	double d0, d1;
 	collComm.get(d0, d1);
@@ -836,7 +836,7 @@ void VectorizationTuner::VTWriterStatistics::writeStatistics(double input, const
 #endif
 
 #ifdef ENABLE_PERSISTENT
-	auto collCommMin = make_CollCommObj_AllreduceMin(dd.getCommunicator(), input);
+	auto collCommMin = makeCollCommObjAllreduceMin(dd.getCommunicator(), input);
 	collCommMin.persistent();
 	double min;
 	collCommMin.get(min);
@@ -849,7 +849,7 @@ void VectorizationTuner::VTWriterStatistics::writeStatistics(double input, const
 #endif
 
 #ifdef ENABLE_PERSISTENT
-	auto collCommMax = make_CollCommObj_AllreduceMax(dd.getCommunicator(), input);
+	auto collCommMax = makeCollCommObjAllreduceMax(dd.getCommunicator(), input);
 	collCommMax.persistent();
 	double max;
 	collCommMax.get(max);

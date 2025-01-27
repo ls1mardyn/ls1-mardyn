@@ -90,7 +90,7 @@ void ExtractPhase::beforeForces(ParticleContainer* particleContainer, DomainDeco
 		numParticles.local++;
 
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), numParticles.local);
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numParticles.local);
 	collComm.persistent();
 	collComm.get(numParticles.global);
 #else

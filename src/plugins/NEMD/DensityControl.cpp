@@ -189,7 +189,7 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer, Domain
 
 #ifdef ENABLE_MPI
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), numMolecules.local);
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numMolecules.local);
 	collComm.persistent();
 	collComm.get(numMolecules.global);
 #else

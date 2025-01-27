@@ -140,11 +140,9 @@
 //! @endcode
 
 template<int tag, int Fn, typename Op, typename Root, typename Comm, typename... Ts>
-class Coll_Comm_Obj
-{
+class CollCommObj {
 public:
-    Coll_Comm_Obj(Op op, Root root, Comm comm, Ts... args)
-    {
+    CollCommObj(Op op, Root root, Comm comm, Ts... args) {
         // fill the buffer, this always has to hapen
         free_fill_buffer(_buffer.data(), args...);
         // check if this combination of values has already been constructed
@@ -319,118 +317,76 @@ private:
 // this will trigger the SFINAE to reject inappropriate functions
 struct empty_template_t{};
 
-// The following functions are used to create a Coll_Comm_Obj.
-// The doubles in the templates and constructor arguments signalize that a certain argument has not been provided
-
-// Function to create a basic CollCommObj without persistent collective communication capabilities.
-// This means only the custom datatype is created.
-template<int tag = 0, typename... Ts>
-auto make_CollCommObj(Ts... args)
-{
-    // This variable determines if and which persistent request should be created. 0 means none.
-    constexpr auto fn = 0;
-    return Coll_Comm_Obj<tag, fn, empty_template_t, empty_template_t, empty_template_t, Ts...> (empty_template_t{}, empty_template_t{}, empty_template_t{}, args...);
-}
-// function to generate a CollCommObj without persistent request, communicator is stored in addition to MPI datatype
-template<int tag = 0, typename... Ts>
-auto make_CollCommObj(MPI_Comm comm, Ts... args)
-{
-    // This variable determines if and which persistent request should be created. 0 means none.
-    constexpr auto fn = 0;
-    return Coll_Comm_Obj<tag, fn, empty_template_t, empty_template_t, MPI_Comm, Ts...> (empty_template_t{}, empty_template_t{}, comm, args...);
-}
-// This function is forbidden because if args starts with an integer that might be swallowed by the int argument of root.
-// template<int tag = 0, typename... Ts>
-// auto make_CollCommObj(int root , Ts... args);
-
-// Function to generate a CollCommObj without persistent request, communicator and root rank is stored in addition to MPI datatype.
-template<int tag = 0, typename... Ts>
-auto make_CollCommObj(int root, MPI_Comm comm, Ts... args)
-{
-    // This variable determines if and which persistent request should be created. 0 means none.
-    constexpr auto fn = 0;
-    return Coll_Comm_Obj<tag, fn, empty_template_t, int, MPI_Comm, Ts...> (empty_template_t{}, root, comm, args...);
-}
-
 
 // Functions to explicitly create a persistent collective communication request.
 template<int tag = 0, typename... Ts>
-auto make_CollCommObj_AllreduceAdd(MPI_Comm comm, Ts... args)
-{
+auto makeCollCommObjAllreduceAdd(MPI_Comm comm, Ts... args) {
     // This variable determines if and which persistent request should be created. 0 means none.
     constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
-    return Coll_Comm_Obj<tag, fn, add_struct, empty_template_t, MPI_Comm, Ts...>(add_struct{}, empty_template_t{}, comm, args...);
+    return CollCommObj<tag, fn, add_struct, empty_template_t, MPI_Comm, Ts...> (add_struct{}, empty_template_t{}, comm, args...);
 }
 
 // Functions to explicitly set the MPI_Datatype and MPI_Op, since the MPI_Comm is missing a persistent comm request is not available.
 template<int tag = 0, typename... Ts>
-auto make_CollCommObj_AllreduceAdd(Ts... args)
-{
+auto makeCollCommObjAllreduceAdd(Ts... args) {
     // This variable determines if and which persistent request should be created. 0 means none.
-    constexpr auto fn = 0;
-    return Coll_Comm_Obj<tag, fn, add_struct, empty_template_t, empty_template_t, Ts...>(add_struct{}, empty_template_t{}, empty_template_t{}, args...);
+    constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
+    return CollCommObj<tag, fn, add_struct, empty_template_t, empty_template_t, Ts...> (add_struct{}, empty_template_t{}, empty_template_t{}, args...);
 }
 
 // Function to explicitly create a persistent collective communication request.
 template<int tag = 0, typename... Ts>
-auto make_CollCommObj_AllreduceMax(MPI_Comm comm, Ts... args)
-{
+auto makeCollCommObjAllreduceMax(MPI_Comm comm, Ts... args) {
     // This variable determines if and which persistent request should be created.
     constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
-    return Coll_Comm_Obj<tag, fn, max_struct, empty_template_t, MPI_Comm, Ts...>(max_struct{}, empty_template_t{}, comm, args...);
+    return CollCommObj<tag, fn, max_struct, empty_template_t, MPI_Comm, Ts...>(max_struct{}, empty_template_t{}, comm, args...);
 }
 
 // 
 template<int tag = 0, typename... Ts>
-auto make_CollCommObj_AllreduceMax(Ts... args)
-{
+auto makeCollCommObjAllreduceMax(Ts... args) {
     // This variable determines if and which persistent request should be created. 0 means none.
     constexpr auto fn = 0;
-    return Coll_Comm_Obj<tag, fn, max_struct, empty_template_t, empty_template_t, Ts...>(max_struct{}, empty_template_t{}, empty_template_t{}, args...);
+    return CollCommObj<tag, fn, max_struct, empty_template_t, empty_template_t, Ts...>(max_struct{}, empty_template_t{}, empty_template_t{}, args...);
 }
 
 // Function to explicitly create a persistent collective communication request.
 template<int tag = 0, typename... Ts>
-auto make_CollCommObj_AllreduceMin(MPI_Comm comm, Ts... args)
-{
+auto makeCollCommObjAllreduceMin(MPI_Comm comm, Ts... args) {
     // This variable determines if and which persistent request should be created.
     constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
-    return Coll_Comm_Obj<tag, fn, min_struct, empty_template_t, MPI_Comm, Ts...>(min_struct{}, empty_template_t{}, comm, args...);
+    return CollCommObj<tag, fn, min_struct, empty_template_t, MPI_Comm, Ts...>(min_struct{}, empty_template_t{}, comm, args...);
 }
 
 // 
 template<int tag = 0, typename... Ts>
-auto make_CollCommObj_AllreduceMin(Ts... args)
-{
+auto makeCollCommObjAllreduceMin(Ts... args) {
     // This variable determines if and which persistent request should be created. 0 means none.
     constexpr auto fn = 0;
-    return Coll_Comm_Obj<tag, fn, min_struct, empty_template_t, empty_template_t, Ts...>(min_struct{}, empty_template_t{}, empty_template_t{}, args...);
+    return CollCommObj<tag, fn, min_struct, empty_template_t, empty_template_t, Ts...>(min_struct{}, empty_template_t{}, empty_template_t{}, args...);
 }
 
 // Function to explicitly create a persistent collective communication request.
 template<int tag = 0, typename... Ts>
-auto make_CollCommObj_Bcast(int root, MPI_Comm comm, Ts... args)
-{
+auto makeCollCommObjBcast(int root, MPI_Comm comm, Ts... args) {
     // This variable determines if and which persistent request should be created.
     constexpr auto fn = static_cast<int>(MPI_CollFunctions::Bcast);
-    return Coll_Comm_Obj<tag, fn, empty_template_t, int, MPI_Comm, Ts...>(empty_template_t{}, root, comm, args...);
+    return CollCommObj<tag, fn, empty_template_t, int, MPI_Comm, Ts...>(empty_template_t{}, root, comm, args...);
 }
 
 // Function to explicitly create a persistent collective communication request.
 template<int tag = 0, typename... Ts>
-auto make_CollCommObj_ScanAdd(MPI_Comm comm, Ts... args)
-{
+auto makeCollCommObjScanAdd(MPI_Comm comm, Ts... args) {
     // This variable determines if and which persistent request should be created.
     constexpr auto fn = static_cast<int>(MPI_CollFunctions::Scan);
-    return Coll_Comm_Obj<tag, fn, add_struct, empty_template_t, MPI_Comm, Ts...>(add_struct{}, empty_template_t{}, comm, args...);
+    return CollCommObj<tag, fn, add_struct, empty_template_t, MPI_Comm, Ts...>(add_struct{}, empty_template_t{}, comm, args...);
 }
 
 template<int tag = 0, typename... Ts>
-auto make_CollCommObj_ScanAdd(Ts... args)
-{
+auto makeCollCommObjScanAdd(Ts... args) {
     // This variable determines if and which persistent request should be created.
     constexpr auto fn = 0;
-    return Coll_Comm_Obj<tag, fn, add_struct, empty_template_t, empty_template_t, Ts...>(add_struct{}, empty_template_t{}, empty_template_t{}, args...);
+    return CollCommObj<tag, fn, add_struct, empty_template_t, empty_template_t, Ts...>(add_struct{}, empty_template_t{}, empty_template_t{}, args...);
 }
 
 #endif

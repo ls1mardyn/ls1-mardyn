@@ -61,7 +61,7 @@ void EnergyLogWriter::endStep(ParticleContainer *particleContainer, DomainDecomp
 
 	// calculate global values
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), nNumMolsGlobalEnergyLocal, UkinLocal, UkinTransLocal, UkinRotLocal);
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), nNumMolsGlobalEnergyLocal, UkinLocal, UkinTransLocal, UkinRotLocal);
 	collComm.persistent();
 	unsigned long nNumMolsGlobalEnergyGlobal;
 	double UkinGlobal;

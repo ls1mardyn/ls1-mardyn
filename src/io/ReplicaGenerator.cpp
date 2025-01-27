@@ -494,7 +494,7 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 	}
 
 #ifdef ENABLE_PERSISTENT
-	auto collCommScan = make_CollCommObj_ScanAdd<2>(domainDecomp->getCommunicator(), numAddedParticlesLocal);
+	auto collCommScan = makeCollCommObjScanAdd<2>(domainDecomp->getCommunicator(), numAddedParticlesLocal);
 	collCommScan.persistent();
 	unsigned long idOffset;
 	collCommScan.get(idOffset);
@@ -518,7 +518,7 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 	uint64_t numAddedParticlesFreespaceGlobal = 0;
 	mardyn_assert(numParticlesLocal == numAddedParticlesLocal);
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), numParticlesLocal, numAddedParticlesFreespaceLocal);
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numParticlesLocal, numAddedParticlesFreespaceLocal);
 	collComm.persistent();
 	collComm.get(numParticlesLocal, numAddedParticlesFreespaceLocal);
 #else

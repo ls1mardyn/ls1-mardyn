@@ -133,7 +133,7 @@ unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particl
 	unsigned long int globalNumMolecules = particleContainer->getNumberOfParticles();
 	std::cout << "numberOfParticles is " << particleContainer->getNumberOfParticles()<< "\n"<<std::flush;
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp->getCommunicator(), globalNumMolecules);
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), globalNumMolecules);
 	collComm.persistent();
 	collComm.get(globalNumMolecules);
 #else

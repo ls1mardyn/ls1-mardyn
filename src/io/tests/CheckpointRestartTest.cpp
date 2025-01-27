@@ -61,7 +61,7 @@ void CheckpointRestartTest::testCheckpointRestart(bool binary) {
 unsigned long CheckpointRestartTest::getGlobalParticleNumber(ParticleContainer* particleContainer){
 	unsigned long localParticleCount = particleContainer->getNumberOfParticles();
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(_domainDecomposition->getCommunicator(), localParticleCount);
+	auto collComm = makeCollCommObjAllreduceAdd(_domainDecomposition->getCommunicator(), localParticleCount);
 	collComm.persistent();
 	unsigned long globalNumParticles;
 	collComm.get(globalNumParticles);

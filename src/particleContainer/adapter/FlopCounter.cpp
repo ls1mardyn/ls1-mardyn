@@ -91,7 +91,7 @@ void FlopCounter::_Counts::allReduce() {
 	DomainDecompBase& domainDecomp =  global_simulation->domainDecomposition();
 
 #ifdef ENABLE_PERSISTENT
-	auto collComm = make_CollCommObj_AllreduceAdd(domainDecomp.getCommunicator(), _moleculeDistances, _potCounts[0]._numKernelCalls, _potCounts[0]._numMacroCalls
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp.getCommunicator(), _moleculeDistances, _potCounts[0]._numKernelCalls, _potCounts[0]._numMacroCalls
 																									, _potCounts[1]._numKernelCalls, _potCounts[1]._numMacroCalls
 																									, _potCounts[2]._numKernelCalls, _potCounts[2]._numMacroCalls
 																									, _potCounts[3]._numKernelCalls, _potCounts[3]._numMacroCalls
