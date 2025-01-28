@@ -256,6 +256,24 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>sendLeavingWithCopies
 <tr class="memitem:a54c3c828f83b63c26dc1346df8a680fb inherit pub_methods_classDomainDecompBase"><td class="memItemLeft" align="right" valign="top"><a id="a54c3c828f83b63c26dc1346df8a680fb" name="a54c3c828f83b63c26dc1346df8a680fb"></a>
 virtual std::vector&lt; std::vector&lt; std::vector&lt; int &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getAllRanks</b> ()</td></tr>
 <tr class="separator:a54c3c828f83b63c26dc1346df8a680fb inherit pub_methods_classDomainDecompBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b77e7c36a02f908dcf5d5743aba495d inherit pub_methods_classDomainDecompBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompBase.html#a3b77e7c36a02f908dcf5d5743aba495d">setGlobalBoundaryType</a> (<a class="el" href="namespaceDimensionUtils.html#a3918691c5189c0f99e4579860743c90c">DimensionUtils::DimensionType</a> dimension, <a class="el" href="namespaceBoundaryUtils.html#a7fbe4213bf7d39c9f2e15bbe5f4371ca">BoundaryUtils::BoundaryType</a> boundary)</td></tr>
+<tr class="memdesc:a3b77e7c36a02f908dcf5d5743aba495d inherit pub_methods_classDomainDecompBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the global boundary type for the _boundaryHandler object.  <a href="classDomainDecompBase.html#a3b77e7c36a02f908dcf5d5743aba495d">More...</a><br /></td></tr>
+<tr class="separator:a3b77e7c36a02f908dcf5d5743aba495d inherit pub_methods_classDomainDecompBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3a582d59a573924ba843b41df6e349b inherit pub_methods_classDomainDecompBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompBase.html#ae3a582d59a573924ba843b41df6e349b">setBoundsAndGlobalBoundaries</a> (<a class="el" href="classDomain.html">Domain</a> *domain, <a class="el" href="classEnsemble.html">Ensemble</a> *ensemble)</td></tr>
+<tr class="memdesc:ae3a582d59a573924ba843b41df6e349b inherit pub_methods_classDomainDecompBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets up the _boundaryHandler object, updating the global and local domain bounds, and triggering <a class="el" href="classBoundaryHandler.html#a7997a552c17276926886ed9e692bed8b" title="Determine which walls in the local region are actually global walls.">BoundaryHandler::updateGlobalWallLookupTable()</a> to refresh boundary conditions.  <a href="classDomainDecompBase.html#ae3a582d59a573924ba843b41df6e349b">More...</a><br /></td></tr>
+<tr class="separator:ae3a582d59a573924ba843b41df6e349b inherit pub_methods_classDomainDecompBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6670cbdcbd8f67730eb3c412a2ce183 inherit pub_methods_classDomainDecompBase"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompBase.html#ac6670cbdcbd8f67730eb3c412a2ce183">hasGlobalInvalidBoundary</a> () const</td></tr>
+<tr class="memdesc:ac6670cbdcbd8f67730eb3c412a2ce183 inherit pub_methods_classDomainDecompBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if any of the global boundaries are invalid.  <a href="classDomainDecompBase.html#ac6670cbdcbd8f67730eb3c412a2ce183">More...</a><br /></td></tr>
+<tr class="separator:ac6670cbdcbd8f67730eb3c412a2ce183 inherit pub_methods_classDomainDecompBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1acbbf9f42e26fb14b1e94ba12c2571 inherit pub_methods_classDomainDecompBase"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompBase.html#ae1acbbf9f42e26fb14b1e94ba12c2571">hasGlobalNonPeriodicBoundary</a> () const</td></tr>
+<tr class="memdesc:ae1acbbf9f42e26fb14b1e94ba12c2571 inherit pub_methods_classDomainDecompBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if any of the global boundaries are non-periodic.  <a href="classDomainDecompBase.html#ae1acbbf9f42e26fb14b1e94ba12c2571">More...</a><br /></td></tr>
+<tr class="separator:ae1acbbf9f42e26fb14b1e94ba12c2571 inherit pub_methods_classDomainDecompBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af8afac7840d82e11e49e25dcd00565d4 inherit pub_methods_classDomainDecompBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompBase.html#af8afac7840d82e11e49e25dcd00565d4">processBoundaryConditions</a> (<a class="el" href="classParticleContainer.html">ParticleContainer</a> *moleculeContainer, double timestepLength)</td></tr>
+<tr class="memdesc:af8afac7840d82e11e49e25dcd00565d4 inherit pub_methods_classDomainDecompBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Processes leaving particles according to the boundary coundition of the wall the particles would be leaving.  <a href="classDomainDecompBase.html#af8afac7840d82e11e49e25dcd00565d4">More...</a><br /></td></tr>
+<tr class="separator:af8afac7840d82e11e49e25dcd00565d4 inherit pub_methods_classDomainDecompBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab301d5c89a3734ed86ff4f86fbdfd5cc inherit pub_methods_classDomainDecompBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomainDecompBase.html#ab301d5c89a3734ed86ff4f86fbdfd5cc">removeNonPeriodicHalos</a> (<a class="el" href="classParticleContainer.html">ParticleContainer</a> *moleculeContainer)</td></tr>
+<tr class="memdesc:ab301d5c89a3734ed86ff4f86fbdfd5cc inherit pub_methods_classDomainDecompBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete all halo particles outside global boundas that are non-periodic.  <a href="classDomainDecompBase.html#ab301d5c89a3734ed86ff4f86fbdfd5cc">More...</a><br /></td></tr>
+<tr class="separator:ab301d5c89a3734ed86ff4f86fbdfd5cc inherit pub_methods_classDomainDecompBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -308,6 +326,9 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_rank</b></td></tr>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr>
 <tr class="memdesc:a25f0ed57fd982d68f0e4e8e3e1a3fa6f inherit pro_attribs_classDomainDecompBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">total number of processes in the simulation <br /></td></tr>
 <tr class="separator:a25f0ed57fd982d68f0e4e8e3e1a3fa6f inherit pro_attribs_classDomainDecompBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d0ce54bb076377a7b56692ecc3d0ca0 inherit pro_attribs_classDomainDecompBase"><td class="memItemLeft" align="right" valign="top"><a id="a2d0ce54bb076377a7b56692ecc3d0ca0" name="a2d0ce54bb076377a7b56692ecc3d0ca0"></a>
+<a class="el" href="classBoundaryHandler.html">BoundaryHandler</a>&#160;</td><td class="memItemRight" valign="bottom"><b>_boundaryHandler</b></td></tr>
+<tr class="separator:a2d0ce54bb076377a7b56692ecc3d0ca0 inherit pro_attribs_classDomainDecompBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a27ba0f16fcc3a0edd43904c1fbf437ef" name="a27ba0f16fcc3a0edd43904c1fbf437ef"></a>
@@ -1744,7 +1765,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_numProcs</b></td></tr
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 15 2025 08:51:38 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Jan 28 2025 14:38:15 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

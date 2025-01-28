@@ -5,7 +5,8 @@ var searchData=
   ['binqueue_2',['BinQueue',['../classBinQueue.html',1,'']]],
   ['binvectors_3',['BinVectors',['../structBinVectors.html',1,'']]],
   ['binwidth_4',['BinWidth',['../structDriftCtrl_1_1Range_1_1Subdivision_1_1BinWidth.html',1,'DriftCtrl::Range::Subdivision']]],
-  ['boundingbox_5',['BoundingBox',['../classBoundingBox.html',1,'']]],
-  ['boxdomain_6',['BoxDomain',['../classBoxDomain.html',1,'']]],
-  ['boxstruct_7',['BoxStruct',['../structBoxStruct.html',1,'']]]
+  ['boundaryhandler_5',['BoundaryHandler',['../classBoundaryHandler.html',1,'']]],
+  ['boundingbox_6',['BoundingBox',['../classBoundingBox.html',1,'']]],
+  ['boxdomain_7',['BoxDomain',['../classBoxDomain.html',1,'']]],
+  ['boxstruct_8',['BoxStruct',['../structBoxStruct.html',1,'']]]
 ];

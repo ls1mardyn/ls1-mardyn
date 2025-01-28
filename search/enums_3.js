@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['sitetype_0',['SiteType',['../namespaceConcSites.html#a292f54005cf7567818f2dc579dbdc76a',1,'ConcSites']]]
+  ['dimensiontype_0',['DimensionType',['../namespaceDimensionUtils.html#a3918691c5189c0f99e4579860743c90c',1,'DimensionUtils']]]
 ];

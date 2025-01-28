@@ -11,7 +11,9 @@ var searchData=
   ['handledomainleavingparticlesdirect_8',['handleDomainLeavingParticlesDirect',['../classDomainDecompBase.html#a00a88b98d85fc1ff0db4d11d00e369da',1,'DomainDecompBase']]],
   ['handleforceexchange_9',['handleForceExchange',['../classDomainDecompBase.html#aac545e2701e83434a8dcf7ea507cf752',1,'DomainDecompBase']]],
   ['handleforceexchangedirect_10',['handleForceExchangeDirect',['../classDomainDecompBase.html#af9e7ffe606930a3e9a75a5717a466bb0',1,'DomainDecompBase']]],
-  ['hash2indices_11',['hash2indices',['../classArray2D.html#a1ae3186b10c0d782f003f4c577531379',1,'Array2D']]],
-  ['hex_5fbinary_12',['hex_binary',['../namespacexml__schema.html#a8179ecdc89c60ae524aa6b63ee9d7f77',1,'xml_schema']]],
-  ['homogeneous_13',['Homogeneous',['../classHomogeneous.html',1,'']]]
+  ['hasglobalinvalidboundary_11',['hasGlobalInvalidBoundary',['../classBoundaryHandler.html#a9bd873d739e9e4fc79234709b6731c66',1,'BoundaryHandler::hasGlobalInvalidBoundary()'],['../classDomainDecompBase.html#ac6670cbdcbd8f67730eb3c412a2ce183',1,'DomainDecompBase::hasGlobalInvalidBoundary()']]],
+  ['hasglobalnonperiodicboundary_12',['hasGlobalNonPeriodicBoundary',['../classBoundaryHandler.html#a38e63a532bf532ef403f1f3f287addab',1,'BoundaryHandler::hasGlobalNonPeriodicBoundary()'],['../classDomainDecompBase.html#ae1acbbf9f42e26fb14b1e94ba12c2571',1,'DomainDecompBase::hasGlobalNonPeriodicBoundary()']]],
+  ['hash2indices_13',['hash2indices',['../classArray2D.html#a1ae3186b10c0d782f003f4c577531379',1,'Array2D']]],
+  ['hex_5fbinary_14',['hex_binary',['../namespacexml__schema.html#a8179ecdc89c60ae524aa6b63ee9d7f77',1,'xml_schema']]],
+  ['homogeneous_15',['Homogeneous',['../classHomogeneous.html',1,'']]]
 ];

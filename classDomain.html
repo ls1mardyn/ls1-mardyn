@@ -115,10 +115,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setNumFluidComponents
 unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>getNumFluidComponents</b> ()</td></tr>
 <tr class="memdesc:a382b2df3c0c95b3b29a44d385a57ce89"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the numbr of fluid molecules as specified in the config file (*_1R.cfg) <br /></td></tr>
 <tr class="separator:a382b2df3c0c95b3b29a44d385a57ce89"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a122e21916ce952a7c7580fa59e8ba010"><td class="memItemLeft" align="right" valign="top"><a id="a122e21916ce952a7c7580fa59e8ba010" name="a122e21916ce952a7c7580fa59e8ba010"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>getLocalUpotCompSpecific</b> ()</td></tr>
-<tr class="memdesc:a122e21916ce952a7c7580fa59e8ba010"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the fluid and fluid-solid potential of the local process <br /></td></tr>
-<tr class="separator:a122e21916ce952a7c7580fa59e8ba010"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f4d310f0e843f2710101b666095c39b"><td class="memItemLeft" align="right" valign="top"><a id="a6f4d310f0e843f2710101b666095c39b" name="a6f4d310f0e843f2710101b666095c39b"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>getLocalUpotCompSpecific</b> () const</td></tr>
+<tr class="memdesc:a6f4d310f0e843f2710101b666095c39b"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the fluid and fluid-solid potential of the local process <br /></td></tr>
+<tr class="separator:a6f4d310f0e843f2710101b666095c39b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a648e8c4921e16fbac4a72ef076362054"><td class="memItemLeft" align="right" valign="top"><a id="a648e8c4921e16fbac4a72ef076362054" name="a648e8c4921e16fbac4a72ef076362054"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setLocalVirial</b> (double Virial)</td></tr>
 <tr class="memdesc:a648e8c4921e16fbac4a72ef076362054"><td class="mdescLeft">&#160;</td><td class="mdescRight">set the virial of the local process <br /></td></tr>
@@ -195,27 +195,27 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>updateMaxMoleculeID</
 double&#160;</td><td class="memItemRight" valign="bottom"><b>getGlobalPressure</b> ()</td></tr>
 <tr class="memdesc:a7f4882e382d2611aea1f91623a885da1"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the global pressure <br /></td></tr>
 <tr class="separator:a7f4882e382d2611aea1f91623a885da1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a367b9515e5c36b5cb648f80c69b9ff7e"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomain.html#a367b9515e5c36b5cb648f80c69b9ff7e">getAverageGlobalUpot</a> ()</td></tr>
-<tr class="memdesc:a367b9515e5c36b5cb648f80c69b9ff7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the global average potential per particle  <a href="classDomain.html#a367b9515e5c36b5cb648f80c69b9ff7e">More...</a><br /></td></tr>
-<tr class="separator:a367b9515e5c36b5cb648f80c69b9ff7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f5dfd8ceaf5283e6460bd8155f7c95b"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomain.html#a9f5dfd8ceaf5283e6460bd8155f7c95b">getAverageGlobalUpot</a> () const</td></tr>
+<tr class="memdesc:a9f5dfd8ceaf5283e6460bd8155f7c95b"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the global average potential per particle  <a href="classDomain.html#a9f5dfd8ceaf5283e6460bd8155f7c95b">More...</a><br /></td></tr>
+<tr class="separator:a9f5dfd8ceaf5283e6460bd8155f7c95b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a30a3c2f0556818c7fd534ef3e5c4da5d"><td class="memItemLeft" align="right" valign="top"><a id="a30a3c2f0556818c7fd534ef3e5c4da5d" name="a30a3c2f0556818c7fd534ef3e5c4da5d"></a>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>getGlobalUpot</b> () const</td></tr>
 <tr class="separator:a30a3c2f0556818c7fd534ef3e5c4da5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae97ddeecbede7af7f2794abd77c73a94"><td class="memItemLeft" align="right" valign="top"><a id="ae97ddeecbede7af7f2794abd77c73a94" name="ae97ddeecbede7af7f2794abd77c73a94"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>getAverageGlobalUpotCSpec</b> ()</td></tr>
-<tr class="memdesc:ae97ddeecbede7af7f2794abd77c73a94"><td class="mdescLeft">&#160;</td><td class="mdescRight">by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction) <br /></td></tr>
-<tr class="separator:ae97ddeecbede7af7f2794abd77c73a94"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abaebbe8a39548024de74f90e2d08c7eb"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomain.html#abaebbe8a39548024de74f90e2d08c7eb">getGlobalUkinTrans</a> ()</td></tr>
-<tr class="memdesc:abaebbe8a39548024de74f90e2d08c7eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the global kinetic energy  <a href="classDomain.html#abaebbe8a39548024de74f90e2d08c7eb">More...</a><br /></td></tr>
-<tr class="separator:abaebbe8a39548024de74f90e2d08c7eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7501306db4c7c2be1bdd291d5e8fbea1"><td class="memItemLeft" align="right" valign="top"><a id="a7501306db4c7c2be1bdd291d5e8fbea1" name="a7501306db4c7c2be1bdd291d5e8fbea1"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>getGlobalUkinRot</b> ()</td></tr>
-<tr class="separator:a7501306db4c7c2be1bdd291d5e8fbea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a72c1eeae491dd94b58d31a3aafa89da8"><td class="memItemLeft" align="right" valign="top">unsigned long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomain.html#a72c1eeae491dd94b58d31a3aafa89da8">getNumFluidMolecules</a> ()</td></tr>
-<tr class="separator:a72c1eeae491dd94b58d31a3aafa89da8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1e07a97dc6b1e0ea932a9a0155bdcf36"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomain.html#a1e07a97dc6b1e0ea932a9a0155bdcf36">getAverageGlobalVirial</a> ()</td></tr>
-<tr class="memdesc:a1e07a97dc6b1e0ea932a9a0155bdcf36"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the global average virial per particle  <a href="classDomain.html#a1e07a97dc6b1e0ea932a9a0155bdcf36">More...</a><br /></td></tr>
-<tr class="separator:a1e07a97dc6b1e0ea932a9a0155bdcf36"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a83d919ab65c4012294b2cb95b4dcd2fa"><td class="memItemLeft" align="right" valign="top"><a id="a83d919ab65c4012294b2cb95b4dcd2fa" name="a83d919ab65c4012294b2cb95b4dcd2fa"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>getAverageGlobalUpotCSpec</b> () const</td></tr>
+<tr class="memdesc:a83d919ab65c4012294b2cb95b4dcd2fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction) <br /></td></tr>
+<tr class="separator:a83d919ab65c4012294b2cb95b4dcd2fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b127c1dfcf5de16eb9679adfb9d7872"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomain.html#a9b127c1dfcf5de16eb9679adfb9d7872">getGlobalUkinTrans</a> () const</td></tr>
+<tr class="memdesc:a9b127c1dfcf5de16eb9679adfb9d7872"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the global kinetic energy  <a href="classDomain.html#a9b127c1dfcf5de16eb9679adfb9d7872">More...</a><br /></td></tr>
+<tr class="separator:a9b127c1dfcf5de16eb9679adfb9d7872"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0dd98b9c405bcdcb32d2db7f01220c20"><td class="memItemLeft" align="right" valign="top"><a id="a0dd98b9c405bcdcb32d2db7f01220c20" name="a0dd98b9c405bcdcb32d2db7f01220c20"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>getGlobalUkinRot</b> () const</td></tr>
+<tr class="separator:a0dd98b9c405bcdcb32d2db7f01220c20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96d940b02869c985fd8c1d07d356e0c2"><td class="memItemLeft" align="right" valign="top">unsigned long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomain.html#a96d940b02869c985fd8c1d07d356e0c2">getNumFluidMolecules</a> () const</td></tr>
+<tr class="separator:a96d940b02869c985fd8c1d07d356e0c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b6724e4c153eeb7f9174ae6014ea5ca"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDomain.html#a9b6724e4c153eeb7f9174ae6014ea5ca">getAverageGlobalVirial</a> () const</td></tr>
+<tr class="memdesc:a9b6724e4c153eeb7f9174ae6014ea5ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the global average virial per particle  <a href="classDomain.html#a9b6724e4c153eeb7f9174ae6014ea5ca">More...</a><br /></td></tr>
+<tr class="separator:a9b6724e4c153eeb7f9174ae6014ea5ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a595e2da26d142fe3553209c7ee469a7f"><td class="memItemLeft" align="right" valign="top"><a id="a595e2da26d142fe3553209c7ee469a7f" name="a595e2da26d142fe3553209c7ee469a7f"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setLocalSummv2</b> (double summv2, int thermostat)</td></tr>
 <tr class="memdesc:a595e2da26d142fe3553209c7ee469a7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">sets _localSummv2 to the given value <br /></td></tr>
@@ -228,10 +228,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setLocalSumIw2</b> (d
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setLocalNrotDOF</b> (int thermostat, unsigned long N, unsigned long rotDOF)</td></tr>
 <tr class="memdesc:a4752315d556f4278a9a1b1c39d943085"><td class="mdescLeft">&#160;</td><td class="mdescRight">sets _localThermostatN and _localRotationalDOF for thermostat <br /></td></tr>
 <tr class="separator:a4752315d556f4278a9a1b1c39d943085"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac11cc22dc1edc49cbb53d6587b3c3f7a"><td class="memItemLeft" align="right" valign="top"><a id="ac11cc22dc1edc49cbb53d6587b3c3f7a" name="ac11cc22dc1edc49cbb53d6587b3c3f7a"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>getglobalRho</b> ()</td></tr>
-<tr class="memdesc:ac11cc22dc1edc49cbb53d6587b3c3f7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">get globalRho <br /></td></tr>
-<tr class="separator:ac11cc22dc1edc49cbb53d6587b3c3f7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56ba591873f1b6fbc3a3f17a81c156c6"><td class="memItemLeft" align="right" valign="top"><a id="a56ba591873f1b6fbc3a3f17a81c156c6" name="a56ba591873f1b6fbc3a3f17a81c156c6"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>getglobalRho</b> () const</td></tr>
+<tr class="memdesc:a56ba591873f1b6fbc3a3f17a81c156c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">get globalRho <br /></td></tr>
+<tr class="separator:a56ba591873f1b6fbc3a3f17a81c156c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabdf73cf03220616dc1f9779f4c5c3fa"><td class="memItemLeft" align="right" valign="top"><a id="aabdf73cf03220616dc1f9779f4c5c3fa" name="aabdf73cf03220616dc1f9779f4c5c3fa"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setglobalRho</b> (double grho)</td></tr>
 <tr class="memdesc:aabdf73cf03220616dc1f9779f4c5c3fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">set globalRho <br /></td></tr>
@@ -334,13 +334,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>record_cv</b> ()</td>
 <tr class="memitem:ad9580ebebb4d77ebe76b39a92d5b5c53"><td class="memItemLeft" align="right" valign="top"><a id="ad9580ebebb4d77ebe76b39a92d5b5c53" name="ad9580ebebb4d77ebe76b39a92d5b5c53"></a>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>cv</b> ()</td></tr>
 <tr class="separator:ad9580ebebb4d77ebe76b39a92d5b5c53"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a737fd14e72f9a35dd169f92ce7a8d13a"><td class="memItemLeft" align="right" valign="top"><a id="a737fd14e72f9a35dd169f92ce7a8d13a" name="a737fd14e72f9a35dd169f92ce7a8d13a"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>getSigma</b> (unsigned cid, unsigned nthSigma)</td></tr>
-<tr class="memdesc:a737fd14e72f9a35dd169f92ce7a8d13a"><td class="mdescLeft">&#160;</td><td class="mdescRight">methods implemented by Stefan Becker <a href="#" onclick="location.href='mai'+'lto:'+'ste'+'fa'+'n.b'+'ec'+'ker'+'@m'+'v.u'+'ni'+'-kl'+'.d'+'e'; return false;">stefa<span style="display: none;">.nosp@m.</span>n.be<span style="display: none;">.nosp@m.</span>cker@<span style="display: none;">.nosp@m.</span>mv.u<span style="display: none;">.nosp@m.</span>ni-kl<span style="display: none;">.nosp@m.</span>.de</a> <br /></td></tr>
-<tr class="separator:a737fd14e72f9a35dd169f92ce7a8d13a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9e165dbf0eb4effd0523398c91bbcc7c"><td class="memItemLeft" align="right" valign="top"><a id="a9e165dbf0eb4effd0523398c91bbcc7c" name="a9e165dbf0eb4effd0523398c91bbcc7c"></a>
-unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>getNumberOfComponents</b> ()</td></tr>
-<tr class="separator:a9e165dbf0eb4effd0523398c91bbcc7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a333d843d7906fef7a9936bfafa1e2091"><td class="memItemLeft" align="right" valign="top"><a id="a333d843d7906fef7a9936bfafa1e2091" name="a333d843d7906fef7a9936bfafa1e2091"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>getSigma</b> (unsigned cid, unsigned nthSigma) const</td></tr>
+<tr class="memdesc:a333d843d7906fef7a9936bfafa1e2091"><td class="mdescLeft">&#160;</td><td class="mdescRight">methods implemented by Stefan Becker <a href="#" onclick="location.href='mai'+'lto:'+'ste'+'fa'+'n.b'+'ec'+'ker'+'@m'+'v.u'+'ni'+'-kl'+'.d'+'e'; return false;">stefa<span style="display: none;">.nosp@m.</span>n.be<span style="display: none;">.nosp@m.</span>cker@<span style="display: none;">.nosp@m.</span>mv.u<span style="display: none;">.nosp@m.</span>ni-kl<span style="display: none;">.nosp@m.</span>.de</a> <br /></td></tr>
+<tr class="separator:a333d843d7906fef7a9936bfafa1e2091"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ffcb5497fa549c6836e4fe7834899de"><td class="memItemLeft" align="right" valign="top"><a id="a8ffcb5497fa549c6836e4fe7834899de" name="a8ffcb5497fa549c6836e4fe7834899de"></a>
+unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>getNumberOfComponents</b> () const</td></tr>
+<tr class="separator:a8ffcb5497fa549c6836e4fe7834899de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a698bdec9fdcb4c470bd03cdcc064f9c7"><td class="memItemLeft" align="right" valign="top"><a id="a698bdec9fdcb4c470bd03cdcc064f9c7" name="a698bdec9fdcb4c470bd03cdcc064f9c7"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setUpotCorr</b> (double upotcorr)</td></tr>
 <tr class="separator:a698bdec9fdcb4c470bd03cdcc064f9c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -484,8 +484,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
 
 </div>
 </div>
-<a id="a367b9515e5c36b5cb648f80c69b9ff7e" name="a367b9515e5c36b5cb648f80c69b9ff7e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a367b9515e5c36b5cb648f80c69b9ff7e">&#9670;&nbsp;</a></span>getAverageGlobalUpot()</h2>
+<a id="a9f5dfd8ceaf5283e6460bd8155f7c95b" name="a9f5dfd8ceaf5283e6460bd8155f7c95b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f5dfd8ceaf5283e6460bd8155f7c95b">&#9670;&nbsp;</a></span>getAverageGlobalUpot()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -494,7 +494,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
           <td class="memname">double Domain::getAverageGlobalUpot </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td></td>
+          <td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -504,8 +504,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
 
 </div>
 </div>
-<a id="a1e07a97dc6b1e0ea932a9a0155bdcf36" name="a1e07a97dc6b1e0ea932a9a0155bdcf36"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1e07a97dc6b1e0ea932a9a0155bdcf36">&#9670;&nbsp;</a></span>getAverageGlobalVirial()</h2>
+<a id="a9b6724e4c153eeb7f9174ae6014ea5ca" name="a9b6724e4c153eeb7f9174ae6014ea5ca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b6724e4c153eeb7f9174ae6014ea5ca">&#9670;&nbsp;</a></span>getAverageGlobalVirial()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -514,7 +514,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
           <td class="memname">double Domain::getAverageGlobalVirial </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td></td>
+          <td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -602,8 +602,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
 
 </div>
 </div>
-<a id="abaebbe8a39548024de74f90e2d08c7eb" name="abaebbe8a39548024de74f90e2d08c7eb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abaebbe8a39548024de74f90e2d08c7eb">&#9670;&nbsp;</a></span>getGlobalUkinTrans()</h2>
+<a id="a9b127c1dfcf5de16eb9679adfb9d7872" name="a9b127c1dfcf5de16eb9679adfb9d7872"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b127c1dfcf5de16eb9679adfb9d7872">&#9670;&nbsp;</a></span>getGlobalUkinTrans()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -615,7 +615,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
           <td class="memname">double Domain::getGlobalUkinTrans </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td></td>
+          <td> const</td>
         </tr>
       </table>
   </td>
@@ -626,12 +626,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
 </div><div class="memdoc">
 
 <p>get the global kinetic energy </p>
-<p >Before this method is called, it has to be sure that the global energies has been calculated (method calculateGlobalValues) </p>
+<p >Before this method is called, the user has to be sure that the global energy (rot and trans) has been calculated via <a class="el" href="classDomain.html#aed30b88d4a385684b442cae6679b5884" title="calculate the global macroscopic values">calculateGlobalValues()</a> Since variables _globalsummv2 and _globalsumIw2 store the sum of m_i*(v_i^2). Therefore, the constant factor 0.5 has to be applied to yield the kinetic energies </p>
 
 </div>
 </div>
-<a id="a72c1eeae491dd94b58d31a3aafa89da8" name="a72c1eeae491dd94b58d31a3aafa89da8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a72c1eeae491dd94b58d31a3aafa89da8">&#9670;&nbsp;</a></span>getNumFluidMolecules()</h2>
+<a id="a96d940b02869c985fd8c1d07d356e0c2" name="a96d940b02869c985fd8c1d07d356e0c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a96d940b02869c985fd8c1d07d356e0c2">&#9670;&nbsp;</a></span>getNumFluidMolecules()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -640,7 +640,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
           <td class="memname">unsigned long Domain::getNumFluidMolecules </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td></td>
+          <td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1040,7 +1040,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setExplosionHeuristic
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 15 2025 08:51:38 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Jan 28 2025 14:38:15 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

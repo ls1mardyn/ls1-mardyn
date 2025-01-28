@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['nodetype_0',['NodeType',['../classXMLfile_1_1Node.html#ab5e0a4b28f6500fe0ab341fe49478b41',1,'XMLfile::Node']]]
+  ['coordinatetype_0',['CoordinateType',['../namespaceConcSites.html#ad1c74db0087975c0d51d9fc693feaa08',1,'ConcSites']]]
 ];
