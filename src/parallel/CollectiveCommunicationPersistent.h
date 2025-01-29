@@ -162,15 +162,11 @@ public:
             // create custom mpi type
             MPI_Type_create_struct(sizeof...(Ts), b.data(), d.data(), t.data(), &_mpi_members->get_type());
             MPI_Type_commit(&_mpi_members->get_type());
-            // Register allocated MPI Type
-            Coll_Comm_Deallocator::emplace_back(&_mpi_members->get_type());
             // check if we were given a custom mpi operation
             if constexpr( std::is_same_v<Op, add_struct> || std::is_same_v<Op, max_struct> || std::is_same_v<Op, min_struct> )
             {
                 // Create MPI Operation
                 MPI_Op_create(Op::template func<Ts...>, 1, &_mpi_members->get_op());
-                // Register allocated MPI Op
-                Coll_Comm_Deallocator::emplace_back(&_mpi_members->get_op());
             }
             // check if we were given a root rank
             if constexpr( std::is_same_v<Root, int> )
@@ -231,19 +227,16 @@ private:
             (is_scan_v<Fn> && is_op_v<Op> && is_comm_v<Comm>)                    // checks if everything for an scan has been given
         > {
         if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Allreduce)) {
-            MPI_Allreduce_init( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(), _mpi_comm, MPI_INFO_NULL, &_mpi_members->get_request() );
-            // Register allocated MPI Request
-            Coll_Comm_Deallocator::emplace_back(&_mpi_members->get_request());
+            MPI_Allreduce_init( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(),
+                            _mpi_comm, MPI_INFO_NULL, &_mpi_members->get_request() );
         }
         else if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Bcast)) {
-            MPI_Bcast_init( _buffer.data(), 1, _mpi_members->get_type(), _root, _mpi_comm, MPI_INFO_NULL, &_mpi_members->get_request() );
-            // Register allocated MPI Request
-            Coll_Comm_Deallocator::emplace_back(&_mpi_members->get_request());
+            MPI_Bcast_init( _buffer.data(), 1, _mpi_members->get_type(), _root, 
+                            _mpi_comm, MPI_INFO_NULL, &_mpi_members->get_request() );
         }
         else if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Scan)) {
-            MPI_Scan_init( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(), _mpi_comm, MPI_INFO_NULL, &_mpi_members->get_request() );
-            // Register allocated MPI Request
-            Coll_Comm_Deallocator::emplace_back(&_mpi_members->get_request());
+            MPI_Scan_init( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(), 
+                            _mpi_comm, MPI_INFO_NULL, &_mpi_members->get_request() );
         }
     }
 #endif

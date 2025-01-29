@@ -22,11 +22,9 @@ class MPI_Env_Wrapper {
 public:
     static auto init_environment(int* argc, char*** argv) {
         static MPI_Environment mpi_env(argc, argv);
-        _mpi_env = &mpi_env;
     }
     static auto init_thread_environment(int* argc, char*** argv, int required) {
         static MPI_Environment mpi_env(argc, argv, required);
-        _mpi_env = &mpi_env;
     }
 private:
     // class to manage MPI_Init and MPI_Finalize
@@ -48,9 +46,6 @@ private:
             MPI_Finalize();
         }
     };
-
-    // storing the class until the end of the program
-    static inline MPI_Environment* _mpi_env;
 };
 
 
@@ -377,35 +372,5 @@ struct is_scan < static_cast<int>(MPI_CollFunctions::Scan) >
 template< int T >
 constexpr bool is_scan_v = is_scan<T>::value;
 
-
-// class to handle deallocation of MPI allocations
-class Coll_Comm_Deallocator {
-public:
-    static auto emplace_back(MPI_Request* request) {
-        _allocated_requests.emplace_back(request);
-    }
-
-    static auto emplace_back(MPI_Op* op) {
-        _allocated_ops.emplace_back(op);
-    }
-
-    static auto emplace_back(MPI_Datatype* type) {
-        _allocated_types.emplace_back(type);
-    }
-
-    static void deallocate() {
-        for (auto ptr : _allocated_requests)
-            MPI_Request_free(ptr);
-        for (auto ptr : _allocated_ops)
-            MPI_Op_free(ptr);
-        for (auto ptr : _allocated_types)
-            MPI_Type_free(ptr);
-    }
-
-private:
-    static inline std::vector<MPI_Request*> _allocated_requests;
-    static inline std::vector<MPI_Op*> _allocated_ops;
-    static inline std::vector<MPI_Datatype*> _allocated_types;
-};
 
 #endif
