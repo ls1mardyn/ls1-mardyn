@@ -152,15 +152,16 @@ public:
             static MPI_Members members;
             _mpi_members = &members;
             // create variables necessary for MPI Datatype
-            std::array<int, sizeof...(Ts)> b;
-            b.fill(1);
-            std::array<MPI_Aint, sizeof...(Ts)> d;
-            std::array<MPI_Datatype, sizeof...(Ts)> t;
+            std::array<int, sizeof...(Ts)> array_of_blocklengths;
+            array_of_blocklengths.fill(1);
+            std::array<MPI_Aint, sizeof...(Ts)> array_of_displacements;
+            std::array<MPI_Datatype, sizeof...(Ts)> array_of_types;
             // fill arrays necessary for custom mpi type        
-            fill_displs_array(d.data(), args...);
-            fill_type_array(t.data(), args...);
+            fill_displs_array(array_of_displacements.data(), args...);
+            fill_type_array(array_of_types.data(), args...);
             // create custom mpi type
-            MPI_Type_create_struct(sizeof...(Ts), b.data(), d.data(), t.data(), &_mpi_members->get_type());
+            MPI_Type_create_struct(sizeof...(Ts), array_of_blocklengths.data(), array_of_displacements.data(),
+                                    array_of_types.data(), &_mpi_members->get_type());
             MPI_Type_commit(&_mpi_members->get_type());
             // check if we were given a custom mpi operation
             if constexpr( std::is_same_v<Op, add_struct> || std::is_same_v<Op, max_struct> || std::is_same_v<Op, min_struct> )
