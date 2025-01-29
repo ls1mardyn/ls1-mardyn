@@ -13,11 +13,24 @@
 #include <tuple>
 #include <mpi.h>
 
-//! @brief This file contains auxiliary classes and functions for the Coll_Comm_Obj in mpi_perscomm_obj.h
-//! @author Mike Söhner
+/** @brief This file contains auxiliary classes and functions for the CollCommObj in CollectiveCommunicationPersistent.h
+*   @author Mike Söhner
+*/
 
-// Can be used to initialize the MPI environment like this:
-// MPI_Env_Wrapper::init_environment(&argc, &argv);
+
+/** This is a wrapper class that wraps MPI_Init and MPI_finalize statically.
+* 
+* This class wraps the MPI_Init and MPI_Finalize functions into static members of a class. Since we call this wrapper
+* before all the other MPI functions we make sure that the static members of this class are constructed before the
+* other static class members and destructed after the other static class members. Therefore
+* this class would be destructed last and MPI_Finalize would be called after the other free functions.
+* It can be used in the following way:
+* @code
+*   // Replace MPI_Init(&argc, &argv); with the following code
+*   MPI_Env_Wrapper::init_environment(&argc, &argv);
+*   // Also remove calls to MPI_Finalize();
+* @endcode
+ */
 class MPI_Env_Wrapper {
 public:
     static auto init_environment(int* argc, char*** argv) {
