@@ -4,7 +4,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "utils/Logger.h"
 #include "molecules/Quaternion.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "particleContainer/ParticleContainer.h"
 
 #define COMMUNICATION_THRESHOLD 3
@@ -93,10 +93,11 @@ void CavityEnsemble::setSubdomain(int rank, double x0, double x1, double y0, dou
 
 void CavityEnsemble::setControlVolume(double x0, double y0, double z0, double x1, double y1, double z1) {
     if ((x0 >= x1) || (y0 >= y1) || (z0 >= z1)) {
-        Log::global_log->error() << "\nInvalid control volume (" << x0 << " / " << y0
+        std::ostringstream error_message;
+        error_message << "\nInvalid control volume (" << x0 << " / " << y0
                             << " / " << z0 << ") to (" << x1 << " / " << y1 << " / "
                             << z1 << ")." << std::endl;
-        Simulation::exit(711);
+        MARDYN_EXIT(error_message.str());
     }
 
     this->restrictedControlVolume = true;
@@ -111,20 +112,24 @@ void CavityEnsemble::setControlVolume(double x0, double y0, double z0, double x1
 
 void CavityEnsemble::init(Component *component, unsigned Nx, unsigned Ny, unsigned Nz) {
     if (this->ownrank < 0) {
-        Log::global_log->error() << "\nInvalid rank " << ownrank << ".\n";
-        Simulation::exit(712);
+        std::ostringstream error_message;
+        error_message << "\nInvalid rank " << ownrank << ".\n";
+        MARDYN_EXIT(error_message.str());
     }
     if (this->initialized) {
-        Log::global_log->error() << "\nCavity ensemble initialized twice.\n";
-        Simulation::exit(713);
+        std::ostringstream error_message;
+        error_message << "\nCavity ensemble initialized twice.\n";
+        MARDYN_EXIT(error_message.str());
     }
     if (0.0 >= this->T) {
-        Log::global_log->error() << "\nInvalid temperature T = " << T << ".\n";
-        Simulation::exit(714);
+        std::ostringstream error_message;
+        error_message << "\nInvalid temperature T = " << T << ".\n";
+        MARDYN_EXIT(error_message.str());
     }
     if (0.0 >= this->globalV) {
-        Log::global_log->error() << "\nInvalid control volume V_ctrl = " << globalV << ".\n";
-        Simulation::exit(715);
+        std::ostringstream error_message;
+        error_message << "\nInvalid control volume V_ctrl = " << globalV << ".\n";
+        MARDYN_EXIT(error_message.str());
     }
 
     this->componentid = component->ID();

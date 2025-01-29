@@ -21,7 +21,7 @@ Prerequisites
 * [FFTW3](http://www.fftw.org)
 * [VTK](http://www.vtk.org)
 * [QuickSched](https://arxiv.org/abs/1601.05384)
-
+* If [AutoPas](https://autopas.github.io/doxygen_documentation/git-master/) is enabled, make sure to have [its requirements](https://github.com/AutoPas/AutoPas/blob/master/docs/userdoc/Building.md) installed.
 
 Installation
 ------------
@@ -161,10 +161,13 @@ MarDyn [options] <inputfile>
 ```
 where `MarDyn` is the executable build in the INSTALLATION section, `[options]` are any "--"-prefixed options as listed by `MarDyn --help` and `<inputfile>` is a input file.
 
-Detailed help can be obtained by running
+To get an overview of further command line options run
 ```sh
 MarDyn --help
 ```
+
+To understand how to write an input file check out [examples/all-options.xml](https://github.com/ls1mardyn/ls1-mardyn/blob/master/examples/all-options.xml), the various examples in the examples folder and the documentation of the various `readXML()` methods, e.g. via our doxygen documentation.
+
 ### running examples
 ls1-MarDyn comes with a set of examples, which can be found in the examples folder.
 ```sh

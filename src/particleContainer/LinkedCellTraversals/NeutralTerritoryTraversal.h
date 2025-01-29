@@ -124,15 +124,17 @@ void NeutralTerritoryTraversal<CellTemplate>::traverseCellPairs(CellProcessor& c
 
 template <class CellTemplate>
 void NeutralTerritoryTraversal<CellTemplate>::traverseCellPairsOuter(CellProcessor& cellProcessor) {
-	Log::global_log->error() << "NT: overlapping Comm not implemented." << std::endl;
-	Simulation::exit(46);
+	std::ostringstream error_message;
+	error_message << "NT: overlapping Comm not implemented." << std::endl;
+	MARDYN_EXIT(error_message.str());
 }
 
 template <class CellTemplate>
 void NeutralTerritoryTraversal<CellTemplate>::traverseCellPairsInner(CellProcessor& cellProcessor, unsigned stage,
 																	 unsigned stageCount) {
-	Log::global_log->error() << "NT: overlapping Comm not implemented." << std::endl;
-	Simulation::exit(47);
+	std::ostringstream error_message;
+	error_message << "NT: overlapping Comm not implemented." << std::endl;
+	MARDYN_EXIT(error_message.str());
 }
 
 template <class CellTemplate>

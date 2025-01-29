@@ -17,7 +17,8 @@
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "utils/Logger.h"  // is this used?
 
-
+#include "boundaries/BoundaryHandler.h"
+#include "ensemble/EnsembleBase.h"
 
 class Component;
 class Domain;
@@ -287,6 +288,63 @@ public:
 
 	virtual void printCommunicationPartners(std::string filename) const {};
 
+	/**
+	 * @brief Set the global boundary type for the _boundaryHandler object.
+	 * 
+	 * Defers directly to BoundaryHandler::setGlobalWallType(), check there for more documentation.
+	 * 
+	 * @param dimension the dimension of interest, must be DimensionType enum member
+	 * @param boundary the type of the boundary, must be BoundaryType enum member
+	 */
+	void setGlobalBoundaryType(DimensionUtils::DimensionType dimension, BoundaryUtils::BoundaryType boundary);
+
+	/**
+	 * @brief Sets up the _boundaryHandler object, updating the global and local domain bounds, and triggering
+	 * BoundaryHandler::updateGlobalWallLookupTable() to refresh boundary conditions
+	 * 
+	 * @param domain Domain object to get the local bounding boxes
+	 * @param ensemble Ensemble object to get the global bounding boxes
+	 */
+	void setBoundsAndGlobalBoundaries(Domain* domain, Ensemble* ensemble);
+
+	/**
+	 * @brief Check if any of the global boundaries are invalid.
+	 * 
+	 * Defers directly to BoundaryHandler::hasGlobalInvalidBoundary(), check there for more documentation.
+	 * 
+	 * @return true if any of the 6 boundaries are invalid
+	 * @return false if all 6 boundaries are valid
+	 */
+	bool hasGlobalInvalidBoundary() const { return _boundaryHandler.hasGlobalInvalidBoundary();}
+
+	/**
+	 * @brief Check if any of the global boundaries are non-periodic.
+	 * 
+	 * If false, this is used to bypass all boundary-related code, to mimic default behaviour of ls1
+	 * (with all periodic boundaries).
+	 * Defers directly to BoundaryHandler::hasGlobalNonPeriodicBoundary(), check there for more documentation.
+	 * 
+	 * @return true if any of the 6 boundaries are non-periodic
+	 * @return false if all 6 boundaries are periodic
+	 */
+	bool hasGlobalNonPeriodicBoundary() const { return _boundaryHandler.hasGlobalNonPeriodicBoundary();}
+
+	/**
+	 * @brief Processes leaving particles according to the boundary coundition of the wall the particles would be leaving.
+	 * 
+	 * Completely bypassed internally if ::hasGlobalNonPeriodicBoundary() is false
+	 * Defers directly to BoundaryHandler::processGlobalWallLeavingParticles(), check there for more documentation.
+	 */
+	void processBoundaryConditions(ParticleContainer* moleculeContainer, double timestepLength);
+
+	/**
+	 * @brief Delete all halo particles outside global boundas that are non-periodic.
+	 * 
+	 * Completely bypassed internally if ::hasGlobalNonPeriodicBoundary() is false
+	 * Defers directly to BoundaryHandler::removeNonPeriodicHalos(), check there for more documentation.
+	 */
+	void removeNonPeriodicHalos(ParticleContainer* moleculeContainer);
+
 protected:
 	void addLeavingMolecules(std::vector<Molecule>& invalidMolecules, ParticleContainer* moleculeContainer);
 
@@ -335,6 +393,8 @@ protected:
 
 	//! total number of processes in the simulation
 	int _numProcs;
+
+	BoundaryHandler _boundaryHandler;
 
 private:
 	CollectiveCommBase _collCommBase;

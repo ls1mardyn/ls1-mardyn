@@ -7,12 +7,13 @@
 
 #include <cmath>
 #include <tuple>
+#include <sstream>
 
 #include "TimerProfiler.h"
 #include "utils/Logger.h"
 #include "utils/String_utils.h"
-#include "utils/mardyn_assert.h"
 #include "utils/xmlfileUnits.h"
+#include "utils/mardyn_assert.h"
 
 
 
@@ -36,7 +37,9 @@ void TimerProfiler::readXML(XMLfileUnits& xmlconfig) {
 		} else if (displayMode == "none") {
 			setDisplayMode(Displaymode::NONE);
 		} else {
-			Log::global_log->error() << "Unknown display mode: " << displayMode << std::endl;
+			std::ostringstream error_message;
+			error_message << "Unknown display mode: " << displayMode << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 }
@@ -189,7 +192,6 @@ void TimerProfiler::readInitialTimersFromFile(std::string fileName){
 		std::make_tuple("VECTORIZED_LJP2P_CELL_PROCESSOR_VLJP2P", std::vector<std::string>{"CELL_PROCESSORS"}, true),
 		std::make_tuple("BINARY_READER_INPUT", std::vector<std::string>{"IO"}, true),
 		std::make_tuple("INPUT_OLDSTYLE_INPUT", std::vector<std::string>{"IO"}, true),
-		std::make_tuple("MPI_IO_READER_INPUT", std::vector<std::string>{"IO"}, true),
 		std::make_tuple("MPI_CHECKPOINT_WRITER_INPUT", std::vector<std::string>{"IO"}, true),
 		std::make_tuple("SIMULATION_LOOP", std::vector<std::string>{"SIMULATION"}, true),
 		std::make_tuple("SIMULATION_DECOMPOSITION", std::vector<std::string>{"SIMULATION_LOOP"}, true),
@@ -198,6 +200,7 @@ void TimerProfiler::readInitialTimersFromFile(std::string fileName){
 		std::make_tuple("QUICKSCHED", std::vector<std::string>{"SIMULATION_LOOP"}, true),
 #endif
 		std::make_tuple("SIMULATION_PER_STEP_IO", std::vector<std::string>{"SIMULATION_LOOP"}, true),
+		std::make_tuple("SIMULATION_BOUNDARY_TREATMENT", std::vector<std::string>{"SIMULATION_LOOP"}, true),
 		std::make_tuple("SIMULATION_IO", std::vector<std::string>{"SIMULATION"}, true),
 		std::make_tuple("SIMULATION_UPDATE_CONTAINER", std::vector<std::string>{"SIMULATION_DECOMPOSITION"}, true),
 		std::make_tuple("SIMULATION_MPI_OMP_COMMUNICATION", std::vector<std::string>{"SIMULATION_DECOMPOSITION"}, true),

@@ -4,7 +4,7 @@
 
 #include "PluginFactory.h"
 #include "Domain.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 
 #include <map>
 #include <string>
@@ -175,13 +175,17 @@ long PluginFactory<PluginBase>::enablePlugins(std::list<PluginBase*>& _plugins, 
 		}
 		Log::global_log->info() << "Enabling plugin: " << pluginname << std::endl;
 
-		PluginBase* plugin = this->create(pluginname);
-		if (plugin == nullptr) {
-			Log::global_log->warning() << "Could not create plugin using factory: " << pluginname << std::endl;
+		// Allowing an alias for a plugin. Not sure why this exists...
+		if (pluginname == "DomainProfiles") {
+			pluginname = "DensityProfileWriter";
+			Log::global_log->warning() << "DomainProfiles doesn't exist but is mapped to DensityProfileWriter!\n";
 		}
+
+		PluginBase* plugin = this->create(pluginname);
 
 		//@TODO: add plugin specific functions
 
+		// Special treatment of complex plugins
 		if (pluginname == "MmpldWriter") {
 			// @todo this should be handled in the MMPLD Writer readXML()
 			std::string sphere_representation = "simple";
@@ -192,17 +196,13 @@ long PluginFactory<PluginBase>::enablePlugins(std::list<PluginBase*>& _plugins, 
 			} else if ("multi" == sphere_representation) {
 				plugin = new MmpldWriterMultiSphere();
 			} else {
-				Log::global_log->error() << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation
-									<< std::endl;
-				Simulation::exit(-1);
+				std::ostringstream error_message;
+				error_message << "[MMPLD Writer] Unknown sphere representation type: " << sphere_representation << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
-		} else if (pluginname == "DomainProfiles") {
-			plugin = this->create("DensityProfileWriter");
-			// TODO: add _domain access (via Simularion)
-			_domain->readXML(xmlconfig);
 		}
 
-		if (nullptr != plugin) {
+		if (plugin) {
 			plugin->readXML(xmlconfig);
 			_plugins.push_back(plugin);
 		} else {

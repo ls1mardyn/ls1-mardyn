@@ -5,22 +5,22 @@
  */
 
 #include "AutoPasSimpleMolecule.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 
 Component* AutoPasSimpleMolecule::_component = nullptr;
 
 Quaternion AutoPasSimpleMolecule::_quaternion = Quaternion(1.0, 0.0, 0.0, 0.0);
 
 AutoPasSimpleMolecule::AutoPasSimpleMolecule(unsigned long id, Component* component, double rx, double ry, double rz,
-											 double vx, double vy, double vz, double q0, double q1, double q2,
-											 double q3, double Dx, double Dy, double Dz)
+											 double vx, double vy, double vz, double qw, double qx, double qy,
+											 double qz, double Dx, double Dy, double Dz)
 	: autopas::ParticleFP64({rx, ry, rz}, {vx, vy, vz}, id) {
 	if (_component == nullptr) {
 		_component = component;
 	} else if (_component != component and component != nullptr) {
-		Log::global_log->debug() << "AutoPasSimpleMolecule can only handle one component" << std::endl;
+		Log::global_log->warning() << "AutoPasSimpleMolecule can only handle one component" << std::endl;
 		_component = component;
-		// Simulation::exit(32);
+		// MARDYN_EXIT(error_message.str());
 	}
 }
 

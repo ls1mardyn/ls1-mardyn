@@ -3,6 +3,8 @@
 #include "ODF.h"
 #include "WrapOpenMP.h"
 
+#include "Simulation.h"
+
 void ODF::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->debug() << "[ODF] enabled. Dipole orientations must be set to [0 0 1]!" << std::endl;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);

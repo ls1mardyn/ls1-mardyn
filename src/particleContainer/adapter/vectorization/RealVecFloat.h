@@ -10,6 +10,8 @@
 
 #include "RealVec.h"
 
+#include "utils/mardyn_assert.h"
+
 // keep this file and RealVecDouble as close as possible, so that they can be examined via diff!
 
 namespace vcp {

@@ -12,6 +12,7 @@
 #include "molecules/Molecule.h"
 #include "Domain.h"
 #include "utils/CommVar.h"
+#include "utils/Random.h"
 //#include "NEMD/Request.h"
 
 #include <map>

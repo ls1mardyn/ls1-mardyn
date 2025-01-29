@@ -8,7 +8,6 @@
 #define SRC_PARALLEL_RESILIENCECOMM_H_
 
 #ifdef ENABLE_MPI
-#include "utils/mardyn_assert.h"
 
 #include <memory>
 #include <vector>

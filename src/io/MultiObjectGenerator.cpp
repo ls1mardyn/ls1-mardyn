@@ -10,7 +10,6 @@
 #endif
 
 #include "Domain.h"
-#include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
 #include "io/ObjectGenerator.h"
 #include "molecules/MoleculeIdPool.h"

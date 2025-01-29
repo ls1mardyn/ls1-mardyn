@@ -30,19 +30,19 @@
 
       <components>
        <moleculetype id="1" name="co2_merker" >
-    <site type="LJ126" id="1" >
+    <site type="LJ126" id="1" name="O">
       <coords> <x>0.0</x> <y>0.0</y> <z>-2.4319</z> </coords>
       <mass>0.015999</mass>
       <sigma>5.62288</sigma>
       <epsilon>0.000318243</epsilon>
     </site>
-    <site type="LJ126" id="2" >
+    <site type="LJ126" id="2" name="O">
       <coords> <x>0.0</x> <y>0.0</y> <z>2.4319</z> </coords>
       <mass>0.015999</mass>
       <sigma>5.62288</sigma>
       <epsilon>0.000318243</epsilon>
     </site>
-    <site type="LJ126" id="3" >
+    <site type="LJ126" id="3" name="C">
       <coords> <x></x> <y></y> <z></z> </coords>
       <mass>0.012</mass>
       <sigma>5.31712</sigma>

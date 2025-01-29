@@ -284,8 +284,9 @@ bool ChemicalPotential::decideDeletion(double deltaUTilde)
 					<< "SEVERE WARNING: The Widom method is (erroneously) trying to carry out test deletions.\n";
 			return false;
 		}
-		Log::global_log->error() << "No decision is possible." << std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "No decision is possible." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	float dec = *_remainingDecisions.begin();
 	_remainingDecisions.erase(_remainingDecisions.begin());
@@ -317,8 +318,9 @@ bool ChemicalPotential::decideInsertion(double deltaUTilde)
 					<< ": no decision is possible !!!\n";
 			return false;
 		}
-		Log::global_log->error() << "No decision is possible." << std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "No decision is possible." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	double acc = _globalReducedVolume * exp(_muTilde - deltaUTilde)
 			/ (1.0 + (double) (_globalN));
@@ -373,10 +375,11 @@ void ChemicalPotential::setControlVolume(double x0, double y0, double z0,
 		double x1, double y1, double z1)
 {
 	if ((x0 >= x1) || (y0 >= y1) || (z0 >= z1)) {
-		Log::global_log->error() << "\nInvalid control volume (" << x0 << " / " << y0
+		std::ostringstream error_message;
+		error_message << "\nInvalid control volume (" << x0 << " / " << y0
 				<< " / " << z0 << ") to (" << x1 << " / " << y1 << " / " << z1
 				<< ")." << std::endl;
-		Simulation::exit(611);
+		MARDYN_EXIT(error_message.str());
 	}
 	_restrictedControlVolume = true;
 	_globalV = (x1 - x0) * (y1 - y0) * (z1 - z0);

@@ -23,11 +23,12 @@ void Dropaligner::readXML(XMLfileUnits& xmlconfig) {
 	// SANITY CHECK
 	if (_interval < 1 || _alignmentCorrection < 0 || _alignmentCorrection > 1 || _xPos <= 0. || _yPos <= 0. ||
 		_zPos <= 0. || _radius <= 0) {
-		Log::global_log->error() << "[Dropaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
-		Log::global_log->error() << "[Dropaligner] HALTING SIMULATION" << std::endl;
+		std::ostringstream error_message;
+		error_message << "[Dropaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
+		error_message << "[Dropaligner] HALTING SIMULATION" << std::endl;
 		_enabled = false;
 		// HALT SIM
-		Simulation::exit(1);
+		MARDYN_EXIT(error_message.str());
 		return;
 	}
 

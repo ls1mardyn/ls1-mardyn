@@ -9,10 +9,10 @@
 
 #include "Common.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
-#include "Simulation.h"
 #include "utils/Logger.h"
 
 
