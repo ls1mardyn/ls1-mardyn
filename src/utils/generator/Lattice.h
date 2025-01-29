@@ -59,7 +59,7 @@ public:
 	   </lattice>
 	   \endcode
 	 * where system can be one of the values "triclinic", "monoclinic", "orthorombic", "tetragonal",
-	 * "rhomboedral", and "hexagonal", "cubic" and centering can be one of the values "primitive",
+	 * "rhomboedral", and "hexagonal", "cubic" (see Bravais lattices) and centering can be one of the values "primitive",
 	 * "body", "face", "base A", "base B", and "base C".
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
@@ -118,6 +118,12 @@ public:
 	inline const double* b() { return _b; }
 	/** Get pointer to lattice vector c */
 	inline const double* c() { return _c; }
+	/** Set i-th element of lattice vector a */
+	void seta(short i, double a_i) { _a[i] = a_i; }
+	/** Set i-th element of lattice vector b */
+	void setb(short i, double b_i) { _b[i] = b_i; }
+	/** Set i-th element of lattice vector c */
+	void setc(short i, double c_i) { _c[i] = c_i; }
 
 
 private:

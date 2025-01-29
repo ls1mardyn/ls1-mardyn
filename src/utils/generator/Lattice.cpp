@@ -32,7 +32,7 @@ static const char* LatticeSystemNames[] = {
 	"cubic"
 };
 
-/** List with the number of cetneres in the different lattice centering types */
+/** List with the number of centers in the different lattice centering types */
 static int LatticeCenteringNums[6] = { 1, 2, 4, 2, 2, 2 };
 
 /** List of the names of the centerings */
