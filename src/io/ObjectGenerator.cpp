@@ -53,9 +53,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		_object->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	} else {
-		std::ostringstream error_message;
-		error_message << "No object specified." << std::endl;
-		MARDYN_EXIT(error_message.str());
+		MARDYN_EXIT("No object specified.");
 	}
 
 	if(xmlconfig.changecurrentnode("velocityAssigner")) {
