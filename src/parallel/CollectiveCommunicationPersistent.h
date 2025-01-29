@@ -139,15 +139,26 @@
 //!  collComm1.get(ull1, s1);
 //! @endcode
 
-template<int tag, int Fn, typename Op, typename Root, typename Comm, typename... Ts>
+template<int tag, int Fn, typename Op, typename Root, typename... Ts>
 class CollCommObj {
 public:
-    CollCommObj(Op op, Root root, Comm comm, Ts... args) {
+
+    /**
+     * Construcor of the class
+     *
+     * @param op Contains the operation that is performed during the collective communication (eg. sum for allreduce).
+     * @param root The root rank of the collective communication.
+     * @param comm The MPI communicator used for the collective communication.
+     * @param args... The elements that will take part in the collective communication.
+     */
+
+    CollCommObj(Op op, Root root, MPI_Comm comm, Ts... args) {
         // fill the buffer, this always has to hapen
         free_fill_buffer(_buffer.data(), args...);
-        // check if this combination of values has already been constructed
-        if ( _mpi_members == nullptr )
-        {
+        // check if this combination of values has already been constructed (this is for MaMico compatibility)
+        if ( _mpi_members == nullptr ) {
+            // set communicator
+            _mpi_comm = comm;
             // create the static members
             static MPI_Members members;
             _mpi_members = &members;
@@ -164,17 +175,13 @@ public:
                                     array_of_types.data(), &_mpi_members->get_type());
             MPI_Type_commit(&_mpi_members->get_type());
             // check if we were given a custom mpi operation
-            if constexpr( std::is_same_v<Op, add_struct> || std::is_same_v<Op, max_struct> || std::is_same_v<Op, min_struct> )
-            {
+            if constexpr( is_op_v<Op> ) {
                 // Create MPI Operation
                 MPI_Op_create(Op::template func<Ts...>, 1, &_mpi_members->get_op());
             }
             // check if we were given a root rank
             if constexpr( std::is_same_v<Root, int> )
                 _root = root;
-            // check if we were given a communicator
-            if constexpr( std::is_same_v<Comm, MPI_Comm> )
-                _mpi_comm = comm;
 #ifdef ENABLE_PERSISTENT
             // check if we should create a persistent communication request
             _init_persistent_request();
@@ -188,9 +195,9 @@ public:
 
     auto communicate()
         -> std::enable_if_t<
-            (is_allreduce_v<Fn> && is_op_v<Op> && is_comm_v<Comm>) ||            // checks if everything for an allreduce has been given
-            (is_bcast_v<Fn> && is_comm_v<Comm> && std::is_same_v<Root, int>) ||    // checks if everything for an bcast has been given
-            (is_scan_v<Fn> && is_op_v<Op> && is_comm_v<Comm>)                    // checks if everything for an scan has been given
+            (is_allreduce_v<Fn> && is_op_v<Op>) ||
+            (is_bcast_v<Fn> && std::is_same_v<Root, int>) ||
+            (is_scan_v<Fn> && is_op_v<Op>)
         > {
 #ifdef ENABLE_PERSISTENT
         MPI_Start( &_mpi_members->get_request() );
@@ -223,9 +230,9 @@ private:
 #ifdef ENABLE_PERSISTENT
     auto _init_persistent_request()
         -> std::enable_if_t<
-            (is_allreduce_v<Fn> && is_op_v<Op> && is_comm_v<Comm>) ||            // checks if everything for an allreduce has been given
-            (is_bcast_v<Fn> && is_comm_v<Comm> && std::is_same_v<Root, int>) ||    // checks if everything for an bcast has been given
-            (is_scan_v<Fn> && is_op_v<Op> && is_comm_v<Comm>)                    // checks if everything for an scan has been given
+            (is_allreduce_v<Fn> && is_op_v<Op>) ||
+            (is_bcast_v<Fn> && std::is_same_v<Root, int>) ||
+            (is_scan_v<Fn> && is_op_v<Op>)
         > {
         if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Allreduce)) {
             MPI_Allreduce_init( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(),
@@ -276,7 +283,6 @@ private:
 #else
     alignas(16) std::array<std::byte, sizeof...(Ts) * get_max_size(Ts{}...)> _buffer{};
 #endif
-    static inline std::mutex _mtx {};
     static inline MPI_Members* _mpi_members {};
     static inline MPI_Comm _mpi_comm {};
     static inline int _root {};
@@ -292,7 +298,8 @@ template<int tag = 0, typename... Ts>
 auto makeCollCommObjAllreduceAdd(MPI_Comm comm, Ts... args) {
     // This variable determines if and which persistent request should be created. 0 means none.
     constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
-    return CollCommObj<tag, fn, add_struct, empty_template_t, MPI_Comm, Ts...> (add_struct{}, empty_template_t{}, comm, args...);
+    return CollCommObj<tag, fn, add_struct, empty_template_t, Ts...> 
+                        (add_struct{}, empty_template_t{}, comm, args...);
 }
 
 
@@ -301,7 +308,8 @@ template<int tag = 0, typename... Ts>
 auto makeCollCommObjAllreduceMax(MPI_Comm comm, Ts... args) {
     // This variable determines if and which persistent request should be created.
     constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
-    return CollCommObj<tag, fn, max_struct, empty_template_t, MPI_Comm, Ts...>(max_struct{}, empty_template_t{}, comm, args...);
+    return CollCommObj<tag, fn, max_struct, empty_template_t, Ts...>
+                        (max_struct{}, empty_template_t{}, comm, args...);
 }
 
 // Function to explicitly create a persistent collective communication request.
@@ -309,7 +317,8 @@ template<int tag = 0, typename... Ts>
 auto makeCollCommObjAllreduceMin(MPI_Comm comm, Ts... args) {
     // This variable determines if and which persistent request should be created.
     constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
-    return CollCommObj<tag, fn, min_struct, empty_template_t, MPI_Comm, Ts...>(min_struct{}, empty_template_t{}, comm, args...);
+    return CollCommObj<tag, fn, min_struct, empty_template_t, Ts...>
+                        (min_struct{}, empty_template_t{}, comm, args...);
 }
 
 
@@ -318,7 +327,8 @@ template<int tag = 0, typename... Ts>
 auto makeCollCommObjBcast(int root, MPI_Comm comm, Ts... args) {
     // This variable determines if and which persistent request should be created.
     constexpr auto fn = static_cast<int>(MPI_CollFunctions::Bcast);
-    return CollCommObj<tag, fn, empty_template_t, int, MPI_Comm, Ts...>(empty_template_t{}, root, comm, args...);
+    return CollCommObj<tag, fn, empty_template_t, int, Ts...>
+                        (empty_template_t{}, root, comm, args...);
 }
 
 // Function to explicitly create a persistent collective communication request.
@@ -326,7 +336,8 @@ template<int tag = 0, typename... Ts>
 auto makeCollCommObjScanAdd(MPI_Comm comm, Ts... args) {
     // This variable determines if and which persistent request should be created.
     constexpr auto fn = static_cast<int>(MPI_CollFunctions::Scan);
-    return CollCommObj<tag, fn, add_struct, empty_template_t, MPI_Comm, Ts...>(add_struct{}, empty_template_t{}, comm, args...);
+    return CollCommObj<tag, fn, add_struct, empty_template_t, Ts...>
+                        (add_struct{}, empty_template_t{}, comm, args...);
 }
 
 #endif
