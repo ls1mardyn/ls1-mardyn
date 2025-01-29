@@ -14,10 +14,12 @@
 #include "LesSolver.h"
 #include "utils/generator/Objects.h"
 #include "utils/Coordinate3D.h"
+#include "utils/mardyn_assert.h"
 #include "molecules/Molecule.h"
 
 #include <iostream>
 #include <cmath>
+#include <array>
 
 
 void GridFiller::init(Lattice& lattice, Basis& basis, double origin[3]) {
@@ -35,6 +37,27 @@ void GridFiller::init() {
     _object->getBboxMin(bBoxMin);
     _object->getBboxMax(bBoxMax);
     _baseCount = 0;
+
+	if (useDensity) {
+		// Lattice is scaled so that a even number of unit cells fit in box
+		// Lattice system is now technically orthorombic instead of cubic
+		std::array<double, 3> bBoxSize;
+		std::array<double, 3> currentVects = { _lattice.a()[0], _lattice.b()[1], _lattice.c()[2] };
+		std::array<double, 3> scaledVects;
+
+		for(int i = 0; i < 3; i++) {
+			bBoxSize[i] = bBoxMax[i] - bBoxMin[i];
+			const int numElementsBox = std::round(bBoxSize[i]/currentVects[i]);
+			scaledVects[i] = bBoxSize[i]/numElementsBox;
+			Log::global_log->debug() << "Scaled lattice vector " << i << " from "
+				<< currentVects[i] << " to " << scaledVects[i]
+				<< " ; Number of unit cells in this direction " << numElementsBox << std::endl;
+		}
+
+		_lattice.seta(0,scaledVects[0]);
+		_lattice.setb(1,scaledVects[1]);
+		_lattice.setc(2,scaledVects[2]);
+	}
 
     /* transpose (a,b,c) */
     double *A[3];
@@ -58,8 +81,8 @@ void GridFiller::init() {
     long startdims[3];
     long enddims[3];
     for(int d = 0; d < 3; d++) {
-        startdims[d] = floor(x0[d]);
-        enddims[d] = ceil(x1[d]);
+        startdims[d] = std::floor(x0[d]);
+        enddims[d] = std::ceil(x1[d]);
     }
 
     double rtmp[3];
@@ -71,9 +94,9 @@ void GridFiller::init() {
         rtmp[j] = boxMax[j];
         LesSolve(A, rtmp, 3, x);
         for(int d = 0; d < 3; d++) {
-            long coord = floor(x[d]);
+            long coord = std::floor(x[d]);
             if(coord < startdims[d]) { startdims[d] = coord; }
-            coord = ceil(x[d]);
+            coord = std::ceil(x[d]);
             if(coord > enddims[d]) { enddims[d] = coord; }
         }
     }
@@ -87,32 +110,54 @@ void GridFiller::init() {
 }
 
 void GridFiller::readXML(XMLfileUnits& xmlconfig) {
-	using std::endl;
-	if(xmlconfig.changecurrentnode("lattice")) {
-		_lattice.readXML(xmlconfig);
-		xmlconfig.changecurrentnode("..");
-	}
+
 	if(xmlconfig.changecurrentnode("basis")) {
 		_basis.readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	}
+
 	xmlconfig.getNodeValue("latticeOccupancy", _latticeOccupancy);
 	Log::global_log->info() << "Lattice occupancy: " << _latticeOccupancy << std::endl;
+
+	// If <density> is specified, use it and ignore <lattice>
 	double rho = 0.0;
 	if(xmlconfig.getNodeValueReduced("density", rho)) {
-		Log::global_log->info() << "Density: " << rho << std::endl;
+		useDensity = true;
+		Log::global_log->info() << "Using <density> for initialization" << std::endl;
+		Log::global_log->info() << "Desired density: " << rho << " ; Warning: This value may not be hit exactly!" << std::endl;
+		// Warn, if density and lattice were given in config xml
+		if (xmlconfig.changecurrentnode("lattice")) {
+			Log::global_log->warning() << "Giving both <lattice> and <density> ignores the provided lattice system and vectors!" << std::endl;
+			xmlconfig.changecurrentnode("..");  // go back if changecurrentnode was successful
+		}
+		_lattice.setSystem(cubic);
+		_lattice.setCentering(face);
+
 		rho /= _latticeOccupancy;
-		Log::global_log->info() << "Initializing cubic lattice with density (fully occupied): " << rho << std::endl;
-		Log::global_log->warning() << "Initializing cubic lattice with density overwrites previously set lattice system and vectors." << std::endl;
+		Log::global_log->debug() << "Initializing lattice with density (fully occupied): " << rho << std::endl;
+		
+		// Calculate size of unit cell
 		long num_molecules_per_crystal_cell = _basis.numMolecules() * _lattice.numCenters();
-		Log::global_log->debug() << "Number of molecules per crystall cell: " << num_molecules_per_crystal_cell << std::endl;
+		Log::global_log->debug() << "Number of molecules per crystal cell: " << num_molecules_per_crystal_cell << std::endl;
 		double crystal_cell_volume = num_molecules_per_crystal_cell / rho;
-		double l = pow(crystal_cell_volume, 1./3.);
+		double l = pow(crystal_cell_volume, 1./3.);  // This assumes a cubic cell as first approach
+		// Since the edge lengths of the cubic cell are not evenly divisible by the object size,
+		// they are later scaled to fit evenly into the object (same distance also across the boundaries)
 		double a[3], b[3], c[3];
 		a[0] = l; a[1] = 0; a[2] = 0;
 		b[0] = 0; b[1] = l; b[2] = 0;
 		c[0] = 0; c[1] = 0; c[2] = l;
 		_lattice.init(cubic, _lattice.centering(), a, b, c);
+	} else {
+		// Use given lattice if no density was specified
+		useDensity = false;
+		Log::global_log->info() << "Using <lattice> for initialization" << std::endl;
+		if (xmlconfig.changecurrentnode("lattice")) {
+			_lattice.readXML(xmlconfig);
+			xmlconfig.changecurrentnode("..");
+		} else {
+			MARDYN_EXIT("[GridFiller] Neither <lattice> nor <density> specified");
+		}
 	}
 
 	Coordinate3D origin(xmlconfig, "latticeOrigin");
