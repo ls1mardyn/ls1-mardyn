@@ -6,6 +6,7 @@
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
+#include "parallel/CollectiveCommunicationPersistent.h"
 #endif
 #include <particleContainer/RegionParticleIterator.h>
 #include <iostream>
@@ -198,12 +199,9 @@ public:
 
 	void updateSendLeavingWithCopies(bool sendTogether){
 				// Count all processes that need to send separately
-		collCommInit(1);
-		collCommAppendInt(!sendTogether);
-		collCommAllreduceSum();
-		_sendLeavingAndCopiesSeparately = collCommGetInt();
-		collCommFinalize();
-
+		auto collComm = makeCollCommObjAllreduceAdd(getCommunicator(), static_cast<int>(!sendTogether));
+		collComm.communicate();
+		std::tie(_sendLeavingAndCopiesSeparately) = collComm.get();
 
 		Log::global_log->info() << "Sending leaving particles and halo copies "
 				<< (sendLeavingWithCopies() ? "together" : "separately") << std::endl;

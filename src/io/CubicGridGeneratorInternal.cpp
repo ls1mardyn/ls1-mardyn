@@ -91,11 +91,11 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 
 	Log::global_log->info() << "Finished reading molecules: 100%" << std::endl;
 
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(id); //number of local molecules
-	domainDecomp->collCommScanSum();
-	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - id;
-	domainDecomp->collCommFinalize();
+	auto collComm = makeCollCommObjScanAdd(domainDecomp->getCommunicator(), id);
+	collComm.communicate();
+	auto [idOffset] = collComm.get();
+	idOffset -= id;
+
 	// fix ID's to be unique:
 	Log::global_log->info() << "CGG: ids" << std::endl;
 	#if defined(_OPENMP)
