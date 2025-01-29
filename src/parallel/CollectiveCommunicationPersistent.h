@@ -295,13 +295,6 @@ auto makeCollCommObjAllreduceAdd(MPI_Comm comm, Ts... args) {
     return CollCommObj<tag, fn, add_struct, empty_template_t, MPI_Comm, Ts...> (add_struct{}, empty_template_t{}, comm, args...);
 }
 
-// Functions to explicitly set the MPI_Datatype and MPI_Op, since the MPI_Comm is missing a persistent comm request is not available.
-template<int tag = 0, typename... Ts>
-auto makeCollCommObjAllreduceAdd(Ts... args) {
-    // This variable determines if and which persistent request should be created. 0 means none.
-    constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
-    return CollCommObj<tag, fn, add_struct, empty_template_t, empty_template_t, Ts...> (add_struct{}, empty_template_t{}, empty_template_t{}, args...);
-}
 
 // Function to explicitly create a persistent collective communication request.
 template<int tag = 0, typename... Ts>
@@ -309,14 +302,6 @@ auto makeCollCommObjAllreduceMax(MPI_Comm comm, Ts... args) {
     // This variable determines if and which persistent request should be created.
     constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
     return CollCommObj<tag, fn, max_struct, empty_template_t, MPI_Comm, Ts...>(max_struct{}, empty_template_t{}, comm, args...);
-}
-
-// 
-template<int tag = 0, typename... Ts>
-auto makeCollCommObjAllreduceMax(Ts... args) {
-    // This variable determines if and which persistent request should be created. 0 means none.
-    constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
-    return CollCommObj<tag, fn, max_struct, empty_template_t, empty_template_t, Ts...>(max_struct{}, empty_template_t{}, empty_template_t{}, args...);
 }
 
 // Function to explicitly create a persistent collective communication request.
@@ -327,13 +312,6 @@ auto makeCollCommObjAllreduceMin(MPI_Comm comm, Ts... args) {
     return CollCommObj<tag, fn, min_struct, empty_template_t, MPI_Comm, Ts...>(min_struct{}, empty_template_t{}, comm, args...);
 }
 
-// 
-template<int tag = 0, typename... Ts>
-auto makeCollCommObjAllreduceMin(Ts... args) {
-    // This variable determines if and which persistent request should be created. 0 means none.
-    constexpr auto fn = static_cast<int>(MPI_CollFunctions::Allreduce);
-    return CollCommObj<tag, fn, min_struct, empty_template_t, empty_template_t, Ts...>(min_struct{}, empty_template_t{}, empty_template_t{}, args...);
-}
 
 // Function to explicitly create a persistent collective communication request.
 template<int tag = 0, typename... Ts>
@@ -349,13 +327,6 @@ auto makeCollCommObjScanAdd(MPI_Comm comm, Ts... args) {
     // This variable determines if and which persistent request should be created.
     constexpr auto fn = static_cast<int>(MPI_CollFunctions::Scan);
     return CollCommObj<tag, fn, add_struct, empty_template_t, MPI_Comm, Ts...>(add_struct{}, empty_template_t{}, comm, args...);
-}
-
-template<int tag = 0, typename... Ts>
-auto makeCollCommObjScanAdd(Ts... args) {
-    // This variable determines if and which persistent request should be created.
-    constexpr auto fn = static_cast<int>(MPI_CollFunctions::Scan);
-    return CollCommObj<tag, fn, add_struct, empty_template_t, empty_template_t, Ts...>(add_struct{}, empty_template_t{}, empty_template_t{}, args...);
 }
 
 #endif
