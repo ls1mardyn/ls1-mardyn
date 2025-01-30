@@ -1,5 +1,6 @@
 #include "IOHelpers.h"
 
+#include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/generator/EqualVelocityAssigner.h"
@@ -39,9 +40,9 @@ void IOHelpers::removeMomentum(ParticleContainer* particleContainer, const std::
 	Log::global_log->info() << "momentumsum prior to removal: " << momentum_sum[0] << " " << momentum_sum[1] << " "
 							<< momentum_sum[2] << std::endl;
 	Log::global_log->info() << "mass_sum: " << mass_sum << std::endl;
-	double v_sub0 = momentum_sum[0] / mass_sum;
-	double v_sub1 = momentum_sum[1] / mass_sum;
-	double v_sub2 = momentum_sum[2] / mass_sum;
+	const double v_sub0 = momentum_sum[0] / mass_sum;
+	const double v_sub1 = momentum_sum[1] / mass_sum;
+	const double v_sub2 = momentum_sum[2] / mass_sum;
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -70,6 +71,48 @@ void IOHelpers::removeMomentum(ParticleContainer* particleContainer, const std::
 	}
 	Log::global_log->info() << "momentumsum after removal: " << momentum_sum[0] << " " << momentum_sum[1] << " "
 							<< momentum_sum[2] << std::endl;
+
+	// After subtraction, the temperature was effectively changed
+	// Therefore, the velocities have to be scaled again to match target temperature
+	const double temperature_target = global_simulation->getEnsemble()->T();
+	double ekin_sum = 0.0;
+	unsigned long numDOFs = 0;
+
+#if defined(_OPENMP)
+#pragma omp parallel reduction(+ : ekin_sum, numDOFs)
+#endif
+	{
+		for (auto molecule = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); molecule.isValid();
+			 ++molecule) {
+			ekin_sum += molecule->U_kin();
+			numDOFs += (3+molecule->component()->getRotationalDegreesOfFreedom());
+		}
+	}
+
+	domainDecomp->collCommInit(2);
+	domainDecomp->collCommAppendDouble(ekin_sum);
+	domainDecomp->collCommAppendUnsLong(numDOFs);
+	domainDecomp->collCommAllreduceSum();
+	ekin_sum = domainDecomp->collCommGetDouble();
+	numDOFs = domainDecomp->collCommGetUnsLong();
+	domainDecomp->collCommFinalize();
+
+	const double temperature_current = 2*ekin_sum/numDOFs;
+	const double scaleFactor = std::sqrt(temperature_target/temperature_current);
+	Log::global_log->info() << "current temperature: " << temperature_current
+							<< "scale velocities by: " << scaleFactor << std::endl;
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+	{
+		for (auto mol = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); mol.isValid();
+			 ++mol) {
+			for (int d = 0; d < 3; d++) {
+				// Scale velocities to match target temperature
+				mol->setv(d,mol->v(d)*scaleFactor);
+			}
+		}
+	}
 }
 
 void IOHelpers::initializeVelocityAccordingToTemperature(ParticleContainer* particleContainer,
