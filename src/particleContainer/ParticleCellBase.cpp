@@ -7,7 +7,6 @@
 
 #include "ParticleCellBase.h"
 #include "ensemble/EnsembleBase.h"
-#include "utils/Random.h"
 #include "Simulation.h"
 #include "utils/generator/EqualVelocityAssigner.h"
 
@@ -50,7 +49,7 @@ bool PositionIsInBox3D(const T l[3], const T u[3], const T r[3]) {
 }
 
 unsigned long ParticleCellBase::initCubicGrid(const std::array<unsigned long, 3> &numMoleculesPerDimension,
-											  const std::array<double, 3> &simBoxLength, Random &RNG) {
+											  const std::array<double, 3> &simBoxLength) {
 
 	std::array<double, 3> spacing{};
 	std::array<double, 3> origin1{}; // origin of the first DrawableMolecule
@@ -133,7 +132,6 @@ unsigned long ParticleCellBase::initCubicGrid(const std::array<unsigned long, 3>
 					// Init molecule with zero velocity and use the EqualVelocityAssigner in the next step
 					Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
 						x2, y2, z2, 0.0, 0.0, 0.0);
-					
 					eqVeloAssigner.assignVelocity(&dummy);
 					buffer.push_back(dummy);
 				}

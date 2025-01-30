@@ -1,7 +1,6 @@
 #pragma once
 
 #include "molecules/Component.h"
-#include "utils/Random.h"
 
 class ParticleContainer;
 class DomainDecompBase;

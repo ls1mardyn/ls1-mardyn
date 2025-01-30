@@ -675,7 +675,7 @@ std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> AutoPasContaine
 }
 
 unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-											  std::array<double, 3> simBoxLength, size_t seed_offset) {
+											  std::array<double, 3> simBoxLength) {
 
 	vcp_real_calc T = global_simulation->getEnsemble()->T();
 	EqualVelocityAssigner eqVeloAssigner(T);
