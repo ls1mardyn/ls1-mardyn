@@ -2,6 +2,7 @@
 
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
+#include "utils/generator/EqualVelocityAssigner.h"
 
 void IOHelpers::removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components,
 							   DomainDecompBase* domainDecomp) {
@@ -73,34 +74,10 @@ void IOHelpers::removeMomentum(ParticleContainer* particleContainer, const std::
 
 void IOHelpers::initializeVelocityAccordingToTemperature(ParticleContainer* particleContainer,
 														 DomainDecompBase* /*domainDecomp*/, double temperature) {
-	Random rng;
+	EqualVelocityAssigner eqVeloAssigner(temperature);
 	for (auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter) {
-		auto velocity = getRandomVelocityAccordingToTemperature(temperature, rng);
-		for (unsigned short d = 0; d < 3; ++d) {
-			iter->setv(d, velocity[d]);
-		}
+		eqVeloAssigner.assignVelocity(&(*iter));
 	}
-}
-
-std::array<double, 3> IOHelpers::getRandomVelocityAccordingToTemperature(double temperature, Random& RNG) {
-	std::array<double, 3> ret{};
-	double dotprod_v = 0;
-	// Doing this multiple times ensures that we have equally distributed directions for the velocities!
-	do {
-		// Velocity
-		for (int dim = 0; dim < 3; dim++) {
-			ret[dim] = RNG.uniformRandInRange(-0.5f, 0.5f);
-		}
-		dotprod_v = ret[0] * ret[0] + ret[1] * ret[1] + ret[2] * ret[2];
-	} while (dotprod_v < 0.0625);
-
-	// Velocity Correction
-	double vCorr = sqrt(3. * temperature / dotprod_v);
-	for (unsigned int i = 0; i < ret.size(); i++) {
-		ret[i] *= vCorr;
-	}
-
-	return ret;
 }
 
 unsigned long IOHelpers::makeParticleIdsUniqueAndGetTotalNumParticles(ParticleContainer* particleContainer,

@@ -14,6 +14,7 @@
 #include "autopas/utils/StringUtils.h"
 #include "autopas/utils/logging/Logger.h"
 #include "parallel/DomainDecompBase.h"
+#include "utils/generator/EqualVelocityAssigner.h"
 
 // Declare the main AutoPas class and the iteratePairwise() methods with all used functors as extern template
 // instantiation. They are instantiated in the respective cpp file inside the templateInstantiations folder.
@@ -676,31 +677,8 @@ std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> AutoPasContaine
 unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
 											  std::array<double, 3> simBoxLength, size_t seed_offset) {
 
-	// Stolen from ParticleCellBase.cpp
-	auto getRandomVelocity = [](auto temperature, Random &RNG) {
-		using T = vcp_real_calc;
-		std::array<T,3> ret{};
-
-		// Velocity
-		for (int dim = 0; dim < 3; dim++) {
-			ret[dim] = RNG.uniformRandInRange(-0.5f, 0.5f);
-		}
-		T dotprod_v = 0;
-		for (unsigned int i = 0; i < ret.size(); i++) {
-			dotprod_v += ret[i] * ret[i];
-		}
-		// Velocity Correction
-		const T three = static_cast<T>(3.0);
-		T vCorr = sqrt(three * temperature / dotprod_v);
-		for (unsigned int i = 0; i < ret.size(); i++) {
-			ret[i] *= vCorr;
-		}
-
-		return ret;
-	};
-
-	Random myRNG{static_cast<int>(seed_offset) + mardyn_get_thread_num()};
 	vcp_real_calc T = global_simulation->getEnsemble()->T();
+	EqualVelocityAssigner eqVeloAssigner(T);
 
 	const std::array<double, 3> spacing = autopas::utils::ArrayMath::div(simBoxLength,
 																		 autopas::utils::ArrayUtils::static_cast_copy_array<double>(
@@ -715,10 +693,10 @@ unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMo
 				const double posY = offset[1] + spacing[1] * y;
 				for (int x = 0; x < numMoleculesPerDimension[0]; ++x) {
 					const double posX = offset[0] + spacing[0] * x;
-					std::array<vcp_real_calc, 3> v = getRandomVelocity(T, myRNG);
+					// Init molecule with zero velocity and use the EqualVelocityAssigner in the next step
 					Molecule m(numMolecules++, &(global_simulation->getEnsemble()->getComponents()->at(0)), posX, posY,
-							   posZ, v[0], v[1],
-							   v[2]);
+							   posZ, 0.0, 0.0, 0.0);
+					eqVeloAssigner.assignVelocity(&m);
 					addParticle(m, true, false, false);
 				}
 			}
