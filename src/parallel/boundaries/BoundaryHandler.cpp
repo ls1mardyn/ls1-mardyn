@@ -138,8 +138,8 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *molec
 
 void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer *moleculeContainer) const {
 	// get halo lengths in each dimension
-	const std::array<double, 3> haloWidths = {moleculeContainer->get_halo_L(0), moleculeContainer->get_halo_L(1),
-											  moleculeContainer->get_halo_L(2)};
+	const std::array<double, 3> haloWidths = {moleculeContainer->getHaloWidthForDimension(0), moleculeContainer->getHaloWidthForDimension(1),
+											  moleculeContainer->getHaloWidthForDimension(2)};
 	for (auto const [currentDim, currentWallIsGlobalWall] : _isGlobalWall) {
 		if (!currentWallIsGlobalWall)
 			continue;
