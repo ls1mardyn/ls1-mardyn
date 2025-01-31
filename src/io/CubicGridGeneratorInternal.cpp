@@ -17,7 +17,6 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
-#include "utils/Random.h"
 #include "utils/mardyn_assert.h"
 
 #include <cmath>
@@ -86,8 +85,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 		global_simulation->getEnsemble()->getComponents()->at(1).updateMassInertia();
 	}
 
-	unsigned long int id = particleContainer->initCubicGrid(
-		numMoleculesPerDim, simBoxLength, static_cast<size_t>(domainDecomp->getRank()) * mardyn_get_max_threads());
+	unsigned long int id = particleContainer->initCubicGrid(numMoleculesPerDim, simBoxLength);
 
 	Log::global_log->info() << "Finished reading molecules: 100%" << std::endl;
 

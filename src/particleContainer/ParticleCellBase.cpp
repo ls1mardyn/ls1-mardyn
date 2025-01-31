@@ -7,8 +7,8 @@
 
 #include "ParticleCellBase.h"
 #include "ensemble/EnsembleBase.h"
-#include "utils/Random.h"
 #include "Simulation.h"
+#include "utils/generator/EqualVelocityAssigner.h"
 
 CellBorderAndFlagManager ParticleCellBase::_cellBorderAndFlagManager;
 
@@ -27,28 +27,6 @@ bool ParticleCellBase::deleteMoleculeByID(unsigned long molid) {
 		deleteMoleculeByIndex(index);
 	}
 	return found;
-}
-
-template <typename T>
-std::array<T, 3> getRandomVelocity(T temperature, Random& RNG) {
-	std::array<T,3> ret{};
-
-	// Velocity
-	for (int dim = 0; dim < 3; dim++) {
-		ret[dim] = RNG.uniformRandInRange(-0.5f, 0.5f);
-	}
-	T dotprod_v = 0;
-	for (unsigned int i = 0; i < ret.size(); i++) {
-		dotprod_v += ret[i] * ret[i];
-	}
-	// Velocity Correction
-	const T three = static_cast<T>(3.0);
-	T vCorr = sqrt(three * temperature / dotprod_v);
-	for (unsigned int i = 0; i < ret.size(); i++) {
-		ret[i] *= vCorr;
-	}
-
-	return ret;
 }
 
 template <typename T>
@@ -71,7 +49,7 @@ bool PositionIsInBox3D(const T l[3], const T u[3], const T r[3]) {
 }
 
 unsigned long ParticleCellBase::initCubicGrid(const std::array<unsigned long, 3> &numMoleculesPerDimension,
-											  const std::array<double, 3> &simBoxLength, Random &RNG) {
+											  const std::array<double, 3> &simBoxLength) {
 
 	std::array<double, 3> spacing{};
 	std::array<double, 3> origin1{}; // origin of the first DrawableMolecule
@@ -83,6 +61,7 @@ unsigned long ParticleCellBase::initCubicGrid(const std::array<unsigned long, 3>
 	}
 
 	vcp_real_calc T = global_simulation->getEnsemble()->T();
+	EqualVelocityAssigner eqVeloAssigner(T);
 
 	double boxMin[3] = {getBoxMin(0), getBoxMin(1), getBoxMin(2)};
 	double boxMax[3] = {getBoxMax(0), getBoxMax(1), getBoxMax(2)};
@@ -141,17 +120,19 @@ unsigned long ParticleCellBase::initCubicGrid(const std::array<unsigned long, 3>
 
 				if (x1In and y1In and z1In) {
 					++numInserted;
-					std::array<vcp_real_calc,3> v = getRandomVelocity<vcp_real_calc>(T, RNG);
+					// Init molecule with zero velocity and use the EqualVelocityAssigner in the next step
 					Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
-						x1, y1, z1, v[0], -v[1], v[2]);
+						x1, y1, z1, 0.0, 0.0, 0.0);
+					eqVeloAssigner.assignVelocity(&dummy);
 					buffer.push_back(dummy);
 				}
 
 				if (x2In and y2In and z2In) {
 					++numInserted;
-					std::array<vcp_real_calc,3> v = getRandomVelocity<vcp_real_calc>(T, RNG);
+					// Init molecule with zero velocity and use the EqualVelocityAssigner in the next step
 					Molecule dummy(0, &(global_simulation->getEnsemble()->getComponents()->at(0)),
-						x2, y2, z2, v[0], -v[1], v[2]);
+						x2, y2, z2, 0.0, 0.0, 0.0);
+					eqVeloAssigner.assignVelocity(&dummy);
 					buffer.push_back(dummy);
 				}
 			}
