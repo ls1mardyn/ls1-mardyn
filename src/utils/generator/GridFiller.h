@@ -27,9 +27,10 @@ public:
 
 	/** @brief Read in XML configuration for GridFiller and all its included objects.
 	 *
-	 * If a density is provided a cubic lattice will be used. If in this case also a lattice occupancy factor (0-1] is provided,
+	 * If a density is provided a face-centered cubic (or orthorhombic) lattice will be used. If in this case also a lattice occupancy factor (0-1] is provided,
 	 * a finer grid will be used and only the specified fraction of points will be used. The lattice vectors will be scaled to
 	 * achieve the desired density taking the occupancy factor into account. By default the occupancy factor is 1 (use all lattice points).
+	 * Note that the desired density is (probably) not met exactly due to the lattice structure (discrete number of molecules)
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
@@ -81,6 +82,8 @@ private:
 	/* Internal values/counters used during the creation by getMolecule */
 	long _baseCount;
 	double _lattice_point[3];
+
+	bool useDensity = false;
 };
 
 #endif  // GRIDFILLER_H_

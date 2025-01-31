@@ -19,8 +19,12 @@ void Cuboid::readXML(XMLfileUnits& xmlconfig) {
 	Coordinate3D upperCorner(xmlconfig, "upper");
 	lowerCorner.get(_lowerCorner);
 	upperCorner.get(_upperCorner);
-	Log::global_log->info() << "lower corner: " << _lowerCorner[0] << ", " << _lowerCorner[1] << ", " << _lowerCorner[2] << std::endl;
-	Log::global_log->info() << "upper corner: " << _upperCorner[0] << ", " << _upperCorner[1] << ", " << _upperCorner[2] << std::endl;
+	Log::global_log->info() << "Lower corner of object: " << _lowerCorner[0]
+							<< ", " << _lowerCorner[1]
+							<< ", " << _lowerCorner[2] << std::endl;
+	Log::global_log->info() << "Upper corner of object: " << _upperCorner[0]
+							<< ", " << _upperCorner[1]
+							<< ", " << _upperCorner[2] << std::endl;
 }
 
 bool Cuboid::isInside(double r[3]) {
