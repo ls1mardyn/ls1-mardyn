@@ -629,7 +629,7 @@ void LinkedCells::deleteOuterParticles() {
 	}
 }
 
-double LinkedCells::get_halo_L(int index) const {
+double LinkedCells::getHaloWidthForDimension(int index) const {
 	return _haloLength[index];
 }
 
