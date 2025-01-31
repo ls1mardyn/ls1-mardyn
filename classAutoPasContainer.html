@@ -124,9 +124,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa9f03882ab7e2de7d517238b37978664"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAutoPasContainer.html#aa9f03882ab7e2de7d517238b37978664">deleteOuterParticles</a> () override</td></tr>
 <tr class="memdesc:aa9f03882ab7e2de7d517238b37978664"><td class="mdescLeft">&#160;</td><td class="mdescRight">delete all Particles which are not within the bounding box  <a href="classAutoPasContainer.html#aa9f03882ab7e2de7d517238b37978664">More...</a><br /></td></tr>
 <tr class="separator:aa9f03882ab7e2de7d517238b37978664"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa561486114d6c447abf96d5f04bd0c8e"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAutoPasContainer.html#aa561486114d6c447abf96d5f04bd0c8e">get_halo_L</a> (int index) const override</td></tr>
-<tr class="memdesc:aa561486114d6c447abf96d5f04bd0c8e"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns the width of the halo stripe (for the given dimension index)  <a href="classAutoPasContainer.html#aa561486114d6c447abf96d5f04bd0c8e">More...</a><br /></td></tr>
-<tr class="separator:aa561486114d6c447abf96d5f04bd0c8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f13f7a2f03a3b7c8afe3fa7e6148d91"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAutoPasContainer.html#a8f13f7a2f03a3b7c8afe3fa7e6148d91">getHaloWidthForDimension</a> (int index) const override</td></tr>
+<tr class="memdesc:a8f13f7a2f03a3b7c8afe3fa7e6148d91"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns the width of the halo stripe (for the given dimension index)  <a href="classAutoPasContainer.html#a8f13f7a2f03a3b7c8afe3fa7e6148d91">More...</a><br /></td></tr>
+<tr class="separator:a8f13f7a2f03a3b7c8afe3fa7e6148d91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acd6cc9d288ddcf7a5ae445e4e243ede6"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAutoPasContainer.html#acd6cc9d288ddcf7a5ae445e4e243ede6">getCutoff</a> () const override</td></tr>
 <tr class="separator:acd6cc9d288ddcf7a5ae445e4e243ede6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa90998e8dd4523e7ab77853a3889e10a"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAutoPasContainer.html#aa90998e8dd4523e7ab77853a3889e10a">getSkin</a> () const override</td></tr>
@@ -481,37 +481,6 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="aa561486114d6c447abf96d5f04bd0c8e" name="aa561486114d6c447abf96d5f04bd0c8e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa561486114d6c447abf96d5f04bd0c8e">&#9670;&nbsp;</a></span>get_halo_L()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">double AutoPasContainer::get_halo_L </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>index</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>returns the width of the halo stripe (for the given dimension index) </p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000045">Todo:</a></b></dt><dd>remove this method, because a halo_L shouldn't be necessary for every <a class="el" href="classParticleContainer.html" title="This Interface is used to get access to particles and pairs of particles.">ParticleContainer</a> e.g. replace it by the cutoff-radius </dd></dl>
-
-<p>Implements <a class="el" href="classParticleContainer.html#a10d6b8f8418cd1ff98ed6bf42ca8dcaf">ParticleContainer</a>.</p>
-
-</div>
-</div>
 <a id="acd776c5668509a3d274f518120c90154" name="acd776c5668509a3d274f518120c90154"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acd776c5668509a3d274f518120c90154">&#9670;&nbsp;</a></span>getCellLength()</h2>
 
@@ -669,6 +638,37 @@ Additional Inherited Members</h2></td></tr>
 <p >Return the size of the halo </p><dl class="section return"><dt>Returns</dt><dd></dd></dl>
 
 <p>Reimplemented from <a class="el" href="classParticleContainer.html#aa916d8f66125ca00892355a13b6e6129">ParticleContainer</a>.</p>
+
+</div>
+</div>
+<a id="a8f13f7a2f03a3b7c8afe3fa7e6148d91" name="a8f13f7a2f03a3b7c8afe3fa7e6148d91"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f13f7a2f03a3b7c8afe3fa7e6148d91">&#9670;&nbsp;</a></span>getHaloWidthForDimension()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double AutoPasContainer::getHaloWidthForDimension </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>index</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>returns the width of the halo stripe (for the given dimension index) </p>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000045">Todo:</a></b></dt><dd>remove this method, because a halo_L shouldn't be necessary for every <a class="el" href="classParticleContainer.html" title="This Interface is used to get access to particles and pairs of particles.">ParticleContainer</a> e.g. replace it by the cutoff-radius </dd></dl>
+
+<p>Implements <a class="el" href="classParticleContainer.html#adbde2eaf6d2eba509118bfc45e2018ee">ParticleContainer</a>.</p>
 
 </div>
 </div>
@@ -1399,7 +1399,7 @@ This method has to be implemented in derived classes Precondition: All Particles
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jan 28 2025 14:38:15 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Fri Jan 31 2025 11:32:13 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
