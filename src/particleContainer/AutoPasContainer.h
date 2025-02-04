@@ -111,7 +111,7 @@ public:
 	getMoleculeAtPosition(const double pos[3]) override;
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-								std::array<double, 3> simBoxLength, size_t seed_offset) override;
+								std::array<double, 3> simBoxLength) override;
 
 	double *getCellLength() override;
 

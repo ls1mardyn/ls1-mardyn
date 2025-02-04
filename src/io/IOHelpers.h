@@ -1,7 +1,6 @@
 #pragma once
 
 #include "molecules/Component.h"
-#include "utils/Random.h"
 
 class ParticleContainer;
 class DomainDecompBase;
@@ -46,14 +45,4 @@ void initializeVelocityAccordingToTemperature(ParticleContainer* particleContain
 unsigned long makeParticleIdsUniqueAndGetTotalNumParticles(ParticleContainer* particleContainer,
 														   DomainDecompBase* domainDecomp);
 
-/**
- * Generates a velocity vector according to the given temperature.
- * The generated velocity vector lies on the surface of a sphere with radius sqrt(3. * temperature).
- * If this function is called multiple times, the generated velocity vectors will be equally distributed on the surface
- * of the sphere.
- * @param temperature
- * @param RNG
- * @return
- */
-std::array<double, 3> getRandomVelocityAccordingToTemperature(double temperature, Random& RNG);
 }  // namespace IOHelpers

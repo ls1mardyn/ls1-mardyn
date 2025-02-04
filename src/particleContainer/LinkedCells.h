@@ -260,7 +260,7 @@ public:
 	bool requiresForceExchange() const override; // new
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-								std::array<double, 3> simBoxLength, size_t seed_offset) override;
+								std::array<double, 3> simBoxLength) override;
 
 	std::vector<unsigned long> getParticleCellStatistics() override;
 

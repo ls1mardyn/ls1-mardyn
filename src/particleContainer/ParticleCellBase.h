@@ -16,8 +16,6 @@
 #include <quicksched.h>
 #endif
 
-class Random;
-
 /** @brief ParticleCellBase defines the interface for cells used by the LinkedCells data structure to store molecule data.
  */
 class ParticleCellBase: public Cell {
@@ -83,7 +81,7 @@ public:
 	virtual void prefetchForForce() const {/*TODO*/}
 
 	unsigned long initCubicGrid(const std::array<unsigned long, 3> &numMoleculesPerDimension,
-								const std::array<double, 3> &simBoxLength, Random &RNG);
+								const std::array<double, 3> &simBoxLength);
 
 //protected: Do not use! use SingleCellIterator instead!
 	// multipurpose:

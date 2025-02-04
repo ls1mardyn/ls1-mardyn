@@ -235,10 +235,9 @@ public:
      * Generates a body-centered cubic grid.
      * @param numMoleculesPerDimension
      * @param simBoxLength
-     * @param seed_offset
      * @return
      */
-	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, size_t seed_offset) = 0;
+	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) = 0;
 
 	virtual double* getCellLength() = 0;
 
