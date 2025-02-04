@@ -145,9 +145,9 @@ double Domain::getGlobalPressure()
 	return globalTemperature * _globalRho + _globalRho * getAverageGlobalVirial()/3.;
 }
 
-double Domain::getAverageGlobalVirial() { return _globalVirial/_globalNumMolecules; }
+double Domain::getAverageGlobalVirial() const { return _globalVirial/_globalNumMolecules; }
 
-double Domain::getAverageGlobalUpot() { return getGlobalUpot()/_globalNumMolecules; }
+double Domain::getAverageGlobalUpot() const { return getGlobalUpot()/_globalNumMolecules; }
 double Domain::getGlobalUpot() const { return _globalUpot; }
 
 Comp2Param& Domain::getComp2Params(){
@@ -791,9 +791,9 @@ void Domain::updateMaxMoleculeID(ParticleContainer* particleContainer, DomainDec
 #endif
 }
 
-double Domain::getglobalRho(){ return _globalRho;}
+double Domain::getglobalRho() const { return _globalRho;}
 
-void Domain::setglobalRho(double grho){ _globalRho = grho;}
+void Domain::setglobalRho(double grho) { _globalRho = grho;}
 
 unsigned long Domain::getglobalRotDOF()
 {
@@ -832,10 +832,10 @@ double Domain::cv()
 
 //! methods implemented by Stefan Becker <stefan.becker@mv.uni-kl.de>
 // the following two methods are used by the MmspdWriter (writing the output file in a format used by MegaMol)
-double Domain::getSigma(unsigned cid, unsigned nthSigma){
+double Domain::getSigma(unsigned cid, unsigned nthSigma) const {
   return _simulation.getEnsemble()->getComponent(cid)->getSigma(nthSigma);
 }
-unsigned Domain::getNumberOfComponents(){
+unsigned Domain::getNumberOfComponents() const {
   return _simulation.getEnsemble()->getComponents()->size();
 }
 
@@ -863,10 +863,10 @@ void Domain::submitDU(unsigned /*cid*/, double DU, double* r)
 
  void Domain::setLocalUpotCompSpecific(double UpotCspec){_localUpotCspecif = UpotCspec;}
 
- double Domain::getLocalUpotCompSpecific(){return _localUpotCspecif;}
+ double Domain::getLocalUpotCompSpecific() const {return _localUpotCspecif;}
 
 
-double Domain::getAverageGlobalUpotCSpec() {
+double Domain::getAverageGlobalUpotCSpec() const {
   Log::global_log->debug() << "number of fluid molecules = " << getNumFluidMolecules() << "\n";
   return _globalUpotCspecif / getNumFluidMolecules();
 }
@@ -876,7 +876,7 @@ void Domain::setNumFluidComponents(unsigned nc){_numFluidComponent = nc;}
 
 unsigned Domain::getNumFluidComponents(){return _numFluidComponent;}
 
-unsigned long Domain::getNumFluidMolecules(){
+unsigned long Domain::getNumFluidMolecules() const {
 	unsigned long numFluidMolecules = 0;
 	for(unsigned i = 0; i < _numFluidComponent; i++){
 		Component& ci=*(global_simulation->getEnsemble()->getComponent(i));
