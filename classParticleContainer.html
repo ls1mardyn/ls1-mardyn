@@ -187,8 +187,8 @@ virtual double&#160;</td><td class="memItemRight" valign="bottom"><b>getEnergy</
 <tr class="memitem:a5a0242ca837b53a8b32328fc7c794efc"><td class="memItemLeft" align="right" valign="top"><a id="a5a0242ca837b53a8b32328fc7c794efc" name="a5a0242ca837b53a8b32328fc7c794efc"></a>
 virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>requiresForceExchange</b> () const</td></tr>
 <tr class="separator:a5a0242ca837b53a8b32328fc7c794efc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8039569759a8b57164b836d04797736d"><td class="memItemLeft" align="right" valign="top">virtual unsigned long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classParticleContainer.html#a8039569759a8b57164b836d04797736d">initCubicGrid</a> (std::array&lt; unsigned long, 3 &gt; numMoleculesPerDimension, std::array&lt; double, 3 &gt; simBoxLength, size_t seed_offset)=0</td></tr>
-<tr class="separator:a8039569759a8b57164b836d04797736d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf67c905609452063f29a1441f41a916"><td class="memItemLeft" align="right" valign="top">virtual unsigned long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classParticleContainer.html#adf67c905609452063f29a1441f41a916">initCubicGrid</a> (std::array&lt; unsigned long, 3 &gt; numMoleculesPerDimension, std::array&lt; double, 3 &gt; simBoxLength)=0</td></tr>
+<tr class="separator:adf67c905609452063f29a1441f41a916"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1310913c1a40b1b11d35cfdb20216748"><td class="memItemLeft" align="right" valign="top"><a id="a1310913c1a40b1b11d35cfdb20216748" name="a1310913c1a40b1b11d35cfdb20216748"></a>
 virtual double *&#160;</td><td class="memItemRight" valign="bottom"><b>getCellLength</b> ()=0</td></tr>
 <tr class="separator:a1310913c1a40b1b11d35cfdb20216748"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -775,8 +775,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a8039569759a8b57164b836d04797736d" name="a8039569759a8b57164b836d04797736d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8039569759a8b57164b836d04797736d">&#9670;&nbsp;</a></span>initCubicGrid()</h2>
+<a id="adf67c905609452063f29a1441f41a916" name="adf67c905609452063f29a1441f41a916"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adf67c905609452063f29a1441f41a916">&#9670;&nbsp;</a></span>initCubicGrid()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -794,13 +794,7 @@ Protected Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">std::array&lt; double, 3 &gt;&#160;</td>
-          <td class="paramname"><em>simBoxLength</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>seed_offset</em>&#160;</td>
+          <td class="paramname"><em>simBoxLength</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -818,13 +812,12 @@ Protected Attributes</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">numMoleculesPerDimension</td><td></td></tr>
     <tr><td class="paramname">simBoxLength</td><td></td></tr>
-    <tr><td class="paramname">seed_offset</td><td></td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd></dd></dl>
 
-<p>Implemented in <a class="el" href="classAutoPasContainer.html#aa8cdf43e5790aad2af0b52a2c5630bd2">AutoPasContainer</a>, <a class="el" href="classLinkedCells.html#a471c16a915e70422f17122e057d547ab">LinkedCells</a>, and <a class="el" href="classParticleContainerToBasisWrapper.html#a6ab1aee15e592c57c8e04c659fc71720">ParticleContainerToBasisWrapper</a>.</p>
+<p>Implemented in <a class="el" href="classAutoPasContainer.html#ac7533d2eaa6b179c0b67ef8278fbc05a">AutoPasContainer</a>, <a class="el" href="classLinkedCells.html#a2d60d6a262f2456aced77d06c58c5b4f">LinkedCells</a>, and <a class="el" href="classParticleContainerToBasisWrapper.html#a2bccc5b10e6130e438d8b5a23c93be2c">ParticleContainerToBasisWrapper</a>.</p>
 
 </div>
 </div>
@@ -1199,7 +1192,7 @@ This method has to be implemented in derived classes Precondition: All Particles
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jan 31 2025 11:32:15 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Feb 4 2025 10:13:16 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

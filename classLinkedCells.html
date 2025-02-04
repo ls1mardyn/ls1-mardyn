@@ -192,8 +192,8 @@ int *&#160;</td><td class="memItemRight" valign="bottom"><b>getBoxWidthInNumCell
 <tr class="separator:a36badcd4d76109db8982052afd687a03"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a23d1f907a9525b5fbcf707f4d49a4822"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLinkedCells.html#a23d1f907a9525b5fbcf707f4d49a4822">requiresForceExchange</a> () const override</td></tr>
 <tr class="separator:a23d1f907a9525b5fbcf707f4d49a4822"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a471c16a915e70422f17122e057d547ab"><td class="memItemLeft" align="right" valign="top">unsigned long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLinkedCells.html#a471c16a915e70422f17122e057d547ab">initCubicGrid</a> (std::array&lt; unsigned long, 3 &gt; numMoleculesPerDimension, std::array&lt; double, 3 &gt; simBoxLength, size_t seed_offset) override</td></tr>
-<tr class="separator:a471c16a915e70422f17122e057d547ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d60d6a262f2456aced77d06c58c5b4f"><td class="memItemLeft" align="right" valign="top">unsigned long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLinkedCells.html#a2d60d6a262f2456aced77d06c58c5b4f">initCubicGrid</a> (std::array&lt; unsigned long, 3 &gt; numMoleculesPerDimension, std::array&lt; double, 3 &gt; simBoxLength) override</td></tr>
+<tr class="separator:a2d60d6a262f2456aced77d06c58c5b4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adbfa13c1086a824515fbf11a99e43a74"><td class="memItemLeft" align="right" valign="top">std::vector&lt; unsigned long &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLinkedCells.html#adbfa13c1086a824515fbf11a99e43a74">getParticleCellStatistics</a> () override</td></tr>
 <tr class="separator:adbfa13c1086a824515fbf11a99e43a74"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1eff78ff0108f18dd1c97b024d5cb775"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLinkedCells.html#a1eff78ff0108f18dd1c97b024d5cb775">getConfigurationAsString</a> () override</td></tr>
@@ -928,8 +928,8 @@ If the point is not inside the bounding box, an error is printed </p>
 
 </div>
 </div>
-<a id="a471c16a915e70422f17122e057d547ab" name="a471c16a915e70422f17122e057d547ab"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a471c16a915e70422f17122e057d547ab">&#9670;&nbsp;</a></span>initCubicGrid()</h2>
+<a id="a2d60d6a262f2456aced77d06c58c5b4f" name="a2d60d6a262f2456aced77d06c58c5b4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d60d6a262f2456aced77d06c58c5b4f">&#9670;&nbsp;</a></span>initCubicGrid()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -947,13 +947,7 @@ If the point is not inside the bounding box, an error is printed </p>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">std::array&lt; double, 3 &gt;&#160;</td>
-          <td class="paramname"><em>simBoxLength</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>seed_offset</em>&#160;</td>
+          <td class="paramname"><em>simBoxLength</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -971,13 +965,12 @@ If the point is not inside the bounding box, an error is printed </p>
   <table class="params">
     <tr><td class="paramname">numMoleculesPerDimension</td><td></td></tr>
     <tr><td class="paramname">simBoxLength</td><td></td></tr>
-    <tr><td class="paramname">seed_offset</td><td></td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd></dd></dl>
 
-<p>Implements <a class="el" href="classParticleContainer.html#a8039569759a8b57164b836d04797736d">ParticleContainer</a>.</p>
+<p>Implements <a class="el" href="classParticleContainer.html#adf67c905609452063f29a1441f41a916">ParticleContainer</a>.</p>
 
 </div>
 </div>
@@ -1473,7 +1466,7 @@ Only forces on the Molecules which are in the inner and boundary region have to 
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jan 31 2025 11:32:14 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Feb 4 2025 10:13:15 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
