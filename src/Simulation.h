@@ -125,14 +125,6 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
-	/** @brief Terminate simulation with given exit code.
-	 *
-	 * The exit method takes care over the right way to terminate the application in a correct way
-	 * for the different parallelization schemes. e.g. terminating other processes in MPI parallel
-	 * execution mode.
-	 */
-	static void exit(int exitcode);
-
 	/** @brief process configuration file
 	 *
 	 * calls initConfigXML

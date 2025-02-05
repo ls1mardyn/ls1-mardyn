@@ -38,7 +38,9 @@
                 </loadBalancer>
             </parallelisation>
             <datastructure type="AutoPas">
+                <!-- <logLevel>info</logLevel> -->
                 <allowedContainers>linkedCells</allowedContainers>
+                <tuningStrategies>predictive,ruleBased</tuningStrategies>
                 <tuningInterval>10000</tuningInterval>
                 <tuningSamples>10</tuningSamples>
                 <rebuildFrequency>10</rebuildFrequency>
@@ -56,7 +58,7 @@
                 <writefrequency>5</writefrequency>
                 <outputprefix>decomp</outputprefix>
                 <incremental>1</incremental>
-                <appendTimestamp>0</appendTimestamp>
+                <appendTimestamp>false</appendTimestamp>
             </outputplugin>
             <!--<outputplugin name="MmpldWriter" type="simple">
               <include query="/spheres">../sphereparams_argon.xml</include>

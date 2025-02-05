@@ -5,6 +5,8 @@
 
 #include "Common.h"
 #include "Domain.h"
+#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "utils/Logger.h"
 #include "parallel/DomainDecompBase.h"
 
@@ -15,8 +17,9 @@ void CommunicationPartnerWriter::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "Write frequency: " << _writeFrequency << std::endl;
 
 	if(_writeFrequency == 0) {
-		Log::global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	std::string HaloParticleType = "unknown";

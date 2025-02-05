@@ -9,7 +9,7 @@
 #include "ParticleContainer.h"
 
 #include <autopas/AutoPas.h>
-#include <autopas/molecularDynamics/autopasmd.h>
+#include <molecularDynamicsLibrary/autopasmd.h>
 
 /**
  * A wrapper for the AutoPas library.
@@ -32,7 +32,8 @@ public:
 		<allowedTraversals>STRINGLIST</allowedTraversals>
 		<allowedContainers>STRINGLIST</allowedContainers>
 		<selectorStrategy>STRING</selectorStrategy>
-		<tuningStrategy>STRING</tuningStrategy>
+		<tuningStrategies>STRING</tuningStrategies>
+		<ruleFile>STRING</ruleFile>
 		<extrapolationMethod>STRING</extrapolationMethod>
 		<dataLayouts>STRINGLIST</dataLayouts>
 		<newton3>STRINGLIST</newton3>
@@ -47,8 +48,8 @@ public:
 		<optimumRange>DOUBLE</optimumRange>
 		<blacklistRange>DOUBLE</blacklistRange>
 		<functor>STRING</functor>
-	    <verletClusterSize>INTEGER</verletClusterSize>
-	   </datastructure>
+		<verletClusterSize>INTEGER</verletClusterSize>
+		</datastructure>
 	   \endcode
 	 * If you are using MPI-parallel simulations, tuningSamples should be a multiple of rebuildFrequency!
 	 * A list of the different Options can be found here:
@@ -88,11 +89,13 @@ public:
 
 	void deleteOuterParticles() override;
 
-	double get_halo_L(int index) const override;
+	double getHaloWidthForDimension(int index) const override;
 
 	double getCutoff() const override;
 
 	double getSkin() const override;
+
+	size_t getRebuildFrequency() const override;
 
 	void deleteMolecule(ParticleIterator &moleculeIter, const bool &rebuildCaches) override;
 
@@ -108,7 +111,7 @@ public:
 	getMoleculeAtPosition(const double pos[3]) override;
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-								std::array<double, 3> simBoxLength, size_t seed_offset) override;
+								std::array<double, 3> simBoxLength) override;
 
 	double *getCellLength() override;
 
@@ -157,11 +160,13 @@ private:
 	unsigned int _evidenceForPrediction;
 	autopas::AutoPas<Molecule> _autopasContainer;
 	bool _autopasContainerIsInitialized{false};
+	std::string _ruleFileName{};
 
 	std::set<autopas::TraversalOption> _traversalChoices;
 	std::set<autopas::ContainerOption> _containerChoices;
 	autopas::SelectorStrategyOption _selectorStrategy;
-	autopas::TuningStrategyOption _tuningStrategyOption;
+	std::vector<autopas::TuningStrategyOption> _tuningStrategyOptions;
+	autopas::TuningMetricOption _tuningMetricOption;
 	autopas::ExtrapolationMethodOption _extrapolationMethod;
 	autopas::AcquisitionFunctionOption _tuningAcquisitionFunction;
 	std::set<autopas::DataLayoutOption> _dataLayoutChoices;

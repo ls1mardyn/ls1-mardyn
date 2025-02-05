@@ -7,7 +7,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 
 
 PressureGradient::PressureGradient(int rank) {
@@ -219,8 +219,9 @@ void PressureGradient::specifyTauPrime(double tauPrime, double dt)
 	if(this->_localRank != 0) return;
 	if(this->_universalConstantAccelerationTimesteps == 0)
 	{
-		Log::global_log->error() << "SEVERE ERROR: unknown UCAT!\n";
-		Simulation::exit(78);
+		std::ostringstream error_message;
+		error_message << "SEVERE ERROR: unknown UCAT!\n";
+		MARDYN_EXIT(error_message.str());
 	}
 	unsigned int vql = (unsigned int)ceil(tauPrime / (dt*this->_universalConstantAccelerationTimesteps));
 	std::map<unsigned int, unsigned int>::iterator vqlit;

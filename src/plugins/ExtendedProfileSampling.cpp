@@ -16,6 +16,7 @@
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "utils/Random.h"
 #include "utils/FileUtils.h"
+#include "utils/mardyn_assert.h"
 #include "Simulation.h"
 #include "longRange/LongRangeCorrection.h"
 
@@ -30,14 +31,12 @@ void ExtendedProfileSampling::init(ParticleContainer* /* particleContainer */, D
 
     _numBinsGlobal = static_cast<unsigned int>(_globalBoxLength[1]/_binwidth);
     if (_globalBoxLength[1]/_binwidth != static_cast<float>(_numBinsGlobal)) {
-        Log::global_log->error() << "[ExtendedProfileSampling] Can not divide domain without remainder! Change binwidth" << std::endl;
-        Simulation::exit(-1);
+		MARDYN_EXIT("[ExtendedProfileSampling] Can not divide domain without remainder! Change binwidth");
     }
     _slabVolume = _globalBoxLength[0]*_globalBoxLength[2]*_binwidth;
 
     if (_slabVolume < 1e-12) {
-        Log::global_log->error() << "[ExtendedProfileSampling] Slab volume too small (<1e-12)!" << std::endl;
-        Simulation::exit(-1);
+        MARDYN_EXIT("[ExtendedProfileSampling] Slab volume too small (<1e-12)!");
     }
 
     _numComps = domain->getNumberOfComponents();

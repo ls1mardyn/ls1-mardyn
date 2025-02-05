@@ -23,8 +23,8 @@ if (ENABLE_AUTOPAS)
     set(AUTOPAS_USE_VECTORIZATION ${USE_VECTORIZATION} CACHE BOOL "Set via USE_VECTORIZATION" FORCE)
     set(AUTOPAS_VECTOR_INSTRUCTIONS ${VECTOR_INSTRUCTIONS} CACHE STRING "Set via VECTOR_INSTRUCTIONS_OPTIONS" FORCE)
 
-    # Merge of fixSpacialLocksResize 2023-05-08; This includes the rewrites of remainder traversal and iterators.
-    set(AUTOPAS_TAG e47c9257bb8d0c6ab680d02823b1e8749b25369a CACHE STRING "AutoPas Git tag or commit id to use")
+    # Last version without 3 Body support. Newer versions have API changes
+    set(AUTOPAS_TAG v2.0.0 CACHE STRING "AutoPas Git tag or commit id to use")
 
     FetchContent_Declare(
             autopasfetch
@@ -41,7 +41,8 @@ if (ENABLE_AUTOPAS)
         add_subdirectory(${autopasfetch_SOURCE_DIR} ${autopasfetch_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif ()
 
-    set(AUTOPAS_LIB "autopas")
+    # Linking the md lib also links AutoPas
+    set(AUTOPAS_LIB "molecularDynamicsLibrary")
 else ()
     message(STATUS "Not using AutoPas.")
     set(AUTOPAS_LIB "")

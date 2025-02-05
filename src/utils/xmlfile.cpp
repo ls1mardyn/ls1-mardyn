@@ -16,7 +16,6 @@
 #include "utils/mardyn_assert.h"
 #include "rapidxml/rapidxml_print.hpp"
 #include "String_utils.h"
-#include "Simulation.h"
 
 //#include <cstdio>	// fseek(),fread(); should be included after mpi.h
 //#ifdef __linux__
@@ -194,9 +193,10 @@ bool XMLfile::initfile_local(const std::string& filepath) {
 	//version using ifstream
 	std::ifstream fstrm(filepathTrimmed.c_str(),std::ifstream::binary|std::ifstream::ate);
 	if(!fstrm) {
-		std::cerr << "ERROR opening " << filepathTrimmed << std::endl;
+		std::ostringstream error_message;
+		error_message << "ERROR opening " << filepathTrimmed << std::endl;
 		clear();
-		Simulation::exit(1);
+		MARDYN_EXIT(error_message.str());
 	}
 	std::ifstream::pos_type filesize=fstrm.tellg();
 	fstrm.close(); fstrm.clear();
@@ -446,13 +446,16 @@ unsigned long XMLfile::query(std::list<Node>& nodeselection, const std::string& 
 				if (! attrname.empty())
 				{ // search for attribute node
 					attr=ele->first_attribute(attrname.c_str());
-					nodepath.append("@");
-					nodepath.append(attrname);
-					nodeselection.push_back(Node(attr,nodepath));
+					if(NULL != attr) {
+						nodepath.append("@");
+						nodepath.append(attrname);
+						nodeselection.push_back(Node(attr,nodepath));
+						++foundnodes;
+					}
 				} else { // found element node
 					nodeselection.push_back(Node(ele,nodepath));
+					++foundnodes;
 				}
-				++foundnodes;
 			}
 		}
 	}
@@ -532,15 +535,29 @@ template<typename T> bool XMLfile::Node::getValue(T& value) const
 {
 	if(m_xmlnode)
 	{
-		//value=T(m_xmlnode->value());
 		std::stringstream ss(m_xmlnode->value());
-		ss>>value;
+		// Check if input has correct sign
+		if (std::is_unsigned_v<T>) {
+			if (ss.str().find_first_of("-") != std::string::npos) {
+				std::ostringstream error_message;
+				error_message << "ERROR parsing \"" << ss.str() << "\" to data type " << typeid(T).name() << " from tag \"<" << name() << ">\" in xml file" << std::endl;
+				error_message << "The tag contains a negative value but an unsigned value was expected." << std::endl;
+				MARDYN_EXIT(error_message.str());
+			}
+		}
+		ss >> value;
+		// Check if the entire string was consumed
+		if (!ss.eof() || ss.fail()) {
+			std::ostringstream error_message;
+			error_message << "ERROR parsing all chars of \"" << ss.str() << "\" from tag \"<" << name() << ">\" in xml file" << std::endl;
+			error_message << "This might be the result of using a float while an integer is expected." << std::endl;
+			MARDYN_EXIT(error_message.str());
+		}
 		return true;
 	}
 	else
 		return false;
 }
-
 
 template<> bool XMLfile::Node::getValue<std::string>(std::string& value) const
 {
@@ -553,62 +570,29 @@ template<> bool XMLfile::Node::getValue<std::string>(std::string& value) const
 		return false;
 }
 
-template<> bool XMLfile::Node::getValue<int>(int& value) const
-{
-	std::string v;
-	bool found=getValue(v);
-	if(found) value=atoi(v.c_str());
-	return found;
-}
-
-template<> bool XMLfile::Node::getValue<long>(long& value) const
-{
-	std::string v;
-	bool found=getValue(v);
-	if(found) value=atol(v.c_str());
-	return found;
-}
-
-template<> bool XMLfile::Node::getValue<float>(float& value) const
-{
-	std::string v;
-	bool found=getValue(v);
-	if(found) value=static_cast<float>(atof(v.c_str()));
-	return found;
-}
-
-template<> bool XMLfile::Node::getValue<double>(double& value) const
-{
-	std::string v;
-	bool found=getValue(v);
-	if(found) value=atof(v.c_str());
-	return found;
-}
-
 template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 {
 	std::string v;
 	bool found=getValue(v);
-	if(found)
-	{
-		int i=atoi(v.c_str());
-		if(i!=0)
-		{
-			/* found integer value unequal 0 */
-			value=true;
-		}
-		else
-		{
-			/* remove white spaces */
-			v.erase( std::remove_if( v.begin(), v.end(), ::isspace ), v.end() );
-			/* convert to upper case letters */
-			std::transform(v.begin(), v.end(), v.begin(), ::toupper);
-			value=(v == "TRUE" || v == "YES" || v == "ON");
+	if (found) {
+		// Remove white spaces
+		v.erase(std::remove_if(v.begin(), v.end(), ::isspace), v.end());
+		// Convert to upper case letters
+		std::transform(v.begin(), v.end(), v.begin(), ::toupper);
+
+		if (v == "TRUE" || v == "YES" || v == "ON") {
+			value = true;
+		} else if (v == "FALSE" || v == "NO" || v == "OFF") {
+			value = false;
+		} else {
+			std::ostringstream error_message;
+			error_message << "ERROR parsing \"" << v << "\" to boolean from tag \"" << name() << "\" in xml file."
+				<< " Valid values are: true, false, yes, no, on, off. " << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 	return found;
 }
-
 
 std::string XMLfile::Node::value_string(std::string defaultvalue) const
 {

@@ -8,12 +8,15 @@ class NeighbourCommunicationScheme;
 class DirectNeighbourCommunicationScheme;
 class IndirectNeighbourCommunicationScheme;
 
+#include <sstream>
 #include <mpi.h>
+
 #include "NeighbourCommunicationScheme.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "DomainDecompMPIBase.h"
 #include "NeighborAcquirer.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "ZonalMethods/ZonalMethod.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
@@ -245,7 +248,8 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 		}
 	}
 	if(not invalidParticles.empty()){
-		Log::global_log->error_always_output() << "NeighbourCommunicationScheme: Invalid particles that should have been "
+		std::ostringstream error_message;
+		error_message << "NeighbourCommunicationScheme: Invalid particles that should have been "
 											 "sent, are still existent. They would be lost. Aborting...\n"
 										  << "BoxMin: "
 										  << moleculeContainer->getBoundingBoxMin(0) << ", "
@@ -257,15 +261,15 @@ void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContai
 										  << moleculeContainer->getBoundingBoxMax(2) << "\n"
 										  << "The particles:" << std::endl;
 		for (auto& invalidParticle : invalidParticles) {
-			Log::global_log->error_always_output() << invalidParticle << std::endl;
+			error_message << invalidParticle << std::endl;
 		}
-		Log::global_log->error_always_output() << "The leavingExportNeighbours:" << std::endl;
+		error_message << "The leavingExportNeighbours:" << std::endl;
 		for (auto& neighbour : (*_leavingExportNeighbours)[0]) {
 			std::stringstream ss;
 			neighbour.print(ss);
-			Log::global_log->error_always_output() << ss.str() << std::endl;
+			error_message << ss.str() << std::endl;
 		}
-		Simulation::exit(544);
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -299,6 +303,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		removeRecvDuplicates |= (domainDecomp->getRank() == (*_neighbours)[0][i].getRank());
 	}
 
+	// local helper function to apply f to all real neighbours
 	auto forAllRealNeighbors = [&](auto&& f) {
 		for (auto& neighbor : (*_neighbours)[0]) {
 			if (not _useSequentialFallback or domainDecomp->getRank() != neighbor.getRank()) {
@@ -375,7 +380,8 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		}
 
 		if (waitingTime > deadlockTimeOut) {
-			Log::global_log->error()
+			std::ostringstream error_message;
+			error_message
 				<< "DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
 				<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 				<< std::endl;
@@ -394,7 +400,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 				});
 			}
 
-			Simulation::exit(457);
+			MARDYN_EXIT(error_message.str());
 		}
 
 	}  // while not allDone
@@ -420,10 +426,11 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 			else _neighbours = _haloImportForceExportNeighbours;
 			break;
 		case LEAVING_AND_HALO_COPIES:
-			Log::global_log->error() << "WRONG type in selectNeighbours - this should not be used for push-pull-partners "
+			std::ostringstream error_message;
+			error_message << "WRONG type in selectNeighbours - this should not be used for push-pull-partners "
 								   "selectNeighbours method"
 								<< std::endl;
-			Simulation::exit(1);
+			MARDYN_EXIT(error_message.str());
 			break;
 	}
 }
@@ -585,14 +592,15 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 		}
 
 		if (waitingTime > deadlockTimeOut) {
-			Log::global_log->error()
+			std::ostringstream error_message;
+			error_message
 					<< "IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 					<< std::endl;
 			for (int i = 0; i < numNeighbours; ++i) {
 				(*_neighbours)[d][i].deadlockDiagnosticSendRecv();
 			}
-			Simulation::exit(457);
+			MARDYN_EXIT(error_message.str());
 		}
 
 	} // while not allDone

@@ -19,10 +19,10 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <component id=INT name="STRING">
-	     <site type="LJ126|Charge|Dipole|Quadrupole"> <!-- see Site class documentation --> </site>
+	   <moleculetype id=UINT name="STRING">
+	     <site type="LJ126|Charge|Dipole|Quadrupole" id="UINT" name="STRING"> <!-- see Site class documentation --> </site>
 	     <momentsofinertia> <Ixx>DOUBLE</Ixx> <Iyy>DOUBLE</Iyy> <Izz>DOUBLE</Izz> </momentsofinertia>
-	   </component>
+	   </moleculetype>
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
@@ -38,8 +38,7 @@ public:
 		                            + this->numDipoles()
 		                            + this->numQuadrupoles();
 	}
-	/** get number of oriented interaction sites (dipoles and quadrupoles) */
-	unsigned int numOrientedSites() const { return numDipoles() + numQuadrupoles(); }
+
 	/** get number of Lennard Jones interaction sites */
 	unsigned int numLJcenters() const { return _ljcenters.size(); }
 	/** get number of charge interaction sites */
@@ -110,8 +109,6 @@ public:
 
 	/** write information to stream */
 	void write(std::ostream& ostrm) const;
-
-	void writeVIM(std::ostream& ostrm);
 
 	void setE_trans(double E) { _E_trans = E; }
 	void setE_rot(double E) { _E_rot = E; }

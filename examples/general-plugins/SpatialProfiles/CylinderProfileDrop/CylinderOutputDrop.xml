@@ -30,8 +30,8 @@
 			</domain>
 			
 			<components>
-		        <moleculetype id="1" name="Test">
-		    	    <site type="LJ126" id="1" >
+		        <moleculetype id="1" name="LJTS">
+		    	    <site type="LJ126" id="1" name="LJTS">
 		  	        	<coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
 		  	        	<mass>1.0</mass>
 		  	        	<sigma>1.0</sigma>
@@ -131,9 +131,9 @@
 
 		<!-- CENTER OF MASS ALIGNMENT  --> 
 		<plugin name="COMaligner">
-			<x>1</x>
-			<y>0</y>
-			<z>1</z>
+			<x>true</x>
+			<y>false</y>
+			<z>true</z>
 			<interval>100</interval>
 			<correctionFactor>.5</correctionFactor>
 		</plugin>
@@ -180,11 +180,11 @@
           <profiledComponent>all</profiledComponent>
 
             <profiles>
-	        <density>1</density>
-	        <temperature>0</temperature>
-	        <velocity>0</velocity>
-	        <velocity3d>0</velocity3d>
-	        <virial>0</virial>
+	        <density>true</density>
+	        <temperature>false</temperature>
+	        <velocity>false</velocity>
+	        <velocity3d>false</velocity3d>
+	        <virial>false</virial>
 	      </profiles>
 	    </plugin>
 

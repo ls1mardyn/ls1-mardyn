@@ -2,21 +2,21 @@
 <components version="20100525" >
 
 	<moleculetype id="1" name="CO2">
-		<site type="LJ126" id="1" >
+		<site type="LJ126" id="1" name="C">
 			<coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
 			<mass>0.012</mass>
 			<sigma>5.31712452</sigma>
 			<epsilon>3.91811245e-05</epsilon>
 			<shifted>false</shifted>
 		</site>
-		<site type="LJ126" id="2" >
+		<site type="LJ126" id="2" name="O">
 			<coords> <x>0.0</x> <y>0.0</y> <z>-2.43188952</z> </coords>
 			<mass>0.016</mass>
 			<sigma>5.62288233</sigma>
 			<epsilon>0.00031824324</epsilon>
 			<shifted>false</shifted>
 		</site>
-		<site type="LJ126" id="3" >
+		<site type="LJ126" id="3" name="O">
 			<coords> <x>0.0</x> <y>0.0</y> <z>2.43188952</z> </coords>
 			<mass>0.016</mass>
 			<sigma>5.62288233</sigma>

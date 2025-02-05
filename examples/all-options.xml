@@ -46,7 +46,7 @@
       <components>
           <moleculetype id="1" >
             <coord_base>principal_axes</coord_base>
-            <site type="LJ126" id="1" >
+            <site type="LJ126" id="1" name="C">
               <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
               <mass>12.00</mass>
               <sigma>2.900109</sigma>
@@ -184,7 +184,8 @@
           </basis>
           <origin> <x>0.0</x> <y>0.0</y> <z>0.0</z> </origin>
         </generator>
-
+        <!-- If true, the simulation ignores the timestep in the loaded checkpoint and starts the simulation from timestep 0. Default: false-->
+        <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
     </ensemble>
 
@@ -196,6 +197,41 @@
           <overlappingCollectives>False</overlappingCollectives> <!-- true if overlapping collectives should be used, false otherwise. REQUIRES MPI>=3! -->
           <overlappingStartAtStep>5</overlappingStartAtStep> <!-- Start overlapping at given step (default: 5), only relevant if overlappingCollectives==True -->
           <overlappingP2P>False</overlappingP2P> <!-- Defines whether to use overlapping p2p communication or not. Default: False -->
+          <!-- Select the boundary type for each dimension. Available options are reflecting/reflective, outflow and periodic (default).
+            particles interacting with a periodic boundary for a certain axis are copied over to the corresponding subdomain, as usual
+            particles interacting with a reflecting boundary for a certain axis have their velocities reversed for that axis
+            particles interacting with an outflow boundary with any axis get deleted, irrespective of the other boundary conditions
+            -->
+          <boundaries> 
+              <x>reflective</x>
+              <y>outflow</y>
+              <z>periodic</z>
+          </boundaries> 
+      </parallelisation>
+      <parallelisation type="StaticIrregDomainDecomposition">
+          <!-- Provide weights that determine the relative widths of each subdomain
+          EX: The weights in <x> being 1,2,1 defines an x axis with subdomain lengths in the 1:2:1 ratio
+          The number of digits per column are the number of ranks in that column, and the number of columns need not be equal per row
+          The number of ranks per row are therefore calculated from the column length, and cannot be given explicitly
+          The program must be run with ranks equal to the ranks in the weights (examples/Mamico-couette/ls1configNoCP.xml must be run with 6 ranks, for example)
+          The actual subdomain lengths are calculated from the total length and given ratios
+          If not given, default behaviour is an equally spaced grid, same as DomainDecomposition
+            -->
+          <subdomainWeights>
+            <x>INT,INT,INT,...</x>
+            <y>INT,INT,INT,...</y>
+            <z>INT,INT,INT,...</z> 
+          </subdomainWeights>
+      </parallelisation>
+      <parallelisation type="GeneralDomainDecomposition">
+          <updateFrequency>INTEGER</updateFrequency>
+          <initialPhaseTime>INTEGER</initialPhaseTime><!--time for initial rebalancing phase-->
+          <initialPhaseFrequency>INTEGER</initialPhaseFrequency><!--frequency for initial rebalancing phase-->
+          <gridSize>STRING</gridSize><!--default: 0; if non-zero, the process boundaries are fixed to multiples of
+              gridSize. Comma separated string to define three different grid sizes for the different dimensions is
+              possible.-->
+          <loadBalancer type="STRING"><!--STRING...type of the load balancer, currently supported: ALL-->
+          </loadBalancer>
       </parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
@@ -242,8 +278,11 @@
         <!-- specify what metric the selector should use to determine the optimal traversal -->
         <!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
         <selectorStrategy>fastestAbsolute</selectorStrategy>
-        <!-- set the auto tuning algorithm -->
-        <tuningStrategy>fullSearch</tuningStrategy>
+        <!-- set the tuning auto tuning pipeline -->
+        <!-- Leave this empty for an exhaustive full search or add any number of strategies that are applied in the stated order -->
+        <tuningStrategies>ruleBasedTuning, predictiveTuning</tuningStrategies>
+        <!-- autopas optimizes the simulation based on tuning metric: time, energy, default option is time -->
+        <tuningMetric>energy</tuningMetric>
         <!-- Data layouts to be used: AoS, SoA -->
         <dataLayouts>SoA</dataLayouts>
         <!-- Allowed choices for newton 3 optimization: enabled, disabled -->
@@ -290,7 +329,6 @@
       - CheckpointWriter
       - ResultWriter
       - XyzWriter
-      - VISWriter
       - MmspdWriter
       - PovWriter
       - StatisticsWriter
@@ -364,16 +402,6 @@
         <outputprefix>default</outputprefix>
       </outputplugin>
 
-      <!-- VISWriter plugin
-      Additional to the coordinates of the molecules, the *.vis-format also contains the orientation information
-      of the molecules (using quaternions). The files can be read by software like:
-      - MolCloud (visit: http://www.visus.uni-stuttgart.de/index.php?id=995)
-      - Megamol  (visit: https://svn.vis.uni-stuttgart.de/trac/megamol/) -->
-      <outputplugin name="VISWriter">
-        <writefrequency>10</writefrequency>
-        <outputprefix>default</outputprefix>
-      </outputplugin>
-
       <!-- MmspdWriter plugin
        The *.mmspd-format contains the coordinates of the molecules and information about the dimensions of the simulation box.
        The file can be read by the software MegaMol (for detail information visit: https://svn.vis.uni-stuttgart.de/trac/megamol/). -->
@@ -397,9 +425,9 @@
       <outputplugin name="MPICheckpointWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
-        <appendTimestamp>1</appendTimestamp>
+        <appendTimestamp>true</appendTimestamp>
         <datarep>native</datarep>
-        <measureTime>1</measureTime>
+        <measureTime>true</measureTime>
       </outputplugin>
 
       <!-- more output plugins -->

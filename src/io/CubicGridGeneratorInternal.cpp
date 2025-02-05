@@ -11,12 +11,13 @@
 #include "CubicGridGeneratorInternal.h"
 
 #include "Domain.h"
+#include "Simulation.h"
 #include "IOHelpers.h"
 #include "WrapOpenMP.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
-#include "utils/Random.h"
+#include "utils/mardyn_assert.h"
 
 #include <cmath>
 #include <algorithm>
@@ -38,17 +39,17 @@ void CubicGridGeneratorInternal::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "binaryMixture: " << _binaryMixture << std::endl;
 	// setting both or none is not allowed!
 	if((_numMolecules == 0 && density == -1.) || (_numMolecules != 0 && density != -1.) ){
-		Log::global_log->error() << "Error in CubicGridGeneratorInternal: You have to set either density or numMolecules!" << std::endl;
-		Simulation::exit(2341);
+		std::ostringstream error_message;
+		error_message << "Error in CubicGridGeneratorInternal: You have to set either density or numMolecules!" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if(density != -1.){
 		// density has been set
 		if(density <= 0){
-			Log::global_log->error()
-					<< "Error in CubicGridGeneratorInternal: Density has to be positive and non-zero!"
-					<< std::endl;
-			Simulation::exit(2342);
+			std::ostringstream error_message;
+			error_message << "Error in CubicGridGeneratorInternal: Density has to be positive and non-zero!" << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		double vol = 1.0;
 		for (int d = 0; d < 3; ++d)
@@ -63,9 +64,10 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 	Log::global_log->info() << "Reading phase space file (CubicGridGenerator)." << std::endl;
 
 	if(_numMolecules == 0){
-		Log::global_log->error() << "Error in CubicGridGeneratorInternal: numMolecules is not set!"
+		std::ostringstream error_message;
+		error_message << "Error in CubicGridGeneratorInternal: numMolecules is not set!"
 				<< std::endl << "Please make sure to run readXML()!" << std::endl;
-		Simulation::exit(2341);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// create a body centered cubic layout, by creating by placing the molecules on the
@@ -83,8 +85,7 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 		global_simulation->getEnsemble()->getComponents()->at(1).updateMassInertia();
 	}
 
-	unsigned long int id = particleContainer->initCubicGrid(
-		numMoleculesPerDim, simBoxLength, static_cast<size_t>(domainDecomp->getRank()) * mardyn_get_max_threads());
+	unsigned long int id = particleContainer->initCubicGrid(numMoleculesPerDim, simBoxLength);
 
 	Log::global_log->info() << "Finished reading molecules: 100%" << std::endl;
 
@@ -143,9 +144,10 @@ std::array<unsigned long, 3> CubicGridGeneratorInternal::determineMolsPerDimensi
 		mardyn_assert(answer >= 1);
 
 		if (answer < 1) {
-			Log::global_log->error() << "computed num Molecules along dimension " << d << ": " << answer << std::endl;
-			Log::global_log->error() << "Should be larger than 1. Exiting." << std::endl;
-			mardyn_exit(1);
+			std::ostringstream error_message;
+			error_message << "computed num Molecules along dimension " << d << ": " << answer << std::endl;
+			error_message << "Should be larger than 1. Exiting." << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 
 		ret[d] = answer;

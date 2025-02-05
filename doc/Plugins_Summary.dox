@@ -10,7 +10,7 @@ Plugin name | Up to 5 Keywords | Short Description (one line)
 Adios2Reader | input, checkpoint, visualization, parallel, particle configurations, MegaMol | Requires ENABLE_ADIOS2=ON (downloads and installs ADIOS2 automatically, alternatively can use your preinstalled ADIOS2 with FIND_PACKAGE_ADIOS2=ON). Reads checkpoint for further computation. Use bpls tool (next to MarDyn executable) for investigation of ADIOS2 files or directories (*.bp).
 Adios2Writer | output, checkpoint, visualization, parallel, particle configurations, MegaMol | Requires ENABLE_ADIOS2=ON (downloads and installs ADIOS2 automatically, alternatively can use your preinstalled ADIOS2 with FIND_PACKAGE_ADIOS2=ON). Writes out particle configuration including position, velocity, angular momentum, quaternions for all components. Also provides meta information such as the full configuration file, component information, process count, and bounding box.
 CavityWriter | cavity, output, profile, grid | Sets up a grid of pseudo-molecules that check for neighbours in radius. Threshold determines if grid point counts as cavity or not. Output in .xyz format.
-CheckpointWriter | checkpoint, legacy | (Legacy) Checkpoint writer. Hint: use <type>binary</type> to speed-up. See also MPICheckpointWriter and MPI_IOCheckpointWriter.
+CheckpointWriter | checkpoint, legacy | (Legacy) Checkpoint writer. Hint: use <type>binary</type> to speed-up.
 COMaligner | alignment, particleContainer utility, visualization | Calculates Center of Mass (COM) of all particles and aligns it with center of simulation box. Dimension/frequency/speed of alignment can be controlled via XML.
 CommunicationPartnerWriter | mpi, communication, output, debugging | Prints the CommunicationPartners for each rank in a separate file.
 DecompWriter | mpi, print | Writes information on the MPI Domain Decomposition. For each rank the boxmin and boxmax is printed.
@@ -47,7 +47,6 @@ MettDeamonFeedrateDirector | feed rate, director, reservoir, stationary, evapora
 Mirror | reflection, mirror plane, wall, boundary condition | Reflect particles at a mirror plane employing different algorithms. This can be used as a simple wall or even more complex boundary conditions.
 MmpldWriter | visualization, particle configurations, MegaMol, mmpld, binary | Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the binary MegaMol Particle List Data file format (MMPLD).
 MmspdBinWriter | visualization, particle configurations, MegaMol, mmspd, binary | Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the binary MegaMol Simple Particle Data file format (MMSPD).
-MPI_IOCheckpointWriter | checkpointing | WIP, not functionable
 MPICheckpointWriter | checkpointing | WIP, not functionable (no proper reader existing)
 ODF | orientation distribution function | Calculates the distribution of mutual orientations between dipolar molecules and writes them into an output. Always use dipolar vector [0 0 1] in the input when using this plugin. Only tested for molecules with exactly one dipole site. Application to other molecules should be possible with minor adjustments and some testing.
 Permittivity | todo | Samples the relative permittivity for pure/mixed Stockmayer fluids and mixtures containing Stockmayer fluids and unpolar fluids. Requires long sampling times (i.e. several million steps). Using global thermostat is recommended.
@@ -61,10 +60,9 @@ TestPlugin | test | Test correctness of plugin calls within Simulation. Simpler 
 TimerWriter | Timers, mpi, print, load balance | Prints the average time for the specified timers as a transient. Separate output for each rank. Can be used to gather information of the load balance.
 VectorizationTuner | todo | todo
 VelocityExchange | temperature gradient | Swap the velocities and angular momentum of two particles. One particle is the warmest (fastest) in the specified cold region, the other one is the coldest (slowest) in the specified warm region.
-VISWriter | visualization, particle configurations, MegaMol | Output plugin writing visualization files containing multiple subsequently sampled frames of particle configurations in the deprecated *.vis MegaMol file format.
 VTKGridWriter | vtk, grid | Write MPI rank, number of molecules in each cell in a .vtu or .pvtu file. Requires compiling with VTK=1.
 VTKMoleculeWriter | vtk, visualization | Write a .vtu or .pvtu file with the molecules for visualiziation in ParaView. Requires compiling with VTK=1.
 WallPotential | potential, Wall, Lennard-Jones | Exerts the force of a Lennard-Jones (9-3 or 10-4) potential on the specified components or all particles.
 XyzWriter | visualization?, todo | todo
-
+EnergyRAPL | stats, print, file | Compute the total energy consumption (package, DRAM) of the simulation across all nodes using RAPL. (See class documentation of \ref EnergyRAPL for usage and limitations.)
 */

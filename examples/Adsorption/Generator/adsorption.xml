@@ -27,7 +27,7 @@
       </domain>
       <components>
         <moleculetype id="1" name="fluid">
-          <site type="LJ126" id="1">
+          <site type="LJ126" id="1" name="LJTS">
             <coords>
               <x>0.0</x>
               <y>0.0</y>
@@ -150,11 +150,11 @@
       </timesteps>
       <outputprefix>adsorption_2D_comp1</outputprefix>
       <profiles>
-        <density>1</density>
-        <temperature>1</temperature>
-        <velocity>1</velocity>
-        <velocity3d>1</velocity3d>
-        <virial>1</virial>
+        <density>true</density>
+        <temperature>true</temperature>
+        <velocity>true</velocity>
+        <velocity3d>true</velocity3d>
+        <virial>true</virial>
       </profiles>
     </plugin>
     <plugin name="SpatialProfile">
@@ -170,11 +170,11 @@
       </timesteps>
       <outputprefix>adsorption_1D_comp1</outputprefix>
       <profiles>
-        <density>1</density>
-        <temperature>1</temperature>
-        <velocity>1</velocity>
-        <velocity3d>1</velocity3d>
-        <virial>1</virial>
+        <density>true</density>
+        <temperature>true</temperature>
+        <velocity>true</velocity>
+        <velocity3d>true</velocity3d>
+        <virial>true</virial>
       </profiles>
     </plugin>
     <plugin name="Mirror" type="2">

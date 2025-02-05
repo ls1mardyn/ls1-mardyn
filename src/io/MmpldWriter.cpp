@@ -13,7 +13,6 @@
 #include <endian.h>
 #endif
 
-
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -23,12 +22,13 @@
 
 #include "Common.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
-#include "Simulation.h"
-#include "utils/Logger.h"
 #include "utils/FileUtils.h"
+#include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
 
 
 // default version to use for mmpld format writing. possible values: 100 or 102
@@ -56,7 +56,9 @@ MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64
 		_color_type(MMPLD_COLOR_NONE)
 {
 	if (0 == _writeFrequency) {
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "[MMPLD Writer] writefrequency must not be 0" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -80,7 +82,7 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	Log::global_log->info() << "[MMPLD Writer] Split files every " << _numFramesPerFile << "th frame."<< std::endl;
 	Log::global_log->info() << "[MMPLD Writer] Write buffer size: " << _writeBufferSize << " Byte" << std::endl;
 
-	int mmpldversion = 100;
+	int mmpldversion = MMPLD_DEFAULT_VERSION;
 	xmlconfig.getNodeValue("mmpldversion", mmpldversion);
 	_mmpldversion = mmpldversion;
 	switch(_mmpldversion) {
@@ -88,8 +90,9 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 		case 102:
 			break;
 		default:
-			Log::global_log->error() << "Unsupported MMPLD version:" << _mmpldversion << std::endl;
-			Simulation::exit(1);
+			std::ostringstream error_message;
+			error_message << "Unsupported MMPLD version:" << _mmpldversion << std::endl;
+			MARDYN_EXIT(error_message.str());
 			break;
 	}
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
@@ -101,8 +104,9 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 	numSites = query.card();
 	Log::global_log->info() << "[MMPLD Writer] Number of sites: " << numSites << std::endl;
 	if(numSites < 1) {
-		Log::global_log->fatal() << "[MMPLD Writer] No site parameters specified." << std::endl;
-		Simulation::exit(48973);
+		std::ostringstream error_message;
+		error_message << "[MMPLD Writer] No site parameters specified." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator outputSiteIter;
@@ -142,6 +146,12 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
 void MmpldWriter::init(ParticleContainer *particleContainer,
 						DomainDecompBase *domainDecomp, Domain *domain)
 {
+	if ( (htole32(1) != 1) || (htole64(1.0) != 1.0) ) {
+		std::ostringstream error_message;
+		error_message << "[MMPLD Writer] The MMPLD Writer currently only supports running on little endian systems." << std::endl;
+		MARDYN_EXIT(error_message.str());
+	}
+
 	// only executed once
 	this->PrepareWriteControl();
 
@@ -317,34 +327,6 @@ void MmpldWriter::endStep(ParticleContainer *particleContainer,
 	write_frame(particleContainer, domainDecomp);
 }
 
-void MmpldWriter::finish(ParticleContainer * /*particleContainer*/, DomainDecompBase *domainDecomp, Domain * /*domain*/)
-{
-	std::string filename = getOutputFilename();
-
-#ifdef ENABLE_MPI
-	int rank = domainDecomp->getRank();
-	if (rank == 0){
-		MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY, MPI_INFO_NULL, &_mpifh);
-		MPI_File_seek(_mpifh, 0, MPI_SEEK_END);
-		MPI_Offset endPosition;
-		MPI_File_get_position(_mpifh, &endPosition);
-
-		uint64_t seektablePos = MMPLD_HEADER_DATA_SIZE + (_frameCount * sizeof(uint64_t));
-		uint64_t seekPosition = htole64(endPosition); /** @todo end of frame offset may not be identical to file end! */
-		MPI_Status status;
-		MPI_File_write_at(_mpifh, seektablePos, &seekPosition, sizeof(seekPosition), MPI_BYTE, &status);
-		uint32_t frameCount = htole32(_frameCount);  // set final number of frames
-		// 8: frame count position in file header
-		MPI_File_write_at(_mpifh, 8, &frameCount, sizeof(frameCount), MPI_BYTE, &status);
-		MPI_File_close(&_mpifh);
-	}else{
-		MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY, MPI_INFO_NULL, &_mpifh);
-		MPI_File_close(&_mpifh);
-	}
-	_seekTable.clear();
-#endif
-}
-
 void MmpldWriter::InitSphereData()
 {
 	if(_bInitSphereData == ISD_READ_FROM_XML)
@@ -414,8 +396,9 @@ long MmpldWriter::get_data_frame_header_size() {
 			data_frame_header_size = sizeof(float) + sizeof(uint32_t);
 			break;
 		default:
-			Log::global_log->error() << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << std::endl;
-			Simulation::exit(1);
+			std::ostringstream error_message;
+			error_message << "[MMPLD Writer] Unsupported MMPLD version: " << _mmpldversion << std::endl;
+			MARDYN_EXIT(error_message.str());
 			break;
 	}
 	return data_frame_header_size;

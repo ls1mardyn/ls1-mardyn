@@ -8,6 +8,7 @@
 #include "ExtractPhase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"

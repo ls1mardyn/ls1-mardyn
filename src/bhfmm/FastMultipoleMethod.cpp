@@ -8,6 +8,7 @@
 #include <utils/threeDimensionalMapping.h>
 #include "FastMultipoleMethod.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "Domain.h"
 #include "utils/Logger.h"
 #include "bhfmm/containers/UniformPseudoParticleContainer.h"
@@ -36,7 +37,7 @@ void FastMultipoleMethod::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "FastMultipoleMethod: LJCellSubdivisionFactor: " << _LJCellSubdivisionFactor << std::endl;
 
 	xmlconfig.getNodeValue("adaptiveContainer", _adaptive);
-	if (_adaptive == 1) {
+	if (_adaptive) {
 		Log::global_log->warning() << "FastMultipoleMethod: adaptiveContainer is not debugged yet and certainly delivers WRONG results!" << std::endl;
 		Log::global_log->warning() << "Unless you are in the process of debugging this container, please stop the simulation and restart with the uniform one" << std::endl;
 	} else {
@@ -44,10 +45,10 @@ void FastMultipoleMethod::readXML(XMLfileUnits& xmlconfig) {
 	}
 
 	xmlconfig.getNodeValue("systemIsPeriodic", _periodic);
-	if (_periodic == 0) {
-		Log::global_log->warning() << "FastMultipoleMethod: periodicity is turned off!" << std::endl;
-	} else {
+	if (_periodic) {
 		Log::global_log->info() << "FastMultipoleMethod: Periodicity is on." << std::endl;
+	} else {
+		Log::global_log->warning() << "FastMultipoleMethod: periodicity is turned off!" << std::endl;
 	}
 }
 
@@ -66,10 +67,11 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 			and _LJCellSubdivisionFactor != 2
 			and _LJCellSubdivisionFactor != 4
 			and _LJCellSubdivisionFactor != 8) {
-		Log::global_log->error() << "Fast Multipole Method: bad subdivision factor:"
+		std::ostringstream error_message;
+		error_message << "Fast Multipole Method: bad subdivision factor:"
 				<< _LJCellSubdivisionFactor << std::endl;
-		Log::global_log->error() << "expected 1,2,4 or 8" << std::endl;
-		Simulation::exit(5);
+		error_message << "expected 1,2,4 or 8" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	Log::global_log->info()
 			<< "Fast Multipole Method: each LJ cell will be subdivided in "
@@ -106,8 +108,9 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 	} else {
 		// TODO: Debugging in Progress!
 #if defined(ENABLE_MPI)
-		Log::global_log->error() << "MPI in combination with adaptive is not supported yet" << std::endl;
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "MPI in combination with adaptive is not supported yet" << std::endl;
+		MARDYN_EXIT(error_message.str());
 #endif
 		//int threshold = 100;
 		_pseudoParticleContainer = new AdaptivePseudoParticleContainer(
@@ -312,8 +315,9 @@ void FastMultipoleMethod::runner(int type, void *data) {
 #else
 #pragma omp critical
 	{
-	Log::global_log->error() << "Quicksched runner without FMM_FFT not implemented!" << std::endl;
-	Simulation::exit(1);
+	std::ostringstream error_message;
+	error_message << "Quicksched runner without FMM_FFT not implemented!" << std::endl;
+	MARDYN_EXIT(error_message.str());
 	}
 #endif /* FMM_FFT */
 }

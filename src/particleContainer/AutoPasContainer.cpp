@@ -7,18 +7,21 @@
 #include <particleContainer/adapter/LegacyCellProcessor.h>
 #include <particleContainer/adapter/VectorizedCellProcessor.h>
 #include <exception>
+#include <sstream>
 #include "Domain.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "autopas/utils/StringUtils.h"
 #include "autopas/utils/logging/Logger.h"
 #include "parallel/DomainDecompBase.h"
+#include "utils/generator/EqualVelocityAssigner.h"
 
 // Declare the main AutoPas class and the iteratePairwise() methods with all used functors as extern template
 // instantiation. They are instantiated in the respective cpp file inside the templateInstantiations folder.
 //! @cond Doxygen_Suppress
 extern template class autopas::AutoPas<Molecule>;
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctor<
+		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ true,
@@ -26,7 +29,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctor<
+		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ false,
@@ -34,7 +37,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctor<
+		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ true,
@@ -42,7 +45,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctor<
+		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ false,
@@ -51,7 +54,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 		> *);
 #ifdef __AVX__
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorAVX<
+		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ true,
@@ -59,7 +62,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorAVX<
+		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ false,
@@ -67,7 +70,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorAVX<
+		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ true,
@@ -75,7 +78,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorAVX<
+		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ false,
@@ -85,7 +88,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 #endif
 #ifdef __ARM_FEATURE_SVE
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorSVE<
+		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ true,
@@ -93,7 +96,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorSVE<
+		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ true,
 				/*mixing*/ false,
@@ -101,7 +104,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorSVE<
+		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ true,
@@ -109,7 +112,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
-		autopas::LJFunctorSVE<
+		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ false,
 				/*mixing*/ false,
@@ -129,7 +132,8 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	_traversalChoices = _autopasContainer.getAllowedTraversals();
 	_containerChoices = _autopasContainer.getAllowedContainers();
 	_selectorStrategy = _autopasContainer.getSelectorStrategy();
-	_tuningStrategyOption = _autopasContainer.getTuningStrategyOption();
+	_tuningStrategyOptions = _autopasContainer.getTuningStrategyOptions();
+	_tuningMetricOption = _autopasContainer.getTuningMetricOption();
 	_tuningAcquisitionFunction = _autopasContainer.getAcquisitionFunction();
 	_dataLayoutChoices = _autopasContainer.getAllowedDataLayouts();
 	_newton3Choices = _autopasContainer.getAllowedNewton3Options();
@@ -171,23 +175,24 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
  * @param defaultValue Set of options that is returned if nothing was found in the xml
  * @return
  */
-template <class OptionType>
+template <class OptionType, class OutputContainer = std::set<OptionType>>
 auto parseAutoPasOption(XMLfileUnits &xmlconfig, const std::string &xmlString,
-						const std::set<OptionType> &defaultValue) {
+						const OutputContainer &defaultValue) {
 	auto stringInXml = string_utils::toLowercase(xmlconfig.getNodeValue_string(xmlString));
 	if (stringInXml.empty()) {
 		return defaultValue;
 	}
 	try {
-		return OptionType::parseOptions(stringInXml);
+		return OptionType::template parseOptions<OutputContainer>(stringInXml);
 	} catch (const std::exception &e) {
-		Log::global_log->error() << "AutoPasContainer: error when parsing " << xmlString << ":" << std::endl;
-		Log::global_log->error() << e.what() << std::endl;
-		Log::global_log->error() << "Possible options: "
+		std::ostringstream error_message;
+		error_message << "AutoPasContainer: error when parsing " << xmlString << ":" << std::endl;
+		error_message << e.what() << std::endl;
+		error_message << "Possible options: "
 							<< autopas::utils::ArrayUtils::to_string(OptionType::getAllOptions()) << std::endl;
-		Simulation::exit(4432);
+		MARDYN_EXIT(error_message.str());
 		// dummy return
-		return decltype(OptionType::parseOptions(""))();
+		return decltype(OptionType::template parseOptions<OutputContainer>(""))();
 	}
 }
 
@@ -201,9 +206,9 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	_selectorStrategy =
 		*parseAutoPasOption<autopas::SelectorStrategyOption>(xmlconfig, "selectorStrategy", {_selectorStrategy})
 			 .begin();
-	_tuningStrategyOption =
-		*parseAutoPasOption<autopas::TuningStrategyOption>(xmlconfig, "tuningStrategy", {_tuningStrategyOption})
-			 .begin();
+	_tuningStrategyOptions =
+		parseAutoPasOption<autopas::TuningStrategyOption, std::vector<autopas::TuningStrategyOption>>(xmlconfig, "tuningStrategies", {_tuningStrategyOptions});
+	_tuningMetricOption = *parseAutoPasOption<autopas::TuningMetricOption>(xmlconfig, "tuningMetric", {_tuningMetricOption}).begin();
 	_extrapolationMethod = *parseAutoPasOption<autopas::ExtrapolationMethodOption>(xmlconfig, "extrapolationMethod",
 																				   {_extrapolationMethod})
 								.begin();
@@ -238,20 +243,24 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 	} else if (vlSkinPerTimestep == -1 ){
 		_verletSkin = vlSkin;
 	} else {
-		Log::global_log->error() << "Input XML specifies skin AND skinPerTimestep. Please choose only one." << std::endl;
+		std::ostringstream error_message;
+		error_message << "Input XML specifies skin AND skinPerTimestep. Please choose only one." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	_relativeOptimumRange = xmlconfig.getNodeValue_double("optimumRange", _relativeOptimumRange);
 	_relativeBlacklistRange = xmlconfig.getNodeValue_double("blacklistRange", _relativeBlacklistRange);
 
+	// string
+	xmlconfig.getNodeValue("ruleFile", _ruleFileName);
 	std::string functorChoiceStr{};
 	xmlconfig.getNodeValue("functor", functorChoiceStr);
-    if (functorChoiceStr.empty()) {
+	if (functorChoiceStr.empty()) {
 #ifdef __ARM_FEATURE_SVE
-        functorChoiceStr = "sve";
+		functorChoiceStr = "sve";
 #elif defined(__AVX__)
-        functorChoiceStr = "avx";
+		functorChoiceStr = "avx";
 #endif
-    }
+	}
 	if (functorChoiceStr.find("avx") != std::string::npos) {
 		functorOption = FunctorOption::AVX;
 		Log::global_log->info() << "Selected AVX Functor." << std::endl;
@@ -318,7 +327,9 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setAllowedTraversals(_traversalChoices);
 	_autopasContainer.setAllowedDataLayouts(_dataLayoutChoices);
 	_autopasContainer.setAllowedNewton3Options(_newton3Choices);
-	_autopasContainer.setTuningStrategyOption(_tuningStrategyOption);
+	_autopasContainer.setTuningStrategyOption(_tuningStrategyOptions);
+	_autopasContainer.setTuningMetricOption(_tuningMetricOption);
+	_autopasContainer.setRuleFileName(_ruleFileName);
 	_autopasContainer.setAcquisitionFunction(_tuningAcquisitionFunction);
 	_autopasContainer.setMaxEvidence(_maxEvidence);
 	_autopasContainer.setRelativeOptimumRange(_relativeOptimumRange);
@@ -331,50 +342,55 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainerIsInitialized = true;
 
 	// print full configuration to the command line
-	int valueOffset = 28;
-	Log::global_log->info() << "AutoPas configuration:" << std::endl
+	constexpr int valueOffset = 28;
+	Log::global_log->info() << "AutoPas configuration:\n"
 					   << std::setw(valueOffset) << std::left << "Data Layout "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedDataLayouts())
-					   << std::endl
+					   << "\n"
 					   << std::setw(valueOffset) << std::left << "Container "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedContainers())
-					   << std::endl
+					   << "\n"
 					   << std::setw(valueOffset) << std::left << "Cell size Factor "
-					   << ": " << _autopasContainer.getAllowedCellSizeFactors() << std::endl
+					   << ": " << _autopasContainer.getAllowedCellSizeFactors() << "\n"
 					   << std::setw(valueOffset) << std::left << "Traversals "
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedTraversals())
-					   << std::endl
+					   << "\n"
 					   << std::setw(valueOffset) << std::left << "Newton3"
 					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getAllowedNewton3Options())
-					   << std::endl
-					   << std::setw(valueOffset) << std::left << "Tuning strategy "
-					   << ": " << _autopasContainer.getTuningStrategyOption() << std::endl
+					   << "\n"
+					   << std::setw(valueOffset) << std::left << "Tuning Metric"
+					   << ": " << _autopasContainer.getTuningMetricOption() << "\n"
+					   << std::setw(valueOffset) << std::left << "Tuning strategies "
+					   << ": " << autopas::utils::ArrayUtils::to_string(_autopasContainer.getTuningStrategyOptions())
+					   << "\n"
 					   << std::setw(valueOffset) << std::left << "Selector strategy "
-					   << ": " << _autopasContainer.getSelectorStrategy() << std::endl
+					   << ": " << _autopasContainer.getSelectorStrategy() << "\n"
 					   << std::setw(valueOffset) << std::left << "Tuning frequency"
-					   << ": " << _autopasContainer.getTuningInterval() << std::endl
+					   << ": " << _autopasContainer.getTuningInterval() << "\n"
 					   << std::setw(valueOffset) << std::left << "Number of samples "
-					   << ": " << _autopasContainer.getNumSamples() << std::endl
+					   << ": " << _autopasContainer.getNumSamples() << "\n"
 					   << std::setw(valueOffset) << std::left << "Tuning Acquisition Function"
-					   << ": " << _autopasContainer.getAcquisitionFunction() << std::endl
+					   << ": " << _autopasContainer.getAcquisitionFunction() << "\n"
 					   << std::setw(valueOffset) << std::left << "Number of evidence "
-					   << ": " << _autopasContainer.getMaxEvidence() << std::endl
+					   << ": " << _autopasContainer.getMaxEvidence() << "\n"
 					   << std::setw(valueOffset) << std::left << "Verlet Cluster size "
-					   << ": " << _autopasContainer.getVerletClusterSize() << std::endl
+					   << ": " << _autopasContainer.getVerletClusterSize() << "\n"
 					   << std::setw(valueOffset) << std::left << "Rebuild frequency "
-					   << ": " << _autopasContainer.getVerletRebuildFrequency() << std::endl
+					   << ": " << _autopasContainer.getVerletRebuildFrequency() << "\n"
 					   << std::setw(valueOffset) << std::left << "Verlet Skin "
-					   << ": " << _autopasContainer.getVerletSkin() << std::endl
+					   << ": " << _autopasContainer.getVerletSkin() << "\n"
 					   << std::setw(valueOffset) << std::left << "Optimum Range "
-					   << ": " << _autopasContainer.getRelativeOptimumRange() << std::endl
+					   << ": " << _autopasContainer.getRelativeOptimumRange() << "\n"
 					   << std::setw(valueOffset) << std::left << "Tuning Phases without test "
-					   << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << std::endl
+					   << ": " << _autopasContainer.getMaxTuningPhasesWithoutTest() << "\n"
 					   << std::setw(valueOffset) << std::left << "Blacklist Range "
-					   << ": " << _autopasContainer.getRelativeBlacklistRange() << std::endl
+					   << ": " << _autopasContainer.getRelativeBlacklistRange() << "\n"
 					   << std::setw(valueOffset) << std::left << "Evidence for prediction "
-					   << ": " << _autopasContainer.getEvidenceFirstPrediction() << std::endl
+					   << ": " << _autopasContainer.getEvidenceFirstPrediction() << "\n"
 					   << std::setw(valueOffset) << std::left << "Extrapolation method "
-					   << ": " << _autopasContainer.getExtrapolationMethodOption() << std::endl;
+					   << ": " << _autopasContainer.getExtrapolationMethodOption() << "\n"
+					   << std::setw(valueOffset) << std::left << "Rule File "
+					   << ": " << _autopasContainer.getRuleFileName() << std::endl;
 
 	/// @todo return sendHaloAndLeavingTogether, (always false) for simplicity.
 	return false;
@@ -383,12 +399,13 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 void AutoPasContainer::update() {
 	// in case we update the container before handling the invalid particles, this might lead to lost particles.
 	if (not _invalidParticles.empty()) {
-		Log::global_log->error() << "AutoPasContainer: trying to update container, even though invalidParticles still "
+		std::ostringstream error_message;
+		error_message << "AutoPasContainer: trying to update container, even though invalidParticles still "
 							   "exist. This would lead to lost particles => ERROR!\n"
 							   "Remaining invalid particles:\n"
 							<< autopas::utils::ArrayUtils::to_string(_invalidParticles, "\n", {"", ""})
 							<< std::endl;
-		Simulation::exit(434);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_invalidParticles = _autopasContainer.updateContainer();
@@ -420,8 +437,8 @@ template <typename F>
 std::pair<double, double> AutoPasContainer::iterateWithFunctor(F &&functor) {
 	// here we call the actual autopas' iteratePairwise method to compute the forces.
 	_autopasContainer.iteratePairwise(&functor);
-	double upot = functor.getUpot();
-	double virial = functor.getVirial();
+	const double upot = functor.getPotentialEnergy();
+	const double virial = functor.getVirial();
 	return std::make_pair(upot, virial);
 }
 
@@ -438,23 +455,22 @@ void AutoPasContainer::traverseTemplateHelper() {
 
 	// Check if all components have the same eps24 and sigma. If that is the case, we can skip the mixing rules, which
 	// is faster!
-	auto numComponents = _particlePropertiesLibrary.getTypes().size();
-	double epsilon24FirstComponent = _particlePropertiesLibrary.get24Epsilon(0);
-	double sigmasqFirstComponent = _particlePropertiesLibrary.getSigmaSquare(0);
+	const auto numComponents = _particlePropertiesLibrary.getNumberRegisteredSiteTypes();
+	const double epsilonFirstComponent = _particlePropertiesLibrary.getEpsilon(0);
+	const double sigmaFirstComponent = _particlePropertiesLibrary.getSigma(0);
 	bool allSame = true;
 	for (auto i = 1ul; i < numComponents; ++i) {
-		allSame &= _particlePropertiesLibrary.get24Epsilon(i) == epsilon24FirstComponent;
-		allSame &= _particlePropertiesLibrary.getSigmaSquare(i) == sigmasqFirstComponent;
+		allSame &= _particlePropertiesLibrary.getEpsilon(i) == epsilonFirstComponent;
+		allSame &= _particlePropertiesLibrary.getSigma(i) == sigmaFirstComponent;
 	}
-	bool useMixing = not allSame;
 
-	if (useMixing) {
+	if (not allSame) {
 		Log::global_log->debug() << "AutoPasContainer: Using mixing." << std::endl;
 		switch (functorOption) {
 			case FunctorOption::SVE: {
 #ifdef __ARM_FEATURE_SVE
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-				autopas::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+				mdLib::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff, _particlePropertiesLibrary);
 
@@ -467,7 +483,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 			case FunctorOption::AVX: {
 #ifdef __AVX__
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-				autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+				mdLib::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff, _particlePropertiesLibrary);
 
@@ -479,7 +495,7 @@ void AutoPasContainer::traverseTemplateHelper() {
 			}
 			case FunctorOption::autoVec: {
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-				autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+				mdLib::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ true, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff, _particlePropertiesLibrary);
 
@@ -496,10 +512,10 @@ void AutoPasContainer::traverseTemplateHelper() {
 			case FunctorOption::SVE: {
 #ifdef __ARM_FEATURE_SVE
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-				autopas::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+				mdLib::LJFunctorSVE<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff);
-				functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
+				functor.setParticleProperties(epsilonFirstComponent * 24, sigmaFirstComponent * sigmaFirstComponent);
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 #else
 				throw std::runtime_error("SVE Functor not compiled due to lack of compiler support!");
@@ -509,10 +525,10 @@ void AutoPasContainer::traverseTemplateHelper() {
 			case FunctorOption::AVX: {
 #ifdef __AVX__
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-				autopas::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+				mdLib::LJFunctorAVX<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff);
-				functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
+				functor.setParticleProperties(epsilonFirstComponent * 24, sigmaFirstComponent * sigmaFirstComponent);
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 #else
 				throw std::runtime_error("AVX Functor not compiled due to lack of compiler support!");
@@ -521,10 +537,10 @@ void AutoPasContainer::traverseTemplateHelper() {
 			}
 			case FunctorOption::autoVec: {
 				// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-				autopas::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+				mdLib::LJFunctor<Molecule, /*applyShift*/ shifting, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 						/*calculateGlobals*/ true>
 						functor(_cutoff);
-				functor.setParticleProperties(epsilon24FirstComponent, sigmasqFirstComponent);
+				functor.setParticleProperties(epsilonFirstComponent * 24, sigmaFirstComponent * sigmaFirstComponent);
 				std::tie(upot, virial) = iterateWithFunctor(functor);
 				break;
 			}
@@ -547,20 +563,20 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		bool hasShift = false;
 		bool hasNoShift = false;
 
-		if (_particlePropertiesLibrary.getTypes().empty()) {
-			auto components = global_simulation->getEnsemble()->getComponents();
-			for (auto &c : *components) {
-				_particlePropertiesLibrary.addType(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma(),
+		if (_particlePropertiesLibrary.getNumberRegisteredSiteTypes() == 0) {
+			const auto components = global_simulation->getEnsemble()->getComponents();
+			for (const auto &c : *components) {
+				_particlePropertiesLibrary.addSiteType(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma(),
 												   c.ljcenter(0).m());
 			}
 			_particlePropertiesLibrary.calculateMixingCoefficients();
 			size_t numComponentsAdded = 0;
-			for (auto &c : *components) {
+			for (const auto &c : *components) {
 				if (c.ljcenter(0).shift6() != 0.) {
 					hasShift = true;
-					double autoPasShift6 =
-						_particlePropertiesLibrary.mixingShift6(numComponentsAdded, numComponentsAdded);
-					double ls1Shift6 = c.ljcenter(0).shift6();
+					const double autoPasShift6 =
+						_particlePropertiesLibrary.getMixingShift6(numComponentsAdded, numComponentsAdded);
+					const double ls1Shift6 = c.ljcenter(0).shift6();
 					if (std::fabs((autoPasShift6 - ls1Shift6) / ls1Shift6) > 1.e-10) {
 						// warn if shift differs relatively by more than 1.e-10
 						Log::global_log->warning() << "Dangerous shift6 detected: AutoPas will use: " << autoPasShift6
@@ -618,11 +634,13 @@ void AutoPasContainer::deleteOuterParticles() {
 	}
 }
 
-double AutoPasContainer::get_halo_L(int /*index*/) const { return _cutoff; }
+double AutoPasContainer::getHaloWidthForDimension(int /*index*/) const { return _cutoff; }
 
 double AutoPasContainer::getCutoff() const { return _cutoff; }
 
 double AutoPasContainer::getSkin() const { return _verletSkin; }
+
+size_t AutoPasContainer::getRebuildFrequency() const {return _verletRebuildFrequency;};
 
 void AutoPasContainer::deleteMolecule(ParticleIterator &moleculeIter, const bool & /*rebuildCaches*/) {
 	_autopasContainer.deleteParticle(moleculeIter);
@@ -657,36 +675,13 @@ std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> AutoPasContaine
 }
 
 unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-											  std::array<double, 3> simBoxLength, size_t seed_offset) {
+											  std::array<double, 3> simBoxLength) {
 
-	// Stolen from ParticleCellBase.cpp
-	auto getRandomVelocity = [](auto temperature, Random &RNG) {
-		using T = vcp_real_calc;
-		std::array<T,3> ret{};
-
-		// Velocity
-		for (int dim = 0; dim < 3; dim++) {
-			ret[dim] = RNG.uniformRandInRange(-0.5f, 0.5f);
-		}
-		T dotprod_v = 0;
-		for (unsigned int i = 0; i < ret.size(); i++) {
-			dotprod_v += ret[i] * ret[i];
-		}
-		// Velocity Correction
-		const T three = static_cast<T>(3.0);
-		T vCorr = sqrt(three * temperature / dotprod_v);
-		for (unsigned int i = 0; i < ret.size(); i++) {
-			ret[i] *= vCorr;
-		}
-
-		return ret;
-	};
-
-	Random myRNG{static_cast<int>(seed_offset) + mardyn_get_thread_num()};
 	vcp_real_calc T = global_simulation->getEnsemble()->T();
+	EqualVelocityAssigner eqVeloAssigner(T);
 
 	const std::array<double, 3> spacing = autopas::utils::ArrayMath::div(simBoxLength,
-																		 autopas::utils::ArrayUtils::static_cast_array<double>(
+																		 autopas::utils::ArrayUtils::static_cast_copy_array<double>(
 																				 numMoleculesPerDimension));
 	size_t numMolecules = 0;
 	for (int grid = 0; grid < 2; ++grid) {
@@ -698,10 +693,10 @@ unsigned long AutoPasContainer::initCubicGrid(std::array<unsigned long, 3> numMo
 				const double posY = offset[1] + spacing[1] * y;
 				for (int x = 0; x < numMoleculesPerDimension[0]; ++x) {
 					const double posX = offset[0] + spacing[0] * x;
-					std::array<vcp_real_calc, 3> v = getRandomVelocity(T, myRNG);
+					// Init molecule with zero velocity and use the EqualVelocityAssigner in the next step
 					Molecule m(numMolecules++, &(global_simulation->getEnsemble()->getComponents()->at(0)), posX, posY,
-							   posZ, v[0], v[1],
-							   v[2]);
+							   posZ, 0.0, 0.0, 0.0);
+					eqVeloAssigner.assignVelocity(&m);
 					addParticle(m, true, false, false);
 				}
 			}
@@ -715,7 +710,7 @@ double *AutoPasContainer::getCellLength() {
 }
 
 double *AutoPasContainer::getHaloSize() {
-	static std::array<double, 3> haloLength{_verletSkin + _cutoff};
+	static std::array<double, 3> haloLength{_verletSkin + _cutoff, _verletSkin + _cutoff, _verletSkin + _cutoff};
 	return haloLength.data();
 }
 

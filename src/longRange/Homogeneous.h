@@ -5,6 +5,7 @@
 #include "LongRangeCorrection.h"
 #include "molecules/Component.h"
 #include "molecules/Comp2Param.h"
+#include "particleContainer/ParticleContainer.h"
 #include <cmath>
 
 class Simulation;

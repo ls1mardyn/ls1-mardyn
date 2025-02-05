@@ -28,7 +28,7 @@ rhol,rhov,_=sat_vrabec2006(t, Re) #get reduced densities
 rhol=(rhol/(sig**3))            #convert rho into non reduced
 rhov=(rhov/(sig**3))
 
-# We now have densities in number of particles (or unified atomic mass) per Angstrom cubed
+# We now have densities in number of particles per Angstrom cubed
 # This can be converted if need be, but is directly used in the given scenario
 # For example, this can be converted to moles per litre by dividing with 6.02214e-4 (Avogadro's number, adjusted for converting Angstrom cubed to litre)
 

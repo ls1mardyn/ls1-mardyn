@@ -19,6 +19,7 @@
 #include "molecules/FullMolecule.h"
 #endif
 
+#include <algorithm>
 #include <errno.h>
 #include <chrono>
 #include <iomanip>

@@ -10,7 +10,6 @@
 #include "molecules/Comp2Param.h"
 #include "molecules/Component.h"
 #include "ensemble/EnsembleBase.h"
-#include "Simulation.h"
 #include "utils/CommVar.h"
 /*
  * TODO add comments for variables
@@ -141,7 +140,7 @@ public:
 	unsigned getNumFluidComponents();
 
 	//! @brief get the fluid and fluid-solid potential of the local process
-	double getLocalUpotCompSpecific();
+	double getLocalUpotCompSpecific() const;
 
 	//! @brief set the virial of the local process
 	void setLocalVirial(double Virial);
@@ -176,9 +175,6 @@ public:
 	//! @brief set the global temperature
 	void setGlobalTemperature(double T) { setTargetTemperature(0, T); }
 	void setTargetTemperature(int thermostatID, double T);
-
-	//! @brief get the mixcoeff
-	std::vector<double> & getmixcoeff();
 
 	//! @brief get the epsilonRF
 	double getepsilonRF() const;
@@ -218,21 +214,30 @@ public:
 	//!
 	//! Before this method is called, it has to be sure that the
 	//! global potential has been calculated (method calculateGlobalValues)
-	double getAverageGlobalUpot();
-        double getGlobalUpot() const;
+	double getAverageGlobalUpot() const;
+	double getGlobalUpot() const;
 
 	//! by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction)
-	double getAverageGlobalUpotCSpec();
+	double getAverageGlobalUpotCSpec() const;
+
+	//! @brief get the global kinetic energy
+	//!
+	//! Before this method is called, the user has to be sure that the
+	//! global energy (rot and trans) has been calculated via calculateGlobalValues()
+	//! Since variables _globalsummv2 and _globalsumIw2 store the sum of m_i*(v_i^2).
+	//! Therefore, the constant factor 0.5 has to be applied to yield the kinetic energies
+	double getGlobalUkinTrans() const { return 0.5*_globalsummv2; }
+	double getGlobalUkinRot() const { return 0.5*_globalsumIw2; }
 
 	//! by Stefan Becker: determine and return the totel number of fluid molecules
 	//! this method assumes all molecules with a component-ID less than _numFluidComponent to be fluid molecules
-	unsigned long getNumFluidMolecules();
+	unsigned long getNumFluidMolecules() const;
 
 	//! @brief get the global average virial per particle
 	//!
 	//! Before this method is called, it has to be sure that the
 	//! global virial has been calculated (method calculateGlobalValues)
-	double getAverageGlobalVirial();
+	double getAverageGlobalVirial() const;
 
 	//! @brief sets _localSummv2 to the given value
 	void setLocalSummv2(double summv2, int thermostat);
@@ -247,7 +252,7 @@ public:
 	}
 
 	//! @brief get globalRho
-	double getglobalRho();
+	double getglobalRho() const;
 
 	//! @brief set globalRho
 	void setglobalRho(double grho);
@@ -349,11 +354,8 @@ public:
 	//! @brief associates a component with a thermostat
 	//! @param cid internal ID of the component
 	//! @param th internal ID of the thermostat
-	void setComponentThermostat(int cid, int thermostat) {
-		if((0 > cid) || (0 >= thermostat)) Simulation::exit(787);
-		this->_componentToThermostatIdMap[cid] = thermostat;
-		this->_universalThermostatN[thermostat] = 0;
-	}
+	void setComponentThermostat(int cid, int thermostat);
+
 	//! @brief enables the "undirected" flag for the specified thermostat
 	//! @param tst internal ID of the respective thermostat
 	void enableUndirectedThermostat(int thermostat);
@@ -372,8 +374,8 @@ public:
 	void evaluateRho(unsigned long localN, DomainDecompBase* comm);
 	void submitDU(unsigned cid, double DU, double* r);
 	void setLambda(double lambda) { this->_universalLambda = lambda; }
-        void setDensityCoefficient(float coeff) { _globalDecisiveDensity = coeff; }
-        void setProfiledComponentMass(double m) { _universalProfiledComponentMass = m; }
+	void setDensityCoefficient(float coeff) { _globalDecisiveDensity = coeff; }
+	void setProfiledComponentMass(double m) { _universalProfiledComponentMass = m; }
 
 	void init_cv(unsigned N, double U, double UU) {
 		this->_globalUSteps = N;
@@ -383,18 +385,18 @@ public:
 	void record_cv();
 	double cv();
 
-    // by Stefan Becker <stefan.becker@mv.uni-kl.de>
+	// by Stefan Becker <stefan.becker@mv.uni-kl.de>
 	/* method returning the sigma parameter of a component
 	=> needed in the output of the MmspdWriter (specifying the particles' radii in a movie) */
-	double getSigma(unsigned cid, unsigned nthSigma);
+	double getSigma(unsigned cid, unsigned nthSigma) const;
 	// needed for the MmspdWriter (MegaMol)
-	unsigned getNumberOfComponents();
+	unsigned getNumberOfComponents() const;
 
 	void setUpotCorr(double upotcorr){ _UpotCorr = upotcorr; }
 	void setVirialCorr(double virialcorr){ _VirialCorr = virialcorr; }
 
-    // explosion heuristics, NOTE: turn off when using slab thermostat
-    void setExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
+	// explosion heuristics, NOTE: turn off when using slab thermostat
+	void setExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
 
 private:
 
@@ -415,6 +417,10 @@ private:
 	double _globalUpot;
 	//! global component specific potential (fluid-fluid and fluid-solid but NOT solid-solid)
 	double _globalUpotCspecif;
+	//! global translational kinetic energy times two
+	double _globalsummv2;
+	//! global rotational kinetic energy times two
+	double _globalsumIw2;
 	//! global virial
 	double _globalVirial;
 	//! global density
@@ -462,9 +468,9 @@ private:
 	double _globalSigmaUU;
 	//! which components should be considered?
 	std::map<unsigned, bool> _universalProfiledComponents;
-        double _universalProfiledComponentMass;  // set from outside
-        double _universalLambda;  // set from outside
-        float _globalDecisiveDensity;  // set from outside
+	double _universalProfiledComponentMass;  // set from outside
+	double _universalLambda;  // set from outside
+	float _globalDecisiveDensity;  // set from outside
 
 	int _universalSelectiveThermostatCounter;
 	int _universalSelectiveThermostatWarning;
@@ -492,12 +498,9 @@ private:
 
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;
-	//! modified Lorentz-Berthelot mixing rule parameters
-	//! @todo more explanation
-	std::vector<double> _mixcoeff;
 
-    // explosion heuristics, NOTE: turn off when using slab thermostat
-    bool _bDoExplosionHeuristics;
+	// explosion heuristics, NOTE: turn off when using slab thermostat
+	bool _bDoExplosionHeuristics;
 };
 
 

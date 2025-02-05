@@ -13,7 +13,6 @@
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "utils/Logger.h"
-#include "utils/Random.h"
 #include "utils/mardyn_assert.h"
 #include "utils/GetChunkSize.h"
 
@@ -83,19 +82,19 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	if (_boxWidthInNumCells[0] < 2 * _haloWidthInNumCells[0]
 			|| _boxWidthInNumCells[1] < 2 * _haloWidthInNumCells[1]
 			|| _boxWidthInNumCells[2] < 2 * _haloWidthInNumCells[2]) {
-		Log::global_log->error_always_output()
-				<< "LinkedCells (constructor): bounding box too small for calculated cell length"
+		std::ostringstream error_message;
+		error_message << "LinkedCells (constructor): bounding box too small for calculated cell length"
 				<< std::endl;
-		Log::global_log->error_always_output() << "_cellsPerDimension: " << _cellsPerDimension[0]
+		error_message << "_cellsPerDimension: " << _cellsPerDimension[0]
 				<< " / " << _cellsPerDimension[1] << " / "
 				<< _cellsPerDimension[2] << std::endl;
-		Log::global_log->error_always_output() << "_haloWidthInNumCells: "
+		error_message << "_haloWidthInNumCells: "
 				<< _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1]
 				<< " / " << _haloWidthInNumCells[2] << std::endl;
-		Log::global_log->error_always_output() << "_boxWidthInNumCells: " << _boxWidthInNumCells[0]
+		error_message << "_boxWidthInNumCells: " << _boxWidthInNumCells[0]
 				<< " / " << _boxWidthInNumCells[1] << " / "
 				<< _boxWidthInNumCells[2] << std::endl;
-		Simulation::exit(5);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	initializeCells();
@@ -155,8 +154,9 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 		// in each dimension at least one layer of (inner+boundary) cells necessary
 		if (_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]) {
-			Log::global_log->error_always_output() << "LinkedCells::rebuild: region too small" << std::endl;
-			Simulation::exit(1);
+			std::ostringstream error_message;
+			error_message << "LinkedCells::rebuild: region too small" << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 
 		numberOfCells *= _cellsPerDimension[dim];
@@ -224,16 +224,17 @@ void LinkedCells::check_molecules_in_box() {
 	}
 
 	if (numBadMolecules > 0) {
-		Log::global_log->error() << "Found " << numBadMolecules << " outside of bounding box:" << std::endl;
+		std::ostringstream error_message;
+		error_message << "Found " << numBadMolecules << " outside of bounding box:" << std::endl;
 		for (auto & m : badMolecules) {
-			Log::global_log->error() << "Particle (id=" << m.getID() << "), (current position: x="
+			error_message << "Particle (id=" << m.getID() << "), (current position: x="
 					<< m.r(0) << ", y=" << m.r(1) << ", z=" << m.r(2) << ")" << std::endl;
 		}
-		Log::global_log->error() << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
+		error_message << "The bounding box is: [" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMax[0]
 				<< ") x [" << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMax[1] << ") x [" << _haloBoundingBoxMin[2]
 				<< ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
-		Log::global_log->error() << "Particles will be lost. Aborting simulation." << std::endl;
-		Simulation::exit(311);
+		error_message << "Particles will be lost. Aborting simulation." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -292,8 +293,9 @@ void LinkedCells::update() {
 
 
 	if (numBadMolecules > 0) {
-		Log::global_log->error() << "Found " << numBadMolecules << " outside of their correct cells. Aborting." << std::endl;
-		Simulation::exit(311);
+		std::ostringstream error_message;
+		error_message << "Found " << numBadMolecules << " outside of their correct cells. Aborting." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 #endif
 }
@@ -542,8 +544,9 @@ void LinkedCells::addParticles(std::vector<Molecule>& particles, bool checkWheth
 
 void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {
 	if (not _cellsValid) {
-		Log::global_log->error() << "Cell structure in LinkedCells (traverseNonInnermostCells) invalid, call update first" << std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "Cell structure in LinkedCells (traverseNonInnermostCells) invalid, call update first" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_traversalTuner->traverseCellPairsOuter(cellProcessor);
@@ -551,8 +554,9 @@ void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {
 
 void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) {
 	if (not _cellsValid) {
-		Log::global_log->error() << "Cell structure in LinkedCells (traversePartialInnermostCells) invalid, call update first" << std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "Cell structure in LinkedCells (traversePartialInnermostCells) invalid, call update first" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_traversalTuner->traverseCellPairsInner(cellProcessor, stage, stageCount);
@@ -560,10 +564,9 @@ void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, un
 
 void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	if (not _cellsValid) {
-		Log::global_log->error()
-				<< "Cell structure in LinkedCells (traversePairs) invalid, call update first"
-				<< std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "Cell structure in LinkedCells (traversePairs) invalid, call update first" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	cellProcessor.initTraversal();
@@ -609,10 +612,9 @@ void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) 
 
 void LinkedCells::deleteOuterParticles() {
 	/*if (_cellsValid == false) {
-		Log::global_log->error()
-				<< "Cell structure in LinkedCells (deleteOuterParticles) invalid, call update first"
-				<< std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "Cell structure in LinkedCells (deleteOuterParticles) invalid, call update first" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}*/
 
 	const size_t numHaloCells = _haloCellIndices.size();
@@ -626,7 +628,7 @@ void LinkedCells::deleteOuterParticles() {
 	}
 }
 
-double LinkedCells::get_halo_L(int index) const {
+double LinkedCells::getHaloWidthForDimension(int index) const {
 	return _haloLength[index];
 }
 
@@ -641,7 +643,7 @@ RegionParticleIterator LinkedCells::regionIterator(const double startRegion[3], 
 	const auto &localBoxOfInterestMin = type == ParticleIterator::ALL_CELLS ? _haloBoundingBoxMin : _boundingBoxMin;
 	const auto &localBoxOfInterestMax = type == ParticleIterator::ALL_CELLS ? _haloBoundingBoxMax : _boundingBoxMax;
 
-    // clamp iterated region to local MPI subdomain
+	// clamp iterated region to local MPI subdomain
 	const std::array<double, 3> startRegionClamped = {
 		std::clamp(startRegion[0], localBoxOfInterestMin[0], localBoxOfInterestMax[0]),
 		std::clamp(startRegion[1], localBoxOfInterestMin[1], localBoxOfInterestMax[1]),
@@ -833,11 +835,12 @@ unsigned long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const 
 	for (int dim = 0; dim < 3; dim++) {
 		#ifndef NDEBUG
 		if (molecule->r(dim) < _haloBoundingBoxMin[dim] || molecule->r(dim) >= _haloBoundingBoxMax[dim]) {
-			Log::global_log->error() << "Molecule is outside of bounding box" << std::endl;
-			Log::global_log->error() << "Molecule:\n" << *molecule << std::endl;
-			Log::global_log->error() << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << std::endl;
-			Log::global_log->error() << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
-			Simulation::exit(1);
+			std::ostringstream error_message;
+			error_message << "Molecule is outside of bounding box" << std::endl;
+			error_message << "Molecule:\n" << *molecule << std::endl;
+			error_message << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << std::endl;
+			error_message << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		#endif
 		//this version is sensitive to roundoffs, if we have molecules (initialized) precisely at position 0.0:
@@ -882,11 +885,12 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 		#ifndef NDEBUG
 		//this should never ever happen!
 		if (localPoint[dim] < _haloBoundingBoxMin[dim] || localPoint[dim] >= _haloBoundingBoxMax[dim]) {
-			Log::global_log->error() << "Point is outside of halo bounding box" << std::endl;
-			Log::global_log->error() << "Point p = (" << localPoint[0] << ", " << localPoint[1] << ", " << localPoint[2] << ")" << std::endl;
-			Log::global_log->error() << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << std::endl;
-			Log::global_log->error() << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
-			Simulation::exit(1);
+			std::ostringstream error_message;
+			error_message << "Point is outside of halo bounding box" << std::endl;
+			error_message << "Point p = (" << localPoint[0] << ", " << localPoint[1] << ", " << localPoint[2] << ")" << std::endl;
+			error_message << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << std::endl;
+			error_message << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		#endif
 
@@ -934,7 +938,7 @@ void LinkedCells::getCellIndicesOfRegion(const double startRegion[3], const doub
 	endIndex = getCellIndexOfPoint(endRegion);
 }
 
-unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, size_t seed_offset) {
+unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) {
 	const unsigned long numCells = _cells.size();
 
 	std::vector<unsigned long> numMoleculesPerThread;
@@ -948,15 +952,13 @@ unsigned long LinkedCells::initCubicGrid(std::array<unsigned long, 3> numMolecul
 		const int myID = mardyn_get_thread_num();
 		const unsigned long myStart = numCells * myID / numThreads;
 		const unsigned long myEnd = numCells * (myID + 1) / numThreads;
-		const int seed = seed_offset + myID;
 
 		unsigned long numMoleculesByThisThread = 0;
-		Random threadPrivateRNG{seed};
 
 		// manual "static" scheduling important, because later this thread needs to traverse the same cells
 		for (unsigned long cellIndex = myStart; cellIndex < myEnd; ++cellIndex) {
 			ParticleCell & cell = _cells[cellIndex];
-			numMoleculesByThisThread += cell.initCubicGrid(numMoleculesPerDimension, simBoxLength, threadPrivateRNG);
+			numMoleculesByThisThread += cell.initCubicGrid(numMoleculesPerDimension, simBoxLength);
 		}
 
 		// prefix sum of numMoleculesByThisThread
@@ -1003,14 +1005,13 @@ void LinkedCells::deleteMolecule(ParticleIterator &moleculeIter, const bool& reb
 
 	moleculeIter.deleteCurrentParticle();
 
-    if (rebuildCaches) {
-        auto cellid = getCellIndexOfMolecule(&*moleculeIter);
-        if (cellid >= _cells.size()) {
-          Log::global_log->error_always_output()
-              << "coordinates for atom deletion lie outside bounding box."
-              << std::endl;
-          Simulation::exit(1);
-        }
+	if (rebuildCaches) {
+		auto cellid = getCellIndexOfMolecule(&*moleculeIter);
+		if (cellid >= _cells.size()) {
+			std::ostringstream error_message;
+			error_message << "coordinates for atom deletion lie outside bounding box." << std::endl;
+			MARDYN_EXIT(error_message.str());
+		}
 		_cells[cellid].buildSoACaches();
 	}
 }
@@ -1066,7 +1067,7 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 		delete cellProcessor;
 	}
 
-    mardyn_assert(not std::isnan(u)); // catches NaN
+	mardyn_assert(not std::isnan(u)); // catches NaN
 
 	return u;
 }

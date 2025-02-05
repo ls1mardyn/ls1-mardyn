@@ -7,24 +7,85 @@ ls1-MarDyn is a massively parallel Molecular Dynamics (MD) code for large system
 Getting Started
 ===============
 
-Documentation:
+Documentation
 --------------
 The current doxygen documentation can be found [here](https://ls1mardyn.github.io/ls1-mardyn/).
 
-Prerequisites:
+Prerequisites
 --------------
-### mandatory requirements:
+### mandatory requirements
 * a C++17 compiler (GCC, Clang, Intel, PGI, Cray, NEC SX, IBM XL, ...)
 * a working MPI installation compatible with the MPI 3.0 specification or later (Open MPI, MPICH, MVAPICH, Intel MPI, Cray MPI, NEC MPI, IBM Platform MPI, ...)
 
-### optional requirements:
+### optional requirements
 * [FFTW3](http://www.fftw.org)
 * [VTK](http://www.vtk.org)
 * [QuickSched](https://arxiv.org/abs/1601.05384)
+* If [AutoPas](https://autopas.github.io/doxygen_documentation/git-master/) is enabled, make sure to have [its requirements](https://github.com/AutoPas/AutoPas/blob/master/docs/userdoc/Building.md) installed.
 
-
-Installation (make)
+Installation
 ------------
+
+### Installing ls1-MarDyn using cmake
+This is the recommended way of building ls1-MarDyn.
+
+#### Quick guide
+
+Run the following commands to build ls1-MarDyn with the Clang compiler. Adjust options (e.g. ENABLE_MPI) according to the individual needs.
+```bash
+mkdir build
+cd build
+CC=clang CXX=clang++ ccmake ..
+make -j $(nproc)
+```
+
+#### Detailed guide
+To build ls1-MarDyn using cmake first create an additional directory on the root ls1-MarDyn directory and change into that directory.
+```bash
+mkdir build
+cd build
+```
+Next, `cmake` has to be executed. In most cases, you will have to specify the compiler with which ls1-MarDyn should be built:
+```bash
+CC=clang CXX=clang++ cmake ..
+```
+Some of the most common compilers are
+| Compiler      | CC    | CXX     |
+|---------------|-------|---------|
+| GCC           | `gcc`   | `g++`     |
+| Intel oneAPI  | `icx`   | `icpx`    |
+| Clang         | `clang` | `clang++` |
+
+The Intel Classic Compiler (`icc` and `icpc`) is not recommended to use, since it is deprecated and does not work with AutoPas.
+
+Note: The Intel oneAPI compiler may rely on some external C++ libraries shipped with gcc (see [this issue](https://github.com/ls1mardyn/ls1-mardyn/issues/297) for details).
+
+Specifying the compiler this way is only possible at the first execution of cmake.
+If you want to change the compiler later on, either add another build directory, or first clear the existing build directory.
+
+To configure the options within ls1-MarDyn it is recommended to use `ccmake`:
+```bash
+ccmake ..
+```
+That way you can easily edit the available options.
+
+Alternatively, specify the configuration with use of the `cmake` command:
+```bash
+CC=clang CXX=clang++ cmake -DENABLE_MPI=ON ..
+```
+
+Finally, build ls1-MarDyn using:
+```bash
+make
+```
+
+For a faster build, you can make use of parallel building:
+```bash
+make -j $(nproc)
+```
+
+The executable is then found at `build/src/MarDyn`.
+
 
 ### Installing ls1-MarDyn using make
 
@@ -52,36 +113,6 @@ To display further information about the available suboptions for a configuratio
   make CFG=<cfg name> cfg_help
 ```
 
-### Installing ls1-MarDyn using cmake
-This is the recommended way of building ls1-MarDyn.
-
-#### Configuration
-Initial support to build ls1-mardyn using cmake has been recently added.
-To build mardyn using cmake first create an additional directory on the root mardyn directory and change into that directory.
-```bash
-mkdir build
-cd build
-```
-Next, cmake has to be executed. In most cases, you will have to specify the compiler with which mardyn should be built:
-```bash
-CC=clang CXX=clang++ cmake ..
-# or using mpi:
-CC=`which mpicc` CXX=`which mpicxx` cmake ..
-```
-Specifying the compiler is only possible at the first execution of cmake.
-If you want to change the compiler later on, either add another build directory, or first clear the existing build directory.
-
-To configure the options within ls1-mardyn it is recommended to use `ccmake`:
-```bash
-ccmake .
-```
-That way you can easily edit the available options.
-
-Finally, build ls1-mardyn using:
-```bash
-make
-```
-For a parallel and faster build please use `make`'s `-j` parameter with an appropriate number of tasks.
 
 #### ADIOS2 support
 If a visualisation with MegaMol and ADIOS2 is desired, an installation of ADIOS2 is needed. By default, ADIOS2 is downloaded and built automatically during the build process of ls1-MarDyn. If connections to external resources, e.g. on HPC systems, are blocked, the following steps (for an MPI build) are required to build ls1-MarDyn with ADIOS2.
@@ -114,7 +145,7 @@ cd build
 cmake .. -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DADIOS2_DIR=PATH-TO-ADIOS2/ADIOS2/build/install/lib64/cmake/adios2 -DENABLE_MPI=ON -DFIND_PACKAGE_ADIOS2=ON
 ```
 
-Finally, build ls1-mardyn using:
+Finally, build ls1-MarDyn using:
 ```bash
 make
 ```
@@ -124,16 +155,19 @@ Note: For both, ADIOS2 and ls1-MarDyn, `ccmake` can be used to configure options
 
 Running ls1-MarDyn
 ------------------
-The basic command to run ls1-mardyn is as follows:
+The basic command to run ls1-MarDyn is as follows:
 ```sh
 MarDyn [options] <inputfile>
 ```
-where MarDyn is the executable build in the INSTALLATION section, `[options]` are any "--"-prefixed options as listed by `MarDyn --help` and `<inputfile>` is a input file.
+where `MarDyn` is the executable build in the INSTALLATION section, `[options]` are any "--"-prefixed options as listed by `MarDyn --help` and `<inputfile>` is a input file.
 
-Detailed help can be obtained by running
+To get an overview of further command line options run
 ```sh
 MarDyn --help
 ```
+
+To understand how to write an input file check out [examples/all-options.xml](https://github.com/ls1mardyn/ls1-mardyn/blob/master/examples/all-options.xml), the various examples in the examples folder and the documentation of the various `readXML()` methods, e.g. via our doxygen documentation.
+
 ### running examples
 ls1-MarDyn comes with a set of examples, which can be found in the examples folder.
 ```sh
@@ -147,7 +181,7 @@ mpirun -np 2 ../../../src/MarDyn config.xml  --steps 10 --loop-abort-time 3600
 
 AutoPas Support
 ------------------
-ls1 mardyn supports AutoPas as a replacement for the used linked cells container and the built-in force calculation.
+ls1-MarDyn supports AutoPas as a replacement for the used linked cells container and the built-in force calculation.
 
 ### Building for AutoPas 
 To enable support for [AutoPas](https://github.com/AutoPas/AutoPas/), you will have to enable the option `ENABLE_AUTOPAS`.

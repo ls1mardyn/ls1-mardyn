@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <autopas/molecularDynamics/MoleculeLJ.h>
+#include <molecularDynamicsLibrary/MoleculeLJ.h>
 #include <autopas/utils/SoAType.h>
 #include <autopas/utils/inBox.h>
 
@@ -167,8 +167,6 @@ public:
 	void setStartIndexSoA_Q(unsigned i) override{};
 
 	unsigned int numSites() const override { return 1; };
-
-	unsigned int numOrientedSites() const override { return 0; }
 
 	unsigned int numLJcenters() const override { return 1; }
 

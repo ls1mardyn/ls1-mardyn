@@ -6,10 +6,12 @@
  */
 #include <memory>
 #include <algorithm>
+#include <sstream>
 
 #include "DomainDecompMPIBase.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
+#include "utils/mardyn_assert.h"
 #include "Simulation.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "ParticleData.h"
@@ -148,9 +150,9 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 	} else if(zonalMethod=="nt") {
 		zonalMethodP = new NeutralTerritory();
 	} else {
-		Log::global_log->error() << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'es', 'hs', 'mp' and 'nt'"
-				<< std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "DomainDecompMPIBase: invalid zonal method specified. Valid values are 'fs', 'es', 'hs', 'mp' and 'nt'" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	Log::global_log->info() << "Using zonal method: " << zonalMethod << std::endl;
 
@@ -164,9 +166,9 @@ void DomainDecompMPIBase::setCommunicationScheme(const std::string& scheme, cons
 		Log::global_log->info() << "DomainDecompMPIBase: Using IndirectCommunicationScheme" << std::endl;
 		_neighbourCommunicationScheme = std::make_unique<IndirectNeighbourCommunicationScheme>(zonalMethodP);
 	} else {
-		Log::global_log->error() << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'"
-				<< std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "DomainDecompMPIBase: invalid NeighbourCommunicationScheme specified. Valid values are 'direct' and 'indirect'" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -195,8 +197,10 @@ void DomainDecompMPIBase::assertIntIdentity(int IX) {
 		for (int i = 1; i < _numProcs; i++) {
 			MPI_CHECK(MPI_Recv(&recv, 1, MPI_INT, i, 2 * i + 17, _comm, &s));
 			if (recv != IX) {
-				Log::global_log->error() << "IX is " << IX << " for rank 0, but " << recv << " for rank " << i << ".\n";
-				MPI_Abort(_comm, 911);
+				std::ostringstream error_message;
+				error_message << "[DomainDecompMPIBase] IX is " << IX << " for rank 0, "
+					<< "but " << recv << " for rank " << i << "." << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
 		}
 		Log::global_log->info() << "IX = " << recv << " for all " << _numProcs << " ranks.\n";
@@ -223,8 +227,9 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 
 		for (auto m = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); m.isValid(); ++m) {
 			if(check.find(m->getID()) != check.end()){
-				Log::global_log->error() << "Rank 0 contains a duplicated particle with id " << m->getID() << std::endl;
-				MPI_Abort(_comm, 1);
+				std::ostringstream error_message;
+				error_message << "Rank 0 contains a duplicated particle with id " << m->getID() << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
 			check[m->getID()] = 0;
 		}
@@ -247,8 +252,9 @@ void DomainDecompMPIBase::assertDisjunctivity(ParticleContainer* moleculeContain
 			}
 		}
 		if (not isOk) {
-			Log::global_log->error() << "Aborting because of duplicated partices." << std::endl;
-			MPI_Abort(_comm, 1);
+			std::ostringstream error_message;
+			error_message << "Aborting because of duplicated particles." << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 
 		Log::global_log->info() << "Data consistency checked: No duplicate IDs detected among " << check.size()

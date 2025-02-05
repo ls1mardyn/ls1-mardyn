@@ -26,7 +26,7 @@
 			</domain>
 			<components>
 				<moleculetype id="1" name="Arbitrary">
-					<site type="LJ126" id="1" >
+					<site type="LJ126" id="1" name="LJfull">
 						<coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
 						<mass>1.0</mass>
 						<sigma>1.0</sigma>
@@ -56,13 +56,19 @@
 							<lower> <x>0</x> <y>0</y> <z>0</z> </lower>
 							<upper> <x>30</x> <y>30</y> <z>30</z> </upper>
 						</object>
-						<velocityAssigner type="EqualVelocityDistribution" enableRandomSeed="1"></velocityAssigner>
+						<velocityAssigner type="EqualVelocityDistribution" enableRandomSeed="true"></velocityAssigner>
 					</objectgenerator>
 				</generator>
 			</phasespacepoint>
 		</ensemble>
 		<algorithm>
-			<parallelisation type="DomainDecomposition"/>
+			<parallelisation type="StaticIrregDomainDecomposition">
+				<subdomainWeights>
+					<x>1,2,1</x>
+					<y>2,1</y>
+					<z>1</z>
+				</subdomainWeights>
+			</parallelisation>
 			<datastructure type="LinkedCells">
 			<cellsInCutoffRadius>1</cellsInCutoffRadius>
 			</datastructure>

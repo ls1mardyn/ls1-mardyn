@@ -192,12 +192,14 @@ public:
 	//! @brief returns the width of the halo stripe (for the given dimension index)
 	//! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
 	//!       e.g. replace it by the cutoff-radius
-	virtual double get_halo_L(int index) const = 0;
+	virtual double getHaloWidthForDimension(int index) const = 0;
 
 
 	virtual double getCutoff() const = 0;
 
 	virtual double getSkin() const {return 0.;}
+
+	virtual size_t getRebuildFrequency() const {return 1;};
 
     /* TODO: Have a look on this */
 	virtual void deleteMolecule(ParticleIterator& moleculeIter, const bool& rebuildCaches) = 0;
@@ -235,10 +237,9 @@ public:
      * Generates a body-centered cubic grid.
      * @param numMoleculesPerDimension
      * @param simBoxLength
-     * @param seed_offset
      * @return
      */
-	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, size_t seed_offset) = 0;
+	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) = 0;
 
 	virtual double* getCellLength() = 0;
 
@@ -273,20 +274,25 @@ public:
 	 * Only used for logging / output.
 	 * @note: Formatting rules:
 	 *  - The whole configuration should be enclosed in curly brackets.
-	 *  - Different elements should be separated by a comma sourrounded by spaces: " , ".
+	 *  - Different elements should be separated by a comma surrounded by spaces: " , ".
 	 *  - Every element should be in the form "key: value"
 	 * @return
 	 */
 	virtual std::string getConfigurationAsString() = 0;
 
 protected:
-
-	//!  coordinates of the left, lower, front corner of the bounding box
+	/**
+	 * Coordinates of the left, lower, front corner of the local bounding box.
+	 */
 	double _boundingBoxMin[3];
-	//! coordinates of the right, upper, back corner of the bounding box
+	/**
+	 * Coordinates of the right, upper, back corner of the local bounding box.
+	 */
 	double _boundingBoxMax[3];
-	//! Vector of particles that are about to be removed from the container.
-	//! Currently only used by AutoPasContainer but here for interface reasons.
+	/**
+	 * Vector of particles that are about to be removed from the container.
+	 * Currently only used by AutoPasContainer but here for interface reasons.
+	 */
 	std::vector<Molecule> _invalidParticles{};
 
 };

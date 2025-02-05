@@ -7,6 +7,9 @@
 
 #include "Dropaccelerator.h"
 
+#include "Simulation.h"
+#include "utils/mardyn_assert.h"
+
 #ifdef ENABLE_MPI
 #include "mpi.h"
 #endif
@@ -28,11 +31,12 @@ void Dropaccelerator::readXML(XMLfileUnits& xmlconfig) {
 	// SANITY CHECK
 	if (_interval < 1 || _steps <= 0 || _startSimStep < 0 || _xPosition <= 0. || _yPosition <= 0. || _zPosition <= 0. ||
 		_dropRadius <= 0) {
-		Log::global_log->error() << "[Dropaccelerator] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
-		Log::global_log->error() << "[Dropaccelerator] HALTING SIMULATION" << std::endl;
+		std::ostringstream error_message;
+		error_message << "[Dropaccelerator] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
+		error_message << "[Dropaccelerator] HALTING SIMULATION" << std::endl;
 		_enabled = false;
 		// HALT SIM
-		Simulation::exit(1);
+		MARDYN_EXIT(error_message.str());
 		return;
 	}
 

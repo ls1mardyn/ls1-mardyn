@@ -10,7 +10,6 @@
 #include "particleContainer/adapter/vectorization/SIMD_DEFINITIONS.h"
 #include "particleContainer/adapter/vectorization/MaskVec.h"
 #include "utils/AlignedArray.h"
-#include "utils/mardyn_assert.h"
 
 TEST_SUITE_REGISTRATION(RealAccumVecTest);
 

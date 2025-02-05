@@ -11,10 +11,10 @@
 FullMolecule::FullMolecule(unsigned long id, Component *component,
 	                 double rx,  double ry,  double rz,
 	                 double vx,  double vy,  double vz,
-	                 double q0,  double q1,  double q2, double q3,
+	                 double qw,  double qx,  double qy, double qz,
 	                 double Dx,  double Dy,  double Dz
 		  )
-		: _q(q0, q1, q2, q3) {
+		: _q(qw, qx, qy, qz) {
 	_id = id;
 	_component = component;
 	_r[0] = rx;

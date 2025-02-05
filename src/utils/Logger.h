@@ -3,19 +3,16 @@
 
 #define USE_GETTIMEOFDAY
 
-#include <iostream>
-#include <fstream>
-#include <cstdlib>
-#include <iomanip>
-#include <map>
-#include <ctime>
-#include <string>
-#include <sstream>
+#include <algorithm>
 #include <chrono>
-
-#ifdef USE_GETTIMEOFDAY
-#include <sys/time.h>
-#endif
+#include <ctime>
+#include <cctype>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
@@ -46,12 +43,12 @@ namespace Log {
 class Logger;
 
 /**
- * Gobal logger variable for use in the entire program.
- * Must be initialized with constructor e.g. new Log::Logger().
+ * Global logger variable for use in the entire program.
+ * Must be initialized with constructor
  * Namespace visibility:
- *    */
+ */
 #ifndef LOGGER_SRC
-extern Log::Logger *global_log;
+extern std::unique_ptr<Log::Logger> global_log;
 #endif
 
 /**
@@ -70,10 +67,7 @@ typedef enum {
 
 /** @brief The Logger class provides a simple interface to handle log messages.
  *
- * Provides easy interface to handle log messages. Initialize either with
- * output level and stream or output level and filename or use default constructor
- * values (Error, &(std::cout)). With a given file basename and MPI Support each rank will
- * create and write to his own file.
+ * The logger provides an easy way to output logging messages with various log levels.
  * For writing log messages use fatal(), error(), warning(), info() or debug() as
  * with normal streams, e.g.
  * > log.error() << "Wrong parameter." << std::endl;
@@ -91,18 +85,13 @@ private:
 	logLevel _log_level;
 	logLevel _msg_log_level;
 	bool _do_output;
-	std::string _filename;
-	std::ostream *_log_stream;
+	std::shared_ptr<std::ostream> _log_stream;
 	std::map<logLevel, std::string> logLevelNames;
-#ifdef USE_GETTIMEOFDAY
-	timeval _starttime;
-#else
-	time_t _starttime;
-#endif
 
+	std::chrono::system_clock::time_point _starttime;
 	int _rank;
 
-	/// initilaize the list of log levels with the corresponding short names
+	/// initialize the list of log levels with the corresponding short names
 	void init_log_levels() {
 		logLevelNames.insert(std::pair<logLevel, std::string>(None,    "NONE"));
 		logLevelNames.insert(std::pair<logLevel, std::string>(Fatal,   "FATAL ERROR"));
@@ -113,23 +102,18 @@ private:
 		logLevelNames.insert(std::pair<logLevel, std::string>(All,     "ALL"      ));
 	}
 
-	// don't allow copy-construction
-	Logger(const Logger&) : _log_level(Log::Error), _msg_log_level(Log::Error), _do_output(true),
-			_filename(""), _log_stream(0), logLevelNames(), _starttime(), _rank(0)
-	{ }
-
-	// don't allow assignment
-	Logger& operator=(const Logger&) { return *this; }
-
 public:
-	/** Initializes the log level, log stream and the list of log level names.
-	 * If ENABLE_MPI is enabled by default all process perform logging output. */
-	Logger(logLevel level = Log::Error, std::ostream *os = &(std::cout));
+	/**
+	 * Constructor for a logger to a stream.
+	 *
+	 * Initializes the log level, log stream and the list of log level names.
+	 * If ENABLE_MPI is enabled by default, all process perform logging output.
+	 * Note: The default stream used (std::cout) cannot be deleted. Therefore the
+	 * passed shared pointer to it uses a no-op deleter function.
+	 */
+	Logger(logLevel level = Log::Error, std::shared_ptr<std::ostream> os = std::shared_ptr<std::ostream>(&std::cout, [](void*){ /* no-op */}));
 
-	Logger(logLevel level, std::string prefix);
-
-	/// Destructor flushes stream
-	~Logger();
+	~Logger() = default;
 
 	/// General output template for variables, strings, etc.
 	template<typename T>
@@ -164,22 +148,14 @@ public:
 				_msg_log_level = level;
 		if (_msg_log_level <= _log_level && _do_output) {
 			// Include timestamp
-			const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-			tm unused{};
-			const auto* lt = localtime_r(&now, &unused);
-			//*_log_stream << ctime(&t) << " ";
-			std::stringstream timestampstream;
-			// maybe sprintf is easier here...
-			timestampstream << std::setfill('0') << std::setw(4) << (1900 + lt->tm_year) << std::setw(2) << (1 + lt->tm_mon) << std::setw(2) << lt->tm_mday << "T" << std::setw(2) << lt->tm_hour << std::setw(2) << lt->tm_min << std::setw(2) << lt->tm_sec;
-			*_log_stream << logLevelNames[level] << ":\t" << timestampstream.str() << " ";
-			//timestampstream.str(""); timestampstream.clear();
-#ifdef USE_GETTIMEOFDAY
-			timeval tod;
-			gettimeofday(&tod, 0);
-			*_log_stream << std::setw(8) << tod.tv_sec - _starttime.tv_sec + (tod.tv_usec - _starttime.tv_usec) / 1.E6 << " ";
-#else
-			*_log_stream << t-_starttime << "\t";
-#endif
+			const auto now = std::chrono::system_clock::now();
+			const auto time_since_start = now - _starttime;
+
+			const auto now_time_t = std::chrono::system_clock::to_time_t(now);
+			std::tm now_local{};
+			localtime_r(&now_time_t, &now_local);
+			*_log_stream << logLevelNames[level] << ":\t" << std::put_time(&now_local, "%Y-%m-%dT%H:%M:%S") << " ";
+			*_log_stream << std::setw(8) << std::chrono::duration<double>(time_since_start).count() << " ";
 
 			*_log_stream << "[" << _rank << "]\t";
 		}
@@ -214,10 +190,11 @@ public:
 	}
 	/// set log level from string
 	logLevel set_log_level(std::string l) {
-		// identify the loglevel by comparing the first char of the names
+		// Compare case-insensitive
+		std::string l_upper = l;
+		std::transform(l_upper.begin(), l_upper.end(), l_upper.begin(), [](unsigned char c){ return std::toupper(c);});
 		for (const auto& [lvl, name] : logLevelNames) {
-			// case-insensitive matching
-			if (std::toupper(name[0]) == std::toupper(l[0])) {
+			if (name == l_upper) {
 				_log_level = lvl;
 				return _log_level;
 			}
@@ -232,6 +209,10 @@ public:
 		return _log_level;
 	}
 
+	void set_log_stream(std::shared_ptr<std::ostream> os) {
+		_log_stream = os;
+	}
+
 	/// switch on / off output
 	bool set_do_output(bool val) {
 		return _do_output = val;
@@ -243,11 +224,7 @@ public:
 
 	/// initialize starting time
 	void init_starting_time() {
-#ifdef USE_GETTIMEOFDAY
-		gettimeofday(&_starttime, 0);
-#else
-		_starttime = time(NULL);
-#endif
+		_starttime = std::chrono::system_clock::now();
 	}
 
 	/* methods for easy handling of output processes */

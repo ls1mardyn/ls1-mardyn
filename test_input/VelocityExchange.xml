@@ -10,7 +10,7 @@
 	<zmin>3.0</zmin> <zmax>111.1</zmax>      <!-- range z-axis; default: 0 to box size -->
 </coldregion>
 <warmregion>                                 <!-- region with higher temperature -->
-	<symmetric>0</symmetric>             <!-- 0: no symmetry; 1: symmetry in y direction (default) -->
+	<symmetric>false</symmetric>             <!-- false: no symmetry; true: symmetry in y direction (default) -->
 	<xmin>7.1</xmin> <xmax>131.3</xmax>      <!-- range x-axis; default: 0 to box size -->
 	<ymin>94.0</ymin> <ymax>120.4</ymax>      <!-- range y-axis -->
 	<zmin>4.0</zmin> <zmax>box</zmax>      <!-- range z-axis; default: 0 to box size -->

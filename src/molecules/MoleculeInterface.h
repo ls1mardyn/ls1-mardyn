@@ -114,7 +114,6 @@ public:
 	virtual void setStartIndexSoA_Q(unsigned i) = 0;
 
 	virtual unsigned int numSites() const = 0;
-	virtual unsigned int numOrientedSites() const = 0;
 	virtual unsigned int numLJcenters() const = 0;
 	virtual unsigned int numCharges() const = 0;
 	virtual unsigned int numDipoles() const = 0;

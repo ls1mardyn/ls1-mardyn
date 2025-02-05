@@ -107,9 +107,9 @@
 			<outputplugin name="MPICheckpointWriter">
 				<writefrequency>10</writefrequency>
 				<outputprefix>mkesfera</outputprefix>
-				<appendTimestamp>1</appendTimestamp>
+				<appendTimestamp>true</appendTimestamp>
 				<datarep>native</datarep>
-				<measureTime>1</measureTime>
+				<measureTime>true</measureTime>
 				<mpi_info>
 					<hint> <key>striping_factor</key> <value>4</value> </hint>
 					<hint> <key>striping_unit</key> <value>65536</value> </hint>
@@ -127,9 +127,9 @@
 		</output>
 		<!-- ALPHA: Center of Mass alignment plugin  --> 
 		<plugin name="COMaligner">
-			<x>1</x>
-			<y>0</y>
-			<z>1</z>
+			<x>true</x>
+			<y>false</y>
+			<z>true</z>
 			<interval>1</interval>
 			<correctionFactor>.5</correctionFactor>
 		</plugin>

@@ -7,6 +7,7 @@
 
 #include "MoleculeRMM.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "molecules/Component.h"
 #include "molecules/Quaternion.h"
 #include "ensemble/EnsembleBase.h"

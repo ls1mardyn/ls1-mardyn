@@ -2,8 +2,9 @@
 
 #include <limits>
 #include <chrono>
+#include <sstream>
 
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"
 #include "molecules/MoleculeIdPool.h"
@@ -24,15 +25,17 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		ObjectFillerFactory objectFillerFactory;
 		_filler = std::shared_ptr<ObjectFillerBase>(objectFillerFactory.create(fillerType));
 		if(!_filler) {
-			Log::global_log->error() << "Object filler could not be created" << std::endl;
-			Simulation::exit(1);
+			std::ostringstream error_message;
+			error_message << "Object filler could not be created" << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		Log::global_log->debug() << "Using object filler of type: " << _filler->getPluginName() << std::endl;
 		_filler->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	} else {
-		Log::global_log->error() << "No filler specified." << std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "No filler specified." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if(xmlconfig.changecurrentnode("object")) {
@@ -42,14 +45,17 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		ObjectFactory objectFactory;
 		_object = std::shared_ptr<Object>(objectFactory.create(objectType));
 		if(!_object) {
-			Log::global_log->error() << "Unknown object type: " << objectType << std::endl;
+			std::ostringstream error_message;
+			error_message << "Unknown object type: " << objectType << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		Log::global_log->debug() << "Created object of type: " << _object->getPluginName() << std::endl;
 		_object->readXML(xmlconfig);
 		xmlconfig.changecurrentnode("..");
 	} else {
-		Log::global_log->error() << "No object specified." << std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "No object specified." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if(xmlconfig.changecurrentnode("velocityAssigner")) {
@@ -78,8 +84,9 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		} else if(velocityAssignerName == "MaxwellVelocityDistribution") {
 			_velocityAssigner = std::make_shared<MaxwellVelocityAssigner>(0, seed);
 		} else {
-			Log::global_log->error() << "Unknown velocity assigner specified." << std::endl;
-			Simulation::exit(1);
+			std::ostringstream error_message;
+			error_message << "Unknown velocity assigner specified." << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		Ensemble* ensemble = _simulation.getEnsemble();
 		Log::global_log->info() << "Setting temperature for velocity assigner to " << ensemble->T() << std::endl;

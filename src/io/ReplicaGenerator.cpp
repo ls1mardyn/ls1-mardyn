@@ -7,8 +7,10 @@
 #include <vector>
 #include <cstdint>
 #include <numeric>
+#include <memory>
 
 #include "Domain.h"
+#include "Simulation.h"
 
 #include "parallel/DomainDecompBase.h"
 
@@ -20,7 +22,7 @@
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "utils/Logger.h"
 
 
@@ -55,9 +57,10 @@ void ReplicaGenerator::readReplicaPhaseSpaceHeader(SubDomain& subDomain) {
 	XMLfileUnits inp(subDomain.strFilePathHeader);
 
 	if(not inp.changecurrentnode("/mardyn")) {
-		Log::global_log->error() << "Could not find root node /mardyn in XML input file." << std::endl;
-		Log::global_log->fatal() << "Not a valid MarDyn XML input file." << std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "Could not find root node /mardyn in XML input file." << std::endl;
+		error_message << "Not a valid MarDyn XML input file." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	bool bInputOk = true;
@@ -79,9 +82,9 @@ void ReplicaGenerator::readReplicaPhaseSpaceHeader(SubDomain& subDomain) {
 	subDomain.dDensity = subDomain.numParticles / subDomain.dVolume;
 
 	if(not bInputOk) {
-		Log::global_log->error() << "Content of file: '" << subDomain.strFilePathHeader << "' corrupted! Program exit ..."
-							<< std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "Content of file: '" << subDomain.strFilePathHeader << "' corrupted!" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if("ICRVQD" == strMoleculeFormat)
@@ -91,8 +94,9 @@ void ReplicaGenerator::readReplicaPhaseSpaceHeader(SubDomain& subDomain) {
 	else if("ICRV" == strMoleculeFormat)
 		_nMoleculeFormat = ICRV;
 	else {
-		Log::global_log->error() << "Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "Not a valid molecule format: " << strMoleculeFormat << ", program exit ..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -105,8 +109,9 @@ void ReplicaGenerator::readReplicaPhaseSpaceData(SubDomain& subDomain, DomainDec
 	std::ifstream ifs;
 	ifs.open(subDomain.strFilePathData.c_str(), std::ios::binary | std::ios::in);
 	if(!ifs.is_open()) {
-		Log::global_log->error() << "Could not open phaseSpaceFile " << subDomain.strFilePathData << std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "Could not open phaseSpaceFile " << subDomain.strFilePathData << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	Log::global_log->info() << "Reading phase space file " << subDomain.strFilePathData << std::endl;
@@ -116,13 +121,13 @@ void ReplicaGenerator::readReplicaPhaseSpaceData(SubDomain& subDomain, DomainDec
 	// Select appropriate reader
 	switch (_nMoleculeFormat) {
 		case ICRVQD:
-			_moleculeDataReader = new MoleculeDataReaderICRVQD();
+			_moleculeDataReader = std::make_unique<MoleculeDataReaderICRVQD>();
 			break;
 		case ICRV:
-			_moleculeDataReader = new MoleculeDataReaderICRV();
+			_moleculeDataReader = std::make_unique<MoleculeDataReaderICRV>();
 			break;
 		case IRV:
-			_moleculeDataReader = new MoleculeDataReaderIRV();
+			_moleculeDataReader = std::make_unique<MoleculeDataReaderIRV>();
 			break;
 	}
 
@@ -187,9 +192,9 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig) {
 	} else if("heterogeneous_LV" == strType) {
 		_nSystemType = ST_HETEROGENEOUS_LIQUID_VAPOR;
 	} else {
-		Log::global_log->error() << "Specified wrong type at XML path: " << xmlconfig.getcurrentnodepath() << "/type"
-							<< std::endl;
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "Specified wrong type at XML path: " << xmlconfig.getcurrentnodepath() << "/type" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	SubDomain sd;
@@ -239,8 +244,9 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig) {
 			numChanges = query.card();
 			Log::global_log->info() << "Number of components to change: " << (uint32_t) numChanges << std::endl;
 			if(numChanges < 1) {
-				Log::global_log->error() << "No component change defined in XML-config file. Program exit ..." << std::endl;
-				Simulation::exit(-1);
+				std::ostringstream error_message;
+				error_message << "No component change defined in XML-config file. Program exit ..." << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
 			XMLfile::Query::const_iterator changeIter;
 			for(changeIter = query.begin(); changeIter; changeIter++) {
@@ -262,8 +268,9 @@ void ReplicaGenerator::readXML(XMLfileUnits& xmlconfig) {
 			numChanges = query.card();
 			Log::global_log->info() << "Number of components to change: " << (uint32_t) numChanges << std::endl;
 			if(numChanges < 1) {
-				Log::global_log->error() << "No component change defined in XML-config file. Program exit ..." << std::endl;
-				Simulation::exit(-1);
+				std::ostringstream error_message;
+				error_message << "No component change defined in XML-config file. Program exit ..." << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
 			XMLfile::Query::const_iterator changeIter;
 			for(changeIter = query.begin(); changeIter; changeIter++) {
@@ -527,11 +534,10 @@ ReplicaGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
 					   << std::endl;
 
 	if(domainDecomp->getRank() == 0 && numParticlesGlobal != _numParticlesTotal - numAddedParticlesFreespaceGlobal) {
-		Log::global_log->info() << "Number of particles: " << numParticlesGlobal << " (added)"
-																			   " != "
-						   << (_numParticlesTotal - numAddedParticlesFreespaceGlobal) << " (expected). Program exit ..."
-						   << std::endl;
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "Number of particles: " << numParticlesGlobal << " (added) != "
+						<< (_numParticlesTotal - numAddedParticlesFreespaceGlobal) << " (expected)." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	global_simulation->timers()->stop("REPLICA_GENERATOR_VLE_INPUT");

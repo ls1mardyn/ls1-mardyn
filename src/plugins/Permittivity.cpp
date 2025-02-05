@@ -9,6 +9,12 @@
  // Important: Always plot the running average data to make sure convergence has been achieved. Permittivity may take a long time to converge, i.e. a few million steps with ~1000 particles. Reducing number of slabs for the thermostat can drastically improve results/convergence!
  // If a simulation is resumed from a restart file, then the existing running average file is ammended but the computation of the running averages starts anew at the time step of the restart file
 #include "Permittivity.h"
+
+#include <sstream>
+
+#include "utils/mardyn_assert.h"
+#include "Simulation.h"
+
 void Permittivity::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "Calculation of relative permittivity enabled." << std::endl;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
@@ -71,7 +77,9 @@ void Permittivity::init(ParticleContainer* particleContainer, DomainDecompBase* 
 			bool orientationIsCorrect = ci.dipole(0).e() == std::array<double, 3>{0,0,1};
 			_myAbs[i] = ci.dipole(0).abs();
 			if(not orientationIsCorrect){
-				Log::global_log->error() << "Wrong dipole vector chosen! Please always choose [eMyx eMyy eMyz] = [0 0 1] when using the permittivity plugin" << std::endl;
+				std::ostringstream error_message;
+				error_message << "Wrong dipole vector chosen! Please always choose [eMyx eMyy eMyz] = [0 0 1] when using the permittivity plugin" << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
 		}
 	}
