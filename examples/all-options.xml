@@ -366,6 +366,7 @@
       <outputplugin name="ResultWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
+        <outputformat>default</outputformat>
         <accumulation_steps>1000</accumulation_steps>
       </outputplugin>
 
