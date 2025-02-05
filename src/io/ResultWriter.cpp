@@ -27,7 +27,7 @@ void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 		Log::global_log->info() << "[ResultWriter] Output format: " << _outputFormat << std::endl;
 	} else {
 		std::ostringstream error_message;
-		error_message << "[ResultWriter] Wrong output format specified! Use \"csv\" or \"tab\" instead of " << _outputFormat << std::endl;
+		error_message << "[ResultWriter] Wrong output format specified! Use \"csv\" or \"tab\" instead of \"" << _outputFormat << "\"" << std::endl;
 		MARDYN_EXIT(error_message.str());
 	}
 	// Set file extension to be .csv in case of "csv" and .res in case of "tab"
@@ -72,9 +72,6 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 		formatOutput(resultStream, "U_kin_avg");
 		formatOutput(resultStream, "p");
 		formatOutput(resultStream, "p_avg");
-		formatOutput(resultStream, "beta_trans");
-		formatOutput(resultStream, "beta_rot");
-		formatOutput(resultStream, "c_v");
 		formatOutput(resultStream, "N");
 		resultStream << std::endl;
 		resultStream.close();
@@ -87,8 +84,7 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 	// Writing of cavities now handled by CavityWriter
 
 	const unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
-	double cv = domain->cv();
-	double ekin = domain->getGlobalUkinTrans()+domain->getGlobalUkinRot();
+	const double ekin = domain->getGlobalUkinTrans()+domain->getGlobalUkinRot();
 
 	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_U_kin_acc->addEntry(ekin);
@@ -112,9 +108,6 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 		formatOutput(resultStream, _U_kin_acc->getAverage());
 		formatOutput(resultStream, domain->getGlobalPressure());
 		formatOutput(resultStream, _p_acc->getAverage());
-		formatOutput(resultStream, domain->getGlobalBetaTrans());
-		formatOutput(resultStream, domain->getGlobalBetaRot());
-		formatOutput(resultStream, cv);
 		formatOutput(resultStream, globalNumMolecules);
 		resultStream << std::endl;
 		resultStream.close();
