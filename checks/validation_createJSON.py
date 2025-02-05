@@ -61,15 +61,18 @@ def create_validation_file(log_data, result_data, output_file):
         output_file (str): Path to the output JSON file.
     '''
     
-    try:
-        commithash = os.popen('git rev-parse --short HEAD').read().strip()
-    except:
-        commithash = ''
+    output = os.popen('git rev-parse --short HEAD; echo $?').read().split()
+    exit_code = int(output[-1])
+    if exit_code == 0:
+        commit_hash = output[0]
+    else:
+        print('Warning! Commit hash could not be determined!')
+        commit_hash = ''
     
     validation_data = {
         'metadata': {
             'created_at': datetime.now().isoformat(),
-            'commit_at_creation': commithash,
+            'commit_at_creation': commit_hash,
             'build_options': 'CC=gcc CXX=g++ cmake -DVECTOR_INSTRUCTIONS=AVX2 -DCMAKE_BUILD_TYPE=Release -DENABLE_AUTOPAS=OFF -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON -DENABLE_ALLLBL=OFF -DOPENMP=ON -DENABLE_MPI=ON -DENABLE_UNIT_TESTS=ON -DENABLE_VTK=ON ..',
             'comment': '',
             'reltolerance': 1e-8,  # Relative tolerance used for comparison
