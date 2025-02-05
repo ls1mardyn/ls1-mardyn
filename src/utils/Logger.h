@@ -194,10 +194,10 @@ public:
 		std::string l_upper = l;
 		std::transform(l_upper.begin(), l_upper.end(), l_upper.begin(), [](unsigned char c){ return std::toupper(c);});
 		for (const auto& [lvl, name] : logLevelNames) {
-			if (name == l_upper) { 
-				_log_level = lvl; 
-				return _log_level; 
-			} 
+			if (name == l_upper) {
+				_log_level = lvl;
+				return _log_level;
+			}
 		}
 		error_always_output() << "Logger::set_log_level() unknown argument '" << l
 							  << "'. Falling back to output everything!" << std::endl;
