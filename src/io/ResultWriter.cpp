@@ -1,7 +1,7 @@
 #include "io/ResultWriter.h"
 
-#include <chrono>
 #include <fstream>
+#include <iomanip>
 
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
@@ -53,20 +53,8 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 		std::ofstream resultStream;
 		resultStream.open(resultfile.c_str(), std::ios::out);
 
-		auto formatOutput = [&](auto value) {
-			if (_outputFormat == "tab") {
-				resultStream << std::setw(_writeWidth) << std::scientific << std::setprecision(_writePrecision) << value;
-			} else {  // csv
-				resultStream << "," << std::scientific << std::setprecision(_writePrecision) << value;
-			}
-		};
-
 		// Write header of output file in case of "tab"
 		if (_outputFormat == "tab") {
-			const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-			tm unused{};
-			const auto nowStr = std::put_time(localtime_r(&now, &unused), "%c");
-			resultStream << "# ls1 MarDyn simulation started at " << nowStr << std::endl;
 			resultStream << "# Averages are the accumulated values over " << _U_pot_acc->getWindowLength()  << " time steps."<< std::endl;
 		}
 		
@@ -77,17 +65,17 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
 			// Do not write comma first
 			resultStream << "simstep";
 		}
-		formatOutput("time");
-		formatOutput("U_pot");
-		formatOutput("U_pot_avg");
-		formatOutput("U_kin");
-		formatOutput("U_kin_avg");
-		formatOutput("p");
-		formatOutput("p_avg");
-		formatOutput("beta_trans");
-		formatOutput("beta_rot");
-		formatOutput("c_v");
-		formatOutput("N");
+		formatOutput(resultStream, "time");
+		formatOutput(resultStream, "U_pot");
+		formatOutput(resultStream, "U_pot_avg");
+		formatOutput(resultStream, "U_kin");
+		formatOutput(resultStream, "U_kin_avg");
+		formatOutput(resultStream, "p");
+		formatOutput(resultStream, "p_avg");
+		formatOutput(resultStream, "beta_trans");
+		formatOutput(resultStream, "beta_rot");
+		formatOutput(resultStream, "c_v");
+		formatOutput(resultStream, "N");
 		resultStream << std::endl;
 		resultStream.close();
 	}
@@ -98,7 +86,7 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 
 	// Writing of cavities now handled by CavityWriter
 
-	unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
+	const unsigned long globalNumMolecules = domain->getglobalNumMolecules(true, particleContainer, domainDecomp);
 	double cv = domain->cv();
 	double ekin = domain->getGlobalUkinTrans()+domain->getGlobalUkinRot();
 
@@ -110,14 +98,6 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 		std::ofstream resultStream;
 		resultStream.open(resultfile.c_str(), std::ios::app);
 
-		auto formatOutput = [&](auto value) {
-			if (_outputFormat == "tab") {
-				resultStream << std::setw(_writeWidth) << std::scientific << std::setprecision(_writePrecision) << value;
-			} else {  // csv
-				resultStream << "," << std::scientific << std::setprecision(_writePrecision) << value;
-			}
-		};
-
 		if (_outputFormat == "tab") {
 			// Do not write simstep in scientific notation
 			resultStream << std::setw(_writeWidth) << simstep;
@@ -125,18 +105,27 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 			// Do not write comma first
 			resultStream << simstep;
 		}
-		formatOutput(_simulation.getSimulationTime());
-		formatOutput(domain->getGlobalUpot());
-		formatOutput(_U_pot_acc->getAverage());
-		formatOutput(ekin);
-		formatOutput(_U_kin_acc->getAverage());
-		formatOutput(domain->getGlobalPressure());
-		formatOutput(_p_acc->getAverage());
-		formatOutput(domain->getGlobalBetaTrans());
-		formatOutput(domain->getGlobalBetaRot());
-		formatOutput(cv);
-		formatOutput(globalNumMolecules);
+		formatOutput(resultStream, _simulation.getSimulationTime());
+		formatOutput(resultStream, domain->getGlobalUpot());
+		formatOutput(resultStream, _U_pot_acc->getAverage());
+		formatOutput(resultStream, ekin);
+		formatOutput(resultStream, _U_kin_acc->getAverage());
+		formatOutput(resultStream, domain->getGlobalPressure());
+		formatOutput(resultStream, _p_acc->getAverage());
+		formatOutput(resultStream, domain->getGlobalBetaTrans());
+		formatOutput(resultStream, domain->getGlobalBetaRot());
+		formatOutput(resultStream, cv);
+		formatOutput(resultStream, globalNumMolecules);
 		resultStream << std::endl;
 		resultStream.close();
 	}
 }
+
+template <typename T>
+void ResultWriter::formatOutput(std::ostream& os, T value) {
+	if (_outputFormat == "tab") {
+		os << std::setw(_writeWidth) << std::scientific << std::setprecision(_writePrecision) << value;
+	} else {  // csv
+		os << "," << std::scientific << std::setprecision(_writePrecision) << value;
+	}
+};

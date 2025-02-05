@@ -4,9 +4,6 @@
 #include <memory>
 #include <string>
 #include <iostream>
-#include <fstream>
-#include <iomanip>
-#include <functional>
 
 #include "plugins/PluginBase.h"
 #include "utils/Accumulator.h"
@@ -18,11 +15,11 @@
  * steps of values to a file with the file extension '.res'.
  * The following values are written to the file:
  * - Simulation time step
- * - time since the simulation started (dimensionless)
- * - Average potential Energy
- * - Pressure
- * - BetaTrans
- * - BetaRot
+ * - Elapsed simulation time (dimensionless)
+ * - (Average) potential energy
+ * - (Average) kinetic energy
+ * - (Average) pressure
+ * - Number of particles
  */
 class ResultWriter : public PluginBase {
 public:
@@ -68,6 +65,9 @@ private:
 	std::unique_ptr<Accumulator<double>> _U_pot_acc;
 	std::unique_ptr<Accumulator<double>> _U_kin_acc;
 	std::unique_ptr<Accumulator<double>> _p_acc;
+
+	template <typename T>
+	void formatOutput(std::ostream&, T);
 };
 
 #endif  // SRC_IO_RESULTWRITER_H_
