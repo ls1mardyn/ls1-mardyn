@@ -22,6 +22,17 @@ void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	Log::global_log->info() << "[ResultWriter] Output prefix: " << _outputPrefix << std::endl;
 
+	xmlconfig.getNodeValue("outputformat", _outputFormat);
+	if (_outputFormat == "csv" || _outputFormat == "tab") {
+		Log::global_log->info() << "[ResultWriter] Output format: " << _outputFormat << std::endl;
+	} else {
+		std::ostringstream error_message;
+		error_message << "[ResultWriter] Wrong output format specified! Use \"csv\" or \"tab\" instead of " << _outputFormat << std::endl;
+		MARDYN_EXIT(error_message.str());
+	}
+	// Set file extension to be .csv in case of "csv" and .res in case of "tab"
+	_resultfilename = _outputPrefix+(_outputFormat == "csv" ? ".csv" : ".res");
+
 	size_t acc_steps = 1000;
 	xmlconfig.getNodeValue("accumulation_steps", acc_steps);
 	_U_pot_acc = std::make_unique<Accumulator<double>>(acc_steps);
@@ -38,27 +49,46 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
                         DomainDecompBase *domainDecomp, Domain * /*domain*/) {
 
 	if(domainDecomp->getRank() == 0) {
-		const std::string resultfile(_outputPrefix+".res");
+		const std::string resultfile(_resultfilename);
 		std::ofstream resultStream;
 		resultStream.open(resultfile.c_str(), std::ios::out);
-		const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-		tm unused{};
-		const auto nowStr = std::put_time(localtime_r(&now, &unused), "%c");
-		resultStream << "# ls1 MarDyn simulation started at " << nowStr << std::endl;
-		resultStream << "# Averages are the accumulated values over " << _U_pot_acc->getWindowLength()  << " time steps."<< std::endl;
-		resultStream << std::setw(10) << "simstep"
-			<< std::setw(_writeWidth) << "time"
-			<< std::setw(_writeWidth) << "U_pot"
-			<< std::setw(_writeWidth) << "U_pot_avg"
-			<< std::setw(_writeWidth) << "U_kin"
-			<< std::setw(_writeWidth) << "U_kin_avg"
-			<< std::setw(_writeWidth) << "p"
-			<< std::setw(_writeWidth) << "p_avg"
-			<< std::setw(_writeWidth) << "beta_trans"
-			<< std::setw(_writeWidth) << "beta_rot"
-			<< std::setw(_writeWidth) << "c_v"
-			<< std::setw(_writeWidth) << "N"
-			<< std::endl;
+
+		auto formatOutput = [&](auto value) {
+			if (_outputFormat == "tab") {
+				resultStream << std::setw(_writeWidth) << std::scientific << std::setprecision(_writePrecision) << value;
+			} else {  // csv
+				resultStream << "," << std::scientific << std::setprecision(_writePrecision) << value;
+			}
+		};
+
+		// Write header of output file in case of "tab"
+		if (_outputFormat == "tab") {
+			const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+			tm unused{};
+			const auto nowStr = std::put_time(localtime_r(&now, &unused), "%c");
+			resultStream << "# ls1 MarDyn simulation started at " << nowStr << std::endl;
+			resultStream << "# Averages are the accumulated values over " << _U_pot_acc->getWindowLength()  << " time steps."<< std::endl;
+		}
+		
+		if (_outputFormat == "tab") {
+			// Do not write simstep in scientific notation
+			resultStream << std::setw(_writeWidth) << "simstep";
+		} else {
+			// Do not write comma first
+			resultStream << "simstep";
+		}
+		formatOutput("time");
+		formatOutput("U_pot");
+		formatOutput("U_pot_avg");
+		formatOutput("U_kin");
+		formatOutput("U_kin_avg");
+		formatOutput("p");
+		formatOutput("p_avg");
+		formatOutput("beta_trans");
+		formatOutput("beta_rot");
+		formatOutput("c_v");
+		formatOutput("N");
+		resultStream << std::endl;
 		resultStream.close();
 	}
 }
@@ -76,40 +106,37 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 	_U_kin_acc->addEntry(ekin);
 	_p_acc->addEntry(domain->getGlobalPressure());
 	if ((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
-		const std::string resultfile(_outputPrefix+".res");
+		const std::string resultfile(_resultfilename);
 		std::ofstream resultStream;
 		resultStream.open(resultfile.c_str(), std::ios::app);
-		auto printOutput = [&](auto value) {
-			resultStream << std::setw(_writeWidth) << std::scientific << std::setprecision(_writePrecision) << value;
+
+		auto formatOutput = [&](auto value) {
+			if (_outputFormat == "tab") {
+				resultStream << std::setw(_writeWidth) << std::scientific << std::setprecision(_writePrecision) << value;
+			} else {  // csv
+				resultStream << "," << std::scientific << std::setprecision(_writePrecision) << value;
+			}
 		};
-		resultStream << std::setw(10) << simstep;
-		printOutput(_simulation.getSimulationTime());
-		printOutput(domain->getGlobalUpot());
-		printOutput(_U_pot_acc->getAverage());
-		printOutput(ekin);
-		printOutput(_U_kin_acc->getAverage());
-		printOutput(domain->getGlobalPressure());
-		printOutput(_p_acc->getAverage());
-		printOutput(domain->getGlobalBetaTrans());
-		printOutput(domain->getGlobalBetaRot());
-		printOutput(cv);
-		printOutput(globalNumMolecules);
+
+		if (_outputFormat == "tab") {
+			// Do not write simstep in scientific notation
+			resultStream << std::setw(_writeWidth) << simstep;
+		} else {
+			// Do not write comma first
+			resultStream << simstep;
+		}
+		formatOutput(_simulation.getSimulationTime());
+		formatOutput(domain->getGlobalUpot());
+		formatOutput(_U_pot_acc->getAverage());
+		formatOutput(ekin);
+		formatOutput(_U_kin_acc->getAverage());
+		formatOutput(domain->getGlobalPressure());
+		formatOutput(_p_acc->getAverage());
+		formatOutput(domain->getGlobalBetaTrans());
+		formatOutput(domain->getGlobalBetaRot());
+		formatOutput(cv);
+		formatOutput(globalNumMolecules);
 		resultStream << std::endl;
-		resultStream.close();
-	}
-}
-
-void ResultWriter::finish(ParticleContainer * /*particleContainer*/,
-						  DomainDecompBase *domainDecomp, Domain * /*domain*/){
-
-	if (domainDecomp->getRank() == 0) {
-		const std::string resultfile(_outputPrefix+".res");
-		std::ofstream resultStream;
-		resultStream.open(resultfile.c_str(), std::ios::app);
-		const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-		tm unused{};
-		const auto nowStr = std::put_time(localtime_r(&now, &unused), "%c");
-		resultStream << "# ls1 mardyn simulation finished at " << nowStr << std::endl;
 		resultStream.close();
 	}
 }

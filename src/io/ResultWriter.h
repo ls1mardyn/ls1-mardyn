@@ -3,6 +3,10 @@
 
 #include <memory>
 #include <string>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <functional>
 
 #include "plugins/PluginBase.h"
 #include "utils/Accumulator.h"
@@ -29,24 +33,25 @@ public:
 		<outputplugin name="ResultWriter">
 			<writefrequency>INTEGER</writefrequency>				<!-- Frequency in which the output is written; Default: 1 -->
 			<outputprefix>STRING</outputprefix>						<!-- Prefix of the output file; Default: "results" -->
+			<outputformat>STRING</outputformat>						<!-- Format of output file ("tab","csv"); Default: "tab" -->
 			<accumulation_steps>INTEGER</accumulation_steps>		<!-- Result is accumulated over the specified steps; Default: 1000 -->
 			<writeprecision>UINTEGER</writeprecision>				<!-- Precision of output can be set here; Default: 5 -->
 		</outputplugin>
 	   \endcode
 	 */
-	virtual void readXML(XMLfileUnits& xmlconfig);
+	virtual void readXML(XMLfileUnits& xmlconfig) override;
 
 	void init(ParticleContainer *particleContainer,
-              DomainDecompBase *domainDecomp, Domain *domain);
+              DomainDecompBase *domainDecomp, Domain *domain) override;
 
 	void endStep(
             ParticleContainer *particleContainer,
             DomainDecompBase *domainDecomp, Domain *domain,
             unsigned long simstep
-    );
+    ) override;
 
 	void finish(ParticleContainer *particleContainer,
-				DomainDecompBase *domainDecomp, Domain *domain);
+				DomainDecompBase *domainDecomp, Domain *domain) override {};
 
 	std::string getPluginName() {
 		return std::string("ResultWriter");
@@ -58,6 +63,8 @@ private:
 	unsigned int _writePrecision{5};
 	unsigned int _writeWidth{20};
 	std::string _outputPrefix{"results"};
+	std::string _outputFormat{"tab"};
+	std::string _resultfilename{""};
 	std::unique_ptr<Accumulator<double>> _U_pot_acc;
 	std::unique_ptr<Accumulator<double>> _U_kin_acc;
 	std::unique_ptr<Accumulator<double>> _p_acc;
