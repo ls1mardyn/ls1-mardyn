@@ -60,10 +60,19 @@ def create_validation_file(log_data, result_data, output_file):
         log_data (list[dict]): Parsed data from output of Logger
         output_file (str): Path to the output JSON file.
     '''
+    
+    try:
+        commithash = os.popen('git rev-parse --short HEAD').read().strip()
+    except:
+        commithash = ''
+    
     validation_data = {
         'metadata': {
             'created_at': datetime.now().isoformat(),
+            'commit_at_creation': commithash,
+            'build_options': 'CC=gcc CXX=g++ cmake -DVECTOR_INSTRUCTIONS=AVX2 -DCMAKE_BUILD_TYPE=Release -DENABLE_AUTOPAS=OFF -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON -DENABLE_ALLLBL=OFF -DOPENMP=ON -DENABLE_MPI=ON -DENABLE_UNIT_TESTS=ON -DENABLE_VTK=ON ..',
             'comment': '',
+            'reltolerance': 1e-8,  # Relative tolerance used for comparison
             'ResultWriter_filename': result_data['name'],
         },
         'logfile' : log_data,

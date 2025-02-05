@@ -4,22 +4,28 @@ import numpy as np
 
 from validation_createJSON import parse_resultwriter_file, parse_log_file
 
-def compare_data(new_data, validation_data):
+def compare_data(new_data, validation_data, reltolerance):
     '''
-    Compares new and validation data sets using numpy's isclose with a specified tolerance
+    Compares new and validation data sets using numpy's isclose with a specified tolerance.
     '''
     differences = []
     for i, (new_entry, validation_entry) in enumerate(zip(new_data, validation_data)):
         entry_differences = {}
         for key in new_entry.keys():
             if key in validation_entry:
-                if not np.isclose(new_entry[key], validation_entry[key], atol=abstolerance, rtol=reltolerance):
+                if not np.isclose(new_entry[key], validation_entry[key], rtol=reltolerance):
                     entry_differences[key] = {
                         'presentRun': new_entry[key],
                         'reference': validation_entry[key]
                     }
         if entry_differences:
-            differences.append({'index': i, 'differences': entry_differences})
+            if 'Simstep' in new_entry.keys():  # Log file
+                simstep = new_entry['Simstep']
+            elif 'simstep' in new_entry.keys():  # ResultWriter
+                simstep = new_entry['simstep']
+            else:
+                simstep = np.nan
+            differences.append({'index': i, 'simstep': simstep, 'differences': entry_differences})
     return differences
 
 def compare_validation_file(validation_file, new_log_file):
@@ -39,6 +45,10 @@ def compare_validation_file(validation_file, new_log_file):
         print(f'Failed with exception: {e}')
         raise
 
+    # Relative tolerance; chosen so that small deviations due to number of ranks are neglected
+    # Specified in metadata
+    reltolerance = validation_data['metadata']['reltolerance']
+
     # Parse files and compare data; errors are handled in respective function
 
     # Process log file
@@ -48,7 +58,7 @@ def compare_validation_file(validation_file, new_log_file):
         print('Error: Validation file is missing required key ("logfile").')
         exit(1)
     new_log_data = parse_log_file(new_log_file)
-    log_diffs = compare_data(new_log_data, validation_log_data)
+    log_diffs = compare_data(new_log_data, validation_log_data, reltolerance)
 
     # Process file of ResultWriter
     try:
@@ -66,7 +76,7 @@ def compare_validation_file(validation_file, new_log_file):
     else:
         new_result_data = parse_resultwriter_file(new_result_file)
     
-    resultwriter_diffs = compare_data(new_result_data, validation_result_data)
+    resultwriter_diffs = compare_data(new_result_data, validation_result_data, reltolerance)
     
     return {
         'log_diffs': log_diffs,
@@ -75,7 +85,8 @@ def compare_validation_file(validation_file, new_log_file):
 
 if __name__ == '__main__':
     '''
-    Compares the output (Logger, ResultWriter) of a simulation using numpy's isclose function
+    Compares the output (Logger, ResultWriter) of a simulation using numpy's isclose function.
+    Since ResultWriter writes to file but Logger to stdout, the logfile has to be specified.
     '''
     parser = argparse.ArgumentParser(
         description='Compare new simulation with a JSON validation file',
@@ -85,9 +96,6 @@ if __name__ == '__main__':
     parser.add_argument('--logfile', required=True, help='Path to the new log file')
 
     args = parser.parse_args()
-
-    abstolerance = 1e-8  # Absolute tolerance
-    reltolerance = 1e-8  # Relative tolerance
 
     differences = compare_validation_file(args.validation_file, args.logfile)
 
