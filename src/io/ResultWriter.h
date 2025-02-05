@@ -30,7 +30,7 @@ public:
 		<outputplugin name="ResultWriter">
 			<writefrequency>INTEGER</writefrequency>				<!-- Frequency in which the output is written; Default: 1 -->
 			<outputprefix>STRING</outputprefix>						<!-- Prefix of the output file; Default: "results" -->
-			<outputformat>STRING</outputformat>						<!-- Format of output file ("tab","csv"); Default: "tab" -->
+			<outputformat>STRING</outputformat>						<!-- Format of output file ("tab" (tab separated),"csv" (comma separated)); Default: "tab" -->
 			<accumulation_steps>INTEGER</accumulation_steps>		<!-- Result is accumulated over the specified steps; Default: 1000 -->
 			<writeprecision>UINTEGER</writeprecision>				<!-- Precision of output can be set here; Default: 5 -->
 		</outputplugin>
