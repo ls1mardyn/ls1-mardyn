@@ -118,7 +118,9 @@ template <typename T>
 void ResultWriter::formatOutput(std::ostream& os, T value) {
 	if (_outputFormat == "tab") {
 		os << std::setw(_writeWidth) << std::scientific << std::setprecision(_writePrecision) << value;
-	} else {  // csv
+	} else if (_outputFormat == "csv") {
 		os << "," << std::scientific << std::setprecision(_writePrecision) << value;
+	} else {
+		MARDYN_EXIT("[ResultWriter] Wrong output format! Only \"csv\" or \"tab\" are valid.");
 	}
 };
