@@ -15,7 +15,7 @@
  * steps of values to a file with the file extension '.res'.
  * The following values are written to the file:
  * - Simulation time step
- * - Elapsed simulation time (dimensionless)
+ * - Simulation time (dimensionless)
  * - (Average) potential energy
  * - (Average) kinetic energy
  * - (Average) pressure
