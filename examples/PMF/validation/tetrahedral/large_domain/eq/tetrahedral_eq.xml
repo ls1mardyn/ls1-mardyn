@@ -21,19 +21,13 @@
     <ensemble type="NVT">
       <temperature unit="reduced">1.0</temperature>
       <domain type="box">
-        <lx>36.845</lx>
-        <ly>36.845</ly>
-        <lz>36.845</lz>
+        <lx>384</lx>
+        <ly>48</ly>
+        <lz>48</lz>
       </domain>
       <components>
         <include query="/components/moleculetype">../../components/lj_tetrahedral_red.xml</include>
       </components>
-      <!-- <phasespacepoint>
-        <file type="binary">
-          <header>restart_data_case_c/generic_lj_step-99.restart.restart.header.xml</header>
-          <data>restart_data_case_c/generic_lj_step-99.restart.dat</data>
-        </file>
-      </phasespacepoint> -->
       <phasespacepoint>
         <generator name="MultiObjectGenerator">
             <objectgenerator>
@@ -54,7 +48,7 @@
                 </filler>
                 <object type="Cuboid">
                     <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                    <upper> <x>36.845</x> <y>36.845</y> <z>36.845</z> </upper>
+                    <upper> <x>384</x> <y>48</y> <z>48</z> </upper>
                 </object>
                 <velocityAssigner type="MaxwellVelocityDistribution"/>
             </objectgenerator>
@@ -72,7 +66,7 @@
           <traversalSelector>sliced</traversalSelector>
       </datastructure>
       <cutoffs type="CenterOfMass">
-        <radiusLJ unit="reduced">5.0</radiusLJ>
+        <radiusLJ unit="reduced">3.0</radiusLJ>
       </cutoffs>
       <electrostatic type="ReactionField">
         <epsilon>1.0e+10</epsilon>
@@ -93,7 +87,7 @@
     </outputplugin>
     <outputplugin name="CheckpointWriter">
       <type>binary</type>
-      <writefrequency>100</writefrequency>
+      <writefrequency>1000</writefrequency>
       <outputprefix>tetrahedral_step</outputprefix>
     </outputplugin>
     </output>
@@ -102,7 +96,7 @@
       <fpregions>
         <region id = "1">
           <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
-          <highX>36.845</highX><highY>36.845</highY><highZ>36.845</highZ>
+          <highX>384</highX><highY>48</highY><highZ>48</highZ>
           <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
           <hybridDimZ>0.0</hybridDimZ>
         </region>
@@ -113,8 +107,9 @@
       <measureFreq>1</measureFreq>
       <rdfMeasureDistance>5</rdfMeasureDistance>
       <updateStride>1000</updateStride>
-      <outputFreq>20</outputFreq>
+      <outputFreq>1000</outputFreq>
       <output>true</output>
+      <doNothing>false</doNothing>
       <mode>Equilibration</mode>
     </plugin>
 	
