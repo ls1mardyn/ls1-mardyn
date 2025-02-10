@@ -87,9 +87,10 @@
       <measureFreq>1</measureFreq>
       <rdfMeasureDistance>5</rdfMeasureDistance>
       <updateStride>1000</updateStride>
-      <outputFreq>10</outputFreq>
+      <outputFreq>1000</outputFreq>
       <output>true</output>
       <mode>Production</mode>
+      <doNothing>false</doNothing>
       <rdfPath>../../restart_data/avg_rdf221000.txt</rdfPath>
       <epPath>../../restart_data/potential_45000.txt</epPath>
     </plugin>

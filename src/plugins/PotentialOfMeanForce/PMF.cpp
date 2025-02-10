@@ -269,6 +269,7 @@ void PMF::ReadRDF(){
     std::ifstream file{ref_rdf_path};
     if(!file){
         Log::global_log->error()<<"[PMF] I could not read the rdf data file"<<std::endl;
+        Simulation::exit(1);
     }
     double n1, n2;
 

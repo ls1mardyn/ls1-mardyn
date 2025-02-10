@@ -29,7 +29,7 @@ class RegionRDFProfiler{
     int total_bins=100;
     double bin_width;
     RegionCellProcessor* processor;
-    int output_frequency=10;
+    int output_frequency=250;
     int sample_frequency=1;
     int measured_steps=0;//increases on every call to ProfileData
     std::string file_prefix="not-set";
