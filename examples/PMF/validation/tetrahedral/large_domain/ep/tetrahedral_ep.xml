@@ -21,7 +21,7 @@
     <ensemble type="NVT">
       <temperature unit="reduced">1.0</temperature>
       <domain type="box">
-        <lx>432</lx>
+        <lx>384</lx>
         <ly>48</ly>
         <lz>48</lz>
       </domain>
@@ -48,7 +48,7 @@
                 </filler>
                 <object type="Cuboid">
                     <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                    <upper> <x>432</x> <y>48</y> <z>48</z> </upper>
+                    <upper> <x>384</x> <y>48</y> <z>48</z> </upper>
                 </object>
                 <velocityAssigner type="MaxwellVelocityDistribution"/>
             </objectgenerator>
@@ -96,7 +96,7 @@
       <fpregions>
         <region id = "1">
           <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
-          <highX>432</highX><highY>48</highY><highZ>48</highZ>
+          <highX>384</highX><highY>48</highY><highZ>48</highZ>
           <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
           <hybridDimZ>0.0</hybridDimZ>
         </region>
