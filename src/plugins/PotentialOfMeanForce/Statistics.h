@@ -29,7 +29,7 @@ class RegionRDFProfiler{
     int total_bins=100;
     double bin_width;
     RegionCellProcessor* processor;
-    int output_frequency=1;
+    int output_frequency=10;
     int sample_frequency=1;
     int measured_steps=0;//increases on every call to ProfileData
     std::string file_prefix="not-set";
@@ -151,7 +151,7 @@ class StatisticsAdResS{
     int output_stride = 1;
 
     RegionRDFProfiler fp_profiler{fp};
-    RegionRDFProfiler cg1_profiler{cg1};
+    // RegionRDFProfiler cg1_profiler{cg1};
 
     public:
     /**
@@ -160,8 +160,8 @@ class StatisticsAdResS{
     void init(FPRegion& region);
     void Output2File(long step);
     void PrintRDFs2File(unsigned long step,ParticleContainer* pc){
-        // fp_profiler.PrintOutput2Files(step, pc);
-        cg1_profiler.PrintOutput2Files(step,pc);
+        fp_profiler.PrintOutput2Files(step, pc);
+        // cg1_profiler.PrintOutput2Files(step,pc);
     }
     void MeasureStatistics(ParticleContainer* pc){
         ClearAll();
@@ -171,8 +171,8 @@ class StatisticsAdResS{
     }
 
     void MeasureLocalRDFs(ParticleContainer* pc, unsigned long simstep){
-        // fp_profiler.MeasureRDF(pc,simstep);
-        cg1_profiler.MeasureRDF(pc,simstep);
+        fp_profiler.MeasureRDF(pc,simstep);
+        // cg1_profiler.MeasureRDF(pc,simstep);
     }
     void ClearAll();
     private:

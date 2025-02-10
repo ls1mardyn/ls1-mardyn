@@ -65,7 +65,10 @@ void RegionRDFProfiler::PrintOutput2Files(unsigned long simstep,ParticleContaine
             val /= (0.5*N*(N-1.0));
             val /= measured_steps;
 
-            output_file<<std::setw(8)<<std::left<<centers[i]<<"\t"<<std::setw(8)<<std::left<<val<<"\t"<<std::setw(8)<<std::left<<data[i]<<std::endl;
+            output_file<<std::setw(8)<<std::left<<centers[i]<<"\t"
+            <<std::setw(8)<<std::left<<val<<"\t"
+            <<std::setw(8)<<std::left<<data[i]
+            <<std::endl;
         }
 
         output_file.close();
