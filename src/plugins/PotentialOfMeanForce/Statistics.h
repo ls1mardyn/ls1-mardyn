@@ -47,28 +47,7 @@ class RegionRDFProfiler{
     void PrintOutput2Files(unsigned long simstep, ParticleContainer* pc);
     private:
     //TODO: do on every step?
-    double RegionVolume(){
-        std::array<double,3> low{0,0,0};
-        std::array<double,3> high{0,0,0};
-        //TODO: only considers left side cg region
-        if(region.component_name == "CG"){
-            low[0] = region.low[0]-_simulation.getcutoffRadius();
-        }
-
-        low[1] = region.low[1]-_simulation.getcutoffRadius();
-        low[2] = region.low[2]-_simulation.getcutoffRadius();
-        high[1] = region.high[1]+_simulation.getcutoffRadius();
-        high[2] = region.high[2]+_simulation.getcutoffRadius();
-
-        double lx =region.high[0]-region.low[0];
-        if(region.component_name == "CG"){
-            lx=region.high[0]-low[0];
-        }
-        double ly =high[1]-low[1];
-        double lz =high[2]-low[2];
-
-        return lx*ly*lz;
-    }
+    double RegionVolume();
     void InitCenters(){
         for(int i=0;i<centers.size();++i){
             double center;
@@ -95,6 +74,17 @@ class RegionCellProcessor:public CellProcessor{
     std::vector<double> global_buffer;
     ResRegion& region;
     std::string component_name="FP";
+    double min_cell_x, max_cell_x;
+
+    void CheckRegionDimensions(double cellMax, double cellMin){
+        if(cellMax> max_cell_x){
+            max_cell_x = cellMax;
+        }
+
+        if(cellMin< min_cell_x){
+            min_cell_x=cellMin;
+        }
+    }
 
     double bin_width;
     public:
@@ -152,6 +142,7 @@ class StatisticsAdResS{
 
     RegionRDFProfiler fp_profiler{fp};
     // RegionRDFProfiler cg1_profiler{cg1};
+
 
     public:
     /**
