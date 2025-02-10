@@ -7,9 +7,18 @@ Convergence::Convergence(double t):tolerance{t}{
 bool Convergence::CheckConvergence(std::vector<double>& rdf_ref, std::vector<double>& rdf_i){
 
     double conv=0.0;
+    // for(int i=0;i<rdf_ref.size();++i){
+    //     conv += std::abs(rdf_ref[i]-rdf_i[i]);
+    // }
+    double sum=0;
+    double sub=0;
     for(int i=0;i<rdf_ref.size();++i){
-        conv += std::abs(rdf_ref[i]-rdf_i[i]);
+        sum += (std::abs(rdf_i[i])+std::abs(rdf_ref[i]));
+        sub += std::abs(rdf_i[i]-rdf_ref[i]);
     }
+
+    conv = 1 - (sub/sum);
+    
     local_convergence.emplace_back(conv);
 
     if(conv<tolerance){
