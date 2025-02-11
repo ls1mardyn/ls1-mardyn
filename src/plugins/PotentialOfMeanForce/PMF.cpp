@@ -219,7 +219,8 @@ void PMF::AddPotentialCorrection(unsigned long step){
     }
 
     ExtrapolateVector(reference_rdf_interpolation.GetXValues(),current_correction);
-    VectorAdd(potential_interpolation.GetYValues(),current_correction);
+    // VectorAdd(potential_interpolation.GetYValues(),current_correction);
+    VectorSub(potential_interpolation.GetYValues(),current_correction);
     if(output){
         std::string name="correction_step_"+std::to_string(step)+".txt";
         std::ofstream corr{name};

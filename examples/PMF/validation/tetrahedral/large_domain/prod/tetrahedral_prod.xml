@@ -76,9 +76,9 @@
     <plugin name="PMF">
       <fpregions>
         <region id = "1">
-          <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
-          <highX>432</highX><highY>48</highY><highZ>48</highZ>
-          <hybridDimX>0</hybridDimX><hybridDimY>0.0</hybridDimY>
+          <lowX>158.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+          <highX>274</highX><highY>48</highY><highZ>48</highZ>
+          <hybridDimX>110</hybridDimX><hybridDimY>0.0</hybridDimY>
           <hybridDimZ>0.0</hybridDimZ>
         </region>
       </fpregions>
@@ -91,8 +91,9 @@
       <outputFreq>250</outputFreq>
       <output>true</output>
       <doNothing>false</doNothing>
-      <mode>EffectivePotential</mode>
+      <mode>Production</mode>
       <rdfPath>../../../restart_data/large_domain/rdf_100ksteps.txt</rdfPath>
+      <epPath>../../restart_data/large_domain/potential_3000.txt</epPath>
     </plugin>
 	
   </simulation>
