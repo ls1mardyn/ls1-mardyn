@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>100000</steps>
+        <steps>250</steps>
       </production>
     </run>
     
@@ -44,7 +44,7 @@
       </parallelisation>
       <datastructure type="LinkedCells">
         <cellsInCutoffRadius>1</cellsInCutoffRadius>
-          <traversalSelector>sliced</traversalSelector>
+          <traversalSelector>c08</traversalSelector>
       </datastructure>
       <cutoffs type="CenterOfMass">
         <radiusLJ unit="reduced">3.0</radiusLJ>
@@ -76,10 +76,41 @@
     <plugin name="PMF">
       <fpregions>
         <region id = "1">
-          <lowX>158.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
-          <highX>274</highX><highY>48</highY><highZ>48</highZ>
-          <hybridDimX>110</hybridDimX><hybridDimY>0.0</hybridDimY>
-          <hybridDimZ>0.0</hybridDimZ>
+        <!-- v=1.0, d_fp=432, t_fp reference -->
+          <!-- <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ> -->
+          <!-- <highX>432</highX><highY>48</highY><highZ>48</highZ> -->
+          <!-- <hybridDimX>0.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ> -->
+
+        <!-- v=0.0, d_fp=0, t_cg reference -->
+          <!-- <lowX>0.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ> -->
+          <!-- <highX>0</highX><highY>0</highY><highZ>0</highZ> -->
+          <!-- <hybridDimX>0.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ> -->
+
+      <!-- v=0.0833, d_fp=12 -->
+          <!-- <lowX>210.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ> -->
+          <!-- <highX>222</highX><highY>48</highY><highZ>48</highZ> -->
+          <!-- <hybridDimX>12.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ> -->
+
+        <!-- v=0.25, d_fp=60-->
+          <lowX>186.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+          <highX>246.0</highX><highY>48.0</highY><highZ>48.0</highZ>
+          <hybridDimX>25.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+
+        <!-- v=0.472, d_fp=90-->
+          <!-- <lowX>171.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ> -->
+          <!-- <highX>261</highX><highY>48</highY><highZ>48</highZ> -->
+          <!-- <hybridDimX>57.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ> -->
+
+        <!-- v=0.777, d_fp =116 -->
+          <!-- <lowX>158.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ> -->
+          <!-- <highX>274</highX><highY>48</highY><highZ>48</highZ> -->
+          <!-- <hybridDimX>110</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ> -->
+        
+        <!-- v=0.949, d_fp =216 -->
+          <!-- <lowX>108.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ> -->
+          <!-- <highX>324</highX><highY>48</highY><highZ>48</highZ> -->
+          <!-- <hybridDimX>97</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ> -->
+
         </region>
       </fpregions>
       <multiplier>1.0</multiplier>
@@ -90,10 +121,10 @@
       <updateStride>1000</updateStride>
       <outputFreq>250</outputFreq>
       <output>true</output>
-      <doNothing>false</doNothing>
+      <doNothing>true</doNothing>
       <mode>Production</mode>
       <rdfPath>../../../restart_data/large_domain/rdf_100ksteps.txt</rdfPath>
-      <epPath>../../restart_data/large_domain/potential_3000.txt</epPath>
+      <epPath>../../../restart_data/large_domain/potential_3000.txt</epPath>
     </plugin>
 	
   </simulation>
