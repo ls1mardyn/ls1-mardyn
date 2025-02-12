@@ -656,8 +656,8 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
     MPI_Reduce(energyfluxVect_step[0].local.data(), energyfluxVect_step[0].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(energyfluxVect_step[1].local.data(), energyfluxVect_step[1].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(energyfluxVect_step[2].local.data(), energyfluxVect_step[2].global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(chemPot_step.local.data(), chemPot_step.global.data(), _numBinsGlobal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(countNTest_step.local.data(), countNTest_step.global.data(), _numBinsGlobal, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(chemPot_step.local.data(), chemPot_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(countNTest_step.local.data(), countNTest_step.global.data(), _lenVector, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
     if (_sampleHigherMoms) {
         MPI_Reduce(hmDelta_step.local.data(), hmDelta_step.global.data(), _lenVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         for (unsigned short d = 0; d < 3; d++) {
