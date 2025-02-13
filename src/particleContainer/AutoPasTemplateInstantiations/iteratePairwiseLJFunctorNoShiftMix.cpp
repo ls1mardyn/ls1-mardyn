@@ -9,7 +9,7 @@
 #include "molecularDynamicsLibrary/LJFunctor.h"
 
 //! @cond Doxygen_Suppress
-template bool autopas::AutoPas<AutoPasSimpleMolecule>::iteratePairwise(
+template bool autopas::AutoPas<AutoPasSimpleMolecule>::computeInteractions(
 		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ false,
