@@ -16,7 +16,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "utils/generator/EqualVelocityAssigner.h"
 
-// Declare the main AutoPas class and the iteratePairwise() methods with all used functors as extern template
+// Declare the main AutoPas class and the computeInteractions() methods with all used functors as extern template
 // instantiation. They are instantiated in the respective cpp file inside the templateInstantiations folder.
 //! @cond Doxygen_Suppress
 extern template class autopas::AutoPas<Molecule>;
@@ -87,7 +87,7 @@ extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		> *);
 #endif
 #ifdef __ARM_FEATURE_SVE
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ true,
@@ -95,7 +95,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ true,
@@ -103,7 +103,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ false,
@@ -111,7 +111,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ false,
@@ -435,7 +435,7 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 
 template <typename F>
 std::pair<double, double> AutoPasContainer::iterateWithFunctor(F &&functor) {
-	// here we call the actual autopas' iteratePairwise method to compute the forces.
+	// here we call the actual autopas' computeInteractions method to compute the forces.
 	_autopasContainer.computeInteractions(&functor);
 	const double upot = functor.getPotentialEnergy();
 	const double virial = functor.getVirial();
