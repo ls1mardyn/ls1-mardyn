@@ -1,6 +1,8 @@
 #ifndef COLLECTIVECOMMUNICATION_PERSISTENT_H_
 #define COLLECTIVECOMMUNICATION_PERSISTENT_H_
 
+#ifdef ENABLE_MPI
+
 #include "CollectiveCommunicationPersistent_helper.h"
 #include "CollectiveCommBase.h"
 #include "CollectiveCommunicationInterface.h"
@@ -326,4 +328,61 @@ auto makeCollCommObjScanAdd(MPI_Comm comm, Ts... args) {
                         (add_struct{}, empty_template_t{}, comm, args...);
 }
 
-#endif
+#else
+#include <tuple> 
+
+
+// get values out of byte vector into variadic template values
+// overload
+template<int id, typename T, typename... TTs>
+constexpr void pack2tuple(std::tuple<TTs...>& tuple, T head) {
+    std::get<id>(tuple) = head;
+}
+// base case: used when pack is non-empty
+template<int id, typename T, typename... Ts, typename... TTs>
+constexpr void pack2tuple(std::tuple<TTs...>& tuple, T head, Ts... tail) {
+    std::get<id>(tuple) = head;
+
+    pack2tuple<id+1>(tuple, tail...);
+}
+// helper function
+template<typename... Ts>
+constexpr auto helper_pack2tuple(Ts... args) {
+    std::tuple<Ts...> tuple;
+
+    pack2tuple<0>(tuple, args...);
+
+    return tuple;
+}
+
+
+template<typename...Ts>
+class FakeCollCommObj
+{
+public:
+    FakeCollCommObj(Ts... args)
+        : _tuple(helper_pack2tuple(args...))
+    {}
+
+    void communicate() {}
+    auto get() const { return _tuple; }
+
+private:
+    std::tuple<Ts...> _tuple;
+};
+
+// fake function in case MPI is not enabled
+template<int tag = 0, typename Comm, typename... Ts>
+auto makeCollCommObjAllreduceAdd(Comm comm, Ts... args) { return FakeCollCommObj(args...); }
+
+template<int tag = 0, typename Comm, typename... Ts>
+auto makeCollCommObjAllreduceMin(Comm comm, Ts... args) { return FakeCollCommObj(args...); }
+
+template<int tag = 0, typename Comm, typename... Ts>
+auto makeCollCommObjAllreduceMax(Comm comm, Ts... args) { return FakeCollCommObj(args...); }
+
+template<int tag = 0, typename Comm, typename... Ts>
+auto makeCollCommObjScanAdd(Comm comm, Ts... args) { return FakeCollCommObj(args...); }
+
+#endif // ENABLE_MPI
+#endif // COLLECTIVECOMMUNICATION_PERSISTENT_H

@@ -2,8 +2,8 @@
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
-#include "parallel/CollectiveCommunicationPersistent.h"
 #endif
+#include "parallel/CollectiveCommunicationPersistent.h"
 
 #include <ctime>
 #include <iomanip>

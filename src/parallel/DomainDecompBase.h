@@ -6,8 +6,8 @@
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
-#include "parallel/CollectiveCommunicationPersistent.h"
 #endif
+#include "parallel/CollectiveCommunicationPersistent.h"
 #include <particleContainer/RegionParticleIterator.h>
 #include <iostream>
 #include <variant>
@@ -273,6 +273,10 @@ public:
 #if defined(ENABLE_MPI)
 	virtual MPI_Comm getCommunicator(){
 	    return MPI_COMM_WORLD;
+	}
+#else
+	virtual int getCommunicator(){
+		return 0;
 	}
 #endif
 
