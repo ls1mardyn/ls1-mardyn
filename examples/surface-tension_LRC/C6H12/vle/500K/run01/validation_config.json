@@ -1,0 +1,139 @@
+{
+    "metadata": {
+        "created_at": "2025-02-05T12:00:09.018287",
+        "commit_at_creation": "67ffbc11d",
+        "build_options": "CC=gcc CXX=g++ cmake -DVECTOR_INSTRUCTIONS=AVX2 -DCMAKE_BUILD_TYPE=Release -DENABLE_AUTOPAS=OFF -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON -DENABLE_ALLLBL=OFF -DOPENMP=ON -DENABLE_MPI=ON -DENABLE_UNIT_TESTS=ON -DENABLE_VTK=ON ..",
+        "comment": "",
+        "reltolerance": 1e-08,
+        "ResultWriter_filename": "None"
+    },
+    "logfile": [
+        {
+            "Simstep": 0,
+            "T": 499.791,
+            "U_pot": -9112640.0,
+            "p": 0.155306
+        },
+        {
+            "Simstep": 1,
+            "T": 499.857,
+            "U_pot": -9113450.0,
+            "p": 0.152445
+        },
+        {
+            "Simstep": 2,
+            "T": 501.84,
+            "U_pot": -9114300.0,
+            "p": 0.153913
+        },
+        {
+            "Simstep": 3,
+            "T": 502.598,
+            "U_pot": -9115000.0,
+            "p": 0.15322
+        },
+        {
+            "Simstep": 4,
+            "T": 502.792,
+            "U_pot": -9115700.0,
+            "p": 0.151508
+        },
+        {
+            "Simstep": 5,
+            "T": 502.853,
+            "U_pot": -9116430.0,
+            "p": 0.1496
+        },
+        {
+            "Simstep": 6,
+            "T": 502.887,
+            "U_pot": -9117150.0,
+            "p": 0.147714
+        },
+        {
+            "Simstep": 7,
+            "T": 502.921,
+            "U_pot": -9117920.0,
+            "p": 0.145754
+        },
+        {
+            "Simstep": 8,
+            "T": 502.954,
+            "U_pot": -9118780.0,
+            "p": 0.143617
+        },
+        {
+            "Simstep": 9,
+            "T": 502.991,
+            "U_pot": -9119760.0,
+            "p": 0.141215
+        },
+        {
+            "Simstep": 10,
+            "T": 503.027,
+            "U_pot": -9120860.0,
+            "p": 0.138484
+        },
+        {
+            "Simstep": 11,
+            "T": 503.063,
+            "U_pot": -9122170.0,
+            "p": 0.135309
+        },
+        {
+            "Simstep": 12,
+            "T": 503.094,
+            "U_pot": -9123580.0,
+            "p": 0.131772
+        },
+        {
+            "Simstep": 13,
+            "T": 503.125,
+            "U_pot": -9125040.0,
+            "p": 0.127938
+        },
+        {
+            "Simstep": 14,
+            "T": 503.151,
+            "U_pot": -9126660.0,
+            "p": 0.123712
+        },
+        {
+            "Simstep": 15,
+            "T": 503.173,
+            "U_pot": -9128440.0,
+            "p": 0.119132
+        },
+        {
+            "Simstep": 16,
+            "T": 503.19,
+            "U_pot": -9130200.0,
+            "p": 0.114435
+        },
+        {
+            "Simstep": 17,
+            "T": 503.201,
+            "U_pot": -9131990.0,
+            "p": 0.109657
+        },
+        {
+            "Simstep": 18,
+            "T": 503.206,
+            "U_pot": -9133760.0,
+            "p": 0.104901
+        },
+        {
+            "Simstep": 19,
+            "T": 503.207,
+            "U_pot": -9135540.0,
+            "p": 0.100238
+        },
+        {
+            "Simstep": 20,
+            "T": 503.204,
+            "U_pot": -9137240.0,
+            "p": 0.0958397
+        }
+    ],
+    "ResultWriter": []
+}
