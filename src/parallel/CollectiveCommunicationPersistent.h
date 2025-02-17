@@ -100,9 +100,22 @@ public:
         // fill the buffer, this always has to hapen
         free_fill_buffer(_buffer.data(), args...);
         // check if this combination of values has already been constructed
-        if ( !_mpi_members.is_setup() ) {
+        bool do_setup = false;
+
+        if (_mpi_members == nullptr)
+            do_setup = true;
+        // check if comunicator has to be updated (in the persistent case this should not happen)
+        else if (comm != _mpi_members->get_comm())
+            _mpi_members->get_comm() = comm;
+
+        if ( do_setup ) {
+            // assign static value to variable
+            static MPI_Members mpi_members;
+            _mpi_members = &mpi_members;
+
             // set communicator
-            _mpi_comm = comm;
+            _mpi_members->get_comm() = comm;
+
             // create variables necessary for MPI Datatype
             std::array<int, sizeof...(Ts)> array_of_blocklengths;
             array_of_blocklengths.fill(1);
@@ -113,12 +126,12 @@ public:
             fill_type_array(array_of_types.data(), args...);
             // create custom mpi type
             MPI_Type_create_struct(sizeof...(Ts), array_of_blocklengths.data(), array_of_displacements.data(),
-                                    array_of_types.data(), &_mpi_members.get_type());
-            MPI_Type_commit(&_mpi_members.get_type());
+                                    array_of_types.data(), &_mpi_members->get_type());
+            MPI_Type_commit(&_mpi_members->get_type());
             // check if we were given a custom mpi operation
             if constexpr( is_op_v<Op> )
                 // Create MPI Operation
-                MPI_Op_create(Op::template func<Ts...>, 1, &_mpi_members.get_op());
+                MPI_Op_create(Op::template func<Ts...>, 1, &_mpi_members->get_op());
             // check if we were given a root rank
             if constexpr( std::is_same_v<Root, int> )
                 _root = root;
@@ -141,19 +154,19 @@ public:
             (is_scan_v<Fn> && is_op_v<Op>)
         > {
 #ifdef ENABLE_PERSISTENT
-        MPI_Start( &_mpi_members.get_request() );
-        MPI_Wait( &_mpi_members.get_request(), MPI_STATUS_IGNORE );
+        MPI_Start( &_mpi_members->get_request() );
+        MPI_Wait( &_mpi_members->get_request(), MPI_STATUS_IGNORE );
 #else
         if constexpr ( Fn == static_cast<int>(MPI_CollFunctions::Allreduce) )
-            MPI_Allreduce( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members.get_type(), 
-                            _mpi_members.get_op(), _mpi_comm );
+            MPI_Allreduce( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), 
+                            _mpi_members->get_op(), _mpi_members->get_comm() );
 
         else if constexpr ( Fn == static_cast<int>(MPI_CollFunctions::Bcast) )
-            MPI_Bcast( _buffer.data(), 1, _mpi_members.get_type(), _root, _mpi_comm );
+            MPI_Bcast( _buffer.data(), 1, _mpi_members->get_type(), _root, _mpi_members->get_comm() );
         
         else if constexpr ( Fn == static_cast<int>(MPI_CollFunctions::Scan) )
-            MPI_Scan( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members.get_type(), 
-                            _mpi_members.get_op(), _mpi_comm );
+            MPI_Scan( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), 
+                            _mpi_members->get_op(), _mpi_members->get_comm() );
 #endif
     }
 
@@ -181,16 +194,16 @@ private:
             (is_scan_v<Fn> && is_op_v<Op>)
         > {
         if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Allreduce)) {
-            MPI_Allreduce_init( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members.get_type(), _mpi_members.get_op(),
-                            _mpi_comm, MPI_INFO_NULL, &_mpi_members.get_request() );
+            MPI_Allreduce_init( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(),
+                            _mpi_members->get_comm(), MPI_INFO_NULL, &_mpi_members->get_request() );
         }
         else if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Bcast)) {
-            MPI_Bcast_init( _buffer.data(), 1, _mpi_members.get_type(), _root, 
-                            _mpi_comm, MPI_INFO_NULL, &_mpi_members.get_request() );
+            MPI_Bcast_init( _buffer.data(), 1, _mpi_members->get_type(), _root, 
+                            _mpi_members->get_comm(), MPI_INFO_NULL, &_mpi_members->get_request() );
         }
         else if constexpr (Fn == static_cast<int>(MPI_CollFunctions::Scan)) {
-            MPI_Scan_init( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members.get_type(), _mpi_members.get_op(), 
-                            _mpi_comm, MPI_INFO_NULL, &_mpi_members.get_request() );
+            MPI_Scan_init( MPI_IN_PLACE, _buffer.data(), 1, _mpi_members->get_type(), _mpi_members->get_op(), 
+                            _mpi_members->get_comm(), MPI_INFO_NULL, &_mpi_members->get_request() );
         }
     }
 #endif
@@ -203,28 +216,29 @@ private:
         MPI_Datatype& get_type() { return _type; }
         MPI_Op& get_op() { return _op; }
         MPI_Request& get_request() { return _request; }
+        MPI_Comm& get_comm() { return _comm; }
 
         MPI_Datatype get_type() const { return _type; }
         MPI_Op get_op() const { return _op; }
         MPI_Request get_request() const { return _request; }
-
-        bool is_setup() const { 
-            return _type != MPI_DATATYPE_NULL && _op != MPI_OP_NULL && _request != MPI_REQUEST_NULL;
-        }
+        MPI_Comm get_comm() const { return _comm; }
 
         ~MPI_Members() {
             if (_type != MPI_DATATYPE_NULL)
                 MPI_Type_free(&_type);
-            if (_op != MPI_OP_NULL)
+
+            if (_op != MPI_OP_NULL) 
                 MPI_Op_free(&_op);
+
             if (_request != MPI_REQUEST_NULL)
                 MPI_Request_free(&_request);
         }
 
     private:
-        MPI_Datatype _type = MPI_DATATYPE_NULL;
-        MPI_Op _op = MPI_OP_NULL;
-        MPI_Request _request = MPI_REQUEST_NULL;
+        MPI_Datatype _type {MPI_DATATYPE_NULL};
+        MPI_Op _op {MPI_OP_NULL};
+        MPI_Request _request {MPI_REQUEST_NULL};
+        MPI_Comm _comm {MPI_COMM_NULL};
     };
 
 
@@ -237,8 +251,7 @@ private:
 #else
     alignas(16) std::array<std::byte, sizeof...(Ts) * get_max_size(Ts{}...)> _buffer;
 #endif
-    static inline MPI_Members _mpi_members {};
-    static inline MPI_Comm _mpi_comm {};
+    static inline MPI_Members* _mpi_members {};
     static inline int _root {};
 };
 
