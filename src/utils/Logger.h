@@ -3,6 +3,7 @@
 
 #define USE_GETTIMEOFDAY
 
+#include <algorithm>
 #include <chrono>
 #include <ctime>
 #include <cctype>
@@ -189,8 +190,11 @@ public:
 	}
 	/// set log level from string
 	logLevel set_log_level(std::string l) {
+		// Compare case-insensitive
+		std::string l_upper = l;
+		std::transform(l_upper.begin(), l_upper.end(), l_upper.begin(), [](unsigned char c){ return std::toupper(c);});
 		for (const auto& [lvl, name] : logLevelNames) {
-			if (name == l) {
+			if (name == l_upper) {
 				_log_level = lvl;
 				return _log_level;
 			}

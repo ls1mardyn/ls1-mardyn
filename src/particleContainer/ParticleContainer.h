@@ -192,7 +192,7 @@ public:
 	//! @brief returns the width of the halo stripe (for the given dimension index)
 	//! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
 	//!       e.g. replace it by the cutoff-radius
-	virtual double get_halo_L(int index) const = 0;
+	virtual double getHaloWidthForDimension(int index) const = 0;
 
 
 	virtual double getCutoff() const = 0;
@@ -235,10 +235,9 @@ public:
      * Generates a body-centered cubic grid.
      * @param numMoleculesPerDimension
      * @param simBoxLength
-     * @param seed_offset
      * @return
      */
-	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength, size_t seed_offset) = 0;
+	virtual unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension, std::array<double, 3> simBoxLength) = 0;
 
 	virtual double* getCellLength() = 0;
 

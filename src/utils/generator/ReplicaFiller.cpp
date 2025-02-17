@@ -95,7 +95,7 @@ class ParticleContainerToBasisWrapper : public ParticleContainer {
 
 	void deleteOuterParticles() override {}
 
-	double get_halo_L(int index) const override { return 0.0; }
+	double getHaloWidthForDimension(int index) const override { return 0.0; }
 
 	double getCutoff() const override { return 0.0; }
 
@@ -116,7 +116,7 @@ class ParticleContainerToBasisWrapper : public ParticleContainer {
 	std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> getMoleculeAtPosition(const double pos[3]) override { return {}; }
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-								std::array<double, 3> simBoxLength, size_t seed_offset) override { return 0; }
+								std::array<double, 3> simBoxLength) override { return 0; }
 
 	size_t getTotalSize() override { return _basis.numMolecules() * sizeof(Molecule); }
 

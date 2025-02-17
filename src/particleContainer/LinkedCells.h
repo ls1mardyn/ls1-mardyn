@@ -190,7 +190,7 @@ public:
 	//! @brief gets the width of the halo region in dimension index
 	//! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
 	//!       e.g. replace it by the cutoff-radius
-	double get_halo_L(int index) const override;
+	double getHaloWidthForDimension(int index) const override;
 
 	double getCutoff() const override { return _cutoffRadius; }
 	void setCutoff(double rc) override { _cutoffRadius = rc; }
@@ -260,7 +260,7 @@ public:
 	bool requiresForceExchange() const override; // new
 
 	unsigned long initCubicGrid(std::array<unsigned long, 3> numMoleculesPerDimension,
-								std::array<double, 3> simBoxLength, size_t seed_offset) override;
+								std::array<double, 3> simBoxLength) override;
 
 	std::vector<unsigned long> getParticleCellStatistics() override;
 
