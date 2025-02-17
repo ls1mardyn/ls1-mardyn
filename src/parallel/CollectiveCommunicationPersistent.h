@@ -17,12 +17,12 @@
 * at compile time. If ENABLE_PERSISTENT is disabled the implementation falls back to the default MPI collectives 
 * (MPI_Allreduce, MPI_Bcast, MPI_Scan), but this will still be more optimized than the default implementation. 
 * This improvement is due to a static storage of the generated MPI_Type, MPI_Op and MPI_Request which allows for a
-* reuse of those constructs. Given the same configuration must be communicated again. The default implementation 
+* reuse of those constructs. Given the same configuration will be communicated again. The default implementation 
 * created and deleted the MPI constructs every time a collective communication had to be performed. This implementation
 * eliminates that overhead. 
 *
 * By putting the values we want to communicate and the operation as template parameters we
-* create a unique class each time we want to comunicate a new configuration. This unique class stores the data
+* create a unique class each time we want to communicate a new configuration. This unique class stores the data
 * necessary for the communication in static members. These members will remain, even if the current instance of the
 * class goes out of scope. Therefore once the same configuration is called again the data can be reused and there is
 * no need to reconstruct it.
@@ -34,6 +34,11 @@
 * This object is created before the MPI constructs and therefore will be destructed after the other static objects, 
 * restoring the correct order creating and freeing MPI constructs. The wrapper can be found in 
 * CollectiveCommunicationPersistent_helper.h.
+*
+* Something else that is to be noted is the behaviour of this class with MPI communicators. If it is desired to create
+* a persistent communication request, it is necessary to reuse the communicator with which the request has been
+* created. Otherwise the communication will fail. This is also the reason why the persistent requests cause problems
+* with the unit test suit.
 *
 * Besides the points mentioned above, does CollCommObj the same MPI functionalities as the already existing 
 * CollectiveCommunication object.
