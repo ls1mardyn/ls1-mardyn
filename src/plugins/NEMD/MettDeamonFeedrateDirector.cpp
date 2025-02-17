@@ -1,10 +1,12 @@
 #include "MettDeamonFeedrateDirector.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
 #include "utils/FileUtils.h"
+#include "utils/mardyn_assert.h"
 #include "plugins/Mirror.h"
 #include "plugins/NEMD/MettDeamon.h"
 
@@ -132,12 +134,14 @@ void MettDeamonFeedrateDirector::beforeForces(
 
 	// Check if other plugins were found
 	if(nullptr == mirror) {
-		Log::global_log->error() << "[MettDeamonFeedrateDirector] No Mirror plugin found in plugin list. Program exit ..." << std::endl;
-		Simulation::exit(-2004);
+		std::ostringstream error_message;
+		error_message << "[MettDeamonFeedrateDirector] No Mirror plugin found in plugin list. Program exit ..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	if(nullptr == mettDeamon) {
-		Log::global_log->error() << "[MettDeamonFeedrateDirector] No MettDeamon plugin found in plugin list. Program exit ..." << std::endl;
-		Simulation::exit(-2004);
+		std::ostringstream error_message;
+		error_message << "[MettDeamonFeedrateDirector] No MettDeamon plugin found in plugin list. Program exit ..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// Get number of deleted/reflected particles from Mirror plugin
@@ -169,11 +173,10 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 {
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	uint32_t cid = 0;
-	domainDecomp.collCommInit(1);
-	domainDecomp.collCommAppendUnsLong(_particleManipCount.deleted.local.at(cid) );
-	domainDecomp.collCommAllreduceSum();
-	_particleManipCount.deleted.global.at(cid) = domainDecomp.collCommGetUnsLong();
-	domainDecomp.collCommFinalize();
+
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp.getCommunicator(), _particleManipCount.deleted.local.at(cid));
+	collComm.communicate();
+	std::tie(_particleManipCount.deleted.global.at(cid)) = collComm.get();
 
 	// reset local values
 	this->resetLocalValues();

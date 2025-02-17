@@ -8,22 +8,64 @@
 #ifndef SRC_UTILS_MARDYN_ASSERT_H_
 #define SRC_UTILS_MARDYN_ASSERT_H_
 
+#include <string>
+#include <sstream>
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
+
 #include "Logger.h"
 
-inline void mardyn_exit(int code) {
+// Macro to wrap mardyn_exit and pass the caller file and line
+#define MARDYN_EXIT(exit_message) mardyn_exit(exit_message, __func__, __FILE__, __LINE__)
+
+inline void mardyn_exit(const std::string & exit_message,
+						const char* function, const char* filepath, const int line) {
+	
+	// Only print the file path relative to the "/src/" directory
+	// The following code extracts this relative path from "filepath"
+	// Search until last "/src/" was found to avoid user-specific "src" dirs
+	const char* filepath_truncated = nullptr;
+	const char* temp = filepath;
+	while ((temp = std::strstr(temp, "/src/")) != nullptr) {
+		filepath_truncated = temp;
+		temp++;
+	}
+	if (filepath_truncated == nullptr) {
+		// Print absolute path if "/src/" not found
+		filepath_truncated = filepath;
+	} else {
+  		filepath_truncated++;  // +1 to ignore the first "/"
+	}
+
+	// Print code location from which MARDYN_EXIT() was called
+	Log::global_log->error_always_output()
+		<< "Exit called from function `" << function << "`"
+		<< " in file `" << filepath_truncated << ":" << line
+		<< "` with message:" << std::endl;
+
+	// Print exit message line by line to always have Logger output
+	std::stringstream ss(exit_message);
+	std::string exit_message_line;
+	// Split exit message by "\n" and print via Logger
+	while (std::getline(ss, exit_message_line, '\n')) {
+		Log::global_log->error_always_output() << exit_message_line << std::endl;
+	}
+
 #ifdef ENABLE_MPI
 	// terminate all mpi processes and return exitcode
-	MPI_Abort(MPI_COMM_WORLD, code);
+	MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
 #else
 	// call global abort - this stops the debugger at the right spot.
-	Log::global_log->error_always_output() << "Exit code would have been " << code << std::endl;
 	::abort();
 #endif
 }
 
 inline void __mardyn_assert__(const char * expr, const char* file, int line) {
-	Log::global_log->error_always_output() << "Assertion \"" << expr << "\" failed at " << file << ":" << line << std::endl;
-	mardyn_exit(1);
+	std::ostringstream error_message;
+	error_message << "Assertion \"" << expr << "\" failed at " << file << ":" << line << std::endl;
+	MARDYN_EXIT(error_message.str());
 }
 
 #ifdef NDEBUG

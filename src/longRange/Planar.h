@@ -13,6 +13,8 @@
 #include <cstdint>
 
 #include "molecules/MoleculeForwardDeclaration.h"
+
+class Simulation;
 class Domain;
 class ParticleContainer;
 

@@ -10,6 +10,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/adapter/FlopCounter.h"
 #include "parallel/DomainDecompBase.h"
+#include "utils/mardyn_assert.h"
 #include "Simulation.h"
 
 void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
@@ -25,7 +26,9 @@ void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
 		_writeToStdout = true;
 		_writeToFile = true;
 	} else {
-		Log::global_log->error() << "Unknown FlopRateOutputPlugin::mode. Choose \"stdout\", \"file\" or \"both\"." << std::endl;
+		std::ostringstream error_message;
+		error_message << "Unknown FlopRateOutputPlugin::mode. Choose \"stdout\", \"file\" or \"both\"." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_writeFrequency = 1;
@@ -34,8 +37,9 @@ void FlopRateWriter::readXML(XMLfileUnits& xmlconfig) {
 
 	// TODO:
 	if(_writeToFile) {
-		Log::global_log->error() << "TODO: file output not yet supported." << std::endl;
-		Simulation::exit(1);
+		std::ostringstream error_message;
+		error_message << "TODO: file output not yet supported." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	if(_writeToFile) {

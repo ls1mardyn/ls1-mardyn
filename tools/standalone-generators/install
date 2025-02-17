@@ -1,2 +1,0 @@
-./produce; sudo dpkg -i *.deb
-

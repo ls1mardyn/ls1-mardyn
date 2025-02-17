@@ -6,7 +6,7 @@
 
 
 #include "EnsembleBase.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "ChemicalPotential.h"
 
 class Domain;
@@ -40,8 +40,9 @@ public:
 
 	// TODO: Implement STUB
 	void readXML(XMLfileUnits& xmlconfig) override {
-		Log::global_log->info() << "[GrandCanonicalEnsemble] readXML not implemented!" << std::endl;
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "[GrandCanonicalEnsemble] readXML not implemented!" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	};
 
 	unsigned long N() override {
@@ -70,8 +71,9 @@ public:
 
 	// TODO: Implement
 	void updateGlobalVariable(ParticleContainer* particleContainer, GlobalVariable variable) override {
-		Log::global_log->info() << "[GrandCanonicalEnsemble] updateGlobalVariable not implemented!" << std::endl;
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "[GrandCanonicalEnsemble] updateGlobalVariable not implemented!" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	};
 
 	/*! Runs steps formerly in initConfigXML in simulation.cpp */

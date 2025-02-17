@@ -3,7 +3,7 @@
 #include <mpi.h>
 
 #include "molecules/Molecule.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "utils/Logger.h"
 
 

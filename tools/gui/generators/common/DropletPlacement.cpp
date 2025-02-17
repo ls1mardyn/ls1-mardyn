@@ -7,10 +7,14 @@
 
 #include "DropletPlacement.h"
 #include <cmath>
+#include <memory>
+
+#include "utils/Logger.h"
+
 
 #define SIZE 100
 
-DropletPlacement::DropletPlacement(double fluidVolume, double maxSphereVolume, int numSphereSizes, Log::Logger* logger)
+DropletPlacement::DropletPlacement(double fluidVolume, double maxSphereVolume, int numSphereSizes, std::shared_ptr<Log::Logger> logger)
  : _fluidVolume(fluidVolume / 100.), _maxSphereRadius(pow((3.0*maxSphereVolume / 100.)/(4.0 * M_PI), 1.0/3.0)),
    _numSphereSizes(numSphereSizes), _numOccupied(0), _logger(logger)
 {

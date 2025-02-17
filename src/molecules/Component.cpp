@@ -5,7 +5,7 @@
 #include "Site.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 
 
 Component::Component(unsigned int id) {
@@ -31,11 +31,11 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 	Log::global_log->info() << "Reading in component" << std::endl;
 	unsigned int cid = 0;
 	xmlconfig.getNodeValue( "@id", cid );
-	Log::global_log->info() << "Component ID:" << cid << std::endl;
+	Log::global_log->info() << "Component ID: " << cid << std::endl;
 	setID(cid - 1);
 	std::string name;
 	xmlconfig.getNodeValue( "@name", name );
-	Log::global_log->info() << "Component name:" << name << std::endl;
+	Log::global_log->info() << "Component name: " << name << std::endl;
 	setName(name);
 
 	XMLfile::Query query = xmlconfig.query( "site" );
@@ -76,11 +76,13 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			quadrupoleSite.readXML(xmlconfig);
 			addQuadrupole(quadrupoleSite);
 		} else if (siteType == "Tersoff") {
-			Log::global_log->error() << "Tersoff no longer supported:" << siteType << std::endl;
-			Simulation::exit(-1);
+			std::ostringstream error_message;
+			error_message << "Tersoff no longer supported:" << siteType << std::endl;
+			MARDYN_EXIT(error_message.str());
 		} else {
-			Log::global_log->error() << "Unknown site type:" << siteType << std::endl;
-			Simulation::exit(-1);
+			std::ostringstream error_message;
+			error_message << "Unknown site type:" << siteType << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		// go back to initial level, to be consistent, even if no site information is found.
 		xmlconfig.changecurrentnode("..");

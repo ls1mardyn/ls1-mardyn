@@ -76,8 +76,10 @@ public:
 			<targets>
 				<target cid="INT" method="INT">   <!-- cid: component id of target particles
 												  <!-- method: handling particles failing the check, 1:limit to max value | 2:limit to max value if force is too high (overlaps) | 3:delete particle -->
-					<Fmax>FLOAT</Fmax>            <! force limit -->
-					<vmax>FLOAT</vmax>            <! velocity limit -->
+					<Fmax>FLOAT</Fmax>            <!-- force limit -->
+					<vmax>FLOAT</vmax>            <!-- velocity limit -->
+					<Mmax>FLOAT</Mmax>            <!-- torsional moment limit -->
+					<Lmax>FLOAT</Lmax>            <!-- angular momentum -->
 				</target>
 			</targets>
 		</plugin
@@ -132,7 +134,6 @@ private:
 private:
 	TimestepControl _control;
 	maxvals_map _maxVals;
-	std::vector<Molecule*> _deletions;
 	struct Range {double xmin, xmax, ymin, ymax, zmin, zmax; bool inclusive;} _range;
 };
 

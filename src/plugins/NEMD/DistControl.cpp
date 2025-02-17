@@ -15,6 +15,7 @@
 #include "utils/DynAlloc.h"
 #include "utils/Math.h"
 #include "utils/xmlfileUnits.h"
+#include "utils/mardyn_assert.h"
 #include "plugins/Mirror.h"  // TODO: Not so nice that DistControl has to know Mirror plugin explicitly
 
 #include <iostream>
@@ -78,16 +79,18 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 	std::string strSubdivisionType;
 	if( !xmlconfig.getNodeValue("subdivision@type", strSubdivisionType) )
 	{
-		Log::global_log->error() << "[DistControl] Missing attribute \"subdivision@type\"! Programm exit..." << std::endl;
-		exit(-1);
+		std::ostringstream error_message;
+		error_message << "[DistControl] Missing attribute \"subdivision@type\"! Programm exit..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	if("number" == strSubdivisionType)
 	{
 		unsigned int nNumSlabs = 0;
 		if( !xmlconfig.getNodeValue("subdivision/number", nNumSlabs) )
 		{
-			Log::global_log->error() << "[DistControl] Missing element \"subdivision/number\"! Programm exit..." << std::endl;
-			exit(-1);
+			std::ostringstream error_message;
+			error_message << "[DistControl] Missing element \"subdivision/number\"! Programm exit..." << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		else
 			this->SetSubdivision(nNumSlabs);
@@ -97,16 +100,18 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		double dSlabWidth = 0.;
 		if( !xmlconfig.getNodeValue("subdivision/width", dSlabWidth) )
 		{
-			Log::global_log->error() << "[DistControl] Missing element \"subdivision/width\"! Programm exit..." << std::endl;
-			exit(-1);
+			std::ostringstream error_message;
+			error_message << "[DistControl] Missing element \"subdivision/width\"! Programm exit..." << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		else
 			this->SetSubdivision(dSlabWidth);
 	}
 	else
 	{
-		Log::global_log->error() << "[DistControl] Wrong attribute \"subdivision@type\". Expected: type=\"number|width\"! Programm exit..." << std::endl;
-		exit(-1);
+		std::ostringstream error_message;
+		error_message << "[DistControl] Wrong attribute \"subdivision@type\". Expected: type=\"number|width\"! Programm exit..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// init method
@@ -136,8 +141,9 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		}
 		else
 		{
-			Log::global_log->error() << "[DistControl] Missing elements \"init/values/left\" or \"init/values/right\" or both! Programm exit..." << std::endl;
-			exit(-1);
+			std::ostringstream error_message;
+			error_message << "[DistControl] Missing elements \"init/values/left\" or \"init/values/right\" or both! Programm exit..." << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 	else if("file" == strInitMethodType)
@@ -153,15 +159,17 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		}
 		else
 		{
-			Log::global_log->error() << "[DistControl] Missing elements \"init/file\" or \"init/simstep\" or both! Programm exit..." << std::endl;
-			exit(-1);
+			std::ostringstream error_message;
+			error_message << "[DistControl] Missing elements \"init/file\" or \"init/simstep\" or both! Programm exit..." << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 	else
 	{
-		Log::global_log->error() << "[DistControl] Wrong attribute \"init@type\", type = " << strInitMethodType << ", "
+		std::ostringstream error_message;
+		error_message << "[DistControl] Wrong attribute \"init@type\", type = " << strInitMethodType << ", "
 				"expected: type=\"startconfig|values|file\"! Programm exit..." << std::endl;
-		exit(-1);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// update method
@@ -188,8 +196,9 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		}
 		else
 		{
-			Log::global_log->error() << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << std::endl;
-			exit(-1);
+			std::ostringstream error_message;
+			error_message << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 	else if("denderiv" == strUpdateMethodType)
@@ -212,15 +221,17 @@ void DistControl::readXML(XMLfileUnits& xmlconfig)
 		}
 		else
 		{
-			Log::global_log->error() << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << std::endl;
-			exit(-1);
+			std::ostringstream error_message;
+			error_message << "[DistControl] Missing elements \"method/componentID\" or \"method/density\" or both! Programm exit..." << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 	else
 	{
-		Log::global_log->error() << "[DistControl] Wrong attribute \"method@type\", type = " << strUpdateMethodType << ", "
+		std::ostringstream error_message;
+		error_message << "[DistControl] Wrong attribute \"method@type\", type = " << strUpdateMethodType << ", "
 				"expected: type=\"density|denderiv\"! Programm exit..." << std::endl;
-		exit(-1);
+		MARDYN_EXIT(error_message.str());
 	}
 }
 
@@ -265,8 +276,9 @@ void DistControl::PrepareSubdivision()
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		Log::global_log->error() << "[DistControl] PrepareSubdivision(): Neither _binParams.width nor _binParams.count was set correctly! Programm exit..." << std::endl;
-		exit(-1);
+		std::ostringstream error_message;
+		error_message << "[DistControl] PrepareSubdivision(): Neither _binParams.width nor _binParams.count was set correctly! Programm exit..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	_binParams.invWidth = 1. / _binParams.width;
@@ -701,13 +713,14 @@ void DistControl::UpdatePositionsInit(ParticleContainer* particleContainer)
 		}
 	case DCIM_UNKNOWN:
 	default:
-		Log::global_log->error() << "[DistControl] Wrong Init Method! Programm exit..." << std::endl;
-		exit(-1);
+		std::ostringstream error_message;
+		error_message << "[DistControl] Wrong Init Method! Programm exit..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 #ifndef NDEBUG
-	Log::global_log->error() << "[DistControl] _dInterfaceMidLeft = " << _dInterfaceMidLeft << std::endl;
-	Log::global_log->error() << "[DistControl] _dInterfaceMidRight = " << _dInterfaceMidRight << std::endl;
+	Log::global_log->debug() << "[DistControl] _dInterfaceMidLeft = " << _dInterfaceMidLeft << std::endl;
+	Log::global_log->debug() << "[DistControl] _dInterfaceMidRight = " << _dInterfaceMidRight << std::endl;
 #endif
 
 	// update positions
@@ -737,8 +750,9 @@ void DistControl::UpdatePositions(const uint64_t& simstep)
 		break;
 	case DCUM_UNKNOWN:
 	default:
-		Log::global_log->error() << "[DistControl] UpdatePositions() Corrupted code!!! Programm exit..." << std::endl;
-		exit(-1);
+		std::ostringstream error_message;
+		error_message << "[DistControl] UpdatePositions() Corrupted code!!! Programm exit..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// update positions

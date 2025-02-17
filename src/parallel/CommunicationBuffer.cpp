@@ -8,6 +8,7 @@
 #include "CommunicationBuffer.h"
 #include "molecules/Molecule.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "ensemble/EnsembleBase.h"
 
 #include <climits> /* UINT64_MAX */

@@ -1,6 +1,10 @@
-#include <particleContainer/ParticleContainer.h>
-#include <particleContainer/ParticleIterator.h>
+
+#include "ForceHelper.h"
+
+#include <sstream>
 #include <variant>
+
+#include "utils/mardyn_assert.h"
 
 std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> addValuesAndGetIterator(
 	ParticleContainer* moleculeContainer, const double* position,
@@ -34,8 +38,9 @@ std::variant<ParticleIterator, SingleCellIterator<ParticleCell>> addValuesAndGet
 		[&](auto originalIter) {
 			if (not originalIter.isValid()) {
 				// This should not happen
-				std::cout << "Original molecule not usePreviousIterator";
-				mardyn_exit(1);
+				std::ostringstream error_message;
+				error_message << "Original molecule not usePreviousIterator" << std::endl;
+				MARDYN_EXIT(error_message.str());
 			}
 
 			mardyn_assert(originalIter->getID() == haloMolecule.getID());

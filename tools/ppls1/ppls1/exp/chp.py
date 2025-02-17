@@ -85,12 +85,8 @@ def exp_chp_bin_DF(fname, chp, append=False):
         writeMode = 'wb'
     
     with open(fname, writeMode) as f:
-        ba=bytearray()
-        for pi, row in chp.iterrows():
-            ba.extend(pack('<QIddddddddddddd',chp['pid'][pi],chp['cid'][pi],chp['rx'][pi],chp['ry'][pi],chp['rz'][pi],
-                                              chp['vx'][pi], chp['vy'][pi], chp['vz'][pi],chp['q0'][pi],chp['q1'][pi],
-                                              chp['q2'][pi], chp['q3'][pi], chp['Dx'][pi],chp['Dy'][pi],chp['Dz'][pi] ))
-        f.write(ba)
+        records = chp.to_records(index=False)
+        records.tofile(f)
         f.close()
 
 #%% Export ASCII ls1 checkpoint (representation: data frame)

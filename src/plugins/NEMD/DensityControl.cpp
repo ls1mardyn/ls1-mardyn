@@ -22,11 +22,13 @@
 
 #include "DensityControl.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/CommVar.h"
 #include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
 
 DensityControl::DensityControl() = default;
 DensityControl::~DensityControl() = default;
@@ -82,10 +84,11 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	_vecPriority.push_back(0);
 	const uint32_t nRet = this->tokenize_int_list(_vecPriority, strPrio);
 	if (nRet != numComponents) {
-		Log::global_log->error() << "[DensityControl] Number of component IDs specified in element <priority>...</priority>"
+		std::ostringstream error_message;
+		error_message << "[DensityControl] Number of component IDs specified in element <priority>...</priority>"
 							<< " does not match the number of components in the simulation. Programm exit ..."
 							<< std::endl;
-		Simulation::exit(-1);
+		MARDYN_EXIT(error_message.str());
 	}
 
 	// targets
@@ -109,8 +112,9 @@ void DensityControl::readXML(XMLfileUnits& xmlconfig) {
 	numTargets = query.card();
 	Log::global_log->info() << "[DensityControl] Number of component targets: " << numTargets << std::endl;
 	if (numTargets < 1) {
-		Log::global_log->error() << "[DensityControl] No target parameters specified. Program exit ..." << std::endl;
-		Simulation::exit(-1);
+		std::ostringstream error_message;
+		error_message << "[DensityControl] No target parameters specified. Program exit ..." << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	const std::string oldpath = xmlconfig.getcurrentnodepath();
 	XMLfile::Query::const_iterator nodeIter;
@@ -188,11 +192,9 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer, Domain
 	numMolecules.local = vec_pacID.local.size();
 
 #ifdef ENABLE_MPI
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(numMolecules.local);
-	domainDecomp->collCommAllreduceSum();
-	numMolecules.global = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numMolecules.local);
+	collComm.communicate();
+	std::tie(numMolecules.global) = collComm.get();
 #else
 	numMolecules.global = numMolecules.local;
 #endif

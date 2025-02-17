@@ -8,6 +8,9 @@
 
 #include <optional>
 
+#include "Domain.h"
+
+#include "particleContainer/ParticleContainer.h"
 #include "DomainDecompMPIBase.h"
 #include "LoadBalancer.h"
 

@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "Simulation.h"
 #include "ZonalMethod.h"
 
 /**

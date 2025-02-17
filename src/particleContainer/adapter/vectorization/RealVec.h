@@ -10,7 +10,7 @@
 
 #include "SIMD_TYPES.h"
 #include "MaskVec.h"
-#include "utils/mardyn_assert.h"
+
 #include <fstream>
 #include <cmath>
 

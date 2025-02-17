@@ -8,6 +8,7 @@
 #include "ExtractPhase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
@@ -89,11 +90,10 @@ void ExtractPhase::beforeForces(ParticleContainer* particleContainer, DomainDeco
 		 it.isValid(); ++it)
 		numParticles.local++;
 
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(numParticles.local);
-	domainDecomp->collCommAllreduceSum();
-	numParticles.global = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numParticles.local);
+	collComm.communicate();
+	std::tie(numParticles.global) = collComm.get();
+
 	_densityTarget.value = numParticles.global / V;
 
 	// Perform action only once

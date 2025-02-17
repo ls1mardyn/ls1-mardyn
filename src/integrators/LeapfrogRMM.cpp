@@ -1,6 +1,6 @@
 #include "LeapfrogRMM.h"
 
-#include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
 

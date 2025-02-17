@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <cmath>
 #include <cstdint>
 
@@ -11,6 +12,7 @@
 #include "molecules/Molecule.h"
 //#include "CutoffCorrections.h"
 #include "Simulation.h"
+#include "utils/mardyn_assert.h"
 #include "ensemble/EnsembleBase.h"
 
 #ifdef ENABLE_MPI
@@ -73,7 +75,7 @@ Domain::Domain(int rank) {
 	this->_universalSelectiveThermostatWarning = 0;
 	this->_universalSelectiveThermostatError = 0;
 
-    // explosion heuristics, NOTE: turn off when using slab thermostat
+	// explosion heuristics, NOTE: turn off when using slab thermostat
     _bDoExplosionHeuristics = true;
 }
 
@@ -92,7 +94,9 @@ void Domain::readXML(XMLfileUnits& xmlconfig) {
 				<< _globalLength[2] << std::endl;
 		}
 		else {
-			Log::global_log->error() << "Unsupported volume type " << type << std::endl;
+			std::ostringstream error_message;
+			error_message << "Unsupported volume type " << type << std::endl;
+			MARDYN_EXIT(error_message.str());
 		}
 		xmlconfig.changecurrentnode("..");
 	}
@@ -141,9 +145,9 @@ double Domain::getGlobalPressure()
 	return globalTemperature * _globalRho + _globalRho * getAverageGlobalVirial()/3.;
 }
 
-double Domain::getAverageGlobalVirial() { return _globalVirial/_globalNumMolecules; }
+double Domain::getAverageGlobalVirial() const { return _globalVirial/_globalNumMolecules; }
 
-double Domain::getAverageGlobalUpot() { return getGlobalUpot()/_globalNumMolecules; }
+double Domain::getAverageGlobalUpot() const { return getGlobalUpot()/_globalNumMolecules; }
 double Domain::getGlobalUpot() const { return _globalUpot; }
 
 Comp2Param& Domain::getComp2Params(){
@@ -168,14 +172,9 @@ void Domain::calculateGlobalValues(
 	// of m_Ukin, m_Upot and Pressure had to be moved from Thermostat / upd_F
 	// to this point
 
-	/* FIXME stuff for the ensemble class */
-	domainDecomp->collCommInit(2, 654);
-	domainDecomp->collCommAppendDouble(Upot);
-	domainDecomp->collCommAppendDouble(Virial);
-	domainDecomp->collCommAllreduceSumAllowPrevious();
-	Upot = domainDecomp->collCommGetDouble();
-	Virial = domainDecomp->collCommGetDouble();
-	domainDecomp->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), Upot, Virial);
+	collComm.communicate();
+	std::tie(Upot, Virial) = collComm.get();
 
 	// Process 0 has to add the dipole correction:
 	// m_UpotCorr and m_VirialCorr already contain constant (internal) dipole correction
@@ -213,39 +212,32 @@ void Domain::calculateGlobalValues(
 		unsigned long rotDOF = _localRotationalDOF[thermit->first];
 		double sumIw2 = (rotDOF > 0)? _local2KERot[thermit->first]: 0.0;
 
-		domainDecomp->collCommInit(4, 12+thermid);
-		domainDecomp->collCommAppendDouble(summv2);
-		domainDecomp->collCommAppendDouble(sumIw2);
-		domainDecomp->collCommAppendUnsLong(numMolecules);
-		domainDecomp->collCommAppendUnsLong(rotDOF);
-		domainDecomp->collCommAllreduceSumAllowPrevious();
-		summv2 = domainDecomp->collCommGetDouble();
-		sumIw2 = domainDecomp->collCommGetDouble();
-		numMolecules = domainDecomp->collCommGetUnsLong();
-		rotDOF = domainDecomp->collCommGetUnsLong();
-		domainDecomp->collCommFinalize();
+		auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), summv2, sumIw2, numMolecules, rotDOF);
+		collComm.communicate();
+		std::tie(_globalsummv2, _globalsumIw2, numMolecules, rotDOF) = collComm.get();
+
 		Log::global_log->debug() << "[ thermostat ID " << thermit->first << "]\tN = " << numMolecules << "\trotDOF = " << rotDOF
-			<< "\tmv2 = " <<  summv2 << "\tIw2 = " << sumIw2 << std::endl;
+			<< "\tmv2 = " <<  _globalsummv2 << "\tIw2 = " << _globalsumIw2 << std::endl;
 
 		this->_universalThermostatN[thermit->first] = numMolecules;
 		this->_universalRotationalDOF[thermit->first] = rotDOF;
-		mardyn_assert((summv2 > 0.0) || (numMolecules == 0));
+		mardyn_assert((_globalsummv2 > 0.0) || (numMolecules == 0));
 
 		/* calculate the temperature of the entire system */
 		if(numMolecules > 0)
 			_globalTemperatureMap[thermit->first] =
-				(summv2 + sumIw2) / (double)(3*numMolecules + rotDOF);
+				(_globalsummv2 + _globalsumIw2) / (double)(3*numMolecules + rotDOF);
 		else
 			_globalTemperatureMap[thermit->first] = _universalTargetTemperature[thermit->first];
 
 		double Ti = Tfactor * _universalTargetTemperature[thermit->first];
 		if((Ti > 0.0) && (numMolecules > 0) && !_universalNVE)
 		{
-			_universalBTrans[thermit->first] = pow(3.0*numMolecules*Ti / summv2, 0.4);
-			if( sumIw2 == 0.0 )
+			_universalBTrans[thermit->first] = pow(3.0*numMolecules*Ti / _globalsummv2, 0.4);
+			if( _globalsumIw2 == 0.0 )
 				_universalBRot[thermit->first] = 1.0;
 			else
-				_universalBRot[thermit->first] = pow(rotDOF*Ti / sumIw2, 0.4);
+				_universalBRot[thermit->first] = pow(rotDOF*Ti / _globalsumIw2, 0.4);
 		}
 		else
 		{
@@ -321,12 +313,9 @@ void Domain::calculateGlobalValues(
 		{
 			std::array<double, 3> sigv = _localThermostatDirectedVelocity[thermit->first];
 
-			domainDecomp->collCommInit(3);
-			for(int d=0; d < 3; d++) domainDecomp->collCommAppendDouble(sigv[d]);
-			domainDecomp->collCommAllreduceSum();
-			for(int d=0; d < 3; d++) sigv[d] = domainDecomp->collCommGetDouble();
-			domainDecomp->collCommFinalize();
-
+			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), sigv[0], sigv[1], sigv[2]);
+			collComm.communicate();
+			std::tie(sigv[0], sigv[1], sigv[2]) = collComm.get();
 
 			_localThermostatDirectedVelocity[thermit->first].fill(0.0);
 
@@ -518,7 +507,7 @@ void Domain::writeCheckpointHeader(std::string filename,
 	#ifndef NDEBUG
 			checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
 			//checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
-	        checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <contact@ls1-mardyn.de>.\n# \n";
+			checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <contact@ls1-mardyn.de>.\n# \n";
 	#endif
 			/* by Stefan Becker: the output line "I ..." causes an error: the restart run does not start!!!
 			if(this->_globalUSteps > 1)
@@ -535,24 +524,29 @@ void Domain::writeCheckpointHeader(std::string filename,
 			for(auto pos=components->begin();pos!=components->end();++pos){
 				pos->write(checkpointfilestream);
 			}
-			unsigned int numperline=_simulation.getEnsemble()->getComponents()->size();
-			unsigned int iout=0;
-			for(auto pos=_mixcoeff.begin();pos!=_mixcoeff.end();++pos){
-				checkpointfilestream << *pos;
-				iout++;
-				// 2 parameters (xi and eta)
-				if(iout/2>=numperline) {
-					checkpointfilestream << std::endl;
-					iout=0;
-					--numperline;
-				}
-				else if(!(iout%2)) {
-					checkpointfilestream << "\t";
-				}
-				else {
-					checkpointfilestream << " ";
+			// Write mixing coefficients
+			auto &mixingrules = _simulation.getEnsemble()->getMixingrules();
+			const auto numComponents=_simulation.getEnsemble()->getComponents()->size();
+			std::stringstream mixingss;
+			for (int cidi = 0; cidi < numComponents; ++cidi) {
+				for (int cidj = cidi+1; cidj < numComponents; ++cidj) {  // cidj is always larger than cidi
+					const auto mixrule = mixingrules[cidi][cidj];
+					if (mixrule->getType() == "LB") {
+						const double eta = mixrule->getParameters().at(0);
+						const double xi = mixrule->getParameters().at(1);
+						mixingss << xi << " " << eta;
+						// Only add tab if not last character in line
+						if (!((cidi == numComponents-1) and (cidj == numComponents))) {
+							mixingss << "\t";
+						}
+					} else {
+						std::ostringstream error_message;
+						error_message << "Only LB mixing rule supported" << std::endl;
+						MARDYN_EXIT(error_message.str());
+					}
 				}
 			}
+			checkpointfilestream << mixingss.str() << std::endl;
 			checkpointfilestream << _epsilonRF << std::endl;
 			for( auto uutit = this->_universalUndirectedThermostat.begin();
 					uutit != this->_universalUndirectedThermostat.end();
@@ -618,7 +612,7 @@ void Domain::writeCheckpoint(std::string filename,
 
 
 void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
-	_comp2params.initialize(*(_simulation.getEnsemble()->getComponents()), _mixcoeff, _epsilonRF, cutoffRadius, cutoffRadiusLJ);
+	_comp2params.initialize(*(_simulation.getEnsemble()->getComponents()), _simulation.getEnsemble()->getMixingrules(), _epsilonRF, cutoffRadius, cutoffRadiusLJ);
 }
 
 void Domain::Nadd(unsigned cid, int N, int localN)
@@ -703,14 +697,22 @@ void Domain::enableComponentwiseThermostat()
 	}
 }
 
+void Domain::setComponentThermostat(int cid, int thermostat) {
+	if ((0 > cid) || (0 >= thermostat)) {
+		std::ostringstream error_message;
+		error_message << "Domain::setComponentThermostat: cid or thermostat id too low" << std::endl;
+		MARDYN_EXIT(error_message.str());
+	}
+	this->_componentToThermostatIdMap[cid] = thermostat;
+	this->_universalThermostatN[thermostat] = 0;
+}
+
 void Domain::enableUndirectedThermostat(int tst)
 {
 	this->_universalUndirectedThermostat[tst] = true;
 	this->_localThermostatDirectedVelocity[tst].fill(0.0);
 	this->_universalThermostatDirectedVelocity[tst].fill(0.0);
 }
-
-std::vector<double> & Domain::getmixcoeff() { return _mixcoeff; }
 
 double Domain::getepsilonRF() const { return _epsilonRF; }
 
@@ -743,11 +745,9 @@ void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, Doma
 	CommVar<uint64_t> numMolecules;
 	numMolecules.local = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 #ifdef ENABLE_MPI
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(numMolecules.local);
-	domainDecomp->collCommAllreduceSum();
-	numMolecules.global = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numMolecules.local);
+	collComm.communicate();
+	std::tie(numMolecules.global) = collComm.get();
 #else
 	numMolecules.global = numMolecules.local;
 #endif
@@ -774,9 +774,9 @@ void Domain::updateMaxMoleculeID(ParticleContainer* particleContainer, DomainDec
 #endif
 }
 
-double Domain::getglobalRho(){ return _globalRho;}
+double Domain::getglobalRho() const { return _globalRho;}
 
-void Domain::setglobalRho(double grho){ _globalRho = grho;}
+void Domain::setglobalRho(double grho) { _globalRho = grho;}
 
 unsigned long Domain::getglobalRotDOF()
 {
@@ -815,10 +815,10 @@ double Domain::cv()
 
 //! methods implemented by Stefan Becker <stefan.becker@mv.uni-kl.de>
 // the following two methods are used by the MmspdWriter (writing the output file in a format used by MegaMol)
-double Domain::getSigma(unsigned cid, unsigned nthSigma){
+double Domain::getSigma(unsigned cid, unsigned nthSigma) const {
   return _simulation.getEnsemble()->getComponent(cid)->getSigma(nthSigma);
 }
-unsigned Domain::getNumberOfComponents(){
+unsigned Domain::getNumberOfComponents() const {
   return _simulation.getEnsemble()->getComponents()->size();
 }
 
@@ -846,10 +846,10 @@ void Domain::submitDU(unsigned /*cid*/, double DU, double* r)
 
  void Domain::setLocalUpotCompSpecific(double UpotCspec){_localUpotCspecif = UpotCspec;}
 
- double Domain::getLocalUpotCompSpecific(){return _localUpotCspecif;}
+ double Domain::getLocalUpotCompSpecific() const {return _localUpotCspecif;}
 
 
-double Domain::getAverageGlobalUpotCSpec() {
+double Domain::getAverageGlobalUpotCSpec() const {
   Log::global_log->debug() << "number of fluid molecules = " << getNumFluidMolecules() << "\n";
   return _globalUpotCspecif / getNumFluidMolecules();
 }
@@ -859,11 +859,11 @@ void Domain::setNumFluidComponents(unsigned nc){_numFluidComponent = nc;}
 
 unsigned Domain::getNumFluidComponents(){return _numFluidComponent;}
 
-unsigned long Domain::getNumFluidMolecules(){
-  unsigned long numFluidMolecules = 0;
-  for(unsigned i = 0; i < _numFluidComponent; i++){
-    Component& ci=*(global_simulation->getEnsemble()->getComponent(i));
-    numFluidMolecules+=ci.getNumMolecules();
-  }
+unsigned long Domain::getNumFluidMolecules() const {
+	unsigned long numFluidMolecules = 0;
+	for(unsigned i = 0; i < _numFluidComponent; i++){
+		Component& ci=*(global_simulation->getEnsemble()->getComponent(i));
+		numFluidMolecules+=ci.getNumMolecules();
+	}
   return numFluidMolecules;
 }

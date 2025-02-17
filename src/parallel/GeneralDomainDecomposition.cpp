@@ -12,12 +12,16 @@
 #include "NeighborAcquirer.h"
 #include "NeighbourCommunicationScheme.h"
 
+#include "utils/String_utils.h"
+#include "utils/mardyn_assert.h"
+
 #include <numeric>
 #include <memory>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <tuple>
+#include <sstream>
 
 GeneralDomainDecomposition::GeneralDomainDecomposition(double interactionLength, Domain* domain, bool forceGrid)
 	: _boxMin{0.},
@@ -55,8 +59,9 @@ void GeneralDomainDecomposition::initializeALL() {
 	_loadBalancer = std::make_unique<ALLLoadBalancer>(_boxMin, _boxMax, 4 /*gamma*/, this->getCommunicator(), gridSize,
 													  gridCoords, minimalDomainSize);
 #else
-	Log::global_log->error() << "ALL load balancing library not enabled. Aborting." << std::endl;
-	Simulation::exit(24235);
+	std::ostringstream error_message;
+	error_message << "ALL load balancing library not enabled. Aborting." << std::endl;
+	MARDYN_EXIT(error_message.str());
 #endif
 	Log::global_log->info() << "GeneralDomainDecomposition initial box: [" << _boxMin[0] << ", " << _boxMax[0] << "] x ["
 					   << _boxMin[1] << ", " << _boxMax[1] << "] x [" << _boxMin[2] << ", " << _boxMax[2] << "]"
@@ -129,6 +134,8 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 			}
 		}
+		_boundaryHandler.setLocalRegion(_boxMin.data(),_boxMax.data());
+		_boundaryHandler.updateGlobalWallLookupTable();
 	}
 	++_steps;
 }
@@ -181,7 +188,8 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 		ownMolecules.push_back(*iter);
 		// TODO: This check should be in debug mode only
 		if (not iter->inBox(newMin.data(), newMax.data())) {
-			Log::global_log->error_always_output()
+			std::ostringstream error_message;
+			error_message
 				<< "Particle still in domain that should have been migrated."
 				<< "BoxMin: "
 				<< particleContainer->getBoundingBoxMin(0) << ", "
@@ -193,7 +201,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 				<< particleContainer->getBoundingBoxMax(2) << "\n"
 				<< "Particle: \n" << *iter
 				<< std::endl;
-			Simulation::exit(2315);
+			MARDYN_EXIT(error_message.str());
 		}
 	}
 	particleContainer->clear();
@@ -284,10 +292,11 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		if (gridSizeString.find(',') != std::string::npos) {
 			auto strings = string_utils::split(gridSizeString, ',');
 			if (strings.size() != 3) {
-				Log::global_log->error()
+				std::ostringstream error_message;
+				error_message
 					<< "GeneralDomainDecomposition's gridSize should have three entries if a list is given, but has "
 					<< strings.size() << "!" << std::endl;
-				Simulation::exit(8134);
+				MARDYN_EXIT(error_message.str());
 			}
 			_gridSize = {std::stod(strings[0]), std::stod(strings[1]), std::stod(strings[2])};
 		} else {
@@ -296,10 +305,11 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		}
 		for (auto gridSize : *_gridSize) {
 			if (gridSize < _interactionLength) {
-				Log::global_log->error() << "GeneralDomainDecomposition's gridSize (" << gridSize
+				std::ostringstream error_message;
+				error_message << "GeneralDomainDecomposition's gridSize (" << gridSize
 									<< ") is smaller than the interactionLength (" << _interactionLength
 									<< "). This is forbidden, as it leads to errors! " << std::endl;
-				Simulation::exit(8136);
+				MARDYN_EXIT(error_message.str());
 			}
 		}
 	}
@@ -314,14 +324,16 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		if (loadBalancerString.find("all") != std::string::npos) {
 			initializeALL();
 		} else {
-			Log::global_log->error() << "GeneralDomainDecomposition: Unknown load balancer " << loadBalancerString
+			std::ostringstream error_message;
+			error_message << "GeneralDomainDecomposition: Unknown load balancer " << loadBalancerString
 								<< ". Aborting! Please select a valid option! Valid options: ALL";
-			Simulation::exit(1);
+			MARDYN_EXIT(error_message.str());
 		}
 		_loadBalancer->readXML(xmlconfig);
 	} else {
-		Log::global_log->error() << "loadBalancer section missing! Aborting!" << std::endl;
-		Simulation::exit(8466);
+		std::ostringstream error_message;
+		error_message << "loadBalancer section missing! Aborting!" << std::endl;
+		MARDYN_EXIT(error_message.str());
 	}
 	xmlconfig.changecurrentnode("..");
 }

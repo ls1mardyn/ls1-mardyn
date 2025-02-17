@@ -9,7 +9,7 @@
 
 	<simulation type="MD" >
 		<options>
-			<option name="refreshIDs">1</option>
+			<option name="refreshIDs">true</option>
 		</options>
 		
 		<integrator type="Leapfrog" >

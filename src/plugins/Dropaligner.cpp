@@ -23,11 +23,12 @@ void Dropaligner::readXML(XMLfileUnits& xmlconfig) {
 	// SANITY CHECK
 	if (_interval < 1 || _alignmentCorrection < 0 || _alignmentCorrection > 1 || _xPos <= 0. || _yPos <= 0. ||
 		_zPos <= 0. || _radius <= 0) {
-		Log::global_log->error() << "[Dropaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
-		Log::global_log->error() << "[Dropaligner] HALTING SIMULATION" << std::endl;
+		std::ostringstream error_message;
+		error_message << "[Dropaligner] INVALID CONFIGURATION!!! DISABLED!" << std::endl;
+		error_message << "[Dropaligner] HALTING SIMULATION" << std::endl;
 		_enabled = false;
 		// HALT SIM
-		Simulation::exit(1);
+		MARDYN_EXIT(error_message.str());
 		return;
 	}
 
@@ -75,17 +76,9 @@ void Dropaligner::beforeForces(ParticleContainer* particleContainer, DomainDecom
 		}
 
 		// COMMUNICATION
-		domainDecomp->collCommInit(4);
-		for (int d = 0; d < 3; d++) {
-			domainDecomp->collCommAppendDouble(_balance[d]);
-		}
-		domainDecomp->collCommAppendDouble(_mass);
-		domainDecomp->collCommAllreduceSum();
-		for (int d = 0; d < 3; d++) {
-			_balance[d] = domainDecomp->collCommGetDouble();
-		}
-		_mass = domainDecomp->collCommGetDouble();
-		domainDecomp->collCommFinalize();
+		auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _balance[0], _balance[1], _balance[2], _mass);
+		collComm.communicate();
+		std::tie(_balance[0], _balance[1], _balance[2], _mass) = collComm.get();
 
 		// CALCULATE MOTION
 
