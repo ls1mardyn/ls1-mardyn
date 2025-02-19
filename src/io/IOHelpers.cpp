@@ -121,7 +121,8 @@ unsigned long IOHelpers::makeParticleIdsUniqueAndGetTotalNumParticles(ParticleCo
 
 	auto collCommScan = makeCollCommObjScanAdd(domainDecomp->getCommunicator(), localNumParticles);
 	collCommScan.communicate();
-	auto [idOffset] = collCommScan.get();
+	unsigned long idOffset = 0;
+    std::tie(idOffset) = collCommScan.get();
 	idOffset -= localNumParticles;
 
 	// fix ID's to be unique:

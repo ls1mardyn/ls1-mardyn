@@ -91,7 +91,8 @@ unsigned long CubicGridGeneratorInternal::readPhaseSpace(ParticleContainer *part
 
 	auto collComm = makeCollCommObjScanAdd(domainDecomp->getCommunicator(), id);
 	collComm.communicate();
-	auto [idOffset] = collComm.get();
+	unsigned long idOffset;
+    std::tie(idOffset) = collComm.get();
 	idOffset -= id;
 
 	// fix ID's to be unique:
