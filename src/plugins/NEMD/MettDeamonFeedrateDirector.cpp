@@ -155,7 +155,9 @@ void MettDeamonFeedrateDirector::beforeForces(
 	{
 		_updateControl.sampledTimestepCount = 0;  // reset sampling control
 		this->calcFeedrate(mettDeamon);
+		std::cout << domainDecomp->getRank() << " 1new feedrate " << _feedrate.avg << std::endl;
 		mettDeamon->setActualFeedrate(_feedrate.avg);
+		std::cout << domainDecomp->getRank() << " 2new feedrate " << _feedrate.avg << std::endl;
 	}
 
 	// Write out restart information

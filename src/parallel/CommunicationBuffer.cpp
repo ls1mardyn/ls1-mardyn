@@ -32,7 +32,8 @@ size_t CommunicationBuffer::_numBytesHalo = 7 * sizeof(double) + sizeof(int)
 			+ sizeof(unsigned long)
 	#endif
 		;
-size_t CommunicationBuffer::_numBytesForces = sizeof(unsigned long) + 12 * sizeof(double);
+// id (1), position (3), force (3), momentum (3), virial (9)
+size_t CommunicationBuffer::_numBytesForces = sizeof(unsigned long) + 18 * sizeof(double);
 #endif
 
 
@@ -210,6 +211,12 @@ void CommunicationBuffer::addForceMolecule(size_t indexOfMolecule, const Molecul
 	i_runningByte = emplaceValue(i_runningByte, m.Vi(0));
 	i_runningByte = emplaceValue(i_runningByte, m.Vi(1));
 	i_runningByte = emplaceValue(i_runningByte, m.Vi(2));
+	i_runningByte = emplaceValue(i_runningByte, m.Vi(3));
+	i_runningByte = emplaceValue(i_runningByte, m.Vi(4));
+	i_runningByte = emplaceValue(i_runningByte, m.Vi(5));
+	i_runningByte = emplaceValue(i_runningByte, m.Vi(6));
+	i_runningByte = emplaceValue(i_runningByte, m.Vi(7));
+	i_runningByte = emplaceValue(i_runningByte, m.Vi(8));
 #endif
 }
 
@@ -348,7 +355,7 @@ void CommunicationBuffer::readForceMolecule(size_t indexOfMolecule, Molecule& m)
 	}
 
 #else
-	double rbuf[3], Fbuf[3], Mbuf[3], Vibuf[3];
+	double rbuf[3], Fbuf[3], Mbuf[3], Vibuf[9];
 	unsigned long idbuf;
 
 	i_runningByte = readValue(i_runningByte, idbuf);
@@ -364,6 +371,12 @@ void CommunicationBuffer::readForceMolecule(size_t indexOfMolecule, Molecule& m)
 	i_runningByte = readValue(i_runningByte, Vibuf[0]);
 	i_runningByte = readValue(i_runningByte, Vibuf[1]);
 	i_runningByte = readValue(i_runningByte, Vibuf[2]);
+	i_runningByte = readValue(i_runningByte, Vibuf[3]);
+	i_runningByte = readValue(i_runningByte, Vibuf[4]);
+	i_runningByte = readValue(i_runningByte, Vibuf[5]);
+	i_runningByte = readValue(i_runningByte, Vibuf[6]);
+	i_runningByte = readValue(i_runningByte, Vibuf[7]);
+	i_runningByte = readValue(i_runningByte, Vibuf[8]);
 	m.setid(idbuf);
 	for(int d = 0; d < 3; d++) {
 		m.setr(d, rbuf[d]);

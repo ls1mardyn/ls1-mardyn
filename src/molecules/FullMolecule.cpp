@@ -29,6 +29,13 @@ FullMolecule::FullMolecule(unsigned long id, Component *component,
 	_Vi[0]= 0.;
 	_Vi[1]= 0.;
 	_Vi[2]= 0.;
+	_Vi[3]= 0.;
+	_Vi[4]= 0.;
+	_Vi[5]= 0.;
+	_Vi[6]= 0.;
+	_Vi[7]= 0.;
+	_Vi[8]= 0.;
+	_upot = 0;
 
 	_soa = nullptr;
 	_soa_index_lj = 0;
@@ -64,6 +71,13 @@ FullMolecule::FullMolecule(const FullMolecule& m) {
 	_Vi[0]= m._Vi[0];
 	_Vi[1]= m._Vi[1];
 	_Vi[2]= m._Vi[2];
+	_Vi[3]= m._Vi[3];
+	_Vi[4]= m._Vi[4];
+	_Vi[5]= m._Vi[5];
+	_Vi[6]= m._Vi[6];
+	_Vi[7]= m._Vi[7];
+	_Vi[8]= m._Vi[8];
+	_upot = m._upot;
 
 	_soa = m._soa;
 	_soa_index_lj = m._soa_index_lj;
@@ -102,6 +116,13 @@ FullMolecule& FullMolecule::operator=(const FullMolecule& m) {
 	_Vi[0]= m._Vi[0];
 	_Vi[1]= m._Vi[1];
 	_Vi[2]= m._Vi[2];
+	_Vi[3]= m._Vi[3];
+	_Vi[4]= m._Vi[4];
+	_Vi[5]= m._Vi[5];
+	_Vi[6]= m._Vi[6];
+	_Vi[7]= m._Vi[7];
+	_Vi[8]= m._Vi[8];
+	_upot = m._upot;
 
 	_soa = m._soa;
 	_soa_index_lj = m._soa_index_lj;
@@ -477,7 +498,8 @@ void FullMolecule::clearFM() {
 	mardyn_assert(_soa != nullptr);
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;
-	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
+	_Vi[0]= _Vi[1]= _Vi[2]=_Vi[3]= _Vi[4]= _Vi[5]=_Vi[6]= _Vi[7]= _Vi[8]= 0.;
+	_upot = 0.;
 
 	std::array<vcp_real_accum, 3> clearance = {0.0, 0.0, 0.0};
 
@@ -488,6 +510,8 @@ void FullMolecule::clearFM() {
 
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::LJC, index_in_soa);
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::LJC, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIALND1, ConcSites::SiteType::LJC, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIALND2, ConcSites::SiteType::LJC, index_in_soa);
 	}
 	ns = numCharges();
 	for (unsigned i = 0; i < ns; ++i) {
@@ -495,6 +519,8 @@ void FullMolecule::clearFM() {
 
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::CHARGE, index_in_soa);
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::CHARGE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIALND1, ConcSites::SiteType::LJC, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIALND2, ConcSites::SiteType::LJC, index_in_soa);
 	}
 	ns = numDipoles();
 	for (unsigned i = 0; i < ns; ++i) {
@@ -502,6 +528,8 @@ void FullMolecule::clearFM() {
 
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::DIPOLE, index_in_soa);
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::DIPOLE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIALND1, ConcSites::SiteType::LJC, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIALND2, ConcSites::SiteType::LJC, index_in_soa);
 
 		_soa->_dipoles_M.x(index_in_soa) = 0.0;
 		_soa->_dipoles_M.y(index_in_soa) = 0.0;
@@ -513,6 +541,8 @@ void FullMolecule::clearFM() {
 
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::FORCE, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
 		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIAL, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIALND1, ConcSites::SiteType::LJC, index_in_soa);
+		_soa->setTripletAccum(clearance, CellDataSoA::QuantityType::VIRIALND2, ConcSites::SiteType::LJC, index_in_soa);
 
 		_soa->_quadrupoles_M.x(index_in_soa) = 0.0;
 		_soa->_quadrupoles_M.y(index_in_soa) = 0.0;
@@ -553,9 +583,11 @@ void FullMolecule::calcFM() {
 
 	// accumulate virial, dipoles_M and quadrupoles_M:
 	double temp_M[3] = { 0., 0., 0. };
-	double temp_Vi[3] = { 0., 0., 0. };
+	double temp_Vi[9] = { 0., 0., 0., 0., 0., 0., 0., 0., 0. };
 
 	std::array<vcp_real_accum, 3> interim;
+	std::array<vcp_real_accum, 3> interimND1;
+	std::array<vcp_real_accum, 3> interimND2;
 
 	ns = numLJcenters();
 	for (unsigned i = 0; i < ns; ++i) {
@@ -569,6 +601,18 @@ void FullMolecule::calcFM() {
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
 		temp_Vi[2] += interim[2];
+
+		interimND1 = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIALND1, ConcSites::SiteType::LJC, index_in_soa);
+
+		temp_Vi[3] += interimND1[0];
+		temp_Vi[4] += interimND1[1];
+		temp_Vi[5] += interimND1[2];
+
+		interimND2 = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIALND2, ConcSites::SiteType::LJC, index_in_soa);
+
+		temp_Vi[6] += interimND2[0];
+		temp_Vi[7] += interimND2[1];
+		temp_Vi[8] += interimND2[2];
 	}
 	ns = numCharges();
 	for (unsigned i = 0; i < ns; ++i) {
@@ -582,6 +626,18 @@ void FullMolecule::calcFM() {
 		temp_Vi[0] += interim[0];
 		temp_Vi[1] += interim[1];
 		temp_Vi[2] += interim[2];
+
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIALND1, ConcSites::SiteType::CHARGE, index_in_soa);
+
+		temp_Vi[3] += interim[0];
+		temp_Vi[4] += interim[1];
+		temp_Vi[5] += interim[2];
+
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIALND2, ConcSites::SiteType::CHARGE, index_in_soa);
+
+		temp_Vi[6] += interim[0];
+		temp_Vi[7] += interim[1];
+		temp_Vi[8] += interim[2];
 	}
 	ns = numDipoles();
 	for (unsigned i = 0; i < ns; ++i) {
@@ -598,6 +654,18 @@ void FullMolecule::calcFM() {
 		temp_M[0] += _soa->_dipoles_M.x(index_in_soa);
 		temp_M[1] += _soa->_dipoles_M.y(index_in_soa);
 		temp_M[2] += _soa->_dipoles_M.z(index_in_soa);
+
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIALND1, ConcSites::SiteType::DIPOLE, index_in_soa);
+
+		temp_Vi[3] += interim[0];
+		temp_Vi[4] += interim[1];
+		temp_Vi[5] += interim[2];
+
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIALND2, ConcSites::SiteType::DIPOLE, index_in_soa);
+
+		temp_Vi[6] += interim[0];
+		temp_Vi[7] += interim[1];
+		temp_Vi[8] += interim[2];
 	}
 	ns = numQuadrupoles();
 	for (unsigned i = 0; i < ns; ++i) {
@@ -614,13 +682,23 @@ void FullMolecule::calcFM() {
 		temp_M[0] += _soa->_quadrupoles_M.x(index_in_soa);
 		temp_M[1] += _soa->_quadrupoles_M.y(index_in_soa);
 		temp_M[2] += _soa->_quadrupoles_M.z(index_in_soa);
+
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIALND1, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
+
+		temp_Vi[3] += interim[0];
+		temp_Vi[4] += interim[1];
+		temp_Vi[5] += interim[2];
+
+		interim = _soa->getTripletAccum(CellDataSoA::QuantityType::VIRIALND2, ConcSites::SiteType::QUADRUPOLE, index_in_soa);
+
+		temp_Vi[6] += interim[0];
+		temp_Vi[7] += interim[1];
+		temp_Vi[8] += interim[2];
 	}
-	temp_Vi[0] *= 0.5;
-	temp_Vi[1] *= 0.5;
-	temp_Vi[2] *= 0.5;
-	mardyn_assert(!std::isnan(temp_Vi[0]));
-	mardyn_assert(!std::isnan(temp_Vi[1]));
-	mardyn_assert(!std::isnan(temp_Vi[2]));
+	for (unsigned i = 0; i < 9; ++i) {
+		temp_Vi[i] *= 0.5;
+		mardyn_assert(!std::isnan(temp_Vi[i]));
+	}
 	Viadd(temp_Vi);
 	Madd(temp_M);
 }
@@ -647,12 +725,22 @@ void FullMolecule::check(unsigned long id) {
     mardyn_assert(isfinite(_invI[d]));
   }
   _q.check();
-  if (!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2])) {
+  if (!isfinite(_Vi[0]) || !isfinite(_Vi[1]) || !isfinite(_Vi[2]
+   || !isfinite(_Vi[3]) || !isfinite(_Vi[4]) || !isfinite(_Vi[5])
+   || !isfinite(_Vi[6]) || !isfinite(_Vi[7]) || !isfinite(_Vi[8]))) {
     std::cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = ("
-         << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")" << std::endl;
+         << _Vi[0] << ", " << _Vi[3] << ", " << _Vi[4] << ", "
+         << _Vi[6] << ", " << _Vi[1] << ", " << _Vi[5] << ", "
+         << _Vi[7] << ", " << _Vi[8] << ", " << _Vi[2] << ")" << std::endl;
     _Vi[0] = 0.0;
     _Vi[1] = 0.0;
     _Vi[2] = 0.0;
+    _Vi[3] = 0.0;
+    _Vi[4] = 0.0;
+    _Vi[5] = 0.0;
+    _Vi[6] = 0.0;
+    _Vi[7] = 0.0;
+    _Vi[8] = 0.0;
     mardyn_assert(false);
   }
 }
@@ -667,7 +755,9 @@ std::ostream& operator<<( std::ostream& os, const FullMolecule& m ) {
 	os << "F:  (" << m.F(0) << ", " << m.F(1) << ", " << m.F(2) << ")\n" ;
 	os << "q:  [[" << m.q().qw() << ", " << m.q().qx() << "], [" << m.q().qy() << ", " << m.q().qz()<< "]]\n" ;
 	os << "w:  (" << m.D(0) << ", " << m.D(1) << ", " << m.D(2) << ")\n";
-	os << "Vi:  (" << m.Vi(0) << ", " << m.Vi(1) << ", " << m.Vi(2) << ")" ;
+	os << "Vi:  (" << m.Vi(0) << ", " << m.Vi(3) << ", " << m.Vi(4) << ")" ;  // Elements written out as in tensor
+	os << "Vi:  (" << m.Vi(6) << ", " << m.Vi(1) << ", " << m.Vi(5) << ")" ;  // Elements written out as in tensor
+	os << "Vi:  (" << m.Vi(7) << ", " << m.Vi(8) << ", " << m.Vi(2) << ")" ;  // Elements written out as in tensor
 	return os;
 }
 

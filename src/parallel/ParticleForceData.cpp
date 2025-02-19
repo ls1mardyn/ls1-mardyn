@@ -8,7 +8,7 @@
 
 
 void ParticleForceData::getMPIType(MPI_Datatype &sendPartType) {
-	int blocklengths[] = { 1, 12 }; // 1 unsLong value (id), 12 double values (3r, 3F, 3M, 3Vi)
+	int blocklengths[] = { 1, 18 }; // 1 unsLong value (id), 12 double values (3r, 3F, 3M, 9Vi)
 	MPI_Datatype types[] = { MPI_UNSIGNED_LONG, MPI_DOUBLE };
 
 	MPI_Aint displacements[2];
@@ -47,6 +47,12 @@ void ParticleForceData::MoleculeToParticleData(ParticleForceData &particleStruct
 	particleStruct.Vi[0] = molecule.Vi(0);
 	particleStruct.Vi[1] = molecule.Vi(1);
 	particleStruct.Vi[2] = molecule.Vi(2);
+	particleStruct.Vi[3] = molecule.Vi(3);
+	particleStruct.Vi[4] = molecule.Vi(4);
+	particleStruct.Vi[5] = molecule.Vi(5);
+	particleStruct.Vi[6] = molecule.Vi(6);
+	particleStruct.Vi[7] = molecule.Vi(7);
+	particleStruct.Vi[8] = molecule.Vi(8);
 }
 
 void ParticleForceData::AddParticleForceDataToMolecule(ParticleForceData &particleStruct, Molecule &molecule) {
