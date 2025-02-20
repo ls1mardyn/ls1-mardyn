@@ -30,8 +30,8 @@
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>../restart_data/generic_lj_step-999.restart.header.xml</header>
-            <data>../restart_data/generic_lj_step-999.restart.dat</data>
+          <header>../restart_data/generic_lj_step-829.restart.header.xml</header>
+            <data>../restart_data/generic_lj_step-829.restart.dat</data>
         </file>
         <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
@@ -89,7 +89,7 @@
       <internalBins>250</internalBins>
       <densityBins>25</densityBins>
       <measureFreq>1</measureFreq>
-      <updateStride>10000</updateStride>
+      <updateStride>10</updateStride>
       <outputFreq>10</outputFreq>
       <output>true</output>
       <mode>EffectivePotential</mode>

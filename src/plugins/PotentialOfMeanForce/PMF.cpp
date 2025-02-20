@@ -198,7 +198,11 @@ void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned l
 void PMF::SetPotentialInitialGuess(){
     std::vector<double> pot0 = reference_rdf_interpolation.GetYValues();
     for(int i=0;i<pot0.size();++i){
-        pot0[i] = -1.0*_simulation.getEnsemble()->T()*std::log(pot0[i]);
+        double val = pot0[i];
+        if(val<0.01){
+            val=0;
+        }
+        pot0[i] = -1.0*_simulation.getEnsemble()->T()*std::log(val);
     }
 
     potential_interpolation.SetYValues(pot0);
@@ -247,6 +251,9 @@ void PMF::AddPotentialCorrection(unsigned long step){
 
     for(int i=0;i<total_data_points;++i){
         double ratio = avg_rdf[i]/reference_rdf_interpolation.GetYValues()[i];
+        if(avg_rdf[i]<0.01){
+            ratio=0;
+        }
         current_correction[i] = -1.0*multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
     }
 
