@@ -170,7 +170,7 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
             AddPotentialCorrection(step);
             
         }
-        
+
         if(output && step%update_stride ==0){
             
             std::string potential_file = "potential_"+std::to_string(step)+".txt";
@@ -202,7 +202,39 @@ void PMF::SetPotentialInitialGuess(){
     }
 
     potential_interpolation.SetYValues(pot0);
-    potential_interpolation.LinearExtrapolation();
+    FivePointAverageExtrapolation(potential_interpolation.GetXValues(),potential_interpolation.GetYValues());
+}
+
+
+void PMF::PrintPotentialCorrection(unsigned long step){
+    std::vector<double> avg_rdf = profiler.GetRDF();
+    int total_data_points = avg_rdf.size();
+    std::vector<double> pot_i;
+    std::vector<double> current_correction;
+    current_correction.resize(total_data_points,0.0);
+    pot_i.resize(total_data_points,0.0);
+
+    for(int i=0;i<total_data_points;++i){
+        double ratio;
+        if(reference_rdf_interpolation.GetYValues()[i]==0){
+            ratio=0;
+        }else{
+            ratio = avg_rdf[i]/reference_rdf_interpolation.GetYValues()[i];
+        }
+        
+        current_correction[i] = 1.0*multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
+    }
+
+    std::string name="correction_step_"+std::to_string(step)+".txt";
+    std::ofstream corr{name};
+    for(int i=0;i<total_data_points;++i){
+        corr<<reference_rdf_interpolation.GetXValues()[i]
+            <<"\t"
+            <<current_correction[i]
+            <<std::endl;
+    }
+
+
 }
 
 void PMF::AddPotentialCorrection(unsigned long step){
@@ -215,12 +247,11 @@ void PMF::AddPotentialCorrection(unsigned long step){
 
     for(int i=0;i<total_data_points;++i){
         double ratio = avg_rdf[i]/reference_rdf_interpolation.GetYValues()[i];
-        current_correction[i] = 1.0*multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
+        current_correction[i] = -1.0*multiplier* _simulation.getEnsemble()->T()*std::log(ratio);
     }
 
-    ExtrapolateVector(reference_rdf_interpolation.GetXValues(),current_correction);
-    // VectorAdd(potential_interpolation.GetYValues(),current_correction);
-    VectorSub(potential_interpolation.GetYValues(),current_correction);
+    VectorAdd(potential_interpolation.GetYValues(),current_correction);
+    // VectorSub(potential_interpolation.GetYValues(),current_correction);
     if(output){
         std::string name="correction_step_"+std::to_string(step)+".txt";
         std::ofstream corr{name};
@@ -292,6 +323,7 @@ void PMF::ReadEffectivePotential(){
     std::ifstream file{effective_potential_path};
     if(!file){
         Log::global_log->error()<<"[PMF] I could not read the potential data file"<<std::endl;
+        Simulation::exit(1);
     }
     double n1, n2;
 

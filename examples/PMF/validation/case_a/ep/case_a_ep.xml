@@ -30,8 +30,8 @@
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>../restart_data/generic_lj_step-829.restart.header.xml</header>
-            <data>../restart_data/generic_lj_step-829.restart.dat</data>
+          <header>../restart_data/generic_lj_step-999.restart.header.xml</header>
+            <data>../restart_data/generic_lj_step-999.restart.dat</data>
         </file>
         <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
@@ -64,7 +64,7 @@
  
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
-      <writefrequency>20</writefrequency>
+      <writefrequency>200</writefrequency>
     </outputplugin>
 
     <outputplugin name="CheckpointWriter">
@@ -85,14 +85,15 @@
         </region>
       </fpregions>
       <multiplier>1.0</multiplier>
+      <doNothing>false</doNothing>
       <internalBins>250</internalBins>
       <densityBins>25</densityBins>
       <measureFreq>1</measureFreq>
-      <updateStride>1000</updateStride>
+      <updateStride>10000</updateStride>
       <outputFreq>10</outputFreq>
       <output>true</output>
       <mode>EffectivePotential</mode>
-      <rdfPath>../../restart_data/avg_rdf82900.txt</rdfPath>
+      <rdfPath>../../restart_data/avg_rdf100000.txt</rdfPath>
     </plugin>
         
   </simulation>

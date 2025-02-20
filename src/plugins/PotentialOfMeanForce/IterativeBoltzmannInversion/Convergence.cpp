@@ -36,26 +36,6 @@ void Convergence::PrepareUpdate(){
     local_convergence.clear();
 }
 
-bool Convergence::TriggerPotentialUpdate(){
-
-    bool trigger = false;
-    int local_steps = local_convergence.size();
-    
-    if(local_steps>100){
-        if((local_convergence[local_steps-1]-local_convergence[local_steps-2])>0){
-            trigger = true;
-            ibi_convergence.emplace_back(local_convergence[local_steps-1]);
-            ++ibi_iteration;            
-
-            local_convergence.clear();
-        }
-    }
-
-    
-
-    return trigger;
-
-}
 
 void Convergence::PrintLocalConvergence2File(){
     std::string conv_name = "local_convergence_ibi_"+std::to_string(ibi_iteration)+".txt";

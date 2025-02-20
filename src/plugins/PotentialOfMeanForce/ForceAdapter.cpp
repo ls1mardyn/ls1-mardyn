@@ -234,8 +234,7 @@ void InteractionForceAdapter::PotForcePureHybridBackend(Molecule& m1, Molecule& 
     //Here we have F_{cg}
     const std::array<double,3> dcg_1 = m1.ljcenter_d_abs(0);
     const std::array<double,3> dcg_2 = m2.ljcenter_d_abs(0);
-    SiteSiteDistanceAbs(dcg_2.data(), dcg_1.data(), drs, dr2);//m2-m1
-    // double r_com = std::sqrt(SqrdDistanceBetweenCOMs(com1,com2));
+    SiteSiteDistanceAbs(dcg_1.data(), dcg_2.data(), drs, dr2);//m2-m1
     double r_com = std::sqrt(dr2);
     std::array<double,3> f_com{drs[0],drs[1],drs[2]};
     NormalizeVector(f_com);
@@ -319,7 +318,7 @@ void InteractionForceAdapter::PotForceHybridFPBackend(Molecule& m1, Molecule& m2
     //Compute COM force
     std::array<double,3> fp_com = ComputeCOM(m2);
     const std::array<double,3> hy_com = m1.ljcenter_d_abs(0);
-    SiteSiteDistanceAbs(fp_com.data(),hy_com.data(),drs,dr2);
+    SiteSiteDistanceAbs(hy_com.data(),fp_com.data(),drs,dr2);
     std::array<double,3> f_com{drs[0],drs[1],drs[2]};
     NormalizeVector(f_com);
     double r_com = std::sqrt(dr2);
@@ -355,7 +354,7 @@ void InteractionForceAdapter::PotForceHybridCGBackend(Molecule& m1, Molecule& m2
     const std::array<double,3> dhy = m1.ljcenter_d_abs(0);//m1
     const std::array<double,3> dcg = m2.ljcenter_d_abs(0);//m2
 
-    SiteSiteDistanceAbs(dcg.data(), dhy.data(), drs, dr2);//m2-m1
+    SiteSiteDistanceAbs(dhy.data(), dcg.data(), drs, dr2);//m1-m2
 
     double Upot =0.0;
     std::array<double,3> f{drs[0],drs[1],drs[2]};
@@ -394,8 +393,14 @@ void InteractionForceAdapter::PotForceOnlyCG(Molecule& m1, Molecule& m2, ParaStr
     //Interact only on com sites
     {
         double Upot =0.0;
-        std::array<double,3> f;
-        double r_com = std::sqrt(m1.dist2(m2,f.data()));//m2-m1
+        double drs[3], dr2; // site distance vector & length^2
+        const std::array<double,3> dm1 = m1.ljcenter_d_abs(0);//m1
+        const std::array<double,3> dm2 = m2.ljcenter_d_abs(0);//
+
+        SiteSiteDistanceAbs(dm1.data(), dm2.data(), drs, dr2);//m1-m2
+
+        std::array<double,3> f{drs[0],drs[1],drs[2]};
+        double r_com = std::sqrt(dr2);
         Upot = PotentialOfMeanForce(r_com);
         NormalizeVector(f);
         ForceOfPotentialOfMeanForce(f,r_com);
@@ -436,28 +441,13 @@ double InteractionForceAdapter::PotentialOfMeanForce(double r){
 
 void InteractionForceAdapter::ForceOfPotentialOfMeanForce(std::array<double,3>& f_com, double r){
 
-    // double norm = 0.0;
-    // for(int i=0;i<f_com.size();++i){
-        // norm += std::pow(f_com[i],2.0);
-    // }
-    // norm = std::sqrt(norm);
-
-    double derivative = 1.0* adres->GetPotentialInterpolation().CentralFiniteDifference(r);
+    double derivative = -1.0* adres->GetPotentialInterpolation().CentralFiniteDifference(r);
     for(int i=0;i<f_com.size();i++){
         f_com[i] *= derivative;
     }
 
 }
 
-double InteractionForceAdapter::SqrdDistanceBetweenCOMs(std::array<double,3> c1,std::array<double,3> c2){
-    double r2 =0.0;
-
-    for(int i=0;i<c1.size();i++){
-        r2 += std::abs((c1[i]-c2[i])*(c1[i]-c2[i]));
-    }
-
-    return r2;
-}
 
 
 void InteractionForceAdapter::AddAndMapForceToFP(std::array<double,3>& f_com, Molecule& mol){

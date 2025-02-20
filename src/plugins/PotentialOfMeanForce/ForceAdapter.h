@@ -78,7 +78,6 @@ class InteractionForceAdapter:public ParticlePairsHandler{
     inline void FluidPotType(Molecule& m1, Molecule& m2, ParaStrm& params, ParaStrm& paramInv, double* drm, double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calcLJ, bool hybrid);
 
     double PotentialOfMeanForce(double r);
-    double SqrdDistanceBetweenCOMs(std::array<double,3> c1,std::array<double,3> c2);
     void ForceOfPotentialOfMeanForce(std::array<double,3>& f_com, double r);
 
     void AddAndMapForceToFP(std::array<double,3>& force, Molecule& molecule);

@@ -107,6 +107,7 @@ class PMF:public PluginBase{
      */
     void AddPotentialCorrection(unsigned long step);
     void UpdateRDFInterpolation();
+    void PrintPotentialCorrection(unsigned long step);
 
 
 

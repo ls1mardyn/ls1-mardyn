@@ -26,10 +26,7 @@ class Convergence{
     public:
 
     Convergence(double tol);
-
     bool CheckConvergence(std::vector<double>& rdf_ref, std::vector<double>& rdf_i);
-    bool TriggerPotentialUpdate();
-
     void PrintLocalConvergence2File();
     void PrintGlobalConvergence2File();
     void PrepareUpdate();
