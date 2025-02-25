@@ -51,7 +51,7 @@
 * - most basic integral and floating-point MPI datatypes 
 *           (see transform functions in CollectiveCommunicationPersistent_helper.h)
 * 
-* Further mpi operations could be added very easily.
+* Additional MPI operations can be added very easily.
 * A typical usage of this class could look like this:
 * @code
 *   // create object, select reduce operation and store values to be sent
