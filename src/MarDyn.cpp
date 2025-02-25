@@ -3,7 +3,6 @@
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
-#include "parallel/CollectiveCommunicationPersistent.h"
 
 #include <ctime>
 #include <iomanip>
@@ -26,6 +25,8 @@
 #ifdef MARDYN_AUTOPAS
 #include "autopas/Version.h"
 #endif
+
+#include "parallel/CollectiveCommunicationPersistent.h"
 
 
 using optparse::Values;
