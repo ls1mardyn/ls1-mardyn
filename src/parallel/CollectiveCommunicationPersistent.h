@@ -13,7 +13,7 @@
 * The CollCommObj class is a more optimized version of the default implementation (found in CollectiveCommunication.h) 
 * and allows for persistent collective communication (for this feature enable ENABLE_PERSISTENT).
 * If all information that is required to create a persistent is given during the object construction, a persistent
-* request will be generated. This is achieved by requiring all necessary information for creating a MPI_Type and MPI_Op
+* request will be generated. This is achieved by requiring all necessary information for creating an MPI_Type and MPI_Op
 * at compile time. If ENABLE_PERSISTENT is disabled the implementation falls back to the default MPI collectives 
 * (MPI_Allreduce, MPI_Bcast, MPI_Scan), but this will still be more optimized than the default implementation. 
 * This improvement is due to a static storage of the generated MPI_Type, MPI_Op and MPI_Request which allows for a
@@ -40,7 +40,7 @@
 * created. Otherwise the communication will fail. This is also the reason why the persistent requests cause problems
 * with the unit test suit.
 *
-* Besides the points mentioned above, does CollCommObj the same MPI functionalities as the already existing 
+* Besides the points mentioned above, CollCommObj provides the same MPI functionalities as the already existing 
 * CollectiveCommunication object.
 * Currently supported commands are:
 * - reduce using add, max or min as reduce operation
@@ -51,7 +51,7 @@
 * - most basic integral and floating-point MPI datatypes 
 *           (see transform functions in CollectiveCommunicationPersistent_helper.h)
 * 
-* Further mpi operations could be added very easily.
+* Additional MPI operations can be added very easily.
 * A typical usage of this class could look like this:
 * @code
 *   // create object, select reduce operation and store values to be sent
@@ -68,9 +68,9 @@
 * We differentiate the different classes by their template parameters (which includes the types of the message).
 * If we try to do communication and want to use the same communication configuration on two communication object
 * and let them run simultaneously, the same buffer will be used for both communication operations. 
-* This will most likely lead to an issue with data loss. For this reason the tag argument was introduced.
+* This will most likely lead to data corruption. Therefore, an additional tag argument is available.
 * This int argument is also part of the signture and if used will then create separate classes.
-* (This is only necessary in the ENABLE_PERSISTENT=On case, as otherwise nonstatic buffers will be used.)
+* (This is only necessary in the ENABLE_PERSISTENT=ON case, as otherwise nonstatic buffers will be used.)
 * It can be used as follows:
 * @code
 *   // create objects, use tags to differentiate between the two classes
