@@ -222,11 +222,10 @@ void CavityEnsemble::init(Component *component, unsigned Nx, unsigned Ny, unsign
 }
 
 unsigned long CavityEnsemble::communicateNumCavities(DomainDecompBase *comm) {
-    comm->collCommInit(1);
-    comm->collCommAppendUnsLong(this->active.size());
-    comm->collCommAllreduceSum();
-    this->globalActive = comm->collCommGetUnsLong();
-    comm->collCommFinalize();
+
+	auto collComm = makeCollCommObjAllreduceAdd(comm->getCommunicator(), this->active.size());
+	collComm.communicate();
+	std::tie(this->globalActive) = collComm.get();
 
     return this->globalActive;
 }
