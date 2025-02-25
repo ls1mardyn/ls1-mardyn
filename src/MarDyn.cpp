@@ -134,7 +134,6 @@ int run_unit_tests(const Values &options, const std::vector<std::string> &args) 
  */
 int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
-	// MPI_Init(&argc, &argv);
 	MPI_Env_Wrapper::init_environment(&argc, &argv);
 	int world_rank = 0;
 	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
