@@ -40,7 +40,7 @@
 * created. Otherwise the communication will fail. This is also the reason why the persistent requests cause problems
 * with the unit test suit.
 *
-* Besides the points mentioned above, does CollCommObj the same MPI functionalities as the already existing 
+* Besides the points mentioned above, CollCommObj provides the same MPI functionalities as the already existing 
 * CollectiveCommunication object.
 * Currently supported commands are:
 * - reduce using add, max or min as reduce operation
