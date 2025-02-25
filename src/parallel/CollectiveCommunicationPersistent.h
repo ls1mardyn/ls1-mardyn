@@ -13,7 +13,7 @@
 * The CollCommObj class is a more optimized version of the default implementation (found in CollectiveCommunication.h) 
 * and allows for persistent collective communication (for this feature enable ENABLE_PERSISTENT).
 * If all information that is required to create a persistent is given during the object construction, a persistent
-* request will be generated. This is achieved by requiring all necessary information for creating a MPI_Type and MPI_Op
+* request will be generated. This is achieved by requiring all necessary information for creating an MPI_Type and MPI_Op
 * at compile time. If ENABLE_PERSISTENT is disabled the implementation falls back to the default MPI collectives 
 * (MPI_Allreduce, MPI_Bcast, MPI_Scan), but this will still be more optimized than the default implementation. 
 * This improvement is due to a static storage of the generated MPI_Type, MPI_Op and MPI_Request which allows for a
