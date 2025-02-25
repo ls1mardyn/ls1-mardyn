@@ -70,7 +70,7 @@
 * and let them run simultaneously, the same buffer will be used for both communication operations. 
 * This will most likely lead to data corruption. Therefore, an additional tag argument is available.
 * This int argument is also part of the signture and if used will then create separate classes.
-* (This is only necessary in the ENABLE_PERSISTENT=On case, as otherwise nonstatic buffers will be used.)
+* (This is only necessary in the ENABLE_PERSISTENT=ON case, as otherwise nonstatic buffers will be used.)
 * It can be used as follows:
 * @code
 *   // create objects, use tags to differentiate between the two classes
