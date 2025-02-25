@@ -111,7 +111,7 @@ public:
             do_setup = true;
         // check if comunicator has to be updated (in the persistent case this should not happen)
         else if (comm != _mpi_members->get_comm())
-            _mpi_members->get_comm() = comm;
+            set_comm(comm);
 
         if ( do_setup ) {
             // assign static value to variable
@@ -119,7 +119,7 @@ public:
             _mpi_members = &mpi_members;
 
             // set communicator
-            _mpi_members->get_comm() = comm;
+            set_comm(comm);
 
             // create variables necessary for MPI Datatype
             std::array<int, sizeof...(Ts)> array_of_blocklengths;
@@ -182,6 +182,12 @@ public:
         return helper_get<Ts...> (_buffer.data());
     }
 
+    /**
+     * Set the MPI communicator
+     */
+    void set_comm(MPI_Comm comm) {
+        _mpi_members->get_comm() = comm;
+    }
 
 private:
     /**
