@@ -68,7 +68,7 @@
 * We differentiate the different classes by their template parameters (which includes the types of the message).
 * If we try to do communication and want to use the same communication configuration on two communication object
 * and let them run simultaneously, the same buffer will be used for both communication operations. 
-* This will most likely lead to an issue with data loss. For this reason the tag argument was introduced.
+* This will most likely lead to data corruption. Therefore, an additional tag argument is available.
 * This int argument is also part of the signture and if used will then create separate classes.
 * (This is only necessary in the ENABLE_PERSISTENT=On case, as otherwise nonstatic buffers will be used.)
 * It can be used as follows:
