@@ -195,9 +195,6 @@ int main(int argc, char** argv) {
 	/* Run built in tests and exit */
 	if (options.is_set_by_user("tests")) {
 		int testresult = run_unit_tests(options, args);
-		#ifdef ENABLE_MPI
-		// MPI_Finalize();
-		#endif
 		std::exit(testresult); // using exit here should be OK
 	}
 
@@ -299,8 +296,4 @@ int main(int argc, char** argv) {
 	simulation.finalize();
 
 	} // End of scope to exclude MPI_Init() and MPI_Finalize()
-
-#ifdef ENABLE_MPI
-	// MPI_Finalize();
-#endif
 }
