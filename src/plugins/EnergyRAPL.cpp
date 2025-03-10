@@ -21,6 +21,10 @@ EnergyRAPL::RAPLCounter::RAPLCounter(const std::string& domainBasePath) {
 	std::ostringstream rangeMicroJoulePath;
 	rangeMicroJoulePath << domainBasePath << "/max_energy_range_uj";
 	std::ifstream rangeMicroJouleFile(rangeMicroJoulePath.str());
+	if(!rangeMicroJouleFile) {
+		Log::global_log->error() << "Failed to open RAPL counter file " << rangeMicroJoulePath.str() << std::endl;
+		exit(1);
+	}
 	rangeMicroJouleFile >> _rangeMicroJoule;
 	reset();
 }
@@ -35,6 +39,10 @@ void EnergyRAPL::RAPLCounter::reset() {
 double EnergyRAPL::RAPLCounter::update() {
 	long long currentMicroJoule;
 	std::ifstream microJouleFile(_microJoulePath);
+	if(!microJouleFile) {
+		Log::global_log->error() << "Failed to open RAPL counter file " << _microJoulePath << std::endl;
+		exit(1);
+	}
 	microJouleFile >> currentMicroJoule;
 	long long deltaMicroJoule = currentMicroJoule - _lastMicroJoule;
 	// Correct counter overflow (occurs around every 60 seconds)
