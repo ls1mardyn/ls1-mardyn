@@ -93,7 +93,7 @@
       </outputplugin>
       <outputplugin name="VTKMoleculeWriter">
         <outputprefix>vtkOutput</outputprefix>
-        <writefrequency>1</writefrequency>
+        <writefrequency>100</writefrequency>
       </outputplugin>
       <outputplugin name="LoadbalanceWriter">
         <writefrequency>10</writefrequency>
@@ -101,7 +101,7 @@
         <outputfilename>lb.dat</outputfilename>
         <timers> <!-- additional timers -->
           <timer> <name>LoadbalanceWriter_default</name> <warninglevel>2</warninglevel> </timer>
-          <timer> <name>SIMULATION_FORCE_CALCULATION</name> <warninglevel>2</warninglevel> <incremental>1</incremental> </timer>
+          <timer> <name>SIMULATION_FORCE_CALCULATION</name> <warninglevel>2</warninglevel> <incremental>true</incremental> </timer>
         </timers>
       </outputplugin>
     </output>

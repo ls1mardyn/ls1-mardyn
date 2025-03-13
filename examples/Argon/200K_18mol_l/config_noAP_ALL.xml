@@ -51,7 +51,7 @@
 			<outputplugin name="DecompWriter">
 				<writefrequency>5</writefrequency>
 				<outputprefix>decomp</outputprefix>
-				<incremental>1</incremental>
+				<incremental>true</incremental>
 				<appendTimestamp>false</appendTimestamp>
 			</outputplugin>
 		</output>
