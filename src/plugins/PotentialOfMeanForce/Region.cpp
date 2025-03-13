@@ -132,8 +132,8 @@ bool FPRegion::IsInsideResolutionRegion(std::array<double,3> point, ResolutionTy
 
 
 		if(_high[0]==_simulation.getDomain()->getGlobalLength(0) 
-	   && (_high[1]==_simulation.getDomain()->getGlobalLength(0))
-	   && (_high[1]==_simulation.getDomain()->getGlobalLength(0))
+	   && (_high[1]==_simulation.getDomain()->getGlobalLength(1))
+	   && (_high[2]==_simulation.getDomain()->getGlobalLength(2))
 	   ){
 			shifted_high[0] += _simulation.getcutoffRadius();
 		}

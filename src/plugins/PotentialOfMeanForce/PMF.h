@@ -31,7 +31,6 @@ class PMF:public PluginBase{
 
     private:
     Mode mode = Mode::EffectivePotential;
-
     Interpolate reference_rdf_interpolation;//should not touch
     Interpolate potential_interpolation;//updated on every step or stride
     Interpolate avg_rdf_interpolation;//current avg value so far 

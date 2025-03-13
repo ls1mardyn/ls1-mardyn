@@ -30,8 +30,8 @@
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>../restart_data/generic_lj_step-260.restart.header.xml</header>
-            <data>../restart_data/generic_lj_step-260.restart.dat</data>
+          <header>../restart_data/generic_lj_step-1.restart.header.xml</header>
+            <data>../restart_data/generic_lj_step-1.restart.dat</data>
             <!-- <header>../restart_data/generic_lj_step-003.restart.header.xml</header> -->
               <!-- <data>../restart_data/generic_lj_step-003.restart.dat</data> -->
         </file>
@@ -64,16 +64,16 @@
     
     <output>
  
-    <outputplugin name="VTKMoleculeWriter">
+    <!--outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
       <writefrequency>1</writefrequency>
-    </outputplugin> 
+    </outputplugin-->
 
-    <outputplugin name="CheckpointWriter">
+    <!--outputplugin name="CheckpointWriter">
       <type>binary</type>
-      <writefrequency>1000</writefrequency>
+      <writefrequency>10000</writefrequency>
       <outputprefix>generic_lj_step</outputprefix>
-    </outputplugin>
+    </outputplugin-->
 
     </output>
 
@@ -91,10 +91,11 @@
       <densityBins>25</densityBins>
       <measureFreq>1</measureFreq>
       <updateStride>1000</updateStride>
-      <outputFreq>10</outputFreq>
+      <outputFreq>1000</outputFreq>
       <output>true</output>
       <mode>EffectivePotential</mode>
-      <rdfPath>../../restart_data/avg_rdf26900.txt</rdfPath>
+      <rdfPath>./avg_rdf.txt</rdfPath>
+      <doNothing>false</doNothing>
   </plugin>
 	
   </simulation>

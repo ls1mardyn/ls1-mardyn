@@ -12,6 +12,7 @@
 #include "plugins/PluginBase.h"
 #include "plugins/PotentialOfMeanForce/Region.h"
 #include "plugins/PotentialOfMeanForce/common.h"
+#include "TheoreticalRDF.h"
 
 struct ResRegion{
     std::array<double,3> low;
@@ -29,7 +30,7 @@ class RegionRDFProfiler{
     int total_bins=100;
     double bin_width;
     RegionCellProcessor* processor;
-    int output_frequency=1;
+    int output_frequency=1000;
     int sample_frequency=1;
     int measured_steps=0;//increases on every call to ProfileData
     std::string file_prefix="not-set";
@@ -47,35 +48,17 @@ class RegionRDFProfiler{
     void PrintOutput2Files(unsigned long simstep, ParticleContainer* pc);
     private:
     //TODO: do on every step?
-    double RegionVolume(){
-        std::array<double,3> low{0,0,0};
-        std::array<double,3> high{0,0,0};
-        //TODO: only considers left side cg region
-        if(region.component_name == "CG"){
-            low[0] = region.low[0]-_simulation.getcutoffRadius();
-        }
-
-        low[1] = region.low[1]-_simulation.getcutoffRadius();
-        low[2] = region.low[2]-_simulation.getcutoffRadius();
-        high[1] = region.high[1]+_simulation.getcutoffRadius();
-        high[2] = region.high[2]+_simulation.getcutoffRadius();
-
-        double lx =region.high[0]-region.low[0];
-        if(region.component_name == "CG"){
-            lx=region.high[0]-low[0];
-        }
-        double ly =high[1]-low[1];
-        double lz =high[2]-low[2];
+    double RegionVolume() {
+        // TODO Note: we do not need to correct for halo volume, at least regular RDF does not do so
+        double lx = region.high[0] - region.low[0];
+        double ly = region.high[1] - region.low[1];
+        double lz = region.high[2] - region.low[2];
 
         return lx*ly*lz;
     }
-    void InitCenters(){
-        for(int i=0;i<centers.size();++i){
-            double center;
-            center=(i+0.5)*bin_width;
-            centers[i] = center;
-        }
-    }
+
+    void InitCenters() { for(int i = 0; i < centers.size(); ++i) centers[i] = (i+0.5)*bin_width; }
+
     /**
      * Extends region to include halo and gets N molecules, is there better option?
      */
@@ -152,6 +135,8 @@ class StatisticsAdResS{
 
     RegionRDFProfiler fp_profiler{fp};
     RegionRDFProfiler cg1_profiler{cg1};
+    TheoreticalRDF fp_theoreticalRdf;
+    TheoreticalRDF cg_theoreticalRdf;
 
     public:
     /**
@@ -160,8 +145,10 @@ class StatisticsAdResS{
     void init(FPRegion& region);
     void Output2File(long step);
     void PrintRDFs2File(unsigned long step,ParticleContainer* pc){
-        // fp_profiler.PrintOutput2Files(step, pc);
+        fp_profiler.PrintOutput2Files(step, pc);
         cg1_profiler.PrintOutput2Files(step,pc);
+        fp_theoreticalRdf.writeFile("fp_theo_rdf_", step);
+        cg_theoreticalRdf.writeFile("cg_theo_rdf_", step);
     }
     void MeasureStatistics(ParticleContainer* pc){
         ClearAll();
@@ -171,8 +158,10 @@ class StatisticsAdResS{
     }
 
     void MeasureLocalRDFs(ParticleContainer* pc, unsigned long simstep){
-        // fp_profiler.MeasureRDF(pc,simstep);
+        fp_profiler.MeasureRDF(pc,simstep);
         cg1_profiler.MeasureRDF(pc,simstep);
+        fp_theoreticalRdf.measure(pc);
+        cg_theoreticalRdf.measure(pc);
     }
     void ClearAll();
     private:

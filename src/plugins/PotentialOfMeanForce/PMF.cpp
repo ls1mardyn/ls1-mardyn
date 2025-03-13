@@ -2,7 +2,7 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 
 
-PMF::PMF():reference_rdf_interpolation{1.0,false},potential_interpolation{0.0,true},avg_rdf_interpolation{1.0,false},convergence{0.5}{
+PMF::PMF(): reference_rdf_interpolation{1.0,false},potential_interpolation{0.0,true},avg_rdf_interpolation{1.0,false},convergence{0.5}{
 
 
 }
