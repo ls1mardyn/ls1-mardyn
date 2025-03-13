@@ -30,7 +30,7 @@ class AdResSCellProcessor: public CellProcessor{
     //Call original processor if pure interaction
     virtual void processCellPair(ParticleCell& cell1, ParticleCell& cell2, bool sumAll = false) override;
     virtual void processCell(ParticleCell& cell) override{}
-    virtual double processSingleMolecule(Molecule* m1, ParticleCell& cell2) override{}
+    virtual double processSingleMolecule(Molecule* m1, ParticleCell& cell2) override{return 0;}
     virtual void postprocessCell(ParticleCell& cell) override{}
     virtual void endTraversal() override{}
 

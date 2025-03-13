@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>20000</steps>
+        <steps>500000</steps>
       </production>
     </run>
     
@@ -30,8 +30,8 @@
       </components>
       <phasespacepoint>
         <file type="binary">
-          <header>../restart_data/generic_lj_step-260.restart.header.xml</header>
-          <data>../restart_data/generic_lj_step-260.restart.dat</data>
+          <header>../restart_data/generic_lj_step-1.restart.header.xml</header>
+          <data>../restart_data/generic_lj_step-1.restart.dat</data>
         </file>
         <ignoreCheckpointTime>true</ignoreCheckpointTime>
       </phasespacepoint>
@@ -62,10 +62,10 @@
     
     <output>
  
-    <outputplugin name="VTKMoleculeWriter">
+    <!--outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
       <writefrequency>1</writefrequency>
-    </outputplugin>
+    </outputplugin-->
 
     <!--outputplugin name="CheckpointWriter">
       <type>binary</type>
@@ -78,8 +78,8 @@
     <plugin name="PMF">
         <fpregions>
           <region id = "1">
-            <lowX>6.5</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
-            <highX>8.5</highX><highY>15</highY><highZ>15</highZ>
+            <lowX>6.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+            <highX>9.0</highX><highY>15</highY><highZ>15</highZ>
             <hybridDimX>3</hybridDimX><hybridDimY>0.0</hybridDimY>
             <hybridDimZ>0.0</hybridDimZ>
           </region>
@@ -91,10 +91,11 @@
         <densityBins>100</densityBins>
         <output>true</output>
         <measureFreq>1</measureFreq>
-        <outputFreq>20</outputFreq>
+        <outputFreq>1000</outputFreq>
         <mode>Production</mode>
-        <rdfPath>../../restart_data/avg_rdf26900.txt</rdfPath>
-        <epPath>../../ep/results/potential_9000.txt</epPath>
+        <rdfPath>avg_rdf.txt</rdfPath>
+        <epPath>ep.txt</epPath>
+        <doNothing>false</doNothing>
     </plugin>
         
   </simulation>

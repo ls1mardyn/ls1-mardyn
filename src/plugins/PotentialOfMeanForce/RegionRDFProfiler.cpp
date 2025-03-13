@@ -28,44 +28,21 @@ int RegionRDFProfiler::CountMoleculesInRegion(ParticleContainer* pc){
 
     std::array<double,3> low = region.low;
     std::array<double,3> high = region.high;
-    low[0] = processor->min_cell_x;
-    high[0] = processor->max_cell_x;
+
     //correct for halo cells
-    low[1] = low[1]-_simulation.getcutoffRadius();
-    low[2] = low[2]-_simulation.getcutoffRadius();
-    high[1] = high[1]+_simulation.getcutoffRadius();
-    high[2] = high[2]+_simulation.getcutoffRadius();
-    // low[1]  =  low[1];
-    // low[2]  =  low[2];
-    // high[1] = high[1];
-    // high[2] = high[2];
+    //low[1] = low[1]-_simulation.getcutoffRadius();
+    //low[2] = low[2]-_simulation.getcutoffRadius();
+    //high[1] = high[1]+_simulation.getcutoffRadius();
+    //high[2] = high[2]+_simulation.getcutoffRadius();
 
     int N=0;
-    RegionParticleIterator it = pc->regionIterator(low.data(),high.data(),ParticleIterator::ALL_CELLS);
-    for(it;it.isValid();++it){
+    #pragma omp parallel reduction(+:N)
+    for(auto it = pc->regionIterator(low.data(),high.data(),ParticleIterator::ONLY_INNER_AND_BOUNDARY);it.isValid();++it) {
         N++;
     }   
 
     return N;
 }
-
-double RegionRDFProfiler::RegionVolume(){
-        std::array<double,3> low{0,0,0};
-        std::array<double,3> high{0,0,0};
-
-
-        low[1] = region.low[1]  ;//-_simulation.getcutoffRadius();
-        low[2] = region.low[2]  ;//-_simulation.getcutoffRadius();
-        high[1] = region.high[1];//+_simulation.getcutoffRadius();
-        high[2] = region.high[2];//+_simulation.getcutoffRadius();
-
-        // double lx = region.high[0]-region.low[0];
-        double lx = processor->max_cell_x-processor->min_cell_x;
-        double ly =high[1]-low[1];
-        double lz =high[2]-low[2];
-
-        return lx*ly*lz;
-    }
 
 void RegionRDFProfiler::PrintOutput2Files(unsigned long simstep,ParticleContainer* pc){
     if(simstep>0 && simstep%output_frequency == 0){
@@ -92,7 +69,7 @@ void RegionRDFProfiler::PrintOutput2Files(unsigned long simstep,ParticleContaine
             <<std::setw(8)<<std::left<<data[i]/measured_steps<<"\t"
             <<std::setw(8)<<std::left<<binvol<<"\t"
             <<std::setw(8)<<std::left<<region_volume<<"\t"
-            <<std::setw(8)<<std::left<<N<<"\t" 
+            <<std::setw(8)<<std::left<<N<<"\t"
             <<std::endl;
         }
 
@@ -111,8 +88,7 @@ void RegionRDFProfiler::PrintOutput2Files(unsigned long simstep,ParticleContaine
  */
 
 RegionCellProcessor::RegionCellProcessor(const double rc, int bins, double width,ResRegion& reg):CellProcessor{rc,rc},bin_width{width},region{reg}{
-    min_cell_x = region.low[0];
-    max_cell_x = region.high[0];
+
     thread_data.resize(mardyn_get_max_threads());
     global_buffer.resize(bins,0.0);
     #pragma omp parallel
@@ -132,14 +108,14 @@ void RegionCellProcessor::processCell(ParticleCell& cell){
         double distance=0.0;
         for(auto it1 = begin;it1.isValid();++it1){
             Molecule& m1 = *it1;
-            // if(m1.component()->getName() != component_name)
-            // continue;
+            if(m1.component()->getName() != component_name)
+            continue;
             auto it2 = it1;
             ++it2;
             for(;it2.isValid();++it2){
                 Molecule& m2 = *it2;
-                // if(m2.component()->getName() != component_name)
-                    // continue;
+                if(m2.component()->getName() != component_name)
+                    continue;
                 mardyn_assert(&m1 != &m2);
                 this->ProcessPairData(m1,m2);
             }
@@ -149,7 +125,7 @@ void RegionCellProcessor::processCell(ParticleCell& cell){
 }
 
 void RegionCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, bool sumAll){
-    if(!CellInRegion(c1) && !CellInRegion(c2)){
+    if(!CellInRegion(c1) || !CellInRegion(c2)){
         return;
     }
 
@@ -158,12 +134,12 @@ void RegionCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, bo
     if(sumAll){
         for(auto it1=begin1;it1.isValid();++it1){
             Molecule& m1 = *it1;
-            // if(m1.component()->getName() != component_name)
-            // continue;
+            //if(m1.component()->getName() != component_name)
+            //continue;
             for(auto it2 =begin2;it2.isValid();++it2){
                 Molecule& m2 = *it2;
-                // if(m2.component()->getName() != component_name)
-                // continue;
+                //if(m2.component()->getName() != component_name)
+                //continue;
                 this->ProcessPairData(m1,m2);
             }
         }
@@ -173,12 +149,12 @@ void RegionCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, bo
 
             for(auto it1=begin1;it1.isValid();++it1){
                 Molecule& m1 = *it1;
-                // if(m1.component()->getName() != component_name)
-                // continue;
+                //if(m1.component()->getName() != component_name)
+                //continue;
                 for(auto it2=begin2;it2.isValid();++it2){
                     Molecule& m2 = *it2;
-                    // if(m2.component()->getName() != component_name)
-                    // continue;   
+                    //if(m2.component()->getName() != component_name)
+                    //continue;
                     this->ProcessPairData(m1,m2);
                 }
             }
@@ -192,12 +168,12 @@ void RegionCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, bo
 
             for(auto it1=begin1;it1.isValid();++it1){
                 Molecule& m1 = *it1;
-                // if(m1.component()->getName() != component_name)
-                // continue;
+                //if(m1.component()->getName() != component_name)
+                //continue;
                 for(auto it2=begin2;it2.isValid();++it2){
                     Molecule& m2 = *it2;
-                    // if(m2.component()->getName() != component_name)
-                    // continue;
+                    //if(m2.component()->getName() != component_name)
+                    //continue;
                     this->ProcessPairData(m1,m2);
                 }
             }
@@ -233,36 +209,14 @@ void RegionCellProcessor::endTraversal(){
 
 
 bool RegionCellProcessor::CellInRegion(ParticleCell& cell){
+    const double cell_min = cell.getBoxMin(0);
+    const double cell_max = cell.getBoxMax(0);
+    const double reg_min = region.low[0];
+    const double reg_max = region.high[0];
 
-    double cell_min = cell.getBoxMin(0);
-    double cell_max = cell.getBoxMax(0);
-    double reg_min = region.low[0];
-    double reg_max = region.high[0];
-
-    //fully inside
-    if(cell_max < reg_max
-        && cell_min > reg_min)
-    {
-        CheckRegionDimensions(cell_max,cell_min);
-        return true;
-    }
-
-    //Cell upper is within region
-    if(cell_max > reg_min 
-        && cell_max < reg_max)
-    {
-        CheckRegionDimensions(cell_max,cell_min);
-        return true;
-    }
-
-    //Cell lower is within region
-    if(cell_min > reg_min
-        && cell_min < reg_max)
-    {
-        CheckRegionDimensions(cell_max,cell_min);
-        return true;    
-    }
+    if(cell_max < reg_max && cell_min > reg_min) return true; //fully inside
+    if(cell_max > reg_min && cell_max < reg_max) return true; //Cell upper is within region
+    if(cell_min > reg_min && cell_min < reg_max) return true; //Cell lower is within region
 
     return false;
-
 }

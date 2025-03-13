@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>10000</steps>
+        <steps>50000</steps>
       </production>
     </run>
     
@@ -60,7 +60,7 @@
       
     </algorithm>
     
-    <output>
+    <!--output>
     <outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
       <writefrequency>1</writefrequency>
@@ -70,7 +70,7 @@
       <writefrequency>100</writefrequency>
       <outputprefix>tetrahedral_step</outputprefix>
     </outputplugin>
-    </output>
+    </output-->
 
     <plugin name="PMF">
       <fpregions>
@@ -93,6 +93,7 @@
       <doNothing>false</doNothing>
       <rdfPath>../../restart_data/avg_rdf221000.txt</rdfPath>
       <epPath>../../restart_data/potential_45000.txt</epPath>
+      <doNothing>false</doNothing>
     </plugin>
 	
   </simulation>

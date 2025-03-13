@@ -194,9 +194,13 @@ void InteractionForceAdapter::PotForcePureHybridBackend(Molecule& m1, Molecule& 
     // skip first LJ site 
 	const unsigned int nc1 = m1.numLJcenters();
 	const unsigned int nc2 = m2.numLJcenters();
-	for (unsigned int si = 1; si < nc1; ++si) {
+	for (unsigned int si = 0; si < nc1; ++si) {
 		const std::array<double,3> dii = m1.ljcenter_d_abs(si);
-		for (unsigned int sj = 1; sj < nc2; ++sj) {
+		for (unsigned int sj = 0; sj < nc2; ++sj) {
+            if (si == 0 || sj == 0) {
+                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                continue;
+            }
 			const std::array<double,3> djj = m2.ljcenter_d_abs(sj);
 			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
 			double eps24;
@@ -229,7 +233,7 @@ void InteractionForceAdapter::PotForcePureHybridBackend(Molecule& m1, Molecule& 
 	m2.Viadd(virial);
 
     // check whether all parameters were used
-	// mardyn_assert(params.eos());
+	mardyn_assert(params.eos());
 
     //Here we have F_{cg}
     const std::array<double,3> dcg_1 = m1.ljcenter_d_abs(0);
@@ -278,9 +282,13 @@ void InteractionForceAdapter::PotForceHybridFPBackend(Molecule& m1, Molecule& m2
     // skip first LJ site 
 	const unsigned int nc1 = m1.numLJcenters();//first site is CG, skip
 	const unsigned int nc2 = m2.numLJcenters();
-	for (unsigned int si = 1; si < nc1; ++si) {
+	for (unsigned int si = 0; si < nc1; ++si) {
 		const std::array<double,3> dii = m1.ljcenter_d_abs(si);
 		for (unsigned int sj = 0; sj < nc2; ++sj) {
+            if(si == 0 || sj == 0) {
+                double tmp; params >> tmp; params >> tmp; params >> tmp;
+                continue;
+            }
 			const std::array<double,3> djj = m2.ljcenter_d_abs(sj);
 			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
 			double eps24;
@@ -313,7 +321,7 @@ void InteractionForceAdapter::PotForceHybridFPBackend(Molecule& m1, Molecule& m2
 	m2.Viadd(virial);
 
     // check whether all parameters were used
-	// mardyn_assert(params.eos());
+	mardyn_assert(params.eos());
 
     //Compute COM force
     std::array<double,3> fp_com = ComputeCOM(m2);

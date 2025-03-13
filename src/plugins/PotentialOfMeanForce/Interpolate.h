@@ -17,6 +17,7 @@ class Interpolate{
     std::vector<double> x_values;//function value
     std::vector<double> y_values;
     double default_value;
+    double extrapolation_target = 1e+3;
     
     public:
     Interpolate()=default;

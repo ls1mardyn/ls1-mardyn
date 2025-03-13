@@ -119,20 +119,21 @@ int Interpolate::GetUpperLimit(double r){
 }
 
 void Interpolate::LinearExtrapolation(){
-
-    for(int i= y_values.size()-1;i>=0;--i){
-
-        if(std::isfinite(y_values[i])){
-            continue;
-        }
-
-        double y_k = y_values[i+1];
-        double y_k_1 = y_values[i+2];
-        double x_k = x_values[i+1];
-        double x_k_1 = x_values[i+2];
-        double x_star = x_values[i];
-        y_values[i] = y_k_1 + 1.0*(x_star-x_k_1)/(x_k-x_k_1)*(y_k-y_k_1);
-        
+    // find first valid node
+    int idx_valid = -1;
+    for (int i = 0; i < y_values.size(); i++) {
+        if (!std::isfinite(y_values[i])) continue;
+        idx_valid = i;
+        break;
     }
 
+    // nothing found
+    if (idx_valid == -1) return;
+
+    // do extrapolation
+    const auto steps = idx_valid;
+    const double dy = (extrapolation_target - y_values[idx_valid]) / steps;
+    for (int i = idx_valid-1; i >= 0; i--) {
+        y_values[i] = y_values[i+1] + dy;
+    }
 }

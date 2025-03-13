@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>10</steps>
+        <steps>100000</steps>
       </production>
     </run>
     
@@ -87,14 +87,14 @@
     
     <output>
  
-    <outputplugin name="VTKMoleculeWriter">
+    <!--outputplugin name="VTKMoleculeWriter">
       <outputprefix>vtkOutput</outputprefix>
       <writefrequency>20</writefrequency>
-    </outputplugin>
+    </outputplugin-->
 
     <outputplugin name="CheckpointWriter">
       <type>binary</type>
-      <writefrequency>100</writefrequency>
+      <writefrequency>100000</writefrequency>
       <outputprefix>generic_lj_step</outputprefix>
     </outputplugin>
 
@@ -114,9 +114,10 @@
       <densityBins>25</densityBins>
       <measureFreq>1</measureFreq>
       <updateStride>1000</updateStride>
-      <outputFreq>100</outputFreq>
+      <outputFreq>10000</outputFreq>
       <output>true</output>
       <mode>Equilibration</mode>
+      <doNothing>false</doNothing>
      </plugin>
 	
   </simulation>
