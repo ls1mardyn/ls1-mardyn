@@ -34,10 +34,6 @@ void StatisticsAdResS::init(FPRegion& region){
     statistics.close();
 
     //setup profilers
-    fp_profiler.init(_simulation.getcutoffRadius());
-    fp_profiler.SetFilePrefix("fp_rdf_");
-    cg1_profiler.init(_simulation.getcutoffRadius());
-    cg1_profiler.SetFilePrefix("cg_rdf_");
     fp_theoreticalRdf = TheoreticalRDF(fp.low, fp.high, 100);
     cg_theoreticalRdf = TheoreticalRDF(cg1.low, cg1.high, 100);
 }
