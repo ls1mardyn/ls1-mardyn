@@ -23,6 +23,8 @@ public:
 	   <outputplugin name="PovWriter">
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
+	     <incremental>BOOL</incremental>
+	     <appendTimestamp>BOOL</appendTimestamp>
 	   </outputplugin>
 	   \endcode
 	 */

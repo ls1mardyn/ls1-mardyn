@@ -23,16 +23,10 @@ void DecompWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	Log::global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 
-	int incremental = 1;
-	xmlconfig.getNodeValue("incremental", incremental);
-	_incremental = (incremental != 0);
+	xmlconfig.getNodeValue("incremental", _incremental);
 	Log::global_log->info() << "Incremental numbers: " << _incremental << std::endl;
 
-	int appendTimestamp = 0;
-	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
-	if(appendTimestamp > 0) {
-		_appendTimestamp = true;
-	}
+	xmlconfig.getNodeValue("appendTimestamp", _appendTimestamp);
 	Log::global_log->info() << "Append timestamp: " << _appendTimestamp << std::endl;
 }
 
