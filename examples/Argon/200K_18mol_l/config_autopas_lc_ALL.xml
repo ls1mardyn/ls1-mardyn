@@ -40,7 +40,8 @@
             <datastructure type="AutoPas">
                 <!-- <logLevel>info</logLevel> -->
                 <allowedContainers>linkedCells</allowedContainers>
-                <tuningStrategies>predictive,ruleBased</tuningStrategies>
+                <tuningStrategies>predictive, ruleBased</tuningStrategies>
+                <ruleFile>tuningRules.rule</ruleFile><!--check the AutoPas repo for examples-->
                 <tuningInterval>10000</tuningInterval>
                 <tuningSamples>10</tuningSamples>
                 <rebuildFrequency>10</rebuildFrequency>
@@ -57,7 +58,7 @@
             <outputplugin name="DecompWriter">
                 <writefrequency>5</writefrequency>
                 <outputprefix>decomp</outputprefix>
-                <incremental>1</incremental>
+                <incremental>true</incremental>
                 <appendTimestamp>false</appendTimestamp>
             </outputplugin>
             <!--<outputplugin name="MmpldWriter" type="simple">

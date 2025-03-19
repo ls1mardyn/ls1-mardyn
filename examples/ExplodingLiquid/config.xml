@@ -65,7 +65,7 @@
             -->
             <datastructure type="AutoPas">
                 <!-- <tuningStragegy>fullsearch</tuningStragegy> -->
-                <tuningStragegy>predictive-tuning</tuningStragegy>
+                <tuningStragegy>predictive</tuningStragegy>
                 <extrapolationMethod>linear-regression</extrapolationMethod>
                 <blacklistRange>3</blacklistRange>
 

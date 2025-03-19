@@ -21,7 +21,7 @@ public:
 	     <type>ASCII|binary</type>
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
-	     <incremental>INTEGER</incremental>
+	     <incremental>BOOL</incremental>
 	     <appendTimestamp>BOOL</appendTimestamp>
 	   </outputplugin>
 	   \endcode

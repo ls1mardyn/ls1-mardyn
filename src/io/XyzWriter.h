@@ -23,7 +23,7 @@ public:
 	   <outputplugin name="XyzWriter">
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
-	     <incremental>INTEGER</incremental>
+	     <incremental>BOOL</incremental>
 	     <appendTimestamp>BOOL</appendTimestamp>
 	   </outputplugin>
 	   \endcode

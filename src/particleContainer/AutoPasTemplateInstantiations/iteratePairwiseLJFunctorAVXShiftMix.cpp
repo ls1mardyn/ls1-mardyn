@@ -10,7 +10,7 @@
 #include "molecularDynamicsLibrary/LJFunctorAVX.h"
 
 //! @cond Doxygen_Suppress
-template bool autopas::AutoPas<AutoPasSimpleMolecule>::iteratePairwise(
+template bool autopas::AutoPas<AutoPasSimpleMolecule>::computeInteractions(
 		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ true,

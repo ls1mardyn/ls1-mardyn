@@ -16,11 +16,11 @@
 #include "parallel/DomainDecompBase.h"
 #include "utils/generator/EqualVelocityAssigner.h"
 
-// Declare the main AutoPas class and the iteratePairwise() methods with all used functors as extern template
+// Declare the main AutoPas class and the computeInteractions() methods with all used functors as extern template
 // instantiation. They are instantiated in the respective cpp file inside the templateInstantiations folder.
 //! @cond Doxygen_Suppress
 extern template class autopas::AutoPas<Molecule>;
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ true,
@@ -28,7 +28,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ true,
@@ -36,7 +36,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ false,
@@ -44,7 +44,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctor<
 				Molecule,
 				/*applyShift*/ false,
@@ -53,7 +53,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				/*calculateGlobals*/ true
 		> *);
 #ifdef __AVX__
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ true,
@@ -61,7 +61,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ true,
@@ -69,7 +69,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ false,
@@ -77,7 +77,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctorAVX<
 				Molecule,
 				/*applyShift*/ false,
@@ -87,7 +87,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 		> *);
 #endif
 #ifdef __ARM_FEATURE_SVE
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ true,
@@ -95,7 +95,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ true,
@@ -103,7 +103,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ false,
@@ -111,7 +111,7 @@ extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true
 		> *);
-extern template bool autopas::AutoPas<Molecule>::iteratePairwise(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::LJFunctorSVE<
 				Molecule,
 				/*applyShift*/ false,
@@ -317,7 +317,7 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setBoxMin(boxMin);
 	_autopasContainer.setBoxMax(boxMax);
 	_autopasContainer.setCutoff(_cutoff);
-	_autopasContainer.setVerletSkinPerTimestep(_verletSkin / _verletRebuildFrequency);
+	_autopasContainer.setVerletSkin(_verletSkin);
 	_autopasContainer.setVerletRebuildFrequency(_verletRebuildFrequency);
 	_autopasContainer.setVerletClusterSize(_verletClusterSize);
 	_autopasContainer.setTuningInterval(_tuningFrequency);
@@ -435,8 +435,8 @@ void AutoPasContainer::addParticles(std::vector<Molecule> &particles, bool check
 
 template <typename F>
 std::pair<double, double> AutoPasContainer::iterateWithFunctor(F &&functor) {
-	// here we call the actual autopas' iteratePairwise method to compute the forces.
-	_autopasContainer.iteratePairwise(&functor);
+	// here we call the actual autopas' computeInteractions method to compute the forces.
+	_autopasContainer.computeInteractions(&functor);
 	const double upot = functor.getPotentialEnergy();
 	const double virial = functor.getVirial();
 	return std::make_pair(upot, virial);
@@ -566,8 +566,8 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		if (_particlePropertiesLibrary.getNumberRegisteredSiteTypes() == 0) {
 			const auto components = global_simulation->getEnsemble()->getComponents();
 			for (const auto &c : *components) {
-				_particlePropertiesLibrary.addSiteType(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma(),
-												   c.ljcenter(0).m());
+				_particlePropertiesLibrary.addSiteType(c.getLookUpId(),c.ljcenter(0).m());
+				_particlePropertiesLibrary.addLJParametersToSite(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma());
 			}
 			_particlePropertiesLibrary.calculateMixingCoefficients();
 			size_t numComponentsAdded = 0;
@@ -735,4 +735,4 @@ RegionParticleIterator AutoPasContainer::regionIterator(const double *startCorne
 	return RegionParticleIterator{
 		_autopasContainer.getRegionIterator(lowCorner, highCorner, convertBehaviorToAutoPas(t))};
 }
-std::string AutoPasContainer::getConfigurationAsString() { return _autopasContainer.getCurrentConfig().toString(); }
+std::string AutoPasContainer::getConfigurationAsString() { return _autopasContainer.getCurrentConfigs().at(autopas::InteractionTypeOption::pairwise).get().toString(); }
