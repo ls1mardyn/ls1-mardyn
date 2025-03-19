@@ -51,6 +51,8 @@ include(mpi)
 include(clang-sanitizers)
 # ccache
 include(ccache)
+# include clangformat target
+include(clangformat)
 
 # ----- second: include libraries, etc.
 # include armadillo module
