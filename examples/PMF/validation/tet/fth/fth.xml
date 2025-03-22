@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mardyn version="20100525">
+  <refunits type="SI">
+    <length unit="nm">0.0529177</length>
+    <mass unit="u">1000</mass>
+    <energy unit="eV">27.2126</energy>
+  </refunits>
+  <simulation type="MD">
+    <integrator type="Leapfrog">
+      <timestep unit="reduced">0.001</timestep>
+    </integrator>
+    
+    <run>
+      <currenttime>0</currenttime>
+      <equilibration> <steps>0</steps> </equilibration>
+      <production>
+        <steps>400000</steps>
+      </production>
+    </run>
+    
+    <ensemble type="NVT">
+      <temperature unit="reduced">1.0</temperature>
+      <domain type="box">
+        <lx>25.0</lx>
+        <ly>25.0</ly>
+        <lz>25.0</lz>
+      </domain>
+      <components>
+        <include query="/components/moleculetype">../../components/lj_tetrahedral_red.xml</include>
+      </components>
+      <phasespacepoint>
+        <file type="binary">
+          <header>../restart_data/tet_step-1.restart.header.xml</header>
+            <data>../restart_data/tet_step-1.restart.dat</data>
+        </file>
+        <ignoreCheckpointTime>true</ignoreCheckpointTime>
+      </phasespacepoint>
+    </ensemble>
+    
+    <algorithm>
+      <parallelisation type="DomainDecomposition">
+        <timerForLoad>SIMULATION_FORCE_CALCULATION</timerForLoad>
+        <overlappingCollectives>False</overlappingCollectives>
+      </parallelisation>
+      <datastructure type="LinkedCells">
+        <cellsInCutoffRadius>1</cellsInCutoffRadius>
+      </datastructure>
+      <cutoffs type="CenterOfMass">
+        <radiusLJ unit="reduced">5</radiusLJ>
+      </cutoffs>
+      <electrostatic type="ReactionField">
+        <epsilon>1.0e+10</epsilon>
+      </electrostatic>
+      <thermostats>
+       <!-- velocity scaling thermostat, if no component is specified the global thermostat is assumed -->
+      <thermostat type="VelocityScaling" componentId="global">
+        <!-- target temperature, if not specified the ensemble temperature will be used -->
+      </thermostat> 
+      </thermostats>
+      
+    </algorithm>
+    
+    <plugin name="PMF">
+      <fpregions>
+        <region id = "1">
+          <lowX>10.0</lowX><lowy>0.0</lowy><lowZ>0.0</lowZ>
+          <highX>15.0</highX><highY>25.0</highY><highZ>25.0</highZ>
+          <hybridDimX>5</hybridDimX><hybridDimY>0.0</hybridDimY>
+          <hybridDimZ>0.0</hybridDimZ>
+        </region>
+      </fpregions>
+      <multiplier>-1</multiplier>
+      <internalBins>200</internalBins>
+      <densityBins>1000</densityBins>
+      <measureFreq>1</measureFreq>
+      <updateStride>10000</updateStride>
+      <outputFreq>10000</outputFreq>
+      <output>true</output>
+      <mode>CreateFTH</mode>
+      <rdfPath>./avg_rdf.txt</rdfPath>
+      <epPath>./ep.txt</epPath>
+      <doNothing>false</doNothing>
+  </plugin>
+	
+  </simulation>
+</mardyn>

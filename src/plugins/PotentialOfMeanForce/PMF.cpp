@@ -2,10 +2,13 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 
 
-PMF::PMF(): reference_rdf_interpolation{1.0,false},potential_interpolation{0.0,true},avg_rdf_interpolation{1.0,false},convergence{0.5}{
-
-
-}
+PMF::PMF(): reference_rdf_interpolation{1.0,false},
+            reference_density_interpolation(0.0,false),
+            potential_interpolation{0.0,true},
+            avg_rdf_interpolation{1.0,false},
+            fth_interpolation(0.0),
+            convergence{0.5, "ibi"},
+            fth_convergence(0.5, "fth") {}
 
 
 void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* domain){
@@ -18,6 +21,12 @@ void PMF::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* do
         Log::global_log->info()<<"[PMF] The region  center is located at: ("<<it->_center[0]<<","<<it->_center[1]<<","<<it->_center[2]<<")"<<std::endl;
     }
 
+    if(mode == Mode::CreateFTH) {
+        double rho = _simulation.getDomain()->getglobalRho();
+        for (int idx = 0; idx < reference_density_interpolation.GetYValues().size(); idx++) {
+            reference_density_interpolation.GetYValues()[idx] = rho;
+        }
+    }
 
 
     adres_statistics.init(resolution_handler->GetRegions()[0]);
@@ -51,6 +60,7 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     xmlfile.getNodeValue("updateStride",update_stride);
     xmlfile.getNodeValue("rdfPath",ref_rdf_path);
     xmlfile.getNodeValue("epPath",effective_potential_path);
+    xmlfile.getNodeValue("fthPath",fth_path);
     xmlfile.getNodeValue("doNothing",do_nothing);
     if(do_nothing){
         Log::global_log->info()<<"[PMF] Do Nothing set"<<std::endl;
@@ -74,12 +84,21 @@ void PMF::readXML(XMLfileUnits& xmlfile){
         Log::global_log->info()<<"[PMF] PMF set as initial guess\n";
         Log::global_log->info()<<"[PMF] RDF has been read successfully\n";
     }
+    if(mode_name == "CreateFTH"){
+        mode = Mode::CreateFTH;
+        Log::global_log->info()<<"[PMF] Mode set to CreateFTH"<<std::endl;
+        this->ReadEffectivePotential();
+        Log::global_log->info()<<"[PMF] Effective potential has been read successfully\n";
+        profiler.SetMeasureDensity(true);
+    }
     if(mode_name == "Production"){
         profiler.SetMeasureDensity(true);
         mode = Mode::Production;
         Log::global_log->info()<<"[PMF] Mode set to Production"<<std::endl;
         this->ReadEffectivePotential();
         Log::global_log->info()<<"[PMF] Effective potential has been read successfully\n";
+        this->ReadFTH();
+        Log::global_log->info()<<"[PMF] FTH has been read successfully\n";
     }
 
 
@@ -94,6 +113,11 @@ void PMF::readXML(XMLfileUnits& xmlfile){
     if(mode == Mode::EffectivePotential){
         potential_interpolation.SetXValues(profiler.GetBinCenters());
         this->SetPotentialInitialGuess();
+    }
+    if(mode == Mode::CreateFTH){
+        this->InitializeFTH();
+        this->reference_density_interpolation.SetXValues(fth_interpolation.GetXValues());
+        this->reference_density_interpolation.SetYValues(fth_interpolation.GetYValues());
     }
 
     avg_rdf_interpolation.ResizeVectors(profiler.GetBinCenters().size());
@@ -142,7 +166,6 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
         UpdateRDFInterpolation();
     }
 
-
     if(mode == Mode::Production && !do_nothing){
         adres_statistics.MeasureStatistics(pc);
         adres_statistics.Output2File(step); 
@@ -155,6 +178,31 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
 
         profiler.PrintOutput2Files(step);
 
+    }
+
+    if(mode == Mode::CreateFTH) {
+        std::vector<double> current_density = profiler.GetDensity();
+        fth_convergence.PrintGlobalConvergence2File();
+        fth_convergence.CheckConvergence(reference_density_interpolation.GetYValues(), current_density);
+        fth_convergence.PrintLocalConvergence2File();
+
+        if(step%update_stride ==0 && step>0){
+            fth_convergence.PrepareUpdate();
+            UpdateFTHInterpolation(step);
+        }
+
+        if(output && step%update_stride ==0){
+
+            std::string fth_file = "fth_"+std::to_string(step)+".txt";
+            std::ofstream fth(fth_file);
+            for(int i=0;i<fth_interpolation.GetYValues().size();++i){
+                fth<<std::setw(8)<<std::left
+                   <<fth_interpolation.GetXValues()[i]
+                   <<"\t"
+                   <<std::setw(8)<<std::left<<fth_interpolation.GetYValues()[i]<<std::endl;
+            }
+            fth.close();
+        }
     }
     
     if(mode == Mode::EffectivePotential){
@@ -188,7 +236,15 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
 }
 
 void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
-
+    if(mode == Mode::CreateFTH || mode == Mode::Production) {
+        #pragma omp parallel
+        for (auto it = pc->regionIterator(adres_statistics.hy1.low.data(), adres_statistics.hy1.high.data(), ParticleIterator::ALL_CELLS); it.isValid(); ++it) {
+            auto r = it->r(0);
+            auto f = fth_interpolation.InterpolateAt(r);
+            std::array<double,3> force {f, 0, 0};
+            it->Fadd(force.data());
+        }
+    }
 }
 /********************
  * ****************** FUNCTIONS NOT FROM THE INTERFACE
@@ -206,7 +262,8 @@ void PMF::SetPotentialInitialGuess(){
     }
 
     potential_interpolation.SetYValues(pot0);
-    FivePointAverageExtrapolation(potential_interpolation.GetXValues(),potential_interpolation.GetYValues());
+    potential_interpolation.LinearExtrapolation();
+    //FivePointAverageExtrapolation(potential_interpolation.GetXValues(),potential_interpolation.GetYValues());
 }
 
 
@@ -278,6 +335,47 @@ void PMF::UpdateRDFInterpolation(){
     avg_rdf_interpolation.SetYValues(rdf_i);
 }
 
+void PMF::UpdateFTHInterpolation(unsigned long step) {
+    std::vector<double> density = profiler.GetDensity();
+    std::vector<double> density_gradient (density.size(), 0.0);
+    std::vector<double>& centers = profiler.GetDensityBinCenters();
+
+    for (int idx = 0; idx < density.size() - 1; idx++) {
+        double dx = centers[idx+1] - centers[idx];
+        double dy = density[idx+1] - density[idx];
+        density_gradient[idx] = dy / dx;
+    }
+    double dx = centers[1] - centers[0];
+    double dy = density[0] - density[density.size()-1];
+    density_gradient[density.size()-1] = dy / dx;
+
+    Component& fp = _simulation.getEnsemble()->getComponents()->at(0);
+    double rho = _simulation.getDomain()->getglobalRho();
+    double kappa = 1000;
+    double factor = -fp.m() / (std::pow(rho, 2.0) * kappa);
+    for (int idx = 0; idx < density_gradient.size(); idx++) {
+        density_gradient[idx] *= factor;
+    }
+
+    VectorAdd(fth_interpolation.GetYValues(), density_gradient);
+
+    if(output){
+        std::string name="density_grad_step_"+std::to_string(step)+".txt";
+        std::ofstream corr{name};
+        for(int i=0;i<density_gradient.size();++i){
+            corr<<reference_density_interpolation.GetXValues()[i]
+                <<"\t"
+                <<density_gradient[i]
+                <<std::endl;
+        }
+
+    }
+
+    std::vector<double>& density_counts = profiler.GetDensityCounts();
+    std::fill(density_counts.begin(), density_counts.end(), 0);
+    profiler.ResetDensitySteps();
+}
+
 double PMF::WeightValue(const std::array<double,3>& pos, FPRegion& region){
     return weight_function.WeightValue(pos,region);
 }
@@ -296,6 +394,10 @@ Interpolate& PMF::GetAVGRDFInterpolation(){
 
 Interpolate& PMF::GetPotentialInterpolation(){
     return this->potential_interpolation;
+}
+
+Interpolate &PMF::GetFTHInterpolation() {
+    return this->fth_interpolation;
 }
 
 void PMF::ReadRDF(){
@@ -344,10 +446,30 @@ void PMF::ReadEffectivePotential(){
 
 }
 
+void PMF::ReadFTH() {
+    std::vector<double> x_values;
+    std::vector<double> y_values;
+
+    std::ifstream file{fth_path};
+    if(!file){
+        Log::global_log->error()<<"[PMF] I could not read the fth data file"<<std::endl;
+        Simulation::exit(1);
+    }
+    double n1, n2;
+
+    while(file >> n1 >> n2){
+        x_values.push_back(n1);
+        y_values.push_back(n2);
+    }
+
+    fth_interpolation.SetXValues(x_values);
+    fth_interpolation.SetYValues(y_values);
+}
+
 void PMF::MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2){
     //does something
     double mass = m1.mass();
-    
+
     //a loop for every type of charge
     for(int i=0;i<m1.numLJcenters();i++){
         double site_ratio = m1.component()->ljcenter(i).m()/mass;
@@ -385,4 +507,11 @@ void PMF::MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2){
         m2.Fdipolesub(i,f.data());
     }
 
+}
+
+void PMF::InitializeFTH() {
+    std::vector<double>& x_values = profiler.GetDensityBinCenters();
+    std::vector<double> y_values (x_values.size(), 0.0);
+    this->fth_interpolation.SetXValues(x_values);
+    this->fth_interpolation.SetYValues(y_values);
 }

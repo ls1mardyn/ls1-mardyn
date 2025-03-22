@@ -9,7 +9,7 @@ InternalCellProcessor::InternalCellProcessor(const double cr, int bins, double w
     #pragma omp parallel
     {
         thread_data[mardyn_get_thread_num()].resize(bins,0.0);
-        thread_density_data[mardyn_get_thread_num()].resize(bins,0.0);
+        thread_density_data[mardyn_get_thread_num()].resize(dbins,0.0);
     }
 
 }
@@ -79,10 +79,12 @@ void InternalCellProcessor::processCellPair(ParticleCell& c1, ParticleCell& c2, 
 }
 
 void InternalCellProcessor::endTraversal(){
-    
-    for(int b=0;b<global_buffer.size();++b){
-        for(int t=0;t<thread_data.size();++t){
+    for(int t=0; t<mardyn_get_max_threads();t++) {
+        for(int b=0; b<global_buffer.size();b++) {
             global_buffer[b] += thread_data[t][b];
+        }
+
+        for(int b=0; b<global_density_buffer.size();b++) {
             global_density_buffer[b] += thread_density_data[t][b];
         }
     }

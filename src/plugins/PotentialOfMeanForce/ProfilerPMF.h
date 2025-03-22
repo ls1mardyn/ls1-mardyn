@@ -62,6 +62,7 @@ class InternalProfiler{
     std::vector<double> r_nodes;
     int sample_frequency;
     int measured_steps;//increases on every call to ProfileData
+    int density_steps;
     double measured_distance_squared;
     int output_frequency;
     public:
@@ -93,6 +94,7 @@ class InternalProfiler{
         return density.bin_centers;
     }
     double GetMeasuredSteps();
+    void ResetDensitySteps();
     void PrintOutput2Files(unsigned long simstep);
 
     private:

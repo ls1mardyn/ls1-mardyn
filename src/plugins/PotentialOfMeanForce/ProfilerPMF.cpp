@@ -1,6 +1,6 @@
 #include "ProfilerPMF.h"
 
-InternalProfiler::InternalProfiler():cell_processor{nullptr},measured_steps{0}{
+InternalProfiler::InternalProfiler():cell_processor{nullptr},measured_steps{0},density_steps(0){
 
 
 }
@@ -70,6 +70,7 @@ std::vector<double>& InternalProfiler::GetBinCenters(){
 void InternalProfiler::ProfileData(ParticleContainer* pc, unsigned long step){
     if(step%sample_frequency==0){
         measured_steps++;
+        density_steps++;
         pc->traverseCells(*cell_processor);
     }
 }
@@ -99,7 +100,7 @@ std::vector<double> InternalProfiler::GetDensity(){
     std::vector<double> buffer_density;
     buffer_density.resize(density.total_bins);
     double binvol = _simulation.getDomain()->getGlobalVolume()/density.total_bins;
-    double den = den = binvol*GetMeasuredSteps();
+    double den = binvol*density_steps;
     for(int i=0;i<density.total_bins;++i){
         buffer_density[i] = GetDensityCounts()[i]/den;
     }   
@@ -125,4 +126,8 @@ void InternalProfiler::PrintOutput2Files(unsigned long ss){
             density_file.close();
         }
     }
+}
+
+void InternalProfiler::ResetDensitySteps() {
+    density_steps = 0;
 }

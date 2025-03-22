@@ -21,10 +21,9 @@ struct ResRegion{
 };
 
 class StatisticsAdResS{
-
-    private:
-
+public:
     ResRegion fp, cg1, cg2, hy1, hy2;
+private:
     double fp_temp, cg1_temp, cg2_temp, hy1_temp, hy2_temp;//per region
     double cg_temp, hy_temp;//average component
     int N_fp, N_cg1, N_cg2, N_hy1, N_hy2;

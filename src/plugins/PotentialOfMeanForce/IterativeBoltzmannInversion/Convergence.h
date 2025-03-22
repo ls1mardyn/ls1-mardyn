@@ -21,11 +21,12 @@ class Convergence{
     double tolerance;
     std::vector<double> ibi_convergence;
     std::vector<double> local_convergence;
+    std::string name;
 
 
     public:
 
-    Convergence(double tol);
+    Convergence(double tol, const std::string& name);
     bool CheckConvergence(std::vector<double>& rdf_ref, std::vector<double>& rdf_i);
     void PrintLocalConvergence2File();
     void PrintGlobalConvergence2File();

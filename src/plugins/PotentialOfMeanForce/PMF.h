@@ -25,18 +25,21 @@
 
 class InteractionSite;
 
-enum class Mode{Equilibration, EffectivePotential, Production};
+enum class Mode{Equilibration, EffectivePotential, Production, CreateFTH};
 
 class PMF:public PluginBase{
 
     private:
     Mode mode = Mode::EffectivePotential;
     Interpolate reference_rdf_interpolation;//should not touch
+    Interpolate reference_density_interpolation;//should not touch
     Interpolate potential_interpolation;//updated on every step or stride
     Interpolate avg_rdf_interpolation;//current avg value so far 
     Interpolate derivative_interpolation;//stores derivatives potential
+    Interpolate fth_interpolation;//stores fth force function
     InternalProfiler profiler;//measuring tool
     Convergence convergence;
+    Convergence fth_convergence;
     ResolutionHandlerBase* resolution_handler;
     /**
      * L2 norm, used for hybrid
@@ -54,6 +57,7 @@ class PMF:public PluginBase{
 
     std::string ref_rdf_path;
     std::string effective_potential_path;
+    std::string fth_path;
 
     public:
     PMF();
@@ -83,6 +87,7 @@ class PMF:public PluginBase{
     Interpolate& GetRDFInterpolation();
     Interpolate& GetAVGRDFInterpolation();
     Interpolate& GetPotentialInterpolation();
+    Interpolate& GetFTHInterpolation();
 
     void MapToAtomistic(std::array<double,3> f, Molecule& m1, Molecule& m2);
 
@@ -97,6 +102,7 @@ class PMF:public PluginBase{
      */
     void ReadRDF();
     void ReadEffectivePotential();
+    void ReadFTH();
     /**
      * Implements U(r)_0 = -T^*ln(g(r)_0)
      */
@@ -107,7 +113,6 @@ class PMF:public PluginBase{
     void AddPotentialCorrection(unsigned long step);
     void UpdateRDFInterpolation();
     void PrintPotentialCorrection(unsigned long step);
-
-
-
+    void InitializeFTH();
+    void UpdateFTHInterpolation(unsigned long step);
 };
