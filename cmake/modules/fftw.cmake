@@ -1,7 +1,7 @@
 include(FetchContent)
 
 # Try to find FFTW in the system
-find_library(FFTW_LIB fftw3 REQUIRED)
+find_library(FFTW_LIB fftw3)
 
 # If not found, download and build from GitHub
 if(NOT FFTW_LIB)
