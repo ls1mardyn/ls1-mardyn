@@ -16,13 +16,9 @@ public:
     static std::vector<double> low_pass_filter(const std::vector<double>& data);
 
 private:
-    static std::vector<std::complex<double>> rfft(const std::vector<double>& rho);
+    static std::vector<std::complex<double>> rfft(const std::vector<double>& rho, int f_max);
 
     static std::vector<double> irfft(const std::vector<std::complex<double>>& freq_domain, int N);
-
-    static void apply_low_pass_filter(std::vector<std::complex<double>>& freq_domain, int N, double cutoff);
-
-    static void apply_frequency_filter(std::vector<std::complex<double>>& freq_domain, int keep_bins);
 };
 
 

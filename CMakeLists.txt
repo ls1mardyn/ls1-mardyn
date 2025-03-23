@@ -63,8 +63,6 @@ include(cppunit)
 include(bhfmm)
 # include ALL load balanding library
 include(ALL)
-# include fftw module
-include(fftw)
 
 # ----- third: include autopas
 include(autopas)

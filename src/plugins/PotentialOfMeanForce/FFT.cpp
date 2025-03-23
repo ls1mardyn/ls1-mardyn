@@ -6,95 +6,57 @@
 
 std::vector<double> FFT::low_pass_filter(const std::vector<double> &data) {
     // Compute FFT
-    std::vector<std::complex<double>> freq_domain = rfft(data);
-
-    // Apply low-pass filter with cutoff frequency = 8
-    apply_frequency_filter(freq_domain, 8);
+    std::vector<std::complex<double>> freq_domain = rfft(data, 8);
 
     // Compute inverse FFT
     return irfft(freq_domain, data.size());
 }
 
-std::vector<std::complex<double>> FFT::rfft(const std::vector<double> &rho) {
+std::vector<std::complex<double>> FFT::rfft(const std::vector<double> &rho, int f_max) {
     int N = rho.size();
-    int N_half = N / 2 + 1;  // Size of complex output
+    std::vector<std::complex<double>> freq_domain(f_max, std::complex<double>{0.0, 0.0});
 
-    std::vector<std::complex<double>> freq_domain(N_half);
+    const std::complex<double> j {0.0, 1.0};
+    std::vector<std::complex<double>> omegas {f_max, std::complex<double>{0.0, 0.0}};
+    for (int k = 0; k < f_max; k++) omegas[k] = std::exp(-j * 2.0 * M_PI * (double) k / (double) N);
+    std::vector<std::complex<double>> active_omegas {omegas}; // contains with power 1
 
-    // FFTW arrays
-    fftw_plan plan;
-    double* in = fftw_alloc_real(N);
-    fftw_complex* out = fftw_alloc_complex(N_half);
+    // n = 0
+    for (int k = 0; k < f_max; k++) freq_domain[k] += rho[0];
 
-    // Copy input data
-    std::copy(rho.begin(), rho.end(), in);
+    // n = 1...N
+    for (int n = 1; n < N; n++) {
+        const auto r_n = rho[n];
 
-    // Create FFT plan
-    plan = fftw_plan_dft_r2c_1d(N, in, out, FFTW_ESTIMATE);
-    fftw_execute(plan);
-
-    // Store result
-    for (int i = 0; i < N_half; i++) {
-        freq_domain[i] = std::complex<double>(out[i][0], out[i][1]);
+        for (int k = 0; k < f_max; k++) freq_domain[k] += r_n * active_omegas[k];
+        for (int k = 0; k < f_max; k++) active_omegas[k] *= omegas[k];
     }
-
-    // Cleanup
-    fftw_destroy_plan(plan);
-    fftw_free(in);
-    fftw_free(out);
 
     return freq_domain;
 }
 
 std::vector<double> FFT::irfft(const std::vector<std::complex<double>> &freq_domain, int N) {
-    int N_half = N / 2 + 1;
-    std::vector<double> rho(N);
+    int f_max = freq_domain.size();
+    std::vector<double> rho(N, 0.0);
+    std::vector<std::complex<double>> c_rho(N, std::complex<double>());
 
-    // FFTW arrays
-    fftw_plan plan;
-    double* out = fftw_alloc_real(N);
-    fftw_complex* in = fftw_alloc_complex(N_half);
+    const std::complex<double> j {0.0, 1.0};
+    std::vector<std::complex<double>> omegas {f_max, std::complex<double>{0.0, 0.0}};
+    for (int k = 0; k < f_max; k++) omegas[k] = std::exp(j * 2.0 * M_PI * (double) k / (double) N);
+    std::vector<std::complex<double>> active_omegas {omegas}; // contains with power 1
 
-    // Copy input data
-    for (int i = 0; i < N_half; i++) {
-        in[i][0] = freq_domain[i].real();
-        in[i][1] = freq_domain[i].imag();
+    // n = 0
+    for (int k = 0; k < f_max; k++) c_rho[0] += freq_domain[k];
+
+    // n = 1...N
+    for (int n = 1; n < N; n++) {
+        for (int k = 0; k < f_max; k++) c_rho[n] += freq_domain[k] * active_omegas[k];
+        for (int k = 0; k < f_max; k++) active_omegas[k] *= omegas[k];
     }
 
-    // Create inverse FFT plan
-    plan = fftw_plan_dft_c2r_1d(N, in, out, FFTW_ESTIMATE);
-    fftw_execute(plan);
-
-    // Normalize and store result
-    for (int i = 0; i < N; i++) {
-        rho[i] = out[i] / N;  // Normalize by N
+    for (int n = 0; n < N; n++) {
+        rho[n] = c_rho[n].real() / N;
     }
-
-    // Cleanup
-    fftw_destroy_plan(plan);
-    fftw_free(in);
-    fftw_free(out);
 
     return rho;
-}
-
-void FFT::apply_low_pass_filter(std::vector<std::complex<double>> &freq_domain, int N, double cutoff) {
-    double freq_resolution = 1.0 / N;  // Frequency resolution
-    int N_half = N / 2 + 1;
-
-    for (int i = 0; i < N_half; i++) {
-        double freq = i * freq_resolution;
-        if (freq > cutoff) {
-            freq_domain[i] = {0.0, 0.0};  // Zero out high frequencies
-        }
-    }
-}
-
-void FFT::apply_frequency_filter(std::vector<std::complex<double>> &freq_domain, int keep_bins) {
-    int N_half = freq_domain.size();
-
-    // Zero out all frequency bins above `keep_bins`
-    for (int i = keep_bins; i < N_half; i++) {
-        freq_domain[i] = {0.0, 0.0};
-    }
 }
