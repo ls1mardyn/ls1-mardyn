@@ -82,6 +82,7 @@ TARGET_LINK_LIBRARIES(MarDyn
         ${LZ4_LIB}     # for LZ4 compression
         ${ALL_LIB}     # for ALL
         ${MPI_LIB}     # for MPI
+        ${FFTW_LIB}    # for FFTW
         )
 
 target_compile_definitions(MarDyn PUBLIC

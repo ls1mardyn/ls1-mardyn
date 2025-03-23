@@ -1,5 +1,6 @@
 #include"PMF.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
+#include "FFT.h"
 
 
 PMF::PMF(): reference_rdf_interpolation{1.0,false},
@@ -244,6 +245,14 @@ void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned l
             std::array<double,3> force {f, 0, 0};
             it->Fadd(force.data());
         }
+
+        #pragma omp parallel
+        for (auto it = pc->regionIterator(adres_statistics.hy2.low.data(), adres_statistics.hy2.high.data(), ParticleIterator::ALL_CELLS); it.isValid(); ++it) {
+            auto r = it->r(0);
+            auto f = fth_interpolation.InterpolateAt(r);
+            std::array<double,3> force {f, 0, 0};
+            it->Fadd(force.data());
+        }
     }
 }
 /********************
@@ -337,6 +346,7 @@ void PMF::UpdateRDFInterpolation(){
 
 void PMF::UpdateFTHInterpolation(unsigned long step) {
     std::vector<double> density = profiler.GetDensity();
+    density = FFT::low_pass_filter(density);
     std::vector<double> density_gradient (density.size(), 0.0);
     std::vector<double>& centers = profiler.GetDensityBinCenters();
 
@@ -351,7 +361,7 @@ void PMF::UpdateFTHInterpolation(unsigned long step) {
 
     Component& fp = _simulation.getEnsemble()->getComponents()->at(0);
     double rho = _simulation.getDomain()->getglobalRho();
-    double kappa = 1000;
+    double kappa = 100;
     double factor = -fp.m() / (std::pow(rho, 2.0) * kappa);
     for (int idx = 0; idx < density_gradient.size(); idx++) {
         density_gradient[idx] *= factor;
