@@ -51,6 +51,10 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			LJcenter ljSite;
 			ljSite.readXML(xmlconfig);
 			addLJcenter(ljSite);
+		} else if (siteType == "LJATM") {
+			LJATMcenter ljatmSite;
+			ljatmSite.readXML(xmlconfig);
+			addLJATMcenter(ljatmSite);
 		} else if (siteType == "Charge") {
 			Charge chargeSite;
 			chargeSite.readXML(xmlconfig);
@@ -175,6 +179,11 @@ void Component::updateMassInertia(Site& site) {
 			if (_Ipa[d] == 0.) --_rot_dof;
 		}
 	}
+}
+
+void Component::addLJATMcenter(LJATMcenter& ljatmsite) {
+	_ljatmcenters.push_back(ljatmsite);
+	updateMassInertia(ljatmsite);
 }
 
 void Component::addCharge(double x, double y, double z, double m, double q) {
