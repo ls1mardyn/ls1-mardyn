@@ -17,7 +17,7 @@ std::vector<std::complex<double>> FFT::rfft(const std::vector<double> &rho, int 
     std::vector<std::complex<double>> freq_domain(f_max, std::complex<double>{0.0, 0.0});
 
     const std::complex<double> j {0.0, 1.0};
-    std::vector<std::complex<double>> omegas {f_max, std::complex<double>{0.0, 0.0}};
+    std::vector<std::complex<double>> omegas (f_max, std::complex<double>{0.0, 0.0});
     for (int k = 0; k < f_max; k++) omegas[k] = std::exp(-j * 2.0 * M_PI * (double) k / (double) N);
     std::vector<std::complex<double>> active_omegas {omegas}; // contains with power 1
 
@@ -41,7 +41,7 @@ std::vector<double> FFT::irfft(const std::vector<std::complex<double>> &freq_dom
     std::vector<std::complex<double>> c_rho(N, std::complex<double>());
 
     const std::complex<double> j {0.0, 1.0};
-    std::vector<std::complex<double>> omegas {f_max, std::complex<double>{0.0, 0.0}};
+    std::vector<std::complex<double>> omegas (f_max, std::complex<double>{0.0, 0.0});
     for (int k = 0; k < f_max; k++) omegas[k] = std::exp(j * 2.0 * M_PI * (double) k / (double) N);
     std::vector<std::complex<double>> active_omegas {omegas}; // contains with power 1
 
