@@ -183,11 +183,11 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
 
     if(mode == Mode::CreateFTH) {
         std::vector<double> current_density = profiler.GetDensity();
-        fth_convergence.PrintGlobalConvergence2File();
         fth_convergence.CheckConvergence(reference_density_interpolation.GetYValues(), current_density);
-        fth_convergence.PrintLocalConvergence2File();
 
         if(step%update_stride ==0 && step>0){
+            fth_convergence.PrintGlobalConvergence2File();
+            fth_convergence.PrintLocalConvergence2File();
             fth_convergence.PrepareUpdate();
             UpdateFTHInterpolation(step);
         }
