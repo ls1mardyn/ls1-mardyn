@@ -96,6 +96,20 @@ private:
 	 * @brief Filename without extension for outputs (output to stdout if empty string)
 	 */
 	std::string _outputprefix;
+#ifdef ENABLE_MPI
+	/**
+	 * @brief If true, output measurements per host instead of in aggregate
+	 */
+	bool _per_host = false;
+	/**
+	 * @brief If true, the corresponding rank should read RAPL values (true for one per host)
+	 */
+	bool _thisRankShouldMeasure = false;
+	/**
+	 * @brief Name of the host for the corresponding MPI rank
+	 */
+	char _processorName[MPI_MAX_PROCESSOR_NAME];
+#endif
 	/**
 	 * @brief Aggregated energy consumption over all \ref _counters
 	 */
@@ -176,6 +190,9 @@ public:
 		 <writefrequency>INTEGER</writefrequency>
 		 <!-- Uses info logger instead of a .tsv file if outputprefix is not given -->
 		 <outputprefix>STRING</outputprefix>
+		 <!-- If true, output the energy per host instead of in aggregate
+		 (Only with MPI and if outputprefix is empty, false by default) -->
+		 <per-host>BOOL</per-host>
 	   </plugin>
 	   \endcode
 	 */

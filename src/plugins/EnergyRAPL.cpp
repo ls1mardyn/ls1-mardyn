@@ -78,10 +78,8 @@ int EnergyRAPL::getNumberOfPackages() {
 
 void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
 #ifdef ENABLE_MPI
-	bool thisRankShouldMeasure = false;
-	char processorName[MPI_MAX_PROCESSOR_NAME];
 	int processorNameLength;
-	MPI_Get_processor_name(processorName, &processorNameLength);
+	MPI_Get_processor_name(_processorName, &processorNameLength);
 	MPI_Comm_rank(MPI_COMM_WORLD, &_thisRank);
 	if (_thisRank == 0) {
 		std::map<std::string, int> processorsRaplRank;
@@ -93,23 +91,23 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 					 MPI_STATUS_IGNORE);
 			processorsRaplRank[otherRankProcessorName] = otherRank;
 		}
-		processorsRaplRank[processorName] = _thisRank;  // Root rank should measure
-		std::set<int> raplRanks;                        // Only measure on one rank per processor (node)
+		processorsRaplRank[_processorName] = _thisRank;  // Root rank should measure
+		std::set<int> raplRanks;                        // Only measure on one rank per processor (host)
 		for (auto item : processorsRaplRank) {
 			Log::global_log->debug() << "[" << getPluginName() << "] RAPL measurements for " << item.first
 									 << " are performed on MPI rank " << item.second << std::endl;
 			raplRanks.insert(item.second);
 		}
-		thisRankShouldMeasure = raplRanks.find(_thisRank) != raplRanks.end();
+		_thisRankShouldMeasure = raplRanks.find(_thisRank) != raplRanks.end();
 		for (int i = 1; i < numberOfRanks; i++) {
 			bool otherRankShouldMeasure = raplRanks.find(i) != raplRanks.end();
 			MPI_Send(&otherRankShouldMeasure, 1, MPI_CXX_BOOL, /* dest */ i, /* tag */ i, MPI_COMM_WORLD);
 		}
 	} else {
-		MPI_Send(processorName, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, /* dest */ 0, /* tag */ _thisRank, MPI_COMM_WORLD);
-		MPI_Recv(&thisRankShouldMeasure, 1, MPI_CXX_BOOL, 0, /* tag */ _thisRank, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Send(_processorName, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, /* dest */ 0, /* tag */ _thisRank, MPI_COMM_WORLD);
+		MPI_Recv(&_thisRankShouldMeasure, 1, MPI_CXX_BOOL, 0, /* tag */ _thisRank, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
-	if (!thisRankShouldMeasure) {
+	if (!_thisRankShouldMeasure) {
 		return;  // Do not set up any counters
 	}
 
@@ -177,14 +175,23 @@ void EnergyRAPL::endStep(ParticleContainer* particleContainer, DomainDecompBase*
 void EnergyRAPL::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	xmlconfig.getNodeValue("outputprefix", _outputprefix);
+	#ifdef ENABLE_MPI
+	xmlconfig.getNodeValue("per-host", _per_host);
+	if (_outputprefix.size() > 0 && _per_host) {
+		Log::global_log->error() << "Cannot use per-host energy measurement when writing to a file." << std::endl;
+		exit(1);
+	}
+	#endif
 }
 
 void EnergyRAPL::outputEnergyJoule() {
 	double joule = _joule;
 #ifdef ENABLE_MPI
-	MPI_Reduce(&_joule, &joule, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	if (_thisRank != 0) {
-		return;  // Only output on root rank
+	if (!_per_host) {
+		MPI_Reduce(&_joule, &joule, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+		if (_thisRank != 0) {
+			return;  // Only output on root rank
+		}
 	}
 #endif
 	std::string jouleStr;
@@ -192,7 +199,14 @@ void EnergyRAPL::outputEnergyJoule() {
 	sstream << std::fixed << std::setprecision(6) << joule;
 	jouleStr = sstream.str();
 	if (_outputprefix.empty()) {
-		Log::global_log->info() << "Simstep = " << _simstep << "\tEnergy consumed = " << jouleStr << " J" << std::endl;
+	std::stringstream logLine;
+#ifdef ENABLE_MPI
+		if(_per_host) {
+			logLine << "Host = " << _processorName << "\t";
+		}
+#endif
+		 logLine << "Simstep = " << _simstep << "\tEnergy consumed = " << jouleStr << " J" << std::endl;
+		 Log::global_log->info() << logLine.str() << std::flush;
 	} else {
 		std::ostringstream outputFilename;
 		outputFilename << _outputprefix << ".tsv";
