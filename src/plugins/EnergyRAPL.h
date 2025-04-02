@@ -195,8 +195,7 @@ public:
 		 <writefrequency>INTEGER</writefrequency>
 		 <!-- Uses info logger instead of a .tsv file if outputprefix is not given -->
 		 <outputprefix>STRING</outputprefix>
-		 <!-- If true, output the energy per host instead of in aggregate
-		 (Only with MPI and if outputprefix is empty, false by default) -->
+		 <!-- If true, output the energy per host instead of in aggregate (Only with MPI) -->
 		 <per-host>BOOL</per-host>
 	   </plugin>
 	   \endcode
