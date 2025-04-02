@@ -141,6 +141,11 @@ private:
 	 */
 	void outputEnergyJoule();
 
+	/**
+	 * @brief Returns the output filename for the corresponding rank or an empty string when logging to stdout instead
+	 */
+	std::string getOutputFilename();
+
 public:
 	/**
 	 * @brief Creates an \b uninitialized instance of the plugin

@@ -76,6 +76,21 @@ int EnergyRAPL::getNumberOfPackages() {
 	return maxPackageIdx + 1;
 }
 
+std::string EnergyRAPL::getOutputFilename() {
+	if (_outputprefix.size() == 0) {
+		return std::string();
+	}
+	std::ostringstream outputFilename;
+	outputFilename << _outputprefix;
+#ifdef ENABLE_MPI
+	if(_per_host) {
+		outputFilename << "_" << _processorName;
+	}
+#endif
+	outputFilename << ".tsv";
+	return outputFilename.str();
+}
+
 void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
 #ifdef ENABLE_MPI
 	int processorNameLength;
@@ -147,15 +162,14 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 		counter.reset();
 	}
 #ifdef ENABLE_MPI
-	if (_thisRank != 0) {
-		return;  // Only output on root rank
+	if (!_thisRankShouldMeasure || (!_per_host && _thisRank != 0)) {
+		return;  // Only output on one rank per host/root rank
 	}
 #endif
 	_simstart = std::chrono::steady_clock::now();
 	if (!_outputprefix.empty()) {
-		std::ostringstream outputFilename;
-		outputFilename << _outputprefix << ".tsv";
-		std::ofstream outputFile(outputFilename.str().c_str());
+		std::string outputFilename = getOutputFilename();
+		std::ofstream outputFile(outputFilename.c_str());
 		outputFile << "milliseconds\tsimstep\tjoule" << std::endl;
 	}
 }
@@ -177,10 +191,6 @@ void EnergyRAPL::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("outputprefix", _outputprefix);
 	#ifdef ENABLE_MPI
 	xmlconfig.getNodeValue("per-host", _per_host);
-	if (_outputprefix.size() > 0 && _per_host) {
-		Log::global_log->error() << "Cannot use per-host energy measurement when writing to a file." << std::endl;
-		exit(1);
-	}
 	#endif
 }
 
@@ -192,6 +202,9 @@ void EnergyRAPL::outputEnergyJoule() {
 		if (_thisRank != 0) {
 			return;  // Only output on root rank
 		}
+	}
+	else if (!_thisRankShouldMeasure) {
+		return; // Only output on one rank per host
 	}
 #endif
 	std::string jouleStr;
@@ -208,9 +221,8 @@ void EnergyRAPL::outputEnergyJoule() {
 		 logLine << "Simstep = " << _simstep << "\tEnergy consumed = " << jouleStr << " J" << std::endl;
 		 Log::global_log->info() << logLine.str() << std::flush;
 	} else {
-		std::ostringstream outputFilename;
-		outputFilename << _outputprefix << ".tsv";
-		std::ofstream outputFile(outputFilename.str().c_str(), std::ios_base::app);
+		std::string outputFilename = getOutputFilename();
+		std::ofstream outputFile(outputFilename.c_str(), std::ios_base::app);
 		int64_t milliseconds =
 			std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - _simstart).count();
 		outputFile << milliseconds << "\t" << _simstep << "\t" << jouleStr << std::endl;
