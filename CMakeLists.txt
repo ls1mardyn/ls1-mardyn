@@ -25,7 +25,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 # generates test target
-ENABLE_TESTING()
+enable_testing()
 
 # modules
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules/)
@@ -69,7 +69,7 @@ include(mamico)
 include(adios2)
 
 # add mardyn
-ADD_SUBDIRECTORY(src)
+add_subdirectory(src)
 
 # add libraries
-ADD_SUBDIRECTORY(libs)
+add_subdirectory(libs)
