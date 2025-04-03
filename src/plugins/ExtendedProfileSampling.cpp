@@ -11,10 +11,10 @@
 #include <limits>
 #include <algorithm>
 #include <map>
+#include <random>
 
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
-#include "utils/Random.h"
 #include "utils/FileUtils.h"
 #include "utils/mardyn_assert.h"
 #include "Simulation.h"
@@ -53,6 +53,10 @@ void ExtendedProfileSampling::init(ParticleContainer* /* particleContainer */, D
     // Always insert molecule of first component
     const unsigned long molID = std::numeric_limits<unsigned long>::max() - static_cast<unsigned long>(domainDecomp->getRank());
     _mTest = Molecule(molID, &(_simulation.getEnsemble()->getComponents()->at(0)));
+
+    // Init random number generator to give numbers between 0 and 1
+    _random_generator = std::mt19937(std::random_device{}());
+    _random_distr = std::uniform_real_distribution<>(0.0f, 1.0f);
 }
 
 void ExtendedProfileSampling::readXML(XMLfileUnits& xmlconfig) {
@@ -595,16 +599,15 @@ void ExtendedProfileSampling::afterForces(ParticleContainer* particleContainer, 
         } else {
             // Random insertion
             // NOTE: This differs from the lattice method as it does not take the local density into account
-            std::unique_ptr<Random> rnd(new Random());
 
             // Share of volume of present rank from whole domain
             const float domainShare = (regionSize[0]*regionSize[1]*regionSize[2])/(_globalBoxLength[0]*_globalBoxLength[1]*_globalBoxLength[2]); 
             const unsigned long nTest = static_cast<unsigned long>(domainShare*nTestGlobal);
 
             for (unsigned long i = 0; i < nTest; i++) {
-                const double rX = regionLowCorner[0] + rnd->rnd()*regionSize[0];
-                const double rY = regionLowCorner[1] + rnd->rnd()*regionSize[1];
-                const double rZ = regionLowCorner[2] + rnd->rnd()*regionSize[2];
+                const double rX = regionLowCorner[0] + _random_distr(_random_generator)*regionSize[0];
+                const double rY = regionLowCorner[1] + _random_distr(_random_generator)*regionSize[1];
+                const double rZ = regionLowCorner[2] + _random_distr(_random_generator)*regionSize[2];
                 const unsigned int index = std::min(_numBinsGlobal, static_cast<unsigned int>(rY/_binwidth));  // Index of bin
                 if (temperature_step_global[index] > 1e-9) {
                     _mTest.setr(0,rX);

@@ -12,6 +12,7 @@ class ExtendedProfileSamplingTest;
 #include <memory>
 #include <vector>
 #include <string>
+#include <random>
 
 #include "PluginBase.h"
 #include "particleContainer/ParticleContainer.h"
@@ -100,6 +101,10 @@ class ExtendedProfileSampling : public PluginBase {
     std::array<std::vector<double>, 27> _hmM_accum;             // Higher moment: M (traceless); cicxcx, cicxcy, cicxcz, cicycx, cicycy, cicycz, ciczcx, ciczcy, ciczcz mit i = x,y,z
 
     std::vector<unsigned long> _countSamples;                   // Number of samples; can vary from bin to bin as some bins could be empty
+
+    // Random number generator
+    std::mt19937 _random_generator;  // Mersenne Twister RNG
+    std::uniform_real_distribution<> _random_distr;
 
     void resizeVectors();  // Change size of accumulation vectors
     void resetVectors();   // Set accumulation vectors to zero
