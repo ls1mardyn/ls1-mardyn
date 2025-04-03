@@ -2,9 +2,9 @@
 
 #include <string>
 
-const std::string MARDYN_VERSION_MAJOR = "1";
-const std::string MARDYN_VERSION_MINOR = "2";
-const std::string MARDYN_VERSION_PATCH = "0";
+const std::string MARDYN_VERSION_MAJOR = "@MarDyn_VERSION_MAJOR@";
+const std::string MARDYN_VERSION_MINOR = "@MarDyn_VERSION_MINOR@";
+const std::string MARDYN_VERSION_PATCH = "@MarDyn_VERSION_PATCH@";
 const std::string MARDYN_VERSION_BRANCH = "_@MarDyn_VERSION_BRANCH@";
 // this is the current git commit id
 const std::string MARDYN_VERSION_HASH = "_@MarDyn_VERSION_HASH@";

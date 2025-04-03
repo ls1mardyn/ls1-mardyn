@@ -4,7 +4,12 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 cmake_minimum_required(VERSION 3.24)
 
-project(MarDyn)
+project(MarDyn
+    VERSION 1.2.0
+    DESCRIPTION "ls1-MarDyn - Large Sca1e MoleculAR DYNamics code"
+    HOMEPAGE_URL "https://www.ls1-mardyn.de/"
+    LANGUAGES C CXX
+    )
 
 
 set(MARDYN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
