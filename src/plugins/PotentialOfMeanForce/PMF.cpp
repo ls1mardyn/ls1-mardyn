@@ -239,7 +239,7 @@ void PMF::endStep(ParticleContainer* pc, DomainDecompBase* dd, Domain* domain, u
 void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long step){
     if(mode == Mode::CreateFTH || mode == Mode::Production) {
         #pragma omp parallel
-        for (auto it = pc->regionIterator(adres_statistics.hy1.low.data(), adres_statistics.hy1.high.data(), ParticleIterator::ALL_CELLS); it.isValid(); ++it) {
+        for (auto it = pc->regionIterator(adres_statistics.cg1.low.data(), adres_statistics.hy1.high.data(), ParticleIterator::ALL_CELLS); it.isValid(); ++it) {
             auto r = it->r(0);
             auto f = fth_interpolation.InterpolateAt(r);
             std::array<double,3> force {f, 0, 0};
@@ -247,7 +247,7 @@ void PMF::siteWiseForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned l
         }
 
         #pragma omp parallel
-        for (auto it = pc->regionIterator(adres_statistics.hy2.low.data(), adres_statistics.hy2.high.data(), ParticleIterator::ALL_CELLS); it.isValid(); ++it) {
+        for (auto it = pc->regionIterator(adres_statistics.hy2.low.data(), adres_statistics.cg2.high.data(), ParticleIterator::ALL_CELLS); it.isValid(); ++it) {
             auto r = it->r(0);
             auto f = fth_interpolation.InterpolateAt(r);
             std::array<double,3> force {f, 0, 0};

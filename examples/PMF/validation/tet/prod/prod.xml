@@ -14,7 +14,7 @@
       <currenttime>0</currenttime>
       <equilibration> <steps>0</steps> </equilibration>
       <production>
-        <steps>10000000</steps>
+        <steps>1000000</steps>
       </production>
     </run>
     
@@ -73,12 +73,13 @@
       <internalBins>200</internalBins>
       <densityBins>1000</densityBins>
       <measureFreq>1</measureFreq>
-      <updateStride>100000</updateStride>
-      <outputFreq>100000</outputFreq>
+      <updateStride>10000</updateStride>
+      <outputFreq>10000</outputFreq>
       <output>true</output>
-      <mode>CreateFTH</mode>
+      <mode>Production</mode>
       <rdfPath>./avg_rdf.txt</rdfPath>
       <epPath>./ep.txt</epPath>
+      <fthPath>./fth.txt</fthPath>
       <doNothing>false</doNothing>
   </plugin>
 	
