@@ -3,6 +3,9 @@ target_sources(MarDyn
         RealAccumVecTest.cpp
         RealCalcVecTest.cpp
         VCP1CLJRMMTest.cpp
-        VectorizedCellProcessorTest.cpp
     )
+
+if(NOT ENABLE_AUTOPAS)
+    target_sources(MarDyn PRIVATE VectorizedCellProcessorTest.cpp)
+endif(NOT ENABLE_AUTOPAS)
 
