@@ -153,9 +153,9 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 				continue;  // (and is DRAM domain)
 			}
 			// add domain
-			Log::global_log->info() << "[" << getPluginName() << "] Adding DRAM domain " << packageBasePath.str()
+			Log::global_log->info() << "[" << getPluginName() << "] Adding DRAM domain " << domainBasePath.str()
 									<< std::endl;
-			_counters.push_back(RAPLCounter(packageBasePath.str()));
+			_counters.push_back(RAPLCounter(domainBasePath.str()));
 		}
 	}
 	for (auto counter : _counters) {
