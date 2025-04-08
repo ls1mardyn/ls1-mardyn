@@ -12,7 +12,7 @@ if(ENABLE_ALLLBL)
     if(ALLLBL_USE_BUNDLED)
         FetchContent_Declare(
                 allfetch
-                URL ${MARDYN_SOURCE_DIR}/libs/ALL_d16796dc.zip
+                URL ${MarDyn_SOURCE_DIR}/libs/ALL_d16796dc.zip
                 URL_HASH MD5=956315034d9d46d4d03741a6669a6dec
         )
     else()
