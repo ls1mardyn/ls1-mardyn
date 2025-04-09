@@ -68,7 +68,7 @@ It detects the less dense space around the dense drop as a cavity.
 											</lattice>
 											<basis>
 													<site>
-															<componentid>0</componentid>
+															<componentid>1</componentid>
 															<coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
 													</site>
 											</basis>
@@ -92,7 +92,7 @@ It detects the less dense space around the dense drop as a cavity.
 											</lattice>
 											<basis>
 													<site>
-															<componentid>0</componentid>
+															<componentid>1</componentid>
 															<coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
 													</site>
 											</basis>
