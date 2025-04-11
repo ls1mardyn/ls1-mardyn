@@ -360,60 +360,51 @@ Interpolation::createGMM(double begin, double end, int samples, double xi, const
 	computeHermite(begin, hermite_f_val, hermite_steps, samples, function);
 }
 
-void Interpolation::realFT(const std::vector<double>& R, unsigned int k_max, double T, std::vector<std::complex<double>>& output) {
-	static const std::complex<double> j{0.0, 1.0};
-	output.resize(k_max+1);
+std::vector<std::complex<double>> Interpolation::realFT(const std::vector<double> &data, unsigned int f_max) {
+    int N = data.size();
+    std::vector<std::complex<double>> freq_domain(f_max, std::complex<double>{0.0, 0.0});
 
-	const auto fac = -j * 2.0 * M_PI / T;
+    const std::complex<double> j {0.0, 1.0};
+    std::vector<std::complex<double>> omegas (f_max, std::complex<double>{0.0, 0.0});
+    for (int k = 0; k < f_max; k++) omegas[k] = std::exp(-j * 2.0 * M_PI * (double) k / (double) N);
+    std::vector<std::complex<double>> active_omegas {omegas}; // contains with power 1
 
-	#if defined(_OPENMP)
-	#pragma omp parallel for
-	#endif
-	for(unsigned long i_w = 0; i_w < k_max+1; i_w++) {
+    // n = 0
+    for (int k = 0; k < f_max; k++) freq_domain[k] += data[0];
 
-		std::complex<double> tmp{0.0, 0.0};
-		for(unsigned long i_r = 0; i_r < R.size(); i_r++) {
-			tmp += std::exp(fac * static_cast<double>(i_w) * R[i_r]);
-		}
-		output[i_w] = tmp;
-	}
+    // n = 1...N
+    for (int n = 1; n < N; n++) {
+        const auto r_n = data[n];
+
+        for (int k = 0; k < f_max; k++) freq_domain[k] += r_n * active_omegas[k];
+        for (int k = 0; k < f_max; k++) active_omegas[k] *= omegas[k];
+    }
+
+    return freq_domain;
 }
 
-void Interpolation::ift(const std::vector<std::complex<double>>& F, unsigned int k_max, double T, double begin, double end, int samples, Function& function) {
-	std::vector<double> hermite_f_val;
-	std::vector<double> hermite_steps;
+std::vector<double> Interpolation::irft(const std::vector<std::complex<double>> &freq_domain, int N) {
+    int f_max = freq_domain.size();
+    std::vector<double> data(N, 0.0);
+    std::vector<std::complex<double>> c_data(N, std::complex<double>());
 
-	auto step_width = static_cast<double>((end-begin)/samples);
-	hermite_f_val.resize(samples, 0.0);
-	hermite_steps.resize(samples-1, step_width);
+    const std::complex<double> j {0.0, 1.0};
+    std::vector<std::complex<double>> omegas (f_max, std::complex<double>{0.0, 0.0});
+    for (int k = 0; k < f_max; k++) omegas[k] = std::exp(j * 2.0 * M_PI * (double) k / (double) N);
+    std::vector<std::complex<double>> active_omegas {omegas}; // contains w with power 1
 
-	const auto fac = 2.0 * M_PI / T;
+    // n = 0
+    for (int k = 0; k < f_max; k++) c_data[0] += freq_domain[k];
 
-	#if defined(_OPENMP)
-	#pragma omp parallel for
-	#endif
-	for(unsigned long i_n = 0; i_n < samples; i_n++) {
+    // n = 1...N
+    for (int n = 1; n < N; n++) {
+        for (int k = 0; k < f_max; k++) c_data[n] += freq_domain[k] * active_omegas[k];
+        for (int k = 0; k < f_max; k++) active_omegas[k] *= omegas[k];
+    }
 
-		double tmp = F[0].real();
-		double n = i_n * step_width;
+    for (int n = 0; n < N; n++) {
+        data[n] = c_data[n].real() / N;
+    }
 
-		for(unsigned long k = 1; k <= k_max; k++) {
-			const auto arg = fac * k * n;
-			tmp += 2 * F[k].real() * std::cos(arg);
-			tmp -= 2 * F[k].imag() * std::sin(arg);
-		}
-
-		hermite_f_val[i_n] = tmp;
-	}
-
-	computeHermite(begin, hermite_f_val, hermite_steps, samples, function);
-}
-
-void Interpolation::filterFT(std::vector<std::complex<double>> &F) {
-	/*for(unsigned long i = F.size()/16; i < F.size(); i++) {
-		F[i] = 0;
-	}*/
-	for(unsigned long k = 0; k < F.size(); k++) {
-		F[k] *= std::exp(-0.5 * std::pow(k/8.0, 2.0));
-	}
+    return data;
 }

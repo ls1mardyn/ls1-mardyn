@@ -3,9 +3,9 @@
 	<headerinfo>
 		<time>2.000000000005909e+02</time>
 		<length>
-			<x>3.000000000000000e+01</x> <y>1.000000000000000e+01</y> <z>1.000000000000000e+01</z>
+			<x>2.500000000000000e+01</x> <y>2.500000000000000e+01</y> <z>2.500000000000000e+01</z>
 		</length>
-		<number>256</number>
+		<number>1688</number>
 		<format type="ICRVQD"/>
 	</headerinfo>
 </mardyn>

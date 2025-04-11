@@ -14,7 +14,7 @@
                 <steps>0</steps>
             </equilibration>
             <production>
-                <steps>1000000</steps>
+                <steps>50000000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -23,9 +23,9 @@
         <ensemble type="NVT">
             <temperature unit="reduced" >1</temperature>
             <domain type="box">
-                <lx unit="reduced">30</lx>
-                <ly unit="reduced">10</ly>
-                <lz unit="reduced">10</lz>
+                <lx unit="reduced">25</lx>
+                <ly unit="reduced">25</ly>
+                <lz unit="reduced">25</lz>
             </domain>
             <components>
                 <include query="/components/moleculetype">./components_red.xml</include>
@@ -43,7 +43,7 @@
 
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>30</x> <y>10</y> <z>10</z> </upper>
+                            <upper> <x>25</x> <y>25</y> <z>25</z> </upper>
                         </object>
                     </objectgenerator>
                 </generator>
@@ -84,8 +84,8 @@
 
         <plugin name="IBI">
             <singleRun>true</singleRun>
-            <stepsEquil>5e+4</stepsEquil>
-            <stepsMeasure>5e+3</stepsMeasure>
+            <stepsEquil>1e+5</stepsEquil>
+            <stepsMeasure>1e+5</stepsMeasure>
             <bins>300</bins>
 
             <optimizer>
@@ -94,7 +94,7 @@
             </optimizer>
 
             <convergence>
-                <threshold>0.98</threshold>
+                <threshold>0.99</threshold>
                 <method>integral</method>
                 <stop-method>worse</stop-method>
                 <window-size>5</window-size>

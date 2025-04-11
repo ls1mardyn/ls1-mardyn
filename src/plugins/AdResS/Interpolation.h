@@ -217,36 +217,20 @@ namespace Interpolation {
 	createGMM(double begin, double end, int samples, double xi, const std::vector<double> &centers, Function &function);
 
 	/**
-	 * Transforms a real valued and periodic function f into its spectral space, whilst using limited frequencies.
-	 * @param R container of vectors r_i
-	 * @param k_max highest frequency to analyze for
-	 * @param output buffer to store results
-	 * @param T cycle length
+	 * Transforms a real valued data into its spectral space, whilst using limited frequencies.
+	 * @param data container of data
+	 * @param f_max highest frequency to analyze for
 	 * */
-	[[maybe_unused]] void
-	realFT(const std::vector<double> &R, unsigned int k_max, double T, std::vector<std::complex<double>> &output);
-
-	/**
-	 * Filters out high frequencies from F
-	 * TODO: dummy function at the moment, applies gaussian to low frequencies
-	 * */
-	[[maybe_unused]] void filterFT(std::vector<std::complex<double>> &F);
+	[[maybe_unused]] std::vector<std::complex<double>> realFT(const std::vector<double> &data, unsigned int f_max);
 
 	/**
 	 * Computes the inverse Real FT for the coefficients F.
 	 * This should transform F back into real space f, which is real, periodic and continuous.
-	 * To represent f, it is sampled and then stored as a Hermite Spline
-	 * @param F fourier coefficients
-	 * @param begin start of sampling
-	 * @param end end of sampling
-	 * @param samples number of samples
-	 * @param function buffer to store f
-	 * @param highest frequency of F
-	 * @param T cycle length
+	 * @param freq_domain fourier coefficients
+	 * @param N number of samples
+	 * @returns reconstructed data with N samples
 	 * */
-	[[maybe_unused]] void
-	ift(const std::vector<std::complex<double>> &F, unsigned int k_max, double T, double begin, double end, int samples,
-		Function &function);
+	[[maybe_unused]] std::vector<double> irft(const std::vector<std::complex<double>> &freq_domain, int N);
 
 	/**
 	 * Finite Elements

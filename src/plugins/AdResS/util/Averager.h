@@ -15,7 +15,7 @@
 template<typename T>
 class Averager {
 public:
-	Averager() : _step_count(0) {	}
+	Averager() : _sum_data(), _step_count(0) {	}
 
 	/**
 	 * Sets the capture size to the size of the container data.
@@ -79,17 +79,6 @@ public:
 	 * */
 	int getStepCount(){
 		return _step_count;
-	}
-
-	std::ostream& writeAverage(std::ostream& out, const T& data){
-		std::string prefix ="//[TimeAverage]: ";
-
-		out << prefix << "data average after: " << _step_count << " steps" << "\n";
-		out << prefix << "data structure with size: " << data.size() << "\n";
-		for (int i = 0; i < data.size(); i++) {
-			out << i << "\t" << data[i] << "\t" << data[i] / (double)_step_count << "\n";
-		}
-		return out;
 	}
 
 private:

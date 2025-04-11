@@ -67,8 +67,8 @@
 #include "plugins/WallPotential.h"
 
 #include "plugins/RDFAtCOM.h"
-#include "plugins/PotentialOfMeanForce/IBI.h"
-#include "plugins/PotentialOfMeanForce/PotentialProfiler.h"
+#include "plugins/IBI/IBI.h"
+#include "plugins/IBI/PotentialProfiler.h"
 
 #ifdef ENABLE_ADIOS2
 #include "io/Adios2Writer.h"

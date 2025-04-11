@@ -23,9 +23,9 @@
         <ensemble type="NVT">
             <temperature unit="reduced" >1</temperature>
             <domain type="box">
-                <lx unit="reduced">30</lx>
-                <ly unit="reduced">10</ly>
-                <lz unit="reduced">10</lz>
+                <lx unit="reduced">25</lx>
+                <ly unit="reduced">25</ly>
+                <lz unit="reduced">25</lz>
             </domain>
             <components>
                 <include query="/components/moleculetype">./components_red.xml</include>
@@ -47,11 +47,11 @@
                                 </site>
                             </basis>
                             <latticeOccupancy>1.</latticeOccupancy>
-                            <density>0.075</density>
+                            <density>0.1</density>
                         </filler>
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>30</x> <y>10</y> <z>10</z> </upper>
+                            <upper> <x>25</x> <y>25</y> <z>25</z> </upper>
                         </object>
                         <velocityAssigner type="MaxwellVelocityDistribution"/>
                     </objectgenerator>
@@ -92,7 +92,7 @@
         </output>
 
 
-        <plugin name="MaxCheck">
+        <!--plugin name="MaxCheck">
             <control>
                 <start>0</start>
                 <frequency>1</frequency>
@@ -114,6 +114,6 @@
                     <Fmax>1e+6</Fmax>
                 </target>
             </targets>
-        </plugin>
+        </plugin-->
     </simulation>
 </mardyn>

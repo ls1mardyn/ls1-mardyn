@@ -139,7 +139,7 @@ AdResSForceAdapter::potForce(Molecule &mi, Molecule &mj, ParaStrm &params, ParaS
         bool isCGI, isCGJ;
         isCGI = compResMap[mi.componentid()] == Resolution::CoarseGrain;
         isCGJ = compResMap[mj.componentid()] == Resolution::CoarseGrain;
-        if (isCGI && isCGJ) return PotForceIBI(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial);
+        if (isCGI && isCGJ) return PotForceIBI(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, false);
         if (isCGI xor isCGJ) throw std::runtime_error("AdResSForceAdapter: CG and FP are interacting.");
 
         return PotForce(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, calculateLJ);
@@ -167,7 +167,7 @@ void AdResSForceAdapter::fluidPot(Molecule &mi, Molecule &mj, ParaStrm &params, 
         bool isCGI, isCGJ;
         isCGI = compResMap[mi.componentid()] == Resolution::CoarseGrain;
         isCGJ = compResMap[mj.componentid()] == Resolution::CoarseGrain;
-        if (isCGI && isCGJ) return FluidPotIBI(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF);
+        if (isCGI && isCGJ) return FluidPotIBI(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, false);
         if (isCGI xor isCGJ) throw std::runtime_error("AdResSForceAdapter: CG and FP are interacting.");
 
         return FluidPot(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, calculateLJ);
@@ -218,6 +218,12 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
                 //both sites must be CG or FP but not mixed
                 if(isCGi ^ isCGj) {
                     double tmp; params >> tmp; params >> tmp; params >> tmp;
+                    continue;
+                }
+                if(isCGi && isCGj) {
+                    double VirialTemp[3];
+                    PotForceIBI(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, VirialTemp, true);
+                    for (int d = 0; d < 3; d++) Virial[d] += VirialTemp[d];
                     continue;
                 }
 
@@ -281,7 +287,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         // Charge-Charge
         for (unsigned sj = 0; sj < ne2; sj++) {
             bool isCGj = sj < nCG_Cj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -304,7 +310,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         // Charge-Quadrupole
         for (unsigned sj = 0; sj < nq2; sj++) {
             bool isCGj = sj < nCG_Qj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -329,7 +335,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         // Charge-Dipole
         for (unsigned sj = 0; sj < nd2; sj++) {
             bool isCGj = sj < nCG_Dj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -360,7 +366,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         // Quadrupole-Charge
         for (unsigned sj = 0; sj < ne2; sj++) {
             bool isCGj = sj < nCG_Cj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -384,7 +390,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         // Quadrupole-Quadrupole -------------------
         for (unsigned int sj = 0; sj < nq2; ++sj) {
             bool isCGj = sj < nCG_Qj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -411,7 +417,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         // Quadrupole-Dipole -----------------------
         for (unsigned int sj = 0; sj < nd2; ++sj) {
             bool isCGj = sj < nCG_Dj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -443,7 +449,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         // Dipole-Charge
         for (unsigned sj = 0; sj < ne2; sj++) {
             bool isCGj = sj < nCG_Cj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -467,7 +473,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         // Dipole-Quadrupole -----------------------
         for (unsigned int sj = 0; sj < nq2; ++sj) {
             bool isCGj = sj < nCG_Qj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -493,7 +499,7 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
         // Dipole-Dipole ---------------------------
         for (unsigned int sj = 0; sj < nd2; ++sj) {
             bool isCGj = sj < nCG_Dj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp; params >> tmp;
                 continue;
             }
@@ -558,6 +564,12 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             const std::array<double,3> dii = mi.ljcenter_d_abs(si);
             bool isCGSiteI = si < nCG_LJ;
             for (unsigned int sj = 0; sj < nc2; ++sj) {
+                if(resolutionJ == Resolution::CoarseGrain && isCGSiteI) {
+                    double VirialTemp[3];
+                    PotForceIBI(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, VirialTemp, true);
+                    for (int d = 0; d < 3; d++) Virial[d] += VirialTemp[d];
+                    continue;
+                }
                 //both sites must be CG or FP but not mixed
                 if((resolutionJ == Resolution::CoarseGrain && !isCGSiteI) ||
                    (resolutionJ == Resolution::FullParticle && isCGSiteI)) {
@@ -901,6 +913,10 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
                     double tmp; params >> tmp; params >> tmp; params >> tmp;
                     continue;
                 }
+                if(isCGi && isCGj) {
+                    FluidPotIBI(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, true);
+                    continue;
+                }
 
                 const std::array<double,3> djj = mj.ljcenter_d_abs(sj);
                 SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
@@ -949,7 +965,7 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
         // Charge-Charge
         for (unsigned sj = 0; sj < ne2; sj++) {
             bool isCGj = sj < nCG_Cj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -965,7 +981,7 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
         // Charge-Quadrupole
         for (unsigned sj = 0; sj < nq2; sj++) {
             bool isCGj = sj < nCG_Qj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -982,7 +998,7 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
         // Charge-Dipole
         for (unsigned sj = 0; sj < nd2; sj++) {
             bool isCGj = sj < nCG_Dj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1005,7 +1021,7 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
         // Quadrupole-Charge
         for (unsigned sj = 0; sj < ne2; sj++) {
             bool isCGj = sj < nCG_Cj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1021,7 +1037,7 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
         // Quadrupole-Quadrupole -------------------
         for (unsigned int sj = 0; sj < nq2; ++sj) {
             bool isCGj = sj < nCG_Qj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1039,7 +1055,7 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
         // Quadrupole-Dipole -----------------------
         for (unsigned int sj = 0; sj < nd2; ++sj) {
             bool isCGj = sj < nCG_Dj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1063,7 +1079,7 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
         // Dipole-Charge
         for (unsigned sj = 0; sj < ne2; sj++) {
             bool isCGj = sj < nCG_Cj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1079,7 +1095,7 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
         // Dipole-Quadrupole -----------------------
         for (unsigned int sj = 0; sj < nq2; ++sj) {
             bool isCGj = sj < nCG_Qj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp;
                 continue;
             }
@@ -1097,7 +1113,7 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
         // Dipole-Dipole ---------------------------
         for (unsigned int sj = 0; sj < nd2; ++sj) {
             bool isCGj = sj < nCG_Dj;
-            if(isCGi ^ isCGj) {
+            if(isCGi || isCGj) {
                 double tmp; params >> tmp; params >> tmp;
                 continue;
             }
@@ -1145,6 +1161,10 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
             const std::array<double,3> dii = mi.ljcenter_d_abs(si);
             bool isCGSiteI = si < nCG_LJ;
             for (unsigned int sj = 0; sj < nc2; ++sj) {
+                if (resolutionJ == Resolution::CoarseGrain && isCGSiteI) {
+                    FluidPotIBI(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, true);
+                    continue;
+                }
                 //both sites must be CG or FP but not mixed
                 if((resolutionJ == Resolution::CoarseGrain && !isCGSiteI) ||
                    (resolutionJ == Resolution::FullParticle && isCGSiteI)) {
@@ -1367,7 +1387,7 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
     mardyn_assert(params.eos());
 }
 
-void AdResSForceAdapter::PotForceIBI(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3]) {
+void AdResSForceAdapter::PotForceIBI(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool ignoreEOS) {
     double f[3];
     double u;
     double drs[3], dr2; // site distance vector & length^2
@@ -1393,11 +1413,11 @@ void AdResSForceAdapter::PotForceIBI(Molecule& mi, Molecule& mj, ParaStrm& param
     for (unsigned short d = 0; d < 3; ++d)
         Virial[d] += 0.5*drm[d] * f[d];
 
-    mardyn_assert(params.eos());
+    if(!ignoreEOS) mardyn_assert(params.eos());
 }
 
 void AdResSForceAdapter::FluidPotIBI(Molecule &mi, Molecule &mj, ParaStrm &params, double *, double &Upot6LJ,
-                                     double &, double &) {
+                                     double &, double &, bool ignoreEOS) {
     double drs[3], dr2; // site distance vector & length^2
 
     const std::array<double,3> dii = mi.ljcenter_d_abs(0);
@@ -1409,5 +1429,5 @@ void AdResSForceAdapter::FluidPotIBI(Molecule &mi, Molecule &mj, ParaStrm &param
     double r = std::sqrt(dr2);
     Upot6LJ += _ibiPot.EvaluateAt(r);
 
-    mardyn_assert(params.eos());
+    if(!ignoreEOS) mardyn_assert(params.eos());
 }

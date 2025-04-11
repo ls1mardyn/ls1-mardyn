@@ -162,9 +162,6 @@ private:
 	/// number of simsteps between each sampling process
 	int _samplingGap;
 
-	/// passed simsteps since last sampling
-	int _samlingCounter;
-
 	/**
 	 * Grid used for certain density sampling techniques
 	 * */

@@ -13,7 +13,7 @@
 #include "plugins/AdResS/util/Region.h"
 #include "plugins/AdResS/features/Resolution.h"
 
-#include "plugins/PotentialOfMeanForce/IBI_Math.h"
+#include "plugins/IBI/IBI_Math.h"
 
 /**
  * Handles all force calculation done in AdResS method.
@@ -177,8 +177,8 @@ private:
 		 * @brief Sets the mesoscopic values in the passed @param domain.
 		 * */
 		void setInDomain(Domain* domain) const {
-			domain->setLocalUpot(_upot6LJ / 6. + _upotXpoles + _myRF + domain->getLocalUpot());
-			domain->setLocalVirial(_virial + 3.0 * _myRF + domain->getLocalVirial());
+			domain->setLocalUpot(_upot6LJ / 6. + _upotXpoles + _myRF);
+			domain->setLocalVirial(_virial + 3.0 * _myRF);
 		}
 	} _mesoValues;
 
@@ -268,9 +268,9 @@ private:
                          double &UpotXpoles, double &MyRF, bool calculateLJ, const Resolution::FPRegion &region,
 						 Resolution::ResolutionType resolutionJ);
 
-    void PotForceIBI(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3]);
+    void PotForceIBI(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool ignoreEOS);
 
-    void FluidPotIBI(Molecule& mi, Molecule& mj, ParaStrm& params, double /*drm*/[3], double& Upot6LJ, double& UpotXpoles, double& MyRF);
+    void FluidPotIBI(Molecule& mi, Molecule& mj, ParaStrm& params, double /*drm*/[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, bool ignoreEOS);
 };
 
 

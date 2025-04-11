@@ -10,13 +10,11 @@ void FTH::Handler::init(const FTH::Config &config) {
 	_config = config;
 	if (!config._enableThermodynamicForce) return;
 	_config._thermodynamicForceSampleCounter = 0;
-	_config._forgetCounter = 0;
 }
 
 void FTH::Handler::computeSingleIteration(ParticleContainer &container, const Resolution::FPRegions_t &regions) {
 	if(!_config._enableThermodynamicForce) return;
 	_config._thermodynamicForceSampleCounter++;
-	_config._forgetCounter++;
 	if(_config._thermodynamicForceSampleCounter % _config._thermodynamicForceSampleGap != 0) return;
 	_config._thermodynamicForceSampleCounter = 0;
 
@@ -122,13 +120,7 @@ void FTH::Grid3DHandler::writeLogs(ParticleContainer &particleContainer, DomainD
 	if (_config._logFTH) writeGridFTH(*_config._grid, "./F_TH_InterpolationFunction", simstep);
 
 	if (!_config._density_sampler->wasSampled()) _config._density_sampler->sampleData(&particleContainer, &domainDecomp, &domain);
-	if(_config._logDensities) _config._density_sampler->writeSample("Density_Grid", simstep);
-
-	if(_config._forgetCounter % 1000000 == 0) {
-		auto* density_sampler = _config._density_sampler;
-		dynamic_cast<AveragedGridSampler*>(density_sampler)->getAverager().reset();
-		_config._forgetCounter = 0;
-	}
+	if(_config._logDensities) _config._density_sampler->writeAverage("Density_Grid", simstep);
 }
 
 void FTH::Grid3DHandler::writeFinalFTH() {
@@ -145,9 +137,8 @@ void FTH::Grid1DHandler::init(const FTH::Config &config) {
 	if (!config._enableThermodynamicForce) return;
 
 	if (_config._fth_file_path.empty()) {
-		mardyn_assert((!_config._density_sampler->is3D() && _config._density_sampler->usesGrid()));
 		auto* domain = _simulation.getDomain();
-		_thermodynamicForce.n = _config._density_sampler->getNumSamplePoints();
+		_thermodynamicForce.n = _bins;
 		_thermodynamicForce.begin = 0.0;
 		_thermodynamicForce.step_width.resize(_thermodynamicForce.n-1, domain->getGlobalLength(0) / static_cast<double>(_thermodynamicForce.n));
 		_thermodynamicForce.gradients.resize(_thermodynamicForce.n, 0.0);
@@ -161,10 +152,9 @@ void FTH::Grid1DHandler::init(const FTH::Config &config) {
 void FTH::Grid1DHandler::updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) {
 	if(!_config._enableThermodynamicForce) return;
 	auto* density_sampler = _config._density_sampler;
-	density_sampler->sampleData(&container, &_simulation.domainDecomposition(), _simulation.getDomain());
 
 	// compute gradient of sampled density
-	auto& density = density_sampler->getSampledData();
+	auto density = density_sampler->getAverage();
 	std::vector<double> d_prime;
 	Interpolation::computeGradient(density, d_prime);
 	Interpolation::Function d_prime_fun;
@@ -195,7 +185,7 @@ bool FTH::Grid1DHandler::checkConvergence() {
 	if(!_config._enableThermodynamicForce) return false;
 	if(_config._convergenceFactor == 0.0) return false;
 
-	auto& densities = _config._density_sampler->getSampledData();
+	auto densities = _config._density_sampler->getAverage();
 	auto it = std::max_element(densities.begin(), densities.end());
 	double rel_error = std::abs(*it - _config._rho0) / _config._rho0;
 	Log::global_log->info() << "[AdResS] F_TH conv rel error: " << rel_error << std::endl;
@@ -236,201 +226,10 @@ void FTH::Grid1DHandler::writeLogs(ParticleContainer &particleContainer, DomainD
 	if(_config._logFTH) _thermodynamicForce.writeTXT(stream.str());
 
 	if(!_config._density_sampler->wasSampled()) _config._density_sampler->sampleData(&particleContainer, &domainDecomp, &domain);
-	if(_config._logDensities) _config._density_sampler->writeSample("Density_Grid1D", simstep);
+	if(_config._logDensities) _config._density_sampler->writeAverage("Density_Grid1D", simstep);
 }
 
 void FTH::Grid1DHandler::writeFinalFTH() {
-	if(!_config._enableThermodynamicForce) return;
-	_thermodynamicForce.writeTXT("./F_TH_Final.txt");
-}
-
-/*****************************************************
- * 				    Function3DHandler
- * **************************************************/
-
-void FTH::Function3DHandler::init(const FTH::Config &config) {
-	Handler::init(config);
-	if (!config._enableThermodynamicForce) return;
-	if (!_config._createThermodynamicForce) return;
-
-	mardyn_assert((_config._density_sampler->is3D() && !_config._density_sampler->usesGrid()));
-	auto* domain = _simulation.getDomain();
-	// TODO set up fth and init to 0
-}
-
-void FTH::Function3DHandler::updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) {
-	if(!_config._enableThermodynamicForce) return;
-	auto* density_sampler = _config._density_sampler;
-	density_sampler->sampleData(&container, &_simulation.domainDecomposition(), _simulation.getDomain());
-
-	// TODO compute gradient
-	// TODO add gradient to fth
-	// TODO set 0 for fth in FP region
-}
-
-bool FTH::Function3DHandler::checkConvergence() {
-	if(!_config._enableThermodynamicForce) return false;
-	if(_config._convergenceFactor == 0.0) return false;
-
-	// TODO find max density
-	//auto it = std::max_element(densities.begin(), densities.end());
-	//double rel_error = std::abs(*it - _config._rho0) / _config._rho0;
-	//Log::global_log->info() << "[AdResS] F_TH conv rel error: " << rel_error << std::endl;
-	//return rel_error <= _config._convergenceThreshold;
-	return false;
-}
-
-void FTH::Function3DHandler::applyForce(ParticleContainer &container, const Resolution::FPRegions_t &regions,
-										const Resolution::CompResMap_t &compResMap) {
-	if(!_config._enableThermodynamicForce) return;
-
-	// TODO add sampling width here
-	std::array<double, 3> low = {2*1,
-								 2*1,
-								 2*1};
-	std::array<double, 3> high= {_simulation.getDomain()->getGlobalLength(0) - 2*1,
-								 _simulation.getDomain()->getGlobalLength(1) - 2*1,
-								 _simulation.getDomain()->getGlobalLength(2) - 2*1};
-	#if defined(_OPENMP)
-	#pragma omp parallel
-	#endif
-	for (auto itM = container.regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
-		if(compResMap[itM->componentid()] == Resolution::FullParticle) continue;
-		if(compResMap[itM->componentid()] == Resolution::CoarseGrain) continue;
-
-		double x = itM->r(0);
-		// TODO compute 3D force here
-		//double F = computeHermiteAt(x, _config._thermodynamicForce);
-		//std::array<double, 3> force = {F, 0.0, 0.0};
-		//itM->Fadd(std::data(force));
-	}
-}
-
-void
-FTH::Function3DHandler::writeLogs(ParticleContainer &particleContainer, DomainDecompBase &domainDecomp, Domain &domain,
-								  unsigned long simstep) {
-	if(!_config._enableThermodynamicForce) return;
-	if(_config._thermodynamicForceSampleCounter != 0) return;
-
-	std::stringstream stream;
-	stream << "./F_TH_InterpolationFunction_" << simstep << ".xml";
-	//if(_config._logFTH) _config._thermodynamicForce.writeXML(stream.str());
-	// TODO write fth
-
-	if (!_config._density_sampler->wasSampled()) _config._density_sampler->sampleData(&particleContainer, &domainDecomp, &domain);
-	if(_config._logDensities) _config._density_sampler->writeSample("./Density_Fun3D", simstep);
-}
-
-void FTH::Function3DHandler::writeFinalFTH() {
-	if(!_config._enableThermodynamicForce) return;
-	//_thermodynamicForce.writeXML("./F_TH_Final.xml");
-	// TODO write fth
-}
-
-/*****************************************************
- * 				    Function1DHandler
- * **************************************************/
-
-void FTH::Function1DHandler::init(const FTH::Config &config) {
-	Handler::init(config);
-	if (!config._enableThermodynamicForce) return;
-
-	if (_config._fth_file_path.empty()) {
-		mardyn_assert((!_config._density_sampler->is3D() && !_config._density_sampler->usesGrid()));
-		auto* domain = _simulation.getDomain();
-		_thermodynamicForce.n = _config._density_sampler->getNumSamplePoints();
-		_thermodynamicForce.begin = 0.0;
-		_thermodynamicForce.step_width.resize(_thermodynamicForce.n-1, domain->getGlobalLength(0) / static_cast<double>(_thermodynamicForce.n));
-		_thermodynamicForce.gradients.resize(_thermodynamicForce.n, 0.0);
-		_thermodynamicForce.function_values.resize(_thermodynamicForce.n, 0.0);
-	}
-	else {
-		_thermodynamicForce.loadTXT(_config._fth_file_path);
-	}
-}
-
-void FTH::Function1DHandler::updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) {
-	if(!_config._enableThermodynamicForce) return;
-	auto* density_sampler = _config._density_sampler;
-	density_sampler->sampleData(&container, &_simulation.domainDecomposition(), _simulation.getDomain());
-
-	// compute gradient of sampled density
-	Interpolation::Function d_fun;
-	density_sampler->getSampleFunction(d_fun);
-	Interpolation::Function d_prime_fun;
-	Interpolation::computeGradient(d_fun, d_prime_fun);
-
-	for(int i = 0; i < d_prime_fun.n; i++) {
-		_thermodynamicForce.function_values[i] -= _config._convergenceFactor * d_prime_fun.function_values[i];
-		_thermodynamicForce.gradients[i] -= _config._convergenceFactor * d_prime_fun.gradients[i];
-	}
-
-	// TODO support multiple regions
-	auto& region = regions.at(0);
-	double x_pos = _thermodynamicForce.begin;
-	double low = region._low[0];
-	double high = region._high[0];
-	for(unsigned long i = 0; i < _thermodynamicForce.n; i++) {
-		if(x_pos >= low && x_pos <= high){
-			_thermodynamicForce.function_values[i] = 0;
-			_thermodynamicForce.gradients[i] = 0;
-		}
-		x_pos += _thermodynamicForce.step_width[i];
-	}
-}
-
-bool FTH::Function1DHandler::checkConvergence() {
-	if(!_config._enableThermodynamicForce) return false;
-	if(_config._convergenceFactor == 0.0) return false;
-
-	// for now, we will just check at the roots of the function and will not use interpolated values
-	Interpolation::Function density;
-	_config._density_sampler->getSampleFunction(density);
-	auto it = std::max_element(density.function_values.begin(), density.function_values.end());
-	double rel_error = std::abs(*it - _config._rho0) / _config._rho0;
-	Log::global_log->info() << "[AdResS] F_TH conv rel error: " << rel_error << std::endl;
-	return rel_error <= _config._convergenceThreshold;
-}
-
-void FTH::Function1DHandler::applyForce(ParticleContainer &container, const Resolution::FPRegions_t &regions,
-										const Resolution::CompResMap_t &compResMap) {
-	if(!_config._enableThermodynamicForce) return;
-
-	std::array<double, 3> low = {2*_thermodynamicForce.step_width[0],
-								 0,
-								 0};
-	std::array<double, 3> high= {_simulation.getDomain()->getGlobalLength(0) - 2*_thermodynamicForce.step_width[0],
-								 _simulation.getDomain()->getGlobalLength(1),
-								 _simulation.getDomain()->getGlobalLength(2)};
-	#if defined(_OPENMP)
-	#pragma omp parallel
-	#endif
-	for (auto itM = container.regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
-		if(compResMap[itM->componentid()] == Resolution::FullParticle) continue;
-		if(compResMap[itM->componentid()] == Resolution::CoarseGrain) continue;
-
-		double x = itM->r(0);
-		double F = computeHermiteAt(x, _thermodynamicForce);
-		std::array<double, 3> force = {F, 0.0, 0.0};
-		itM->Fadd(std::data(force));
-	}
-}
-
-void
-FTH::Function1DHandler::writeLogs(ParticleContainer &particleContainer, DomainDecompBase &domainDecomp, Domain &domain,
-								  unsigned long simstep) {
-	if(!_config._enableThermodynamicForce) return;
-	if(_config._thermodynamicForceSampleCounter != 0) return;
-
-	std::stringstream stream;
-	stream << "./F_TH_InterpolationFunction_" << simstep << ".txt";
-	if(_config._logFTH) _thermodynamicForce.writeTXT(stream.str());
-
-	if (!_config._density_sampler->wasSampled()) _config._density_sampler->sampleData(&particleContainer, &domainDecomp, &domain);
-	if(_config._logDensities) _config._density_sampler->writeSample("./Density_Fun1D", simstep);
-}
-
-void FTH::Function1DHandler::writeFinalFTH() {
 	if(!_config._enableThermodynamicForce) return;
 	_thermodynamicForce.writeTXT("./F_TH_Final.txt");
 }

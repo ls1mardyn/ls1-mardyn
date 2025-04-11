@@ -53,8 +53,6 @@ namespace FTH {
 
 		//! @brief path to an existing fth file
 		std::string _fth_file_path;
-
-		int _forgetCounter;
 	};
 
 	/**
@@ -137,6 +135,8 @@ namespace FTH {
 	 * */
 	class Grid1DHandler : public Handler {
 	public:
+        explicit Grid1DHandler(int bins) : _bins(bins) {}
+
 		void init(const Config &config) override;
 
 		void updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) override;
@@ -152,50 +152,8 @@ namespace FTH {
 	private:
 		//! @brief Thermodynamic force used to correct the density difference created by plain AdResS
 		Interpolation::Function _thermodynamicForce;
-	};
-
-	/**
-	 * Computes FTH for a density sampler, that uses a 3D function
-	 * */
-	class Function3DHandler : public Handler {
-	public:
-		void init(const Config &config) override;
-
-		void updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) override;
-
-		bool checkConvergence() override;
-
-		void applyForce(ParticleContainer &container, const Resolution::FPRegions_t &regions, const Resolution::CompResMap_t &compResMap) override;
-
-		void writeLogs(ParticleContainer &particleContainer, DomainDecompBase &domainDecomp, Domain &domain, unsigned long simstep) override;
-
-		void writeFinalFTH() override;
-
-	private:
-		//! @brief Thermodynamic force used to correct the density difference created by plain AdResS
-		Interpolation::Function3D _thermodynamicForce;
-	};
-
-	/**
-	 * Computes FTH for a density sampler, that uses a 1D function
-	 * */
-	class Function1DHandler : public Handler {
-	public:
-		void init(const Config &config) override;
-
-		void updateForce(ParticleContainer &container, const Resolution::FPRegions_t &regions) override;
-
-		bool checkConvergence() override;
-
-		void applyForce(ParticleContainer &container, const Resolution::FPRegions_t &regions, const Resolution::CompResMap_t &compResMap) override;
-
-		void writeLogs(ParticleContainer &particleContainer, DomainDecompBase &domainDecomp, Domain &domain, unsigned long simstep) override;
-
-		void writeFinalFTH() override;
-
-	private:
-		//! @brief Thermodynamic force used to correct the density difference created by plain AdResS
-		Interpolation::Function _thermodynamicForce;
+        //! @brief number of bins of sampling
+        int _bins;
 	};
 };
 #endif //MARDYN_FTH_H

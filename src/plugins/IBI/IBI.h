@@ -13,6 +13,7 @@
 #include "plugins/RDFAtCOM.h"
 #include "IBIPairsHandler.h"
 #include "RDFProfiler.h"
+#include "../ExtraConsole.h"
 
 /**
  * Performs IBI on the current phasespace.
@@ -48,7 +49,7 @@ public:
 private:
     /// Implements U(r)_0 = -T^*ln(g(r)_0)
     void InitializePotentialValues();
-    /// Implements U(r)_{i+1} =U(r)_i - alpha*T^*ln(g(r)_i/g(r)_*)
+    /// Implements U(r)_{i+1} =U(r)_i + alpha*T^*ln(g(r)_i/g(r)_*)
     void AddPotentialCorrection();
     /// Implements F(r) = - d/dr U(r)
     void DerivativeOfPotential();
@@ -140,4 +141,10 @@ private:
 
     /// handles the update step
     std::unique_ptr<IBIOptimizer> optimizer;
+
+    /// external logging
+    std::unique_ptr<Terminal::PlotLogger<double>> extLog_conv;
+    std::unique_ptr<Terminal::PlotLogger<double>> extLog_force;
+    std::unique_ptr<Terminal::PlotLogger<double>> extLog_pot;
+    std::unique_ptr<Terminal::PlotLogger<double>> extLog_rdf;
 };

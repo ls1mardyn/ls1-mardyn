@@ -12,19 +12,61 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 
+void SamplerBase::checkReset(unsigned long simstep) {
+    if (shouldReset(simstep)) _averager.reset();
+}
+
+void SamplerBase::writeAverage(const std::string &filename, int simstep) {
+    auto avg = getAverage();
+    const auto& sum_counts = _averager.getSumData();
+
+    std::stringstream ss;
+    ss << filename << "_" << simstep << ".txt";
+    std::ofstream avg_file(ss.str());
+
+    std::string prefix ="//[TimeAverage]: ";
+    avg_file << prefix << "data average after: " << _averager.getStepCount() << " steps" << "\n";
+    avg_file << prefix << "data structure with size: " << avg.size() << "\n";
+
+    for (int i = 0; i < avg.size(); i++) {
+        avg_file << i << "\t" << sum_counts[i] << "\t" << avg[i] << "\n";
+    }
+
+    avg_file.close();
+}
+
+bool SamplerBase::shouldReset(unsigned long simstep) {
+    if (!_useReset) return false;
+    if (_averager.getStepCount() > 0 && simstep > 0 && simstep % _window == 0) return true;
+    return false;
+}
+
 /*************************************************************
  *						GRID_SAMPLER
  *********************************************************** */
-GridSampler::GridSampler(FTH::grid_t *grid, double rad): _grid(grid), _measure_radius(rad) { }
+GridSampler::GridSampler(int window, bool useReset, FTH::grid_t *grid, double rad): SamplerBase(window, useReset), _grid(grid), _measure_radius(rad) { }
 
 void GridSampler::init(Domain *domain) {
 	unsigned long total_nodes = _grid->getNodes().size();
 	_sampled_data.resize(total_nodes, 0.0);
+    _averager.setDataSize(_sampled_data);
 }
 
 void GridSampler::sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) {
 	sampleAtNodes(pc);
 	_was_sampled = true;
+
+    _averager.averageData(_sampled_data); // _sample_data buffer is now free to use
+    _averager.getAveragedData(_sampled_data);
+
+    //write averages into grid
+    const double sphere_volume = 4.0/3.0 * M_PI * std::pow(_measure_radius, 3);
+    #if defined(_OPENMP)
+    #pragma omp parallel for
+    #endif
+    for(int nidx = 0; nidx < _sampled_data.size(); nidx++){
+        _grid->getNodes()[nidx].data().density = _sampled_data[nidx] / sphere_volume;
+    }
 }
 
 void GridSampler::sampleAtNodes(ParticleContainer* pc){
@@ -84,17 +126,6 @@ void GridSampler::sampleAtNodes(ParticleContainer* pc){
 			}
 		}
 	}
-	//Convert to material density values
-	const double sphere_volume = 4.0/3.0 * M_PI * std::pow(_measure_radius, 3);
-	#if defined(_OPENMP)
-	#pragma omp parallel for
-	#endif
-	for(int nidx = 0; nidx < _sampled_data.size(); nidx++){
-		_grid->getNodes()[nidx].data().particles = static_cast<int>(_sampled_data[nidx]);
-		const auto mat_density = (double)_sampled_data[nidx]/sphere_volume;
-		_sampled_data[nidx] = mat_density;
-		_grid->getNodes()[nidx].data().density = mat_density;
-	}
 }
 
 bool GridSampler::ParticleInsideMeasuringSpace(const std::array<double,3>& nodal_pos, const std::array<double,3>& par_pos) const {
@@ -114,55 +145,17 @@ bool GridSampler::ParticleInsideMeasuringSpace(const std::array<double,3>& nodal
 	return is_inside;
 }
 
-void GridSampler::writeSample(const std::string &filename, int simstep) {
-	std::stringstream ss;
-	ss << filename << "_" << simstep << ".txt";
-    std::ofstream file(ss.str());
-    file << "#Total nodes sampled: " << _sampled_data.size() << "\n";
-    auto& nodes = _grid->getNodes();
+std::vector<double> GridSampler::getAverage() {
+    auto avg = _averager.getAveragedDataCopy();
 
-    for(int i = 0; i < _sampled_data.size(); i++) {
-        auto& pos = nodes[i].getPos();
-        file << i << "\t" << pos[0] << "\t" << pos[1] << "\t" << pos[2] << "\t" << _sampled_data[i] << "\n";
+    const double sphere_volume = 4.0/3.0 * M_PI * std::pow(_measure_radius, 3);
+    #if defined(_OPENMP)
+    #pragma omp parallel for
+    #endif
+    for (int idx = 0; idx < avg.size(); idx++) {
+        avg[idx] /= sphere_volume;
     }
-}
-
-/*************************************************************
- *						AVG_GRID_SAMPLER
- *********************************************************** */
-AveragedGridSampler::AveragedGridSampler(FTH::grid_t *grid, double rad): GridSampler(grid, rad) { }
-
-void AveragedGridSampler::init(Domain *domain) {
-	GridSampler::init(nullptr);
-	_averager.setDataSize(_sampled_data);
-}
-
-void AveragedGridSampler::sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) {
-	GridSampler::sampleData(pc, domainDecomp, domain);
-	_averager.averageData(_sampled_data);
-	_averager.getAveragedData(_sampled_data);
-
-	//write averages into grid
-	#if defined(_OPENMP)
-	#pragma omp parallel for
-	#endif
-	for(int nidx = 0; nidx < _sampled_data.size(); nidx++){
-		_grid->getNodes()[nidx].data().density = _sampled_data[nidx];
-	}
-}
-
-void AveragedGridSampler::writeSample(const std::string &filename, int simstep) {
-	GridSampler::writeSample(filename, simstep);
-
-	std::stringstream ss;
-	ss << "AVG_" << filename << "_" << simstep << ".txt";
-	std::ofstream avg_file(ss.str());
-	_averager.writeAverage(avg_file, _averager.getSumData());
-	avg_file.close();
-}
-
-Averager<std::vector<double>> &AveragedGridSampler::getAverager() {
-	return _averager;
+    return avg;
 }
 
 /*************************************************************
@@ -215,129 +208,95 @@ void ProjectedSampler::loadGlobalMolPos(ParticleContainer *particleContainer, Do
 /*************************************************************
  *						DIR_PROJ_SAMPLER
  *********************************************************** */
-DirectProjectedSampler::DirectProjectedSampler(int dim, double bin_width) : ProjectedSampler(dim), _bins(0), _binWidth(bin_width), _binVolume(0) { }
+DirectProjectedSampler::DirectProjectedSampler(int window, bool useReset, int dim, int bins) : ProjectedSampler(window, useReset, dim), _bins(bins), _binWidth(0), _binVolume(0) { }
 
 void DirectProjectedSampler::init(Domain *domain) {
 	double full_volume = domain->getGlobalLength(0) * domain->getGlobalLength(1) * domain->getGlobalLength(2);
-	_bins = static_cast<unsigned long>(domain->getGlobalLength(_dim) / _binWidth);
+    _binWidth = domain->getGlobalLength(_dim) / _bins;
 	_binVolume = full_volume / domain->getGlobalLength(_dim) * _binWidth;
+
+    _sampled_data.resize(_bins, 0.0);
 }
 
 void DirectProjectedSampler::sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) {
-	_localDensities.clear();
-	_localDensities.resize(_bins, 0.0);
+    ProjectedSampler::loadGlobalMolPos(pc, domainDecomp, domain);
+    std::fill(_sampled_data.begin(), _sampled_data.end(), 0.0);
 
-	_sampled_data.clear();
-	_sampled_data.resize(_bins, 0.0);
-
-	//we first count the molecule counts
-	//only after the global reduction, we divide by bin volume
-	//gather local densities first
 	#if defined(_OPENMP)
-	auto* raw_array = _localDensities.data();
-	#pragma omp parallel reduction(+: raw_array[:_localDensities.size()])
+    #pragma omp declare reduction(vec_double_plus : std::vector<double> : \
+			std::transform(omp_out.begin(), omp_out.end(), omp_in.begin(), omp_out.begin(), std::plus<double>())) \
+			initializer(omp_priv = decltype(omp_orig)(omp_orig.size()))
+	#pragma omp parallel for reduction(vec_double_plus: _sampled_data)
 	#endif
-	for(auto itM = pc->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
-		std::array<double, 3> R = (*itM).r_arr();
-		auto bin_pos = static_cast<unsigned long>(R[_dim] / _binWidth);
+	for(int idx = 0; idx < _global_mol_pos.size(); idx++) {
+		auto bin_pos = static_cast<unsigned long>(_global_mol_pos[idx] / _binWidth);
 		bin_pos = std::clamp(bin_pos, 0UL, _bins-1UL);
-		raw_array[bin_pos] += 1;
+		_sampled_data[bin_pos] += 1.0;
 	}
 
-#if defined(ENABLE_MPI)
-	MPI_Allreduce(_localDensities.data(), _sampled_data.data(), _localDensities.size(), MPI_DOUBLE, MPI_SUM, domainDecomp->getCommunicator());
-#else
-	std::memcpy(_localDensities.data(), _sampled_data.data(), _localDensities.size());
-#endif
-
-	//divide global bins by volume
-	for(int i = 0; i < _sampled_data.size(); i++) {
-		_sampled_data[i] /= _binVolume;
-	}
-
+    _averager.averageData(_sampled_data);
 	_was_sampled = true;
 }
 
-void DirectProjectedSampler::writeSample(const std::string &filename, int simstep) {
-	std::stringstream ss;
-	ss << filename << "_" << simstep << ".txt";
-	std::ofstream file(ss.str());
-	file << "#Total bins sampled: " << _sampled_data.size() << "\n";
+std::vector<double> DirectProjectedSampler::getAverage() {
+    auto avg = _averager.getAveragedDataCopy();
 
-	for(int i = 0; i < _sampled_data.size(); i++) {
-		file << i << "\t" << _sampled_data[i] << "\n";
-	}
+    #if defined(_OPENMP)
+    #pragma omp parallel for
+    #endif
+    for(int i = 0; i < avg.size(); i++) {
+        avg[i] /= _binVolume;
+    }
+    return avg;
 }
 
 /*************************************************************
  *						SMOOTH_PROJ_SAMPLER
  *********************************************************** */
-SmoothedProjectedSampler::SmoothedProjectedSampler(int dim, double bin_width, double smoothing_strength) : DirectProjectedSampler(dim, bin_width), _filterStrength(smoothing_strength) { }
+SmoothedProjectedSampler::SmoothedProjectedSampler(int window, bool useReset, int dim, int bins, double smoothing_strength) : DirectProjectedSampler(window, useReset, dim, bins), _filterStrength(smoothing_strength) { }
 
 void SmoothedProjectedSampler::init(Domain *domain) {
 	DirectProjectedSampler::init(domain);
 	Interpolation::createGaussianMatrix(0.0, domain->getGlobalLength(0), _binWidth, _filterStrength, _smoothingFilter);
 }
 
-void SmoothedProjectedSampler::sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) {
-	DirectProjectedSampler::sampleData(pc, domainDecomp, domain);
-	std::vector<double> buffer = _smoothingFilter * _sampled_data;
-	std::copy(buffer.begin(), buffer.end(), _sampled_data.begin());
+std::vector<double> SmoothedProjectedSampler::getAverage() {
+    return _smoothingFilter * DirectProjectedSampler::getAverage();
 }
 
 /*************************************************************
  *						FT_PROJ_SAMPLER
  *********************************************************** */
-FTProjectedSampler::FTProjectedSampler(int dim, int frequencies, int samples) : ProjectedSampler(dim), _frequencies(frequencies), _samples(samples), _realFT(), _fun(), _binVolume(0) { }
+FTProjectedSampler::FTProjectedSampler(int window, bool useReset, int dim, int bins, int frequencies) : DirectProjectedSampler(window, useReset, dim, bins), _frequencies(frequencies), _realFT(), _fun(), _binVolume(0) { }
 
 void FTProjectedSampler::init(Domain *domain) {
-	double binWidth = domain->getGlobalLength(_dim) / _samples;
-	_binVolume = domain->getGlobalLength(0) * domain->getGlobalLength(1) * domain->getGlobalLength(2);
-	_binVolume = _binVolume / domain->getGlobalLength(_dim) * binWidth;
+    DirectProjectedSampler::init(domain);
 }
 
-void FTProjectedSampler::sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) {
-	ProjectedSampler::loadGlobalMolPos(pc, domainDecomp, domain);
-	const auto dom_size = domain->getGlobalLength(_dim);
-	Interpolation::realFT(_global_mol_pos, _frequencies, dom_size, _realFT);
-	Interpolation::filterFT(_realFT);
-	Interpolation::ift(_realFT, _frequencies, dom_size, 0, dom_size, _samples, _fun);
-
-	for(unsigned long i = 0; i < _fun.n; i++) {
-		_fun.function_values[i] /= _binVolume;
-	}
-
-	_was_sampled = true;
-}
-
-void FTProjectedSampler::writeSample(const std::string &filename, int simstep) {
-	std::stringstream ss;
-	ss << filename << "_" << simstep << ".txt";
-	_fun.writeTXT(ss.str());
-}
-
-void FTProjectedSampler::getSampleFunction(Interpolation::Function &fun) {
-	fun = _fun;
+std::vector<double> FTProjectedSampler::getAverage() {
+    auto avg = DirectProjectedSampler::getAverage();
+    auto freq = Interpolation::realFT(avg, _frequencies);
+    return Interpolation::irft(freq, static_cast<int>(_bins));
 }
 
 /*************************************************************
  *						GMM_PROJ_SAMPLER
  *********************************************************** */
-GMMProjectedSampler::GMMProjectedSampler(int dim, int samples, double smoothing_strength) : ProjectedSampler(dim), _samples(samples), _filterStrength(smoothing_strength) {}
+GMMProjectedSampler::GMMProjectedSampler(int window, bool useReset, int dim, int bins, double smoothing_strength) : ProjectedSampler(window, useReset, dim), _bins(bins), _filterStrength(smoothing_strength) {}
+
+void GMMProjectedSampler::init(Domain *domain) {
+    _sampled_data.resize(_bins, 0.0);
+}
 
 void GMMProjectedSampler::sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) {
 	ProjectedSampler::loadGlobalMolPos(pc, domainDecomp, domain);
-	Interpolation::createGMM(0.0, domain->getGlobalLength(_dim), _samples, _filterStrength, _global_mol_pos, _fun);
+	Interpolation::createGMM(0.0, domain->getGlobalLength(_dim), _bins, _filterStrength, _global_mol_pos, _fun);
 
+    std::copy(_fun.function_values.begin(), _fun.function_values.end(), _sampled_data.begin());
+    _averager.averageData(_sampled_data);
 	_was_sampled = true;
 }
 
-void GMMProjectedSampler::writeSample(const std::string &filename, int simstep) {
-	std::stringstream ss;
-	ss << filename << "_" << simstep << ".txt";
-	_fun.writeTXT(ss.str());
-}
-
-void GMMProjectedSampler::getSampleFunction(Interpolation::Function &fun) {
-	fun = _fun;
+std::vector<double> GMMProjectedSampler::getAverage() {
+    return _averager.getAveragedDataCopy();
 }

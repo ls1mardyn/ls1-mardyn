@@ -23,7 +23,7 @@ using Log::global_log;
 
 Weight::function_t AdResS::weight = nullptr;
 
-AdResS::AdResS() : _resolutionHandler(), _fthHandler(nullptr), _forceAdapter(nullptr), _density_sampler(nullptr), _grid(nullptr), _samplingGap(100), _samlingCounter(0) {};
+AdResS::AdResS() : _resolutionHandler(), _fthHandler(nullptr), _forceAdapter(nullptr), _density_sampler(nullptr), _grid(nullptr), _samplingGap(100) {};
 
 AdResS::~AdResS() {
 	delete _fthHandler;
@@ -54,6 +54,8 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
     xmlconfig.changecurrentnode("sampler");
     xmlconfig.getNodeValue("@type",sample_type);
 	_samplingGap = xmlconfig.getNodeValue_int("sampleGap", 100);
+    int samplingWindow = xmlconfig.getNodeValue_int("window", 100000);
+    bool useReset = xmlconfig.getNodeValue_bool("useReset", true);
 
     if (sample_type == "Grid") {
         global_log->info() << "[AdResS] Using sampler implementation " << sample_type << std::endl;
@@ -74,46 +76,51 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 					 x, y, z);
 
         double rad = xmlconfig.getNodeValue_double("sampleRadius", 1.0);
-        _density_sampler = new AveragedGridSampler{_grid, rad};
+        _density_sampler = new GridSampler{samplingWindow, useReset, _grid, rad};
 		_fthHandler = new FTH::Grid3DHandler();
-    } else if (sample_type == "Direct") {
+    }
+    else if (sample_type == "Direct") {
 		global_log->info() << "[AdResS] Using sampler implementation " << sample_type << std::endl;
 		int dim = xmlconfig.getNodeValue_int("dim", 0);
-		double bin_width = xmlconfig.getNodeValue_double("binWidth", 1);
+		int bins = xmlconfig.getNodeValue_int("bins", 100);
 
-		_density_sampler = new DirectProjectedSampler(dim, bin_width);
-		_fthHandler = new FTH::Grid1DHandler();
-	} else if (sample_type == "Smooth") {
+		_density_sampler = new DirectProjectedSampler(samplingWindow, useReset, dim, bins);
+		_fthHandler = new FTH::Grid1DHandler(bins);
+	}
+    else if (sample_type == "Smooth") {
 		global_log->info() << "[AdResS] Using sampler implementation " << sample_type << std::endl;
 		int dim = xmlconfig.getNodeValue_int("dim", 0);
-		double bin_width = xmlconfig.getNodeValue_double("binWidth", 1);
+        int bins = xmlconfig.getNodeValue_int("bins", 100);
 		double smoothingStrength = xmlconfig.getNodeValue_double("smoothingStrength", 1);
 
-		_density_sampler = new SmoothedProjectedSampler(dim, bin_width, smoothingStrength);
-		_fthHandler = new FTH::Grid1DHandler();
-	} else if (sample_type == "FT") {
+		_density_sampler = new SmoothedProjectedSampler(samplingWindow, useReset, dim, bins, smoothingStrength);
+		_fthHandler = new FTH::Grid1DHandler(bins);
+	}
+    else if (sample_type == "FT") {
 		global_log->info() << "[AdResS] Using sampler implementation " << sample_type << std::endl;
 		int dim = xmlconfig.getNodeValue_int("dim", 0);
 		int frequencies = xmlconfig.getNodeValue_int("frequencies", 500);
-		int samples = xmlconfig.getNodeValue_int("samples", 100);
+        int bins = xmlconfig.getNodeValue_int("bins", 100);
 
-		_density_sampler = new FTProjectedSampler(dim, frequencies, samples);
-		_fthHandler = new FTH::Function1DHandler();
-	} else if (sample_type == "GMM") {
+		_density_sampler = new FTProjectedSampler(samplingWindow, useReset, dim, bins, frequencies);
+		_fthHandler = new FTH::Grid1DHandler(bins);
+	}
+    else if (sample_type == "GMM") {
 		global_log->info() << "[AdResS] Using sampler implementation " << sample_type << std::endl;
 		int dim = xmlconfig.getNodeValue_int("dim", 0);
-		int samples = xmlconfig.getNodeValue_int("samples", 100);
-		double smoothingStrength = xmlconfig.getNodeValue_double("smoothingStrength", 1);
+        int bins = xmlconfig.getNodeValue_int("bins", 100);
+        double smoothingStrength = xmlconfig.getNodeValue_double("smoothingStrength", 1);
 
-		_density_sampler = new GMMProjectedSampler(dim, samples, smoothingStrength);
-		_fthHandler = new FTH::Function1DHandler();
-	} else {
+		_density_sampler = new GMMProjectedSampler(samplingWindow, useReset, dim, bins, smoothingStrength);
+		_fthHandler = new FTH::Grid1DHandler(bins);
+	}
+    else {
 		global_log->info() << "[AdResS] Falling back to Direct sampler implementation " << std::endl;
 		int dim = 0;
-		double bin_width = 1;
+        int bins = 100;
 
-		_density_sampler = new DirectProjectedSampler(dim, bin_width);
-		_fthHandler = new FTH::Grid1DHandler();
+		_density_sampler = new DirectProjectedSampler(samplingWindow, useReset, dim, bins);
+		_fthHandler = new FTH::Grid1DHandler(bins);
 	}
 	_density_sampler->init(_simulation.getDomain());
 	xmlconfig.changecurrentnode("..");
@@ -212,6 +219,8 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 void AdResS::endStep(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain,
                      unsigned long simstep) {
 	_fthHandler->writeLogs(*particleContainer, *domainDecomp, *domain, simstep);
+
+    _density_sampler->checkReset(simstep);
 }
 
 void AdResS::finish(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp, Domain *domain) {
@@ -222,11 +231,9 @@ std::string AdResS::getPluginName() {
     return {"AdResS"};
 }
 
-void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *dd, unsigned long) {
-	_samlingCounter++;
-	if ((_samlingCounter % _samplingGap) == 0) {
+void AdResS::beforeForces(ParticleContainer *container, DomainDecompBase *dd, unsigned long simstep) {
+	if ((simstep % _samplingGap) == 0) {
 		_density_sampler->sampleData(container, dd, _simulation.getDomain());
-		_samlingCounter = 0;
 	}
     _resolutionHandler.checkResolution(*container);
 	_fthHandler->computeSingleIteration(*container, _resolutionHandler.getRegions());

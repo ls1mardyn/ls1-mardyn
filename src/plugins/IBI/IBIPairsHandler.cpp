@@ -44,8 +44,8 @@ void IBIPairsHandler::finish(){
     }
 
     Domain* domain = _simulation.getDomain();
-    domain->setLocalUpot(upot6LJ / 6. + upotXpoles + myRF + domain->getLocalUpot());
-    domain->setLocalVirial(virial + 3.0 * myRF + domain->getLocalVirial());
+    domain->setLocalUpot(upot6LJ / 6. + upotXpoles + myRF);
+    domain->setLocalVirial(virial + 3.0 * myRF);
 }
 
 double IBIPairsHandler::processPair(Molecule& m1, Molecule& m2, double distance[3], PairType pair, double dd, bool CalculateLJ){

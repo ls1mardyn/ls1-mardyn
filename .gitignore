@@ -34,3 +34,4 @@ src/MarDyn_*.*
 *.out
 *.pvtu
 
+/examples/PMF/

@@ -14,7 +14,7 @@
                 <steps>0</steps>
             </equilibration>
             <production>
-                <steps>100000</steps>
+                <steps>10000000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -23,9 +23,9 @@
         <ensemble type="NVT">
             <temperature unit="reduced" >1</temperature>
             <domain type="box">
-                <lx unit="reduced">30</lx>
-                <ly unit="reduced">10</ly>
-                <lz unit="reduced">10</lz>
+                <lx unit="reduced">25</lx>
+                <ly unit="reduced">25</ly>
+                <lz unit="reduced">25</lz>
             </domain>
             <components>
                 <include query="/components/moleculetype">./components_red.xml</include>
@@ -43,7 +43,7 @@
 
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>30</x> <y>10</y> <z>10</z> </upper>
+                            <upper> <x>25</x> <y>25</y> <z>25</z> </upper>
                         </object>
                     </objectgenerator>
                 </generator>
@@ -82,45 +82,40 @@
             </outputplugin-->
         </output>
 
-        <plugin name="SpatialProfile">
-            <mode>cartesian</mode>
-            <x>100</x>
-            <y>1</y>
-            <z>1</z>
-            <writefrequency>100000</writefrequency>
-            <timesteps>
-                <init>0</init>
-                <recording>1</recording>
-            </timesteps>
-            <outputprefix>ADR-IBI-density_</outputprefix>
-            <profiledComponent>all</profiledComponent>
-            <profiles>
-                <density>true</density>
-                <temperature>false</temperature>
-                <velocity>false</velocity>
-                <velocity3d>false</velocity3d>
-                <virial>false</virial>
-            </profiles>
-        </plugin>
-
         <plugin name="AdResS">
             <weightImpl>near</weightImpl>
-            <sampler type="Direct">
-                <sampleGap>2000000</sampleGap>
+            <sampler type="FT">
+                <sampleGap>1</sampleGap>
+                <window>100000</window>
+                <useReset>true</useReset>
+
                 <dim>0</dim>
-                <binWidth>3.0e-1</binWidth>
+                <bins>1000</bins>
+                <frequencies>8</frequencies>
             </sampler>
+
+            <enableFTH>
+                <logFTH>true</logFTH>
+                <logDensity>true</logDensity>
+                <rho>0.1</rho>
+
+                <createFTH>
+                    <sampleGap>100000</sampleGap> <!-- fth window -->
+                    <threshold>0.01</threshold> <!-- conv criterion -->
+                    <convFactor>0.4</convFactor> <!-- update strength -->
+                </createFTH>
+            </enableFTH>
 
             <fpregions>
                 <region id="1">
                     <lowX>10.0</lowX><lowY>-5.0</lowY><lowZ>-5.0</lowZ>
-                    <highX>20.0</highX><highY>15.0</highY><highZ>15.0</highZ>
+                    <highX>15.0</highX><highY>30.0</highY><highZ>30.0</highZ>
                     <hybridDimX>5.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
 
-            <CG-Force>../../examples/AdResS/Validation/Tetrahedral/force_9.txt</CG-Force>
-            <CG-Pot>../../examples/AdResS/Validation/Tetrahedral/pot_9.txt</CG-Pot>
+            <CG-Force>../../examples/AdResS/Validation/Tetrahedral/force_18.txt</CG-Force>
+            <CG-Pot>../../examples/AdResS/Validation/Tetrahedral/pot_18.txt</CG-Pot>
         </plugin>
     </simulation>
 </mardyn>

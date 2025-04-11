@@ -23,6 +23,12 @@ class Domain;
 
 class SamplerBase {
 public:
+    /**
+     * @param window average window size
+	 * @param useReset should avg be reset
+     * */
+    explicit SamplerBase(int window, bool useReset) : _window(window), _sampled_data(), _was_sampled(false), _averager(), _useReset(useReset) {}
+
 	virtual ~SamplerBase() = default;
 
 	/**
@@ -30,17 +36,12 @@ public:
 	 * */
 	virtual void init(Domain *domain) = 0;
 
-	/**
-	 * Writes the currently stored sample data to the specified file
+    /**
+	 * Writes the currently stored averaged data to the specified file
 	 * @param filename filename
 	 * @param simstep simstep
 	 * */
-	virtual void writeSample(const std::string &filename, int simstep) = 0;
-
-	/**
-	 * Returns a reference to the currently stored sample data
-	 * */
-	std::vector<double>& getSampledData() { return _sampled_data; }
+    void writeAverage(const std::string &filename, int simstep);
 
 	/**
 	 * Samples data and stores in buffer
@@ -48,52 +49,48 @@ public:
 	virtual void sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) = 0;
 
 	/**
-	 * Returns true iff the implementation uses the grid for density computation
-	 * */
-	virtual bool usesGrid() { return false; }
-
-	/**
-	 * Returns true iff the implementation computes a 3d density, else a 1d projection
-	 * */
-	virtual bool is3D() { return false; }
-
-	/**
-	 * If the implementation is NOT 3d and NOT using the grid, then this method provides the output
-	 * @param fun function destination
-	 * */
-	virtual void getSampleFunction(Interpolation::Function& fun) { };
-
-	/**
-	 * If the implementation is 3d and NOT using the grid, then this method provides the output
-	 * @param fun function destination
-	 * */
-	virtual void getSampleFunction(Interpolation::Function3D& fun) { };
-
-	/**
-	 * Returns number of bins if implementation is projected
-	 * */
-	virtual int getNumSamplePoints() { return 0; };
-
-	/**
 	 * Returns true if sampleData was called at least once before
 	 * */
 	[[nodiscard]] bool wasSampled() const { return _was_sampled; }
 
+    /**
+     * Returns the average data
+     * */
+    virtual std::vector<double> getAverage() = 0;
+
+    /**
+     * Performs the reset check
+     * */
+    void checkReset(unsigned long simstep);
+
+    /**
+     * Contains the actual reset logic
+     * */
+    bool shouldReset(unsigned long simstep);
+
 protected:
-	/// sample buffer
+    /// averaging window size
+    int _window;
+	/// sample buffer (containing last instantaneous measurement)
 	std::vector<double> _sampled_data;
 	/// flag whether sampleData was already called at least once
-	bool _was_sampled = false;
+	bool _was_sampled;
+    /// averages data across all sampleData calls
+    Averager<std::vector<double>> _averager;
+    /// should averages be reset after _window samples?
+    bool _useReset;
 };
 
 class GridSampler : public SamplerBase {
 public:
 	/**
 	 * Construct a GridSampler
+	 * @param window average window size
+	 * @param useReset should avg be reset
 	 * @param grid ptr to used grid
 	 * @param rad radius of sphere around each node for measurement
 	 * */
-    GridSampler(FTH::grid_t *grid, double rad);
+    GridSampler(int window, bool useReset, FTH::grid_t *grid, double rad);
 
     /**
      * Do resizing and other stuff
@@ -106,13 +103,9 @@ public:
     void sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) override;
 
     /**
-     * A grid sampler would print all data on every node
-    */
-    void writeSample(const std::string &filename, int simstep) override;
-
-	bool usesGrid() override { return true; }
-
-	bool is3D() override { return true; }
+     * Returns average of grid
+     * */
+    std::vector<double> getAverage() override;
 
 protected:
 	/**
@@ -132,39 +125,6 @@ protected:
 	double _measure_radius;
 };
 
-class AveragedGridSampler : public GridSampler {
-public:
-	/**
-	 * Construct an AveragedGridSampler
-	 * @param grid ptr to used grid
-	 * @param rad radius of sphere around each node for measurement
-	 * */
-    AveragedGridSampler(FTH::grid_t *grid, double rad);
-
-	/**
-	 * Returns a mutable reference to the averager
-	 * */
-    Averager<std::vector<double>>& getAverager();
-
-	/**
-     * Do resizing and other stuff
-    */
-	void init(Domain *domain) override;
-
-	/**
-	 * Populates sample buffer. Calls super class sampleData and uses results for averaging
-	 * */
-    void sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) override;
-
-	/**
-     * A grid sampler would print all data on every node
-    */
-    void writeSample(const std::string &filename, int simstep) override;
-protected:
-	/// averages data across all sampleData calls
-	Averager<std::vector<double>> _averager;
-};
-
 /**
  * Projects all molecular positions down to the selected dimension and performs density sampling on that
  * */
@@ -172,9 +132,11 @@ class ProjectedSampler : public SamplerBase {
 public:
 	/**
 	 * Creates a projection sampler, that projects to the selected dimension
+	 * @param window average window size
+	 * @param useReset should avg be reset
 	 * @param dim dimension
 	 * */
-	explicit ProjectedSampler(int dim) : _dim(dim) { }
+	explicit ProjectedSampler(int window, bool useReset, int dim) : SamplerBase(window, useReset), _dim(dim) { }
 
 protected:
 	/**
@@ -198,28 +160,25 @@ class DirectProjectedSampler : public ProjectedSampler {
 public:
 	/**
 	 * Creates direct projected sampler
+	 * @param window average window size
+	 * @param useReset should avg be reset
 	 * @param dim projection dimension
 	 * @param bin_width width of each bin
 	 * */
-	DirectProjectedSampler(int dim, double bin_width);
+	DirectProjectedSampler(int window, bool useReset, int dim, int bins);
 
 	// init some fields that need the domain
 	void init(Domain *domain) override;
-
-	// "uses grid" by having bins, will output data in _sampled_data
-	bool usesGrid() override { return true; }
 
 	/**
 	 * Samples all molecules into their bins and stores result in _sampled_data
 	 * */
 	void sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) override;
 
-	/**
-	 * Writes _sampled_data to file
-	 * */
-	void writeSample(const std::string &filename, int simstep) override;
-
-	int getNumSamplePoints() override { return static_cast<int>(_bins); }
+    /**
+     * Returns average of direct samples
+     * */
+    std::vector<double> getAverage() override;
 
 protected:
 	/// number of bins
@@ -228,8 +187,6 @@ protected:
 	double _binWidth;
 	/// volume of each bin
 	double _binVolume;
-	/// MPI buffer - densities of only local rank
-	std::vector<double> _localDensities;
 };
 
 /**
@@ -239,19 +196,21 @@ class SmoothedProjectedSampler : public DirectProjectedSampler {
 public:
 	/**
 	 * Creates smoothed projected sampler
+	 * @param window average window size
+	 * @param useReset should avg be reset
 	 * @param dim projection dimension
 	 * @param bin_width width of each bin
 	 * @param smoothing_strength strength of smoothing kernel
 	 * */
-	SmoothedProjectedSampler(int dim, double bin_width, double smoothing_strength);
+	SmoothedProjectedSampler(int window, bool useReset, int dim, int bins, double smoothing_strength);
 
 	// init some fields that need the domain
 	void init(Domain *domain) override;
 
-	/**
-	 * Calls DirectProjectedSampler::sampleData and smoothes its results
-	 * */
-	void sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) override;
+    /**
+     * Returns smoothed version of direct sampling
+     * */
+    std::vector<double> getAverage() override;
 
 private:
 	/// smoothing kernel
@@ -264,41 +223,29 @@ private:
  * Assumes the domain is a space of dirac delta functions. Everywhere, where a molecule is, a dirac is 1.
  * Uses a real FT to filter out high frequencies.
  * */
-class FTProjectedSampler : public ProjectedSampler {
+class FTProjectedSampler : public DirectProjectedSampler {
 public:
 	/**
 	 * Creates a ft projected sampler
+	 * @param window average window size
+	 * @param useReset should avg be reset
 	 * @param dim projections dimension
+	 * @param bins number of resampling points
 	 * @param frequencies number of considered frequencies
-	 * @param samples number of resampling points
 	 * */
-	FTProjectedSampler(int dim, int frequencies, int samples);
+	FTProjectedSampler(int window, bool useReset, int dim, int bins, int frequencies);
 
 	// init some fields that need the domain
 	void init(Domain *domain) override;
 
-	/**
-	 * Samples density by using real FT filtering
-	 * */
-	void sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) override;
-
-	/**
-	 * Writes _fun to file
-	 * */
-	void writeSample(const std::string &filename, int simstep) override;
-
-	/**
-	 * Writes into fun the current sampled function
-	 * */
-	void getSampleFunction(Interpolation::Function& fun) override;
-
-	int getNumSamplePoints() override { return _samples; }
+    /**
+     * Returns FT filtered average
+     * */
+    std::vector<double> getAverage() override;
 
 private:
 	/// number of discrete frequencies
 	int _frequencies;
-	/// number of samples to resample the ift output
-	int _samples;
 	/// buffer for real FT
 	std::vector<std::complex<double>> _realFT;
 	/// current output function
@@ -314,14 +261,15 @@ class GMMProjectedSampler : public ProjectedSampler {
 public:
 	/**
 	 * Creates a gmm projected sampler
+	 * @param window average window size
+	 * @param useReset should avg be reset
 	 * @param dim projections dimension
-	 * @param samples number of resampling points
+	 * @param bins number of resampling points
 	 * @param smoothing_strength strength of filtering
 	 * */
-	GMMProjectedSampler(int dim, int samples, double smoothing_strength);
+	GMMProjectedSampler(int window, bool useReset, int dim, int bins, double smoothing_strength);
 
-	/// Does nothing
-	void init(Domain *domain) override { }
+	void init(Domain *domain) override;
 
 	/**
 	 * Samples density by using GMM filtering
@@ -329,20 +277,13 @@ public:
 	void sampleData(ParticleContainer *pc, DomainDecompBase *domainDecomp, Domain *domain) override;
 
 	/**
-	 * Writes _fun to file
+	 * Returns GMM filtered average
 	 * */
-	void writeSample(const std::string &filename, int simstep) override;
-
-	/**
-	 * Writes into fun the current sampled function
-	 * */
-	void getSampleFunction(Interpolation::Function& fun) override;
-
-	int getNumSamplePoints() override { return _samples; }
+    std::vector<double> getAverage() override;
 
 private:
 	/// number of samples for resampling
-	int _samples;
+	int _bins;
 	/// strength of filtering
 	double _filterStrength;
 	/// current output function
