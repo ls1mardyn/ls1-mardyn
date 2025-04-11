@@ -76,23 +76,9 @@ int EnergyRAPL::getNumberOfPackages() {
 	return maxPackageIdx + 1;
 }
 
-std::string EnergyRAPL::getOutputFilename() {
-	if (_outputprefix.empty()) {
-		return std::string();
-	}
-	std::ostringstream outputFilename;
-	outputFilename << _outputprefix;
-#ifdef ENABLE_MPI
-	if(_per_host) {
-		outputFilename << "_" << _processorName;
-	}
-#endif
-	outputFilename << ".tsv";
-	return outputFilename.str();
-}
-
 void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
 #ifdef ENABLE_MPI
+	// Determine if the rank should measure for the corresponding node
 	int processorNameLength;
 	MPI_Get_processor_name(_processorName, &processorNameLength);
 	MPI_Comm_rank(MPI_COMM_WORLD, &_thisRank);
@@ -166,10 +152,27 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 		return;  // Only output on one rank per host/root rank
 	}
 #endif
+
+
 	_simstart = std::chrono::steady_clock::now();
+
+	// Determine the output filename
+	std::ostringstream outputFilename;
 	if (!_outputprefix.empty()) {
-		std::string outputFilename = getOutputFilename();
-		std::ofstream outputFile(outputFilename.c_str());
+		outputFilename << _outputprefix;
+#ifdef ENABLE_MPI
+		if(_per_host) {
+			outputFilename << "_" << _processorName;
+		}
+#endif
+		if (_append_timestamp) {
+			outputFilename << "_" << std::chrono::duration_cast<std::chrono::seconds>(_simstart.time_since_epoch()).count();
+		}
+		outputFilename << ".tsv";
+	}
+	_outputFilename = outputFilename.str();
+	if (!_outputFilename.empty()) {
+		std::ofstream outputFile(_outputFilename);
 		outputFile << "milliseconds\tsimstep\tjoule" << std::endl;
 	}
 }
@@ -189,9 +192,10 @@ void EnergyRAPL::endStep(ParticleContainer* particleContainer, DomainDecompBase*
 void EnergyRAPL::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	xmlconfig.getNodeValue("outputprefix", _outputprefix);
-	#ifdef ENABLE_MPI
+	xmlconfig.getNodeValue("append-timestamp", _append_timestamp);
+#ifdef ENABLE_MPI
 	xmlconfig.getNodeValue("per-host", _per_host);
-	#endif
+#endif
 }
 
 void EnergyRAPL::outputEnergyJoule() {
@@ -211,7 +215,7 @@ void EnergyRAPL::outputEnergyJoule() {
 	std::stringstream sstream;
 	sstream << std::fixed << std::setprecision(6) << joule;
 	jouleStr = sstream.str();
-	if (_outputprefix.empty()) {
+	if (_outputFilename.empty()) {
 	std::stringstream logLine;
 #ifdef ENABLE_MPI
 		if(_per_host) {
@@ -221,8 +225,7 @@ void EnergyRAPL::outputEnergyJoule() {
 		 logLine << "Simstep = " << _simstep << "\tEnergy consumed = " << jouleStr << " J" << std::endl;
 		 Log::global_log->info() << logLine.str() << std::flush;
 	} else {
-		std::string outputFilename = getOutputFilename();
-		std::ofstream outputFile(outputFilename.c_str(), std::ios_base::app);
+		std::ofstream outputFile(_outputFilename, std::ios_base::app);
 		int64_t milliseconds =
 			std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - _simstart).count();
 		outputFile << milliseconds << "\t" << _simstep << "\t" << jouleStr << std::endl;
