@@ -77,7 +77,7 @@ int EnergyRAPL::getNumberOfPackages() {
 }
 
 std::string EnergyRAPL::getOutputFilename() {
-	if (_outputprefix.size() == 0) {
+	if (_outputprefix.empty()) {
 		return std::string();
 	}
 	std::ostringstream outputFilename;
