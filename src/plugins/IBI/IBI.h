@@ -147,4 +147,5 @@ private:
     std::unique_ptr<Terminal::PlotLogger<double>> extLog_force;
     std::unique_ptr<Terminal::PlotLogger<double>> extLog_pot;
     std::unique_ptr<Terminal::PlotLogger<double>> extLog_rdf;
+    bool enableExtLog = false;
 };

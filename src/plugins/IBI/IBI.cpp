@@ -63,10 +63,11 @@ void IBI::readXML(XMLfileUnits& xmlfile) {
     }
 
     if (mode_initial_rdf) mode_equilibrate = false;
-    if (mode_single_run) extLog_conv = std::make_unique<Terminal::PlotLogger<double>>("CONV");
-    if (mode_single_run) extLog_force = std::make_unique<Terminal::PlotLogger<double>>("FORCE");
-    if (mode_single_run) extLog_pot = std::make_unique<Terminal::PlotLogger<double>>("POT");
-    if (mode_single_run) extLog_rdf = std::make_unique<Terminal::PlotLogger<double>>("RDF");
+    xmlfile.getNodeValue("useExtLog", enableExtLog);
+    if (mode_single_run && enableExtLog) extLog_conv = std::make_unique<Terminal::PlotLogger<double>>("CONV");
+    if (mode_single_run && enableExtLog) extLog_force = std::make_unique<Terminal::PlotLogger<double>>("FORCE");
+    if (mode_single_run && enableExtLog) extLog_pot = std::make_unique<Terminal::PlotLogger<double>>("POT");
+    if (mode_single_run && enableExtLog) extLog_rdf = std::make_unique<Terminal::PlotLogger<double>>("RDF");
 }
 
 void IBI::init(ParticleContainer* pc, DomainDecompBase* domainDecomp, Domain* domain) {
@@ -151,14 +152,14 @@ void IBI::afterForces(ParticleContainer* pc, DomainDecompBase* dd, unsigned long
                 AddPotentialCorrection();
                 ibi_iteration++;
                 pairs_handler->getPotentialFunction().write(createFilepath("pot"));
-                extLog_pot->set(pairs_handler->getPotentialFunction().GetYValues(), -0.5, 1.5);
+                if (enableExtLog) extLog_pot->set(pairs_handler->getPotentialFunction().GetYValues(), -0.5, 1.5);
                 DerivativeOfPotential();
-                extLog_force->set(pairs_handler->getForceFunction().GetYValues(), -0.5, 1.5);
+                if (enableExtLog) extLog_force->set(pairs_handler->getForceFunction().GetYValues(), -0.5, 1.5);
                 WriteRDF();
 
                 auto conv = ConvergenceCheck(reference_rdf, profiler);
                 Log::global_log->info() << "[PMF] Convergence: target_reached=" << conv.first << " value=" << conv.second << std::endl;
-                extLog_conv->add(conv.second);
+                if (enableExtLog) extLog_conv->add(conv.second);
                 const bool should_stop = ConvergenceCheck.ShouldStop();
                 if (should_stop) {
                     Log::global_log->info() << "[PMF] Convergence: stopping criterion reached. Stopping now." << std::endl;
