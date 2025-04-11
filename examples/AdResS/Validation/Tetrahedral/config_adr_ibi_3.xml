@@ -102,7 +102,7 @@
                 <createFTH>
                     <sampleGap>100000</sampleGap> <!-- fth window -->
                     <threshold>0.01</threshold> <!-- conv criterion -->
-                    <convFactor>0.4</convFactor> <!-- update strength -->
+                    <convFactor>1000.0</convFactor> <!-- update strength -->
                 </createFTH>
             </enableFTH>
 
