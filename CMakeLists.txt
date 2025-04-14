@@ -61,6 +61,8 @@ include(ALL)
 
 # ----- third: include autopas
 include(autopas)
+# include 3-body correction with AutoPas
+include(threebody)
 
 # ----- include mamico
 include(mamico)
