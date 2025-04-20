@@ -150,7 +150,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
 
         if(count == 1) { // sample FTH function
             fthConf._createThermodynamicForce = true;
-            fthConf._thermodynamicForceSampleGap = xmlconfig.getNodeValue_int("enableFTH/createFTH/sampleGap", 200);
+            fthConf._thermodynamicForceSampleGap = xmlconfig.getNodeValue_int("enableFTH/createFTH/sampleGap", samplingWindow);
             fthConf._convergenceThreshold = xmlconfig.getNodeValue_double("enableFTH/createFTH/threshold", 0.02);
             fthConf._convergenceFactor = xmlconfig.getNodeValue_double("enableFTH/createFTH/convFactor", 0.2);
         	fthConf._fth_file_path = xmlconfig.getNodeValue_string("enableFTH/pathFTH", ""); // reload from file and keep refining
@@ -158,7 +158,7 @@ void AdResS::readXML(XMLfileUnits &xmlconfig) {
         else { // use existing FTH function
 			fthConf._fth_file_path = xmlconfig.getNodeValue_string("enableFTH/pathFTH", "");
 			fthConf._logFTH = false;
-            fthConf._thermodynamicForceSampleGap = 200;
+            fthConf._thermodynamicForceSampleGap = samplingWindow;
 			fthConf._createThermodynamicForce = false;
         }
     }

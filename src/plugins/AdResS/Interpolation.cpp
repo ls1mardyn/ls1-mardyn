@@ -72,6 +72,10 @@ void Interpolation::Function::loadTXT(const std::string &filename) {
 		if (file >> s_buf; s_buf != "num_points") throw std::runtime_error("wrong format!");
 		file >> n;
 
+        step_width.resize(n-1, 0.0);
+        gradients.resize(n, 0.0);
+        function_values.resize(n, 0.0);
+
 		while (!file.eof() && file.good()) {
 			file >> s_buf;
 			if (s_buf[0] == '#' || s_buf[0] != 'p') { file.ignore(2048, '\n'); continue; }
