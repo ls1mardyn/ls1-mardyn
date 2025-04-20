@@ -1,0 +1,109 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Run IBI on Equilibrated PS -->
+<mardyn version="20100525" >
+    <refunits type="SI" >
+        <length unit="nm">0.1</length>
+        <mass unit="u">1.0</mass>
+        <energy unit="eV">1.0</energy>
+    </refunits>
+
+    <simulation type="MD" >
+        <run>
+            <currenttime>0</currenttime>
+            <equilibration>
+                <steps>0</steps>
+            </equilibration>
+            <production>
+                <steps>10000000</steps>
+            </production>
+        </run>
+        <integrator type="Leapfrog">
+            <timestep unit="reduced">0.0009118371969</timestep>
+        </integrator>
+        <ensemble type="NVT">
+            <!-- temp in Kelvin -->
+            <temperature unit="reduced" >647.096</temperature>
+            <domain type="box">
+                <lx unit="reduced">80</lx>
+                <ly unit="reduced">40</ly>
+                <lz unit="reduced">40</lz>
+            </domain>
+            <components>
+                <include query="/components/moleculetype">./components.xml</include>
+            </components>
+
+            <phasespacepoint>
+                <generator name="MultiObjectGenerator">
+                    <objectgenerator>
+                        <filler type="ReplicaFiller">
+                            <input type="BinaryReader">
+                                <header>H2O-ADR-IBI-EQ-250k-1.restart.header.xml</header>
+                                <data>H2O-ADR-IBI-EQ-250k-1.restart.dat</data>
+                            </input>
+                        </filler>
+
+                        <object type="Cuboid">
+                            <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
+                            <upper> <x>80</x> <y>40</y> <z>40</z> </upper>
+                        </object>
+                    </objectgenerator>
+                </generator>
+            </phasespacepoint>
+        </ensemble>
+
+        <algorithm>
+            <parallelisation type="DomainDecomposition"/>
+            <datastructure type="LinkedCells">
+                <cellsInCutoffRadius>1</cellsInCutoffRadius>
+                <traversalSelector>c08</traversalSelector>
+            </datastructure>
+            <cutoffs type="CenterOfMass" >
+                <radiusLJ unit="reduced" >10</radiusLJ>
+            </cutoffs>
+            <electrostatic type="ReactionField" >
+                <epsilon>1</epsilon>
+            </electrostatic>
+            <thermostats>
+                <thermostat type="VelocityScaling" componentId="global">
+                    <temperature>647.096</temperature>
+                </thermostat>
+            </thermostats>
+        </algorithm>
+
+        <plugin name="AdResS">
+            <weightImpl>near</weightImpl>
+            <sampler type="FT">
+                <sampleGap>1</sampleGap>
+                <window>100000</window>
+                <useReset>true</useReset>
+
+                <dim>0</dim>
+                <bins>4000</bins>
+                <frequencies>8</frequencies>
+            </sampler>
+
+            <enableFTH>
+                <logFTH>true</logFTH>
+                <logDensity>true</logDensity>
+                <rho>0.01</rho>
+
+                <createFTH>
+                    <sampleGap>100000</sampleGap> <!-- fth window -->
+                    <threshold>0.01</threshold> <!-- conv criterion -->
+                    <convFactor>1000.0</convFactor> <!-- update strength -->
+                </createFTH>
+            </enableFTH>
+
+            <fpregions>
+                <region id="1">
+                    <lowX>30.0</lowX><lowY>-10.0</lowY><lowZ>-10.0</lowZ>
+                    <highX>50.0</highX><highY>50.0</highY><highZ>50.0</highZ>
+                    <hybridDimX>10.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                </region>
+            </fpregions>
+
+            <CG-Force>../../examples/AdResS/Validation/Tetrahedral/force_18.txt</CG-Force>
+            <CG-Pot>../../examples/AdResS/Validation/Tetrahedral/pot_18.txt</CG-Pot>
+        </plugin>
+    </simulation>
+</mardyn>

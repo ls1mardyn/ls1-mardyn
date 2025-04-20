@@ -1,4 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
+<!-- Create Equilibrated PS for base Tetrahedral model -->
 <mardyn version="20100525" >
     <refunits type="SI" >
         <length unit="nm">0.1</length>
@@ -6,31 +7,22 @@
         <energy unit="eV">1.0</energy>
     </refunits>
 
-    <!-- simulation options -->
     <simulation type="MD" >
         <run>
             <currenttime>0</currenttime>
+            <equilibration>
+                <steps>0</steps>
+            </equilibration>
             <production>
-                <steps>25000</steps>
+                <steps>250000</steps>
             </production>
         </run>
-        <integrator type="Langevin">
-            <!-- MD ODE integrator -->
+        <integrator type="Leapfrog">
             <timestep unit="reduced">0.0009118371969</timestep>
-            <friction>0.5</friction>
-            <ActiveRegions>
-                <region>
-                    <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                    <upper> <x>80</x> <y>40</y> <z>40</z> </upper>
-                </region>
-            </ActiveRegions>
         </integrator>
         <ensemble type="NVT">
-            <!-- Target temperature is 1000K -->
-            <!-- real gas closer to ideal gas at higher temperatures but lower pressures -->
-            <temperature unit="reduced" >1000</temperature>
-            <!-- low temp test: 200K -->
-            <!--temperature unit="reduced" >0.961170213</temperature-->
+            <!-- temp in Kelvin -->
+            <temperature unit="reduced" >647.096</temperature>
             <domain type="box">
                 <lx unit="reduced">80</lx>
                 <ly unit="reduced">40</ly>
@@ -52,10 +44,12 @@
                             <basis>
                                 <site>
                                     <componentid>0</componentid>
-                                    <coordinate> <x>.5</x> <y>.5</y> <z>.5</z> </coordinate>
+                                    <coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
                                 </site>
                             </basis>
                             <latticeOccupancy>1.</latticeOccupancy>
+                            <!-- number-density based on 1 ATM and 647.096K -->
+                            <!-- theoretical num-dens is 0.0108..., we are aiming for 1377 molecules, getting 1331 (close enough) -->
                             <density>0.01</density>
                         </filler>
                         <object type="Cuboid">
@@ -75,20 +69,14 @@
                 <traversalSelector>c08</traversalSelector>
             </datastructure>
             <cutoffs type="CenterOfMass" >
-                <radiusLJ unit="reduced" >10.0</radiusLJ>
+                <radiusLJ unit="reduced" >10</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField" >
-                <epsilon>1</epsilon> <!-- TODO: dielectric constant water, for now use vacuum since P is very low -->
+                <epsilon>1</epsilon>
             </electrostatic>
             <thermostats>
-                <thermostat type="TemperatureObserver">
-                    <samples>100</samples>
-                    <ActiveRegions>
-                        <region>
-                            <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>80</x> <y>40</y> <z>40</z> </upper>
-                        </region>
-                    </ActiveRegions>
+                <thermostat type="VelocityScaling" componentId="global">
+                    <temperature>647.096</temperature>
                 </thermostat>
             </thermostats>
         </algorithm>
@@ -96,49 +84,37 @@
         <output>
             <outputplugin name="CheckpointWriter">
                 <type>binary</type>
-                <writefrequency>25000</writefrequency>
-                <outputprefix>Water-Eq-FP</outputprefix>
+                <writefrequency>250000</writefrequency>
+                <outputprefix>H2O-REF-EQ-250k</outputprefix>
             </outputplugin>
+
+            <!--outputplugin name="VTKMoleculeWriter">
+                <outputprefix>vtkOutput</outputprefix>
+                <writefrequency>10000</writefrequency>
+            </outputplugin-->
         </output>
 
-        <!--plugin name="AdResS">
-            <weightImpl>near</weightImpl>
-            <enableFTH>
-                <smoothingFactor>1.0</smoothingFactor>
-                <logFTH>false</logFTH>
-                <logDensity>true</logDensity>
-                <rho>0.1</rho>
-                <createFTH>
-                    <sampleGap>1</sampleGap>
-                    <threshold>0.05</threshold>
-                    <convFactor>1e-3</convFactor>
-                    <sampleBinSize>1.0</sampleBinSize>
-                </createFTH>
-            </enableFTH>
-            <fpregions>
-                <region id="1">
-                    <lowX>35.0</lowX><lowY>0.0</lowY><lowZ>0.0</lowZ>
-                    <highX>45.0</highX><highY>40.0</highY><highZ>40.0</highZ>
-                    <hybridDimX>4.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
-                </region>
-            </fpregions>
-        </plugin-->
 
         <!--plugin name="MaxCheck">
             <control>
                 <start>0</start>
                 <frequency>1</frequency>
-                <stop>100000000</stop>
+                <stop>1000000000</stop>
             </control>
             <range>
                 <inclusive>true</inclusive>
-                <xmin>31</xmin><xmax>49</xmax>
-                <ymin>0</ymin><ymax>40</ymax>
-                <zmin>0</zmin><zmax>40</zmax>
+                <xmin>-5</xmin><ymin>-5</ymin><zmin>-5</zmin>
+                <xmax>35</xmax><ymax>15</ymax><zmax>15</zmax>
             </range>
             <targets>
-                <target cid="2" method="1">
-                    <Fmax>1e+3</Fmax>
+                <target cid="1" method="0">
+                    <Fmax>1e+6</Fmax>
+                </target>
+                <target cid="2" method="2">
+                    <Fmax>1e+6</Fmax>
+                </target>
+                <target cid="3" method="0">
+                    <Fmax>1e+6</Fmax>
                 </target>
             </targets>
         </plugin-->
