@@ -255,7 +255,7 @@ void IBI::DerivativeOfPotential() {
 void IBI::WriteRDF() {
     std::vector<double> avg_rdf;
     profiler.GetRDFTotal(avg_rdf);
-    if (mode_single_run) extLog_rdf->set(avg_rdf);
+    if (enableExtLog && mode_single_run) extLog_rdf->set(avg_rdf);
 
     FunctionPL rdfFunction {};
     rdfFunction.SetXValues(profiler.GetRNodes());
