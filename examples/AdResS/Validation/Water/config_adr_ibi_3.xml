@@ -102,8 +102,8 @@
                 </region>
             </fpregions>
 
-            <CG-Force>../../examples/AdResS/Validation/Tetrahedral/force_18.txt</CG-Force>
-            <CG-Pot>../../examples/AdResS/Validation/Tetrahedral/pot_18.txt</CG-Pot>
+            <CG-Force>../../examples/AdResS/Validation/Water/force_20.txt</CG-Force>
+            <CG-Pot>../../examples/AdResS/Validation/Water/pot_20.txt</CG-Pot>
         </plugin>
     </simulation>
 </mardyn>
