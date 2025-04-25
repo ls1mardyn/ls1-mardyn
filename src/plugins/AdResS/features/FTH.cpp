@@ -104,7 +104,7 @@ void FTH::Grid3DHandler::applyForce(ParticleContainer &container, const Resoluti
 	#endif
 	for (auto itM = container.regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
 		if(compResMap[itM->componentid()] == Resolution::FullParticle) continue;
-		if(compResMap[itM->componentid()] == Resolution::CoarseGrain) continue;
+		//if(compResMap[itM->componentid()] == Resolution::CoarseGrain) continue;
 
 		std::array<double, 3> r = itM->r_arr();
 		std::array<double, 3> force = interpolateGridFTH(*_config._grid, r);
