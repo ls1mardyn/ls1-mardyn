@@ -207,7 +207,7 @@ void FTH::Grid1DHandler::applyForce(ParticleContainer &container, const Resoluti
 	#endif
 	for (auto itM = container.regionIterator(std::data(low), std::data(high), ParticleIterator::ONLY_INNER_AND_BOUNDARY); itM.isValid(); ++itM) {
 		if(compResMap[itM->componentid()] == Resolution::FullParticle) continue;
-		if(compResMap[itM->componentid()] == Resolution::CoarseGrain) continue;
+		//if(compResMap[itM->componentid()] == Resolution::CoarseGrain) continue;
 
 		double x = itM->r(0);
 		double F = computeHermiteAt(x, _thermodynamicForce);
