@@ -29,7 +29,7 @@
                 <lz unit="reduced">40</lz>
             </domain>
             <components>
-                <include query="/components/moleculetype">./components.xml</include>
+                <include query="/components/moleculetype">./comp_model_a.xml</include>
             </components>
 
             <phasespacepoint>
@@ -72,7 +72,7 @@
                 <radiusLJ unit="reduced" >10</radiusLJ>
             </cutoffs>
             <electrostatic type="ReactionField" >
-                <epsilon>1</epsilon>
+                <epsilon>1e+10</epsilon>
             </electrostatic>
             <thermostats>
                 <thermostat type="VelocityScaling" componentId="global">
@@ -88,10 +88,10 @@
                 <outputprefix>H2O-REF-EQ-250k</outputprefix>
             </outputplugin>
 
-            <!--outputplugin name="VTKMoleculeWriter">
+            <outputplugin name="VTKMoleculeWriter">
                 <outputprefix>vtkOutput</outputprefix>
-                <writefrequency>10000</writefrequency>
-            </outputplugin-->
+                <writefrequency>100</writefrequency>
+            </outputplugin>
         </output>
 
 

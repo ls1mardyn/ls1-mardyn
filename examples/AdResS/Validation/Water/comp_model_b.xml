@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- this model is derived from the data provided by: https://doi.org/10.1021/acs.jcim.4c00404 -->
+<components version="20100525">
+    <moleculetype id="1" name="FP_H2O">
+        <site type="LJ126" id="1">
+            <coords><x>0</x><y>0</y><z>0</z>   </coords>
+            <sigma>3.1096</sigma>
+            <epsilon>95.2350</epsilon>
+            <mass>18.01528</mass>
+        </site>
+        <site type="Charge" id="2">
+            <coords><x>0</x><y>0.1522</y><z>0</z>   </coords>
+            <charge>-437.7212</charge>
+        </site>
+        <site type="Charge" id="3">
+            <coords><x>0.7713</x><y>0.5454</y><z>0</z>   </coords>
+            <charge>218.8606</charge>
+        </site>
+        <site type="Charge" id="4">
+            <coords><x>-0.7713</x><y>0.5454</y><z>0</z>   </coords>
+            <charge>218.8606</charge>
+        </site>
+        <momentsofinertia rotaxes="xyz">
+            <Ixx>0.89401500129182</Ixx>
+            <Iyy>1.6797307537884</Iyy>
+            <Izz>2.5737457550802</Izz>
+        </momentsofinertia>
+    </moleculetype>
+</components>
