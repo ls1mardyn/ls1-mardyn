@@ -85,7 +85,7 @@
             <outputplugin name="CheckpointWriter">
                 <type>binary</type>
                 <writefrequency>250000</writefrequency>
-                <outputprefix>H2O-REF-EQ-250k</outputprefix>
+                <outputprefix>H2Oa-REF-EQ-250k</outputprefix>
             </outputplugin>
 
             <!--outputplugin name="VTKMoleculeWriter">

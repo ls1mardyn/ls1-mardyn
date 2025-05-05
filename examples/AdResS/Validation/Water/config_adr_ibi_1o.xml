@@ -29,7 +29,7 @@
                 <lz unit="reduced">40</lz>
             </domain>
             <components>
-                <include query="/components/moleculetype">./components.xml</include>
+                <include query="/components/moleculetype">./comp_spc_o.xml</include>
             </components>
 
             <phasespacepoint>
@@ -37,8 +37,8 @@
                     <objectgenerator>
                         <filler type="ReplicaFiller">
                             <input type="BinaryReader">
-                                <header>H2O-REF-EQ-250k-1.restart.header.xml</header>
-                                <data>H2O-REF-EQ-250k-1.restart.dat</data>
+                                <header>H2Oo-REF-EQ-250k-1.restart.header.xml</header>
+                                <data>H2Oo-REF-EQ-250k-1.restart.dat</data>
                             </input>
                         </filler>
 

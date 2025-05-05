@@ -29,7 +29,7 @@
                 <lz unit="reduced">40</lz>
             </domain>
             <components>
-                <include query="/components/moleculetype">./comp_model_a.xml</include>
+                <include query="/components/moleculetype">./comp_spc_o.xml</include>
             </components>
 
             <phasespacepoint>
@@ -85,7 +85,7 @@
             <outputplugin name="CheckpointWriter">
                 <type>binary</type>
                 <writefrequency>250000</writefrequency>
-                <outputprefix>H2O-REF-EQ-250k</outputprefix>
+                <outputprefix>H2Oo-REF-EQ-250k</outputprefix>
             </outputplugin>
 
             <!--outputplugin name="VTKMoleculeWriter">

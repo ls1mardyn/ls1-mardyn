@@ -14,7 +14,7 @@
                 <steps>0</steps>
             </equilibration>
             <production>
-                <steps>50000000</steps>
+                <steps>10000000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -29,7 +29,7 @@
                 <lz unit="reduced">40</lz>
             </domain>
             <components>
-                <include query="/components/moleculetype">./components.xml</include>
+                <include query="/components/moleculetype">./comp_model_a.xml</include>
             </components>
 
             <phasespacepoint>
@@ -37,8 +37,8 @@
                     <objectgenerator>
                         <filler type="ReplicaFiller">
                             <input type="BinaryReader">
-                                <header>H2O-REF-EQ-250k-1.restart.header.xml</header>
-                                <data>H2O-REF-EQ-250k-1.restart.dat</data>
+                                <header>H2Oa-REF-EQ-250k-1.restart.header.xml</header>
+                                <data>H2Oa-REF-EQ-250k-1.restart.dat</data>
                             </input>
                         </filler>
 
@@ -70,24 +70,35 @@
             </thermostats>
         </algorithm>
 
-        <plugin name="IBI">
-            <singleRun>true</singleRun>
-            <stepsEquil>1e+5</stepsEquil>
-            <stepsMeasure>1e+5</stepsMeasure>
-            <bins>400</bins>
+        <plugin name="AdResS">
+            <weightImpl>near</weightImpl>
+            <sampler type="FT">
+                <sampleGap>1</sampleGap>
+                <window>100000</window>
+                <useReset>true</useReset>
 
-            <optimizer>
-                <type>default</type>
-                <alpha>0.4</alpha>
-            </optimizer>
+                <dim>0</dim>
+                <bins>4000</bins>
+                <frequencies>8</frequencies>
+            </sampler>
 
-            <convergence>
-                <threshold>0.99</threshold>
-                <method>integral</method>
-                <stop-method>worse</stop-method>
-                <window-size>5</window-size>
-                <offset>8</offset>
-            </convergence>
+            <enableFTH>
+                <logFTH>false</logFTH>
+                <logDensity>true</logDensity>
+                <rho>0.01</rho>
+                <pathFTH>../../examples/AdResS/Validation/Water/F_TH_InterpolationFunction_a_0.txt</pathFTH>
+            </enableFTH>
+
+            <fpregions>
+                <region id="1">
+                    <lowX>30.0</lowX><lowY>-10.0</lowY><lowZ>-10.0</lowZ>
+                    <highX>50.0</highX><highY>50.0</highY><highZ>50.0</highZ>
+                    <hybridDimX>10.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                </region>
+            </fpregions>
+
+            <CG-Force>../../examples/AdResS/Validation/Water/force_a_20.txt</CG-Force>
+            <CG-Pot>../../examples/AdResS/Validation/Water/pot_a_20.txt</CG-Pot>
         </plugin>
     </simulation>
 </mardyn>

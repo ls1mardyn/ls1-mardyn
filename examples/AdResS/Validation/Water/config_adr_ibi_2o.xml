@@ -14,7 +14,7 @@
                 <steps>0</steps>
             </equilibration>
             <production>
-                <steps>50000000</steps>
+                <steps>250000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -29,7 +29,7 @@
                 <lz unit="reduced">40</lz>
             </domain>
             <components>
-                <include query="/components/moleculetype">./components.xml</include>
+                <include query="/components/moleculetype">./comp_spc_o.xml</include>
             </components>
 
             <phasespacepoint>
@@ -37,8 +37,8 @@
                     <objectgenerator>
                         <filler type="ReplicaFiller">
                             <input type="BinaryReader">
-                                <header>H2O-REF-EQ-250k-1.restart.header.xml</header>
-                                <data>H2O-REF-EQ-250k-1.restart.dat</data>
+                                <header>H2Oo-REF-EQ-250k-1.restart.header.xml</header>
+                                <data>H2Oo-REF-EQ-250k-1.restart.dat</data>
                             </input>
                         </filler>
 
@@ -70,24 +70,40 @@
             </thermostats>
         </algorithm>
 
-        <plugin name="IBI">
-            <singleRun>true</singleRun>
-            <stepsEquil>1e+5</stepsEquil>
-            <stepsMeasure>1e+5</stepsMeasure>
-            <bins>400</bins>
+        <output>
+            <outputplugin name="CheckpointWriter">
+                <type>binary</type>
+                <writefrequency>250000</writefrequency>
+                <outputprefix>H2Oo-ADR-IBI-EQ-250k</outputprefix>
+            </outputplugin>
 
-            <optimizer>
-                <type>default</type>
-                <alpha>0.4</alpha>
-            </optimizer>
+            <!--outputplugin name="VTKMoleculeWriter">
+                <outputprefix>vtkOutput</outputprefix>
+                <writefrequency>10000</writefrequency>
+            </outputplugin-->
+        </output>
 
-            <convergence>
-                <threshold>0.99</threshold>
-                <method>integral</method>
-                <stop-method>worse</stop-method>
-                <window-size>5</window-size>
-                <offset>8</offset>
-            </convergence>
+        <plugin name="AdResS">
+            <weightImpl>near</weightImpl>
+            <sampler type="Direct">
+                <sampleGap>1</sampleGap>
+                <window>10000</window>
+                <useReset>true</useReset>
+
+                <dim>0</dim>
+                <bins>1000</bins>
+            </sampler>
+
+            <fpregions>
+                <region id="1">
+                    <lowX>30.0</lowX><lowY>-10.0</lowY><lowZ>-10.0</lowZ>
+                    <highX>50.0</highX><highY>50.0</highY><highZ>50.0</highZ>
+                    <hybridDimX>10.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                </region>
+            </fpregions>
+
+            <CG-Force>../../examples/AdResS/Validation/Water/force_o_20.txt</CG-Force>
+            <CG-Pot>../../examples/AdResS/Validation/Water/pot_o_20.txt</CG-Pot>
         </plugin>
     </simulation>
 </mardyn>
