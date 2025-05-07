@@ -97,8 +97,8 @@
                 </region>
             </fpregions>
 
-            <CG-Force>../../examples/AdResS/Validation/Water/force_b_20.txt</CG-Force>
-            <CG-Pot>../../examples/AdResS/Validation/Water/pot_b_20.txt</CG-Pot>
+            <CG-Force>../../examples/AdResS/Validation/Water/force_b_14.txt</CG-Force>
+            <CG-Pot>../../examples/AdResS/Validation/Water/pot_b_14.txt</CG-Pot>
         </plugin>
     </simulation>
 </mardyn>
