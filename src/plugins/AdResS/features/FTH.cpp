@@ -155,6 +155,14 @@ void FTH::Grid1DHandler::updateForce(ParticleContainer &container, const Resolut
 
 	// compute gradient of sampled density
 	auto density = density_sampler->getAverage();
+
+	// symmetrize density values
+	for (int i = 0; i < density.size() / 2; ++i) {
+		const double avg = (density[i] + density[density.size()-1-i]) / 2;
+		density[i] = avg;
+		density[density.size()-1-i] = avg;
+	}
+
 	std::vector<double> d_prime;
 	Interpolation::computeGradient(density, d_prime);
 	Interpolation::Function d_prime_fun;
@@ -178,6 +186,17 @@ void FTH::Grid1DHandler::updateForce(ParticleContainer &container, const Resolut
 			_thermodynamicForce.gradients[i] = 0;
 		}
 		x_pos += _thermodynamicForce.step_width[i];
+	}
+
+	// just to make sure: symmetrize fth values but with opposite sign
+	for (int i = 0; i < _thermodynamicForce.n / 2; i++) {
+		const double avg_fun = (_thermodynamicForce.function_values[i] - _thermodynamicForce.function_values[_thermodynamicForce.n-1-i]) / 2;
+		const double avg_grad = (_thermodynamicForce.gradients[i] - _thermodynamicForce.gradients[_thermodynamicForce.n-1-i]) / 2;
+
+		_thermodynamicForce.function_values[i] = avg_fun;
+		_thermodynamicForce.function_values[_thermodynamicForce.n-1-i] = -avg_fun;
+		_thermodynamicForce.gradients[i] = avg_grad;
+		_thermodynamicForce.gradients[_thermodynamicForce.n-1-i] = -avg_grad;
 	}
 }
 
