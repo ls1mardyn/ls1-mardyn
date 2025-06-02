@@ -14,7 +14,7 @@
                 <steps>0</steps>
             </equilibration>
             <production>
-                <steps>250000</steps>
+                <steps>10000000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -22,14 +22,14 @@
         </integrator>
         <ensemble type="NVT">
             <!-- temp in Kelvin -->
-            <temperature unit="reduced" >647.096</temperature>
+            <temperature unit="reduced" >300</temperature>
             <domain type="box">
                 <lx unit="reduced">80</lx>
                 <ly unit="reduced">40</ly>
                 <lz unit="reduced">40</lz>
             </domain>
             <components>
-                <include query="/components/moleculetype">./comp_spc_o.xml</include>
+                <include query="/components/moleculetype">../comp_spc_o.xml</include>
             </components>
 
             <phasespacepoint>
@@ -65,34 +65,29 @@
             </electrostatic>
             <thermostats>
                 <thermostat type="VelocityScaling" componentId="global">
-                    <temperature>647.096</temperature>
+                    <temperature>300</temperature>
                 </thermostat>
             </thermostats>
         </algorithm>
 
-        <output>
-            <outputplugin name="CheckpointWriter">
-                <type>binary</type>
-                <writefrequency>250000</writefrequency>
-                <outputprefix>H2Oo-ADR-IBI-EQ-250k</outputprefix>
-            </outputplugin>
-
-            <outputplugin name="VTKMoleculeWriter">
-                <outputprefix>vtkOutput</outputprefix>
-                <writefrequency>10000</writefrequency>
-            </outputplugin>
-        </output>
-
         <plugin name="AdResS">
             <weightImpl>near</weightImpl>
-            <sampler type="Direct">
+            <sampler type="FT">
                 <sampleGap>1</sampleGap>
-                <window>10000</window>
+                <window>500000</window>
                 <useReset>true</useReset>
 
                 <dim>0</dim>
-                <bins>1000</bins>
+                <bins>4000</bins>
+                <frequencies>8</frequencies>
             </sampler>
+
+            <enableFTH>
+                <logFTH>false</logFTH>
+                <logDensity>true</logDensity>
+                <rho>0.033</rho>
+                <pathFTH>../../examples/AdResS/Validation/Water/gas-case/F_TH_InterpolationFunction_o_1250000.txt</pathFTH>
+            </enableFTH>
 
             <fpregions>
                 <region id="1">
@@ -102,8 +97,8 @@
                 </region>
             </fpregions>
 
-            <CG-Force>../../examples/AdResS/Validation/Water/force_o_41.txt</CG-Force>
-            <CG-Pot>../../examples/AdResS/Validation/Water/pot_o_41.txt</CG-Pot>
+            <CG-Force>../../examples/AdResS/Validation/Water/gas-case/force_o_41.txt</CG-Force>
+            <CG-Pot>../../examples/AdResS/Validation/Water/gas-case/pot_o_41.txt</CG-Pot>
         </plugin>
     </simulation>
 </mardyn>

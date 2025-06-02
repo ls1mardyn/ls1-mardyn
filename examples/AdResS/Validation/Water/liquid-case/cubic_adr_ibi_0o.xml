@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- Run IBI on Equilibrated PS -->
+<!-- Create Equilibrated PS for base Tetrahedral model -->
 <mardyn version="20100525" >
     <refunits type="SI" >
         <length unit="nm">0.1</length>
@@ -14,7 +14,7 @@
                 <steps>0</steps>
             </equilibration>
             <production>
-                <steps>50000000</steps>
+                <steps>250000</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -22,30 +22,41 @@
         </integrator>
         <ensemble type="NVT">
             <!-- temp in Kelvin -->
-            <temperature unit="reduced" >647.096</temperature>
+            <temperature unit="reduced" >300</temperature>
             <domain type="box">
-                <lx unit="reduced">80</lx>
-                <ly unit="reduced">40</ly>
-                <lz unit="reduced">40</lz>
+                <lx unit="reduced">50</lx>
+                <ly unit="reduced">50</ly>
+                <lz unit="reduced">50</lz>
             </domain>
             <components>
-                <include query="/components/moleculetype">./comp_spc_o.xml</include>
+                <include query="/components/moleculetype">../comp_spc_o.xml</include>
             </components>
 
             <phasespacepoint>
                 <generator name="MultiObjectGenerator">
                     <objectgenerator>
-                        <filler type="ReplicaFiller">
-                            <input type="BinaryReader">
-                                <header>H2Oo-REF-EQ-250k-1.restart.header.xml</header>
-                                <data>H2Oo-REF-EQ-250k-1.restart.dat</data>
-                            </input>
+                        <filler type="GridFiller">
+                            <lattice system="cubic" centering="face">
+                                <vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
+                                <vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
+                                <vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
+                            </lattice>
+                            <basis>
+                                <site>
+                                    <componentid>0</componentid>
+                                    <coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
+                                </site>
+                            </basis>
+                            <latticeOccupancy>1.</latticeOccupancy>
+                            <!-- number-density based on 1 ATM and 647.096K -->
+                            <!-- theoretical num-dens is 0.0108..., we are aiming for 1377 molecules, getting 1331 (close enough) -->
+                            <density>0.033</density>
                         </filler>
-
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>80</x> <y>40</y> <z>40</z> </upper>
+                            <upper> <x>50</x> <y>50</y> <z>50</z> </upper>
                         </object>
+                        <velocityAssigner type="MaxwellVelocityDistribution"/>
                     </objectgenerator>
                 </generator>
             </phasespacepoint>
@@ -65,29 +76,17 @@
             </electrostatic>
             <thermostats>
                 <thermostat type="VelocityScaling" componentId="global">
-                    <temperature>647.096</temperature>
+                    <temperature>300</temperature>
                 </thermostat>
             </thermostats>
         </algorithm>
 
-        <plugin name="IBI">
-            <singleRun>true</singleRun>
-            <stepsEquil>1e+5</stepsEquil>
-            <stepsMeasure>1e+5</stepsMeasure>
-            <bins>400</bins>
-
-            <optimizer>
-                <type>default</type>
-                <alpha>0.4</alpha>
-            </optimizer>
-
-            <convergence>
-                <threshold>0.999</threshold>
-                <method>integral</method>
-                <stop-method>window</stop-method>
-                <window-size>5</window-size>
-                <offset>10</offset>
-            </convergence>
-        </plugin>
+        <output>
+            <outputplugin name="CheckpointWriter">
+                <type>binary</type>
+                <writefrequency>250000</writefrequency>
+                <outputprefix>cubic-H2Oo-REF-EQ-250k</outputprefix>
+            </outputplugin>
+        </output>
     </simulation>
 </mardyn>
