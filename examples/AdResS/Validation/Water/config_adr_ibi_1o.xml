@@ -82,11 +82,11 @@
             </optimizer>
 
             <convergence>
-                <threshold>0.99</threshold>
+                <threshold>0.999</threshold>
                 <method>integral</method>
-                <stop-method>worse</stop-method>
+                <stop-method>window</stop-method>
                 <window-size>5</window-size>
-                <offset>8</offset>
+                <offset>10</offset>
             </convergence>
         </plugin>
     </simulation>

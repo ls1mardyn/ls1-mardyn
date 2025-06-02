@@ -77,10 +77,10 @@
                 <outputprefix>H2Oo-ADR-IBI-EQ-250k</outputprefix>
             </outputplugin>
 
-            <!--outputplugin name="VTKMoleculeWriter">
+            <outputplugin name="VTKMoleculeWriter">
                 <outputprefix>vtkOutput</outputprefix>
                 <writefrequency>10000</writefrequency>
-            </outputplugin-->
+            </outputplugin>
         </output>
 
         <plugin name="AdResS">
@@ -102,8 +102,8 @@
                 </region>
             </fpregions>
 
-            <CG-Force>../../examples/AdResS/Validation/Water/force_o_13.txt</CG-Force>
-            <CG-Pot>../../examples/AdResS/Validation/Water/pot_o_13.txt</CG-Pot>
+            <CG-Force>../../examples/AdResS/Validation/Water/force_o_41.txt</CG-Force>
+            <CG-Pot>../../examples/AdResS/Validation/Water/pot_o_41.txt</CG-Pot>
         </plugin>
     </simulation>
 </mardyn>
