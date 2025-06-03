@@ -92,7 +92,6 @@
                     <threshold>0.01</threshold> <!-- conv criterion -->
                     <convFactor>2000000.0</convFactor> <!-- update strength -->
                 </createFTH>
-                <pathFTH>../../examples/AdResS/Validation/Water/gas-case/F_TH_InterpolationFunction_o_1000000.txt</pathFTH>
             </enableFTH>
 
             <fpregions>
@@ -103,8 +102,8 @@
                 </region>
             </fpregions>
 
-            <CG-Force>../../examples/AdResS/Validation/Water/gas-case/force_o_41.txt</CG-Force>
-            <CG-Pot>../../examples/AdResS/Validation/Water/gas-case/pot_o_41.txt</CG-Pot>
+            <CG-Force>../../examples/AdResS/Validation/Water/gas-case/force_o.txt</CG-Force>
+            <CG-Pot>../../examples/AdResS/Validation/Water/gas-case/pot_o.txt</CG-Pot>
         </plugin>
     </simulation>
 </mardyn>

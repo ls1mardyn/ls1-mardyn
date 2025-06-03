@@ -14,7 +14,7 @@
                 <steps>0</steps>
             </equilibration>
             <production>
-                <steps>250000</steps>
+                <steps>100</steps>
             </production>
         </run>
         <integrator type="Leapfrog">
@@ -24,7 +24,7 @@
             <!-- temp in Kelvin -->
             <temperature unit="reduced" >300</temperature>
             <domain type="box">
-                <lx unit="reduced">80</lx>
+                <lx unit="reduced">640</lx>
                 <ly unit="reduced">40</ly>
                 <lz unit="reduced">40</lz>
             </domain>
@@ -37,14 +37,14 @@
                     <objectgenerator>
                         <filler type="ReplicaFiller">
                             <input type="BinaryReader">
-                                <header>H2Oo-REF-EQ-250k-1.restart.header.xml</header>
-                                <data>H2Oo-REF-EQ-250k-1.restart.dat</data>
+                                <header>long-H2Oo-REF-EQ-250k-1.restart.header.xml</header>
+                                <data>long-H2Oo-REF-EQ-250k-1.restart.dat</data>
                             </input>
                         </filler>
 
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>80</x> <y>40</y> <z>40</z> </upper>
+                            <upper> <x>640</x> <y>40</y> <z>40</z> </upper>
                         </object>
                     </objectgenerator>
                 </generator>
@@ -55,7 +55,7 @@
             <parallelisation type="DomainDecomposition"/>
             <datastructure type="LinkedCells">
                 <cellsInCutoffRadius>1</cellsInCutoffRadius>
-                <traversalSelector>c08</traversalSelector>
+                <traversalSelector>c04</traversalSelector>
             </datastructure>
             <cutoffs type="CenterOfMass" >
                 <radiusLJ unit="reduced" >10</radiusLJ>
@@ -70,40 +70,34 @@
             </thermostats>
         </algorithm>
 
-        <output>
-            <outputplugin name="CheckpointWriter">
-                <type>binary</type>
-                <writefrequency>250000</writefrequency>
-                <outputprefix>H2Oo-ADR-IBI-EQ-250k</outputprefix>
-            </outputplugin>
-
-            <!--outputplugin name="VTKMoleculeWriter">
-                <outputprefix>vtkOutput</outputprefix>
-                <writefrequency>10000</writefrequency>
-            </outputplugin-->
-        </output>
-
         <plugin name="AdResS">
             <weightImpl>near</weightImpl>
-            <sampler type="Direct">
-                <sampleGap>1</sampleGap>
-                <window>10000</window>
+            <sampler type="FT">
+                <sampleGap>500</sampleGap>
+                <window>500000</window>
                 <useReset>true</useReset>
 
                 <dim>0</dim>
-                <bins>1000</bins>
+                <bins>4000</bins>
+                <frequencies>8</frequencies>
             </sampler>
+
+            <enableFTH>
+                <logFTH>false</logFTH>
+                <logDensity>false</logDensity>
+                <rho>0.033</rho>
+            </enableFTH>
 
             <fpregions>
                 <region id="1">
-                    <lowX>30.0</lowX><lowY>-10.0</lowY><lowZ>-10.0</lowZ>
-                    <highX>50.0</highX><highY>50.0</highY><highZ>50.0</highZ>
-                    <hybridDimX>10.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                    <lowX>192.0</lowX><lowY>-10.0</lowY><lowZ>-10.0</lowZ>
+                    <highX>448.0</highX><highY>50.0</highY><highZ>50.0</highZ>
+                    <hybridDimX>128.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
 
-            <CG-Force>../../examples/AdResS/Validation/Water/gas-case/force_o.txt</CG-Force>
-            <CG-Pot>../../examples/AdResS/Validation/Water/gas-case/pot_o.txt</CG-Pot>
+            <CG-Force>../../examples/AdResS/Validation/Water/liquid-case/force_o.txt</CG-Force>
+            <CG-Pot>../../examples/AdResS/Validation/Water/liquid-case/pot_o.txt</CG-Pot>
         </plugin>
     </simulation>
 </mardyn>
