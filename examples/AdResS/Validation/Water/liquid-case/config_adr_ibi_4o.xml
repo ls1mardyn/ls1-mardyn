@@ -86,7 +86,7 @@
                 <logFTH>false</logFTH>
                 <logDensity>true</logDensity>
                 <rho>0.033</rho>
-                <pathFTH>../../examples/AdResS/Validation/Water/gas-case/F_TH_InterpolationFunction_o.txt</pathFTH>
+                <pathFTH>../../examples/AdResS/Validation/Water/liquid-case/F_TH_InterpolationFunction_o.txt</pathFTH>
             </enableFTH>
 
             <fpregions>
@@ -97,8 +97,8 @@
                 </region>
             </fpregions>
 
-            <CG-Force>../../examples/AdResS/Validation/Water/gas-case/force_o.txt</CG-Force>
-            <CG-Pot>../../examples/AdResS/Validation/Water/gas-case/pot_o.txt</CG-Pot>
+            <CG-Force>../../examples/AdResS/Validation/Water/liquid-case/force_o.txt</CG-Force>
+            <CG-Pot>../../examples/AdResS/Validation/Water/liquid-case/pot_o.txt</CG-Pot>
         </plugin>
     </simulation>
 </mardyn>
