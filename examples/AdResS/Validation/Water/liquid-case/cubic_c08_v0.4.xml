@@ -90,9 +90,9 @@
 
             <fpregions>
                 <region id="1">
-                    <lowX>20.0</lowX><lowY>-10.0</lowY><lowZ>-10.0</lowZ>
-                    <highX>30.0</highX><highY>60.0</highY><highZ>60.0</highZ>
-                    <hybridDimX>5</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                    <lowX>25.0</lowX><lowY>-10.0</lowY><lowZ>-10.0</lowZ>
+                    <highX>25.0</highX><highY>60.0</highY><highZ>60.0</highZ>
+                    <hybridDimX>10</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
 
