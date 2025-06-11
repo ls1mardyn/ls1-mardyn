@@ -24,9 +24,9 @@
             <!-- temp in Kelvin -->
             <temperature unit="reduced" >300</temperature>
             <domain type="box">
-                <lx unit="reduced">50</lx>
-                <ly unit="reduced">50</ly>
-                <lz unit="reduced">50</lz>
+                <lx unit="reduced">100</lx>
+                <ly unit="reduced">100</ly>
+                <lz unit="reduced">100</lz>
             </domain>
             <components>
                 <include query="/components/moleculetype">../comp_spc_o.xml</include>
@@ -54,7 +54,7 @@
                         </filler>
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>50</x> <y>50</y> <z>50</z> </upper>
+                            <upper> <x>100</x> <y>100</y> <z>100</z> </upper>
                         </object>
                         <velocityAssigner type="MaxwellVelocityDistribution"/>
                     </objectgenerator>

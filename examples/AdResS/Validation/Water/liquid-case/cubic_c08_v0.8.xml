@@ -24,9 +24,9 @@
             <!-- temp in Kelvin -->
             <temperature unit="reduced" >300</temperature>
             <domain type="box">
-                <lx unit="reduced">50</lx>
-                <ly unit="reduced">50</ly>
-                <lz unit="reduced">50</lz>
+                <lx unit="reduced">100</lx>
+                <ly unit="reduced">100</ly>
+                <lz unit="reduced">100</lz>
             </domain>
             <components>
                 <include query="/components/moleculetype">../comp_spc_o.xml</include>
@@ -44,7 +44,7 @@
 
                         <object type="Cuboid">
                             <lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-                            <upper> <x>50</x> <y>50</y> <z>50</z> </upper>
+                            <upper> <x>100</x> <y>100</y> <z>100</z> </upper>
                         </object>
                     </objectgenerator>
                 </generator>
@@ -90,14 +90,14 @@
 
             <fpregions>
                 <region id="1">
-                    <lowX>15.0</lowX><lowY>-10.0</lowY><lowZ>-10.0</lowZ>
-                    <highX>35.0</highX><highY>60.0</highY><highZ>60.0</highZ>
-                    <hybridDimX>10.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
+                    <lowX>30.0</lowX><lowY>-10.0</lowY><lowZ>-10.0</lowZ>
+                    <highX>70.0</highX><highY>110.0</highY><highZ>110.0</highZ>
+                    <hybridDimX>20.0</hybridDimX><hybridDimY>0.0</hybridDimY><hybridDimZ>0.0</hybridDimZ>
                 </region>
             </fpregions>
 
-            <CG-Force>../../examples/AdResS/Validation/Water/liquid-case/force_o_41.txt</CG-Force>
-            <CG-Pot>../../examples/AdResS/Validation/Water/liquid-case/pot_o_41.txt</CG-Pot>
+            <CG-Force>../../examples/AdResS/Validation/Water/liquid-case/force_o.txt</CG-Force>
+            <CG-Pot>../../examples/AdResS/Validation/Water/liquid-case/pot_o.txt</CG-Pot>
         </plugin>
     </simulation>
 </mardyn>
