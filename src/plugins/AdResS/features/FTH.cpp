@@ -143,6 +143,7 @@ void FTH::Grid1DHandler::init(const FTH::Config &config) {
 		_thermodynamicForce.step_width.resize(_thermodynamicForce.n-1, domain->getGlobalLength(0) / static_cast<double>(_thermodynamicForce.n));
 		_thermodynamicForce.gradients.resize(_thermodynamicForce.n, 0.0);
 		_thermodynamicForce.function_values.resize(_thermodynamicForce.n, 0.0);
+		_thermodynamicForce.uniform = true;
 	}
 	else {
 		_thermodynamicForce.loadTXT(_config._fth_file_path);

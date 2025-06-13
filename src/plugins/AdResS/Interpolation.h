@@ -28,6 +28,8 @@ namespace Interpolation {
 		std::vector<double> function_values;
 		//! @brief samples of f'(x)
 		std::vector<double> gradients;
+		//! @brief are step widths uniform
+		bool uniform;
 
 		//! @brief write this function to file in XML format
 		void writeXML(const std::string &filename) const;
@@ -37,6 +39,9 @@ namespace Interpolation {
 
 		//! @brief load function from file
 		void loadTXT(const std::string &filename);
+
+		//! @brief checks whether step widths are the same
+		void checkUniform();
 	};
 
 	// TODO

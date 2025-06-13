@@ -7,20 +7,14 @@
 
 #include <cmath>
 
-FunctionPL::FunctionPL(double def_low, double def_high): default_value_lower(def_low), default_value_upper(def_high) { }
+FunctionPL::FunctionPL(double def_low, double def_high): default_value_lower(def_low), default_value_upper(def_high), uniform_dx(false), uniform_dx_val(0.0) { }
 
 void FunctionPL::SetXValues(const std::vector<double>& x) {
     x_values.resize(x.size());
     std::copy(x.begin(), x.end(), x_values.begin());
 
 #ifndef NDEBUG
-    bool uniform = true;
-    const auto dx = x[1] - x[0];
-    for (int idx = 1; idx < x.size() - 1; idx++) {
-        const auto delta = x[idx + 1] - x[idx];
-        uniform &= delta >= dx - 1e-15 || delta <= dx + 1e-15;
-    }
-    mardyn_assert(uniform);
+    mardyn_assert(checkUniformity());
 #endif
 }
 
@@ -30,7 +24,7 @@ void FunctionPL::SetYValues(const std::vector<double>& y) {
 }
 
 double FunctionPL::EvaluateAt(double x) {
-    if (x > x_values[x_values.size() - 1]) return default_value_upper;
+    if (x >= x_values[x_values.size() - 1]) return default_value_upper;
     if (x < x_values[0]) return default_value_lower;
 
     //find between which 2 values
@@ -41,6 +35,25 @@ double FunctionPL::EvaluateAt(double x) {
     //interpolate
     const auto fx = LinearInterpolation(idx_lower, idx_upper, x);
     return fx;
+}
+
+double FunctionPL::EvaluateAt(double x, int idx) {
+    if (idx >= x_values.size()) return default_value_upper;
+    if (idx <= 0) return default_value_lower;
+
+    const auto idx_upper = idx;
+    const auto idx_lower = idx_upper -1;
+
+    //interpolate
+    const auto fx = LinearInterpolation(idx_lower, idx_upper, x);
+    return fx;
+}
+
+int FunctionPL::idxOf(double x) {
+    if (x >= x_values[x_values.size() - 1]) return x_values.size();
+    if (x < x_values[0]) return 0;
+
+    return FindUpperNode(x);
 }
 
 FunctionPL FunctionPL::Derivative(double def_low, double def_high) const {
@@ -56,6 +69,10 @@ FunctionPL FunctionPL::Derivative(double def_low, double def_high) const {
     for (int idx = 1; idx < size - 1; idx++) {
         result.y_values[idx] = (y_values[idx + 1] - y_values[idx - 1]) / (2 * (x_values[idx + 1] - x_values[idx - 1]));
     }
+    if (uniform_dx) {
+        result.uniform_dx = true;
+        result.uniform_dx_val = uniform_dx_val;
+    }
     return result;
 }
 
@@ -69,13 +86,18 @@ double FunctionPL::LinearInterpolation(int a, int b, double x) {
 }
 
 int FunctionPL::FindUpperNode(double x) {
-    int i = 0;
-    const auto i_max = x_values.size();
-    while(x > x_values[i]) {
-        i++;
-        if(i == i_max) break;
+    if (uniform_dx) {
+        const int bin = (x - x_values[0]) / uniform_dx_val;
+        return bin + 1;
+    } else {
+        int i = 0;
+        const auto i_max = x_values.size();
+        while(x > x_values[i]) {
+            i++;
+            if(i == i_max) break;
+        }
+        return i;
     }
-    return i;
 }
 
 void FunctionPL::read(const std::string &path) {
@@ -91,6 +113,8 @@ void FunctionPL::read(const std::string &path) {
         y_values.push_back(n2);
     }
     file.close();
+
+    checkUniformity();
 }
 
 void FunctionPL::write(const std::string &path) {
@@ -108,6 +132,20 @@ void FunctionPL::write(const std::string &path) {
         file << x_values[idx] << "\t" << y_values[idx];
     }
     file.close();
+}
+
+bool FunctionPL::checkUniformity() {
+    bool uniform = true;
+    const auto dx = x_values[1] - x_values[0];
+    for (int idx = 1; idx < x_values.size() - 1; idx++) {
+        const auto delta = x_values[idx + 1] - x_values[idx];
+        uniform &= delta >= dx - 1e-10 && delta <= dx + 1e-10;
+    }
+
+    uniform_dx = uniform;
+    uniform_dx_val = dx;
+
+    return uniform;
 }
 
 std::string IBIOptimizer::createFilepath(const std::string &prefix, int step) const {

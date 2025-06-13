@@ -91,6 +91,17 @@ void Interpolation::Function::loadTXT(const std::string &filename) {
 		global_log->error() << "[Interpolation] Failed to load Interpolation function.\n" << e.what() << std::endl;
 		_simulation.exit(-1);
 	}
+
+	checkUniform();
+}
+
+void Interpolation::Function::checkUniform() {
+	const auto val = step_width[0];
+	bool res = true;
+	for(int i = 1; i < n; i++) {
+		res &= step_width[i] == val;
+	}
+	uniform = res;
 }
 
 /**
@@ -160,8 +171,13 @@ static inline double bernstein_3(double t, int k) {
     //get active spline and conv x to t
     int c_step = 0;
     double knot_begin = 0;
-    {
-        double c_pos = x - fun.begin;
+	if (fun.uniform) {
+		const double c_pos = x - fun.begin;
+		c_step = c_pos / fun.step_width[0];
+		knot_begin = c_step * fun.step_width[0];
+	}
+	else {
+        const double c_pos = x - fun.begin;
         while(true) {
             if(c_step >= fun.n - 2) break;
             if(fun.step_width[c_step] + knot_begin > c_pos) break;

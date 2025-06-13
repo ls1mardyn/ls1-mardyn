@@ -236,32 +236,18 @@ AdResSForceAdapter::potForceFullHybrid(Molecule &mi, Molecule &mj, ParaStrm &par
                 double shift6;
                 params >> shift6; // must be 0.0 for full LJ
                 if (calculateLJ) {
-                    if (_useIBIFunctions && isCGi) {
-                        double r = std::sqrt(dr2);
-                        const double Upot = _ibiPot.EvaluateAt(r);
-                        const double F = _ibiForce.EvaluateAt(r);
-                        for (int d = 0; d < 3; d++) f[d] = F * (drs[d] / r) * (1 - wi * wj);
-                        u = Upot * (1 - wi * wj);
+                    PotForceLJ(drs, dr2, eps24, sig2, f, u);
+                    u += shift6;
 
-                        mi.Fljcenteradd(si, f);
-                        mj.Fljcentersub(sj, f);
-                        Upot6LJ += u;
-                        for (unsigned short d = 0; d < 3; ++d)
-                            Virial[d] += 0.5*drm[d] * f[d];
-                    } else {
-                        PotForceLJ(drs, dr2, eps24, sig2, f, u);
-                        u += shift6;
+                    //if mass 0 -> weight inv; if mass > 0 weight
+                    if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; }
+                    else { for (double &d: f) d *= wi * wj; u *= wi * wj; }
 
-                        //if mass 0 -> weight inv; if mass > 0 weight
-                        if(isCGi) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj; }
-                        else { for (double &d: f) d *= wi * wj; u *= wi * wj; }
-
-                        mi.Fljcenteradd(si, f);
-                        mj.Fljcentersub(sj, f);
-                        Upot6LJ += u;
-                        for (unsigned short d = 0; d < 3; ++d)
-                            Virial[d] += 0.5*drm[d] * f[d];
-                    }
+                    mi.Fljcenteradd(si, f);
+                    mj.Fljcentersub(sj, f);
+                    Upot6LJ += u;
+                    for (unsigned short d = 0; d < 3; ++d)
+                        Virial[d] += 0.5*drm[d] * f[d];
                 }
             }
         }
@@ -586,32 +572,18 @@ AdResSForceAdapter::potForceSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
                 double shift6;
                 params >> shift6; // must be 0.0 for full LJ
                 if (calculateLJ) {
-                    if (_useIBIFunctions && isCGSiteI) {
-                        double r = std::sqrt(dr2);
-                        const double Upot = _ibiPot.EvaluateAt(r);
-                        const double F = _ibiForce.EvaluateAt(r);
-                        for (int d = 0; d < 3; d++) f[d] = F * (drs[d] / r) * (1 - wi * wj);
-                        u = Upot * (1 - wi * wj);
+                    PotForceLJ(drs, dr2, eps24, sig2, f, u);
+                    u += shift6;
 
-                        mi.Fljcenteradd(si, f);
-                        mj.Fljcentersub(sj, f);
-                        Upot6LJ += u;
-                        for (unsigned short d = 0; d < 3; ++d)
-                            Virial[d] += 0.5*drm[d] * f[d];
-                    } else {
-                        PotForceLJ(drs, dr2, eps24, sig2, f, u);
-                        u += shift6;
+                    //if mass 0 -> weight inv; if mass > 0 weight
+                    if(isCGSiteI) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj;}
+                    else { for (double &d: f) d *= wi * wj; u *= wi * wj;}
 
-                        //if mass 0 -> weight inv; if mass > 0 weight
-                        if(isCGSiteI) { for (double &d: f) d *= 1 - wi * wj; u *= 1 - wi * wj;}
-                        else { for (double &d: f) d *= wi * wj; u *= wi * wj;}
-
-                        mi.Fljcenteradd(si, f);
-                        mj.Fljcentersub(sj, f);
-                        Upot6LJ += u;
-                        for (unsigned short d = 0; d < 3; ++d)
-                            Virial[d] += 0.5*drm[d] * f[d];
-                    }
+                    mi.Fljcenteradd(si, f);
+                    mj.Fljcentersub(sj, f);
+                    Upot6LJ += u;
+                    for (unsigned short d = 0; d < 3; ++d)
+                        Virial[d] += 0.5*drm[d] * f[d];
                 }
             }
         }
@@ -927,19 +899,11 @@ void AdResSForceAdapter::fluidPotFullHybrid(Molecule &mi, Molecule &mj, ParaStrm
                 double shift6;
                 params >> shift6; // must be 0.0 for full LJ
                 if (calculateLJ) {
-                    if (_useIBIFunctions && isCGi) {
-                        double r = std::sqrt(dr2);
-                        const double Upot = _ibiPot.EvaluateAt(r);
-                        u = Upot * (1 - wi * wj);
-                        Upot6LJ += u;
-                    }
-                    else {
-                        PotForceLJ(drs, dr2, eps24, sig2, f, u);
-                        if(isCGi) { u *= 1 - wi * wj;}
-                        else { u *= wi * wj;}
-                        u += shift6;
-                        Upot6LJ += u;
-                    }
+                    PotForceLJ(drs, dr2, eps24, sig2, f, u);
+                    if(isCGi) { u *= 1 - wi * wj;}
+                    else { u *= wi * wj;}
+                    u += shift6;
+                    Upot6LJ += u;
                 }
             }
         }
@@ -1181,19 +1145,11 @@ AdResSForceAdapter::fluidPotSingleHybrid(Molecule &mi, Molecule &mj, ParaStrm &p
                 double shift6;
                 params >> shift6; // must be 0.0 for full LJ
                 if (calculateLJ) {
-                    if (_useIBIFunctions && isCGSiteI) {
-                        double r = std::sqrt(dr2);
-                        const double Upot = _ibiPot.EvaluateAt(r);
-                        u = Upot * (1 - wi * wj);
-                        Upot6LJ += u;
-                    }
-                    else {
-                        PotForceLJ(drs, dr2, eps24, sig2, f, u);
-                        if(isCGSiteI) { u *= 1 - wi * wj;}
-                        else { u *= wi * wj;}
-                        u += shift6;
-                        Upot6LJ += u;
-                    }
+                    PotForceLJ(drs, dr2, eps24, sig2, f, u);
+                    if(isCGSiteI) { u *= 1 - wi * wj;}
+                    else { u *= wi * wj;}
+                    u += shift6;
+                    Upot6LJ += u;
                 }
             }
         }
@@ -1402,8 +1358,9 @@ void AdResSForceAdapter::PotForceIBI(Molecule& mi, Molecule& mj, ParaStrm& param
     params >> eps24; params >> sig2; params >> shift6;
 
     double r = std::sqrt(dr2);
-    const double Upot = _ibiPot.EvaluateAt(r);
-    const double F = _ibiForce.EvaluateAt(r);
+    const int idx = _ibiPot.idxOf(r);
+    const double Upot = _ibiPot.EvaluateAt(r, idx);
+    const double F = _ibiForce.EvaluateAt(r, idx);
     for (int d = 0; d < 3; d++) f[d] = F * (drs[d] / r);
     u = Upot;
 

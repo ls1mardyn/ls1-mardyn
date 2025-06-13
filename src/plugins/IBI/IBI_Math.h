@@ -26,6 +26,8 @@ public:
     [[nodiscard]] double GetLowerDefault() const { return default_value_lower; }
     [[nodiscard]] double GetUpperDefault() const { return default_value_upper; }
     double EvaluateAt(double x);
+    double EvaluateAt(double x, int idx);
+    int idxOf(double x);
     [[nodiscard]] FunctionPL Derivative(double def_low = 0.0, double def_high = 0.0) const;
 
     template<typename T>
@@ -38,6 +40,8 @@ public:
     /// write to file
     void write(const std::string& path);
 private:
+    /// Checks whether the x values have uniform dx
+    bool checkUniformity();
     /// Interpolates between two points
     double LinearInterpolation(int a, int b, double x);
     /// Returns the index of the next large x node
@@ -50,6 +54,10 @@ private:
     double default_value_lower;
     /// default value upper
     double default_value_upper;
+    /// has uniform x deltas?
+    bool uniform_dx;
+    /// uniform dx value
+    double uniform_dx_val;
 };
 
 class IBIOptimizer {
