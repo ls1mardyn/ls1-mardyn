@@ -92,18 +92,48 @@ private:
 	 * @brief Number of simulation steps between outputs (only output at the end if 0)
 	 */
 	int _writeFrequency = 0;
+
 	/**
 	 * @brief Filename without extension for outputs (output to stdout if empty string)
 	 */
 	std::string _outputprefix;
+
+	/**
+	 * @brief If true, append the timestamp to the filename to avoid overwriting old measurements
+	 */
+	bool _append_timestamp = false;
+
+	/**
+	 * @brief The full output filename for the corresponding rank or an empty string when logging to stdout instead
+	 */
+	std::string _outputFilename;
+
+#ifdef ENABLE_MPI
+	/**
+	 * @brief If true, output measurements per host instead of in aggregate
+	 */
+	bool _per_host = false;
+
+	/**
+	 * @brief If true, the corresponding rank should read RAPL values (true for one per host)
+	 */
+	bool _thisRankShouldMeasure = false;
+
+	/**
+	 * @brief Name of the host for the corresponding MPI rank
+	 */
+	char _processorName[MPI_MAX_PROCESSOR_NAME];
+#endif
 	/**
 	 * @brief Aggregated energy consumption over all \ref _counters
 	 */
 	double _joule;
+
 	/**
 	 * @brief Simulation step (updated by plugin hook)
 	 */
 	unsigned long _simstep;
+
 	/**
 	 * @brief Start time of the simulation (used to compute timestamp in milliseconds)
 	 */
@@ -176,6 +206,10 @@ public:
 		 <writefrequency>INTEGER</writefrequency>
 		 <!-- Uses info logger instead of a .tsv file if outputprefix is not given -->
 		 <outputprefix>STRING</outputprefix>
+		 <!-- If true, include a timestamp in the output filename (Unused if outputprefix is empty) -->
+		 <append-timestamp>BOOL</append-timestamp>
+		 <!-- If true, output the energy per host instead of in aggregate (Only with MPI) -->
+		 <per-host>BOOL</per-host>
 	   </plugin>
 	   \endcode
 	 */

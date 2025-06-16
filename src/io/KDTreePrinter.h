@@ -12,7 +12,7 @@ public:
 	   <outputplugin name="KDTreePrinter">
 	     <writefrequency>INTEGER</writefrequency>
 	     <outputprefix>STRING</outputprefix>
-	     <incremental>INTEGER</incremental>
+	     <incremental>BOOL</incremental>
 	     <appendTimestamp>BOOL</appendTimestamp>
 	   </outputplugin>
 	   \endcode

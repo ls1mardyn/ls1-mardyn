@@ -146,7 +146,9 @@ void Homogeneous::calculateLongRange() {
 		VirialCorr/(3.*globalNumMolecules),
 	};
 	// double uPotCorrPerMol = UpotCorr/globalNumMolecules;
-
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
 	for (auto tempMol = _particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); tempMol.isValid(); ++tempMol) {
 		tempMol->Viadd(virialCorrPerMol);
 		// tempMol->Uadd(uPotCorrPerMol);  // Not implemented in Molecule class yet

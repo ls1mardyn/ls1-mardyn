@@ -48,7 +48,7 @@
             <parallelisation type="DomainDecomposition"></parallelisation>
 
             <datastructure type="AutoPas">
-                <allowedTraversals>c08, sli</allowedTraversals>
+                <allowedTraversals>lc_c08, lc_sliced</allowedTraversals>
                 <allowedContainers>linkedCells</allowedContainers>
                 <traversalSelectorStrategy>fastestMedian</traversalSelectorStrategy>
                 <containerSelectorStrategy>fastestMedian</containerSelectorStrategy>

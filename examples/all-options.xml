@@ -197,6 +197,16 @@
           <overlappingCollectives>False</overlappingCollectives> <!-- true if overlapping collectives should be used, false otherwise. REQUIRES MPI>=3! -->
           <overlappingStartAtStep>5</overlappingStartAtStep> <!-- Start overlapping at given step (default: 5), only relevant if overlappingCollectives==True -->
           <overlappingP2P>False</overlappingP2P> <!-- Defines whether to use overlapping p2p communication or not. Default: False -->
+          <!-- Select the boundary type for each dimension. Available options are reflecting/reflective, outflow and periodic (default).
+            particles interacting with a periodic boundary for a certain axis are copied over to the corresponding subdomain, as usual
+            particles interacting with a reflecting boundary for a certain axis have their velocities reversed for that axis
+            particles interacting with an outflow boundary with any axis get deleted, irrespective of the other boundary conditions
+            -->
+          <boundaries> 
+              <x>reflective</x>
+              <y>outflow</y>
+              <z>periodic</z>
+          </boundaries> 
       </parallelisation>
       <parallelisation type="StaticIrregDomainDecomposition">
           <!-- Provide weights that determine the relative widths of each subdomain
@@ -249,11 +259,11 @@
       </datastructure>
 
       <datastructure type="AutoPas">
-        <!-- for a list of possible options see the setter functions in https://www5.in.tum.de/AutoPas/doxygen_doc/master/classautopas_1_1AutoPas.html -->
-        <!-- for possible values see the respective options in https://www5.in.tum.de/AutoPas/doxygen_doc/master/namespaceautopas_1_1options.html-->
+        <!-- for a list of possible options see the setter functions in https://autopas.github.io/doxygen_documentation/git-master/classautopas_1_1AutoPas.html -->
+        <!-- for possible values see the respective options in https://autopas.github.io/doxygen_documentation/git-master/namespaceautopas_1_1options.html -->
 
         <!-- specify all allowed traversals as a comma separated list -->
-        <allowedTraversals>c08, sli</allowedTraversals>
+        <allowedTraversals>lc_c08, lc_sliced</allowedTraversals>
         <!-- specify all allowed containers as a comma separated list -->
         <!-- possible values include:
            - DirectSum
@@ -262,11 +272,11 @@
            - VerletListsCells
            - VerletClusterLists
            - VarVerletListsAsBuild
-           - VerletClusterCells
+           - Octree
         -->
         <allowedContainers>linkedCells, verletlists, verletclusterlists</allowedContainers>
         <!-- specify what metric the selector should use to determine the optimal traversal -->
-        <!-- possible values: fastetAbsolute, fastestMean, fastestMedian -->
+        <!-- possible values: fastestAbsolute, fastestMean, fastestMedian -->
         <selectorStrategy>fastestAbsolute</selectorStrategy>
         <!-- set the tuning auto tuning pipeline -->
         <!-- Leave this empty for an exhaustive full search or add any number of strategies that are applied in the stated order -->
@@ -418,7 +428,7 @@
         <outputprefix>default</outputprefix>
         <appendTimestamp>true</appendTimestamp>
         <datarep>native</datarep>
-        <measureTime>1</measureTime>
+        <measureTime>true</measureTime>
       </outputplugin>
 
       <!-- more output plugins -->

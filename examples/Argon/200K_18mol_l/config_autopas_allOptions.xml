@@ -45,8 +45,8 @@
       -->
       <datastructure type="AutoPas">
         <loglevel>off</loglevel><!--Level for the AutoPas logger-->
-        <allowedTraversals>ds_sequential, lc_sliced, lc_sliced_balanced, lc_sliced_c02, lc_c01, lc_c01_combined_SoA, lc_c01_cuda, lc_c04, lc_c04_HCP, lc_c04_combined_SoA, lc_c08, lc_c18, vcc_cluster_iteration_cuda, vcl_cluster_iteration, vcl_c06, vcl_c01_balanced, vl_list_iteration, vlc_c01, vlc_c18, vlc_sliced, vlc_sliced_balanced, vlc_sliced_c02, vvl_as_built</allowedTraversals>
-        <allowedContainers>DirectSum,LinkedCells, VerletLists, VerletListsCells, VerletClusterLists,VarVerletListsAsBuild,VerletClusterCells</allowedContainers>
+        <allowedTraversals>ds_sequential, lc_sliced, lc_sliced_balanced, lc_sliced_c02, lc_c01, lc_c01_combined_SoA, lc_c04, lc_c04_HCP, lc_c04_combined_SoA, lc_c08, lc_c18, vcl_cluster_iteration, vcl_c06, vcl_c01_balanced, vcl_sliced, vcl_sliced_c02, vcl_sliced_balanced, vl_list_iteration, vlc_c01, vlc_c18, vlc_c08, vlc_sliced, vlc_sliced_balanced, vlc_sliced_c02, vvl_as_built, vlp_sliced, vlp_sliced_c02, vlp_c18, vlp_c01, vlp_sliced_balanced, vlp_c08, ot_c18, ot_c01</allowedTraversals>
+        <allowedContainers>DirectSum, LinkedCells, LinkedCellsReferences, VerletLists, VerletListsCells, VerletClusterLists, VarVerletListsAsBuild, PairwiseVerletLists, Octree</allowedContainers>
         <selectorStrategy>fastestMean</selectorStrategy><!--fastestMedian,fastestAbs-->
         <tuningStrategies>predictive,rulebased</tuningStrategies><!--Predictive, RuleBased, BayesianSearch, ...; Leave empty for full search-->
         <dataLayouts>AoS, SoA</dataLayouts>
@@ -54,8 +54,8 @@
         <tuningAcquisitionFunction>lower-confidence-bound</tuningAcquisitionFunction> <!--only relevant for BayesianSearch-->
         <maxEvidence>20</maxEvidence>
         <tuningInterval>1000</tuningInterval>
-        <tuningSamples>10</tuningSamples>
-        <ruleFile>AutoPas/examples/md-flexible/input/tuningRules.rule</ruleFile><!--check the AutoPas repo for examples-->
+        <tuningSamples>3</tuningSamples>
+        <ruleFile>tuningRules.rule</ruleFile><!--check the AutoPas repo for examples-->
         <rebuildFrequency>10</rebuildFrequency>
         <skin>0.5</skin>
       </datastructure>

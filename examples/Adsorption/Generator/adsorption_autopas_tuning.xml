@@ -84,7 +84,7 @@
     <algorithm>
       <parallelisation type="DomainDecomposition"/>
       <datastructure type="AutoPas">
-        <allowedTraversals>c01, c04, c08, c18, sli</allowedTraversals>
+        <allowedTraversals>lc_c01, lc_c04, lc_c04_HCP, lc_c08, lc_c18, lc_sliced</allowedTraversals>
         <allowedContainers>linkedCells</allowedContainers>
         <selectorStrategy>fastestMedian</selectorStrategy>
         <dataLayouts>SoA</dataLayouts>

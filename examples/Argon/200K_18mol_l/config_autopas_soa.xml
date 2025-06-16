@@ -71,7 +71,7 @@
       </outputplugin>
       <outputplugin name="VTKMoleculeWriter">
         <outputprefix>vtkOutput</outputprefix>
-        <writefrequency>1</writefrequency>
+        <writefrequency>100</writefrequency>
       </outputplugin>
     </output>
 	<plugin name="TestPlugin">

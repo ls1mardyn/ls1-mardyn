@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <random>
+#include <array>
 
 #include "Domain.h"
 #include "IOHelpers.h"
