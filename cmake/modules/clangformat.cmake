@@ -1,4 +1,3 @@
-
 set(INCLUDE_DIRS
         "${PROJECT_SOURCE_DIR}/src/"
 )
@@ -16,11 +15,6 @@ if(CLANG_FORMAT)
         message(STATUS "Found clang-format version 18: ${CLANG_FORMAT}")
 
         file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/.clang-format-stamps")
-
-        # Create a custom target for formatting
-#        add_custom_target(clangformat
-#                COMMAND ${CMAKE_COMMAND} -E echo "Running clang-format..."
-#        )
 
         # Find all source files
         set(ALL_SOURCE_FILES)
@@ -52,18 +46,6 @@ if(CLANG_FORMAT)
             list(APPEND STAMP_FILES ${STAMP_FILE})
         endforeach()
 
-#            if(SOURCE_FILES)
-#                add_custom_command(
-#                        TARGET clangformat
-#                        COMMAND ${CLANG_FORMAT} -style=file -i ${SOURCE_FILES}
-#                        COMMENT "Formatting files in ${DIR}"
-#                )
-#            else()
-#                message(STATUS "No source files found in ${DIR}")
-#            endif()
-#
-#            unset(SOURCE_FILES)  # Clear for next iteration
-#        endforeach()
         # Create main formatting target
         add_custom_target(clangformat
                 DEPENDS ${STAMP_FILES}
@@ -77,17 +59,3 @@ if(CLANG_FORMAT)
 else()
     message(STATUS "clang-format-18 not found")
 endif()
-
-
-## Recursively find all files with the specified extensions
-#file(GLOB_RECURSE ALL_SOURCE_FILES
-#    ${PROJECT_SOURCE_DIR}/*.h
-#    ${PROJECT_SOURCE_DIR}/*.cpp
-#)
-#
-## Define clang-format target
-#add_custom_target(clang-format
-#    COMMAND ${CLANG_FORMAT_BIN} -i ${ALL_SOURCE_FILES}
-#    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-#    COMMENT "Running clang-format"
-#)
