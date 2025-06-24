@@ -403,6 +403,10 @@ help_vect:
 
 all: $(BINARY)
 
+clangformat:
+	@echo "Running clang-format (version might not match the one of the CI which uses v18)"
+	@echo "$(shell clang-format --version)"
+	clang-format -i $(shell find $(SRCDIR) -name "*.h" -or -name "*.cpp")
 
 #list available configurations
 cfg_list:
