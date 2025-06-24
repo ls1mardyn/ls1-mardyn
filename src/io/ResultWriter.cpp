@@ -31,7 +31,17 @@ void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 		MARDYN_EXIT(error_message.str());
 	}
 	// Set file extension to be .csv in case of "csv" and .res in case of "tab"
-	_resultfilename = _outputPrefix+(_outputFormat == "csv" ? ".csv" : ".res");
+	if (_outputFormat == "csv") {
+	    _resultfilename = _outputPrefix + ".csv";
+	}
+	else if (_outputFormat == "tab") {
+	    _resultfilename = _outputPrefix + ".res";
+	}
+	else {
+		std::ostringstream error_message;
+		error_message << "[ResultWriter] Wrong output format specified! Use \"csv\" or \"tab\" instead of \"" << _outputFormat << "\"" << std::endl;
+		MARDYN_EXIT(error_message.str());
+	}
 
 	size_t acc_steps = 1000;
 	xmlconfig.getNodeValue("accumulation_steps", acc_steps);
