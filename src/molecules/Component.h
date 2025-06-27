@@ -63,6 +63,9 @@ public:
 	const std::vector<LJcenter>& ljcenters() const { return _ljcenters; }
 	LJcenter& ljcenter(unsigned int i) { return _ljcenters[i]; }
 	const LJcenter& ljcenter(unsigned int i) const { return _ljcenters[i]; }
+	const std::vector<LJATMcenter>& ljatmcenters() const { return _ljatmcenters; }
+	LJATMcenter& ljatmcenter(unsigned int i) { return _ljatmcenters[i]; }
+	const LJATMcenter& ljatmcenter(unsigned int i) const { return _ljatmcenters[i]; }
 	const std::vector<Charge>& charges() const { return _charges; }
 	Charge& charge(unsigned i) { return _charges[i]; }
 	const Charge& charge(unsigned i) const { return _charges[i]; }
@@ -83,6 +86,7 @@ public:
 			double x, double y, double z, double m, double eps,
 			double sigma, double rc = 0, bool TRUNCATED_SHIFTED = 0
 	);
+	void addLJATMcenter(LJATMcenter& ljatmsite);
 	void addCharge(Charge& chargesite);
 	void addCharge(double x, double y, double z, double m, double q);
 	void addDipole(Dipole& dipolesite);
@@ -143,6 +147,7 @@ private:
 	//std::vector<Site> _sites;
 	// use separate vectors instead...
 	std::vector<LJcenter> _ljcenters;
+	std::vector<LJATMcenter> _ljatmcenters;
 	std::vector<Charge> _charges;
 	std::vector<Dipole> _dipoles;
 	std::vector<Quadrupole> _quadrupoles;
