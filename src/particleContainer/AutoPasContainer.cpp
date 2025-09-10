@@ -579,7 +579,6 @@ void AutoPasContainer::traverseTemplateHelper() {
 #if ENABLE_THREE_BODY
 	double upot3b{}, virial3b{};
 
-	// const auto numComponents = _particlePropertiesLibrary.getNumberRegisteredSiteTypes();
 	const double nuFirstComponent = _particlePropertiesLibrary.getNu(0);
 	allSame = true;
 	for (auto i = 1ul; i < numComponents; ++i) {
@@ -595,12 +594,14 @@ void AutoPasContainer::traverseTemplateHelper() {
 		std::tie(upot3b, virial3b) = iterateWithFunctor(functor);
 	} else {
 		Log::global_log->debug() << "AutoPasContainer: Not using mixing." << std::endl;
-		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
-		mdLib::AxilrodTellerFunctor<Molecule, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+		if (nuFirstComponent != 0.0) {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			mdLib::AxilrodTellerFunctor<Molecule, /*mixing*/ false, autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true>
 				functor(_cutoff);
-		functor.setParticleProperties(nuFirstComponent);
-		std::tie(upot3b, virial3b) = iterateWithFunctor(functor);
+			functor.setParticleProperties(nuFirstComponent);
+			std::tie(upot3b, virial3b) = iterateWithFunctor(functor);
+		}
 	}
 	upot += upot3b;
 	virial += virial3b;
@@ -625,8 +626,12 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 				// AutoPas only supports single site until now
 				_particlePropertiesLibrary.addSiteType(c.getLookUpId(),c.ljcenter(0).m());
 				_particlePropertiesLibrary.addLJParametersToSite(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma());
-#ifndef ENABLE_THREE_BODY
-				_particlePropertiesLibrary.addATParametersToSite(c.getLookUpId(), c.atmcenter(0).nu());
+#ifdef ENABLE_THREE_BODY
+				if (c.numATMcenters()) {
+					_particlePropertiesLibrary.addATParametersToSite(c.getLookUpId(), c.atmcenter(0).nu());
+				} else {
+					_particlePropertiesLibrary.addATParametersToSite(c.getLookUpId(), 0.0);
+				}
 #endif
 			}
 			_particlePropertiesLibrary.calculateMixingCoefficients();
