@@ -22,6 +22,7 @@ Component::Component(unsigned int id) {
 	_isStockmayer = false;
 
 	_ljcenters = std::vector<LJcenter> ();
+	_atmcenters = std::vector<ATMcenter> ();
 	_charges = std::vector<Charge> ();
 	_quadrupoles = std::vector<Quadrupole> ();
 	_dipoles = std::vector<Dipole> ();
@@ -51,10 +52,10 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			LJcenter ljSite;
 			ljSite.readXML(xmlconfig);
 			addLJcenter(ljSite);
-		} else if (siteType == "LJATM") {
-			LJATMcenter ljatmSite;
-			ljatmSite.readXML(xmlconfig);
-			addLJATMcenter(ljatmSite);
+		} else if (siteType == "ATM") {
+			ATMcenter atmSite;
+			atmSite.readXML(xmlconfig);
+			addATMcenter(atmSite);
 		} else if (siteType == "Charge") {
 			Charge chargeSite;
 			chargeSite.readXML(xmlconfig);
@@ -181,9 +182,15 @@ void Component::updateMassInertia(Site& site) {
 	}
 }
 
-void Component::addLJATMcenter(LJATMcenter& ljatmsite) {
-	_ljatmcenters.push_back(ljatmsite);
-	updateMassInertia(ljatmsite);
+void Component::addATMcenter(ATMcenter& atmsite) {
+	_atmcenters.push_back(atmsite);
+	updateMassInertia(atmsite);
+}
+
+void Component::addATMcenter(double x, double y, double z, double m, double nu) {
+	ATMcenter atmsite(x, y, z, m, nu);
+	_atmcenters.push_back(atmsite);
+	updateMassInertia(atmsite);
 }
 
 void Component::addCharge(double x, double y, double z, double m, double q) {
@@ -229,6 +236,10 @@ void Component::write(std::ostream& ostrm) const {
 	      << _dipoles.size() << "\t" << _quadrupoles.size() << "\t"
 		  << 0 << "\n";  // the 0 indicates a zero amount of tersoff sites.
 	for (auto pos = _ljcenters.cbegin(); pos != _ljcenters.end(); ++pos) {
+		pos->write(ostrm);
+		ostrm << std::endl;
+	}
+	for (auto pos = _atmcenters.cbegin(); pos != _atmcenters.end(); ++pos) {
 		pos->write(ostrm);
 		ostrm << std::endl;
 	}

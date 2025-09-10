@@ -7,7 +7,7 @@
 #include "molecules/Site.h"
 
 /**
- * @brief Class implementing molecules as rigid rotators consisting out of different interaction sites (LJcenter, Charge, Dipole, Quadrupole).
+ * @brief Class implementing molecules as rigid rotators consisting out of different interaction sites (LJcenter, ATMcenter, Charge, Dipole, Quadrupole).
  *
  * @author Martin Bernreuther
  */
@@ -20,7 +20,7 @@ public:
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
 	   <moleculetype id=UINT name="STRING">
-	     <site type="LJ126|Charge|Dipole|Quadrupole" id="UINT" name="STRING"> <!-- see Site class documentation --> </site>
+	     <site type="LJ126|ATM|Charge|Dipole|Quadrupole" id="UINT" name="STRING"> <!-- see Site class documentation --> </site>
 	     <momentsofinertia> <Ixx>DOUBLE</Ixx> <Iyy>DOUBLE</Iyy> <Izz>DOUBLE</Izz> </momentsofinertia>
 	   </moleculetype>
 	   \endcode
@@ -34,13 +34,15 @@ public:
 
 	/** get number of interaction sites */
 	unsigned int numSites() const {
-		return this->numLJcenters() + this->numCharges()
+		return this->numLJcenters() + this->numATMcenters() + this->numCharges()
 		                            + this->numDipoles()
 		                            + this->numQuadrupoles();
 	}
 
 	/** get number of Lennard Jones interaction sites */
 	unsigned int numLJcenters() const { return _ljcenters.size(); }
+	/** get number of Axilrod-Teller-Muto interaction sites */
+	unsigned int numATMcenters() const { return _atmcenters.size(); }
 	/** get number of charge interaction sites */
 	unsigned int numCharges() const { return _charges.size(); }
 	/** get number of dipole interaction sites */
@@ -63,9 +65,9 @@ public:
 	const std::vector<LJcenter>& ljcenters() const { return _ljcenters; }
 	LJcenter& ljcenter(unsigned int i) { return _ljcenters[i]; }
 	const LJcenter& ljcenter(unsigned int i) const { return _ljcenters[i]; }
-	const std::vector<LJATMcenter>& ljatmcenters() const { return _ljatmcenters; }
-	LJATMcenter& ljatmcenter(unsigned int i) { return _ljatmcenters[i]; }
-	const LJATMcenter& ljatmcenter(unsigned int i) const { return _ljatmcenters[i]; }
+	const std::vector<ATMcenter>& atmcenters() const { return _atmcenters; }
+	ATMcenter& atmcenter(unsigned int i) { return _atmcenters[i]; }
+	const ATMcenter& atmcenter(unsigned int i) const { return _atmcenters[i]; }
 	const std::vector<Charge>& charges() const { return _charges; }
 	Charge& charge(unsigned i) { return _charges[i]; }
 	const Charge& charge(unsigned i) const { return _charges[i]; }
@@ -86,7 +88,8 @@ public:
 			double x, double y, double z, double m, double eps,
 			double sigma, double rc = 0, bool TRUNCATED_SHIFTED = 0
 	);
-	void addLJATMcenter(LJATMcenter& ljatmsite);
+	void addATMcenter(ATMcenter& atmsite);
+	void addATMcenter(double x, double y, double z, double m, double nu);
 	void addCharge(Charge& chargesite);
 	void addCharge(double x, double y, double z, double m, double q);
 	void addDipole(Dipole& dipolesite);
@@ -101,6 +104,7 @@ public:
 
 	/** delete the last site stored in the vector -- these are used by the external generators*/
 	void deleteLJCenter() { _ljcenters.pop_back() ;}
+	void deleteATMCenter() { _atmcenters.pop_back() ;}
 	void deleteCharge() { _charges.pop_back() ;}
 	void deleteDipole() { _dipoles.pop_back() ;}
 	void deleteQuadrupole() { _quadrupoles.pop_back() ;}
@@ -147,7 +151,7 @@ private:
 	//std::vector<Site> _sites;
 	// use separate vectors instead...
 	std::vector<LJcenter> _ljcenters;
-	std::vector<LJATMcenter> _ljatmcenters;
+	std::vector<ATMcenter> _atmcenters;
 	std::vector<Charge> _charges;
 	std::vector<Dipole> _dipoles;
 	std::vector<Quadrupole> _quadrupoles;

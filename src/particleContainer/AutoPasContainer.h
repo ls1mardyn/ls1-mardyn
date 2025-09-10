@@ -124,7 +124,7 @@ public:
 
 	std::string getName() override { return "AutoPasContainer"; }
 
-	void  setCutoff(double cutoff) override { _cutoff = cutoff; }
+	void setCutoff(double cutoff) override { _cutoff = cutoff; }
 
 	bool isInvalidParticleReturner() override { return true; }
 

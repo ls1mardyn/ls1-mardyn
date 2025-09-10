@@ -409,10 +409,11 @@ public:
 	void setAbsQ(double q) { setAbs(q); }
 };
 
-class LJATMcenter : public LJcenter {
+
+class ATMcenter : public Site {
 public:
 	/** @brief Constructor */
-	LJATMcenter(): _nu(0.) {}
+	ATMcenter(): _nu(0.) {}
 	/** @brief Constructor
 	 * \param[in] x		relative x coordinate
 	 * \param[in] y		relative y coordinate
@@ -420,29 +421,29 @@ public:
 	 * \param[in] m		mass
 	 * \param[in] nu	interaction strength
 	 */
-	LJATMcenter(double x, double y, double z,  double m, double epsilon, double sigma, double shift, double nu)
-		: LJcenter(x, y, z, m, epsilon, sigma, shift), _nu(nu) {}
+	ATMcenter(double x, double y, double z,  double m, double nu)
+		: Site(x, y, z, m), _nu(nu) {}
 
-	/** @brief Read in XML configuration for an LJATMcenter and all its included objects.
+	/** @brief Read in XML configuration for an ATMcenter and all its included objects.
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <site type="LJATM">
-	     <!-- all LJ126 Site class parameters -->
+	   <site type="ATM">
+	     <!-- all Site class parameters -->
 	     <nu>DOUBLE</nu>
 	   </site>
 	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig) {
-		LJcenter::readXML(xmlconfig);
-		Log::global_log->info() << "Site type: Lennard-Jones combined with Axilrod-Teller-Muto" << std::endl;
+		Site::readXML(xmlconfig);
+		Log::global_log->info() << "Site type: Axilrod-Teller-Muto" << std::endl;
 		xmlconfig.getNodeValueReduced("nu", _nu);
 		Log::global_log->info() << "Site parameters: nu = " << _nu << std::endl;
 	}
 
 	/// write to stream
 	void write(std::ostream& ostrm) const {
-		LJcenter::write(ostrm);
+		Site::write(ostrm);
 		ostrm << "\t" << nu();
 	}
 

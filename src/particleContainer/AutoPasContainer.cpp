@@ -121,14 +121,14 @@ extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		> *);
 #endif
 #ifdef ENABLE_THREE_BODY
-extern template bool autopas::AutoPas<AutoPasSimpleMolecule>::computeInteractions(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::AxilrodTellerFunctor<
 				Molecule,
 				/*mixing*/ true,
 				autopas::FunctorN3Modes::Both,
 				/*calculateGlobals*/ true>
 		*);
-extern template bool autopas::AutoPas<AutoPasSimpleMolecule>::computeInteractions(
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 		mdLib::AxilrodTellerFunctor<
 				Molecule,
 				/*mixing*/ false,
@@ -623,29 +623,20 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 			const auto components = global_simulation->getEnsemble()->getComponents();
 			for (const auto &c : *components) {
 				// AutoPas only supports single site until now
-#ifndef ENABLE_THREE_BODY
 				_particlePropertiesLibrary.addSiteType(c.getLookUpId(),c.ljcenter(0).m());
 				_particlePropertiesLibrary.addLJParametersToSite(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma());
-#else
-				_particlePropertiesLibrary.addSiteType(c.getLookUpId(),c.ljatmcenter(0).m());
-				_particlePropertiesLibrary.addLJParametersToSite(c.getLookUpId(), c.ljatmcenter(0).eps(), c.ljatmcenter(0).sigma());
-				_particlePropertiesLibrary.addATParametersToSite(c.getLookUpId(), c.ljatmcenter(0).nu());
+#ifndef ENABLE_THREE_BODY
+				_particlePropertiesLibrary.addATParametersToSite(c.getLookUpId(), c.atmcenter(0).nu());
 #endif
 			}
 			_particlePropertiesLibrary.calculateMixingCoefficients();
 			size_t numComponentsAdded = 0;
 			for (const auto &c : *components) {
-				auto &particleCenter =
-				#ifndef ENABLE_THREE_BODY
-					c.ljcenter(0);
-				#else
-						c.ljatmcenter(0);
-				#endif
-				if (particleCenter.shift6() != 0.) {
+				if (c.ljcenter(0).shift6() != 0.) {
 					hasShift = true;
 					const double autoPasShift6 =
 						_particlePropertiesLibrary.getMixingShift6(numComponentsAdded, numComponentsAdded);
-					const double ls1Shift6 = particleCenter.shift6();
+					const double ls1Shift6 = c.ljcenter(0).shift6();
 					if (std::fabs((autoPasShift6 - ls1Shift6) / ls1Shift6) > 1.e-10) {
 						// warn if shift differs relatively by more than 1.e-10
 						Log::global_log->warning() << "Dangerous shift6 detected: AutoPas will use: " << autoPasShift6
