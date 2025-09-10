@@ -23,7 +23,7 @@ if (ENABLE_AUTOPAS)
     set(AUTOPAS_USE_VECTORIZATION ${USE_VECTORIZATION} CACHE BOOL "Set via USE_VECTORIZATION" FORCE)
     set(AUTOPAS_VECTOR_INSTRUCTIONS ${VECTOR_INSTRUCTIONS} CACHE STRING "Set via VECTOR_INSTRUCTIONS_OPTIONS" FORCE)
 
-    # Last version without 3 Body support. Newer versions have API changes
+    # Version from March 19th, 2025. Includes PMT energy measurements, dynamic rebuilding and 3-body interactions.
     set(AUTOPAS_TAG 279288035684fc85fba16c62f8dc7125ff0ff75e CACHE STRING "AutoPas Git tag or commit id to use")
 
     FetchContent_Declare(

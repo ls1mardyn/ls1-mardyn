@@ -2,21 +2,16 @@
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.24)
 
-project(MarDyn)
-
-if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.24)
-    cmake_policy(SET CMP0135 NEW)
-endif()
-
-set(MARDYN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(MARDYN_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+project(MarDyn
+    VERSION 1.2.0
+    DESCRIPTION "ls1-MarDyn - Large Sca1e MoleculAR DYNamics code"
+    HOMEPAGE_URL "https://www.ls1-mardyn.de/"
+    LANGUAGES C CXX
+    )
 
 set(CMAKE_CXX_STANDARD 17)
-if (NOT CYGWIN)
-    set(CMAKE_CXX_EXTENSIONS OFF)
-endif ()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -30,7 +25,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 # generates test target
-ENABLE_TESTING()
+enable_testing()
 
 # modules
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules/)
@@ -51,6 +46,8 @@ include(mpi)
 include(clang-sanitizers)
 # ccache
 include(ccache)
+# include clangformat target
+include(clangformat)
 
 # ----- second: include libraries, etc.
 # include armadillo module
@@ -76,7 +73,7 @@ include(mamico)
 include(adios2)
 
 # add mardyn
-ADD_SUBDIRECTORY(src)
+add_subdirectory(src)
 
 # add libraries
-ADD_SUBDIRECTORY(libs)
+add_subdirectory(libs)
