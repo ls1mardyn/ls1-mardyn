@@ -10,6 +10,7 @@
 
 #include "PluginBase.h"
 #include "molecules/MoleculeForwardDeclaration.h"
+#include "molecules/Molecule.h"
 
 #include <vector>
 

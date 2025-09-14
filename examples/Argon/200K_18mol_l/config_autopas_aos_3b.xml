@@ -26,7 +26,12 @@
         <include query="/components/moleculetype">../components3b.xml</include>
       </components>
       <phasespacepoint>
-        <file type="ASCII">Argon_200K_18mol_l.inp</file>
+<!--        <file type="ASCII">Argon_200K_18mol_l.inp</file>-->
+        <generator name="CubicGridGenerator">
+          <specification>density</specification>
+          <density>0.00160630092</density>
+          <binaryMixture>false</binaryMixture>
+        </generator>
       </phasespacepoint>
     </ensemble>
     <algorithm>
@@ -72,11 +77,11 @@
         <writefrequency>10000</writefrequency>
         <expression label="LoadAvg1">procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
-      </outputplugin>
+      </outputplugin> -->
       <outputplugin name="VTKMoleculeWriter">
         <outputprefix>vtkOutput</outputprefix>
-        <writefrequency>1</writefrequency>
-      </outputplugin>-->
+        <writefrequency>5</writefrequency>
+      </outputplugin>
     </output>
 <!--	<plugin name="TestPlugin">
 		<writefrequency>1</writefrequency>
