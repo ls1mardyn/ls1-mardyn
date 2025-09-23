@@ -29,21 +29,25 @@ EnergyRAPL::RAPLCounter::RAPLCounter(const std::string& domainBasePath) {
 	reset();
 }
 
-void EnergyRAPL::RAPLCounter::reset() {
-	// Update last micro joule
-	update();
-	_microJoule = 0;
-	_joule = 0;
-}
-
-double EnergyRAPL::RAPLCounter::update() {
-	long long currentMicroJoule;
+long long EnergyRAPL::RAPLCounter::readMicroJoule() {
+	long long microJoule;
 	std::ifstream microJouleFile(_microJoulePath);
 	if(!microJouleFile) {
 		Log::global_log->error() << "Failed to open RAPL counter file " << _microJoulePath << std::endl;
 		exit(1);
 	}
-	microJouleFile >> currentMicroJoule;
+	microJouleFile >> microJoule;
+	return microJoule;
+}
+
+void EnergyRAPL::RAPLCounter::reset() {
+	_microJoule = 0;
+	_joule = 0;
+	_lastMicroJoule = readMicroJoule();
+}
+
+double EnergyRAPL::RAPLCounter::update() {
+	long long currentMicroJoule = readMicroJoule();
 	long long deltaMicroJoule = currentMicroJoule - _lastMicroJoule;
 	// Correct counter overflow (occurs around every 60 seconds)
 	if (0 > deltaMicroJoule) {
@@ -144,7 +148,7 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 			_counters.push_back(RAPLCounter(domainBasePath.str()));
 		}
 	}
-	for (auto counter : _counters) {
+	for (auto& counter : _counters) {
 		counter.reset();
 	}
 #ifdef ENABLE_MPI
@@ -180,7 +184,7 @@ void EnergyRAPL::init(ParticleContainer* particleContainer, DomainDecompBase* do
 void EnergyRAPL::endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
 						 unsigned long simstep) {
 	_joule = 0;
-	for (auto counter : _counters) {
+	for (auto& counter : _counters) {
 		_joule += counter.update();
 	}
 	_simstep = simstep;
