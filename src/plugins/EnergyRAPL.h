@@ -57,6 +57,12 @@ private:
 		 */
 		long long _microJoule;
 
+		/**
+		 * @brief Read the current RAPL value for this domain
+		 * @return The current value in micro Joule
+		 */
+		long long readMicroJoule();
+
 	public:
 		/**
 		 * @brief Creates a new instance of a counter for the energy consumption of a specific domain
@@ -65,6 +71,12 @@ private:
 		 * max_energy_range_uj, energy_uj)
 		 */
 		RAPLCounter(const std::string& domainBasePath);
+
+		// Counters should not be copyable, only moveable (avoid bugs)
+		RAPLCounter(const RAPLCounter&) = delete;
+		RAPLCounter& operator=(const RAPLCounter&) = delete;
+		RAPLCounter(RAPLCounter&&) noexcept = default;
+		RAPLCounter& operator=(RAPLCounter&&) noexcept = default;
 
 		/**
 		 * @brief Reset the counter for this domain to 0
