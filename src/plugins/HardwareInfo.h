@@ -31,11 +31,6 @@ public:
 
 private:
 	int _thread, _rank, _totalThreads, _totalRanks;
-	char _processorName[
-#ifdef ENABLE_MPI
-		MPI_MAX_PROCESSOR_NAME
-#else
-		8
-#endif
-	];	// with size 8, it stores "serial\0"
+	unsigned int _openMPCPUID, _openMPNUMA;
+	char _processorName[1024];
 };
