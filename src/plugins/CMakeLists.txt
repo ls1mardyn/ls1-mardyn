@@ -7,6 +7,7 @@ target_sources(MarDyn
         EnergyRAPL.cpp
         ExamplePlugin.cpp
         FixRegion.cpp
+        HardwareInfo.cpp
         InMemoryCheckpointing.cpp
         LoadImbalanceThroughSleepPlugin.cpp
         MamicoCoupling.cpp
