@@ -7,7 +7,25 @@
 
 #pragma once
 
+#include <vector>
+
 #include "PluginBase.h"
+
+struct ThreadwiseInfo {
+	int rank, totalRanks;
+	int thread, totalThreads;
+	unsigned int cpuID, numa;
+	std::string processorName;
+	ThreadwiseInfo(int rankNum = 0, int totalRankNum = 1, int threadNum = 0, int totalThreadsNum = 1,
+				   unsigned int openMPCPUID = 0, unsigned int openMPNUMA = 0, std::string curProcessorName = "")
+		: rank(rankNum),
+		  totalRanks(totalRankNum),
+		  thread(threadNum),
+		  totalThreads(totalThreadsNum),
+		  cpuID(openMPCPUID),
+		  numa(openMPNUMA),
+		  processorName(curProcessorName) {}
+};
 
 /**
  * @brief Prints the hardware info of current run to stdout or to file
@@ -30,7 +48,11 @@ public:
 	static PluginBase* createInstance() { return new HardwareInfo(); }
 
 private:
-	int _thread, _rank, _totalThreads, _totalRanks;
-	unsigned int _openMPCPUID, _openMPNUMA;
-	char _processorName[1024];
+	void populateData(DomainDecompBase* domainDecomp);
+	void printDataToStdout();
+
+	int _rank, _totalRanks;
+	std::string _processorName;
+	std::vector<ThreadwiseInfo> threadData;
+	bool _dataPopulated = false;
 };
