@@ -12,19 +12,11 @@
 #include "PluginBase.h"
 
 struct ThreadwiseInfo {
-	int rank, totalRanks;
 	int thread, totalThreads;
 	unsigned int cpuID, numa;
-	std::string processorName;
-	ThreadwiseInfo(int rankNum = 0, int totalRankNum = 1, int threadNum = 0, int totalThreadsNum = 1,
-				   unsigned int openMPCPUID = 0, unsigned int openMPNUMA = 0, std::string curProcessorName = "")
-		: rank(rankNum),
-		  totalRanks(totalRankNum),
-		  thread(threadNum),
-		  totalThreads(totalThreadsNum),
-		  cpuID(openMPCPUID),
-		  numa(openMPNUMA),
-		  processorName(curProcessorName) {}
+	ThreadwiseInfo(int threadNum = 0, int totalThreadsNum = 1, unsigned int openMPCPUID = 0,
+				   unsigned int openMPNUMA = 0)
+		: thread(threadNum), totalThreads(totalThreadsNum), cpuID(openMPCPUID), numa(openMPNUMA) {}
 };
 
 /**

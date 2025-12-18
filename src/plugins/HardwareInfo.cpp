@@ -64,8 +64,7 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 		int totalThreads = mardyn_get_num_threads();
 		unsigned int openMPCPUID, openMPNUMA;
 		getcpu(&openMPCPUID, &openMPNUMA);	// from sched.h
-		threadData[thread] =
-			ThreadwiseInfo(_rank, _totalRanks, thread, totalThreads, openMPCPUID, openMPNUMA, _processorName);
+		threadData[thread] = ThreadwiseInfo(thread, totalThreads, openMPCPUID, openMPNUMA);
 	}
 #ifdef _OPENMP
 #pragma omp barrier
@@ -79,8 +78,8 @@ void HardwareInfo::printDataToStdout() {
 	std::ostringstream ss;
 	for (auto data : threadData) {
 		ss << "[" << getPluginName() << "] Thread " << data.thread << " out of " << data.totalThreads
-		   << " threads, NUMA domain " << data.numa << ", rank " << data.rank << " out of " << data.totalRanks
-		   << " ranks, running on " << data.processorName << " with CPU index " << data.cpuID << std::endl;
+		   << " threads, NUMA domain " << data.numa << ", rank " << _rank << " out of " << _totalRanks
+		   << " ranks, running on " << _processorName << " with CPU index " << data.cpuID << std::endl;
 		Log::global_log->set_mpi_output_all();
 		Log::global_log->info() << ss.str();
 		Log::global_log->set_mpi_output_root(0);
@@ -97,7 +96,7 @@ void HardwareInfo::writeDataToFile() {
 	// add header data if rank 0
 	if (_rank == 0) {
 		outputStringSS << "{\n";
-		outputStringSS << "\t\"total_ranks\": " << threadData[0].totalRanks << ",\n";
+		outputStringSS << "\t\"total_ranks\": " << _totalRanks << ",\n";
 		outputStringSS << "\t\"total_threads\": " << threadData[0].totalThreads << ",\n";
 		outputStringSS << "\t\"ranks\": {";
 		// write header
@@ -119,7 +118,7 @@ void HardwareInfo::writeDataToFile() {
 	if (_rank == 0) {
 		std::ofstream outputFile(_filename, std::ios_base::app);
 		outputFile << outputString;
-		outputFile << "\n\t}\n}"; // ending brace if rank 0
+		outputFile << "\n\t}\n}";  // ending brace if rank 0
 		outputFile.close();
 	}
 }
