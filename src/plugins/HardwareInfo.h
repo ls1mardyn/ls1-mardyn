@@ -51,7 +51,7 @@ private:
 	void populateData(DomainDecompBase* domainDecomp);
 	void printDataToStdout();
 	void writeDataToFile();
-	inline std::string convertThreadwiseInfoToJson(const ThreadwiseInfo& threadInfo);
+	std::string convertFullDataToJson();
 
 	std::string _filename;
 	int _rank, _totalRanks;

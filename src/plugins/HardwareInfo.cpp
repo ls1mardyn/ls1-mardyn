@@ -99,7 +99,7 @@ void HardwareInfo::writeDataToFile() {
 		outputStringSS << "{\n";
 		outputStringSS << "\t\"total_ranks\": " << threadData[0].totalRanks << ",\n";
 		outputStringSS << "\t\"total_threads\": " << threadData[0].totalThreads << ",\n";
-		outputStringSS << "\t\"thread_data\": [\n";
+		outputStringSS << "\t\"ranks\": {";
 		// write header
 		std::ofstream outputFile(_filename);
 		outputFile << outputStringSS.str();
@@ -108,35 +108,40 @@ void HardwareInfo::writeDataToFile() {
 	}
 	// add all thread data
 	// since trailing commas are not allowed, put data from rank 0 at end without comma
-	for (auto it = threadData.begin(); it != threadData.end(); ++it) {
-		if (it != threadData.begin() || _rank != 0)
-			outputStringSS << ",\n";
-		outputStringSS << convertThreadwiseInfoToJson(*it);
-	}
-	// write parallely to file
-	std::string outputString = outputStringSS.str();
+	std::string outputString = convertFullDataToJson();
 #ifdef ENABLE_MPI
-	if(_rank != 0) {
-
+	if (_rank != 0) {
+		MPI_File parFile;
+		// MPI_File_open
 	}
 #endif
 	// write thread data from rank 0 to file to ensure no comma at end
 	if (_rank == 0) {
 		std::ofstream outputFile(_filename, std::ios_base::app);
 		outputFile << outputString;
-		outputFile << "\n\t]\n}"; // ending brace if rank 0
+		outputFile << "\n\t}\n}"; // ending brace if rank 0
 		outputFile.close();
 	}
 }
 
-inline std::string HardwareInfo::convertThreadwiseInfoToJson(const ThreadwiseInfo& threadInfo) {
-	std::ostringstream curInfo;
-	curInfo << "\t\t{";
-	curInfo << "\"rank\": " << threadInfo.rank << ", ";
-	curInfo << "\"thread\": " << threadInfo.thread << ", ";
-	curInfo << "\"cpu_ID\": " << threadInfo.cpuID << ", ";
-	curInfo << "\"numa_domain\": " << threadInfo.numa << ", ";
-	curInfo << "\"node_name\": \"" << threadInfo.processorName << "\"";
-	curInfo << "}";
-	return curInfo.str();
+std::string HardwareInfo::convertFullDataToJson() {
+	std::ostringstream rankInfo;
+	rankInfo << "\n\t\t\"" << _rank << "\": {\n";
+	rankInfo << "\t\t\t\"node_name\": \"" << _processorName << "\",\n";
+	rankInfo << "\t\t\t\"thread_data\": {\n";
+
+	for (auto it = threadData.begin(); it != threadData.end(); ++it) {
+		if (it != threadData.begin())
+			rankInfo << ",\n";
+		rankInfo << "\t\t\t\"" << it->thread << "\": {";
+		rankInfo << "\"cpu_ID\": " << it->cpuID << ", ";
+		rankInfo << "\"numa_domain\": " << it->numa;
+		rankInfo << "}";
+	}
+
+	rankInfo << "\n\t\t\t}";  // close threads
+	rankInfo << "\n\t\t}";	  // close rank
+	if (_rank != 0)
+		rankInfo << ",";
+	return rankInfo.str();
 }
