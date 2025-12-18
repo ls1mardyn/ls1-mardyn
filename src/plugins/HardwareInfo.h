@@ -37,7 +37,7 @@ public:
 	HardwareInfo() = default;
 	~HardwareInfo() override = default;
 
-	void readXML(XMLfileUnits& xmlconfig) override {}
+	void readXML(XMLfileUnits& xmlconfig) override;
 	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
 	void endStep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
 				 unsigned long simstep) override {};
@@ -50,7 +50,10 @@ public:
 private:
 	void populateData(DomainDecompBase* domainDecomp);
 	void printDataToStdout();
+	void writeDataToFile();
+	inline std::string convertThreadwiseInfoToJson(const ThreadwiseInfo& threadInfo);
 
+	std::string _filename;
 	int _rank, _totalRanks;
 	std::string _processorName;
 	std::vector<ThreadwiseInfo> threadData;

@@ -11,6 +11,7 @@
 #include <sched.h>
 #include <unistd.h>
 
+#include <fstream>
 #include <iostream>
 #include <sstream>
 
@@ -21,6 +22,15 @@
 
 // #include "utils/compile_info.h"
 
+void HardwareInfo::readXML(XMLfileUnits& xmlconfig) {
+	_filename = "";
+	xmlconfig.getNodeValue("filename", _filename);
+	if (_filename != "") {
+		_filename += ".json";
+		Log::global_log->info() << "[" << getPluginName() << "] Filename: " << _filename << std::endl;
+	}
+}
+
 void HardwareInfo::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
 	// defaults
 	_rank = 0;
@@ -28,13 +38,14 @@ void HardwareInfo::init(ParticleContainer* particleContainer, DomainDecompBase* 
 	_processorName = "";
 	populateData(domainDecomp);
 	printDataToStdout();
+	if (_filename != "")
+		writeDataToFile();
 }
 
 void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	char cStyleProcName[1024];
 	gethostname(cStyleProcName, 1023);	// from unistd.h
 	threadData.resize(mardyn_get_max_threads());
-	threadData[0] = ThreadwiseInfo();
 	// mpi
 #ifdef ENABLE_MPI
 	auto curCommunicator = domainDecomp->getCommunicator();
@@ -63,14 +74,69 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 }
 
 void HardwareInfo::printDataToStdout() {
-	std::stringstream ss;
+	if (!_dataPopulated)
+		return;
+	std::ostringstream ss;
 	for (auto data : threadData) {
-		ss << "[HardwareInfo] Thread " << data.thread << " out of " << data.totalThreads << " threads, NUMA domain "
-		   << data.numa << ", rank " << data.rank << " out of " << data.totalRanks << " ranks, running on "
-		   << data.processorName << " with CPU index " << data.cpuID << std::endl;
+		ss << "[" << getPluginName() << "] Thread " << data.thread << " out of " << data.totalThreads
+		   << " threads, NUMA domain " << data.numa << ", rank " << data.rank << " out of " << data.totalRanks
+		   << " ranks, running on " << data.processorName << " with CPU index " << data.cpuID << std::endl;
 		Log::global_log->set_mpi_output_all();
 		Log::global_log->info() << ss.str();
 		Log::global_log->set_mpi_output_root(0);
 		ss.str(std::string());
 	}
+}
+
+void HardwareInfo::writeDataToFile() {
+	if (!_dataPopulated)
+		return;
+	Log::global_log->info() << "[" << getPluginName() << "] Writing to file: " << _filename << std::endl;
+	// put all local data into a string ready to write to file
+	std::ostringstream outputStringSS;
+	// add header data if rank 0
+	if (_rank == 0) {
+		outputStringSS << "{\n";
+		outputStringSS << "\t\"total_ranks\": " << threadData[0].totalRanks << ",\n";
+		outputStringSS << "\t\"total_threads\": " << threadData[0].totalThreads << ",\n";
+		outputStringSS << "\t\"thread_data\": [\n";
+		// write header
+		std::ofstream outputFile(_filename);
+		outputFile << outputStringSS.str();
+		outputFile.close();
+		outputStringSS.str(std::string());
+	}
+	// add all thread data
+	// since trailing commas are not allowed, put data from rank 0 at end without comma
+	for (auto it = threadData.begin(); it != threadData.end(); ++it) {
+		if (it != threadData.begin() || _rank != 0)
+			outputStringSS << ",\n";
+		outputStringSS << convertThreadwiseInfoToJson(*it);
+	}
+	// write parallely to file
+	std::string outputString = outputStringSS.str();
+#ifdef ENABLE_MPI
+	if(_rank != 0) {
+
+	}
+#endif
+	// write thread data from rank 0 to file to ensure no comma at end
+	if (_rank == 0) {
+		std::ofstream outputFile(_filename, std::ios_base::app);
+		outputFile << outputString;
+		outputFile << "\n\t]\n}"; // ending brace if rank 0
+		outputFile.close();
+	}
+}
+
+inline std::string HardwareInfo::convertThreadwiseInfoToJson(const ThreadwiseInfo& threadInfo) {
+	std::ostringstream curInfo;
+	curInfo << "\t\t{";
+	curInfo << "\"rank\": " << threadInfo.rank << ", ";
+	curInfo << "\"thread\": " << threadInfo.thread << ", ";
+	curInfo << "\"cpu_ID\": " << threadInfo.cpuID << ", ";
+	curInfo << "\"numa_domain\": " << threadInfo.numa << ", ";
+	curInfo << "\"node_name\": \"" << threadInfo.processorName << "\"";
+	curInfo << "}";
+	return curInfo.str();
 }
