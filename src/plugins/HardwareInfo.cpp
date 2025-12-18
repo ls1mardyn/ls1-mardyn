@@ -61,7 +61,12 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 		int thread = mardyn_get_thread_num();
 		int totalThreads = mardyn_get_num_threads();
 		unsigned int openMPCPUID, openMPNUMA;
+#if __GLIBC__ > 1 && __GLIBC_MINOR__ >= 29
 		getcpu(&openMPCPUID, &openMPNUMA);	// from sched.h
+#else
+		openMPCPUID = sched_getcpu();  // from sched.h
+		openMPNUMA = -1;
+#endif
 		threadData[thread] = ThreadwiseInfo(thread, totalThreads, openMPCPUID, openMPNUMA);
 	}
 #ifdef _OPENMP
@@ -75,9 +80,11 @@ void HardwareInfo::printDataToStdout() {
 		return;
 	std::ostringstream ss;
 	for (auto data : threadData) {
-		ss << "[" << getPluginName() << "] Thread " << data.thread << " out of " << data.totalThreads
-		   << " threads, NUMA domain " << data.numa << ", rank " << _rank << " out of " << _totalRanks
-		   << " ranks, running on " << _processorName << " with CPU index " << data.cpuID << std::endl;
+		ss << "[" << getPluginName() << "] Thread " << data.thread << " out of " << data.totalThreads << " threads";
+		if (data.numa != -1)
+			ss << ", NUMA domain " << data.numa;
+		ss << ", rank " << _rank << " out of " << _totalRanks << " ranks, running on " << _processorName
+		   << " with CPU index " << data.cpuID << std::endl;
 		Log::global_log->set_mpi_output_all();
 		Log::global_log->info() << ss.str();
 		Log::global_log->set_mpi_output_root(0);
@@ -107,10 +114,10 @@ void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 	// since trailing commas are not allowed, put data from rank 0 at end without comma
 	std::string outputString = convertFullDataToJson();
 #ifdef ENABLE_MPI
-// taken from DomainDecompMPIBase::printDecomp
+	// taken from DomainDecompMPIBase::printDecomp
 	MPI_File parFile;
 	MPI_File_open(domainDecomp->getCommunicator(), _filename.c_str(),
-					MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL, &parFile);
+				  MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL, &parFile);
 	unsigned long writeSize = outputString.size();
 	unsigned long offset = 0;
 	if (_rank == 0) {
@@ -124,7 +131,7 @@ void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 		MPI_Exscan(&writeSize, &offset, 1, MPI_UINT64_T, MPI_SUM, domainDecomp->getCommunicator());
 	}
 	MPI_File_write_at(parFile, static_cast<MPI_Offset>(offset), outputString.c_str(),
-						static_cast<int>(outputString.size()), MPI_CHAR, MPI_STATUS_IGNORE);
+					  static_cast<int>(outputString.size()), MPI_CHAR, MPI_STATUS_IGNORE);
 	MPI_File_close(&parFile);
 #endif
 	// close remaining braces
@@ -145,8 +152,9 @@ std::string HardwareInfo::convertFullDataToJson() {
 		if (it != threadData.begin())
 			rankInfo << ",\n";
 		rankInfo << "\t\t\t\"" << it->thread << "\": {";
-		rankInfo << "\"cpu_ID\": " << it->cpuID << ", ";
-		rankInfo << "\"numa_domain\": " << it->numa;
+		rankInfo << "\"cpu_ID\": " << it->cpuID;
+		if (it->numa != -1)
+			rankInfo << ", \"numa_domain\": " << it->numa;
 		rankInfo << "}";
 	}
 
