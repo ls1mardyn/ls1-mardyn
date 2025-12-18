@@ -63,9 +63,11 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 		unsigned int openMPCPUID, openMPNUMA;
 #if __GLIBC__ > 1 && __GLIBC_MINOR__ >= 29
 		getcpu(&openMPCPUID, &openMPNUMA);	// from sched.h
-#else
+#elif defined(__GLIBC__)
 		openMPCPUID = sched_getcpu();  // from sched.h
 		openMPNUMA = -1;
+#else
+		openMPCPUID = openMPNUMA = -1;
 #endif
 		threadData[thread] = ThreadwiseInfo(thread, totalThreads, openMPCPUID, openMPNUMA);
 	}
@@ -83,8 +85,9 @@ void HardwareInfo::printDataToStdout() {
 		ss << "[" << getPluginName() << "] Thread " << data.thread << " out of " << data.totalThreads << " threads";
 		if (data.numa != -1)
 			ss << ", NUMA domain " << data.numa;
-		ss << ", rank " << _rank << " out of " << _totalRanks << " ranks, running on " << _processorName
-		   << " with CPU index " << data.cpuID << std::endl;
+		ss << ", rank " << _rank << " out of " << _totalRanks << " ranks, running on " << _processorName;
+		if (data.cpuID != -1)
+			ss << " with CPU index " << data.cpuID << std::endl;
 		Log::global_log->set_mpi_output_all();
 		Log::global_log->info() << ss.str();
 		Log::global_log->set_mpi_output_root(0);
@@ -152,7 +155,8 @@ std::string HardwareInfo::convertFullDataToJson() {
 		if (it != threadData.begin())
 			rankInfo << ",\n";
 		rankInfo << "\t\t\t\"" << it->thread << "\": {";
-		rankInfo << "\"cpu_ID\": " << it->cpuID;
+		if (it->cpuID != -1)
+			rankInfo << "\"cpu_ID\": " << it->cpuID;
 		if (it->numa != -1)
 			rankInfo << ", \"numa_domain\": " << it->numa;
 		rankInfo << "}";
