@@ -20,8 +20,6 @@
 #include "parallel/DomainDecompBase.h"
 #include "utils/Logger.h"
 
-// #include "utils/compile_info.h"
-
 void HardwareInfo::readXML(XMLfileUnits& xmlconfig) {
 	_filename = "";
 	xmlconfig.getNodeValue("filename", _filename);
@@ -39,7 +37,7 @@ void HardwareInfo::init(ParticleContainer* particleContainer, DomainDecompBase* 
 	populateData(domainDecomp);
 	printDataToStdout();
 	if (_filename != "")
-		writeDataToFile();
+		writeDataToFile(domainDecomp);
 }
 
 void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
@@ -87,7 +85,7 @@ void HardwareInfo::printDataToStdout() {
 	}
 }
 
-void HardwareInfo::writeDataToFile() {
+void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 	if (!_dataPopulated)
 		return;
 	Log::global_log->info() << "[" << getPluginName() << "] Writing to file: " << _filename << std::endl;
@@ -98,7 +96,7 @@ void HardwareInfo::writeDataToFile() {
 		outputStringSS << "{\n";
 		outputStringSS << "\t\"total_ranks\": " << _totalRanks << ",\n";
 		outputStringSS << "\t\"total_threads\": " << threadData[0].totalThreads << ",\n";
-		outputStringSS << "\t\"ranks\": {";
+		outputStringSS << "\t\"rank_data\": {";
 		// write header
 		std::ofstream outputFile(_filename);
 		outputFile << outputStringSS.str();
@@ -109,15 +107,29 @@ void HardwareInfo::writeDataToFile() {
 	// since trailing commas are not allowed, put data from rank 0 at end without comma
 	std::string outputString = convertFullDataToJson();
 #ifdef ENABLE_MPI
-	if (_rank != 0) {
-		MPI_File parFile;
-		// MPI_File_open
+// taken from DomainDecompMPIBase::printDecomp
+	MPI_File parFile;
+	MPI_File_open(domainDecomp->getCommunicator(), _filename.c_str(),
+					MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL, &parFile);
+	unsigned long writeSize = outputString.size();
+	unsigned long offset = 0;
+	if (_rank == 0) {
+		MPI_Offset fileEndOffset;
+		MPI_File_seek(parFile, 0, MPI_SEEK_END);
+		MPI_File_get_position(parFile, &fileEndOffset);
+		writeSize += fileEndOffset;
+		MPI_Exscan(&writeSize, &offset, 1, MPI_UINT64_T, MPI_SUM, domainDecomp->getCommunicator());
+		offset += fileEndOffset;
+	} else {
+		MPI_Exscan(&writeSize, &offset, 1, MPI_UINT64_T, MPI_SUM, domainDecomp->getCommunicator());
 	}
+	MPI_File_write_at(parFile, static_cast<MPI_Offset>(offset), outputString.c_str(),
+						static_cast<int>(outputString.size()), MPI_CHAR, MPI_STATUS_IGNORE);
+	MPI_File_close(&parFile);
 #endif
-	// write thread data from rank 0 to file to ensure no comma at end
+	// close remaining braces
 	if (_rank == 0) {
 		std::ofstream outputFile(_filename, std::ios_base::app);
-		outputFile << outputString;
 		outputFile << "\n\t}\n}";  // ending brace if rank 0
 		outputFile.close();
 	}
@@ -140,7 +152,7 @@ std::string HardwareInfo::convertFullDataToJson() {
 
 	rankInfo << "\n\t\t\t}";  // close threads
 	rankInfo << "\n\t\t}";	  // close rank
-	if (_rank != 0)
+	if (_rank != _totalRanks - 1)
 		rankInfo << ",";
 	return rankInfo.str();
 }

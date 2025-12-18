@@ -42,7 +42,7 @@ public:
 private:
 	void populateData(DomainDecompBase* domainDecomp);
 	void printDataToStdout();
-	void writeDataToFile();
+	void writeDataToFile(DomainDecompBase* domainDecomp);
 	std::string convertFullDataToJson();
 
 	std::string _filename;
