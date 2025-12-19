@@ -8,7 +8,9 @@
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
+#ifdef __GLIBC__
 #include <sched.h>
+#endif
 #include <unistd.h>
 
 #include <fstream>
@@ -105,7 +107,6 @@ void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 	if (_rank == 0) {
 		outputStringSS << "{\n";
 		outputStringSS << "\t\"total_ranks\": " << _totalRanks << ",\n";
-		outputStringSS << "\t\"total_threads\": " << threadData[0].totalThreads << ",\n";
 		outputStringSS << "\t\"rank_data\": {";
 		// write header
 		std::ofstream outputFile(_filename);
@@ -140,6 +141,9 @@ void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 	// close remaining braces
 	if (_rank == 0) {
 		std::ofstream outputFile(_filename, std::ios_base::app);
+#ifndef ENABLE_MPI	// write serial data
+		outputFile << outputString;
+#endif
 		outputFile << "\n\t}\n}";  // ending brace if rank 0
 		outputFile.close();
 	}
@@ -149,6 +153,7 @@ std::string HardwareInfo::convertFullDataToJson() {
 	std::ostringstream rankInfo;
 	rankInfo << "\n\t\t\"" << _rank << "\": {\n";
 	rankInfo << "\t\t\t\"node_name\": \"" << _processorName << "\",\n";
+	rankInfo << "\t\t\t\"total_threads\": \"" << mardyn_get_max_threads() << "\",\n";
 	rankInfo << "\t\t\t\"thread_data\": {\n";
 
 	for (auto it = threadData.begin(); it != threadData.end(); ++it) {
