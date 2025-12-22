@@ -9,9 +9,11 @@
 #include <mpi.h>
 #endif
 #ifdef __GLIBC__
-#include <sched.h>
+#include <sched.h>	// sched_getcpu(), getcpu(int*, int*)
 #endif
-#include <unistd.h>
+#ifndef _WIN32		 // only OS not POSIX compliant
+#include <unistd.h>	 // gethostname(char*, int)
+#endif
 
 #include <fstream>
 #include <iostream>
@@ -19,11 +21,10 @@
 
 #include "HardwareInfo.h"
 #include "WrapOpenMP.h"
-#include "parallel/DomainDecompBase.h"
+#include "parallel/DomainDecompBase.h"	// getCommunicator()
 #include "utils/Logger.h"
 
 void HardwareInfo::readXML(XMLfileUnits& xmlconfig) {
-	_filename = "";
 	xmlconfig.getNodeValue("filename", _filename);
 	if (_filename != "") {
 		_filename += ".json";
@@ -31,21 +32,24 @@ void HardwareInfo::readXML(XMLfileUnits& xmlconfig) {
 	}
 }
 
-void HardwareInfo::init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+void HardwareInfo::init(ParticleContainer*, DomainDecompBase* domainDecomp, Domain*) {
 	// defaults
 	_rank = 0;
 	_totalRanks = 1;
 	_processorName = "";
 	populateData(domainDecomp);
-	printDataToStdout();
 	if (_filename != "")
 		writeDataToFile(domainDecomp);
+	else
+		printDataToStdout();
 }
 
-void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
-	char cStyleProcName[1024];
+void HardwareInfo::populateData(const DomainDecompBase* domainDecomp) {
+	char cStyleProcName[1024] = {"default"};
+#ifndef _WIN32
 	gethostname(cStyleProcName, 1023);	// from unistd.h
-	threadData.resize(mardyn_get_max_threads());
+#endif
+	_threadData.resize(mardyn_get_max_threads());
 	// mpi
 #ifdef ENABLE_MPI
 	auto curCommunicator = domainDecomp->getCommunicator();
@@ -57,13 +61,13 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	_processorName = std::string(cStyleProcName);
 	// openmp
 #ifdef _OPENMP
-#pragma omp parallel shared(threadData)
+#pragma omp parallel shared(_threadData)
 #endif
 	{
 		int thread = mardyn_get_thread_num();
 		int totalThreads = mardyn_get_num_threads();
 		unsigned int openMPCPUID, openMPNUMA;
-#if __GLIBC__ > 1 && __GLIBC_MINOR__ >= 29
+#if __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 29
 		getcpu(&openMPCPUID, &openMPNUMA);	// from sched.h
 #elif defined(__GLIBC__)
 		openMPCPUID = sched_getcpu();  // from sched.h
@@ -71,7 +75,7 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 #else
 		openMPCPUID = openMPNUMA = -1;
 #endif
-		threadData[thread] = ThreadwiseInfo(thread, totalThreads, openMPCPUID, openMPNUMA);
+		_threadData[thread] = ThreadwiseInfo(thread, totalThreads, openMPCPUID, openMPNUMA);
 	}
 #ifdef _OPENMP
 #pragma omp barrier
@@ -79,11 +83,14 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	_dataPopulated = true;
 }
 
-void HardwareInfo::printDataToStdout() {
-	if (!_dataPopulated)
-		return;
+const void HardwareInfo::printDataToStdout() {
+	if (!_dataPopulated) {	// sanity check
+		std::ostringstream msg;
+		msg << "[" << getPluginName() << "] data not populated!" << std::endl;
+		MARDYN_EXIT(msg.str());
+	}
 	std::ostringstream ss;
-	for (auto data : threadData) {
+	for (auto data : _threadData) {
 		ss << "[" << getPluginName() << "] Thread " << data.thread << " out of " << data.totalThreads << " threads";
 		if (data.numa != -1)
 			ss << ", NUMA domain " << data.numa;
@@ -93,13 +100,16 @@ void HardwareInfo::printDataToStdout() {
 		Log::global_log->set_mpi_output_all();
 		Log::global_log->info() << ss.str();
 		Log::global_log->set_mpi_output_root(0);
-		ss.str(std::string());
+		ss.str(std::string());	// clear ostringstream
 	}
 }
 
-void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
-	if (!_dataPopulated)
-		return;
+const void HardwareInfo::writeDataToFile(const DomainDecompBase* domainDecomp) {
+	if (!_dataPopulated) {	// sanity check
+		std::ostringstream msg;
+		msg << "[" << getPluginName() << "] data not populated!" << std::endl;
+		MARDYN_EXIT(msg.str());
+	}
 	Log::global_log->info() << "[" << getPluginName() << "] Writing to file: " << _filename << std::endl;
 	// put all local data into a string ready to write to file
 	std::ostringstream outputStringSS;
@@ -112,7 +122,7 @@ void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 		std::ofstream outputFile(_filename);
 		outputFile << outputStringSS.str();
 		outputFile.close();
-		outputStringSS.str(std::string());
+		outputStringSS.str(std::string());	// clear ostringstream
 	}
 	// add all thread data
 	// since trailing commas are not allowed, put data from rank 0 at end without comma
@@ -141,7 +151,7 @@ void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 	// close remaining braces
 	if (_rank == 0) {
 		std::ofstream outputFile(_filename, std::ios_base::app);
-#ifndef ENABLE_MPI	// write serial data
+#ifndef ENABLE_MPI	// write serial data if MPI not enabled
 		outputFile << outputString;
 #endif
 		outputFile << "\n\t}\n}";  // ending brace if rank 0
@@ -149,15 +159,15 @@ void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 	}
 }
 
-std::string HardwareInfo::convertFullDataToJson() {
+const std::string HardwareInfo::convertFullDataToJson() {
 	std::ostringstream rankInfo;
 	rankInfo << "\n\t\t\"" << _rank << "\": {\n";
 	rankInfo << "\t\t\t\"node_name\": \"" << _processorName << "\",\n";
-	rankInfo << "\t\t\t\"total_threads\": \"" << mardyn_get_max_threads() << "\",\n";
+	rankInfo << "\t\t\t\"total_threads\": \"" << _threadData[0].totalThreads << "\",\n";
 	rankInfo << "\t\t\t\"thread_data\": {\n";
 
-	for (auto it = threadData.begin(); it != threadData.end(); ++it) {
-		if (it != threadData.begin())
+	for (auto it = _threadData.begin(); it != _threadData.end(); ++it) {
+		if (it != _threadData.begin())
 			rankInfo << ",\n";
 		rankInfo << "\t\t\t\"" << it->thread << "\": {";
 		if (it->cpuID != -1)
@@ -167,9 +177,9 @@ std::string HardwareInfo::convertFullDataToJson() {
 		rankInfo << "}";
 	}
 
-	rankInfo << "\n\t\t\t}";  // close threads
-	rankInfo << "\n\t\t}";	  // close rank
-	if (_rank != _totalRanks - 1)
+	rankInfo << "\n\t\t\t}";	   // close threads
+	rankInfo << "\n\t\t}";		   // close rank
+	if (_rank != _totalRanks - 1)  // no trailing comma for final rank
 		rankInfo << ",";
 	return rankInfo.str();
 }
