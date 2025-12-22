@@ -128,9 +128,10 @@ const void HardwareInfo::writeDataToFile(const DomainDecompBase* domainDecomp) {
 	// since trailing commas are not allowed, put data from rank 0 at end without comma
 	std::string outputString = convertFullDataToJson();
 #ifdef ENABLE_MPI
+	auto curComm = domainDecomp->getCommunicator();
 	// taken from DomainDecompMPIBase::printDecomp
 	MPI_File parFile;
-	MPI_File_open(domainDecomp->getCommunicator(), _filename.c_str(),
+	MPI_File_open(curComm, _filename.c_str(),
 				  MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL, &parFile);
 	unsigned long writeSize = outputString.size();
 	unsigned long offset = 0;
@@ -139,10 +140,10 @@ const void HardwareInfo::writeDataToFile(const DomainDecompBase* domainDecomp) {
 		MPI_File_seek(parFile, 0, MPI_SEEK_END);
 		MPI_File_get_position(parFile, &fileEndOffset);
 		writeSize += fileEndOffset;
-		MPI_Exscan(&writeSize, &offset, 1, MPI_UINT64_T, MPI_SUM, domainDecomp->getCommunicator());
+		MPI_Exscan(&writeSize, &offset, 1, MPI_UINT64_T, MPI_SUM, curComm);
 		offset += fileEndOffset;
 	} else {
-		MPI_Exscan(&writeSize, &offset, 1, MPI_UINT64_T, MPI_SUM, domainDecomp->getCommunicator());
+		MPI_Exscan(&writeSize, &offset, 1, MPI_UINT64_T, MPI_SUM, curComm);
 	}
 	MPI_File_write_at(parFile, static_cast<MPI_Offset>(offset), outputString.c_str(),
 					  static_cast<int>(outputString.size()), MPI_CHAR, MPI_STATUS_IGNORE);
