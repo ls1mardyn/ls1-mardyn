@@ -82,14 +82,14 @@ private:
 	 *
 	 * @param domainDecomp Needed to access the communicator to get MPI rank and world size
 	 */
-	void populateData(const DomainDecompBase* domainDecomp);
+	void populateData(DomainDecompBase* domainDecomp);
 
 	/**
 	 * @brief Pretty-prints _threadData, _rank, _totalRanks, and _processorName using the logger.
 	 *
 	 * Any data that is -1 is assumed to be incomplete and skipped.
 	 */
-	const void printDataToStdout();
+	void printDataToStdout();
 
 	/**
 	 * @brief Writes _threadData, _rank, _totalRanks, and _processorName to a specified json file.
@@ -111,7 +111,7 @@ private:
 	 *
 	 * @param domainDecomp Needed to access the communicator to set up the MPI file to be written to
 	 */
-	const void writeDataToFile(const DomainDecompBase* domainDecomp);
+	void writeDataToFile(DomainDecompBase* domainDecomp);
 
 	/**
 	 * @brief Wrapper for logic that converts the entire _threadData into a json string.
@@ -132,7 +132,7 @@ private:
 	 * \endcode
 	 * @return const std::string The rank-dependent hardware information formatted in json.
 	 */
-	const std::string convertFullDataToJson();
+	const std::string convertFullDataToJson() const;
 
 	/**
 	 * @brief Stores the filename read in from XML, appended with a ".json".

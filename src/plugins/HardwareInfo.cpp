@@ -44,7 +44,7 @@ void HardwareInfo::init(ParticleContainer*, DomainDecompBase* domainDecomp, Doma
 		printDataToStdout();
 }
 
-void HardwareInfo::populateData(const DomainDecompBase* domainDecomp) {
+void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	char cStyleProcName[1024] = {"default"};
 #ifndef _WIN32
 	gethostname(cStyleProcName, 1023);	// from unistd.h
@@ -52,7 +52,7 @@ void HardwareInfo::populateData(const DomainDecompBase* domainDecomp) {
 	_threadData.resize(mardyn_get_max_threads());
 	// mpi
 #ifdef ENABLE_MPI
-	const auto curComm = domainDecomp->getCommunicator();
+	auto curComm = domainDecomp->getCommunicator();
 	MPI_CHECK(MPI_Comm_size(curComm, &_totalRanks));
 	MPI_CHECK(MPI_Comm_rank(curComm, &_rank));
 	int name_len;
@@ -83,7 +83,7 @@ void HardwareInfo::populateData(const DomainDecompBase* domainDecomp) {
 	_dataPopulated = true;
 }
 
-const void HardwareInfo::printDataToStdout() {
+void HardwareInfo::printDataToStdout() {
 	if (!_dataPopulated) {	// sanity check
 		std::ostringstream msg;
 		msg << "[" << getPluginName() << "] data not populated!" << std::endl;
@@ -104,7 +104,7 @@ const void HardwareInfo::printDataToStdout() {
 	}
 }
 
-const void HardwareInfo::writeDataToFile(const DomainDecompBase* domainDecomp) {
+void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 	if (!_dataPopulated) {	// sanity check
 		std::ostringstream msg;
 		msg << "[" << getPluginName() << "] data not populated!" << std::endl;
@@ -128,7 +128,7 @@ const void HardwareInfo::writeDataToFile(const DomainDecompBase* domainDecomp) {
 	// since trailing commas are not allowed, put data from rank 0 at end without comma
 	std::string outputString = convertFullDataToJson();
 #ifdef ENABLE_MPI
-	const auto curComm = domainDecomp->getCommunicator();
+	auto curComm = domainDecomp->getCommunicator();
 	// taken from DomainDecompMPIBase::printDecomp
 	MPI_File parFile;
 	MPI_File_open(curComm, _filename.c_str(), MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL,
@@ -160,7 +160,7 @@ const void HardwareInfo::writeDataToFile(const DomainDecompBase* domainDecomp) {
 	}
 }
 
-const std::string HardwareInfo::convertFullDataToJson() {
+const std::string HardwareInfo::convertFullDataToJson() const {
 	std::ostringstream rankInfo;
 	rankInfo << "\n\t\t\"" << _rank << "\": {\n";
 	rankInfo << "\t\t\t\"node_name\": \"" << _processorName << "\",\n";
