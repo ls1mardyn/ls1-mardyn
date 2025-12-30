@@ -104,7 +104,7 @@ private:
 	   {
 		   "total_ranks": _totalRanks,
 		   "rank_data": {
-			   (data from convertFullDataToJson())
+			   <data from convertFullDataToJson()>
 		   }
 	   }
 	   \endcode

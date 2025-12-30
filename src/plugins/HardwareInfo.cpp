@@ -37,6 +37,13 @@ void HardwareInfo::init(ParticleContainer*, DomainDecompBase* domainDecomp, Doma
 	_rank = 0;
 	_totalRanks = 1;
 	_processorName = "";
+#ifndef __GLIBC__
+	Log::global_log->warning()
+		<< "[" << getPluginName()
+		<< "] sched.h cannot be loaded since glibc was not used! Thread pinning data not available!" << std::endl;
+#elif __GLIBC__ < 2 || __GLIBC_MINOR__ < 29
+	Log::global_log->warning() << "[" << getPluginName() << "] glibc version too low to show NUMA info!" << std::endl;
+#endif
 	populateData(domainDecomp);
 	if (_filename != "")
 		writeDataToFile(domainDecomp);
@@ -50,16 +57,16 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	gethostname(cStyleProcName, 1023);	// from unistd.h
 #endif
 	_threadData.resize(mardyn_get_max_threads());
-	// mpi
+	// mpi data
 #ifdef ENABLE_MPI
 	auto curComm = domainDecomp->getCommunicator();
 	MPI_CHECK(MPI_Comm_size(curComm, &_totalRanks));
 	MPI_CHECK(MPI_Comm_rank(curComm, &_rank));
-	int name_len;
+	int name_len;  // value not used, placeholder was needed for get_processor_name
 	MPI_CHECK(MPI_Get_processor_name(cStyleProcName, &name_len));
 #endif
 	_processorName = std::string(cStyleProcName);
-	// openmp
+	// openmp data
 #ifdef _OPENMP
 #pragma omp parallel shared(_threadData)
 #endif
@@ -86,7 +93,7 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 void HardwareInfo::printDataToStdout() {
 	if (!_dataPopulated) {	// sanity check
 		std::ostringstream msg;
-		msg << "[" << getPluginName() << "] data not populated!" << std::endl;
+		msg << "[" << getPluginName() << "] Data not populated!" << std::endl;
 		MARDYN_EXIT(msg.str());
 	}
 	std::ostringstream ss;
@@ -107,7 +114,7 @@ void HardwareInfo::printDataToStdout() {
 void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 	if (!_dataPopulated) {	// sanity check
 		std::ostringstream msg;
-		msg << "[" << getPluginName() << "] data not populated!" << std::endl;
+		msg << "[" << getPluginName() << "] Data not populated!" << std::endl;
 		MARDYN_EXIT(msg.str());
 	}
 	Log::global_log->info() << "[" << getPluginName() << "] Writing to file: " << _filename << std::endl;
@@ -125,7 +132,7 @@ void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 		outputStringSS.str(std::string());	// clear ostringstream
 	}
 	// add all thread data
-	// since trailing commas are not allowed, put data from rank 0 at end without comma
+	// since trailing commas are not allowed, last rank will write data without comma at end
 	std::string outputString = convertFullDataToJson();
 #ifdef ENABLE_MPI
 	auto curComm = domainDecomp->getCommunicator();
@@ -155,7 +162,7 @@ void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 #ifndef ENABLE_MPI	// write serial data if MPI not enabled
 		outputFile << outputString;
 #endif
-		outputFile << "\n\t}\n}";  // ending brace if rank 0
+		outputFile << "\n\t}\n}";  // ending brace from rank 0
 		outputFile.close();
 	}
 }
