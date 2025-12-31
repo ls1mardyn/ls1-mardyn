@@ -70,7 +70,7 @@ public:
 
 private:
 	/**
-	 * @brief Fills the data members _threadData, _rank, _totalRanks, and _processorName, and sets _dataPopulated to
+	 * @brief Fills the data members _threadData, _rank, _totalRanks, and _nodeName, and sets _dataPopulated to
 	 * true
 	 *
 	 * This function is tasked with performing all of the necessary quesries to get the hardware information. It uses
@@ -85,14 +85,14 @@ private:
 	void populateData(DomainDecompBase* domainDecomp);
 
 	/**
-	 * @brief Pretty-prints _threadData, _rank, _totalRanks, and _processorName using the logger.
+	 * @brief Pretty-prints _threadData, _rank, _totalRanks, and _nodeName using the logger.
 	 *
 	 * Any data that is -1 is assumed to be incomplete and skipped.
 	 */
 	void printDataToStdout();
 
 	/**
-	 * @brief Writes _threadData, _rank, _totalRanks, and _processorName to a specified json file.
+	 * @brief Writes _threadData, _rank, _totalRanks, and _nodeName to a specified json file.
 	 *
 	 * No json libraries are used, so all the data is processed as raw strings and directly written to file. The file is
 	 * opened as an MPI file and all ranks write directly to it in specified offsets. Thus, the data will be ordered by
@@ -123,7 +123,7 @@ private:
 	 * The json structure is as follows:
 	 * \code{.json}
 	 * _rank: {
-		   "node_name": _processorName,
+		   "node_name": _nodeName,
 		   "total_threads": omp_get_max_threads(),
 		   "thread_data": {
 			   _threadID: {"cpu_ID": INT, "numa_domain": INT}
@@ -147,7 +147,7 @@ private:
 	/**
 	 * @brief Stores name of the current node.
 	 */
-	std::string _processorName;
+	std::string _nodeName;
 
 	/**
 	 * @brief Stores all thread data, in the form of ThreadwiseInfo struct objects.

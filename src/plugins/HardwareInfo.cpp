@@ -36,7 +36,7 @@ void HardwareInfo::init(ParticleContainer*, DomainDecompBase* domainDecomp, Doma
 	// defaults
 	_rank = 0;
 	_totalRanks = 1;
-	_processorName = "";
+	_nodeName = "";
 #ifndef __GLIBC__
 	Log::global_log->warning()
 		<< "[" << getPluginName()
@@ -52,21 +52,21 @@ void HardwareInfo::init(ParticleContainer*, DomainDecompBase* domainDecomp, Doma
 }
 
 void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
-	char cStyleProcName[1024] = {"default"};
+	char cStyleNodeName[1024] = {"default"};
 #ifndef _WIN32
-	gethostname(cStyleProcName, 1023);	// from unistd.h
+	gethostname(cStyleNodeName, 1023);	// from unistd.h
 #endif
 	_threadData.resize(mardyn_get_max_threads());
-	// mpi data
+	// rank level data
 #ifdef ENABLE_MPI
 	auto curComm = domainDecomp->getCommunicator();
 	MPI_CHECK(MPI_Comm_size(curComm, &_totalRanks));
 	MPI_CHECK(MPI_Comm_rank(curComm, &_rank));
 	int name_len;  // value not used, placeholder was needed for get_processor_name
-	MPI_CHECK(MPI_Get_processor_name(cStyleProcName, &name_len));
+	MPI_CHECK(MPI_Get_processor_name(cStyleNodeName, &name_len));
 #endif
-	_processorName = std::string(cStyleProcName);
-	// openmp data
+	_nodeName = std::string(cStyleNodeName);
+	// thread level data
 #ifdef _OPENMP
 #pragma omp parallel shared(_threadData)
 #endif
@@ -101,7 +101,7 @@ void HardwareInfo::printDataToStdout() {
 		ss << "[" << getPluginName() << "] Thread " << data.thread << " out of " << data.totalThreads << " threads";
 		if (data.numa != -1)
 			ss << ", NUMA domain " << data.numa;
-		ss << ", rank " << _rank << " out of " << _totalRanks << " ranks, running on " << _processorName;
+		ss << ", rank " << _rank << " out of " << _totalRanks << " ranks, running on " << _nodeName;
 		if (data.cpuID != -1)
 			ss << " with CPU index " << data.cpuID << std::endl;
 		Log::global_log->set_mpi_output_all();
@@ -170,7 +170,7 @@ void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 const std::string HardwareInfo::convertFullDataToJson() const {
 	std::ostringstream rankInfo;
 	rankInfo << "\n\t\t\"" << _rank << "\": {\n";
-	rankInfo << "\t\t\t\"node_name\": \"" << _processorName << "\",\n";
+	rankInfo << "\t\t\t\"node_name\": \"" << _nodeName << "\",\n";
 	rankInfo << "\t\t\t\"total_threads\": \"" << _threadData[0].totalThreads << "\",\n";
 	rankInfo << "\t\t\t\"thread_data\": {\n";
 
