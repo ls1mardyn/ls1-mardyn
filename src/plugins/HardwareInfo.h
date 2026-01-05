@@ -116,10 +116,10 @@ private:
 	/**
 	 * @brief Wrapper for logic that converts the entire _threadData into a json string.
 	 *
-	 * This contains all the data that is rank dependent, and assumes that all data that is -1 is absent, and can be
-	 * skipped. Since the data will be written in order of ranks, the trailing comma for the data of the final rank is
-	 * removed. Thus, without the trailing comma, this function returns a fully parseable json, without any closing
-	 * braces required. Each line of the json is prepended with two tabs.
+	 * This contains all the data that is rank dependent, and assumes that all data that is -1 is absent. Since the data
+	 * will be written in order of ranks, the trailing comma for the data of the final rank is removed. Thus, without
+	 * the trailing comma, this function returns a fully parseable json, without any closing braces required. Each line
+	 * of the json is prepended with two tabs.
 	 * The json structure is as follows:
 	 * \code{.json}
 	 * _rank: {
@@ -148,6 +148,10 @@ private:
 	 * @brief Stores name of the current node.
 	 */
 	std::string _nodeName;
+
+	std::string _maxRam;
+
+	std::string _cpuInfo;
 
 	/**
 	 * @brief Stores all thread data, in the form of ThreadwiseInfo struct objects.

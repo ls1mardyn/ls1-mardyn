@@ -12,12 +12,13 @@
 #include <sched.h>	// sched_getcpu(), getcpu(int*, int*)
 #endif
 #ifndef _WIN32		 // only OS not POSIX compliant
-#include <unistd.h>	 // gethostname(char*, int)
+#include <unistd.h>	 // gethostname(char*, int), sysinfo
 #endif
 
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <iomanip> // std::fixed, std::setprecision
 
 #include "HardwareInfo.h"
 #include "WrapOpenMP.h"
@@ -59,6 +60,7 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	gethostname(cStyleNodeName, 1023);	// from unistd.h
 #endif
 	_threadData.resize(mardyn_get_max_threads());
+	
 	// rank level data
 #ifdef ENABLE_MPI
 	auto curComm = domainDecomp->getCommunicator();
@@ -68,6 +70,7 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	MPI_CHECK(MPI_Get_processor_name(cStyleNodeName, &name_len));
 #endif
 	_nodeName = std::string(cStyleNodeName);
+	
 	// thread level data
 #ifdef _OPENMP
 #pragma omp parallel shared(_threadData)
@@ -89,6 +92,20 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 #ifdef _OPENMP
 #pragma omp barrier
 #endif
+
+	// RAM information
+	_maxRam = "N/A";
+#ifndef _WIN32
+	float ramGB = ((sysconf(_SC_PAGESIZE) / 1000.0) * (sysconf(_SC_PHYS_PAGES) / 1000.0)) / 1000.0; // from unistd.h, ordering to prevent overflow
+	float ramGiB = ((sysconf(_SC_PAGESIZE) / 1024.0) * (sysconf(_SC_PHYS_PAGES) / 1024.0)) / 1024.0; // from unistd.h, ordering to prevent overflow
+	std::ostringstream ramDataCollect;
+	ramDataCollect << std::fixed << std::setprecision(2) << ramGB << " GB (" << ramGiB << " GiB)";
+	_maxRam = ramDataCollect.str();
+#endif
+
+	// CPU information
+	_cpuInfo = "N/A";
+
 	_dataPopulated = true;
 }
 
@@ -103,7 +120,8 @@ void HardwareInfo::printDataToStdout() {
 		ss << "[" << getPluginName() << "] Thread " << data.thread << " out of " << data.totalThreads << " threads";
 		ss << ", NUMA domain " << data.numa;
 		ss << ", rank " << _rank << " out of " << _totalRanks << " ranks, running on " << _nodeName;
-		ss << " with CPU index " << data.cpuID << std::endl;
+		ss << " with CPU index " << data.cpuID;
+		ss << ", CPU info: " << _cpuInfo << ", Max RAM available: " << _maxRam << std::endl;
 		Log::global_log->set_mpi_output_all();
 		Log::global_log->info() << ss.str();
 		Log::global_log->set_mpi_output_root(0);
@@ -171,6 +189,8 @@ const std::string HardwareInfo::convertFullDataToJson() const {
 	std::ostringstream rankInfo;
 	rankInfo << "\n\t\t\"" << _rank << "\": {\n";
 	rankInfo << "\t\t\t\"node_name\": \"" << _nodeName << "\",\n";
+	rankInfo << "\t\t\t\"cpu_info\": \"" << _cpuInfo << "\",\n";
+	rankInfo << "\t\t\t\"max_avail_ram\": \"" << _maxRam << "\",\n";
 	rankInfo << "\t\t\t\"total_threads\": \"" << _threadData[0].totalThreads << "\",\n";
 	rankInfo << "\t\t\t\"thread_data\": {\n";
 
@@ -178,7 +198,7 @@ const std::string HardwareInfo::convertFullDataToJson() const {
 		if (it != _threadData.begin())
 			rankInfo << ",\n";
 		rankInfo << "\t\t\t\"" << it->thread << "\": {";
-		rankInfo << "\"cpu_ID\": " << it->cpuID;
+		rankInfo << "\"cpu_id\": " << it->cpuID;
 		rankInfo << ", \"numa_domain\": " << it->numa;
 		rankInfo << "}";
 	}
