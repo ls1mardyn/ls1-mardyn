@@ -41,7 +41,7 @@ void HardwareInfo::init(ParticleContainer*, DomainDecompBase* domainDecomp, Doma
 	Log::global_log->warning()
 		<< "[" << getPluginName()
 		<< "] sched.h cannot be loaded since glibc was not used! Thread pinning data replaced with -1!" << std::endl;
-#elif __GLIBC__ < 2 || __GLIBC_MINOR__ < 29
+#elif (__GLIBC__ < 2) || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 29)
 	Log::global_log->warning()
 		<< "[" << getPluginName()
 		<< "] glibc version too low to show NUMA info (>=2.29 required)! NUMA data replaced with -1!" << std::endl;
@@ -76,7 +76,7 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 		int thread = mardyn_get_thread_num();
 		int totalThreads = mardyn_get_num_threads();
 		unsigned int openMPCPUID, openMPNUMA;
-#if __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 29
+#if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 29)
 		getcpu(&openMPCPUID, &openMPNUMA);	// from sched.h
 #elif defined(__GLIBC__)
 		openMPCPUID = sched_getcpu();  // from sched.h
