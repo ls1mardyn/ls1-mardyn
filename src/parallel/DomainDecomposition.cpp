@@ -36,13 +36,13 @@ void DomainDecomposition::initMPIGridDims() {
 		}
 	}
 
-	MPI_Comm previous_comm = _comm;
+	MPI_Comm previousComm = _comm;
 	MPI_CHECK(MPI_Dims_create( _numProcs, DIMgeom, _gridSize.data()));
 	MPI_CHECK(MPI_Cart_create(_comm, DIMgeom, _gridSize.data(), period, reorder, &_comm));
 
 	// If initMPIGridDims has already been executed, the previous communicator is deleted.
 	if (_cartCommunicatorCreated) {
-		MPI_Comm_free(&previous_comm);
+		MPI_Comm_free(&previousComm);
 	}
 	_cartCommunicatorCreated = true;
 
