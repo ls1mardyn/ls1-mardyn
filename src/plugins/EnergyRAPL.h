@@ -209,7 +209,7 @@ public:
 	 */
 	static PluginBase* createInstance() { return new EnergyRAPL(); }
 
-	/** @brief Read in XML configuration for DecompWriter.
+	/** @brief Read in XML configuration for EnergyRAPL.
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
