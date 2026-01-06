@@ -16,7 +16,7 @@ public:
 	XyzWriter() = default;
 	~XyzWriter() override = default;
 
-	/** @brief Read in XML configuration for DecompWriter.
+	/** @brief Read in XML configuration for XyzWriter.
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
