@@ -11,14 +11,14 @@
 #ifdef __GLIBC__
 #include <sched.h>	// sched_getcpu(), getcpu(int*, int*)
 #endif
-#ifndef _WIN32		 // only OS not POSIX compliant
-#include <unistd.h>	 // gethostname(char*, int), sysinfo
+#ifndef _WIN32	// only OS not POSIX compliant
+#include <sys/utsname.h>
+#include <unistd.h>	 // sysinfo
 #endif
 
 #include <fstream>
-#include <iostream>
+#include <iomanip>	// std::fixed, std::setprecision
 #include <sstream>
-#include <iomanip> // std::fixed, std::setprecision
 
 #include "HardwareInfo.h"
 #include "WrapOpenMP.h"
@@ -57,10 +57,16 @@ void HardwareInfo::init(ParticleContainer*, DomainDecompBase* domainDecomp, Doma
 void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	char cStyleNodeName[1024] = {"default"};
 #ifndef _WIN32
-	gethostname(cStyleNodeName, 1023);	// from unistd.h
+	struct utsname buffer;	// from sys/utsname.h
+	if (uname(&buffer) < 0) {
+		std::ostringstream msg;
+		msg << "[" << getPluginName() << "] Error using uname() from sys/utsname.h!" << std::endl;
+		MARDYN_EXIT(msg.str());
+	}
+	strcpy(cStyleNodeName, buffer.nodename);
 #endif
 	_threadData.resize(mardyn_get_max_threads());
-	
+
 	// rank level data
 #ifdef ENABLE_MPI
 	auto curComm = domainDecomp->getCommunicator();
@@ -70,7 +76,7 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	MPI_CHECK(MPI_Get_processor_name(cStyleNodeName, &name_len));
 #endif
 	_nodeName = std::string(cStyleNodeName);
-	
+
 	// thread level data
 #ifdef _OPENMP
 #pragma omp parallel shared(_threadData)
@@ -96,8 +102,10 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	// RAM information
 	_maxRam = "N/A";
 #ifndef _WIN32
-	float ramGB = ((sysconf(_SC_PAGESIZE) / 1000.0) * (sysconf(_SC_PHYS_PAGES) / 1000.0)) / 1000.0; // from unistd.h, ordering to prevent overflow
-	float ramGiB = ((sysconf(_SC_PAGESIZE) / 1024.0) * (sysconf(_SC_PHYS_PAGES) / 1024.0)) / 1024.0; // from unistd.h, ordering to prevent overflow
+	float ramGB = ((sysconf(_SC_PAGESIZE) / 1000.0) * (sysconf(_SC_PHYS_PAGES) / 1000.0)) /
+				  1000.0;  // from unistd.h, ordering to prevent overflow
+	float ramGiB = ((sysconf(_SC_PAGESIZE) / 1024.0) * (sysconf(_SC_PHYS_PAGES) / 1024.0)) /
+				   1024.0;	// from unistd.h, ordering to prevent overflow
 	std::ostringstream ramDataCollect;
 	ramDataCollect << std::fixed << std::setprecision(2) << ramGB << " GB (" << ramGiB << " GiB)";
 	_maxRam = ramDataCollect.str();
@@ -105,7 +113,16 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 
 	// CPU information
 	_cpuInfo = "N/A";
+	_cpuArch = "N/A";
+#ifndef _WIN32
+	_cpuArch = std::string(buffer.machine);
+	if (_cpuArch == "aarch64") {  // ARM, proc/cpuinfo more complex
+		_cpuInfo = "ARM";
+	} else if (_cpuArch == "x86_64") {	// Intel/AMD, proc/cpuinfo simpler
+		_cpuInfo = "intel/amd";
+	}  // no other architectures tested, hence no default case
 
+#endif
 	_dataPopulated = true;
 }
 
@@ -121,7 +138,8 @@ void HardwareInfo::printDataToStdout() {
 		ss << ", NUMA domain " << data.numa;
 		ss << ", rank " << _rank << " out of " << _totalRanks << " ranks, running on " << _nodeName;
 		ss << " with CPU index " << data.cpuID;
-		ss << ", CPU info: " << _cpuInfo << ", Max RAM available: " << _maxRam << std::endl;
+		ss << ", CPU info: " << _cpuInfo << ", architecture: " << _cpuArch;
+		ss << ", Max RAM available: " << _maxRam << std::endl;
 		Log::global_log->set_mpi_output_all();
 		Log::global_log->info() << ss.str();
 		Log::global_log->set_mpi_output_root(0);
@@ -190,6 +208,7 @@ const std::string HardwareInfo::convertFullDataToJson() const {
 	rankInfo << "\n\t\t\"" << _rank << "\": {\n";
 	rankInfo << "\t\t\t\"node_name\": \"" << _nodeName << "\",\n";
 	rankInfo << "\t\t\t\"cpu_info\": \"" << _cpuInfo << "\",\n";
+	rankInfo << "\t\t\t\"cpu_arch\": \"" << _cpuArch << "\",\n";
 	rankInfo << "\t\t\t\"max_avail_ram\": \"" << _maxRam << "\",\n";
 	rankInfo << "\t\t\t\"total_threads\": \"" << _threadData[0].totalThreads << "\",\n";
 	rankInfo << "\t\t\t\"thread_data\": {\n";

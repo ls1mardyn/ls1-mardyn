@@ -153,6 +153,8 @@ private:
 
 	std::string _cpuInfo;
 
+	std::string _cpuArch;
+
 	/**
 	 * @brief Stores all thread data, in the form of ThreadwiseInfo struct objects.
 	 */
