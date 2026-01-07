@@ -22,8 +22,7 @@
 struct ThreadwiseInfo {
 	int thread;
 	int cpuID, numa;
-	ThreadwiseInfo(int threadNum = 0, int totalThreadsNum = 1, unsigned int openMPCPUID = 0,
-				   unsigned int openMPNUMA = 0)
+	ThreadwiseInfo(int threadNum = 0, int openMPCPUID = 0, int openMPNUMA = 0)
 		: thread(threadNum), cpuID(openMPCPUID), numa(openMPNUMA) {}
 };
 
