@@ -20,11 +20,11 @@
  * When writing to file, the value from _threadData[0] is used.
  */
 struct ThreadwiseInfo {
-	int thread, totalThreads;
+	int thread;
 	unsigned int cpuID, numa;
 	ThreadwiseInfo(int threadNum = 0, int totalThreadsNum = 1, unsigned int openMPCPUID = 0,
 				   unsigned int openMPNUMA = 0)
-		: thread(threadNum), totalThreads(totalThreadsNum), cpuID(openMPCPUID), numa(openMPNUMA) {}
+		: thread(threadNum), cpuID(openMPCPUID), numa(openMPNUMA) {}
 };
 
 /**
@@ -132,7 +132,7 @@ private:
 	 * \endcode
 	 * @return const std::string The rank-dependent hardware information formatted in json.
 	 */
-	const std::string convertFullDataToJson() const;
+	std::string convertFullDataToJson() const;
 
 	/**
 	 * @brief Stores the filename read in from XML, appended with a ".json".
@@ -144,6 +144,7 @@ private:
 	 */
 	int _rank, _totalRanks;
 
+	int _maxThreads;
 	/**
 	 * @brief Stores name of the current node.
 	 */

@@ -8,13 +8,14 @@
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #ifdef __GLIBC__
 #include <sched.h>	// sched_getcpu(), getcpu(int*, int*)
 #endif
-#ifndef _WIN32	// only OS not POSIX compliant
 #include <sys/utsname.h>
 #include <unistd.h>	 // sysinfo
-#endif
 
 #include <fstream>
 #include <iomanip>	// std::fixed, std::setprecision
@@ -65,7 +66,6 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	}
 	strcpy(cStyleNodeName, buffer.nodename);
 #endif
-	_threadData.resize(mardyn_get_max_threads());
 
 	// rank level data
 #ifdef ENABLE_MPI
@@ -78,22 +78,33 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	_nodeName = std::string(cStyleNodeName);
 
 	// thread level data
+	int thread = 0;
+#ifdef _OPENMP
+	_maxThreads = omp_get_max_threads();
+#endif
+	_threadData.resize(_maxThreads);
+
 #ifdef _OPENMP
 #pragma omp parallel shared(_threadData)
 #endif
 	{
-		int thread = omp_get_thread_num();
-		int totalThreads = omp_get_num_threads();
-		unsigned int openMPCPUID, openMPNUMA;
+#ifdef _OPENMP
+		thread = omp_get_thread_num();
+#endif
+		int openMPCPUID, openMPNUMA;
 #if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 29)
-		getcpu(&openMPCPUID, &openMPNUMA);	// from sched.h
+		unsigned int tempCPU, tempNUMA;
+		getcpu(&tempCPU, &tempNUMA);  // from sched.h
+		// following casts are only an issue if values > INT_MAX, which is unusual anyway
+		openMPCPUID = (int)tempCPU;
+		openMPNUMA = (int)tempNUMA;
 #elif defined(__GLIBC__)
 		openMPCPUID = sched_getcpu();  // from sched.h
 		openMPNUMA = -1;
 #else
 		openMPCPUID = openMPNUMA = -1;
 #endif
-		_threadData[thread] = ThreadwiseInfo(thread, totalThreads, openMPCPUID, openMPNUMA);
+		_threadData[thread] = ThreadwiseInfo(thread, openMPCPUID, openMPNUMA);
 	}
 
 	// RAM information
@@ -131,7 +142,7 @@ void HardwareInfo::printDataToStdout() {
 	}
 	std::ostringstream ss;
 	for (auto data : _threadData) {
-		ss << "[" << getPluginName() << "] Thread " << data.thread << " out of " << data.totalThreads << " threads";
+		ss << "[" << getPluginName() << "] Thread " << data.thread << " out of " << _maxThreads << " threads";
 		ss << ", NUMA domain " << data.numa;
 		ss << ", rank " << _rank << " out of " << _totalRanks << " ranks, running on " << _nodeName;
 		ss << " with CPU index " << data.cpuID;
@@ -207,7 +218,7 @@ std::string HardwareInfo::convertFullDataToJson() const {
 	rankInfo << "\t\t\t\"cpu_info\": \"" << _cpuInfo << "\",\n";
 	rankInfo << "\t\t\t\"cpu_arch\": \"" << _cpuArch << "\",\n";
 	rankInfo << "\t\t\t\"max_avail_ram\": \"" << _maxRam << "\",\n";
-	rankInfo << "\t\t\t\"total_threads\": \"" << _threadData[0].totalThreads << "\",\n";
+	rankInfo << "\t\t\t\"total_threads\": " << _maxThreads << ",\n";
 	rankInfo << "\t\t\t\"thread_data\": {\n";
 
 	for (auto it = _threadData.begin(); it != _threadData.end(); ++it) {
