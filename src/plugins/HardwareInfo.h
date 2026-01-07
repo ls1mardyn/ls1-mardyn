@@ -28,8 +28,7 @@ struct ThreadwiseInfo {
  *
  * The plugin either prints to stdout, or a json file. Default behaviour is to print to stdout.
  * Printed information includes rank number, thread number, NUMA domain and name of node on which the rank resides.
- * Thread stats depend on sched.h, which requires glibc and has less functionality on older versions. In serial mode
- * (non MPI) node name is gotten from unistd.h, which is absent on non POSIX compliant OSs.
+ * Thread stats depend on sched.h, which requires glibc and has less functionality on older versions.
  */
 class HardwareInfo : public PluginBase {
 public:
@@ -65,14 +64,14 @@ public:
 
 private:
 	/**
-	 * @brief Fills the data members _threadData, _rank, _totalRanks, and _nodeName, and sets _dataPopulated to
-	 * true
+	 * @brief Fills the data members _threadData, _rank, _totalRanks, _nodeName, _maxThreads, _cpuInfo, _cpuArch and
+	 * _maxRam. Sets _dataPopulated to true.
 	 *
-	 * This function is tasked with performing all of the necessary quesries to get the hardware information. It uses
-	 * MPI functions to fill _rank and _totalRanks, openMP fucntions to populate _threadData. Depending on the
-	 * availability of functions in sched.h (glibc version dependent) and on the availability of unistd.h (POSIX OS
-	 * required), not all information may be available (NUMA domain and CPU ID). This data is filled with -1 instead. At
-	 * the end of this function, an openMP barrier is present. Also, the value _dataPopulated is set to true for sanity
+	 * This function is tasked with performing all of the necessary queries to get the pinning information. It uses
+	 * MPI functions to fill _rank and _totalRanks, and openMP functions to populate _threadData. Depending on the
+	 * availability of functions in sched.h (glibc version dependent) not all information may be available (NUMA domain
+	 * and CPU ID). This data is filled with -1 instead. RAM info is populated by calling sysinfo from sys/sysinfo.h,
+	 * and CPU info is obtained by parsing /proc/cpuinfo. Also, the value _dataPopulated is set to true for sanity
 	 * checks.
 	 *
 	 * @param domainDecomp Needed to access the communicator to get MPI rank and world size
@@ -82,7 +81,7 @@ private:
 	/**
 	 * @brief Pretty-prints _threadData, _rank, _totalRanks, and _nodeName using the logger.
 	 *
-	 * Any data that is -1 is assumed to be incomplete and skipped.
+	 * Any data that is -1 is assumed to be incomplete.
 	 */
 	void printDataToStdout();
 
@@ -139,16 +138,28 @@ private:
 	 */
 	int _rank, _totalRanks;
 
+	/**
+	 * @brief Stores the maximum number of OpenMP threads possible.
+	 */
 	int _maxThreads;
 	/**
 	 * @brief Stores name of the current node.
 	 */
 	std::string _nodeName;
 
+	/**
+	 * @brief Stores a string with the max RAM of the current node, in GB and GiB.
+	 */
 	std::string _maxRam;
 
+	/**
+	 * @brief Stores a string containing information needed to identify the CPU.
+	 */
 	std::string _cpuInfo;
 
+	/**
+	 * @brief Stores the CPU architecture.
+	 */
 	std::string _cpuArch;
 
 	/**

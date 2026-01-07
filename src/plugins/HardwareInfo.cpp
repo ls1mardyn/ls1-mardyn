@@ -14,8 +14,8 @@
 #ifdef __GLIBC__
 #include <sched.h>	// sched_getcpu(), getcpu(int*, int*)
 #endif
-#include <sys/utsname.h>
-#include <unistd.h>	 // sysinfo
+#include <sys/sysinfo.h>  // sysinfo
+#include <sys/utsname.h>  // uname
 
 #include <fstream>
 #include <iomanip>	// std::fixed, std::setprecision
@@ -57,13 +57,13 @@ void HardwareInfo::init(ParticleContainer*, DomainDecompBase* domainDecomp, Doma
 
 void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	char cStyleNodeName[1024];
-	struct utsname buffer;	// from sys/utsname.h
-	if (uname(&buffer) < 0) {
+	struct utsname utsnameData;	 // from sys/utsname.h
+	if (uname(&utsnameData) < 0) {
 		std::ostringstream msg;
 		msg << "[" << getPluginName() << "] Error using uname() from sys/utsname.h!" << std::endl;
 		MARDYN_EXIT(msg.str());
 	}
-	strcpy(cStyleNodeName, buffer.nodename);
+	strcpy(cStyleNodeName, utsnameData.nodename);
 
 	// rank level data
 #ifdef ENABLE_MPI
@@ -107,16 +107,20 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 
 	// RAM information
 	_maxRam = "N/A";
-	float ramGB = ((sysconf(_SC_PAGESIZE) / 1000.0) * (sysconf(_SC_PHYS_PAGES) / 1000.0)) /
-				  1000.0;  // from unistd.h, ordering to prevent overflow
-	float ramGiB = ((sysconf(_SC_PAGESIZE) / 1024.0) * (sysconf(_SC_PHYS_PAGES) / 1024.0)) /
-				   1024.0;	// from unistd.h, ordering to prevent overflow
+	struct sysinfo sysinfoData;	 // from sys/sysinfo.h
+	if (sysinfo(&sysinfoData) < 0) {
+		std::ostringstream msg;
+		msg << "[" << getPluginName() << "] Error using sysinfo() from sys/sysinfo.h!" << std::endl;
+		MARDYN_EXIT(msg.str());
+	}
+	float ramGB = sysinfoData.totalram / 1000.0 / 1000.0 / 1000.0;
+	float ramGiB = sysinfoData.totalram / 1024.0 / 1024.0 / 1024.0;
 	std::ostringstream ramDataCollect;
 	ramDataCollect << std::fixed << std::setprecision(2) << ramGB << " GB (" << ramGiB << " GiB)";
 	_maxRam = ramDataCollect.str();
 
 	// CPU information
-	_cpuArch = std::string(buffer.machine);
+	_cpuArch = std::string(utsnameData.machine);
 	std::ifstream procCPUStream("/proc/cpuinfo");
 	std::string fileLine, key, value = "N/A";
 	char sep = ':';
