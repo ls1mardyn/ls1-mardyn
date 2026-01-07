@@ -22,9 +22,9 @@
 #include <sstream>
 
 #include "HardwareInfo.h"
-#include "WrapOpenMP.h"
 #include "parallel/DomainDecompBase.h"	// getCommunicator()
 #include "utils/Logger.h"
+#include "utils/String_utils.h"
 
 void HardwareInfo::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("filename", _filename);
@@ -56,8 +56,7 @@ void HardwareInfo::init(ParticleContainer*, DomainDecompBase* domainDecomp, Doma
 }
 
 void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
-	char cStyleNodeName[1024] = {"default"};
-#ifndef _WIN32
+	char cStyleNodeName[1024];
 	struct utsname buffer;	// from sys/utsname.h
 	if (uname(&buffer) < 0) {
 		std::ostringstream msg;
@@ -65,7 +64,6 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 		MARDYN_EXIT(msg.str());
 	}
 	strcpy(cStyleNodeName, buffer.nodename);
-#endif
 
 	// rank level data
 #ifdef ENABLE_MPI
@@ -109,7 +107,6 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 
 	// RAM information
 	_maxRam = "N/A";
-#ifndef _WIN32
 	float ramGB = ((sysconf(_SC_PAGESIZE) / 1000.0) * (sysconf(_SC_PHYS_PAGES) / 1000.0)) /
 				  1000.0;  // from unistd.h, ordering to prevent overflow
 	float ramGiB = ((sysconf(_SC_PAGESIZE) / 1024.0) * (sysconf(_SC_PHYS_PAGES) / 1024.0)) /
@@ -117,20 +114,43 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	std::ostringstream ramDataCollect;
 	ramDataCollect << std::fixed << std::setprecision(2) << ramGB << " GB (" << ramGiB << " GiB)";
 	_maxRam = ramDataCollect.str();
-#endif
 
 	// CPU information
-	_cpuInfo = "N/A";
-	_cpuArch = "N/A";
-#ifndef _WIN32
 	_cpuArch = std::string(buffer.machine);
-	if (_cpuArch == "aarch64") {  // ARM, proc/cpuinfo more complex
-		_cpuInfo = "ARM";
-	} else if (_cpuArch == "x86_64") {	// Intel/AMD, proc/cpuinfo simpler
-		_cpuInfo = "intel/amd";
-	}  // no other architectures tested, hence no default case
-
-#endif
+	std::ifstream procCPUStream("/proc/cpuinfo");
+	std::string fileLine, key, value = "N/A";
+	char sep = ':';
+	if (!procCPUStream) {
+		Log::global_log->warning() << "[" << getPluginName() << "] Could not open /proc/cpuinfo!" << std::endl;
+	} else {
+		if (_cpuArch == "aarch64") {  // ARM, proc/cpuinfo more complex
+			std::ostringstream valueBuilder;
+			valueBuilder << "ARM ";
+			short valsFound = 0;
+			while (getline(procCPUStream, fileLine)) {
+				key = string_utils::trim(fileLine.substr(0, fileLine.find(sep)));
+				if (key.substr(0, 3) == "CPU") {
+					key = string_utils::trim(key.substr(4));
+					value = string_utils::trim(fileLine.substr(fileLine.find(sep) + 1));
+					valueBuilder << key << ": " << value << " ";
+					valsFound++;
+				}
+				if (valsFound > 4)
+					break;
+			}
+			value = string_utils::trim(valueBuilder.str());
+		} else if (_cpuArch == "x86_64") {	// Intel/AMD, proc/cpuinfo simpler
+			while (getline(procCPUStream, fileLine)) {
+				key = string_utils::trim(fileLine.substr(0, fileLine.find(sep)));
+				if (key == "model name") {
+					value = string_utils::trim(fileLine.substr(fileLine.find(sep) + 1));
+					break;
+				}
+			}
+		}  // no other architectures tested, hence no default case
+		procCPUStream.close();
+	}
+	_cpuInfo = value;
 	_dataPopulated = true;
 }
 
@@ -178,6 +198,8 @@ void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 	// add all thread data
 	// since trailing commas are not allowed, last rank will write data without comma at end
 	std::string outputString = convertFullDataToJson();
+	if (_rank != _totalRanks - 1)  // no trailing comma for final rank
+		outputString += ",";
 #ifdef ENABLE_MPI
 	auto curComm = domainDecomp->getCommunicator();
 	// taken from DomainDecompMPIBase::printDecomp
@@ -230,9 +252,7 @@ std::string HardwareInfo::convertFullDataToJson() const {
 		rankInfo << "}";
 	}
 
-	rankInfo << "\n\t\t\t}";	   // close threads
-	rankInfo << "\n\t\t}";		   // close rank
-	if (_rank != _totalRanks - 1)  // no trailing comma for final rank
-		rankInfo << ",";
+	rankInfo << "\n\t\t\t}";  // close threads
+	rankInfo << "\n\t\t}";	  // close rank
 	return rankInfo.str();
 }

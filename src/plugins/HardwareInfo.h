@@ -14,10 +14,6 @@
 /**
  * @brief Stores information unique to each openMP thread. This includes thread number, cpu ID of the thread, and NUMA
  * domain of the thread.
- *
- * The total number of threads isn't unique, but is used to store the output of mardyn_get_num_threads, which may not
- * always match mardyn_get_max_threads, such as in heterogeneous hardware scenarios. totalThreads is printed to stdout.
- * When writing to file, the value from _threadData[0] is used.
  */
 struct ThreadwiseInfo {
 	int thread;
