@@ -82,8 +82,8 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 #pragma omp parallel shared(_threadData)
 #endif
 	{
-		int thread = mardyn_get_thread_num();
-		int totalThreads = mardyn_get_num_threads();
+		int thread = omp_get_thread_num();
+		int totalThreads = omp_get_num_threads();
 		unsigned int openMPCPUID, openMPNUMA;
 #if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 29)
 		getcpu(&openMPCPUID, &openMPNUMA);	// from sched.h
@@ -95,9 +95,6 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 #endif
 		_threadData[thread] = ThreadwiseInfo(thread, totalThreads, openMPCPUID, openMPNUMA);
 	}
-#ifdef _OPENMP
-#pragma omp barrier
-#endif
 
 	// RAM information
 	_maxRam = "N/A";
@@ -203,7 +200,7 @@ void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 	}
 }
 
-const std::string HardwareInfo::convertFullDataToJson() const {
+std::string HardwareInfo::convertFullDataToJson() const {
 	std::ostringstream rankInfo;
 	rankInfo << "\n\t\t\"" << _rank << "\": {\n";
 	rankInfo << "\t\t\t\"node_name\": \"" << _nodeName << "\",\n";
