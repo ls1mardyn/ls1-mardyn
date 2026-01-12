@@ -76,7 +76,6 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	_nodeName = std::string(cStyleNodeName);
 
 	// thread level data
-	int thread = 0;
 #ifdef _OPENMP
 	_maxThreads = omp_get_max_threads();
 #endif
@@ -86,6 +85,7 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 #pragma omp parallel shared(_threadData)
 #endif
 	{
+		int thread = 0;
 #ifdef _OPENMP
 		thread = omp_get_thread_num();
 #endif
