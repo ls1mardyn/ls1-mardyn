@@ -76,6 +76,7 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	_nodeName = std::string(cStyleNodeName);
 
 	// thread level data
+	_maxThreads = 1;
 #ifdef _OPENMP
 	_maxThreads = omp_get_max_threads();
 #endif
