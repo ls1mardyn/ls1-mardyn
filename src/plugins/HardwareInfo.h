@@ -26,7 +26,7 @@ struct ThreadwiseInfo {
  * @brief Prints the information of the hardware of current simulation to stdout or to file.
  * @author Amartya Das Sharma
  *
- * The plugin either prints to stdout, or a json file. Default behaviour is to print to stdout.
+ * The plugin either prints to stdout, or a JSON file. Default behaviour is to print to stdout.
  * Printed information includes rank number, thread number, NUMA domain and name of node on which the rank resides.
  * Thread stats depend on sched.h, which requires glibc and has less functionality on older versions.
  */
@@ -79,54 +79,42 @@ private:
 	void populateData(DomainDecompBase* domainDecomp);
 
 	/**
-	 * @brief Pretty-prints _threadData, _rank, _totalRanks, and _nodeName using the logger.
+	 * @brief Pretty-prints _threadData, _rank, _totalRanks, _nodeName, _maxThreads, _cpuInfo, _cpuArch and _maxRam
+	 * using the logger.
 	 *
 	 * Any data that is -1 is assumed to be incomplete.
 	 */
 	void printDataToStdout();
 
 	/**
-	 * @brief Writes _threadData, _rank, _totalRanks, and _nodeName to a specified json file.
+	 * @brief Writes _threadData, _rank, _totalRanks, _nodeName, _maxThreads, _cpuInfo, _cpuArch and _maxRam to a
+	 * specified JSON file.
 	 *
-	 * No json libraries are used, so all the data is processed as raw strings and directly written to file. The file is
-	 * opened as an MPI file and all ranks write directly to it in specified offsets. Thus, the data will be ordered by
-	 * ranks in increasing order.
-	 * The root node writes some header information, and closes the ending braces. In case the simulation is compiled in
-	 * serial mode, this function also writes the data serially.
-	 * The json structure is as follows:
+	 * The nlohmann/json library is used to create and autoindent the JSON before dumping it to file. Each rank
+	 * serialises its data and sends it to the root rank, which compiles it into one JSON object. A tab width of 4
+	 * spaces is used. Missing values are denoted with -1.
+	 * The JSON structure is as follows:
 	 * \code{.json}
 	   {
 		   "total_ranks": _totalRanks,
 		   "rank_data": {
-			   <data from convertFullDataToJson()>
+			   _rank: {
+				   "node_name": _nodeName,
+				   "cpu_arch": _cpuArch,
+				   "cpu_info": _cpuInfo,
+				   "max_avail_ram": _maxRam,
+				   "total_threads": _maxThreads,
+				   "thread_data": {
+				   _threadID: {"cpu_ID": INT, "numa_domain": INT}
+			   }
 		   }
 	   }
 	   \endcode
+	 * Since JSON is unordered, the elements may be in any order.
 	 *
-	 * @param domainDecomp Needed to access the communicator to set up the MPI file to be written to
+	 * @param domainDecomp Needed to access the communicator to receive the JSON data from participating ranks
 	 */
 	void writeDataToFile(DomainDecompBase* domainDecomp);
-
-	/**
-	 * @brief Wrapper for logic that converts the entire _threadData into a json string.
-	 *
-	 * This contains all the data that is rank dependent, and assumes that all data that is -1 is absent. Since the data
-	 * will be written in order of ranks, the trailing comma for the data of the final rank is removed. Thus, without
-	 * the trailing comma, this function returns a fully parseable json, without any closing braces required. Each line
-	 * of the json is prepended with two tabs.
-	 * The json structure is as follows:
-	 * \code{.json}
-	 * _rank: {
-		   "node_name": _nodeName,
-		   "total_threads": omp_get_max_threads(),
-		   "thread_data": {
-			   _threadID: {"cpu_ID": INT, "numa_domain": INT}
-		   }
-	   }
-	 * \endcode
-	 * @return const std::string The rank-dependent hardware information formatted in json.
-	 */
-	std::string convertFullDataToJson() const;
 
 	/**
 	 * @brief Stores the filename read in from XML, appended with a ".json".

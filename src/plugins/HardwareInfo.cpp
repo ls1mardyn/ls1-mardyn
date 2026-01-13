@@ -14,6 +14,11 @@
 #ifdef __GLIBC__
 #include <sched.h>	// sched_getcpu(), getcpu(int*, int*)
 #endif
+#ifdef ENABLE_JSON
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+#endif
+
 #include <sys/sysinfo.h>  // sysinfo
 #include <sys/utsname.h>  // uname
 
@@ -24,13 +29,21 @@
 #include "HardwareInfo.h"
 #include "parallel/DomainDecompBase.h"	// getCommunicator()
 #include "utils/Logger.h"
-#include "utils/String_utils.h"
+#include "utils/String_utils.h"	 // trim()
 
 void HardwareInfo::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("filename", _filename);
 	if (_filename != "") {
+#ifndef ENABLE_JSON
+		Log::global_log->warning()
+			<< "[" << getPluginName()
+			<< "] Cannot write to JSON file since ENABLE_JSON not specified in cmake! Printing data to log instead!"
+			<< std::endl;
+		_filename = "";
+#else
 		_filename += ".json";
 		Log::global_log->info() << "[" << getPluginName() << "] Filename: " << _filename << std::endl;
+#endif
 	}
 }
 
@@ -93,12 +106,15 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 		int openMPCPUID, openMPNUMA;
 #if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 29)
 		unsigned int tempCPU, tempNUMA;
+#ifdef _OPENMP
+#pragma omp critical(getcpu)  // cannot find documentation explicitly saying this is thread-safe, hence precautionary
+#endif
 		getcpu(&tempCPU, &tempNUMA);  // from sched.h
 		// following casts are only an issue if values > INT_MAX, which is unusual anyway
 		openMPCPUID = (int)tempCPU;
 		openMPNUMA = (int)tempNUMA;
 #elif defined(__GLIBC__)
-		openMPCPUID = sched_getcpu();  // from sched.h
+		openMPCPUID = sched_getcpu();  // from sched.h, documentation says this is thread-safe
 		openMPNUMA = -1;
 #else
 		openMPCPUID = openMPNUMA = -1;
@@ -124,7 +140,7 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	_cpuArch = std::string(utsnameData.machine);
 	std::ifstream procCPUStream("/proc/cpuinfo");
 	std::string fileLine, key, value = "N/A";
-	char sep = ':';
+	char sep = ':';	 // separator for key-value pairs in /proc/cpuinfo
 	if (!procCPUStream) {
 		Log::global_log->warning() << "[" << getPluginName() << "] Could not open /proc/cpuinfo!" << std::endl;
 	} else {
@@ -135,26 +151,26 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 			while (getline(procCPUStream, fileLine)) {
 				key = string_utils::trim(fileLine.substr(0, fileLine.find(sep)));
 				if (key.substr(0, 3) == "CPU") {
-					key = string_utils::trim(key.substr(4));
+					key = string_utils::trim(key.substr(4));  // trim out "CPU" from the key
 					value = string_utils::trim(fileLine.substr(fileLine.find(sep) + 1));
 					valueBuilder << key << ": " << value << " ";
 					valsFound++;
 				}
-				if (valsFound > 4)
+				if (valsFound > 4)	// grabs CPU implementer, architecture, variant, part, and revision, and then exits
 					break;
 			}
 			value = string_utils::trim(valueBuilder.str());
 		} else if (_cpuArch == "x86_64") {	// Intel/AMD, proc/cpuinfo simpler
 			while (getline(procCPUStream, fileLine)) {
 				key = string_utils::trim(fileLine.substr(0, fileLine.find(sep)));
-				if (key == "model name") {
+				if (key == "model name") {	// only take model name
 					value = string_utils::trim(fileLine.substr(fileLine.find(sep) + 1));
 					break;
 				}
 			}
 		}  // no other architectures tested, hence no default case
-		procCPUStream.close();
 	}
+	procCPUStream.close();
 	_cpuInfo = value;
 	_dataPopulated = true;
 }
@@ -181,83 +197,62 @@ void HardwareInfo::printDataToStdout() {
 }
 
 void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
+#ifndef ENABLE_JSON	 // should never be reached, but failsafe
+	std::ostringstream msg;
+	msg << "[" << getPluginName() << "] Cannot write to JSON file since ENABLE_JSON not specified in cmake! Exiting..."
+		<< std::endl;
+	MARDYN_EXIT(msg.str());
+#else
 	if (!_dataPopulated) {	// sanity check
 		std::ostringstream msg;
 		msg << "[" << getPluginName() << "] Data not populated!" << std::endl;
 		MARDYN_EXIT(msg.str());
 	}
 	Log::global_log->info() << "[" << getPluginName() << "] Writing to file: " << _filename << std::endl;
-	// put all local data into a string ready to write to file
-	std::ostringstream outputStringSS;
-	// add header data if rank 0
-	if (_rank == 0) {
-		outputStringSS << "{\n";
-		outputStringSS << "\t\"total_ranks\": " << _totalRanks << ",\n";
-		outputStringSS << "\t\"rank_data\": {";
-		// write header
-		std::ofstream outputFile(_filename);
-		outputFile << outputStringSS.str();
-		outputFile.close();
-		outputStringSS.str(std::string());	// clear ostringstream
-	}
-	// add all thread data
-	// since trailing commas are not allowed, last rank will write data without comma at end
-	std::string outputString = convertFullDataToJson();
-	if (_rank != _totalRanks - 1)  // no trailing comma for final rank
-		outputString += ",";
-#ifdef ENABLE_MPI
-	auto curComm = domainDecomp->getCommunicator();
-	// taken from DomainDecompMPIBase::printDecomp
-	MPI_File parFile;
-	MPI_File_open(curComm, _filename.c_str(), MPI_MODE_WRONLY | MPI_MODE_APPEND | MPI_MODE_CREATE, MPI_INFO_NULL,
-				  &parFile);
-	unsigned long writeSize = outputString.size();
-	unsigned long offset = 0;
-	if (_rank == 0) {
-		MPI_Offset fileEndOffset;
-		MPI_File_seek(parFile, 0, MPI_SEEK_END);
-		MPI_File_get_position(parFile, &fileEndOffset);
-		writeSize += fileEndOffset;
-		MPI_Exscan(&writeSize, &offset, 1, MPI_UINT64_T, MPI_SUM, curComm);
-		offset += fileEndOffset;
-	} else {
-		MPI_Exscan(&writeSize, &offset, 1, MPI_UINT64_T, MPI_SUM, curComm);
-	}
-	MPI_File_write_at(parFile, static_cast<MPI_Offset>(offset), outputString.c_str(),
-					  static_cast<int>(outputString.size()), MPI_CHAR, MPI_STATUS_IGNORE);
-	MPI_File_close(&parFile);
-#endif
-	// close remaining braces
-	if (_rank == 0) {
-		std::ofstream outputFile(_filename, std::ios_base::app);
-#ifndef ENABLE_MPI	// write serial data if MPI not enabled
-		outputFile << outputString;
-#endif
-		outputFile << "\n\t}\n}";  // ending brace from rank 0
-		outputFile.close();
-	}
-}
 
-std::string HardwareInfo::convertFullDataToJson() const {
-	std::ostringstream rankInfo;
-	rankInfo << "\n\t\t\"" << _rank << "\": {\n";
-	rankInfo << "\t\t\t\"node_name\": \"" << _nodeName << "\",\n";
-	rankInfo << "\t\t\t\"cpu_info\": \"" << _cpuInfo << "\",\n";
-	rankInfo << "\t\t\t\"cpu_arch\": \"" << _cpuArch << "\",\n";
-	rankInfo << "\t\t\t\"max_avail_ram\": \"" << _maxRam << "\",\n";
-	rankInfo << "\t\t\t\"total_threads\": " << _maxThreads << ",\n";
-	rankInfo << "\t\t\t\"thread_data\": {\n";
+	// create a json object on all ranks to hold the relevant data
+	json threadDataJson;
 
+	// write data to json object
+	threadDataJson["node_name"] = _nodeName;
+	threadDataJson["cpu_info"] = _cpuInfo;
+	threadDataJson["cpu_arch"] = _cpuArch;
+	threadDataJson["max_avail_ram"] = _maxRam;
+	threadDataJson["total_threads"] = _maxThreads;
 	for (auto it = _threadData.begin(); it != _threadData.end(); ++it) {
-		if (it != _threadData.begin())
-			rankInfo << ",\n";
-		rankInfo << "\t\t\t\"" << it->thread << "\": {";
-		rankInfo << "\"cpu_id\": " << it->cpuID;
-		rankInfo << ", \"numa_domain\": " << it->numa;
-		rankInfo << "}";
+		threadDataJson["thread_data"][std::to_string(it->thread)]["cpu_id"] = it->cpuID;
+		threadDataJson["thread_data"][std::to_string(it->thread)]["numa_domain"] = it->numa;
 	}
 
-	rankInfo << "\n\t\t\t}";  // close threads
-	rankInfo << "\n\t\t}";	  // close rank
-	return rankInfo.str();
+	// collect data and write to file
+	if (_rank == 0) {
+		// create new json object to collect data, and hold common info
+		json collDataJson;
+		collDataJson["total_ranks"] = _totalRanks;
+		collDataJson["rank_data"]["0"] = threadDataJson;
+		// collect data from other ranks
+#ifdef ENABLE_MPI
+		MPI_Status status;
+		std::vector<std::uint8_t> dataToReceive;
+		for (int i = 1; i < _totalRanks; i++) {
+			MPI_Probe(i, 0, domainDecomp->getCommunicator(), &status);
+			int count;
+			MPI_Get_count(&status, MPI_UINT8_T, &count);
+			dataToReceive.resize(count);
+			MPI_Recv(dataToReceive.data(), count, MPI_UINT8_T, i, 0, domainDecomp->getCommunicator(), &status);
+			collDataJson["rank_data"][std::to_string(i)] = json::from_bson(dataToReceive);
+		}
+#endif
+		// write to file
+		std::ofstream outputFile(_filename);
+		outputFile << collDataJson.dump(4);	 // 4 is the tab size
+		outputFile.close();
+#ifdef ENABLE_MPI
+	} else {  // _rank != 0
+		// send data to rank 0
+		std::vector<std::uint8_t> dataToSend = json::to_bson(threadDataJson);
+		MPI_Send(dataToSend.data(), dataToSend.size(), MPI_UINT8_T, 0, 0, domainDecomp->getCommunicator());
+#endif
+	}
+#endif
 }
