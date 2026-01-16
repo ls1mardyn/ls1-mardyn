@@ -1,5 +1,5 @@
 /*
- * HardwareInfo.cpp
+ * PinningInfo.cpp
  *
  *  Created on: 16 Dec 2025
  *      Author: amartyads
@@ -26,12 +26,12 @@ using json = nlohmann::json;
 #include <iomanip>	// std::fixed, std::setprecision
 #include <sstream>
 
-#include "HardwareInfo.h"
+#include "PinningInfo.h"
 #include "parallel/DomainDecompBase.h"	// getCommunicator()
 #include "utils/Logger.h"
 #include "utils/String_utils.h"	 // trim()
 
-void HardwareInfo::readXML(XMLfileUnits& xmlconfig) {
+void PinningInfo::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("filename", _filename);
 	if (_filename != "") {
 #ifndef ENABLE_JSON
@@ -47,7 +47,7 @@ void HardwareInfo::readXML(XMLfileUnits& xmlconfig) {
 	}
 }
 
-void HardwareInfo::init(ParticleContainer*, DomainDecompBase* domainDecomp, Domain*) {
+void PinningInfo::init(ParticleContainer*, DomainDecompBase* domainDecomp, Domain*) {
 	// defaults
 	_rank = 0;
 	_totalRanks = 1;
@@ -68,7 +68,7 @@ void HardwareInfo::init(ParticleContainer*, DomainDecompBase* domainDecomp, Doma
 		printDataToStdout();
 }
 
-void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
+void PinningInfo::populateData(DomainDecompBase* domainDecomp) {
 	char cStyleNodeName[1024];
 	struct utsname utsnameData;	 // from sys/utsname.h
 	if (uname(&utsnameData) < 0) {
@@ -175,7 +175,7 @@ void HardwareInfo::populateData(DomainDecompBase* domainDecomp) {
 	_dataPopulated = true;
 }
 
-void HardwareInfo::printDataToStdout() {
+void PinningInfo::printDataToStdout() {
 	if (!_dataPopulated) {	// sanity check
 		std::ostringstream msg;
 		msg << "[" << getPluginName() << "] Data not populated!" << std::endl;
@@ -196,7 +196,7 @@ void HardwareInfo::printDataToStdout() {
 	}
 }
 
-void HardwareInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
+void PinningInfo::writeDataToFile(DomainDecompBase* domainDecomp) {
 #ifndef ENABLE_JSON	 // should never be reached, but failsafe
 	std::ostringstream msg;
 	msg << "[" << getPluginName() << "] Cannot write to JSON file since ENABLE_JSON not specified in cmake! Exiting..."

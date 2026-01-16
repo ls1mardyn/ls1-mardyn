@@ -28,7 +28,7 @@ FixRegion | todo | Fixes particles within a cuboid region to their respective po
 FlopRateWriter | performance, FLOP/sec | Calculate the floating point operations per second at which the simulation runs. Only FLOPs in the force calculation are calculated.
 GammaWriter | sampling, surface tension | Calculate the surface tension in a two phase system consisting of one or two interfaces.
 HaloParticleWriter | mpi, communication, HaloParticles, output, debugging | Prints the halo particles for each process in a separate files.
-HardwareInfo | mpi, openmp, file, output, hardware | Prints the hardware information of the current parallel/serial execution, in a json file or to output. Uses the nlohmann/json library, which can be downloaded as a dependency using the ENABLE_JSON=ON flag.
+PinningInfo | mpi, openmp, file, output, hardware | Prints the pinning information of the current parallel/serial execution, in a json file or to output. Uses the nlohmann/json library, which can be downloaded as a dependency using the ENABLE_JSON=ON flag.
 InMemoryCheckpointing | resilience, checkpoint, fault tolerance, in-memory | In-memory Checkpointing. Save and restore the state of a simulation from a previous snapshot stored in RAM. Under development.
 KDTreePrinter | output, debugging, kdd | Prints the full tree information of the kd-tree decomposition.
 SpatialProfile (SP) | cartesian cylinder sampling profile output | Enables Profiles (via ProfileBase) to record and output quantities from a cartesian/cylinder sampling grid. Currently available profile outputs under plugins/profiles.

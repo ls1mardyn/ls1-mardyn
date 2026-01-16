@@ -1,5 +1,5 @@
 /*
- * HardwareInfo.h
+ * PinningInfo.h
  *
  *  Created on: 16 Dec 2025
  *      Author: amartyads
@@ -23,23 +23,23 @@ struct ThreadwiseInfo {
 };
 
 /**
- * @brief Prints the information of the hardware of current simulation to stdout or to file.
+ * @brief Prints the pinning information of the hardware of current simulation to stdout or to file.
  * @author Amartya Das Sharma
  *
  * The plugin either prints to stdout, or a JSON file. Default behaviour is to print to stdout.
  * Printed information includes rank number, thread number, NUMA domain and name of node on which the rank resides.
  * Thread stats depend on sched.h, which requires glibc and has less functionality on older versions.
  */
-class HardwareInfo : public PluginBase {
+class PinningInfo : public PluginBase {
 public:
-	HardwareInfo() = default;
-	~HardwareInfo() override = default;
+	PinningInfo() = default;
+	~PinningInfo() override = default;
 
-	/** @brief Read in XML configuration for HardwareInfo.
+	/** @brief Read in XML configuration for PinningInfo.
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <plugin name="HardwareInfo">
+	   <plugin name="PinningInfo">
 		 <!-- Uses info logger instead of a .json file if filename is not given -->
 		 <filename>STRING</filename>
 	   </plugin>
@@ -58,9 +58,9 @@ public:
 	void endStep(ParticleContainer*, DomainDecompBase*, Domain*, unsigned long) override {};
 	void finish(ParticleContainer*, DomainDecompBase*, Domain*) override {};
 
-	std::string getPluginName() override { return "HardwareInfo"; }
+	std::string getPluginName() override { return "PinningInfo"; }
 
-	static PluginBase* createInstance() { return new HardwareInfo(); }
+	static PluginBase* createInstance() { return new PinningInfo(); }
 
 private:
 	/**
