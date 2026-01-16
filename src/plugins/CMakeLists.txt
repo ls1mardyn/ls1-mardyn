@@ -7,7 +7,6 @@ target_sources(MarDyn
         EnergyRAPL.cpp
         ExamplePlugin.cpp
         FixRegion.cpp
-        PinningInfo.cpp
         InMemoryCheckpointing.cpp
         LoadImbalanceThroughSleepPlugin.cpp
         MamicoCoupling.cpp
@@ -15,6 +14,7 @@ target_sources(MarDyn
         Mirror.cpp
         MirrorSystem.cpp
         Permittivity.cpp
+        PinningInfo.cpp
         PluginFactory.cpp
         SpatialProfile.cpp
         VectorizationTuner.cpp
