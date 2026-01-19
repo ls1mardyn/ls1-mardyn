@@ -35,11 +35,10 @@ void PinningInfo::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("filename", _filename);
 	if (_filename != "") {
 #ifndef ENABLE_JSON
-		Log::global_log->warning()
-			<< "[" << getPluginName()
-			<< "] Cannot write to JSON file since ENABLE_JSON not specified in cmake! Printing data to log instead!"
+		std::ostringstream msg;
+		msg << "[" << getPluginName() << "] Cannot write to JSON file since ENABLE_JSON not specified in cmake!"
 			<< std::endl;
-		_filename = "";
+		MARDYN_EXIT(msg.str());
 #else
 		_filename += ".json";
 		Log::global_log->info() << "[" << getPluginName() << "] Filename: " << _filename << std::endl;
