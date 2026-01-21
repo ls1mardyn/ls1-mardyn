@@ -87,7 +87,7 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <simulation>
+	   <simulation handle_signals="BOOL">
 	     <integrator type="STRING"><!-- see Integrator class documentation --></integrator>
 	     <run>
 	       <production>
