@@ -2,7 +2,9 @@
 #include "Simulation.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
+#include <csignal>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
@@ -161,6 +163,8 @@ Simulation::~Simulation() {
 }
 
 void Simulation::readXML(XMLfileUnits& xmlconfig) {
+	xmlconfig.getNodeValue("@handle_signals", _handleSignals);
+
 	/* timers */
 	if(xmlconfig.changecurrentnode("programtimers")) {
 		_timerProfiler.readXML(xmlconfig);
@@ -844,7 +848,68 @@ void Simulation::updateForces() {
 	} // end pragma omp parallel
 }
 
+// Store of signals received on any rank
+std::atomic<int> _signalFlags = Simulation::SIG_NONE;
+
+/**
+ * @brief Stores signals received on any rank. Handling on all ranks is deferred to the next simstep.
+ */
+void signalHandler(int signalReceived)
+{
+#ifdef ENABLE_MPI
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+	Log::global_log->info()
+#ifdef ENABLE_MPI
+		<< "[Rank #" << rank << "] "
+#endif
+		<< "Received signal: " << signalReceived << std::endl;
+    int signalFlagsBit = 0;
+    switch (signalReceived) {
+        case SIGINT:
+        case SIGTERM:
+            signalFlagsBit = Simulation::SIG_STOP;
+            break;
+        case SIGUSR1:
+            signalFlagsBit = Simulation::SIG_USR1;
+            break;
+        case SIGUSR2:
+            signalFlagsBit = Simulation::SIG_USR2;
+            break;
+        default:
+			std::ostringstream ossError;
+			ossError << "Handler caught wrong signal: " << signalReceived;
+            MARDYN_EXIT(ossError.str());
+    }
+    _signalFlags.fetch_or(signalFlagsBit, std::memory_order_relaxed);
+}
+
+void Simulation::installSignalHandlers() {
+	Log::global_log->info() << "Installing signal handlers" << std::endl;
+    struct sigaction sa{};
+    sa.sa_handler = signalHandler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+
+    sigaction(SIGINT,  &sa, &_oldSigInt);
+    sigaction(SIGTERM, &sa, &_oldSigTerm);
+    sigaction(SIGUSR1, &sa, &_oldSigUsr1);
+    sigaction(SIGUSR2, &sa, &_oldSigUsr2);
+}
+
+void Simulation::restoreOldSignalHandlers()
+{
+	Log::global_log->info() << "Restoring old signal handlers" << std::endl;
+    sigaction(SIGINT,  &_oldSigInt, nullptr);
+    sigaction(SIGTERM, &_oldSigTerm, nullptr);
+    sigaction(SIGUSR1, &_oldSigUsr1, nullptr);
+    sigaction(SIGUSR2, &_oldSigUsr2, nullptr);
+}
+
 void Simulation::prepare_start() {
+	if (_handleSignals) installSignalHandlers();
+
 	Log::global_log->info() << "Initializing simulation" << std::endl;
 
 	Log::global_log->info() << "Initialising cell processor" << std::endl;
@@ -1392,6 +1457,8 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 }
 
 void Simulation::finalize() {
+	if (_handleSignals) restoreOldSignalHandlers();
+
 	if (_FMM != nullptr) {
 		_FMM->printTimers();
 		auto * temp = dynamic_cast<bhfmm::VectorizedLJP2PCellProcessor*>(_cellProcessor);
@@ -1530,7 +1597,16 @@ void Simulation::initialize() {
 bool Simulation::keepRunning() {
 
 	// Simstep Criterion
-	if (_simstep >= _numberOfTimesteps){
+	int signalFlags = _signalFlags.exchange(SIG_NONE, std::memory_order_relaxed);
+#ifdef ENABLE_MPI
+	MPI_Allreduce(MPI_IN_PLACE, &signalFlags, 1, MPI_INT, MPI_BOR, MPI_COMM_WORLD);
+#endif
+	if (signalFlags & SIG_STOP) {
+		Log::global_log->info() << "Stopped by SIGINT or SIGTERM." << std::endl;
+		simulationDone = true;
+		return false;
+	}
+	else if (_simstep >= _numberOfTimesteps){
 		Log::global_log->info() << "Maximum Simstep reached: " << _simstep << std::endl;
 		simulationDone = true;
 		return false;
