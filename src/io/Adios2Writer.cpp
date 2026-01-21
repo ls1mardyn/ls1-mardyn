@@ -283,7 +283,7 @@ void Adios2Writer::initAdios2() {
 }
 
 void Adios2Writer::beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-										  unsigned long simstep) {
+										  unsigned long simstep, bool signalled) {
 	Log::global_log->debug() << "[Adios2Writer] beforeEventNewTimestep." << std::endl;
 }
 

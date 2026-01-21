@@ -568,7 +568,6 @@ public:
 		SIG_NONE = 0, // No signal
 		SIG_STOP = 1 << 0, // SIGINT/SIGTERM
 		SIG_USR1 = 1 << 1, // SIGUSR1
-		SIG_USR2 = 1 << 2, // SIGUSR2
 	};
 private:
 	// Use <simulation handle_signals="false"> to overwrite this behaviour
@@ -577,9 +576,11 @@ private:
 	struct sigaction _oldSigInt;
 	struct sigaction _oldSigTerm;
 	struct sigaction _oldSigUsr1;
-	struct sigaction _oldSigUsr2;
 	void installSignalHandlers();
 	void restoreOldSignalHandlers();
+	// Copy received signals as a bitmask to local variable
+	void receiveSignals();
+	int _signalFlags;
 	// stores the timing info for the previous load. This is used for the load calculation and the rebalancing.
 	double previousTimeForLoad = 0.;
 	/*** @brief Act as safeguards for the preSimLoopSteps(), simulateOneTimestep() and postSimLoopSteps() functions.

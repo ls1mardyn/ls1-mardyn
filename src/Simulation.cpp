@@ -849,7 +849,7 @@ void Simulation::updateForces() {
 }
 
 // Store of signals received on any rank
-std::atomic<int> _signalFlags = Simulation::SIG_NONE;
+std::atomic<int> signalFlags = Simulation::SIG_NONE;
 
 /**
  * @brief Stores signals received on any rank. Handling on all ranks is deferred to the next simstep.
@@ -874,15 +874,12 @@ void signalHandler(int signalReceived)
         case SIGUSR1:
             signalFlagsBit = Simulation::SIG_USR1;
             break;
-        case SIGUSR2:
-            signalFlagsBit = Simulation::SIG_USR2;
-            break;
         default:
 			std::ostringstream ossError;
 			ossError << "Handler caught wrong signal: " << signalReceived;
             MARDYN_EXIT(ossError.str());
     }
-    _signalFlags.fetch_or(signalFlagsBit, std::memory_order_relaxed);
+    signalFlags.fetch_or(signalFlagsBit, std::memory_order_relaxed);
 }
 
 void Simulation::installSignalHandlers() {
@@ -895,7 +892,6 @@ void Simulation::installSignalHandlers() {
     sigaction(SIGINT,  &sa, &_oldSigInt);
     sigaction(SIGTERM, &sa, &_oldSigTerm);
     sigaction(SIGUSR1, &sa, &_oldSigUsr1);
-    sigaction(SIGUSR2, &sa, &_oldSigUsr2);
 }
 
 void Simulation::restoreOldSignalHandlers()
@@ -904,7 +900,6 @@ void Simulation::restoreOldSignalHandlers()
     sigaction(SIGINT,  &_oldSigInt, nullptr);
     sigaction(SIGTERM, &_oldSigTerm, nullptr);
     sigaction(SIGUSR1, &_oldSigUsr1, nullptr);
-    sigaction(SIGUSR2, &_oldSigUsr2, nullptr);
 }
 
 void Simulation::prepare_start() {
@@ -1063,11 +1058,20 @@ void Simulation::prepare_start() {
 
 }
 
+void Simulation::receiveSignals() {
+	_signalFlags = signalFlags.exchange(SIG_NONE, std::memory_order_relaxed);
+	#ifdef ENABLE_MPI
+		MPI_Allreduce(MPI_IN_PLACE, &_signalFlags, 1, MPI_INT, MPI_BOR, MPI_COMM_WORLD);
+	#endif
+}
+
 void Simulation::simulate() {
 	
 	preSimLoopSteps();
+	receiveSignals();
 	while (keepRunning()) {
 		simulateOneTimestep();
+		receiveSignals();
 	}
 	postSimLoopSteps();
 }
@@ -1169,7 +1173,7 @@ void Simulation::simulateOneTimestep()
         for (auto plugin : _plugins) {
             Log::global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Plugin: " << plugin->getPluginName() << std::endl;
 			global_simulation->timers()->start(plugin->getPluginName());
-            plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
+            plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep, _signalFlags & SIG_USR1);
 			global_simulation->timers()->stop(plugin->getPluginName());
         }
 
@@ -1596,12 +1600,8 @@ void Simulation::initialize() {
 
 bool Simulation::keepRunning() {
 
-	// Simstep Criterion
-	int signalFlags = _signalFlags.exchange(SIG_NONE, std::memory_order_relaxed);
-#ifdef ENABLE_MPI
-	MPI_Allreduce(MPI_IN_PLACE, &signalFlags, 1, MPI_INT, MPI_BOR, MPI_COMM_WORLD);
-#endif
-	if (signalFlags & SIG_STOP) {
+	// Simstep Criter
+	if (_signalFlags & SIG_STOP) {
 		Log::global_log->info() << "Stopped by SIGINT or SIGTERM." << std::endl;
 		simulationDone = true;
 		return false;
