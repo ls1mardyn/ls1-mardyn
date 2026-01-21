@@ -37,22 +37,23 @@ void GeneralDomainDecomposition::initializeALL() {
 	Log::global_log->info() << "gridSize:" << gridSize[0] << ", " << gridSize[1] << ", " << gridSize[2] << std::endl;
 	Log::global_log->info() << "gridCoords:" << gridCoords[0] << ", " << gridCoords[1] << ", " << gridCoords[2] << std::endl;
 	std::tie(_boxMin, _boxMax) = initializeRegularGrid(_domainLength, gridSize, gridCoords);
-	if (_forceLatchingToLinkedCellsGrid and not _gridSize.has_value()) {
+	if (_forceLatchingToLinkedCellsGrid and not _latchGridSize.has_value()) {
 		std::array<double, 3> forcedGridSize{};
 		for(size_t dim = 0; dim < 3; ++dim){
-			size_t numCells = _domainLength[dim] / _interactionLength;
+			// if we calculate 3.5 cells per dim there is only space for 3 -> floor
+			const auto numCells = std::floor(_domainLength[dim] / _interactionLength);
 			forcedGridSize[dim] = _domainLength[dim] / numCells;
 		}
-		_gridSize = forcedGridSize;
+		_latchGridSize = forcedGridSize;
 	}
-	if (_gridSize.has_value()) {
+	if (_latchGridSize.has_value()) {
 		std::tie(_boxMin, _boxMax) = latchToGridSize(_boxMin, _boxMax);
 	}
 #ifdef ENABLE_ALLLBL
 	// Increased slightly to prevent rounding errors.
 	const double safetyFactor = 1. + 1.e-10;
 	const std::array<double, 3> minimalDomainSize =
-		_gridSize.has_value() ? *_gridSize
+		_latchGridSize.has_value() ? *_latchGridSize
 							  : std::array{_interactionLength * safetyFactor, _interactionLength * safetyFactor,
 										   _interactionLength * safetyFactor};
 
@@ -98,17 +99,17 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			moleculeContainer->deleteOuterParticles();
 
 			// rebalance
-			Log::global_log->info() << "rebalancing..." << std::endl;
+			Log::global_log->debug() << "rebalancing..." << std::endl;
 
 			Log::global_log->set_mpi_output_all();
 			Log::global_log->debug() << "work:" << lastTraversalTime << std::endl;
 			Log::global_log->set_mpi_output_root(0);
 			auto [newBoxMin, newBoxMax] = _loadBalancer->rebalance(lastTraversalTime);
-			if (_gridSize.has_value()) {
+			if (_latchGridSize.has_value()) {
 				std::tie(newBoxMin, newBoxMax) = latchToGridSize(newBoxMin, newBoxMax);
 			}
 			// migrate the particles, this will rebuild the moleculeContainer!
-			Log::global_log->info() << "migrating particles" << std::endl;
+			Log::global_log->debug() << "migrating particles" << std::endl;
 			migrateParticles(domain, moleculeContainer, newBoxMin, newBoxMax);
 
 #ifndef MARDYN_AUTOPAS
@@ -121,9 +122,9 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 			_boxMax = newBoxMax;
 
 			// init communication partners
-			Log::global_log->info() << "updating communication partners" << std::endl;
+			Log::global_log->debug() << "updating communication partners" << std::endl;
 			initCommPartners(moleculeContainer, domain);
-			Log::global_log->info() << "rebalancing finished" << std::endl;
+			Log::global_log->debug() << "rebalancing finished" << std::endl;
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 		} else {
 			if (sendLeavingWithCopies()) {
@@ -255,7 +256,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 
 void GeneralDomainDecomposition::initCommPartners(ParticleContainer* moleculeContainer,
 												  Domain* domain) {  // init communication partners
-	auto coversWholeDomain = _loadBalancer->getCoversWholeDomain();
+	const auto coversWholeDomain = _loadBalancer->getCoversWholeDomain();
 	for (int d = 0; d < DIMgeom; ++d) {
 		// this needs to be updated for proper initialization of the neighbours
 		_neighbourCommunicationScheme->setCoverWholeDomain(d, coversWholeDomain[d]);
@@ -298,12 +299,12 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 					<< strings.size() << "!" << std::endl;
 				MARDYN_EXIT(error_message.str());
 			}
-			_gridSize = {std::stod(strings[0]), std::stod(strings[1]), std::stod(strings[2])};
+			_latchGridSize = {std::stod(strings[0]), std::stod(strings[1]), std::stod(strings[2])};
 		} else {
 			double gridSize = std::stod(gridSizeString);
-			_gridSize = {gridSize, gridSize, gridSize};
+			_latchGridSize = {gridSize, gridSize, gridSize};
 		}
-		for (auto gridSize : *_gridSize) {
+		for (auto gridSize : *_latchGridSize) {
 			if (gridSize < _interactionLength) {
 				std::ostringstream error_message;
 				error_message << "GeneralDomainDecomposition's gridSize (" << gridSize
