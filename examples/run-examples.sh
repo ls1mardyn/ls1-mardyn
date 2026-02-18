@@ -1,7 +1,7 @@
 #!/bin/bash
 # Testscript running all examples from example-list.txt
 #
-# Copyright (c) 2017-2025 Christoph Niethammer <niethammer@hlrs.de>
+# Copyright (c) 2017-2026 Christoph Niethammer <niethammer@hlrs.de>
 #
 
 # Some default values
@@ -11,9 +11,10 @@ MPIRUN_EXE="mpirun"
 # Oversubscribe is specific to OpenMPI. If you use something different this flag needs to be removed / replaced.
 MPIRUN_ARGS="-n 4 --oversubscribe"
 EXAMPLE_LIST_FILE=${EXAMPLE_LIST_FILE:=example-list.txt}
+EXAMPLES_DIR=${EXAMPLES_DIR:=$(dirname "$EXAMPLE_LIST_FILE")}
 LOGFILE=${LOGFILE:=$PWD/run-examples.log}
 
-TEMP=$(getopt -o vh --long "help,inputlist:,logfile:,mardyn-args:,mardyn-exe:,mpirun-args:,mpirun-exe:,verbose" -- "$@")
+TEMP=$(getopt -o 'i:d:hv' --long 'help,inputlist:,examples-dir:,logfile:,mardyn-args:,mardyn-exe:,mpirun-args:,mpirun-exe:,verbose' -- "$@")
 
 if [ $? -ne 0 ]; then
   echo "Error parsing commandline"
@@ -37,6 +38,7 @@ Usage:
 
 Options:
  -i,--inputlist   <FILE>    path to an inputfile list
+ -d,--examples-dir <DIR>    path to examples base directory
     --logfile     <FILE>    path for the logfile
     --mpirun-exe  <mpirun>  mpirun command or path to mpirun executable
     --mpirun-args <ARGS>    arguments to be passed to the mpirun command
@@ -77,6 +79,11 @@ while true; do
        ;;
     '-i'|'--inputlist')
        EXAMPLE_LIST_FILE="$2"
+       shift 2
+       continue
+       ;;
+    '-d'|'--examples-dir')
+       EXAMPLES_DIR="$2"
        shift 2
        continue
        ;;
@@ -138,7 +145,7 @@ fi
 logfile=$LOGFILE
 date > $logfile
 for example in ${all_examples[@]} ; do
-  example_dir=$(dirname $example)
+  example_dir=${EXAMPLES_DIR}/$(dirname $example)
   example_inp_file=$(basename $example)
   echo -e -n "Running example ${IMagenta}$example_inp_file${Color_Off} in ${IMagenta}$example_dir${Color_Off} ... "
   echo "Running example $example_inp_file in $example_dir" >> $logfile
