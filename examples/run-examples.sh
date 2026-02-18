@@ -75,7 +75,7 @@ while true; do
        shift 2
        continue
        ;;
-    '--inputlist')
+    '-i'|'--inputlist')
        EXAMPLE_LIST_FILE="$2"
        shift 2
        continue
