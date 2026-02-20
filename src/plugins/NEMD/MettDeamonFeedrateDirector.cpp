@@ -173,11 +173,10 @@ void MettDeamonFeedrateDirector::calcFeedrate(MettDeamon* mettDeamon)
 {
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	uint32_t cid = 0;
-	domainDecomp.collCommInit(1);
-	domainDecomp.collCommAppendUnsLong(_particleManipCount.deleted.local.at(cid) );
-	domainDecomp.collCommAllreduceSum();
-	_particleManipCount.deleted.global.at(cid) = domainDecomp.collCommGetUnsLong();
-	domainDecomp.collCommFinalize();
+
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp.getCommunicator(), _particleManipCount.deleted.local.at(cid));
+	collComm.communicate();
+	std::tie(_particleManipCount.deleted.global.at(cid)) = collComm.get();
 
 	// reset local values
 	this->resetLocalValues();

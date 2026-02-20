@@ -25,17 +25,9 @@ void IOHelpers::removeMomentum(ParticleContainer* particleContainer, const std::
 		}
 	}
 
-	domainDecomp->collCommInit(4);
-	domainDecomp->collCommAppendDouble(mass_sum);
-	domainDecomp->collCommAppendDouble(momentum_sum[0]);
-	domainDecomp->collCommAppendDouble(momentum_sum[1]);
-	domainDecomp->collCommAppendDouble(momentum_sum[2]);
-	domainDecomp->collCommAllreduceSum();
-	mass_sum = domainDecomp->collCommGetDouble();
-	momentum_sum[0] = domainDecomp->collCommGetDouble();
-	momentum_sum[1] = domainDecomp->collCommGetDouble();
-	momentum_sum[2] = domainDecomp->collCommGetDouble();
-	domainDecomp->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), mass_sum, momentum_sum[0], momentum_sum[1], momentum_sum[2]);
+	collComm.communicate();
+	std::tie(mass_sum, momentum_sum[0], momentum_sum[1], momentum_sum[2]) = collComm.get();
 
 	Log::global_log->info() << "momentumsum prior to removal: " << momentum_sum[0] << " " << momentum_sum[1] << " "
 							<< momentum_sum[2] << std::endl;
@@ -127,11 +119,12 @@ unsigned long IOHelpers::makeParticleIdsUniqueAndGetTotalNumParticles(ParticleCo
 																	  DomainDecompBase* domainDecomp) {
 	unsigned long localNumParticles = particleContainer->getNumberOfParticles();
 
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(localNumParticles);
-	domainDecomp->collCommScanSum();
-	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - localNumParticles;
-	domainDecomp->collCommFinalize();
+	auto collCommScan = makeCollCommObjScanAdd(domainDecomp->getCommunicator(), localNumParticles);
+	collCommScan.communicate();
+	unsigned long idOffset = 0;
+    std::tie(idOffset) = collCommScan.get();
+	idOffset -= localNumParticles;
+
 	// fix ID's to be unique:
 #if defined(_OPENMP)
 #pragma omp parallel
@@ -142,10 +135,9 @@ unsigned long IOHelpers::makeParticleIdsUniqueAndGetTotalNumParticles(ParticleCo
 		}
 	}
 
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(localNumParticles);
-	domainDecomp->collCommAllreduceSum();
-	unsigned long globalNumParticles = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd<2>(domainDecomp->getCommunicator(), localNumParticles);
+	collComm.communicate();
+	auto [globalNumParticles] = collComm.get();
+
 	return globalNumParticles;
 }

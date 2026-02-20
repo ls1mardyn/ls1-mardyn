@@ -192,11 +192,9 @@ void DensityControl::controlDensity(ParticleContainer* particleContainer, Domain
 	numMolecules.local = vec_pacID.local.size();
 
 #ifdef ENABLE_MPI
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(numMolecules.local);
-	domainDecomp->collCommAllreduceSum();
-	numMolecules.global = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numMolecules.local);
+	collComm.communicate();
+	std::tie(numMolecules.global) = collComm.get();
 #else
 	numMolecules.global = numMolecules.local;
 #endif

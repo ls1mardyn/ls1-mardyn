@@ -26,6 +26,8 @@
 #include "autopas/Version.h"
 #endif
 
+#include "parallel/CollectiveCommunicationPersistent.h"
+
 
 using optparse::Values;
 
@@ -133,7 +135,7 @@ int run_unit_tests(const Values &options, const std::vector<std::string> &args) 
  */
 int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
-	MPI_Init(&argc, &argv);
+	MPI_Env_Wrapper::init_environment(&argc, &argv);
 	int world_rank = 0;
 	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 #endif
@@ -194,9 +196,6 @@ int main(int argc, char** argv) {
 	/* Run built in tests and exit */
 	if (options.is_set_by_user("tests")) {
 		int testresult = run_unit_tests(options, args);
-		#ifdef ENABLE_MPI
-		MPI_Finalize();
-		#endif
 		std::exit(testresult); // using exit here should be OK
 	}
 
@@ -298,8 +297,4 @@ int main(int argc, char** argv) {
 	simulation.finalize();
 
 	} // End of scope to exclude MPI_Init() and MPI_Finalize()
-
-#ifdef ENABLE_MPI
-	MPI_Finalize();
-#endif
 }

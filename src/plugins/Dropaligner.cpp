@@ -76,17 +76,9 @@ void Dropaligner::beforeForces(ParticleContainer* particleContainer, DomainDecom
 		}
 
 		// COMMUNICATION
-		domainDecomp->collCommInit(4);
-		for (int d = 0; d < 3; d++) {
-			domainDecomp->collCommAppendDouble(_balance[d]);
-		}
-		domainDecomp->collCommAppendDouble(_mass);
-		domainDecomp->collCommAllreduceSum();
-		for (int d = 0; d < 3; d++) {
-			_balance[d] = domainDecomp->collCommGetDouble();
-		}
-		_mass = domainDecomp->collCommGetDouble();
-		domainDecomp->collCommFinalize();
+		auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _balance[0], _balance[1], _balance[2], _mass);
+		collComm.communicate();
+		std::tie(_balance[0], _balance[1], _balance[2], _mass) = collComm.get();
 
 		// CALCULATE MOTION
 
