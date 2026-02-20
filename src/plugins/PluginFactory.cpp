@@ -17,6 +17,7 @@
 #include "io/CavityWriter.h"
 #include "io/CheckpointWriter.h"
 #include "io/CommunicationPartnerWriter.h"
+#include "io/CsvWriter.h"
 #include "io/DecompWriter.h"
 #include "io/EnergyLogWriter.h"
 #include "io/FlopRateWriter.h"
@@ -92,6 +93,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(CavityWriter);
 	REGISTER_PLUGIN(CheckpointWriter);
 	REGISTER_PLUGIN(CommunicationPartnerWriter);
+	REGISTER_PLUGIN(CsvWriter);
 	REGISTER_PLUGIN(DecompWriter);
 	REGISTER_PLUGIN(DirectedPM);
 	REGISTER_PLUGIN(Dropaccelerator);
