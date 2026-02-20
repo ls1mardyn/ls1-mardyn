@@ -283,24 +283,15 @@ void DomainDecompMPIBase::finishNonBlockingStageImpl(ParticleContainer* molecule
 
 void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool doHaloPositionCheck, bool removeRecvDuplicates) {
-
-	Log::global_log->set_mpi_output_all();
-
 	_neighbourCommunicationScheme->exchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates,
 														this, doHaloPositionCheck);
-
-	Log::global_log->set_mpi_output_root(0);
 }
 
 
 
 void DomainDecompMPIBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain) {
-	Log::global_log->set_mpi_output_all();
-
 	// Using molecule exchange method with the force message type
 	_neighbourCommunicationScheme->exchangeMoleculesMPI(moleculeContainer, domain, FORCES, false, this);
-
-	Log::global_log->set_mpi_output_root(0);
 }
 
 size_t DomainDecompMPIBase::getTotalSize() {
