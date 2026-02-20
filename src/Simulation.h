@@ -1,6 +1,7 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
+#include <csignal>
 #include <memory>
 #include <any>
 
@@ -86,7 +87,7 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	   <simulation>
+	   <simulation handle_signals="BOOL">
 	     <integrator type="STRING"><!-- see Integrator class documentation --></integrator>
 	     <run>
 	       <production>
@@ -562,7 +563,24 @@ public:
 	 * */
 	void markSimAsDone();
 
+	// Bitmask mapping for individual signals that can be handled
+	enum SignalBits {
+		SIG_NONE = 0, // No signal
+		SIG_STOP = 1 << 0, // SIGINT/SIGTERM
+		SIG_USR1 = 1 << 1, // SIGUSR1
+	};
 private:
+	// Use <simulation handle_signals="false"> to overwrite this behaviour
+	bool _handleSignals = true;
+	// Store old signal handlers and restore them later
+	struct sigaction _oldSigInt;
+	struct sigaction _oldSigTerm;
+	struct sigaction _oldSigUsr1;
+	void installSignalHandlers();
+	void restoreOldSignalHandlers();
+	// Copy received signals as a bitmask to local variable
+	void receiveSignals();
+	int _signalFlags;
 	// stores the timing info for the previous load. This is used for the load calculation and the rebalancing.
 	double previousTimeForLoad = 0.;
 	/*** @brief Act as safeguards for the preSimLoopSteps(), simulateOneTimestep() and postSimLoopSteps() functions.

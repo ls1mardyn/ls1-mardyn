@@ -32,9 +32,11 @@ public:
     /** @brief Method will be called first thing in a new timestep. */
 	void beforeEventNewTimestep(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-			unsigned long simstep
+			unsigned long simstep, bool signalled
 	) {
 		Log::global_log -> debug() << "[TESTPLUGIN] BEFORE EVENT NEW TIMESTEP" << std::endl;
+        if (signalled)
+		    Log::global_log -> debug() << "[TESTPLUGIN] SIGUSR1 RECEIVED" << std::endl;
 	};
 
     /** @brief Method beforeForces will be called before forcefields have been applied

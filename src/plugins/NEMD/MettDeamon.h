@@ -189,7 +189,7 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 	void init(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) override;
-	void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
+	void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep, bool signalled) override;
 	void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
 	void siteWiseForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override {};
 	void afterForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;

@@ -10,7 +10,7 @@
   </refunits>
 
   <!-- simulation options -->
-  <simulation type="MD" >
+  <simulation type="MD" handle_signals="true">
     <!-- block for misc options -->
     <options>
       <!-- immediately after filling the simulation with particles, reset all id's to start at zero and are consecutive -->
