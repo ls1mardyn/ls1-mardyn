@@ -34,7 +34,7 @@ The current doxygen documentation can be found [here](https://ls1mardyn.github.i
 * [Doxygen](https://www.doxygen.nl/) to build the ls1-MarDyn documentation
 * [Adios2](https://github.com/ornladios/ADIOS2) for support of reading and writing files in the Adios2 format
 * [FFTW3](http://www.fftw.org)
-* [VTK](http://www.vtk.org) for support of creating VTK files
+* [Xerces](https://xerces.apache.org/xerces-c/) for support of creating [VTK](http://www.vtk.org) files
 * [QuickSched](https://arxiv.org/abs/1601.05384)
 * [AutoPas](https://autopas.github.io/doxygen_documentation/git-master/) for alternative particle containers and auto tuning (if enabled, make sure to have the [AutoPas dependencies](https://github.com/AutoPas/AutoPas/blob/master/docs/userdoc/Building.md) installed, as well)
 
