@@ -27,7 +27,7 @@ void MirrorSystem::init(ParticleContainer* particleContainer, DomainDecompBase* 
 
 void MirrorSystem::beforeEventNewTimestep(
 		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-		unsigned long simstep
+		unsigned long simstep, bool signalled
 ) {
 
 	if(_bDone)

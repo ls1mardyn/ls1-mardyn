@@ -36,7 +36,7 @@ public:
 	 */
 	void readXML(XMLfileUnits &) override {}
 
-	void beforeEventNewTimestep(ParticleContainer *, DomainDecompBase *, unsigned long) override {}
+	void beforeEventNewTimestep(ParticleContainer *, DomainDecompBase *, unsigned long, bool) override {}
 
 	/**
 	 * @brief Takes coupling steps such as particle insertion, to make sure they are
