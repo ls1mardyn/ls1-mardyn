@@ -1,7 +1,7 @@
 #include "io/ResultWriter.h"
 
-#include <chrono>
 #include <fstream>
+#include <iomanip>
 
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
@@ -22,6 +22,27 @@ void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	Log::global_log->info() << "[ResultWriter] Output prefix: " << _outputPrefix << std::endl;
 
+	xmlconfig.getNodeValue("outputformat", _outputFormat);
+	if (_outputFormat == "csv" || _outputFormat == "tab") {
+		Log::global_log->info() << "[ResultWriter] Output format: " << _outputFormat << std::endl;
+	} else {
+		std::ostringstream error_message;
+		error_message << "[ResultWriter] Wrong output format specified! Use \"csv\" or \"tab\" instead of \"" << _outputFormat << "\"" << std::endl;
+		MARDYN_EXIT(error_message.str());
+	}
+	// Set file extension to be .csv in case of "csv" and .res in case of "tab"
+	if (_outputFormat == "csv") {
+	    _resultfilename = _outputPrefix + ".csv";
+	}
+	else if (_outputFormat == "tab") {
+	    _resultfilename = _outputPrefix + ".res";
+	}
+	else {
+		std::ostringstream error_message;
+		error_message << "[ResultWriter] Wrong output format specified! Use \"csv\" or \"tab\" instead of \"" << _outputFormat << "\"" << std::endl;
+		MARDYN_EXIT(error_message.str());
+	}
+
 	size_t acc_steps = 1000;
 	xmlconfig.getNodeValue("accumulation_steps", acc_steps);
 	_U_pot_acc = std::make_unique<Accumulator<double>>(acc_steps);
@@ -38,26 +59,31 @@ void ResultWriter::init(ParticleContainer * /*particleContainer*/,
                         DomainDecompBase *domainDecomp, Domain * /*domain*/) {
 
 	if(domainDecomp->getRank() == 0) {
-		const std::string resultfile(_outputPrefix+".res");
+		const std::string resultfile(_resultfilename);
 		std::ofstream resultStream;
 		resultStream.open(resultfile.c_str(), std::ios::out);
-		const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-		tm unused{};
-		const auto nowStr = std::put_time(localtime_r(&now, &unused), "%c");
-		resultStream << "# ls1 MarDyn simulation started at " << nowStr << std::endl;
-		resultStream << "# Averages are the accumulated values over " << _U_pot_acc->getWindowLength()  << " time steps."<< std::endl;
-		resultStream << std::setw(10) << "# step" << std::setw(_writeWidth) << "time"
-			<< std::setw(_writeWidth) << "U_pot"
-			<< std::setw(_writeWidth) << "U_pot_avg"
-			<< std::setw(_writeWidth) << "U_kin"
-			<< std::setw(_writeWidth) << "U_kin_avg"
-			<< std::setw(_writeWidth) << "p"
-			<< std::setw(_writeWidth) << "p_avg"
-			<< std::setw(_writeWidth) << "beta_trans"
-			<< std::setw(_writeWidth) << "beta_rot"
-			<< std::setw(_writeWidth) << "c_v"
-			<< std::setw(_writeWidth) << "N"
-			<< std::endl;
+
+		// Write header of output file in case of "tab"
+		if (_outputFormat == "tab") {
+			resultStream << "# Averages are the accumulated values over " << _U_pot_acc->getWindowLength()  << " time steps."<< std::endl;
+		}
+		
+		if (_outputFormat == "tab") {
+			// Do not write simstep in scientific notation
+			resultStream << std::setw(_writeWidth) << "simstep";
+		} else {
+			// Do not write comma first
+			resultStream << "simstep";
+		}
+		formatOutput(resultStream, "time");
+		formatOutput(resultStream, "U_pot");
+		formatOutput(resultStream, "U_pot_avg");
+		formatOutput(resultStream, "U_kin");
+		formatOutput(resultStream, "U_kin_avg");
+		formatOutput(resultStream, "p");
+		formatOutput(resultStream, "p_avg");
+		formatOutput(resultStream, "N");
+		resultStream << std::endl;
 		resultStream.close();
 	}
 }
@@ -74,40 +100,37 @@ void ResultWriter::endStep(ParticleContainer *particleContainer, DomainDecompBas
 	_U_kin_acc->addEntry(ekin);
 	_p_acc->addEntry(domain->getGlobalPressure());
 	if ((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
-		const std::string resultfile(_outputPrefix+".res");
+		const std::string resultfile(_resultfilename);
 		std::ofstream resultStream;
 		resultStream.open(resultfile.c_str(), std::ios::app);
-		auto printOutput = [&](auto value) {
-			resultStream << std::setw(_writeWidth) << std::scientific << std::setprecision(_writePrecision) << value;
-		};
-		resultStream << std::setw(10) << simstep;
-		printOutput(_simulation.getSimulationTime());
-		printOutput(domain->getGlobalUpot());
-		printOutput(_U_pot_acc->getAverage());
-		printOutput(ekin);
-		printOutput(_U_kin_acc->getAverage());
-		printOutput(domain->getGlobalPressure());
-		printOutput(_p_acc->getAverage());
-		printOutput(domain->getGlobalBetaTrans());
-		printOutput(domain->getGlobalBetaRot());
-		printOutput(domain->cv());
-		printOutput(globalNumMolecules);
+
+		if (_outputFormat == "tab") {
+			// Do not write simstep in scientific notation
+			resultStream << std::setw(_writeWidth) << simstep;
+		} else {
+			// Do not write comma first
+			resultStream << simstep;
+		}
+		formatOutput(resultStream, _simulation.getSimulationTime());
+		formatOutput(resultStream, domain->getGlobalUpot());
+		formatOutput(resultStream, _U_pot_acc->getAverage());
+		formatOutput(resultStream, ekin);
+		formatOutput(resultStream, _U_kin_acc->getAverage());
+		formatOutput(resultStream, domain->getGlobalPressure());
+		formatOutput(resultStream, _p_acc->getAverage());
+		formatOutput(resultStream, globalNumMolecules);
 		resultStream << std::endl;
 		resultStream.close();
 	}
 }
 
-void ResultWriter::finish(ParticleContainer * /*particleContainer*/,
-						  DomainDecompBase *domainDecomp, Domain * /*domain*/){
-
-	if (domainDecomp->getRank() == 0) {
-		const std::string resultfile(_outputPrefix+".res");
-		std::ofstream resultStream;
-		resultStream.open(resultfile.c_str(), std::ios::app);
-		const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-		tm unused{};
-		const auto nowStr = std::put_time(localtime_r(&now, &unused), "%c");
-		resultStream << "# ls1 mardyn simulation finished at " << nowStr << std::endl;
-		resultStream.close();
+template <typename T>
+void ResultWriter::formatOutput(std::ostream& os, T value) {
+	if (_outputFormat == "tab") {
+		os << std::setw(_writeWidth) << std::scientific << std::setprecision(_writePrecision) << value;
+	} else if (_outputFormat == "csv") {
+		os << "," << std::scientific << std::setprecision(_writePrecision) << value;
+	} else {
+		MARDYN_EXIT("[ResultWriter] Wrong output format! Only \"csv\" or \"tab\" are valid.");
 	}
-}
+};
