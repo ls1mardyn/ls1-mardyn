@@ -120,7 +120,23 @@ extern template bool autopas::AutoPas<Molecule>::computeInteractions(
 				/*calculateGlobals*/ true
 		> *);
 #endif
+#ifdef ENABLE_THREE_BODY
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
+		mdLib::AxilrodTellerFunctor<
+				Molecule,
+				/*mixing*/ true,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true>
+		*);
+extern template bool autopas::AutoPas<Molecule>::computeInteractions(
+		mdLib::AxilrodTellerFunctor<
+				Molecule,
+				/*mixing*/ false,
+				autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true>
+		*);
 //! @endcond
+#endif
 
 AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePropertiesLibrary(cutoff) {
 	// use autopas defaults. This block is important when we do not read from an XML like in the unit tests
@@ -163,6 +179,10 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	outputSuffix << "Rank" << std::setfill('0') << std::setw(numDigitsMaxRank) << myRank << "_";
 	_autopasContainer.setOutputSuffix(outputSuffix.str());
 #endif
+#ifdef ENABLE_THREE_BODY
+	_autopasContainer.setAllowedInteractionTypeOptions(
+		{autopas::InteractionTypeOption::pairwise, autopas::InteractionTypeOption::triwise});
+#endif
 }
 
 /**
@@ -201,8 +221,9 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 
 	// if any option is not specified in the XML use the autopas defaults
 	// get option values from xml
-	_traversalChoices = parseAutoPasOption<autopas::TraversalOption>(xmlconfig, "allowedTraversals", _traversalChoices);
 	_containerChoices = parseAutoPasOption<autopas::ContainerOption>(xmlconfig, "allowedContainers", _containerChoices);
+	_traversalChoices = parseAutoPasOption<autopas::TraversalOption>(xmlconfig, "allowedTraversals", _traversalChoices);
+	_traversalChoices3B = parseAutoPasOption<autopas::TraversalOption>(xmlconfig, "allowedTraversals3B", _traversalChoices3B);
 	_selectorStrategy =
 		*parseAutoPasOption<autopas::SelectorStrategyOption>(xmlconfig, "selectorStrategy", {_selectorStrategy})
 			 .begin();
@@ -213,7 +234,9 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 																				   {_extrapolationMethod})
 								.begin();
 	_dataLayoutChoices = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig, "dataLayouts", _dataLayoutChoices);
+	_dataLayoutChoices3B = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig, "dataLayouts3B", _dataLayoutChoices3B);
 	_newton3Choices = parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton3", _newton3Choices);
+	_newton3Choices3B = parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton33B", _newton3Choices3B);
 	_tuningAcquisitionFunction = *parseAutoPasOption<autopas::AcquisitionFunctionOption>(
 									  xmlconfig, "tuningAcquisitionFunction", {_tuningAcquisitionFunction})
 									  .begin();
@@ -324,9 +347,12 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setNumSamples(_tuningSamples);
 	_autopasContainer.setSelectorStrategy(_selectorStrategy);
 	_autopasContainer.setAllowedContainers(_containerChoices);
-	_autopasContainer.setAllowedTraversals(_traversalChoices);
-	_autopasContainer.setAllowedDataLayouts(_dataLayoutChoices);
-	_autopasContainer.setAllowedNewton3Options(_newton3Choices);
+	_autopasContainer.setAllowedTraversals(_traversalChoices, autopas::InteractionTypeOption::pairwise);
+	_autopasContainer.setAllowedTraversals(_traversalChoices3B, autopas::InteractionTypeOption::triwise);
+	_autopasContainer.setAllowedDataLayouts(_dataLayoutChoices, autopas::InteractionTypeOption::pairwise);
+	_autopasContainer.setAllowedDataLayouts(_dataLayoutChoices3B, autopas::InteractionTypeOption::triwise);
+	_autopasContainer.setAllowedNewton3Options(_newton3Choices, autopas::InteractionTypeOption::pairwise);
+	_autopasContainer.setAllowedNewton3Options(_newton3Choices, autopas::InteractionTypeOption::triwise);
 	_autopasContainer.setTuningStrategyOption(_tuningStrategyOptions);
 	_autopasContainer.setTuningMetricOption(_tuningMetricOption);
 	_autopasContainer.setRuleFileName(_ruleFileName);
@@ -550,6 +576,37 @@ void AutoPasContainer::traverseTemplateHelper() {
 		}
 	}
 
+#if ENABLE_THREE_BODY
+	double upot3b{}, virial3b{};
+
+	const double nuFirstComponent = _particlePropertiesLibrary.getNu(0);
+	allSame = true;
+	for (auto i = 1ul; i < numComponents; ++i) {
+		allSame &= _particlePropertiesLibrary.getNu(i) == nuFirstComponent;
+	}
+
+	if (not allSame) {
+		Log::global_log->debug() << "AutoPasContainer: Using mixing." << std::endl;
+		// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+		mdLib::AxilrodTellerFunctor<Molecule, /*mixing*/ true, autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true>
+				functor(_cutoff, _particlePropertiesLibrary);
+		std::tie(upot3b, virial3b) = iterateWithFunctor(functor);
+	} else {
+		Log::global_log->debug() << "AutoPasContainer: Not using mixing." << std::endl;
+		if (nuFirstComponent != 0.0) {
+			// Generate the functor. Should be regenerated every iteration to wipe internally saved globals.
+			mdLib::AxilrodTellerFunctor<Molecule, /*mixing*/ false, autopas::FunctorN3Modes::Both,
+				/*calculateGlobals*/ true>
+				functor(_cutoff);
+			functor.setParticleProperties(nuFirstComponent);
+			std::tie(upot3b, virial3b) = iterateWithFunctor(functor);
+		}
+	}
+	upot += upot3b;
+	virial += virial3b;
+#endif
+
 	// _myRF is always zero for lj only!
 	global_simulation->getDomain()->setLocalVirial(virial /*+ 3.0 * _myRF*/);
 	// _upotXpoles is zero as we do not have any dipoles or quadrupoles
@@ -566,8 +623,16 @@ void AutoPasContainer::traverseCells(CellProcessor &cellProcessor) {
 		if (_particlePropertiesLibrary.getNumberRegisteredSiteTypes() == 0) {
 			const auto components = global_simulation->getEnsemble()->getComponents();
 			for (const auto &c : *components) {
+				// AutoPas only supports single site until now
 				_particlePropertiesLibrary.addSiteType(c.getLookUpId(),c.ljcenter(0).m());
 				_particlePropertiesLibrary.addLJParametersToSite(c.getLookUpId(), c.ljcenter(0).eps(), c.ljcenter(0).sigma());
+#ifdef ENABLE_THREE_BODY
+				if (c.numATMcenters()) {
+					_particlePropertiesLibrary.addATParametersToSite(c.getLookUpId(), c.atmcenter(0).nu());
+				} else {
+					_particlePropertiesLibrary.addATParametersToSite(c.getLookUpId(), 0.0);
+				}
+#endif
 			}
 			_particlePropertiesLibrary.calculateMixingCoefficients();
 			size_t numComponentsAdded = 0;

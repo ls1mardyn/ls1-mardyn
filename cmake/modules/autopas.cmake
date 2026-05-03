@@ -24,7 +24,7 @@ if (ENABLE_AUTOPAS)
     set(AUTOPAS_VECTOR_INSTRUCTIONS ${VECTOR_INSTRUCTIONS} CACHE STRING "Set via VECTOR_INSTRUCTIONS_OPTIONS" FORCE)
 
     # Version from March 19th, 2025. Includes PMT energy measurements, dynamic rebuilding and 3-body interactions.
-    set(AUTOPAS_TAG 0338ff17d55cc770a403efee69740a69753d64ad CACHE STRING "AutoPas Git tag or commit id to use")
+    set(AUTOPAS_TAG 279288035684fc85fba16c62f8dc7125ff0ff75e CACHE STRING "AutoPas Git tag or commit id to use")
 
     FetchContent_Declare(
             autopasfetch
