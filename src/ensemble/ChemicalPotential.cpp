@@ -441,11 +441,10 @@ Molecule ChemicalPotential::loadMolecule()
 }
 
 int ChemicalPotential::grandcanonicalBalance(DomainDecompBase* comm) {
-	comm->collCommInit(1);
-	comm->collCommAppendInt(_localInsertionsMinusDeletions);
-	comm->collCommAllreduceSum();
-	int universalInsertionsMinusDeletions = comm->collCommGetInt();
-	comm->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(comm->getCommunicator(), _localInsertionsMinusDeletions);
+	collComm.communicate();
+	auto [universalInsertionsMinusDeletions] = collComm.get();
+
 	return universalInsertionsMinusDeletions;
 }
 

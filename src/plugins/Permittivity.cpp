@@ -192,11 +192,11 @@ void Permittivity::collect(DomainDecompBase* domainDecomp) {
 	}
 
 	_outputSquaredM[_currentOutputNum] /= ((double)_accumulatedSteps-1);
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(_numParticlesLocal);
-	domainDecomp->collCommAllreduceSum();
-	_numParticles[_currentOutputNum] = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
+
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _numParticlesLocal);
+	collComm.communicate();
+	std::tie(_numParticles[_currentOutputNum]) = collComm.get();
+
 	_currentOutputNum++;
 }
 

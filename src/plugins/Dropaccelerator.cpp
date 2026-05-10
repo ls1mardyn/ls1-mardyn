@@ -90,11 +90,9 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 						  domainDecomp->getCommunicator());
 #endif
 
-			domainDecomp->collCommInit(1);
-			domainDecomp->collCommAppendInt(particlesInDrop);
-			domainDecomp->collCommAllreduceSum();
-			particlesInDrop = domainDecomp->collCommGetInt();
-			domainDecomp->collCommFinalize();
+			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), particlesInDrop);
+			collComm.communicate();
+			std::tie(particlesInDrop) = collComm.get();
 		}
 
 		// ITERATE OVER PARTICLES AND ACCELERATE ONLY DROPMOLECULES
@@ -108,11 +106,9 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 				}
 			}
 
-			domainDecomp->collCommInit(1);
-			domainDecomp->collCommAppendInt(particlesInDrop);
-			domainDecomp->collCommAllreduceSum();
-			particlesInDrop = domainDecomp->collCommGetInt();
-			domainDecomp->collCommFinalize();
+			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), particlesInDrop);
+			collComm.communicate();
+			std::tie(particlesInDrop) = collComm.get();
 		}
 
 		// CHECK IF VELOCITY HAS REACHED AND IF NOT ACCELERATE AGAIN
@@ -135,18 +131,9 @@ void Dropaccelerator::afterForces(ParticleContainer* particleContainer, DomainDe
 			}
 
 			// COMMUNICATION
-
-			domainDecomp->collCommInit(1);
-			domainDecomp->collCommAppendDouble(_velocNow);
-			domainDecomp->collCommAllreduceSum();
-			_velocNow = domainDecomp->collCommGetDouble();
-			domainDecomp->collCommFinalize();
-
-			domainDecomp->collCommInit(1);
-			domainDecomp->collCommAppendInt(particlesInDrop);
-			domainDecomp->collCommAllreduceSum();
-			particlesInDrop = domainDecomp->collCommGetInt();
-			domainDecomp->collCommFinalize();
+			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _velocNow, particlesInDrop);
+			collComm.communicate();
+			std::tie(_velocNow, particlesInDrop) = collComm.get();
 
 			// CALCULATE AVERAGE SPEED
 			_velocNow = _velocNow / particlesInDrop;

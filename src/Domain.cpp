@@ -172,14 +172,9 @@ void Domain::calculateGlobalValues(
 	// of m_Ukin, m_Upot and Pressure had to be moved from Thermostat / upd_F
 	// to this point
 
-	/* FIXME stuff for the ensemble class */
-	domainDecomp->collCommInit(2, 654);
-	domainDecomp->collCommAppendDouble(Upot);
-	domainDecomp->collCommAppendDouble(Virial);
-	domainDecomp->collCommAllreduceSumAllowPrevious();
-	Upot = domainDecomp->collCommGetDouble();
-	Virial = domainDecomp->collCommGetDouble();
-	domainDecomp->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), Upot, Virial);
+	collComm.communicate();
+	std::tie(Upot, Virial) = collComm.get();
 
 	// Process 0 has to add the dipole correction:
 	// m_UpotCorr and m_VirialCorr already contain constant (internal) dipole correction
@@ -217,17 +212,10 @@ void Domain::calculateGlobalValues(
 		unsigned long rotDOF = _localRotationalDOF[thermit->first];
 		double sumIw2 = (rotDOF > 0)? _local2KERot[thermit->first]: 0.0;
 
-		domainDecomp->collCommInit(4, 12+thermid);
-		domainDecomp->collCommAppendDouble(summv2);
-		domainDecomp->collCommAppendDouble(sumIw2);
-		domainDecomp->collCommAppendUnsLong(numMolecules);
-		domainDecomp->collCommAppendUnsLong(rotDOF);
-		domainDecomp->collCommAllreduceSumAllowPrevious();
-		_globalsummv2 = domainDecomp->collCommGetDouble();
-		_globalsumIw2 = domainDecomp->collCommGetDouble();
-		numMolecules = domainDecomp->collCommGetUnsLong();
-		rotDOF = domainDecomp->collCommGetUnsLong();
-		domainDecomp->collCommFinalize();
+		auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), summv2, sumIw2, numMolecules, rotDOF);
+		collComm.communicate();
+		std::tie(_globalsummv2, _globalsumIw2, numMolecules, rotDOF) = collComm.get();
+
 		Log::global_log->debug() << "[ thermostat ID " << thermit->first << "]\tN = " << numMolecules << "\trotDOF = " << rotDOF
 			<< "\tmv2 = " <<  _globalsummv2 << "\tIw2 = " << _globalsumIw2 << std::endl;
 
@@ -325,12 +313,9 @@ void Domain::calculateGlobalValues(
 		{
 			std::array<double, 3> sigv = _localThermostatDirectedVelocity[thermit->first];
 
-			domainDecomp->collCommInit(3);
-			for(int d=0; d < 3; d++) domainDecomp->collCommAppendDouble(sigv[d]);
-			domainDecomp->collCommAllreduceSum();
-			for(int d=0; d < 3; d++) sigv[d] = domainDecomp->collCommGetDouble();
-			domainDecomp->collCommFinalize();
-
+			auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), sigv[0], sigv[1], sigv[2]);
+			collComm.communicate();
+			std::tie(sigv[0], sigv[1], sigv[2]) = collComm.get();
 
 			_localThermostatDirectedVelocity[thermit->first].fill(0.0);
 
@@ -760,11 +745,9 @@ void Domain::updateglobalNumMolecules(ParticleContainer* particleContainer, Doma
 	CommVar<uint64_t> numMolecules;
 	numMolecules.local = particleContainer->getNumberOfParticles(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 #ifdef ENABLE_MPI
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(numMolecules.local);
-	domainDecomp->collCommAllreduceSum();
-	numMolecules.global = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), numMolecules.local);
+	collComm.communicate();
+	std::tie(numMolecules.global) = collComm.get();
 #else
 	numMolecules.global = numMolecules.local;
 #endif
