@@ -447,7 +447,7 @@ void MettDeamon::init(ParticleContainer* particleContainer, DomainDecompBase* do
 	double cutoffRadius = global_simulation->getcutoffRadius();
 	this->prepare_start(domainDecomp, particleContainer, cutoffRadius);
 }
-void MettDeamon::beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep)
+void MettDeamon::beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep, bool signalled)
 {
 	this->init_positionMap(particleContainer);
 }

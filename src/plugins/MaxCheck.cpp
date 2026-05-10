@@ -138,7 +138,7 @@ void MaxCheck::readXML(XMLfileUnits& xmlconfig) {
 
 void MaxCheck::beforeEventNewTimestep(
 		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-		unsigned long simstep
+		unsigned long simstep, bool signalled
 	)
 {
 	if (simstep < _control.start || simstep > _control.stop || simstep % _control.freq != 0) {
