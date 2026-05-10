@@ -60,7 +60,7 @@
 							</lattice>
 							<basis>
 								<site>
-									<componentid>2</componentid>
+									<componentid>3</componentid>
 									<coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
 								</site>
 							</basis>
