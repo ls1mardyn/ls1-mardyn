@@ -1,0 +1,139 @@
+{
+    "metadata": {
+        "created_at": "2025-02-05T11:59:48.271747",
+        "commit_at_creation": "67ffbc11d",
+        "build_options": "CC=gcc CXX=g++ cmake -DVECTOR_INSTRUCTIONS=AVX2 -DCMAKE_BUILD_TYPE=Release -DENABLE_AUTOPAS=OFF -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON -DENABLE_ALLLBL=OFF -DOPENMP=ON -DENABLE_MPI=ON -DENABLE_UNIT_TESTS=ON -DENABLE_VTK=ON ..",
+        "comment": "",
+        "reltolerance": 1e-08,
+        "ResultWriter_filename": "None"
+    },
+    "logfile": [
+        {
+            "Simstep": 0,
+            "T": 2.53016e-05,
+            "U_pot": -2.09893,
+            "p": -2.66901e-07
+        },
+        {
+            "Simstep": 1,
+            "T": 2.53834e-05,
+            "U_pot": -2.09918,
+            "p": -2.67772e-07
+        },
+        {
+            "Simstep": 2,
+            "T": 0.000333466,
+            "U_pot": -2.10111,
+            "p": 2.19335e-07
+        },
+        {
+            "Simstep": 3,
+            "T": 0.000557966,
+            "U_pot": -2.10377,
+            "p": 5.69207e-07
+        },
+        {
+            "Simstep": 4,
+            "T": 0.000618423,
+            "U_pot": -2.10658,
+            "p": 6.54969e-07
+        },
+        {
+            "Simstep": 5,
+            "T": 0.000631256,
+            "U_pot": -2.10937,
+            "p": 6.64245e-07
+        },
+        {
+            "Simstep": 6,
+            "T": 0.000633834,
+            "U_pot": -2.11212,
+            "p": 6.57222e-07
+        },
+        {
+            "Simstep": 7,
+            "T": 0.00063433,
+            "U_pot": -2.1148,
+            "p": 6.47076e-07
+        },
+        {
+            "Simstep": 8,
+            "T": 0.000634405,
+            "U_pot": -2.1174,
+            "p": 6.36515e-07
+        },
+        {
+            "Simstep": 9,
+            "T": 0.000634394,
+            "U_pot": -2.11993,
+            "p": 6.26101e-07
+        },
+        {
+            "Simstep": 10,
+            "T": 0.000634365,
+            "U_pot": -2.12238,
+            "p": 6.15963e-07
+        },
+        {
+            "Simstep": 11,
+            "T": 0.00063433,
+            "U_pot": -2.12473,
+            "p": 6.06144e-07
+        },
+        {
+            "Simstep": 12,
+            "T": 0.000634294,
+            "U_pot": -2.127,
+            "p": 5.96656e-07
+        },
+        {
+            "Simstep": 13,
+            "T": 0.000634256,
+            "U_pot": -2.12917,
+            "p": 5.87517e-07
+        },
+        {
+            "Simstep": 14,
+            "T": 0.000634217,
+            "U_pot": -2.13124,
+            "p": 5.78739e-07
+        },
+        {
+            "Simstep": 15,
+            "T": 0.000634178,
+            "U_pot": -2.13322,
+            "p": 5.70333e-07
+        },
+        {
+            "Simstep": 16,
+            "T": 0.000634138,
+            "U_pot": -2.13509,
+            "p": 5.62304e-07
+        },
+        {
+            "Simstep": 17,
+            "T": 0.000634097,
+            "U_pot": -2.13688,
+            "p": 5.54652e-07
+        },
+        {
+            "Simstep": 18,
+            "T": 0.000634057,
+            "U_pot": -2.13856,
+            "p": 5.47392e-07
+        },
+        {
+            "Simstep": 19,
+            "T": 0.000634016,
+            "U_pot": -2.14013,
+            "p": 5.40526e-07
+        },
+        {
+            "Simstep": 20,
+            "T": 0.000633975,
+            "U_pot": -2.14161,
+            "p": 5.34057e-07
+        }
+    ],
+    "ResultWriter": []
+}
