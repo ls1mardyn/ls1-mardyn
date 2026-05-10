@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <molecularDynamicsLibrary/MoleculeLJ.h>
+#include <autopas/particles/ParticleDefinitions.h>
 #include <autopas/utils/SoAType.h>
 #include <autopas/utils/inBox.h>
 
@@ -15,7 +15,7 @@
 /**
  * class that implements additional functions to make the molecule compatible with autopas
  */
-class AutoPasSimpleMolecule final : public MoleculeInterface, public autopas::ParticleFP64 {
+class AutoPasSimpleMolecule final : public MoleculeInterface, public autopas::ParticleBaseFP64 {
 public:
 	explicit AutoPasSimpleMolecule(unsigned long id = 0, Component* component = nullptr, double rx = 0., double ry = 0.,
 								   double rz = 0., double vx = 0., double vy = 0., double vz = 0., double qw = 1.,
@@ -227,7 +227,7 @@ public:
 		for (unsigned short i = 0; i < 3; i++) _f[i] = F[i];
 	}
 
-	void setF(const std::array<double, 3>& f) { autopas::Particle::setF(f); }
+	void setF(const std::array<double, 3>& f) { autopas::ParticleBaseFP64::setF(f); }
 
 	void setM(double M[3]) override {}
 

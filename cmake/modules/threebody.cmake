@@ -1,0 +1,12 @@
+# 3-Body correction via the Axilrod-Teller-Muto potential
+option(ENABLE_THREE_BODY "Enable 3-Body correction" OFF)
+if(ENABLE_THREE_BODY)
+    if(NOT ENABLE_AUTOPAS)
+        message(FATAL_ERROR "3-Body correction is only compatible with the AutoPas container. Set ENABLE_AUTOPAS to ON.")
+    else()
+        add_compile_definitions(ENABLE_THREE_BODY)
+        message(STATUS "3-Body correction enabled")
+    endif()
+else()
+    message(STATUS "3-Body correction disabled")
+endif()
