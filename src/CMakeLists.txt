@@ -50,10 +50,11 @@ target_link_libraries(MarDyn
         ${LZ4_LIB}     # for LZ4 compression
         ${ALL_LIB}     # for ALL
         ${MPI_LIB}     # for MPI
+        ${JSON_LIB}    # for JSON
         )
 
 target_compile_definitions(MarDyn PUBLIC
-        ${ADIOS2_COMPILE_DEFINITION}
+        ${ADIOS2_COMPILE_DEFINITION} ${JSON_COMPILE_DEFINITION}
 )
 
 add_test(

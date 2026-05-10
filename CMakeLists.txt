@@ -70,6 +70,9 @@ include(mamico)
 # ----- add adios2 dependency
 include(adios2)
 
+# ----- add json dependency
+include(json)
+
 # add mardyn
 add_subdirectory(src)
 
