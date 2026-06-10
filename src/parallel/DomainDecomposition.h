@@ -79,6 +79,7 @@ protected:
 
 	std::array<int, DIMgeom> _gridSize; //!< Number of processes in each dimension of the MPI process grid
 	int _coords[DIMgeom]; //!< Coordinate of the process in the MPI process grid
+	bool _cartCommunicatorCreated = false; // Indicates whether a communicator with topology information has already been created.
 };
 
 #endif /* DOMAINDECOMPOSITION_H_ */

@@ -130,7 +130,9 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
 			} else {
 				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+#ifndef MARDYN_AUTOPAS
 				moleculeContainer->deleteOuterParticles();
+#endif
 				DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 			}
 		}
