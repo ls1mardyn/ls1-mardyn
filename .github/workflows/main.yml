@@ -37,6 +37,10 @@ jobs:
           AGE_CUTOFF=360 # In days
           MAIN_BRANCH=master
           
+          # Fetch all branches
+          git branch -r | grep -v '\->' | sed 's/origin\///' > branches.txt
+
+          
 
 
 
