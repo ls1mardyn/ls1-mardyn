@@ -3,7 +3,7 @@ name: Archive Old Branches
 on:
   workflow_dispatch:
 
-  jobs:
+jobs:
   ArchiveStaleBranches:
     runs-on: ubuntu-latest
     permissions:
