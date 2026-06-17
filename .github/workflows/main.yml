@@ -40,8 +40,9 @@ jobs:
           # Fetch all branches
           git branch -r | grep -v '\->' | sed 's/origin\///' > branches.txt
 
-          
-
+          # Loop through branches
+          while read branch; do
+          done < branches.txt
 
 
 
