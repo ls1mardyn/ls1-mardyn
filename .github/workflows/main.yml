@@ -1,4 +1,7 @@
 name: Archive Old Branches
 
+on:
+  workflow_dispatch:
+
 
 
