@@ -28,5 +28,11 @@ on:
       - name: Install GitHub CLI
         run: sudo apt-get install -y gh
 
+      - name: Filter and Archive Stale Branches
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+
 
 
