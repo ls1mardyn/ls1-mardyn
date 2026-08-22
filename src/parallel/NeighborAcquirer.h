@@ -29,7 +29,7 @@ public:
 	 * second vector will own the particles.
 	 */
 	static std::tuple<std::vector<CommunicationPartner>, std::vector<CommunicationPartner>> acquireNeighbors(
-		const std::array<double, 3>& globalDomainLength, HaloRegion* ownRegion, std::vector<HaloRegion>& desiredRegions,
+		const std::array<double, 3>& globalDomainLength, HaloRegion* ownRegion, const std::vector<HaloRegion>& desiredRegions,
 		const MPI_Comm& comm, bool excludeOwnRank=true);
 
 	static std::vector<CommunicationPartner> squeezePartners(const std::vector<CommunicationPartner>& partners);

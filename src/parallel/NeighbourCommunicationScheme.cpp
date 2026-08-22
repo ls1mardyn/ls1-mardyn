@@ -439,16 +439,17 @@ void NeighbourCommunicationScheme::selectNeighbours(MessageType msgType, bool im
 void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoffRadius, Domain * domain,
 		DomainDecompMPIBase* domainDecomp, ParticleContainer* moleculeContainer) {
 	// corners of the process-specific domain
-	double rmin[DIMgeom]; // lower corner
-	double rmax[DIMgeom]; // higher corner
-
-	for (int d = 0; d < DIMgeom; d++) {
-		rmin[d] = domainDecomp->getBoundingBoxMin(d, domain);
-		rmax[d] = domainDecomp->getBoundingBoxMax(d, domain);
-
-		// TODO: this should be safe, as long as molecules don't start flying around
-		// at the speed of one cutoffRadius per time step
-	}
+	static_assert(DIMgeom == 3); // The initialization here assumes 3 dimensions!
+	const std::array<double, DIMgeom> localLowerCorner{
+		domainDecomp->getBoundingBoxMin(0, domain),
+		domainDecomp->getBoundingBoxMin(1, domain),
+		domainDecomp->getBoundingBoxMin(2, domain),
+	};
+	const std::array<double, DIMgeom> localUpperCorner{
+		domainDecomp->getBoundingBoxMax(0, domain),
+		domainDecomp->getBoundingBoxMax(1, domain),
+		domainDecomp->getBoundingBoxMax(2, domain),
+	};
 
 	if (_pushPull) {
 		for (unsigned int d = 0; d < _commDimms; d++) { // why free?
@@ -463,18 +464,17 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 		}
 	}
 
-	HaloRegion ownRegion = {rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0, cutoffRadius};
+	HaloRegion ownRegion = {localLowerCorner[0], localLowerCorner[1], localLowerCorner[2], localUpperCorner[0], localUpperCorner[1], localUpperCorner[2], 0, 0, 0, cutoffRadius};
 
 	if (_pushPull) {
-		double* cellLength = moleculeContainer->getHaloSize();
+		double* const cellLength = moleculeContainer->getHaloSize();
 		// halo/force regions
 		std::vector<HaloRegion> haloOrForceRegions =
 			_zonalMethod->getHaloImportForceExportRegions(ownRegion, cutoffRadius, _coversWholeDomain, cellLength);
 		std::vector<HaloRegion> leavingRegions =
-				_zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius,
-						_coversWholeDomain);
+			_zonalMethod->getLeavingExportRegions(ownRegion, cutoffRadius, _coversWholeDomain);
 
-		std::array<double, 3> globalDomainLength{domain->getGlobalLength(0), domain->getGlobalLength(1),
+		const std::array<double, 3> globalDomainLength{domain->getGlobalLength(0), domain->getGlobalLength(1),
 												 domain->getGlobalLength(2)};
 		// assuming p1 sends regions to p2
 		std::tie((*_haloImportForceExportNeighbours)[0], (*_haloExportForceImportNeighbours)[0]) =
@@ -530,9 +530,10 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 		const int numNeighbours = (*_neighbours)[d].size();
 		std::vector<Molecule> dummy;
 		for (int i = 0; i < numNeighbours; ++i) {
-			Log::global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
+			Log::global_log->debug() << "Rank " << domainDecomp->getRank()
+									 << " is initiating communication to " << (*_neighbours)[d][i].getRank() << "\n";
 			(*_neighbours)[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
-					domainDecomp->getMPIParticleType(), msgType, dummy, false, true/*do halo position change*/);
+					domainDecomp->getMPIParticleType(), msgType, dummy, false, true/*do halo position check*/);
 		}
 
 	}

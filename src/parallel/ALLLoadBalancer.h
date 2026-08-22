@@ -12,9 +12,9 @@
 #include <tuple>
 class ALLLoadBalancer : public LoadBalancer {
 public:
-	ALLLoadBalancer(std::array<double, 3> boxMin, std::array<double, 3> boxMax, double gamma, MPI_Comm comm,
-					std::array<size_t, 3> globalSize, std::array<size_t, 3> localCoordinates,
-					std::array<double, 3> minimalPartitionSize);
+	ALLLoadBalancer(const std::array<double, 3> &boxMin, const std::array<double, 3> &boxMax, double gamma, MPI_Comm comm,
+					const std::array<size_t, 3>& globalSize, const std::array<size_t, 3>& localCoordinates,
+					const std::array<double, 3>& minimalPartitionSize);
 
 	~ALLLoadBalancer() override = default;
 	std::tuple<std::array<double, 3>, std::array<double, 3>> rebalance(double work) override;
@@ -22,7 +22,7 @@ public:
 		// nothing yet.
 	}
 
-	std::array<bool, 3> getCoversWholeDomain() override { return _coversWholeDomain; }
+	const std::array<bool, 3>& getCoversWholeDomain() const override { return _coversWholeDomain; }
 
 private:
 	ALL<double, double> _all;

@@ -172,7 +172,7 @@ private:
 	std::pair<std::array<double, 3>, std::array<double, 3>> latchToGridSize(std::array<double, 3> boxMin,
 																			std::array<double, 3> boxMax) {
 		for (size_t ind = 0; ind < 3; ++ind) {
-			double currentGridSize = (*_gridSize)[ind];
+			const double currentGridSize = (*_latchGridSize)[ind];
 			// For boxmin, the lower domain boundary is 0, so that's always fine!
 			boxMin[ind] = std::round(boxMin[ind] / currentGridSize) * currentGridSize;
 			// update boxmax only if it isn't at the very top of the domain!
@@ -197,10 +197,10 @@ private:
 	size_t _initFrequency{500};
 
 	/**
-	 * Optionally safe a given grid size on which the process boundaries are bound/latched.
+	 * Optionally, give a grid size (=3D size of one grid cell) on which the process boundaries are bound/latched.
 	 * If no value is given, it is not used.
 	 */
-	std::optional<std::array<double, 3>> _gridSize{};
+	std::optional<std::array<double, 3>> _latchGridSize{};
 
 	/**
 	 * Bool that indicates whether a grid should be forced even if no gridSize is set.

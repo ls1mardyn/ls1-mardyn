@@ -130,7 +130,7 @@ void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
 }
 
 bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
-	Log::global_log->info() << "REBUILD OF LinkedCells" << std::endl;
+	Log::global_log->debug() << "REBUILD OF LinkedCells" << std::endl;
 
 	for (int i = 0; i < 3; i++) {
 		this->_boundingBoxMin[i] = bBoxMin[i];
@@ -138,13 +138,13 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 //		_haloWidthInNumCells[i] = ::ceil(_cellsInCutoff);
 		_haloWidthInNumCells[i] = _cellsInCutoff;
 	}
-	Log::global_log->info() << "Bounding box: " << "[" << bBoxMin[0] << ", " << bBoxMax[0] << "]" << " x " << "["
+	Log::global_log->debug() << "Bounding box: " << "[" << bBoxMin[0] << ", " << bBoxMax[0] << "]" << " x " << "["
 			<< bBoxMin[1] << ", " << bBoxMax[1] << "]" << " x " << "[" << bBoxMin[2] << ", " << bBoxMax[2] << "]"
 			<< std::endl;
 
 	int numberOfCells = 1;
 
-	Log::global_log->info() << "Using " << _cellsInCutoff << " cells in cutoff." << std::endl;
+	Log::global_log->debug() << "Using " << _cellsInCutoff << " cells in cutoff." << std::endl;
 	float rc = (_cutoffRadius / _cellsInCutoff);
 
 	for (int dim = 0; dim < 3; dim++) {
@@ -171,7 +171,7 @@ bool LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 		_haloBoundingBoxMax[dim] = _boundingBoxMax[dim] + _haloLength[dim];
 	}
 
-	Log::global_log->info() << "Cells per dimension (incl. halo): " << _cellsPerDimension[0] << " x "
+	Log::global_log->debug() << "Cells per dimension (incl. halo): " << _cellsPerDimension[0] << " x "
 			<< _cellsPerDimension[1] << " x " << _cellsPerDimension[2] << std::endl;
 
 
