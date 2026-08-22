@@ -162,15 +162,18 @@ private:
 	bool _autopasContainerIsInitialized{false};
 	std::string _ruleFileName{};
 
-	std::set<autopas::TraversalOption> _traversalChoices;
 	std::set<autopas::ContainerOption> _containerChoices;
+	std::set<autopas::TraversalOption> _traversalChoices;
+	std::set<autopas::TraversalOption> _traversalChoices3B;
 	autopas::SelectorStrategyOption _selectorStrategy;
 	std::vector<autopas::TuningStrategyOption> _tuningStrategyOptions;
 	autopas::TuningMetricOption _tuningMetricOption;
 	autopas::ExtrapolationMethodOption _extrapolationMethod;
 	autopas::AcquisitionFunctionOption _tuningAcquisitionFunction;
 	std::set<autopas::DataLayoutOption> _dataLayoutChoices;
+	std::set<autopas::DataLayoutOption> _dataLayoutChoices3B;
 	std::set<autopas::Newton3Option> _newton3Choices;
+	std::set<autopas::Newton3Option> _newton3Choices3B;
 	autopas::Logger::LogLevel _logLevel{autopas::Logger::LogLevel::info};
 
 	enum class FunctorOption {
