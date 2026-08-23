@@ -62,6 +62,8 @@ jobs:
           libopenmpi-dev        \
           libomp-dev            \
           libxerces-c-dev
+        # Install python modules to execute validation script
+        pip3 install numpy pandas
         echo "Running ${JOBNAME}"
         git status
         mkdir build_${JOBNAME}
@@ -84,16 +86,23 @@ jobs:
             alllbl_enabled='OFF'
           fi
 
-          cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
-                -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
-                -DENABLE_AUTOPAS=${{ matrix.autopas }} \
-                -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON \
-                -DENABLE_ALLLBL=$alllbl_enabled \
-                -DOPENMP=${{ matrix.openmp }} \
-                -DENABLE_MPI=$mpi_enabled \
-                -DENABLE_UNIT_TESTS=ON \
-                -DENABLE_VTK=ON \
-              ..
+          cmake_exec="cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
+            -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
+            -DENABLE_AUTOPAS=${{ matrix.autopas }} \
+            -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON \
+            -DENABLE_ALLLBL=$alllbl_enabled \
+            -DOPENMP=${{ matrix.openmp }} \
+            -DENABLE_MPI=$mpi_enabled \
+            -DENABLE_UNIT_TESTS=ON \
+            -DENABLE_VTK=ON \
+            .."
+
+          # Omit quotes to trim whitespace of cmake_exec in second echo command
+          echo "The following cmake command is executed:"
+          echo CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} ${cmake_exec}
+          echo ""
+
+          ${cmake_exec}
         
           cmake --build . --parallel 1
 
@@ -115,60 +124,23 @@ jobs:
     - if: ${{ matrix.parall == 'PAR' }}
       name: Validation
       run: |
+          #set strict pipefail option
+          set -eo pipefail
+          
           #save absolute path to root of ls1 directory
           repoPath=$PWD
+          
+          #example list of new version is used
           examplesFile="branchExamples_${JOBNAME}.txt"
-          # choose and save examples (so that this commit and master execute the same list)
+          # choose and save examples (so that the same file name could be used regardless of AutoPas is on or off)
           if [[ ${{ matrix.autopas }} == 'ON' ]]
           then
             cp ./examples/example-list_autopas.txt "${examplesFile}"
           else
             cp ./examples/example-list.txt "${examplesFile}"
           fi
-
-          #translate matrix to ON/OFF for certain entries
-          if [[ ${{ matrix.parall }} == 'PAR' ]]
-          then
-            mpi_enabled='ON'
-          else
-            mpi_enabled='OFF'
-          fi
-          if [[ ${{ matrix.parall }} == 'PAR' ]] && [[ ${{ matrix.autopas }} == 'ON' ]]
-          then
-            alllbl_enabled='ON'
-          else
-            alllbl_enabled='OFF'
-          fi
-
-          #build master branch equivalent to compare new build to
-          mkdir build_${JOBNAME}_master
-          git fetch
-          git checkout master
-          git status
-          cd build_${JOBNAME}_master
-          #note: ALLLBL is enabled if AutoPas is enabled.
-          cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
-                -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
-                -DENABLE_AUTOPAS=${{ matrix.autopas }} \
-                -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON \
-                -DENABLE_ALLLBL=$alllbl_enabled \
-                -DOPENMP=${{ matrix.openmp }} \
-                -DENABLE_MPI=$mpi_enabled \
-                -DENABLE_VTK=ON \
-              ..
         
-          cmake --build . --parallel 1
-
-          #as example list of new version is used, also the example files of new version should be used
-          #therefore, go back to new version
-          git checkout -
-
-          cd "${repoPath}"
-
-          #set strict pipefail option
-          set -eo pipefail
-        
-          # execute all examples. These calls create artifacts which we will then compare
+          # execute all examples. These calls create artifacts which we will then compare to the validation JSON file
           IFS=$'\n'
           for i in $(cat "${repoPath}/${examplesFile}" )
           do
@@ -177,7 +149,7 @@ jobs:
             then
               continue
             fi
-            echo $i
+
             cd $repoPath/examples/$(dirname $i)
         
             # patch input files according to current conf
@@ -194,27 +166,22 @@ jobs:
               sed --in-place 's|AutoPas">|AutoPas">\n\t<functor>autoVec</functor>|g' input_patched.xml
             fi
 
-            # run the example with the old and new exe
-            for VERSION in "master" "new"
-            do
-              if [[ "${VERSION}" == "master" ]]
-              then
-                printf "   Running master... "
-                EXE=$repoPath/build_${JOBNAME}_master/src/MarDyn
-              else
-                printf "   Running new version... "
-                EXE=$repoPath/build_${JOBNAME}/src/MarDyn
-              fi
+            # run the example with the new exe
+            printf "   Running example: $i ... "
+            EXE=$repoPath/build_${JOBNAME}/src/MarDyn
         
-              # when using OpenMPI --oversubscribe is needed. Remove it if you switch to MPICH.
-              mpirun --oversubscribe -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
-                | tee "output_${{ join(matrix.*, '-') }}"                                                   \
-                | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' > ${repoPath}/output_${VERSION}    \
-                || (exitCode=$?; cat "output_${{ join(matrix.*, '-') }}"; (exit $exitCode))
-              printf "Done\n"
-            done
-            # compare the two runs
-            diff ${repoPath}/output_new ${repoPath}/output_master
+            # when using OpenMPI --oversubscribe is needed. Remove it if you switch to MPICH.
+            mpirun --oversubscribe -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
+              | tee "output_${{ join(matrix.*, '-') }}"                                                   \
+              | awk '/Simstep = /{ print $7 " " $10 " " $13 " " $16 }' > ${repoPath}/output_${VERSION}    \
+              || (exitCode=$?; cat "output_${{ join(matrix.*, '-') }}"; (exit $exitCode))
+            printf "Done\n"
+
+            # compare the output of the run to the validation file
+            # validation files are named after the respective config xml but without the file extension (::-4)
+            python3 ${repoPath}/checks/validation_compare_files.py \
+              --validation-file "validation_$(basename ${i::-4}).json" \
+              --logfile "output_${{ join(matrix.*, '-') }}"
           done
 
       env:

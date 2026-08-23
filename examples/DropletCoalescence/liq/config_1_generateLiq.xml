@@ -34,30 +34,10 @@
 			</components>
 
 			<phasespacepoint>
-				<generator name="MultiObjectGenerator">
-					<objectgenerator>
-						<filler type="GridFiller">
-							<lattice system="cubic" centering="face">
-								<vec id="a"> <x>1</x> <y>0</y> <z>0</z> </vec>
-								<vec id="b"> <x>0</x> <y>1</y> <z>0</z> </vec>
-								<vec id="c"> <x>0</x> <y>0</y> <z>1</z> </vec>
-							</lattice>
-							<basis>
-								<site>
-									<componentid>0</componentid>
-									<coordinate> <x>0.5</x> <y>0.5</y> <z>0.5</z> </coordinate>
-								</site>
-							</basis>
-							<latticeOccupancy>1</latticeOccupancy>
-							<density>0.0187650</density>
-						</filler>
-						<object type="Cuboid">
-							<lower> <x>0</x> <y>0</y> <z>0</z> </lower>
-							<upper> <x>100</x> <y>100</y> <z>100</z> </upper>
-						</object>
-	<!--                <velocityAssigner type="MaxwellVelocityDistribution"></velocityAssigner>-->
-						<velocityAssigner type="EqualVelocityDistribution"></velocityAssigner>
-					</objectgenerator>
+				<generator name="CubicGridGenerator">
+					<specification>density</specification>
+					<density>0.0187650</density>
+					<binaryMixture>false</binaryMixture>
 				</generator>
 			</phasespacepoint>
 		</ensemble>
