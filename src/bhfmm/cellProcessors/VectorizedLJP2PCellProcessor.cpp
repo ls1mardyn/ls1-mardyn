@@ -519,8 +519,7 @@ void VectorizedLJP2PCellProcessor::processCellPair(ParticleCell & c1, ParticleCe
 		// if one of them is halo:
 		// 		if full_c1-index < full_c2-index, then compute
 		// 		else, then don't compute
-		// This saves the Molecule::isLessThan checks
-		// and works similar to the "Half-Shell" scheme
+		// This works similar to the "Half-Shell" scheme
 
 		const bool ApplyCutoff = true;
 
