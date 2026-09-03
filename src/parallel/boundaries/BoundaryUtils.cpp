@@ -7,13 +7,13 @@
 
 #include "BoundaryUtils.h"
 
-#include "utils/Logger.h"
-#include "utils/mardyn_assert.h"
-
 #include <algorithm>
 #include <cctype>
-#include <sstream> // for ostringstream
+#include <sstream>	// for ostringstream
 #include <string>
+
+#include "utils/Logger.h"
+#include "utils/mardyn_assert.h"
 
 BoundaryUtils::BoundaryType BoundaryUtils::convertStringToBoundary(const std::string &boundary) {
 	std::string boundaryLowercase(boundary);
@@ -29,7 +29,7 @@ BoundaryUtils::BoundaryType BoundaryUtils::convertStringToBoundary(const std::st
 	error_message << "Invalid boundary type passed to BoundaryUtils::convertStringToBoundary. Check your input file!"
 				  << std::endl;
 	MARDYN_EXIT(error_message.str());
-	return BoundaryType::ERROR; // warning suppression
+	return BoundaryType::ERROR;	 // warning suppression
 }
 
 std::string BoundaryUtils::convertBoundaryToString(BoundaryType boundary) {
@@ -45,5 +45,5 @@ std::string BoundaryUtils::convertBoundaryToString(BoundaryType boundary) {
 			error_message << "BoundaryType::ERROR received in BoundaryUtils::convertBoundaryToString!" << std::endl;
 			MARDYN_EXIT(error_message.str());
 	}
-	return "error"; // warning suppression
+	return "error";	 // warning suppression
 }

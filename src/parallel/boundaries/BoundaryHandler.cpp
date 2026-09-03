@@ -7,14 +7,13 @@
 
 #include "BoundaryHandler.h"
 
-#include "integrators/Integrator.h"
+#include <algorithm>
+#include <sstream>	// for ostringstream
 
+#include "integrators/Integrator.h"
 #include "utils/Logger.h"
 #include "utils/Math.h"
 #include "utils/mardyn_assert.h"
-
-#include <algorithm>
-#include <sstream> // for ostringstream
 
 BoundaryUtils::BoundaryType BoundaryHandler::getGlobalWallType(DimensionUtils::DimensionType dimension) const {
 	return _boundaries.at(dimension);
@@ -123,7 +122,7 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *molec
 							// reversed velocity: -(currentVel+nextStepVelAdjustment)
 							moleculeIter->setv(currentDimInt,
 											   -currentVel - nextStepVelAdjustment - nextStepVelAdjustment);
-						} else { // outflow, delete the particle if it would leave
+						} else {  // outflow, delete the particle if it would leave
 							moleculeContainer->deleteMolecule(moleculeIter, false);
 						}
 					}
@@ -138,7 +137,8 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *molec
 
 void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer *moleculeContainer) const {
 	// get halo lengths in each dimension
-	const std::array<double, 3> haloWidths = {moleculeContainer->getHaloWidthForDimension(0), moleculeContainer->getHaloWidthForDimension(1),
+	const std::array<double, 3> haloWidths = {moleculeContainer->getHaloWidthForDimension(0),
+											  moleculeContainer->getHaloWidthForDimension(1),
 											  moleculeContainer->getHaloWidthForDimension(2)};
 	for (auto const [currentDim, currentWallIsGlobalWall] : _isGlobalWall) {
 		if (!currentWallIsGlobalWall)

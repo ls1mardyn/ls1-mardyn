@@ -6,10 +6,11 @@
  */
 
 #include "DimensionUtils.h"
-#include "utils/Logger.h"
-#include "utils/mardyn_assert.h" // for MARDYN_EXIT()
 
-#include <sstream> // for ostringstream
+#include <sstream>	// for ostringstream
+
+#include "utils/Logger.h"
+#include "utils/mardyn_assert.h"  // for MARDYN_EXIT()
 
 bool DimensionUtils::isDimensionNumericPermissible(int dim) {
 	// permissible dimensions are {-1, -2, -3, 1, 2, 3}
@@ -21,7 +22,7 @@ DimensionUtils::DimensionType DimensionUtils::convertNumericToDimension(int dim)
 		std::ostringstream error_message;
 		error_message << "Invalid dimension passed for enum conversion. Received value: " << dim << std::endl;
 		MARDYN_EXIT(error_message.str());
-		return DimensionType::ERROR; // warning suppression
+		return DimensionType::ERROR;  // warning suppression
 	}
 	switch (dim) {
 		case 1:
@@ -37,7 +38,7 @@ DimensionUtils::DimensionType DimensionUtils::convertNumericToDimension(int dim)
 		case -3:
 			return DimensionType::NEGZ;
 	}
-	return DimensionType::ERROR; // warning suppression
+	return DimensionType::ERROR;  // warning suppression
 }
 
 DimensionUtils::DimensionType DimensionUtils::convertLS1DimIndexToEnumPositive(int dim) {
@@ -67,9 +68,9 @@ std::string DimensionUtils::convertDimensionToString(DimensionType dimension) {
 			return "-y";
 		case DimensionType::NEGZ:
 			return "-z";
-		default: // ERROR
+		default:  // ERROR
 			MARDYN_EXIT("DimesionType::ERROR received in DimensionUtils::convertDimensionToString!");
-			return "error"; // warning suppression
+			return "error";	 // warning suppression
 	}
 }
 
@@ -93,7 +94,7 @@ int DimensionUtils::convertDimensionToNumeric(DimensionType dimension) {
 			return -3;
 		default:
 			MARDYN_EXIT("DimesionType::ERROR received in DimensionUtils::convertDimensionToNumeric!");
-			return 0; // warning suppression
+			return 0;  // warning suppression
 	}
 }
 

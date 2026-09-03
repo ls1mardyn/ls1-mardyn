@@ -7,8 +7,9 @@
 
 #pragma once
 
-#include "utils/Math.h"
 #include <string>
+
+#include "utils/Math.h"
 
 /**
  * @brief Includes the DimensionType enum and helper functions for dimension types.
@@ -120,4 +121,4 @@ int convertEnumToLS1DimIndex(DimensionType dimension);
  */
 int findSign(DimensionType dimension);
 
-} // namespace DimensionUtils
+}  // namespace DimensionUtils

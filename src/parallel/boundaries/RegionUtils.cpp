@@ -6,12 +6,12 @@
  */
 
 #include "RegionUtils.h"
-#include "utils/mardyn_assert.h" //for MARDYN_EXIT()
+
+#include "utils/mardyn_assert.h"  //for MARDYN_EXIT()
 
 std::tuple<std::array<double, 3>, std::array<double, 3>> RegionUtils::getInnerRegionSlab(
 	const std::array<double, 3> &givenRegionBegin, const std::array<double, 3> &givenRegionEnd,
 	DimensionUtils::DimensionType dimension, double regionWidth) {
-
 	std::array<double, 3> returnRegionBegin = givenRegionBegin;
 	std::array<double, 3> returnRegionEnd = givenRegionEnd;
 

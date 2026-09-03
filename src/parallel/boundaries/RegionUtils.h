@@ -7,9 +7,10 @@
 
 #pragma once
 
+#include <tuple>
+
 #include "DimensionUtils.h"
 #include "molecules/Molecule.h"
-#include <tuple>
 
 /**
  * @brief Includes helper functions for region-related computation during boundary handling.
@@ -96,4 +97,4 @@ std::tuple<std::array<double, 3>, std::array<double, 3>> getOuterRegionSlab(
 	const std::array<double, 3> &givenRegionBegin, const std::array<double, 3> &givenRegionEnd,
 	DimensionUtils::DimensionType dimension, const std::array<double, 3> &regionWidth);
 
-} // namespace RegionUtils
+}  // namespace RegionUtils
