@@ -81,7 +81,10 @@ bool BoundaryHandler::isGlobalWall(int dimension) const {
 void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *moleculeContainer,
 														double timestepLength) const {
 	const auto cutoff = moleculeContainer->getCutoff();
-	for (auto const [currentDim, currentWallIsGlobalWall] : _isGlobalWall) {
+	DimensionUtils::DimensionType currentDim;
+	bool currentWallIsGlobalWall;
+	for (auto loopVar : _isGlobalWall) {
+		std::tie(currentDim, currentWallIsGlobalWall) = loopVar;
 		if (!currentWallIsGlobalWall)
 			continue;
 
@@ -95,8 +98,10 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *molec
 				[[fallthrough]];
 			case BoundaryUtils::BoundaryType::REFLECTING: {
 				// create region by using getInnerRegionSlab()
-				const auto [curWallRegionBegin, curWallRegionEnd] =
+				std::array<double, 3> curWallRegionBegin, curWallRegionEnd;
+				std::tie(curWallRegionBegin, curWallRegionEnd) =
 					RegionUtils::getInnerRegionSlab(_localRegionStart, _localRegionEnd, currentDim, cutoff);
+				const int currentDimInt = DimensionUtils::convertEnumToLS1DimIndex(currentDim);
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -109,12 +114,10 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *molec
 					for (auto moleculeIter = particlesInRegion; moleculeIter.isValid(); ++moleculeIter) {
 						// Calculate the change in velocity, which the leapfrog method will
 						// apply in the next velocity update to the dimension of interest.
-						const int currentDimInt = DimensionUtils::convertEnumToLS1DimIndex(currentDim);
 						const double halfTimestep = .5 * timestepLength;
 						const double halfTimestepByMass = halfTimestep / moleculeIter->mass();
 						const double force = moleculeIter->F(currentDimInt);
 						const double nextStepVelAdjustment = halfTimestepByMass * force;
-
 						// check if the molecule would leave the bounds
 						if (RegionUtils::isMoleculeLeaving(*moleculeIter, curWallRegionBegin, curWallRegionEnd,
 														   currentDim, timestepLength, nextStepVelAdjustment)) {
@@ -158,7 +161,8 @@ void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer *moleculeContaine
 				[[fallthrough]];
 			case BoundaryUtils::BoundaryType::REFLECTING: {
 				// create region by using getOuterRegionSlab()
-				auto const [curWallRegionBegin, curWallRegionEnd] =
+				std::array<double, 3> curWallRegionBegin, curWallRegionEnd;
+				std::tie(curWallRegionBegin, curWallRegionEnd) =
 					RegionUtils::getOuterRegionSlab(_localRegionStart, _localRegionEnd, currentDim, haloWidths);
 #if defined(_OPENMP)
 #pragma omp parallel
