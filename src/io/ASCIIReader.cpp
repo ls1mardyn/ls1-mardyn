@@ -265,6 +265,65 @@ void ASCIIReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_phaseSpaceHeaderFileStream.close();
 }
 
+void ASCIIReader::readPhaseSpaceHeaderTimeOnly() {
+	std::string token;
+
+	Log::global_log->info() << "Opening phase space header file " << _phaseSpaceHeaderFile << std::endl;
+	_phaseSpaceHeaderFileStream.open(_phaseSpaceHeaderFile.c_str());
+	_phaseSpaceHeaderFileStream >> token;
+	if(token != "mardyn") {
+		std::ostringstream error_message;
+		error_message << _phaseSpaceHeaderFile << " not a valid mardyn input file." << std::endl;
+		MARDYN_EXIT(error_message.str());
+	}
+
+	std::string inputversion;
+	_phaseSpaceHeaderFileStream >> token >> inputversion;
+	// FIXME: remove tag trunk from file specification?
+	if(token != "trunk") {
+		std::ostringstream error_message;
+		error_message << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << std::endl;
+		MARDYN_EXIT(error_message.str());
+	}
+
+	if(std::stoi(inputversion) < 20080701) {
+		std::ostringstream error_message;
+		error_message << "Input version too old (" << inputversion << ")" << std::endl;
+		MARDYN_EXIT(error_message.str());
+	}
+
+	Log::global_log->info() << "Reading simulation time from phase space header, from file " << _phaseSpaceHeaderFile << std::endl;
+
+	bool done = false; // When the last currentTime element was read, "done" is set to true
+
+	while(!done) {
+		char c;
+		if (!(_phaseSpaceHeaderFileStream >> c)) {
+			std::ostringstream error_message;
+			error_message << "Unexpected end of file while reading phase space header from "
+						<< _phaseSpaceHeaderFile;
+			MARDYN_EXIT(error_message.str());
+		}
+		if(c == '#') {
+			// comment line
+			_phaseSpaceHeaderFileStream.ignore(INT_MAX, '\n');
+			continue;
+		}
+		_phaseSpaceHeaderFileStream.putback(c);
+
+		token.clear();
+		_phaseSpaceHeaderFileStream >> token;
+		Log::global_log->info() << "{{" << token << "}}" << std::endl;
+
+		if((token == "currentTime") || (token == "t")) {
+			// set current simulation time
+			_phaseSpaceHeaderFileStream >> token;
+			_simulation.setSimulationTime(strtod(token.c_str(), NULL));
+			done = true;
+		}
+	}
+}
+
 unsigned long
 ASCIIReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) {
 

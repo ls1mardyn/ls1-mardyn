@@ -61,7 +61,7 @@ public:
 				  const std::string compression_rate = "8");
 
 	void beforeEventNewTimestep(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-								unsigned long simstep) override;
+								unsigned long simstep, bool signalled) override;
 
 	void beforeForces(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, unsigned long simstep) override;
 
