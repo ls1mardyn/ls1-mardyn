@@ -148,7 +148,10 @@ void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer *moleculeContaine
 	const std::array<double, 3> haloWidths = {moleculeContainer->getHaloWidthForDimension(0),
 											  moleculeContainer->getHaloWidthForDimension(1),
 											  moleculeContainer->getHaloWidthForDimension(2)};
-	for (auto const [currentDim, currentWallIsGlobalWall] : _isGlobalWall) {
+	DimensionUtils::DimensionType currentDim;
+	bool currentWallIsGlobalWall;
+	for (auto loopVar : _isGlobalWall) {
+		std::tie(currentDim, currentWallIsGlobalWall) = loopVar;
 		if (!currentWallIsGlobalWall)
 			continue;
 
