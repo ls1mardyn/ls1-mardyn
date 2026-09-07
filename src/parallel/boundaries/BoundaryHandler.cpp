@@ -107,6 +107,8 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *molec
 #endif
 				{
 					// grab an iterator from the converted coords
+					// OpenMP work splitting occurs inside the regionIterator() function so the function call to get the
+					// iterator needs to occur inside the parallel region
 					const auto particlesInRegion = moleculeContainer->regionIterator(
 						curWallRegionBegin.data(), curWallRegionEnd.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
@@ -172,6 +174,8 @@ void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer *moleculeContaine
 #endif
 				{
 					// grab an iterator from the converted coords
+					// OpenMP work splitting occurs inside the regionIterator() function so the function call to get the
+					// iterator needs to occur inside the parallel region
 					auto particlesInRegion = moleculeContainer->regionIterator(
 						curWallRegionBegin.data(), curWallRegionEnd.data(), ParticleIterator::ALL_CELLS);
 					for (auto moleculeIter = particlesInRegion; moleculeIter.isValid(); ++moleculeIter) {
