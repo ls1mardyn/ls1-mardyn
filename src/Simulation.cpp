@@ -872,7 +872,8 @@ void Simulation::updateForces() {
 }
 
 void Simulation::prepare_start() {
-	if (_handleSignals) signalHandler.enable();
+	if (_handleSignals)
+		signalHandler.enable();
 
 	Log::global_log->info() << "Initializing simulation" << std::endl;
 
@@ -1030,10 +1031,10 @@ void Simulation::prepare_start() {
 void Simulation::simulate() {
 	
 	preSimLoopSteps();
-	signalHandler.syncReceiveSignals();
+	signalHandler.syncReceivedSignals();
 	while (keepRunning()) {
 		simulateOneTimestep();
-		signalHandler.syncReceiveSignals();
+		signalHandler.syncReceivedSignals();
 	}
 	postSimLoopSteps();
 }
@@ -1423,7 +1424,8 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 }
 
 void Simulation::finalize() {
-	signalHandler.disable();
+	if(signalHandler.isEnabled())
+		signalHandler.disable();
 
 	if (_FMM != nullptr) {
 		_FMM->printTimers();
