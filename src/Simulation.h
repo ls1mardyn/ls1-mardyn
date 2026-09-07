@@ -1,7 +1,6 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
-#include <csignal>
 #include <memory>
 #include <any>
 
@@ -9,9 +8,9 @@
 #include "thermostats/VelocityScalingThermostat.h"
 #include "utils/FixedSizeQueue.h"
 #include "utils/FunctionWrapper.h"
+#include "utils/SignalHandler.h"
 #include "utils/SysMon.h"
 #include "utils/Random.h"
-
 
 
 // plugins
@@ -479,7 +478,10 @@ private:
 	bool _finalCheckpoint;
 
 	/** Enable restart from final checkpoint */
-	bool _restart;
+	bool _restart = false;
+
+	bool _handleSignals;
+	SignalHandler signalHandler;
 
 	/** use legacyCellProcessor instead of vectorizedCellProcessor */
 	bool _legacyCellProcessor = false;
@@ -571,25 +573,7 @@ public:
 	 * */
 	void markSimAsDone();
 
-	// Bitmask mapping for individual signals that can be handled
-	enum SignalBits {
-		SIG_NONE = 0, // No signal
-		SIG_STOP = 1 << 0, // SIGINT/SIGTERM
-		SIG_USR1 = 1 << 1, // SIGUSR1
-	};
 private:
-	// Custom handling of SIGINT, SIGTERM, SIGUSR1, (and SIGSEGV for debug builds)
-	bool _handleSignals;
-	// Store old signal handlers and restore them later
-	struct sigaction _oldSigInt;
-	struct sigaction _oldSigTerm;
-	struct sigaction _oldSigUsr1;
-	struct sigaction _oldSigSegv;
-	void installSignalHandlers();
-	void restoreOldSignalHandlers();
-	// Copy received signals as a bitmask to local variable
-	inline void receiveSignals();
-	int _signalFlags;
 	// stores the timing info for the previous load. This is used for the load calculation and the rebalancing.
 	double previousTimeForLoad = 0.;
 	/*** @brief Act as safeguards for the preSimLoopSteps(), simulateOneTimestep() and postSimLoopSteps() functions.

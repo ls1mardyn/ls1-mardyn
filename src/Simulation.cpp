@@ -2,9 +2,7 @@
 #include "Simulation.h"
 
 #include <algorithm>
-#include <atomic>
 #include <cmath>
-#include <csignal>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
@@ -15,10 +13,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#ifdef __GLIBC__
-#include <execinfo.h>
-#endif
 
 #include "Common.h"
 #include "Domain.h"
@@ -132,7 +126,6 @@ Simulation::Simulation(bool handleSignals)
 	_forced_checkpoint_time(0),
 	_loopCompTime(0.0),
 	_loopCompTimeSteps(0),
-	_signalFlags(SIG_NONE),
 	_handleSignals(handleSignals)
 {
 	_timeFromStart.start();
@@ -751,8 +744,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint")) {
 		bool ignoreCheckpointTime = false;
 		if(xmlconfig.getNodeValue("ignoreCheckpointTime", ignoreCheckpointTime)) {
-			if(ignoreCheckpointTime)
+			if(ignoreCheckpointTime) {
+				if(restarting) {
+					Log::global_log->warning() << "Restarting simulation but ignoring checkpoint time" << std::endl;
+				}
 				setSimulationTime(0.0);
+			}
 		}
 	}
 
@@ -874,94 +871,8 @@ void Simulation::updateForces() {
 	} // end pragma omp parallel
 }
 
-std::string getStackTrace() {
-	std::ostringstream ss;
-#ifdef __GLIBC__
-	size_t size = 10;
-	void *array[size];
-	size = backtrace(array, size);
-	char** symbols = backtrace_symbols(array, size);
-    if (symbols != nullptr) {
-		ss << "Stack trace:\n";
-		for (int i = 0; i < size; ++i)
-			ss << "  " << symbols[i] << '\n';
-		free(symbols);
-	}
-#endif
-    return ss.str();
-}
-
-// Store of signals received on any rank
-std::atomic<int> signalFlags = Simulation::SIG_NONE;
-
-/**
- * @brief Stores signals received on any rank. Handling on all ranks is deferred to the next simstep.
- */
-void signalHandler(int signalReceived)
-{
-#ifdef ENABLE_MPI
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-	Log::global_log->info()
-#ifdef ENABLE_MPI
-		<< "[Rank #" << rank << "] "
-#endif
-		<< "Received signal: " << signalReceived << std::endl;
-    int signalFlagsBit = 0;
-	std::ostringstream ossError;
-    switch (signalReceived) {
-        case SIGINT:
-        case SIGTERM:
-            signalFlagsBit = Simulation::SIG_STOP;
-            break;
-        case SIGUSR1:
-            signalFlagsBit = Simulation::SIG_USR1;
-            break;
-#ifndef NDEBUG
-		case SIGSEGV:
-			ossError << "Segmentation fault (" << signalReceived << ")!\n" << getStackTrace();
-			MARDYN_EXIT(ossError.str());
-#endif
-        default:
-			ossError << "Handler caught wrong signal: " << signalReceived;
-            MARDYN_EXIT(ossError.str());
-    }
-    signalFlags.fetch_or(signalFlagsBit, std::memory_order_relaxed);
-}
-
-void Simulation::installSignalHandlers() {
-	if(_handleSignals) {
-		Log::global_log->info() << "Installing signal handlers" << std::endl;
-		struct sigaction sa{};
-		sa.sa_handler = signalHandler;
-		sigemptyset(&sa.sa_mask);
-		sa.sa_flags = 0;
-
-		sigaction(SIGINT,  &sa, &_oldSigInt);
-		sigaction(SIGTERM, &sa, &_oldSigTerm);
-		sigaction(SIGUSR1, &sa, &_oldSigUsr1);
-#ifndef NDEBUG
-		sigaction(SIGSEGV, &sa, &_oldSigSegv);
-#endif
-	}
-}
-
-void Simulation::restoreOldSignalHandlers()
-{
-	if(_handleSignals) {
-		Log::global_log->info() << "Restoring old signal handlers" << std::endl;
-		sigaction(SIGINT,  &_oldSigInt, nullptr);
-		sigaction(SIGTERM, &_oldSigTerm, nullptr);
-		sigaction(SIGUSR1, &_oldSigUsr1, nullptr);
-#ifndef NDEBUG
-		sigaction(SIGSEGV, &_oldSigSegv, nullptr);
-#endif
-	}
-}
-
 void Simulation::prepare_start() {
-	installSignalHandlers();
+	if (_handleSignals) signalHandler.enable();
 
 	Log::global_log->info() << "Initializing simulation" << std::endl;
 
@@ -1116,22 +1027,13 @@ void Simulation::prepare_start() {
 
 }
 
-inline void Simulation::receiveSignals() {
-	if(_handleSignals) {
-		_signalFlags = signalFlags.exchange(SIG_NONE, std::memory_order_relaxed);
-		#ifdef ENABLE_MPI
-			MPI_Allreduce(MPI_IN_PLACE, &_signalFlags, 1, MPI_INT, MPI_BOR, MPI_COMM_WORLD);
-		#endif
-	}
-}
-
 void Simulation::simulate() {
 	
 	preSimLoopSteps();
-	receiveSignals();
+	signalHandler.syncReceiveSignals();
 	while (keepRunning()) {
 		simulateOneTimestep();
-		receiveSignals();
+		signalHandler.syncReceiveSignals();
 	}
 	postSimLoopSteps();
 }
@@ -1233,7 +1135,7 @@ void Simulation::simulateOneTimestep()
         for (auto plugin : _plugins) {
             Log::global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Plugin: " << plugin->getPluginName() << std::endl;
 			global_simulation->timers()->start(plugin->getPluginName());
-            plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep, _signalFlags & SIG_USR1);
+            plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep, signalHandler.getBitmask() & SignalHandler::SIG_USR1);
 			global_simulation->timers()->stop(plugin->getPluginName());
         }
 
@@ -1521,7 +1423,7 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 }
 
 void Simulation::finalize() {
-	restoreOldSignalHandlers();
+	signalHandler.disable();
 
 	if (_FMM != nullptr) {
 		_FMM->printTimers();
@@ -1661,7 +1563,7 @@ void Simulation::initialize() {
 bool Simulation::keepRunning() {
 
 	// Simstep Criteria
-	if (_signalFlags & SIG_STOP) {
+	if (signalHandler.getBitmask() & SignalHandler::SIG_STOP) {
 		Log::global_log->info() << "Stopped by SIGINT or SIGTERM." << std::endl;
 		simulationDone = true;
 		return false;
