@@ -59,7 +59,7 @@ public:
 	void readPhaseSpaceHeader(Domain* domain, double timestep);
 
 	/**
-	 * Only part of \ref readPhaseSpaceHeader() to only read the currentTime (simulation time)
+	 * @brief Only part of \ref readPhaseSpaceHeader() to only read the currentTime (simulation time)
 	 */
 	void readPhaseSpaceHeaderTimeOnly();
 

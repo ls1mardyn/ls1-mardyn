@@ -83,6 +83,7 @@ public:
      */
     virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
+	
     /** @brief Method will be called first thing in a new timestep. */
 	virtual void beforeEventNewTimestep(
 			ParticleContainer* /* particleContainer */, DomainDecompBase* /* domainDecomp */,
