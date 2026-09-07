@@ -81,9 +81,9 @@ bool BoundaryHandler::isGlobalWall(int dimension) const {
 void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *moleculeContainer,
 														double timestepLength) const {
 	const auto cutoff = moleculeContainer->getCutoff();
-	DimensionUtils::DimensionType currentDim;
-	bool currentWallIsGlobalWall;
 	for (auto loopVar : _isGlobalWall) {
+		DimensionUtils::DimensionType currentDim;
+		bool currentWallIsGlobalWall;
 		std::tie(currentDim, currentWallIsGlobalWall) = loopVar;
 		if (!currentWallIsGlobalWall)
 			continue;
@@ -148,9 +148,9 @@ void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer *moleculeContaine
 	const std::array<double, 3> haloWidths = {moleculeContainer->getHaloWidthForDimension(0),
 											  moleculeContainer->getHaloWidthForDimension(1),
 											  moleculeContainer->getHaloWidthForDimension(2)};
-	DimensionUtils::DimensionType currentDim;
-	bool currentWallIsGlobalWall;
 	for (auto loopVar : _isGlobalWall) {
+		DimensionUtils::DimensionType currentDim;
+		bool currentWallIsGlobalWall;
 		std::tie(currentDim, currentWallIsGlobalWall) = loopVar;
 		if (!currentWallIsGlobalWall)
 			continue;
