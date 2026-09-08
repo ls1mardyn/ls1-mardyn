@@ -52,4 +52,4 @@ BoundaryType convertStringToBoundary(const std::string &boundary);
  */
 std::string convertBoundaryToString(BoundaryType boundary);
 
-} // namespace BoundaryUtils
+}  // namespace BoundaryUtils

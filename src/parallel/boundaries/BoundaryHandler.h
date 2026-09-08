@@ -7,15 +7,15 @@
 
 #pragma once
 
-#include "BoundaryUtils.h"
-#include "DimensionUtils.h"
-#include "RegionUtils.h"
-#include "particleContainer/ParticleContainer.h"
-
 #include <array>
 #include <map>
 #include <string>
 #include <vector>
+
+#include "BoundaryUtils.h"
+#include "DimensionUtils.h"
+#include "RegionUtils.h"
+#include "particleContainer/ParticleContainer.h"
 
 /**
  * @brief Class to handle boundary conditions, namely leaving and halo particles.

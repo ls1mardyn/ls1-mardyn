@@ -7,14 +7,13 @@
 
 #include "BoundaryHandler.h"
 
-#include "integrators/Integrator.h"
+#include <algorithm>
+#include <sstream>	// for ostringstream
 
+#include "integrators/Integrator.h"
 #include "utils/Logger.h"
 #include "utils/Math.h"
 #include "utils/mardyn_assert.h"
-
-#include <algorithm>
-#include <sstream> // for ostringstream
 
 BoundaryUtils::BoundaryType BoundaryHandler::getGlobalWallType(DimensionUtils::DimensionType dimension) const {
 	return _boundaries.at(dimension);
@@ -82,7 +81,10 @@ bool BoundaryHandler::isGlobalWall(int dimension) const {
 void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *moleculeContainer,
 														double timestepLength) const {
 	const auto cutoff = moleculeContainer->getCutoff();
-	for (auto const [currentDim, currentWallIsGlobalWall] : _isGlobalWall) {
+	for (auto loopVar : _isGlobalWall) {
+		DimensionUtils::DimensionType currentDim;
+		bool currentWallIsGlobalWall;
+		std::tie(currentDim, currentWallIsGlobalWall) = loopVar;
 		if (!currentWallIsGlobalWall)
 			continue;
 
@@ -96,38 +98,45 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *molec
 				[[fallthrough]];
 			case BoundaryUtils::BoundaryType::REFLECTING: {
 				// create region by using getInnerRegionSlab()
-				const auto [curWallRegionBegin, curWallRegionEnd] =
+				std::array<double, 3> curWallRegionBegin, curWallRegionEnd;
+				std::tie(curWallRegionBegin, curWallRegionEnd) =
 					RegionUtils::getInnerRegionSlab(_localRegionStart, _localRegionEnd, currentDim, cutoff);
-				// grab an iterator from the converted coords
-				const auto particlesInRegion = moleculeContainer->regionIterator(
-					curWallRegionBegin.data(), curWallRegionEnd.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+				const int currentDimInt = DimensionUtils::convertEnumToLS1DimIndex(currentDim);
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+				{
+					// grab an iterator from the converted coords
+					// OpenMP work splitting occurs inside the regionIterator() function so the function call to get the
+					// iterator needs to occur inside the parallel region
+					const auto particlesInRegion = moleculeContainer->regionIterator(
+						curWallRegionBegin.data(), curWallRegionEnd.data(), ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 
-				// iterate through all molecules
-				for (auto moleculeIter = particlesInRegion; moleculeIter.isValid(); ++moleculeIter) {
-					// Calculate the change in velocity, which the leapfrog method will
-					// apply in the next velocity update to the dimension of interest.
-					const int currentDimInt = DimensionUtils::convertEnumToLS1DimIndex(currentDim);
-					const double halfTimestep = .5 * timestepLength;
-					const double halfTimestepByMass = halfTimestep / moleculeIter->mass();
-					const double force = moleculeIter->F(currentDimInt);
-					const double nextStepVelAdjustment = halfTimestepByMass * force;
-
-					// check if the molecule would leave the bounds
-					if (RegionUtils::isMoleculeLeaving(*moleculeIter, curWallRegionBegin, curWallRegionEnd, currentDim,
-													   timestepLength, nextStepVelAdjustment)) {
-						if (getGlobalWallType(currentDim) == BoundaryUtils::BoundaryType::REFLECTING) {
-							const double currentVel = moleculeIter->v(currentDimInt);
-							// change the velocity in the dimension of interest such that when
-							// the leapfrog integrator adds nextStepVelAdjustment in the next
-							// velocity update, the final result ends up being the intended,
-							// reversed velocity: -(currentVel+nextStepVelAdjustment)
-							moleculeIter->setv(currentDimInt,
-											   -currentVel - nextStepVelAdjustment - nextStepVelAdjustment);
-						} else { // outflow, delete the particle if it would leave
-							moleculeContainer->deleteMolecule(moleculeIter, false);
+					// iterate through all molecules
+					for (auto moleculeIter = particlesInRegion; moleculeIter.isValid(); ++moleculeIter) {
+						// Calculate the change in velocity, which the leapfrog method will
+						// apply in the next velocity update to the dimension of interest.
+						const double halfTimestep = .5 * timestepLength;
+						const double halfTimestepByMass = halfTimestep / moleculeIter->mass();
+						const double force = moleculeIter->F(currentDimInt);
+						const double nextStepVelAdjustment = halfTimestepByMass * force;
+						// check if the molecule would leave the bounds
+						if (RegionUtils::isMoleculeLeaving(*moleculeIter, curWallRegionBegin, curWallRegionEnd,
+														   currentDim, timestepLength, nextStepVelAdjustment)) {
+							if (getGlobalWallType(currentDim) == BoundaryUtils::BoundaryType::REFLECTING) {
+								const double currentVel = moleculeIter->v(currentDimInt);
+								// change the velocity in the dimension of interest such that when
+								// the leapfrog integrator adds nextStepVelAdjustment in the next
+								// velocity update, the final result ends up being the intended,
+								// reversed velocity: -(currentVel+nextStepVelAdjustment)
+								moleculeIter->setv(currentDimInt,
+												   -currentVel - nextStepVelAdjustment - nextStepVelAdjustment);
+							} else {  // outflow, delete the particle if it would leave
+								moleculeContainer->deleteMolecule(moleculeIter, false);
+							}
 						}
 					}
-				}
+				}  // pragma omp parallel
 				break;
 			}
 			default:
@@ -138,9 +147,13 @@ void BoundaryHandler::processGlobalWallLeavingParticles(ParticleContainer *molec
 
 void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer *moleculeContainer) const {
 	// get halo lengths in each dimension
-	const std::array<double, 3> haloWidths = {moleculeContainer->getHaloWidthForDimension(0), moleculeContainer->getHaloWidthForDimension(1),
+	const std::array<double, 3> haloWidths = {moleculeContainer->getHaloWidthForDimension(0),
+											  moleculeContainer->getHaloWidthForDimension(1),
 											  moleculeContainer->getHaloWidthForDimension(2)};
-	for (auto const [currentDim, currentWallIsGlobalWall] : _isGlobalWall) {
+	for (auto loopVar : _isGlobalWall) {
+		DimensionUtils::DimensionType currentDim;
+		bool currentWallIsGlobalWall;
+		std::tie(currentDim, currentWallIsGlobalWall) = loopVar;
 		if (!currentWallIsGlobalWall)
 			continue;
 
@@ -153,16 +166,23 @@ void BoundaryHandler::removeNonPeriodicHalos(ParticleContainer *moleculeContaine
 				[[fallthrough]];
 			case BoundaryUtils::BoundaryType::REFLECTING: {
 				// create region by using getOuterRegionSlab()
-				auto const [curWallRegionBegin, curWallRegionEnd] =
+				std::array<double, 3> curWallRegionBegin, curWallRegionEnd;
+				std::tie(curWallRegionBegin, curWallRegionEnd) =
 					RegionUtils::getOuterRegionSlab(_localRegionStart, _localRegionEnd, currentDim, haloWidths);
-
-				// grab an iterator from the converted coords
-				auto particlesInRegion = moleculeContainer->regionIterator(
-					curWallRegionBegin.data(), curWallRegionEnd.data(), ParticleIterator::ALL_CELLS);
-				for (auto moleculeIter = particlesInRegion; moleculeIter.isValid(); ++moleculeIter) {
-					// delete all halo particles
-					moleculeContainer->deleteMolecule(moleculeIter, false);
-				}
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+				{
+					// grab an iterator from the converted coords
+					// OpenMP work splitting occurs inside the regionIterator() function so the function call to get the
+					// iterator needs to occur inside the parallel region
+					auto particlesInRegion = moleculeContainer->regionIterator(
+						curWallRegionBegin.data(), curWallRegionEnd.data(), ParticleIterator::ALL_CELLS);
+					for (auto moleculeIter = particlesInRegion; moleculeIter.isValid(); ++moleculeIter) {
+						// delete all halo particles
+						moleculeContainer->deleteMolecule(moleculeIter, false);
+					}
+				}  // pragma omp parallel
 				break;
 			}
 			default:
