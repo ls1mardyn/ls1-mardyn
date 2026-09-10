@@ -1,0 +1,113 @@
+# This workflow implements two preliminary steps to handle old branches.
+# In the first step, this workflow collects old branches and their authors.
+# In the second step, it generates an issue to send notifications to the authors of the old branches.
+# In the notifications, the authors will be informed that their branches are old and scheduled to be archived.
+# By archiving, the commit history will be deleted, but the final state of the branch is recoverable.
+
+name: Notify Owners of Old Branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      age_cutoff:
+        description: 'Branches older than these many days will be collected:'
+        required: true
+        default: '360' # In days
+        type: number
+
+jobs:
+  NotifyOwnersOldBranches:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0  # Needed to retrieve full commit log
+
+      - name: Setup Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: '3.x'
+
+      - name: Install GitHub CLI
+        run: sudo apt-get install -y gh
+
+      - name: Find Stale Branches and List Owners
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        run: |
+          AGE_CUTOFF=${{ inputs.age_cutoff }} # In days
+          echo $AGE_CUTOFF
+          MAIN_BRANCH=master
+
+          # Fetch all branches
+          git branch -r | grep -v '\->' | sed 's/origin\///' > branches.txt
+
+          # Variable for collecting GitHub usernames
+          allContributors=""
+
+          reportText="The branches listed below have been inactive for over ${AGE_CUTOFF} days. Therefore, they are scheduled for archival in 60 days. "
+          reportText+="We will create a pull request for the branch, delete the branch, and then close the pull request. This will remove the commit "
+          reportText+="history of the branch from the git repository, but it should be possible to restore the final state of the branch afterwards. "
+          reportText+="Please let us know before the deadline if you plan to re-use the branch soon and you would like to keep the branch intact."
+          issueBody=$'## Old Branches\n\n'"$reportText"$'\n\n```text\n'
+
+          # Loop through branches
+          while read branch; do
+            # Skip main branch
+            if [ "$branch" = "master" ] || [ "$branch" = "main" ]; then
+              continue
+            fi
+
+            # Skip if open PR exists
+            open_prs=$(gh pr list --head "$branch" --json number --jq 'length')
+            if [ "$open_prs" -gt 0 ]; then
+              continue
+            fi
+
+            # Get last commit date
+            lastCommitData=$(gh api "repos/${{ github.repository }}/commits/$branch")
+            lastCommitDate=$(printf '%s\n' "$lastCommitData" | jq -r '.commit.committer.date')
+
+            # Calculate branch age in days
+            branchAgeDays=$(( ($(date -u +%s) - $(date -u -d "$lastCommitDate" +%s)) / 86400 ))
+
+            # Check whether the branch is old enough
+            if [ $branchAgeDays -ge $AGE_CUTOFF ]; then
+              # Get contributors to the branch
+              author=$(printf '%s\n' "$lastCommitData" | jq -r '"\(.commit.author.name) (@\(.author.login // "unknown")) <\(.commit.author.email // "unknown")>"')
+
+              BLUE='\033[34m'
+              RED='\033[31m'
+              GREEN='\033[32m'
+              NC='\033[0m'
+              printf "BRANCH=${BLUE}%-20s${NC}\nAGE=${RED}%-15s${NC}\nOWNER=${GREEN}%s${NC}\n\n" "$branch" "${branchAgeDays} days old" "$author"
+
+              #create an issue
+              issueBody+=$(printf '🔵BRANCH= %-20s\n🔴AGE= %-15s\n🟢OWNER= %s\n\n' "$branch" "$branchAgeDays days old" "$author")
+              issueBody+=$'\n\n'
+
+              # Get only GitHub usernames for notifications
+              contributorLogin=$(printf '%s\n' "$lastCommitData" | jq -r '.author.login // "unknown"')
+
+              # Add the usernames to the global contributor list
+              allContributors+="$contributorLogin"$'\n'	      
+            fi
+          done < branches.txt
+
+          # Remove duplicate usernames and create GitHub mentions
+          mentions=$(printf '%s\n' "$allContributors" | sed '/^null$/d' | sed '/^$/d' | sort -u | sed 's/^/@/' | paste -sd ' ' -)
+          mentions="@RezaUHH"
+          #echo $mentions
+
+          # Close the code block
+          issueBody+=$'\n```'
+
+          # Add the mentions to the issue body
+          issueBody+=$'\n\n'"$mentions"
+
+          gh issue create  --title "Report of Old Branches"  --body "$issueBody"
