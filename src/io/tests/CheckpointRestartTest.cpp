@@ -60,10 +60,9 @@ void CheckpointRestartTest::testCheckpointRestart(bool binary) {
 
 unsigned long CheckpointRestartTest::getGlobalParticleNumber(ParticleContainer* particleContainer){
 	unsigned long localParticleCount = particleContainer->getNumberOfParticles();
-	_domainDecomposition->collCommInit(1);
-	_domainDecomposition->collCommAppendUnsLong(localParticleCount);
-	_domainDecomposition->collCommAllreduceSum();
-	auto globalNumParticles = _domainDecomposition->collCommGetUnsLong();
-	_domainDecomposition->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(_domainDecomposition->getCommunicator(), localParticleCount);
+	collComm.communicate();
+	auto [globalNumParticles] = collComm.get();
+
 	return globalNumParticles;
 }
