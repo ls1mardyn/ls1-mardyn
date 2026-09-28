@@ -5,6 +5,9 @@
 #include <execinfo.h>
 #endif
 #endif
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
 
 #include "mardyn_assert.h"
 
@@ -64,6 +67,11 @@ void SignalHandler::handleSignal(int signalReceived) {
 SignalHandler* SignalHandler::_enabledInstance = nullptr;
 
 void SignalHandler::enable() {
+#if defined(_OPENMP)
+	if (omp_in_parallel()) {
+		MARDYN_EXIT("SignalHandler::enable() was called inside an OpenMP parallel region");
+	}
+#endif
 	if (isEnabled()) {
 #ifndef NDEBUG
 		Log::global_log->warning() << "Signal handler is already enabled" << std::endl;
@@ -92,6 +100,11 @@ void SignalHandler::enable() {
 }
 
 void SignalHandler::disable() {
+#if defined(_OPENMP)
+	if (omp_in_parallel()) {
+		MARDYN_EXIT("SignalHandler::disable() was called inside an OpenMP parallel region");
+	}
+#endif
 	if (!isEnabled()) {
 #ifndef NDEBUG
 		Log::global_log->warning() << "Signal handler is not enabled" << std::endl;
