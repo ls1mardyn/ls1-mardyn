@@ -228,12 +228,13 @@ bool GeneralDomainDecomposition::checkForSensibleRebalance(const DomainPoint new
 	}
 	
 	if (_previousDomainDecomposition.empty()) {
-		_previousDomainDecompositionChange.reserve(_numProcs * (_numProcs - 1));
-    	_futureDomainDecompositionChange.reserve(_numProcs * (_numProcs - 1));
+		const std::size_t numProcs = static_cast<std::size_t>(_numProcs);
+		_previousDomainDecompositionChange.reserve(numProcs * (numProcs - 1));
+    	_futureDomainDecompositionChange.reserve(numProcs * (numProcs - 1));
 
-		_previousDomainDecomposition.resize(6 * _numProcs);
-		_currentDomainDecomposition.resize(6 * _numProcs);
-		_futureDomainDecomposition.resize(6 * _numProcs);
+		_previousDomainDecomposition.resize(6 * numProcs);
+		_currentDomainDecomposition.resize(6 * numProcs);
+		_futureDomainDecomposition.resize(6 * numProcs);
 
 		std::array<double, 6> oldDomainBox = {_boxMin[0], _boxMin[1], _boxMin[2], _boxMax[0], _boxMax[1], _boxMax[2]};
 		MPI_CHECK(MPI_Allgather(oldDomainBox.data(), 6, MPI_DOUBLE, _previousDomainDecomposition.data(), 6, MPI_DOUBLE, _comm));
@@ -543,13 +544,13 @@ double GeneralDomainDecomposition::getMaxdivMin(double* data, const int size) {
 	return max / min;
 }
 
-inline const double GeneralDomainDecomposition::bboxVolume(const DomainBox& bbox) {
+inline double GeneralDomainDecomposition::bboxVolume(const DomainBox& bbox) const {
     return std::max(bbox[1][0] - bbox[0][0], 0.0) *
            std::max(bbox[1][1] - bbox[0][1], 0.0) *
            std::max(bbox[1][2] - bbox[0][2], 0.0);
 }
 
-inline const double GeneralDomainDecomposition::bboxIntersectionVolume(const DomainBox& bbox1, const DomainBox& bbox2) {
+inline double GeneralDomainDecomposition::bboxIntersectionVolume(const DomainBox& bbox1, const DomainBox& bbox2) const {
     const DomainPoint lower{
         std::max(bbox1[0][0], bbox2[0][0]),
         std::max(bbox1[0][1], bbox2[0][1]),

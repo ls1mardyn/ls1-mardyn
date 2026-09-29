@@ -165,7 +165,7 @@ private:
 	 *
 	 * @return volumen of the Bbox
 	 */
-    inline const double bboxVolume(const DomainBox& bbox);
+    inline double bboxVolume(const DomainBox& bbox) const;
 
 	/**
 	 * Calculates the intersection volume of two Bboxes; If there is no intersection, 0 is returned
@@ -174,7 +174,7 @@ private:
 	 *
 	 * @return volumen of the intersection
 	 */
-	inline const double bboxIntersectionVolume(const DomainBox& bbox1, const DomainBox& bbox2);
+	inline double bboxIntersectionVolume(const DomainBox& bbox1, const DomainBox& bbox2) const;
 	
 	/**
 	 * Calculates the percentage of repeated changes to the total change between the previous load distribution change and the proposed one  
