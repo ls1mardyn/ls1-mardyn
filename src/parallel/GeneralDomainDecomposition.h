@@ -78,9 +78,6 @@ public:
 		throw std::runtime_error("GeneralDomainDecomposition::getNeighboursFromHaloRegion() not yet implemented");
 	}
 private:
-	using DomainGridPoint = std::array<int, DIMgeom>;
-	using DomainPoint = std::array<double, DIMgeom>;
-    using DomainBox   = std::array<DomainPoint, 2>;
 
     /**
 	 * Method that initializes the ALLLoadBalancer
@@ -135,10 +132,9 @@ private:
 	 * This function will rebuild the particleContainer.
 	 * @param domain
 	 * @param particleContainer
-	 * @param newMin new minimum of the own subdomain
-	 * @param newMax new maximum of the own subdomain
+	 * @param newLocalDomain new local subdomain
 	 */
-	void migrateParticles(Domain* domain, ParticleContainer* particleContainer, DomainPoint newMin, DomainPoint newMax);
+	void migrateParticles(Domain* domain, ParticleContainer* particleContainer, DomainBox newLocalDomain);
 
 	/**
 	 * Check whether a rebalancing is necessary.
@@ -148,10 +144,15 @@ private:
 	
 	/**
 	 * checked whether the reallocation is sensible according to specified characteristics
-	 * @param newBoxMin new minimum of the own subdomain
-	 * @param newBoxMax new maximum of the own subdomain
+	 * @param proposedLocalDomain new proposed subdomain
+	 * @return True if Either Rebalance is sensible or the Featcher is disabled.
 	 */
-	bool checkForSensibleRebalance(const DomainPoint newBoxMin, const DomainPoint newBoxMax);
+	bool checkForSensibleRebalance(const DomainBox& proposedLocalDomain);
+
+	/**
+	 * TODO 
+	 */
+	DomainBox reviseNewRebalance(DomainBox proposedLocalDomain);
 
 	/**
 	 * checked whether the data in _minimalDomainSize is valid
@@ -198,8 +199,8 @@ private:
     
 	double _maximumRepeatedLoadChange{1}; // represents a percentage, 1 == disabled
 
-	DomainPoint _boxMin{};
-	DomainPoint _boxMax{};
+	DomainBox _localDomain{}; // The currently used local domain
+	DomainBox _proposedLocalDomain{}; // The proposed version of the local domain used, without modifications
 
 	DomainPoint _domainLength;
 	std::vector<double> _minimalDomainSize = {0., 0., 0.};

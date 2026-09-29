@@ -1,13 +1,13 @@
 /**
  * @file LoadBalancer.h
- * @author seckler
- * @date 04.06.19
+ * @author seckler, Georg von Bismarck
+ * @date 29.09.2026
  */
 
 #pragma once
 #include <array>
-#include <tuple>
 #include "utils/xmlfileUnits.h"
+#include "parallel/DomainDecompMPIBase.h"
 
 /**
  * LoadBalancer class for the usage of arbitrary load balancing classes that are handled by GeneralDomainDecomposition.
@@ -24,11 +24,11 @@ public:
 	 * Based on the current domain and the work for that domain this function determines a new
 	 * domain decomposition that provides a better load balancing.
 	 * This call will normally include communication and exchange of information with other processes.
+	 * @param localSupdomain The local Supdomain of the Prozess. It does not have to correspond exactly to the actually implemented subdomain.  
 	 * @param work Arbitrary unit of work, e.g., time for the current process
-	 * @return New domain boundaries for the current process. First entry is the new boxMin,
-	 * second the new boxMax.
+	 * @return New domain boundaries for the current process.
 	 */
-	virtual std::tuple<std::array<double, 3>, std::array<double, 3>> rebalance(double work) = 0;
+	virtual DomainBox rebalance(DomainBox localBox, double work) = 0;
 
 	/**
 	 * Read Config file
@@ -41,20 +41,4 @@ public:
 	 * @return Array of bools, for each dimension one value: true, iff the process spans the entire domain along this dimension.
 	 */
 	virtual std::array<bool, 3> getCoversWholeDomain() = 0;
-
-	/**
-	 * Returns the local domain boundaries 
-	 * @return domain boundaries for the current process. First entry is the new boxMin,
-	 * second the new boxMax.
-	 */
-	virtual std::tuple<std::array<double, 3>, std::array<double, 3>> getlocalDomain() = 0;
-
-	/**
-	 * Sets the local domain boundaries 
-	 * @param newBoxMin 
-	 * @param newBoxMax
-	 */
-	virtual void setlocalDomain(std::array<double, 3> newBoxMin, std::array<double, 3> newBoxMax) = 0;
-
 };
-

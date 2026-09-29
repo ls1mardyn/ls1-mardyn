@@ -9,11 +9,7 @@
 #include "ALL.hpp"
 #include "parallel/DomainDecompMPIBase.h"
 
-ALLLoadBalancer::ALLLoadBalancer(std::array<double, DIMgeom> localBoxMin, std::array<double, DIMgeom> localBoxMax, double gamma,
-								 MPI_Comm comm, std::array<int, 3> globalSize, std::vector<double> minimalPartitionSize) {
-	
-	_localBoxMin = localBoxMin;
-	_localBoxMax = localBoxMax;
+ALLLoadBalancer::ALLLoadBalancer(double gamma, MPI_Comm comm, DomainGridPoint globalSize, std::vector<double> minimalPartitionSize) {
 	_comm = comm;
 	_gamma = gamma;
 	_minimalPartitionSize = minimalPartitionSize;
@@ -35,7 +31,7 @@ void ALLLoadBalancer::readXML(XMLfileUnits& xmlconfig){
 		mode = ALL::LB_t::FORCEBASED; // has not been fully tested in LS1-Mardyn and may produce unexpected performance results
 	} else if (loadBalancer == "ALL_VORONOI_ACTIVE") {
 		#ifdef ALL_VORONOI_ACTIVE
-			mode = ALL::LB_t::VORONOI;
+			mode = ALL::LB_t::VORONOI; // has not been fully tested in LS1-Mardyn and may produce unexpected performance results
 		#else
 			std::ostringstream error_message;
 			error_message << "ALLLoadBalancer: ALL libery has VORONOI not active. Aborting! Please select a valid option!";
@@ -59,12 +55,12 @@ void ALLLoadBalancer::readXML(XMLfileUnits& xmlconfig){
     _all->setup();
 }
 
-std::tuple<std::array<double, DIMgeom>, std::array<double, DIMgeom>> ALLLoadBalancer::rebalance(double work) {
+DomainBox ALLLoadBalancer::rebalance(DomainBox localBox, double work) {
 	std::vector<ALL::Point<double>> domain(2, ALL::Point<double>(DIMgeom));
 
 	for (int i = 0; i < DIMgeom; ++i) {
-		domain[0][i] = _localBoxMin[i];
-		domain[1][i] = _localBoxMax[i];
+		domain[0][i] = localBox[0][i];
+		domain[1][i] = localBox[1][i];
 	}
 
 	_all->setVertices(domain);
@@ -72,20 +68,12 @@ std::tuple<std::array<double, DIMgeom>, std::array<double, DIMgeom>> ALLLoadBala
 	_all->balance();
 
 	std::vector<ALL::Point<double>> updatedVertices = _all->getVertices();
+	DomainBox newlocalBox;
 
 	for (int i = 0; i < DIMgeom; ++i) {
-		_localBoxMin[i] = updatedVertices[0][i];
-		_localBoxMax[i] = updatedVertices[1][i];
+		newlocalBox[0][i] = updatedVertices[0][i];
+		newlocalBox[1][i] = updatedVertices[1][i];
 	}
 
-	return std::make_tuple(_localBoxMin, _localBoxMax);
-}
-
-std::tuple<std::array<double, 3>, std::array<double, 3>> ALLLoadBalancer::getlocalDomain(){
-	return std::make_tuple(_localBoxMin, _localBoxMax);
-}
-
-void ALLLoadBalancer::setlocalDomain(std::array<double, 3> newBoxMin, std::array<double, 3> newBoxMax){
-	_localBoxMin = newBoxMin;
-	_localBoxMax = newBoxMax;
+	return newlocalBox;
 }
