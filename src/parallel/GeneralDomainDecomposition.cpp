@@ -403,7 +403,7 @@ void GeneralDomainDecomposition::rebalance(double lastTraversalTime, ParticleCon
 	_boundaryHandler.updateGlobalWallLookupTable();
 }
 
-void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContainer* particleContainer, DomainBox newLocalDomain) {
+void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContainer* moleculeContainer, DomainBox newLocalDomain) {
 	HaloRegion ownDomain{}, newDomain{};
 	for (size_t i = 0; i < DIMgeom; ++i) {
 		ownDomain.rmin[i] = _localDomain[0][i];
@@ -429,14 +429,14 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 
 	std::tie(recvNeighbors, sendNeighbors) =
 		NeighborAcquirer::acquireNeighbors(_domainLength, &ownDomain, desiredDomain, _comm);
-	if (particleContainer->isInvalidParticleReturner()) {
+	if (moleculeContainer->isInvalidParticleReturner()) {
 		//AutoPas
 		#if false
 		{
 			//TODO: In rare cases, the code crashes when using Autopass. This can be reproduced by setting the load balancing input to the process rank. 
-			emigrants = particleContainer->rebuildFilter(newMin.data(), newMax.data());
+			emigrants = moleculeContainer->rebuildFilter(newMin.data(), newMax.data());
 			for (auto& sender : sendNeighbors) {
-				sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, emigrants,
+				sender.initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, emigrants,
 								true , false);
 			}
 		}
@@ -444,30 +444,30 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 		{
 			std::vector<Molecule> dummy;
 			for (auto& sender : sendNeighbors) {
-				sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, dummy,
+				sender.initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, dummy,
 								false /*don't use invalid particles*/, false /*do halo position change*/,
 								true /*removeFromContainer*/);
 			}
-			emigrants = particleContainer->rebuildFilter(newLocalDomain[0].data(), newLocalDomain[1].data());
+			emigrants = moleculeContainer->rebuildFilter(newLocalDomain[0].data(), newLocalDomain[1].data());
 			}
 		#endif
 	} else {
 		//LinkedCells
 		std::vector<Molecule> dummy;
 		for (auto& sender : sendNeighbors) {
-			sender.initSend(particleContainer, _comm, _mpiParticleType, LEAVING_ONLY, dummy,
+			sender.initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, dummy,
 							false /*don't use invalid particles*/, false /*do halo position change*/,
 							true /*removeFromContainer*/);
 		}
 		//Note: Changing the domain of the LinkedCells container that contains particles may results in the deletion of particles. 
 		std::vector<Molecule> ownMolecules{};
-		ownMolecules.reserve(particleContainer->getNumberOfParticles());
-		for (auto iter = particleContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter) {
+		ownMolecules.reserve(moleculeContainer->getNumberOfParticles());
+		for (auto iter = moleculeContainer->iterator(ParticleIterator::ONLY_INNER_AND_BOUNDARY); iter.isValid(); ++iter) {
 			ownMolecules.push_back(*iter);
 		}
-		particleContainer->clear();
-		particleContainer->rebuild(newLocalDomain[0].data(), newLocalDomain[1].data());
-		particleContainer->addParticles(ownMolecules);
+		moleculeContainer->clear();
+		moleculeContainer->rebuild(newLocalDomain[0].data(), newLocalDomain[1].data());
+		moleculeContainer->addParticles(ownMolecules);
 	}	
 
 	bool allDone = false;
@@ -485,7 +485,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 		// unpack molecules
 		for (auto& recv : recvNeighbors) {
 			allDone &= recv.iprobeCount(this->getCommunicator(), this->getMPIParticleType());
-			allDone &= recv.testRecv(particleContainer, false);
+			allDone &= recv.testRecv(moleculeContainer, false);
 		}
 
 		// catch deadlocks
