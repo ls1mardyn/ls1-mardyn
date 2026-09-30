@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <optional>
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
 #include "DomainDecompMPIBase.h"
@@ -161,6 +162,14 @@ private:
 	void checkMinimalDomainSize(double minimalDomainBoundary);
 	
 	/**
+	 * Latches domain boundaries to a grid, which is defined by _latchedGridSize.
+	 * If boxMax matches the top boundary, it is not changed.
+	 * @param proposedLocalDomain new subdomain
+	 * @return The Latched version of the subdomain.
+	 */
+	DomainBox latchToGridSize(DomainBox proposedLocalDomain) const;
+
+	/**
 	 * Calculate the volume of a Bbox 
 	 * @param bbox
 	 *
@@ -216,8 +225,10 @@ private:
 	// the LoadBalancer used
 	std::unique_ptr<LoadBalancer> _loadBalancer{nullptr};
 	
-	 // Number of processes in each dimension of the MPI process grid
+	// Number of processes in each dimension of the MPI process grid
 	DomainGridPoint _gridSize;
+	// dimensions for latching grid
+	std::optional<DomainPoint> _latchedGridSize;
 	
 	// Coordinate of the process in the MPI process grid
 	DomainGridPoint _coords;

@@ -5,6 +5,8 @@
  */
 
 #include "GeneralDomainDecomposition.h"
+#include <csignal>
+#include "utils/String_utils.h"
 #ifdef ENABLE_ALLLBL
 #include "ALLLoadBalancer.h"
 #endif
@@ -136,8 +138,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		Log::global_log->info() << "GeneralDomainDecomposition: imbalance Threshold MinMax is active with the value: " << _imbalanceThresholdMinMax << std::endl;
 	}
 
-	xmlconfig.getNodeValue("maximumRepeatedLoadChange", _maximumRepeatedLoadChange);
-	if (_maximumRepeatedLoadChange != 0) {
+	if (xmlconfig.getNodeValue("maximumRepeatedLoadChange", _maximumRepeatedLoadChange)) {
 		if (_maximumRepeatedLoadChange <= 0 || _maximumRepeatedLoadChange > 1) {
 			std::ostringstream error_message;
 			error_message << "GeneralDomainDecomposition: maximumRepeatedLoadChange settion of " << _maximumRepeatedLoadChange << " is illogical (It is not a percentage). Aborting! Please select a valid option!";
@@ -160,14 +161,49 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		const double minimalDomainBoundary = 2 * _cutoffRadius;
 	#endif
 
+	_minimalDomainSize = {_skin + minimalDomainBoundary, _skin + minimalDomainBoundary, _skin + minimalDomainBoundary};
+
+	// NOTE Currently, forceLatchingToLinkedCellsGrid is not implemented.  
+	std::string gridSizeString;
+	if (xmlconfig.getNodeValue("gridSize", gridSizeString)) {
+		Log::global_log->info() << "GeneralDomainDecomposition grid size: " << gridSizeString << std::endl;
+
+		if (gridSizeString.find(',') != std::string::npos) {
+			auto strings = string_utils::split(gridSizeString, ',');
+			if (strings.size() != 3) {
+				std::ostringstream error_message;
+				error_message
+					<< "GeneralDomainDecomposition's gridSize should have three entries if a list is given, but has "
+					<< strings.size() << "!" << std::endl;
+				MARDYN_EXIT(error_message.str());
+			}
+			_latchedGridSize = {std::stod(strings[0]), std::stod(strings[1]), std::stod(strings[2])};
+		} else {
+			const double latchedGridMonoSize = std::stod(gridSizeString);
+			_latchedGridSize = {latchedGridMonoSize, latchedGridMonoSize, latchedGridMonoSize};
+		}
+		// latch the initial RegularGrid
+		_localDomain = latchToGridSize(_localDomain);
+
+		// TODO Fix Check
+		// for (auto gridSize : *_latchedGridSize) {
+		// 	if (gridSize < minimalDomainBoundary) {
+		// 		std::ostringstream error_message;
+		// 		error_message << "GeneralDomainDecomposition's gridSize (" << gridSize
+		// 							<< ") is smaller than the interactionLength (" << minimalDomainBoundary
+		// 							<< "). This is forbidden, as it leads to errors! " << std::endl;
+		// 		MARDYN_EXIT(error_message.str());
+		// 	}
+		// }
+		// _minimalDomainSize = {(*_latchedGridSize)[0], (*_latchedGridSize)[1], (*_latchedGridSize)[2]}; // TODO This line causes problems in the current code. 
+	}
+
 	if(xmlconfig.changecurrentnode("minimalDomainSize")) {
-		Log::global_log->info() << "GeneralDomainDecomposition: minimalDomainSize setting is overwriting skin + cutoff radius" << std::endl;
+		Log::global_log->info() << "GeneralDomainDecomposition: minimalDomainSize setting is overwriting (skin + minimalDomainBoundary) or latchedGridSize" << std::endl;
 		_minimalDomainSize[0] = xmlconfig.getNodeValue_double("x", 0);
 		_minimalDomainSize[1] = xmlconfig.getNodeValue_double("y", 0);
 		_minimalDomainSize[2] = xmlconfig.getNodeValue_double("z", 0);
 		xmlconfig.changecurrentnode("..");
-	} else {
-		_minimalDomainSize = {_skin + minimalDomainBoundary, _skin + minimalDomainBoundary, _skin + minimalDomainBoundary};
 	}
 	Log::global_log->info() << "GeneralDomainDecomposition: Using minimal Domain Size of (" << _minimalDomainSize[0] << ", " << _minimalDomainSize[1] << ", " << _minimalDomainSize[2] << ") for the Load Balancer." << std::endl;
 	checkMinimalDomainSize(minimalDomainBoundary);
@@ -220,7 +256,10 @@ bool GeneralDomainDecomposition::checkNeedRebalance(double lastTraversalTime) {
 }
 
 DomainBox GeneralDomainDecomposition::reviseNewRebalance(DomainBox proposedLocalDomain) {
-	return proposedLocalDomain; //TODO Implement force latching feature
+	if (_latchedGridSize.has_value()) {
+		proposedLocalDomain = latchToGridSize(proposedLocalDomain);
+	}
+	return proposedLocalDomain;
 }
 
 bool GeneralDomainDecomposition::checkForSensibleRebalance(const DomainBox& proposedLocalDomain) {
@@ -547,6 +586,19 @@ double GeneralDomainDecomposition::getMaxdivMin(double* data, const int size) {
 	}
 
 	return max / min;
+}
+
+DomainBox GeneralDomainDecomposition::latchToGridSize(DomainBox proposedLocalDomain) const {
+	for (size_t ind = 0; ind < DIMgeom; ++ind) {
+		double currentGridSize = (*_latchedGridSize)[ind];
+		// For boxmin, the lower domain boundary is 0, so that's always fine!
+		proposedLocalDomain[0][ind] = std::round(proposedLocalDomain[0][ind] / currentGridSize) * currentGridSize;
+		// update boxmax only if it isn't at the very top of the domain!
+		if (proposedLocalDomain[1][ind] != _domainLength[ind]) {
+			proposedLocalDomain[1][ind] = std::round(proposedLocalDomain[1][ind] / currentGridSize) * currentGridSize;
+		}
+	}
+	return proposedLocalDomain;
 }
 
 inline double GeneralDomainDecomposition::bboxVolume(const DomainBox& bbox) const {
