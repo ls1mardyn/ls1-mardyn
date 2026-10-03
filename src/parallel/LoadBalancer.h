@@ -40,5 +40,5 @@ public:
 	 * Indicates if the current process / MPI rank spans the full length of a dimension.
 	 * @return Array of bools, for each dimension one value: true, iff the process spans the entire domain along this dimension.
 	 */
-	virtual std::array<bool, 3> getCoversWholeDomain() = 0;
+	virtual const std::array<bool, 3>& getCoversWholeDomain() const = 0;
 };
