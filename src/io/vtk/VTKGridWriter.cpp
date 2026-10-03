@@ -79,7 +79,7 @@ void  VTKGridWriter::endStep(
 
 	if (rank == 0) {
 		int numProcs = 0;
-		MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &numProcs) );
+		MPI_CHECK( MPI_Comm_size(domainDecomp->getCommunicator(), &numProcs) );
 		outputParallelVTKFile(numProcs,simstep, impl);
 	}
 #endif

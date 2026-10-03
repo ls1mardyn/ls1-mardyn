@@ -19,9 +19,9 @@
  * MaMiCo coupling requires the MAMICO_COUPLING flag to be set, and the MAMICO_SRC_DIR flag to point to MaMiCo source
  * files. With these enabled, ls1 compiles as a library. To make sure the program compiles and works with tests, the
  * relevant MaMiCo portions for the code are put in #ifdef regions.
- * 
- * This plugin alters the simulation state, as leaving particles get communicated in the beforeForces() step. Any plugins
- * running after this plugin that wants to work on leaving particles will find zero leaving particles.
+ *
+ * This plugin alters the simulation state, as leaving particles get communicated in the beforeForces() step. Any
+ * plugins running after this plugin that wants to work on leaving particles will find zero leaving particles.
  *
  * \code{.xml}
  * <plugin name="MamicoCoupling">
