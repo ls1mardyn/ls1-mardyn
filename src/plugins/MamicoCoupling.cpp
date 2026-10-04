@@ -17,14 +17,18 @@ void MamicoCoupling::beforeForces(ParticleContainer *particleContainer, DomainDe
 		// Before forces are calculated, mamico would like to insert and delete particles using usher.
 		// At this point in time, ls1 linked cells should have no halos, and leaving particles should not have been
 		// communicated. Particle container is hence updated to make sure halos exist.
-		global_simulation->updateParticleContainerAndDecomposition(1.0, false);
-		// Particle insertion and deletion
-		_couplingCellService->distributeMass(simstep);
+		if (_couplingCellService->checkIfDistributeMass(simstep)) {
+			global_simulation->updateParticleContainerAndDecomposition(1.0, false);
+			// Particle insertion and deletion
+			_couplingCellService->distributeMass(simstep);
+		}
 		// Mamico thermostat
 		_couplingCellService->applyTemperatureToMolecules(simstep);
 		// Remove halos, as at this point in the code there should be no halos
 #ifndef MARDYN_AUTOPAS
-		particleContainer->deleteOuterParticles();
+		if (_couplingCellService->checkIfDistributeMass(simstep)) {
+			particleContainer->deleteOuterParticles();
+		}
 #endif
 		// Unfortunately, at this point, leaving particles should exist on source ranks and not destination
 		// Thus this plugin does not entirely preserve the simulation state, since leaving particles are communicated
