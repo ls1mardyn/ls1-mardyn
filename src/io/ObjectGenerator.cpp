@@ -4,6 +4,7 @@
 #include <chrono>
 #include <sstream>
 
+#include "IOHelpers.h"
 #include "utils/mardyn_assert.h"
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"
@@ -105,6 +106,7 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		Log::global_log->warning() << "No velocityAssigner specified.  Will not change velocities provided by filler."
 							  << std::endl;
 	}
+	xmlconfig.getNodeValue("removeDrift", _removeDrift);
 }
 
 
@@ -156,5 +158,7 @@ ObjectGenerator::readPhaseSpace(ParticleContainer* particleContainer, Domain* do
 			moleculeID = _moleculeIdPool->getNewMoleculeId();
 		}
 	}
+	if(_removeDrift)
+		IOHelpers::removeMomentum(particleContainer, *(global_simulation->getEnsemble()->getComponents()), domainDecomp);
 	return numMolecules;
 }
