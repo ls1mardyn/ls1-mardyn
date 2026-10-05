@@ -1,0 +1,73 @@
+# This workflow is to implement and test a preliminary step for archiving old branches.
+# In this preliminary step, the old branches and their authors will be collected.
+# After successful tests, this step will be integrated into a second workflow and the current workflow will be removed.
+
+name: Pick Old Branches & Owners
+
+on:
+  workflow_dispatch:
+    inputs:
+      age_cutoff:
+        description: 'Branches older than these many days will be collected:'
+        required: true
+        default: '360' # In days
+        type: number
+
+jobs:
+  PickOldBranchesAndOwners:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0  # Needed to retrieve full commit log
+
+      - name: Install GitHub CLI
+        run: sudo apt-get install -y gh
+
+      - name: Find Stale Branches and List Owners
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        run: |
+          AGE_CUTOFF=${{ inputs.age_cutoff }} # In days
+          MAIN_BRANCH=master
+
+          # Fetch all branches
+          git branch -r | grep -v '\->' | sed 's/origin\///' > branches.txt
+
+          # Loop through branches
+          while read branch; do
+            # Skip main branch
+            if [ "$branch" = "master" ] || [ "$branch" = "main" ]; then
+              continue
+            fi
+
+            # Skip if open PR exists
+            open_prs=$(gh pr list --head "$branch" --json number --jq 'length')
+            if [ "$open_prs" -gt 0 ]; then
+              continue
+            fi
+
+            # Get last commit date
+            lastCommitData=$(gh api "repos/${{ github.repository }}/commits/$branch")
+            lastCommitDate=$(printf '%s\n' "$lastCommitData" | jq -r '.commit.committer.date')
+
+            # Calculate branch age in days
+            branchAgeDays=$(( ($(date -u +%s) - $(date -u -d "$lastCommitDate" +%s)) / 86400 ))
+
+            # Check whether the branch is old enough
+            if [ $branchAgeDays -ge $AGE_CUTOFF ]; then
+              # Get the author of the last commit of the branch
+              author=$(printf '%s\n' "$lastCommitData" | jq -r '"\(.commit.author.name) (@\(.author.login // "unknown")) <\(.commit.author.email // "unknown")>"')
+
+              BLUE='\033[34m'
+              RED='\033[31m'
+              GREEN='\033[32m'
+              NC='\033[0m'
+              printf "BRANCH=${BLUE}%-20s${NC}\nAGE=${RED}%-15s${NC}\nOWNER=${GREEN}%s${NC}\n\n" "$branch" "${branchAgeDays} days old" "$author"
+            fi
+          done < branches.txt
