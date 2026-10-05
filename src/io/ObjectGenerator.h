@@ -24,6 +24,10 @@ public:
 	ObjectGenerator() : _filler(nullptr), _object(nullptr), _velocityAssigner(nullptr), _moleculeIdPool(nullptr) {};
 
 	/** @brief Read in XML configuration for ObjectGenerator and all its included objects.
+	 * 
+	 * The velocityAssigner can take two additional parameters. enableRandomSeed adds the option of having random
+	 * intial molecule velocities at the beginning of the simulation. If a seed is specified, that value is used
+	 * instead. Leaving both blank gives the default behaviour (seed = 0). Both cannot be nonzero simultaneously.
 	 *
 	 * The following XML object structure is handled by this method:
 	 * @note This structure is not fixed yet and may see changes
@@ -31,7 +35,8 @@ public:
 	   <objectgenerator>
 	     <filler type="STRING"> <!-- see Filler documentation --> </filler>
 	     <object type="STRING"> <!-- see Object documentation --> </object>
-	     <velocityAssigner type="STRING"> <!-- see VelocityAssignerBase documentation --> </velocityAssigner>
+	     <velocityAssigner type="STRING" enableRandomSeed="BOOL" seed="LONG"> 
+			<!-- see VelocityAssignerBase documentation --> </velocityAssigner>
 	   </objectgenerator>
 	   \endcode
 	 */
