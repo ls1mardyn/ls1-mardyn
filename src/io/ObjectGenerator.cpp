@@ -66,6 +66,13 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		const long seed = [&]() -> long {
 			bool enableRandomSeed = false;
 			xmlconfig.getNodeValue("@enableRandomSeed", enableRandomSeed);
+			long fixedSeed = 0;
+			xmlconfig.getNodeValue("@seed", fixedSeed);
+			if (fixedSeed != 0 && enableRandomSeed) {
+				std::ostringstream error_message;
+				error_message << "Cannot simultaneously have a simulation seed and a random seed!" << std::endl;
+				MARDYN_EXIT(error_message.str());
+			}
 			if(enableRandomSeed) {
 				/** A random seed for the velocity generator is created.
 				 *  The current rank is added to make sure that, if multiple simulations are instantiated across
@@ -74,7 +81,9 @@ void ObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 				 */
 				return std::chrono::system_clock::now().time_since_epoch().count() + _simulation.domainDecomposition().getRank();
 
-			} else {
+			} else if(fixedSeed != 0) {
+				return fixedSeed + _simulation.domainDecomposition().getRank();
+			} else { // if the seed is zero, maintain old behaviour
 				return 0;
 			}
 		}();

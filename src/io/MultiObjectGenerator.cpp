@@ -9,7 +9,9 @@
 #include <mpi.h>
 #endif
 
+#include "IOHelpers.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
 #include "io/ObjectGenerator.h"
 #include "molecules/MoleculeIdPool.h"
@@ -41,6 +43,7 @@ void MultiObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		_generators.push_back(generator);
 	}
 	xmlconfig.changecurrentnode(oldpath);
+	xmlconfig.getNodeValue("removeDrift", _removeDrift);
 }
 
 
@@ -55,6 +58,8 @@ unsigned long MultiObjectGenerator::readPhaseSpace(ParticleContainer* particleCo
 		numMolecules += generator->readPhaseSpace(particleContainer, domain, domainDecomp);
 	}
 	particleContainer->updateMoleculeCaches();
+	if(_removeDrift)
+		IOHelpers::removeMomentum(particleContainer, *(global_simulation->getEnsemble()->getComponents()), domainDecomp);
 	Log::global_log->info() << "Number of locally inserted molecules: " << numMolecules << std::endl;
 	_globalNumMolecules = numMolecules;
 #ifdef ENABLE_MPI
