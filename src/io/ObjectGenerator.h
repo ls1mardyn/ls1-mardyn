@@ -28,9 +28,6 @@ public:
 	 * The velocityAssigner can take two additional parameters. enableRandomSeed adds the option of having random
 	 * intial molecule velocities at the beginning of the simulation. If a seed is specified, that value is used
 	 * instead. Leaving both blank gives the default behaviour (seed = 0). Both cannot be nonzero simultaneously.
-	 * The removeDrift parameter uses the function IOHelpers::removeMomentum() to remove overall drift from the 
-	 * phasespace after initialisation, similar to what is done in CubicGridGenerator. This is off by default, as
-	 * some experiments may want to load checkpoints with initial drift.
 	 *
 	 * The following XML object structure is handled by this method:
 	 * @note This structure is not fixed yet and may see changes
@@ -40,7 +37,6 @@ public:
 	     <object type="STRING"> <!-- see Object documentation --> </object>
 	     <velocityAssigner type="STRING" enableRandomSeed="BOOL" seed="LONG"> 
 			<!-- see VelocityAssignerBase documentation --> </velocityAssigner>
-		 <removeDrift>BOOL</removeDrift>
 	   </objectgenerator>
 	   \endcode
 	 */
@@ -63,7 +59,6 @@ private:
 	std::shared_ptr<Object> _object;
 	std::shared_ptr<VelocityAssignerBase> _velocityAssigner;
 	std::shared_ptr<MoleculeIdPool> _moleculeIdPool;
-	bool _removeDrift = false;
 };
 
 #endif  // SRC_IO_OBJECTGENERATOR_H_
