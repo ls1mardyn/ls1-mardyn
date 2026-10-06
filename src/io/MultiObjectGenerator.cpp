@@ -42,8 +42,8 @@ void MultiObjectGenerator::readXML(XMLfileUnits& xmlconfig) {
 		generator->readXML(xmlconfig);
 		_generators.push_back(generator);
 	}
-	xmlconfig.getNodeValue("removeDrift", _removeDrift);
 	xmlconfig.changecurrentnode(oldpath);
+	xmlconfig.getNodeValue("removeDrift", _removeDrift);
 }
 
 
