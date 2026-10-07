@@ -1,33 +1,32 @@
 /**
  * @file ALLLoadBalancer.h
- * @author seckler
- * @date 04.06.19
+ * @author seckler, Georg von Bismarck
+ * @date 23.09.2026
  */
 
 #pragma once
 #ifdef ENABLE_ALLLBL
 #include <ALL.hpp>
 #include "LoadBalancer.h"
+#include "parallel/DomainDecompMPIBase.h"
 
 #include <tuple>
 class ALLLoadBalancer : public LoadBalancer {
 public:
-	ALLLoadBalancer(std::array<double, 3> boxMin, std::array<double, 3> boxMax, double gamma, MPI_Comm comm,
-					std::array<size_t, 3> globalSize, std::array<size_t, 3> localCoordinates,
-					std::array<double, 3> minimalPartitionSize);
+	ALLLoadBalancer(double gamma, MPI_Comm comm, DomainGridPoint globalSize, std::vector<double> minimalPartitionSize);
 
 	~ALLLoadBalancer() override = default;
-	std::tuple<std::array<double, 3>, std::array<double, 3>> rebalance(double work) override;
-	void readXML(XMLfileUnits& xmlconfig) override {
-		// nothing yet.
-	}
+	DomainBox rebalance(DomainBox localBox, double work) override;
+	void readXML(XMLfileUnits& xmlconfig) override;
 
 	std::array<bool, 3> getCoversWholeDomain() override { return _coversWholeDomain; }
 
 private:
-	ALL<double, double> _all;
-	using Point = ALL_Point<double>;
-	std::array<double, 3> _minimalPartitionSize{};
+	std::unique_ptr<ALL::ALL<double, double>> _all;
+	MPI_Comm _comm;
+	double _gamma;
+
+	std::vector<double> _minimalPartitionSize{};
 	std::array<bool, 3> _coversWholeDomain{};
 };
 #endif

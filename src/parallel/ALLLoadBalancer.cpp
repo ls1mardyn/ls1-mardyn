@@ -1,37 +1,79 @@
 /**
  * @file ALLLoadBalancer.cpp
- * @author seckler
- * @date 04.06.19
+ * @author seckler, Georg von Bismarck
+ * @date 23.09.2026
  */
 
 #include "ALLLoadBalancer.h"
-ALLLoadBalancer::ALLLoadBalancer(std::array<double, 3> boxMin, std::array<double, 3> boxMax, double gamma,
-								 MPI_Comm comm, std::array<size_t, 3> globalSize,
-								 std::array<size_t, 3> localCoordinates, std::array<double, 3> minimalPartitionSize)
-	: _all(3 /*dim*/, gamma) {
-	std::vector<Point> points;
-	points.emplace_back(3, boxMin.data());
-	points.emplace_back(3, boxMax.data());
-	_all.set_vertices(points);
-	std::array<int, 3> global_size{static_cast<int>(globalSize[0]), static_cast<int>(globalSize[1]),
-								   static_cast<int>(globalSize[2])};
-	std::array<int, 3> coords{static_cast<int>(localCoordinates[0]), static_cast<int>(localCoordinates[1]),
-							  static_cast<int>(localCoordinates[2])};
-	_all.set_proc_grid_params(coords.data(), global_size.data());
-	_all.set_communicator(comm);
+#include <string>
+#include "ALL.hpp"
+#include "parallel/DomainDecompMPIBase.h"
 
-	_coversWholeDomain = {globalSize[0] == 1, global_size[1] == 1, global_size[2] == 1};
-
+ALLLoadBalancer::ALLLoadBalancer(double gamma, MPI_Comm comm, DomainGridPoint globalSize, std::vector<double> minimalPartitionSize) {
+	_comm = comm;
+	_gamma = gamma;
 	_minimalPartitionSize = minimalPartitionSize;
+	
+	_coversWholeDomain = {globalSize[0] == 1, globalSize[1] == 1, globalSize[2] == 1};;
 }
-std::tuple<std::array<double, 3>, std::array<double, 3>> ALLLoadBalancer::rebalance(double work) {
-	_all.set_work(work);
-	_all.setup(ALL_LB_t::STAGGERED);
-	_all.set_min_domain_size(ALL_LB_t::STAGGERED, _minimalPartitionSize.data());
-	_all.balance(ALL_LB_t::STAGGERED);
-	auto resultVertices = _all.get_result_vertices();
-	std::array<double, 3> boxMin{resultVertices[0].x(0), resultVertices[0].x(1), resultVertices[0].x(2)};
-	std::array<double, 3> boxMax{resultVertices[1].x(0), resultVertices[1].x(1), resultVertices[1].x(2)};
-	_all.set_vertices(resultVertices);
-	return std::make_tuple(boxMin, boxMax);
+
+void ALLLoadBalancer::readXML(XMLfileUnits& xmlconfig){
+	ALL::LB_t mode = ALL::LB_t::UNIMPLEMENTED;
+
+	std::string loadBalancer("STAGGERED");
+	xmlconfig.getNodeValue("mode", loadBalancer);
+	
+	if (loadBalancer == "STAGGERED") { //default
+		mode = ALL::LB_t::STAGGERED;
+	} else if (loadBalancer == "TENSOR") {
+		mode = ALL::LB_t::TENSOR;
+	} else if (loadBalancer == "FORCEBASED") {
+		mode = ALL::LB_t::FORCEBASED; // has not been fully tested in LS1-Mardyn and may produce unexpected performance results
+	} else if (loadBalancer == "ALL_VORONOI_ACTIVE") {
+		#ifdef ALL_VORONOI_ACTIVE
+			mode = ALL::LB_t::VORONOI; // has not been fully tested in LS1-Mardyn and may produce unexpected performance results
+		#else
+			std::ostringstream error_message;
+			error_message << "ALLLoadBalancer: ALL libery has VORONOI not active. Aborting! Please select a valid option!";
+			MARDYN_EXIT(error_message.str());
+		#endif
+	} else if (loadBalancer == "HISTOGRAM") {
+		mode = ALL::LB_t::HISTOGRAM;  // has not been fully tested in LS1-Mardyn and may produce unexpected performance results
+	} else if (loadBalancer == "TENSOR_MAX") {
+		mode = ALL::LB_t::TENSOR_MAX;  // has not been fully tested in LS1-Mardyn and may produce unexpected performance results
+	} else {
+		std::ostringstream error_message;
+		error_message << "ALLLoadBalancer: Unsupported load balancer " << loadBalancer << " was selected. Aborting! Please select a valid option!";
+		MARDYN_EXIT(error_message.str());
+	}
+
+	Log::global_log->info() << "ALLLoadBalancer: using the " << loadBalancer << " load balancer" << std::endl;
+
+	_all = std::make_unique<ALL::ALL<double, double>>(ALL::TENSOR, DIMgeom, _gamma);
+	_all->setCommunicator(_comm);
+	_all->setMinDomainSize(_minimalPartitionSize);
+    _all->setup();
+}
+
+DomainBox ALLLoadBalancer::rebalance(DomainBox localBox, double work) {
+	std::vector<ALL::Point<double>> domain(2, ALL::Point<double>(DIMgeom));
+
+	for (int i = 0; i < DIMgeom; ++i) {
+		domain[0][i] = localBox[0][i];
+		domain[1][i] = localBox[1][i];
+	}
+
+	_all->setVertices(domain);
+	_all->setWork(work);
+	_all->balance();
+
+	std::vector<ALL::Point<double>> updatedVertices = _all->getVertices();
+	DomainBox newlocalBox;
+
+	for (int i = 0; i < DIMgeom; ++i) {
+		newlocalBox[0][i] = updatedVertices[0][i];
+		newlocalBox[1][i] = updatedVertices[1][i];
+	}
+
+	return newlocalBox;
 }
