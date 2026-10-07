@@ -3,7 +3,6 @@ target_sources(MarDyn
         Comp2Param.cpp
         Component.cpp
         FullMolecule.cpp
-        MoleculeInterface.cpp
         MoleculeRMM.cpp
         Quaternion.cpp
     )
@@ -11,11 +10,6 @@ target_sources(MarDyn
 if(ENABLE_AUTOPAS)
     target_sources(MarDyn PRIVATE AutoPasSimpleMolecule.cpp)
 endif(ENABLE_AUTOPAS)
-
-if(ENABLE_UNIT_TESTS)
-    add_subdirectory(tests)
-endif(ENABLE_UNIT_TESTS)
-
 
 add_subdirectory(mixingrules)
 
