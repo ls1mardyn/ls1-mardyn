@@ -11,6 +11,7 @@ target_sources(MarDyn
         PrintThreadPinningToCPU.cpp
         Random.cpp
         Region.cpp
+        SignalHandler.cpp
         SteereoIntegration.cpp
         SysMon.cpp
         Testing.cpp

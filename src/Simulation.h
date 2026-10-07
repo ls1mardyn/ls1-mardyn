@@ -8,6 +8,7 @@
 #include "thermostats/VelocityScalingThermostat.h"
 #include "utils/FixedSizeQueue.h"
 #include "utils/FunctionWrapper.h"
+#include "utils/SignalHandler.h"
 #include "utils/SysMon.h"
 #include "utils/Random.h"
 
@@ -76,8 +77,10 @@ private:
 	void updateForces();
 
 public:
-	/** Instantiate simulation object */
-	Simulation();
+	/** @brief Instantiate simulation object
+	 *  @param[in]  handleSignals if true, use custom signal handler for: SIGINT, SIGTERM, SIGUSR1, (and SIGSEGV for debug builds)
+	*/
+	Simulation(bool handleSignals = true);
 
 	/** destruct simulation object */
 	~Simulation();
@@ -419,6 +422,9 @@ public:
 	void enableFinalCheckpoint() { _finalCheckpoint = true; }
 	void disableFinalCheckpoint() { _finalCheckpoint = false; }
 
+	void enableRestart() { _restart = true; }
+	void disableRestart() { _restart = false; }
+
 	void useLegacyCellProcessor() { _legacyCellProcessor = true; }
 
 	void enableMemoryProfiler() {
@@ -471,6 +477,12 @@ private:
 
 	/** Enable final checkpoint after simulation run. */
 	bool _finalCheckpoint;
+
+	/** Enable restart from final checkpoint */
+	bool _restart = false;
+
+	bool _handleSignals;
+	SignalHandler signalHandler;
 
 	/** use legacyCellProcessor instead of vectorizedCellProcessor */
 	bool _legacyCellProcessor = false;

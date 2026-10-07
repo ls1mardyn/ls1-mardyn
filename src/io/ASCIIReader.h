@@ -58,6 +58,11 @@ public:
 	//! \li NumberOfMolecules: One token follows with the number of molecules
 	void readPhaseSpaceHeader(Domain* domain, double timestep);
 
+	/**
+	 * @brief Only part of \ref readPhaseSpaceHeader() to only read the currentTime (simulation time)
+	 */
+	void readPhaseSpaceHeaderTimeOnly();
+
 	//! @brief reads in the data of all molecules
 	//!
 	//! The Molecule Data starts in a new line with the string "MoleculeFormat"
