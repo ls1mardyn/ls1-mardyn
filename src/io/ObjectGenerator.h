@@ -36,7 +36,8 @@ public:
 	     <filler type="STRING"> <!-- see Filler documentation --> </filler>
 	     <object type="STRING"> <!-- see Object documentation --> </object>
 	     <velocityAssigner type="STRING" enableRandomSeed="BOOL" seed="LONG"> 
-			<!-- see VelocityAssignerBase documentation --> </velocityAssigner>
+			<!-- see VelocityAssignerBase documentation, specifying both enableRandomSeed and seed will 
+			cause an error --> </velocityAssigner>
 	   </objectgenerator>
 	   \endcode
 	 */
