@@ -18,6 +18,10 @@ public:
 
 	/** @brief Read in XML configuration for Generator and all its included objects.
 	 *
+	 * The removeDrift parameter uses the function IOHelpers::removeMomentum() to remove overall drift from the 
+	 * phasespace after initialisation, similar to what is done in CubicGridGenerator. This is off by default, as
+	 * some experiments may want to load checkpoints with initial drift.
+	 * 
 	 * The following xml object structure is handled by this method:
 	 * @note This structure is not fixed yet and may see changes
 	 * \code{.xml}
@@ -25,6 +29,7 @@ public:
 	     <objectgenerator> <!-- ... --> </objectgenerator>
 	     ...
 	     <velocityAssigner> <!-- ... --> </velocityAssigner>
+		 <removeDrift>BOOL</removeDrift>
 	   </generator >
 	   \endcode
 	 */
@@ -38,6 +43,7 @@ private:
 
 	std::list<ObjectGenerator*> _generators;
 	unsigned long _globalNumMolecules;
+	bool _removeDrift = false;
 };
 
 #endif  // SRC_IO_MULTIOBJECTGENERATOR_H_
