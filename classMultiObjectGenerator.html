@@ -212,10 +212,12 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Read in XML configuration for Generator and all its included objects. </p>
+<p >The removeDrift parameter uses the function IOHelpers::removeMomentum() to remove overall drift from the phasespace after initialisation, similar to what is done in CubicGridGenerator. This is off by default, as some experiments may want to load checkpoints with initial drift.</p>
 <p >The following xml object structure is handled by this method: </p><dl class="section note"><dt>Note</dt><dd>This structure is not fixed yet and may see changes <div class="fragment"><div class="line">&lt;<span class="keywordtype">generator</span> <span class="keyword">name</span>=<span class="stringliteral">&quot;MultiObjectGenerator&quot;</span>&gt;</div>
 <div class="line">  &lt;<span class="keywordtype">objectgenerator</span>&gt; <span class="comment">&lt;!-- ... --&gt;</span> &lt;/<span class="keywordtype">objectgenerator</span>&gt;</div>
 <div class="line">  ...</div>
 <div class="line">  &lt;<span class="keywordtype">velocityAssigner</span>&gt; <span class="comment">&lt;!-- ... --&gt;</span> &lt;/<span class="keywordtype">velocityAssigner</span>&gt;</div>
+<div class="line">  &lt;<span class="keywordtype">removeDrift</span>&gt;<span class="keyword">BOOL</span>&lt;/<span class="keywordtype">removeDrift</span>&gt;</div>
 <div class="line">&lt;/<span class="keywordtype">generator</span> &gt;</div>
 </div><!-- fragment --> </dd></dl>
 
@@ -230,7 +232,7 @@ Public Member Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Oct 4 2026 09:39:47 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Oct 13 2026 10:38:05 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>

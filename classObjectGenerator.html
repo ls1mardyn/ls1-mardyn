@@ -231,10 +231,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setMoleculeIDPool</b>
 </div><div class="memdoc">
 
 <p>Read in XML configuration for <a class="el" href="classObjectGenerator.html" title="The ObjectGenerator sets up a phase space by filling volumetric objects.">ObjectGenerator</a> and all its included objects. </p>
+<p >The velocityAssigner can take two additional parameters. enableRandomSeed adds the option of having random intial molecule velocities at the beginning of the simulation. If a seed is specified, that value is used instead. Leaving both blank gives the default behaviour (seed = 0). Both cannot be nonzero simultaneously.</p>
 <p >The following XML object structure is handled by this method: </p><dl class="section note"><dt>Note</dt><dd>This structure is not fixed yet and may see changes <div class="fragment"><div class="line">&lt;<span class="keywordtype">objectgenerator</span>&gt;</div>
 <div class="line">  &lt;<span class="keywordtype">filler</span> <span class="keyword">type</span>=<span class="stringliteral">&quot;STRING&quot;</span>&gt; <span class="comment">&lt;!-- see Filler documentation --&gt;</span> &lt;/<span class="keywordtype">filler</span>&gt;</div>
 <div class="line">  &lt;<span class="keywordtype">object</span> <span class="keyword">type</span>=<span class="stringliteral">&quot;STRING&quot;</span>&gt; <span class="comment">&lt;!-- see Object documentation --&gt;</span> &lt;/<span class="keywordtype">object</span>&gt;</div>
-<div class="line">  &lt;<span class="keywordtype">velocityAssigner</span> <span class="keyword">type</span>=<span class="stringliteral">&quot;STRING&quot;</span>&gt; <span class="comment">&lt;!-- see VelocityAssignerBase documentation --&gt;</span> &lt;/<span class="keywordtype">velocityAssigner</span>&gt;</div>
+<div class="line">  &lt;<span class="keywordtype">velocityAssigner</span> <span class="keyword">type</span>=<span class="stringliteral">&quot;STRING&quot;</span> <span class="keyword">enableRandomSeed</span>=<span class="stringliteral">&quot;BOOL&quot;</span> <span class="keyword">seed</span>=<span class="stringliteral">&quot;LONG&quot;</span>&gt; </div>
+<div class="line">    <span class="comment">&lt;!-- see VelocityAssignerBase documentation, specifying both enableRandomSeed and seed will </span></div>
+<div class="line"><span class="comment">    cause an error --&gt;</span> &lt;/<span class="keywordtype">velocityAssigner</span>&gt;</div>
 <div class="line">&lt;/<span class="keywordtype">objectgenerator</span>&gt;</div>
 </div><!-- fragment --> </dd></dl>
 <p >A random seed for the velocity generator is created. The current rank is added to make sure that, if multiple simulations are instantiated across multiple ranks (for ex. when coupling to MaMiCo), the seeds will be unique if they are created at the same time</p>
@@ -250,7 +253,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setMoleculeIDPool</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Oct 4 2026 09:39:47 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+Generated on Tue Oct 13 2026 10:38:05 for ls1-MarDyn by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
 </small></address>
 </body>
 </html>
