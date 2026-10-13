@@ -182,20 +182,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 			const double latchedGridMonoSize = std::stod(gridSizeString);
 			_latchedGridSize = {latchedGridMonoSize, latchedGridMonoSize, latchedGridMonoSize};
 		}
-		// latch the initial RegularGrid
-		_localDomain = latchToGridSize(_localDomain);
-
-		// TODO Fix Check
-		// for (auto gridSize : *_latchedGridSize) {
-		// 	if (gridSize < minimalDomainBoundary) {
-		// 		std::ostringstream error_message;
-		// 		error_message << "GeneralDomainDecomposition's gridSize (" << gridSize
-		// 							<< ") is smaller than the interactionLength (" << minimalDomainBoundary
-		// 							<< "). This is forbidden, as it leads to errors! " << std::endl;
-		// 		MARDYN_EXIT(error_message.str());
-		// 	}
-		// }
-		// _minimalDomainSize = {(*_latchedGridSize)[0], (*_latchedGridSize)[1], (*_latchedGridSize)[2]}; // TODO This line causes problems in the current code. 
+		_minimalDomainSize = {(*_latchedGridSize)[0], (*_latchedGridSize)[1], (*_latchedGridSize)[2]}; // TODO This line causes problems in the current code. 
 	}
 
 	if(xmlconfig.changecurrentnode("minimalDomainSize")) {
@@ -207,6 +194,12 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	}
 	Log::global_log->info() << "GeneralDomainDecomposition: Using minimal Domain Size of (" << _minimalDomainSize[0] << ", " << _minimalDomainSize[1] << ", " << _minimalDomainSize[2] << ") for the Load Balancer." << std::endl;
 	checkMinimalDomainSize(minimalDomainBoundary);
+
+	if (_latchedGridSize.has_value()) {
+		// latch the initial RegularGrid
+		// IMPORTANT: This must happen after the checkMinimalDomainSize check
+		_localDomain = latchToGridSize(_localDomain);
+	}
 
 	if (xmlconfig.changecurrentnode("loadBalancer")) {
 		std::string loadBalancerString = "None";
