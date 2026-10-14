@@ -212,6 +212,7 @@ private:
 	DomainBox _proposedLocalDomain{}; // The proposed version of the local domain used, without modifications
 
 	DomainPoint _domainLength;
+	DomainPoint _skinDims;  //skin value exending minimum domain size for _minimalDomainSize
 	std::vector<double> _minimalDomainSize = {0., 0., 0.};
 	double _cutoffRadius;
 	double _skin;

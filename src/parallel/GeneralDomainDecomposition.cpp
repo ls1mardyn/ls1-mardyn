@@ -32,6 +32,7 @@ GeneralDomainDecomposition::GeneralDomainDecomposition(double cutoffRadius, doub
 DomainDecompMPIBase(comm),
 _cutoffRadius{cutoffRadius},
 _skin{skin},
+_skinDims{skin,skin,skin},
 _domainLength{domain->getGlobalLength(0), domain->getGlobalLength(1), domain->getGlobalLength(2)},
 _gridSize({0,0,0}), 
 _coords{0, 0,0} {
@@ -155,25 +156,38 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode("..");
 	}
 
+	if(xmlconfig.changecurrentnode("skinDims")) {
+		_skinDims[0] = xmlconfig.getNodeValue_int("x", 0);
+		_skinDims[1] = xmlconfig.getNodeValue_int("y", 0);
+		_skinDims[2] = xmlconfig.getNodeValue_int("z", 0);
+		if( _skinDims[0] < _skin or _skinDims[1] < _skin or _skinDims[2] < _skin){
+				std::ostringstream error_message;
+				error_message << "GeneralDomainDecomposition: Manual skin settings must not fall below the boundaries specified by the datastructure. " << std::endl;
+				MARDYN_EXIT(error_message.str());
+		}
+		Log::global_log->info() << "GeneralDomainDecomposition: Using Manual skin values of (" << _skinDims[0] << ", " << _skinDims[1] << ", " << _skinDims[2] << ") for the minimal Domain Size." << std::endl;
+		xmlconfig.changecurrentnode("..");
+	}
+
 	#ifdef MARDYN_AUTOPAS
 		const double minimalDomainBoundary = _cutoffRadius;
 	#else
 		const double minimalDomainBoundary = 2 * _cutoffRadius;
 	#endif
 
-	_minimalDomainSize = {_skin + minimalDomainBoundary, _skin + minimalDomainBoundary, _skin + minimalDomainBoundary};
+	_minimalDomainSize = {_skinDims[0] + minimalDomainBoundary, _skinDims[1] + minimalDomainBoundary, _skinDims[2] + minimalDomainBoundary};
 
 	// NOTE Currently, forceLatchingToLinkedCellsGrid is not implemented.  
 	std::string gridSizeString;
 	if (xmlconfig.getNodeValue("gridSize", gridSizeString)) {
-		Log::global_log->info() << "GeneralDomainDecomposition grid size: " << gridSizeString << std::endl;
+		Log::global_log->info() << "GeneralDomainDecomposition: grid size: " << gridSizeString << std::endl;
 
 		if (gridSizeString.find(',') != std::string::npos) {
 			auto strings = string_utils::split(gridSizeString, ',');
 			if (strings.size() != 3) {
 				std::ostringstream error_message;
 				error_message
-					<< "GeneralDomainDecomposition's gridSize should have three entries if a list is given, but has "
+					<< "GeneralDomainDecomposition: gridSize should have three entries if a list is given, but has "
 					<< strings.size() << "!" << std::endl;
 				MARDYN_EXIT(error_message.str());
 			}
@@ -182,11 +196,11 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 			const double latchedGridMonoSize = std::stod(gridSizeString);
 			_latchedGridSize = {latchedGridMonoSize, latchedGridMonoSize, latchedGridMonoSize};
 		}
-		_minimalDomainSize = {(*_latchedGridSize)[0], (*_latchedGridSize)[1], (*_latchedGridSize)[2]}; // TODO This line causes problems in the current code. 
+		_minimalDomainSize = {(*_latchedGridSize)[0], (*_latchedGridSize)[1], (*_latchedGridSize)[2]};
 	}
 
 	if(xmlconfig.changecurrentnode("minimalDomainSize")) {
-		Log::global_log->info() << "GeneralDomainDecomposition: minimalDomainSize setting is overwriting (skin + minimalDomainBoundary) or latchedGridSize" << std::endl;
+		Log::global_log->info() << "GeneralDomainDecomposition: Manual minimal Domain Size setting found. This is overwriting (skin + minimalDomainBoundary) or latchedGridSize" << std::endl;
 		_minimalDomainSize[0] = xmlconfig.getNodeValue_double("x", 0);
 		_minimalDomainSize[1] = xmlconfig.getNodeValue_double("y", 0);
 		_minimalDomainSize[2] = xmlconfig.getNodeValue_double("z", 0);
@@ -204,7 +218,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	if (xmlconfig.changecurrentnode("loadBalancer")) {
 		std::string loadBalancerString = "None";
 		xmlconfig.getNodeValue("@type", loadBalancerString);
-		Log::global_log->info() << "Chosen Load Balancer: " << loadBalancerString << std::endl;
+		Log::global_log->info() << "GeneralDomainDecomposition: Chosen Load Balancer: " << loadBalancerString << std::endl;
 
 		std::transform(loadBalancerString.begin(), loadBalancerString.end(), loadBalancerString.begin(), ::tolower);
 
@@ -220,7 +234,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode("..");
 	} else {
 		std::ostringstream error_message;
-		error_message << "loadBalancer section missing! Aborting!" << std::endl;
+		error_message << "GeneralDomainDecomposition: loadBalancer section missing! Aborting!" << std::endl;
 		MARDYN_EXIT(error_message.str());
 	}
 }
@@ -544,10 +558,18 @@ void GeneralDomainDecomposition::initializeRegularGrid(const DomainPoint& domain
 
 void GeneralDomainDecomposition::checkMinimalDomainSize(double minimalDomainBoundary) {
 	for (int i = 0; i < DIMgeom; ++i) {
-		if (_minimalDomainSize[i] < minimalDomainBoundary or _minimalDomainSize[i] > _localDomain[1][i] - _localDomain[0][i]) {
+		constexpr std::array<const char*, 3> axisNames{"X", "Y", "Z"};
+		const char* axisName = axisNames[i];
+		if (_minimalDomainSize[i] < (minimalDomainBoundary + _skin) or _minimalDomainSize[i] > _localDomain[1][i] - _localDomain[0][i]) {
 			std::ostringstream error_message;
-			error_message << "GeneralDomainDecomposition: The specified minimal DomainSize is invalid. Aborting." << std::endl;
+			error_message << "GeneralDomainDecomposition: The specified minimal Domain Size is invalid. on the " << axisName << "-axis.Aborting." << std::endl;
 			MARDYN_EXIT(error_message.str());
+		}
+		if (_minimalDomainSize[i] < minimalDomainBoundary + _skinDims[i]) {
+			Log::global_log->warning() << "GeneralDomainDecomposition: For the current minimal Domain Size, violates the specified skinDims on the " << axisName << "-axis. " << std::endl;
+		}
+		if (_minimalDomainSize[i] == minimalDomainBoundary) {
+			Log::global_log->warning() << "GeneralDomainDecomposition: For the current minimal Domain Size, the load balancer can reduce the domain to the absolute minimum on the " << axisName << "-axis. " << std::endl;
 		}
 	}
 }

@@ -359,14 +359,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 							MARDYN_EXIT(error_message.str());
 						}
 					} else if (datastructuretype == "LinkedCells") {
-						skin = getcutoffRadius();
-						if (xmlconfig.getNodeValue("skin", skin) == 0) {
-							Log::global_log->warning() << "No skin value detected. Unless skinDims is specified, the absolute minimum domain size is used" << std::endl;
-						}
+						xmlconfig.getNodeValue("skin", skin);
 					}
 					else
 					{
-						Log::global_log->warning() << "Using the GeneralDomainDecomposition without AutoPas or LinkedCells is not tested" << std::endl;
+						Log::global_log->warning() << "GeneralDomainDecomposition: Using It without AutoPas or LinkedCells is not tested" << std::endl;
 					}
 					
 				} else {
@@ -380,7 +377,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					MARDYN_EXIT(error_message.str());
 				}
 				delete _domainDecomposition;
-				Log::global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
+				Log::global_log->info() << "GeneralDomainDecomposition: Using skin = " << skin << std::endl;
 				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius(), skin, _domain);
 			} else {
 				std::ostringstream error_message;
