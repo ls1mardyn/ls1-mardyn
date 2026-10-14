@@ -14,6 +14,7 @@ target_sources(MarDyn
         Mirror.cpp
         MirrorSystem.cpp
         Permittivity.cpp
+        PinningInfo.cpp
         PluginFactory.cpp
         SpatialProfile.cpp
         VectorizationTuner.cpp
