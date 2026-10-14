@@ -144,7 +144,7 @@ void CavityWriter::init(ParticleContainer *particleContainer, DomainDecompBase *
 
 void CavityWriter::beforeEventNewTimestep(
         ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-        unsigned long simstep
+        unsigned long simstep, bool signalled
 ) {
     if (simstep >= global_simulation->getInitStatistics() && simstep % _writeFrequency == 0) {
         std::map<unsigned, CavityEnsemble *>::iterator ceit;

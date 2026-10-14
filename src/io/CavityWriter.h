@@ -70,7 +70,7 @@ public:
      * set the required Quaternions for the pseudo-molecules.*/
     void beforeEventNewTimestep(
             ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-            unsigned long simstep
+            unsigned long simstep, bool signalled
     ) final;
 
     /** @brief Method afterForces will be called after forcefields have been applied

@@ -90,7 +90,7 @@
 
 Simulation* global_simulation;
 
-Simulation::Simulation()
+Simulation::Simulation(bool handleSignals)
 	:
 	_simulationTime(0.0),
 	_maxMoleculeId(0),
@@ -125,7 +125,8 @@ Simulation::Simulation()
 #endif /* TASKTIMINGPROFILE */
 	_forced_checkpoint_time(0),
 	_loopCompTime(0.0),
-	_loopCompTimeSteps(0)
+	_loopCompTimeSteps(0),
+	_handleSignals(handleSignals)
 {
 	_timeFromStart.start();
 	_ensemble = new CanonicalEnsemble();
@@ -653,76 +654,102 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 
 	std::string oldpath = xmlconfig.getcurrentnodepath();
 
-	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/file")) {
-		Log::global_log->info() << "Reading phase space from file." << std::endl;
-		std::string pspfiletype;
-		xmlconfig.getNodeValue("@type", pspfiletype);
-		Log::global_log->info() << "Phase space file type: " << pspfiletype << std::endl;
 
-		if (pspfiletype == "ASCII") {
-			_inputReader = new ASCIIReader();
-			_inputReader->readXML(xmlconfig);
+	bool restarting = false;
+	if(_restart) {
+		/* Read final checkpoint */
+		std::string cpfile(_outputPrefix + ".restart.dat");
+		if (std::ifstream(cpfile).good()) {
+			restarting = true;
+			Log::global_log->info() << "Reading final checkpoint from file '" << cpfile << "'" << std::endl;
+			// Final checkpoint by Simulation class is always ASCII
+			ASCIIReader* inputReader = new ASCIIReader();
+			inputReader->setPhaseSpaceFile(cpfile);
+			inputReader->setPhaseSpaceHeaderFile(cpfile);
+			inputReader->readPhaseSpaceHeaderTimeOnly();
+			_inputReader = inputReader;
 		}
-		else if (pspfiletype == "binary") {
-			_inputReader = new BinaryReader();
-			_inputReader->readXML(xmlconfig);
-			//!@todo read header should be either part of readPhaseSpace or readXML.
-			double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
-			_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+		else {
+			Log::global_log->warning() << "Can't read final checkpoint from file '" << cpfile << "'" << std::endl;
+			Log::global_log->warning() << "(Starting simulation from scratch.)" << std::endl;
 		}
+	}
+	if(!restarting) {
+		if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/file")) {
+			Log::global_log->info() << "Reading phase space from file." << std::endl;
+			std::string pspfiletype;
+			xmlconfig.getNodeValue("@type", pspfiletype);
+			Log::global_log->info() << "Phase space file type: " << pspfiletype << std::endl;
+
+			if (pspfiletype == "ASCII") {
+				_inputReader = new ASCIIReader();
+				_inputReader->readXML(xmlconfig);
+			}
+			else if (pspfiletype == "binary") {
+				_inputReader = new BinaryReader();
+				_inputReader->readXML(xmlconfig);
+				//!@todo read header should be either part of readPhaseSpace or readXML.
+				double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
+				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+			}
 #ifdef ENABLE_ADIOS2
-        else if (pspfiletype == "adios2") {
-			_inputReader = new Adios2Reader();
+			else if (pspfiletype == "adios2") {
+				_inputReader = new Adios2Reader();
+				_inputReader->readXML(xmlconfig);
+			}
+#endif
+			else {
+				std::ostringstream error_message;
+				error_message << "Unknown phase space file type" << std::endl;
+				MARDYN_EXIT(error_message.str());
+			}
+		}
+		xmlconfig.changecurrentnode(oldpath);
+
+		oldpath = xmlconfig.getcurrentnodepath();
+		if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/generator")) {
+			std::string generatorName;
+			xmlconfig.getNodeValue("@name", generatorName);
+			Log::global_log->info() << "Initializing phase space using generator: " << generatorName << std::endl;
+			if(generatorName == "MultiObjectGenerator") {
+				_inputReader = new MultiObjectGenerator();
+			}
+			else if(generatorName == "mkesfera") {
+				_inputReader = new MkesferaGenerator();
+			}
+			else if(generatorName == "mkTcTS") {
+				_inputReader = new MkTcTSGenerator();
+			}
+			else if (generatorName == "CubicGridGenerator") {
+				_inputReader = new CubicGridGeneratorInternal();
+			}
+			else if (generatorName == "ReplicaGenerator") {
+				_inputReader = new ReplicaGenerator();
+			}
+			else if (generatorName == "PerCellGenerator") {
+				_inputReader = new PerCellGenerator();
+			}
+			else {
+				std::ostringstream error_message;
+				error_message << "Unknown generator: " << generatorName << std::endl;
+				MARDYN_EXIT(error_message.str());
+			}
 			_inputReader->readXML(xmlconfig);
 		}
-#endif
-		else {
-			std::ostringstream error_message;
-			error_message << "Unknown phase space file type" << std::endl;
-			MARDYN_EXIT(error_message.str());
-		}
+		xmlconfig.changecurrentnode(oldpath);
 	}
-	xmlconfig.changecurrentnode(oldpath);
-
-	oldpath = xmlconfig.getcurrentnodepath();
-	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint/generator")) {
-		std::string generatorName;
-		xmlconfig.getNodeValue("@name", generatorName);
-		Log::global_log->info() << "Initializing phase space using generator: " << generatorName << std::endl;
-		if(generatorName == "MultiObjectGenerator") {
-			_inputReader = new MultiObjectGenerator();
-		}
-		else if(generatorName == "mkesfera") {
-			_inputReader = new MkesferaGenerator();
-		}
-		else if(generatorName == "mkTcTS") {
-			_inputReader = new MkTcTSGenerator();
-		}
-		else if (generatorName == "CubicGridGenerator") {
-			_inputReader = new CubicGridGeneratorInternal();
-		}
-		else if (generatorName == "ReplicaGenerator") {
-			_inputReader = new ReplicaGenerator();
-		}
-		else if (generatorName == "PerCellGenerator") {
-			_inputReader = new PerCellGenerator();
-		}
-		else {
-			std::ostringstream error_message;
-			error_message << "Unknown generator: " << generatorName << std::endl;
-			MARDYN_EXIT(error_message.str());
-		}
-		_inputReader->readXML(xmlconfig);
-	}
-	xmlconfig.changecurrentnode(oldpath);
 
 	oldpath = xmlconfig.getcurrentnodepath();
 
 	if(xmlconfig.changecurrentnode("ensemble/phasespacepoint")) {
 		bool ignoreCheckpointTime = false;
 		if(xmlconfig.getNodeValue("ignoreCheckpointTime", ignoreCheckpointTime)) {
-			if(ignoreCheckpointTime)
+			if(ignoreCheckpointTime) {
+				if(restarting) {
+					Log::global_log->warning() << "Restarting simulation but ignoring checkpoint time" << std::endl;
+				}
 				setSimulationTime(0.0);
+			}
 		}
 	}
 
@@ -845,6 +872,9 @@ void Simulation::updateForces() {
 }
 
 void Simulation::prepare_start() {
+	if (_handleSignals)
+		signalHandler.enable();
+
 	Log::global_log->info() << "Initializing simulation" << std::endl;
 
 	Log::global_log->info() << "Initialising cell processor" << std::endl;
@@ -1001,8 +1031,10 @@ void Simulation::prepare_start() {
 void Simulation::simulate() {
 	
 	preSimLoopSteps();
+	signalHandler.syncReceivedSignals();
 	while (keepRunning()) {
 		simulateOneTimestep();
+		signalHandler.syncReceivedSignals();
 	}
 	postSimLoopSteps();
 }
@@ -1104,7 +1136,7 @@ void Simulation::simulateOneTimestep()
         for (auto plugin : _plugins) {
             Log::global_log -> debug() << "[BEFORE EVENT NEW TIMESTEP] Plugin: " << plugin->getPluginName() << std::endl;
 			global_simulation->timers()->start(plugin->getPluginName());
-            plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep);
+            plugin->beforeEventNewTimestep(_moleculeContainer, _domainDecomposition, _simstep, signalHandler.getBitmask() & SignalHandler::SIG_USR1);
 			global_simulation->timers()->stop(plugin->getPluginName());
         }
 
@@ -1392,6 +1424,9 @@ void Simulation::pluginEndStepCall(unsigned long simstep) {
 }
 
 void Simulation::finalize() {
+	if(signalHandler.isEnabled())
+		signalHandler.disable();
+
 	if (_FMM != nullptr) {
 		_FMM->printTimers();
 		auto * temp = dynamic_cast<bhfmm::VectorizedLJP2PCellProcessor*>(_cellProcessor);
@@ -1529,8 +1564,13 @@ void Simulation::initialize() {
 
 bool Simulation::keepRunning() {
 
-	// Simstep Criterion
-	if (_simstep >= _numberOfTimesteps){
+	// Simstep Criteria
+	if (signalHandler.getBitmask() & SignalHandler::SIG_STOP) {
+		Log::global_log->info() << "Stopped by SIGINT or SIGTERM." << std::endl;
+		simulationDone = true;
+		return false;
+	}
+	else if (_simstep >= _numberOfTimesteps){
 		Log::global_log->info() << "Maximum Simstep reached: " << _simstep << std::endl;
 		simulationDone = true;
 		return false;
