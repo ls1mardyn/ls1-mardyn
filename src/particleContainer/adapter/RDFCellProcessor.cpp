@@ -100,7 +100,6 @@ void RDFCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2,
 		} // inner cell
 
 		if (cell1.isBoundaryCell()) {//first cell is boundary
-			//if (cell2.isHaloCell() && ! molecule1.isLessThan(molecule2)) {//boundary <-> halo: using macroscopic boundary condition
 			if (cell2.isHaloCell() && ! (cell1.getCellIndex()<cell2.getCellIndex())) {//boundary <-> halo: not using macroscopic boundary condition, instead cell indices are compared.
 				/* Do not sum up values twice. */
 				return;

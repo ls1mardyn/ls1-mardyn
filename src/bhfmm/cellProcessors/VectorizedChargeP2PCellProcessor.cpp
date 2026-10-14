@@ -558,8 +558,7 @@ void VectorizedChargeP2PCellProcessor::processCellPair(ParticleCellPointers & c1
 	// if one of them is halo:
 	// 		if c1-index < c2-index, then compute
 	// 		else, then don't compute
-	// This saves the Molecule::isLessThan checks
-	// and works similar to the "Half-Shell" scheme
+	// This  works similar to the "Half-Shell" scheme
 
 	const bool ApplyCutoff = false;
 
