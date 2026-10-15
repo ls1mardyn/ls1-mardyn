@@ -91,9 +91,20 @@ public:
 	//! This method basically does what the constructor does as well, with the difference,
 	//! that there are already particles stored, and particles which don't belong to the
 	//! new region have to be deleted after rebuild
-	//! @parameter bBoxMin minimum of the box
-	//! @parameter bBoxMax maximum of the box
+	//! @param bBoxMin minimum of the box
+	//! @param bBoxMax maximum of the box
+	//! @return true if leaving particles should be Send together with halo copies
 	virtual bool rebuild(double bBoxMin[3], double bBoxMax[3]);
+
+	//! @brief rebuild the datastructure
+	//!
+	//! This method works similarly to the rebuild function, 
+	//! but returns all particles that do not belong to the new region.
+	//! @param bBoxMin minimum of the box
+	//! @param bBoxMax maximum of the box
+	//! @return all particles not belong to the new region
+	virtual std::vector<Molecule> rebuildFilter(double bBoxMin[3], double bBoxMax[3]);
+
 
 	//! @brief do necessary updates resulting from changed particle positions
 	//!

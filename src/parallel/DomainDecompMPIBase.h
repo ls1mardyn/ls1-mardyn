@@ -23,6 +23,10 @@
 
 #define DIMgeom 3
 
+using DomainGridPoint = std::array<int, DIMgeom>;
+using DomainPoint = std::array<double, DIMgeom>;
+using DomainBox   = std::array<DomainPoint, 2>; // 0: boxMin,  1: boxMax
+
 class NeighbourCommunicationScheme;
 
 struct HaloRegion;
