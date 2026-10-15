@@ -16,6 +16,7 @@
 #include "NeighbourCommunicationScheme.h"
 
 #include "utils/mardyn_assert.h"
+#include "utils/Math.h"
 
 #include <memory>
 #include <string>
@@ -568,7 +569,7 @@ void GeneralDomainDecomposition::checkMinimalDomainSize(double minimalDomainBoun
 		if (_minimalDomainSize[i] < minimalDomainBoundary + _skinDims[i]) {
 			Log::global_log->warning() << "GeneralDomainDecomposition: For the current minimal Domain Size, violates the specified skinDims on the " << axisName << "-axis. " << std::endl;
 		}
-		if (_minimalDomainSize[i] == minimalDomainBoundary) {
+		if (isNearRel(_minimalDomainSize[i], minimalDomainBoundary)) {
 			Log::global_log->warning() << "GeneralDomainDecomposition: For the current minimal Domain Size, the load balancer can reduce the domain to the absolute minimum on the " << axisName << "-axis. " << std::endl;
 		}
 	}
