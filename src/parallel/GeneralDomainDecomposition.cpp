@@ -63,7 +63,7 @@ void GeneralDomainDecomposition::initMPIGridDims() {
 
 	// If initMPIGridDims has already been executed, the previous communicator is deleted.
 	if (_cartCommunicatorCreated) {
-		MPI_Comm_free(&previousComm);
+		MPI_CHECK(MPI_Comm_free(&previousComm));
 	}
 	_cartCommunicatorCreated = true;
 
@@ -77,7 +77,7 @@ void GeneralDomainDecomposition::initMPIGridDims() {
 }
 
 GeneralDomainDecomposition::~GeneralDomainDecomposition() {
-	MPI_Comm_free(&_comm);
+	MPI_CHECK(MPI_Comm_free(&_comm));
 }
 
 
@@ -294,7 +294,7 @@ bool GeneralDomainDecomposition::checkForSensibleRebalance(const DomainBox& prop
 	}
 	
 	std::array<double, 6> newDomainBox = {proposedLocalDomain[0][0], proposedLocalDomain[0][1], proposedLocalDomain[0][2], proposedLocalDomain[1][0], proposedLocalDomain[1][1], proposedLocalDomain[1][2]};
-	MPI_Allgather(newDomainBox.data(), 6, MPI_DOUBLE, _futureDomainDecomposition.data(), 6, MPI_DOUBLE, _comm);
+	MPI_CHECK(MPI_Allgather(newDomainBox.data(), 6, MPI_DOUBLE, _futureDomainDecomposition.data(), 6, MPI_DOUBLE, _comm));
 
 	const double repeatedChange = domainDecompositionPercentageOfRepeatedChanges();
 	const bool issensibleRebalance = repeatedChange <= _maximumRepeatedLoadChange;
