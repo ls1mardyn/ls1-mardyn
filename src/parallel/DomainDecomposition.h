@@ -24,7 +24,7 @@ public:
 	DomainDecomposition();
 
 	DomainDecomposition(MPI_Comm comm, const std::array<int, DIMgeom> &gridSize);
-	// documentation see father class (DomainDecompBase.h)
+	// documentation see base class (DomainDecompBase.h)
 	~DomainDecomposition();
 
 	/** @brief Read in XML configuration for DomainDecomposition and all its included objects.
@@ -39,10 +39,10 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig) override;
 
-	// documentation see father class (DomainDecompBase.h)
+	// documentation see base class (DomainDecompBase.h)
 	double getBoundingBoxMin(int dimension, Domain* domain) override;
 
-	// documentation see father class (DomainDecompBase.h)
+	// documentation see base class (DomainDecompBase.h)
 	double getBoundingBoxMax(int dimension, Domain* domain) override;
 
 	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
