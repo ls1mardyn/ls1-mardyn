@@ -119,7 +119,7 @@ public:
      * @param latchedGridSize the grid to be latched to
      * @param domainLength The total size of the domain
      */
-    void latchToGridSize(const DomainPoint& latchedGridSize, const DomainPoint& domainLength);
+    void latchToGridSize(const DomainPoint& latchedGridSize, const DomainPoint& domainLength) noexcept;
 
     
 };

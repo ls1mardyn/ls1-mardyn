@@ -82,12 +82,14 @@ private:
 
     /**
 	 * Method that initializes the ALLLoadBalancer
+	 * @throws MARDYN_EXIT if the programme was compiled without ALL
 	 */
 	void initializeALLLoadBalancer();
 	
 	/**
-	Creates a new MPI communicator with topology information added.
-	*/
+	 * Creates a new MPI communicator with topology information added.
+	 * @throws MARDYN_EXIT if MPI communication problems or invalid _gridSize
+	 */
 	void initMPIGridDims();
 
 	/**
@@ -97,7 +99,7 @@ private:
 	 * @param size size of array
 	 * @return coefficients of variation 
 	 */
-	double getCV(double* data, const int size);
+	double getCV(double* data, const int size) const noexcept;
 	
 	/** 
 	 * Return the Max divided Min of an array
@@ -105,7 +107,7 @@ private:
 	 * @param size size of array
 	 * @return Max divided Min
 	 */
-	double getMaxdivMin(double* data, const int size); 
+	double getMaxdivMin(double* data, const int size) const noexcept; 
 
 	/**
 	 * Initializes communication partners
@@ -135,7 +137,7 @@ private:
 	 * Check, based on the specified settings, whether rebalancing should be carried out in the specified iteration
 	 * @param step current step of the simulation
 	 */
-	bool checkRebalancing(size_t step);
+	bool checkRebalancing(size_t step) const noexcept;
 	
 	/**
 	 * Checks, based on available parameters (e.g. lastTraversalTime), whether rebalancing appears to be sensible. 
@@ -148,6 +150,7 @@ private:
 	 * For value 2, the maximum divided by the minimum of all lastTraversalTime values is compared with the threshold (_imbalanceThresholdMinMax).
 	 *  -> Using the getMaxdivMin helper function
 	 * @param lastTraversalTime
+	 * @throws MARDYN_EXIT if MPI communication problems
 	 * @return True if rebalancing appears sensible or if no method of classification is enabled. 
 	 */
 	bool checkNeedRebalance(double lastTraversalTime);
@@ -158,6 +161,7 @@ private:
 	 *  -> Using the domainDecompositionPercentageOfRepeatedChanges helper function
 	 * The function builds a global view of the domain decomposition for the specified objective.
 	 * @param proposedLocalDomain new proposed subdomain
+	 * @throws MARDYN_EXIT if MPI communication problems
 	 * @return True if Either Rebalance is sensible or the Featcher is disabled.
 	 */
 	bool checkForSensibleRebalance(const DomainBox& proposedLocalDomain);
@@ -168,10 +172,11 @@ private:
 	 * @param proposedLocalDomain new proposed subdomain
 	 * @return possibly modified proposed subdomain
 	 */
-	DomainBox reviseNewRebalance(DomainBox proposedLocalDomain);
+	DomainBox reviseNewRebalance(DomainBox proposedLocalDomain) noexcept;
 
 	/**
 	 * checked whether the data in _minimalDomainSize is valid
+	 * @throws MARDYN_EXIT if invalid minimum domain boundary settings
 	 * @param minimalDomainBoundary minimal DomainSize in each dimension
 	 */
 	void checkMinimalDomainSize(double minimalDomainBoundary);
@@ -186,7 +191,7 @@ private:
 	 * This is done, firstly, between the previous and current domain decompositions, and secondly, between the current and proposed domain decompositions.
 	 * The geometric similarity is then calculated between these two domain decomposition changes
 	 */
-	double domainDecompositionPercentageOfRepeatedChanges();
+	double domainDecompositionPercentageOfRepeatedChanges() noexcept;
 
     // ------ private data members ------
 	bool _cartCommunicatorCreated = false; // Indicates whether a communicator with topology information has already been created.

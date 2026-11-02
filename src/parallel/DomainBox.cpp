@@ -122,7 +122,7 @@ std::array<double, 6> DomainBox::toArray() const noexcept {
     return { min[0], min[1], min[2], max[0], max[1], max[2] };
 }
 
-void DomainBox::latchToGridSize(const DomainPoint& latchedGridSize, const DomainPoint& domainLength) {
+void DomainBox::latchToGridSize(const DomainPoint& latchedGridSize, const DomainPoint& domainLength) noexcept {
     for (std::size_t ind = 0; ind < 3; ++ind) {
         const double currentGridSize = latchedGridSize[ind];
 

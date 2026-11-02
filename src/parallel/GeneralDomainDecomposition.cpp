@@ -267,7 +267,7 @@ bool GeneralDomainDecomposition::checkNeedRebalance(double lastTraversalTime) {
 	}
 }
 
-DomainBox GeneralDomainDecomposition::reviseNewRebalance(DomainBox proposedLocalDomain) {
+DomainBox GeneralDomainDecomposition::reviseNewRebalance(DomainBox proposedLocalDomain) noexcept {
 	if (_latchedGridSize.has_value()) {
 		proposedLocalDomain.latchToGridSize((*_latchedGridSize), _domainLength);
 	}
@@ -316,7 +316,7 @@ bool GeneralDomainDecomposition::checkForSensibleRebalance(const DomainBox& prop
 }
 
 
-bool GeneralDomainDecomposition::checkRebalancing(size_t step) {
+bool GeneralDomainDecomposition::checkRebalancing(size_t step) const noexcept {
 	return step <= _initPhase ? step % _initFrequency == 0 : step % _rebuildFrequency == 0;
 }
 
@@ -439,7 +439,8 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 		//AutoPas
 		#if false
 		{
-			//TODO: In rare cases, the code crashes when using Autopass. This can be reproduced by setting the load balancing input to the process rank. 
+			//TODO: In rare cases, the code crashes when using Autopass. This can be reproduced by setting the load balancing input to the process rank.
+			//Note: This code would be faster than the alternative if it worked without errors
 			emigrants = moleculeContainer->rebuildFilter(newMin.data(), newMax.data());
 			for (auto& sender : sendNeighbors) {
 				sender.initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, emigrants,
@@ -553,7 +554,7 @@ void GeneralDomainDecomposition::checkMinimalDomainSize(double minimalDomainBoun
 	}
 }
 
-double GeneralDomainDecomposition::getCV(double* data, const int size) {
+double GeneralDomainDecomposition::getCV(double* data, const int size) const noexcept {
 	double sum = 0;
 	for( size_t i = 0; i < size; i++ ) {
 		sum += data[i];
@@ -570,7 +571,7 @@ double GeneralDomainDecomposition::getCV(double* data, const int size) {
 	return stddev / mean;
 }
 
-double GeneralDomainDecomposition::getMaxdivMin(double* data, const int size) {
+double GeneralDomainDecomposition::getMaxdivMin(double* data, const int size) const noexcept {
 	double min = data[0];
 	double max = data[0];
 
@@ -582,7 +583,7 @@ double GeneralDomainDecomposition::getMaxdivMin(double* data, const int size) {
 	return max / min;
 }
 
-double GeneralDomainDecomposition::domainDecompositionPercentageOfRepeatedChanges() {
+double GeneralDomainDecomposition::domainDecompositionPercentageOfRepeatedChanges() noexcept {
     for (int i = 0; i < _numProcs; ++i) {
 		for (int j = 0; j < _numProcs; ++j) {
 			if (i == j) continue;
