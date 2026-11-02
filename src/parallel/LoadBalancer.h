@@ -7,7 +7,7 @@
 #pragma once
 #include <array>
 #include "utils/xmlfileUnits.h"
-#include "parallel/DomainDecompMPIBase.h"
+#include "parallel/DomainBox.h"
 
 /**
  * LoadBalancer class for the usage of arbitrary load balancing classes that are handled by GeneralDomainDecomposition.

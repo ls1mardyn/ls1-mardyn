@@ -91,11 +91,6 @@ private:
 	void initMPIGridDims();
 
 	/**
-	initialize Domain Decomposition as regular grid!
-	*/
-    void initializeRegularGrid(const DomainPoint& domainLength, const DomainGridPoint& gridSize, const DomainGridPoint& gridCoords);
-	
-	/** 
 	 * Return the coefficients of variation (CV) also known as relative standard deviation (RSD)
 	 * The coefficient of variation is calculated by dividing the standard deviation by the mean
 	 * @param data array of double
@@ -182,31 +177,6 @@ private:
 	void checkMinimalDomainSize(double minimalDomainBoundary);
 	
 	/**
-	 * Latches domain boundaries to a grid, which is defined by _latchedGridSize.
-	 * If boxMax matches the top boundary, it is not changed.
-	 * @param proposedLocalDomain new subdomain
-	 * @return The Latched version of the subdomain.
-	 */
-	DomainBox latchToGridSize(DomainBox proposedLocalDomain) const;
-
-	/**
-	 * Calculate the volume of a DomainBox 
-	 * @param bbox
-	 *
-	 * @return volumen of the DomainBox
-	 */
-    inline double bboxVolume(const DomainBox& bbox) const;
-
-	/**
-	 * Calculates the intersection volume of two DomainBox
-	 * @param bbox1
-	 * @param bbox2
-	 *
-	 * @return volumen of the intersection; If there is no intersection, 0 is returned
-	 */
-	inline double bboxIntersectionVolume(const DomainBox& bbox1, const DomainBox& bbox2) const;
-	
-	/**
 	 * Calculates the geometric similarity between the previous domain decomposition change and the current proposed domain decomposition change.
 	 * Geometric similarity is a procedural similarity measure defined as the geometric intersection divided by the geometric union. 
 	 * In this specific context, a value of 1 would mean that the proposed change is an undo of the preceding change. 
@@ -226,13 +196,15 @@ private:
 	double _imbalanceThresholdMinMax{0};
 	
 	// Variables for storing the global view of the domain decompositions. 
-	// The vectors consist, in flattened form, of DomainBox data from each process
-	std::vector<double> _previousDomainDecomposition;
-    std::vector<double> _currentDomainDecomposition;
-	std::vector<double> _futureDomainDecomposition;
-	// Storing the geometric differences between domain decompositions
+	std::vector<DomainBox> _previousDomainDecomposition;
+    std::vector<DomainBox> _currentDomainDecomposition;
+	std::vector<DomainBox> _proposedDomainDecomposition;
+
+	// These vectors are retained as private members for the
+	// maximumRepeatedLoadChange feature to prevent repeated allocations.
+	std::vector<double> _mpiBufferDomainDecomposition;
 	std::vector<DomainBox> _previousDomainDecompositionChange; // between previous and current
-    std::vector<DomainBox> _futureDomainDecompositionChange; // between future and current
+    std::vector<DomainBox> _proposedDomainDecompositionChange; // between future and current
     
 	double _maximumRepeatedLoadChange{1}; // represents a percentage, 1 == disabled
 

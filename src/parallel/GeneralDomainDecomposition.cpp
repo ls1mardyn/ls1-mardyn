@@ -14,6 +14,7 @@
 #include "Domain.h"
 #include "NeighborAcquirer.h"
 #include "NeighbourCommunicationScheme.h"
+#include "DomainBox.h"
 
 #include "utils/mardyn_assert.h"
 #include "utils/Math.h"
@@ -73,7 +74,10 @@ void GeneralDomainDecomposition::initMPIGridDims() {
 	MPI_CHECK(MPI_Cart_coords(_comm, _rank, DIMgeom, _coords.data()));
 	Log::global_log->info() << "MPI coordinate of current process: " << _coords[0] << ", " << _coords[1] << ", " << _coords[2] << std::endl;
 
-	initializeRegularGrid(_domainLength, _gridSize, _coords);
+	_localDomain = DomainBox::createAsRegularGrid(_domainLength, _gridSize, _coords);
+	_proposedLocalDomain = _localDomain;
+
+	Log::global_log->info() << "GeneralDomainDecomposition initial box: " << _localDomain << std::endl;
 }
 
 GeneralDomainDecomposition::~GeneralDomainDecomposition() {
@@ -213,7 +217,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	if (_latchedGridSize.has_value()) {
 		// latch the initial RegularGrid
 		// IMPORTANT: This must happen after the checkMinimalDomainSize check
-		_localDomain = latchToGridSize(_localDomain);
+		_localDomain.latchToGridSize((*_latchedGridSize), _domainLength);
 	}
 
 	if (xmlconfig.changecurrentnode("loadBalancer")) {
@@ -240,9 +244,9 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	}
 }
 
-double GeneralDomainDecomposition::getBoundingBoxMin(int dimension, Domain* /*domain*/) { return _localDomain[0][dimension]; }
+double GeneralDomainDecomposition::getBoundingBoxMin(int dimension, Domain* /*domain*/) { return _localDomain.min[dimension]; }
 
-double GeneralDomainDecomposition::getBoundingBoxMax(int dimension, Domain* /*domain*/) { return _localDomain[1][dimension]; }
+double GeneralDomainDecomposition::getBoundingBoxMax(int dimension, Domain* /*domain*/) { return _localDomain.max[dimension]; }
 
 bool GeneralDomainDecomposition::checkNeedRebalance(double lastTraversalTime) {
 	if (_imbalanceThresholdMode == 0){
@@ -265,7 +269,7 @@ bool GeneralDomainDecomposition::checkNeedRebalance(double lastTraversalTime) {
 
 DomainBox GeneralDomainDecomposition::reviseNewRebalance(DomainBox proposedLocalDomain) {
 	if (_latchedGridSize.has_value()) {
-		proposedLocalDomain = latchToGridSize(proposedLocalDomain);
+		proposedLocalDomain.latchToGridSize((*_latchedGridSize), _domainLength);
 	}
 	return proposedLocalDomain;
 }
@@ -278,23 +282,24 @@ bool GeneralDomainDecomposition::checkForSensibleRebalance(const DomainBox& prop
 	if (_previousDomainDecomposition.empty()) {
 		const std::size_t numProcs = static_cast<std::size_t>(_numProcs);
 		_previousDomainDecompositionChange.reserve(numProcs * (numProcs - 1));
-    	_futureDomainDecompositionChange.reserve(numProcs * (numProcs - 1));
+    	_proposedDomainDecompositionChange.reserve(numProcs * (numProcs - 1));
+		_mpiBufferDomainDecomposition.resize(6 * numProcs);
 
-		_previousDomainDecomposition.resize(6 * numProcs);
-		_currentDomainDecomposition.resize(6 * numProcs);
-		_futureDomainDecomposition.resize(6 * numProcs);
+		_previousDomainDecomposition.resize(numProcs);
+		_currentDomainDecomposition.resize(numProcs);
+		_proposedDomainDecomposition.resize(numProcs);
 
-		std::array<double, 6> oldDomainBox = {_localDomain[0][0], _localDomain[0][1], _localDomain[0][2], _localDomain[1][0], _localDomain[1][1], _localDomain[1][2]};
-		MPI_CHECK(MPI_Allgather(oldDomainBox.data(), 6, MPI_DOUBLE, _previousDomainDecomposition.data(), 6, MPI_DOUBLE, _comm));
-
-		std::array<double, 6> newDomainBox = {proposedLocalDomain[0][0], proposedLocalDomain[0][1], proposedLocalDomain[0][2], proposedLocalDomain[1][0], proposedLocalDomain[1][1], proposedLocalDomain[1][2]};
-		MPI_CHECK(MPI_Allgather(newDomainBox.data(), 6, MPI_DOUBLE, _currentDomainDecomposition.data(), 6, MPI_DOUBLE, _comm));
+		MPI_CHECK(MPI_Allgather(_localDomain.toArray().data(), 6, MPI_DOUBLE, _mpiBufferDomainDecomposition.data(), 6, MPI_DOUBLE, _comm));
+		_previousDomainDecomposition = DomainBox::fromFlatArray(_mpiBufferDomainDecomposition);
+		
+		MPI_CHECK(MPI_Allgather(proposedLocalDomain.toArray().data(), 6, MPI_DOUBLE, _mpiBufferDomainDecomposition.data(), 6, MPI_DOUBLE, _comm));
+		_currentDomainDecomposition = DomainBox::fromFlatArray(_mpiBufferDomainDecomposition);
 
 		return true;
 	}
 	
-	std::array<double, 6> newDomainBox = {proposedLocalDomain[0][0], proposedLocalDomain[0][1], proposedLocalDomain[0][2], proposedLocalDomain[1][0], proposedLocalDomain[1][1], proposedLocalDomain[1][2]};
-	MPI_CHECK(MPI_Allgather(newDomainBox.data(), 6, MPI_DOUBLE, _futureDomainDecomposition.data(), 6, MPI_DOUBLE, _comm));
+	MPI_CHECK(MPI_Allgather(proposedLocalDomain.toArray().data(), 6, MPI_DOUBLE, _mpiBufferDomainDecomposition.data(), 6, MPI_DOUBLE, _comm));
+	_proposedDomainDecomposition = DomainBox::fromFlatArray(_mpiBufferDomainDecomposition);
 
 	const double repeatedChange = domainDecompositionPercentageOfRepeatedChanges();
 	const bool issensibleRebalance = repeatedChange <= _maximumRepeatedLoadChange;
@@ -304,7 +309,7 @@ bool GeneralDomainDecomposition::checkForSensibleRebalance(const DomainBox& prop
 	if (issensibleRebalance) {
 		//At this point, the load balancing procedure is expected to be carried out.
 		_previousDomainDecomposition = _currentDomainDecomposition;
-		_currentDomainDecomposition  = _futureDomainDecomposition;
+		_currentDomainDecomposition  = _proposedDomainDecomposition;
 	}
 
 	return issensibleRebalance;
@@ -407,29 +412,22 @@ void GeneralDomainDecomposition::rebalance(double lastTraversalTime, ParticleCon
 	Log::global_log->debug() << "GeneralDomainDecomposition: Sending Halos." << std::endl;
 	DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 
-	_boundaryHandler.setLocalRegion(_localDomain[0].data(),_localDomain[1].data());
+	_boundaryHandler.setLocalRegion(_localDomain.min.data(),_localDomain.max.data());
 	_boundaryHandler.updateGlobalWallLookupTable();
 }
 
 void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContainer* moleculeContainer, DomainBox newLocalDomain) {
 	HaloRegion ownDomain{}, newDomain{};
 	for (size_t i = 0; i < DIMgeom; ++i) {
-		ownDomain.rmin[i] = _localDomain[0][i];
-		newDomain.rmin[i] = newLocalDomain[0][i];
-		ownDomain.rmax[i] = _localDomain[1][i];
-		newDomain.rmax[i] = newLocalDomain[1][i];
+		ownDomain.rmin[i] = _localDomain.min[i];
+		newDomain.rmin[i] = newLocalDomain.min[i];
+		ownDomain.rmax[i] = _localDomain.max[i];
+		newDomain.rmax[i] = newLocalDomain.max[i];
 		ownDomain.offset[i] = 0;
 		newDomain.offset[i] = 0;
 	}
 	Log::global_log->set_mpi_output_all();
-	Log::global_log->debug() << "GeneralDomainDecomposition: migrating from"
-						<< " [" << _localDomain[0][0] << ", " << _localDomain[1][0] << "] x"
-						<< " [" << _localDomain[0][1] << ", " << _localDomain[1][1] << "] x"
-						<< " [" << _localDomain[0][2] << ", " << _localDomain[1][2] << "] " << std::endl;
-	Log::global_log->debug() << "GeneralDomainDecomposition: to"
-						<< " [" << newLocalDomain[0][0] << ", " << newLocalDomain[1][0] << "] x"
-						<< " [" << newLocalDomain[0][1] << ", " << newLocalDomain[1][1] << "] x"
-						<< " [" << newLocalDomain[0][2] << ", " << newLocalDomain[1][2] << "]." << std::endl;
+	Log::global_log->debug() << "GeneralDomainDecomposition: migrating from " << _localDomain << " to " << newLocalDomain << std::endl;
 	Log::global_log->set_mpi_output_root(0);
 	std::vector<HaloRegion> desiredDomain{newDomain};
 	std::vector<CommunicationPartner> sendNeighbors{}, recvNeighbors{};
@@ -456,7 +454,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 								false /*don't use invalid particles*/, false /*do halo position change*/,
 								true /*removeFromContainer*/);
 			}
-			emigrants = moleculeContainer->rebuildFilter(newLocalDomain[0].data(), newLocalDomain[1].data());
+			emigrants = moleculeContainer->rebuildFilter(newLocalDomain.min.data(), newLocalDomain.max.data());
 			}
 		#endif
 	} else {
@@ -474,7 +472,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 			ownMolecules.push_back(*iter);
 		}
 		moleculeContainer->clear();
-		moleculeContainer->rebuild(newLocalDomain[0].data(), newLocalDomain[1].data());
+		moleculeContainer->rebuild(newLocalDomain.min.data(), newLocalDomain.max.data());
 		moleculeContainer->addParticles(ownMolecules);
 	}	
 
@@ -537,31 +535,11 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 	
 }
 
-void GeneralDomainDecomposition::initializeRegularGrid(const DomainPoint& domainLength, const DomainGridPoint& gridSize, const DomainGridPoint& gridCoords) {
-	_localDomain = {{{0., 0., 0.}, {0., 0., 0.}}}; 
-
-	// initialize it as regular grid!
-	for (int dim = 0; dim < DIMgeom; ++dim) {
-		_localDomain[0][dim] = gridCoords[dim] * domainLength[dim] / gridSize[dim];
-		_localDomain[1][dim] = (gridCoords[dim] + 1) * domainLength[dim] / gridSize[dim];
-		if (gridCoords[dim] == gridSize[dim] - 1) {
-			// ensure that the upper domain boundaries match.
-			// lower domain boundaries always match, because they are 0.
-			_localDomain[1][dim] = domainLength[dim];
-		}
-	}
-	_proposedLocalDomain = _localDomain;
-
-	Log::global_log->info() << "GeneralDomainDecomposition initial box: [" << _localDomain[0][0] << ", " << _localDomain[1][0] << "] x ["
-			<< _localDomain[0][1] << ", " << _localDomain[1][1] << "] x [" << _localDomain[0][2] << ", " << _localDomain[1][2] << "]"
-			<< std::endl;
-}
-
 void GeneralDomainDecomposition::checkMinimalDomainSize(double minimalDomainBoundary) {
 	for (int i = 0; i < DIMgeom; ++i) {
 		constexpr std::array<const char*, 3> axisNames{"X", "Y", "Z"};
 		const char* axisName = axisNames[i];
-		if (_minimalDomainSize[i] < (minimalDomainBoundary + _skin) or _minimalDomainSize[i] > _localDomain[1][i] - _localDomain[0][i]) {
+		if (_minimalDomainSize[i] < (minimalDomainBoundary + _skin) or _minimalDomainSize[i] > _localDomain.max[i] - _localDomain.min[i]) {
 			std::ostringstream error_message;
 			error_message << "GeneralDomainDecomposition: The specified minimal Domain Size is invalid. on the " << axisName << "-axis.Aborting." << std::endl;
 			MARDYN_EXIT(error_message.str());
@@ -604,83 +582,19 @@ double GeneralDomainDecomposition::getMaxdivMin(double* data, const int size) {
 	return max / min;
 }
 
-DomainBox GeneralDomainDecomposition::latchToGridSize(DomainBox proposedLocalDomain) const {
-	for (size_t ind = 0; ind < DIMgeom; ++ind) {
-		double currentGridSize = (*_latchedGridSize)[ind];
-		// For boxmin, the lower domain boundary is 0, so that's always fine!
-		proposedLocalDomain[0][ind] = std::round(proposedLocalDomain[0][ind] / currentGridSize) * currentGridSize;
-		// update boxmax only if it isn't at the very top of the domain!
-		if (proposedLocalDomain[1][ind] != _domainLength[ind]) {
-			proposedLocalDomain[1][ind] = std::round(proposedLocalDomain[1][ind] / currentGridSize) * currentGridSize;
-		}
-	}
-	return proposedLocalDomain;
-}
-
-inline double GeneralDomainDecomposition::bboxVolume(const DomainBox& bbox) const {
-    return std::max(bbox[1][0] - bbox[0][0], 0.0) *
-           std::max(bbox[1][1] - bbox[0][1], 0.0) *
-           std::max(bbox[1][2] - bbox[0][2], 0.0);
-}
-
-inline double GeneralDomainDecomposition::bboxIntersectionVolume(const DomainBox& bbox1, const DomainBox& bbox2) const {
-    const DomainPoint lower{
-        std::max(bbox1[0][0], bbox2[0][0]),
-        std::max(bbox1[0][1], bbox2[0][1]),
-        std::max(bbox1[0][2], bbox2[0][2])
-    };
-
-    const DomainPoint upper{
-        std::min(bbox1[1][0], bbox2[1][0]),
-        std::min(bbox1[1][1], bbox2[1][1]),
-        std::min(bbox1[1][2], bbox2[1][2])
-    };
-
-    return bboxVolume(DomainBox{lower, upper});
-}
-
 double GeneralDomainDecomposition::domainDecompositionPercentageOfRepeatedChanges() {
     for (int i = 0; i < _numProcs; ++i) {
 		for (int j = 0; j < _numProcs; ++j) {
 			if (i == j) continue;
-
-			const int ci = 6 * i;
-			const int lj = 6 * j;
-
-			const DomainPoint previousLower{
-				std::max(_currentDomainDecomposition[ci + 0], _previousDomainDecomposition[lj + 0]),
-				std::max(_currentDomainDecomposition[ci + 1], _previousDomainDecomposition[lj + 1]),
-				std::max(_currentDomainDecomposition[ci + 2], _previousDomainDecomposition[lj + 2])
-			};
-
-			const DomainPoint previousUpper{
-				std::min(_currentDomainDecomposition[ci + 3], _previousDomainDecomposition[lj + 3]),
-				std::min(_currentDomainDecomposition[ci + 4], _previousDomainDecomposition[lj + 4]),
-				std::min(_currentDomainDecomposition[ci + 5], _previousDomainDecomposition[lj + 5])
-			};
-
-			if (previousLower[0] < previousUpper[0] &&
-				previousLower[1] < previousUpper[1] &&
-				previousLower[2] < previousUpper[2]) {
-				_previousDomainDecompositionChange.push_back(DomainBox{previousLower, previousUpper});
+			
+			std::optional<DomainBox> maybeIntersectionPrevious =  _previousDomainDecomposition[i].intersection(_currentDomainDecomposition[j]);
+			if (maybeIntersectionPrevious.has_value()) {
+				_previousDomainDecompositionChange.push_back(*maybeIntersectionPrevious);
 			}
 
-			const DomainPoint futureLower{
-				std::max(_currentDomainDecomposition[ci + 0], _futureDomainDecomposition[lj + 0]),
-				std::max(_currentDomainDecomposition[ci + 1], _futureDomainDecomposition[lj + 1]),
-				std::max(_currentDomainDecomposition[ci + 2], _futureDomainDecomposition[lj + 2])
-			};
-
-			const DomainPoint futureUpper{
-				std::min(_currentDomainDecomposition[ci + 3], _futureDomainDecomposition[lj + 3]),
-				std::min(_currentDomainDecomposition[ci + 4], _futureDomainDecomposition[lj + 4]),
-				std::min(_currentDomainDecomposition[ci + 5], _futureDomainDecomposition[lj + 5])
-			};
-
-			if (futureLower[0] < futureUpper[0] &&
-				futureLower[1] < futureUpper[1] &&
-				futureLower[2] < futureUpper[2]) {
-				_futureDomainDecompositionChange.push_back(DomainBox{futureLower, futureUpper});
+			std::optional<DomainBox> maybeIntersectionProposed =  _currentDomainDecomposition[i].intersection(_proposedDomainDecomposition[j]);
+			if (maybeIntersectionProposed.has_value()) {
+				_proposedDomainDecompositionChange.push_back(*maybeIntersectionProposed);
 			}
 		}
 	}
@@ -688,22 +602,26 @@ double GeneralDomainDecomposition::domainDecompositionPercentageOfRepeatedChange
     double total_volume = 0.0;
     double total_intersection = 0.0;
 
-    for (const DomainBox& box : _futureDomainDecompositionChange) {
-        total_volume += bboxVolume(box);
+    for (const DomainBox& box : _proposedDomainDecompositionChange) {
+        total_volume += box.volume();
     }
 
     for (const DomainBox& left_box : _previousDomainDecompositionChange) {
-        total_volume += bboxVolume(left_box);
+        total_volume += left_box.volume();
 
-        for (const DomainBox& right_box : _futureDomainDecompositionChange) {
-            const double inter = bboxIntersectionVolume(left_box, right_box);
-			mardyn_assert(inter < 0);
+        for (const DomainBox& right_box : _proposedDomainDecompositionChange) {
+			const double inter = left_box.intersectionVolume(right_box);
             total_volume -= inter;
             total_intersection += inter;
         }
     }
+	
 	_previousDomainDecompositionChange.clear();
-	_futureDomainDecompositionChange.clear();
+	_proposedDomainDecompositionChange.clear();
 
+	if (total_volume == 0.0) {
+		Log::global_log->error() << "GeneralDomainDecomposition: maximumRepeatedLoadChange calculated a value that should be impossible. Featcher is disabled for the currently running process." << std::endl;
+		return 0.0;
+	}
     return total_intersection / total_volume;
 }

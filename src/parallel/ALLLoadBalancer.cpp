@@ -7,7 +7,7 @@
 #include "ALLLoadBalancer.h"
 #include <string>
 #include "ALL.hpp"
-#include "parallel/DomainDecompMPIBase.h"
+#include "utils/mardyn_assert.h"
 
 ALLLoadBalancer::ALLLoadBalancer(double gamma, MPI_Comm comm, DomainGridPoint globalSize, std::vector<double> minimalPartitionSize) {
 	_comm = comm;
@@ -49,31 +49,28 @@ void ALLLoadBalancer::readXML(XMLfileUnits& xmlconfig){
 
 	Log::global_log->info() << "ALLLoadBalancer: using the " << loadBalancer << " load balancer" << std::endl;
 
-	_all = std::make_unique<ALL::ALL<double, double>>(ALL::TENSOR, DIMgeom, _gamma);
+	_all = std::make_unique<ALL::ALL<double, double>>(ALL::TENSOR, 3, _gamma);
 	_all->setCommunicator(_comm);
 	_all->setMinDomainSize(_minimalPartitionSize);
     _all->setup();
 }
 
 DomainBox ALLLoadBalancer::rebalance(DomainBox localBox, double work) {
-	std::vector<ALL::Point<double>> domain(2, ALL::Point<double>(DIMgeom));
+	std::vector<ALL::Point<double>> domain(2, ALL::Point<double>(3));
 
-	for (int i = 0; i < DIMgeom; ++i) {
-		domain[0][i] = localBox[0][i];
-		domain[1][i] = localBox[1][i];
-	}
+	domain[0][0] = localBox.min[0];
+	domain[0][1] = localBox.min[1];
+	domain[0][2] = localBox.min[2];
+
+	domain[1][0] = localBox.max[0];
+	domain[1][1] = localBox.max[1];
+	domain[1][2] = localBox.max[2];
 
 	_all->setVertices(domain);
 	_all->setWork(work);
 	_all->balance();
 
 	std::vector<ALL::Point<double>> updatedVertices = _all->getVertices();
-	DomainBox newlocalBox;
-
-	for (int i = 0; i < DIMgeom; ++i) {
-		newlocalBox[0][i] = updatedVertices[0][i];
-		newlocalBox[1][i] = updatedVertices[1][i];
-	}
-
-	return newlocalBox;
+	
+	return DomainBox(updatedVertices[0][0], updatedVertices[0][1], updatedVertices[0][2], updatedVertices[1][0], updatedVertices[1][1], updatedVertices[1][2]);
 }
