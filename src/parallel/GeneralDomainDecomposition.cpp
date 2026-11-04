@@ -441,7 +441,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 		{
 			//TODO: In rare cases, the code crashes when using Autopass. This can be reproduced by setting the load balancing input to the process rank.
 			//Note: This code would be faster than the alternative if it worked without errors
-			emigrants = moleculeContainer->rebuildFilter(newMin.data(), newMax.data());
+			emigrants = moleculeContainer->rebuildFilter(newLocalDomain.min.data(), newLocalDomain.max.data());
 			for (auto& sender : sendNeighbors) {
 				sender.initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, emigrants,
 								true , false);

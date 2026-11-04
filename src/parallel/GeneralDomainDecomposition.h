@@ -20,13 +20,20 @@
 class GeneralDomainDecomposition : public DomainDecompMPIBase {
 public:
     /**
-	 * Constructor for the GeneralDomainDecomposition.
+	 * Constructor of GeneralDomainDecomposition.
 	 * @param cutoffRadius
 	 * @param skin
 	 * @param domain
 	 */
 	GeneralDomainDecomposition(double cutoffRadius, double skin, Domain* domain);
 
+	/**
+	 * Constructor of GeneralDomainDecomposition.
+	 * @param cutoffRadius
+	 * @param skin
+	 * @param domain
+	 * @param comm Main MPI Communicator
+	 */
 	GeneralDomainDecomposition(double cutoffRadius, double skin, Domain* domain, MPI_Comm comm);
 
 	// documentation see base class (DomainDecompBase.h)
