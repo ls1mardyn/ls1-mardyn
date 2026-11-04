@@ -189,7 +189,7 @@ void GeneralDomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 
 		if (gridSizeString.find(',') != std::string::npos) {
 			auto strings = string_utils::split(gridSizeString, ',');
-			if (strings.size() != 3) {
+			if (strings.size() != DIMgeom) {
 				std::ostringstream error_message;
 				error_message
 					<< "GeneralDomainDecomposition: gridSize should have three entries if a list is given, but has "
@@ -538,7 +538,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 
 void GeneralDomainDecomposition::checkMinimalDomainSize(double minimalDomainBoundary) {
 	for (int i = 0; i < DIMgeom; ++i) {
-		constexpr std::array<const char*, 3> axisNames{"X", "Y", "Z"};
+		constexpr std::array<const char*, DIMgeom> axisNames{"X", "Y", "Z"};
 		const char* axisName = axisNames[i];
 		if (_minimalDomainSize[i] < (minimalDomainBoundary + _skin) or _minimalDomainSize[i] > _localDomain.max[i] - _localDomain.min[i]) {
 			std::ostringstream error_message;

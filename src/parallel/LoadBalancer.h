@@ -8,6 +8,7 @@
 #include <array>
 #include "utils/xmlfileUnits.h"
 #include "parallel/DomainBox.h"
+#include "parallel/DomainDecompMPIBase.h" // for DIMgeom Definition
 
 /**
  * LoadBalancer class for the usage of arbitrary load balancing classes that are handled by GeneralDomainDecomposition.
@@ -41,5 +42,5 @@ public:
 	 * Indicates if the current process / MPI rank spans the full length of a dimension.
 	 * @return Array of bools, for each dimension one value: true, iff the process spans the entire domain along this dimension.
 	 */
-	virtual std::array<bool, 3> getCoversWholeDomain() noexcept = 0;
+	virtual std::array<bool, DIMgeom> getCoversWholeDomain() noexcept = 0;
 };

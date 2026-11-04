@@ -10,9 +10,10 @@
 #include <optional>
 #include <ostream>
 #include <vector>
+#include "parallel/DomainDecompMPIBase.h" // for DIMgeom Definition
 
-using DomainGridPoint = std::array<int, 3>;
-using DomainPoint = std::array<double, 3>;
+using DomainGridPoint = std::array<int, DIMgeom>;
+using DomainPoint = std::array<double, DIMgeom>;
 
 // A 3D bounding box defined by two corners
 class DomainBox {

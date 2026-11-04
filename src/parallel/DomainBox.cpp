@@ -49,7 +49,7 @@ DomainBox DomainBox::createAsRegularGrid(const DomainPoint& domainLength, const 
 	DomainBox box = DomainBox(); 
 
 	// initialize DomainBox as regular grid!
-	for (int dim = 0; dim < 3; ++dim) {
+	for (int dim = 0; dim < DIMgeom; ++dim) {
 		box.min[dim] = gridCoords[dim] * domainLength[dim] / gridSize[dim];
 		box.max[dim] = (gridCoords[dim] + 1) * domainLength[dim] / gridSize[dim];
 		if (gridCoords[dim] == gridSize[dim] - 1) {
@@ -123,7 +123,7 @@ std::array<double, 6> DomainBox::toArray() const noexcept {
 }
 
 void DomainBox::latchToGridSize(const DomainPoint& latchedGridSize, const DomainPoint& domainLength) noexcept {
-    for (std::size_t ind = 0; ind < 3; ++ind) {
+    for (std::size_t ind = 0; ind < DIMgeom; ++ind) {
         const double currentGridSize = latchedGridSize[ind];
 
         min[ind] = std::round(min[ind] / currentGridSize) * currentGridSize;

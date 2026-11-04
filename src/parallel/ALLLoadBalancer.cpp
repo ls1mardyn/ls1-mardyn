@@ -52,14 +52,14 @@ void ALLLoadBalancer::readXML(XMLfileUnits& xmlconfig){
 
 	Log::global_log->info() << "ALLLoadBalancer: using the " << loadBalancer << " load balancer with gamma of " << gamma << std::endl;
 
-	_all = std::make_unique<ALL::ALL<double, double>>(ALL::TENSOR, 3, gamma);
+	_all = std::make_unique<ALL::ALL<double, double>>(ALL::TENSOR, DIMgeom, gamma);
 	_all->setCommunicator(_comm);
 	_all->setMinDomainSize(_minimalDomainSize);
     _all->setup();
 }
 
 DomainBox ALLLoadBalancer::rebalance(DomainBox localBox, double work) {
-	std::vector<ALL::Point<double>> domain(2, ALL::Point<double>(3));
+	std::vector<ALL::Point<double>> domain(2, ALL::Point<double>(DIMgeom));
 
 	domain[0][0] = localBox.min[0];
 	domain[0][1] = localBox.min[1];
