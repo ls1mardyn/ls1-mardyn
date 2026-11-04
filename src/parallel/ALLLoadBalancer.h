@@ -1,7 +1,7 @@
 /**
  * @file ALLLoadBalancer.h
  * @author seckler, Georg von Bismarck
- * @date 23.09.2026
+ * @date 4.11.2026
  */
 
 #pragma once
@@ -9,22 +9,41 @@
 #include <ALL.hpp>
 #include "LoadBalancer.h"
 
+/** 
+ * Integration of A Loadbalancing Library (ALL) into LS1 for use through GeneralDomainDecomposition
+ */ 
 class ALLLoadBalancer : public LoadBalancer {
 public:
-	ALLLoadBalancer(double gamma, MPI_Comm comm, DomainGridPoint globalSize, std::vector<double> minimalPartitionSize);
 
+	/**
+     * Constructs from two corner points.
+     * @param comm !Cartesian-Communicator! 
+	 * @param globalSize global Domain Size
+	 * @param minimalDomainSize
+     */
+	ALLLoadBalancer(MPI_Comm comm, DomainGridPoint globalSize, std::vector<double> minimalDomainSize) noexcept;
 	~ALLLoadBalancer() override = default;
+
+	/** 
+	 * documentation see base class (LoadBalancer.h)
+	 */ 
 	DomainBox rebalance(DomainBox localBox, double work) override;
+
+	/** 
+	 * documentation see base class (LoadBalancer.h)
+	 */ 
 	void readXML(XMLfileUnits& xmlconfig) override;
 
-	std::array<bool, 3> getCoversWholeDomain() override { return _coversWholeDomain; }
+	/** 
+	 * documentation see base class (LoadBalancer.h)
+	 */ 
+	std::array<bool, 3> getCoversWholeDomain() noexcept override { return _coversWholeDomain; }
 
 private:
 	std::unique_ptr<ALL::ALL<double, double>> _all;
 	MPI_Comm _comm;
-	double _gamma;
 
-	std::vector<double> _minimalPartitionSize{};
+	std::vector<double> _minimalDomainSize{};
 	std::array<bool, 3> _coversWholeDomain{};
 };
 #endif

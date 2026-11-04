@@ -88,7 +88,7 @@ GeneralDomainDecomposition::~GeneralDomainDecomposition() {
 void GeneralDomainDecomposition::initializeALLLoadBalancer() {
 	Log::global_log->info() << "GeneralDomainDecomposition: initializing ALL load balancer..." << std::endl;
 #ifdef ENABLE_ALLLBL
-	_loadBalancer = std::make_unique<ALLLoadBalancer>(4 /*gamma*/, this->getCommunicator(), _gridSize,  _minimalDomainSize);
+	_loadBalancer = std::make_unique<ALLLoadBalancer>(this->getCommunicator(), _gridSize,  _minimalDomainSize);
 #else
 	std::ostringstream error_message;
 	error_message << "ALL load balancing library not enabled. Aborting." << std::endl;

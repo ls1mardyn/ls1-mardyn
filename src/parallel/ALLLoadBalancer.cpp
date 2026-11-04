@@ -1,7 +1,7 @@
 /**
  * @file ALLLoadBalancer.cpp
  * @author seckler, Georg von Bismarck
- * @date 23.09.2026
+ * @date 4.11.2026
  */
 
 #include "ALLLoadBalancer.h"
@@ -9,16 +9,16 @@
 #include "ALL.hpp"
 #include "utils/mardyn_assert.h"
 
-ALLLoadBalancer::ALLLoadBalancer(double gamma, MPI_Comm comm, DomainGridPoint globalSize, std::vector<double> minimalPartitionSize) {
+ALLLoadBalancer::ALLLoadBalancer(MPI_Comm comm, DomainGridPoint globalSize, std::vector<double> minimalDomainSize) noexcept {
 	_comm = comm;
-	_gamma = gamma;
-	_minimalPartitionSize = minimalPartitionSize;
+	_minimalDomainSize = minimalDomainSize;
 	
 	_coversWholeDomain = {globalSize[0] == 1, globalSize[1] == 1, globalSize[2] == 1};;
 }
 
 void ALLLoadBalancer::readXML(XMLfileUnits& xmlconfig){
 	ALL::LB_t mode = ALL::LB_t::UNIMPLEMENTED;
+	double gamma = 4;
 
 	std::string loadBalancer("STAGGERED");
 	xmlconfig.getNodeValue("mode", loadBalancer);
@@ -47,11 +47,14 @@ void ALLLoadBalancer::readXML(XMLfileUnits& xmlconfig){
 		MARDYN_EXIT(error_message.str());
 	}
 
-	Log::global_log->info() << "ALLLoadBalancer: using the " << loadBalancer << " load balancer" << std::endl;
+	//gamma is used as a correction factor if required by the selected balancing method
+	xmlconfig.getNodeValue("gamma", gamma);
 
-	_all = std::make_unique<ALL::ALL<double, double>>(ALL::TENSOR, 3, _gamma);
+	Log::global_log->info() << "ALLLoadBalancer: using the " << loadBalancer << " load balancer with gamma of " << gamma << std::endl;
+
+	_all = std::make_unique<ALL::ALL<double, double>>(ALL::TENSOR, 3, gamma);
 	_all->setCommunicator(_comm);
-	_all->setMinDomainSize(_minimalPartitionSize);
+	_all->setMinDomainSize(_minimalDomainSize);
     _all->setup();
 }
 
@@ -68,9 +71,8 @@ DomainBox ALLLoadBalancer::rebalance(DomainBox localBox, double work) {
 
 	_all->setVertices(domain);
 	_all->setWork(work);
-	_all->balance();
 
-	std::vector<ALL::Point<double>> updatedVertices = _all->getVertices();
+	std::vector<ALL::Point<double>> updatedVertices = _all->balance();
 	
 	return DomainBox(updatedVertices[0][0], updatedVertices[0][1], updatedVertices[0][2], updatedVertices[1][0], updatedVertices[1][1], updatedVertices[1][2]);
 }
