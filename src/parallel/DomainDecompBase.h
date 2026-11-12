@@ -19,6 +19,8 @@
 #include "boundaries/BoundaryHandler.h"
 #include "ensemble/EnsembleBase.h"
 
+#define DIMgeom 3
+
 class Component;
 class Domain;
 class ParticleContainer;

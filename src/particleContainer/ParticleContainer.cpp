@@ -24,6 +24,12 @@ bool ParticleContainer::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	return true; // Send leaving particles together with halo copies
 }
 
+
+std::vector<Molecule> ParticleContainer::rebuildFilter(double bBoxMin[3], double bBoxMax[3]) {
+	rebuild(bBoxMin, bBoxMax);
+	return {};
+}
+
 double ParticleContainer::getBoundingBoxMin(int dimension) const {
 	return this->_boundingBoxMin[dimension];
 }

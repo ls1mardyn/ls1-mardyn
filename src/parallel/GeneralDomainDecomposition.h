@@ -1,59 +1,51 @@
 /**
  * @file GeneralDomainDecomposition.h
- * @author seckler
- * @date 11.04.19
+ * @author seckler, Georg von Bismarck
+ * @date 27.10.2026
  */
 
 #pragma once
 
 #include <optional>
-
 #include "Domain.h"
-
 #include "particleContainer/ParticleContainer.h"
 #include "DomainDecompMPIBase.h"
 #include "LoadBalancer.h"
+
+
 
 /**
  * This decomposition is meant to be able to call arbitrary load balancers.
  */
 class GeneralDomainDecomposition : public DomainDecompMPIBase {
 public:
-	/**
-	 * Constructor for the GeneralDomainDecomposition.
-	 * @param interactionLength
+    /**
+	 * Constructor of GeneralDomainDecomposition.
+	 * @param cutoffRadius
+	 * @param skin
 	 * @param domain
-	 * @param forceGrid
 	 */
-	GeneralDomainDecomposition(double interactionLength, Domain* domain, bool forceGrid);
+	GeneralDomainDecomposition(double cutoffRadius, double skin, Domain* domain);
 
-	// documentation see father class (DomainDecompBase.h)
+	/**
+	 * Constructor of GeneralDomainDecomposition.
+	 * @param cutoffRadius
+	 * @param skin
+	 * @param domain
+	 * @param comm Main MPI Communicator
+	 */
+	GeneralDomainDecomposition(double cutoffRadius, double skin, Domain* domain, MPI_Comm comm);
+
+	// documentation see base class (DomainDecompBase.h)
 	~GeneralDomainDecomposition() override;
 
-	/** @brief Read in XML configuration for DomainDecomposition and all its included objects.
-	 *
-	 * The following xml object structure is handled by this method:
-	 * \code{.xml}
-	   <parallelisation type="GeneralDomainDecomposition">
-		  <updateFrequency>INTEGER</updateFrequency>
-		  <initialPhaseTime>INTEGER</initialPhaseTime><!--time for initial rebalancing phase-->
-		  <initialPhaseFrequency>INTEGER</initialPhaseFrequency><!--frequency for initial rebalancing phase-->
-		  <gridSize>STRING</gridSize><!--default: 0; if non-zero, the process boundaries are fixed to multiples of
-				gridSize. Comma separated string to define three different grid sizes for the different dimensions is
-				possible.-->
-		  <loadBalancer type="STRING"><!--STRING...type of the load balancer, currently supported: ALL-->
-			<!--options for the load balancer-->
-			<!--for detailed information see the readXML functions from ALLLoadBalancer.-->
-		  </loadBalancer>
-	   </parallelisation>
-	   \endcode
-	 */
+	// Read in XML configuration for GeneralDomainDecomposition and all its included objects.
 	void readXML(XMLfileUnits& xmlconfig) override;
 
-	// documentation see father class (DomainDecompBase.h)
+	// documentation see base class (DomainDecompBase.h)
 	double getBoundingBoxMin(int dimension, Domain* domain) override;
 
-	// documentation see father class (DomainDecompBase.h)
+	// documentation see base class (DomainDecompBase.h)
 	double getBoundingBoxMax(int dimension, Domain* domain) override;
 
 	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer,
@@ -65,24 +57,24 @@ public:
 		throw std::runtime_error("GeneralDomainDecomposition::getNeighbourRanks() not yet implemented");
 	}
 
-	// returns a vector of all 26 neighbour ranks in x y and z direction
+	// documentation see base class (DomainDecompBase.h)
 	std::vector<int> getNeighbourRanksFullShell() override {
 		throw std::runtime_error("GeneralDomainDecomposition::getNeighbourRanksFullShell() not yet implemented");
 	}
 
-	// documentation in base class
+	// documentation see base class (DomainDecompBase.h)
 	void prepareNonBlockingStage(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain,
 								 unsigned int stageNumber) override {
 		throw std::runtime_error("GeneralDomainDecomposition::prepareNonBlockingStage() not yet implemented");
 	}
 
-	// documentation in base class
+	// documentation see base class (DomainDecompBase.h)
 	void finishNonBlockingStage(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain,
 								unsigned int stageNumber) override {
 		throw std::runtime_error("GeneralDomainDecomposition::prepareNonBlockingStage() not yet implemented");
 	}
 
-	// documentation in base class
+	// documentation see base class (DomainDecompBase.h)
 	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain,
 											double etime) override {
 		throw std::runtime_error(
@@ -93,121 +85,166 @@ public:
 																  double cutoff) override {
 		throw std::runtime_error("GeneralDomainDecomposition::getNeighboursFromHaloRegion() not yet implemented");
 	}
-
 private:
-	/**
+
+    /**
 	 * Method that initializes the ALLLoadBalancer
+	 * @throws MARDYN_EXIT if the programme was compiled without ALL
 	 */
-	void initializeALL();
+	void initializeALLLoadBalancer();
+	
+	/**
+	 * Creates a new MPI communicator with topology information added.
+	 * @throws MARDYN_EXIT if MPI communication problems or invalid _gridSize
+	 */
+	void initMPIGridDims();
 
 	/**
-	 * Get the optimal grid for the given dimensions of the box and the number of processes.
-	 * The grid is produced, s.t., the number of grid[0] * grid[1] * grid[2] == numProcs
-	 * The edge lengths of the grid will resemble the lengths of the domain, i.e., the longest edge of the domain will
-	 * also have the largest amount of grid points.
-	 * @param domainLength
-	 * @param numProcs
-	 * @return
+	 * Return the coefficients of variation (CV) also known as relative standard deviation (RSD)
+	 * The coefficient of variation is calculated by dividing the standard deviation by the mean
+	 * @param data array of double
+	 * @param size size of array
+	 * @return coefficients of variation 
 	 */
-	static std::array<size_t, 3> getOptimalGrid(const std::array<double, 3>& domainLength, int numProcs);
-
-	/**
-	 * Get the coordinates from the rank.
-	 * S.t. rank = x * gridSize[1]*gridSize[2] + y * gridSize[2] + z
-	 * @param gridSize
-	 * @param rank
-	 * @return
+	double getCV(double* data, const int size) const noexcept;
+	
+	/** 
+	 * Return the Max divided Min of an array
+	 * @param data array of double
+	 * @param size size of array
+	 * @return Max divided Min
 	 */
-	static std::array<size_t, 3> getCoordsFromRank(const std::array<size_t, 3>& gridSize, int rank);
-
-	/**
-	 * Returns boxMin and boxMax according to regular grid.
-	 * @param domainLength
-	 * @param gridSize
-	 * @param gridCoords
-	 * @return boxMin and boxMax
-	 */
-	static std::tuple<std::array<double, 3>, std::array<double, 3>> initializeRegularGrid(
-		const std::array<double, 3>& domainLength, const std::array<size_t, 3>& gridSize,
-		const std::array<size_t, 3>& gridCoords);
-
-	/**
-	 * Check whether a rebalancing is necessary.
-	 * @param step the step number
-	 * @param updateFrequency the frequency defining how often
-	 * @param lastTraversalTime the time of the last traversal for this node
-	 * @param initPhase Number of time steps in the initial rebalancing phase.
-	 * @param initUpdateFrequency Update frequency within the initial rebalancing phase, normally higher frequency,
-	 * i.e., lower value than updateFrequency.
-	 * @return true if a rebuild is necessary
-	 */
-	static bool queryRebalancing(size_t step, size_t updateFrequency, size_t initPhase, size_t initUpdateFrequency,
-								 double lastTraversalTime);
+	double getMaxdivMin(double* data, const int size) const noexcept; 
 
 	/**
 	 * Initializes communication partners
 	 * @param moleculeContainer
 	 * @param domain
 	 */
-	void initCommPartners(ParticleContainer* moleculeContainer, Domain* domain);
+	void initCommunicationPartners(Domain* domain, ParticleContainer* moleculeContainer);
+
+	/**
+	 * Calculate new distribution on process and migrate accordingly.
+	 * @param lastTraversalTime time of last calculation
+	 * @param domain
+	 * @param particleContainer
+	 */
+	void rebalance(double lastTraversalTime, ParticleContainer* moleculeContainer, Domain* domain);
 
 	/**
 	 * Exchange the particles, s.t., particles are withing the particleContainer of the process they belong to.
 	 * This function will rebuild the particleContainer.
 	 * @param domain
 	 * @param particleContainer
-	 * @param newMin new minimum of the own subdomain
-	 * @param newMax new maximum of the own subdomain
+	 * @param newLocalDomain new local subdomain
 	 */
-	void migrateParticles(Domain* domain, ParticleContainer* particleContainer, std::array<double, 3> newMin,
-						  std::array<double, 3> newMax);
+	void migrateParticles(Domain* domain, ParticleContainer* particleContainer, DomainBox newLocalDomain);
 
 	/**
-	 * Latches domain boundaries (given as boxMin and boxMax) to a grid, which is defined by _gridSize.
-	 * If boxMax matches the top boundary, it is not changed.
-	 * @param boxMin
-	 * @param boxMax
-	 * @return The new boundaries.
+	 * Check, based on the specified settings, whether rebalancing should be carried out in the specified iteration
+	 * @param step current step of the simulation
 	 */
-	std::pair<std::array<double, 3>, std::array<double, 3>> latchToGridSize(std::array<double, 3> boxMin,
-																			std::array<double, 3> boxMax) {
-		for (size_t ind = 0; ind < 3; ++ind) {
-			double currentGridSize = (*_gridSize)[ind];
-			// For boxmin, the lower domain boundary is 0, so that's always fine!
-			boxMin[ind] = std::round(boxMin[ind] / currentGridSize) * currentGridSize;
-			// update boxmax only if it isn't at the very top of the domain!
-			if (boxMax[ind] != _domainLength[ind]) {
-				boxMax[ind] = std::round(boxMax[ind] / currentGridSize) * currentGridSize;
-			}
-		}
-		return {boxMin, boxMax};
-	}
+	bool checkRebalancing(size_t step) const noexcept;
+	
+	/**
+	 * Checks, based on available parameters (e.g. lastTraversalTime), whether rebalancing appears to be sensible. 
+	 * This function uses the _imbalanceThresholdMode value internally to decide which method to use for the assessment. 
+	 * This value, along with other values required for the assessment, is set via the settings.  
+	 * If the _imbalanceThresholdMode value is 0, True is always returned. 
+	 * For value 1, the coefficient of variation of all lastTraversalTime values is compared with the threshold (_imbalanceThresholdCV).
+	 *  -> Using the getCV helper function
+	 *  -> Note: The coefficient of variation was preferred over the standard deviation, as it is relative to the lastTraversalTime and is therefore a unitless quantity. 
+	 * For value 2, the maximum divided by the minimum of all lastTraversalTime values is compared with the threshold (_imbalanceThresholdMinMax).
+	 *  -> Using the getMaxdivMin helper function
+	 * @param lastTraversalTime
+	 * @throws MARDYN_EXIT if MPI communication problems
+	 * @return True if rebalancing appears sensible or if no method of classification is enabled. 
+	 */
+	bool checkNeedRebalance(double lastTraversalTime);
 
-	// variables
-	std::array<double, 3> _boxMin;
-	std::array<double, 3> _boxMax;
+	/**
+	 * Checks whether a proposed new domain decomposition is sensible. 
+	 * To this end, the function compares the proposed decomposition with the current and previous ones. 
+	 *  -> Using the domainDecompositionPercentageOfRepeatedChanges helper function
+	 * The function builds a global view of the domain decomposition for the specified objective.
+	 * @param proposedLocalDomain new proposed subdomain
+	 * @throws MARDYN_EXIT if MPI communication problems
+	 * @return True if Either Rebalance is sensible or the Featcher is disabled.
+	 */
+	bool checkForSensibleRebalance(const DomainBox& proposedLocalDomain);
 
-	std::array<double, 3> _domainLength;
-	double _interactionLength;
+	/**
+	 * Can modify the proposed new domain decomposition according to user-defined methods.
+	 * Currently, only the functionality provided by the latchToGridSize function is supported.
+	 * @param proposedLocalDomain new proposed subdomain
+	 * @return possibly modified proposed subdomain
+	 */
+	DomainBox reviseNewRebalance(DomainBox proposedLocalDomain) noexcept;
 
+	/**
+	 * checked whether the data in _minimalDomainSize is valid
+	 * @throws MARDYN_EXIT if invalid minimum domain boundary settings
+	 * @param minimalDomainBoundary minimal DomainSize in each dimension
+	 */
+	void checkMinimalDomainSize(double minimalDomainBoundary);
+	
+	/**
+	 * Calculates the geometric similarity between the previous domain decomposition change and the current proposed domain decomposition change.
+	 * Geometric similarity is a procedural similarity measure defined as the geometric intersection divided by the geometric union. 
+	 * In this specific context, a value of 1 would mean that the proposed change is an undo of the preceding change. 
+	 *
+	 * The function first generates a geometric representation of the domain decomposition change by finding, for two consecutive domain decompositions, all intersections between two subdomains from different processes. 
+	 * The geometries thus identified correspond to regions that were swapped during load balancing. 
+	 * This is done, firstly, between the previous and current domain decompositions, and secondly, between the current and proposed domain decompositions.
+	 * The geometric similarity is then calculated between these two domain decomposition changes
+	 */
+	double domainDecompositionPercentageOfRepeatedChanges() noexcept;
+
+    // ------ private data members ------
+	bool _cartCommunicatorCreated = false; // Indicates whether a communicator with topology information has already been created.
+	
+	int _imbalanceThresholdMode{0}; // 0 == disabled, 1 == Coefficient of variation (CV), 2 == MinMax 
+	double _imbalanceThresholdCV{0};
+	double _imbalanceThresholdMinMax{0};
+	
+	// Variables for storing the global view of the domain decompositions. 
+	std::vector<DomainBox> _previousDomainDecomposition;
+    std::vector<DomainBox> _currentDomainDecomposition;
+	std::vector<DomainBox> _proposedDomainDecomposition;
+
+	// These vectors are retained as private members for the
+	// maximumRepeatedLoadChange feature to prevent repeated allocations.
+	std::vector<double> _mpiBufferDomainDecomposition;
+	std::vector<DomainBox> _previousDomainDecompositionChange; // between previous and current
+    std::vector<DomainBox> _proposedDomainDecompositionChange; // between future and current
+    
+	double _maximumRepeatedLoadChange{1}; // represents a percentage, 1 == disabled
+
+	DomainBox _localDomain{}; // The currently used local domain
+	DomainBox _proposedLocalDomain{}; // The proposed version of the local domain used, without modifications
+
+	//skin is exending minimum domain size for _minimalDomainSize
+	double _skin; //is passed upon instantiation; defined by ParticleContainer settings
+	DomainPoint _skinDims;  
+	std::vector<double> _minimalDomainSize = {0., 0., 0.};
+	
+	DomainPoint _domainLength;
+	double _cutoffRadius;
+	
+	// Setting for the funtion checkRebalancing
 	size_t _steps{0};
 	size_t _rebuildFrequency{10000};
-
 	size_t _initPhase{0};
 	size_t _initFrequency{500};
-
-	/**
-	 * Optionally safe a given grid size on which the process boundaries are bound/latched.
-	 * If no value is given, it is not used.
-	 */
-	std::optional<std::array<double, 3>> _gridSize{};
-
-	/**
-	 * Bool that indicates whether a grid should be forced even if no gridSize is set.
-	 */
-	bool _forceLatchingToLinkedCellsGrid{false};
-
+	
+	// the LoadBalancer used
 	std::unique_ptr<LoadBalancer> _loadBalancer{nullptr};
-
-	friend class GeneralDomainDecompositionTest;
+	
+	// Number of processes in each dimension of the MPI process grid
+	DomainGridPoint _gridSize;
+	// dimensions for latching grid
+	std::optional<DomainPoint> _latchedGridSize;
+	
+	// Coordinate of the process in the MPI process grid
+	DomainGridPoint _coords;
 };

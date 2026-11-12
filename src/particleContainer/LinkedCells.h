@@ -138,6 +138,9 @@ public:
 	// documentation see father class (ParticleContainer.h)
 	bool rebuild(double bBoxMin[3], double bBoxMax[3]) override;
 
+	// documentation see father class (ParticleContainer.h)
+	std::vector<Molecule> rebuildFilter(double bBoxMin[3], double bBoxMax[3]) override;
+
 	//! Pointers to the particles are put into cells depending on the spacial position
 	//! of the particles.
 	//! Before the call of this method, this distribution might have become invalid.

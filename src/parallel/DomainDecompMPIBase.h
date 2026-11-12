@@ -18,10 +18,6 @@
 #include "CommunicationPartner.h"
 #include "ParticleDataForwardDeclaration.h"
 
-#define LOWER  0
-#define HIGHER 1
-
-#define DIMgeom 3
 
 class NeighbourCommunicationScheme;
 
@@ -33,7 +29,7 @@ public:
 	DomainDecompMPIBase(MPI_Comm comm);
 	virtual ~DomainDecompMPIBase();
 
-	// documentation see father class (DomainDecompBase.h)
+	// documentation see base class (DomainDecompBase.h)
 	void barrier() const override {
 		MPI_CHECK(MPI_Barrier(_comm));
 	}
@@ -52,7 +48,7 @@ public:
 	// CollectiveCommunication (or CollectiveCommDummy in the sequential
 	// case). To get information about how to use this methods, read
 	// the documentation of the class CollectiveCommunication and of the
-	// father class of this class (DomainDecompBase.h)
+	// base class of this class (DomainDecompBase.h)
 	//##################################################################
 	void collCommInit(int numValues, int key=0) override {
 		_collCommunication->init(_comm, numValues, key);

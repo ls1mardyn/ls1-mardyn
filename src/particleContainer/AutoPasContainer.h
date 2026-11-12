@@ -62,6 +62,8 @@ public:
 
 	bool rebuild(double bBoxMin[3], double bBoxMax[3]) override;
 
+	std::vector<Molecule> rebuildFilter(double bBoxMin[3], double bBoxMax[3]) override;
+
 	void update() override;
 
 	bool addParticle(Molecule &particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false,
