@@ -76,6 +76,7 @@
             <electrostatic type="ReactionField" >
                 <epsilon>1.0e+10</epsilon>
             </electrostatic>
+            <longrange type="none"/>
         </algorithm>
 
         <output>
