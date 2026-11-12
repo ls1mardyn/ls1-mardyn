@@ -112,6 +112,7 @@
                     </regions>
                 </thermostat>
             </thermostats>
+            <longrange type="none"/>
         </algorithm>
 
         <output>
