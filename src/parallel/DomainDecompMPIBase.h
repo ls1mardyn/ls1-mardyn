@@ -18,10 +18,6 @@
 #include "CommunicationPartner.h"
 #include "ParticleDataForwardDeclaration.h"
 
-#define LOWER  0
-#define HIGHER 1
-
-#define DIMgeom 3
 
 class NeighbourCommunicationScheme;
 
