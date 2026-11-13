@@ -19,7 +19,7 @@ jobs:
     strategy:
       # do not cancel all other workflow runs if one fails
       fail-fast: false
-      matrix: 
+      matrix:
         vector: ['SSE', 'NONE', 'AVX', 'AVX2']
         target: ['Debug', 'Release']
         parall: ['SEQ', 'PAR']
@@ -87,14 +87,14 @@ jobs:
           cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
                 -DENABLE_AUTOPAS=${{ matrix.autopas }} \
-                -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON \
+                -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=OFF \
                 -DENABLE_ALLLBL=$alllbl_enabled \
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
                 -DENABLE_UNIT_TESTS=ON \
                 -DENABLE_VTK=ON \
               ..
-        
+
           cmake --build . --parallel 1
 
           cd ..
@@ -150,13 +150,13 @@ jobs:
           cmake -DVECTOR_INSTRUCTIONS=${{ matrix.vector }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.target }} \
                 -DENABLE_AUTOPAS=${{ matrix.autopas }} \
-                -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=ON \
+                -DAUTOPAS_ENABLE_RULES_BASED_AND_FUZZY_TUNING=OFF \
                 -DENABLE_ALLLBL=$alllbl_enabled \
                 -DOPENMP=${{ matrix.openmp }} \
                 -DENABLE_MPI=$mpi_enabled \
                 -DENABLE_VTK=ON \
               ..
-        
+
           cmake --build . --parallel 1
 
           #as example list of new version is used, also the example files of new version should be used
@@ -167,7 +167,7 @@ jobs:
 
           #set strict pipefail option
           set -eo pipefail
-        
+
           # execute all examples. These calls create artifacts which we will then compare
           IFS=$'\n'
           for i in $(cat "${repoPath}/${examplesFile}" )
@@ -179,7 +179,7 @@ jobs:
             fi
             echo $i
             cd $repoPath/examples/$(dirname $i)
-        
+
             # patch input files according to current conf
             cp $(basename $i) input_patched.xml
             # if AutoPas is enabled, replace all occurrences of LinkedCell in the examples' config files with AutoPas
@@ -205,7 +205,7 @@ jobs:
                 printf "   Running new version... "
                 EXE=$repoPath/build_${JOBNAME}/src/MarDyn
               fi
-        
+
               # when using OpenMPI --oversubscribe is needed. Remove it if you switch to MPICH.
               mpirun --oversubscribe -np ${{ matrix.procs }} ${EXE} input_patched.xml --steps=20                            \
                 | tee "output_${{ join(matrix.*, '-') }}"                                                   \
