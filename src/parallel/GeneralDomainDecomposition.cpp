@@ -43,10 +43,10 @@ _coords{0, 0,0} {
 
 void GeneralDomainDecomposition::initMPIGridDims() {
 	mardyn_assert(DIMgeom == 3);
-	int period[DIMgeom] = {1, 1, 1}; // 1(true) when using periodic boundary conditions in the corresponding dimension
-	int reorder = 1; // 1(true) if the ranking may be reordered by MPI_Cart_create
+	const int period[DIMgeom] = {1, 1, 1}; // 1(true) when using periodic boundary conditions in the corresponding dimension
+	const int reorder = 1; // 1(true) if the ranking may be reordered by MPI_Cart_create
 	{
-		auto numProcsGridSize = _gridSize[0] * _gridSize[1] * _gridSize[2];
+		const int numProcsGridSize = _gridSize[0] * _gridSize[1] * _gridSize[2];
 		if (numProcsGridSize != _numProcs and numProcsGridSize != 0) {
 			std::ostringstream error_message;
 			error_message << "GeneralDomainDecomposition: Wrong grid size given!" << std::endl;
@@ -88,7 +88,7 @@ GeneralDomainDecomposition::~GeneralDomainDecomposition() {
 void GeneralDomainDecomposition::initializeALLLoadBalancer() {
 	Log::global_log->info() << "GeneralDomainDecomposition: initializing ALL load balancer..." << std::endl;
 #ifdef ENABLE_ALLLBL
-	_loadBalancer = std::make_unique<ALLLoadBalancer>(this->getCommunicator(), _gridSize,  _minimalDomainSize);
+	_loadBalancer = std::make_unique<ALLLoadBalancer>(_comm, _gridSize,  _minimalDomainSize);
 #else
 	std::ostringstream error_message;
 	error_message << "ALL load balancing library not enabled. Aborting." << std::endl;
@@ -479,8 +479,8 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 
 	bool allDone = false;
 	double waitCounter = 30.0;
-	double deadlockTimeOut = 360.0;
-	double startTime = MPI_Wtime();
+	const double deadlockTimeOut = 360.0;
+	const double startTime = MPI_Wtime();
 	while (not allDone) {
 		allDone = true;
 
@@ -491,7 +491,7 @@ void GeneralDomainDecomposition::migrateParticles(Domain* domain, ParticleContai
 
 		// unpack molecules
 		for (auto& recv : recvNeighbors) {
-			allDone &= recv.iprobeCount(this->getCommunicator(), this->getMPIParticleType());
+			allDone &= recv.iprobeCount(_comm, _mpiParticleType);
 			allDone &= recv.testRecv(moleculeContainer, false);
 		}
 

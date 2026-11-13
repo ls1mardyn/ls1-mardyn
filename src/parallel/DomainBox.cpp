@@ -134,12 +134,9 @@ void DomainBox::latchToGridSize(const DomainPoint& latchedGridSize, const Domain
     }
 }
 
-std::ostream& operator<<(std::ostream& os, const DomainBox& box)
-{
-    os << "DomainBox{"
-       << "min=[" << box.min[0] << ", " << box.min[1] << ", " << box.min[2] << "], "
-       << "max=[" << box.max[0] << ", " << box.max[1] << ", " << box.max[2] << "]"
-       << "}";
+std::ostream& operator<<(std::ostream& os, const DomainBox& box) {
+    os << "[" << "[" << box.min[0] << ", " << box.min[1] << ", " << box.min[2] << "], "
+       << "[" << box.max[0] << ", " << box.max[1] << ", " << box.max[2] << "]" << "]";
     return os;
 }
 
