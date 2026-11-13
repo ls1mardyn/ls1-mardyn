@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   ci-matrix:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Fix newer CMake in ubuntu-latest
     strategy:
       # do not cancel all other workflow runs if one fails
       fail-fast: false
