@@ -322,6 +322,8 @@ bool GeneralDomainDecomposition::checkRebalancing(size_t step) const noexcept {
 
 void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing,
 													ParticleContainer* moleculeContainer, Domain* domain) {							
+	const double averageLastTraversalTime = setLastTraversalTime(lastTraversalTime);
+	
 	if (_steps == 0) {
 		// ensure that there are no outer particles
 		moleculeContainer->deleteOuterParticles();
@@ -333,9 +335,9 @@ void GeneralDomainDecomposition::balanceAndExchange(double lastTraversalTime, bo
 
 	const bool doRebalance = checkRebalancing(_steps) || forceRebalancing;
 	if (doRebalance) {
-		const bool needRebalance = checkNeedRebalance(lastTraversalTime);
+		const bool needRebalance = checkNeedRebalance(averageLastTraversalTime);
 		if (needRebalance || forceRebalancing) {
-			rebalance(lastTraversalTime, moleculeContainer, domain);
+			rebalance(averageLastTraversalTime, moleculeContainer, domain);
 		}
 		else {
 			Log::global_log->info() << "GeneralDomainDecomposition: Skiping rebalancing" << std::endl;

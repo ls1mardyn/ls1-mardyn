@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <numeric>
+#include <iterator>
 
 #include "parallel/DomainDecompBase.h"
 #include "Domain.h"
@@ -430,7 +432,9 @@ bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancin
 	return false;
 }
 
-void DomainDecompBase::balanceAndExchange(double /*lastTraversalTime*/, bool /* forceRebalancing */, ParticleContainer* moleculeContainer, Domain* domain) {
+void DomainDecompBase::balanceAndExchange(double lastTraversalTime, bool /* forceRebalancing */, ParticleContainer* moleculeContainer, Domain* domain) {
+	//Add lastTraversalTime to the internal storage so that plugins and other modules can access this information. 
+	setLastTraversalTime(lastTraversalTime);
 	exchangeMolecules(moleculeContainer, domain);
 }
 
@@ -652,5 +656,29 @@ double DomainDecompBase::getIOCutoffRadius(int dim, Domain* domain,
 	return cutoff;
 }
 
+void DomainDecompBase::setLastTraversalTimeAveragingWindowSize(size_t new_capacity) noexcept{
+	_lastTraversalTimeHistory.setCapacity(new_capacity);
+}
 
+double DomainDecompBase::setLastTraversalTime(double lastTraversalTime) {
+	_lastTraversalTimeHistory.insert(lastTraversalTime);
+	return getAverageLastTraversalTime();
+}
 
+double DomainDecompBase::getLastTraversalTime() const noexcept{
+	if (_lastTraversalTimeHistory.size() == 0) {
+		return 0.0;
+	}
+	// The newest entry is at the back (insert() uses push_back).
+	return *std::prev(_lastTraversalTimeHistory.end());
+}
+
+double DomainDecompBase::getAverageLastTraversalTime() const noexcept{
+	const size_t count = _lastTraversalTimeHistory.size();
+	if (count == 0) {
+		return 0.0;
+	}
+	const double sum = std::accumulate(_lastTraversalTimeHistory.begin(),
+	                                   _lastTraversalTimeHistory.end(), 0.0);
+	return sum / static_cast<double>(count);
+}

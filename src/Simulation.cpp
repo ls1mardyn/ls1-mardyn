@@ -420,7 +420,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				error_message << "timerForLoadAveragingLength has to be at least 1" << std::endl;
 				MARDYN_EXIT(error_message.str());
 			}
-			_lastTraversalTimeHistory.setCapacity(timerForLoadAveragingLength);
+			_domainDecomposition->setLastTraversalTimeAveragingWindowSize(timerForLoadAveragingLength);
 
 			if(xmlconfig.changecurrentnode("boundaries")) {
 				std::string xBoundaryFromConfig, yBoundaryFromConfig, zBoundaryFromConfig;
@@ -1422,14 +1422,9 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 	_moleculeContainer->update();
 	global_simulation->timers()->stop("SIMULATION_UPDATE_CONTAINER");
 
-	_lastTraversalTimeHistory.insert(lastTraversalTime);
-	double averageLastTraversalTime =
-		std::accumulate(_lastTraversalTimeHistory.begin(), _lastTraversalTimeHistory.end(), 0.) /
-		_lastTraversalTimeHistory.size();
-
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
-	_domainDecomposition->balanceAndExchange(averageLastTraversalTime, forceRebalancing, _moleculeContainer,
+	_domainDecomposition->balanceAndExchange(lastTraversalTime, forceRebalancing, _moleculeContainer,
 											 _domain);
 	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
 
