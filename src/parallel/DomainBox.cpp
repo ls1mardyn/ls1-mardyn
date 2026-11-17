@@ -9,6 +9,7 @@
 #include <cmath>
 #include <sstream>
 #include "utils/mardyn_assert.h"
+#include "utils/Math.h"
 
 DomainBox::DomainBox(const DomainPoint& min_, const DomainPoint& max_) noexcept
     : min(min_), max(max_) {}
@@ -117,6 +118,17 @@ double DomainBox::intersectionVolume(const DomainBox& other) const noexcept {
     if (w <= 0 || h <= 0 || d <= 0) return 0.0;
     return w * h * d;
 }
+
+bool DomainBox::isNearEqual(const DomainBox& other) const noexcept{
+    for (std::size_t ind = 0; ind < DIMgeom; ++ind) {
+        if (!isNearRel(min[ind], other.min[ind]) || !isNearRel(max[ind], other.max[ind])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 
 std::array<double, 6> DomainBox::toArray() const noexcept {
     return { min[0], min[1], min[2], max[0], max[1], max[2] };

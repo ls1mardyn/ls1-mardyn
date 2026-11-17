@@ -109,6 +109,13 @@ public:
     double intersectionVolume(const DomainBox& other) const noexcept;
 
     /**
+     * Compares The values of The DomainBox with another box element by element using isNearRel.
+     * @param other The other DomainBox
+     * @return true if all corresponding values are sufficiently close; false otherwise.
+     */
+    bool isNearEqual(const DomainBox& other) const noexcept;
+
+    /**
      * Converts the DomainBox to a flat array.
      * @return {min.x, min.y, min.z, max.x, max.y, max.z}.
      */

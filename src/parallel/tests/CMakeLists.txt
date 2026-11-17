@@ -8,6 +8,7 @@ if(ENABLE_MPI)
         PRIVATE
             CollectiveCommunicationTest.cpp
             CommunicationBufferTest.cpp
+            DomainBoxTest.cpp
             DomainDecompositionTest.cpp
             KDDecompositionTest.cpp
             KDNodeTest.cpp
