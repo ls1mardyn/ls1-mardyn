@@ -10,7 +10,7 @@
 #include <optional>
 #include <ostream>
 #include <vector>
-#include "parallel/DomainDecompMPIBase.h" // for DIMgeom Definition
+#include "parallel/DomainDecompBase.h" // for DIMgeom Definition
 
 using DomainGridPoint = std::array<int, DIMgeom>;
 using DomainPoint = std::array<double, DIMgeom>;

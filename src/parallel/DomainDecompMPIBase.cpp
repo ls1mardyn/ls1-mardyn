@@ -308,6 +308,11 @@ size_t DomainDecompMPIBase::getTotalSize() {
 			+ _collCommunication->getTotalSize();
 }
 
+DomainBox DomainDecompMPIBase::getDomainBox(Domain *domain){
+	return DomainBox(getBoundingBoxMin(0, domain), getBoundingBoxMin(1, domain), getBoundingBoxMin(2, domain),
+					 getBoundingBoxMax(0, domain), getBoundingBoxMax(1, domain), getBoundingBoxMax(2, domain));
+}
+
 void DomainDecompMPIBase::printDecomp(const std::string &filename, Domain *domain, ParticleContainer *particleContainer) {
 	if (_rank == 0) {
 		std::ofstream povcfgstrm(filename);

@@ -7,6 +7,7 @@ target_sources(MarDyn
         CommunicationPartnerWriter.cpp
         CubicGridGeneratorInternal.cpp
         DecompWriter.cpp
+        DomainDecompAnalyser.cpp
         EnergyLogWriter.cpp
         FlopRateWriter.cpp
         GammaWriter.cpp

@@ -48,6 +48,9 @@ public:
 	// documentation see base class (DomainDecompBase.h)
 	double getBoundingBoxMax(int dimension, Domain* domain) override;
 
+	// documentation see base class (DomainDecompMPIBase.h)
+	DomainBox getDomainBox(Domain *domain) override;
+
 	void balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer,
 							Domain* domain) override;
 

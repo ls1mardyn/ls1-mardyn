@@ -12,6 +12,7 @@
 #include <vector>
 #include <memory>
 
+#include "parallel/DomainBox.h"
 #include "utils/Logger.h"
 #include "DomainDecompBase.h"
 #include "CollectiveCommunicationInterface.h"
@@ -215,6 +216,12 @@ public:
 	virtual int getNonBlockingStageCount() override;
 
 	virtual size_t getTotalSize() override;
+
+	/**
+	 * get the DomainBox of this process' domain
+	 * @note This function is currently located here rather than in DomainDecompBase to avoid recursive dependencies. 
+	 */
+	virtual DomainBox getDomainBox(Domain *domain);
 
 	virtual void printSubInfo(int offset) override;
 

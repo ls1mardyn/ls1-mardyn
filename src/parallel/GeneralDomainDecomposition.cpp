@@ -248,6 +248,8 @@ double GeneralDomainDecomposition::getBoundingBoxMin(int dimension, Domain* /*do
 
 double GeneralDomainDecomposition::getBoundingBoxMax(int dimension, Domain* /*domain*/) { return _localDomain.max[dimension]; }
 
+DomainBox GeneralDomainDecomposition::getDomainBox(Domain* /*domain*/) { return _localDomain; }
+
 bool GeneralDomainDecomposition::checkNeedRebalance(double lastTraversalTime) {
 	if (_imbalanceThresholdMode == 0){
 		return true; // checkNeedRebalance is disabled
