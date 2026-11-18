@@ -18,6 +18,7 @@
 #include "io/CheckpointWriter.h"
 #include "io/CommunicationPartnerWriter.h"
 #include "io/DecompWriter.h"
+#include "io/DomainDecompAnalyser.h"
 #include "io/EnergyLogWriter.h"
 #include "io/FlopRateWriter.h"
 #include "io/GammaWriter.h"
@@ -94,6 +95,7 @@ void PluginFactory<PluginBase>::registerDefaultPlugins() {
 	REGISTER_PLUGIN(CommunicationPartnerWriter);
 	REGISTER_PLUGIN(DecompWriter);
 	REGISTER_PLUGIN(DirectedPM);
+	REGISTER_PLUGIN(DomainDecompAnalyser);
 	REGISTER_PLUGIN(Dropaccelerator);
 	REGISTER_PLUGIN(Dropaligner);
 	REGISTER_PLUGIN(EnergyLogWriter);

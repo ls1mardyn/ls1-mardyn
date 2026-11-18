@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <numeric>
+#include <iterator>
 
 #include "parallel/DomainDecompBase.h"
 #include "Domain.h"
@@ -33,7 +35,7 @@ void DomainDecompBase::setGlobalBoundaryType(DimensionUtils::DimensionType dimen
 
 void DomainDecompBase::setBoundsAndGlobalBoundaries(Domain* domain, Ensemble* ensemble) {
 	//find which walls to consider
-	double startRegion[3], endRegion[3];
+	double startRegion[DIMgeom], endRegion[DIMgeom];
 	getBoundingBoxMinMax(domain, startRegion, endRegion);
 	const double* globStartRegion = ensemble->domain()->rmin();
 	const double* globEndRegion = ensemble->domain()->rmax();
@@ -85,15 +87,15 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 		addLeavingMolecules(moleculeContainer->getInvalidParticlesRef(), moleculeContainer);
 		// now use direct scheme to transfer the rest!
 		FullShell fs;
-		double rmin[3];  // lower corner
-		double rmax[3];  // higher corner
-		for (int d = 0; d < 3; d++) {
+		double rmin[DIMgeom];  // lower corner
+		double rmax[DIMgeom];  // higher corner
+		for (int d = 0; d < DIMgeom; d++) {
 			rmin[d] = getBoundingBoxMin(d, domain);
 			rmax[d] = getBoundingBoxMax(d, domain);
 		}
 		HaloRegion ownRegion = {rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0, 0.};
-		bool coversWholeDomain[3];
-		double cellLengthDummy[3]{};
+		bool coversWholeDomain[DIMgeom];
+		double cellLengthDummy[DIMgeom]{};
 		Log::global_log->debug() << "DDBase: Populating halo." << std::endl;
 		auto haloExportRegions =
 			fs.getHaloExportForceImportRegions(ownRegion, moleculeContainer->getCutoff(),
@@ -104,17 +106,17 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 		}
 	} else {
 	    // default ls1-mode (non-autopas, so linked-cells!)
-		for (unsigned d = 0; d < 3; ++d) {
+		for (unsigned d = 0; d < DIMgeom; ++d) {
 			handleDomainLeavingParticles(d, moleculeContainer);
 		}
-		for (unsigned d = 0; d < 3; ++d) {
+		for (unsigned d = 0; d < DIMgeom; ++d) {
 			populateHaloLayerWithCopies(d, moleculeContainer);
 		}
 	}
 }
 
 void DomainDecompBase::exchangeForces(ParticleContainer* moleculeContainer, Domain* domain){
-	for (unsigned d = 0; d < 3; ++d) {
+	for (unsigned d = 0; d < DIMgeom; ++d) {
 		handleForceExchange(d,moleculeContainer);
 	}
 }
@@ -130,10 +132,10 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 
 		// Loop over all halo particles in the positive direction
 		double cutoff = moleculeContainer->getCutoff();
-		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0) - cutoff,
+		double startRegion[DIMgeom]{moleculeContainer->getBoundingBoxMin(0) - cutoff,
 							  moleculeContainer->getBoundingBoxMin(1) - cutoff,
 							  moleculeContainer->getBoundingBoxMin(2) - cutoff};
-		double endRegion[3]{moleculeContainer->getBoundingBoxMax(0) + cutoff,
+		double endRegion[DIMgeom]{moleculeContainer->getBoundingBoxMax(0) + cutoff,
 							moleculeContainer->getBoundingBoxMax(1) + cutoff,
 							moleculeContainer->getBoundingBoxMax(2) + cutoff};
 
@@ -147,7 +149,7 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 #pragma omp parallel shared(startRegion, endRegion)
 #endif
 		{
-			double shiftedPosition[3];
+			double shiftedPosition[DIMgeom];
 
 			decltype(moleculeContainer->getMoleculeAtPosition(shiftedPosition)) originalPreviousIter{};
 
@@ -167,8 +169,8 @@ void DomainDecompBase::handleForceExchange(unsigned dim, ParticleContainer* mole
 }
 
 void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, ParticleContainer* moleculeContainer) const {
-	double shift[3];
-	for (int dim=0;dim<3;dim++){
+	double shift[DIMgeom];
+	for (int dim = 0; dim < DIMgeom; dim++){
 		shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 		shift[dim] *= haloRegion.offset[dim] * (-1);  // for halo regions the shift has to be multiplied with -1; as the offset is in negative direction of the shift
 	}
@@ -177,7 +179,7 @@ void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, P
 #pragma omp parallel
 #endif
 	{
-		double shiftedPosition[3];
+		double shiftedPosition[DIMgeom];
 
 		decltype(moleculeContainer->getMoleculeAtPosition(shiftedPosition)) originalPreviousIter{};
 
@@ -186,7 +188,7 @@ void DomainDecompBase::handleForceExchangeDirect(const HaloRegion& haloRegion, P
 			 haloIter.isValid(); ++haloIter) {
 			// Add force of halo particle to original particle (or other duplicates)
 			// that have a distance of -'shiftMagnitude' in the current direction
-			for (int dim = 0; dim < 3; dim++) {
+			for (int dim = 0; dim < DIMgeom; dim++) {
 				shiftedPosition[dim] = haloIter->r(dim) + shift[dim];
 			}
 			originalPreviousIter =
@@ -207,10 +209,10 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
 
 		double cutoff = moleculeContainer->getCutoff();
-		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0) - cutoff,
+		double startRegion[DIMgeom]{moleculeContainer->getBoundingBoxMin(0) - cutoff,
 							  moleculeContainer->getBoundingBoxMin(1) - cutoff,
 							  moleculeContainer->getBoundingBoxMin(2) - cutoff};
-		double endRegion[3]{moleculeContainer->getBoundingBoxMax(0) + cutoff,
+		double endRegion[DIMgeom]{moleculeContainer->getBoundingBoxMax(0) + cutoff,
 							moleculeContainer->getBoundingBoxMax(1) + cutoff,
 							moleculeContainer->getBoundingBoxMax(2) + cutoff};
 
@@ -251,8 +253,8 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& haloRegion,
 														  ParticleContainer* moleculeContainer,
 														  std::vector<Molecule>& invalidParticles) const {
-	double shift[3];
-	for (int dim = 0; dim < 3; dim++) {
+	double shift[DIMgeom];
+	for (int dim = 0; dim < DIMgeom; dim++) {
 		shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 		shift[dim] *= haloRegion.offset[dim] * (-1);  // for halo regions the shift has to be multiplied with -1; as the
 													  // offset is in negative direction of the shift
@@ -264,7 +266,7 @@ void DomainDecompBase::handleDomainLeavingParticlesDirect(const HaloRegion& halo
 			error_message << "trying to remove a particle that is not in the halo region" << std::endl;
 			MARDYN_EXIT(error_message.str());
 		}
-		for (int dim = 0; dim < 3; dim++) {
+		for (int dim = 0; dim < DIMgeom; dim++) {
 			if (shift[dim] != 0) {
 				m.setr(dim, m.r(dim) + shift[dim]);
 				// some additional shifting to ensure that rounding errors do not hinder the correct
@@ -331,10 +333,10 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
 
-		double startRegion[3]{moleculeContainer->getBoundingBoxMin(0) - interactionLength,
+		double startRegion[DIMgeom]{moleculeContainer->getBoundingBoxMin(0) - interactionLength,
 							  moleculeContainer->getBoundingBoxMin(1) - interactionLength,
 							  moleculeContainer->getBoundingBoxMin(2) - interactionLength};
-		double endRegion[3]{moleculeContainer->getBoundingBoxMax(0) + interactionLength,
+		double endRegion[DIMgeom]{moleculeContainer->getBoundingBoxMax(0) + interactionLength,
 							moleculeContainer->getBoundingBoxMax(1) + interactionLength,
 							moleculeContainer->getBoundingBoxMax(2) + interactionLength};
 
@@ -377,8 +379,8 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 
 void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloRegion,
 														 ParticleContainer* moleculeContainer, bool positionCheck) const {
-	double shift[3];
-	for (int dim = 0; dim < 3; dim++) {
+	double shift[DIMgeom];
+	for (int dim = 0; dim < DIMgeom; dim++) {
 		shift[dim] = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 		shift[dim] *= haloRegion.offset[dim] * (-1);  // for halo regions the shift has to be multiplied with -1; as the
 													  // offset is in negative direction of the shift
@@ -393,7 +395,7 @@ void DomainDecompBase::populateHaloLayerWithCopiesDirect(const HaloRegion& haloR
 														ParticleIterator::ONLY_INNER_AND_BOUNDARY);
 			 i.isValid(); ++i) {
 			Molecule m = *i;
-			for (int dim = 0; dim < 3; dim++) {
+			for (int dim = 0; dim < DIMgeom; dim++) {
 				if (shift[dim] != 0) {
 					m.setr(dim, m.r(dim) + shift[dim]);
 					if (positionCheck) {
@@ -430,7 +432,9 @@ bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancin
 	return false;
 }
 
-void DomainDecompBase::balanceAndExchange(double /*lastTraversalTime*/, bool /* forceRebalancing */, ParticleContainer* moleculeContainer, Domain* domain) {
+void DomainDecompBase::balanceAndExchange(double lastTraversalTime, bool /* forceRebalancing */, ParticleContainer* moleculeContainer, Domain* domain) {
+	//Add lastTraversalTime to the internal storage so that plugins and other modules can access this information. 
+	setLastTraversalTime(lastTraversalTime);
 	exchangeMolecules(moleculeContainer, domain);
 }
 
@@ -569,7 +573,7 @@ void DomainDecompBase::writeMoleculesToFile(const std::string& filename, Particl
 }
 
 void DomainDecompBase::getBoundingBoxMinMax(Domain *domain, double *min, double *max) {
-	for(int d = 0; d < 3; d++) {
+	for(int d = 0; d < DIMgeom; d++) {
 		min[d] = getBoundingBoxMin(d, domain);
 		max[d] = getBoundingBoxMax(d, domain);
 	}
@@ -652,5 +656,29 @@ double DomainDecompBase::getIOCutoffRadius(int dim, Domain* domain,
 	return cutoff;
 }
 
+void DomainDecompBase::setLastTraversalTimeAveragingWindowSize(size_t new_capacity) noexcept{
+	_lastTraversalTimeHistory.setCapacity(new_capacity);
+}
 
+double DomainDecompBase::setLastTraversalTime(double lastTraversalTime) {
+	_lastTraversalTimeHistory.insert(lastTraversalTime);
+	return getAverageLastTraversalTime();
+}
 
+double DomainDecompBase::getLastTraversalTime() const noexcept{
+	if (_lastTraversalTimeHistory.size() == 0) {
+		return 0.0;
+	}
+	// The newest entry is at the back (insert() uses push_back).
+	return *std::prev(_lastTraversalTimeHistory.end());
+}
+
+double DomainDecompBase::getAverageLastTraversalTime() const noexcept{
+	const size_t count = _lastTraversalTimeHistory.size();
+	if (count == 0) {
+		return 0.0;
+	}
+	const double sum = std::accumulate(_lastTraversalTimeHistory.begin(),
+	                                   _lastTraversalTimeHistory.end(), 0.0);
+	return sum / static_cast<double>(count);
+}

@@ -4,6 +4,7 @@ cmake-build-*/
 build*/
 *.swp
 .idea/
+.cache
 .project
 .settings
 

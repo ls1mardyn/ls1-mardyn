@@ -15,9 +15,12 @@
 #include "io/MemoryProfiler.h"
 #include "molecules/MoleculeForwardDeclaration.h"
 #include "utils/Logger.h"  // is this used?
+#include "utils/FixedSizeQueue.h"
 
 #include "boundaries/BoundaryHandler.h"
 #include "ensemble/EnsembleBase.h"
+
+#define DIMgeom 3
 
 class Component;
 class Domain;
@@ -347,6 +350,39 @@ public:
 	 */
 	void removeNonPeriodicHalos(ParticleContainer* moleculeContainer);
 
+	/**
+	 * Sets the number of iterations over which the traversal time is averaged.
+	 * If the window is reduced, the oldest entries are discarded.
+	 * A window size of 1 disables averaging: getAverageLastTraversalTime() then
+	 * returns the same value as getLastTraversalTime().
+	 * @param new_capacity Number of traversal times to keep for averaging.
+	 */
+	void setLastTraversalTimeAveragingWindowSize(size_t new_capacity) noexcept;
+
+	/**
+	 * Stores the traversal time of the current iteration.
+	 * If the averaging window is full, the oldest entry is discarded.
+	 * @param lastTraversalTime Traversal time of the current iteration.
+	 * @return The average traversal time over the averaging window, including
+	 *         the new entry (same value as getAverageLastTraversalTime()).
+	 * @throws std::bad_alloc If memory for the new entry cannot be allocated.
+	 *         In this case the history remains unchanged.
+	 */
+	double setLastTraversalTime(double lastTraversalTime);
+
+	/**
+	 * Returns the traversal time of the most recent iteration.
+	 * @return The last stored traversal time, or 0.0 if no time has been stored yet.
+	 */
+	double getLastTraversalTime() const noexcept;
+
+	/**
+	 * Returns the average traversal time over the averaging window.
+	 * @return The arithmetic mean of all stored traversal times,
+	 *         or 0.0 if no time has been stored yet.
+	 */
+	double getAverageLastTraversalTime() const noexcept;
+
 protected:
 	void addLeavingMolecules(std::vector<Molecule>& invalidMolecules, ParticleContainer* moleculeContainer);
 
@@ -397,6 +433,8 @@ protected:
 	int _numProcs;
 
 	BoundaryHandler _boundaryHandler;
+
+	FixedSizeQueue<double> _lastTraversalTimeHistory{1};
 
 private:
 	CollectiveCommBase _collCommBase;

@@ -97,8 +97,11 @@ bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalan
 	return true;
 }
 
-void DomainDecomposition::balanceAndExchange(double /*lastTraversalTime*/, bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
+void DomainDecomposition::balanceAndExchange(double lastTraversalTime, bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
 		Domain* domain) {
+	//Add lastTraversalTime to the internal storage so that plugins and other modules can access this information. 
+	setLastTraversalTime(lastTraversalTime);
+	
 	if (sendLeavingWithCopies()) {
 		Log::global_log->debug() << "DD: Sending Leaving and Halos." << std::endl;
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
