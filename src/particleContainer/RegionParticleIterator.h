@@ -72,7 +72,7 @@ class RegionParticleIterator : public ParticleIterator {
 
 		~RegionParticleIterator() override = default;
 
-		constexpr RegionParticleIterator(const RegionParticleIterator&) = default;
+		RegionParticleIterator(const RegionParticleIterator&) = default;
 
 		void operator++() override;
 	private:
