@@ -36,7 +36,7 @@ void MamicoCoupling::beforeForces(ParticleContainer *particleContainer, DomainDe
 	}
 }
 
-void MamicoCoupling::afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+void MamicoCoupling::siteWiseForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
 								 unsigned long simstep) {
 	if (_couplingEnabled) {
 		_couplingCellService->distributeMomentum(simstep);

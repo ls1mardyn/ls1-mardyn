@@ -66,7 +66,7 @@ public:
 	 * - Distribute incoming momentum among affected cells
 	 * - Apply boundary force to molecules near microscopic domain boundary
 	 */
-	void afterForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
+	void siteWiseForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
 					 unsigned long simstep) override;
 
 	void endStep(ParticleContainer *, DomainDecompBase *, Domain *, unsigned long) override {}

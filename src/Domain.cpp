@@ -785,7 +785,7 @@ void Domain::updateMaxMoleculeID(ParticleContainer* particleContainer, DomainDec
 			_maxMoleculeID.local = pid;
 	}
 #ifdef ENABLE_MPI
-	MPI_Allreduce(&_maxMoleculeID.local, &_maxMoleculeID.global, 1, MPI_UNSIGNED_LONG, MPI_MAX, MPI_COMM_WORLD);
+	MPI_Allreduce(&_maxMoleculeID.local, &_maxMoleculeID.global, 1, MPI_UNSIGNED_LONG, MPI_MAX, domainDecomp->getCommunicator());
 #else
 	_maxMoleculeID.global = _maxMoleculeID.local;
 #endif
