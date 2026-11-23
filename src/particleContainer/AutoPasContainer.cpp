@@ -134,7 +134,6 @@ AutoPasContainer::AutoPasContainer(double cutoff) : _cutoff(cutoff), _particlePr
 	_selectorStrategy = _autopasContainer.getSelectorStrategy();
 	_tuningStrategyOptions = _autopasContainer.getTuningStrategyOptions();
 	_tuningMetricOption = _autopasContainer.getTuningMetricOption();
-	_tuningAcquisitionFunction = _autopasContainer.getAcquisitionFunction();
 	_dataLayoutChoices = _autopasContainer.getAllowedDataLayouts();
 	_newton3Choices = _autopasContainer.getAllowedNewton3Options();
 	_verletClusterSize = _autopasContainer.getVerletClusterSize();
@@ -214,9 +213,6 @@ void AutoPasContainer::readXML(XMLfileUnits &xmlconfig) {
 								.begin();
 	_dataLayoutChoices = parseAutoPasOption<autopas::DataLayoutOption>(xmlconfig, "dataLayouts", _dataLayoutChoices);
 	_newton3Choices = parseAutoPasOption<autopas::Newton3Option>(xmlconfig, "newton3", _newton3Choices);
-	_tuningAcquisitionFunction = *parseAutoPasOption<autopas::AcquisitionFunctionOption>(
-									  xmlconfig, "tuningAcquisitionFunction", {_tuningAcquisitionFunction})
-									  .begin();
 	// get numeric options from xml
 	// int
 	_maxEvidence = static_cast<unsigned int>(xmlconfig.getNodeValue_int("maxEvidence", static_cast<int>(_maxEvidence)));
@@ -330,7 +326,6 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	_autopasContainer.setTuningStrategyOption(_tuningStrategyOptions);
 	_autopasContainer.setTuningMetricOption(_tuningMetricOption);
 	_autopasContainer.setRuleFileName(_ruleFileName);
-	_autopasContainer.setAcquisitionFunction(_tuningAcquisitionFunction);
 	_autopasContainer.setMaxEvidence(_maxEvidence);
 	_autopasContainer.setRelativeOptimumRange(_relativeOptimumRange);
 	_autopasContainer.setMaxTuningPhasesWithoutTest(_maxTuningPhasesWithoutTest);
@@ -369,8 +364,6 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 					   << ": " << _autopasContainer.getTuningInterval() << "\n"
 					   << std::setw(valueOffset) << std::left << "Number of samples "
 					   << ": " << _autopasContainer.getNumSamples() << "\n"
-					   << std::setw(valueOffset) << std::left << "Tuning Acquisition Function"
-					   << ": " << _autopasContainer.getAcquisitionFunction() << "\n"
 					   << std::setw(valueOffset) << std::left << "Number of evidence "
 					   << ": " << _autopasContainer.getMaxEvidence() << "\n"
 					   << std::setw(valueOffset) << std::left << "Verlet Cluster size "

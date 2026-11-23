@@ -287,8 +287,6 @@
         <dataLayouts>SoA</dataLayouts>
         <!-- Allowed choices for newton 3 optimization: enabled, disabled -->
         <newton3>enabled</newton3>
-        <!-- Only for Bayesian tuning strategies: sets the function that predicts knowledge gain from samples -->
-        <tuningAcquisitionFunction>upper-confidence-bound</tuningAcquisitionFunction>
         <!-- How many iterations before retuning -->
         <tuningInterval>1000</tuningInterval>
         <!-- How many samples should the tuner take for each tested combination (=1 Evidence) -->

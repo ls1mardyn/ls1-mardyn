@@ -15,16 +15,16 @@ if (ENABLE_AUTOPAS)
 
     set(AUTOPAS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(AUTOPAS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(AUTOPAS_BUILD_MD_LIBRARY ON CACHE BOOL "" FORCE)
     set(AUTOPAS_ENABLE_ADDRESS_SANITIZER ${ENABLE_ADDRESS_SANITIZER} CACHE BOOL "" FORCE)
     set(AUTOPAS_OPENMP ${OPENMP} CACHE BOOL "" FORCE)
     set(spdlog_ForceBundled ON CACHE BOOL "" FORCE)
     set(Eigen3_ForceBundled ON CACHE BOOL "" FORCE)
     # translate ls1 vectorization settings to AutoPas'
-    set(AUTOPAS_USE_VECTORIZATION ${USE_VECTORIZATION} CACHE BOOL "Set via USE_VECTORIZATION" FORCE)
-    set(AUTOPAS_VECTOR_INSTRUCTIONS ${VECTOR_INSTRUCTIONS} CACHE STRING "Set via VECTOR_INSTRUCTIONS_OPTIONS" FORCE)
+    set(AUTOPAS_USE_AUTOVEC ${USE_VECTORIZATION} CACHE BOOL "Set via USE_VECTORIZATION" FORCE)
 
-    # Version from March 19th, 2025. Includes PMT energy measurements, dynamic rebuilding and 3-body interactions.
-    set(AUTOPAS_TAG 0338ff17d55cc770a403efee69740a69753d64ad CACHE STRING "AutoPas Git tag or commit id to use")
+    # Version from November 23rd, 2026. Includes PMT energy measurements, dynamic rebuilding and 3-body interactions.
+    set(AUTOPAS_TAG 9089f88ba748e7945d9310581f620a553c27381b CACHE STRING "AutoPas Git tag or commit id to use")
 
     FetchContent_Declare(
             autopasfetch
