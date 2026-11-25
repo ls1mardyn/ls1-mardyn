@@ -5,6 +5,8 @@
 #include <coupling/interface/impl/ls1/LS1RegionWrapper.h>
 #include <coupling/services/CouplingCellService.h>
 
+#include <chrono>
+
 #include "PluginBase.h"
 
 /**
@@ -67,7 +69,7 @@ public:
 	 * - Apply boundary force to molecules near microscopic domain boundary
 	 */
 	void siteWiseForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-					 unsigned long simstep) override;
+						unsigned long simstep) override;
 
 	void endStep(ParticleContainer *, DomainDecompBase *, Domain *, unsigned long) override {}
 
@@ -115,9 +117,37 @@ public:
 	 */
 	bool getCouplingState() const { return _couplingEnabled; }
 
+	/**
+	 * @brief Getter for the time elapsed in beforeForces()
+	 *
+	 * Time is converted from millisecond to seconds before returning.
+	 * This is used instead of the aggregate timer for the whole plugin because the separation is needed for MaMiCo load
+	 * balancing.
+	 *
+	 * @return double The cumulative time spent in the beforeForces step
+	 */
+	double getCumulativeBeforeForcesTime() const {
+		return static_cast<double>(_cumulativeBeforeForcesTime.count()) / 1000.0;
+	}
+
+	/**
+	 * @brief Getter for the time elapsed in siteWiseForces()
+	 *
+	 * Time is converted from millisecond to seconds before returning.
+	 * This is used instead of the aggregate timer for the whole plugin because the separation is needed for MaMiCo load
+	 * balancing.
+	 *
+	 * @return double The cumulative time spent in the siteWiseForces step
+	 */
+	double getCumulativeSiteWiseForcesTime() const {
+		return static_cast<double>(_cumulativeSiteWiseForcesTime.count()) / 1000.0;
+	}
+
 private:
 	coupling::services::CouplingCellServiceImpl<ls1::LS1RegionWrapper, 3> *_couplingCellService = nullptr;
 	bool _couplingEnabled = false;
+	std::chrono::milliseconds _cumulativeBeforeForcesTime = std::chrono::milliseconds::zero();
+	std::chrono::milliseconds _cumulativeSiteWiseForcesTime = std::chrono::milliseconds::zero();
 };
 
 #endif	// MAMICO_COUPLING

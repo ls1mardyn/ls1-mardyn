@@ -10,6 +10,7 @@ void MamicoCoupling::init(ParticleContainer *particleContainer, DomainDecompBase
 
 void MamicoCoupling::beforeForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
 								  unsigned long simstep) {
+	auto start = std::chrono::high_resolution_clock::now();
 	if (_couplingEnabled) {
 		// This object should be set by MaMiCo after the plugins are created in the simulation readxml file.
 		// Even though this method is called before the object is set, at this point the coupling switch is always off
@@ -34,14 +35,19 @@ void MamicoCoupling::beforeForces(ParticleContainer *particleContainer, DomainDe
 		// Thus this plugin does not entirely preserve the simulation state, since leaving particles are communicated
 		// Any plugins after this that work on leaving particles will find zero leaving particles
 	}
+	_cumulativeBeforeForcesTime +=
+		duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
 }
 
 void MamicoCoupling::siteWiseForces(ParticleContainer *particleContainer, DomainDecompBase *domainDecomp,
-								 unsigned long simstep) {
+									unsigned long simstep) {
+	auto start = std::chrono::high_resolution_clock::now();
 	if (_couplingEnabled) {
 		_couplingCellService->distributeMomentum(simstep);
 		_couplingCellService->applyBoundaryForce(simstep);
 	}
+	_cumulativeSiteWiseForcesTime +=
+		duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
 }
 
 #endif	// MAMICO_COUPLING
