@@ -93,7 +93,7 @@ public:
     /** @brief Method will be called first thing in a new timestep. */
 	void beforeEventNewTimestep(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-			unsigned long simstep
+			unsigned long simstep, bool signalled
 	) override;
 
     /** @brief Method siteWiseForces will be called before forcefields have been applied
