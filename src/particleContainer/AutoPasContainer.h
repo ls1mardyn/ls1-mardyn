@@ -37,7 +37,6 @@ public:
 		<extrapolationMethod>STRING</extrapolationMethod>
 		<dataLayouts>STRINGLIST</dataLayouts>
 		<newton3>STRINGLIST</newton3>
-		<tuningAcquisitionFunction>STRING</tuningAcquisitionFunction>
 		<maxEvidence>INTEGER</maxEvidence>
 		<tuningPhasesWithoutTest>INTEGER</tuningPhasesWithoutTest>
 		<evidenceForPrediction>INTEGER</evidenceForPrediction>
@@ -168,7 +167,6 @@ private:
 	std::vector<autopas::TuningStrategyOption> _tuningStrategyOptions;
 	autopas::TuningMetricOption _tuningMetricOption;
 	autopas::ExtrapolationMethodOption _extrapolationMethod;
-	autopas::AcquisitionFunctionOption _tuningAcquisitionFunction;
 	std::set<autopas::DataLayoutOption> _dataLayoutChoices;
 	std::set<autopas::Newton3Option> _newton3Choices;
 	autopas::Logger::LogLevel _logLevel{autopas::Logger::LogLevel::info};
