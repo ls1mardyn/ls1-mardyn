@@ -9,7 +9,7 @@
 #define SRC_PLUGINS_INMEMORYCHECKPOINTING_H_
 
 #include "PluginBase.h"
-#include "molecules/MoleculeForwardDeclaration.h"
+#include "molecules/Molecule.h"
 
 #include <vector>
 

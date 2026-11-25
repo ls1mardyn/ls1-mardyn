@@ -34,7 +34,7 @@ if (ENABLE_ADIOS2)
         FetchContent_Declare(
                 adios2fetch
                 GIT_REPOSITORY ${adios2RepoPath}
-                GIT_TAG "v2.7.1.436"
+                GIT_TAG "v2.12.1"
         )
 
         # Get adios2 source and binary directories from CMake project

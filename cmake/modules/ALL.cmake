@@ -34,6 +34,14 @@ if(ENABLE_ALLLBL)
     if (NOT allfetch_POPULATED)
         FetchContent_Populate(ALLfetch)
 
+        # Fix C++20 DR 2237 incompatibility (template-id not allowed on destructor) in ALL d16796dc
+        set(_all_point_hpp_path "${allfetch_SOURCE_DIR}/include/ALL_Point.hpp")
+        file(READ "${_all_point_hpp_path}" _all_point_hpp)
+        string(REPLACE "~ALL_Point<T>()" "~ALL_Point()" _all_point_hpp_patched "${_all_point_hpp}")
+        if (NOT _all_point_hpp_patched STREQUAL _all_point_hpp)
+            file(WRITE "${_all_point_hpp_path}" "${_all_point_hpp_patched}")
+        endif ()
+
         add_library(ALL INTERFACE)
         target_include_directories(ALL INTERFACE ${allfetch_SOURCE_DIR}/include/)
     endif ()
