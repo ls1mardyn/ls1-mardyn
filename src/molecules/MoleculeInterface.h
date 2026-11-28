@@ -269,27 +269,6 @@ public:
 	virtual void calcFM() = 0;
 	virtual void check(unsigned long id) = 0;
 
-	//! NOTE: Vectorized force calculation doesn't use this anymore
-	//!
-	//! @brief find out whether m1 is before m2 (in some global ordering)
-	//!
-	//! Compares this molecule to m2 based on their coordinates.
-	//!
-	//! @return true if this molecule is smaller than m2 (according to the order
-	//!         induced by the coordinates (z,y,x)
-	//!
-	//! At the boundary between two processes (if used in parallel mode), the forces
-	//! for pairs which cross the boundary are calculated twice (once by each proc who
-	//! owns one of the particles). But the contribution to macroscopic value must be
-	//! counted only once, which is done by the process who owns the "first" particle.
-	//! As order criterion, the spacial position is used int this method. The particles
-	//! with lower x-coordinate is first (if equal, then y- or z-coordinate).
-	//! For pairs which are completely on one process, the first particle can be
-	//! determined from the cell structure. But for pairs on different procs, the
-	//! corresponding cell discretisations might be different as well, and therefore
-	//! the cell structure must not be used to determine the order.
-	bool isLessThan(const MoleculeInterface& m2) const;
-
 	/**
 	 * \brief test whether molecule is inside a cuboid region
 	 * @param l lower left front corner of cube (equality allowed)
