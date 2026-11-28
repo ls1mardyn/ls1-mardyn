@@ -409,4 +409,51 @@ public:
 	void setAbsQ(double q) { setAbs(q); }
 };
 
+
+class ATMcenter : public Site {
+public:
+	/** @brief Constructor */
+	ATMcenter(): _nu(0.) {}
+	/** @brief Constructor
+	 * \param[in] x		relative x coordinate
+	 * \param[in] y		relative y coordinate
+	 * \param[in] z		relative z coordinate
+	 * \param[in] m		mass
+	 * \param[in] nu	interaction strength
+	 */
+	ATMcenter(double x, double y, double z,  double m, double nu)
+		: Site(x, y, z, m), _nu(nu) {}
+
+	/** @brief Read in XML configuration for an ATMcenter and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <site type="ATM">
+	     <!-- all Site class parameters -->
+	     <nu>DOUBLE</nu>
+	   </site>
+	   \endcode
+	 */
+	void readXML(XMLfileUnits& xmlconfig) {
+		Site::readXML(xmlconfig);
+		Log::global_log->info() << "Site type: Axilrod-Teller-Muto" << std::endl;
+		xmlconfig.getNodeValueReduced("nu", _nu);
+		Log::global_log->info() << "Site parameters: nu = " << _nu << std::endl;
+	}
+
+	/// write to stream
+	void write(std::ostream& ostrm) const {
+		Site::write(ostrm);
+		ostrm << "\t" << nu();
+	}
+
+	/** Get the ATM interaction strength. */
+	double nu() const { return _nu; }
+
+	/** Set the ATM interaction strength. */
+	void setNu(double nu) { _nu = nu; }
+
+private:
+	double _nu;
+};
 #endif  /* SITE_H_ */

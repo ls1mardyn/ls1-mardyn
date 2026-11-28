@@ -13,5 +13,7 @@ target_sources(MarDyn
         iteratePairwiseLJFunctorSVENoShiftNoMix.cpp
         iteratePairwiseLJFunctorSVEShiftMix.cpp
         iteratePairwiseLJFunctorSVEShiftNoMix.cpp
+        computeInteractionsATMFunctorMix.cpp
+        computeInteractionsATMFunctorNoMix.cpp
     )
 
