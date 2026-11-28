@@ -475,20 +475,17 @@ void MettDeamon::findMaxMoleculeID(DomainDecompBase* domainDecomp)
 	}
 
 	// global max IDs
-	domainDecomp->collCommInit(1);
-	domainDecomp->collCommAppendUnsLong(_nMaxMoleculeID.local);
-	domainDecomp->collCommAllreduceSum();
-	_nMaxMoleculeID.global = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp->getCommunicator(), _nMaxMoleculeID.local);
+	collComm.communicate();
+	std::tie(_nMaxMoleculeID.global) = collComm.get();
 }
 
 uint64_t MettDeamon::getnNumMoleculesDeleted2( DomainDecompBase* domainDecomposition)
 {
-	domainDecomposition->collCommInit(1);
-	domainDecomposition->collCommAppendUnsLong(_nNumMoleculesTooFast.local);
-	domainDecomposition->collCommAllreduceSum();
-	_nNumMoleculesTooFast.global = domainDecomposition->collCommGetUnsLong();
-	domainDecomposition->collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomposition->getCommunicator(), _nNumMoleculesTooFast.local);
+	collComm.communicate();
+	std::tie(_nNumMoleculesTooFast.global) = collComm.get();
+	
 	return _nNumMoleculesTooFast.global;
 }
 
@@ -793,19 +790,12 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 	if( (FRM_DIRECTED == _nFeedRateMethod) && (global_simulation->getSimulationStep() % _nUpdateFreq == 0) )
 	{
 		// update global number of particles / calc global number of deleted particles
-		domainDecomposition->collCommInit(5);
-		domainDecomposition->collCommAppendUnsLong(nNumMoleculesLocal);
-		domainDecomposition->collCommAppendUnsLong(_feedrate.numMolecules.inserted.local);
-		domainDecomposition->collCommAppendUnsLong(_feedrate.numMolecules.deleted.local);
-		domainDecomposition->collCommAppendUnsLong(_feedrate.numMolecules.changed_to.local);
-		domainDecomposition->collCommAppendUnsLong(_feedrate.numMolecules.changed_from.local);
-		domainDecomposition->collCommAllreduceSum();
-		nNumMoleculesGlobal = domainDecomposition->collCommGetUnsLong();
-		_feedrate.numMolecules.inserted.global = domainDecomposition->collCommGetUnsLong();
-		_feedrate.numMolecules.deleted.global = domainDecomposition->collCommGetUnsLong();
-		_feedrate.numMolecules.changed_to.global = domainDecomposition->collCommGetUnsLong();
-		_feedrate.numMolecules.changed_from.global = domainDecomposition->collCommGetUnsLong();
-		domainDecomposition->collCommFinalize();
+		auto collComm = makeCollCommObjAllreduceAdd(domainDecomposition->getCommunicator(), nNumMoleculesLocal, _feedrate.numMolecules.inserted.local, _feedrate.numMolecules.deleted.local, 
+																									_feedrate.numMolecules.changed_to.local, _feedrate.numMolecules.changed_from.local);
+		collComm.communicate();
+		std::tie(nNumMoleculesGlobal, _feedrate.numMolecules.inserted.global, _feedrate.numMolecules.deleted.global, 
+										_feedrate.numMolecules.changed_to.global, _feedrate.numMolecules.changed_from.global) = collComm.get();
+
 		_nNumMoleculesDeletedGlobalAlltime += _feedrate.numMolecules.deleted.global;
 		_feedrate.numMolecules.inserted.local = 0;
 		_feedrate.numMolecules.deleted.local = 0;
@@ -849,11 +839,9 @@ void MettDeamon::postForce_action(ParticleContainer* particleContainer, DomainDe
 	else
 	{
 		// update global number of particles
-		domainDecomposition->collCommInit(1);
-		domainDecomposition->collCommAppendUnsLong(nNumMoleculesLocal);
-		domainDecomposition->collCommAllreduceSum();
-		nNumMoleculesGlobal = domainDecomposition->collCommGetUnsLong();
-		domainDecomposition->collCommFinalize();
+		auto collComm = makeCollCommObjAllreduceAdd(domainDecomposition->getCommunicator(), nNumMoleculesLocal);
+		collComm.communicate();
+		std::tie(nNumMoleculesGlobal) = collComm.get();
 	}
 	global_simulation->getDomain()->setglobalNumMolecules(nNumMoleculesGlobal);
 
@@ -954,13 +942,10 @@ void MettDeamon::logReleased()
 		return;
 
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-	domainDecomp.collCommInit(2);
-	domainDecomp.collCommAppendUnsLong(_released.count.local);
-	domainDecomp.collCommAppendUnsLong(_released.deleted.local);
-	domainDecomp.collCommAllreduceSum();
-	_released.count.global = domainDecomp.collCommGetUnsLong();
-	_released.deleted.global = domainDecomp.collCommGetUnsLong();
-	domainDecomp.collCommFinalize();
+
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp.getCommunicator(), _released.count.local, _released.deleted.local);
+	collComm.communicate();
+	std::tie(_released.count.global, _released.deleted.global) = collComm.get();
 
 	// reset local values
 	_released.count.local = 0;
@@ -1154,11 +1139,9 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	CommVar<uint64_t> numParticlesCurrentSlab;
 	numParticlesCurrentSlab.local = currentReservoirSlab.size();
 	// calc global values
-	domainDecomp.collCommInit(1);
-	domainDecomp.collCommAppendUnsLong(numParticlesCurrentSlab.local);
-	domainDecomp.collCommAllreduceSum();
-	numParticlesCurrentSlab.global = domainDecomp.collCommGetUnsLong();
-	domainDecomp.collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(domainDecomp.getCommunicator(), numParticlesCurrentSlab.local);
+	collComm.communicate();
+	std::tie(numParticlesCurrentSlab.global) = collComm.get();
 
 	// get available particle IDs
 	CommVar<std::vector<uint64_t> > particleIDs_available;
@@ -1197,11 +1180,9 @@ void MettDeamon::InsertReservoirSlab(ParticleContainer* particleContainer)
 	}
 	Log::global_log->debug() << "[" << nRank << "]: ADDED " << numAdded.local << "/" << numParticlesCurrentSlab.local << " particles (" << numAdded.local/static_cast<float>(numParticlesCurrentSlab.local)*100 << ")%." << std::endl;
 	// calc global values
-	domainDecomp.collCommInit(1);
-	domainDecomp.collCommAppendUnsLong(numAdded.local);
-	domainDecomp.collCommAllreduceSum();
-	numAdded.global = domainDecomp.collCommGetUnsLong();
-	domainDecomp.collCommFinalize();
+	collComm = makeCollCommObjAllreduceAdd(domainDecomp.getCommunicator(), numAdded.local);
+	collComm.communicate();
+	std::tie(numAdded.global) = collComm.get();
 
 	if(0 == nRank)
 		Log::global_log->debug() << "[" << nRank << "]: ADDED " << numAdded.global << "/" << numParticlesCurrentSlab.global << " particles (" << numAdded.global/static_cast<float>(numParticlesCurrentSlab.global)*100 << ")%." << std::endl;

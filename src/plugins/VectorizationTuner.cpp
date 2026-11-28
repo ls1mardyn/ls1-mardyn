@@ -822,25 +822,20 @@ void VectorizationTuner::VTWriterStatistics::writeStatistics(double input, const
 	int numRanks = global_simulation->domainDecomposition().getNumProcs();
 
 	double square = input * input;
-	dd.collCommInit(2);
-	dd.collCommAppendDouble(input);
-	dd.collCommAppendDouble(square);
-	dd.collCommAllreduceSum();
-	double average = dd.collCommGetDouble() / numRanks;
-	double average2 = dd.collCommGetDouble() / numRanks;
-	dd.collCommFinalize();
 
-	dd.collCommInit(1);
-	dd.collCommAppendDouble(input);
-	dd.collCommAllreduceCustom(ReduceType::MIN);
-	double min = dd.collCommGetDouble();
-	dd.collCommFinalize();
+	auto collComm = makeCollCommObjAllreduceAdd(dd.getCommunicator(), input, square);
+	collComm.communicate();
+	auto [average, average2] = collComm.get();
+	average /= numRanks;
+	average2 /= numRanks;
 
-	dd.collCommInit(1);
-	dd.collCommAppendDouble(input);
-	dd.collCommAllreduceCustom(ReduceType::MAX);
-	double max = dd.collCommGetDouble();
-	dd.collCommFinalize();
+	auto collCommMin = makeCollCommObjAllreduceMin(dd.getCommunicator(), input);
+	collCommMin.communicate();
+	auto [min] = collCommMin.get();
+
+	auto collCommMax = makeCollCommObjAllreduceMax(dd.getCommunicator(), input);
+	collCommMax.communicate();
+	auto [max] = collCommMax.get();
 
 	double stddev = std::sqrt(average2  - average * average);
 
