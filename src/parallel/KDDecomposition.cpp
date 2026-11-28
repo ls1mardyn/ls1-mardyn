@@ -261,7 +261,8 @@ bool KDDecomposition::checkNeedRebalance(double lastTraversalTime) const {
 }
 
 void KDDecomposition::balanceAndExchange(double lastTraversalTime, bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
-	bool needsRebalance = checkNeedRebalance(lastTraversalTime);
+	const double averageLastTraversalTime = setLastTraversalTime(lastTraversalTime);
+	bool needsRebalance = checkNeedRebalance(averageLastTraversalTime);
 	bool rebalance = doRebalancing(forceRebalancing, needsRebalance, _steps, _frequency);
 	_steps++;
 	const bool removeRecvDuplicates = true;

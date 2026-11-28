@@ -396,6 +396,25 @@ bool AutoPasContainer::rebuild(double *bBoxMin, double *bBoxMax) {
 	return false;
 }
 
+std::vector<Molecule> AutoPasContainer::rebuildFilter(double *bBoxMin, double *bBoxMax) {
+	mardyn_assert(_cutoff > 0.);
+	std::array<double, 3> boxMin{bBoxMin[0], bBoxMin[1], bBoxMin[2]};
+	std::array<double, 3> boxMax{bBoxMax[0], bBoxMax[1], bBoxMax[2]};
+
+	memcpy(_boundingBoxMin, bBoxMin, 3 * sizeof(double));
+	memcpy(_boundingBoxMax, bBoxMax, 3 * sizeof(double));
+
+	// check if autopas is already initialized
+	if (_autopasContainerIsInitialized) {
+		std::vector<Molecule> emigrants = _autopasContainer.resizeBox(boxMin, boxMax);
+		// TODO: maybe only force this if the box and num particles changed too much?
+		_autopasContainer.forceRetune();
+		return emigrants;
+	}
+	rebuild(bBoxMin, bBoxMax);
+	return {};
+}
+
 void AutoPasContainer::update() {
 	// in case we update the container before handling the invalid particles, this might lead to lost particles.
 	if (not _invalidParticles.empty()) {

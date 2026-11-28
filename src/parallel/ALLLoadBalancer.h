@@ -1,7 +1,7 @@
 /**
  * @file ALLLoadBalancer.h
- * @author seckler
- * @date 04.06.19
+ * @author seckler, Georg von Bismarck
+ * @date 4.11.2026
  */
 
 #pragma once
@@ -9,25 +9,41 @@
 #include <ALL.hpp>
 #include "LoadBalancer.h"
 
-#include <tuple>
+/** 
+ * Integration of A Loadbalancing Library (ALL) into LS1 for use through GeneralDomainDecomposition
+ */ 
 class ALLLoadBalancer : public LoadBalancer {
 public:
-	ALLLoadBalancer(std::array<double, 3> boxMin, std::array<double, 3> boxMax, double gamma, MPI_Comm comm,
-					std::array<size_t, 3> globalSize, std::array<size_t, 3> localCoordinates,
-					std::array<double, 3> minimalPartitionSize);
 
+	/**
+     * Constructs from two corner points.
+     * @param comm !Cartesian-Communicator! 
+	 * @param globalSize global Domain Size
+	 * @param minimalDomainSize
+     */
+	ALLLoadBalancer(MPI_Comm comm, DomainGridPoint globalSize, std::vector<double> minimalDomainSize) noexcept;
 	~ALLLoadBalancer() override = default;
-	std::tuple<std::array<double, 3>, std::array<double, 3>> rebalance(double work) override;
-	void readXML(XMLfileUnits& xmlconfig) override {
-		// nothing yet.
-	}
 
-	std::array<bool, 3> getCoversWholeDomain() override { return _coversWholeDomain; }
+	/** 
+	 * documentation see base class (LoadBalancer.h)
+	 */ 
+	DomainBox rebalance(DomainBox localBox, double work) override;
+
+	/** 
+	 * documentation see base class (LoadBalancer.h)
+	 */ 
+	void readXML(XMLfileUnits& xmlconfig) override;
+
+	/** 
+	 * documentation see base class (LoadBalancer.h)
+	 */ 
+	std::array<bool, DIMgeom> getCoversWholeDomain() noexcept override { return _coversWholeDomain; }
 
 private:
-	ALL<double, double> _all;
-	using Point = ALL_Point<double>;
-	std::array<double, 3> _minimalPartitionSize{};
-	std::array<bool, 3> _coversWholeDomain{};
+	std::unique_ptr<ALL::ALL<double, double>> _all;
+	MPI_Comm _comm;
+
+	std::vector<double> _minimalDomainSize{};
+	std::array<bool, DIMgeom> _coversWholeDomain{};
 };
 #endif

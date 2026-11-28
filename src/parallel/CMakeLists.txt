@@ -13,6 +13,7 @@ if(ENABLE_MPI)
             DomainDecompMPIBase.cpp
             DomainDecomposition.cpp
             GeneralDomainDecomposition.cpp
+            DomainBox.cpp
             KDDecomposition.cpp
             KDDStaticValues.cpp
             KDNode.cpp

@@ -341,7 +341,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _ensemble->getComponents()->size());
 			} else if (parallelisationtype == "GeneralDomainDecomposition") {
 				double skin = 0.;
-				bool forceLatchingToLinkedCellsGrid = false;
 				// We need the skin here (to specify the smallest possible partition), so we extract it from the AutoPas
 				// container's xml, because the ParticleContainer needs to be instantiated later. :/
 				xmlconfig.changecurrentnode("..");
@@ -359,18 +358,14 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 												  << std::endl;
 							MARDYN_EXIT(error_message.str());
 						}
-					} else {
-						Log::global_log->warning() << "Using the GeneralDomainDecomposition without AutoPas is not "
-												 "thoroughly tested and considered BETA."
-											  << std::endl;
-						// Force grid! This is needed, as the linked cells container assumes a grid and the calculation
-						// of global values will be faulty without one!
-						Log::global_log->info() << "Forcing a grid for the GeneralDomainDecomposition! This is required "
-												 "to get correct global values!"
-											  << std::endl;
-						forceLatchingToLinkedCellsGrid = true;
+					} else if (datastructuretype == "LinkedCells") {
+						xmlconfig.getNodeValue("skin", skin);
 					}
-					Log::global_log->info() << "Using skin = " << skin << " for the GeneralDomainDecomposition." << std::endl;
+					else
+					{
+						Log::global_log->warning() << "GeneralDomainDecomposition: Using It without AutoPas or LinkedCells is not tested" << std::endl;
+					}
+					
 				} else {
 					std::ostringstream error_message;
 					error_message << "Datastructure section missing" << std::endl;
@@ -382,7 +377,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					MARDYN_EXIT(error_message.str());
 				}
 				delete _domainDecomposition;
-				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius() + skin, _domain, forceLatchingToLinkedCellsGrid);
+				Log::global_log->info() << "GeneralDomainDecomposition: Using skin = " << skin << std::endl;
+				_domainDecomposition = new GeneralDomainDecomposition(getcutoffRadius(), skin, _domain);
 			} else {
 				std::ostringstream error_message;
 				error_message << "Unknown parallelisation type: " << parallelisationtype << std::endl;
@@ -424,7 +420,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				error_message << "timerForLoadAveragingLength has to be at least 1" << std::endl;
 				MARDYN_EXIT(error_message.str());
 			}
-			_lastTraversalTimeHistory.setCapacity(timerForLoadAveragingLength);
+			_domainDecomposition->setLastTraversalTimeAveragingWindowSize(timerForLoadAveragingLength);
 
 			if(xmlconfig.changecurrentnode("boundaries")) {
 				std::string xBoundaryFromConfig, yBoundaryFromConfig, zBoundaryFromConfig;
@@ -1426,14 +1422,9 @@ void Simulation::updateParticleContainerAndDecomposition(double lastTraversalTim
 	_moleculeContainer->update();
 	global_simulation->timers()->stop("SIMULATION_UPDATE_CONTAINER");
 
-	_lastTraversalTimeHistory.insert(lastTraversalTime);
-	double averageLastTraversalTime =
-		std::accumulate(_lastTraversalTimeHistory.begin(), _lastTraversalTimeHistory.end(), 0.) /
-		_lastTraversalTimeHistory.size();
-
 	bool forceRebalancing = false;
 	global_simulation->timers()->start("SIMULATION_MPI_OMP_COMMUNICATION");
-	_domainDecomposition->balanceAndExchange(averageLastTraversalTime, forceRebalancing, _moleculeContainer,
+	_domainDecomposition->balanceAndExchange(lastTraversalTime, forceRebalancing, _moleculeContainer,
 											 _domain);
 	global_simulation->timers()->stop("SIMULATION_MPI_OMP_COMMUNICATION");
 
